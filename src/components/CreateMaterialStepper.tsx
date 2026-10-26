@@ -219,23 +219,59 @@ export default function CreateMaterialStepper({
 
       <Box sx={{ mt: 2 }}>
         {activeStep === 0 && (
-          <Box component="form" onSubmit={onCreateDeck} noValidate>
-            <Stack spacing={2}>
-              <Typography variant="h6">New deck</Typography>
-              <TextField
-                label="Title"
-                name="title"
-                value={title}
-                onChange={(ev) => setTitle(ev.target.value)}
-                required
-                fullWidth
-                inputRef={titleRef}
-              />
-              <Button type="submit" variant="contained" disabled={busy || !title.trim()}>
-                {busy ? "Working…" : "Create deck"}
-              </Button>
-            </Stack>
-          </Box>
+          <Stack spacing={3}>
+            {decks.length > 0 ? (
+              <Stack spacing={2}>
+                <Typography variant="h6">Choose a deck</Typography>
+                <FormControl fullWidth>
+                  <InputLabel id="existing-deck-label">Existing deck</InputLabel>
+                  <Select
+                    labelId="existing-deck-label"
+                    label="Existing deck"
+                    value={selectedDeckId}
+                    onChange={(ev) => setSelectedDeckId(ev.target.value)}
+                  >
+                    {decks.map((d) => (
+                      <MenuItem key={d.id} value={d.id}>
+                        {d.title}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Button
+                  variant="contained"
+                  disabled={!selectedDeckId}
+                  onClick={() => setActiveStep(1)}
+                >
+                  Continue with this deck
+                </Button>
+                <Divider>or create new</Divider>
+              </Stack>
+            ) : null}
+            <Box component="form" onSubmit={onCreateDeck} noValidate>
+              <Stack spacing={2}>
+                <Typography variant="h6">
+                  {decks.length > 0 ? "New deck" : "Create a deck"}
+                </Typography>
+                <TextField
+                  label="Title"
+                  name="title"
+                  value={title}
+                  onChange={(ev) => setTitle(ev.target.value)}
+                  required
+                  fullWidth
+                  inputRef={titleRef}
+                />
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={busy || !title.trim()}
+                >
+                  {busy ? "Working…" : "Create deck"}
+                </Button>
+              </Stack>
+            </Box>
+          </Stack>
         )}
 
         {activeStep === 1 && (
