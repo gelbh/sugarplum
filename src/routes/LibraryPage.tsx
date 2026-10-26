@@ -13,13 +13,15 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import {
   ApiError,
-  createDeck,
   listDecks,
   me,
-  pasteMaterial,
-  uploadPdf,
   type Deck,
+  getJourney,
 } from "../api/client";
+import { deriveJourney } from "../journey/derive";
+import JourneyRail from "../components/JourneyRail";
+import JourneyNextButton from "../components/JourneyNextButton";
+import CreateMaterialStepper from "../components/CreateMaterialStepper";
 
 const MAX_PDF_BYTES = 25 * 1024 * 1024;
 
@@ -34,6 +36,9 @@ export default function LibraryPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
+  const [view, setView] = useState<any | null>(null);
+  const [activeStep, setActiveStep] = useState(0);
+  const [focusTitle, setFocusTitle] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,9 +46,11 @@ export default function LibraryPage() {
       try {
         await me();
         const list = await listDecks();
+        const journey = await getJourney();
         if (cancelled) return;
         setDecks(list);
         if (list[0]) setSelectedDeckId(list[0].id);
+        setView(deriveJourney(journey));
         setReady(true);
       } catch (err) {
         if (cancelled) return;
@@ -61,84 +68,18 @@ export default function LibraryPage() {
   }, []);
 
   async function onCreateDeck(e: FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setNotice(null);
-    setBusy(true);
-    try {
-      const deck = await createDeck(title);
-      setDecks((prev) => [...prev, deck]);
-      setSelectedDeckId(deck.id);
-      setTitle("");
-      setNotice(`Created “${deck.title}”`);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not create deck");
-    } finally {
-      setBusy(false);
-    }
+    // now handled inside CreateMaterialStepper
+    return;
   }
 
   async function onPaste(e: FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setNotice(null);
-    if (!selectedDeckId) {
-      setError("Select a deck first");
-      return;
-    }
-    setBusy(true);
-    try {
-      const material = await pasteMaterial(selectedDeckId, {
-        text: pasteText,
-        ...(filename.trim() ? { filename: filename.trim() } : {}),
-      });
-      setPasteText("");
-      setFilename("");
-      if (material.jobId) {
-        window.location.assign(`/jobs/${encodeURIComponent(material.jobId)}/drafts`);
-        return;
-      }
-      setNotice(`Saved paste material (${material.status})`);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not save paste");
-    } finally {
-      setBusy(false);
-    }
+    // handled in CreateMaterialStepper
+    return;
   }
 
   async function onUploadPdf(e: FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setNotice(null);
-    if (!selectedDeckId) {
-      setError("Select a deck first");
-      return;
-    }
-    if (!pdfFile) {
-      setError("Choose a PDF file");
-      return;
-    }
-    if (pdfFile.type && pdfFile.type !== "application/pdf") {
-      setError("Only PDF files are allowed");
-      return;
-    }
-    if (pdfFile.size > MAX_PDF_BYTES) {
-      setError("PDF must be 25MB or smaller");
-      return;
-    }
-    setBusy(true);
-    try {
-      const material = await uploadPdf(selectedDeckId, pdfFile);
-      setPdfFile(null);
-      // PDF text extract is not implemented yet; store only (do not claim cards ready).
-      setNotice(
-        `Stored PDF (${material.status}). Text extraction is not ready yet — use paste for generation.`,
-      );
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not upload PDF");
-    } finally {
-      setBusy(false);
-    }
+    // handled in CreateMaterialStepper
+    return;
   }
 
   if (!ready) {
@@ -180,122 +121,34 @@ export default function LibraryPage() {
             </Stack>
           )}
         </Box>
-
-        <Box component="form" onSubmit={onCreateDeck} noValidate>
-          <Stack spacing={2}>
-            <Typography variant="h6" component="h2">
-              New deck
-            </Typography>
-            <TextField
-              label="Title"
-              name="title"
-              value={title}
-              onChange={(ev) => setTitle(ev.target.value)}
-              required
-              fullWidth
-            />
-            <Button type="submit" variant="contained" disabled={busy || !title.trim()}>
-              {busy ? "Working…" : "Create deck"}
-            </Button>
-          </Stack>
-        </Box>
-
-        <Box component="form" onSubmit={onPaste} noValidate>
-          <Stack spacing={2}>
-            <Typography variant="h6" component="h2">
-              Paste material
-            </Typography>
-            <FormControl fullWidth disabled={decks.length === 0}>
-              <InputLabel id="deck-select-label">Deck</InputLabel>
-              <Select
-                labelId="deck-select-label"
-                label="Deck"
-                value={selectedDeckId}
-                onChange={(ev) => setSelectedDeckId(ev.target.value)}
-              >
-                {decks.map((d) => (
-                  <MenuItem key={d.id} value={d.id}>
-                    {d.title}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <TextField
-              label="Filename (optional)"
-              name="filename"
-              value={filename}
-              onChange={(ev) => setFilename(ev.target.value)}
-              fullWidth
-            />
-            <TextField
-              label="Paste text"
-              name="text"
-              value={pasteText}
-              onChange={(ev) => setPasteText(ev.target.value)}
-              required
-              fullWidth
-              multiline
-              minRows={6}
-            />
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={busy || decks.length === 0 || !pasteText.trim()}
-            >
-              {busy ? "Saving…" : "Save paste"}
-            </Button>
-          </Stack>
-        </Box>
-
-        <Box component="form" onSubmit={onUploadPdf} noValidate>
-          <Stack spacing={2}>
-            <Typography variant="h6" component="h2">
-              Upload PDF
-            </Typography>
-            <FormControl fullWidth disabled={decks.length === 0}>
-              <InputLabel id="pdf-deck-select-label">Deck</InputLabel>
-              <Select
-                labelId="pdf-deck-select-label"
-                label="Deck"
-                value={selectedDeckId}
-                onChange={(ev) => setSelectedDeckId(ev.target.value)}
-              >
-                {decks.map((d) => (
-                  <MenuItem key={d.id} value={d.id}>
-                    {d.title}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <Button
-              variant="outlined"
-              component="label"
-              disabled={busy || decks.length === 0}
-            >
-              {pdfFile ? pdfFile.name : "Choose PDF"}
-              <input
-                type="file"
-                accept="application/pdf,.pdf"
-                hidden
-                onChange={(ev) => {
-                  const file = ev.target.files?.[0] ?? null;
-                  setPdfFile(file);
+        <Stack spacing={2}>
+          {view ? <JourneyRail view={view} /> : null}
+          <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+            {view ? (
+              <JourneyNextButton
+                view={view}
+                onAction={(action) => {
+                  if (action === "create_deck") {
+                    setActiveStep(0);
+                    setFocusTitle(true);
+                  } else if (action === "add_material") {
+                    setActiveStep(1);
+                  } else if (action === "add_more") {
+                    setActiveStep(1);
+                  }
                 }}
               />
-            </Button>
-            <Typography variant="caption" color="text.secondary">
-              PDF only, max 25MB. Stored for later; flashcard generation from PDF
-              text is not available yet (use paste).
-            </Typography>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={busy || decks.length === 0 || !pdfFile}
-            >
-              {busy ? "Uploading…" : "Upload PDF"}
-            </Button>
-          </Stack>
-        </Box>
+            ) : null}
+          </Box>
+          <CreateMaterialStepper
+            decks={decks}
+            setDecks={(fn) => setDecks(fn(decks))}
+            activeStep={activeStep}
+            setActiveStep={setActiveStep}
+            focusTitle={focusTitle}
+            onFocusedTitleHandled={() => setFocusTitle(false)}
+          />
+        </Stack>
 
         <Typography variant="body2">
           <Link href="/" underline="hover">
