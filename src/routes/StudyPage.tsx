@@ -16,14 +16,18 @@ import {
   type CardDraftView,
   type StudyRating,
 } from "../api/client";
+import { useTrackedBusy } from "../progress/useTrackedBusy";
 
 /** Study session: reveal answer, grade with FSRS (keys 1-4). Code-led MUI. */
 export default function StudyPage() {
   const [queue, setQueue] = useState<CardDraftView[]>([]);
   const [revealed, setRevealed] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
+  const { end: endLoad } = useTrackedBusy("Loading study…", {
+    trackOnMount: true,
+  });
+  const { busy, begin, end } = useTrackedBusy("Saving grade…");
 
   const load = useCallback(async () => {
     const due = await listDueCards();
@@ -37,7 +41,10 @@ export default function StudyPage() {
       try {
         await me();
         await load();
-        if (!cancelled) setReady(true);
+        if (!cancelled) {
+          setReady(true);
+          endLoad();
+        }
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
@@ -46,12 +53,13 @@ export default function StudyPage() {
         }
         setError(err instanceof ApiError ? err.message : "Failed to load study");
         setReady(true);
+        endLoad(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [load]);
+  }, [endLoad, load]);
 
   const current = queue[0] ?? null;
 
@@ -59,18 +67,18 @@ export default function StudyPage() {
     async (rating: StudyRating) => {
       if (!current || busy || !revealed) return;
       setError(null);
-      setBusy(true);
+      begin();
       try {
         await reviewCard(current.id, rating);
         setQueue((prev) => prev.slice(1));
         setRevealed(false);
+        end();
       } catch (err) {
         setError(err instanceof ApiError ? err.message : "Could not save grade");
-      } finally {
-        setBusy(false);
+        end(false);
       }
     },
-    [busy, current, revealed],
+    [begin, busy, current, end, revealed],
   );
 
   useEffect(() => {

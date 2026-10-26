@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useId, useState, type FormEvent } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -20,6 +20,8 @@ import {
   uploadPdf,
   type Deck,
 } from "../api/client";
+import { useProgressRegistry } from "../progress/ProgressProvider";
+import { useTrackedBusy } from "../progress/useTrackedBusy";
 
 const MAX_PDF_BYTES = 25 * 1024 * 1024;
 
@@ -32,8 +34,15 @@ export default function LibraryPage() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const { end: endLoad } = useTrackedBusy("Loading library…", {
+    trackOnMount: true,
+  });
+  const { busy, begin, end } = useTrackedBusy("Working…");
+  const { upsert, complete, fail } = useProgressRegistry();
+  const uploadOpId = `upload:${useId()}`;
+  const anyBusy = busy || uploading;
 
   useEffect(() => {
     let cancelled = false;
@@ -45,6 +54,7 @@ export default function LibraryPage() {
         setDecks(list);
         if (list[0]) setSelectedDeckId(list[0].id);
         setReady(true);
+        endLoad();
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
@@ -53,28 +63,29 @@ export default function LibraryPage() {
         }
         setError(err instanceof ApiError ? err.message : "Failed to load library");
         setReady(true);
+        endLoad(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [endLoad]);
 
   async function onCreateDeck(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setNotice(null);
-    setBusy(true);
+    begin("Working…");
     try {
       const deck = await createDeck(title);
       setDecks((prev) => [...prev, deck]);
       setSelectedDeckId(deck.id);
       setTitle("");
       setNotice(`Created “${deck.title}”`);
+      end();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not create deck");
-    } finally {
-      setBusy(false);
+      end(false);
     }
   }
 
@@ -86,7 +97,7 @@ export default function LibraryPage() {
       setError("Select a deck first");
       return;
     }
-    setBusy(true);
+    begin("Saving…");
     try {
       const material = await pasteMaterial(selectedDeckId, {
         text: pasteText,
@@ -95,14 +106,15 @@ export default function LibraryPage() {
       setPasteText("");
       setFilename("");
       if (material.jobId) {
+        end();
         window.location.assign(`/jobs/${encodeURIComponent(material.jobId)}/drafts`);
         return;
       }
       setNotice(`Saved paste material (${material.status})`);
+      end();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not save paste");
-    } finally {
-      setBusy(false);
+      end(false);
     }
   }
 
@@ -126,18 +138,41 @@ export default function LibraryPage() {
       setError("PDF must be 25MB or smaller");
       return;
     }
-    setBusy(true);
+    setUploading(true);
+    upsert({
+      id: uploadOpId,
+      label: "Uploading PDF",
+      mode: "determinate",
+      percent: 0,
+      source: "client",
+    });
     try {
-      const material = await uploadPdf(selectedDeckId, pdfFile);
+      const material = await uploadPdf(selectedDeckId, pdfFile, (percent) => {
+        upsert({
+          id: uploadOpId,
+          label: "Uploading PDF",
+          mode: "determinate",
+          percent,
+          source: "client",
+        });
+      });
+      complete(uploadOpId);
       setPdfFile(null);
-      // PDF text extract is not implemented yet; store only (do not claim cards ready).
+      if (material.jobId) {
+        window.location.assign(
+          `/jobs/${encodeURIComponent(material.jobId)}/drafts`,
+        );
+        return;
+      }
+      // Idempotent re-complete: material already ready, no new job this call.
       setNotice(
-        `Stored PDF (${material.status}). Text extraction is not ready yet — use paste for generation.`,
+        `PDF already stored (${material.status}). Open Library drafts from a prior generate, or re-upload a new file.`,
       );
     } catch (err) {
+      fail(uploadOpId);
       setError(err instanceof ApiError ? err.message : "Could not upload PDF");
     } finally {
-      setBusy(false);
+      setUploading(false);
     }
   }
 
@@ -194,7 +229,11 @@ export default function LibraryPage() {
               required
               fullWidth
             />
-            <Button type="submit" variant="contained" disabled={busy || !title.trim()}>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={anyBusy || !title.trim()}
+            >
               {busy ? "Working…" : "Create deck"}
             </Button>
           </Stack>
@@ -240,7 +279,7 @@ export default function LibraryPage() {
             <Button
               type="submit"
               variant="contained"
-              disabled={busy || decks.length === 0 || !pasteText.trim()}
+              disabled={anyBusy || decks.length === 0 || !pasteText.trim()}
             >
               {busy ? "Saving…" : "Save paste"}
             </Button>
@@ -270,7 +309,7 @@ export default function LibraryPage() {
             <Button
               variant="outlined"
               component="label"
-              disabled={busy || decks.length === 0}
+              disabled={anyBusy || decks.length === 0}
             >
               {pdfFile ? pdfFile.name : "Choose PDF"}
               <input
@@ -290,9 +329,9 @@ export default function LibraryPage() {
             <Button
               type="submit"
               variant="contained"
-              disabled={busy || decks.length === 0 || !pdfFile}
+              disabled={anyBusy || decks.length === 0 || !pdfFile}
             >
-              {busy ? "Uploading…" : "Upload PDF"}
+              {uploading ? "Uploading…" : "Upload PDF"}
             </Button>
           </Stack>
         </Box>
