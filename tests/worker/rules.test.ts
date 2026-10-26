@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { remainderAfterRules } from "../../worker/generation/pipeline";
 import { harvestRuleDrafts } from "../../worker/generation/rules";
 import { assertSingleCloze, CardDraftSchema } from "../../worker/generation/schema";
 
@@ -157,5 +158,34 @@ describe("harvestRuleDrafts", () => {
     expect(harvestRuleDrafts("Just a plain paragraph.\n\nAnother sentence.")).toEqual(
       [],
     );
+  });
+
+  it("does not harvest lecture prose with Note:/Figure:/dash appositives", () => {
+    const text = [
+      "Note: Always wash your hands before lab work.",
+      "Figure 1: Structure of ATP synthase",
+      "The mitochondria - often called the powerhouse - produce ATP.",
+      "Chapter 3 - Cellular respiration overview",
+      "Krebs cycle produces NADH in the matrix.",
+      "mitochondria: powerhouse of the cell",
+    ].join("\n");
+    const drafts = harvestRuleDrafts(text);
+    expect(drafts).toHaveLength(1);
+    expect(drafts[0]).toMatchObject({
+      type: "qa",
+      front: "mitochondria",
+      back: "powerhouse of the cell",
+    });
+    const remainder = remainderAfterRules(text, drafts);
+    expect(remainder).toContain("Note: Always wash");
+    expect(remainder).toContain("Krebs cycle produces NADH");
+    expect(remainder).not.toContain("mitochondria: powerhouse");
+  });
+
+  it("skips a line with Anki cloze plus underscore blank instead of throwing", () => {
+    expect(() =>
+      harvestRuleDrafts("The {{c1::foo}} and ___ blank"),
+    ).not.toThrow();
+    expect(harvestRuleDrafts("The {{c1::foo}} and ___ blank")).toEqual([]);
   });
 });
