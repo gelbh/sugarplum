@@ -3,7 +3,7 @@ import { getDb } from "../db/client";
 import { decryptSecret } from "../crypto/secrets";
 import { extractPdfText } from "../materials/extract-pdf";
 import type { GenerateQueueMessage } from "./enqueue";
-import { createLlmAdapter, type LlmAdapter } from "./llm";
+import { createLlmAdapter, parseLlmProvider, type LlmAdapter } from "./llm";
 import type { CardDraft } from "./schema";
 
 type MaterialRow = {
@@ -178,11 +178,12 @@ export async function processGenerateJob(
       throw new Error("Extracted material text is empty");
     }
 
-    const llm = opts?.llm ?? createLlmAdapter(secret.provider);
+    const provider = parseLlmProvider(secret.provider);
+    const llm = opts?.llm ?? createLlmAdapter(provider);
     const drafts = await llm.generateDrafts({
       text,
       apiKey,
-      provider: secret.provider,
+      provider,
     });
 
     await insertDraftCards(db, { deckId, jobId, drafts });

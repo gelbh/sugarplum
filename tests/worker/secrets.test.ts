@@ -37,6 +37,26 @@ describe("GET/PUT /api/settings/llm", () => {
     env.seedSession("sess-a", "user-a");
   }
 
+  it("rejects unknown provider strings and URL-as-provider", async () => {
+    const env = createTestEnv();
+    seedUser(env);
+    for (const provider of ["https://api.openai.com/v1", "openrouter", "mock"]) {
+      const res = await app.request(
+        "/api/settings/llm",
+        {
+          method: "PUT",
+          headers: {
+            "content-type": "application/json",
+            cookie: `${SESSION_COOKIE}=sess-a`,
+          },
+          body: JSON.stringify({ provider, apiKey: "sk-x" }),
+        },
+        env,
+      );
+      expect(res.status).toBe(400);
+    }
+  });
+
   it("PUT stores ciphertext and GET never includes the raw key", async () => {
     const env = createTestEnv();
     seedUser(env);

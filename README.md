@@ -6,14 +6,14 @@
 [![MUI](https://img.shields.io/badge/MUI-v7-007FFF?logo=mui&logoColor=white)](https://mui.com/)
 [![FSRS](https://img.shields.io/badge/SRS-FSRS-2E7D32)](https://github.com/open-spaced-repetition/ts-fsrs)
 
-Spaced-repetition study app that turns lecture notes, PDFs, and slides into editable flashcards, then schedules reviews so you remember them.
+Spaced-repetition study app that turns pasted lecture notes into editable flashcards, then schedules reviews so you remember them. PDF upload to R2 is supported; text extraction from PDFs is not ready yet (jobs fail with a clear error until that lands).
 
 **App:** [sugarplum.gelbhart.dev](https://sugarplum.gelbhart.dev)
 
 ## What it does
 
-1. Upload or paste study materials
-2. Generate draft cards (Q&A and cloze in the first release)
+1. Paste study materials (preferred for generation today); optional PDF upload stores the file
+2. Generate draft cards from paste text (Q&A and cloze in the first release)
 3. Review and edit before anything enters your deck
 4. Study with FSRS spaced repetition
 

@@ -4,6 +4,10 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import { encryptSecret, parseSecretMeta } from "../crypto/secrets";
+import {
+  isUserLlmProvider,
+  USER_LLM_PROVIDERS,
+} from "../generation/llm";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -75,6 +79,12 @@ settingsRoutes.put("/llm", async (c) => {
   if (!provider) {
     throw new HTTPException(400, { message: "provider required" });
   }
+  const normalized = provider.toLowerCase();
+  if (!isUserLlmProvider(normalized)) {
+    throw new HTTPException(400, {
+      message: `Unsupported provider. Allowed: ${USER_LLM_PROVIDERS.join(", ")}`,
+    });
+  }
   if (!apiKey.trim()) {
     throw new HTTPException(400, { message: "apiKey required" });
   }
@@ -98,12 +108,12 @@ settingsRoutes.put("/llm", async (c) => {
          ciphertext = excluded.ciphertext,
          updated_at = excluded.updated_at`,
     )
-    .bind(userId, provider, ciphertext, now, now)
+    .bind(userId, normalized, ciphertext, now, now)
     .run();
 
   const meta = parseSecretMeta(ciphertext)!;
   return c.json({
-    provider,
+    provider: normalized,
     last4: meta.last4,
     configured: true,
   } satisfies LlmSettingsConfigured);
