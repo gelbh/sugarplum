@@ -163,4 +163,108 @@ describe("draft review / accept gate", () => {
       "image_label",
     );
   });
+
+  it("accept-all accepts every draft for the job and schedules them", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedMaterial({
+      id: "mat-1",
+      deck_id: "deck-a",
+      kind: "paste",
+      r2_key: null,
+      filename: null,
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    await env.DB.prepare(
+      "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    )
+      .bind(
+        "job-bulk",
+        "mat-1",
+        "needs_review",
+        null,
+        null,
+        "2026-01-01T00:00:00.000Z",
+        "2026-01-01T00:01:00.000Z",
+      )
+      .run();
+
+    for (const id of ["d1", "d2"]) {
+      env.seedCard({
+        id,
+        deck_id: "deck-a",
+        job_id: "job-bulk",
+        type: "qa",
+        front_json: JSON.stringify(`${id}?`),
+        back_json: JSON.stringify("A"),
+        media_r2_keys_json: null,
+        provenance_json: JSON.stringify({ pages: [1], excerpt: id }),
+        status: "draft",
+        created_at: "2026-01-01T00:00:00.000Z",
+        updated_at: "2026-01-01T00:00:00.000Z",
+      });
+    }
+
+    const res = await app.request(
+      "/api/jobs/job-bulk/drafts/accept-all",
+      {
+        method: "POST",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { accepted: number; failed: number };
+    expect(body).toEqual({ accepted: 2, failed: 0 });
+    expect(env.getCards().every((c) => c.status === "accepted")).toBe(true);
+    expect(env.getSchedules()).toHaveLength(2);
+  });
+
+  it("accept-all returns 404 for another user", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedUser({
+      id: "user-b",
+      email: "b@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSession("sess-b", "user-b");
+    env.seedMaterial({
+      id: "mat-1",
+      deck_id: "deck-a",
+      kind: "paste",
+      r2_key: null,
+      filename: null,
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    await env.DB.prepare(
+      "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    )
+      .bind(
+        "job-bulk",
+        "mat-1",
+        "needs_review",
+        null,
+        null,
+        "2026-01-01T00:00:00.000Z",
+        null,
+      )
+      .run();
+
+    const res = await app.request(
+      "/api/jobs/job-bulk/drafts/accept-all",
+      {
+        method: "POST",
+        headers: { cookie: `${SESSION_COOKIE}=sess-b` },
+      },
+      env,
+    );
+    expect(res.status).toBe(404);
+  });
 });
