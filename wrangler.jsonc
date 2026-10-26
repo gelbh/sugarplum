@@ -1,0 +1,54 @@
+/**
+ * Sugarplum Worker config.
+ * Binding IDs below are placeholders until `wrangler` create succeeds against a Cloudflare account.
+ * Secrets (set via `wrangler secret put`): SECRETS_WRAP_KEY,
+ * R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
+ */
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "sugarplum",
+	"main": "worker/index.ts",
+	"compatibility_date": "2026-10-26",
+	"assets": {
+		"not_found_handling": "single-page-application"
+	},
+	"upload_source_maps": true,
+	"vars": {
+		"APP_URL": "https://sugarplum.gelbhart.dev",
+		"R2_ACCOUNT_ID": "578279c4ee8d8a1b0bda8ecf8ecc3f67",
+		"R2_BUCKET_NAME": "sugarplum-materials"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "sugarplum",
+			"database_id": "737d7509-0390-4715-b52a-8ecf18e6cb45"
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "MATERIALS",
+			"bucket_name": "sugarplum-materials"
+		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "SESSIONS",
+			"id": "4b51ba56cbdd48bd97a31ff775a9e684"
+		}
+	],
+	"queues": {
+		"producers": [
+			{
+				"binding": "GENERATE_QUEUE",
+				"queue": "sugarplum-generate"
+			}
+		],
+		"consumers": [
+			{
+				"queue": "sugarplum-generate",
+				"max_batch_size": 1
+			}
+		]
+	}
+}
