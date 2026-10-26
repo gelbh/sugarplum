@@ -13,24 +13,28 @@ import {
   getJourney,
 } from "../api/client";
 import { deriveJourney } from "../journey/derive";
-import JourneyChrome from "../components/JourneyChrome";
 import CreateMaterialStepper from "../components/CreateMaterialStepper";
-import type { JourneyView } from "../journey/types";
 
 export default function LibraryPage() {
   const [decks, setDecks] = useState<Deck[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
-  const [view, setView] = useState<JourneyView | null>(null);
   const [activeStep, setActiveStep] = useState(0);
   const [focusTitle, setFocusTitle] = useState(false);
 
-  const refreshJourney = useCallback(async () => {
+  const syncStepperFromJourney = useCallback(async () => {
     try {
-      const journey = await getJourney();
-      setView(deriveJourney(journey));
+      const derived = deriveJourney(await getJourney());
+      if (
+        derived.next.action === "add_material" ||
+        derived.next.action === "add_more"
+      ) {
+        setActiveStep(1);
+      } else if (derived.next.action === "create_deck") {
+        setActiveStep(0);
+      }
     } catch {
-      setView(null);
+      /* journey is optional for Library */
     }
   }, []);
 
@@ -43,12 +47,7 @@ export default function LibraryPage() {
         if (cancelled) return;
         setDecks(list);
         setReady(true);
-        try {
-          const journey = await getJourney();
-          if (!cancelled) setView(deriveJourney(journey));
-        } catch {
-          if (!cancelled) setView(null);
-        }
+        await syncStepperFromJourney();
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
@@ -62,7 +61,7 @@ export default function LibraryPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [syncStepperFromJourney]);
 
   if (!ready) {
     return (
@@ -77,25 +76,9 @@ export default function LibraryPage() {
       <Typography variant="h4" component="h1" gutterBottom color="primary">
         Library
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
         Create decks, paste notes, or upload PDFs as materials.
       </Typography>
-
-      {view ? (
-        <Box sx={{ mb: 3 }}>
-          <JourneyChrome
-            view={view}
-            onAction={(action) => {
-              if (action === "create_deck") {
-                setActiveStep(0);
-                setFocusTitle(true);
-              } else if (action === "add_material" || action === "add_more") {
-                setActiveStep(1);
-              }
-            }}
-          />
-        </Box>
-      ) : null}
 
       <Stack spacing={4}>
         {error ? <Alert severity="error">{error}</Alert> : null}
@@ -119,6 +102,7 @@ export default function LibraryPage() {
           )}
         </Box>
 
+        {/* Create stepper owns Library progress; journey rail lives on Today/Review. */}
         <CreateMaterialStepper
           decks={decks}
           setDecks={setDecks}
@@ -126,7 +110,7 @@ export default function LibraryPage() {
           setActiveStep={setActiveStep}
           focusTitle={focusTitle}
           onFocusedTitleHandled={() => setFocusTitle(false)}
-          onChanged={refreshJourney}
+          onChanged={syncStepperFromJourney}
         />
 
         <Typography variant="body2">
