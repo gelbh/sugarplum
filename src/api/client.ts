@@ -191,6 +191,18 @@ export function listJobDrafts(jobId: string) {
   return api<CardDraftView[]>(`/api/jobs/${jobId}/drafts`);
 }
 
+export type JourneyStatus = {
+  deckCount: number;
+  hasGenerationJob: boolean;
+  openReviewJobId: string | null;
+  acceptedCount: number;
+  dueCount: number;
+};
+
+export function getJourney() {
+  return api<JourneyStatus>("/api/journey");
+}
+
 export function patchCard(
   cardId: string,
   body: { front?: string; back?: string; type?: "qa" | "cloze" },
