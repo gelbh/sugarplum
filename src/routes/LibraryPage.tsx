@@ -1,15 +1,9 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
 import Link from "@mui/material/Link";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import {
   ApiError,
@@ -23,18 +17,9 @@ import JourneyRail from "../components/JourneyRail";
 import JourneyNextButton from "../components/JourneyNextButton";
 import CreateMaterialStepper from "../components/CreateMaterialStepper";
 
-const MAX_PDF_BYTES = 25 * 1024 * 1024;
-
 export default function LibraryPage() {
   const [decks, setDecks] = useState<Deck[]>([]);
-  const [title, setTitle] = useState("");
-  const [selectedDeckId, setSelectedDeckId] = useState("");
-  const [pasteText, setPasteText] = useState("");
-  const [filename, setFilename] = useState("");
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
   const [view, setView] = useState<any | null>(null);
   const [activeStep, setActiveStep] = useState(0);
@@ -49,7 +34,6 @@ export default function LibraryPage() {
         const journey = await getJourney();
         if (cancelled) return;
         setDecks(list);
-        if (list[0]) setSelectedDeckId(list[0].id);
         setView(deriveJourney(journey));
         setReady(true);
       } catch (err) {
@@ -66,21 +50,6 @@ export default function LibraryPage() {
       cancelled = true;
     };
   }, []);
-
-  async function onCreateDeck(e: FormEvent) {
-    // now handled inside CreateMaterialStepper
-    return;
-  }
-
-  async function onPaste(e: FormEvent) {
-    // handled in CreateMaterialStepper
-    return;
-  }
-
-  async function onUploadPdf(e: FormEvent) {
-    // handled in CreateMaterialStepper
-    return;
-  }
 
   if (!ready) {
     return (
@@ -101,7 +70,6 @@ export default function LibraryPage() {
 
       <Stack spacing={4}>
         {error ? <Alert severity="error">{error}</Alert> : null}
-        {notice ? <Alert severity="success">{notice}</Alert> : null}
 
         <Box>
           <Typography variant="h6" component="h2" gutterBottom>
@@ -142,7 +110,7 @@ export default function LibraryPage() {
           </Box>
           <CreateMaterialStepper
             decks={decks}
-            setDecks={(fn) => setDecks(fn(decks))}
+            setDecks={setDecks}
             activeStep={activeStep}
             setActiveStep={setActiveStep}
             focusTitle={focusTitle}
