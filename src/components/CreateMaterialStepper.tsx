@@ -12,9 +12,6 @@ import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import Alert from "@mui/material/Alert";
-import CollectionsBookmarkIcon from "@mui/icons-material/CollectionsBookmark";
-import ContentPasteIcon from "@mui/icons-material/ContentPaste";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 
@@ -165,11 +162,7 @@ export default function CreateMaterialStepper({
     }
   }
 
-  const steps = [
-    { label: "Deck", icon: <CollectionsBookmarkIcon /> },
-    { label: "Material", icon: <ContentPasteIcon /> },
-    { label: "Done", icon: <PictureAsPdfIcon /> },
-  ];
+  const steps = ["Deck", "Material", "Done"] as const;
 
   return (
     <Box>
@@ -177,9 +170,9 @@ export default function CreateMaterialStepper({
       {notice ? <Alert severity="success">{notice}</Alert> : null}
 
       <Stepper activeStep={activeStep} alternativeLabel>
-        {steps.map((s) => (
-          <Step key={s.label}>
-            <StepLabel icon={s.icon}>{s.label}</StepLabel>
+        {steps.map((label) => (
+          <Step key={label}>
+            <StepLabel>{label}</StepLabel>
           </Step>
         ))}
       </Stepper>
