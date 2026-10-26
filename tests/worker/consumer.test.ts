@@ -225,6 +225,8 @@ describe("processGenerateJob free path", () => {
     const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("failed");
     expect(job?.error).toMatch(/Workers AI|Settings|API key/i);
+    expect(job?.error).toMatch(/OpenAI|Anthropic|Google/i);
+    expect(job?.error).not.toMatch(/Gemini/i);
     // Slot not consumed when AI binding is missing
     expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBeNull();
   });

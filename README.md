@@ -21,7 +21,7 @@ Spaced-repetition study app that turns pasted lecture notes (and PDF text extrac
 
 React + Vite PWA on Cloudflare Workers, Material UI, D1 / R2 / KV / Queues / Workers AI, `ts-fsrs`.
 
-**Generation:** free by default via the Workers `AI` binding (rules harvest first, then platform model). Optional BYO OpenAI / Anthropic / Google key in Settings for higher quality and no free daily cap. Free path is capped at 20 jobs per user per UTC day.
+**Generation:** free by default via the Workers `AI` binding (rules harvest first, then platform model). Optional BYO OpenAI / Anthropic / Google key in Settings for higher quality and no free daily cap. Free path is capped at 20 jobs per user per UTC day. Long pastes are processed in at most 4 chunks (~5k chars each) to bound LLM/Workers AI calls.
 
 ## Develop
 

@@ -8,6 +8,9 @@ import { parseCardDrafts, type CardDraft } from "./schema";
 /** Hard cap per generate/critique chunk (~4–6k chars). */
 export const CHUNK_CHAR_LIMIT = 5000;
 
+/** Max chunks processed per job (generate+critique each); rest of text is dropped. */
+export const MAX_PIPELINE_CHUNKS = 4;
+
 /**
  * LLM used by the pipeline: generateDrafts for the create pass,
  * complete for the critique pass (custom system/user prompts).
@@ -149,7 +152,7 @@ export async function runGenerationPipeline(
   const { text, llm, apiKey, provider } = input;
   if (!text.trim()) return [];
 
-  const chunks = chunkText(text);
+  const chunks = chunkText(text).slice(0, MAX_PIPELINE_CHUNKS);
   const out: CardDraft[] = [];
 
   for (const chunk of chunks) {

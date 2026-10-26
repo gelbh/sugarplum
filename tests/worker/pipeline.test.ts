@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   CHUNK_CHAR_LIMIT,
+  MAX_PIPELINE_CHUNKS,
   remainderAfterRules,
   runGenerationPipeline,
   type PipelineLlm,
@@ -118,6 +119,34 @@ describe("runGenerationPipeline", () => {
     }
     expect(llm.generateDrafts).toHaveBeenCalledTimes(seenChunks.length);
     expect(drafts.length).toBeGreaterThan(0);
+  });
+
+  it("caps generateDrafts calls at MAX_PIPELINE_CHUNKS", async () => {
+    const llm = mockPipelineLlm({
+      generate: async () => [
+        validDraft({ front: "Q?", back: "A", provenance: { pages: [1], excerpt: "e" } }),
+      ],
+      complete: async () =>
+        JSON.stringify({
+          cards: [
+            validDraft({ front: "Q?", back: "A", provenance: { pages: [1], excerpt: "e" } }),
+          ],
+        }),
+    });
+
+    // 6 paragraph blocks → would be 6 chunks without the cap.
+    const block = "y".repeat(CHUNK_CHAR_LIMIT - 10);
+    const text = Array.from({ length: 6 }, () => block).join("\n\n");
+
+    await runGenerationPipeline({
+      text,
+      llm,
+      apiKey: "k",
+      provider: "mock",
+    });
+
+    expect(llm.generateDrafts).toHaveBeenCalledTimes(MAX_PIPELINE_CHUNKS);
+    expect(llm.complete).toHaveBeenCalledTimes(MAX_PIPELINE_CHUNKS);
   });
 
   it("runs generate then critique and returns critique survivors", async () => {
