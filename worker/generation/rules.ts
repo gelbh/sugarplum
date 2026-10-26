@@ -80,7 +80,7 @@ function harvestLine(line: string): CardDraft[] {
     return boldMatches.map((match, index) => {
       const answer = match[1]!.trim();
       let pos = 0;
-      const front = trimmed.replace(BOLD_RE, (whole, inner: string) => {
+      const front = trimmed.replace(BOLD_RE, (_whole, inner: string) => {
         const current = pos;
         pos += 1;
         if (current === index) {

@@ -131,19 +131,9 @@ export function mockLlmAdapter(): LlmAdapter {
       return drafts(text);
     },
     async complete() {
-      // Fixed critique JSON so pipeline tests can use mock without network.
+      // Keep the fixed generate set so consumer + pipeline tests get 3 drafts.
       return JSON.stringify({
-        cards: [
-          {
-            type: "qa",
-            front: "What is the primary topic of these notes?",
-            back: "The material's main subject as stated in the source.",
-            provenance: {
-              pages: [1],
-              excerpt: "mock critique excerpt",
-            },
-          },
-        ],
+        cards: drafts("mock critique excerpt"),
       });
     },
   };
