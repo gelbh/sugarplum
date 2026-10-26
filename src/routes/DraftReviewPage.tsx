@@ -20,6 +20,7 @@ import {
   rejectCard,
   type CardDraftView,
 } from "../api/client";
+import { useTrackedBusy } from "../progress/useTrackedBusy";
 
 function jobIdFromPath(): string | null {
   const match = window.location.pathname.match(/^\/jobs\/([^/]+)\/drafts\/?$/);
@@ -49,10 +50,13 @@ export default function DraftReviewPage() {
   const [index, setIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [statusLine, setStatusLine] = useState<string | null>(null);
+  const { end: endLoad } = useTrackedBusy("Loading drafts…", {
+    trackOnMount: true,
+  });
+  const { busy, begin, end } = useTrackedBusy("Working…");
 
   const load = useCallback(async (id: string) => {
     const list = await listJobDrafts(id);
@@ -67,6 +71,7 @@ export default function DraftReviewPage() {
       if (!jobId) {
         setError("Missing job id in URL");
         setReady(true);
+        endLoad(false);
         return;
       }
       try {
@@ -76,7 +81,10 @@ export default function DraftReviewPage() {
         if (cancelled) return;
         setStatusLine(null);
         await load(jobId);
-        if (!cancelled) setReady(true);
+        if (!cancelled) {
+          setReady(true);
+          endLoad();
+        }
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
@@ -88,12 +96,13 @@ export default function DraftReviewPage() {
           err instanceof ApiError ? err.message : "Failed to load drafts",
         );
         setReady(true);
+        endLoad(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [jobId, load]);
+  }, [endLoad, jobId, load]);
 
   const current = drafts[index] ?? null;
 
@@ -111,7 +120,7 @@ export default function DraftReviewPage() {
     if (!current || !dirty) return;
     setError(null);
     setNotice(null);
-    setBusy(true);
+    begin();
     try {
       const updated = await patchCard(current.id, {
         front: current.front,
@@ -123,10 +132,10 @@ export default function DraftReviewPage() {
       );
       setDirty(false);
       setNotice("Saved edits");
+      end();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not save");
-    } finally {
-      setBusy(false);
+      end(false);
     }
   }
 
@@ -134,7 +143,7 @@ export default function DraftReviewPage() {
     if (!current || !jobId) return;
     setError(null);
     setNotice(null);
-    setBusy(true);
+    begin();
     try {
       if (dirty) {
         await patchCard(current.id, {
@@ -146,10 +155,10 @@ export default function DraftReviewPage() {
       await acceptCard(current.id);
       await load(jobId);
       setNotice("Card accepted into study");
+      end();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not accept");
-    } finally {
-      setBusy(false);
+      end(false);
     }
   }
 
@@ -157,15 +166,15 @@ export default function DraftReviewPage() {
     if (!current || !jobId) return;
     setError(null);
     setNotice(null);
-    setBusy(true);
+    begin();
     try {
       await rejectCard(current.id);
       await load(jobId);
       setNotice("Card rejected");
+      end();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not reject");
-    } finally {
-      setBusy(false);
+      end(false);
     }
   }
 

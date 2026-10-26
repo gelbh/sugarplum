@@ -20,6 +20,7 @@ import {
   uploadPdf,
   type Deck,
 } from "../api/client";
+import { useTrackedBusy } from "../progress/useTrackedBusy";
 
 const MAX_PDF_BYTES = 25 * 1024 * 1024;
 
@@ -32,8 +33,11 @@ export default function LibraryPage() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
+  const { end: endLoad } = useTrackedBusy("Loading library…", {
+    trackOnMount: true,
+  });
+  const { busy, begin, end } = useTrackedBusy("Working…");
 
   useEffect(() => {
     let cancelled = false;
@@ -45,6 +49,7 @@ export default function LibraryPage() {
         setDecks(list);
         if (list[0]) setSelectedDeckId(list[0].id);
         setReady(true);
+        endLoad();
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
@@ -53,28 +58,29 @@ export default function LibraryPage() {
         }
         setError(err instanceof ApiError ? err.message : "Failed to load library");
         setReady(true);
+        endLoad(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [endLoad]);
 
   async function onCreateDeck(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setNotice(null);
-    setBusy(true);
+    begin("Working…");
     try {
       const deck = await createDeck(title);
       setDecks((prev) => [...prev, deck]);
       setSelectedDeckId(deck.id);
       setTitle("");
       setNotice(`Created “${deck.title}”`);
+      end();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not create deck");
-    } finally {
-      setBusy(false);
+      end(false);
     }
   }
 
@@ -86,7 +92,7 @@ export default function LibraryPage() {
       setError("Select a deck first");
       return;
     }
-    setBusy(true);
+    begin("Saving…");
     try {
       const material = await pasteMaterial(selectedDeckId, {
         text: pasteText,
@@ -95,14 +101,15 @@ export default function LibraryPage() {
       setPasteText("");
       setFilename("");
       if (material.jobId) {
+        end();
         window.location.assign(`/jobs/${encodeURIComponent(material.jobId)}/drafts`);
         return;
       }
       setNotice(`Saved paste material (${material.status})`);
+      end();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not save paste");
-    } finally {
-      setBusy(false);
+      end(false);
     }
   }
 
@@ -126,7 +133,7 @@ export default function LibraryPage() {
       setError("PDF must be 25MB or smaller");
       return;
     }
-    setBusy(true);
+    begin("Uploading…");
     try {
       const material = await uploadPdf(selectedDeckId, pdfFile);
       setPdfFile(null);
@@ -134,10 +141,10 @@ export default function LibraryPage() {
       setNotice(
         `Stored PDF (${material.status}). Text extraction is not ready yet — use paste for generation.`,
       );
+      end();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not upload PDF");
-    } finally {
-      setBusy(false);
+      end(false);
     }
   }
 

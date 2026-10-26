@@ -32,7 +32,7 @@ export function effectiveWeights(
   presentStages: readonly ProgressStage[],
 ): Record<ProgressStage, number> {
   const present = new Set(presentStages);
-  const weights = { ...STAGE_WEIGHTS };
+  const weights: Record<ProgressStage, number> = { ...STAGE_WEIGHTS };
 
   let skipped = 0;
   for (const stage of STAGE_ORDER) {
