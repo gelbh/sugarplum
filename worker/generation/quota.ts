@@ -36,7 +36,7 @@ function ttlUntilNextUtcDay(now: Date): number {
  * Reserve one free-gen attempt for this UTC day: read count, throw if at cap,
  * otherwise put count+1 immediately. Call once before Workers AI / pipeline.
  *
- * ponytail: KV has no CAS  -  concurrent jobs can still overshoot the cap under race.
+ * ponytail: KV has no CAS - concurrent jobs can still overshoot the cap under race.
  */
 export async function consumeFreeGenSlot(
   env: Env,
