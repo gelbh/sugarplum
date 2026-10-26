@@ -93,6 +93,15 @@ export default function LoginPage() {
               Register
             </Link>
           </Typography>
+          <Typography variant="body2" textAlign="center" color="text.secondary">
+            <Link href="/privacy" underline="hover">
+              Privacy
+            </Link>
+            {" · "}
+            <Link href="/terms" underline="hover">
+              Terms
+            </Link>
+          </Typography>
         </Stack>
       </Box>
     </Container>
