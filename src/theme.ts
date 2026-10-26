@@ -1,11 +1,25 @@
 import { createTheme } from "@mui/material/styles";
 
+const brand = {
+  primary: { main: "#5B2C6F" },
+  secondary: { main: "#1ABC9C" },
+};
+
 export const theme = createTheme({
-  cssVariables: true,
-  palette: {
-    mode: "light",
-    primary: { main: "#5B2C6F" },
-    secondary: { main: "#1ABC9C" },
+  cssVariables: {
+    colorSchemeSelector: "data",
   },
-  typography: { fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif' },
+  colorSchemes: {
+    light: {
+      palette: {
+        ...brand,
+      },
+    },
+    dark: {
+      palette: {
+        ...brand,
+      },
+    },
+  },
+  typography: { fontFamily: '"Roboto", "Helvetica", "Arial", "sans-serif"' },
 });

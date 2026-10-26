@@ -3,11 +3,13 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
+import Divider from "@mui/material/Divider";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { ApiError, register } from "../api/client";
+import GoogleSignInButton from "../components/GoogleSignInButton";
 
 const MIN_PASSWORD = 12;
 
@@ -70,6 +72,8 @@ export default function RegisterPage() {
           <Button type="submit" variant="contained" disabled={busy} fullWidth>
             {busy ? "Creating…" : "Register"}
           </Button>
+          <Divider>or</Divider>
+          <GoogleSignInButton />
           <Typography variant="body2" textAlign="center">
             Already have an account?{" "}
             <Link href="/login" underline="hover">

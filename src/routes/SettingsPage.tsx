@@ -10,7 +10,10 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
+import { useColorScheme } from "@mui/material/styles";
 import {
   ApiError,
   getLlmSettings,
@@ -19,6 +22,8 @@ import {
   type LlmSettings,
 } from "../api/client";
 
+type ThemeMode = "system" | "light" | "dark";
+
 const PROVIDERS = [
   { value: "openai", label: "OpenAI" },
   { value: "anthropic", label: "Anthropic" },
@@ -26,6 +31,7 @@ const PROVIDERS = [
 ] as const;
 
 export default function SettingsPage() {
+  const { mode, setMode } = useColorScheme();
   const [provider, setProvider] = useState<string>("openai");
   const [apiKey, setApiKey] = useState("");
   const [current, setCurrent] = useState<LlmSettings | null>(null);
@@ -33,6 +39,9 @@ export default function SettingsPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
+
+  const themeMode: ThemeMode =
+    mode === "light" || mode === "dark" || mode === "system" ? mode : "system";
 
   useEffect(() => {
     let cancelled = false;
@@ -95,6 +104,25 @@ export default function SettingsPage() {
         Bring your own LLM API key. Sugarplum encrypts it at rest and never
         shows the full key again.
       </Typography>
+
+      <Stack spacing={1} sx={{ mb: 4 }}>
+        <Typography variant="subtitle1" component="h2">
+          Appearance
+        </Typography>
+        <ToggleButtonGroup
+          exclusive
+          size="small"
+          value={themeMode}
+          onChange={(_e, value: ThemeMode | null) => {
+            if (value) setMode(value);
+          }}
+          aria-label="Color scheme"
+        >
+          <ToggleButton value="system">System</ToggleButton>
+          <ToggleButton value="light">Light</ToggleButton>
+          <ToggleButton value="dark">Dark</ToggleButton>
+        </ToggleButtonGroup>
+      </Stack>
 
       {current?.configured ? (
         <Alert severity="info" sx={{ mb: 3 }}>
