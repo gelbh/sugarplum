@@ -7,6 +7,7 @@ import Stepper from "@mui/material/Stepper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import Divider from "@mui/material/Divider";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
@@ -34,6 +35,7 @@ type Props = {
 };
 
 const MAX_PDF_BYTES = 25 * 1024 * 1024;
+const CREATE_NEW_DECK = "__create_new_deck__";
 
 export default function CreateMaterialStepper({
   decks,
@@ -54,6 +56,7 @@ export default function CreateMaterialStepper({
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
+  const [focusCreateTitle, setFocusCreateTitle] = useState(false);
 
   const titleRef = useRef<HTMLInputElement | null>(null);
 
@@ -64,11 +67,48 @@ export default function CreateMaterialStepper({
   }, [decks]);
 
   useEffect(() => {
-    if (focusTitle) {
+    if (focusTitle || focusCreateTitle) {
       titleRef.current?.focus();
       onFocusedTitleHandled?.();
+      setFocusCreateTitle(false);
     }
-  }, [focusTitle, onFocusedTitleHandled]);
+  }, [focusTitle, focusCreateTitle, onFocusedTitleHandled, activeStep]);
+
+  function onDeckSelect(value: string) {
+    if (value === CREATE_NEW_DECK) {
+      setActiveStep(0);
+      setFocusCreateTitle(true);
+      return;
+    }
+    setSelectedDeckId(value);
+  }
+
+  function deckSelect(labelId: string) {
+    return (
+      <FormControl fullWidth>
+        <InputLabel id={labelId}>Deck</InputLabel>
+        <Select
+          labelId={labelId}
+          label="Deck"
+          value={selectedDeckId}
+          onChange={(ev) => onDeckSelect(ev.target.value)}
+          displayEmpty={decks.length === 0}
+          renderValue={(value) => {
+            if (!value) return "Choose a deck";
+            return decks.find((d) => d.id === value)?.title ?? "Choose a deck";
+          }}
+        >
+          {decks.map((d) => (
+            <MenuItem key={d.id} value={d.id}>
+              {d.title}
+            </MenuItem>
+          ))}
+          {decks.length > 0 ? <Divider component="li" /> : null}
+          <MenuItem value={CREATE_NEW_DECK}>Create new deck…</MenuItem>
+        </Select>
+      </FormControl>
+    );
+  }
 
   // material tab: paste or pdf
   const [tab, setTab] = useState<"paste" | "pdf">("paste");
@@ -213,21 +253,7 @@ export default function CreateMaterialStepper({
             {tab === "paste" && (
               <Box component="form" onSubmit={onPaste} noValidate>
                 <Stack spacing={2}>
-                  <FormControl fullWidth disabled={decks.length === 0}>
-                    <InputLabel id="deck-select-label">Deck</InputLabel>
-                    <Select
-                      labelId="deck-select-label"
-                      label="Deck"
-                      value={selectedDeckId}
-                      onChange={(ev) => setSelectedDeckId(ev.target.value)}
-                    >
-                      {decks.map((d) => (
-                        <MenuItem key={d.id} value={d.id}>
-                          {d.title}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  {deckSelect("deck-select-label")}
                   <TextField
                     label="Filename (optional)"
                     name="filename"
@@ -248,7 +274,7 @@ export default function CreateMaterialStepper({
                   <Button
                     type="submit"
                     variant="contained"
-                    disabled={busy || decks.length === 0 || !pasteText.trim()}
+                    disabled={busy || !selectedDeckId || !pasteText.trim()}
                   >
                     {busy ? "Saving…" : "Save paste"}
                   </Button>
@@ -259,22 +285,12 @@ export default function CreateMaterialStepper({
             {tab === "pdf" && (
               <Box component="form" onSubmit={onUploadPdf} noValidate>
                 <Stack spacing={2}>
-                  <FormControl fullWidth disabled={decks.length === 0}>
-                    <InputLabel id="pdf-deck-select-label">Deck</InputLabel>
-                    <Select
-                      labelId="pdf-deck-select-label"
-                      label="Deck"
-                      value={selectedDeckId}
-                      onChange={(ev) => setSelectedDeckId(ev.target.value)}
-                    >
-                      {decks.map((d) => (
-                        <MenuItem key={d.id} value={d.id}>
-                          {d.title}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <Button variant="outlined" component="label" disabled={busy || decks.length === 0}>
+                  {deckSelect("pdf-deck-select-label")}
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    disabled={busy || !selectedDeckId}
+                  >
                     {pdfFile ? pdfFile.name : "Choose PDF"}
                     <input
                       type="file"
@@ -290,7 +306,11 @@ export default function CreateMaterialStepper({
                     PDF only, max 25MB. Stored for later; flashcard generation from PDF
                     text is not available yet (use paste).
                   </Typography>
-                  <Button type="submit" variant="contained" disabled={busy || decks.length === 0 || !pdfFile}>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={busy || !selectedDeckId || !pdfFile}
+                  >
                     {busy ? "Uploading…" : "Upload PDF"}
                   </Button>
                 </Stack>
