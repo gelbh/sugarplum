@@ -10,7 +10,8 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import DraftCardEditor from "../components/DraftCardEditor";
-import JourneyChrome from "../components/JourneyChrome";
+import JourneyRail from "../components/JourneyRail";
+import JourneyNextButton from "../components/JourneyNextButton";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import {
@@ -231,7 +232,7 @@ export default function DraftReviewPage() {
             accepted.
           </Typography>
         </Box>
-        {view ? <JourneyChrome view={view} hideNext={!!current} /> : null}
+        {view ? <JourneyRail view={view} /> : null}
         {journeyError ? (
           <Alert severity="warning">{journeyError}</Alert>
         ) : null}
@@ -252,12 +253,14 @@ export default function DraftReviewPage() {
 
         {!current ? (
           <Paper variant="outlined" sx={{ p: 2 }}>
-            <Typography>No drafts left for this job.</Typography>
-            {!view ? (
-              <Box sx={{ mt: 2 }}>
+            <Stack spacing={2}>
+              <Typography>No drafts left for this job.</Typography>
+              {view ? (
+                <JourneyNextButton view={view} />
+              ) : (
                 <Link href="/library">Back to library</Link>
-              </Box>
-            ) : null}
+              )}
+            </Stack>
           </Paper>
         ) : (
           <Paper variant="outlined" sx={{ p: 2.5 }}>

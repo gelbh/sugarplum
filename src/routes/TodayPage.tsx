@@ -7,7 +7,8 @@ import Typography from "@mui/material/Typography";
 import { ApiError, listDueCards, me, getJourney } from "../api/client";
 import { deriveJourney } from "../journey/derive";
 import type { JourneyView } from "../journey/types";
-import JourneyChrome from "../components/JourneyChrome";
+import JourneyRail from "../components/JourneyRail";
+import JourneyNextButton from "../components/JourneyNextButton";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
 /** Home: due count and start a study session. Code-led MUI; no Impeccable comps. */
@@ -55,7 +56,10 @@ export default function TodayPage() {
     );
   }
 
-  const hideChromeNext = dueCount > 0;
+  const showJourneyNext =
+    view != null &&
+    dueCount === 0 &&
+    view.next.href !== "/today";
 
   return (
     <Container maxWidth="sm" sx={{ py: 6 }}>
@@ -64,21 +68,7 @@ export default function TodayPage() {
           Today
         </Typography>
 
-        {view ? (
-          <JourneyChrome
-            view={view}
-            hideNext={hideChromeNext}
-            onAction={(action) => {
-              if (
-                action === "create_deck" ||
-                action === "add_material" ||
-                action === "add_more"
-              ) {
-                window.location.assign("/library");
-              }
-            }}
-          />
-        ) : null}
+        {view ? <JourneyRail view={view} /> : null}
 
         <Typography variant="body1" color="text.secondary">
           {dueCount === 0
@@ -99,6 +89,20 @@ export default function TodayPage() {
             >
               Start study
             </Button>
+          ) : null}
+          {showJourneyNext ? (
+            <JourneyNextButton
+              view={view}
+              onAction={(action) => {
+                if (
+                  action === "create_deck" ||
+                  action === "add_material" ||
+                  action === "add_more"
+                ) {
+                  window.location.assign("/library");
+                }
+              }}
+            />
           ) : null}
           <Button variant="outlined" href="/library">
             Library
