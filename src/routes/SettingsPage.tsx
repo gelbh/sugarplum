@@ -14,6 +14,8 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import { useColorScheme } from "@mui/material/styles";
+import VpnKeyIcon from "@mui/icons-material/VpnKey";
+import Brightness6Icon from "@mui/icons-material/Brightness6";
 import {
   ApiError,
   getLlmSettings,
@@ -106,9 +108,12 @@ export default function SettingsPage() {
       </Typography>
 
       <Stack spacing={1} sx={{ mb: 4 }}>
-        <Typography variant="subtitle1" component="h2">
-          Appearance
-        </Typography>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Brightness6Icon />
+          <Typography variant="subtitle1" component="h2">
+            Appearance
+          </Typography>
+        </Stack>
         <ToggleButtonGroup
           exclusive
           size="small"
@@ -124,6 +129,12 @@ export default function SettingsPage() {
         </ToggleButtonGroup>
       </Stack>
 
+      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+        <VpnKeyIcon />
+        <Typography variant="subtitle1" component="h2">
+          LLM
+        </Typography>
+      </Stack>
       {current?.configured ? (
         <Alert severity="info" sx={{ mb: 3 }}>
           Configured: {current.provider} · key ending in ···{current.last4}

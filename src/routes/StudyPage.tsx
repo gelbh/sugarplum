@@ -8,6 +8,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import CardFace from "../components/CardFace";
 import GradeButtons from "../components/GradeButtons";
+import TodayIcon from "@mui/icons-material/Today";
 import {
   ApiError,
   listDueCards,
@@ -130,8 +131,9 @@ export default function StudyPage() {
         {!current ? (
           <Alert severity="success">
             Session complete.{" "}
-            <Link href="/" underline="hover">
-              Back to today
+            <Link href="/today" underline="hover">
+              <TodayIcon fontSize="small" sx={{ mr: 0.5, verticalAlign: "middle" }} />
+              Back to Today
             </Link>
           </Alert>
         ) : (

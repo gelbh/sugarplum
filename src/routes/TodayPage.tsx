@@ -5,13 +5,18 @@ import Container from "@mui/material/Container";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { ApiError, listDueCards, me } from "../api/client";
+import { ApiError, listDueCards, me, getJourney } from "../api/client";
+import { deriveJourney } from "../journey/derive";
+import JourneyRail from "../components/JourneyRail";
+import JourneyNextButton from "../components/JourneyNextButton";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
 /** Home: due count and start a study session. Code-led MUI; no Impeccable comps. */
 export default function TodayPage() {
   const [dueCount, setDueCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [view, setView] = useState<any | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -19,8 +24,10 @@ export default function TodayPage() {
       try {
         await me();
         const due = await listDueCards();
+        const journey = await getJourney();
         if (cancelled) return;
         setDueCount(due.length);
+        setView(deriveJourney(journey));
         setReady(true);
       } catch (err) {
         if (cancelled) return;
@@ -48,6 +55,7 @@ export default function TodayPage() {
   return (
     <Container maxWidth="sm" sx={{ py: 6 }}>
       <Stack spacing={3}>
+        {view ? <JourneyRail view={view} /> : null}
         <Typography variant="h3" component="h1" color="primary">
           Today
         </Typography>
@@ -62,13 +70,19 @@ export default function TodayPage() {
         {error ? <Alert severity="error">{error}</Alert> : null}
 
         <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-          <Button
-            variant="contained"
-            href="/study"
-            disabled={dueCount === 0}
-          >
-            Start study
-          </Button>
+          {dueCount > 0 ? (
+            <Button variant="contained" href="/study" startIcon={<PlayArrowIcon />} disabled={dueCount === 0}>
+              Start study
+            </Button>
+          ) : view ? (
+            <Box sx={{ ml: "auto" }}>
+              <JourneyNextButton view={view} />
+            </Box>
+          ) : (
+            <Button variant="contained" href="/study" disabled>
+              Start study
+            </Button>
+          )}
           <Button variant="outlined" href="/library">
             Library
           </Button>
@@ -77,15 +91,7 @@ export default function TodayPage() {
           </Button>
         </Stack>
 
-        <Typography variant="body2" color="text.secondary">
-          <Link href="/login" underline="hover">
-            Sign in
-          </Link>
-          {" · "}
-          <Link href="/register" underline="hover">
-            Register
-          </Link>
-        </Typography>
+        {/* sign in / register handled by AppShell; removed from Today page */}
       </Stack>
     </Container>
   );

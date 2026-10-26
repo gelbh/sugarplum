@@ -10,6 +10,10 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import DraftCardEditor from "../components/DraftCardEditor";
+import JourneyRail from "../components/JourneyRail";
+import JourneyNextButton from "../components/JourneyNextButton";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
 import {
   ApiError,
   acceptCard,
@@ -59,6 +63,7 @@ export default function DraftReviewPage() {
     setDrafts(list);
     setIndex(0);
     setDirty(false);
+    return list;
   }, []);
 
   useEffect(() => {
@@ -75,7 +80,27 @@ export default function DraftReviewPage() {
         await waitForJobReady(jobId);
         if (cancelled) return;
         setStatusLine(null);
-        await load(jobId);
+        const list = await load(jobId);
+        // derive journey view and apply a job-local override when drafts exist
+        try {
+          const journey = await getJourney();
+          const derived = deriveJourney(journey);
+          if (list && list.length > 0) {
+            derived.collapsed = false;
+            derived.next = {
+              label: "Review drafts",
+              href: `/jobs/${jobId}/drafts`,
+              action: "review",
+            };
+            derived.stages = derived.stages.map((s: any) => ({
+              ...s,
+              active: s.id === "review",
+            }));
+          }
+          if (!cancelled) setView(derived);
+        } catch {
+          /* ignore journey errors */
+        }
         if (!cancelled) setReady(true);
       } catch (err) {
         if (cancelled) return;
@@ -182,6 +207,7 @@ export default function DraftReviewPage() {
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
       <Stack spacing={2}>
+        {view ? <JourneyRail view={view} /> : null}
         <Box>
           <Typography variant="h4" component="h1" color="primary" gutterBottom>
             Draft review
@@ -207,10 +233,12 @@ export default function DraftReviewPage() {
         {notice ? <Alert severity="success">{notice}</Alert> : null}
 
         {!current ? (
-          <Alert severity="info">
-            No drafts left for this job.{" "}
-            <Link href="/library">Back to library</Link>
-          </Alert>
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Typography>No drafts left for this job.</Typography>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+              {view ? <JourneyNextButton view={view} /> : <Link href="/library">Back to library</Link>}
+            </Box>
+          </Paper>
         ) : (
           <Paper variant="outlined" sx={{ p: 2.5 }}>
             <Stack
@@ -254,16 +282,13 @@ export default function DraftReviewPage() {
               useFlexGap
               sx={{ mt: 3 }}
             >
-              <Button
-                variant="outlined"
-                onClick={onSave}
-                disabled={busy || !dirty}
-              >
+              <Button variant="text" onClick={onSave} disabled={busy || !dirty}>
                 Save
               </Button>
               <Button
                 variant="contained"
                 color="primary"
+                startIcon={<CheckIcon />}
                 onClick={onAccept}
                 disabled={busy}
               >
@@ -272,6 +297,7 @@ export default function DraftReviewPage() {
               <Button
                 variant="outlined"
                 color="error"
+                startIcon={<CloseIcon />}
                 onClick={onReject}
                 disabled={busy}
               >
