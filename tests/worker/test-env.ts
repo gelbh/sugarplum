@@ -46,6 +46,20 @@ type UserSecretRow = {
   updated_at: string;
 };
 
+export type CardRow = {
+  id: string;
+  deck_id: string;
+  job_id: string | null;
+  type: string;
+  front_json: string;
+  back_json: string;
+  media_r2_keys_json: string | null;
+  provenance_json: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
 type SessionRecord = { userId: string; expiresAt: number };
 
 /** Fixed 32-byte wrap key for Vitest when SECRETS_WRAP_KEY is unset. */
@@ -57,9 +71,12 @@ export type TestEnv = Env & {
   seedDeck: (row: DeckRow) => void;
   seedMaterial: (row: MaterialRow) => void;
   seedSession: (id: string, userId: string, ttlMs?: number) => void;
+  seedUserSecret: (row: UserSecretRow) => void;
+  seedR2: (key: string, value: string) => void;
   getMaterials: () => MaterialRow[];
   getGenerationJobs: () => GenerationJobRow[];
   getUserSecrets: () => UserSecretRow[];
+  getCards: () => CardRow[];
   getQueueMessages: () => unknown[];
   getR2Keys: () => string[];
 };
@@ -72,6 +89,7 @@ export function createTestEnv(opts?: {
   const materials = new Map<string, MaterialRow>();
   const generationJobs = new Map<string, GenerationJobRow>();
   const userSecrets = new Map<string, UserSecretRow>();
+  const cards = new Map<string, CardRow>();
   const sessions = new Map<string, string>();
   const r2 = new Map<string, string>();
   const queueMessages: unknown[] = [];
@@ -133,6 +151,21 @@ export function createTestEnv(opts?: {
             : null;
         }
         if (
+          normalized.startsWith(
+            "SELECT id, deck_id, kind, r2_key, status FROM materials WHERE id =",
+          )
+        ) {
+          const material = materials.get(bound[0] as string);
+          if (!material) return null;
+          return {
+            id: material.id,
+            deck_id: material.deck_id,
+            kind: material.kind,
+            r2_key: material.r2_key,
+            status: material.status,
+          } as T;
+        }
+        if (
           normalized.includes("FROM materials m") &&
           normalized.includes("INNER JOIN decks d") &&
           normalized.includes("m.id =") &&
@@ -143,6 +176,29 @@ export function createTestEnv(opts?: {
           const deck = decks.get(material.deck_id);
           if (!deck || deck.user_id !== bound[1]) return null;
           return material as T;
+        }
+        if (
+          normalized.includes("FROM generation_jobs j") &&
+          normalized.includes("INNER JOIN materials m") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("j.id =") &&
+          normalized.includes("d.user_id =")
+        ) {
+          const job = generationJobs.get(bound[0] as string);
+          if (!job) return null;
+          const material = materials.get(job.material_id);
+          if (!material) return null;
+          const deck = decks.get(material.deck_id);
+          if (!deck || deck.user_id !== bound[1]) return null;
+          return {
+            id: job.id,
+            material_id: job.material_id,
+            status: job.status,
+            error: job.error,
+            coverage_json: job.coverage_json,
+            created_at: job.created_at,
+            finished_at: job.finished_at,
+          } as T;
         }
         if (
           normalized.startsWith(
@@ -266,6 +322,55 @@ export function createTestEnv(opts?: {
             created_at,
             finished_at,
           });
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET status = ?, error = NULL, finished_at = ?",
+          )
+        ) {
+          const [status, finished_at, id] = bound as [
+            string,
+            string,
+            string,
+          ];
+          const row = generationJobs.get(id);
+          if (row) {
+            generationJobs.set(id, {
+              ...row,
+              status,
+              error: null,
+              finished_at,
+            });
+          }
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET status = ?, error = NULL WHERE id =",
+          )
+        ) {
+          const [status, id] = bound as [string, string];
+          const row = generationJobs.get(id);
+          if (row) {
+            generationJobs.set(id, { ...row, status, error: null });
+          }
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET status = ?, error = ?, finished_at = ?",
+          )
+        ) {
+          const [status, error, finished_at, id] = bound as [
+            string,
+            string,
+            string,
+            string,
+          ];
+          const row = generationJobs.get(id);
+          if (row) {
+            generationJobs.set(id, {
+              ...row,
+              status,
+              error,
+              finished_at,
+            });
+          }
         } else if (normalized.startsWith("INSERT INTO user_secrets")) {
           const [user_id, provider, ciphertext, created_at, updated_at] =
             bound as [string, string, string, string, string];
@@ -275,6 +380,45 @@ export function createTestEnv(opts?: {
             provider,
             ciphertext,
             created_at: existing?.created_at ?? created_at,
+            updated_at,
+          });
+        } else if (normalized.startsWith("INSERT INTO cards")) {
+          const [
+            id,
+            deck_id,
+            job_id,
+            type,
+            front_json,
+            back_json,
+            media_r2_keys_json,
+            provenance_json,
+            status,
+            created_at,
+            updated_at,
+          ] = bound as [
+            string,
+            string,
+            string | null,
+            string,
+            string,
+            string,
+            string | null,
+            string | null,
+            string,
+            string,
+            string,
+          ];
+          cards.set(id, {
+            id,
+            deck_id,
+            job_id,
+            type,
+            front_json,
+            back_json,
+            media_r2_keys_json,
+            provenance_json,
+            status,
+            created_at,
             updated_at,
           });
         }
@@ -344,9 +488,16 @@ export function createTestEnv(opts?: {
       };
       sessions.set(id, JSON.stringify(record));
     },
+    seedUserSecret(row) {
+      userSecrets.set(row.user_id, row);
+    },
+    seedR2(key, value) {
+      r2.set(key, value);
+    },
     getMaterials: () => [...materials.values()],
     getGenerationJobs: () => [...generationJobs.values()],
     getUserSecrets: () => [...userSecrets.values()],
+    getCards: () => [...cards.values()],
     getQueueMessages: () => [...queueMessages],
     getR2Keys: () => [...r2.keys()],
   };

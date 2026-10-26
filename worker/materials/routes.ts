@@ -3,6 +3,7 @@ import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
+import { enqueueGeneration } from "../generation/enqueue";
 import { createR2PutUrl } from "./r2-presign";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
@@ -162,6 +163,11 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
     .bind(id, deckId, "paste", r2Key, filename, null, PASTE_READY, createdAt)
     .run();
 
+  const jobId = await enqueueGeneration(c.env, {
+    materialId: id,
+    deckId,
+  });
+
   const material: MaterialRow = {
     id,
     deck_id: deckId,
@@ -173,7 +179,7 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
     created_at: createdAt,
   };
 
-  return c.json(material, 201);
+  return c.json({ ...material, jobId }, 201);
 });
 
 deckRoutes.post("/:id/materials/upload-url", async (c) => {
@@ -278,22 +284,10 @@ materialRoutes.post("/:id/complete", async (c) => {
     .bind(PDF_READY, materialId)
     .run();
 
-  const jobId = newId();
-  const createdAt = new Date().toISOString();
-  await db
-    .prepare(
-      "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-    )
-    .bind(jobId, materialId, "queued", null, null, createdAt, null)
-    .run();
-
-  if (c.env.GENERATE_QUEUE) {
-    await c.env.GENERATE_QUEUE.send({
-      jobId,
-      materialId,
-      deckId: material.deck_id,
-    });
-  }
+  const jobId = await enqueueGeneration(c.env, {
+    materialId,
+    deckId: material.deck_id,
+  });
 
   return c.json({
     id: material.id,
