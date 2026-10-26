@@ -219,6 +219,13 @@ export default function DraftReviewPage() {
     setConfirmAll(false);
     begin();
     try {
+      if (dirty && current) {
+        await patchCard(current.id, {
+          front: current.front,
+          back: current.back,
+          type: current.type as "qa" | "cloze" | "image_label" | "diagram",
+        });
+      }
       const result = await acceptAllJobDrafts(jobId);
       await load(jobId);
       if (result.failed > 0) {
