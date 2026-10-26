@@ -740,6 +740,11 @@ export function createTestEnv(opts?: {
 
   const env: TestEnv = {
     DB: { prepare, batch } as unknown as D1Database,
+    AI: {
+      run: async () => {
+        throw new Error("AI.run not stubbed in test env");
+      },
+    } as unknown as Ai,
     MATERIALS: {
       async put(key: string, value: string | ArrayBuffer | ReadableStream) {
         const text =

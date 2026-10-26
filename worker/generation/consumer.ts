@@ -7,13 +7,19 @@ import { MAX_IMAGE_BYTES } from "../materials/limits";
 import type { GenerateQueueMessage } from "./enqueue";
 import { createLlmAdapter, parseLlmProvider, type LlmAdapter } from "./llm";
 import {
+  remainderAfterRules,
+  runGenerationPipeline,
+} from "./pipeline";
+import {
   computePercent,
   writeJobProgress,
   type ProgressStage,
 } from "./progress";
+import { consumeFreeGenSlot } from "./quota";
+import { harvestRuleDrafts } from "./rules";
 import type { CardDraft } from "./schema";
+import { createWorkersAiAdapter } from "./workers-ai";
 
-/** Stages until free-gen lands; skipped weights roll into generate. */
 const PRESENT_STAGES = [
   "queued",
   "extract",
@@ -62,12 +68,35 @@ type SecretRow = {
 };
 
 export type ProcessGenerateOptions = {
-  /** Override LLM (tests). Default: createLlmAdapter(provider). */
+  /**
+   * Override LLM (tests). When set, skips Workers AI / BYO factories.
+   * Free-path quota still applies when no user_secrets row exists.
+   */
   llm?: LlmAdapter;
 };
 
 function newId(): string {
   return crypto.randomUUID();
+}
+
+function normalizeFront(front: string): string {
+  return front.trim().toLowerCase();
+}
+
+/** Merge rules then LLM drafts; drop near-identical fronts (trim + lower). */
+export function mergeAndDedupeDrafts(
+  rulesDrafts: CardDraft[],
+  llmDrafts: CardDraft[],
+): CardDraft[] {
+  const seen = new Set<string>();
+  const out: CardDraft[] = [];
+  for (const draft of [...rulesDrafts, ...llmDrafts]) {
+    const key = normalizeFront(draft.front);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(draft);
+  }
+  return out;
 }
 
 async function markJobFailed(
@@ -138,6 +167,38 @@ function bytesToBase64(bytes: ArrayBuffer): string {
   return btoa(binary);
 }
 
+async function resolveTextLlm(
+  env: Env,
+  secret: SecretRow | null,
+  opts?: ProcessGenerateOptions,
+): Promise<{ llm: LlmAdapter; apiKey: string; provider: string }> {
+  if (secret) {
+    const wrapKey = env.SECRETS_WRAP_KEY;
+    if (!wrapKey) {
+      throw new Error("SECRETS_WRAP_KEY is not configured");
+    }
+    const apiKey = await decryptSecret(secret.ciphertext, wrapKey);
+    const provider = parseLlmProvider(secret.provider);
+    const llm = opts?.llm ?? createLlmAdapter(provider);
+    return { llm, apiKey, provider };
+  }
+
+  if (opts?.llm) {
+    return { llm: opts.llm, apiKey: "", provider: "workers-ai" };
+  }
+  if (env.AI) {
+    return {
+      llm: createWorkersAiAdapter(env),
+      apiKey: "",
+      provider: "workers-ai",
+    };
+  }
+  throw new Error(
+    "Workers AI is not available and no LLM API key is configured. " +
+      "Add an OpenAI, Anthropic, or Google API key under Settings, or retry later.",
+  );
+}
+
 async function insertDraftCards(
   db: D1Database,
   args: {
@@ -179,7 +240,8 @@ async function insertDraftCards(
 }
 
 /**
- * Process one generate queue message: extract → LLM → draft cards → needs_review.
+ * Process one generate queue message:
+ * image → vision generate; text → rules harvest → (optional) LLM pipeline → merge.
  * On failure marks the job failed with an actionable error (does not throw after mark).
  */
 export async function processGenerateJob(
@@ -225,26 +287,36 @@ export async function processGenerateJob(
       .bind(deck.user_id)
       .first<SecretRow>();
 
-    if (!secret) {
-      throw new Error(
-        "No LLM API key configured. Save a key under Settings before generating.",
-      );
-    }
-
-    const wrapKey = env.SECRETS_WRAP_KEY;
-    if (!wrapKey) {
-      throw new Error("SECRETS_WRAP_KEY is not configured");
-    }
-
-    const apiKey = await decryptSecret(secret.ciphertext, wrapKey);
-    const provider = parseLlmProvider(secret.provider);
-    const llm = opts?.llm ?? createLlmAdapter(provider);
-
     let drafts: CardDraft[];
     let mediaR2Keys: string[] | null = null;
-    const generateTotal = 1;
 
     if (material.kind === "image") {
+      // Vision needs a BYO provider; free Workers AI path is text-only.
+      if (!secret && !opts?.llm) {
+        throw new Error(
+          "Image generation requires an OpenAI, Anthropic, or Google API key under Settings.",
+        );
+      }
+      const wrapKey = env.SECRETS_WRAP_KEY;
+      let apiKey = "";
+      let provider = "mock";
+      let llm: LlmAdapter;
+      if (opts?.llm) {
+        llm = opts.llm;
+      } else {
+        if (!secret) {
+          throw new Error(
+            "Image generation requires an OpenAI, Anthropic, or Google API key under Settings.",
+          );
+        }
+        if (!wrapKey) {
+          throw new Error("SECRETS_WRAP_KEY is not configured");
+        }
+        apiKey = await decryptSecret(secret.ciphertext, wrapKey);
+        provider = parseLlmProvider(secret.provider);
+        llm = createLlmAdapter(provider);
+      }
+
       await emitProgress(db, jobId, "extract", 0, 0, "Loading image");
       if (!material.r2_key) {
         throw new Error("Image material has no R2 object");
@@ -259,13 +331,14 @@ export async function processGenerateJob(
           `Image exceeds ${MAX_IMAGE_BYTES / (1024 * 1024)}MB generate limit`,
         );
       }
+      const generateTotal = 1;
       await emitProgress(
         db,
         jobId,
         "generate",
         0,
         generateTotal,
-        "Generating cards (chunk 1/1)",
+        "Generating cards",
       );
       drafts = await llm.generateDrafts({
         text: "",
@@ -282,7 +355,7 @@ export async function processGenerateJob(
         "generate",
         generateTotal,
         generateTotal,
-        "Generating cards (chunk 1/1)",
+        "Generating cards",
       );
       mediaR2Keys = [material.r2_key];
     } else {
@@ -291,31 +364,62 @@ export async function processGenerateJob(
       if (!text.trim()) {
         throw new Error("Extracted material text is empty");
       }
-      await emitProgress(
-        db,
-        jobId,
-        "generate",
-        0,
-        generateTotal,
-        "Generating cards (chunk 1/1)",
-      );
-      drafts = await llm.generateDrafts({
-        text,
-        apiKey,
-        provider,
-      });
-      await emitProgress(
-        db,
-        jobId,
-        "generate",
-        generateTotal,
-        generateTotal,
-        "Generating cards (chunk 1/1)",
-      );
+
+      const rulesDrafts = harvestRuleDrafts(text);
+      const remainder = remainderAfterRules(text, rulesDrafts);
+
+      let llmDrafts: CardDraft[] = [];
+
+      if (remainder.trim()) {
+        const { llm, apiKey, provider } = await resolveTextLlm(
+          env,
+          secret,
+          opts,
+        );
+        if (!secret) {
+          // Charge the attempt before LLM so failures still count toward the cap.
+          await consumeFreeGenSlot(env, deck.user_id);
+        }
+
+        const generateTotal = 1;
+        await emitProgress(
+          db,
+          jobId,
+          "generate",
+          0,
+          generateTotal,
+          "Generating cards",
+        );
+        llmDrafts = await runGenerationPipeline({
+          text: remainder,
+          llm,
+          apiKey,
+          provider,
+        });
+        await emitProgress(
+          db,
+          jobId,
+          "generate",
+          generateTotal,
+          generateTotal,
+          "Generating cards",
+        );
+      } else if (rulesDrafts.length === 0) {
+        throw new Error(
+          "No flashcard drafts could be produced from this material.",
+        );
+      }
+
+      drafts = mergeAndDedupeDrafts(rulesDrafts, llmDrafts);
+    }
+
+    if (drafts.length === 0) {
+      throw new Error("Generation produced no valid draft cards");
     }
 
     await emitProgress(db, jobId, "persist", 0, 1, "Saving drafts");
     await insertDraftCards(db, { deckId, jobId, drafts, mediaR2Keys });
+    // Final progress before terminal status so pollers never stop below 100%.
     await emitProgress(db, jobId, "persist", 1, 1, "Saving drafts");
 
     const covered = drafts.map(

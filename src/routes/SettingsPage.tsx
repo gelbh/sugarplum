@@ -137,8 +137,10 @@ export default function SettingsPage() {
         Settings
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Bring your own LLM API key. Sugarplum encrypts it at rest and never
-        shows the full key again.
+        Optional. Without a key, Sugarplum uses free platform AI (up to 20
+        jobs per UTC day). Add your own OpenAI, Anthropic, or Google key to
+        skip that cap and for higher quality. Keys are encrypted at rest and
+        never shown in full again.
       </Typography>
 
       <Stack spacing={1} sx={{ mb: 4 }}>
@@ -186,8 +188,8 @@ export default function SettingsPage() {
           Configured: {current.provider} · key ending in ···{current.last4}
         </Alert>
       ) : (
-        <Alert severity="warning" sx={{ mb: 3 }}>
-          No API key configured yet.
+        <Alert severity="info" sx={{ mb: 3 }}>
+          No personal API key yet. Generation still works via free platform AI.
         </Alert>
       )}
 
