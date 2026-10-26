@@ -34,6 +34,7 @@ type GenerationJobRow = {
   status: string;
   error: string | null;
   coverage_json: string | null;
+  progress_json: string | null;
   created_at: string;
   finished_at: string | null;
 };
@@ -248,6 +249,7 @@ export function createTestEnv(opts?: {
             status: job.status,
             error: job.error,
             coverage_json: job.coverage_json,
+            progress_json: job.progress_json,
             created_at: job.created_at,
             finished_at: job.finished_at,
           } as T;
@@ -467,9 +469,20 @@ export function createTestEnv(opts?: {
             status,
             error,
             coverage_json,
+            progress_json: null,
             created_at,
             finished_at,
           });
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET progress_json = ? WHERE id = ?",
+          )
+        ) {
+          const [progress_json, id] = bound as [string, string];
+          const row = generationJobs.get(id);
+          if (row) {
+            generationJobs.set(id, { ...row, progress_json });
+          }
         } else if (
           normalized.startsWith(
             "UPDATE generation_jobs SET status = ?, error = NULL, finished_at = ?",
