@@ -5,20 +5,22 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
+import Typography from "@mui/material/Typography";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CollectionsBookmarkIcon from "@mui/icons-material/CollectionsBookmark";
 import NoteAddIcon from "@mui/icons-material/NoteAdd";
 import RateReviewIcon from "@mui/icons-material/RateReview";
 import SchoolIcon from "@mui/icons-material/School";
-import type { JourneyView, JourneyStageId } from "./types";
-import JourneyNextButton from "./JourneyNextButton";
-import Typography from "@mui/material/Typography";
+import type { SvgIconComponent } from "@mui/icons-material";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { useTheme } from "@mui/material/styles";
+import type { JourneyView, JourneyStageId } from "../journey/types";
 
 type Props = {
   view: JourneyView;
 };
 
-const STAGE_ICON: Record<JourneyStageId, any> = {
+const STAGE_ICON: Record<JourneyStageId, SvgIconComponent> = {
   deck: CollectionsBookmarkIcon,
   material: NoteAddIcon,
   review: RateReviewIcon,
@@ -27,6 +29,9 @@ const STAGE_ICON: Record<JourneyStageId, any> = {
 
 export default function JourneyRail({ view }: Props) {
   if (view.collapsed) return null;
+
+  const theme = useTheme();
+  const isXs = useMediaQuery(theme.breakpoints.down("sm"));
 
   return (
     <Paper elevation={1} sx={{ width: 280, p: 2 }}>
@@ -38,17 +43,23 @@ export default function JourneyRail({ view }: Props) {
             return (
               <ListItem key={s.id} disableGutters>
                 <ListItemIcon>
-                  {s.done ? <CheckCircleIcon color="success" /> : <Icon color={s.active ? "primary" : "inherit"} />}
+                  {s.done ? (
+                    <CheckCircleIcon color="success" />
+                  ) : (
+                    <Icon color={s.active ? "primary" : "inherit"} />
+                  )}
                 </ListItemIcon>
-                <ListItemText primary={s.label} />
+                <ListItemText
+                  primary={isXs ? s.label : s.label}
+                  primaryTypographyProps={{
+                    color: s.done ? undefined : s.active ? "textPrimary" : "text.secondary",
+                  }}
+                />
               </ListItem>
             );
           })}
         </List>
-
-        <Box>
-          <JourneyNextButton next={view.next} />
-        </Box>
+        <Box />
       </Stack>
     </Paper>
   );
