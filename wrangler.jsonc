@@ -15,7 +15,7 @@
 	"upload_source_maps": true,
 	"vars": {
 		"APP_URL": "https://sugarplum.gelbhart.dev",
-		"R2_ACCOUNT_ID": "REPLACE_WITH_CLOUDFLARE_ACCOUNT_ID",
+		"R2_ACCOUNT_ID": "578279c4ee8d8a1b0bda8ecf8ecc3f67",
 		"R2_BUCKET_NAME": "sugarplum-materials"
 	},
 	"d1_databases": [
