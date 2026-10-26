@@ -140,7 +140,7 @@ export function mockLlmAdapter(): LlmAdapter {
       },
       {
         type: "qa",
-        front: "Name one key fact from the material.",
+        front: "Name one key fact from the material?",
         back: "A concrete detail drawn from the excerpt.",
         provenance: { pages: [1], excerpt },
       },
