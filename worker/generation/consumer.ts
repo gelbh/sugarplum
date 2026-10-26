@@ -4,7 +4,37 @@ import { decryptSecret } from "../crypto/secrets";
 import { extractPdfText } from "../materials/extract-pdf";
 import type { GenerateQueueMessage } from "./enqueue";
 import { createLlmAdapter, parseLlmProvider, type LlmAdapter } from "./llm";
+import {
+  computePercent,
+  writeJobProgress,
+  type ProgressStage,
+} from "./progress";
 import type { CardDraft } from "./schema";
+
+/** Stages until free-gen lands; skipped weights roll into generate. */
+const PRESENT_STAGES = [
+  "queued",
+  "extract",
+  "generate",
+  "persist",
+] as const satisfies readonly ProgressStage[];
+
+async function emitProgress(
+  db: D1Database,
+  jobId: string,
+  stage: ProgressStage,
+  current: number,
+  total: number,
+  label: string,
+): Promise<void> {
+  await writeJobProgress(db, jobId, {
+    stage,
+    current,
+    total,
+    percent: computePercent(stage, current, total, PRESENT_STAGES),
+    label,
+  });
+}
 
 type MaterialRow = {
   id: string;
@@ -127,6 +157,8 @@ export async function processGenerateJob(
     .run();
 
   try {
+    await emitProgress(db, jobId, "queued", 0, 0, "Queued");
+
     const material = await db
       .prepare(
         "SELECT id, deck_id, kind, r2_key, status FROM materials WHERE id = ?",
@@ -166,6 +198,8 @@ export async function processGenerateJob(
     }
 
     const apiKey = await decryptSecret(secret.ciphertext, wrapKey);
+
+    await emitProgress(db, jobId, "extract", 0, 0, "Extracting material");
     const text = await extractMaterialText(env, material);
     if (!text.trim()) {
       throw new Error("Extracted material text is empty");
@@ -173,12 +207,30 @@ export async function processGenerateJob(
 
     const provider = parseLlmProvider(secret.provider);
     const llm = opts?.llm ?? createLlmAdapter(provider);
+    const generateTotal = 1;
+    await emitProgress(
+      db,
+      jobId,
+      "generate",
+      0,
+      generateTotal,
+      "Generating cards (chunk 1/1)",
+    );
     const drafts = await llm.generateDrafts({
       text,
       apiKey,
       provider,
     });
+    await emitProgress(
+      db,
+      jobId,
+      "generate",
+      generateTotal,
+      generateTotal,
+      "Generating cards (chunk 1/1)",
+    );
 
+    await emitProgress(db, jobId, "persist", 0, 1, "Saving drafts");
     await insertDraftCards(db, { deckId, jobId, drafts });
 
     const finishedAt = new Date().toISOString();
@@ -188,7 +240,10 @@ export async function processGenerateJob(
       )
       .bind("needs_review", finishedAt, jobId)
       .run();
+
+    await emitProgress(db, jobId, "persist", 1, 1, "Saving drafts");
   } catch (err) {
+    // Leave last progress_json; only mark status failed.
     const messageText =
       err instanceof Error ? err.message : "Generation failed";
     await markJobFailed(db, jobId, messageText);

@@ -112,12 +112,21 @@ export function pasteMaterial(
   });
 }
 
+export type GenerationJobProgress = {
+  stage: string;
+  current: number;
+  total: number;
+  percent: number;
+  label: string;
+};
+
 export type GenerationJob = {
   id: string;
   material_id: string;
   status: string;
   error: string | null;
   coverage_json: string | null;
+  progress: GenerationJobProgress | null;
   created_at: string;
   finished_at: string | null;
 };
