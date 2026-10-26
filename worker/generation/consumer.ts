@@ -27,13 +27,18 @@ async function emitProgress(
   total: number,
   label: string,
 ): Promise<void> {
-  await writeJobProgress(db, jobId, {
-    stage,
-    current,
-    total,
-    percent: computePercent(stage, current, total, PRESENT_STAGES),
-    label,
-  });
+  // Best-effort: progress must never flip a successful job to failed.
+  try {
+    await writeJobProgress(db, jobId, {
+      stage,
+      current,
+      total,
+      percent: computePercent(stage, current, total, PRESENT_STAGES),
+      label,
+    });
+  } catch (err) {
+    console.error("writeJobProgress failed", jobId, stage, err);
+  }
 }
 
 type MaterialRow = {
@@ -232,6 +237,8 @@ export async function processGenerateJob(
 
     await emitProgress(db, jobId, "persist", 0, 1, "Saving drafts");
     await insertDraftCards(db, { deckId, jobId, drafts });
+    // Final progress before terminal status so pollers never stop below 100%.
+    await emitProgress(db, jobId, "persist", 1, 1, "Saving drafts");
 
     const finishedAt = new Date().toISOString();
     await db
@@ -240,8 +247,6 @@ export async function processGenerateJob(
       )
       .bind("needs_review", finishedAt, jobId)
       .run();
-
-    await emitProgress(db, jobId, "persist", 1, 1, "Saving drafts");
   } catch (err) {
     // Leave last progress_json; only mark status failed.
     const messageText =
