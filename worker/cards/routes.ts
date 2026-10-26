@@ -203,34 +203,34 @@ cardRoutes.post("/:id/accept", async (c) => {
   const schedule = scheduleColumnsFromCard(newCard());
   const updatedAt = new Date().toISOString();
 
-  await db
-    .prepare(
-      `UPDATE cards SET status = ?, updated_at = ? WHERE id = ?`,
-    )
-    .bind("accepted", updatedAt, cardId)
-    .run();
-
-  await db
-    .prepare(
-      `INSERT INTO card_schedules (
-         card_id, due, stability, difficulty, elapsed_days, scheduled_days,
-         learning_steps, reps, lapses, state, last_review
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    )
-    .bind(
-      cardId,
-      schedule.due,
-      schedule.stability,
-      schedule.difficulty,
-      schedule.elapsed_days,
-      schedule.scheduled_days,
-      schedule.learning_steps,
-      schedule.reps,
-      schedule.lapses,
-      schedule.state,
-      schedule.last_review,
-    )
-    .run();
+  // Atomic: accepted status + schedule row succeed or fail together.
+  await db.batch([
+    db
+      .prepare(
+        `UPDATE cards SET status = ?, updated_at = ? WHERE id = ?`,
+      )
+      .bind("accepted", updatedAt, cardId),
+    db
+      .prepare(
+        `INSERT INTO card_schedules (
+           card_id, due, stability, difficulty, elapsed_days, scheduled_days,
+           learning_steps, reps, lapses, state, last_review
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        cardId,
+        schedule.due,
+        schedule.stability,
+        schedule.difficulty,
+        schedule.elapsed_days,
+        schedule.scheduled_days,
+        schedule.learning_steps,
+        schedule.reps,
+        schedule.lapses,
+        schedule.state,
+        schedule.last_review,
+      ),
+  ]);
 
   return c.json(
     serializeCard({ ...row, status: "accepted", updated_at: updatedAt }),

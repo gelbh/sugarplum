@@ -572,8 +572,16 @@ export function createTestEnv(opts?: {
     return stmt;
   }
 
+  async function batch(statements: D1PreparedStatement[]): Promise<D1Result[]> {
+    const results: D1Result[] = [];
+    for (const stmt of statements) {
+      results.push(await stmt.run());
+    }
+    return results;
+  }
+
   const env: TestEnv = {
-    DB: { prepare } as unknown as D1Database,
+    DB: { prepare, batch } as unknown as D1Database,
     MATERIALS: {
       async put(key: string, value: string | ArrayBuffer | ReadableStream) {
         const text =

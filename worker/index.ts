@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import type { Env } from "./env";
 import { authRoutes } from "./auth/routes";
 import type { AuthVariables } from "./auth/session";
@@ -9,8 +10,24 @@ import { cardRoutes, jobDraftRoutes } from "./cards/routes";
 import { studyRoutes } from "./study/routes";
 import { handleGenerateQueue } from "./generation/consumer";
 import type { GenerateQueueMessage } from "./generation/enqueue";
+import { isAllowedMutatingOrigin } from "./security/origin";
 
 const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
+
+const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+app.use("/api/*", async (c, next) => {
+  if (MUTATING.has(c.req.method)) {
+    const appUrl = c.env?.APP_URL;
+    if (appUrl) {
+      const origin = c.req.header("origin");
+      if (!isAllowedMutatingOrigin(origin, appUrl)) {
+        throw new HTTPException(403, { message: "Forbidden origin" });
+      }
+    }
+  }
+  await next();
+});
 
 app.route("/api/auth", authRoutes);
 app.route("/api/decks", deckRoutes);
