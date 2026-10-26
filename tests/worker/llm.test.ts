@@ -135,4 +135,47 @@ describe("LLM provider allowlist", () => {
     expect(urls).toEqual([providerRequestUrl("openai")]);
     expect(urls[0]).toContain("api.openai.com");
   });
+
+  it("complete() posts custom system/user on the same BYO transport", async () => {
+    let body: unknown;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+        body = JSON.parse(String(init?.body));
+        return new Response(
+          JSON.stringify({
+            choices: [{ message: { content: '{"ok":true}' } }],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }),
+    );
+
+    const raw = await createLlmAdapter("openai").complete({
+      system: "custom-system",
+      user: "custom-user",
+      apiKey: "sk-openai",
+      provider: "openai",
+    });
+
+    expect(raw).toBe('{"ok":true}');
+    expect(body).toMatchObject({
+      messages: [
+        { role: "system", content: "custom-system" },
+        { role: "user", content: "custom-user" },
+      ],
+    });
+  });
+
+  it("mock complete returns fixed critique JSON", async () => {
+    const raw = await createLlmAdapter("mock").complete({
+      system: "s",
+      user: "u",
+      apiKey: "",
+      provider: "mock",
+    });
+    const parsed = JSON.parse(raw) as { cards: unknown[] };
+    expect(Array.isArray(parsed.cards)).toBe(true);
+    expect(parsed.cards.length).toBeGreaterThan(0);
+  });
 });

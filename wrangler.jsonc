@@ -38,6 +38,9 @@
 			"id": "4b51ba56cbdd48bd97a31ff775a9e684"
 		}
 	],
+	"ai": {
+		"binding": "AI"
+	},
 	"queues": {
 		"producers": [
 			{

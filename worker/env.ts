@@ -3,6 +3,8 @@ export interface Env {
   DB: D1Database;
   MATERIALS: R2Bucket;
   SESSIONS: KVNamespace;
+  /** Workers AI binding for free-generation path. */
+  AI: Ai;
   /** Optional until queue consumer ships; missing → D1 generation_jobs only. */
   GENERATE_QUEUE?: Queue;
   APP_URL: string;

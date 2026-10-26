@@ -12,14 +12,7 @@ export const CHUNK_CHAR_LIMIT = 5000;
  * LLM used by the pipeline: generateDrafts for the create pass,
  * complete for the critique pass (custom system/user prompts).
  */
-export type PipelineLlm = LlmAdapter & {
-  complete(input: {
-    system: string;
-    user: string;
-    apiKey: string;
-    provider: string;
-  }): Promise<string>;
-};
+export type PipelineLlm = LlmAdapter;
 
 export type RunGenerationPipelineInput = {
   text: string;
