@@ -1,40 +1,35 @@
+import { alpha } from "@mui/material/styles";
 import type { SxProps, Theme } from "@mui/material/styles";
 
-/** Dark-safe MUI Stepper colors (labels + icon glyphs). */
-export const stepperSx: SxProps<Theme> = (theme) => ({
-  "& .MuiStepLabel-label, & .MuiStepLabel-labelContainer": {
-    color: "text.secondary",
-  },
-  "& .MuiStepLabel-label.Mui-active, & .MuiStepLabel-label.Mui-completed": {
-    color: "text.primary",
-  },
-  "& .MuiStepLabel-label.Mui-disabled": {
-    color: "text.secondary",
-  },
-  "& .MuiStepConnector-line": {
-    borderColor: "divider",
-  },
-  ...theme.applyStyles("dark", {
+/** Stepper colors from the active palette (matches headings / primary CTAs). */
+export const stepperSx: SxProps<Theme> = (theme) => {
+  const upcomingDisc = alpha(theme.palette.primary.main, 0.35);
+  const upcomingGlyph = theme.palette.primary.main;
+
+  return {
     "& .MuiStepLabel-label, & .MuiStepLabel-labelContainer, & .MuiStepLabel-label.Mui-disabled":
       {
-        color: "rgba(255, 255, 255, 0.72)",
+        color: "text.secondary",
       },
     "& .MuiStepLabel-label.Mui-active, & .MuiStepLabel-label.Mui-completed": {
-      color: "#F5F5F5",
+      color: "text.primary",
     },
-    // Upcoming: dark disc + white numeral (not black-on-black / white-on-light).
+    "& .MuiStepConnector-line": {
+      borderColor: "divider",
+    },
+    // Upcoming: muted primary disc + primary numeral (same family as Library heading).
     "& .MuiStepIcon-root": {
-      color: "#616161",
+      color: upcomingDisc,
     },
     "& .MuiStepIcon-root .MuiStepIcon-text": {
-      fill: "#FFFFFF",
+      fill: upcomingGlyph,
     },
     "& .MuiStepIcon-root.Mui-active, & .MuiStepIcon-root.Mui-completed": {
-      color: theme.palette.primary.main,
+      color: "primary.main",
     },
     "& .MuiStepIcon-root.Mui-active .MuiStepIcon-text, & .MuiStepIcon-root.Mui-completed .MuiStepIcon-text":
       {
-        fill: "#1A1A1A",
+        fill: theme.palette.primary.contrastText,
       },
-  }),
-});
+  };
+};
