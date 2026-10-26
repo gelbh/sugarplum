@@ -25,7 +25,22 @@ function randomSessionId(): string {
   return hex;
 }
 
-/** Create a KV session and set the HttpOnly Secure SameSite=Lax cookie. */
+/** Secure cookies only on https so http://localhost can set the session. */
+export function sessionCookieSecure(url: string | URL): boolean {
+  const protocol = typeof url === "string" ? new URL(url).protocol : url.protocol;
+  return protocol === "https:";
+}
+
+function sessionCookieAttrs(c: AuthContext) {
+  return {
+    httpOnly: true,
+    secure: sessionCookieSecure(c.req.url),
+    sameSite: "Lax" as const,
+    path: "/",
+  };
+}
+
+/** Create a KV session and set the HttpOnly SameSite=Lax cookie (Secure on https). */
 export async function createSession(
   c: AuthContext,
   userId: string,
@@ -37,10 +52,7 @@ export async function createSession(
     expirationTtl: SESSION_TTL_SECONDS,
   });
   setCookie(c, SESSION_COOKIE, id, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "Lax",
-    path: "/",
+    ...sessionCookieAttrs(c),
     maxAge: SESSION_TTL_SECONDS,
   });
   return id;
@@ -50,7 +62,7 @@ export async function createSession(
 export async function destroySession(c: AuthContext): Promise<void> {
   const id = getCookie(c, SESSION_COOKIE);
   if (id) await c.env.SESSIONS.delete(id);
-  deleteCookie(c, SESSION_COOKIE, { path: "/" });
+  deleteCookie(c, SESSION_COOKIE, sessionCookieAttrs(c));
 }
 
 /**

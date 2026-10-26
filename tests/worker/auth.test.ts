@@ -10,6 +10,7 @@ import {
   isSessionActive,
   parseSessionRecord,
   SESSION_COOKIE,
+  sessionCookieSecure,
 } from "../../worker/auth/session";
 
 describe("auth register validation", () => {
@@ -65,5 +66,16 @@ describe("session helpers", () => {
 
   it("exports the sp_session cookie name", () => {
     expect(SESSION_COOKIE).toBe("sp_session");
+  });
+
+  it("gates Secure on https only so localhost http works", () => {
+    expect(sessionCookieSecure("http://localhost:8787/api/auth/login")).toBe(
+      false,
+    );
+    expect(sessionCookieSecure("https://sugarplum.example/api/auth/login")).toBe(
+      true,
+    );
+    expect(sessionCookieSecure(new URL("http://127.0.0.1:5173/"))).toBe(false);
+    expect(sessionCookieSecure(new URL("https://app.example/"))).toBe(true);
   });
 });
