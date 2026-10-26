@@ -53,6 +53,32 @@ describe("CardDraft schema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("keeps valid cards when some cloze drafts are multi-blank", () => {
+    const drafts = parseCardDrafts([
+      {
+        type: "qa",
+        front: "Q?",
+        back: "A",
+        provenance: { pages: [1], excerpt: "ex" },
+      },
+      {
+        type: "cloze",
+        front: "{{c1::a}} and {{c2::b}}",
+        back: "a",
+        provenance: { pages: [1], excerpt: "ex" },
+      },
+      {
+        type: "cloze",
+        front: "Hello {{c1::world}}",
+        back: "world",
+        provenance: { pages: [1], excerpt: "ex" },
+      },
+    ]);
+    expect(drafts).toHaveLength(2);
+    expect(drafts.map((d) => d.type)).toEqual(["qa", "cloze"]);
+    expect(drafts[1]?.front).toBe("Hello {{c1::world}}");
+  });
 });
 
 describe("mock LLM adapter", () => {
