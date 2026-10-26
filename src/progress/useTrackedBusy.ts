@@ -20,8 +20,11 @@ export function useTrackedBusy(
   const idRef = useRef(`busy:${reactId}`);
   const [busy, setBusy] = useState(trackOnMount);
   const labelRef = useRef(label);
-  labelRef.current = label;
   const activeRef = useRef(false);
+
+  useEffect(() => {
+    labelRef.current = label;
+  }, [label]);
 
   const begin = useCallback(
     (overrideLabel?: string) => {

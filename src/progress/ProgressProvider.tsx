@@ -46,8 +46,8 @@ export function ProgressProvider({ children }: ProgressProviderProps) {
   const [active, setActive] = useState(
     () => new Map<string, ProgressSnapshot>(),
   );
+  /** Kept in sync inside setActive updaters for delayed remove timers. */
   const activeRef = useRef(active);
-  activeRef.current = active;
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
 
   const clearTimer = useCallback((id: string) => {
@@ -65,6 +65,7 @@ export function ProgressProvider({ children }: ProgressProviderProps) {
         if (!prev.has(id)) return prev;
         const next = new Map(prev);
         next.delete(id);
+        activeRef.current = next;
         return next;
       });
     },
@@ -86,6 +87,7 @@ export function ProgressProvider({ children }: ProgressProviderProps) {
         }
         const next = new Map(prev);
         next.set(snapshot.id, { ...snapshot, percent });
+        activeRef.current = next;
         return next;
       });
     },
@@ -95,21 +97,25 @@ export function ProgressProvider({ children }: ProgressProviderProps) {
   const complete = useCallback(
     (id: string) => {
       clearTimer(id);
-      const existing = activeRef.current.get(id);
-      if (!existing) return;
-      if (existing.mode === "determinate") {
-        setActive((prev) => {
-          const cur = prev.get(id);
-          if (!cur) return prev;
+      // Batched functional updaters: same-tick upsert then complete sees the
+      // entry in `prev`. Do not gate on a render-synced ref.
+      setActive((prev) => {
+        const cur = prev.get(id);
+        if (!cur) return prev;
+        if (cur.mode === "determinate") {
           const next = new Map(prev);
           next.set(id, { ...cur, percent: 100 });
+          activeRef.current = next;
+          clearTimer(id);
+          const t = setTimeout(() => remove(id), COMPLETE_HOLD_MS);
+          timers.current.set(id, t);
           return next;
-        });
-        const t = setTimeout(() => remove(id), COMPLETE_HOLD_MS);
-        timers.current.set(id, t);
-      } else {
-        remove(id);
-      }
+        }
+        const next = new Map(prev);
+        next.delete(id);
+        activeRef.current = next;
+        return next;
+      });
     },
     [clearTimer, remove],
   );
