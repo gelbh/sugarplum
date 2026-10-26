@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { loadDueCache, saveDueCache } from "../../src/study/dueCache";
+import {
+  clearDueCache,
+  loadDueCache,
+  saveDueCache,
+} from "../../src/study/dueCache";
 import type { CardDraftView } from "../../src/api/client";
 
 const sample: CardDraftView = {
@@ -30,6 +34,12 @@ function installMemoryLocalStorage() {
     clear() {
       store.clear();
     },
+    get length() {
+      return store.size;
+    },
+    key(index: number) {
+      return Array.from(store.keys())[index] ?? null;
+    },
   };
   Object.defineProperty(globalThis, "localStorage", {
     value: api,
@@ -46,15 +56,31 @@ afterEach(() => {
 });
 
 describe("dueCache", () => {
-  it("round-trips due cards through localStorage", () => {
-    saveDueCache([sample]);
-    const snap = loadDueCache();
+  it("round-trips due cards through localStorage for a user", () => {
+    saveDueCache("user-a", [sample]);
+    const snap = loadDueCache("user-a");
+    expect(snap?.userId).toBe("user-a");
     expect(snap?.cards).toHaveLength(1);
     expect(snap?.cards[0]?.id).toBe("c1");
     expect(snap?.savedAt).toBeTruthy();
   });
 
   it("returns null when empty", () => {
-    expect(loadDueCache()).toBeNull();
+    expect(loadDueCache("user-a")).toBeNull();
+  });
+
+  it("does not leak another user's cache", () => {
+    saveDueCache("user-a", [sample]);
+    expect(loadDueCache("user-b")).toBeNull();
+  });
+
+  it("clearDueCache drops one user or all", () => {
+    saveDueCache("user-a", [sample]);
+    saveDueCache("user-b", [sample]);
+    clearDueCache("user-a");
+    expect(loadDueCache("user-a")).toBeNull();
+    expect(loadDueCache("user-b")?.cards).toHaveLength(1);
+    clearDueCache();
+    expect(loadDueCache("user-b")).toBeNull();
   });
 });

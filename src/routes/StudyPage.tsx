@@ -31,15 +31,15 @@ export default function StudyPage() {
   });
   const { busy, begin, end } = useTrackedBusy("Saving grade…");
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (userId: string) => {
     try {
       const due = await listDueCards();
-      saveDueCache(due);
+      saveDueCache(userId, due);
       setQueue(due);
       setOfflineCopy(false);
       setRevealed(false);
     } catch (err) {
-      const cached = loadDueCache();
+      const cached = loadDueCache(userId);
       if (cached && cached.cards.length > 0) {
         setQueue(cached.cards);
         setOfflineCopy(true);
@@ -54,8 +54,8 @@ export default function StudyPage() {
     let cancelled = false;
     (async () => {
       try {
-        await me();
-        await load();
+        const user = await me();
+        await load(user.id);
         if (!cancelled) {
           setReady(true);
           endLoad();

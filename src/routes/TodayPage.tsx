@@ -23,16 +23,16 @@ export default function TodayPage() {
     let cancelled = false;
     (async () => {
       try {
-        await me();
+        const user = await me();
         try {
           const due = await listDueCards();
           if (cancelled) return;
-          saveDueCache(due);
+          saveDueCache(user.id, due);
           setDueCount(due.length);
           setOfflineCopy(false);
         } catch (err) {
           if (cancelled) return;
-          const cached = loadDueCache();
+          const cached = loadDueCache(user.id);
           if (cached) {
             setDueCount(cached.cards.length);
             setOfflineCopy(true);
