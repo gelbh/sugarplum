@@ -2,6 +2,7 @@ import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import LibraryPage from "./routes/LibraryPage";
 import LoginPage from "./routes/LoginPage";
 import RegisterPage from "./routes/RegisterPage";
 
@@ -10,6 +11,7 @@ export default function App() {
 
   if (path === "/login") return <LoginPage />;
   if (path === "/register") return <RegisterPage />;
+  if (path === "/library") return <LibraryPage />;
 
   return (
     <Container maxWidth="sm" sx={{ py: 6 }}>
@@ -19,8 +21,11 @@ export default function App() {
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
         Spaced-repetition study shell. More surfaces land in later tasks.
       </Typography>
-      <Stack direction="row" spacing={2}>
-        <Button variant="contained" href="/login">
+      <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+        <Button variant="contained" href="/library">
+          Library
+        </Button>
+        <Button variant="outlined" href="/login">
           Sign in
         </Button>
         <Button variant="outlined" href="/register">

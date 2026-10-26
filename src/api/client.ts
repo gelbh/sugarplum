@@ -70,3 +70,42 @@ export function logout() {
 export function me() {
   return api<AuthUser>("/api/auth/me");
 }
+
+export type Deck = {
+  id: string;
+  title: string;
+  subject_hint: string | null;
+  created_at: string;
+};
+
+export type Material = {
+  id: string;
+  deck_id: string;
+  kind: string;
+  r2_key: string | null;
+  filename: string | null;
+  page_count: number | null;
+  status: string;
+  created_at: string;
+};
+
+export function listDecks() {
+  return api<Deck[]>("/api/decks");
+}
+
+export function createDeck(title: string) {
+  return api<Deck>("/api/decks", {
+    method: "POST",
+    json: { title },
+  });
+}
+
+export function pasteMaterial(
+  deckId: string,
+  body: { text: string; filename?: string },
+) {
+  return api<Material>(`/api/decks/${deckId}/materials/paste`, {
+    method: "POST",
+    json: body,
+  });
+}
