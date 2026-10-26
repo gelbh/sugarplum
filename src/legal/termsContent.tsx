@@ -22,7 +22,7 @@ export const termsSections = [
   },
   {
     title: "BYO API keys",
-    body: `If you add your own OpenAI or Anthropic API keys (or use a BYO provider), Sugarplum sends material text and prompts to that provider to generate drafts.`,
+    body: `If you add your own OpenAI, Anthropic, or Google API key, Sugarplum sends material text and prompts to that provider to generate drafts. Keys are stored encrypted for your account.`,
   },
   {
     title: "Intellectual property",
