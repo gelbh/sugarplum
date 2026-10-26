@@ -88,6 +88,11 @@ export function createWorkersAiAdapter(env: Env): LlmAdapter {
   return {
     complete,
     async generateDrafts(input: GenerateDraftsInput) {
+      if (input.image) {
+        throw new Error(
+          "Workers AI free path does not support image generation. Add a BYO API key in Settings.",
+        );
+      }
       const content = await complete({
         system: GENERATE_SYSTEM_PROMPT,
         user: userPromptForJson(input.text),

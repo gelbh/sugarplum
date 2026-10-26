@@ -31,13 +31,43 @@ const PROVIDERS = [
   { value: "google", label: "Google" },
 ] as const;
 
+function settingsQueryMessage(): { error: string | null; notice: string | null } {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("linked") === "1") {
+    return { error: null, notice: "Google account linked." };
+  }
+  const code = params.get("error");
+  if (code === "oauth_conflict") {
+    return {
+      error: "That Google account is already linked to a different user.",
+      notice: null,
+    };
+  }
+  if (code === "oauth_email_mismatch") {
+    return {
+      error: "Google email must match your Sugarplum account email.",
+      notice: null,
+    };
+  }
+  if (code === "oauth_denied") {
+    return { error: "Google linking was cancelled.", notice: null };
+  }
+  if (code === "oauth") {
+    return { error: "Google linking failed. Try again.", notice: null };
+  }
+  return { error: null, notice: null };
+}
+
 export default function SettingsPage() {
   const { mode, setMode } = useColorScheme();
   const [provider, setProvider] = useState<string>("openai");
   const [apiKey, setApiKey] = useState("");
   const [current, setCurrent] = useState<LlmSettings | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [googleLinked, setGoogleLinked] = useState(false);
+  const [accountEmail, setAccountEmail] = useState<string | null>(null);
+  const queryMsg = settingsQueryMessage();
+  const [error, setError] = useState<string | null>(queryMsg.error);
+  const [notice, setNotice] = useState<string | null>(queryMsg.notice);
   const [ready, setReady] = useState(false);
   const { end: endLoad } = useTrackedBusy("Loading…", { trackOnMount: true });
   const { busy, begin, end } = useTrackedBusy("Saving…");
@@ -49,9 +79,11 @@ export default function SettingsPage() {
     let cancelled = false;
     (async () => {
       try {
-        await me();
+        const user = await me();
         const settings = await getLlmSettings();
         if (cancelled) return;
+        setAccountEmail(user.email);
+        setGoogleLinked(user.google_linked === true);
         setCurrent(settings);
         if (settings.configured) setProvider(settings.provider);
         setReady(true);
@@ -110,6 +142,27 @@ export default function SettingsPage() {
         skip that cap and for higher quality. Keys are encrypted at rest and
         never shown in full again.
       </Typography>
+
+      <Stack spacing={1} sx={{ mb: 4 }}>
+        <Typography variant="subtitle1" component="h2">
+          Account
+        </Typography>
+        {accountEmail ? (
+          <Typography variant="body2" color="text.secondary">
+            Signed in as {accountEmail}
+          </Typography>
+        ) : null}
+        {googleLinked ? (
+          <Alert severity="success">Google account linked.</Alert>
+        ) : (
+          <Button
+            variant="outlined"
+            href="/api/auth/google/start?intent=link"
+          >
+            Link Google
+          </Button>
+        )}
+      </Stack>
 
       <Stack spacing={1} sx={{ mb: 4 }}>
         <Typography variant="subtitle1" component="h2">

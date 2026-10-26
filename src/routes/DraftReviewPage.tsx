@@ -13,6 +13,7 @@ import DraftCardEditor from "../components/DraftCardEditor";
 import {
   ApiError,
   acceptCard,
+  getJob,
   listJobDrafts,
   me,
   patchCard,
@@ -37,6 +38,11 @@ export default function DraftReviewPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [coverage, setCoverage] = useState<{
+    covered: string[];
+    gaps: string[];
+    draft_count?: number;
+  } | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const jobProgress = useJobProgress(authReady ? jobId : null);
   const {
@@ -46,10 +52,28 @@ export default function DraftReviewPage() {
   const { busy, begin, end } = useTrackedBusy("Working…");
 
   const load = useCallback(async (id: string) => {
-    const list = await listJobDrafts(id);
+    const [list, job] = await Promise.all([listJobDrafts(id), getJob(id)]);
     setDrafts(list);
     setIndex(0);
     setDirty(false);
+    if (job.coverage_json) {
+      try {
+        const parsed = JSON.parse(job.coverage_json) as {
+          covered?: string[];
+          gaps?: string[];
+          draft_count?: number;
+        };
+        setCoverage({
+          covered: Array.isArray(parsed.covered) ? parsed.covered : [],
+          gaps: Array.isArray(parsed.gaps) ? parsed.gaps : [],
+          draft_count: parsed.draft_count,
+        });
+      } catch {
+        setCoverage(null);
+      }
+    } else {
+      setCoverage(null);
+    }
   }, []);
 
   useEffect(() => {
@@ -133,7 +157,7 @@ export default function DraftReviewPage() {
       const updated = await patchCard(current.id, {
         front: current.front,
         back: current.back,
-        type: current.type === "cloze" ? "cloze" : "qa",
+        type: current.type as "qa" | "cloze" | "image_label" | "diagram",
       });
       setDrafts((prev) =>
         prev.map((c) => (c.id === updated.id ? updated : c)),
@@ -157,7 +181,7 @@ export default function DraftReviewPage() {
         await patchCard(current.id, {
           front: current.front,
           back: current.back,
-          type: current.type === "cloze" ? "cloze" : "qa",
+          type: current.type as "qa" | "cloze" | "image_label" | "diagram",
         });
       }
       await acceptCard(current.id);
@@ -225,6 +249,22 @@ export default function DraftReviewPage() {
         {error ? <Alert severity="error">{error}</Alert> : null}
         {notice ? <Alert severity="success">{notice}</Alert> : null}
 
+        {coverage && coverage.covered.length > 0 ? (
+          <Alert severity="info">
+            Draft topics
+            {coverage.draft_count != null
+              ? ` (${coverage.draft_count} cards)`
+              : ""}
+            <Box component="ul" sx={{ m: 0, mt: 1, pl: 2 }}>
+              {coverage.covered.slice(0, 5).map((item) => (
+                <Typography component="li" key={item} variant="caption">
+                  {item}
+                </Typography>
+              ))}
+            </Box>
+          </Alert>
+        ) : null}
+
         {!current ? (
           <Alert severity="info">
             No drafts left for this job.{" "}
@@ -243,7 +283,15 @@ export default function DraftReviewPage() {
               </Typography>
               <Chip
                 size="small"
-                label={current.type === "cloze" ? "Cloze" : "Q&A"}
+                label={
+                  current.type === "cloze"
+                    ? "Cloze"
+                    : current.type === "image_label"
+                      ? "Image label"
+                      : current.type === "diagram"
+                        ? "Diagram"
+                        : "Q&A"
+                }
                 color="secondary"
                 variant="outlined"
               />

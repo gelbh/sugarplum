@@ -7,11 +7,13 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { ApiError, listDueCards, me } from "../api/client";
 import { useTrackedBusy } from "../progress/useTrackedBusy";
+import { loadDueCache, saveDueCache } from "../study/dueCache";
 
 /** Home: due count and start a study session. Code-led MUI; no Impeccable comps. */
 export default function TodayPage() {
   const [dueCount, setDueCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [offlineCopy, setOfflineCopy] = useState(false);
   const [ready, setReady] = useState(false);
   const { end: endLoad } = useTrackedBusy("Loading today…", {
     trackOnMount: true,
@@ -21,12 +23,27 @@ export default function TodayPage() {
     let cancelled = false;
     (async () => {
       try {
-        await me();
-        const due = await listDueCards();
-        if (cancelled) return;
-        setDueCount(due.length);
-        setReady(true);
-        endLoad();
+        const user = await me();
+        try {
+          const due = await listDueCards();
+          if (cancelled) return;
+          saveDueCache(user.id, due);
+          setDueCount(due.length);
+          setOfflineCopy(false);
+        } catch (err) {
+          if (cancelled) return;
+          const cached = loadDueCache(user.id);
+          if (cached) {
+            setDueCount(cached.cards.length);
+            setOfflineCopy(true);
+          } else {
+            throw err;
+          }
+        }
+        if (!cancelled) {
+          setReady(true);
+          endLoad();
+        }
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
@@ -66,6 +83,11 @@ export default function TodayPage() {
         </Typography>
 
         {error ? <Alert severity="error">{error}</Alert> : null}
+        {offlineCopy ? (
+          <Alert severity="warning">
+            Showing an offline copy of your due count.
+          </Alert>
+        ) : null}
 
         <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
           <Button

@@ -121,4 +121,46 @@ describe("draft review / accept gate", () => {
     const due = (await dueRes.json()) as { id: string }[];
     expect(due.some((c) => c.id === "card-draft")).toBe(true);
   });
+
+  it("patch preserves image_label type", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedCard({
+      id: "card-img",
+      deck_id: "deck-a",
+      job_id: "job-1",
+      type: "image_label",
+      front_json: JSON.stringify("Label the aorta"),
+      back_json: JSON.stringify("Aorta"),
+      media_r2_keys_json: JSON.stringify(["materials/deck-a/m1.png"]),
+      provenance_json: JSON.stringify({ pages: [], excerpt: "fig" }),
+      status: "draft",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/cards/card-img",
+      {
+        method: "PATCH",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          front: "Label the aortic arch",
+          back: "Aortic arch",
+          type: "image_label",
+        }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { type: string; front: string };
+    expect(body.type).toBe("image_label");
+    expect(body.front).toBe("Label the aortic arch");
+    expect(env.getCards().find((c) => c.id === "card-img")?.type).toBe(
+      "image_label",
+    );
+  });
 });
