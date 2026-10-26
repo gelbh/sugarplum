@@ -121,7 +121,13 @@ export default function AppShell({ children }: AppShellProps) {
           },
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ gap: 1.5 }}>
+          <Box
+            component="img"
+            src="/logo-sidebar.png"
+            alt=""
+            sx={{ height: 32, width: "auto", display: "block" }}
+          />
           <Typography variant="h6" color="primary" noWrap>
             Sugarplum
           </Typography>

@@ -6,14 +6,14 @@
 [![MUI](https://img.shields.io/badge/MUI-v7-007FFF?logo=mui&logoColor=white)](https://mui.com/)
 [![FSRS](https://img.shields.io/badge/SRS-FSRS-2E7D32)](https://github.com/open-spaced-repetition/ts-fsrs)
 
-Spaced-repetition study app that turns pasted lecture notes into editable flashcards, then schedules reviews so you remember them. PDF upload to R2 is supported; text extraction from PDFs is not ready yet (jobs fail with a clear error until that lands).
+Spaced-repetition study app that turns pasted lecture notes (and PDF text extract) into editable flashcards, then schedules reviews so you remember them. Sign in with email/password or Google.
 
 **App:** [sugarplum.gelbhart.dev](https://sugarplum.gelbhart.dev)
 
 ## What it does
 
-1. Paste study materials (preferred for generation today); optional PDF upload stores the file
-2. Generate draft cards from paste text (Q&A and cloze in the first release)
+1. Paste study materials or upload a text PDF
+2. Generate draft cards (Q&A and cloze)
 3. Review and edit before anything enters your deck
 4. Study with FSRS spaced repetition
 
@@ -64,7 +64,17 @@ Workers custom domain on `gelbhart.dev`. Assets use SPA fallback (`not_found_han
 npx wrangler secret put SECRETS_WRAP_KEY   # exactly 32 UTF-8 bytes (or base64 of 32 bytes)
 npx wrangler secret put R2_ACCESS_KEY_ID
 npx wrangler secret put R2_SECRET_ACCESS_KEY
+npx wrangler secret put GOOGLE_CLIENT_ID      # from Google Cloud OAuth client
+npx wrangler secret put GOOGLE_CLIENT_SECRET
 ```
+
+### Google Sign-In (one-time)
+
+1. In Google Cloud Console, create an OAuth 2.0 **Web** client.
+2. Authorized redirect URI (production): `https://sugarplum.gelbhart.dev/api/auth/google/callback`
+3. For local Workers/Vite, also add your local APP_URL callback, e.g. `http://localhost:8787/api/auth/google/callback` (match `vars.APP_URL`).
+4. Put the client ID and secret into Worker secrets as above (not Vite env; not committed).
+5. Until secrets are set, `/api/auth/google/start` returns 503.
 
 ### 3. R2 CORS (one-time)
 

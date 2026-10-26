@@ -3,6 +3,18 @@ import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import {
+  buildGoogleAuthorizeUrl,
+  exchangeGoogleCode,
+  fetchGoogleProfile,
+  googleOauthSubject,
+  googleRedirectUri,
+  OAUTH_KV_PREFIX,
+  OAUTH_STATE_TTL_SECONDS,
+  pkceChallenge,
+  randomUrlSafe,
+  type GoogleOAuthPending,
+} from "./google";
+import {
   hashPassword,
   isPasswordLongEnough,
   verifyPassword,
@@ -19,6 +31,13 @@ type AuthEnv = { Bindings: Env; Variables: AuthVariables };
 type UserRow = {
   id: string;
   email: string;
+  password_hash: string | null;
+};
+
+type OauthUserRow = {
+  id: string;
+  email: string;
+  oauth_subject: string | null;
   password_hash: string | null;
 };
 
@@ -69,9 +88,9 @@ authRoutes.post("/register", async (c) => {
   try {
     await db
       .prepare(
-        "INSERT INTO users (id, email, password_hash, oauth_subject, created_at) VALUES (?, ?, ?, NULL, ?)",
+        "INSERT INTO users (id, email, password_hash, oauth_subject, created_at) VALUES (?, ?, ?, ?, ?)",
       )
-      .bind(id, email, passwordHash, createdAt)
+      .bind(id, email, passwordHash, null, createdAt)
       .run();
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -133,4 +152,163 @@ authRoutes.get("/me", async (c) => {
 
   if (!user) throw new HTTPException(401, { message: "Unauthorized" });
   return c.json(user);
+});
+
+function requireGoogleCreds(env: Env): {
+  clientId: string;
+  clientSecret: string;
+} {
+  const clientId = env.GOOGLE_CLIENT_ID?.trim();
+  const clientSecret = env.GOOGLE_CLIENT_SECRET?.trim();
+  if (!clientId || !clientSecret) {
+    throw new HTTPException(503, {
+      message: "Google Sign-In is not configured",
+    });
+  }
+  return { clientId, clientSecret };
+}
+
+/** Start Google OIDC (PKCE). Redirects the browser to Google. */
+authRoutes.get("/google/start", async (c) => {
+  const { clientId } = requireGoogleCreds(c.env);
+  const redirectUri = googleRedirectUri(c.env.APP_URL);
+  const state = randomUrlSafe(24);
+  const codeVerifier = randomUrlSafe(32);
+  const codeChallenge = await pkceChallenge(codeVerifier);
+  const pending: GoogleOAuthPending = {
+    codeVerifier,
+    createdAt: Date.now(),
+  };
+  await c.env.SESSIONS.put(
+    `${OAUTH_KV_PREFIX}${state}`,
+    JSON.stringify(pending),
+    { expirationTtl: OAUTH_STATE_TTL_SECONDS },
+  );
+  const url = buildGoogleAuthorizeUrl({
+    clientId,
+    redirectUri,
+    state,
+    codeChallenge,
+  });
+  return c.redirect(url, 302);
+});
+
+function oauthLoginRedirect(
+  appUrl: string,
+  errorCode: string,
+): Response {
+  const base = appUrl.replace(/\/$/, "") || "";
+  const url = new URL(`${base}/login`);
+  url.searchParams.set("error", errorCode);
+  return Response.redirect(url.toString(), 302);
+}
+
+/** Google OAuth callback: exchange code, upsert user, set session, redirect home. */
+authRoutes.get("/google/callback", async (c) => {
+  const { clientId, clientSecret } = requireGoogleCreds(c.env);
+  const appUrl = c.env.APP_URL;
+  const err = c.req.query("error");
+  if (err) {
+    return oauthLoginRedirect(appUrl, "oauth_denied");
+  }
+  const code = c.req.query("code");
+  const state = c.req.query("state");
+  if (!code || !state) {
+    return oauthLoginRedirect(appUrl, "oauth");
+  }
+
+  const kvKey = `${OAUTH_KV_PREFIX}${state}`;
+  const rawPending = await c.env.SESSIONS.get(kvKey);
+  await c.env.SESSIONS.delete(kvKey);
+  if (!rawPending) {
+    return oauthLoginRedirect(appUrl, "oauth");
+  }
+  let pending: GoogleOAuthPending;
+  try {
+    pending = JSON.parse(rawPending) as GoogleOAuthPending;
+  } catch {
+    return oauthLoginRedirect(appUrl, "oauth");
+  }
+  if (typeof pending.codeVerifier !== "string") {
+    return oauthLoginRedirect(appUrl, "oauth");
+  }
+
+  const redirectUri = googleRedirectUri(appUrl);
+  let profile;
+  try {
+    const tokens = await exchangeGoogleCode({
+      clientId,
+      clientSecret,
+      code,
+      redirectUri,
+      codeVerifier: pending.codeVerifier,
+    });
+    profile = await fetchGoogleProfile(tokens.access_token);
+  } catch {
+    return oauthLoginRedirect(appUrl, "oauth");
+  }
+
+  const subject = googleOauthSubject(profile.sub);
+  const db = getDb(c.env);
+
+  const bySubject = await db
+    .prepare(
+      "SELECT id, email, oauth_subject, password_hash FROM users WHERE oauth_subject = ?",
+    )
+    .bind(subject)
+    .first<OauthUserRow>();
+
+  let userId: string;
+  if (bySubject) {
+    userId = bySubject.id;
+  } else {
+    const byEmail = await db
+      .prepare(
+        "SELECT id, email, oauth_subject, password_hash FROM users WHERE email = ?",
+      )
+      .bind(profile.email)
+      .first<OauthUserRow>();
+
+    if (byEmail) {
+      if (
+        byEmail.oauth_subject != null &&
+        byEmail.oauth_subject !== subject
+      ) {
+        return oauthLoginRedirect(appUrl, "oauth_conflict");
+      }
+      // Do not auto-link password accounts (unverified email signup → hijack).
+      if (byEmail.password_hash != null) {
+        return oauthLoginRedirect(appUrl, "oauth_link_required");
+      }
+      if (byEmail.oauth_subject == null) {
+        await db
+          .prepare("UPDATE users SET oauth_subject = ? WHERE id = ?")
+          .bind(subject, byEmail.id)
+          .run();
+      }
+      userId = byEmail.id;
+    } else {
+      userId = newUserId();
+      const createdAt = new Date().toISOString();
+      try {
+        await db
+          .prepare(
+            "INSERT INTO users (id, email, password_hash, oauth_subject, created_at) VALUES (?, ?, ?, ?, ?)",
+          )
+          .bind(userId, profile.email, null, subject, createdAt)
+          .run();
+      } catch (insertErr) {
+        const message =
+          insertErr instanceof Error ? insertErr.message : String(insertErr);
+        if (/unique|constraint|already exists/i.test(message)) {
+          return oauthLoginRedirect(appUrl, "oauth_conflict");
+        }
+        throw insertErr;
+      }
+    }
+  }
+
+  await createSession(c, userId);
+  const home = appUrl.replace(/\/$/, "") || "/";
+  return c.redirect(`${home}/`, 302);
 });

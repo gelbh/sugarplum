@@ -16,4 +16,8 @@ export interface Env {
   R2_ACCESS_KEY_ID: string;
   /** Secret: `wrangler secret put R2_SECRET_ACCESS_KEY` */
   R2_SECRET_ACCESS_KEY: string;
+  /** Secret: `wrangler secret put GOOGLE_CLIENT_ID` (optional until Google Sign-In is configured) */
+  GOOGLE_CLIENT_ID?: string;
+  /** Secret: `wrangler secret put GOOGLE_CLIENT_SECRET` */
+  GOOGLE_CLIENT_SECRET?: string;
 }
