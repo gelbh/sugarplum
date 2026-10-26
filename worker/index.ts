@@ -5,6 +5,8 @@ import type { AuthVariables } from "./auth/session";
 import { deckRoutes, materialRoutes } from "./materials/routes";
 import { settingsRoutes } from "./settings/routes";
 import { jobRoutes } from "./generation/routes";
+import { cardRoutes, jobDraftRoutes } from "./cards/routes";
+import { studyRoutes } from "./study/routes";
 import { handleGenerateQueue } from "./generation/consumer";
 import type { GenerateQueueMessage } from "./generation/enqueue";
 
@@ -15,6 +17,9 @@ app.route("/api/decks", deckRoutes);
 app.route("/api/materials", materialRoutes);
 app.route("/api/settings", settingsRoutes);
 app.route("/api/jobs", jobRoutes);
+app.route("/api/jobs", jobDraftRoutes);
+app.route("/api/cards", cardRoutes);
+app.route("/api/study", studyRoutes);
 
 export { app };
 

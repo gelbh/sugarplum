@@ -157,6 +157,46 @@ export function putLlmSettings(provider: string, apiKey: string) {
   });
 }
 
+export type CardDraftView = {
+  id: string;
+  deck_id: string;
+  job_id: string | null;
+  type: "qa" | "cloze" | string;
+  front: string;
+  back: string;
+  provenance: unknown;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  due?: string;
+};
+
+export function listJobDrafts(jobId: string) {
+  return api<CardDraftView[]>(`/api/jobs/${jobId}/drafts`);
+}
+
+export function patchCard(
+  cardId: string,
+  body: { front?: string; back?: string; type?: "qa" | "cloze" },
+) {
+  return api<CardDraftView>(`/api/cards/${cardId}`, {
+    method: "PATCH",
+    json: body,
+  });
+}
+
+export function acceptCard(cardId: string) {
+  return api<CardDraftView>(`/api/cards/${cardId}/accept`, { method: "POST" });
+}
+
+export function rejectCard(cardId: string) {
+  return api<CardDraftView>(`/api/cards/${cardId}/reject`, { method: "POST" });
+}
+
+export function listDueCards() {
+  return api<CardDraftView[]>("/api/study/due");
+}
+
 /** Request signed URL, PUT the PDF to R2, then mark ready / enqueue generation. */
 export async function uploadPdf(deckId: string, file: File): Promise<CompleteMaterialResponse> {
   const { materialId, uploadUrl } = await requestPdfUploadUrl(deckId, {

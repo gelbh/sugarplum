@@ -2,6 +2,7 @@ import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import DraftReviewPage from "./routes/DraftReviewPage";
 import LibraryPage from "./routes/LibraryPage";
 import LoginPage from "./routes/LoginPage";
 import RegisterPage from "./routes/RegisterPage";
@@ -14,6 +15,7 @@ export default function App() {
   if (path === "/register") return <RegisterPage />;
   if (path === "/library") return <LibraryPage />;
   if (path === "/settings") return <SettingsPage />;
+  if (/^\/jobs\/[^/]+\/drafts\/?$/.test(path)) return <DraftReviewPage />;
 
   return (
     <Container maxWidth="sm" sx={{ py: 6 }}>

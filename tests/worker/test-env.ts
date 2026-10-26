@@ -60,6 +60,20 @@ export type CardRow = {
   updated_at: string;
 };
 
+export type ScheduleRow = {
+  card_id: string;
+  due: string;
+  stability: number;
+  difficulty: number;
+  elapsed_days: number;
+  scheduled_days: number;
+  learning_steps: number;
+  reps: number;
+  lapses: number;
+  state: number;
+  last_review: string | null;
+};
+
 type SessionRecord = { userId: string; expiresAt: number };
 
 /** Fixed 32-byte wrap key for Vitest when SECRETS_WRAP_KEY is unset. */
@@ -72,11 +86,14 @@ export type TestEnv = Env & {
   seedMaterial: (row: MaterialRow) => void;
   seedSession: (id: string, userId: string, ttlMs?: number) => void;
   seedUserSecret: (row: UserSecretRow) => void;
+  seedCard: (row: CardRow) => void;
+  seedSchedule: (row: ScheduleRow) => void;
   seedR2: (key: string, value: string) => void;
   getMaterials: () => MaterialRow[];
   getGenerationJobs: () => GenerationJobRow[];
   getUserSecrets: () => UserSecretRow[];
   getCards: () => CardRow[];
+  getSchedules: () => ScheduleRow[];
   getQueueMessages: () => unknown[];
   getR2Keys: () => string[];
 };
@@ -90,6 +107,7 @@ export function createTestEnv(opts?: {
   const generationJobs = new Map<string, GenerationJobRow>();
   const userSecrets = new Map<string, UserSecretRow>();
   const cards = new Map<string, CardRow>();
+  const schedules = new Map<string, ScheduleRow>();
   const sessions = new Map<string, string>();
   const r2 = new Map<string, string>();
   const queueMessages: unknown[] = [];
@@ -210,6 +228,32 @@ export function createTestEnv(opts?: {
             ? ({ provider: row.provider, ciphertext: row.ciphertext } as T)
             : null;
         }
+        if (
+          normalized.includes("FROM cards c") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("c.id =") &&
+          normalized.includes("d.user_id =")
+        ) {
+          const card = cards.get(bound[0] as string);
+          if (!card) return null;
+          const deck = decks.get(card.deck_id);
+          if (!deck || deck.user_id !== bound[1]) return null;
+          return card as T;
+        }
+        if (
+          normalized.includes("FROM generation_jobs j") &&
+          normalized.includes("SELECT j.id") &&
+          normalized.includes("j.id =") &&
+          normalized.includes("d.user_id =")
+        ) {
+          const job = generationJobs.get(bound[0] as string);
+          if (!job) return null;
+          const material = materials.get(job.material_id);
+          if (!material) return null;
+          const deck = decks.get(material.deck_id);
+          if (!deck || deck.user_id !== bound[1]) return null;
+          return { id: job.id } as T;
+        }
         return null;
       },
       async all<T>(): Promise<{ results: T[] }> {
@@ -232,6 +276,37 @@ export function createTestEnv(opts?: {
           const rows = [...materials.values()].filter(
             (m) => m.deck_id === bound[0],
           );
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM cards") &&
+          normalized.includes("job_id =") &&
+          normalized.includes("status =")
+        ) {
+          const [jobId, status] = bound as [string, string];
+          const rows = [...cards.values()]
+            .filter((c) => c.job_id === jobId && c.status === status)
+            .sort((a, b) => a.created_at.localeCompare(b.created_at));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM cards c") &&
+          normalized.includes("INNER JOIN card_schedules s") &&
+          normalized.includes("c.status =") &&
+          normalized.includes("s.due <=")
+        ) {
+          const [userId, status, now] = bound as [string, string, string];
+          const rows = [...cards.values()]
+            .filter((c) => {
+              if (c.status !== status) return false;
+              const deck = decks.get(c.deck_id);
+              if (!deck || deck.user_id !== userId) return false;
+              const schedule = schedules.get(c.id);
+              if (!schedule || schedule.due > now) return false;
+              return true;
+            })
+            .map((c) => ({ ...c, due: schedules.get(c.id)!.due }))
+            .sort((a, b) => a.due.localeCompare(b.due));
           return { results: rows as T[] };
         }
         return { results: [] };
@@ -421,6 +496,75 @@ export function createTestEnv(opts?: {
             created_at,
             updated_at,
           });
+        } else if (
+          normalized.startsWith(
+            "UPDATE cards SET type = ?, front_json = ?, back_json = ?, updated_at = ?",
+          )
+        ) {
+          const [type, front_json, back_json, updated_at, id] = bound as [
+            string,
+            string,
+            string,
+            string,
+            string,
+          ];
+          const row = cards.get(id);
+          if (row) {
+            cards.set(id, {
+              ...row,
+              type,
+              front_json,
+              back_json,
+              updated_at,
+            });
+          }
+        } else if (
+          normalized.startsWith(
+            "UPDATE cards SET status = ?, updated_at = ? WHERE id =",
+          )
+        ) {
+          const [status, updated_at, id] = bound as [string, string, string];
+          const row = cards.get(id);
+          if (row) cards.set(id, { ...row, status, updated_at });
+        } else if (normalized.startsWith("INSERT INTO card_schedules")) {
+          const [
+            card_id,
+            due,
+            stability,
+            difficulty,
+            elapsed_days,
+            scheduled_days,
+            learning_steps,
+            reps,
+            lapses,
+            state,
+            last_review,
+          ] = bound as [
+            string,
+            string,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            string | null,
+          ];
+          schedules.set(card_id, {
+            card_id,
+            due,
+            stability,
+            difficulty,
+            elapsed_days,
+            scheduled_days,
+            learning_steps,
+            reps,
+            lapses,
+            state,
+            last_review,
+          });
         }
         return { success: true, meta: { changes: 1 } } as D1Result;
       },
@@ -491,6 +635,12 @@ export function createTestEnv(opts?: {
     seedUserSecret(row) {
       userSecrets.set(row.user_id, row);
     },
+    seedCard(row) {
+      cards.set(row.id, row);
+    },
+    seedSchedule(row) {
+      schedules.set(row.card_id, row);
+    },
     seedR2(key, value) {
       r2.set(key, value);
     },
@@ -498,6 +648,7 @@ export function createTestEnv(opts?: {
     getGenerationJobs: () => [...generationJobs.values()],
     getUserSecrets: () => [...userSecrets.values()],
     getCards: () => [...cards.values()],
+    getSchedules: () => [...schedules.values()],
     getQueueMessages: () => [...queueMessages],
     getR2Keys: () => [...r2.keys()],
   };
