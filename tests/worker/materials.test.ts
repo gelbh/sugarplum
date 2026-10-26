@@ -232,6 +232,39 @@ describe("PDF upload-url validation", () => {
     expect(env.getMaterials()[0]?.kind).toBe("pdf");
     expect(env.getMaterials()[0]?.status).toBe("uploading");
   });
+
+  it("returns signed upload URL for valid PPTX metadata", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+
+    const res = await app.request(
+      "/api/decks/deck-a/materials/upload-url",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          filename: "lecture.pptx",
+          contentType:
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+          size: 2048,
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      materialId: string;
+      uploadUrl: string;
+      r2Key: string;
+    };
+    expect(body.r2Key.endsWith(".pptx")).toBe(true);
+    expect(env.getMaterials()[0]?.kind).toBe("pptx");
+    expect(env.getMaterials()[0]?.status).toBe("uploading");
+  });
 });
 
 describe("material complete", () => {

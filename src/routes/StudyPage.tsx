@@ -16,6 +16,7 @@ import {
   type CardDraftView,
   type StudyRating,
 } from "../api/client";
+import { loadDueCache, saveDueCache } from "../study/dueCache";
 
 /** Study session: reveal answer, grade with FSRS (keys 1-4). Code-led MUI. */
 export default function StudyPage() {
@@ -24,11 +25,25 @@ export default function StudyPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
+  const [offlineCopy, setOfflineCopy] = useState(false);
 
   const load = useCallback(async () => {
-    const due = await listDueCards();
-    setQueue(due);
-    setRevealed(false);
+    try {
+      const due = await listDueCards();
+      saveDueCache(due);
+      setQueue(due);
+      setOfflineCopy(false);
+      setRevealed(false);
+    } catch (err) {
+      const cached = loadDueCache();
+      if (cached && cached.cards.length > 0) {
+        setQueue(cached.cards);
+        setOfflineCopy(true);
+        setRevealed(false);
+        return;
+      }
+      throw err;
+    }
   }, []);
 
   useEffect(() => {
@@ -126,6 +141,12 @@ export default function StudyPage() {
         </Stack>
 
         {error ? <Alert severity="error">{error}</Alert> : null}
+        {offlineCopy ? (
+          <Alert severity="warning">
+            Showing an offline copy of due cards. Grading still needs a network
+            connection.
+          </Alert>
+        ) : null}
 
         {!current ? (
           <Alert severity="success">
@@ -146,7 +167,15 @@ export default function StudyPage() {
               </Typography>
               <Chip
                 size="small"
-                label={current.type === "cloze" ? "Cloze" : "Q&A"}
+                label={
+                  current.type === "cloze"
+                    ? "Cloze"
+                    : current.type === "image_label"
+                      ? "Image label"
+                      : current.type === "diagram"
+                        ? "Diagram"
+                        : "Q&A"
+                }
                 color="secondary"
                 variant="outlined"
               />
@@ -155,6 +184,7 @@ export default function StudyPage() {
             <CardFace
               front={String(current.front)}
               back={String(current.back)}
+              mediaR2Keys={current.media_r2_keys}
               revealed={revealed}
               onReveal={() => setRevealed(true)}
               disabled={busy}

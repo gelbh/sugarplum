@@ -18,6 +18,7 @@
     "@mui/material": "^7.3.4",
     "aws4fetch": "^1.0.20",
     "hono": "^4.9.12",
+    "jszip": "^3.10.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "ts-fsrs": "^5.2.3",
@@ -27,6 +28,7 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.13.12",
     "@cloudflare/workers-types": "^5.20261026.1",
+    "@types/jszip": "^3.4.0",
     "@types/node": "^24.9.1",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",

@@ -17,11 +17,13 @@ import {
   listDecks,
   me,
   pasteMaterial,
-  uploadPdf,
+  uploadMaterialFile,
   type Deck,
 } from "../api/client";
 
-const MAX_PDF_BYTES = 25 * 1024 * 1024;
+const MAX_FILE_BYTES = 25 * 1024 * 1024;
+const PPTX_MIME =
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation";
 
 export default function LibraryPage() {
   const [decks, setDecks] = useState<Deck[]>([]);
@@ -29,7 +31,7 @@ export default function LibraryPage() {
   const [selectedDeckId, setSelectedDeckId] = useState("");
   const [pasteText, setPasteText] = useState("");
   const [filename, setFilename] = useState("");
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -106,7 +108,7 @@ export default function LibraryPage() {
     }
   }
 
-  async function onUploadPdf(e: FormEvent) {
+  async function onUploadFile(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setNotice(null);
@@ -114,28 +116,45 @@ export default function LibraryPage() {
       setError("Select a deck first");
       return;
     }
-    if (!pdfFile) {
-      setError("Choose a PDF file");
+    if (!uploadFile) {
+      setError("Choose a PDF, PPTX, or image file");
       return;
     }
-    if (pdfFile.type && pdfFile.type !== "application/pdf") {
-      setError("Only PDF files are allowed");
+    const type = uploadFile.type;
+    const name = uploadFile.name.toLowerCase();
+    const okType =
+      type === "application/pdf" ||
+      type === PPTX_MIME ||
+      type === "image/jpeg" ||
+      type === "image/png" ||
+      type === "image/webp" ||
+      name.endsWith(".pdf") ||
+      name.endsWith(".pptx") ||
+      name.endsWith(".jpg") ||
+      name.endsWith(".jpeg") ||
+      name.endsWith(".png") ||
+      name.endsWith(".webp");
+    if (!okType) {
+      setError("Only PDF, PPTX, or image (jpeg/png/webp) files are allowed");
       return;
     }
-    if (pdfFile.size > MAX_PDF_BYTES) {
-      setError("PDF must be 25MB or smaller");
+    if (uploadFile.size > MAX_FILE_BYTES) {
+      setError("File must be 25MB or smaller");
       return;
     }
     setBusy(true);
     try {
-      const material = await uploadPdf(selectedDeckId, pdfFile);
-      setPdfFile(null);
-      // PDF text extract is not implemented yet; store only (do not claim cards ready).
-      setNotice(
-        `Stored PDF (${material.status}). Text extraction is not ready yet — use paste for generation.`,
-      );
+      const material = await uploadMaterialFile(selectedDeckId, uploadFile);
+      setUploadFile(null);
+      if (material.jobId) {
+        window.location.assign(
+          `/jobs/${encodeURIComponent(material.jobId)}/drafts`,
+        );
+        return;
+      }
+      setNotice(`Stored file (${material.status}).`);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not upload PDF");
+      setError(err instanceof ApiError ? err.message : "Could not upload file");
     } finally {
       setBusy(false);
     }
@@ -155,7 +174,7 @@ export default function LibraryPage() {
         Library
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Create decks, paste notes, or upload PDFs as materials.
+        Create decks, paste notes, or upload PDF, PPTX, or image materials.
       </Typography>
 
       <Stack spacing={4}>
@@ -247,15 +266,15 @@ export default function LibraryPage() {
           </Stack>
         </Box>
 
-        <Box component="form" onSubmit={onUploadPdf} noValidate>
+        <Box component="form" onSubmit={onUploadFile} noValidate>
           <Stack spacing={2}>
             <Typography variant="h6" component="h2">
-              Upload PDF
+              Upload file
             </Typography>
             <FormControl fullWidth disabled={decks.length === 0}>
-              <InputLabel id="pdf-deck-select-label">Deck</InputLabel>
+              <InputLabel id="file-deck-select-label">Deck</InputLabel>
               <Select
-                labelId="pdf-deck-select-label"
+                labelId="file-deck-select-label"
                 label="Deck"
                 value={selectedDeckId}
                 onChange={(ev) => setSelectedDeckId(ev.target.value)}
@@ -272,27 +291,27 @@ export default function LibraryPage() {
               component="label"
               disabled={busy || decks.length === 0}
             >
-              {pdfFile ? pdfFile.name : "Choose PDF"}
+              {uploadFile ? uploadFile.name : "Choose PDF, PPTX, or image"}
               <input
                 type="file"
-                accept="application/pdf,.pdf"
+                accept="application/pdf,.pdf,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
                 hidden
                 onChange={(ev) => {
                   const file = ev.target.files?.[0] ?? null;
-                  setPdfFile(file);
+                  setUploadFile(file);
                 }}
               />
             </Button>
             <Typography variant="caption" color="text.secondary">
-              PDF only, max 25MB. Stored for later; flashcard generation from PDF
-              text is not available yet (use paste).
+              PDF, PPTX, or image (jpeg/png/webp), max 25MB. Upload starts
+              generation when complete.
             </Typography>
             <Button
               type="submit"
               variant="contained"
-              disabled={busy || decks.length === 0 || !pdfFile}
+              disabled={busy || decks.length === 0 || !uploadFile}
             >
-              {busy ? "Uploading…" : "Upload PDF"}
+              {busy ? "Uploading…" : "Upload file"}
             </Button>
           </Stack>
         </Box>

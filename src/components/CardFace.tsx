@@ -3,6 +3,7 @@ import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
+import { mediaUrl } from "../api/client";
 
 type Props = {
   front: string;
@@ -10,6 +11,7 @@ type Props = {
   revealed: boolean;
   onReveal: () => void;
   disabled?: boolean;
+  mediaR2Keys?: string[];
 };
 
 /** Front (and optional back) of a study card. */
@@ -19,9 +21,27 @@ export default function CardFace({
   revealed,
   onReveal,
   disabled,
+  mediaR2Keys = [],
 }: Props) {
+  const imageKey = mediaR2Keys[0];
+
   return (
     <Paper variant="outlined" sx={{ p: 3 }}>
+      {imageKey ? (
+        <Box
+          component="img"
+          src={mediaUrl(imageKey)}
+          alt="Card media"
+          sx={{
+            display: "block",
+            width: "100%",
+            maxHeight: "40vh",
+            objectFit: "contain",
+            mb: 2,
+            borderRadius: 1,
+          }}
+        />
+      ) : null}
       <Typography variant="overline" color="text.secondary">
         Front
       </Typography>

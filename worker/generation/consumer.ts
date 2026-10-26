@@ -2,6 +2,7 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { decryptSecret } from "../crypto/secrets";
 import { extractPdfText } from "../materials/extract-pdf";
+import { extractPptxText } from "../materials/extract-pptx";
 import type { GenerateQueueMessage } from "./enqueue";
 import { createLlmAdapter, parseLlmProvider, type LlmAdapter } from "./llm";
 import type { CardDraft } from "./schema";
@@ -69,9 +70,31 @@ async function extractMaterialText(
     return extractPdfText(bytes);
   }
 
+  if (material.kind === "pptx") {
+    const bytes = await obj.arrayBuffer();
+    return extractPptxText(bytes);
+  }
+
   throw new Error(
     `Unsupported material kind for generation: ${material.kind}`,
   );
+}
+
+function mimeFromR2Key(r2Key: string): string {
+  const lower = r2Key.toLowerCase();
+  if (lower.endsWith(".png")) return "image/png";
+  if (lower.endsWith(".webp")) return "image/webp";
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+  return "image/jpeg";
+}
+
+function bytesToBase64(bytes: ArrayBuffer): string {
+  const arr = new Uint8Array(bytes);
+  let binary = "";
+  for (let i = 0; i < arr.length; i++) {
+    binary += String.fromCharCode(arr[i]!);
+  }
+  return btoa(binary);
 }
 
 async function insertDraftCards(
@@ -80,9 +103,14 @@ async function insertDraftCards(
     deckId: string;
     jobId: string;
     drafts: CardDraft[];
+    mediaR2Keys: string[] | null;
   },
 ): Promise<void> {
   const now = new Date().toISOString();
+  const mediaJson =
+    args.mediaR2Keys && args.mediaR2Keys.length > 0
+      ? JSON.stringify(args.mediaR2Keys)
+      : null;
   for (const draft of args.drafts) {
     const id = newId();
     await db
@@ -99,7 +127,7 @@ async function insertDraftCards(
         draft.type,
         JSON.stringify(draft.front),
         JSON.stringify(draft.back),
-        null,
+        mediaJson,
         JSON.stringify(draft.provenance),
         "draft",
         now,
@@ -166,27 +194,60 @@ export async function processGenerateJob(
     }
 
     const apiKey = await decryptSecret(secret.ciphertext, wrapKey);
-    const text = await extractMaterialText(env, material);
-    if (!text.trim()) {
-      throw new Error("Extracted material text is empty");
-    }
-
     const provider = parseLlmProvider(secret.provider);
     const llm = opts?.llm ?? createLlmAdapter(provider);
-    const drafts = await llm.generateDrafts({
-      text,
-      apiKey,
-      provider,
-    });
 
-    await insertDraftCards(db, { deckId, jobId, drafts });
+    let drafts: CardDraft[];
+    let mediaR2Keys: string[] | null = null;
+
+    if (material.kind === "image") {
+      if (!material.r2_key) {
+        throw new Error("Image material has no R2 object");
+      }
+      const obj = await env.MATERIALS.get(material.r2_key);
+      if (!obj) {
+        throw new Error(`R2 object missing: ${material.r2_key}`);
+      }
+      const bytes = await obj.arrayBuffer();
+      drafts = await llm.generateDrafts({
+        text: "",
+        apiKey,
+        provider,
+        image: {
+          mimeType: mimeFromR2Key(material.r2_key),
+          base64: bytesToBase64(bytes),
+        },
+      });
+      mediaR2Keys = [material.r2_key];
+    } else {
+      const text = await extractMaterialText(env, material);
+      if (!text.trim()) {
+        throw new Error("Extracted material text is empty");
+      }
+      drafts = await llm.generateDrafts({
+        text,
+        apiKey,
+        provider,
+      });
+    }
+
+    await insertDraftCards(db, { deckId, jobId, drafts, mediaR2Keys });
+
+    const covered = drafts.map(
+      (d) => d.provenance.excerpt.slice(0, 80) || d.front.slice(0, 80),
+    );
+    const coverageJson = JSON.stringify({
+      covered,
+      gaps: [] as string[],
+      draft_count: drafts.length,
+    });
 
     const finishedAt = new Date().toISOString();
     await db
       .prepare(
-        "UPDATE generation_jobs SET status = ?, error = NULL, finished_at = ? WHERE id = ?",
+        "UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = ?, finished_at = ? WHERE id = ?",
       )
-      .bind("needs_review", finishedAt, jobId)
+      .bind("needs_review", coverageJson, finishedAt, jobId)
       .run();
   } catch (err) {
     const messageText =

@@ -25,7 +25,7 @@ export const ProvenanceSchema = z.object({
 
 export const CardDraftSchema = z
   .object({
-    type: z.enum(["qa", "cloze"]),
+    type: z.enum(["qa", "cloze", "image_label", "diagram"]),
     front: z.string().min(1),
     back: z.string().min(1),
     provenance: ProvenanceSchema,

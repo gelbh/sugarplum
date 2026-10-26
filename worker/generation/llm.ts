@@ -2,7 +2,12 @@ import {
   parseCardDrafts,
   type CardDraft,
 } from "./schema";
-import { GENERATE_SYSTEM_PROMPT, generateUserPrompt } from "./prompts";
+import {
+  GENERATE_SYSTEM_PROMPT,
+  IMAGE_GENERATE_SYSTEM_PROMPT,
+  generateImageUserPrompt,
+  generateUserPrompt,
+} from "./prompts";
 
 /** User-selectable BYO providers (Settings + Secrets). */
 export const USER_LLM_PROVIDERS = ["openai", "anthropic", "google"] as const;
@@ -12,10 +17,17 @@ export type UserLlmProvider = (typeof USER_LLM_PROVIDERS)[number];
 export const LLM_PROVIDERS = [...USER_LLM_PROVIDERS, "mock"] as const;
 export type LlmProvider = (typeof LLM_PROVIDERS)[number];
 
+export type GenerateImageInput = {
+  mimeType: string;
+  base64: string;
+};
+
 export type GenerateDraftsInput = {
   text: string;
   apiKey: string;
   provider: string;
+  /** When set, run vision/image card generation instead of text Q&A/cloze. */
+  image?: GenerateImageInput;
 };
 
 export type LlmAdapter = {
@@ -56,10 +68,32 @@ export function providerRequestUrl(provider: LlmProvider): string {
   }
 }
 
-/** Fixed 2 QA + 1 cloze for tests (no network). */
+/** Fixed drafts for tests (no network). */
 export function mockLlmAdapter(): LlmAdapter {
   return {
-    async generateDrafts({ text }) {
+    async generateDrafts({ text, image }) {
+      if (image) {
+        return parseCardDrafts([
+          {
+            type: "image_label",
+            front: "What structure is highlighted in this image?",
+            back: "The labelled anatomical or diagram structure.",
+            provenance: {
+              pages: [1],
+              excerpt: "image region under study",
+            },
+          },
+          {
+            type: "diagram",
+            front: "How do the labelled parts relate spatially?",
+            back: "Describe the adjacency or flow shown in the diagram.",
+            provenance: {
+              pages: [1],
+              excerpt: "diagram spatial relation",
+            },
+          },
+        ]);
+      }
       const excerpt = text.slice(0, 120) || "source excerpt";
       return parseCardDrafts([
         {
@@ -87,6 +121,14 @@ export function mockLlmAdapter(): LlmAdapter {
 
 function userPromptForJson(text: string): string {
   return `${generateUserPrompt(text)}\n\nReturn JSON as {"cards":[...]}`;
+}
+
+function imagePromptForJson(): string {
+  return `${generateImageUserPrompt()}\n\nReturn JSON as {"cards":[...]}`;
+}
+
+function systemPromptFor(input: GenerateDraftsInput): string {
+  return input.image ? IMAGE_GENERATE_SYSTEM_PROMPT : GENERATE_SYSTEM_PROMPT;
 }
 
 function parseCardsPayload(content: string): CardDraft[] {
@@ -121,8 +163,20 @@ async function readErrorDetail(res: Response): Promise<string> {
 
 function openAiAdapter(): LlmAdapter {
   return {
-    async generateDrafts({ text, apiKey }) {
+    async generateDrafts(input) {
+      const { text, apiKey, image } = input;
       const url = providerRequestUrl("openai");
+      const userContent = image
+        ? [
+            { type: "text", text: imagePromptForJson() },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:${image.mimeType};base64,${image.base64}`,
+              },
+            },
+          ]
+        : userPromptForJson(text);
       const res = await fetch(url, {
         method: "POST",
         headers: {
@@ -134,8 +188,8 @@ function openAiAdapter(): LlmAdapter {
           temperature: 0.3,
           response_format: { type: "json_object" },
           messages: [
-            { role: "system", content: GENERATE_SYSTEM_PROMPT },
-            { role: "user", content: userPromptForJson(text) },
+            { role: "system", content: systemPromptFor(input) },
+            { role: "user", content: userContent },
           ],
         }),
       });
@@ -158,8 +212,22 @@ function openAiAdapter(): LlmAdapter {
 
 function anthropicAdapter(): LlmAdapter {
   return {
-    async generateDrafts({ text, apiKey }) {
+    async generateDrafts(input) {
+      const { text, apiKey, image } = input;
       const url = providerRequestUrl("anthropic");
+      const userContent = image
+        ? [
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: image.mimeType,
+                data: image.base64,
+              },
+            },
+            { type: "text", text: imagePromptForJson() },
+          ]
+        : userPromptForJson(text);
       const res = await fetch(url, {
         method: "POST",
         headers: {
@@ -171,8 +239,8 @@ function anthropicAdapter(): LlmAdapter {
           model: "claude-3-5-haiku-latest",
           max_tokens: 4096,
           temperature: 0.3,
-          system: GENERATE_SYSTEM_PROMPT,
-          messages: [{ role: "user", content: userPromptForJson(text) }],
+          system: systemPromptFor(input),
+          messages: [{ role: "user", content: userContent }],
         }),
       });
 
@@ -195,8 +263,20 @@ function anthropicAdapter(): LlmAdapter {
 
 function googleAdapter(): LlmAdapter {
   return {
-    async generateDrafts({ text, apiKey }) {
+    async generateDrafts(input) {
+      const { text, apiKey, image } = input;
       const url = providerRequestUrl("google");
+      const parts = image
+        ? [
+            { text: imagePromptForJson() },
+            {
+              inlineData: {
+                mimeType: image.mimeType,
+                data: image.base64,
+              },
+            },
+          ]
+        : [{ text: userPromptForJson(text) }];
       const res = await fetch(url, {
         method: "POST",
         headers: {
@@ -204,10 +284,10 @@ function googleAdapter(): LlmAdapter {
           "x-goog-api-key": apiKey,
         },
         body: JSON.stringify({
-          systemInstruction: { parts: [{ text: GENERATE_SYSTEM_PROMPT }] },
-          contents: [
-            { role: "user", parts: [{ text: userPromptForJson(text) }] },
-          ],
+          systemInstruction: {
+            parts: [{ text: systemPromptFor(input) }],
+          },
+          contents: [{ role: "user", parts }],
           generationConfig: {
             temperature: 0.3,
             responseMimeType: "application/json",

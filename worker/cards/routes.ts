@@ -27,7 +27,7 @@ const PatchDraftSchema = z
   .object({
     front: z.string().min(1).optional(),
     back: z.string().min(1).optional(),
-    type: z.enum(["qa", "cloze"]).optional(),
+    type: z.enum(["qa", "cloze", "image_label", "diagram"]).optional(),
   })
   .refine(
     (body) =>
@@ -54,6 +54,9 @@ export function serializeCard(row: CardRow) {
     type: row.type,
     front: parseJsonField(row.front_json, row.front_json),
     back: parseJsonField(row.back_json, row.back_json),
+    media_r2_keys: row.media_r2_keys_json
+      ? parseJsonField<string[]>(row.media_r2_keys_json, [])
+      : [],
     provenance: row.provenance_json
       ? parseJsonField(row.provenance_json, null)
       : null,

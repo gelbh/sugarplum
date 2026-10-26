@@ -53,12 +53,35 @@ export default function DraftReviewPage() {
   const [ready, setReady] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [statusLine, setStatusLine] = useState<string | null>(null);
+  const [coverage, setCoverage] = useState<{
+    covered: string[];
+    gaps: string[];
+    draft_count?: number;
+  } | null>(null);
 
   const load = useCallback(async (id: string) => {
-    const list = await listJobDrafts(id);
+    const [list, job] = await Promise.all([listJobDrafts(id), getJob(id)]);
     setDrafts(list);
     setIndex(0);
     setDirty(false);
+    if (job.coverage_json) {
+      try {
+        const parsed = JSON.parse(job.coverage_json) as {
+          covered?: string[];
+          gaps?: string[];
+          draft_count?: number;
+        };
+        setCoverage({
+          covered: Array.isArray(parsed.covered) ? parsed.covered : [],
+          gaps: Array.isArray(parsed.gaps) ? parsed.gaps : [],
+          draft_count: parsed.draft_count,
+        });
+      } catch {
+        setCoverage(null);
+      }
+    } else {
+      setCoverage(null);
+    }
   }, []);
 
   useEffect(() => {
@@ -206,6 +229,28 @@ export default function DraftReviewPage() {
         {error ? <Alert severity="error">{error}</Alert> : null}
         {notice ? <Alert severity="success">{notice}</Alert> : null}
 
+        {coverage ? (
+          <Alert severity="info">
+            Coverage: {coverage.covered.length} concept
+            {coverage.covered.length === 1 ? "" : "s"} covered
+            {coverage.gaps.length > 0
+              ? ` · ${coverage.gaps.length} gap${coverage.gaps.length === 1 ? "" : "s"}`
+              : ""}
+            {coverage.draft_count != null
+              ? ` · ${coverage.draft_count} drafts`
+              : ""}
+            {coverage.covered.length > 0 ? (
+              <Box component="ul" sx={{ m: 0, mt: 1, pl: 2 }}>
+                {coverage.covered.slice(0, 5).map((item) => (
+                  <Typography component="li" key={item} variant="caption">
+                    {item}
+                  </Typography>
+                ))}
+              </Box>
+            ) : null}
+          </Alert>
+        ) : null}
+
         {!current ? (
           <Alert severity="info">
             No drafts left for this job.{" "}
@@ -224,7 +269,15 @@ export default function DraftReviewPage() {
               </Typography>
               <Chip
                 size="small"
-                label={current.type === "cloze" ? "Cloze" : "Q&A"}
+                label={
+                  current.type === "cloze"
+                    ? "Cloze"
+                    : current.type === "image_label"
+                      ? "Image label"
+                      : current.type === "diagram"
+                        ? "Diagram"
+                        : "Q&A"
+                }
                 color="secondary"
                 variant="outlined"
               />

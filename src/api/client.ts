@@ -47,7 +47,11 @@ export async function api<T>(
   return (await res.json()) as T;
 }
 
-export type AuthUser = { id: string; email: string };
+export type AuthUser = {
+  id: string;
+  email: string;
+  google_linked?: boolean;
+};
 
 export function register(email: string, password: string) {
   return api<AuthUser>("/api/auth/register", {
@@ -132,7 +136,7 @@ export type UploadUrlResponse = {
   r2Key: string;
 };
 
-export function requestPdfUploadUrl(
+export function requestMaterialUploadUrl(
   deckId: string,
   body: { filename: string; contentType: string; size: number },
 ) {
@@ -140,6 +144,14 @@ export function requestPdfUploadUrl(
     method: "POST",
     json: body,
   });
+}
+
+/** @deprecated Prefer requestMaterialUploadUrl */
+export function requestPdfUploadUrl(
+  deckId: string,
+  body: { filename: string; contentType: string; size: number },
+) {
+  return requestMaterialUploadUrl(deckId, body);
 }
 
 export type CompleteMaterialResponse = Material & { jobId: string | null };
@@ -177,9 +189,10 @@ export type CardDraftView = {
   id: string;
   deck_id: string;
   job_id: string | null;
-  type: "qa" | "cloze" | string;
+  type: "qa" | "cloze" | "image_label" | "diagram" | string;
   front: string;
   back: string;
+  media_r2_keys?: string[];
   provenance: unknown;
   status: string;
   created_at: string;
@@ -187,13 +200,22 @@ export type CardDraftView = {
   due?: string;
 };
 
+/** Session-gated media URL for an owned R2 object key. */
+export function mediaUrl(r2Key: string): string {
+  return `/api/materials/media?key=${encodeURIComponent(r2Key)}`;
+}
+
 export function listJobDrafts(jobId: string) {
   return api<CardDraftView[]>(`/api/jobs/${jobId}/drafts`);
 }
 
 export function patchCard(
   cardId: string,
-  body: { front?: string; back?: string; type?: "qa" | "cloze" },
+  body: {
+    front?: string;
+    back?: string;
+    type?: "qa" | "cloze" | "image_label" | "diagram";
+  },
 ) {
   return api<CardDraftView>(`/api/cards/${cardId}`, {
     method: "PATCH",
@@ -224,25 +246,51 @@ export function reviewCard(cardId: string, rating: StudyRating) {
   });
 }
 
-/** Request signed URL, PUT the PDF to R2, then mark ready / enqueue generation. */
-export async function uploadPdf(deckId: string, file: File): Promise<CompleteMaterialResponse> {
-  const { materialId, uploadUrl } = await requestPdfUploadUrl(deckId, {
-    filename: file.name || "upload.pdf",
-    contentType: "application/pdf",
+const PPTX_MIME =
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+
+function resolveUploadContentType(file: File): string {
+  if (file.type) return file.type;
+  const name = file.name.toLowerCase();
+  if (name.endsWith(".pdf")) return "application/pdf";
+  if (name.endsWith(".pptx")) return PPTX_MIME;
+  if (name.endsWith(".png")) return "image/png";
+  if (name.endsWith(".webp")) return "image/webp";
+  if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";
+  return "application/octet-stream";
+}
+
+/** Request signed URL, PUT the file to R2, then mark ready / enqueue generation. */
+export async function uploadMaterialFile(
+  deckId: string,
+  file: File,
+): Promise<CompleteMaterialResponse> {
+  const contentType = resolveUploadContentType(file);
+  const { materialId, uploadUrl } = await requestMaterialUploadUrl(deckId, {
+    filename: file.name || "upload.bin",
+    contentType,
     size: file.size,
   });
 
   const putRes = await fetch(uploadUrl, {
     method: "PUT",
     headers: {
-      "Content-Type": "application/pdf",
+      "Content-Type": contentType,
       "Content-Length": String(file.size),
     },
     body: file,
   });
   if (!putRes.ok) {
-    throw new ApiError(putRes.status, "Failed to upload PDF to storage");
+    throw new ApiError(putRes.status, "Failed to upload file to storage");
   }
 
   return completeMaterial(materialId);
+}
+
+/** @deprecated Prefer uploadMaterialFile */
+export async function uploadPdf(
+  deckId: string,
+  file: File,
+): Promise<CompleteMaterialResponse> {
+  return uploadMaterialFile(deckId, file);
 }
