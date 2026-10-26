@@ -71,6 +71,34 @@ export default function DraftReviewPage() {
     return list;
   }, []);
 
+  const refreshJourney = useCallback(async (id: string, draftCount: number) => {
+    try {
+      const journey = await getJourney();
+      const derived = deriveJourney(journey);
+      if (draftCount > 0) {
+        derived.collapsed = false;
+        derived.next = {
+          label: "Review drafts",
+          href: `/jobs/${id}/drafts`,
+          action: "review",
+        };
+        derived.stages = derived.stages.map((s) => ({
+          ...s,
+          active: s.id === "review",
+        }));
+      }
+      setJourneyError(null);
+      setView(derived);
+    } catch (err) {
+      setView(null);
+      setJourneyError(
+        err instanceof ApiError
+          ? err.message
+          : "Could not load journey progress",
+      );
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -86,36 +114,7 @@ export default function DraftReviewPage() {
         if (cancelled) return;
         setStatusLine(null);
         const list = await load(jobId);
-        // derive journey view and apply a job-local override when drafts exist
-        try {
-          const journey = await getJourney();
-          const derived = deriveJourney(journey);
-          if (list && list.length > 0) {
-            derived.collapsed = false;
-            derived.next = {
-              label: "Review drafts",
-              href: `/jobs/${jobId}/drafts`,
-              action: "review",
-            };
-            derived.stages = derived.stages.map((s) => ({
-              ...s,
-              active: s.id === "review",
-            }));
-          }
-          if (!cancelled) {
-            setJourneyError(null);
-            setView(derived);
-          }
-        } catch (err) {
-          if (!cancelled) {
-            setView(null);
-            setJourneyError(
-              err instanceof ApiError
-                ? err.message
-                : "Could not load journey progress",
-            );
-          }
-        }
+        if (!cancelled) await refreshJourney(jobId, list.length);
         if (!cancelled) setReady(true);
       } catch (err) {
         if (cancelled) return;
@@ -133,7 +132,7 @@ export default function DraftReviewPage() {
     return () => {
       cancelled = true;
     };
-  }, [jobId, load]);
+  }, [jobId, load, refreshJourney]);
 
   const current = drafts[index] ?? null;
 
@@ -184,7 +183,8 @@ export default function DraftReviewPage() {
         });
       }
       await acceptCard(current.id);
-      await load(jobId);
+      const list = await load(jobId);
+      await refreshJourney(jobId, list.length);
       setNotice("Card accepted into study");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not accept");
@@ -200,7 +200,8 @@ export default function DraftReviewPage() {
     setBusy(true);
     try {
       await rejectCard(current.id);
-      await load(jobId);
+      const list = await load(jobId);
+      await refreshJourney(jobId, list.length);
       setNotice("Card rejected");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not reject");

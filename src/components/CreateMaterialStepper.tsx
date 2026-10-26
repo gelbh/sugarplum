@@ -33,6 +33,7 @@ type Props = {
   setActiveStep: (n: number) => void;
   focusTitle?: boolean;
   onFocusedTitleHandled?: () => void;
+  onChanged?: () => void | Promise<void>;
 };
 
 const MAX_PDF_BYTES = 25 * 1024 * 1024;
@@ -44,6 +45,7 @@ export default function CreateMaterialStepper({
   setActiveStep,
   focusTitle,
   onFocusedTitleHandled,
+  onChanged,
 }: Props) {
   const [title, setTitle] = useState("");
   const [selectedDeckId, setSelectedDeckId] = useState("");
@@ -59,7 +61,9 @@ export default function CreateMaterialStepper({
   const titleRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    if (decks[0]) setSelectedDeckId(decks[0].id);
+    setSelectedDeckId((prev) =>
+      prev && decks.some((d) => d.id === prev) ? prev : (decks[0]?.id ?? ""),
+    );
   }, [decks]);
 
   useEffect(() => {
@@ -83,8 +87,8 @@ export default function CreateMaterialStepper({
       setSelectedDeckId(deck.id);
       setTitle("");
       setNotice(`Created “${deck.title}”`);
-      // move to material step
       setActiveStep(1);
+      await onChanged?.();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not create deck");
     } finally {

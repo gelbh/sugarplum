@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
@@ -26,17 +26,30 @@ export default function LibraryPage() {
   const [activeStep, setActiveStep] = useState(0);
   const [focusTitle, setFocusTitle] = useState(false);
 
+  const refreshJourney = useCallback(async () => {
+    try {
+      const journey = await getJourney();
+      setView(deriveJourney(journey));
+    } catch {
+      setView(null);
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         await me();
         const list = await listDecks();
-        const journey = await getJourney();
         if (cancelled) return;
         setDecks(list);
-        setView(deriveJourney(journey));
         setReady(true);
+        try {
+          const journey = await getJourney();
+          if (!cancelled) setView(deriveJourney(journey));
+        } catch {
+          if (!cancelled) setView(null);
+        }
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
@@ -116,6 +129,7 @@ export default function LibraryPage() {
             setActiveStep={setActiveStep}
             focusTitle={focusTitle}
             onFocusedTitleHandled={() => setFocusTitle(false)}
+            onChanged={refreshJourney}
           />
         </Stack>
 

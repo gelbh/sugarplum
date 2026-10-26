@@ -25,11 +25,15 @@ export default function TodayPage() {
       try {
         await me();
         const due = await listDueCards();
-        const journey = await getJourney();
         if (cancelled) return;
         setDueCount(due.length);
-        setView(deriveJourney(journey));
         setReady(true);
+        try {
+          const journey = await getJourney();
+          if (!cancelled) setView(deriveJourney(journey));
+        } catch {
+          if (!cancelled) setView(null);
+        }
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
@@ -53,6 +57,11 @@ export default function TodayPage() {
     );
   }
 
+  const showJourneyNext =
+    dueCount === 0 &&
+    view != null &&
+    view.next.href !== "/today";
+
   return (
     <Container maxWidth="sm" sx={{ py: 6 }}>
       <Stack spacing={3}>
@@ -72,12 +81,27 @@ export default function TodayPage() {
 
         <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
           {dueCount > 0 ? (
-            <Button variant="contained" href="/study" startIcon={<PlayArrowIcon />} disabled={dueCount === 0}>
+            <Button
+              variant="contained"
+              href="/study"
+              startIcon={<PlayArrowIcon />}
+            >
               Start study
             </Button>
-          ) : view ? (
+          ) : showJourneyNext ? (
             <Box sx={{ ml: "auto" }}>
-              <JourneyNextButton view={view} />
+              <JourneyNextButton
+                view={view}
+                onAction={(action) => {
+                  if (
+                    action === "create_deck" ||
+                    action === "add_material" ||
+                    action === "add_more"
+                  ) {
+                    window.location.assign("/library");
+                  }
+                }}
+              />
             </Box>
           ) : (
             <Button variant="contained" href="/study" disabled>
@@ -91,8 +115,6 @@ export default function TodayPage() {
             Settings
           </Button>
         </Stack>
-
-        {/* sign in / register handled by AppShell; removed from Today page */}
       </Stack>
     </Container>
   );
