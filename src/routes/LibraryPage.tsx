@@ -17,8 +17,11 @@ import {
   listDecks,
   me,
   pasteMaterial,
+  uploadPdf,
   type Deck,
 } from "../api/client";
+
+const MAX_PDF_BYTES = 25 * 1024 * 1024;
 
 export default function LibraryPage() {
   const [decks, setDecks] = useState<Deck[]>([]);
@@ -26,6 +29,7 @@ export default function LibraryPage() {
   const [selectedDeckId, setSelectedDeckId] = useState("");
   const [pasteText, setPasteText] = useState("");
   const [filename, setFilename] = useState("");
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -98,6 +102,38 @@ export default function LibraryPage() {
     }
   }
 
+  async function onUploadPdf(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setNotice(null);
+    if (!selectedDeckId) {
+      setError("Select a deck first");
+      return;
+    }
+    if (!pdfFile) {
+      setError("Choose a PDF file");
+      return;
+    }
+    if (pdfFile.type && pdfFile.type !== "application/pdf") {
+      setError("Only PDF files are allowed");
+      return;
+    }
+    if (pdfFile.size > MAX_PDF_BYTES) {
+      setError("PDF must be 25MB or smaller");
+      return;
+    }
+    setBusy(true);
+    try {
+      const material = await uploadPdf(selectedDeckId, pdfFile);
+      setPdfFile(null);
+      setNotice(`Uploaded PDF (${material.status}); generation queued`);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not upload PDF");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (!ready) {
     return (
       <Container maxWidth="sm" sx={{ py: 6 }}>
@@ -112,7 +148,7 @@ export default function LibraryPage() {
         Library
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Create decks and paste study notes as materials.
+        Create decks, paste notes, or upload PDFs as materials.
       </Typography>
 
       <Stack spacing={4}>
@@ -200,6 +236,55 @@ export default function LibraryPage() {
               disabled={busy || decks.length === 0 || !pasteText.trim()}
             >
               {busy ? "Saving…" : "Save paste"}
+            </Button>
+          </Stack>
+        </Box>
+
+        <Box component="form" onSubmit={onUploadPdf} noValidate>
+          <Stack spacing={2}>
+            <Typography variant="h6" component="h2">
+              Upload PDF
+            </Typography>
+            <FormControl fullWidth disabled={decks.length === 0}>
+              <InputLabel id="pdf-deck-select-label">Deck</InputLabel>
+              <Select
+                labelId="pdf-deck-select-label"
+                label="Deck"
+                value={selectedDeckId}
+                onChange={(ev) => setSelectedDeckId(ev.target.value)}
+              >
+                {decks.map((d) => (
+                  <MenuItem key={d.id} value={d.id}>
+                    {d.title}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Button
+              variant="outlined"
+              component="label"
+              disabled={busy || decks.length === 0}
+            >
+              {pdfFile ? pdfFile.name : "Choose PDF"}
+              <input
+                type="file"
+                accept="application/pdf,.pdf"
+                hidden
+                onChange={(ev) => {
+                  const file = ev.target.files?.[0] ?? null;
+                  setPdfFile(file);
+                }}
+              />
+            </Button>
+            <Typography variant="caption" color="text.secondary">
+              PDF only, max 25MB. Uploads go directly to storage via a signed URL.
+            </Typography>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={busy || decks.length === 0 || !pdfFile}
+            >
+              {busy ? "Uploading…" : "Upload PDF"}
             </Button>
           </Stack>
         </Box>

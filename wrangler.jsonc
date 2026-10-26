@@ -1,7 +1,8 @@
 /**
  * Sugarplum Worker config.
  * Binding IDs below are placeholders until `wrangler` create succeeds against a Cloudflare account.
- * Secrets (set via `wrangler secret put`): SESSION_SECRET, SECRETS_WRAP_KEY
+ * Secrets (set via `wrangler secret put`): SESSION_SECRET, SECRETS_WRAP_KEY,
+ * R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
@@ -13,7 +14,9 @@
 	},
 	"upload_source_maps": true,
 	"vars": {
-		"APP_URL": "https://sugarplum.gelbhart.dev"
+		"APP_URL": "https://sugarplum.gelbhart.dev",
+		"R2_ACCOUNT_ID": "REPLACE_WITH_CLOUDFLARE_ACCOUNT_ID",
+		"R2_BUCKET_NAME": "sugarplum-materials"
 	},
 	"d1_databases": [
 		{

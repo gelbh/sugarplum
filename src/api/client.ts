@@ -109,3 +109,47 @@ export function pasteMaterial(
     json: body,
   });
 }
+
+export type UploadUrlResponse = {
+  materialId: string;
+  uploadUrl: string;
+  r2Key: string;
+};
+
+export function requestPdfUploadUrl(
+  deckId: string,
+  body: { filename: string; contentType: string; size: number },
+) {
+  return api<UploadUrlResponse>(`/api/decks/${deckId}/materials/upload-url`, {
+    method: "POST",
+    json: body,
+  });
+}
+
+export type CompleteMaterialResponse = Material & { jobId: string | null };
+
+export function completeMaterial(materialId: string) {
+  return api<CompleteMaterialResponse>(`/api/materials/${materialId}/complete`, {
+    method: "POST",
+  });
+}
+
+/** Request signed URL, PUT the PDF to R2, then mark ready / enqueue generation. */
+export async function uploadPdf(deckId: string, file: File): Promise<CompleteMaterialResponse> {
+  const { materialId, uploadUrl } = await requestPdfUploadUrl(deckId, {
+    filename: file.name || "upload.pdf",
+    contentType: "application/pdf",
+    size: file.size,
+  });
+
+  const putRes = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": "application/pdf" },
+    body: file,
+  });
+  if (!putRes.ok) {
+    throw new ApiError(putRes.status, "Failed to upload PDF to storage");
+  }
+
+  return completeMaterial(materialId);
+}

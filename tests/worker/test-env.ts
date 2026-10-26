@@ -28,14 +28,27 @@ type MaterialRow = {
   body_text?: string | null;
 };
 
+type GenerationJobRow = {
+  id: string;
+  material_id: string;
+  status: string;
+  error: string | null;
+  coverage_json: string | null;
+  created_at: string;
+  finished_at: string | null;
+};
+
 type SessionRecord = { userId: string; expiresAt: number };
 
 /** In-memory Worker bindings for route tests (no Miniflare). */
 export type TestEnv = Env & {
   seedUser: (row: UserRow) => void;
   seedDeck: (row: DeckRow) => void;
+  seedMaterial: (row: MaterialRow) => void;
   seedSession: (id: string, userId: string, ttlMs?: number) => void;
   getMaterials: () => MaterialRow[];
+  getGenerationJobs: () => GenerationJobRow[];
+  getQueueMessages: () => unknown[];
   getR2Keys: () => string[];
 };
 
@@ -43,8 +56,10 @@ export function createTestEnv(): TestEnv {
   const users = new Map<string, UserRow>();
   const decks = new Map<string, DeckRow>();
   const materials = new Map<string, MaterialRow>();
+  const generationJobs = new Map<string, GenerationJobRow>();
   const sessions = new Map<string, string>();
   const r2 = new Map<string, string>();
+  const queueMessages: unknown[] = [];
 
   function prepare(sql: string) {
     const normalized = sql.replace(/\s+/g, " ").trim();
@@ -95,6 +110,18 @@ export function createTestEnv(): TestEnv {
           return deck
             ? ({ id: deck.id, user_id: deck.user_id } as T)
             : null;
+        }
+        if (
+          normalized.includes("FROM materials m") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("m.id =") &&
+          normalized.includes("d.user_id =")
+        ) {
+          const material = materials.get(bound[0] as string);
+          if (!material) return null;
+          const deck = decks.get(material.deck_id);
+          if (!deck || deck.user_id !== bound[1]) return null;
+          return material as T;
         }
         return null;
       },
@@ -177,6 +204,37 @@ export function createTestEnv(): TestEnv {
             status,
             created_at,
           });
+        } else if (normalized.startsWith("UPDATE materials SET status =")) {
+          const [status, id] = bound as [string, string];
+          const row = materials.get(id);
+          if (row) materials.set(id, { ...row, status });
+        } else if (normalized.startsWith("INSERT INTO generation_jobs")) {
+          const [
+            id,
+            material_id,
+            status,
+            error,
+            coverage_json,
+            created_at,
+            finished_at,
+          ] = bound as [
+            string,
+            string,
+            string,
+            string | null,
+            string | null,
+            string,
+            string | null,
+          ];
+          generationJobs.set(id, {
+            id,
+            material_id,
+            status,
+            error,
+            coverage_json,
+            created_at,
+            finished_at,
+          });
         }
         return { success: true, meta: { changes: 1 } } as D1Result;
       },
@@ -216,15 +274,26 @@ export function createTestEnv(): TestEnv {
         sessions.delete(key);
       },
     } as unknown as KVNamespace,
-    GENERATE_QUEUE: { send: async () => {} } as unknown as Queue,
+    GENERATE_QUEUE: {
+      send: async (body: unknown) => {
+        queueMessages.push(body);
+      },
+    } as unknown as Queue,
     APP_URL: "http://localhost",
     SESSION_SECRET: "test-session-secret",
     SECRETS_WRAP_KEY: "test-wrap-key",
+    R2_ACCOUNT_ID: "test-account",
+    R2_BUCKET_NAME: "sugarplum-materials",
+    R2_ACCESS_KEY_ID: "test-access-key",
+    R2_SECRET_ACCESS_KEY: "test-secret-key",
     seedUser(row) {
       users.set(row.id, row);
     },
     seedDeck(row) {
       decks.set(row.id, row);
+    },
+    seedMaterial(row) {
+      materials.set(row.id, row);
     },
     seedSession(id, userId, ttlMs = 60_000) {
       const record: SessionRecord = {
@@ -234,6 +303,8 @@ export function createTestEnv(): TestEnv {
       sessions.set(id, JSON.stringify(record));
     },
     getMaterials: () => [...materials.values()],
+    getGenerationJobs: () => [...generationJobs.values()],
+    getQueueMessages: () => [...queueMessages],
     getR2Keys: () => [...r2.keys()],
   };
 
