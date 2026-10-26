@@ -166,6 +166,25 @@ export default function SettingsPage() {
 
       <Stack spacing={1} sx={{ mb: 4 }}>
         <Typography variant="subtitle1" component="h2">
+          Legal
+        </Typography>
+        <Typography variant="body2">
+          <Link href="/privacy" underline="hover">
+            Privacy Policy
+          </Link>
+          {" · "}
+          <Link href="/terms" underline="hover">
+            Terms of Service
+          </Link>
+          {" · "}
+          <Link href="/data-deletion" underline="hover">
+            Data deletion
+          </Link>
+        </Typography>
+      </Stack>
+
+      <Stack spacing={1} sx={{ mb: 4 }}>
+        <Typography variant="subtitle1" component="h2">
           Appearance
         </Typography>
         <ToggleButtonGroup

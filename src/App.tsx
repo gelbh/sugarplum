@@ -4,6 +4,9 @@ import DraftReviewPage from "./routes/DraftReviewPage";
 import LibraryPage from "./routes/LibraryPage";
 import LoginPage from "./routes/LoginPage";
 import RegisterPage from "./routes/RegisterPage";
+import PrivacyPage from "./routes/PrivacyPage";
+import TermsPage from "./routes/TermsPage";
+import DataDeletionPage from "./routes/DataDeletionPage";
 import SettingsPage from "./routes/SettingsPage";
 import StudyPage from "./routes/StudyPage";
 import TodayPage from "./routes/TodayPage";
@@ -17,6 +20,9 @@ export default function App() {
 
   if (path === "/login") return <LoginPage />;
   if (path === "/register") return <RegisterPage />;
+  if (path === "/privacy") return <PrivacyPage />;
+  if (path === "/terms") return <TermsPage />;
+  if (path === "/data-deletion") return <DataDeletionPage />;
   if (path === "/library") return shell(<LibraryPage />);
   if (path === "/settings") return shell(<SettingsPage />);
   if (path === "/study") return shell(<StudyPage />);
