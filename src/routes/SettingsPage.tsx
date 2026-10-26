@@ -105,9 +105,10 @@ export default function SettingsPage() {
         Settings
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Optional. Without a key, Sugarplum uses free platform AI
-        (rate-limited). Add your own key for higher quality and limits. Keys
-        are encrypted at rest and never shown in full again.
+        Optional. Without a key, Sugarplum uses free platform AI (up to 20
+        jobs per UTC day). Add your own OpenAI, Anthropic, or Google key to
+        skip that cap and for higher quality. Keys are encrypted at rest and
+        never shown in full again.
       </Typography>
 
       <Stack spacing={1} sx={{ mb: 4 }}>
