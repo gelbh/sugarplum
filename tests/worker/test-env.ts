@@ -150,6 +150,40 @@ export function createTestEnv(opts?: {
           }
           return null;
         }
+        if (
+          normalized.startsWith(
+            "SELECT id, email, oauth_subject, password_hash FROM users WHERE oauth_subject =",
+          )
+        ) {
+          for (const u of users.values()) {
+            if (u.oauth_subject === bound[0]) {
+              return {
+                id: u.id,
+                email: u.email,
+                oauth_subject: u.oauth_subject,
+                password_hash: u.password_hash,
+              } as T;
+            }
+          }
+          return null;
+        }
+        if (
+          normalized.startsWith(
+            "SELECT id, email, oauth_subject, password_hash FROM users WHERE email =",
+          )
+        ) {
+          for (const u of users.values()) {
+            if (u.email === bound[0]) {
+              return {
+                id: u.id,
+                email: u.email,
+                oauth_subject: u.oauth_subject,
+                password_hash: u.password_hash,
+              } as T;
+            }
+          }
+          return null;
+        }
         if (normalized.startsWith("SELECT id, email FROM users WHERE id =")) {
           const u = users.get(bound[0] as string);
           return u ? ({ id: u.id, email: u.email } as T) : null;
@@ -313,25 +347,47 @@ export function createTestEnv(opts?: {
       },
       async run(): Promise<D1Result> {
         if (normalized.startsWith("INSERT INTO users")) {
-          const [id, email, password_hash, , created_at] = bound as [
+          const [id, email, password_hash, oauth_subject, created_at] = bound as [
             string,
             string,
-            string,
-            null,
+            string | null,
+            string | null,
             string,
           ];
           for (const existing of users.values()) {
             if (existing.email === email) {
               throw new Error("UNIQUE constraint failed: users.email");
             }
+            if (
+              oauth_subject != null &&
+              existing.oauth_subject === oauth_subject
+            ) {
+              throw new Error("UNIQUE constraint failed: users.oauth_subject");
+            }
           }
           users.set(id, {
             id,
             email,
             password_hash,
-            oauth_subject: null,
+            oauth_subject,
             created_at,
           });
+        } else if (
+          normalized.startsWith("UPDATE users SET oauth_subject =")
+        ) {
+          const [oauth_subject, id] = bound as [string, string];
+          const u = users.get(id);
+          if (u) {
+            for (const existing of users.values()) {
+              if (
+                existing.id !== id &&
+                existing.oauth_subject === oauth_subject
+              ) {
+                throw new Error("UNIQUE constraint failed: users.oauth_subject");
+              }
+            }
+            users.set(id, { ...u, oauth_subject });
+          }
         } else if (normalized.startsWith("INSERT INTO decks")) {
           const [id, user_id, title, subject_hint, created_at] = bound as [
             string,
@@ -657,6 +713,8 @@ export function createTestEnv(opts?: {
     R2_BUCKET_NAME: "sugarplum-materials",
     R2_ACCESS_KEY_ID: "test-access-key",
     R2_SECRET_ACCESS_KEY: "test-secret-key",
+    GOOGLE_CLIENT_ID: "test-google-client-id",
+    GOOGLE_CLIENT_SECRET: "test-google-client-secret",
     seedUser(row) {
       users.set(row.id, row);
     },

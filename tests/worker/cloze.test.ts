@@ -161,7 +161,8 @@ describe("generation pipeline (paste + mock LLM)", () => {
     expect(poll.error).toBeNull();
   });
 
-  it("PDF extract stub fails the job with an actionable error", async () => {
+  it("PDF extract feeds generation and yields draft cards", async () => {
+    const { minimalPdfWithText } = await import("./pdf-fixture");
     const env = createTestEnv();
     await seedPasteOwner(env);
     env.seedMaterial({
@@ -174,7 +175,11 @@ describe("generation pipeline (paste + mock LLM)", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedR2("materials/deck-a/mat-pdf.pdf", "%PDF-fake");
+    const pdfBytes = minimalPdfWithText("Mitochondria produce ATP");
+    env.seedR2(
+      "materials/deck-a/mat-pdf.pdf",
+      new TextDecoder().decode(pdfBytes),
+    );
 
     const { enqueueGeneration } = await import(
       "../../worker/generation/enqueue"
@@ -191,8 +196,43 @@ describe("generation pipeline (paste + mock LLM)", () => {
     );
 
     const job = env.getGenerationJobs().find((j) => j.id === jobId);
+    expect(job?.status).toBe("needs_review");
+    expect(job?.error).toBeNull();
+    expect(env.getCards().length).toBeGreaterThan(0);
+  });
+
+  it("empty PDF extract fails the job with an actionable hint", async () => {
+    const env = createTestEnv();
+    await seedPasteOwner(env);
+    env.seedMaterial({
+      id: "mat-pdf-empty",
+      deck_id: "deck-a",
+      kind: "pdf",
+      r2_key: "materials/deck-a/mat-empty.pdf",
+      filename: "scan.pdf",
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedR2("materials/deck-a/mat-empty.pdf", "%PDF-1.1\n%%EOF");
+
+    const { enqueueGeneration } = await import(
+      "../../worker/generation/enqueue"
+    );
+    const jobId = await enqueueGeneration(env, {
+      materialId: "mat-pdf-empty",
+      deckId: "deck-a",
+    });
+
+    await processGenerateJob(
+      env,
+      { jobId, materialId: "mat-pdf-empty", deckId: "deck-a" },
+      { llm: mockLlmAdapter() },
+    );
+
+    const job = env.getGenerationJobs().find((j) => j.id === jobId);
     expect(job?.status).toBe("failed");
-    expect(job?.error).toMatch(/PDF text extraction/i);
+    expect(job?.error).toMatch(/PDF|OCR|text/i);
     expect(env.getCards()).toHaveLength(0);
   });
 
