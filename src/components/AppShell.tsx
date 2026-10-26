@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import EditNoteIcon from "@mui/icons-material/EditNote";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
 import SettingsIcon from "@mui/icons-material/Settings";
 import TodayIcon from "@mui/icons-material/Today";
@@ -19,7 +18,7 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 
 const DRAWER_WIDTH = 240;
 
-type NavId = "today" | "library" | "drafts" | "settings";
+type NavId = "today" | "library" | "settings";
 
 type NavItem = {
   id: NavId;
@@ -42,15 +41,8 @@ const NAV: NavItem[] = [
     label: "Library",
     href: "/library",
     icon: <LibraryBooksIcon />,
-    match: (path) => path === "/library",
-  },
-  {
-    id: "drafts",
-    label: "Drafts",
-    // Job drafts live at /jobs/:id/drafts; library is the entry to start generation.
-    href: "/library",
-    icon: <EditNoteIcon />,
-    match: (path) => /^\/jobs\/[^/]+\/drafts\/?$/.test(path),
+    match: (path) =>
+      path === "/library" || /^\/jobs\/[^/]+\/drafts\/?$/.test(path),
   },
   {
     id: "settings",

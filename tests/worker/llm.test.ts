@@ -58,6 +58,7 @@ describe("LLM provider allowlist", () => {
         authHeaders.push(
           headers.get("authorization") ??
             headers.get("x-api-key") ??
+            headers.get("x-goog-api-key") ??
             (url.includes("key=") ? "query-key" : ""),
         );
 
@@ -101,10 +102,13 @@ describe("LLM provider allowlist", () => {
     expect(urls.every((u) => !u.includes("api.openai.com"))).toBe(true);
     expect(urls[0]).toBe(providerRequestUrl("anthropic"));
     expect(urls[0]).toContain("api.anthropic.com");
+    expect(urls[1]).toBe(providerRequestUrl("google"));
     expect(urls[1]).toContain("generativelanguage.googleapis.com");
     expect(urls[1]).not.toContain("api.openai.com");
+    expect(urls[1]).not.toContain(encodeURIComponent(googleKey));
+    expect(urls[1]).not.toMatch(/[?&]key=/);
     expect(authHeaders[0]).toBe(anthropicKey);
-    expect(urls[1]).toContain(encodeURIComponent(googleKey));
+    expect(authHeaders[1]).toBe(googleKey);
   });
 
   it("routes openai to api.openai.com only", async () => {

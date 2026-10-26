@@ -13,6 +13,7 @@ import DraftCardEditor from "../components/DraftCardEditor";
 import {
   ApiError,
   acceptCard,
+  getJob,
   listJobDrafts,
   me,
   patchCard,
@@ -25,6 +26,22 @@ function jobIdFromPath(): string | null {
   return match?.[1] ? decodeURIComponent(match[1]) : null;
 }
 
+const TERMINAL_OK = new Set(["needs_review", "done"]);
+const TERMINAL_FAIL = new Set(["failed"]);
+
+async function waitForJobReady(jobId: string): Promise<void> {
+  const deadline = Date.now() + 60_000;
+  while (Date.now() < deadline) {
+    const job = await getJob(jobId);
+    if (TERMINAL_OK.has(job.status)) return;
+    if (TERMINAL_FAIL.has(job.status)) {
+      throw new ApiError(400, job.error ?? "Generation failed");
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new ApiError(408, "Timed out waiting for generation");
+}
+
 /** Operate UI: review, edit, accept or reject generation drafts (code-led MUI; no Impeccable comps). */
 export default function DraftReviewPage() {
   const jobId = jobIdFromPath();
@@ -35,6 +52,7 @@ export default function DraftReviewPage() {
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [statusLine, setStatusLine] = useState<string | null>(null);
 
   const load = useCallback(async (id: string) => {
     const list = await listJobDrafts(id);
@@ -53,6 +71,10 @@ export default function DraftReviewPage() {
       }
       try {
         await me();
+        setStatusLine("Waiting for generation…");
+        await waitForJobReady(jobId);
+        if (cancelled) return;
+        setStatusLine(null);
         await load(jobId);
         if (!cancelled) setReady(true);
       } catch (err) {
@@ -61,6 +83,7 @@ export default function DraftReviewPage() {
           window.location.assign("/login");
           return;
         }
+        setStatusLine(null);
         setError(
           err instanceof ApiError ? err.message : "Failed to load drafts",
         );
@@ -149,7 +172,9 @@ export default function DraftReviewPage() {
   if (!ready) {
     return (
       <Container maxWidth="sm" sx={{ py: 6 }}>
-        <Typography color="text.secondary">Loading drafts…</Typography>
+        <Typography color="text.secondary">
+          {statusLine ?? "Loading drafts…"}
+        </Typography>
       </Container>
     );
   }

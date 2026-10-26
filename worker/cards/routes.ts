@@ -204,12 +204,13 @@ cardRoutes.post("/:id/accept", async (c) => {
   const updatedAt = new Date().toISOString();
 
   // Atomic: accepted status + schedule row succeed or fail together.
-  await db.batch([
+  // Status CAS prevents concurrent reject/accept races.
+  const results = await db.batch([
     db
       .prepare(
-        `UPDATE cards SET status = ?, updated_at = ? WHERE id = ?`,
+        `UPDATE cards SET status = ?, updated_at = ? WHERE id = ? AND status = ?`,
       )
-      .bind("accepted", updatedAt, cardId),
+      .bind("accepted", updatedAt, cardId, "draft"),
     db
       .prepare(
         `INSERT INTO card_schedules (
@@ -231,6 +232,11 @@ cardRoutes.post("/:id/accept", async (c) => {
         schedule.last_review,
       ),
   ]);
+  if (!results[0]?.meta.changes) {
+    throw new HTTPException(409, {
+      message: "Card is no longer a draft",
+    });
+  }
 
   return c.json(
     serializeCard({ ...row, status: "accepted", updated_at: updatedAt }),
@@ -250,10 +256,17 @@ cardRoutes.post("/:id/reject", async (c) => {
   }
 
   const updatedAt = new Date().toISOString();
-  await db
-    .prepare(`UPDATE cards SET status = ?, updated_at = ? WHERE id = ?`)
-    .bind("rejected", updatedAt, cardId)
+  const result = await db
+    .prepare(
+      `UPDATE cards SET status = ?, updated_at = ? WHERE id = ? AND status = ?`,
+    )
+    .bind("rejected", updatedAt, cardId, "draft")
     .run();
+  if (!result.meta.changes) {
+    throw new HTTPException(409, {
+      message: "Card is no longer a draft",
+    });
+  }
 
   return c.json(
     serializeCard({ ...row, status: "rejected", updated_at: updatedAt }),

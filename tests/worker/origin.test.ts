@@ -68,4 +68,25 @@ describe("mutating /api origin middleware", () => {
     );
     expect(res.status).not.toBe(403);
   });
+
+  it("fails closed when APP_URL is unset", async () => {
+    const env = createTestEnv();
+    env.APP_URL = "";
+    const res = await app.request(
+      "/api/auth/register",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "http://localhost",
+        },
+        body: JSON.stringify({
+          email: "noconfig@example.com",
+          password: "long-enough-password",
+        }),
+      },
+      env,
+    );
+    expect(res.status).toBe(500);
+  });
 });

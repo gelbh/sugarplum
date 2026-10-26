@@ -100,14 +100,30 @@ export function createDeck(title: string) {
   });
 }
 
+export type PasteMaterialResponse = Material & { jobId: string };
+
 export function pasteMaterial(
   deckId: string,
   body: { text: string; filename?: string },
 ) {
-  return api<Material>(`/api/decks/${deckId}/materials/paste`, {
+  return api<PasteMaterialResponse>(`/api/decks/${deckId}/materials/paste`, {
     method: "POST",
     json: body,
   });
+}
+
+export type GenerationJob = {
+  id: string;
+  material_id: string;
+  status: string;
+  error: string | null;
+  coverage_json: string | null;
+  created_at: string;
+  finished_at: string | null;
+};
+
+export function getJob(jobId: string) {
+  return api<GenerationJob>(`/api/jobs/${jobId}`);
 }
 
 export type UploadUrlResponse = {
@@ -218,7 +234,10 @@ export async function uploadPdf(deckId: string, file: File): Promise<CompleteMat
 
   const putRes = await fetch(uploadUrl, {
     method: "PUT",
-    headers: { "Content-Type": "application/pdf" },
+    headers: {
+      "Content-Type": "application/pdf",
+      "Content-Length": String(file.size),
+    },
     body: file,
   });
   if (!putRes.ok) {

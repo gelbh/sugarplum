@@ -32,8 +32,22 @@ const PASTE_READY = "ready";
 const PDF_UPLOADING = "uploading";
 const PDF_READY = "ready";
 const PDF_CONTENT_TYPE = "application/pdf";
+const MAX_PASTE_BYTES = 100 * 1024;
 const MAX_PDF_BYTES = 25 * 1024 * 1024;
 const DEFAULT_R2_BUCKET = "sugarplum-materials";
+
+function assertConfiguredR2AccountId(accountId: string): void {
+  const trimmed = accountId.trim();
+  if (
+    !trimmed ||
+    trimmed.startsWith("REPLACE_") ||
+    trimmed.includes("REPLACE_WITH")
+  ) {
+    throw new HTTPException(500, {
+      message: "R2_ACCOUNT_ID is not configured",
+    });
+  }
+}
 
 function newId(): string {
   return crypto.randomUUID();
@@ -142,6 +156,12 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
 
   const text = typeof body.text === "string" ? body.text : "";
   if (!text.trim()) throw new HTTPException(400, { message: "Text required" });
+  const textBytes = new TextEncoder().encode(text).byteLength;
+  if (textBytes > MAX_PASTE_BYTES) {
+    throw new HTTPException(400, {
+      message: "Paste must be 100KB or smaller",
+    });
+  }
 
   const filename =
     typeof body.filename === "string" && body.filename.trim()
@@ -228,6 +248,7 @@ deckRoutes.post("/:id/materials/upload-url", async (c) => {
       message: "R2 upload signing is not configured",
     });
   }
+  assertConfiguredR2AccountId(accountId);
 
   const uploadUrl = await createR2PutUrl({
     accountId,
@@ -236,6 +257,7 @@ deckRoutes.post("/:id/materials/upload-url", async (c) => {
     bucket: c.env.R2_BUCKET_NAME ?? DEFAULT_R2_BUCKET,
     key: r2Key,
     contentType: PDF_CONTENT_TYPE,
+    contentLength: size,
   });
 
   await db
@@ -279,10 +301,17 @@ materialRoutes.post("/:id/complete", async (c) => {
     });
   }
 
-  await db
-    .prepare("UPDATE materials SET status = ? WHERE id = ?")
-    .bind(PDF_READY, materialId)
+  const cas = await db
+    .prepare(
+      "UPDATE materials SET status = ? WHERE id = ? AND status = ?",
+    )
+    .bind(PDF_READY, materialId, PDF_UPLOADING)
     .run();
+  if (!cas.meta.changes) {
+    throw new HTTPException(409, {
+      message: "Material is not awaiting upload completion",
+    });
+  }
 
   const jobId = await enqueueGeneration(c.env, {
     materialId,

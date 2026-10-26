@@ -10,8 +10,6 @@ export interface Env {
   R2_ACCOUNT_ID: string;
   /** R2 bucket name used in S3 endpoint path (defaults in code if unset). */
   R2_BUCKET_NAME?: string;
-  /** Secret: `wrangler secret put SESSION_SECRET` */
-  SESSION_SECRET: string;
   /** Secret: `wrangler secret put SECRETS_WRAP_KEY` */
   SECRETS_WRAP_KEY: string;
   /** Secret: `wrangler secret put R2_ACCESS_KEY_ID` */

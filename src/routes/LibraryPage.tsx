@@ -94,6 +94,10 @@ export default function LibraryPage() {
       });
       setPasteText("");
       setFilename("");
+      if (material.jobId) {
+        window.location.assign(`/jobs/${encodeURIComponent(material.jobId)}/drafts`);
+        return;
+      }
       setNotice(`Saved paste material (${material.status})`);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not save paste");
@@ -126,7 +130,10 @@ export default function LibraryPage() {
     try {
       const material = await uploadPdf(selectedDeckId, pdfFile);
       setPdfFile(null);
-      setNotice(`Uploaded PDF (${material.status}); generation queued`);
+      // PDF text extract is not implemented yet; store only (do not claim cards ready).
+      setNotice(
+        `Stored PDF (${material.status}). Text extraction is not ready yet — use paste for generation.`,
+      );
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not upload PDF");
     } finally {
@@ -277,7 +284,8 @@ export default function LibraryPage() {
               />
             </Button>
             <Typography variant="caption" color="text.secondary">
-              PDF only, max 25MB. Uploads go directly to storage via a signed URL.
+              PDF only, max 25MB. Stored for later; flashcard generation from PDF
+              text is not available yet (use paste).
             </Typography>
             <Button
               type="submit"

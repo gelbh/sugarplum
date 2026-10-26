@@ -68,17 +68,33 @@ export async function encryptSecret(
   return `${PREFIX}$${bytesToB64(iv)}$${bytesToB64(new Uint8Array(ct))}$${apiKeyLast4(plaintext)}`;
 }
 
+/**
+ * Unpack `aes-gcm$iv$ct$last4`. Only the first three `$` are separators so
+ * last4 may itself contain `$` without breaking decrypt/meta parse.
+ */
+export function unpackSecretPacked(
+  packed: string,
+): { ivB64: string; ctB64: string; last4: string } | null {
+  const parts = packed.split("$");
+  if (parts.length < 4 || parts[0] !== PREFIX) return null;
+  const ivB64 = parts[1]!;
+  const ctB64 = parts[2]!;
+  const last4 = parts.slice(3).join("$");
+  if (!ivB64 || !ctB64 || !last4) return null;
+  return { ivB64, ctB64, last4 };
+}
+
 /** Decrypt a packed ciphertext from `user_secrets`. */
 export async function decryptSecret(
   packed: string,
   wrapKey: string,
 ): Promise<string> {
-  const parts = packed.split("$");
-  if (parts.length !== 4 || parts[0] !== PREFIX) {
+  const unpacked = unpackSecretPacked(packed);
+  if (!unpacked) {
     throw new Error("Invalid secret ciphertext format");
   }
-  const iv = b64ToBytes(parts[1]!);
-  const ct = b64ToBytes(parts[2]!);
+  const iv = b64ToBytes(unpacked.ivB64);
+  const ct = b64ToBytes(unpacked.ctB64);
   const key = await importAesKey(wrapKey);
   const pt = await crypto.subtle.decrypt(
     { name: "AES-GCM", iv: iv.slice().buffer },
@@ -92,9 +108,7 @@ export async function decryptSecret(
 export function parseSecretMeta(
   packed: string,
 ): { last4: string } | null {
-  const parts = packed.split("$");
-  if (parts.length !== 4 || parts[0] !== PREFIX) return null;
-  const last4 = parts[3]!;
-  if (!last4) return null;
-  return { last4 };
+  const unpacked = unpackSecretPacked(packed);
+  if (!unpacked) return null;
+  return { last4: unpacked.last4 };
 }

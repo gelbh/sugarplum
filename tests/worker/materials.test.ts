@@ -47,6 +47,39 @@ describe("deck materials ownership", () => {
     expect(env.getR2Keys()).toHaveLength(0);
   });
 
+  it("rejects paste over 100KB", async () => {
+    const env = createTestEnv();
+    env.seedUser({
+      id: "user-a",
+      email: "a@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-a",
+      user_id: "user-a",
+      title: "Owner deck",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSession("sess-a", "user-a");
+
+    const res = await app.request(
+      "/api/decks/deck-a/materials/paste",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({ text: "x".repeat(100 * 1024 + 1) }),
+      },
+      env,
+    );
+    expect(res.status).toBe(400);
+  });
+
   it("stores paste material for the deck owner", async () => {
     const env = createTestEnv();
     env.seedUser({

@@ -74,13 +74,17 @@ export async function requireUser(c: AuthContext): Promise<string> {
   if (!id) throw new HTTPException(401, { message: "Unauthorized" });
 
   const raw = await c.env.SESSIONS.get(id);
-  if (!raw) throw new HTTPException(401, { message: "Unauthorized" });
+  if (!raw) {
+    deleteCookie(c, SESSION_COOKIE, sessionCookieAttrs(c));
+    throw new HTTPException(401, { message: "Unauthorized" });
+  }
 
   let record: SessionRecord;
   try {
     record = JSON.parse(raw) as SessionRecord;
   } catch {
     await c.env.SESSIONS.delete(id);
+    deleteCookie(c, SESSION_COOKIE, sessionCookieAttrs(c));
     throw new HTTPException(401, { message: "Unauthorized" });
   }
 
@@ -90,6 +94,7 @@ export async function requireUser(c: AuthContext): Promise<string> {
     record.expiresAt < Date.now()
   ) {
     await c.env.SESSIONS.delete(id);
+    deleteCookie(c, SESSION_COOKIE, sessionCookieAttrs(c));
     throw new HTTPException(401, { message: "Unauthorized" });
   }
 

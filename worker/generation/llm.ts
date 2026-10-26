@@ -37,7 +37,7 @@ export function parseLlmProvider(raw: string): LlmProvider {
 }
 
 /** Absolute request URL for the provider's generate call (tests assert routing). */
-export function providerRequestUrl(provider: LlmProvider, apiKey?: string): string {
+export function providerRequestUrl(provider: LlmProvider): string {
   switch (provider) {
     case "openai":
       return "https://api.openai.com/v1/chat/completions";
@@ -45,8 +45,7 @@ export function providerRequestUrl(provider: LlmProvider, apiKey?: string): stri
       return "https://api.anthropic.com/v1/messages";
     case "google": {
       const model = "gemini-2.0-flash";
-      const key = apiKey ?? "";
-      return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`;
+      return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
     }
     case "mock":
       throw new Error("mock provider has no network URL");
@@ -197,10 +196,13 @@ function anthropicAdapter(): LlmAdapter {
 function googleAdapter(): LlmAdapter {
   return {
     async generateDrafts({ text, apiKey }) {
-      const url = providerRequestUrl("google", apiKey);
+      const url = providerRequestUrl("google");
       const res = await fetch(url, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: GENERATE_SYSTEM_PROMPT }] },
           contents: [

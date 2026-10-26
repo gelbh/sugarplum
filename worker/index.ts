@@ -18,12 +18,15 @@ const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 app.use("/api/*", async (c, next) => {
   if (MUTATING.has(c.req.method)) {
-    const appUrl = c.env?.APP_URL;
-    if (appUrl) {
-      const origin = c.req.header("origin");
-      if (!isAllowedMutatingOrigin(origin, appUrl)) {
-        throw new HTTPException(403, { message: "Forbidden origin" });
-      }
+    const appUrl = c.env?.APP_URL?.trim();
+    if (!appUrl) {
+      throw new HTTPException(500, {
+        message: "APP_URL is not configured",
+      });
+    }
+    const origin = c.req.header("origin");
+    if (!isAllowedMutatingOrigin(origin, appUrl)) {
+      throw new HTTPException(403, { message: "Forbidden origin" });
     }
   }
   await next();

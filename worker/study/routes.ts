@@ -123,45 +123,44 @@ studyRoutes.post("/review", async (c) => {
   const cols = scheduleColumnsFromCard(nextCard);
   const reviewedAt = toIsoRequired(log.review ?? now);
 
-  await db
-    .prepare(
-      `UPDATE card_schedules SET
-         due = ?, stability = ?, difficulty = ?, elapsed_days = ?,
-         scheduled_days = ?, learning_steps = ?, reps = ?, lapses = ?,
-         state = ?, last_review = ?
-       WHERE card_id = ?`,
-    )
-    .bind(
-      cols.due,
-      cols.stability,
-      cols.difficulty,
-      cols.elapsed_days,
-      cols.scheduled_days,
-      cols.learning_steps,
-      cols.reps,
-      cols.lapses,
-      cols.state,
-      cols.last_review,
-      cardId,
-    )
-    .run();
-
-  await db
-    .prepare(
-      `INSERT INTO review_logs (
-         id, card_id, rating, scheduled_days, elapsed_days, reviewed_at, state_json
-       ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    )
-    .bind(
-      crypto.randomUUID(),
-      cardId,
-      rating,
-      log.scheduled_days,
-      log.elapsed_days,
-      reviewedAt,
-      JSON.stringify(log),
-    )
-    .run();
+  await db.batch([
+    db
+      .prepare(
+        `UPDATE card_schedules SET
+           due = ?, stability = ?, difficulty = ?, elapsed_days = ?,
+           scheduled_days = ?, learning_steps = ?, reps = ?, lapses = ?,
+           state = ?, last_review = ?
+         WHERE card_id = ?`,
+      )
+      .bind(
+        cols.due,
+        cols.stability,
+        cols.difficulty,
+        cols.elapsed_days,
+        cols.scheduled_days,
+        cols.learning_steps,
+        cols.reps,
+        cols.lapses,
+        cols.state,
+        cols.last_review,
+        cardId,
+      ),
+    db
+      .prepare(
+        `INSERT INTO review_logs (
+           id, card_id, rating, scheduled_days, elapsed_days, reviewed_at, state_json
+         ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        crypto.randomUUID(),
+        cardId,
+        rating,
+        log.scheduled_days,
+        log.elapsed_days,
+        reviewedAt,
+        JSON.stringify(log),
+      ),
+  ]);
 
   return c.json({ due: cols.due });
 });

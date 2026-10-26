@@ -23,6 +23,14 @@ describe("secrets crypto", () => {
     expect(await decryptSecret(packed, TEST_SECRETS_WRAP_KEY)).toBe(apiKey);
     expect(parseSecretMeta(packed)).toEqual({ last4: apiKeyLast4(apiKey) });
   });
+
+  it("round-trips when last4 contains dollar signs", async () => {
+    const apiKey = "sk-test-key-ends-with-$a$b";
+    const packed = await encryptSecret(apiKey, TEST_SECRETS_WRAP_KEY);
+    expect(apiKeyLast4(apiKey)).toBe("$a$b");
+    expect(await decryptSecret(packed, TEST_SECRETS_WRAP_KEY)).toBe(apiKey);
+    expect(parseSecretMeta(packed)).toEqual({ last4: "$a$b" });
+  });
 });
 
 describe("GET/PUT /api/settings/llm", () => {

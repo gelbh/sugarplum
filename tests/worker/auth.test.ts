@@ -12,26 +12,37 @@ import {
   SESSION_COOKIE,
   sessionCookieSecure,
 } from "../../worker/auth/session";
+import { createTestEnv } from "./test-env";
 
 describe("auth register validation", () => {
   it("rejects short password", async () => {
-    const res = await app.request("/api/auth/register", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email: "a@b.co", password: "short" }),
-    });
+    const env = createTestEnv();
+    const res = await app.request(
+      "/api/auth/register",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: "a@b.co", password: "short" }),
+      },
+      env,
+    );
     expect(res.status).toBe(400);
   });
 
   it("rejects missing email", async () => {
-    const res = await app.request("/api/auth/register", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        email: "not-an-email",
-        password: "long-enough-password",
-      }),
-    });
+    const env = createTestEnv();
+    const res = await app.request(
+      "/api/auth/register",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email: "not-an-email",
+          password: "long-enough-password",
+        }),
+      },
+      env,
+    );
     expect(res.status).toBe(400);
   });
 });

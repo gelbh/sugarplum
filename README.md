@@ -40,8 +40,7 @@ Workers custom domain on `gelbhart.dev`. Assets use SPA fallback (`not_found_han
 ### 2. Secrets
 
 ```bash
-npx wrangler secret put SESSION_SECRET
-npx wrangler secret put SECRETS_WRAP_KEY   # exactly 32 UTF-8 bytes
+npx wrangler secret put SECRETS_WRAP_KEY   # exactly 32 UTF-8 bytes (or base64 of 32 bytes)
 npx wrangler secret put R2_ACCESS_KEY_ID
 npx wrangler secret put R2_SECRET_ACCESS_KEY
 ```

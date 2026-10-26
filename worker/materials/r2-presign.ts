@@ -10,6 +10,8 @@ export async function createR2PutUrl(opts: {
   bucket: string;
   key: string;
   contentType: string;
+  /** Bound into the signature so oversized PUTs fail auth. */
+  contentLength: number;
   expiresIn?: number;
 }): Promise<string> {
   const expiresIn = opts.expiresIn ?? DEFAULT_EXPIRES_SEC;
@@ -28,7 +30,10 @@ export async function createR2PutUrl(opts: {
   const signed = await client.sign(
     new Request(url, {
       method: "PUT",
-      headers: { "Content-Type": opts.contentType },
+      headers: {
+        "Content-Type": opts.contentType,
+        "Content-Length": String(opts.contentLength),
+      },
     }),
     { aws: { signQuery: true } },
   );

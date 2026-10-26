@@ -1,7 +1,7 @@
 /**
  * Sugarplum Worker config.
  * Binding IDs below are placeholders until `wrangler` create succeeds against a Cloudflare account.
- * Secrets (set via `wrangler secret put`): SESSION_SECRET, SECRETS_WRAP_KEY,
+ * Secrets (set via `wrangler secret put`): SECRETS_WRAP_KEY,
  * R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
  */
 {

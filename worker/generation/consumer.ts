@@ -1,7 +1,6 @@
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { decryptSecret } from "../crypto/secrets";
-import { extractPdfText } from "../materials/extract-pdf";
 import type { GenerateQueueMessage } from "./enqueue";
 import { createLlmAdapter, parseLlmProvider, type LlmAdapter } from "./llm";
 import type { CardDraft } from "./schema";
@@ -65,15 +64,10 @@ async function extractMaterialText(
   }
 
   if (material.kind === "pdf") {
-    try {
-      const bytes = await obj.arrayBuffer();
-      return await extractPdfText(bytes);
-    } catch (err) {
-      const reason = err instanceof Error ? err.message : "unknown error";
-      throw new Error(
-        `PDF text extraction is not available yet (${reason}). Re-upload as paste text, or wait for P2 PDF extract.`,
-      );
-    }
+    void (await obj.arrayBuffer());
+    throw new Error(
+      "PDF text extraction is not available yet. Re-upload as paste text, or wait for P2 PDF extract.",
+    );
   }
 
   throw new Error(

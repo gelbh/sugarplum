@@ -66,12 +66,20 @@ authRoutes.post("/register", async (c) => {
   const passwordHash = await hashPassword(password);
   const createdAt = new Date().toISOString();
 
-  await db
-    .prepare(
-      "INSERT INTO users (id, email, password_hash, oauth_subject, created_at) VALUES (?, ?, ?, NULL, ?)",
-    )
-    .bind(id, email, passwordHash, createdAt)
-    .run();
+  try {
+    await db
+      .prepare(
+        "INSERT INTO users (id, email, password_hash, oauth_subject, created_at) VALUES (?, ?, ?, NULL, ?)",
+      )
+      .bind(id, email, passwordHash, createdAt)
+      .run();
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (/unique|constraint|already exists/i.test(message)) {
+      throw new HTTPException(409, { message: "Email already registered" });
+    }
+    throw err;
+  }
 
   await createSession(c, id);
   return c.json({ id, email }, 201);

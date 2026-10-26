@@ -320,6 +320,11 @@ export function createTestEnv(opts?: {
             null,
             string,
           ];
+          for (const existing of users.values()) {
+            if (existing.email === email) {
+              throw new Error("UNIQUE constraint failed: users.email");
+            }
+          }
           users.set(id, {
             id,
             email,
@@ -366,6 +371,18 @@ export function createTestEnv(opts?: {
             status,
             created_at,
           });
+        } else if (
+          normalized.startsWith(
+            "UPDATE materials SET status = ? WHERE id = ? AND status = ?",
+          )
+        ) {
+          const [status, id, expected] = bound as [string, string, string];
+          const row = materials.get(id);
+          if (row && row.status === expected) {
+            materials.set(id, { ...row, status });
+            return { success: true, meta: { changes: 1 } } as D1Result;
+          }
+          return { success: true, meta: { changes: 0 } } as D1Result;
         } else if (normalized.startsWith("UPDATE materials SET status =")) {
           const [status, id] = bound as [string, string];
           const row = materials.get(id);
@@ -520,6 +537,23 @@ export function createTestEnv(opts?: {
           }
         } else if (
           normalized.startsWith(
+            "UPDATE cards SET status = ?, updated_at = ? WHERE id = ? AND status = ?",
+          )
+        ) {
+          const [status, updated_at, id, expected] = bound as [
+            string,
+            string,
+            string,
+            string,
+          ];
+          const row = cards.get(id);
+          if (row && row.status === expected) {
+            cards.set(id, { ...row, status, updated_at });
+            return { success: true, meta: { changes: 1 } } as D1Result;
+          }
+          return { success: true, meta: { changes: 0 } } as D1Result;
+        } else if (
+          normalized.startsWith(
             "UPDATE cards SET status = ?, updated_at = ? WHERE id =",
           )
         ) {
@@ -618,7 +652,6 @@ export function createTestEnv(opts?: {
       },
     } as unknown as Queue,
     APP_URL: "http://localhost",
-    SESSION_SECRET: "test-session-secret",
     SECRETS_WRAP_KEY: wrapKey,
     R2_ACCOUNT_ID: "test-account",
     R2_BUCKET_NAME: "sugarplum-materials",
