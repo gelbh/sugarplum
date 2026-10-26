@@ -1,3 +1,5 @@
+import { UploadError, uploadWithProgress } from "../progress/uploadWithProgress";
+
 export type ApiErrorBody = {
   error?: string;
   message?: string;
@@ -233,24 +235,30 @@ export function reviewCard(cardId: string, rating: StudyRating) {
   });
 }
 
-/** Request signed URL, PUT the PDF to R2, then mark ready / enqueue generation. */
-export async function uploadPdf(deckId: string, file: File): Promise<CompleteMaterialResponse> {
+/** Request signed URL, PUT the PDF to R2 (with optional byte progress), then complete. */
+export async function uploadPdf(
+  deckId: string,
+  file: File,
+  onProgress?: (percent: number) => void,
+): Promise<CompleteMaterialResponse> {
   const { materialId, uploadUrl } = await requestPdfUploadUrl(deckId, {
     filename: file.name || "upload.pdf",
     contentType: "application/pdf",
     size: file.size,
   });
 
-  const putRes = await fetch(uploadUrl, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Length": String(file.size),
-    },
-    body: file,
-  });
-  if (!putRes.ok) {
-    throw new ApiError(putRes.status, "Failed to upload PDF to storage");
+  try {
+    await uploadWithProgress(uploadUrl, file, onProgress ?? (() => {}), {
+      contentType: "application/pdf",
+    });
+  } catch (err) {
+    if (err instanceof UploadError) {
+      throw new ApiError(
+        err.status || 502,
+        err.message || "Failed to upload PDF to storage",
+      );
+    }
+    throw new ApiError(502, "Failed to upload PDF to storage");
   }
 
   return completeMaterial(materialId);
