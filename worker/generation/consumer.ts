@@ -3,6 +3,7 @@ import { getDb } from "../db/client";
 import { decryptSecret } from "../crypto/secrets";
 import { extractPdfText } from "../materials/extract-pdf";
 import { extractPptxText } from "../materials/extract-pptx";
+import { MAX_IMAGE_BYTES } from "../materials/limits";
 import type { GenerateQueueMessage } from "./enqueue";
 import { createLlmAdapter, parseLlmProvider, type LlmAdapter } from "./llm";
 import {
@@ -123,11 +124,16 @@ function mimeFromR2Key(r2Key: string): string {
   return "image/jpeg";
 }
 
+/** Chunked so large images do not blow the call stack via spread. */
 function bytesToBase64(bytes: ArrayBuffer): string {
   const arr = new Uint8Array(bytes);
+  const chunkSize = 0x8000;
   let binary = "";
-  for (let i = 0; i < arr.length; i++) {
-    binary += String.fromCharCode(arr[i]!);
+  for (let i = 0; i < arr.length; i += chunkSize) {
+    const end = Math.min(i + chunkSize, arr.length);
+    for (let j = i; j < end; j++) {
+      binary += String.fromCharCode(arr[j]!);
+    }
   }
   return btoa(binary);
 }
@@ -248,6 +254,11 @@ export async function processGenerateJob(
         throw new Error(`R2 object missing: ${material.r2_key}`);
       }
       const bytes = await obj.arrayBuffer();
+      if (bytes.byteLength > MAX_IMAGE_BYTES) {
+        throw new Error(
+          `Image exceeds ${MAX_IMAGE_BYTES / (1024 * 1024)}MB generate limit`,
+        );
+      }
       await emitProgress(
         db,
         jobId,

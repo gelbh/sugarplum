@@ -17,6 +17,8 @@ import {
   listDecks,
   me,
   pasteMaterial,
+  PPTX_MIME,
+  resolveUploadContentType,
   uploadMaterialFile,
   type Deck,
 } from "../api/client";
@@ -24,8 +26,13 @@ import { useProgressRegistry } from "../progress/ProgressProvider";
 import { useTrackedBusy } from "../progress/useTrackedBusy";
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
-const PPTX_MIME =
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const ALLOWED_UPLOAD_MIMES = new Set([
+  "application/pdf",
+  PPTX_MIME,
+  ...IMAGE_MIMES,
+]);
 
 export default function LibraryPage() {
   const [decks, setDecks] = useState<Deck[]>([]);
@@ -132,26 +139,17 @@ export default function LibraryPage() {
       setError("Choose a PDF, PPTX, or image file");
       return;
     }
-    const type = uploadFile.type;
-    const name = uploadFile.name.toLowerCase();
-    const okType =
-      type === "application/pdf" ||
-      type === PPTX_MIME ||
-      type === "image/jpeg" ||
-      type === "image/png" ||
-      type === "image/webp" ||
-      name.endsWith(".pdf") ||
-      name.endsWith(".pptx") ||
-      name.endsWith(".jpg") ||
-      name.endsWith(".jpeg") ||
-      name.endsWith(".png") ||
-      name.endsWith(".webp");
-    if (!okType) {
+    const contentType = resolveUploadContentType(uploadFile);
+    if (!ALLOWED_UPLOAD_MIMES.has(contentType)) {
       setError("Only PDF, PPTX, or image (jpeg/png/webp) files are allowed");
       return;
     }
     if (uploadFile.size > MAX_FILE_BYTES) {
       setError("File must be 25MB or smaller");
+      return;
+    }
+    if (IMAGE_MIMES.has(contentType) && uploadFile.size > MAX_IMAGE_BYTES) {
+      setError("Images for generation must be 8MB or smaller");
       return;
     }
     setUploading(true);
@@ -342,7 +340,7 @@ export default function LibraryPage() {
               />
             </Button>
             <Typography variant="caption" color="text.secondary">
-              PDF, PPTX, or image (jpeg/png/webp), max 25MB. Upload starts
+              PDF/PPTX max 25MB; images max 8MB. Upload starts
               generation when complete.
             </Typography>
             <Button

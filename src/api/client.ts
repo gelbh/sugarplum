@@ -157,14 +157,6 @@ export function requestMaterialUploadUrl(
   });
 }
 
-/** @deprecated Prefer requestMaterialUploadUrl */
-export function requestPdfUploadUrl(
-  deckId: string,
-  body: { filename: string; contentType: string; size: number },
-) {
-  return requestMaterialUploadUrl(deckId, body);
-}
-
 export type CompleteMaterialResponse = Material & { jobId: string | null };
 
 export function completeMaterial(materialId: string) {
@@ -257,18 +249,33 @@ export function reviewCard(cardId: string, rating: StudyRating) {
   });
 }
 
-const PPTX_MIME =
+export const PPTX_MIME =
   "application/vnd.openxmlformats-officedocument.presentationml.presentation";
 
-function resolveUploadContentType(file: File): string {
-  if (file.type) return file.type;
+const ZIP_MIMES = new Set([
+  "application/zip",
+  "application/x-zip-compressed",
+  "application/octet-stream",
+  "",
+]);
+
+/** Map browser File to upload content-type (prefer extension when type is zip/empty). */
+export function resolveUploadContentType(file: File): string {
   const name = file.name.toLowerCase();
+  const rawType = (file.type || "").trim().toLowerCase();
+  if (name.endsWith(".pptx") && (ZIP_MIMES.has(rawType) || !rawType)) {
+    return PPTX_MIME;
+  }
+  if (name.endsWith(".pdf") && (!rawType || rawType === "application/octet-stream")) {
+    return "application/pdf";
+  }
+  if (rawType && !ZIP_MIMES.has(rawType)) return file.type;
   if (name.endsWith(".pdf")) return "application/pdf";
   if (name.endsWith(".pptx")) return PPTX_MIME;
   if (name.endsWith(".png")) return "image/png";
   if (name.endsWith(".webp")) return "image/webp";
   if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";
-  return "application/octet-stream";
+  return rawType || "application/octet-stream";
 }
 
 /** Request signed URL, PUT the file to R2 (optional byte progress), then complete. */
@@ -301,11 +308,3 @@ export async function uploadMaterialFile(
   return completeMaterial(materialId);
 }
 
-/** @deprecated Prefer uploadMaterialFile */
-export async function uploadPdf(
-  deckId: string,
-  file: File,
-  onProgress?: (percent: number) => void,
-): Promise<CompleteMaterialResponse> {
-  return uploadMaterialFile(deckId, file, onProgress);
-}

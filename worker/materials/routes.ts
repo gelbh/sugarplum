@@ -4,7 +4,14 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import { enqueueGeneration } from "../generation/enqueue";
+import {
+  MAX_FILE_BYTES,
+  MAX_IMAGE_BYTES,
+  MAX_PASTE_BYTES,
+} from "./limits";
 import { createR2PutUrl } from "./r2-presign";
+
+export { MAX_IMAGE_BYTES } from "./limits";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -39,17 +46,28 @@ const IMAGE_CONTENT_TYPES = new Set([
   "image/png",
   "image/webp",
 ]);
-const MAX_PASTE_BYTES = 100 * 1024;
-const MAX_FILE_BYTES = 25 * 1024 * 1024;
 const DEFAULT_R2_BUCKET = "sugarplum-materials";
+const ZIP_CONTENT_TYPES = new Set([
+  "application/zip",
+  "application/x-zip-compressed",
+  "application/octet-stream",
+]);
 
 type UploadKind = "pdf" | "pptx" | "image";
 
 function resolveUpload(
   contentType: string,
+  filename: string,
 ): { kind: UploadKind; ext: string } | null {
+  const lowerName = filename.toLowerCase();
   if (contentType === PDF_CONTENT_TYPE) return { kind: "pdf", ext: "pdf" };
   if (contentType === PPTX_CONTENT_TYPE) return { kind: "pptx", ext: "pptx" };
+  if (
+    ZIP_CONTENT_TYPES.has(contentType) &&
+    lowerName.endsWith(".pptx")
+  ) {
+    return { kind: "pptx", ext: "pptx" };
+  }
   if (IMAGE_CONTENT_TYPES.has(contentType)) {
     const ext =
       contentType === "image/png"
@@ -243,7 +261,11 @@ deckRoutes.post("/:id/materials/upload-url", async (c) => {
 
   const contentType =
     typeof body.contentType === "string" ? body.contentType.trim() : "";
-  const resolved = resolveUpload(contentType);
+  const filenameHint =
+    typeof body.filename === "string" && body.filename.trim()
+      ? body.filename.trim()
+      : "";
+  const resolved = resolveUpload(contentType, filenameHint);
   if (!resolved) {
     throw new HTTPException(400, {
       message:
@@ -258,12 +280,16 @@ deckRoutes.post("/:id/materials/upload-url", async (c) => {
   if (size > MAX_FILE_BYTES) {
     throw new HTTPException(400, { message: "File must be 25MB or smaller" });
   }
+  if (resolved.kind === "image" && size > MAX_IMAGE_BYTES) {
+    throw new HTTPException(400, {
+      message: `Images for generation must be ${MAX_IMAGE_BYTES / (1024 * 1024)}MB or smaller`,
+    });
+  }
 
   const defaultName = `upload.${resolved.ext}`;
-  const filename =
-    typeof body.filename === "string" && body.filename.trim()
-      ? body.filename.trim()
-      : defaultName;
+  const filename = filenameHint || defaultName;
+  const putContentType =
+    resolved.kind === "pptx" ? PPTX_CONTENT_TYPE : contentType;
 
   const materialId = newId();
   const createdAt = new Date().toISOString();
@@ -285,7 +311,7 @@ deckRoutes.post("/:id/materials/upload-url", async (c) => {
     secretAccessKey,
     bucket: c.env.R2_BUCKET_NAME ?? DEFAULT_R2_BUCKET,
     key: r2Key,
-    contentType,
+    contentType: putContentType,
     contentLength: size,
   });
 
