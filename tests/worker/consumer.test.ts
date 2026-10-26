@@ -8,8 +8,8 @@ import { enqueueGeneration } from "../../worker/generation/enqueue";
 import { mockLlmAdapter, type LlmAdapter } from "../../worker/generation/llm";
 import {
   FREE_GEN_DAILY_CAP,
+  consumeFreeGenSlot,
   freeGenKvKey,
-  recordFreeGen,
 } from "../../worker/generation/quota";
 import type { CardDraft } from "../../worker/generation/schema";
 import { createTestEnv, TEST_SECRETS_WRAP_KEY } from "./test-env";
@@ -167,7 +167,7 @@ describe("processGenerateJob free path", () => {
     const env = createTestEnv();
     await seedOwner(env, false);
     for (let i = 0; i < FREE_GEN_DAILY_CAP; i++) {
-      await recordFreeGen(env, "user-a");
+      await consumeFreeGenSlot(env, "user-a");
     }
     const llm = spyLlm();
     const msg = await seedPasteJob(
@@ -181,6 +181,32 @@ describe("processGenerateJob free path", () => {
     const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("failed");
     expect(job?.error).toMatch(/free generation|daily|Settings|BYO|UTC midnight/i);
+    expect(env.getCards()).toHaveLength(0);
+  });
+
+  it("counts free-gen attempt even when generation fails afterward", async () => {
+    const env = createTestEnv();
+    await seedOwner(env, false);
+    const llm: LlmAdapter = {
+      generateDrafts: vi.fn(async () => {
+        throw new Error("simulated LLM failure");
+      }),
+      complete: vi.fn(async () => {
+        throw new Error("simulated LLM failure");
+      }),
+    };
+    const msg = await seedPasteJob(
+      env,
+      "Mitochondria are the powerhouse of the cell.",
+    );
+
+    await processGenerateJob(env, msg, { llm });
+
+    expect(llm.generateDrafts).toHaveBeenCalled();
+    const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
+    expect(job?.status).toBe("failed");
+    expect(job?.error).toMatch(/simulated LLM failure/);
+    expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBe("1");
     expect(env.getCards()).toHaveLength(0);
   });
 
@@ -199,5 +225,7 @@ describe("processGenerateJob free path", () => {
     const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("failed");
     expect(job?.error).toMatch(/Workers AI|Settings|API key/i);
+    // Slot not consumed when AI binding is missing
+    expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBeNull();
   });
 });

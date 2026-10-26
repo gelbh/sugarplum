@@ -1,9 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   FREE_GEN_DAILY_CAP,
-  assertFreeGenAllowed,
+  consumeFreeGenSlot,
   freeGenKvKey,
-  recordFreeGen,
 } from "../../worker/generation/quota";
 import { createTestEnv } from "./test-env";
 
@@ -12,36 +11,29 @@ describe("free generation quota", () => {
     vi.useRealTimers();
   });
 
-  it("allows under the daily cap and increments via recordFreeGen", async () => {
+  it("allows under the daily cap and increments via consumeFreeGenSlot", async () => {
     const env = createTestEnv();
     const userId = "user-under-cap";
 
-    await assertFreeGenAllowed(env, userId);
-
     for (let i = 0; i < FREE_GEN_DAILY_CAP - 1; i++) {
-      await recordFreeGen(env, userId);
+      await consumeFreeGenSlot(env, userId);
     }
 
-    await expect(assertFreeGenAllowed(env, userId)).resolves.toBeUndefined();
+    await expect(consumeFreeGenSlot(env, userId)).resolves.toBeUndefined();
 
     const raw = await env.SESSIONS.get(freeGenKvKey(userId));
-    expect(raw).toBe(String(FREE_GEN_DAILY_CAP - 1));
+    expect(raw).toBe(String(FREE_GEN_DAILY_CAP));
   });
 
-  it("denies at or over the daily cap with an actionable error", async () => {
+  it("denies at the daily cap with an actionable error", async () => {
     const env = createTestEnv();
     const userId = "user-at-cap";
 
     for (let i = 0; i < FREE_GEN_DAILY_CAP; i++) {
-      await recordFreeGen(env, userId);
+      await consumeFreeGenSlot(env, userId);
     }
 
-    await expect(assertFreeGenAllowed(env, userId)).rejects.toThrow(
-      /free generation|daily|Settings|BYO|UTC midnight/i,
-    );
-
-    await recordFreeGen(env, userId);
-    await expect(assertFreeGenAllowed(env, userId)).rejects.toThrow(
+    await expect(consumeFreeGenSlot(env, userId)).rejects.toThrow(
       /free generation|daily|Settings|BYO|UTC midnight/i,
     );
   });
@@ -53,7 +45,7 @@ describe("free generation quota", () => {
 
     const env = createTestEnv();
     const userId = "user-utc-day";
-    await recordFreeGen(env, userId);
+    await consumeFreeGenSlot(env, userId);
 
     expect(freeGenKvKey(userId)).toBe(`free-gen:${userId}:2026-03-16`);
     expect(await env.SESSIONS.get(`free-gen:${userId}:2026-03-16`)).toBe("1");

@@ -5,6 +5,10 @@ export const FREE_GEN_DAILY_CAP = 20;
 
 const KEY_PREFIX = "free-gen:";
 
+const CAP_ERROR =
+  `Daily free generation limit of ${FREE_GEN_DAILY_CAP} reached. ` +
+  "Add your own API key in Settings for BYO generation, or retry after UTC midnight.";
+
 /** KV key for a user's free-gen counter on a UTC calendar day. */
 export function freeGenKvKey(userId: string, now: Date = new Date()): string {
   const day = now.toISOString().slice(0, 10);
@@ -29,28 +33,22 @@ function ttlUntilNextUtcDay(now: Date): number {
 }
 
 /**
- * Throws if this user has already used the free Workers AI daily cap.
- * Call before starting a free-path generation job.
+ * Reserve one free-gen attempt for this UTC day: read count, throw if at cap,
+ * otherwise put count+1 immediately. Call once before Workers AI / pipeline.
+ *
+ * ponytail: KV has no CAS  -  concurrent jobs can still overshoot the cap under race.
  */
-export async function assertFreeGenAllowed(
+export async function consumeFreeGenSlot(
   env: Env,
   userId: string,
 ): Promise<void> {
-  const count = await readCount(env, userId);
-  if (count >= FREE_GEN_DAILY_CAP) {
-    throw new Error(
-      `Daily free generation limit of ${FREE_GEN_DAILY_CAP} reached. ` +
-        "Add your own API key in Settings for BYO generation, or retry after UTC midnight.",
-    );
-  }
-}
-
-/** Increment the per-user UTC-day free-gen counter (Workers AI path only). */
-export async function recordFreeGen(env: Env, userId: string): Promise<void> {
   const now = new Date();
   const key = freeGenKvKey(userId, now);
-  const next = (await readCount(env, userId, now)) + 1;
-  await env.SESSIONS.put(key, String(next), {
+  const count = await readCount(env, userId, now);
+  if (count >= FREE_GEN_DAILY_CAP) {
+    throw new Error(CAP_ERROR);
+  }
+  await env.SESSIONS.put(key, String(count + 1), {
     expirationTtl: ttlUntilNextUtcDay(now),
   });
 }

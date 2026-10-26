@@ -119,4 +119,25 @@ describe("Workers AI adapter", () => {
     (env as { AI?: Ai }).AI = undefined;
     expect(() => createWorkersAiAdapter(env)).toThrow(/env\.AI/i);
   });
+
+  it("maps capacity / 429 AI.run failures to Settings / midnight hint", async () => {
+    const run = vi.fn(async () => {
+      const err = new Error("Workers AI rate limit: neurons exhausted");
+      (err as Error & { status: number }).status = 429;
+      throw err;
+    });
+
+    const env = createTestEnv();
+    env.AI = { run } as unknown as Ai;
+    const adapter = createWorkersAiAdapter(env);
+
+    await expect(
+      adapter.complete({
+        system: "s",
+        user: "u",
+        apiKey: "",
+        provider: "workers-ai",
+      }),
+    ).rejects.toThrow(/Settings|BYO|UTC midnight|capacity/i);
+  });
 });
