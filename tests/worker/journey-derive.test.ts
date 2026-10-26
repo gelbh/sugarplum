@@ -123,4 +123,18 @@ describe("deriveJourney", () => {
     const view = deriveJourney(status({ deckCount: 1 }));
     expect(view.stages.find((s) => s.id === "review")?.done).toBe(false);
   });
+
+  it("review next never builds /jobs/null when openReviewJobId missing", () => {
+    // Invariants normally prevent review-active + null id; guard must still be safe.
+    const view = deriveJourney(
+      status({
+        deckCount: 1,
+        hasGenerationJob: true,
+        openReviewJobId: null,
+        acceptedCount: 0,
+      }),
+    );
+    expect(view.activeStage).toBe("study");
+    expect(JSON.stringify(view.next)).not.toContain("/jobs/null");
+  });
 });

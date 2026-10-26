@@ -52,7 +52,9 @@ function nextForStage(
     case "review":
       return {
         label: "Review drafts",
-        href: `/jobs/${status.openReviewJobId}/drafts`,
+        href: status.openReviewJobId
+          ? `/jobs/${status.openReviewJobId}/drafts`
+          : null,
         action: "review",
       };
     case "study":

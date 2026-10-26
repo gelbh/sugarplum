@@ -55,6 +55,7 @@ export default function DraftReviewPage() {
   const [drafts, setDrafts] = useState<CardDraftView[]>([]);
   const [index, setIndex] = useState(0);
   const [view, setView] = useState<JourneyView | null>(null);
+  const [journeyError, setJourneyError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -96,14 +97,24 @@ export default function DraftReviewPage() {
               href: `/jobs/${jobId}/drafts`,
               action: "review",
             };
-            derived.stages = derived.stages.map((s: any) => ({
+            derived.stages = derived.stages.map((s) => ({
               ...s,
               active: s.id === "review",
             }));
           }
-          if (!cancelled) setView(derived);
-        } catch {
-          /* ignore journey errors */
+          if (!cancelled) {
+            setJourneyError(null);
+            setView(derived);
+          }
+        } catch (err) {
+          if (!cancelled) {
+            setView(null);
+            setJourneyError(
+              err instanceof ApiError
+                ? err.message
+                : "Could not load journey progress",
+            );
+          }
         }
         if (!cancelled) setReady(true);
       } catch (err) {
@@ -212,6 +223,9 @@ export default function DraftReviewPage() {
     <Container maxWidth="sm" sx={{ py: 4 }}>
       <Stack spacing={2}>
         {view ? <JourneyRail view={view} /> : null}
+        {journeyError ? (
+          <Alert severity="warning">{journeyError}</Alert>
+        ) : null}
         <Box>
           <Typography variant="h4" component="h1" color="primary" gutterBottom>
             Draft review
