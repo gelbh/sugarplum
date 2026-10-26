@@ -6,15 +6,45 @@ import { requireUser, type AuthVariables } from "../auth/session";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
+export type JobProgressPayload = {
+  stage: string;
+  current: number;
+  total: number;
+  percent: number;
+  label: string;
+};
+
 export type JobPollRow = {
   id: string;
   material_id: string;
   status: string;
   error: string | null;
   coverage_json: string | null;
+  progress_json: string | null;
   created_at: string;
   finished_at: string | null;
 };
+
+function parseProgressJson(
+  raw: string | null,
+): JobProgressPayload | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as JobProgressPayload;
+    if (
+      typeof parsed.stage !== "string" ||
+      typeof parsed.current !== "number" ||
+      typeof parsed.total !== "number" ||
+      typeof parsed.percent !== "number" ||
+      typeof parsed.label !== "string"
+    ) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
 
 export const jobRoutes = new Hono<AppEnv>();
 
@@ -26,7 +56,7 @@ jobRoutes.get("/:id", async (c) => {
 
   const row = await db
     .prepare(
-      `SELECT j.id, j.material_id, j.status, j.error, j.coverage_json, j.created_at, j.finished_at
+      `SELECT j.id, j.material_id, j.status, j.error, j.coverage_json, j.progress_json, j.created_at, j.finished_at
        FROM generation_jobs j
        INNER JOIN materials m ON m.id = j.material_id
        INNER JOIN decks d ON d.id = m.deck_id
@@ -43,6 +73,7 @@ jobRoutes.get("/:id", async (c) => {
     status: row.status,
     error: row.error,
     coverage_json: row.coverage_json,
+    progress: parseProgressJson(row.progress_json),
     created_at: row.created_at,
     finished_at: row.finished_at,
   });
