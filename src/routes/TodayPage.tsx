@@ -2,14 +2,12 @@ import { useEffect, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
-import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { ApiError, listDueCards, me, getJourney } from "../api/client";
 import { deriveJourney } from "../journey/derive";
 import type { JourneyView } from "../journey/types";
-import JourneyRail from "../components/JourneyRail";
-import JourneyNextButton from "../components/JourneyNextButton";
+import JourneyChrome from "../components/JourneyChrome";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
 /** Home: due count and start a study session. Code-led MUI; no Impeccable comps. */
@@ -57,18 +55,31 @@ export default function TodayPage() {
     );
   }
 
-  const showJourneyNext =
-    dueCount === 0 &&
-    view != null &&
-    view.next.href !== "/today";
+  const hideChromeNext = dueCount > 0;
 
   return (
     <Container maxWidth="sm" sx={{ py: 6 }}>
       <Stack spacing={3}>
-        {view ? <JourneyRail view={view} /> : null}
         <Typography variant="h3" component="h1" color="primary">
           Today
         </Typography>
+
+        {view ? (
+          <JourneyChrome
+            view={view}
+            hideNext={hideChromeNext}
+            onAction={(action) => {
+              if (
+                action === "create_deck" ||
+                action === "add_material" ||
+                action === "add_more"
+              ) {
+                window.location.assign("/library");
+              }
+            }}
+          />
+        ) : null}
+
         <Typography variant="body1" color="text.secondary">
           {dueCount === 0
             ? "Nothing due right now."
@@ -88,26 +99,7 @@ export default function TodayPage() {
             >
               Start study
             </Button>
-          ) : showJourneyNext ? (
-            <Box sx={{ ml: "auto" }}>
-              <JourneyNextButton
-                view={view}
-                onAction={(action) => {
-                  if (
-                    action === "create_deck" ||
-                    action === "add_material" ||
-                    action === "add_more"
-                  ) {
-                    window.location.assign("/library");
-                  }
-                }}
-              />
-            </Box>
-          ) : (
-            <Button variant="contained" href="/study" disabled>
-              Start study
-            </Button>
-          )}
+          ) : null}
           <Button variant="outlined" href="/library">
             Library
           </Button>

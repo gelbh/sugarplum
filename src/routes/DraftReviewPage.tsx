@@ -10,8 +10,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import DraftCardEditor from "../components/DraftCardEditor";
-import JourneyRail from "../components/JourneyRail";
-import JourneyNextButton from "../components/JourneyNextButton";
+import JourneyChrome from "../components/JourneyChrome";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import {
@@ -223,10 +222,6 @@ export default function DraftReviewPage() {
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
       <Stack spacing={2}>
-        {view ? <JourneyRail view={view} /> : null}
-        {journeyError ? (
-          <Alert severity="warning">{journeyError}</Alert>
-        ) : null}
         <Box>
           <Typography variant="h4" component="h1" color="primary" gutterBottom>
             Draft review
@@ -236,6 +231,10 @@ export default function DraftReviewPage() {
             accepted.
           </Typography>
         </Box>
+        {view ? <JourneyChrome view={view} hideNext={!!current} /> : null}
+        {journeyError ? (
+          <Alert severity="warning">{journeyError}</Alert>
+        ) : null}
 
         <Stack direction="row" spacing={2} alignItems="center">
           <Link href="/library" underline="hover">
@@ -254,9 +253,11 @@ export default function DraftReviewPage() {
         {!current ? (
           <Paper variant="outlined" sx={{ p: 2 }}>
             <Typography>No drafts left for this job.</Typography>
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
-              {view ? <JourneyNextButton view={view} /> : <Link href="/library">Back to library</Link>}
-            </Box>
+            {!view ? (
+              <Box sx={{ mt: 2 }}>
+                <Link href="/library">Back to library</Link>
+              </Box>
+            ) : null}
           </Paper>
         ) : (
           <Paper variant="outlined" sx={{ p: 2.5 }}>

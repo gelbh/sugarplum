@@ -13,8 +13,7 @@ import {
   getJourney,
 } from "../api/client";
 import { deriveJourney } from "../journey/derive";
-import JourneyRail from "../components/JourneyRail";
-import JourneyNextButton from "../components/JourneyNextButton";
+import JourneyChrome from "../components/JourneyChrome";
 import CreateMaterialStepper from "../components/CreateMaterialStepper";
 import type { JourneyView } from "../journey/types";
 
@@ -78,9 +77,25 @@ export default function LibraryPage() {
       <Typography variant="h4" component="h1" gutterBottom color="primary">
         Library
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         Create decks, paste notes, or upload PDFs as materials.
       </Typography>
+
+      {view ? (
+        <Box sx={{ mb: 3 }}>
+          <JourneyChrome
+            view={view}
+            onAction={(action) => {
+              if (action === "create_deck") {
+                setActiveStep(0);
+                setFocusTitle(true);
+              } else if (action === "add_material" || action === "add_more") {
+                setActiveStep(1);
+              }
+            }}
+          />
+        </Box>
+      ) : null}
 
       <Stack spacing={4}>
         {error ? <Alert severity="error">{error}</Alert> : null}
@@ -103,35 +118,16 @@ export default function LibraryPage() {
             </Stack>
           )}
         </Box>
-        <Stack spacing={2}>
-          {view ? <JourneyRail view={view} /> : null}
-          <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-            {view ? (
-              <JourneyNextButton
-                view={view}
-                onAction={(action) => {
-                  if (action === "create_deck") {
-                    setActiveStep(0);
-                    setFocusTitle(true);
-                  } else if (action === "add_material") {
-                    setActiveStep(1);
-                  } else if (action === "add_more") {
-                    setActiveStep(1);
-                  }
-                }}
-              />
-            ) : null}
-          </Box>
-          <CreateMaterialStepper
-            decks={decks}
-            setDecks={setDecks}
-            activeStep={activeStep}
-            setActiveStep={setActiveStep}
-            focusTitle={focusTitle}
-            onFocusedTitleHandled={() => setFocusTitle(false)}
-            onChanged={refreshJourney}
-          />
-        </Stack>
+
+        <CreateMaterialStepper
+          decks={decks}
+          setDecks={setDecks}
+          activeStep={activeStep}
+          setActiveStep={setActiveStep}
+          focusTitle={focusTitle}
+          onFocusedTitleHandled={() => setFocusTitle(false)}
+          onChanged={refreshJourney}
+        />
 
         <Typography variant="body2">
           <Link href="/" underline="hover">
