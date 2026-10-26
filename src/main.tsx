@@ -3,8 +3,12 @@ import { createRoot } from "react-dom/client";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import InitColorSchemeScript from "@mui/material/InitColorSchemeScript";
+import { registerSW } from "virtual:pwa-register";
 import App from "./App.tsx";
 import { theme } from "./theme.ts";
+
+// https://vite-pwa-org.netlify.app/guide/auto-update
+registerSW({ immediate: true });
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
