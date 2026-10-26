@@ -197,6 +197,17 @@ export function listDueCards() {
   return api<CardDraftView[]>("/api/study/due");
 }
 
+export type StudyRating = 1 | 2 | 3 | 4;
+
+export type ReviewResult = { due: string };
+
+export function reviewCard(cardId: string, rating: StudyRating) {
+  return api<ReviewResult>("/api/study/review", {
+    method: "POST",
+    json: { cardId, rating },
+  });
+}
+
 /** Request signed URL, PUT the PDF to R2, then mark ready / enqueue generation. */
 export async function uploadPdf(deckId: string, file: File): Promise<CompleteMaterialResponse> {
   const { materialId, uploadUrl } = await requestPdfUploadUrl(deckId, {
