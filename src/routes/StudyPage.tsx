@@ -16,7 +16,7 @@ import {
   type CardDraftView,
   type StudyRating,
 } from "../api/client";
-import { useTrackedBusy } from "../progress/useTrackedBusy";
+import { useTrackedOp } from "../progress/useTrackedOp";
 import { loadDueCache, saveDueCache } from "../study/dueCache";
 
 /** Study session: reveal answer, grade with FSRS (keys 1-4). Code-led MUI. */
@@ -26,10 +26,10 @@ export default function StudyPage() {
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [offlineCopy, setOfflineCopy] = useState(false);
-  const { end: endLoad } = useTrackedBusy("Loading study…", {
+  const { end: endLoad } = useTrackedOp("Loading study…", {
     trackOnMount: true,
   });
-  const { busy, begin, end } = useTrackedBusy("Saving grade…");
+  const { busy, begin, end } = useTrackedOp("Saving grade…");
 
   const load = useCallback(async (userId: string) => {
     try {
@@ -66,7 +66,9 @@ export default function StudyPage() {
           window.location.assign("/login");
           return;
         }
-        setError(err instanceof ApiError ? err.message : "Failed to load study");
+        setError(
+          err instanceof ApiError ? err.message : "Failed to load study",
+        );
         setReady(true);
         endLoad(false);
       }
@@ -89,7 +91,9 @@ export default function StudyPage() {
         setRevealed(false);
         end();
       } catch (err) {
-        setError(err instanceof ApiError ? err.message : "Could not save grade");
+        setError(
+          err instanceof ApiError ? err.message : "Could not save grade",
+        );
         end(false);
       }
     },
@@ -100,7 +104,10 @@ export default function StudyPage() {
     if (!revealed || busy || !current) return;
 
     function onKey(e: KeyboardEvent) {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
         return;
       }
       const map: Record<string, StudyRating> = {

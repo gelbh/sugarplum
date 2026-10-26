@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -22,8 +22,7 @@ import {
   uploadMaterialFile,
   type Deck,
 } from "../api/client";
-import { useProgressRegistry } from "../progress/ProgressProvider";
-import { useTrackedBusy } from "../progress/useTrackedBusy";
+import { useTrackedOp } from "../progress/useTrackedOp";
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
@@ -44,13 +43,11 @@ export default function LibraryPage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const { end: endLoad } = useTrackedBusy("Loading library…", {
+  const { end: endLoad } = useTrackedOp("Loading library…", {
     trackOnMount: true,
   });
-  const { busy, begin, end } = useTrackedBusy("Working…");
-  const { upsert, complete, fail } = useProgressRegistry();
-  const uploadOpId = `upload:${useId()}`;
+  const { busy, run } = useTrackedOp("Working…");
+  const { busy: uploading, run: runUpload } = useTrackedOp("Uploading file");
   const anyBusy = busy || uploading;
 
   useEffect(() => {
@@ -70,7 +67,9 @@ export default function LibraryPage() {
           window.location.assign("/login");
           return;
         }
-        setError(err instanceof ApiError ? err.message : "Failed to load library");
+        setError(
+          err instanceof ApiError ? err.message : "Failed to load library",
+        );
         setReady(true);
         endLoad(false);
       }
@@ -84,17 +83,16 @@ export default function LibraryPage() {
     e.preventDefault();
     setError(null);
     setNotice(null);
-    begin("Working…");
     try {
-      const deck = await createDeck(title);
-      setDecks((prev) => [...prev, deck]);
-      setSelectedDeckId(deck.id);
-      setTitle("");
-      setNotice(`Created “${deck.title}”`);
-      end();
+      await run(async () => {
+        const deck = await createDeck(title);
+        setDecks((prev) => [...prev, deck]);
+        setSelectedDeckId(deck.id);
+        setTitle("");
+        setNotice(`Created “${deck.title}”`);
+      });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not create deck");
-      end(false);
     }
   }
 
@@ -106,24 +104,26 @@ export default function LibraryPage() {
       setError("Select a deck first");
       return;
     }
-    begin("Saving…");
     try {
-      const material = await pasteMaterial(selectedDeckId, {
-        text: pasteText,
-        ...(filename.trim() ? { filename: filename.trim() } : {}),
-      });
+      const material = await run(
+        async () =>
+          pasteMaterial(selectedDeckId, {
+            text: pasteText,
+            ...(filename.trim() ? { filename: filename.trim() } : {}),
+          }),
+        { label: "Saving…" },
+      );
       setPasteText("");
       setFilename("");
       if (material.jobId) {
-        end();
-        window.location.assign(`/jobs/${encodeURIComponent(material.jobId)}/drafts`);
+        window.location.assign(
+          `/jobs/${encodeURIComponent(material.jobId)}/drafts`,
+        );
         return;
       }
       setNotice(`Saved paste material (${material.status})`);
-      end();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not save paste");
-      end(false);
     }
   }
 
@@ -152,29 +152,12 @@ export default function LibraryPage() {
       setError("Images for generation must be 8MB or smaller");
       return;
     }
-    setUploading(true);
-    upsert({
-      id: uploadOpId,
-      label: "Uploading file",
-      mode: "determinate",
-      percent: 0,
-      source: "client",
-    });
     try {
-      const material = await uploadMaterialFile(
-        selectedDeckId,
-        uploadFile,
-        (percent) => {
-          upsert({
-            id: uploadOpId,
-            label: "Uploading file",
-            mode: "determinate",
-            percent,
-            source: "client",
-          });
-        },
+      const material = await runUpload(
+        async ({ setPercent }) =>
+          uploadMaterialFile(selectedDeckId, uploadFile, setPercent),
+        { mode: "determinate" },
       );
-      complete(uploadOpId);
       setUploadFile(null);
       if (material.jobId) {
         window.location.assign(
@@ -186,10 +169,7 @@ export default function LibraryPage() {
         `File already stored (${material.status}). Open drafts from a prior generate, or upload a new file.`,
       );
     } catch (err) {
-      fail(uploadOpId);
       setError(err instanceof ApiError ? err.message : "Could not upload file");
-    } finally {
-      setUploading(false);
     }
   }
 
@@ -340,8 +320,8 @@ export default function LibraryPage() {
               />
             </Button>
             <Typography variant="caption" color="text.secondary">
-              PDF/PPTX max 25MB; images max 8MB. Upload starts
-              generation when complete.
+              PDF/PPTX max 25MB; images max 8MB. Upload starts generation when
+              complete.
             </Typography>
             <Button
               type="submit"

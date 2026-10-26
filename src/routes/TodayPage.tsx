@@ -6,7 +6,7 @@ import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { ApiError, listDueCards, me } from "../api/client";
-import { useTrackedBusy } from "../progress/useTrackedBusy";
+import { useTrackedOp } from "../progress/useTrackedOp";
 import { loadDueCache, saveDueCache } from "../study/dueCache";
 
 /** Home: due count and start a study session. Code-led MUI; no Impeccable comps. */
@@ -15,7 +15,7 @@ export default function TodayPage() {
   const [error, setError] = useState<string | null>(null);
   const [offlineCopy, setOfflineCopy] = useState(false);
   const [ready, setReady] = useState(false);
-  const { end: endLoad } = useTrackedBusy("Loading today…", {
+  const { end: endLoad } = useTrackedOp("Loading today…", {
     trackOnMount: true,
   });
 
@@ -90,11 +90,7 @@ export default function TodayPage() {
         ) : null}
 
         <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-          <Button
-            variant="contained"
-            href="/study"
-            disabled={dueCount === 0}
-          >
+          <Button variant="contained" href="/study" disabled={dueCount === 0}>
             Start study
           </Button>
           <Button variant="outlined" href="/library">
