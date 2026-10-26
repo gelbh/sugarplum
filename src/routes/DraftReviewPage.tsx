@@ -20,26 +20,13 @@ import {
   rejectCard,
   type CardDraftView,
 } from "../api/client";
+import JobProgressPanel from "../progress/JobProgressPanel";
+import { useJobProgress } from "../progress/useJobProgress";
+import { useTrackedBusy } from "../progress/useTrackedBusy";
 
 function jobIdFromPath(): string | null {
   const match = window.location.pathname.match(/^\/jobs\/([^/]+)\/drafts\/?$/);
   return match?.[1] ? decodeURIComponent(match[1]) : null;
-}
-
-const TERMINAL_OK = new Set(["needs_review", "done"]);
-const TERMINAL_FAIL = new Set(["failed"]);
-
-async function waitForJobReady(jobId: string): Promise<void> {
-  const deadline = Date.now() + 60_000;
-  while (Date.now() < deadline) {
-    const job = await getJob(jobId);
-    if (TERMINAL_OK.has(job.status)) return;
-    if (TERMINAL_FAIL.has(job.status)) {
-      throw new ApiError(400, job.error ?? "Generation failed");
-    }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new ApiError(408, "Timed out waiting for generation");
 }
 
 /** Operate UI: review, edit, accept or reject generation drafts (code-led MUI; no Impeccable comps). */
@@ -49,15 +36,20 @@ export default function DraftReviewPage() {
   const [index, setIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const [statusLine, setStatusLine] = useState<string | null>(null);
   const [coverage, setCoverage] = useState<{
     covered: string[];
     gaps: string[];
     draft_count?: number;
   } | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const jobProgress = useJobProgress(authReady ? jobId : null);
+  const {
+    begin: beginLoad,
+    end: endLoad,
+  } = useTrackedBusy("Loading drafts…");
+  const { busy, begin, end } = useTrackedBusy("Working…");
 
   const load = useCallback(async (id: string) => {
     const [list, job] = await Promise.all([listJobDrafts(id), getJob(id)]);
@@ -94,19 +86,14 @@ export default function DraftReviewPage() {
       }
       try {
         await me();
-        setStatusLine("Waiting for generation…");
-        await waitForJobReady(jobId);
         if (cancelled) return;
-        setStatusLine(null);
-        await load(jobId);
-        if (!cancelled) setReady(true);
+        setAuthReady(true);
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
           window.location.assign("/login");
           return;
         }
-        setStatusLine(null);
         setError(
           err instanceof ApiError ? err.message : "Failed to load drafts",
         );
@@ -116,7 +103,38 @@ export default function DraftReviewPage() {
     return () => {
       cancelled = true;
     };
-  }, [jobId, load]);
+  }, [jobId]);
+
+  useEffect(() => {
+    if (jobProgress.error) {
+      setError(jobProgress.error);
+      setReady(true);
+      return;
+    }
+    if (!jobProgress.ready || !jobId) return;
+
+    let cancelled = false;
+    (async () => {
+      beginLoad();
+      try {
+        await load(jobId);
+        if (cancelled) return;
+        setReady(true);
+        endLoad();
+      } catch (err) {
+        if (cancelled) return;
+        setError(
+          err instanceof ApiError ? err.message : "Failed to load drafts",
+        );
+        setReady(true);
+        endLoad(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      endLoad(false);
+    };
+  }, [beginLoad, endLoad, jobId, jobProgress.error, jobProgress.ready, load]);
 
   const current = drafts[index] ?? null;
 
@@ -134,7 +152,7 @@ export default function DraftReviewPage() {
     if (!current || !dirty) return;
     setError(null);
     setNotice(null);
-    setBusy(true);
+    begin();
     try {
       const updated = await patchCard(current.id, {
         front: current.front,
@@ -146,10 +164,10 @@ export default function DraftReviewPage() {
       );
       setDirty(false);
       setNotice("Saved edits");
+      end();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not save");
-    } finally {
-      setBusy(false);
+      end(false);
     }
   }
 
@@ -157,7 +175,7 @@ export default function DraftReviewPage() {
     if (!current || !jobId) return;
     setError(null);
     setNotice(null);
-    setBusy(true);
+    begin();
     try {
       if (dirty) {
         await patchCard(current.id, {
@@ -169,10 +187,10 @@ export default function DraftReviewPage() {
       await acceptCard(current.id);
       await load(jobId);
       setNotice("Card accepted into study");
+      end();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not accept");
-    } finally {
-      setBusy(false);
+      end(false);
     }
   }
 
@@ -180,24 +198,26 @@ export default function DraftReviewPage() {
     if (!current || !jobId) return;
     setError(null);
     setNotice(null);
-    setBusy(true);
+    begin();
     try {
       await rejectCard(current.id);
       await load(jobId);
       setNotice("Card rejected");
+      end();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not reject");
-    } finally {
-      setBusy(false);
+      end(false);
     }
   }
 
   if (!ready) {
     return (
       <Container maxWidth="sm" sx={{ py: 6 }}>
-        <Typography color="text.secondary">
-          {statusLine ?? "Loading drafts…"}
-        </Typography>
+        {jobId && authReady && !jobProgress.error ? (
+          <JobProgressPanel snapshot={jobProgress.snapshot} />
+        ) : (
+          <Typography color="text.secondary">Loading drafts…</Typography>
+        )}
       </Container>
     );
   }

@@ -21,6 +21,7 @@ import {
   putLlmSettings,
   type LlmSettings,
 } from "../api/client";
+import { useTrackedBusy } from "../progress/useTrackedBusy";
 
 type ThemeMode = "system" | "light" | "dark";
 
@@ -67,8 +68,9 @@ export default function SettingsPage() {
   const queryMsg = settingsQueryMessage();
   const [error, setError] = useState<string | null>(queryMsg.error);
   const [notice, setNotice] = useState<string | null>(queryMsg.notice);
-  const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
+  const { end: endLoad } = useTrackedBusy("Loading…", { trackOnMount: true });
+  const { busy, begin, end } = useTrackedBusy("Saving…");
 
   const themeMode: ThemeMode =
     mode === "light" || mode === "dark" || mode === "system" ? mode : "system";
@@ -85,6 +87,7 @@ export default function SettingsPage() {
         setCurrent(settings);
         if (settings.configured) setProvider(settings.provider);
         setReady(true);
+        endLoad();
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
@@ -95,27 +98,28 @@ export default function SettingsPage() {
           err instanceof ApiError ? err.message : "Failed to load settings",
         );
         setReady(true);
+        endLoad(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [endLoad]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setNotice(null);
-    setBusy(true);
+    begin();
     try {
       const saved = await putLlmSettings(provider, apiKey);
       setCurrent(saved);
       setApiKey("");
       setNotice("API key saved (encrypted at rest).");
+      end();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not save key");
-    } finally {
-      setBusy(false);
+      end(false);
     }
   }
 

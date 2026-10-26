@@ -1,3 +1,5 @@
+import { UploadError, uploadWithProgress } from "../progress/uploadWithProgress";
+
 export type ApiErrorBody = {
   error?: string;
   message?: string;
@@ -116,12 +118,21 @@ export function pasteMaterial(
   });
 }
 
+export type GenerationJobProgress = {
+  stage: string;
+  current: number;
+  total: number;
+  percent: number;
+  label: string;
+};
+
 export type GenerationJob = {
   id: string;
   material_id: string;
   status: string;
   error: string | null;
   coverage_json: string | null;
+  progress: GenerationJobProgress | null;
   created_at: string;
   finished_at: string | null;
 };
@@ -260,10 +271,11 @@ function resolveUploadContentType(file: File): string {
   return "application/octet-stream";
 }
 
-/** Request signed URL, PUT the file to R2, then mark ready / enqueue generation. */
+/** Request signed URL, PUT the file to R2 (optional byte progress), then complete. */
 export async function uploadMaterialFile(
   deckId: string,
   file: File,
+  onProgress?: (percent: number) => void,
 ): Promise<CompleteMaterialResponse> {
   const contentType = resolveUploadContentType(file);
   const { materialId, uploadUrl } = await requestMaterialUploadUrl(deckId, {
@@ -272,16 +284,18 @@ export async function uploadMaterialFile(
     size: file.size,
   });
 
-  const putRes = await fetch(uploadUrl, {
-    method: "PUT",
-    headers: {
-      "Content-Type": contentType,
-      "Content-Length": String(file.size),
-    },
-    body: file,
-  });
-  if (!putRes.ok) {
-    throw new ApiError(putRes.status, "Failed to upload file to storage");
+  try {
+    await uploadWithProgress(uploadUrl, file, onProgress ?? (() => {}), {
+      contentType,
+    });
+  } catch (err) {
+    if (err instanceof UploadError) {
+      throw new ApiError(
+        err.status || 502,
+        err.message || "Failed to upload file to storage",
+      );
+    }
+    throw new ApiError(502, "Failed to upload file to storage");
   }
 
   return completeMaterial(materialId);
@@ -291,6 +305,7 @@ export async function uploadMaterialFile(
 export async function uploadPdf(
   deckId: string,
   file: File,
+  onProgress?: (percent: number) => void,
 ): Promise<CompleteMaterialResponse> {
-  return uploadMaterialFile(deckId, file);
+  return uploadMaterialFile(deckId, file, onProgress);
 }

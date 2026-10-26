@@ -5,7 +5,42 @@ import { extractPdfText } from "../materials/extract-pdf";
 import { extractPptxText } from "../materials/extract-pptx";
 import type { GenerateQueueMessage } from "./enqueue";
 import { createLlmAdapter, parseLlmProvider, type LlmAdapter } from "./llm";
+import {
+  computePercent,
+  writeJobProgress,
+  type ProgressStage,
+} from "./progress";
 import type { CardDraft } from "./schema";
+
+/** Stages until free-gen lands; skipped weights roll into generate. */
+const PRESENT_STAGES = [
+  "queued",
+  "extract",
+  "generate",
+  "persist",
+] as const satisfies readonly ProgressStage[];
+
+async function emitProgress(
+  db: D1Database,
+  jobId: string,
+  stage: ProgressStage,
+  current: number,
+  total: number,
+  label: string,
+): Promise<void> {
+  // Best-effort: progress must never flip a successful job to failed.
+  try {
+    await writeJobProgress(db, jobId, {
+      stage,
+      current,
+      total,
+      percent: computePercent(stage, current, total, PRESENT_STAGES),
+      label,
+    });
+  } catch (err) {
+    console.error("writeJobProgress failed", jobId, stage, err);
+  }
+}
 
 type MaterialRow = {
   id: string;
@@ -155,6 +190,8 @@ export async function processGenerateJob(
     .run();
 
   try {
+    await emitProgress(db, jobId, "queued", 0, 0, "Queued");
+
     const material = await db
       .prepare(
         "SELECT id, deck_id, kind, r2_key, status FROM materials WHERE id = ?",
@@ -199,8 +236,10 @@ export async function processGenerateJob(
 
     let drafts: CardDraft[];
     let mediaR2Keys: string[] | null = null;
+    const generateTotal = 1;
 
     if (material.kind === "image") {
+      await emitProgress(db, jobId, "extract", 0, 0, "Loading image");
       if (!material.r2_key) {
         throw new Error("Image material has no R2 object");
       }
@@ -209,6 +248,14 @@ export async function processGenerateJob(
         throw new Error(`R2 object missing: ${material.r2_key}`);
       }
       const bytes = await obj.arrayBuffer();
+      await emitProgress(
+        db,
+        jobId,
+        "generate",
+        0,
+        generateTotal,
+        "Generating cards (chunk 1/1)",
+      );
       drafts = await llm.generateDrafts({
         text: "",
         apiKey,
@@ -218,20 +265,47 @@ export async function processGenerateJob(
           base64: bytesToBase64(bytes),
         },
       });
+      await emitProgress(
+        db,
+        jobId,
+        "generate",
+        generateTotal,
+        generateTotal,
+        "Generating cards (chunk 1/1)",
+      );
       mediaR2Keys = [material.r2_key];
     } else {
+      await emitProgress(db, jobId, "extract", 0, 0, "Extracting material");
       const text = await extractMaterialText(env, material);
       if (!text.trim()) {
         throw new Error("Extracted material text is empty");
       }
+      await emitProgress(
+        db,
+        jobId,
+        "generate",
+        0,
+        generateTotal,
+        "Generating cards (chunk 1/1)",
+      );
       drafts = await llm.generateDrafts({
         text,
         apiKey,
         provider,
       });
+      await emitProgress(
+        db,
+        jobId,
+        "generate",
+        generateTotal,
+        generateTotal,
+        "Generating cards (chunk 1/1)",
+      );
     }
 
+    await emitProgress(db, jobId, "persist", 0, 1, "Saving drafts");
     await insertDraftCards(db, { deckId, jobId, drafts, mediaR2Keys });
+    await emitProgress(db, jobId, "persist", 1, 1, "Saving drafts");
 
     const covered = drafts.map(
       (d) => d.provenance.excerpt.slice(0, 80) || d.front.slice(0, 80),
@@ -250,6 +324,7 @@ export async function processGenerateJob(
       .bind("needs_review", coverageJson, finishedAt, jobId)
       .run();
   } catch (err) {
+    // Leave last progress_json; only mark status failed.
     const messageText =
       err instanceof Error ? err.message : "Generation failed";
     await markJobFailed(db, jobId, messageText);
