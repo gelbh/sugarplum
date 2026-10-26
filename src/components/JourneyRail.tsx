@@ -1,4 +1,3 @@
-import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import List from "@mui/material/List";
@@ -27,11 +26,60 @@ const STAGE_ICON: Record<JourneyStageId, SvgIconComponent> = {
   study: SchoolIcon,
 };
 
-export default function JourneyRail({ view }: Props) {
-  if (view.collapsed) return null;
+const STAGE_SHORT_LABEL: Record<JourneyStageId, string> = {
+  deck: "Deck",
+  material: "Mat",
+  review: "Rev",
+  study: "Study",
+};
 
+function stageIcon(s: JourneyView["stages"][number]) {
+  const Icon = STAGE_ICON[s.id];
+  if (s.done) {
+    return <CheckCircleIcon color="success" fontSize="small" />;
+  }
+  return <Icon color={s.active ? "primary" : "inherit"} fontSize="small" />;
+}
+
+export default function JourneyRail({ view }: Props) {
   const theme = useTheme();
   const isXs = useMediaQuery(theme.breakpoints.down("sm"));
+
+  if (view.collapsed) return null;
+
+  if (isXs) {
+    return (
+      <Paper elevation={1} sx={{ width: "100%", p: 1.5 }}>
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          justifyContent="space-between"
+          useFlexGap
+          flexWrap="wrap"
+        >
+          {view.stages.map((s) => (
+            <Stack
+              key={s.id}
+              alignItems="center"
+              spacing={0.25}
+              aria-label={s.label}
+              sx={{ minWidth: 0, flex: "1 1 auto" }}
+            >
+              {stageIcon(s)}
+              <Typography
+                variant="caption"
+                color={s.done ? "textPrimary" : s.active ? "textPrimary" : "text.secondary"}
+                noWrap
+              >
+                {STAGE_SHORT_LABEL[s.id]}
+              </Typography>
+            </Stack>
+          ))}
+        </Stack>
+      </Paper>
+    );
+  }
 
   return (
     <Paper elevation={1} sx={{ width: 280, p: 2 }}>
@@ -50,7 +98,7 @@ export default function JourneyRail({ view }: Props) {
                   )}
                 </ListItemIcon>
                 <ListItemText
-                  primary={isXs ? s.label : s.label}
+                  primary={s.label}
                   primaryTypographyProps={{
                     color: s.done ? undefined : s.active ? "textPrimary" : "text.secondary",
                   }}
@@ -59,9 +107,7 @@ export default function JourneyRail({ view }: Props) {
             );
           })}
         </List>
-        <Box />
       </Stack>
     </Paper>
   );
 }
-
