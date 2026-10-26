@@ -50,9 +50,7 @@ export function uploadWithProgress(
         resolve();
         return;
       }
-      reject(
-        new UploadError(xhr.status, "Failed to upload PDF to storage"),
-      );
+      reject(new UploadError(xhr.status, "Upload failed"));
     };
 
     xhr.onerror = () => {

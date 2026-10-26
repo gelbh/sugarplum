@@ -158,21 +158,21 @@ export default function LibraryPage() {
       });
       complete(uploadOpId);
       setPdfFile(null);
-      setUploading(false);
       if (material.jobId) {
         window.location.assign(
           `/jobs/${encodeURIComponent(material.jobId)}/drafts`,
         );
         return;
       }
-      // PDF text extract is not implemented yet; store only (do not claim cards ready).
+      // Idempotent re-complete: material already ready, no new job this call.
       setNotice(
-        `Stored PDF (${material.status}). Text extraction is not ready yet — use paste for generation.`,
+        `PDF already stored (${material.status}). Open Library drafts from a prior generate, or re-upload a new file.`,
       );
     } catch (err) {
       fail(uploadOpId);
-      setUploading(false);
       setError(err instanceof ApiError ? err.message : "Could not upload PDF");
+    } finally {
+      setUploading(false);
     }
   }
 
