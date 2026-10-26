@@ -7,7 +7,6 @@ import Typography from "@mui/material/Typography";
 import { ApiError, listDueCards, me, getJourney } from "../api/client";
 import { deriveJourney } from "../journey/derive";
 import type { JourneyView } from "../journey/types";
-import JourneyRail from "../components/JourneyRail";
 import JourneyNextButton from "../components/JourneyNextButton";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
@@ -56,6 +55,7 @@ export default function TodayPage() {
     );
   }
 
+  // Today is due/study, not setup. Offer a single Next CTA when idle; no stage rail.
   const showJourneyNext =
     view != null &&
     dueCount === 0 &&
@@ -67,8 +67,6 @@ export default function TodayPage() {
         <Typography variant="h3" component="h1" color="primary">
           Today
         </Typography>
-
-        {view ? <JourneyRail view={view} /> : null}
 
         <Typography variant="body1" color="text.secondary">
           {dueCount === 0
