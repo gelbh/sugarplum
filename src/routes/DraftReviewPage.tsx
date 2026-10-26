@@ -157,7 +157,7 @@ export default function DraftReviewPage() {
       const updated = await patchCard(current.id, {
         front: current.front,
         back: current.back,
-        type: current.type === "cloze" ? "cloze" : "qa",
+        type: current.type as "qa" | "cloze" | "image_label" | "diagram",
       });
       setDrafts((prev) =>
         prev.map((c) => (c.id === updated.id ? updated : c)),
@@ -181,7 +181,7 @@ export default function DraftReviewPage() {
         await patchCard(current.id, {
           front: current.front,
           back: current.back,
-          type: current.type === "cloze" ? "cloze" : "qa",
+          type: current.type as "qa" | "cloze" | "image_label" | "diagram",
         });
       }
       await acceptCard(current.id);
@@ -249,25 +249,19 @@ export default function DraftReviewPage() {
         {error ? <Alert severity="error">{error}</Alert> : null}
         {notice ? <Alert severity="success">{notice}</Alert> : null}
 
-        {coverage ? (
+        {coverage && coverage.covered.length > 0 ? (
           <Alert severity="info">
-            Coverage: {coverage.covered.length} concept
-            {coverage.covered.length === 1 ? "" : "s"} covered
-            {coverage.gaps.length > 0
-              ? ` · ${coverage.gaps.length} gap${coverage.gaps.length === 1 ? "" : "s"}`
-              : ""}
+            Draft topics
             {coverage.draft_count != null
-              ? ` · ${coverage.draft_count} drafts`
+              ? ` (${coverage.draft_count} cards)`
               : ""}
-            {coverage.covered.length > 0 ? (
-              <Box component="ul" sx={{ m: 0, mt: 1, pl: 2 }}>
-                {coverage.covered.slice(0, 5).map((item) => (
-                  <Typography component="li" key={item} variant="caption">
-                    {item}
-                  </Typography>
-                ))}
-              </Box>
-            ) : null}
+            <Box component="ul" sx={{ m: 0, mt: 1, pl: 2 }}>
+              {coverage.covered.slice(0, 5).map((item) => (
+                <Typography component="li" key={item} variant="caption">
+                  {item}
+                </Typography>
+              ))}
+            </Box>
           </Alert>
         ) : null}
 

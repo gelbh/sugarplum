@@ -151,7 +151,8 @@ cardRoutes.patch("/:id", async (c) => {
   const nextBack =
     parsed.data.back ?? parseJsonField<string>(row.back_json, "");
 
-  if (nextType !== "qa" && nextType !== "cloze") {
+  const allowedTypes = new Set(["qa", "cloze", "image_label", "diagram"]);
+  if (!allowedTypes.has(nextType)) {
     throw new HTTPException(400, { message: "Unsupported card type" });
   }
   if (nextType === "cloze") {
