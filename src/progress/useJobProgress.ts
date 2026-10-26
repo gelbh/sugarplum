@@ -42,10 +42,12 @@ function snapshotFromJob(
     progress.total > 0
       ? `chunk ${progress.current}/${progress.total}`
       : undefined;
+  // No measurable units yet: keep label + weighted floor but stay indeterminate (honesty 1A).
+  const measurable = progress.total > 0;
   return {
     id: jobId,
     label: progress.label || "Waiting for generation…",
-    mode: "determinate",
+    mode: measurable ? "determinate" : "indeterminate",
     percent: progress.percent,
     ...(detail ? { detail } : {}),
     source: "job",
