@@ -23,6 +23,7 @@ import {
   type Deck,
   ApiError,
 } from "../api/client";
+import { stepperSx } from "./stepperSx";
 
 type Props = {
   decks: Deck[];
@@ -209,7 +210,7 @@ export default function CreateMaterialStepper({
       {error ? <Alert severity="error">{error}</Alert> : null}
       {notice ? <Alert severity="success">{notice}</Alert> : null}
 
-      <Stepper activeStep={activeStep} alternativeLabel>
+      <Stepper activeStep={activeStep} alternativeLabel sx={stepperSx}>
         {steps.map((label) => (
           <Step key={label}>
             <StepLabel>{label}</StepLabel>

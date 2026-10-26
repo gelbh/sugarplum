@@ -3,6 +3,7 @@ import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import Stepper from "@mui/material/Stepper";
 import type { JourneyView } from "../journey/types";
+import { stepperSx } from "./stepperSx";
 
 type Props = {
   view: JourneyView;
@@ -26,15 +27,15 @@ export default function JourneyRail({ view }: Props) {
       <Stepper
         activeStep={activeIndex}
         alternativeLabel
-        sx={{
-          "& .MuiStepLabel-label": {
-            typography: "caption",
-            mt: 0.5,
+        sx={[
+          stepperSx,
+          {
+            "& .MuiStepLabel-label": {
+              typography: "caption",
+              mt: 0.5,
+            },
           },
-          "& .MuiStepConnector-line": {
-            borderColor: "divider",
-          },
-        }}
+        ]}
       >
         {view.stages.map((s) => (
           <Step key={s.id} completed={s.done}>
