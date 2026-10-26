@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
-import Link from "@mui/material/Link";
+import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { ApiError, listDueCards, me, getJourney } from "../api/client";
 import { deriveJourney } from "../journey/derive";
+import type { JourneyView } from "../journey/types";
 import JourneyRail from "../components/JourneyRail";
 import JourneyNextButton from "../components/JourneyNextButton";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -16,7 +17,7 @@ export default function TodayPage() {
   const [dueCount, setDueCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
-  const [view, setView] = useState<any | null>(null);
+  const [view, setView] = useState<JourneyView | null>(null);
 
   useEffect(() => {
     let cancelled = false;

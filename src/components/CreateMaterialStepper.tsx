@@ -205,7 +205,7 @@ export default function CreateMaterialStepper({
           <Box>
             <Tabs
               value={tab}
-              onChange={(ev, v) => setTab(v)}
+              onChange={(_ev, v) => setTab(v)}
               aria-label="material-type-tabs"
               sx={{ mb: 2 }}
             >

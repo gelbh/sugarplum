@@ -17,13 +17,16 @@ import CloseIcon from "@mui/icons-material/Close";
 import {
   ApiError,
   acceptCard,
-  getJob,
+    getJob,
+    getJourney,
   listJobDrafts,
   me,
   patchCard,
   rejectCard,
   type CardDraftView,
 } from "../api/client";
+import { deriveJourney } from "../journey/derive";
+import type { JourneyView } from "../journey/types";
 
 function jobIdFromPath(): string | null {
   const match = window.location.pathname.match(/^\/jobs\/([^/]+)\/drafts\/?$/);
@@ -51,6 +54,7 @@ export default function DraftReviewPage() {
   const jobId = jobIdFromPath();
   const [drafts, setDrafts] = useState<CardDraftView[]>([]);
   const [index, setIndex] = useState(0);
+  const [view, setView] = useState<JourneyView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
