@@ -13,13 +13,15 @@ Spaced-repetition study app that turns pasted lecture notes (and PDF text extrac
 ## What it does
 
 1. Paste study materials or upload a text PDF
-2. Generate draft cards (Q&A and cloze)
+2. Generate draft cards (rules harvest + LLM; Q&A and cloze)
 3. Review and edit before anything enters your deck
 4. Study with FSRS spaced repetition
 
 ## Stack
 
-React + Vite PWA on Cloudflare Workers, Material UI, D1 / R2 / KV / Queues, `ts-fsrs`. BYO LLM API key.
+React + Vite PWA on Cloudflare Workers, Material UI, D1 / R2 / KV / Queues / Workers AI, `ts-fsrs`.
+
+**Generation:** free by default via the Workers `AI` binding (rules harvest first, then platform model). Optional BYO OpenAI / Anthropic / Google key in Settings for higher quality and no free daily cap. Free path is capped at 20 jobs per user per UTC day. Long pastes are processed in at most 4 chunks (~5k chars each) to bound LLM/Workers AI calls.
 
 ## Develop
 
