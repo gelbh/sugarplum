@@ -1,0 +1,698 @@
+import type { Env } from "../../worker/env";
+
+type UserRow = {
+  id: string;
+  email: string;
+  password_hash: string | null;
+  oauth_subject: string | null;
+  created_at: string;
+};
+
+type DeckRow = {
+  id: string;
+  user_id: string;
+  title: string;
+  subject_hint: string | null;
+  created_at: string;
+};
+
+type MaterialRow = {
+  id: string;
+  deck_id: string;
+  kind: string;
+  r2_key: string | null;
+  filename: string | null;
+  page_count: number | null;
+  status: string;
+  created_at: string;
+  body_text?: string | null;
+};
+
+type GenerationJobRow = {
+  id: string;
+  material_id: string;
+  status: string;
+  error: string | null;
+  coverage_json: string | null;
+  created_at: string;
+  finished_at: string | null;
+};
+
+type UserSecretRow = {
+  user_id: string;
+  provider: string;
+  ciphertext: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CardRow = {
+  id: string;
+  deck_id: string;
+  job_id: string | null;
+  type: string;
+  front_json: string;
+  back_json: string;
+  media_r2_keys_json: string | null;
+  provenance_json: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ScheduleRow = {
+  card_id: string;
+  due: string;
+  stability: number;
+  difficulty: number;
+  elapsed_days: number;
+  scheduled_days: number;
+  learning_steps: number;
+  reps: number;
+  lapses: number;
+  state: number;
+  last_review: string | null;
+};
+
+type SessionRecord = { userId: string; expiresAt: number };
+
+/** Fixed 32-byte wrap key for Vitest when SECRETS_WRAP_KEY is unset. */
+export const TEST_SECRETS_WRAP_KEY = "0123456789abcdef0123456789abcdef";
+
+/** In-memory Worker bindings for route tests (no Miniflare). */
+export type TestEnv = Env & {
+  seedUser: (row: UserRow) => void;
+  seedDeck: (row: DeckRow) => void;
+  seedMaterial: (row: MaterialRow) => void;
+  seedSession: (id: string, userId: string, ttlMs?: number) => void;
+  seedUserSecret: (row: UserSecretRow) => void;
+  seedCard: (row: CardRow) => void;
+  seedSchedule: (row: ScheduleRow) => void;
+  seedR2: (key: string, value: string) => void;
+  getMaterials: () => MaterialRow[];
+  getGenerationJobs: () => GenerationJobRow[];
+  getUserSecrets: () => UserSecretRow[];
+  getCards: () => CardRow[];
+  getSchedules: () => ScheduleRow[];
+  getQueueMessages: () => unknown[];
+  getR2Keys: () => string[];
+};
+
+export function createTestEnv(opts?: {
+  secretsWrapKey?: string | null;
+}): TestEnv {
+  const users = new Map<string, UserRow>();
+  const decks = new Map<string, DeckRow>();
+  const materials = new Map<string, MaterialRow>();
+  const generationJobs = new Map<string, GenerationJobRow>();
+  const userSecrets = new Map<string, UserSecretRow>();
+  const cards = new Map<string, CardRow>();
+  const schedules = new Map<string, ScheduleRow>();
+  const sessions = new Map<string, string>();
+  const r2 = new Map<string, string>();
+  const queueMessages: unknown[] = [];
+
+  // Test harness only: missing wrap key → fixed 32-byte test key.
+  const wrapKey =
+    opts?.secretsWrapKey === null
+      ? ""
+      : (opts?.secretsWrapKey ?? TEST_SECRETS_WRAP_KEY);
+
+  function prepare(sql: string) {
+    const normalized = sql.replace(/\s+/g, " ").trim();
+    let bound: unknown[] = [];
+
+    const stmt = {
+      bind(...args: unknown[]) {
+        bound = args;
+        return stmt;
+      },
+      async first<T>(): Promise<T | null> {
+        if (normalized.startsWith("SELECT id FROM users WHERE email =")) {
+          for (const u of users.values()) {
+            if (u.email === bound[0]) return { id: u.id } as T;
+          }
+          return null;
+        }
+        if (
+          normalized.startsWith(
+            "SELECT id, email, password_hash FROM users WHERE email =",
+          )
+        ) {
+          for (const u of users.values()) {
+            if (u.email === bound[0]) {
+              return {
+                id: u.id,
+                email: u.email,
+                password_hash: u.password_hash,
+              } as T;
+            }
+          }
+          return null;
+        }
+        if (normalized.startsWith("SELECT id, email FROM users WHERE id =")) {
+          const u = users.get(bound[0] as string);
+          return u ? ({ id: u.id, email: u.email } as T) : null;
+        }
+        if (
+          normalized.includes("FROM decks WHERE id =") &&
+          normalized.includes("user_id =")
+        ) {
+          const deck = decks.get(bound[0] as string);
+          if (!deck || deck.user_id !== bound[1]) return null;
+          return deck as T;
+        }
+        if (normalized.startsWith("SELECT id, user_id FROM decks WHERE id =")) {
+          const deck = decks.get(bound[0] as string);
+          return deck
+            ? ({ id: deck.id, user_id: deck.user_id } as T)
+            : null;
+        }
+        if (
+          normalized.startsWith(
+            "SELECT id, deck_id, kind, r2_key, status FROM materials WHERE id =",
+          )
+        ) {
+          const material = materials.get(bound[0] as string);
+          if (!material) return null;
+          return {
+            id: material.id,
+            deck_id: material.deck_id,
+            kind: material.kind,
+            r2_key: material.r2_key,
+            status: material.status,
+          } as T;
+        }
+        if (
+          normalized.includes("FROM materials m") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("m.id =") &&
+          normalized.includes("d.user_id =")
+        ) {
+          const material = materials.get(bound[0] as string);
+          if (!material) return null;
+          const deck = decks.get(material.deck_id);
+          if (!deck || deck.user_id !== bound[1]) return null;
+          return material as T;
+        }
+        if (
+          normalized.includes("FROM generation_jobs j") &&
+          normalized.includes("INNER JOIN materials m") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("j.id =") &&
+          normalized.includes("d.user_id =")
+        ) {
+          const job = generationJobs.get(bound[0] as string);
+          if (!job) return null;
+          const material = materials.get(job.material_id);
+          if (!material) return null;
+          const deck = decks.get(material.deck_id);
+          if (!deck || deck.user_id !== bound[1]) return null;
+          return {
+            id: job.id,
+            material_id: job.material_id,
+            status: job.status,
+            error: job.error,
+            coverage_json: job.coverage_json,
+            created_at: job.created_at,
+            finished_at: job.finished_at,
+          } as T;
+        }
+        if (
+          normalized.startsWith(
+            "SELECT provider, ciphertext FROM user_secrets WHERE user_id =",
+          )
+        ) {
+          const row = userSecrets.get(bound[0] as string);
+          return row
+            ? ({ provider: row.provider, ciphertext: row.ciphertext } as T)
+            : null;
+        }
+        if (
+          normalized.includes("FROM cards c") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("c.id =") &&
+          normalized.includes("d.user_id =")
+        ) {
+          const card = cards.get(bound[0] as string);
+          if (!card) return null;
+          const deck = decks.get(card.deck_id);
+          if (!deck || deck.user_id !== bound[1]) return null;
+          return card as T;
+        }
+        if (
+          normalized.includes("FROM generation_jobs j") &&
+          normalized.includes("SELECT j.id") &&
+          normalized.includes("j.id =") &&
+          normalized.includes("d.user_id =")
+        ) {
+          const job = generationJobs.get(bound[0] as string);
+          if (!job) return null;
+          const material = materials.get(job.material_id);
+          if (!material) return null;
+          const deck = decks.get(material.deck_id);
+          if (!deck || deck.user_id !== bound[1]) return null;
+          return { id: job.id } as T;
+        }
+        return null;
+      },
+      async all<T>(): Promise<{ results: T[] }> {
+        if (
+          normalized.includes("FROM decks WHERE user_id =") &&
+          normalized.includes("ORDER BY created_at")
+        ) {
+          const rows = [...decks.values()]
+            .filter((d) => d.user_id === bound[0])
+            .sort((a, b) => a.created_at.localeCompare(b.created_at))
+            .map(({ id, title, subject_hint, created_at }) => ({
+              id,
+              title,
+              subject_hint,
+              created_at,
+            }));
+          return { results: rows as T[] };
+        }
+        if (normalized.includes("FROM materials WHERE deck_id =")) {
+          const rows = [...materials.values()].filter(
+            (m) => m.deck_id === bound[0],
+          );
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM cards") &&
+          normalized.includes("job_id =") &&
+          normalized.includes("status =")
+        ) {
+          const [jobId, status] = bound as [string, string];
+          const rows = [...cards.values()]
+            .filter((c) => c.job_id === jobId && c.status === status)
+            .sort((a, b) => a.created_at.localeCompare(b.created_at));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM cards c") &&
+          normalized.includes("INNER JOIN card_schedules s") &&
+          normalized.includes("c.status =") &&
+          normalized.includes("s.due <=")
+        ) {
+          const [userId, status, now] = bound as [string, string, string];
+          const rows = [...cards.values()]
+            .filter((c) => {
+              if (c.status !== status) return false;
+              const deck = decks.get(c.deck_id);
+              if (!deck || deck.user_id !== userId) return false;
+              const schedule = schedules.get(c.id);
+              if (!schedule || schedule.due > now) return false;
+              return true;
+            })
+            .map((c) => ({ ...c, due: schedules.get(c.id)!.due }))
+            .sort((a, b) => a.due.localeCompare(b.due));
+          return { results: rows as T[] };
+        }
+        return { results: [] };
+      },
+      async run(): Promise<D1Result> {
+        if (normalized.startsWith("INSERT INTO users")) {
+          const [id, email, password_hash, , created_at] = bound as [
+            string,
+            string,
+            string,
+            null,
+            string,
+          ];
+          for (const existing of users.values()) {
+            if (existing.email === email) {
+              throw new Error("UNIQUE constraint failed: users.email");
+            }
+          }
+          users.set(id, {
+            id,
+            email,
+            password_hash,
+            oauth_subject: null,
+            created_at,
+          });
+        } else if (normalized.startsWith("INSERT INTO decks")) {
+          const [id, user_id, title, subject_hint, created_at] = bound as [
+            string,
+            string,
+            string,
+            string | null,
+            string,
+          ];
+          decks.set(id, { id, user_id, title, subject_hint, created_at });
+        } else if (normalized.startsWith("INSERT INTO materials")) {
+          const [
+            id,
+            deck_id,
+            kind,
+            r2_key,
+            filename,
+            page_count,
+            status,
+            created_at,
+          ] = bound as [
+            string,
+            string,
+            string,
+            string | null,
+            string | null,
+            number | null,
+            string,
+            string,
+          ];
+          materials.set(id, {
+            id,
+            deck_id,
+            kind,
+            r2_key,
+            filename,
+            page_count,
+            status,
+            created_at,
+          });
+        } else if (
+          normalized.startsWith(
+            "UPDATE materials SET status = ? WHERE id = ? AND status = ?",
+          )
+        ) {
+          const [status, id, expected] = bound as [string, string, string];
+          const row = materials.get(id);
+          if (row && row.status === expected) {
+            materials.set(id, { ...row, status });
+            return { success: true, meta: { changes: 1 } } as D1Result;
+          }
+          return { success: true, meta: { changes: 0 } } as D1Result;
+        } else if (normalized.startsWith("UPDATE materials SET status =")) {
+          const [status, id] = bound as [string, string];
+          const row = materials.get(id);
+          if (row) materials.set(id, { ...row, status });
+        } else if (normalized.startsWith("INSERT INTO generation_jobs")) {
+          const [
+            id,
+            material_id,
+            status,
+            error,
+            coverage_json,
+            created_at,
+            finished_at,
+          ] = bound as [
+            string,
+            string,
+            string,
+            string | null,
+            string | null,
+            string,
+            string | null,
+          ];
+          generationJobs.set(id, {
+            id,
+            material_id,
+            status,
+            error,
+            coverage_json,
+            created_at,
+            finished_at,
+          });
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET status = ?, error = NULL, finished_at = ?",
+          )
+        ) {
+          const [status, finished_at, id] = bound as [
+            string,
+            string,
+            string,
+          ];
+          const row = generationJobs.get(id);
+          if (row) {
+            generationJobs.set(id, {
+              ...row,
+              status,
+              error: null,
+              finished_at,
+            });
+          }
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET status = ?, error = NULL WHERE id =",
+          )
+        ) {
+          const [status, id] = bound as [string, string];
+          const row = generationJobs.get(id);
+          if (row) {
+            generationJobs.set(id, { ...row, status, error: null });
+          }
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET status = ?, error = ?, finished_at = ?",
+          )
+        ) {
+          const [status, error, finished_at, id] = bound as [
+            string,
+            string,
+            string,
+            string,
+          ];
+          const row = generationJobs.get(id);
+          if (row) {
+            generationJobs.set(id, {
+              ...row,
+              status,
+              error,
+              finished_at,
+            });
+          }
+        } else if (normalized.startsWith("INSERT INTO user_secrets")) {
+          const [user_id, provider, ciphertext, created_at, updated_at] =
+            bound as [string, string, string, string, string];
+          const existing = userSecrets.get(user_id);
+          userSecrets.set(user_id, {
+            user_id,
+            provider,
+            ciphertext,
+            created_at: existing?.created_at ?? created_at,
+            updated_at,
+          });
+        } else if (normalized.startsWith("INSERT INTO cards")) {
+          const [
+            id,
+            deck_id,
+            job_id,
+            type,
+            front_json,
+            back_json,
+            media_r2_keys_json,
+            provenance_json,
+            status,
+            created_at,
+            updated_at,
+          ] = bound as [
+            string,
+            string,
+            string | null,
+            string,
+            string,
+            string,
+            string | null,
+            string | null,
+            string,
+            string,
+            string,
+          ];
+          cards.set(id, {
+            id,
+            deck_id,
+            job_id,
+            type,
+            front_json,
+            back_json,
+            media_r2_keys_json,
+            provenance_json,
+            status,
+            created_at,
+            updated_at,
+          });
+        } else if (
+          normalized.startsWith(
+            "UPDATE cards SET type = ?, front_json = ?, back_json = ?, updated_at = ?",
+          )
+        ) {
+          const [type, front_json, back_json, updated_at, id] = bound as [
+            string,
+            string,
+            string,
+            string,
+            string,
+          ];
+          const row = cards.get(id);
+          if (row) {
+            cards.set(id, {
+              ...row,
+              type,
+              front_json,
+              back_json,
+              updated_at,
+            });
+          }
+        } else if (
+          normalized.startsWith(
+            "UPDATE cards SET status = ?, updated_at = ? WHERE id = ? AND status = ?",
+          )
+        ) {
+          const [status, updated_at, id, expected] = bound as [
+            string,
+            string,
+            string,
+            string,
+          ];
+          const row = cards.get(id);
+          if (row && row.status === expected) {
+            cards.set(id, { ...row, status, updated_at });
+            return { success: true, meta: { changes: 1 } } as D1Result;
+          }
+          return { success: true, meta: { changes: 0 } } as D1Result;
+        } else if (
+          normalized.startsWith(
+            "UPDATE cards SET status = ?, updated_at = ? WHERE id =",
+          )
+        ) {
+          const [status, updated_at, id] = bound as [string, string, string];
+          const row = cards.get(id);
+          if (row) cards.set(id, { ...row, status, updated_at });
+        } else if (normalized.startsWith("INSERT INTO card_schedules")) {
+          const [
+            card_id,
+            due,
+            stability,
+            difficulty,
+            elapsed_days,
+            scheduled_days,
+            learning_steps,
+            reps,
+            lapses,
+            state,
+            last_review,
+          ] = bound as [
+            string,
+            string,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            string | null,
+          ];
+          schedules.set(card_id, {
+            card_id,
+            due,
+            stability,
+            difficulty,
+            elapsed_days,
+            scheduled_days,
+            learning_steps,
+            reps,
+            lapses,
+            state,
+            last_review,
+          });
+        }
+        return { success: true, meta: { changes: 1 } } as D1Result;
+      },
+    };
+    return stmt;
+  }
+
+  async function batch(statements: D1PreparedStatement[]): Promise<D1Result[]> {
+    const results: D1Result[] = [];
+    for (const stmt of statements) {
+      results.push(await stmt.run());
+    }
+    return results;
+  }
+
+  const env: TestEnv = {
+    DB: { prepare, batch } as unknown as D1Database,
+    MATERIALS: {
+      async put(key: string, value: string | ArrayBuffer | ReadableStream) {
+        const text =
+          typeof value === "string"
+            ? value
+            : value instanceof ArrayBuffer
+              ? new TextDecoder().decode(value)
+              : await new Response(value).text();
+        r2.set(key, text);
+      },
+      async get(key: string) {
+        const v = r2.get(key);
+        if (v === undefined) return null;
+        return {
+          text: async () => v,
+          arrayBuffer: async () => new TextEncoder().encode(v).buffer,
+        };
+      },
+    } as unknown as R2Bucket,
+    SESSIONS: {
+      async get(key: string) {
+        return sessions.get(key) ?? null;
+      },
+      async put(key: string, value: string) {
+        sessions.set(key, value);
+      },
+      async delete(key: string) {
+        sessions.delete(key);
+      },
+    } as unknown as KVNamespace,
+    GENERATE_QUEUE: {
+      send: async (body: unknown) => {
+        queueMessages.push(body);
+      },
+    } as unknown as Queue,
+    APP_URL: "http://localhost",
+    SECRETS_WRAP_KEY: wrapKey,
+    R2_ACCOUNT_ID: "test-account",
+    R2_BUCKET_NAME: "sugarplum-materials",
+    R2_ACCESS_KEY_ID: "test-access-key",
+    R2_SECRET_ACCESS_KEY: "test-secret-key",
+    seedUser(row) {
+      users.set(row.id, row);
+    },
+    seedDeck(row) {
+      decks.set(row.id, row);
+    },
+    seedMaterial(row) {
+      materials.set(row.id, row);
+    },
+    seedSession(id, userId, ttlMs = 60_000) {
+      const record: SessionRecord = {
+        userId,
+        expiresAt: Date.now() + ttlMs,
+      };
+      sessions.set(id, JSON.stringify(record));
+    },
+    seedUserSecret(row) {
+      userSecrets.set(row.user_id, row);
+    },
+    seedCard(row) {
+      cards.set(row.id, row);
+    },
+    seedSchedule(row) {
+      schedules.set(row.card_id, row);
+    },
+    seedR2(key, value) {
+      r2.set(key, value);
+    },
+    getMaterials: () => [...materials.values()],
+    getGenerationJobs: () => [...generationJobs.values()],
+    getUserSecrets: () => [...userSecrets.values()],
+    getCards: () => [...cards.values()],
+    getSchedules: () => [...schedules.values()],
+    getQueueMessages: () => [...queueMessages],
+    getR2Keys: () => [...r2.keys()],
+  };
+
+  return env;
+}
