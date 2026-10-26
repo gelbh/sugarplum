@@ -134,6 +134,29 @@ export function completeMaterial(materialId: string) {
   });
 }
 
+export type LlmSettingsConfigured = {
+  provider: string;
+  last4: string;
+  configured: true;
+};
+
+export type LlmSettingsMissing = {
+  configured: false;
+};
+
+export type LlmSettings = LlmSettingsConfigured | LlmSettingsMissing;
+
+export function getLlmSettings() {
+  return api<LlmSettings>("/api/settings/llm");
+}
+
+export function putLlmSettings(provider: string, apiKey: string) {
+  return api<LlmSettingsConfigured>("/api/settings/llm", {
+    method: "PUT",
+    json: { provider, apiKey },
+  });
+}
+
 /** Request signed URL, PUT the PDF to R2, then mark ready / enqueue generation. */
 export async function uploadPdf(deckId: string, file: File): Promise<CompleteMaterialResponse> {
   const { materialId, uploadUrl } = await requestPdfUploadUrl(deckId, {

@@ -5,6 +5,7 @@ import Typography from "@mui/material/Typography";
 import LibraryPage from "./routes/LibraryPage";
 import LoginPage from "./routes/LoginPage";
 import RegisterPage from "./routes/RegisterPage";
+import SettingsPage from "./routes/SettingsPage";
 
 export default function App() {
   const path = window.location.pathname;
@@ -12,6 +13,7 @@ export default function App() {
   if (path === "/login") return <LoginPage />;
   if (path === "/register") return <RegisterPage />;
   if (path === "/library") return <LibraryPage />;
+  if (path === "/settings") return <SettingsPage />;
 
   return (
     <Container maxWidth="sm" sx={{ py: 6 }}>
@@ -24,6 +26,9 @@ export default function App() {
       <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
         <Button variant="contained" href="/library">
           Library
+        </Button>
+        <Button variant="outlined" href="/settings">
+          Settings
         </Button>
         <Button variant="outlined" href="/login">
           Sign in

@@ -1,0 +1,151 @@
+import { useEffect, useState, type FormEvent } from "react";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Container from "@mui/material/Container";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import Link from "@mui/material/Link";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import {
+  ApiError,
+  getLlmSettings,
+  me,
+  putLlmSettings,
+  type LlmSettings,
+} from "../api/client";
+
+const PROVIDERS = [
+  { value: "openai", label: "OpenAI" },
+  { value: "anthropic", label: "Anthropic" },
+  { value: "google", label: "Google" },
+] as const;
+
+export default function SettingsPage() {
+  const [provider, setProvider] = useState<string>("openai");
+  const [apiKey, setApiKey] = useState("");
+  const [current, setCurrent] = useState<LlmSettings | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        await me();
+        const settings = await getLlmSettings();
+        if (cancelled) return;
+        setCurrent(settings);
+        if (settings.configured) setProvider(settings.provider);
+        setReady(true);
+      } catch (err) {
+        if (cancelled) return;
+        if (err instanceof ApiError && err.status === 401) {
+          window.location.assign("/login");
+          return;
+        }
+        setError(
+          err instanceof ApiError ? err.message : "Failed to load settings",
+        );
+        setReady(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setNotice(null);
+    setBusy(true);
+    try {
+      const saved = await putLlmSettings(provider, apiKey);
+      setCurrent(saved);
+      setApiKey("");
+      setNotice("API key saved (encrypted at rest).");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not save key");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!ready) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 6 }}>
+        <Typography color="text.secondary">Loading…</Typography>
+      </Container>
+    );
+  }
+
+  return (
+    <Container maxWidth="sm" sx={{ py: 6 }}>
+      <Typography variant="h4" component="h1" gutterBottom color="primary">
+        Settings
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        Bring your own LLM API key. Sugarplum encrypts it at rest and never
+        shows the full key again.
+      </Typography>
+
+      {current?.configured ? (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Configured: {current.provider} · key ending in ···{current.last4}
+        </Alert>
+      ) : (
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          No API key configured yet.
+        </Alert>
+      )}
+
+      <Box component="form" onSubmit={onSubmit} noValidate>
+        <Stack spacing={2}>
+          {error ? <Alert severity="error">{error}</Alert> : null}
+          {notice ? <Alert severity="success">{notice}</Alert> : null}
+          <FormControl fullWidth>
+            <InputLabel id="provider-label">Provider</InputLabel>
+            <Select
+              labelId="provider-label"
+              label="Provider"
+              value={provider}
+              onChange={(ev) => setProvider(ev.target.value)}
+            >
+              {PROVIDERS.map((p) => (
+                <MenuItem key={p.value} value={p.value}>
+                  {p.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField
+            label="API key"
+            type="password"
+            name="apiKey"
+            autoComplete="off"
+            value={apiKey}
+            onChange={(ev) => setApiKey(ev.target.value)}
+            required
+            fullWidth
+            helperText="Paste a new key to replace the stored one."
+          />
+          <Button type="submit" variant="contained" disabled={busy || !apiKey}>
+            {busy ? "Saving…" : "Save API key"}
+          </Button>
+          <Typography variant="body2">
+            <Link href="/library" underline="hover">
+              Back to library
+            </Link>
+          </Typography>
+        </Stack>
+      </Box>
+    </Container>
+  );
+}

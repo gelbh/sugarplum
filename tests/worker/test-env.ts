@@ -38,7 +38,18 @@ type GenerationJobRow = {
   finished_at: string | null;
 };
 
+type UserSecretRow = {
+  user_id: string;
+  provider: string;
+  ciphertext: string;
+  created_at: string;
+  updated_at: string;
+};
+
 type SessionRecord = { userId: string; expiresAt: number };
+
+/** Fixed 32-byte wrap key for Vitest when SECRETS_WRAP_KEY is unset. */
+export const TEST_SECRETS_WRAP_KEY = "0123456789abcdef0123456789abcdef";
 
 /** In-memory Worker bindings for route tests (no Miniflare). */
 export type TestEnv = Env & {
@@ -48,18 +59,28 @@ export type TestEnv = Env & {
   seedSession: (id: string, userId: string, ttlMs?: number) => void;
   getMaterials: () => MaterialRow[];
   getGenerationJobs: () => GenerationJobRow[];
+  getUserSecrets: () => UserSecretRow[];
   getQueueMessages: () => unknown[];
   getR2Keys: () => string[];
 };
 
-export function createTestEnv(): TestEnv {
+export function createTestEnv(opts?: {
+  secretsWrapKey?: string | null;
+}): TestEnv {
   const users = new Map<string, UserRow>();
   const decks = new Map<string, DeckRow>();
   const materials = new Map<string, MaterialRow>();
   const generationJobs = new Map<string, GenerationJobRow>();
+  const userSecrets = new Map<string, UserSecretRow>();
   const sessions = new Map<string, string>();
   const r2 = new Map<string, string>();
   const queueMessages: unknown[] = [];
+
+  // Test harness only: missing wrap key → fixed 32-byte test key.
+  const wrapKey =
+    opts?.secretsWrapKey === null
+      ? ""
+      : (opts?.secretsWrapKey ?? TEST_SECRETS_WRAP_KEY);
 
   function prepare(sql: string) {
     const normalized = sql.replace(/\s+/g, " ").trim();
@@ -122,6 +143,16 @@ export function createTestEnv(): TestEnv {
           const deck = decks.get(material.deck_id);
           if (!deck || deck.user_id !== bound[1]) return null;
           return material as T;
+        }
+        if (
+          normalized.startsWith(
+            "SELECT provider, ciphertext FROM user_secrets WHERE user_id =",
+          )
+        ) {
+          const row = userSecrets.get(bound[0] as string);
+          return row
+            ? ({ provider: row.provider, ciphertext: row.ciphertext } as T)
+            : null;
         }
         return null;
       },
@@ -235,6 +266,17 @@ export function createTestEnv(): TestEnv {
             created_at,
             finished_at,
           });
+        } else if (normalized.startsWith("INSERT INTO user_secrets")) {
+          const [user_id, provider, ciphertext, created_at, updated_at] =
+            bound as [string, string, string, string, string];
+          const existing = userSecrets.get(user_id);
+          userSecrets.set(user_id, {
+            user_id,
+            provider,
+            ciphertext,
+            created_at: existing?.created_at ?? created_at,
+            updated_at,
+          });
         }
         return { success: true, meta: { changes: 1 } } as D1Result;
       },
@@ -281,7 +323,7 @@ export function createTestEnv(): TestEnv {
     } as unknown as Queue,
     APP_URL: "http://localhost",
     SESSION_SECRET: "test-session-secret",
-    SECRETS_WRAP_KEY: "test-wrap-key",
+    SECRETS_WRAP_KEY: wrapKey,
     R2_ACCOUNT_ID: "test-account",
     R2_BUCKET_NAME: "sugarplum-materials",
     R2_ACCESS_KEY_ID: "test-access-key",
@@ -304,6 +346,7 @@ export function createTestEnv(): TestEnv {
     },
     getMaterials: () => [...materials.values()],
     getGenerationJobs: () => [...generationJobs.values()],
+    getUserSecrets: () => [...userSecrets.values()],
     getQueueMessages: () => [...queueMessages],
     getR2Keys: () => [...r2.keys()],
   };
