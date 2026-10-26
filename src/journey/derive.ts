@@ -85,7 +85,9 @@ export function deriveJourney(status: JourneyStatus): JourneyView {
   }));
 
   const next = collapsed
-    ? {
+    ? status.dueCount > 0
+      ? { label: "Start study", href: "/study", action: "study" as const }
+      : {
         label: "Add more material",
         href: "/library",
         action: "add_more" as const,

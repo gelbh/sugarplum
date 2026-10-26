@@ -69,7 +69,7 @@ export default function JourneyRail({ view }: Props) {
               {stageIcon(s)}
               <Typography
                 variant="caption"
-                color={s.done ? "textPrimary" : s.active ? "textPrimary" : "text.secondary"}
+                color={s.done ? "text.primary" : s.active ? "text.primary" : "text.secondary"}
                 noWrap
               >
                 {STAGE_SHORT_LABEL[s.id]}
@@ -100,7 +100,7 @@ export default function JourneyRail({ view }: Props) {
                 <ListItemText
                   primary={s.label}
                   primaryTypographyProps={{
-                    color: s.done ? undefined : s.active ? "textPrimary" : "text.secondary",
+                    color: s.done ? undefined : s.active ? "text.primary" : "text.secondary",
                   }}
                 />
               </ListItem>

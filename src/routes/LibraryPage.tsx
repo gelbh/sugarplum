@@ -16,12 +16,13 @@ import { deriveJourney } from "../journey/derive";
 import JourneyRail from "../components/JourneyRail";
 import JourneyNextButton from "../components/JourneyNextButton";
 import CreateMaterialStepper from "../components/CreateMaterialStepper";
+import type { JourneyView } from "../journey/types";
 
 export default function LibraryPage() {
   const [decks, setDecks] = useState<Deck[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
-  const [view, setView] = useState<any | null>(null);
+  const [view, setView] = useState<JourneyView | null>(null);
   const [activeStep, setActiveStep] = useState(0);
   const [focusTitle, setFocusTitle] = useState(false);
 

@@ -113,9 +113,9 @@ describe("deriveJourney", () => {
     expect(view.stages.every((s) => s.done)).toBe(true);
     expect(view.stages.every((s) => !s.active)).toBe(true);
     expect(view.next).toEqual({
-      label: "Add more material",
-      href: "/library",
-      action: "add_more",
+      label: "Start study",
+      href: "/study",
+      action: "study",
     });
   });
 
