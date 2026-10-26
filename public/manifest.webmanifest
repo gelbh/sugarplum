@@ -1,0 +1,17 @@
+{
+  "name": "Sugarplum",
+  "short_name": "Sugarplum",
+  "description": "Spaced-repetition study app that turns notes into flashcards",
+  "display": "standalone",
+  "theme_color": "#5B2C6F",
+  "background_color": "#ffffff",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
