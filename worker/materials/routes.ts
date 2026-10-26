@@ -4,7 +4,14 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import { enqueueGeneration } from "../generation/enqueue";
+import {
+  MAX_FILE_BYTES,
+  MAX_IMAGE_BYTES,
+  MAX_PASTE_BYTES,
+} from "./limits";
 import { createR2PutUrl } from "./r2-presign";
+
+export { MAX_IMAGE_BYTES } from "./limits";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -29,12 +36,49 @@ export type MaterialRow = {
 
 /** Pastes ≤100KB use the same R2 path; schema has no body_text column for D1 inline. */
 const PASTE_READY = "ready";
-const PDF_UPLOADING = "uploading";
-const PDF_READY = "ready";
+const FILE_UPLOADING = "uploading";
+const FILE_READY = "ready";
 const PDF_CONTENT_TYPE = "application/pdf";
-const MAX_PASTE_BYTES = 100 * 1024;
-const MAX_PDF_BYTES = 25 * 1024 * 1024;
+const PPTX_CONTENT_TYPE =
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+const IMAGE_CONTENT_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
 const DEFAULT_R2_BUCKET = "sugarplum-materials";
+const ZIP_CONTENT_TYPES = new Set([
+  "application/zip",
+  "application/x-zip-compressed",
+  "application/octet-stream",
+]);
+
+type UploadKind = "pdf" | "pptx" | "image";
+
+function resolveUpload(
+  contentType: string,
+  filename: string,
+): { kind: UploadKind; ext: string } | null {
+  const lowerName = filename.toLowerCase();
+  if (contentType === PDF_CONTENT_TYPE) return { kind: "pdf", ext: "pdf" };
+  if (contentType === PPTX_CONTENT_TYPE) return { kind: "pptx", ext: "pptx" };
+  if (
+    ZIP_CONTENT_TYPES.has(contentType) &&
+    lowerName.endsWith(".pptx")
+  ) {
+    return { kind: "pptx", ext: "pptx" };
+  }
+  if (IMAGE_CONTENT_TYPES.has(contentType)) {
+    const ext =
+      contentType === "image/png"
+        ? "png"
+        : contentType === "image/webp"
+          ? "webp"
+          : "jpg";
+    return { kind: "image", ext };
+  }
+  return null;
+}
 
 function assertConfiguredR2AccountId(accountId: string): void {
   const trimmed = accountId.trim();
@@ -217,9 +261,15 @@ deckRoutes.post("/:id/materials/upload-url", async (c) => {
 
   const contentType =
     typeof body.contentType === "string" ? body.contentType.trim() : "";
-  if (contentType !== PDF_CONTENT_TYPE) {
+  const filenameHint =
+    typeof body.filename === "string" && body.filename.trim()
+      ? body.filename.trim()
+      : "";
+  const resolved = resolveUpload(contentType, filenameHint);
+  if (!resolved) {
     throw new HTTPException(400, {
-      message: "Only application/pdf is allowed",
+      message:
+        "Only PDF, PPTX, or image (jpeg/png/webp) uploads are allowed",
     });
   }
 
@@ -227,18 +277,23 @@ deckRoutes.post("/:id/materials/upload-url", async (c) => {
   if (!Number.isFinite(size) || size <= 0) {
     throw new HTTPException(400, { message: "Valid size required" });
   }
-  if (size > MAX_PDF_BYTES) {
-    throw new HTTPException(400, { message: "PDF must be 25MB or smaller" });
+  if (size > MAX_FILE_BYTES) {
+    throw new HTTPException(400, { message: "File must be 25MB or smaller" });
+  }
+  if (resolved.kind === "image" && size > MAX_IMAGE_BYTES) {
+    throw new HTTPException(400, {
+      message: `Images for generation must be ${MAX_IMAGE_BYTES / (1024 * 1024)}MB or smaller`,
+    });
   }
 
-  const filename =
-    typeof body.filename === "string" && body.filename.trim()
-      ? body.filename.trim()
-      : "upload.pdf";
+  const defaultName = `upload.${resolved.ext}`;
+  const filename = filenameHint || defaultName;
+  const putContentType =
+    resolved.kind === "pptx" ? PPTX_CONTENT_TYPE : contentType;
 
   const materialId = newId();
   const createdAt = new Date().toISOString();
-  const r2Key = `materials/${deckId}/${materialId}.pdf`;
+  const r2Key = `materials/${deckId}/${materialId}.${resolved.ext}`;
 
   const accountId = c.env.R2_ACCOUNT_ID;
   const accessKeyId = c.env.R2_ACCESS_KEY_ID;
@@ -256,7 +311,7 @@ deckRoutes.post("/:id/materials/upload-url", async (c) => {
     secretAccessKey,
     bucket: c.env.R2_BUCKET_NAME ?? DEFAULT_R2_BUCKET,
     key: r2Key,
-    contentType: PDF_CONTENT_TYPE,
+    contentType: putContentType,
     contentLength: size,
   });
 
@@ -267,11 +322,11 @@ deckRoutes.post("/:id/materials/upload-url", async (c) => {
     .bind(
       materialId,
       deckId,
-      "pdf",
+      resolved.kind,
       r2Key,
       filename,
       null,
-      PDF_UPLOADING,
+      FILE_UPLOADING,
       createdAt,
     )
     .run();
@@ -281,13 +336,53 @@ deckRoutes.post("/:id/materials/upload-url", async (c) => {
 
 export const materialRoutes = new Hono<AppEnv>();
 
+/** Session-gated media fetch by R2 key (must belong to a material the user owns). */
+materialRoutes.get("/media", async (c) => {
+  const userId = await requireUser(c);
+  const key = c.req.query("key")?.trim();
+  if (!key) {
+    throw new HTTPException(400, { message: "key query required" });
+  }
+  const db = getDb(c.env);
+  const owned = await db
+    .prepare(
+      `SELECT m.r2_key FROM materials m
+       INNER JOIN decks d ON d.id = m.deck_id
+       WHERE m.r2_key = ? AND d.user_id = ?`,
+    )
+    .bind(key, userId)
+    .first<{ r2_key: string }>();
+  if (!owned) {
+    throw new HTTPException(404, { message: "Media not found" });
+  }
+  const obj = await c.env.MATERIALS.get(key);
+  if (!obj) {
+    throw new HTTPException(404, { message: "Media not found" });
+  }
+  const lower = key.toLowerCase();
+  const contentType =
+    lower.endsWith(".png")
+      ? "image/png"
+      : lower.endsWith(".webp")
+        ? "image/webp"
+        : lower.endsWith(".jpg") || lower.endsWith(".jpeg")
+          ? "image/jpeg"
+          : "application/octet-stream";
+  return new Response(obj.body, {
+    headers: {
+      "content-type": contentType,
+      "cache-control": "private, max-age=3600",
+    },
+  });
+});
+
 materialRoutes.post("/:id/complete", async (c) => {
   const userId = await requireUser(c);
   const materialId = c.req.param("id");
   const db = getDb(c.env);
   const material = await requireOwnedMaterial(db, materialId, userId);
 
-  if (material.status === PDF_READY) {
+  if (material.status === FILE_READY) {
     return c.json({
       id: material.id,
       deck_id: material.deck_id,
@@ -305,7 +400,7 @@ materialRoutes.post("/:id/complete", async (c) => {
     .prepare(
       "UPDATE materials SET status = ? WHERE id = ? AND status = ?",
     )
-    .bind(PDF_READY, materialId, PDF_UPLOADING)
+    .bind(FILE_READY, materialId, FILE_UPLOADING)
     .run();
   if (!cas.meta.changes) {
     throw new HTTPException(409, {
@@ -325,7 +420,7 @@ materialRoutes.post("/:id/complete", async (c) => {
     r2_key: material.r2_key,
     filename: material.filename,
     page_count: material.page_count,
-    status: PDF_READY,
+    status: FILE_READY,
     created_at: material.created_at,
     jobId,
   });

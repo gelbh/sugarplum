@@ -14,7 +14,7 @@ import GoogleSignInButton from "../components/GoogleSignInButton";
 function oauthErrorMessage(code: string | null): string | null {
   if (!code) return null;
   if (code === "oauth_link_required") {
-    return "This email already has a password account. Sign in with email and password (Google linking comes later).";
+    return "This email already has a password account. Sign in with email and password, then link Google under Settings.";
   }
   if (code === "oauth_conflict") {
     return "This email is linked to a different Google account.";

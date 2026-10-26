@@ -8,9 +8,14 @@ export const GOOGLE_USERINFO_URL =
 export const OAUTH_STATE_TTL_SECONDS = 600;
 export const OAUTH_KV_PREFIX = "oauth:google:";
 
+export type GoogleOAuthIntent = "login" | "link";
+
 export type GoogleOAuthPending = {
   codeVerifier: string;
   createdAt: number;
+  intent: GoogleOAuthIntent;
+  /** Set when intent is link; session user that requested linking. */
+  userId?: string;
 };
 
 export type GoogleProfile = {

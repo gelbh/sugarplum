@@ -2,6 +2,8 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { decryptSecret } from "../crypto/secrets";
 import { extractPdfText } from "../materials/extract-pdf";
+import { extractPptxText } from "../materials/extract-pptx";
+import { MAX_IMAGE_BYTES } from "../materials/limits";
 import type { GenerateQueueMessage } from "./enqueue";
 import { createLlmAdapter, parseLlmProvider, type LlmAdapter } from "./llm";
 import {
@@ -133,8 +135,67 @@ async function extractMaterialText(
     return extractPdfText(bytes);
   }
 
+  if (material.kind === "pptx") {
+    const bytes = await obj.arrayBuffer();
+    return extractPptxText(bytes);
+  }
+
   throw new Error(
     `Unsupported material kind for generation: ${material.kind}`,
+  );
+}
+
+function mimeFromR2Key(r2Key: string): string {
+  const lower = r2Key.toLowerCase();
+  if (lower.endsWith(".png")) return "image/png";
+  if (lower.endsWith(".webp")) return "image/webp";
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+  return "image/jpeg";
+}
+
+/** Chunked so large images do not blow the call stack via spread. */
+function bytesToBase64(bytes: ArrayBuffer): string {
+  const arr = new Uint8Array(bytes);
+  const chunkSize = 0x8000;
+  let binary = "";
+  for (let i = 0; i < arr.length; i += chunkSize) {
+    const end = Math.min(i + chunkSize, arr.length);
+    for (let j = i; j < end; j++) {
+      binary += String.fromCharCode(arr[j]!);
+    }
+  }
+  return btoa(binary);
+}
+
+async function resolveTextLlm(
+  env: Env,
+  secret: SecretRow | null,
+  opts?: ProcessGenerateOptions,
+): Promise<{ llm: LlmAdapter; apiKey: string; provider: string }> {
+  if (secret) {
+    const wrapKey = env.SECRETS_WRAP_KEY;
+    if (!wrapKey) {
+      throw new Error("SECRETS_WRAP_KEY is not configured");
+    }
+    const apiKey = await decryptSecret(secret.ciphertext, wrapKey);
+    const provider = parseLlmProvider(secret.provider);
+    const llm = opts?.llm ?? createLlmAdapter(provider);
+    return { llm, apiKey, provider };
+  }
+
+  if (opts?.llm) {
+    return { llm: opts.llm, apiKey: "", provider: "workers-ai" };
+  }
+  if (env.AI) {
+    return {
+      llm: createWorkersAiAdapter(env),
+      apiKey: "",
+      provider: "workers-ai",
+    };
+  }
+  throw new Error(
+    "Workers AI is not available and no LLM API key is configured. " +
+      "Add an OpenAI, Anthropic, or Google API key under Settings, or retry later.",
   );
 }
 
@@ -144,9 +205,14 @@ async function insertDraftCards(
     deckId: string;
     jobId: string;
     drafts: CardDraft[];
+    mediaR2Keys: string[] | null;
   },
 ): Promise<void> {
   const now = new Date().toISOString();
+  const mediaJson =
+    args.mediaR2Keys && args.mediaR2Keys.length > 0
+      ? JSON.stringify(args.mediaR2Keys)
+      : null;
   for (const draft of args.drafts) {
     const id = newId();
     await db
@@ -163,7 +229,7 @@ async function insertDraftCards(
         draft.type,
         JSON.stringify(draft.front),
         JSON.stringify(draft.back),
-        null,
+        mediaJson,
         JSON.stringify(draft.provenance),
         "draft",
         now,
@@ -175,7 +241,7 @@ async function insertDraftCards(
 
 /**
  * Process one generate queue message:
- * extract → rules harvest → (optional) LLM pipeline → merge → drafts → needs_review.
+ * image → vision generate; text → rules harvest → (optional) LLM pipeline → merge.
  * On failure marks the job failed with an actionable error (does not throw after mark).
  */
 export async function processGenerateJob(
@@ -221,49 +287,50 @@ export async function processGenerateJob(
       .bind(deck.user_id)
       .first<SecretRow>();
 
-    await emitProgress(db, jobId, "extract", 0, 0, "Extracting material");
-    const text = await extractMaterialText(env, material);
-    if (!text.trim()) {
-      throw new Error("Extracted material text is empty");
-    }
+    let drafts: CardDraft[];
+    let mediaR2Keys: string[] | null = null;
 
-    const rulesDrafts = harvestRuleDrafts(text);
-    const remainder = remainderAfterRules(text, rulesDrafts);
-
-    let llmDrafts: CardDraft[] = [];
-
-    if (remainder.trim()) {
+    if (material.kind === "image") {
+      // Vision needs a BYO provider; free Workers AI path is text-only.
+      if (!secret && !opts?.llm) {
+        throw new Error(
+          "Image generation requires an OpenAI, Anthropic, or Google API key under Settings.",
+        );
+      }
+      const wrapKey = env.SECRETS_WRAP_KEY;
+      let apiKey = "";
+      let provider = "mock";
       let llm: LlmAdapter;
-      let apiKey: string;
-      let provider: string;
-
-      if (secret) {
-        const wrapKey = env.SECRETS_WRAP_KEY;
+      if (opts?.llm) {
+        llm = opts.llm;
+      } else {
+        if (!secret) {
+          throw new Error(
+            "Image generation requires an OpenAI, Anthropic, or Google API key under Settings.",
+          );
+        }
         if (!wrapKey) {
           throw new Error("SECRETS_WRAP_KEY is not configured");
         }
         apiKey = await decryptSecret(secret.ciphertext, wrapKey);
         provider = parseLlmProvider(secret.provider);
-        llm = opts?.llm ?? createLlmAdapter(provider);
-      } else {
-        if (opts?.llm) {
-          llm = opts.llm;
-          apiKey = "";
-          provider = "workers-ai";
-        } else if (env.AI) {
-          llm = createWorkersAiAdapter(env);
-          apiKey = "";
-          provider = "workers-ai";
-        } else {
-          throw new Error(
-            "Workers AI is not available and no LLM API key is configured. " +
-              "Add an OpenAI, Anthropic, or Google API key under Settings, or retry later.",
-          );
-        }
-        // Charge the attempt before LLM so failures still count toward the cap.
-        await consumeFreeGenSlot(env, deck.user_id);
+        llm = createLlmAdapter(provider);
       }
 
+      await emitProgress(db, jobId, "extract", 0, 0, "Loading image");
+      if (!material.r2_key) {
+        throw new Error("Image material has no R2 object");
+      }
+      const obj = await env.MATERIALS.get(material.r2_key);
+      if (!obj) {
+        throw new Error(`R2 object missing: ${material.r2_key}`);
+      }
+      const bytes = await obj.arrayBuffer();
+      if (bytes.byteLength > MAX_IMAGE_BYTES) {
+        throw new Error(
+          `Image exceeds ${MAX_IMAGE_BYTES / (1024 * 1024)}MB generate limit`,
+        );
+      }
       const generateTotal = 1;
       await emitProgress(
         db,
@@ -273,11 +340,14 @@ export async function processGenerateJob(
         generateTotal,
         "Generating cards",
       );
-      llmDrafts = await runGenerationPipeline({
-        text: remainder,
-        llm,
+      drafts = await llm.generateDrafts({
+        text: "",
         apiKey,
         provider,
+        image: {
+          mimeType: mimeFromR2Key(material.r2_key),
+          base64: bytesToBase64(bytes),
+        },
       });
       await emitProgress(
         db,
@@ -287,28 +357,86 @@ export async function processGenerateJob(
         generateTotal,
         "Generating cards",
       );
-    } else if (rulesDrafts.length === 0) {
-      throw new Error(
-        "No flashcard drafts could be produced from this material.",
-      );
+      mediaR2Keys = [material.r2_key];
+    } else {
+      await emitProgress(db, jobId, "extract", 0, 0, "Extracting material");
+      const text = await extractMaterialText(env, material);
+      if (!text.trim()) {
+        throw new Error("Extracted material text is empty");
+      }
+
+      const rulesDrafts = harvestRuleDrafts(text);
+      const remainder = remainderAfterRules(text, rulesDrafts);
+
+      let llmDrafts: CardDraft[] = [];
+
+      if (remainder.trim()) {
+        const { llm, apiKey, provider } = await resolveTextLlm(
+          env,
+          secret,
+          opts,
+        );
+        if (!secret) {
+          // Charge the attempt before LLM so failures still count toward the cap.
+          await consumeFreeGenSlot(env, deck.user_id);
+        }
+
+        const generateTotal = 1;
+        await emitProgress(
+          db,
+          jobId,
+          "generate",
+          0,
+          generateTotal,
+          "Generating cards",
+        );
+        llmDrafts = await runGenerationPipeline({
+          text: remainder,
+          llm,
+          apiKey,
+          provider,
+        });
+        await emitProgress(
+          db,
+          jobId,
+          "generate",
+          generateTotal,
+          generateTotal,
+          "Generating cards",
+        );
+      } else if (rulesDrafts.length === 0) {
+        throw new Error(
+          "No flashcard drafts could be produced from this material.",
+        );
+      }
+
+      drafts = mergeAndDedupeDrafts(rulesDrafts, llmDrafts);
     }
 
-    const drafts = mergeAndDedupeDrafts(rulesDrafts, llmDrafts);
     if (drafts.length === 0) {
       throw new Error("Generation produced no valid draft cards");
     }
 
     await emitProgress(db, jobId, "persist", 0, 1, "Saving drafts");
-    await insertDraftCards(db, { deckId, jobId, drafts });
+    await insertDraftCards(db, { deckId, jobId, drafts, mediaR2Keys });
     // Final progress before terminal status so pollers never stop below 100%.
     await emitProgress(db, jobId, "persist", 1, 1, "Saving drafts");
+
+    const covered = drafts.map(
+      (d) => d.provenance.excerpt.slice(0, 80) || d.front.slice(0, 80),
+    );
+    const coverageJson = JSON.stringify({
+      covered,
+      gaps: [] as string[],
+      draft_count: drafts.length,
+    });
 
     const finishedAt = new Date().toISOString();
     await db
       .prepare(
-        "UPDATE generation_jobs SET status = ?, error = NULL, finished_at = ? WHERE id = ?",
+        "UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = ?, finished_at = ? WHERE id = ?",
       )
-      .bind("needs_review", finishedAt, jobId)
+      .bind("needs_review", coverageJson, finishedAt, jobId)
       .run();
   } catch (err) {
     // Leave last progress_json; only mark status failed.

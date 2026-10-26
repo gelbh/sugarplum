@@ -146,12 +146,16 @@ authRoutes.get("/me", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
   const user = await db
-    .prepare("SELECT id, email FROM users WHERE id = ?")
+    .prepare("SELECT id, email, oauth_subject FROM users WHERE id = ?")
     .bind(userId)
-    .first<{ id: string; email: string }>();
+    .first<{ id: string; email: string; oauth_subject: string | null }>();
 
   if (!user) throw new HTTPException(401, { message: "Unauthorized" });
-  return c.json(user);
+  return c.json({
+    id: user.id,
+    email: user.email,
+    google_linked: user.oauth_subject != null,
+  });
 });
 
 function requireGoogleCreds(env: Env): {
@@ -168,9 +172,41 @@ function requireGoogleCreds(env: Env): {
   return { clientId, clientSecret };
 }
 
+function oauthRedirect(
+  appUrl: string,
+  path: "/login" | "/settings",
+  params: Record<string, string>,
+): Response {
+  const base = appUrl.replace(/\/$/, "") || "";
+  const url = new URL(`${base}${path}`);
+  for (const [key, value] of Object.entries(params)) {
+    url.searchParams.set(key, value);
+  }
+  return Response.redirect(url.toString(), 302);
+}
+
+function oauthLoginRedirect(appUrl: string, errorCode: string): Response {
+  return oauthRedirect(appUrl, "/login", { error: errorCode });
+}
+
+function oauthSettingsRedirect(
+  appUrl: string,
+  params: Record<string, string>,
+): Response {
+  return oauthRedirect(appUrl, "/settings", params);
+}
+
 /** Start Google OIDC (PKCE). Redirects the browser to Google. */
 authRoutes.get("/google/start", async (c) => {
   const { clientId } = requireGoogleCreds(c.env);
+  const intentRaw = c.req.query("intent");
+  const intent = intentRaw === "link" ? "link" : "login";
+
+  let linkUserId: string | undefined;
+  if (intent === "link") {
+    linkUserId = await requireUser(c);
+  }
+
   const redirectUri = googleRedirectUri(c.env.APP_URL);
   const state = randomUrlSafe(24);
   const codeVerifier = randomUrlSafe(32);
@@ -178,6 +214,8 @@ authRoutes.get("/google/start", async (c) => {
   const pending: GoogleOAuthPending = {
     codeVerifier,
     createdAt: Date.now(),
+    intent,
+    ...(linkUserId ? { userId: linkUserId } : {}),
   };
   await c.env.SESSIONS.put(
     `${OAUTH_KV_PREFIX}${state}`,
@@ -193,44 +231,39 @@ authRoutes.get("/google/start", async (c) => {
   return c.redirect(url, 302);
 });
 
-function oauthLoginRedirect(
-  appUrl: string,
-  errorCode: string,
-): Response {
-  const base = appUrl.replace(/\/$/, "") || "";
-  const url = new URL(`${base}/login`);
-  url.searchParams.set("error", errorCode);
-  return Response.redirect(url.toString(), 302);
-}
-
-/** Google OAuth callback: exchange code, upsert user, set session, redirect home. */
+/** Google OAuth callback: login upsert or authenticated Settings link. */
 authRoutes.get("/google/callback", async (c) => {
   const { clientId, clientSecret } = requireGoogleCreds(c.env);
   const appUrl = c.env.APP_URL;
   const err = c.req.query("error");
-  if (err) {
-    return oauthLoginRedirect(appUrl, "oauth_denied");
-  }
+
   const code = c.req.query("code");
   const state = c.req.query("state");
-  if (!code || !state) {
-    return oauthLoginRedirect(appUrl, "oauth");
-  }
 
-  const kvKey = `${OAUTH_KV_PREFIX}${state}`;
-  const rawPending = await c.env.SESSIONS.get(kvKey);
-  await c.env.SESSIONS.delete(kvKey);
-  if (!rawPending) {
-    return oauthLoginRedirect(appUrl, "oauth");
+  const kvKey = state ? `${OAUTH_KV_PREFIX}${state}` : null;
+  const rawPending = kvKey ? await c.env.SESSIONS.get(kvKey) : null;
+  if (kvKey) await c.env.SESSIONS.delete(kvKey);
+
+  let pending: GoogleOAuthPending | null = null;
+  if (rawPending) {
+    try {
+      pending = JSON.parse(rawPending) as GoogleOAuthPending;
+    } catch {
+      pending = null;
+    }
   }
-  let pending: GoogleOAuthPending;
-  try {
-    pending = JSON.parse(rawPending) as GoogleOAuthPending;
-  } catch {
-    return oauthLoginRedirect(appUrl, "oauth");
+  const intent =
+    pending?.intent === "link" ? "link" : ("login" as const);
+  const fail = (errorCode: string) =>
+    intent === "link"
+      ? oauthSettingsRedirect(appUrl, { error: errorCode })
+      : oauthLoginRedirect(appUrl, errorCode);
+
+  if (err) {
+    return fail("oauth_denied");
   }
-  if (typeof pending.codeVerifier !== "string") {
-    return oauthLoginRedirect(appUrl, "oauth");
+  if (!code || !state || !pending || typeof pending.codeVerifier !== "string") {
+    return fail("oauth");
   }
 
   const redirectUri = googleRedirectUri(appUrl);
@@ -245,11 +278,59 @@ authRoutes.get("/google/callback", async (c) => {
     });
     profile = await fetchGoogleProfile(tokens.access_token);
   } catch {
-    return oauthLoginRedirect(appUrl, "oauth");
+    return fail("oauth");
   }
 
   const subject = googleOauthSubject(profile.sub);
   const db = getDb(c.env);
+
+  if (intent === "link") {
+    let sessionUserId: string;
+    try {
+      sessionUserId = await requireUser(c);
+    } catch {
+      return oauthSettingsRedirect(appUrl, { error: "oauth" });
+    }
+    if (!pending.userId || pending.userId !== sessionUserId) {
+      return oauthSettingsRedirect(appUrl, { error: "oauth" });
+    }
+
+    const account = await db
+      .prepare(
+        "SELECT id, email, oauth_subject, password_hash FROM users WHERE id = ?",
+      )
+      .bind(sessionUserId)
+      .first<OauthUserRow>();
+    if (!account) {
+      return oauthSettingsRedirect(appUrl, { error: "oauth" });
+    }
+    if (account.email !== profile.email) {
+      return oauthSettingsRedirect(appUrl, { error: "oauth_email_mismatch" });
+    }
+
+    const bySubject = await db
+      .prepare(
+        "SELECT id, email, oauth_subject, password_hash FROM users WHERE oauth_subject = ?",
+      )
+      .bind(subject)
+      .first<OauthUserRow>();
+    if (bySubject && bySubject.id !== account.id) {
+      return oauthSettingsRedirect(appUrl, { error: "oauth_conflict" });
+    }
+    if (
+      account.oauth_subject != null &&
+      account.oauth_subject !== subject
+    ) {
+      return oauthSettingsRedirect(appUrl, { error: "oauth_conflict" });
+    }
+    if (account.oauth_subject == null) {
+      await db
+        .prepare("UPDATE users SET oauth_subject = ? WHERE id = ?")
+        .bind(subject, account.id)
+        .run();
+    }
+    return oauthSettingsRedirect(appUrl, { linked: "1" });
+  }
 
   const bySubject = await db
     .prepare(

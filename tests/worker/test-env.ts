@@ -185,6 +185,24 @@ export function createTestEnv(opts?: {
           }
           return null;
         }
+        if (
+          normalized.startsWith(
+            "SELECT id, email, oauth_subject FROM users WHERE id =",
+          ) ||
+          normalized.startsWith(
+            "SELECT id, email, oauth_subject, password_hash FROM users WHERE id =",
+          )
+        ) {
+          const u = users.get(bound[0] as string);
+          return u
+            ? ({
+                id: u.id,
+                email: u.email,
+                oauth_subject: u.oauth_subject,
+                password_hash: u.password_hash,
+              } as T)
+            : null;
+        }
         if (normalized.startsWith("SELECT id, email FROM users WHERE id =")) {
           const u = users.get(bound[0] as string);
           return u ? ({ id: u.id, email: u.email } as T) : null;
@@ -217,6 +235,22 @@ export function createTestEnv(opts?: {
             r2_key: material.r2_key,
             status: material.status,
           } as T;
+        }
+        if (
+          normalized.includes("FROM materials m") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("m.r2_key =") &&
+          normalized.includes("d.user_id =")
+        ) {
+          const r2Key = bound[0] as string;
+          const userId = bound[1] as string;
+          for (const material of materials.values()) {
+            if (material.r2_key !== r2Key) continue;
+            const deck = decks.get(material.deck_id);
+            if (!deck || deck.user_id !== userId) continue;
+            return { r2_key: material.r2_key } as T;
+          }
+          return null;
         }
         if (
           normalized.includes("FROM materials m") &&
@@ -475,6 +509,27 @@ export function createTestEnv(opts?: {
           });
         } else if (
           normalized.startsWith(
+            "UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = ?, finished_at = ?",
+          )
+        ) {
+          const [status, coverage_json, finished_at, id] = bound as [
+            string,
+            string,
+            string,
+            string,
+          ];
+          const row = generationJobs.get(id);
+          if (row) {
+            generationJobs.set(id, {
+              ...row,
+              status,
+              error: null,
+              coverage_json,
+              finished_at,
+            });
+          }
+        } else if (
+          normalized.startsWith(
             "UPDATE generation_jobs SET progress_json = ? WHERE id = ?",
           )
         ) {
@@ -703,9 +758,14 @@ export function createTestEnv(opts?: {
       async get(key: string) {
         const v = r2.get(key);
         if (v === undefined) return null;
+        const bytes = new TextEncoder().encode(v);
         return {
           text: async () => v,
-          arrayBuffer: async () => new TextEncoder().encode(v).buffer,
+          arrayBuffer: async () => bytes.buffer.slice(
+            bytes.byteOffset,
+            bytes.byteOffset + bytes.byteLength,
+          ),
+          body: bytes,
         };
       },
     } as unknown as R2Bucket,

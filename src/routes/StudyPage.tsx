@@ -17,6 +17,7 @@ import {
   type StudyRating,
 } from "../api/client";
 import { useTrackedBusy } from "../progress/useTrackedBusy";
+import { loadDueCache, saveDueCache } from "../study/dueCache";
 
 /** Study session: reveal answer, grade with FSRS (keys 1-4). Code-led MUI. */
 export default function StudyPage() {
@@ -24,23 +25,37 @@ export default function StudyPage() {
   const [revealed, setRevealed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [offlineCopy, setOfflineCopy] = useState(false);
   const { end: endLoad } = useTrackedBusy("Loading study…", {
     trackOnMount: true,
   });
   const { busy, begin, end } = useTrackedBusy("Saving grade…");
 
-  const load = useCallback(async () => {
-    const due = await listDueCards();
-    setQueue(due);
-    setRevealed(false);
+  const load = useCallback(async (userId: string) => {
+    try {
+      const due = await listDueCards();
+      saveDueCache(userId, due);
+      setQueue(due);
+      setOfflineCopy(false);
+      setRevealed(false);
+    } catch (err) {
+      const cached = loadDueCache(userId);
+      if (cached && cached.cards.length > 0) {
+        setQueue(cached.cards);
+        setOfflineCopy(true);
+        setRevealed(false);
+        return;
+      }
+      throw err;
+    }
   }, []);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        await me();
-        await load();
+        const user = await me();
+        await load(user.id);
         if (!cancelled) {
           setReady(true);
           endLoad();
@@ -134,6 +149,12 @@ export default function StudyPage() {
         </Stack>
 
         {error ? <Alert severity="error">{error}</Alert> : null}
+        {offlineCopy ? (
+          <Alert severity="warning">
+            Showing an offline copy of due cards. Grading still needs a network
+            connection.
+          </Alert>
+        ) : null}
 
         {!current ? (
           <Alert severity="success">
@@ -154,7 +175,15 @@ export default function StudyPage() {
               </Typography>
               <Chip
                 size="small"
-                label={current.type === "cloze" ? "Cloze" : "Q&A"}
+                label={
+                  current.type === "cloze"
+                    ? "Cloze"
+                    : current.type === "image_label"
+                      ? "Image label"
+                      : current.type === "diagram"
+                        ? "Diagram"
+                        : "Q&A"
+                }
                 color="secondary"
                 variant="outlined"
               />
@@ -163,6 +192,7 @@ export default function StudyPage() {
             <CardFace
               front={String(current.front)}
               back={String(current.back)}
+              mediaR2Keys={current.media_r2_keys}
               revealed={revealed}
               onReveal={() => setRevealed(true)}
               disabled={busy}
