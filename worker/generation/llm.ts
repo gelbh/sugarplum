@@ -95,10 +95,17 @@ function systemPromptFor(input: GenerateDraftsInput): string {
   return input.image ? IMAGE_GENERATE_SYSTEM_PROMPT : GENERATE_SYSTEM_PROMPT;
 }
 
+/** Strip ``` / ```json fences GLM and other models wrap around JSON. */
+export function unwrapLlmJsonText(content: string): string {
+  const trimmed = content.trim();
+  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  return fenced?.[1]?.trim() ?? trimmed;
+}
+
 export function parseCardsPayload(content: string): CardDraft[] {
   let parsed: unknown;
   try {
-    parsed = JSON.parse(content);
+    parsed = JSON.parse(unwrapLlmJsonText(content));
   } catch {
     throw new Error("LLM returned non-JSON content");
   }

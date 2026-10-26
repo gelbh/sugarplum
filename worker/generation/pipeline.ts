@@ -2,7 +2,11 @@ import {
   CRITIQUE_SYSTEM_PROMPT,
   critiqueUserPrompt,
 } from "./critique-prompts";
-import type { GenerateDraftsInput, LlmAdapter } from "./llm";
+import {
+  unwrapLlmJsonText,
+  type GenerateDraftsInput,
+  type LlmAdapter,
+} from "./llm";
 import { parseCardDrafts, type CardDraft } from "./schema";
 
 /** Hard cap per generate/critique chunk (~4–6k chars). */
@@ -82,7 +86,7 @@ export function chunkText(
 function unwrapCardsJson(raw: string): unknown {
   let parsed: unknown;
   try {
-    parsed = JSON.parse(raw);
+    parsed = JSON.parse(unwrapLlmJsonText(raw));
   } catch {
     throw new Error("Critique returned non-JSON content");
   }
