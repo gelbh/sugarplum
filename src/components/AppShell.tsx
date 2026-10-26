@@ -13,6 +13,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
+import Link from "@mui/material/Link";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import GlobalProgressBar from "../progress/GlobalProgressBar";
@@ -117,6 +118,9 @@ export default function AppShell({ children }: AppShellProps) {
           [`& .MuiDrawer-paper`]: {
             width: DRAWER_WIDTH,
             boxSizing: "border-box",
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
           },
         }}
       >
@@ -144,6 +148,22 @@ export default function AppShell({ children }: AppShellProps) {
             </ListItemButton>
           ))}
         </List>
+        <Box sx={{ flexGrow: 1 }} />
+        <Box sx={{ px: 2, py: 2 }}>
+          <Typography variant="caption" color="text.secondary" component="div">
+            <Link href="/privacy" underline="hover" color="inherit">
+              Privacy
+            </Link>
+            {" · "}
+            <Link href="/terms" underline="hover" color="inherit">
+              Terms
+            </Link>
+            {" · "}
+            <Link href="/data-deletion" underline="hover" color="inherit">
+              Deletion
+            </Link>
+          </Typography>
+        </Box>
       </Drawer>
       <Box
         component="main"
