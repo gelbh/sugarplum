@@ -79,6 +79,7 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
 
     setPending(true);
     let cancelled = false;
+    let pollTimer: ReturnType<typeof setTimeout> | undefined;
     const deadline = Date.now() + TIMEOUT_MS;
 
     const settleOk = () => {
@@ -131,7 +132,7 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
       }
 
       if (!cancelled && !settledRef.current) {
-        window.setTimeout(() => {
+        pollTimer = setTimeout(() => {
           void tick();
         }, POLL_MS);
       }
@@ -141,6 +142,7 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
 
     return () => {
       cancelled = true;
+      if (pollTimer !== undefined) clearTimeout(pollTimer);
       if (!settledRef.current) {
         fail(jobId);
       }

@@ -94,10 +94,9 @@ export default function DraftReviewPage() {
       beginLoad();
       try {
         await load(jobId);
-        if (!cancelled) {
-          setReady(true);
-          endLoad();
-        }
+        if (cancelled) return;
+        setReady(true);
+        endLoad();
       } catch (err) {
         if (cancelled) return;
         setError(
@@ -109,6 +108,7 @@ export default function DraftReviewPage() {
     })();
     return () => {
       cancelled = true;
+      endLoad(false);
     };
   }, [beginLoad, endLoad, jobId, jobProgress.error, jobProgress.ready, load]);
 
