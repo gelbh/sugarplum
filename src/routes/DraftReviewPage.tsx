@@ -22,7 +22,7 @@ import {
 } from "../api/client";
 import JobProgressPanel from "../progress/JobProgressPanel";
 import { useJobProgress } from "../progress/useJobProgress";
-import { useTrackedBusy } from "../progress/useTrackedBusy";
+import { useTrackedOp } from "../progress/useTrackedOp";
 
 function jobIdFromPath(): string | null {
   const match = window.location.pathname.match(/^\/jobs\/([^/]+)\/drafts\/?$/);
@@ -45,11 +45,8 @@ export default function DraftReviewPage() {
   } | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const jobProgress = useJobProgress(authReady ? jobId : null);
-  const {
-    begin: beginLoad,
-    end: endLoad,
-  } = useTrackedBusy("Loading drafts…");
-  const { busy, begin, end } = useTrackedBusy("Working…");
+  const { begin: beginLoad, end: endLoad } = useTrackedOp("Loading drafts…");
+  const { busy, begin, end } = useTrackedOp("Working…");
 
   const load = useCallback(async (id: string) => {
     const [list, job] = await Promise.all([listJobDrafts(id), getJob(id)]);
@@ -159,9 +156,7 @@ export default function DraftReviewPage() {
         back: current.back,
         type: current.type as "qa" | "cloze" | "image_label" | "diagram",
       });
-      setDrafts((prev) =>
-        prev.map((c) => (c.id === updated.id ? updated : c)),
-      );
+      setDrafts((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
       setDirty(false);
       setNotice("Saved edits");
       end();
@@ -309,7 +304,8 @@ export default function DraftReviewPage() {
               <>
                 <Divider sx={{ my: 2 }} />
                 <Typography variant="caption" color="text.secondary">
-                  Source: {String((current.provenance as { excerpt: string }).excerpt)}
+                  Source:{" "}
+                  {String((current.provenance as { excerpt: string }).excerpt)}
                 </Typography>
               </>
             ) : null}

@@ -21,7 +21,7 @@ import {
   putLlmSettings,
   type LlmSettings,
 } from "../api/client";
-import { useTrackedBusy } from "../progress/useTrackedBusy";
+import { useTrackedOp } from "../progress/useTrackedOp";
 
 type ThemeMode = "system" | "light" | "dark";
 
@@ -31,7 +31,10 @@ const PROVIDERS = [
   { value: "google", label: "Google" },
 ] as const;
 
-function settingsQueryMessage(): { error: string | null; notice: string | null } {
+function settingsQueryMessage(): {
+  error: string | null;
+  notice: string | null;
+} {
   const params = new URLSearchParams(window.location.search);
   if (params.get("linked") === "1") {
     return { error: null, notice: "Google account linked." };
@@ -69,8 +72,8 @@ export default function SettingsPage() {
   const [error, setError] = useState<string | null>(queryMsg.error);
   const [notice, setNotice] = useState<string | null>(queryMsg.notice);
   const [ready, setReady] = useState(false);
-  const { end: endLoad } = useTrackedBusy("Loading…", { trackOnMount: true });
-  const { busy, begin, end } = useTrackedBusy("Saving…");
+  const { end: endLoad } = useTrackedOp("Loading…", { trackOnMount: true });
+  const { busy, begin, end } = useTrackedOp("Saving…");
 
   const themeMode: ThemeMode =
     mode === "light" || mode === "dark" || mode === "system" ? mode : "system";
@@ -137,10 +140,10 @@ export default function SettingsPage() {
         Settings
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Optional. Without a key, Sugarplum uses free platform AI (up to 20
-        jobs per UTC day). Add your own OpenAI, Anthropic, or Google key to
-        skip that cap and for higher quality. Keys are encrypted at rest and
-        never shown in full again.
+        Optional. Without a key, Sugarplum uses free platform AI (up to 20 jobs
+        per UTC day). Add your own OpenAI, Anthropic, or Google key to skip that
+        cap and for higher quality. Keys are encrypted at rest and never shown
+        in full again.
       </Typography>
 
       <Stack spacing={1} sx={{ mb: 4 }}>
@@ -155,10 +158,7 @@ export default function SettingsPage() {
         {googleLinked ? (
           <Alert severity="success">Google account linked.</Alert>
         ) : (
-          <Button
-            variant="outlined"
-            href="/api/auth/google/start?intent=link"
-          >
+          <Button variant="outlined" href="/api/auth/google/start?intent=link">
             Link Google
           </Button>
         )}
