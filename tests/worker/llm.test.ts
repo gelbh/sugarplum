@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createLlmAdapter,
+  parseCardsPayload,
   parseLlmProvider,
   providerRequestUrl,
 } from "../../worker/generation/llm";
@@ -177,5 +178,15 @@ describe("LLM provider allowlist", () => {
     const parsed = JSON.parse(raw) as { cards: unknown[] };
     expect(Array.isArray(parsed.cards)).toBe(true);
     expect(parsed.cards.length).toBeGreaterThan(0);
+  });
+});
+
+describe("parseCardsPayload", () => {
+  it("accepts markdown-fenced JSON from Workers AI / GLM", () => {
+    const fenced = "```json\n" + sampleCardsJson + "\n```";
+    const drafts = parseCardsPayload(fenced);
+    expect(drafts).toHaveLength(3);
+    expect(drafts[0]?.type).toBe("qa");
+    expect(drafts[2]?.type).toBe("cloze");
   });
 });
