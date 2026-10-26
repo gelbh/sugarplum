@@ -10,7 +10,10 @@
 	"main": "worker/index.ts",
 	"compatibility_date": "2026-10-26",
 	"assets": {
-		"not_found_handling": "single-page-application"
+		"not_found_handling": "single-page-application",
+		// Explicit API-first routing so deep links return index.html without
+		// relying on Sec-Fetch-Mode: navigate (bare curl / link checkers).
+		"run_worker_first": ["/api/*"]
 	},
 	"upload_source_maps": true,
 	"vars": {
