@@ -574,6 +574,7 @@ export function createTestEnv(opts?: {
                 id: job.id,
                 status: job.status,
                 created_at: job.created_at,
+                deck_id: material.deck_id,
                 deck_title: deck.title,
                 filename: material.filename,
                 draft_count,
@@ -695,6 +696,18 @@ export function createTestEnv(opts?: {
           const rows = [...materials.values()]
             .filter((m) => m.deck_id === bound[0] && m.r2_key != null)
             .map((m) => ({ r2_key: m.r2_key }));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM cards") &&
+          normalized.includes("WHERE deck_id =") &&
+          normalized.includes("AND status =") &&
+          !normalized.startsWith("SELECT COUNT(*)")
+        ) {
+          const [deckId, status] = bound as [string, string];
+          const rows = [...cards.values()]
+            .filter((c) => c.deck_id === deckId && c.status === status)
+            .sort((a, b) => a.created_at.localeCompare(b.created_at));
           return { results: rows as T[] };
         }
         if (
@@ -1325,6 +1338,96 @@ export function createTestEnv(opts?: {
             reviewed_at,
             state_json,
           });
+        } else if (
+          normalized.startsWith("UPDATE card_schedules SET") &&
+          normalized.includes("WHERE card_id =")
+        ) {
+          const [
+            due,
+            stability,
+            difficulty,
+            elapsed_days,
+            scheduled_days,
+            learning_steps,
+            reps,
+            lapses,
+            state,
+            last_review,
+            card_id,
+          ] = bound as [
+            string,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            string | null,
+            string,
+          ];
+          const existing = schedules.get(card_id);
+          if (!existing) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          schedules.set(card_id, {
+            card_id,
+            due,
+            stability,
+            difficulty,
+            elapsed_days,
+            scheduled_days,
+            learning_steps,
+            reps,
+            lapses,
+            state,
+            last_review,
+          });
+          return { success: true, meta: { changes: 1 } } as D1Result;
+        } else if (
+          normalized.startsWith("INSERT INTO card_schedules") &&
+          normalized.includes("ON CONFLICT(card_id) DO UPDATE")
+        ) {
+          const [
+            card_id,
+            due,
+            stability,
+            difficulty,
+            elapsed_days,
+            scheduled_days,
+            learning_steps,
+            reps,
+            lapses,
+            state,
+            last_review,
+          ] = bound as [
+            string,
+            string,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            string | null,
+          ];
+          schedules.set(card_id, {
+            card_id,
+            due,
+            stability,
+            difficulty,
+            elapsed_days,
+            scheduled_days,
+            learning_steps,
+            reps,
+            lapses,
+            state,
+            last_review,
+          });
+          return { success: true, meta: { changes: 1 } } as D1Result;
         } else if (normalized.startsWith("INSERT INTO card_schedules")) {
           // Conditional accept: INSERT…SELECT WHERE status/updated_at match CAS.
           if (normalized.includes("SELECT c.id")) {

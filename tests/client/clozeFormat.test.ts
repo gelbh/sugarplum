@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  assertSingleCloze,
   blankClozeFront,
   CLOZE_EXTRA_LABEL,
   clozeExtraSubtitle,
@@ -81,5 +82,19 @@ describe("clozeExtraSubtitle", () => {
 describe("DraftCardEditor cloze Extra label", () => {
   it("labels the back field Extra (optional)", () => {
     expect(CLOZE_EXTRA_LABEL).toBe("Extra (optional)");
+  });
+});
+
+describe("assertSingleCloze", () => {
+  it("allows a single Anki blank", () => {
+    expect(() =>
+      assertSingleCloze("The {{c1::femur}} is the thigh bone"),
+    ).not.toThrow();
+  });
+
+  it("rejects two Anki blanks", () => {
+    expect(() =>
+      assertSingleCloze("The {{c1::a}} and {{c1::b}}"),
+    ).toThrow(/at most one blank/);
   });
 });

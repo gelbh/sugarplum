@@ -4,6 +4,7 @@ import DraftReviewPage from "./routes/DraftReviewPage";
 import HomePage from "./routes/HomePage";
 import LibraryPage from "./routes/LibraryPage";
 import SubjectPage from "./routes/SubjectPage";
+import DeckHubPage from "./routes/DeckHubPage";
 import LoginPage from "./routes/LoginPage";
 import RegisterPage from "./routes/RegisterPage";
 import PrivacyPage from "./routes/PrivacyPage";
@@ -17,6 +18,7 @@ import { subscribePath } from "./nav/navigate";
 import { StudyChromeProvider } from "./study/StudyChromeContext";
 
 const SUBJECT_PATH = /^\/library\/subjects\/([^/]+)\/?$/;
+const DECK_PATH = /^\/library\/decks\/([^/]+)\/?$/;
 
 function shell(page: ReactNode) {
   return <AppShell>{page}</AppShell>;
@@ -46,6 +48,10 @@ function AppInner() {
     return shell(
       <SubjectPage subjectId={decodeURIComponent(subjectMatch[1])} />,
     );
+  }
+  const deckMatch = path.match(DECK_PATH);
+  if (deckMatch) {
+    return shell(<DeckHubPage deckId={decodeURIComponent(deckMatch[1])} />);
   }
   if (path === "/library") return shell(<LibraryPage />);
   if (path === "/settings") return shell(<SettingsPage />);

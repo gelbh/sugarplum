@@ -39,7 +39,7 @@ describe("buildGuestImportPayload", () => {
     expect(buildGuestImportPayload({ decks: [], cards: [] })).toBeNull();
   });
 
-  it("skips guest-deck-demo and non-paste cards", () => {
+  it("skips guest-deck-demo and non-paste/non-hub cards", () => {
     const payload = buildGuestImportPayload({
       decks: [demoDeck, userDeck],
       cards: [seedCard, pasteCard],
@@ -55,6 +55,46 @@ describe("buildGuestImportPayload", () => {
         back: pasteCard.back,
       },
     ]);
+  });
+
+  it("includes hub DIY qa cards in the import payload", () => {
+    const hubCard = {
+      deck_id: userDeck.id,
+      type: "qa",
+      front: "What is ATP?",
+      back: "Energy currency",
+      provenance: { guest: true, source: "hub" as const },
+    };
+    const payload = buildGuestImportPayload({
+      decks: [userDeck],
+      cards: [hubCard],
+    });
+    expect(payload).not.toBeNull();
+    expect(payload!.cards).toEqual([
+      {
+        clientDeckId: userDeck.id,
+        front: hubCard.front,
+        back: hubCard.back,
+      },
+    ]);
+  });
+
+  it("skips hub cloze/mcq until typed merge exists", () => {
+    const hubCloze = {
+      deck_id: userDeck.id,
+      type: "cloze",
+      front: "The {{c1::femur}}",
+      back: "",
+      provenance: { guest: true, source: "hub" as const },
+    };
+    const payload = buildGuestImportPayload({
+      decks: [userDeck],
+      cards: [hubCloze],
+    });
+    expect(payload).toEqual({
+      decks: [{ clientId: userDeck.id, title: userDeck.title }],
+      cards: [],
+    });
   });
 
   it("includes empty user guest-deck-* decks without paste cards", () => {
