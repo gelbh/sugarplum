@@ -59,7 +59,10 @@
 		"consumers": [
 			{
 				"queue": "sugarplum-generate",
-				"max_batch_size": 1
+				"max_batch_size": 1,
+				// Keep in sync with GENERATE_QUEUE_* in worker/generation/progress.ts
+				"max_retries": 21,
+				"retry_delay": 60
 			}
 		]
 	}

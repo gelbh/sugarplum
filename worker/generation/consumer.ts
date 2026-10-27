@@ -27,7 +27,9 @@ import {
   TEXT_LLM_STAGES,
   computePercent,
   computePipelineBandPercent,
+  GENERATE_QUEUE_RETRY_DELAY_SEC,
   isRunningJobStale,
+  withUpdatedAt,
   writeJobProgress,
   accumulateTokenUsage,
   type ProgressPatch,
@@ -501,11 +503,12 @@ export async function processGenerateJob(
   const db = getDb(env);
   const { jobId, materialId, deckId } = message;
 
+  const claimHeartbeat = withUpdatedAt(null);
   const claim = await db
     .prepare(
-      "UPDATE generation_jobs SET status = ?, error = NULL WHERE id = ? AND status = ?",
+      "UPDATE generation_jobs SET status = ?, error = NULL, progress_json = ? WHERE id = ? AND status = ?",
     )
-    .bind("running", jobId, "queued")
+    .bind("running", claimHeartbeat, jobId, "queued")
     .run();
   // Duplicate / stale queue delivery: another worker already claimed or finished.
   if (!claim.meta.changes) {
@@ -519,16 +522,34 @@ export async function processGenerateJob(
         progress_json: string | null;
         created_at: string;
       }>();
-    if (
-      existing?.status === "running" &&
-      isRunningJobStale(existing.progress_json, existing.created_at)
-    ) {
-      // Dead consumer left status=running; reclaim and continue.
-    } else if (existing?.status === "running") {
-      // Still heartbeating; ask the queue to retry later instead of ack-abandoning.
-      return "busy";
-    } else {
+    if (existing?.status !== "running") {
       return "done";
+    }
+    if (!isRunningJobStale(existing.progress_json, existing.created_at)) {
+      return "busy";
+    }
+    const reclaimedProgress = withUpdatedAt(existing.progress_json);
+    const reclaim =
+      existing.progress_json == null
+        ? await db
+            .prepare(
+              "UPDATE generation_jobs SET progress_json = ? WHERE id = ? AND status = ? AND progress_json IS NULL",
+            )
+            .bind(reclaimedProgress, jobId, "running")
+            .run()
+        : await db
+            .prepare(
+              "UPDATE generation_jobs SET progress_json = ? WHERE id = ? AND status = ? AND progress_json = ?",
+            )
+            .bind(
+              reclaimedProgress,
+              jobId,
+              "running",
+              existing.progress_json,
+            )
+            .run();
+    if (!reclaim.meta.changes) {
+      return "busy";
     }
   }
 
@@ -936,7 +957,7 @@ export async function handleGenerateQueue(
   for (const msg of batch.messages) {
     const result = await processGenerateJob(env, msg.body);
     if (result === "busy") {
-      msg.retry({ delaySeconds: 60 });
+      msg.retry({ delaySeconds: GENERATE_QUEUE_RETRY_DELAY_SEC });
     } else {
       msg.ack();
     }

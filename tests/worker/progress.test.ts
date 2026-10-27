@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  GENERATE_QUEUE_MAX_RETRIES,
+  GENERATE_QUEUE_RETRY_DELAY_SEC,
   RUNNING_JOB_STALE_MS,
   STAGE_WEIGHTS,
   accumulateTokenUsage,
@@ -9,6 +11,7 @@ import {
   pushProgressEvent,
   toProgressJson,
   truncateProgressText,
+  withUpdatedAt,
   writeJobProgress,
 } from "../../worker/generation/progress";
 import { createTestEnv } from "./test-env";
@@ -220,6 +223,51 @@ describe("isRunningJobStale", () => {
         now,
       ),
     ).toBe(true);
+  });
+
+  it("ignores newer events when updated_at is present", () => {
+    const updatedAt = "2026-10-27T17:00:00.000Z";
+    const eventAt = "2026-10-27T18:00:00.000Z";
+    const now = Date.parse(updatedAt) + RUNNING_JOB_STALE_MS;
+    expect(
+      isRunningJobStale(
+        JSON.stringify({
+          updated_at: updatedAt,
+          events: [{ at: eventAt, kind: "excerpt", stage: "extract", text: "x" }],
+        }),
+        createdAt,
+        now,
+      ),
+    ).toBe(true);
+  });
+
+  it("withUpdatedAt sets heartbeat and preserves stage fields", () => {
+    const next = JSON.parse(
+      withUpdatedAt(
+        JSON.stringify({
+          stage: "figures",
+          current: 2,
+          total: 2,
+          percent: 20,
+          label: "Processing figures",
+        }),
+        "2026-10-27T19:00:00.000Z",
+      ),
+    );
+    expect(next).toMatchObject({
+      stage: "figures",
+      current: 2,
+      total: 2,
+      percent: 20,
+      label: "Processing figures",
+      updated_at: "2026-10-27T19:00:00.000Z",
+    });
+  });
+
+  it("queue retry constants span the stale window", () => {
+    expect(
+      GENERATE_QUEUE_MAX_RETRIES * GENERATE_QUEUE_RETRY_DELAY_SEC * 1000,
+    ).toBeGreaterThanOrEqual(RUNNING_JOB_STALE_MS);
   });
 });
 

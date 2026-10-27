@@ -8,7 +8,13 @@ import {
   mergeAndDedupeDrafts,
   processGenerateJob,
 } from "../../worker/generation/consumer";
-import { RUNNING_JOB_STALE_MS } from "../../worker/generation/progress";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import {
+  GENERATE_QUEUE_MAX_RETRIES,
+  GENERATE_QUEUE_RETRY_DELAY_SEC,
+  RUNNING_JOB_STALE_MS,
+} from "../../worker/generation/progress";
 import { enqueueGeneration } from "../../worker/generation/enqueue";
 import { mockLlmAdapter, type LlmAdapter } from "../../worker/generation/llm";
 import { CHUNK_CHAR_LIMIT } from "../../worker/generation/pipeline";
@@ -300,8 +306,108 @@ describe("processGenerateJob free path", () => {
       env,
     );
 
-    expect(retry).toHaveBeenCalledWith({ delaySeconds: 60 });
+    expect(retry).toHaveBeenCalledWith({
+      delaySeconds: GENERATE_QUEUE_RETRY_DELAY_SEC,
+    });
     expect(ack).not.toHaveBeenCalled();
+  });
+
+  it("second concurrent stale reclaim loses CAS and returns busy", async () => {
+    const env = createTestEnv();
+    await seedOwner(env, false);
+    const msg = await seedPasteJob(
+      env,
+      "Mitochondria are the powerhouse of the cell.",
+    );
+    const jobs = env.getGenerationJobs();
+    const job = jobs.find((j) => j.id === msg.jobId)!;
+    const staleAt = new Date(
+      Date.now() - RUNNING_JOB_STALE_MS - 1000,
+    ).toISOString();
+    const staleProgress = JSON.stringify({
+      updated_at: staleAt,
+      stage: "figures",
+      current: 1,
+      total: 1,
+      percent: 20,
+      label: "Skipping PDF figures",
+    });
+    env.seedGenerationJob({
+      ...job,
+      status: "running",
+      progress_json: staleProgress,
+    });
+
+    const gate = Promise.withResolvers<void>();
+    const firstLlm = spyLlm({
+      async generateDrafts(input) {
+        await gate.promise;
+        return mockLlmAdapter().generateDrafts(input);
+      },
+      async complete(input) {
+        return mockLlmAdapter().complete(input);
+      },
+    });
+
+    const first = processGenerateJob(env, msg, { llm: firstLlm });
+    await vi.waitFor(() => {
+      const row = env.getGenerationJobs().find((j) => j.id === msg.jobId)!;
+      const progress = JSON.parse(row.progress_json!) as { updated_at?: string };
+      expect(progress.updated_at).not.toBe(staleAt);
+    });
+    const second = await processGenerateJob(env, msg, { llm: spyLlm() });
+    expect(second).toBe("busy");
+    gate.resolve();
+    expect(await first).toBe("done");
+    expect(env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status).toBe(
+      "needs_review",
+    );
+  });
+
+  it("queue retry budget covers RUNNING_JOB_STALE_MS", () => {
+    const wrangler = readFileSync(
+      resolve(import.meta.dirname, "../../wrangler.jsonc"),
+      "utf8",
+    );
+    expect(wrangler).toContain(`"max_retries": ${GENERATE_QUEUE_MAX_RETRIES}`);
+    expect(wrangler).toContain(
+      `"retry_delay": ${GENERATE_QUEUE_RETRY_DELAY_SEC}`,
+    );
+    expect(
+      GENERATE_QUEUE_MAX_RETRIES * GENERATE_QUEUE_RETRY_DELAY_SEC * 1000,
+    ).toBeGreaterThanOrEqual(RUNNING_JOB_STALE_MS);
+  });
+
+  it("claim from queued writes an updated_at heartbeat", async () => {
+    const env = createTestEnv();
+    await seedOwner(env, false);
+    const msg = await seedPasteJob(
+      env,
+      "Mitochondria are the powerhouse of the cell.",
+    );
+
+    let sawClaimHeartbeat = false;
+    const base = mockLlmAdapter();
+    const llm = spyLlm({
+      async generateDrafts(input) {
+        if (!sawClaimHeartbeat) {
+          const row = env.getGenerationJobs().find((j) => j.id === msg.jobId);
+          const progress = JSON.parse(row!.progress_json!) as {
+            updated_at?: string;
+          };
+          expect(typeof progress.updated_at).toBe("string");
+          expect(Date.parse(progress.updated_at!)).not.toBeNaN();
+          sawClaimHeartbeat = true;
+        }
+        return base.generateDrafts(input);
+      },
+      async complete(input) {
+        return base.complete(input);
+      },
+    });
+
+    await processGenerateJob(env, msg, { llm });
+    expect(sawClaimHeartbeat).toBe(true);
   });
 
   it("no secret + mock llm → needs_review and records free-gen", async () => {

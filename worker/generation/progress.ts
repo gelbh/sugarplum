@@ -47,9 +47,19 @@ export type ProgressPatch = {
 /** Queue redelivery may reclaim `running` jobs with no progress newer than this. */
 export const RUNNING_JOB_STALE_MS = 20 * 60 * 1000;
 
+/** Per-message delay when returning busy (must match wrangler consumers.retry_delay). */
+export const GENERATE_QUEUE_RETRY_DELAY_SEC = 60;
+
 /**
- * True when the newest progress heartbeat (updated_at, else events[].at, else
- * created_at) is at least RUNNING_JOB_STALE_MS before now.
+ * Consumer max_retries so busy retries can span RUNNING_JOB_STALE_MS
+ * (must match wrangler consumers.max_retries).
+ */
+export const GENERATE_QUEUE_MAX_RETRIES =
+  Math.ceil(RUNNING_JOB_STALE_MS / 1000 / GENERATE_QUEUE_RETRY_DELAY_SEC) + 1;
+
+/**
+ * True when the progress heartbeat is at least RUNNING_JOB_STALE_MS old.
+ * Prefer `updated_at`; else newest `events[].at` (pre-heartbeat rows); else `created_at`.
  */
 export function isRunningJobStale(
   progressJson: string | null | undefined,
@@ -67,12 +77,13 @@ export function isRunningJobStale(
       if (typeof parsed.updated_at === "string") {
         const t = Date.parse(parsed.updated_at);
         if (Number.isFinite(t)) lastMs = t;
-      }
-      for (const event of parsed.events ?? []) {
-        if (typeof event?.at !== "string") continue;
-        const t = Date.parse(event.at);
-        if (!Number.isFinite(t)) continue;
-        lastMs = Number.isFinite(lastMs) ? Math.max(lastMs, t) : t;
+      } else {
+        for (const event of parsed.events ?? []) {
+          if (typeof event?.at !== "string") continue;
+          const t = Date.parse(event.at);
+          if (!Number.isFinite(t)) continue;
+          lastMs = Number.isFinite(lastMs) ? Math.max(lastMs, t) : t;
+        }
       }
     } catch {
       // Corrupt progress_json: fall back to created_at.
@@ -85,6 +96,33 @@ export function isRunningJobStale(
   }
 
   return nowMs - lastMs >= RUNNING_JOB_STALE_MS;
+}
+
+/** Merge/set `updated_at` on progress_json (claim + reclaim CAS). */
+export function withUpdatedAt(
+  progressJson: string | null | undefined,
+  at: string = new Date().toISOString(),
+): string {
+  let base: Record<string, unknown> = {};
+  if (progressJson) {
+    try {
+      const parsed = JSON.parse(progressJson) as unknown;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        base = { ...(parsed as Record<string, unknown>) };
+      }
+    } catch {
+      base = {};
+    }
+  }
+  if (typeof base.stage !== "string") {
+    base.stage = "queued";
+    base.current = 0;
+    base.total = 0;
+    base.percent = 0;
+    base.label = typeof base.label === "string" ? base.label : "Claimed";
+  }
+  base.updated_at = at;
+  return JSON.stringify(base);
 }
 
 /** Strip C0 control chars except newline and space; cap length. */
