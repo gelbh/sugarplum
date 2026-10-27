@@ -189,4 +189,22 @@ describe("parseCardsPayload", () => {
     expect(drafts[0]?.type).toBe("qa");
     expect(drafts[2]?.type).toBe("cloze");
   });
+
+  it("accepts prose before a fenced JSON block", () => {
+    const wrapped =
+      "Sure, here are the cards:\n\n```json\n" + sampleCardsJson + "\n```\n";
+    expect(parseCardsPayload(wrapped)).toHaveLength(3);
+  });
+
+  it("accepts raw JSON with leading/trailing chatter", () => {
+    const wrapped =
+      "Output:\n" + sampleCardsJson + "\nHope this helps!";
+    expect(parseCardsPayload(wrapped)).toHaveLength(3);
+  });
+
+  it("still rejects content with no JSON object or array", () => {
+    expect(() => parseCardsPayload("I cannot help with that.")).toThrow(
+      /non-JSON/i,
+    );
+  });
 });
