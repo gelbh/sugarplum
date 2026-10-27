@@ -64,9 +64,7 @@ export default function DraftReviewPage() {
     draft_count?: number;
   } | null>(null);
   const [authReady, setAuthReady] = useState(false);
-  const jobProgress = useJobProgress(
-    authReady && progressGate ? jobId : null,
-  );
+  const jobProgress = useJobProgress(authReady && progressGate ? jobId : null);
   const { begin: beginLoad, end: endLoad } = useTrackedOp("Loading drafts…");
   const { busy, begin, end } = useTrackedOp("Working…");
 
@@ -285,7 +283,8 @@ export default function DraftReviewPage() {
         });
       }
       const result = await acceptAllJobDrafts(jobId);
-      await load(jobId);
+      const list = await load(jobId);
+      await refreshJourney(jobId, list.length);
       if (result.failed > 0) {
         setNotice(
           `Accepted ${result.accepted}; ${result.failed} could not be accepted`,
@@ -316,9 +315,7 @@ export default function DraftReviewPage() {
       setProgressGate(false);
       end();
     } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Could not regenerate",
-      );
+      setError(err instanceof ApiError ? err.message : "Could not regenerate");
       end(false);
     }
   }
@@ -411,7 +408,7 @@ export default function DraftReviewPage() {
                 {view ? (
                   <JourneyNextButton view={view} />
                 ) : (
-                  <Link href="/library" color="primary">
+                  <Link href="/library" color="text.secondary">
                     Back to library
                   </Link>
                 )}
@@ -457,7 +454,10 @@ export default function DraftReviewPage() {
               </>
             ) : null}
 
-            <Stack spacing={1.5} sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: "divider" }}>
+            <Stack
+              spacing={1.5}
+              sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: "divider" }}
+            >
               <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
                 <Button
                   variant="contained"

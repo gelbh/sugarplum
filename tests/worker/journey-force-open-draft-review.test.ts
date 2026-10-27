@@ -47,7 +47,10 @@ describe("forceOpenDraftReview", () => {
   });
 
   it("does not throw when next is absent at runtime", () => {
-    const withoutNext = { ...baseView(), next: undefined } as unknown as JourneyView;
+    const withoutNext = {
+      ...baseView(),
+      next: undefined,
+    } as unknown as JourneyView;
     const view = forceOpenDraftReview(withoutNext);
     expect(view.next.href).toBeNull();
   });
