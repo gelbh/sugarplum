@@ -2,7 +2,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-import type { KeyboardEvent, MouseEvent } from "react";
+import type { MouseEvent } from "react";
 import { mediaUrl } from "../api/client";
 
 type Props = {
@@ -48,14 +48,6 @@ export default function CardFace({
     onReveal();
   };
 
-  const onCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (!canReveal) return;
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      onReveal();
-    }
-  };
-
   const onShowAnswerClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     reveal();
@@ -64,11 +56,7 @@ export default function CardFace({
   return (
     <Box sx={{ perspective: "1000px" }}>
       <Box
-        role={canReveal ? "button" : undefined}
-        tabIndex={canReveal ? 0 : undefined}
-        aria-label={canReveal ? "Show answer" : undefined}
         onClick={canReveal ? reveal : undefined}
-        onKeyDown={canReveal ? onCardKeyDown : undefined}
         sx={{
           position: "relative",
           minHeight: 280,
@@ -77,11 +65,6 @@ export default function CardFace({
           transition: "transform 0.45s ease",
           transform: revealed ? "rotateY(180deg)" : "rotateY(0deg)",
           cursor: canReveal ? "pointer" : "default",
-          outline: "none",
-          "&:focus-visible": {
-            boxShadow: (theme) => `0 0 0 3px ${theme.palette.primary.main}`,
-            borderRadius: 1,
-          },
           "@media (prefers-reduced-motion: reduce)": {
             transform: "none",
             transition: "none",
@@ -132,12 +115,12 @@ export default function CardFace({
             >
               {front}
             </Typography>
-            {canReveal ? (
+            {!revealed ? (
               <Box sx={{ mt: 2 }}>
                 <Button
                   variant="contained"
                   onClick={onShowAnswerClick}
-                  disabled={disabled}
+                  disabled={!!disabled}
                 >
                   Show answer
                 </Button>
