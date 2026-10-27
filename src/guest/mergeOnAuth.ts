@@ -8,6 +8,8 @@ import { exitGuest, isGuest } from "./session";
 import { GUEST_STORE_KEY, peekGuestStore } from "./store";
 
 export const SNAPSHOT_KEY = "sugarplum.guest.merge.v1";
+/** Set when import fails so Today can show a soft-fail toast after redirect/OAuth. */
+export const MERGE_FAILED_KEY = "sugarplum.guest.merge.failed";
 
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -109,8 +111,30 @@ export async function tryMergeGuestAfterAuth(
     await importGuest(payload);
     endGuestLocal(local);
     clearSnapshot(session);
+    try {
+      sessionBackend(session).removeItem(MERGE_FAILED_KEY);
+    } catch {
+      /* ignore */
+    }
     return "merged";
   } catch {
+    try {
+      sessionBackend(session).setItem(MERGE_FAILED_KEY, "1");
+    } catch {
+      /* ignore */
+    }
     return "failed";
+  }
+}
+
+/** Consume soft-fail flag for one UI toast (clears the flag). */
+export function consumeMergeFailedNotice(session?: Store): boolean {
+  try {
+    const s = sessionBackend(session);
+    if (s.getItem(MERGE_FAILED_KEY) !== "1") return false;
+    s.removeItem(MERGE_FAILED_KEY);
+    return true;
+  } catch {
+    return false;
   }
 }
