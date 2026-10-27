@@ -32,6 +32,8 @@ node scripts/fetch-ocr-assets.mjs      # public/ocr for occlusion Suggest region
 npm run dev
 ```
 
+**Optional PDF figures (Docling):** not required for core dev. To extract figures from PDFs locally, start [docling-serve](https://github.com/docling-project/docling-serve) via `docker compose -f docker-compose.docling.yml up -d`, then set in `.dev.vars` both `DOCLING_URL=http://127.0.0.1:5001` and `DOCLING_API_KEY=dev-docling-key` (must match compose). Production hosting checklist: [docs/docling-prod.md](docs/docling-prod.md).
+
 ## CI / CD
 
 GitHub Actions (no PR preview Workers in v1):
@@ -70,6 +72,7 @@ npx wrangler secret put R2_ACCESS_KEY_ID
 npx wrangler secret put R2_SECRET_ACCESS_KEY
 npx wrangler secret put GOOGLE_CLIENT_ID      # from Google Cloud OAuth client
 npx wrangler secret put GOOGLE_CLIENT_SECRET
+npx wrangler secret put DOCLING_API_KEY       # optional until Docling enabled; required when DOCLING_URL is set
 ```
 
 ### Google Sign-In (one-time)
