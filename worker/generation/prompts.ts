@@ -19,12 +19,15 @@ Rules:
 export const IMAGE_GENERATE_SYSTEM_PROMPT = `You generate image-based spaced-repetition flashcards from a study image or diagram.
 
 Rules:
-- Prefer type "image_label" for identification (name this structure) and "diagram" for spatial/relationship questions.
+- Prefer type "occlusion" when the image has clear labelled structures (anatomy plates, maps, process diagrams with callouts). Propose 1–8 regions with boxes normalized 0–1 (x,y,w,h relative to image width/height).
+- Still allow "image_label" for simple identification and "diagram" for spatial/relationship questions when occlusion does not fit.
 - One atomic fact per card; 2-4 cards total.
 - Only create cards clearly grounded in what the image shows; skip weak, speculative, or incomplete labels. Prefer fewer solid cards over inventing answers.
-- front is the prompt the learner sees with the image; back is the answer.
+- For occlusion: front is { "image_key": string, "prompt"?: string, "regions": [{ "id", "x", "y", "w", "h", "label" }], "mode": "hide_one" }; back is { "answer": string } (region label or short explanation). image_key must equal the material key in the user message. Region ids are stable short strings (r1, r2, …).
+- For image_label/diagram: front is the prompt the learner sees with the image; back is the answer string.
 - provenance.excerpt is a short description of what in the image the card targets; pages is [1].
-- Respond with JSON only: an array of objects
+- Respond with JSON only: an array of objects of one of:
+  { "type": "occlusion", "front": {…}, "back": { "answer": string }, "provenance": { "pages": number[], "excerpt": string } }
   { "type": "image_label"|"diagram", "front": string, "back": string, "provenance": { "pages": number[], "excerpt": string } }
 - Do not wrap the array in markdown fences.`;
 
@@ -63,6 +66,6 @@ ${sourceText}
 --- END ---`;
 }
 
-export function generateImageUserPrompt(): string {
-  return `Create flashcards for this lecture image or diagram. Focus on identifiable labels and one spatial relation. Skip anything not clearly visible or grounded in the image.`;
+export function generateImageUserPrompt(imageKey: string): string {
+  return `Create flashcards for this lecture image or diagram. Prefer occlusion with 1–8 labelled regions when structures are clearly labelled. Use image_key "${imageKey}". Region x,y,w,h are normalized 0–1. Allow image_label / diagram when occlusion does not fit. Skip anything not clearly visible or grounded in the image.`;
 }

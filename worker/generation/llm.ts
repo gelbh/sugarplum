@@ -32,6 +32,8 @@ export type GenerateDraftsInput = {
   provider: string;
   /** When set, run vision/image card generation instead of text Q&A/cloze. */
   image?: GenerateImageInput;
+  /** Material R2 key for vision; required in prompts and occlusion fronts. */
+  imageKey?: string;
 };
 
 export type CompleteInput = {
@@ -87,8 +89,8 @@ export function userPromptForJson(text: string): string {
   return `${generateUserPrompt(text)}\n\nReturn JSON as {"cards":[...]}`;
 }
 
-function imagePromptForJson(): string {
-  return `${generateImageUserPrompt()}\n\nReturn JSON as {"cards":[...]}`;
+function imagePromptForJson(imageKey: string): string {
+  return `${generateImageUserPrompt(imageKey)}\n\nReturn JSON as {"cards":[...]}`;
 }
 
 function systemPromptFor(input: GenerateDraftsInput): string {
@@ -285,9 +287,42 @@ export function mockLlmAdapter(): LlmAdapter {
   };
 
   return {
-    async generateDrafts({ text, image }) {
+    async generateDrafts({ text, image, imageKey }) {
       if (image) {
+        const key = imageKey ?? "materials/mock/image.png";
         return parseCardDrafts([
+          {
+            type: "occlusion",
+            front: {
+              image_key: key,
+              prompt: "Identify the hidden region",
+              regions: [
+                {
+                  id: "r1",
+                  x: 0.12,
+                  y: 0.18,
+                  w: 0.28,
+                  h: 0.22,
+                  label: "Structure A",
+                },
+                {
+                  id: "r2",
+                  x: 0.55,
+                  y: 0.4,
+                  w: 0.2,
+                  h: 0.16,
+                  label: "Structure B",
+                },
+              ],
+              mode: "hide_one",
+            },
+            back: { answer: "Structure A" },
+            provenance: {
+              pages: [1],
+              excerpt: "labelled structures in image",
+            },
+            media_keys: [key],
+          },
           {
             type: "image_label",
             front: "What structure is highlighted in this image?",
@@ -372,6 +407,7 @@ function openAiAdapter(): LlmAdapter {
         return parseCardsPayload(content);
       }
 
+      const imageKey = input.imageKey ?? "material";
       const url = providerRequestUrl("openai");
       const res = await fetch(url, {
         method: "POST",
@@ -388,7 +424,7 @@ function openAiAdapter(): LlmAdapter {
             {
               role: "user",
               content: [
-                { type: "text", text: imagePromptForJson() },
+                { type: "text", text: imagePromptForJson(imageKey) },
                 {
                   type: "image_url",
                   image_url: {
@@ -465,6 +501,7 @@ function anthropicAdapter(): LlmAdapter {
         return parseCardsPayload(content);
       }
 
+      const imageKey = input.imageKey ?? "material";
       const url = providerRequestUrl("anthropic");
       const res = await fetch(url, {
         method: "POST",
@@ -490,7 +527,7 @@ function anthropicAdapter(): LlmAdapter {
                     data: image.base64,
                   },
                 },
-                { type: "text", text: imagePromptForJson() },
+                { type: "text", text: imagePromptForJson(imageKey) },
               ],
             },
           ],
@@ -561,6 +598,7 @@ function googleAdapter(): LlmAdapter {
         return parseCardsPayload(content);
       }
 
+      const imageKey = input.imageKey ?? "material";
       const url = providerRequestUrl("google");
       const res = await fetch(url, {
         method: "POST",
@@ -576,7 +614,7 @@ function googleAdapter(): LlmAdapter {
             {
               role: "user",
               parts: [
-                { text: imagePromptForJson() },
+                { text: imagePromptForJson(imageKey) },
                 {
                   inlineData: {
                     mimeType: image.mimeType,

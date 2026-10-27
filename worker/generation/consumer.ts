@@ -129,6 +129,21 @@ function draftDedupeKey(draft: CardDraft): string {
   return normalizeFront(draft.front);
 }
 
+/** Stamp material R2 key onto occlusion fronts (LLM must not invent storage keys). */
+function bindOcclusionImageKey(
+  drafts: CardDraft[],
+  imageKey: string,
+): CardDraft[] {
+  return drafts.map((draft) => {
+    if (draft.type !== "occlusion") return draft;
+    return {
+      ...draft,
+      front: { ...draft.front, image_key: imageKey },
+      media_keys: [imageKey],
+    };
+  });
+}
+
 /** Merge rules then LLM drafts; drop near-identical fronts (trim + lower). */
 export function mergeAndDedupeDrafts(
   rulesDrafts: CardDraft[],
@@ -460,12 +475,14 @@ export async function processGenerateJob(
         text: "",
         apiKey,
         provider,
+        imageKey: material.r2_key,
         image: {
           mimeType: mimeFromR2Key(imageR2Key),
           base64: bytesToBase64(bytes),
         },
       });
       await emit("generate", generateTotal, generateTotal, "Generating cards");
+      drafts = bindOcclusionImageKey(drafts, material.r2_key);
       drafts = filterDraftsByQuality(drafts);
       if (drafts.length === 0) {
         throw new Error("Generation produced no valid draft cards");
