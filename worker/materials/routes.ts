@@ -384,9 +384,19 @@ materialRoutes.post("/:id/figures/presign", async (c) => {
     });
   }
 
+  const r2Key = figureR2Key(parent.deck_id, pdfMaterialId, index);
+  const existingFigure = await db
+    .prepare("SELECT id FROM materials WHERE r2_key = ?")
+    .bind(r2Key)
+    .first<{ id: string }>();
+  if (existingFigure) {
+    throw new HTTPException(409, {
+      message: `Figure crop index ${index} is already attached to this PDF`,
+    });
+  }
+
   const materialId = newId();
   const createdAt = new Date().toISOString();
-  const r2Key = figureR2Key(parent.deck_id, pdfMaterialId, index);
   const accountId = c.env.R2_ACCOUNT_ID;
   const accessKeyId = c.env.R2_ACCESS_KEY_ID;
   const secretAccessKey = c.env.R2_SECRET_ACCESS_KEY;

@@ -23,8 +23,9 @@ describe("STAGE_WEIGHTS", () => {
   it("covers catalog stages and sums to 1", () => {
     expect(STAGE_WEIGHTS.queued).toBe(0.02);
     expect(STAGE_WEIGHTS.extract).toBe(0.08);
+    expect(STAGE_WEIGHTS.figures).toBe(0.1);
     expect(STAGE_WEIGHTS.rules).toBe(0.05);
-    expect(STAGE_WEIGHTS.generate).toBe(0.45);
+    expect(STAGE_WEIGHTS.generate).toBe(0.35);
     expect(STAGE_WEIGHTS.critique).toBe(0.3);
     expect(STAGE_WEIGHTS.persist).toBe(0.1);
     const sum = Object.values(STAGE_WEIGHTS).reduce((a, b) => a + b, 0);

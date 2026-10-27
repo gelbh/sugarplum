@@ -423,26 +423,44 @@ export async function processGenerateJob(
         if (existingFigureKeys.length === 0) throw textError;
       }
 
-      let figureKeys = await listFigureR2KeysForPdf(db, {
-        deckId,
-        pdfMaterialId: material.id,
-      });
-      if (figureKeys.length === 0 && env.DOCLING_URL) {
-        const figureResult = await extractFiguresViaDocling(env, pdfBytes);
-        if (figureResult.warning) console.warn(figureResult.warning);
+      type FigureRef = {
+        r2Key: string;
+        page?: number;
+        caption?: string;
+      };
+      let figures: FigureRef[] = (
+        await listFigureR2KeysForPdf(db, {
+          deckId,
+          pdfMaterialId: material.id,
+        })
+      ).map((r2Key) => ({ r2Key }));
+      let figureWarning: string | undefined;
+      if (figures.length === 0 && env.DOCLING_URL) {
+        const doclingTimeout = AbortSignal.timeout(60_000);
+        const figureResult = await extractFiguresViaDocling(env, pdfBytes, {
+          signal: doclingTimeout,
+        });
+        if (figureResult.warning) {
+          figureWarning = figureResult.warning;
+          console.warn(figureResult.warning);
+        }
         if (figureResult.crops.length > 0) {
           const persisted = await persistFigureCrops(env, {
             deckId,
             pdfMaterialId: material.id,
             crops: figureResult.crops,
           });
-          figureKeys = persisted.map(({ r2Key }) => r2Key);
+          figures = persisted.map(({ r2Key, crop }) => ({
+            r2Key,
+            page: crop.page,
+            caption: crop.caption,
+          }));
         }
       }
 
       const figureDrafts: Array<CardDraft & { mediaR2Keys?: string[] }> = [];
-      if (figureKeys.length > 0) {
-        await emit("figures", 0, figureKeys.length, "Processing figures");
+      if (figures.length > 0) {
+        await emit("figures", 0, figures.length, "Processing figures");
         let vision: { llm: LlmAdapter; apiKey: string; provider: string } | null =
           null;
         if (secret || opts?.llm) {
@@ -450,22 +468,23 @@ export async function processGenerateJob(
             ? await resolveTextLlm(env, secret, opts)
             : { llm: opts!.llm!, apiKey: "", provider: "mock" };
         } else {
-          console.warn(
-            "Skipping PDF figures: vision generation requires an LLM API key.",
-          );
+          figureWarning =
+            "Skipping PDF figures: vision generation requires an LLM API key.";
+          console.warn(figureWarning);
         }
         if (vision) {
-          for (let i = 0; i < figureKeys.length; i++) {
-            const figureKey = figureKeys[i]!;
+          for (let i = 0; i < figures.length; i++) {
+            const figure = figures[i]!;
             try {
-              const figureObject = await env.MATERIALS.get(figureKey);
+              const figureObject = await env.MATERIALS.get(figure.r2Key);
               if (!figureObject) {
-                console.warn(`Figure R2 object missing: ${figureKey}`);
+                console.warn(`Figure R2 object missing: ${figure.r2Key}`);
                 continue;
               }
               const figureBytes = await figureObject.arrayBuffer();
               if (figureBytes.byteLength > MAX_IMAGE_BYTES) {
-                console.warn(`Skipping oversized PDF figure: ${figureKey}`);
+                figureWarning = `Skipped oversized figure(s); max ${MAX_IMAGE_BYTES / (1024 * 1024)}MB`;
+                console.warn(`Skipping oversized PDF figure: ${figure.r2Key}`);
                 continue;
               }
               const generated = await vision.llm.generateDrafts({
@@ -473,27 +492,54 @@ export async function processGenerateJob(
                 apiKey: vision.apiKey,
                 provider: vision.provider,
                 image: {
-                  mimeType: mimeFromR2Key(figureKey),
+                  mimeType: mimeFromR2Key(figure.r2Key),
                   base64: bytesToBase64(figureBytes),
                 },
               });
+              const excerpt =
+                figure.caption?.trim() ||
+                `Figure p.${figure.page ?? "?"}#${i}`;
+              const pages =
+                figure.page && figure.page >= 1 ? [figure.page] : [];
               figureDrafts.push(
                 ...filterDraftsByQuality(generated).map((draft) => ({
                   ...draft,
-                  mediaR2Keys: [figureKey],
+                  mediaR2Keys: [figure.r2Key],
+                  provenance: {
+                    pages: pages.length > 0 ? pages : draft.provenance.pages,
+                    excerpt:
+                      draft.provenance.excerpt?.trim() || excerpt,
+                  },
                 })),
               );
             } catch (err) {
-              console.warn(`PDF figure generation failed for ${figureKey}`, err);
+              console.warn(`PDF figure generation failed for ${figure.r2Key}`, err);
             } finally {
-              await emit("figures", i + 1, figureKeys.length, "Processing figures");
+              await emit(
+                "figures",
+                i + 1,
+                figures.length,
+                figureWarning
+                  ? `Processing figures (${figureWarning})`
+                  : "Processing figures",
+              );
             }
           }
         } else {
-          await emit("figures", figureKeys.length, figureKeys.length, "Processing figures");
+          await emit(
+            "figures",
+            figures.length,
+            figures.length,
+            figureWarning ?? "Processing figures",
+          );
         }
       } else {
-        await emit("figures", 0, 0, "No figures found");
+        await emit(
+          "figures",
+          0,
+          0,
+          figureWarning ?? "No figures found",
+        );
       }
 
       let textDrafts: CardDraft[] = [];

@@ -104,7 +104,7 @@ export function computePercent(
   total: number,
   presentStages: readonly ProgressStage[],
 ): number {
-  if (total > 0 && current >= total) return 100;
+  // Do not jump to 100 when a mid-pipeline stage finishes; later stages still weigh.
   const weights = effectiveWeights(presentStages);
   const present = presentStages.filter((s) => weights[s] > 0 || s === stage);
   const ordered = STAGE_ORDER.filter((s) => present.includes(s));
@@ -118,7 +118,17 @@ export function computePercent(
   const within =
     total > 0 ? Math.max(0, current) / total : 0;
   const raw = 100 * (completed + weights[stage] * within);
-  return Math.min(100, Math.max(0, raw));
+  const capped = Math.min(100, Math.max(0, raw));
+  // Last catalog stage finished: snap float dust to 100.
+  if (
+    total > 0 &&
+    current >= total &&
+    ordered.length > 0 &&
+    stage === ordered[ordered.length - 1]
+  ) {
+    return 100;
+  }
+  return capped;
 }
 
 /**
