@@ -357,6 +357,19 @@ export function createTestEnv(opts?: {
           } as T;
         }
         if (
+          normalized.startsWith(
+            "SELECT status, progress_json, created_at FROM generation_jobs WHERE id =",
+          )
+        ) {
+          const job = generationJobs.get(bound[0] as string);
+          if (!job) return null;
+          return {
+            status: job.status,
+            progress_json: job.progress_json,
+            created_at: job.created_at,
+          } as T;
+        }
+        if (
           normalized.includes("FROM materials m") &&
           normalized.includes("INNER JOIN decks d") &&
           normalized.includes("m.r2_key =") &&
@@ -1128,6 +1141,47 @@ export function createTestEnv(opts?: {
           }
         } else if (
           normalized.startsWith(
+            "UPDATE generation_jobs SET progress_json = ? WHERE id = ? AND status = ? AND progress_json IS NULL",
+          )
+        ) {
+          const [progress_json, id, requiredStatus] = bound as [
+            string,
+            string,
+            string,
+          ];
+          const row = generationJobs.get(id);
+          if (
+            !row ||
+            row.status !== requiredStatus ||
+            row.progress_json != null
+          ) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          generationJobs.set(id, { ...row, progress_json });
+          return { success: true, meta: { changes: 1 } } as D1Result;
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET progress_json = ? WHERE id = ? AND status = ? AND progress_json = ?",
+          )
+        ) {
+          const [progress_json, id, requiredStatus, expectedProgress] = bound as [
+            string,
+            string,
+            string,
+            string,
+          ];
+          const row = generationJobs.get(id);
+          if (
+            !row ||
+            row.status !== requiredStatus ||
+            row.progress_json !== expectedProgress
+          ) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          generationJobs.set(id, { ...row, progress_json });
+          return { success: true, meta: { changes: 1 } } as D1Result;
+        } else if (
+          normalized.startsWith(
             "UPDATE generation_jobs SET progress_json = ? WHERE id = ?",
           )
         ) {
@@ -1136,6 +1190,28 @@ export function createTestEnv(opts?: {
           if (row) {
             generationJobs.set(id, { ...row, progress_json });
           }
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET status = ?, error = NULL, progress_json = ? WHERE id = ? AND status =",
+          )
+        ) {
+          const [status, progress_json, id, requiredStatus] = bound as [
+            string,
+            string,
+            string,
+            string,
+          ];
+          const row = generationJobs.get(id);
+          if (!row || row.status !== requiredStatus) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          generationJobs.set(id, {
+            ...row,
+            status,
+            error: null,
+            progress_json,
+          });
+          return { success: true, meta: { changes: 1 } } as D1Result;
         } else if (
           normalized.startsWith(
             "UPDATE generation_jobs SET status = ?, error = NULL, finished_at = ?",
