@@ -6,6 +6,7 @@ import {
 } from "../../worker/generation/consumer";
 import { enqueueGeneration } from "../../worker/generation/enqueue";
 import { mockLlmAdapter, type LlmAdapter } from "../../worker/generation/llm";
+import { CHUNK_CHAR_LIMIT } from "../../worker/generation/pipeline";
 import {
   FREE_GEN_DAILY_CAP,
   consumeFreeGenSlot,
@@ -229,5 +230,49 @@ describe("processGenerateJob free path", () => {
     expect(job?.error).not.toMatch(/Gemini/i);
     // Slot not consumed when AI binding is missing
     expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBeNull();
+  });
+
+  it("multi-chunk paste emits generate/critique progress with real total", async () => {
+    const env = createTestEnv();
+    await seedOwner(env, true);
+    const base = mockLlmAdapter();
+    const midGenerate: Array<{
+      stage: string;
+      current: number;
+      total: number;
+      label: string;
+    }> = [];
+    const llm: LlmAdapter = {
+      generateDrafts: vi.fn(async (input) => {
+        const job = env.getGenerationJobs()[0];
+        if (job?.progress_json) {
+          midGenerate.push(JSON.parse(job.progress_json));
+        }
+        return base.generateDrafts(input);
+      }),
+      complete: vi.fn(async (args) => base.complete(args)),
+    };
+
+    const block = "x".repeat(3500);
+    const msg = await seedPasteJob(env, `${block}\n\n${block}`);
+
+    await processGenerateJob(env, msg, { llm });
+
+    expect(llm.generateDrafts).toHaveBeenCalledTimes(2);
+    expect(midGenerate.length).toBeGreaterThanOrEqual(1);
+    expect(midGenerate[0]!.stage).toBe("generate");
+    expect(midGenerate[0]!.total).toBeGreaterThanOrEqual(2);
+    expect(midGenerate[0]!.current).toBe(0);
+    expect(midGenerate[0]!.label).toMatch(/chunk 1\//);
+
+    const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
+    expect(job?.status).toBe("needs_review");
+    expect(job?.progress_json).toBeTruthy();
+    const final = JSON.parse(job!.progress_json!) as { stage: string; percent: number };
+    expect(final.stage).toBe("persist");
+    expect(final.percent).toBe(100);
+
+    // Silence unused import if CHUNK used only for doc — ensure text actually chunks
+    expect(`${block}\n\n${block}`.length).toBeGreaterThan(CHUNK_CHAR_LIMIT);
   });
 });

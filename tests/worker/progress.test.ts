@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   STAGE_WEIGHTS,
   computePercent,
+  computePipelineBandPercent,
   toProgressJson,
   writeJobProgress,
 } from "../../worker/generation/progress";
@@ -83,6 +84,51 @@ describe("computePercent", () => {
       expect(p).toBeGreaterThanOrEqual(prev);
       prev = p;
     }
+  });
+
+  it("rolls skipped generate/critique into persist for rules-only runs", () => {
+    const rulesOnly = ["queued", "extract", "rules", "persist"] as const;
+    // completed before persist: 0.02+0.08+0.05 = 0.15; persist gets 0.10+0.75 = 0.85
+    expect(computePercent("persist", 0, 1, [...rulesOnly])).toBeCloseTo(15, 5);
+    expect(computePercent("persist", 1, 1, [...rulesOnly])).toBeCloseTo(100, 5);
+  });
+
+  it("is monotonic from generate into critique with full stages", () => {
+    const stages = [...FULL_STAGES];
+    const atGenerateDone = computePercent("generate", 2, 2, stages);
+    const atCritiqueStart = computePercent("critique", 0, 2, stages);
+    expect(atCritiqueStart).toBeGreaterThanOrEqual(atGenerateDone);
+  });
+});
+
+describe("computePipelineBandPercent", () => {
+  it("is monotonic across interleaved generate/critique half-steps", () => {
+    const stages = [...FULL_STAGES];
+    const n = 2;
+    // Per chunk i: gen start 2i, gen done 2i+1, critique start 2i+1, critique done 2i+2
+    const halfSteps = [0, 1, 1, 2, 2, 3, 3, 4];
+    let prev = -1;
+    for (const h of halfSteps) {
+      const p = computePipelineBandPercent(h, n, stages);
+      expect(p).toBeGreaterThanOrEqual(prev);
+      prev = p;
+    }
+    // After all LLM half-steps: base 0.15 + band 0.75 = 0.90 → 90%
+    expect(computePipelineBandPercent(4, n, stages)).toBeCloseTo(90, 5);
+    // Mid: after first generate done (1/4 of band): 0.15 + 0.75*0.25 = 0.3375 → 33.75%
+    expect(computePipelineBandPercent(1, n, stages)).toBeCloseTo(33.75, 5);
+  });
+
+  it("does not rewind when re-entering generate after critique (vs computePercent)", () => {
+    const stages = [...FULL_STAGES];
+    const n = 2;
+    // Old model rewound here; band model stays at critique-done of chunk 0 (= 2 half-steps)
+    const afterCritiqueChunk0 = computePipelineBandPercent(2, n, stages);
+    const generateChunk1Start = computePipelineBandPercent(2, n, stages);
+    expect(generateChunk1Start).toBe(afterCritiqueChunk0);
+    expect(generateChunk1Start).toBeGreaterThan(
+      computePercent("generate", 1, 2, stages),
+    );
   });
 });
 
