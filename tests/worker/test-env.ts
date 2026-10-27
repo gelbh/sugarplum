@@ -88,6 +88,7 @@ export type TestEnv = Env & {
   seedSession: (id: string, userId: string, ttlMs?: number) => void;
   seedUserSecret: (row: UserSecretRow) => void;
   seedCard: (row: CardRow) => void;
+  seedGenerationJob: (row: GenerationJobRow) => void;
   seedSchedule: (row: ScheduleRow) => void;
   seedR2: (key: string, value: string) => void;
   getMaterials: () => MaterialRow[];
@@ -287,6 +288,105 @@ export function createTestEnv(opts?: {
             created_at: job.created_at,
             finished_at: job.finished_at,
           } as T;
+        }
+        // SELECT j.id ... WHERE d.user_id = ? AND j.status = 'needs_review' AND EXISTS (SELECT 1 FROM cards c WHERE c.job_id = j.id AND c.status = 'draft') ORDER BY j.created_at DESC LIMIT 1
+        if (
+          normalized.includes("FROM generation_jobs j") &&
+          normalized.includes("INNER JOIN materials m") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("j.status = 'needs_review'") &&
+          (normalized.includes("EXISTS") || normalized.includes("INNER JOIN cards"))
+        ) {
+          const userId = bound[0] as string;
+          const matched = [...generationJobs.values()].filter((job) => {
+            const material = materials.get(job.material_id);
+            if (!material) return false;
+            const deck = decks.get(material.deck_id);
+            if (!deck || deck.user_id !== userId) return false;
+            if (job.status !== "needs_review") return false;
+            for (const c of cards.values()) {
+              if (c.job_id === job.id && c.status === "draft") return true;
+            }
+            return false;
+          });
+          if (matched.length === 0) return null;
+          matched.sort((a, b) => b.created_at.localeCompare(a.created_at));
+          return { id: matched[0]!.id } as T;
+        }
+        // SELECT j.id, j.status ... WHERE d.user_id = ? ORDER BY j.created_at DESC LIMIT 1
+        if (
+          normalized.includes("FROM generation_jobs j") &&
+          normalized.includes("INNER JOIN materials m") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("j.id, j.status") &&
+          !normalized.includes("j.status =") &&
+          !normalized.includes("j.status IN")
+        ) {
+          const userId = bound[0] as string;
+          const matched = [...generationJobs.values()].filter((job) => {
+            const material = materials.get(job.material_id);
+            if (!material) return false;
+            const deck = decks.get(material.deck_id);
+            return !!deck && deck.user_id === userId;
+          });
+          if (matched.length === 0) return null;
+          matched.sort((a, b) => b.created_at.localeCompare(a.created_at));
+          const newest = matched[0]!;
+          return { id: newest.id, status: newest.status } as T;
+        }
+        // SELECT 1 as exists FROM generation_jobs ... WHERE d.user_id = ? LIMIT 1
+        if (
+          normalized.startsWith("SELECT 1") &&
+          normalized.includes("FROM generation_jobs") &&
+          normalized.includes("INNER JOIN materials") &&
+          normalized.includes("INNER JOIN decks")
+        ) {
+          const userId = bound[0] as string;
+          for (const job of generationJobs.values()) {
+            const material = materials.get(job.material_id);
+            if (!material) continue;
+            const deck = decks.get(material.deck_id);
+            if (!deck || deck.user_id !== userId) continue;
+            return { exists: 1 } as T;
+          }
+          return null;
+        }
+        // COUNT(*) handlers
+        if (normalized.startsWith("SELECT COUNT(*)") && normalized.includes("FROM decks WHERE user_id =")) {
+          const userId = bound[0] as string;
+          const cnt = [...decks.values()].filter((d) => d.user_id === userId).length;
+          return ({ count: cnt } as unknown) as T;
+        }
+        if (
+          normalized.startsWith("SELECT COUNT(*)") &&
+          normalized.includes("FROM cards") &&
+          normalized.includes("INNER JOIN card_schedules")
+        ) {
+          const [userId, status, now] = bound as [string, string, string];
+          const cnt = [...cards.values()].filter((c) => {
+            if (c.status !== status) return false;
+            const deck = decks.get(c.deck_id);
+            if (!deck || deck.user_id !== userId) return false;
+            const schedule = schedules.get(c.id);
+            if (!schedule || schedule.due > now) return false;
+            return true;
+          }).length;
+          return ({ count: cnt } as unknown) as T;
+        }
+        if (
+          normalized.startsWith("SELECT COUNT(*)") &&
+          normalized.includes("FROM cards") &&
+          normalized.includes("INNER JOIN decks")
+        ) {
+          const userId = bound[0] as string;
+          const cnt = [...cards.values()].filter((c) => {
+            const deck = decks.get(c.deck_id);
+            if (!deck || deck.user_id !== userId) return false;
+            // only accepted cards appear in this query usage in tests
+            if (c.status !== "accepted") return false;
+            return true;
+          }).length;
+          return ({ count: cnt } as unknown) as T;
         }
         if (
           normalized.startsWith(
@@ -819,6 +919,9 @@ export function createTestEnv(opts?: {
     },
     seedCard(row) {
       cards.set(row.id, row);
+    },
+    seedGenerationJob(row) {
+      generationJobs.set(row.id, row);
     },
     seedSchedule(row) {
       schedules.set(row.card_id, row);

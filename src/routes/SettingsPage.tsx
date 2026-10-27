@@ -14,6 +14,7 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import { useColorScheme } from "@mui/material/styles";
+import Brightness6Icon from "@mui/icons-material/Brightness6";
 import {
   ApiError,
   getLlmSettings,
@@ -184,9 +185,12 @@ export default function SettingsPage() {
       </Stack>
 
       <Stack spacing={1} sx={{ mb: 4 }}>
-        <Typography variant="subtitle1" component="h2">
-          Appearance
-        </Typography>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Brightness6Icon />
+          <Typography variant="subtitle1" component="h2">
+            Appearance
+          </Typography>
+        </Stack>
         <ToggleButtonGroup
           exclusive
           size="small"
