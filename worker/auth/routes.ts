@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
@@ -15,6 +16,12 @@ import {
   type GoogleOAuthPending,
 } from "./google";
 import {
+  OAUTH_CTX_COOKIE,
+  OAUTH_DONE_TTL_SECONDS,
+  oauthDoneKey,
+  parseOAuthDone,
+} from "./oauth-replay";
+import {
   hashPassword,
   isPasswordLongEnough,
   verifyPassword,
@@ -22,7 +29,9 @@ import {
 import {
   createSession,
   destroySession,
+  peekSessionUserId,
   requireUser,
+  sessionCookieSecure,
   type AuthVariables,
 } from "./session";
 
@@ -196,6 +205,36 @@ function oauthSettingsRedirect(
   return oauthRedirect(appUrl, "/settings", params);
 }
 
+function oauthCtxCookieAttrs(c: { req: { url: string } }) {
+  return {
+    httpOnly: true,
+    secure: sessionCookieSecure(c.req.url),
+    sameSite: "Lax" as const,
+    path: "/",
+  };
+}
+
+function setOAuthCtxCookie(
+  c: Parameters<typeof setCookie>[0],
+  state: string,
+): void {
+  setCookie(c, OAUTH_CTX_COOKIE, state, {
+    ...oauthCtxCookieAttrs(c),
+    maxAge: OAUTH_STATE_TTL_SECONDS,
+  });
+}
+
+function clearOAuthCtxCookie(c: Parameters<typeof deleteCookie>[0]): void {
+  deleteCookie(c, OAUTH_CTX_COOKIE, oauthCtxCookieAttrs(c));
+}
+
+function oauthCtxMatches(
+  c: Parameters<typeof getCookie>[0],
+  state: string,
+): boolean {
+  return getCookie(c, OAUTH_CTX_COOKIE) === state;
+}
+
 /** Start Google OIDC (PKCE). Redirects the browser to Google. */
 authRoutes.get("/google/start", async (c) => {
   const { clientId } = requireGoogleCreds(c.env);
@@ -228,8 +267,31 @@ authRoutes.get("/google/start", async (c) => {
     state,
     codeChallenge,
   });
+  setOAuthCtxCookie(c, state);
   return c.redirect(url, 302);
 });
+
+function oauthSuccessHome(appUrl: string): string {
+  const home = appUrl.replace(/\/$/, "") || "";
+  return `${home}/today`;
+}
+
+async function storeOAuthDone(
+  sessions: Env["SESSIONS"],
+  state: string,
+  done: { userId: string; intent: "login" | "link" },
+): Promise<void> {
+  await sessions.put(oauthDoneKey(state), JSON.stringify(done), {
+    expirationTtl: OAUTH_DONE_TTL_SECONDS,
+  });
+}
+
+async function consumeOAuthDone(
+  sessions: Env["SESSIONS"],
+  state: string,
+): Promise<void> {
+  await sessions.delete(oauthDoneKey(state));
+}
 
 /** Google OAuth callback: login upsert or authenticated Settings link. */
 authRoutes.get("/google/callback", async (c) => {
@@ -242,7 +304,41 @@ authRoutes.get("/google/callback", async (c) => {
 
   const kvKey = state ? `${OAUTH_KV_PREFIX}${state}` : null;
   const rawPending = kvKey ? await c.env.SESSIONS.get(kvKey) : null;
-  if (kvKey) await c.env.SESSIONS.delete(kvKey);
+
+  // Pending already consumed: replay local success, never re-exchange the code.
+  // Mint only with browser-held sp_oauth; matching session alone may finish replay.
+  if (state && !rawPending) {
+    const doneRaw = await c.env.SESSIONS.get(oauthDoneKey(state));
+    const done = doneRaw ? parseOAuthDone(doneRaw) : null;
+    if (done) {
+      if (done.intent === "link") {
+        try {
+          const sessionUserId = await requireUser(c);
+          if (sessionUserId !== done.userId) {
+            return oauthSettingsRedirect(appUrl, { error: "oauth" });
+          }
+        } catch {
+          return oauthSettingsRedirect(appUrl, { error: "oauth" });
+        }
+        await consumeOAuthDone(c.env.SESSIONS, state);
+        clearOAuthCtxCookie(c);
+        return oauthSettingsRedirect(appUrl, { linked: "1" });
+      }
+      const existing = await peekSessionUserId(c);
+      if (existing === done.userId) {
+        await consumeOAuthDone(c.env.SESSIONS, state);
+        clearOAuthCtxCookie(c);
+        return c.redirect(oauthSuccessHome(appUrl), 302);
+      }
+      if (!oauthCtxMatches(c, state)) {
+        return oauthLoginRedirect(appUrl, "oauth");
+      }
+      await createSession(c, done.userId);
+      await consumeOAuthDone(c.env.SESSIONS, state);
+      clearOAuthCtxCookie(c);
+      return c.redirect(oauthSuccessHome(appUrl), 302);
+    }
+  }
 
   let pending: GoogleOAuthPending | null = null;
   if (rawPending) {
@@ -262,7 +358,13 @@ authRoutes.get("/google/callback", async (c) => {
   if (err) {
     return fail("oauth_denied");
   }
-  if (!code || !state || !pending || typeof pending.codeVerifier !== "string") {
+  if (
+    !code ||
+    !state ||
+    !pending ||
+    typeof pending.codeVerifier !== "string" ||
+    !oauthCtxMatches(c, state)
+  ) {
     return fail("oauth");
   }
 
@@ -278,6 +380,7 @@ authRoutes.get("/google/callback", async (c) => {
     });
     profile = await fetchGoogleProfile(tokens.access_token);
   } catch {
+    if (kvKey) await c.env.SESSIONS.delete(kvKey);
     return fail("oauth");
   }
 
@@ -329,6 +432,12 @@ authRoutes.get("/google/callback", async (c) => {
         .bind(subject, account.id)
         .run();
     }
+    await storeOAuthDone(c.env.SESSIONS, state, {
+      userId: account.id,
+      intent: "link",
+    });
+    if (kvKey) await c.env.SESSIONS.delete(kvKey);
+    clearOAuthCtxCookie(c);
     return oauthSettingsRedirect(appUrl, { linked: "1" });
   }
 
@@ -390,6 +499,8 @@ authRoutes.get("/google/callback", async (c) => {
   }
 
   await createSession(c, userId);
-  const home = appUrl.replace(/\/$/, "") || "/";
-  return c.redirect(`${home}/`, 302);
+  await storeOAuthDone(c.env.SESSIONS, state, { userId, intent: "login" });
+  if (kvKey) await c.env.SESSIONS.delete(kvKey);
+  clearOAuthCtxCookie(c);
+  return c.redirect(oauthSuccessHome(appUrl), 302);
 });

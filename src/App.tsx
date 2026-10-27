@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import AppShell from "./components/AppShell";
 import DraftReviewPage from "./routes/DraftReviewPage";
 import HomePage from "./routes/HomePage";
@@ -11,6 +11,7 @@ import DataDeletionPage from "./routes/DataDeletionPage";
 import SettingsPage from "./routes/SettingsPage";
 import StudyPage from "./routes/StudyPage";
 import TodayPage from "./routes/TodayPage";
+import { subscribePath } from "./nav/navigate";
 import { StudyChromeProvider } from "./study/StudyChromeContext";
 
 function shell(page: ReactNode) {
@@ -26,7 +27,9 @@ export default function App() {
 }
 
 function AppInner() {
-  const path = window.location.pathname;
+  const [path, setPath] = useState(() => window.location.pathname);
+
+  useEffect(() => subscribePath(setPath), []);
 
   if (path === "/" || path === "") return <HomePage />;
   if (path === "/login") return <LoginPage />;
