@@ -11,7 +11,6 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useCallback, useRef, useState, type PointerEvent } from "react";
 import { mediaUrl, type OcclusionFrontView } from "../api/client";
-import { suggestOcclusionRegions } from "../lib/occlusionOcr";
 
 export type OcclusionRegion = OcclusionFrontView["regions"][number];
 
@@ -79,7 +78,16 @@ async function decodeImageNaturalSize(
 }
 
 function suggestErrorMessage(err: unknown): string {
-  if (err instanceof Error && err.message) return err.message;
+  const raw = err instanceof Error ? err.message : "";
+  if (raw.includes("failed to load") || raw.includes("OCR worker")) {
+    return "Could not load on-device OCR. Try again, or edit regions manually.";
+  }
+  if (raw.includes("recognition failed") || raw.includes("OCR recognition")) {
+    return "OCR could not read this image. Try again, or edit regions manually.";
+  }
+  if (raw.includes("Image fetch") || raw.includes("decode")) {
+    return "Could not load the crop image for OCR.";
+  }
   return "Could not suggest regions.";
 }
 
@@ -133,6 +141,7 @@ export default function OcclusionRegionEditor({
       }
       const blob = await res.blob();
       const { width, height } = await decodeImageNaturalSize(blob);
+      const { suggestOcclusionRegions } = await import("../lib/occlusionOcr");
       const regions = await suggestOcclusionRegions(blob, width, height);
       if (regions.length === 0) {
         setSuggestNotice({
