@@ -12,10 +12,22 @@ import {
   scheduleColumnsFromCard,
   type ScheduleRowLike,
 } from "./fsrs";
+import { rankStruggling, type StrugglingCandidate } from "./struggling";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
 type DueRow = CardRow & { due: string };
+
+type StrugglingSqlRow = {
+  id: string;
+  deck_id: string;
+  front_json: string;
+  lapses: number;
+  difficulty: number;
+  due: string;
+  last_review: string | null;
+  again_14d: number;
+};
 
 const ReviewBodySchema = z.object({
   cardId: z.string().min(1),
@@ -58,6 +70,49 @@ studyRoutes.get("/due", async (c) => {
       due: row.due,
     })),
   );
+});
+
+/**
+ * Accepted cards struggling by lapses or recent Again; ranked, capped at 50.
+ * Drafts never appear. Ownership mirrors /due via decks.user_id.
+ */
+studyRoutes.get("/struggling", async (c) => {
+  const userId = await requireUser(c);
+  const db = getDb(c.env);
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const since = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { results } = await db
+    .prepare(
+      `SELECT c.id, c.deck_id, c.front_json,
+              s.lapses, s.difficulty, s.due, s.last_review,
+              (
+                SELECT COUNT(*) FROM review_logs rl
+                WHERE rl.card_id = c.id
+                  AND rl.rating = 1
+                  AND rl.reviewed_at >= ?
+              ) AS again_14d
+       FROM cards c
+       INNER JOIN card_schedules s ON s.card_id = c.id
+       INNER JOIN decks d ON d.id = c.deck_id
+       WHERE d.user_id = ? AND c.status = ?`,
+    )
+    .bind(since, userId, "accepted")
+    .all<StrugglingSqlRow>();
+
+  const candidates: StrugglingCandidate[] = (results ?? []).map((row) => ({
+    id: row.id,
+    deck_id: row.deck_id,
+    front_json: row.front_json,
+    lapses: row.lapses,
+    again_14d: Number(row.again_14d) || 0,
+    difficulty: row.difficulty,
+    due: row.due,
+    last_review: row.last_review,
+  }));
+
+  return c.json(rankStruggling(candidates, nowIso));
 });
 
 /** Grade a due accepted card with FSRS; writes review_logs and updates schedule. */

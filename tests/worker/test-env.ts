@@ -75,6 +75,16 @@ export type ScheduleRow = {
   last_review: string | null;
 };
 
+export type ReviewLogRow = {
+  id: string;
+  card_id: string;
+  rating: number;
+  scheduled_days: number;
+  elapsed_days: number;
+  reviewed_at: string;
+  state_json: string;
+};
+
 type SessionRecord = { userId: string; expiresAt: number };
 
 /** Fixed 32-byte wrap key for Vitest when SECRETS_WRAP_KEY is unset. */
@@ -90,12 +100,14 @@ export type TestEnv = Env & {
   seedCard: (row: CardRow) => void;
   seedGenerationJob: (row: GenerationJobRow) => void;
   seedSchedule: (row: ScheduleRow) => void;
+  seedReviewLog: (row: ReviewLogRow) => void;
   seedR2: (key: string, value: string) => void;
   getMaterials: () => MaterialRow[];
   getGenerationJobs: () => GenerationJobRow[];
   getUserSecrets: () => UserSecretRow[];
   getCards: () => CardRow[];
   getSchedules: () => ScheduleRow[];
+  getReviewLogs: () => ReviewLogRow[];
   getQueueMessages: () => unknown[];
   getR2Keys: () => string[];
 };
@@ -110,6 +122,7 @@ export function createTestEnv(opts?: {
   const userSecrets = new Map<string, UserSecretRow>();
   const cards = new Map<string, CardRow>();
   const schedules = new Map<string, ScheduleRow>();
+  const reviewLogs: ReviewLogRow[] = [];
   const sessions = new Map<string, string>();
   const r2 = new Map<string, string>();
   const queueMessages: unknown[] = [];
@@ -538,6 +551,42 @@ export function createTestEnv(opts?: {
             .sort((a, b) => a.due.localeCompare(b.due));
           return { results: rows as T[] };
         }
+        // GET /api/study/struggling: accepted + schedule + again_14d subquery
+        if (
+          normalized.includes("FROM cards c") &&
+          normalized.includes("INNER JOIN card_schedules s") &&
+          normalized.includes("FROM review_logs rl") &&
+          normalized.includes("c.status =")
+        ) {
+          const [since, userId, status] = bound as [string, string, string];
+          const rows = [...cards.values()]
+            .filter((c) => {
+              if (c.status !== status) return false;
+              const deck = decks.get(c.deck_id);
+              if (!deck || deck.user_id !== userId) return false;
+              return schedules.has(c.id);
+            })
+            .map((c) => {
+              const schedule = schedules.get(c.id)!;
+              const again_14d = reviewLogs.filter(
+                (rl) =>
+                  rl.card_id === c.id &&
+                  rl.rating === 1 &&
+                  rl.reviewed_at >= since,
+              ).length;
+              return {
+                id: c.id,
+                deck_id: c.deck_id,
+                front_json: c.front_json,
+                lapses: schedule.lapses,
+                difficulty: schedule.difficulty,
+                due: schedule.due,
+                last_review: schedule.last_review,
+                again_14d,
+              };
+            });
+          return { results: rows as T[] };
+        }
         return { results: [] };
       },
       async run(): Promise<D1Result> {
@@ -898,6 +947,33 @@ export function createTestEnv(opts?: {
             cards.delete(id);
             schedules.delete(id);
           }
+        } else if (normalized.startsWith("INSERT INTO review_logs")) {
+          const [
+            id,
+            card_id,
+            rating,
+            scheduled_days,
+            elapsed_days,
+            reviewed_at,
+            state_json,
+          ] = bound as [
+            string,
+            string,
+            number,
+            number,
+            number,
+            string,
+            string,
+          ];
+          reviewLogs.push({
+            id,
+            card_id,
+            rating,
+            scheduled_days,
+            elapsed_days,
+            reviewed_at,
+            state_json,
+          });
         } else if (normalized.startsWith("INSERT INTO card_schedules")) {
           // Conditional accept: INSERT…SELECT WHERE status/updated_at match CAS.
           if (normalized.includes("SELECT c.id")) {
@@ -1099,6 +1175,9 @@ export function createTestEnv(opts?: {
     seedSchedule(row) {
       schedules.set(row.card_id, row);
     },
+    seedReviewLog(row) {
+      reviewLogs.push(row);
+    },
     seedR2(key, value) {
       r2.set(key, value);
     },
@@ -1107,6 +1186,7 @@ export function createTestEnv(opts?: {
     getUserSecrets: () => [...userSecrets.values()],
     getCards: () => [...cards.values()],
     getSchedules: () => [...schedules.values()],
+    getReviewLogs: () => [...reviewLogs],
     getQueueMessages: () => [...queueMessages],
     getR2Keys: () => [...r2.keys()],
   };
