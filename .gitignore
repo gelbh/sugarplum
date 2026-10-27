@@ -12,3 +12,7 @@ public/logo-photo.png
 public/models/*.onnx
 # Legacy ORT copies (runtime uses Vite-bundled onnxruntime-web/wasm)
 public/ort/
+# OCR (fetched on prebuild; pins in scripts/fetch-ocr-assets.mjs)
+public/ocr/worker.min.js
+public/ocr/core/
+public/ocr/*.traineddata.gz
