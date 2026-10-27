@@ -8,7 +8,9 @@ import {
 } from "../../worker/materials/figures";
 import { createTestEnv } from "./test-env";
 
-function crop(overrides: Partial<FigureCrop> & Pick<FigureCrop, "index">): FigureCrop {
+function crop(
+  overrides: Partial<FigureCrop> & Pick<FigureCrop, "index">,
+): FigureCrop {
   return {
     page: overrides.page ?? 1,
     index: overrides.index,
@@ -33,15 +35,17 @@ describe("figureR2KeyPrefixBounds", () => {
 
   it("builds a half-open range that covers figure keys under the pdf prefix", () => {
     const { lower, upper } = figureR2KeyPrefixBounds(deckId, pdfMaterialId);
-    expect(lower).toBe(
-      `materials/${deckId}/figures/${pdfMaterialId}/`,
-    );
+    expect(lower).toBe(`materials/${deckId}/figures/${pdfMaterialId}/`);
     expect(upper).toBe(`materials/${deckId}/figures/${pdfMaterialId}0`);
     const key = figureR2Key(deckId, pdfMaterialId, 0);
     expect(key >= lower && key < upper).toBe(true);
-    expect(`materials/${deckId}/figures/${pdfMaterialId}-other/0.png` < lower).toBe(
-      true,
-    );
+    expect(
+      `materials/${deckId}/figures/${pdfMaterialId}-other/0.png` < lower,
+    ).toBe(true);
+    // Exclusive upper: stem0… sorts at/after upper (ASCII '/' then '0').
+    const atUpper = `materials/${deckId}/figures/${pdfMaterialId}0/0.png`;
+    expect(atUpper >= upper).toBe(true);
+    expect(atUpper < upper).toBe(false);
   });
 
   it("documents that the old LIKE pattern exceeds D1's 50-byte limit", () => {
@@ -53,10 +57,7 @@ describe("figureR2KeyPrefixBounds", () => {
 describe("persistFigureCrops", () => {
   it("stores each crop in R2 and inserts ready image materials", async () => {
     const env = createTestEnv();
-    const crops = [
-      crop({ page: 2, index: 0 }),
-      crop({ page: 5, index: 1 }),
-    ];
+    const crops = [crop({ page: 2, index: 0 }), crop({ page: 5, index: 1 })];
 
     const persisted = await persistFigureCrops(env, {
       deckId: "deck-a",
@@ -172,8 +173,8 @@ describe("persistFigureCrops race with client uploads", () => {
     expect(persisted.map((p) => p.r2Key)).toEqual([
       "materials/deck-a/figures/pdf-parent/1.png",
     ]);
-    expect(
-      env.getMaterials().filter((m) => m.kind === "image"),
-    ).toHaveLength(2);
+    expect(env.getMaterials().filter((m) => m.kind === "image")).toHaveLength(
+      2,
+    );
   });
 });
