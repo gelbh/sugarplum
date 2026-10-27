@@ -16,7 +16,8 @@ type Props = {
   back: string;
   options?: string[];
   disabled?: boolean;
-  onGrade: (rating: StudyRating) => void;
+  /** Return false (or reject) so the face unlocks for another tap. */
+  onGrade: (rating: StudyRating) => boolean | Promise<boolean>;
 };
 
 export default function McqFace({
@@ -33,19 +34,39 @@ export default function McqFace({
   );
   const [picked, setPicked] = useState<string | null>(null);
   const gradeSentRef = useRef(false);
+  const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
     setPicked(null);
     gradeSentRef.current = false;
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, [cardId]);
+
+  const unlock = () => {
+    setPicked(null);
+    gradeSentRef.current = false;
+  };
 
   const onPick = (option: string) => {
     if (disabled || picked !== null || gradeSentRef.current) return;
     setPicked(option);
     gradeSentRef.current = true;
     const rating = mcqTapRating(option, back);
-    window.setTimeout(() => {
-      onGrade(rating);
+    timerRef.current = window.setTimeout(() => {
+      timerRef.current = null;
+      void (async () => {
+        try {
+          const ok = await onGrade(rating);
+          if (!ok) unlock();
+        } catch {
+          unlock();
+        }
+      })();
     }, FEEDBACK_MS);
   };
 
@@ -130,7 +151,7 @@ export default function McqFace({
             <Stack spacing={1} sx={{ width: "100%", mt: "auto" }}>
               {choices.map((option, index) => {
                 const isPicked = picked === option;
-                const isCorrect = option === back;
+                const isCorrect = option.trim() === back.trim();
                 let borderColor = "currentColor";
                 let bgcolor = "transparent";
                 let opacity = 0.88;

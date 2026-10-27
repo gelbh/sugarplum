@@ -173,9 +173,9 @@ export default function StudyPage() {
   }, [revealed, current?.id]);
 
   const onGrade = useCallback(
-    async (rating: StudyRating, fromMcq = false) => {
-      if (!current || busyRef.current) return;
-      if (!fromMcq && !revealed) return;
+    async (rating: StudyRating, fromMcq = false): Promise<boolean> => {
+      if (!current || busyRef.current) return false;
+      if (!fromMcq && !revealed) return false;
       busyRef.current = true;
       setError(null);
       begin();
@@ -187,11 +187,13 @@ export default function StudyPage() {
         setQueue((prev) => prev.slice(1));
         setRevealed(false);
         end();
+        return true;
       } catch (err) {
         setError(
           err instanceof ApiError ? err.message : "Could not save grade",
         );
         end(false);
+        return false;
       }
     },
     [begin, current, end, revealed],
@@ -465,7 +467,7 @@ export default function StudyPage() {
                     back={String(current.back)}
                     options={current.options}
                     disabled={busy}
-                    onGrade={(rating) => void onGrade(rating, true)}
+                    onGrade={(rating) => onGrade(rating, true)}
                   />
                 ) : (
                   <CardFace
