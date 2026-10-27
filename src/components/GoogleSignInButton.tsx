@@ -1,5 +1,5 @@
 import Button from "@mui/material/Button";
-import { endGuestLocal } from "../guest/endGuestLocal";
+import { snapshotGuestForMerge } from "../guest/mergeOnAuth";
 
 /** Top-level navigation to Worker Google OAuth start (iOS Home Screen friendly). */
 export default function GoogleSignInButton() {
@@ -10,7 +10,8 @@ export default function GoogleSignInButton() {
       variant="outlined"
       fullWidth
       onClick={() => {
-        endGuestLocal();
+        // Same-tab only: open-in-new-tab skips onClick so snapshot is not taken.
+        snapshotGuestForMerge();
       }}
     >
       Continue with Google

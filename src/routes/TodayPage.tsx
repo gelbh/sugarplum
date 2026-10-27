@@ -14,6 +14,11 @@ import {
   getJourney,
   type StrugglingRow,
 } from "../api/client";
+import {
+  consumeMergeFailedNotice,
+  tryMergeGuestAfterAuth,
+} from "../guest/mergeOnAuth";
+import { isGuest } from "../guest/session";
 import { deriveJourney } from "../journey/derive";
 import type { JourneyView } from "../journey/types";
 import JourneyNextButton from "../components/JourneyNextButton";
@@ -33,6 +38,7 @@ import { warmDueMedia } from "../study/warmDueMedia";
 export default function TodayPage() {
   const [dueCount, setDueCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [mergeFailed, setMergeFailed] = useState(false);
   const [offlineCopy, setOfflineCopy] = useState(false);
   const [ready, setReady] = useState(false);
   const [view, setView] = useState<JourneyView | null>(null);
@@ -77,6 +83,10 @@ export default function TodayPage() {
       try {
         const user = await me();
         if (cancelled) return;
+        // OAuth land: merge guest paste snapshot once session exists (email auth merges in register/login).
+        if (!isGuest()) await tryMergeGuestAfterAuth();
+        if (cancelled) return;
+        if (consumeMergeFailedNotice()) setMergeFailed(true);
         setUserId(user.id);
         refreshPendingCount(user.id);
         await flushOnMount(user.id);
@@ -199,6 +209,16 @@ export default function TodayPage() {
         {error ? (
           <Alert severity="error" sx={{ width: "100%", textAlign: "left" }}>
             {error}
+          </Alert>
+        ) : null}
+        {mergeFailed ? (
+          <Alert
+            severity="warning"
+            sx={{ width: "100%", textAlign: "left" }}
+            onClose={() => setMergeFailed(false)}
+          >
+            Could not import your guest cards. They are still in this browser;
+            try again later or paste them after signing in.
           </Alert>
         ) : null}
         {syncSummary ? (

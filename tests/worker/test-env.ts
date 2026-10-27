@@ -1223,6 +1223,24 @@ export function createTestEnv(opts?: {
           }
         } else if (
           normalized.startsWith(
+            "UPDATE cards SET status = ?, updated_at = ? WHERE job_id = ? AND status = ?",
+          )
+        ) {
+          const [status, updated_at, jobId, expected] = bound as [
+            string,
+            string,
+            string,
+            string,
+          ];
+          let changes = 0;
+          for (const [id, card] of [...cards.entries()]) {
+            if (card.job_id !== jobId || card.status !== expected) continue;
+            cards.set(id, { ...card, status, updated_at });
+            changes += 1;
+          }
+          return { success: true, meta: { changes } } as D1Result;
+        } else if (
+          normalized.startsWith(
             "UPDATE cards SET status = ?, updated_at = ? WHERE id = ? AND status = ?",
           )
         ) {

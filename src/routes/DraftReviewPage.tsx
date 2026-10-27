@@ -30,6 +30,7 @@ import {
   patchCard,
   regenJob,
   rejectCard,
+  rejectJobDrafts,
   type CardDraftView,
   type CardType,
 } from "../api/client";
@@ -79,6 +80,7 @@ export default function DraftReviewPage() {
   const [ready, setReady] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [confirmAll, setConfirmAll] = useState(false);
+  const [confirmRejectDrafts, setConfirmRejectDrafts] = useState(false);
   const [confirmRegen, setConfirmRegen] = useState(false);
   /** When false, drop jobId from useJobProgress so the same id can remount and poll again after regen. */
   const [progressGate, setProgressGate] = useState(true);
@@ -311,6 +313,33 @@ export default function DraftReviewPage() {
     }
   }
 
+  async function onRejectRemainingDrafts() {
+    if (!jobId) return;
+    setError(null);
+    setNotice(null);
+    setConfirmRejectDrafts(false);
+    begin();
+    try {
+      const result = await rejectJobDrafts(jobId);
+      const list = await load(jobId);
+      setDirty(false);
+      await refreshJourney(jobId, list.length);
+      setNotice(
+        result.rejectedCount === 0
+          ? "No remaining drafts to reject"
+          : `Rejected ${result.rejectedCount} remaining drafts`,
+      );
+      end();
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "Could not reject remaining drafts",
+      );
+      end(false);
+    }
+  }
+
   async function onRegen() {
     if (!jobId) return;
     setError(null);
@@ -332,7 +361,7 @@ export default function DraftReviewPage() {
     }
   }
 
-  const regenDisabled = busy || jobProgress.pending;
+  const jobActionDisabled = busy || jobProgress.pending;
 
   if (!ready) {
     return (
@@ -426,9 +455,17 @@ export default function DraftReviewPage() {
                 )}
                 <Button
                   variant="outlined"
+                  color="warning"
+                  onClick={() => setConfirmRejectDrafts(true)}
+                  disabled={jobActionDisabled}
+                >
+                  Reject remaining drafts
+                </Button>
+                <Button
+                  variant="outlined"
                   color="error"
                   onClick={() => setConfirmRegen(true)}
-                  disabled={regenDisabled}
+                  disabled={jobActionDisabled}
                 >
                   Regenerate
                 </Button>
@@ -552,16 +589,30 @@ export default function DraftReviewPage() {
                   Next
                 </Button>
               </Stack>
-              <Box>
+              <Stack
+                direction="row"
+                spacing={1.5}
+                flexWrap="wrap"
+                useFlexGap
+                sx={{ pt: 1, borderTop: 1, borderColor: "divider" }}
+              >
+                <Button
+                  variant="text"
+                  color="warning"
+                  onClick={() => setConfirmRejectDrafts(true)}
+                  disabled={jobActionDisabled || drafts.length === 0}
+                >
+                  Reject remaining drafts
+                </Button>
                 <Button
                   variant="text"
                   color="error"
                   onClick={() => setConfirmRegen(true)}
-                  disabled={regenDisabled}
+                  disabled={jobActionDisabled}
                 >
                   Regenerate
                 </Button>
-              </Box>
+              </Stack>
             </Stack>
           </Paper>
         )}
@@ -584,6 +635,36 @@ export default function DraftReviewPage() {
               autoFocus
             >
               Confirm
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={confirmRejectDrafts}
+          onClose={() => !busy && setConfirmRejectDrafts(false)}
+        >
+          <DialogTitle>Reject remaining drafts?</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              This rejects remaining drafts for this job only. Cards you already
+              accepted stay in study. Nothing is regenerated.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => setConfirmRejectDrafts(false)}
+              disabled={busy}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="warning"
+              onClick={onRejectRemainingDrafts}
+              disabled={busy}
+              autoFocus
+            >
+              Reject drafts
             </Button>
           </DialogActions>
         </Dialog>

@@ -3,6 +3,11 @@ import {
   uploadWithProgress,
 } from "../progress/uploadWithProgress";
 import { endGuestLocal } from "../guest/endGuestLocal";
+import {
+  clearGuestMergeArtifacts,
+  tryMergeGuestAfterAuth,
+} from "../guest/mergeOnAuth";
+import type { GuestImportPayload } from "../guest/importPayload";
 import { GUEST_USER, isGuest } from "../guest/session";
 import {
   ensureGuestStore,
@@ -82,12 +87,19 @@ export type AuthUser = {
   google_linked?: boolean;
 };
 
+export function importGuestLocal(body: GuestImportPayload) {
+  return api<{ deckCount: number; cardCount: number }>("/api/guest/import", {
+    method: "POST",
+    json: body,
+  });
+}
+
 export async function register(email: string, password: string) {
   const user = await api<AuthUser>("/api/auth/register", {
     method: "POST",
     json: { email, password },
   });
-  endGuestLocal();
+  await tryMergeGuestAfterAuth({ importGuest: importGuestLocal });
   return user;
 }
 
@@ -96,7 +108,7 @@ export async function login(email: string, password: string) {
     method: "POST",
     json: { email, password },
   });
-  endGuestLocal();
+  await tryMergeGuestAfterAuth({ importGuest: importGuestLocal });
   return user;
 }
 
@@ -110,6 +122,7 @@ export async function logout() {
   });
   clearDueCache();
   clearPendingGrades();
+  clearGuestMergeArtifacts();
   if (typeof caches !== "undefined") {
     try {
       await caches.delete(STUDY_MEDIA_CACHE);
@@ -299,6 +312,14 @@ export function getJob(jobId: string) {
 export function regenJob(jobId: string) {
   if (isGuest()) guestUnsupported("regenerate cards");
   return api<GenerationJob>(`/api/jobs/${jobId}/regen`, { method: "POST" });
+}
+
+/** Soft-clean: reject remaining drafts only; accepted cards stay. No requeue. */
+export function rejectJobDrafts(jobId: string) {
+  if (isGuest()) guestUnsupported("reject remaining drafts");
+  return api<{ rejectedCount: number }>(`/api/jobs/${jobId}/reject-drafts`, {
+    method: "POST",
+  });
 }
 
 export type JobListItem = {

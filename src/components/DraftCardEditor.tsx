@@ -22,6 +22,7 @@ import {
 } from "../api/client";
 import {
   blankClozeFront,
+  CLOZE_EXTRA_LABEL,
   extractClozeAnswer,
 } from "../lib/clozeFormat";
 import OcclusionRegionEditor from "./OcclusionRegionEditor";
@@ -275,7 +276,7 @@ export default function DraftCardEditor({
                   helperText="Advanced: keep the generated blank markers if you edit wording."
                 />
                 <TextField
-                  label="Back"
+                  label={CLOZE_EXTRA_LABEL}
                   value={backText}
                   onChange={(e) => patch({ back: e.target.value })}
                   multiline

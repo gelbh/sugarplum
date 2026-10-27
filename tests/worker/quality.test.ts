@@ -92,6 +92,21 @@ describe("filterDraftsByQuality", () => {
     expect(filterDraftsByQuality([cloze])).toEqual([cloze]);
   });
 
+  it("keeps cloze with empty Extra back (answer lives in front)", () => {
+    const cloze: CardDraft = {
+      type: "cloze",
+      front: "The powerhouse is the {{c1::mitochondria}}.",
+      back: "",
+      provenance: { pages: [1], excerpt: "powerhouse" },
+    };
+    expect(filterDraftsByQuality([cloze])).toEqual([cloze]);
+  });
+
+  it("still drops qa when back is shorter than MIN_BACK", () => {
+    const short = qa("What is the powerhouse of the cell?", "x");
+    expect(filterDraftsByQuality([short])).toEqual([]);
+  });
+
   it("keeps questions that end with a table-column word", () => {
     const hostQ = qa("What is the definitive host?", "Dogs and cats");
     expect(filterDraftsByQuality([hostQ])).toEqual([hostQ]);

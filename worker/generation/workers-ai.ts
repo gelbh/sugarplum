@@ -2,6 +2,7 @@ import type { Env } from "../env";
 import {
   parseCardsPayload,
   userPromptForJson,
+  withCompactTruncationRetry,
   type CompleteInput,
   type GenerateDraftsInput,
   type LlmAdapter,
@@ -99,10 +100,6 @@ function contentFromAiRun(result: unknown): AiRunContent {
   throw new Error("Workers AI returned empty content");
 }
 
-function isTruncationParseError(err: unknown): boolean {
-  return err instanceof Error && /truncated mid-JSON/i.test(err.message);
-}
-
 function withAiDiagnostics(err: unknown, run: AiRunContent): Error {
   const base =
     err instanceof Error ? err.message : String(err ?? "Generation failed");
@@ -170,23 +167,24 @@ export function createWorkersAiAdapter(env: Env): LlmAdapter {
         }
       };
 
-      const first = await runChat(
-        GENERATE_SYSTEM_PROMPT,
-        userPromptForJson(input.text),
+      // One compact retry: live monoxenous failures end mid-first-card with
+      // nothing to salvage; a smaller ask often completes within budget.
+      return withCompactTruncationRetry(
+        async () =>
+          parseOrThrow(
+            await runChat(
+              GENERATE_SYSTEM_PROMPT,
+              userPromptForJson(input.text),
+            ),
+          ),
+        async () =>
+          parseOrThrow(
+            await runChat(
+              GENERATE_COMPACT_SYSTEM_PROMPT,
+              generateCompactUserPrompt(input.text),
+            ),
+          ),
       );
-      try {
-        return parseOrThrow(first);
-      } catch (err) {
-        if (!isTruncationParseError(err)) throw err;
-
-        // One compact retry: live monoxenous failures end mid-first-card with
-        // nothing to salvage; a smaller ask often completes within budget.
-        const second = await runChat(
-          GENERATE_COMPACT_SYSTEM_PROMPT,
-          generateCompactUserPrompt(input.text),
-        );
-        return parseOrThrow(second);
-      }
     },
   };
 }
