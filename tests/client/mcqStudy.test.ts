@@ -9,6 +9,11 @@ describe("mcqTapRating", () => {
     expect(mcqTapRating("Wrong", "Right")).toBe(1);
     expect(mcqTapRating("Right", "Right")).toBe(3);
   });
+
+  it("trims whitespace so padded options still grade Good", () => {
+    expect(mcqTapRating("ATP ", "ATP")).toBe(3);
+    expect(mcqTapRating("ATP", "ATP ")).toBe(3);
+  });
 });
 
 describe("shuffledMcqOptions", () => {

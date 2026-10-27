@@ -40,5 +40,5 @@ export function mcqTapRating(
   selected: string,
   correctAnswer: string,
 ): StudyRating {
-  return selected === correctAnswer ? 3 : 1;
+  return selected.trim() === correctAnswer.trim() ? 3 : 1;
 }

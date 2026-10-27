@@ -18,8 +18,14 @@ export function assertSingleCloze(front: string): void {
   }
 }
 
-/** MCQ: 3–5 unique trimmed non-empty options; back must match one option exactly (trimmed). */
-export function assertValidMcqOptions(back: string, options: string[] | undefined): void {
+/**
+ * MCQ: 3–5 unique trimmed non-empty options; back must match one option.
+ * Returns trimmed fields so persist/grade use the same exact strings.
+ */
+export function assertValidMcqOptions(
+  back: string,
+  options: string[] | undefined,
+): { back: string; options: string[] } {
   if (options === undefined) {
     throw new Error("MCQ requires options");
   }
@@ -37,9 +43,11 @@ export function assertValidMcqOptions(back: string, options: string[] | undefine
     }
     seen.add(o);
   }
-  if (!trimmed.includes(back.trim())) {
+  const answer = back.trim();
+  if (!trimmed.includes(answer)) {
     throw new Error("MCQ back must be one of the options");
   }
+  return { back: answer, options: trimmed };
 }
 
 export const ProvenanceSchema = z.object({

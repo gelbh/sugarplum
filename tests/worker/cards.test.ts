@@ -512,6 +512,86 @@ describe("draft review / accept gate", () => {
     });
   });
 
+  it("patch trims mcq answer and options for exact grade match", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedCard({
+      id: "card-mcq-trim",
+      deck_id: "deck-a",
+      job_id: "job-1",
+      type: "mcq",
+      front_json: JSON.stringify("What is ATP?"),
+      back_json: JSON.stringify({
+        answer: "ATP",
+        options: ["ATP", "ADP", "RNA"],
+      }),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "ATP" }),
+      status: "draft",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/cards/card-mcq-trim",
+      {
+        method: "PATCH",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          back: "ATP",
+          options: ["ATP ", "ADP", "RNA"],
+        }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { back: string; options: string[] };
+    expect(body.back).toBe("ATP");
+    expect(body.options).toEqual(["ATP", "ADP", "RNA"]);
+    const stored = env.getCards().find((c) => c.id === "card-mcq-trim");
+    expect(JSON.parse(stored!.back_json)).toEqual({
+      answer: "ATP",
+      options: ["ATP", "ADP", "RNA"],
+    });
+  });
+
+  it("accept rejects invalid mcq drafts", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedCard({
+      id: "card-mcq-bad",
+      deck_id: "deck-a",
+      job_id: "job-1",
+      type: "mcq",
+      front_json: JSON.stringify("Broken MCQ?"),
+      back_json: JSON.stringify({
+        answer: "Only two",
+        options: ["Only two", "Options"],
+      }),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "x" }),
+      status: "draft",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/cards/card-mcq-bad/accept",
+      {
+        method: "POST",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+    expect(res.status).toBe(400);
+    expect(env.getCards().find((c) => c.id === "card-mcq-bad")!.status).toBe(
+      "draft",
+    );
+  });
+
   it("patch qa card keeps string back_json", async () => {
     const env = createTestEnv();
     seedOwner(env);

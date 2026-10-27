@@ -30,7 +30,7 @@ import {
 import { consumeFreeGenSlot } from "./quota";
 import { filterDraftsByQuality } from "./quality";
 import { harvestRuleDrafts } from "./rules";
-import type { CardDraft } from "./schema";
+import { assertValidMcqOptions, type CardDraft } from "./schema";
 import { createWorkersAiAdapter } from "./workers-ai";
 
 async function emitProgress(
@@ -314,7 +314,13 @@ export async function insertDraftCards(
     const id = newId();
     const backJson =
       draft.type === "mcq"
-        ? JSON.stringify({ answer: draft.back, options: draft.options ?? [] })
+        ? (() => {
+            const mcq = assertValidMcqOptions(draft.back, draft.options);
+            return JSON.stringify({
+              answer: mcq.back,
+              options: mcq.options,
+            });
+          })()
         : JSON.stringify(draft.back);
     await db
       .prepare(

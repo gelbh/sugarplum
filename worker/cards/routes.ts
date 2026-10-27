@@ -134,8 +134,18 @@ async function requireOwnedCard(
 
 async function acceptDraftCard(
   db: D1Database,
-  cardId: string,
-): Promise<"accepted" | "conflict"> {
+  card: { id: string; type: string; back_json: string; status: string },
+): Promise<"accepted" | "conflict" | "invalid"> {
+  if (card.status !== "draft") return "conflict";
+  if (card.type === "mcq") {
+    const decoded = decodeStoredBack(card.type, card.back_json);
+    try {
+      assertValidMcqOptions(decoded.back, decoded.options);
+    } catch {
+      return "invalid";
+    }
+  }
+
   const schedule = scheduleColumnsFromCard(newCard());
   const updatedAt = new Date().toISOString();
   // One batch: CAS update + schedule insert only when this accept won
@@ -146,7 +156,7 @@ async function acceptDraftCard(
       .prepare(
         `UPDATE cards SET status = ?, updated_at = ? WHERE id = ? AND status = ?`,
       )
-      .bind("accepted", updatedAt, cardId, "draft"),
+      .bind("accepted", updatedAt, card.id, "draft"),
     db
       .prepare(
         `INSERT INTO card_schedules (
@@ -168,7 +178,7 @@ async function acceptDraftCard(
         schedule.lapses,
         schedule.state,
         schedule.last_review,
-        cardId,
+        card.id,
         "accepted",
         updatedAt,
       ),
@@ -232,16 +242,17 @@ jobDraftRoutes.post("/:id/drafts/accept-all", async (c) => {
 
   const { results } = await db
     .prepare(
-      `SELECT id FROM cards WHERE job_id = ? AND status = ? ORDER BY created_at ASC`,
+      `SELECT id, type, back_json, status FROM cards
+       WHERE job_id = ? AND status = ? ORDER BY created_at ASC`,
     )
     .bind(jobId, "draft")
-    .all<{ id: string }>();
+    .all<{ id: string; type: string; back_json: string; status: string }>();
 
   let accepted = 0;
   let failed = 0;
   for (const row of results ?? []) {
     try {
-      const outcome = await acceptDraftCard(db, row.id);
+      const outcome = await acceptDraftCard(db, row);
       if (outcome === "accepted") accepted += 1;
       else failed += 1;
     } catch (err) {
@@ -310,10 +321,13 @@ cardRoutes.patch("/:id", async (c) => {
       row.type === "mcq"
         ? storedBack
         : { back: parsed.data.back ?? "", options: undefined as string[] | undefined };
-    nextBack = parsed.data.back ?? prior.back;
-    nextOptions = parsed.data.options ?? prior.options;
     try {
-      assertValidMcqOptions(nextBack, nextOptions);
+      const mcq = assertValidMcqOptions(
+        parsed.data.back ?? prior.back,
+        parsed.data.options ?? prior.options,
+      );
+      nextBack = mcq.back;
+      nextOptions = mcq.options;
     } catch (err) {
       throw new HTTPException(400, {
         message: err instanceof Error ? err.message : "Invalid MCQ",
@@ -358,10 +372,15 @@ cardRoutes.post("/:id/accept", async (c) => {
     });
   }
 
-  const outcome = await acceptDraftCard(db, cardId);
+  const outcome = await acceptDraftCard(db, row);
   if (outcome === "conflict") {
     throw new HTTPException(409, {
       message: "Card is no longer a draft",
+    });
+  }
+  if (outcome === "invalid") {
+    throw new HTTPException(400, {
+      message: "Invalid MCQ card; fix options before accepting",
     });
   }
 
