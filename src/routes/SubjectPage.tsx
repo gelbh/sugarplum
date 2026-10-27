@@ -59,6 +59,8 @@ export default function SubjectPage({ subjectId }: Props) {
   const [deleteTarget, setDeleteTarget] = useState<Deck | null>(null);
   const [deleteStats, setDeleteStats] = useState<DeckStats | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [confirmSubjectDelete, setConfirmSubjectDelete] = useState(false);
+  const [subjectDeleteBusy, setSubjectDeleteBusy] = useState(false);
   const { end: endLoad } = useTrackedOp("Loading subject…", {
     trackOnMount: true,
   });
@@ -157,16 +159,26 @@ export default function SubjectPage({ subjectId }: Props) {
     }
   }
 
-  async function onDeleteSubject() {
+  function requestDeleteSubject() {
     if (!subject || subjectDeleteBlocked(subject, decks.length)) return;
+    setError(null);
+    setConfirmSubjectDelete(true);
+  }
+
+  async function confirmDeleteSubject() {
+    if (!subject) return;
+    setSubjectDeleteBusy(true);
     setError(null);
     try {
       await deleteSubject(subject.id);
+      setConfirmSubjectDelete(false);
       navigate("/library");
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : "Could not delete subject",
       );
+    } finally {
+      setSubjectDeleteBusy(false);
     }
   }
 
@@ -267,7 +279,7 @@ export default function SubjectPage({ subjectId }: Props) {
                         size="small"
                         aria-label="Delete subject"
                         disabled={deleteSubjectBlocked}
-                        onClick={onDeleteSubject}
+                        onClick={requestDeleteSubject}
                       >
                         <DeleteOutlineIcon fontSize="small" />
                       </IconButton>
@@ -401,6 +413,36 @@ export default function SubjectPage({ subjectId }: Props) {
             </Button>
           </DialogActions>
         </Box>
+      </Dialog>
+
+      <Dialog
+        open={confirmSubjectDelete}
+        onClose={() => !subjectDeleteBusy && setConfirmSubjectDelete(false)}
+      >
+        <DialogTitle>Delete subject?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {subject
+              ? `Delete “${subject.title}”? This only works when the subject has no decks.`
+              : ""}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setConfirmSubjectDelete(false)}
+            disabled={subjectDeleteBusy}
+          >
+            Cancel
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            disabled={subjectDeleteBusy}
+            onClick={confirmDeleteSubject}
+          >
+            {subjectDeleteBusy ? "Deleting…" : "Delete"}
+          </Button>
+        </DialogActions>
       </Dialog>
 
       <Dialog

@@ -12,6 +12,7 @@ import Container from "@mui/material/Container";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
@@ -61,6 +62,9 @@ export default function LibraryPage() {
   const [titleValue, setTitleValue] = useState("");
   const [dialogBusy, setDialogBusy] = useState(false);
   const [dialogError, setDialogError] = useState<string | null>(null);
+  const [deleteSubjectTarget, setDeleteSubjectTarget] =
+    useState<Subject | null>(null);
+  const [deleteSubjectBusy, setDeleteSubjectBusy] = useState(false);
   const guest = isGuest();
   const { end: endLoad } = useTrackedOp("Loading library…", {
     trackOnMount: true,
@@ -181,21 +185,34 @@ export default function LibraryPage() {
     return decks.filter((d) => d.subject_id === subjectId).length;
   }
 
-  async function onDeleteSubject(subject: Subject, ev: MouseEvent) {
+  function requestDeleteSubject(subject: Subject, ev: MouseEvent) {
     ev.stopPropagation();
     const localCount = localDeckCountForSubject(subject.id);
     if (subjectDeleteBlocked(subject, localCount)) return;
     setError(null);
+    setDeleteSubjectTarget(subject);
+  }
+
+  async function confirmDeleteSubject() {
+    if (!deleteSubjectTarget) return;
+    setDeleteSubjectBusy(true);
+    setError(null);
     try {
-      await deleteSubject(subject.id);
-      setSubjects((prev) => prev.filter((s) => s.id !== subject.id));
+      await deleteSubject(deleteSubjectTarget.id);
+      setSubjects((prev) =>
+        prev.filter((s) => s.id !== deleteSubjectTarget.id),
+      );
+      setDeleteSubjectTarget(null);
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         await Promise.all([refreshSubjects(), refreshDecks()]);
+        setDeleteSubjectTarget(null);
       }
       setError(
         err instanceof ApiError ? err.message : "Could not delete subject",
       );
+    } finally {
+      setDeleteSubjectBusy(false);
     }
   }
 
@@ -274,17 +291,33 @@ export default function LibraryPage() {
                     <Box
                       component="li"
                       key={s.id}
-                      onClick={() => openSubject(s.id)}
                       sx={{
                         display: "flex",
                         alignItems: "center",
                         gap: 1,
                         py: 1,
-                        cursor: "pointer",
                         "&:hover": { bgcolor: "action.hover" },
                       }}
                     >
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Box
+                        role="link"
+                        tabIndex={0}
+                        aria-label={`Open subject ${s.title}`}
+                        onClick={() => openSubject(s.id)}
+                        onKeyDown={(ev) => {
+                          if (ev.key === "Enter" || ev.key === " ") {
+                            ev.preventDefault();
+                            openSubject(s.id);
+                          }
+                        }}
+                        sx={{
+                          flex: 1,
+                          minWidth: 0,
+                          cursor: "pointer",
+                          borderRadius: 1,
+                          outlineOffset: 2,
+                        }}
+                      >
                         <Typography variant="body2" noWrap>
                           {s.title}
                         </Typography>
@@ -311,7 +344,7 @@ export default function LibraryPage() {
                             size="small"
                             aria-label={`Delete ${s.title}`}
                             disabled={deleteBlocked}
-                            onClick={(ev) => onDeleteSubject(s, ev)}
+                            onClick={(ev) => requestDeleteSubject(s, ev)}
                           >
                             <DeleteOutlineIcon fontSize="small" />
                           </IconButton>
@@ -452,6 +485,36 @@ export default function LibraryPage() {
             </Button>
           </DialogActions>
         </Box>
+      </Dialog>
+
+      <Dialog
+        open={deleteSubjectTarget !== null}
+        onClose={() => !deleteSubjectBusy && setDeleteSubjectTarget(null)}
+      >
+        <DialogTitle>Delete subject?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {deleteSubjectTarget
+              ? `Delete “${deleteSubjectTarget.title}”? This only works when the subject has no decks.`
+              : ""}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setDeleteSubjectTarget(null)}
+            disabled={deleteSubjectBusy}
+          >
+            Cancel
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            disabled={deleteSubjectBusy}
+            onClick={confirmDeleteSubject}
+          >
+            {deleteSubjectBusy ? "Deleting…" : "Delete"}
+          </Button>
+        </DialogActions>
       </Dialog>
     </Container>
   );
