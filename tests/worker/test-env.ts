@@ -234,6 +234,27 @@ export function createTestEnv(opts?: {
           return u ? ({ id: u.id, email: u.email } as T) : null;
         }
         if (
+          normalized.startsWith("SELECT id FROM subjects WHERE user_id =") &&
+          normalized.includes("title =")
+        ) {
+          const userId = bound[0] as string;
+          const title = bound[1] as string;
+          const matches = [...subjects.values()]
+            .filter((s) => s.user_id === userId && s.title === title)
+            .sort((a, b) =>
+              a.created_at !== b.created_at
+                ? a.created_at < b.created_at
+                  ? -1
+                  : 1
+                : a.id < b.id
+                  ? -1
+                  : a.id > b.id
+                    ? 1
+                    : 0,
+            );
+          return matches[0] ? ({ id: matches[0].id } as T) : null;
+        }
+        if (
           normalized.includes("FROM subjects WHERE id =") &&
           normalized.includes("user_id =")
         ) {
