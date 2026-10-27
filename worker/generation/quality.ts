@@ -78,7 +78,7 @@ function isIncompleteBack(back: string): boolean {
   return false;
 }
 
-/** One-word adjective/category back with a non-question front (table cell pair). */
+/** One-word alphabetic back with a non-question front (table cell pair). */
 function isGenericOneWordPair(front: string, back: string): boolean {
   if (front.includes("?")) return false;
   if (wordCount(back) !== 1) return false;
@@ -88,12 +88,13 @@ function isGenericOneWordPair(front: string, back: string): boolean {
 
 function hasBrokenPunctuation(back: string): boolean {
   const t = back.trim();
-  // Starts with a closing curly quote (e.g. ”Blackhead”.).
-  if (/^[”’»]/.test(t)) return true;
+  // Starts with a closing curly double quote (e.g. ”Blackhead”.).
+  // Apostrophes (’ / ') are contractions, not quote pairs.
+  if (/^[”»]/.test(t)) return true;
   const straight = (t.match(/"/g) ?? []).length;
   if (straight % 2 !== 0) return true;
-  const curlyOpen = (t.match(/[“‘«]/g) ?? []).length;
-  const curlyClose = (t.match(/[”’»]/g) ?? []).length;
+  const curlyOpen = (t.match(/[“«]/g) ?? []).length;
+  const curlyClose = (t.match(/[”»]/g) ?? []).length;
   if (curlyOpen !== curlyClose) return true;
   return false;
 }

@@ -84,4 +84,12 @@ describe("filterDraftsByQuality", () => {
       cloze,
     ]);
   });
+
+  it("keeps QA backs with typographic apostrophe contractions", () => {
+    const dna = qa(
+      "What is DNA?",
+      "Deoxyribonucleic acid. It\u2019s genetic.",
+    );
+    expect(filterDraftsByQuality([dna])).toEqual([dna]);
+  });
 });
