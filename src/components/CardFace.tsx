@@ -89,7 +89,7 @@ export default function CardFace({
             },
           }}
         >
-          <Box sx={CONTENT_SX}>
+          <Box data-card-face-content sx={CONTENT_SX}>
             {imageKey ? (
               <Box
                 component="img"
@@ -149,7 +149,7 @@ export default function CardFace({
             },
           }}
         >
-          <Box sx={CONTENT_SX}>
+          <Box data-card-face-content sx={CONTENT_SX}>
             <Typography variant="overline" color="text.secondary">
               Back
             </Typography>

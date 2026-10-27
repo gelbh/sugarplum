@@ -33,6 +33,14 @@ import { loadDueCache, saveDueCache } from "../study/dueCache";
 import { useStudyChrome } from "../study/StudyChromeContext";
 import { loadZenPreference, saveZenPreference } from "../study/zenPreference";
 
+/** True when the event target sits in a CardFace content box that overflows. */
+function isInsideScrollableCardFace(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false;
+  const face = target.closest("[data-card-face-content]");
+  if (!(face instanceof HTMLElement)) return false;
+  return face.scrollHeight > face.clientHeight;
+}
+
 function requestStudyFullscreen(): Promise<void> {
   return document.documentElement.requestFullscreen?.() ?? Promise.resolve();
 }
@@ -270,6 +278,12 @@ export default function StudyPage() {
       return;
     const dx = e.clientX - start.x;
     const dy = e.clientY - start.y;
+    if (
+      Math.abs(dy) >= Math.abs(dx) &&
+      isInsideScrollableCardFace(e.target)
+    ) {
+      return;
+    }
     const result = resolveCardGesture({ revealed, dx, dy });
     if (result.type === "reveal") {
       reveal();
