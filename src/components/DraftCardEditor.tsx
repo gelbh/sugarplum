@@ -113,8 +113,8 @@ export default function DraftCardEditor({
   if (card.type === "occlusion" && isOcclusionFront(card.front)) {
     return (
       <OcclusionRegionEditor
+        key={card.id}
         front={card.front}
-        backAnswer={backAnswer(card.back)}
         disabled={disabled}
         onChange={({ front, back }) =>
           onChange({ front, back, type: "occlusion" })
