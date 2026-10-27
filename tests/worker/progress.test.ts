@@ -3,7 +3,9 @@ import {
   STAGE_WEIGHTS,
   computePercent,
   computePipelineBandPercent,
+  pushProgressEvent,
   toProgressJson,
+  truncateProgressText,
   writeJobProgress,
 } from "../../worker/generation/progress";
 import { createTestEnv } from "./test-env";
@@ -133,6 +135,38 @@ describe("computePipelineBandPercent", () => {
   });
 });
 
+describe("truncateProgressText", () => {
+  it("strips C0 control chars except newline and space, then slices", () => {
+    const withControls = "hello\u0000\u0007world\nok\tthere";
+    expect(truncateProgressText(withControls)).toBe("helloworld\nokthere");
+    expect(truncateProgressText("a".repeat(200))).toBe("a".repeat(160));
+    expect(truncateProgressText("short", 160)).toBe("short");
+  });
+});
+
+describe("pushProgressEvent", () => {
+  const sample = (i: number) => ({
+    at: "2026-10-27T00:00:00.000Z",
+    kind: "stage" as const,
+    stage: "generate",
+    text: `event ${i}`,
+  });
+
+  it("starts from empty when events undefined", () => {
+    expect(pushProgressEvent(undefined, sample(1))).toEqual([sample(1)]);
+  });
+
+  it("drops oldest when exceeding max (default 12)", () => {
+    let events: ReturnType<typeof sample>[] = [];
+    for (let i = 0; i < 13; i++) {
+      events = pushProgressEvent(events, sample(i));
+    }
+    expect(events).toHaveLength(12);
+    expect(events[0].text).toBe("event 1");
+    expect(events[11].text).toBe("event 12");
+  });
+});
+
 describe("toProgressJson", () => {
   it("serializes server progress snapshot fields", () => {
     const json = toProgressJson({
@@ -149,6 +183,68 @@ describe("toProgressJson", () => {
       percent: 42,
       label: "Generating cards (chunk 2/5)",
     });
+  });
+
+  it("includes optional fields when set and omits when absent", () => {
+    const full = toProgressJson({
+      stage: "generate",
+      current: 1,
+      total: 3,
+      percent: 10,
+      label: "Gen",
+      tokens_used: 100,
+      tokens_prompt: 60,
+      tokens_completion: 40,
+      drafts_so_far: 2,
+      path: "free",
+      events: [
+        {
+          at: "2026-10-27T00:00:00.000Z",
+          kind: "draft",
+          stage: "generate",
+          text: "card draft",
+        },
+      ],
+    });
+    expect(JSON.parse(full)).toEqual({
+      stage: "generate",
+      current: 1,
+      total: 3,
+      percent: 10,
+      label: "Gen",
+      tokens_used: 100,
+      tokens_prompt: 60,
+      tokens_completion: 40,
+      drafts_so_far: 2,
+      path: "free",
+      events: [
+        {
+          at: "2026-10-27T00:00:00.000Z",
+          kind: "draft",
+          stage: "generate",
+          text: "card draft",
+        },
+      ],
+    });
+
+    const minimal = toProgressJson({
+      stage: "queued",
+      current: 0,
+      total: 0,
+      percent: 0,
+      label: "Queued",
+    });
+    const parsed = JSON.parse(minimal) as Record<string, unknown>;
+    expect(parsed).toEqual({
+      stage: "queued",
+      current: 0,
+      total: 0,
+      percent: 0,
+      label: "Queued",
+    });
+    expect(parsed).not.toHaveProperty("tokens_used");
+    expect(parsed).not.toHaveProperty("events");
+    expect(parsed).not.toHaveProperty("path");
   });
 });
 

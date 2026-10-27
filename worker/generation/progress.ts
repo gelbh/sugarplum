@@ -21,13 +21,49 @@ const STAGE_ORDER: ProgressStage[] = [
   "persist",
 ];
 
+export type ProgressEvent = {
+  at: string;
+  kind: "excerpt" | "draft" | "stage";
+  stage: string;
+  text: string;
+};
+
 export type ProgressPatch = {
   stage: ProgressStage;
   current: number;
   total: number;
   percent: number;
   label: string;
+  tokens_used?: number;
+  tokens_prompt?: number;
+  tokens_completion?: number;
+  drafts_so_far?: number;
+  events?: ProgressEvent[];
+  path?: "free" | "byo";
 };
+
+/** Strip C0 control chars except newline and space; cap length. */
+export function truncateProgressText(text: string, max = 160): string {
+  let out = "";
+  for (const ch of text) {
+    const code = ch.charCodeAt(0);
+    if (code === 0x0a || code === 0x20 || (code > 0x20 && code !== 0x7f)) {
+      out += ch;
+    }
+  }
+  return out.length <= max ? out : out.slice(0, max);
+}
+
+/** Append a progress event; keep at most `max` newest (drop oldest). */
+export function pushProgressEvent(
+  events: ProgressEvent[] | undefined,
+  event: ProgressEvent,
+  max = 12,
+): ProgressEvent[] {
+  const next = [...(events ?? []), event];
+  if (next.length <= max) return next;
+  return next.slice(next.length - max);
+}
 
 /** Stage catalogs for generation job paths (weights via effectiveWeights). */
 export const IMAGE_STAGES = [
@@ -163,13 +199,22 @@ export function computePipelineBandPercent(
 
 /** Serialize server-side progress fields for progress_json column. */
 export function toProgressJson(patch: ProgressPatch): string {
-  return JSON.stringify({
+  const body: Record<string, unknown> = {
     stage: patch.stage,
     current: patch.current,
     total: patch.total,
     percent: patch.percent,
     label: patch.label,
-  });
+  };
+  if (patch.tokens_used !== undefined) body.tokens_used = patch.tokens_used;
+  if (patch.tokens_prompt !== undefined) body.tokens_prompt = patch.tokens_prompt;
+  if (patch.tokens_completion !== undefined) {
+    body.tokens_completion = patch.tokens_completion;
+  }
+  if (patch.drafts_so_far !== undefined) body.drafts_so_far = patch.drafts_so_far;
+  if (patch.events !== undefined) body.events = patch.events;
+  if (patch.path !== undefined) body.path = patch.path;
+  return JSON.stringify(body);
 }
 
 /** Persist progress_json on a generation_jobs row. */
