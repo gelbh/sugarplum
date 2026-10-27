@@ -375,7 +375,7 @@ export default function DeckHubPage({ deckId }: Props) {
       const created = await createDeckCard(deckId, {
         type: createType,
         front,
-        back: createType === "cloze" ? createBack : back,
+        back: createType === "cloze" ? createBack.trim() : back,
         ...(options ? { options } : {}),
       });
       setCards((prev) => [created, ...prev]);
@@ -1155,6 +1155,7 @@ export default function DeckHubPage({ deckId }: Props) {
                 card={editCard}
                 disabled={editBusy || resetBusy}
                 onChange={onEditChange}
+                allowedTypes={["qa", "cloze", "mcq"]}
               />
             </Box>
           ) : null}

@@ -257,6 +257,37 @@ describe("guest store", () => {
     expect(due.map((c) => c.id).slice(1)).toEqual(olderDue);
   });
 
+  it("createDeckCard allows cloze with empty Extra", () => {
+    enterGuest(storage);
+    const subject = guestCreateSubject("Cloze subject", storage);
+    const deck = guestCreateDeck("Cloze deck", subject.id, storage);
+    const card = guestCreateDeckCard(
+      deck.id,
+      {
+        type: "cloze",
+        front: "The {{c1::femur}} is the thigh bone",
+        back: "",
+      },
+      storage,
+    );
+    expect(card.type).toBe("cloze");
+    expect(card.back).toBe("");
+    expect(guestListDueCards(storage)[0]?.id).toBe(card.id);
+  });
+
+  it("createDeckCard rejects MCQ without valid options", () => {
+    enterGuest(storage);
+    const subject = guestCreateSubject("Mcq subject", storage);
+    const deck = guestCreateDeck("Mcq deck", subject.id, storage);
+    expect(() =>
+      guestCreateDeckCard(
+        deck.id,
+        { type: "mcq", front: "Pick one", back: "A" },
+        storage,
+      ),
+    ).toThrow(/MCQ requires options/);
+  });
+
   it("patchCard updates front on an accepted card", () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Edit subject", storage);

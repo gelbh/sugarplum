@@ -272,12 +272,18 @@ deckRoutes.get("/:id/stats", async (c) => {
   });
 });
 
-const HubCreateCardSchema = z.object({
-  type: z.enum(["qa", "cloze", "mcq"]),
-  front: z.string().min(1),
-  back: z.string().min(1),
-  options: z.array(z.string()).optional(),
-});
+const HubCreateCardSchema = z
+  .object({
+    type: z.enum(["qa", "cloze", "mcq"]),
+    front: z.string().min(1),
+    /** Cloze Extra may be ""; study answer comes from the blank. */
+    back: z.string(),
+    options: z.array(z.string()).optional(),
+  })
+  .refine((body) => body.type === "cloze" || body.back.trim().length > 0, {
+    message: "Back is required",
+    path: ["back"],
+  });
 
 deckRoutes.get("/:id/cards", async (c) => {
   const userId = await requireUser(c);

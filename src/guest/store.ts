@@ -413,6 +413,35 @@ export function guestListDeckCards(
     .sort((a, b) => a.created_at.localeCompare(b.created_at));
 }
 
+/** Mirror worker assertValidMcqOptions for guest hub create. */
+function guestAssertValidMcq(
+  back: string,
+  options: string[] | undefined,
+): { back: string; options: string[] } {
+  if (options === undefined) {
+    throw new Error("MCQ requires options");
+  }
+  const trimmed = options.map((o) => o.trim());
+  if (trimmed.length < 3 || trimmed.length > 5) {
+    throw new Error("MCQ must have 3–5 options");
+  }
+  if (trimmed.some((o) => o.length === 0)) {
+    throw new Error("MCQ options must be non-empty");
+  }
+  const seen = new Set<string>();
+  for (const o of trimmed) {
+    if (seen.has(o)) {
+      throw new Error("MCQ options must be unique");
+    }
+    seen.add(o);
+  }
+  const answer = back.trim();
+  if (!trimmed.includes(answer)) {
+    throw new Error("MCQ back must be one of the options");
+  }
+  return { back: answer, options: trimmed };
+}
+
 /** Create an accepted hub card (qa|cloze|mcq) and prepend to due. */
 export function guestCreateDeckCard(
   deckId: string,
@@ -428,10 +457,19 @@ export function guestCreateDeckCard(
     throw new Error("Unsupported card type");
   }
   const front = body.front.trim();
-  const back = body.back.trim();
-  if (!front || !back) {
+  if (!front) {
+    throw new Error("Front required");
+  }
+  let back = body.back.trim();
+  let options = body.options;
+  if (body.type === "mcq") {
+    const mcq = guestAssertValidMcq(body.back, body.options);
+    back = mcq.back;
+    options = mcq.options;
+  } else if (body.type === "qa" && !back) {
     throw new Error("Front and back required");
   }
+  // cloze: Extra (back) may be ""
   const created = nowIso();
   const card: CardDraftView = {
     id: `guest-card-${crypto.randomUUID()}`,
@@ -440,9 +478,7 @@ export function guestCreateDeckCard(
     type: body.type,
     front,
     back,
-    ...(body.type === "mcq" && body.options
-      ? { options: body.options }
-      : {}),
+    ...(body.type === "mcq" && options ? { options } : {}),
     provenance: { guest: true, source: "hub" },
     status: "accepted",
     created_at: created,

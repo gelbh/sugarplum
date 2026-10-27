@@ -187,6 +187,34 @@ describe("POST /api/decks/:id/cards", () => {
     expect(dueMs).toBeLessThanOrEqual(Date.now() + 5_000);
   });
 
+  it("creates cloze with empty Extra (back)", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+
+    const res = await app.request(
+      "/api/decks/deck-a/cards",
+      {
+        method: "POST",
+        headers: authHeaders({ "content-type": "application/json" }),
+        body: JSON.stringify({
+          type: "cloze",
+          front: "The {{c1::femur}} is the thigh bone",
+          back: "",
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as CardBody;
+    expect(body).toMatchObject({
+      type: "cloze",
+      front: "The {{c1::femur}} is the thigh bone",
+      back: "",
+      status: "accepted",
+    });
+  });
+
   it("returns 404 when creating on another user's deck", async () => {
     const env = createTestEnv();
     seedOwner(env);
