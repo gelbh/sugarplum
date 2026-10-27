@@ -70,6 +70,8 @@ export default function StudyPage() {
     trackOnMount: true,
   });
   const { busy, begin, end } = useTrackedOp("Saving grade…");
+  const busyRef = useRef(busy);
+  busyRef.current = busy;
 
   const load = useCallback(async (userId: string) => {
     try {
@@ -198,7 +200,8 @@ export default function StudyPage() {
 
   const onGrade = useCallback(
     async (rating: StudyRating) => {
-      if (!current || busy || !revealed) return;
+      if (!current || busyRef.current || !revealed) return;
+      busyRef.current = true;
       setError(null);
       begin();
       try {
@@ -213,7 +216,7 @@ export default function StudyPage() {
         end(false);
       }
     },
-    [begin, busy, current, end, revealed],
+    [begin, current, end, revealed],
   );
 
   useEffect(() => {
@@ -226,12 +229,19 @@ export default function StudyPage() {
       ) {
         return;
       }
+      if (e.key === "Escape") {
+        // Browser owns Esc while in FS; fullscreenchange exits zen.
+        if (!zenRef.current || document.fullscreenElement) return;
+        e.preventDefault();
+        exitZen();
+        return;
+      }
       if (e.key === "z" || e.key === "Z") {
         e.preventDefault();
         toggleZen();
         return;
       }
-      if (!revealed || busy || !current) return;
+      if (!revealed || busyRef.current || !current) return;
       const map: Record<string, StudyRating> = {
         "1": 1,
         "2": 2,
@@ -246,7 +256,7 @@ export default function StudyPage() {
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [busy, current, onGrade, ready, revealed, toggleZen]);
+  }, [current, exitZen, onGrade, ready, revealed, toggleZen]);
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     ensureFullscreenIfNeeded();
@@ -256,7 +266,8 @@ export default function StudyPage() {
   const onPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
     const start = pointerRef.current;
     pointerRef.current = null;
-    if (!start || start.id !== e.pointerId || busy || !current) return;
+    if (!start || start.id !== e.pointerId || busyRef.current || !current)
+      return;
     const dx = e.clientX - start.x;
     const dy = e.clientY - start.y;
     const result = resolveCardGesture({ revealed, dx, dy });
