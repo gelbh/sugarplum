@@ -757,12 +757,24 @@ export function createTestEnv(opts?: {
           normalized.includes("c.status =") &&
           normalized.includes("s.due <=")
         ) {
-          const [userId, status, now] = bound as [string, string, string];
+          const userId = bound[0] as string;
+          const status = bound[1] as string;
+          const now = bound[2] as string;
+          const filterDeckId = normalized.includes("c.deck_id =")
+            ? (bound[3] as string)
+            : null;
+          const filterSubjectId = normalized.includes("d.subject_id =")
+            ? (bound[3] as string)
+            : null;
           const rows = [...cards.values()]
             .filter((c) => {
               if (c.status !== status) return false;
               const deck = decks.get(c.deck_id);
               if (!deck || deck.user_id !== userId) return false;
+              if (filterDeckId && c.deck_id !== filterDeckId) return false;
+              if (filterSubjectId && deck.subject_id !== filterSubjectId) {
+                return false;
+              }
               const schedule = schedules.get(c.id);
               if (!schedule || schedule.due > now) return false;
               return true;
