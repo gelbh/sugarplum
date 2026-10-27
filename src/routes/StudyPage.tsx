@@ -34,7 +34,10 @@ import {
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { resolveCardGesture } from "../study/cardGestures";
 import { loadDueCache, saveDueCache } from "../study/dueCache";
-import { pickOcclusionRegion } from "../study/pickOcclusionRegion";
+import {
+  occlusionRevealAnswer,
+  pickOcclusionRegion,
+} from "../study/pickOcclusionRegion";
 import { useStudyZenMode } from "../study/useStudyZenMode";
 
 type PointerStart = {
@@ -79,7 +82,7 @@ function studyFrontText(card: CardDraftView): string {
   return typeof card.front === "string" ? card.front : "";
 }
 
-function studyBackText(card: CardDraftView): string {
+function fallbackBackText(card: CardDraftView): string {
   const { back } = card;
   if (typeof back === "object" && back !== null && "answer" in back) {
     return back.answer;
@@ -87,16 +90,30 @@ function studyBackText(card: CardDraftView): string {
   return typeof back === "string" ? back : "";
 }
 
-/** Stable hide_one mask for study; undefined when not an occlusion face. */
-function occlusionStudyFace(card: CardDraftView): OcclusionStudyFace | undefined {
+type OcclusionStudyParts = {
+  face: OcclusionStudyFace | undefined;
+  answer: string;
+};
+
+/**
+ * One hide_one pick drives both the mask and the reveal answer (region label,
+ * else back.answer).
+ */
+function occlusionStudyParts(card: CardDraftView): OcclusionStudyParts {
+  const fallback = fallbackBackText(card);
   if (card.type !== "occlusion" || !isOcclusionFront(card.front)) {
-    return undefined;
+    return { face: undefined, answer: fallback };
   }
   const region = pickOcclusionRegion(card.id, card.front.regions);
-  if (!region) return undefined;
+  if (!region) {
+    return { face: undefined, answer: fallback };
+  }
   return {
-    imageKey: card.front.image_key,
-    mask: { x: region.x, y: region.y, w: region.w, h: region.h },
+    face: {
+      imageKey: card.front.image_key,
+      mask: { x: region.x, y: region.y, w: region.w, h: region.h },
+    },
+    answer: occlusionRevealAnswer(region, fallback),
   };
 }
 
@@ -183,6 +200,9 @@ export default function StudyPage() {
 
   const current = queue[0] ?? null;
   const mcqMode = isMcqCard(current);
+  const occlusionParts = current
+    ? occlusionStudyParts(current)
+    : { face: undefined, answer: "" };
 
   const reveal = useCallback(() => {
     setRevealed(true);
@@ -503,7 +523,7 @@ export default function StudyPage() {
                   <McqFace
                     cardId={current.id}
                     front={studyFrontText(current)}
-                    back={studyBackText(current)}
+                    back={occlusionParts.answer}
                     options={current.options}
                     disabled={busy}
                     onGrade={(rating) => onGrade(rating, true)}
@@ -511,10 +531,10 @@ export default function StudyPage() {
                 ) : (
                   <CardFace
                     front={studyFrontText(current)}
-                    back={studyBackText(current)}
+                    back={occlusionParts.answer}
                     type={current.type}
                     mediaR2Keys={current.media_r2_keys}
-                    occlusion={occlusionStudyFace(current)}
+                    occlusion={occlusionParts.face}
                     revealed={revealed}
                     onReveal={reveal}
                     onFlipBack={flipBack}

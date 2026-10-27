@@ -18,3 +18,14 @@ export function pickOcclusionRegion<T>(
   if (regions.length === 0) return null;
   return regions[hashCardId(cardId) % regions.length] ?? null;
 }
+
+/**
+ * Reveal copy for hide_one: the picked region's label, else fallback (back.answer).
+ */
+export function occlusionRevealAnswer(
+  region: { label: string } | null,
+  fallback: string,
+): string {
+  const label = region?.label.trim();
+  return label || fallback;
+}

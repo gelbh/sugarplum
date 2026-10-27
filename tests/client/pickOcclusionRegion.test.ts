@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   hashCardId,
+  occlusionRevealAnswer,
   pickOcclusionRegion,
 } from "../../src/study/pickOcclusionRegion";
 
@@ -9,6 +10,22 @@ const regions = [
   { id: "r2", label: "vena cava" },
   { id: "r3", label: "pulmonary" },
 ];
+
+describe("occlusionRevealAnswer", () => {
+  it("uses the picked region's label when back.answer disagrees", () => {
+    const picked = pickOcclusionRegion("card-abc", regions);
+    expect(picked).not.toBeNull();
+    const fallback = "whole-card summary that is not the region";
+    expect(occlusionRevealAnswer(picked, fallback)).toBe(picked!.label);
+    expect(occlusionRevealAnswer(picked, fallback)).not.toBe(fallback);
+  });
+
+  it("falls back when label is missing or blank", () => {
+    expect(occlusionRevealAnswer({ label: "" }, "fallback")).toBe("fallback");
+    expect(occlusionRevealAnswer({ label: "   " }, "fallback")).toBe("fallback");
+    expect(occlusionRevealAnswer(null, "fallback")).toBe("fallback");
+  });
+});
 
 describe("pickOcclusionRegion", () => {
   it("returns null for empty regions", () => {
