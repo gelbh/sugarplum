@@ -387,12 +387,20 @@ export function presignPdfFigure(
 
 export type CompleteMaterialResponse = Material & { jobId: string | null };
 
-export function completeMaterial(materialId: string) {
+export type FigureExtractMode = "fast" | "accurate";
+
+export function completeMaterial(
+  materialId: string,
+  opts?: { figureExtractMode?: FigureExtractMode },
+) {
   if (isGuest()) guestUnsupported("complete material uploads");
   return api<CompleteMaterialResponse>(
     `/api/materials/${materialId}/complete`,
     {
       method: "POST",
+      ...(opts?.figureExtractMode !== undefined
+        ? { json: { figureExtractMode: opts.figureExtractMode } }
+        : {}),
     },
   );
 }
@@ -589,6 +597,7 @@ export async function uploadMaterialFile(
   deckId: string,
   file: File,
   onProgress?: (percent: number) => void,
+  opts?: { figureExtractMode?: FigureExtractMode },
 ): Promise<CompleteMaterialResponse> {
   const contentType = resolveUploadContentType(file);
   const { materialId, uploadUrl } = await requestMaterialUploadUrl(deckId, {
@@ -611,7 +620,7 @@ export async function uploadMaterialFile(
     throw new ApiError(502, "Failed to upload file to storage");
   }
 
-  return completeMaterial(materialId);
+  return completeMaterial(materialId, opts);
 }
 
 export async function uploadPdfWithFigureCrops(
@@ -619,6 +628,7 @@ export async function uploadPdfWithFigureCrops(
   pdfFile: File,
   figureFiles: File[],
   onProgress?: (percent: number) => void,
+  opts?: { figureExtractMode?: FigureExtractMode },
 ): Promise<CompleteMaterialResponse> {
   const contentType = resolveUploadContentType(pdfFile);
   const { materialId, uploadUrl } = await requestMaterialUploadUrl(deckId, {
@@ -654,5 +664,5 @@ export async function uploadPdfWithFigureCrops(
     throw new ApiError(502, "Failed to upload file to storage");
   }
 
-  return completeMaterial(materialId);
+  return completeMaterial(materialId, opts);
 }
