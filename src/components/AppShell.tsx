@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import InsightsIcon from "@mui/icons-material/Insights";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
 import SettingsIcon from "@mui/icons-material/Settings";
 import TodayIcon from "@mui/icons-material/Today";
@@ -37,7 +38,7 @@ const SHELL_HAIRLINE = "rgba(232, 216, 199, 0.16)";
 const PLUM_ON_DARK = "#CE93D8";
 const BOTTOM_NAV_HEIGHT = 56;
 
-type NavId = "today" | "library" | "settings";
+type NavId = "today" | "insights" | "library" | "settings";
 
 type NavItem = {
   id: NavId;
@@ -54,6 +55,13 @@ const NAV: NavItem[] = [
     href: "/today",
     icon: <TodayIcon fontSize="small" />,
     match: (path) => path === "/today" || path === "/study",
+  },
+  {
+    id: "insights",
+    label: "Insights",
+    href: "/insights",
+    icon: <InsightsIcon fontSize="small" />,
+    match: (path) => path === "/insights",
   },
   {
     id: "library",

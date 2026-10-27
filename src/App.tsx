@@ -9,6 +9,7 @@ import PrivacyPage from "./routes/PrivacyPage";
 import TermsPage from "./routes/TermsPage";
 import DataDeletionPage from "./routes/DataDeletionPage";
 import SettingsPage from "./routes/SettingsPage";
+import InsightsPage from "./routes/InsightsPage";
 import StudyPage from "./routes/StudyPage";
 import TodayPage from "./routes/TodayPage";
 import { subscribePath } from "./nav/navigate";
@@ -41,6 +42,7 @@ function AppInner() {
   if (path === "/settings") return shell(<SettingsPage />);
   if (path === "/study") return shell(<StudyPage />);
   if (path === "/today") return shell(<TodayPage />);
+  if (path === "/insights") return shell(<InsightsPage />);
   if (/^\/jobs\/[^/]+\/drafts\/?$/.test(path))
     return shell(<DraftReviewPage />);
 
