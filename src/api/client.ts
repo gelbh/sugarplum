@@ -3,7 +3,10 @@ import {
   uploadWithProgress,
 } from "../progress/uploadWithProgress";
 import { endGuestLocal } from "../guest/endGuestLocal";
-import { tryMergeGuestAfterAuth } from "../guest/mergeOnAuth";
+import {
+  clearGuestMergeArtifacts,
+  tryMergeGuestAfterAuth,
+} from "../guest/mergeOnAuth";
 import type { GuestImportPayload } from "../guest/importPayload";
 import { GUEST_USER, isGuest } from "../guest/session";
 import {
@@ -119,6 +122,7 @@ export async function logout() {
   });
   clearDueCache();
   clearPendingGrades();
+  clearGuestMergeArtifacts();
   if (typeof caches !== "undefined") {
     try {
       await caches.delete(STUDY_MEDIA_CACHE);

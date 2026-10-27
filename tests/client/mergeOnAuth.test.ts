@@ -95,11 +95,11 @@ describe("mergeOnAuth", () => {
     local.setItem(GUEST_FLAG_KEY, "1");
   });
 
-  it("snapshotGuestForMerge copies live store into sessionStorage and clears guest flag", () => {
+  it("snapshotGuestForMerge copies store to sessionStorage and clears live store + flag", () => {
     local.setItem(STORE_KEY, JSON.stringify(pasteStore));
     snapshotGuestForMerge(local, session);
     expect(session.getItem(SNAPSHOT_KEY)).toBe(JSON.stringify(pasteStore));
-    expect(local.getItem(STORE_KEY)).toBe(JSON.stringify(pasteStore));
+    expect(local.getItem(STORE_KEY)).toBeNull();
     expect(local.getItem(GUEST_FLAG_KEY)).toBeNull();
   });
 
@@ -139,7 +139,7 @@ describe("mergeOnAuth", () => {
     expect(local.getItem(STORE_KEY)).toBeNull();
   });
 
-  it("keeps guest store when import throws", async () => {
+  it("keeps guest store but clears guest flag when import throws", async () => {
     local.setItem(STORE_KEY, JSON.stringify(pasteStore));
     const importGuest = vi.fn().mockRejectedValue(new Error("boom"));
 
@@ -150,8 +150,9 @@ describe("mergeOnAuth", () => {
     });
 
     expect(result).toBe("failed");
-    expect(local.getItem(GUEST_FLAG_KEY)).toBe("1");
+    expect(local.getItem(GUEST_FLAG_KEY)).toBeNull();
     expect(local.getItem(STORE_KEY)).toBe(JSON.stringify(pasteStore));
+    expect(session.getItem("sugarplum.guest.merge.failed")).toBe("1");
   });
 
   it("falls back to session snapshot when live store is gone", async () => {
@@ -168,4 +169,5 @@ describe("mergeOnAuth", () => {
     expect(importGuest).toHaveBeenCalled();
     expect(session.getItem(SNAPSHOT_KEY)).toBeNull();
   });
+
 });

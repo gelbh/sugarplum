@@ -10,6 +10,7 @@ export default function GoogleSignInButton() {
       variant="outlined"
       fullWidth
       onClick={() => {
+        // Same-tab only: open-in-new-tab skips onClick so snapshot is not taken.
         snapshotGuestForMerge();
       }}
     >
