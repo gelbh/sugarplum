@@ -12,10 +12,11 @@ import { GENERATE_SYSTEM_PROMPT } from "./prompts";
 export const WORKERS_AI_MODEL = "@cf/zai-org/glm-4.7-flash" as const;
 
 /**
- * Workers AI defaults max_tokens to 256 when omitted, which truncates
- * multi-card JSON mid-string. Match Anthropic BYO budget.
+ * Workers AI defaults completion length to 256 when omitted, which truncates
+ * multi-card JSON mid-string. GLM docs prefer max_completion_tokens; keep
+ * max_tokens as a compatibility alias.
  */
-export const WORKERS_AI_MAX_TOKENS = 4096;
+export const WORKERS_AI_MAX_TOKENS = 8192;
 
 const CAPACITY_ERROR =
   "Workers AI is temporarily at capacity. " +
@@ -91,6 +92,7 @@ export function createWorkersAiAdapter(env: Env): LlmAdapter {
           { role: "system", content: system },
           { role: "user", content: user },
         ],
+        max_completion_tokens: WORKERS_AI_MAX_TOKENS,
         max_tokens: WORKERS_AI_MAX_TOKENS,
         temperature: 0.3,
         chat_template_kwargs: { enable_thinking: false },
