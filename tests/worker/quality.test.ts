@@ -29,6 +29,16 @@ describe("filterDraftsByQuality", () => {
     expect(filterDraftsByQuality([glossary])).toEqual([glossary]);
   });
 
+  it("keeps very short non-question glossary fronts (≥3 chars)", () => {
+    const dna = qa("DNA", "deoxyribonucleic acid");
+    expect(filterDraftsByQuality([dna])).toEqual([dna]);
+  });
+
+  it("still drops non-glossary fronts shorter than 8 chars", () => {
+    const shortQ = qa("What?", "too short question front");
+    expect(filterDraftsByQuality([shortQ])).toEqual([]);
+  });
+
   it("keeps rule-harvested glossary after Layer-1 (harvest→filter)", () => {
     const drafts = harvestRuleDrafts("mitochondria: powerhouse of the cell");
     expect(drafts.map((d) => d.front)).toEqual(["mitochondria"]);
