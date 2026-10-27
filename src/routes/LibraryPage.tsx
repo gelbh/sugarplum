@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
+import Divider from "@mui/material/Divider";
 import Link from "@mui/material/Link";
+import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import {
@@ -89,72 +91,129 @@ export default function LibraryPage() {
   }, [endLoad]);
 
   return (
-    <Container maxWidth="sm" sx={{ py: 6 }}>
+    <Container maxWidth="sm" sx={{ py: { xs: 4, md: 5 } }}>
       {!ready ? (
         <Typography color="text.secondary">Loading library…</Typography>
       ) : (
-        <>
-          <Typography variant="h4" component="h1" gutterBottom color="primary">
-            Library
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Create decks, paste notes, or upload PDF, PPTX, or image materials.
-          </Typography>
+        <Stack spacing={3}>
+          <Box>
+            <Typography
+              variant="h4"
+              component="h1"
+              gutterBottom
+              sx={{ color: "text.primary", fontWeight: 600 }}
+            >
+              Library
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Create decks, paste notes, or upload PDF, PPTX, or image materials.
+            </Typography>
+          </Box>
 
-          <Stack spacing={4}>
-            {error ? <Alert severity="error">{error}</Alert> : null}
+          {error ? <Alert severity="error">{error}</Alert> : null}
 
-            <Box>
-              <Typography variant="h6" component="h2" gutterBottom>
-                Your decks
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 2.5,
+              bgcolor: "background.paper",
+              borderColor: "divider",
+            }}
+          >
+            <Typography
+              variant="subtitle1"
+              component="h2"
+              sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+            >
+              Your decks
+            </Typography>
+            {decks.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                No decks yet. Create one below.
               </Typography>
-              {decks.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
-                  No decks yet. Create one below.
-                </Typography>
-              ) : (
-                <Stack component="ul" spacing={0.5} sx={{ m: 0, pl: 2 }}>
-                  {decks.map((d) => (
-                    <Typography component="li" key={d.id} variant="body2">
-                      {d.title}
+            ) : (
+              <Stack
+                component="ul"
+                spacing={0}
+                divider={<Divider flexItem />}
+                sx={{ m: 0, p: 0, listStyle: "none" }}
+              >
+                {decks.map((d) => (
+                  <Typography
+                    component="li"
+                    key={d.id}
+                    variant="body2"
+                    sx={{ py: 1 }}
+                  >
+                    {d.title}
+                  </Typography>
+                ))}
+              </Stack>
+            )}
+          </Paper>
+
+          {draftJobs.length > 0 ? (
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 2.5,
+                bgcolor: "background.paper",
+                borderColor: "divider",
+              }}
+            >
+              <Typography
+                variant="subtitle1"
+                component="h2"
+                sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+              >
+                Draft reviews
+              </Typography>
+              <Stack
+                component="ul"
+                spacing={0}
+                divider={<Divider flexItem />}
+                sx={{ m: 0, p: 0, listStyle: "none" }}
+              >
+                {draftJobs.map((job) => {
+                  const filename = job.filename?.trim() || null;
+                  const label = filename || job.deck_title;
+                  const countLabel =
+                    job.draft_count === 1
+                      ? "1 draft"
+                      : `${job.draft_count} drafts`;
+                  const suffix = filename
+                    ? ` · ${countLabel} · ${job.deck_title}`
+                    : ` · ${countLabel}`;
+                  return (
+                    <Typography
+                      component="li"
+                      key={job.id}
+                      variant="body2"
+                      sx={{ py: 1 }}
+                    >
+                      <Link
+                        href={`/jobs/${encodeURIComponent(job.id)}/drafts`}
+                        underline="hover"
+                        color="primary"
+                      >
+                        {label}
+                      </Link>
+                      {suffix}
                     </Typography>
-                  ))}
-                </Stack>
-              )}
-            </Box>
+                  );
+                })}
+              </Stack>
+            </Paper>
+          ) : null}
 
-            {draftJobs.length > 0 ? (
-              <Box>
-                <Typography variant="h6" component="h2" gutterBottom>
-                  Draft reviews
-                </Typography>
-                <Stack component="ul" spacing={0.5} sx={{ m: 0, pl: 2 }}>
-                  {draftJobs.map((job) => {
-                    const filename = job.filename?.trim() || null;
-                    const label = filename || job.deck_title;
-                    const countLabel =
-                      job.draft_count === 1
-                        ? "1 draft"
-                        : `${job.draft_count} drafts`;
-                    const suffix = filename
-                      ? ` · ${countLabel} · ${job.deck_title}`
-                      : ` · ${countLabel}`;
-                    return (
-                      <Typography component="li" key={job.id} variant="body2">
-                        <Link
-                          href={`/jobs/${encodeURIComponent(job.id)}/drafts`}
-                          underline="hover"
-                        >
-                          {label}
-                        </Link>
-                        {suffix}
-                      </Typography>
-                    );
-                  })}
-                </Stack>
-              </Box>
-            ) : null}
-
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 2.5,
+              bgcolor: "background.paper",
+              borderColor: "divider",
+            }}
+          >
             <CreateMaterialStepper
               decks={decks}
               setDecks={setDecks}
@@ -165,14 +224,14 @@ export default function LibraryPage() {
                 await refreshDraftJobs();
               }}
             />
+          </Paper>
 
-            <Typography variant="body2">
-              <Link href="/today" underline="hover">
-                Back home
-              </Link>
-            </Typography>
-          </Stack>
-        </>
+          <Typography variant="body2">
+            <Link href="/today" underline="hover" color="primary">
+              Back home
+            </Link>
+          </Typography>
+        </Stack>
       )}
     </Container>
   );

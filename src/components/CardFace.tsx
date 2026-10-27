@@ -18,33 +18,60 @@ type Props = {
   showAnswerRef?: Ref<HTMLButtonElement | null>;
 };
 
+const FACE_SANS = '"Source Sans 3", "Helvetica", "Arial", sans-serif';
+
+const OVERLINE_SX = {
+  fontFamily: FACE_SANS,
+  fontSize: "0.6875rem",
+  fontWeight: 500,
+  letterSpacing: "0.22em",
+  textTransform: "uppercase" as const,
+  color: "inherit",
+  opacity: 0.55,
+  textAlign: "center" as const,
+  lineHeight: 1.2,
+};
+
 const FACE_SX = {
   p: 3,
-  minHeight: 280,
-  maxHeight: "70vh",
+  height: "100%",
   display: "flex",
   flexDirection: "column",
   boxSizing: "border-box",
+  borderRadius: 2,
+  boxShadow: "0 12px 40px rgba(0, 0, 0, 0.35)",
   backfaceVisibility: "hidden",
   WebkitBackfaceVisibility: "hidden",
+  bgcolor: "var(--sp-card-face)",
+  color: "var(--sp-stage-bg)",
+  fontFamily: FACE_SANS,
 } as const;
 
-const CONTENT_SX = {
+const FACE_BODY_SX = {
   overflow: "auto",
   flex: 1,
+  minHeight: 0,
+  display: "flex",
+  flexDirection: "column",
+  width: "100%",
+} as const;
+
+const PROMPT_SX = {
+  flex: 1,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  textAlign: "center",
   minHeight: 0,
 } as const;
 
 function faceMotionSx(revealedFace: boolean, thisFaceVisible: boolean) {
   return {
     ...FACE_SX,
-    ...(revealedFace
-      ? {
-          position: "absolute" as const,
-          inset: 0,
-          transform: "rotateY(180deg)",
-        }
-      : { position: "relative" as const }),
+    position: "absolute" as const,
+    inset: 0,
+    ...(revealedFace ? { transform: "rotateY(180deg)" } : {}),
     "@media (prefers-reduced-motion: reduce)": {
       transform: "none",
       transition: "none",
@@ -54,8 +81,31 @@ function faceMotionSx(revealedFace: boolean, thisFaceVisible: boolean) {
       position: thisFaceVisible ? "relative" : "absolute",
       inset: thisFaceVisible ? "auto" : 0,
       width: "100%",
+      height: thisFaceVisible ? "auto" : undefined,
+      minHeight: thisFaceVisible ? 280 : undefined,
     },
   };
+}
+
+function FaceOverline({ label }: { label: string }) {
+  return (
+    <Box sx={{ mb: 2, flexShrink: 0 }}>
+      <Typography component="div" sx={OVERLINE_SX}>
+        {label}
+      </Typography>
+      <Box
+        aria-hidden
+        sx={{
+          width: 28,
+          height: 1,
+          bgcolor: "currentColor",
+          opacity: 0.35,
+          mx: "auto",
+          mt: 0.75,
+        }}
+      />
+    </Box>
+  );
 }
 
 /** Physical study card: 3D Y-flip, or instant swap when prefers-reduced-motion. */
@@ -83,13 +133,22 @@ export default function CardFace({
   };
 
   return (
-    <Box sx={{ perspective: "1000px" }}>
+    <Box
+      sx={{
+        perspective: "1000px",
+        width: "100%",
+        maxWidth: 360,
+        mx: "auto",
+      }}
+    >
       <Box
+        className="sp-playing-card"
         onClick={canReveal ? reveal : undefined}
         sx={{
           position: "relative",
-          minHeight: 280,
-          maxHeight: "70vh",
+          width: "100%",
+          borderRadius: 2,
+          bgcolor: "transparent",
           transformStyle: "preserve-3d",
           transition: "transform 0.45s ease",
           transform: revealed ? "rotateY(180deg)" : "rotateY(0deg)",
@@ -97,51 +156,62 @@ export default function CardFace({
           "@media (prefers-reduced-motion: reduce)": {
             transform: "none",
             transition: "none",
+            aspectRatio: "unset",
+            minHeight: 280,
+            maxHeight: "70vh",
           },
         }}
       >
         <Paper
-          elevation={3}
+          elevation={0}
           aria-hidden={revealed}
           inert={revealed || undefined}
+          className="sp-playing-card"
           sx={faceMotionSx(false, !revealed)}
         >
-          <Box data-card-face-content sx={CONTENT_SX}>
-            {imageKey ? (
-              <Box
-                component="img"
-                src={mediaUrl(imageKey)}
-                alt="Card media"
-                draggable={false}
-                onDragStart={(event) => event.preventDefault()}
+          <FaceOverline label="Front" />
+          <Box data-card-face-content sx={FACE_BODY_SX}>
+            <Box sx={PROMPT_SX}>
+              {imageKey ? (
+                <Box
+                  component="img"
+                  src={mediaUrl(imageKey)}
+                  alt="Card media"
+                  draggable={false}
+                  onDragStart={(event) => event.preventDefault()}
+                  sx={{
+                    display: "block",
+                    width: "100%",
+                    maxHeight: "36%",
+                    objectFit: "contain",
+                    mb: 2,
+                    borderRadius: 1,
+                    userSelect: "none",
+                  }}
+                />
+              ) : null}
+              <Typography
+                component="p"
                 sx={{
-                  display: "block",
-                  width: "100%",
-                  maxHeight: "40vh",
-                  objectFit: "contain",
-                  mb: 2,
-                  borderRadius: 1,
-                  userSelect: "none",
+                  fontFamily: FACE_SANS,
+                  fontSize: { xs: "1.125rem", sm: "1.35rem" },
+                  fontWeight: 400,
+                  lineHeight: 1.35,
+                  whiteSpace: "pre-wrap",
+                  color: "inherit",
                 }}
-              />
-            ) : null}
-            <Typography variant="overline" color="text.secondary">
-              Front
-            </Typography>
-            <Typography
-              variant="h5"
-              component="p"
-              sx={{ whiteSpace: "pre-wrap", mb: 2 }}
-            >
-              {front}
-            </Typography>
+              >
+                {front}
+              </Typography>
+            </Box>
             {!revealed ? (
-              <Box sx={{ mt: 2 }}>
+              <Box sx={{ pt: 2, width: "100%", flexShrink: 0 }}>
                 <Button
                   ref={showAnswerRef}
                   variant="contained"
                   onClick={onShowAnswerClick}
                   disabled={!!disabled}
+                  sx={{ fontFamily: FACE_SANS }}
                 >
                   Show answer
                 </Button>
@@ -151,26 +221,34 @@ export default function CardFace({
         </Paper>
 
         <Paper
-          elevation={3}
+          elevation={0}
           aria-hidden={!revealed}
           inert={!revealed || undefined}
+          className="sp-playing-card"
           sx={faceMotionSx(true, revealed)}
         >
+          <FaceOverline label="Back" />
           <Box
             ref={answerFocusRef}
             data-card-face-content
             tabIndex={revealed ? -1 : undefined}
-            sx={{ ...CONTENT_SX, outline: "none" }}
+            sx={{ ...FACE_BODY_SX, outline: "none" }}
           >
-            <Typography variant="overline" color="text.secondary">
-              Back
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ whiteSpace: "pre-wrap", color: "secondary.main" }}
-            >
-              {back}
-            </Typography>
+            <Box sx={PROMPT_SX}>
+              <Typography
+                component="p"
+                sx={{
+                  fontFamily: FACE_SANS,
+                  fontSize: { xs: "1.05rem", sm: "1.2rem" },
+                  fontWeight: 400,
+                  lineHeight: 1.45,
+                  whiteSpace: "pre-wrap",
+                  color: "inherit",
+                }}
+              >
+                {back}
+              </Typography>
+            </Box>
           </Box>
         </Paper>
       </Box>

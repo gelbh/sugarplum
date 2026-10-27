@@ -307,10 +307,15 @@ export default function DraftReviewPage() {
   }
 
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
-      <Stack spacing={2}>
+    <Container maxWidth="sm" sx={{ py: { xs: 4, md: 5 } }}>
+      <Stack spacing={2.5}>
         <Box>
-          <Typography variant="h4" component="h1" color="primary" gutterBottom>
+          <Typography
+            variant="h4"
+            component="h1"
+            gutterBottom
+            sx={{ color: "text.primary", fontWeight: 600 }}
+          >
             Draft review
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -323,8 +328,17 @@ export default function DraftReviewPage() {
           <Alert severity="warning">{journeyError}</Alert>
         ) : null}
 
-        <Stack direction="row" spacing={2} alignItems="center">
-          <Link href="/library" underline="hover">
+        <Stack
+          direction="row"
+          spacing={2}
+          alignItems="center"
+          sx={{
+            pb: 1,
+            borderBottom: 1,
+            borderColor: "divider",
+          }}
+        >
+          <Link href="/library" underline="hover" color="primary">
             Library
           </Link>
           {jobId ? (
@@ -354,25 +368,41 @@ export default function DraftReviewPage() {
         ) : null}
 
         {!current ? (
-          <Paper variant="outlined" sx={{ p: 2 }}>
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 2.5,
+              bgcolor: "background.paper",
+              borderColor: "divider",
+            }}
+          >
             <Stack spacing={2}>
               <Typography>No drafts left for this job.</Typography>
               {view ? (
                 <JourneyNextButton view={view} />
               ) : (
-                <Link href="/library">Back to library</Link>
+                <Link href="/library" color="primary">
+                  Back to library
+                </Link>
               )}
             </Stack>
           </Paper>
         ) : (
-          <Paper variant="outlined" sx={{ p: 2.5 }}>
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 2.5,
+              bgcolor: "background.paper",
+              borderColor: "divider",
+            }}
+          >
             <Stack
               direction="row"
               justifyContent="space-between"
               alignItems="center"
               sx={{ mb: 2 }}
             >
-              <Typography variant="subtitle1">
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                 Card {index + 1} of {drafts.length}
               </Typography>
               <Chip
@@ -386,7 +416,7 @@ export default function DraftReviewPage() {
                         ? "Diagram"
                         : "Q&A"
                 }
-                color="secondary"
+                color="primary"
                 variant="outlined"
               />
             </Stack>
@@ -414,7 +444,7 @@ export default function DraftReviewPage() {
               spacing={1.5}
               flexWrap="wrap"
               useFlexGap
-              sx={{ mt: 3 }}
+              sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: "divider" }}
             >
               <Button
                 variant="text"
