@@ -473,6 +473,34 @@ export function createTestEnv(opts?: {
             }));
           return { results: rows as T[] };
         }
+        if (
+          normalized.includes("r2_key LIKE ?") &&
+          normalized.includes("kind = 'image'") &&
+          normalized.includes("ORDER BY r2_key")
+        ) {
+          const [deckId, likePrefix] = bound as [string, string];
+          const prefix = likePrefix.endsWith("%")
+            ? likePrefix.slice(0, -1)
+            : likePrefix;
+          const allowUploading = normalized.includes("'uploading'");
+          const rows = [...materials.values()]
+            .filter(
+              (m) =>
+                m.deck_id === deckId &&
+                m.kind === "image" &&
+                (m.status === "ready" ||
+                  (allowUploading && m.status === "uploading")) &&
+                m.r2_key != null &&
+                m.r2_key.startsWith(prefix),
+            )
+            .sort((a, b) => (a.r2_key ?? "").localeCompare(b.r2_key ?? ""))
+            .map((m) =>
+              allowUploading
+                ? { r2_key: m.r2_key, status: m.status }
+                : { r2_key: m.r2_key },
+            );
+          return { results: rows as T[] };
+        }
         if (normalized.includes("FROM materials WHERE deck_id =")) {
           const rows = [...materials.values()].filter(
             (m) => m.deck_id === bound[0],
