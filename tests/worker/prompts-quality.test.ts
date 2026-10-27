@@ -35,6 +35,8 @@ describe("drop-biased quality prompts (5B)", () => {
     expect(p).toMatch(/entail|not\s+in\s+the\s+(source|excerpt)|ungrounded/);
     expect(p).toMatch(/cloze/);
     expect(p).toMatch(/back.*(?:equal|same|duplicat)|may\s+equal/);
+    expect(p).toMatch(/restate|restates/);
+    expect(p).toMatch(/no\s+new\s+fact|adds?\s+no\s+new/);
     assertNoAlwaysRewrite(CRITIQUE_SYSTEM_PROMPT);
   });
 
@@ -43,6 +45,8 @@ describe("drop-biased quality prompts (5B)", () => {
     expect(user).toMatch(/drop/);
     expect(user).toMatch(/ground|excerpt|entail/);
     expect(user).toMatch(/prefer\s+drop|do\s+not\s+speculate|cheap\s+fix/);
+    expect(user).toMatch(/restate|restates/);
+    expect(user).toMatch(/no\s+new\s+fact|adds?\s+no\s+new/);
     assertNoAlwaysRewrite(user);
   });
 
