@@ -17,7 +17,9 @@ import Typography from "@mui/material/Typography";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
 import TodayIcon from "@mui/icons-material/Today";
-import CardFace from "../components/CardFace";
+import CardFace, {
+  type OcclusionStudyFace,
+} from "../components/CardFace";
 import GradeButtons from "../components/GradeButtons";
 import McqFace from "../components/McqFace";
 import {
@@ -26,11 +28,16 @@ import {
   me,
   reviewCard,
   type CardDraftView,
+  type OcclusionFrontView,
   type StudyRating,
 } from "../api/client";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { resolveCardGesture } from "../study/cardGestures";
 import { loadDueCache, saveDueCache } from "../study/dueCache";
+import {
+  occlusionRevealAnswer,
+  pickOcclusionRegion,
+} from "../study/pickOcclusionRegion";
 import { useStudyZenMode } from "../study/useStudyZenMode";
 
 type PointerStart = {
@@ -54,11 +61,60 @@ function typeLabel(type: CardDraftView["type"]): string {
   if (type === "mcq") return "Multiple choice";
   if (type === "image_label") return "Image label";
   if (type === "diagram") return "Diagram";
+  if (type === "occlusion") return "Occlusion";
   return "Q&A";
 }
 
 function isMcqCard(card: CardDraftView | null): boolean {
   return card?.type === "mcq";
+}
+
+function isOcclusionFront(
+  front: CardDraftView["front"],
+): front is OcclusionFrontView {
+  return typeof front === "object" && front !== null && "regions" in front;
+}
+
+function studyFrontText(card: CardDraftView): string {
+  if (isOcclusionFront(card.front)) {
+    return card.front.prompt?.trim() || "Identify the hidden region";
+  }
+  return typeof card.front === "string" ? card.front : "";
+}
+
+function fallbackBackText(card: CardDraftView): string {
+  const { back } = card;
+  if (typeof back === "object" && back !== null && "answer" in back) {
+    return back.answer;
+  }
+  return typeof back === "string" ? back : "";
+}
+
+type OcclusionStudyParts = {
+  face: OcclusionStudyFace | undefined;
+  answer: string;
+};
+
+/**
+ * One hide_one pick drives both the mask and the reveal answer (region label,
+ * else back.answer).
+ */
+function occlusionStudyParts(card: CardDraftView): OcclusionStudyParts {
+  const fallback = fallbackBackText(card);
+  if (card.type !== "occlusion" || !isOcclusionFront(card.front)) {
+    return { face: undefined, answer: fallback };
+  }
+  const region = pickOcclusionRegion(card.id, card.front.regions);
+  if (!region) {
+    return { face: undefined, answer: fallback };
+  }
+  return {
+    face: {
+      imageKey: card.front.image_key,
+      mask: { x: region.x, y: region.y, w: region.w, h: region.h },
+    },
+    answer: occlusionRevealAnswer(region, fallback),
+  };
 }
 
 /** Study session: reveal answer, grade with FSRS (keys 1-4). Code-led MUI. */
@@ -144,6 +200,9 @@ export default function StudyPage() {
 
   const current = queue[0] ?? null;
   const mcqMode = isMcqCard(current);
+  const occlusionParts = current
+    ? occlusionStudyParts(current)
+    : { face: undefined, answer: "" };
 
   const reveal = useCallback(() => {
     setRevealed(true);
@@ -463,18 +522,19 @@ export default function StudyPage() {
                 {mcqMode ? (
                   <McqFace
                     cardId={current.id}
-                    front={String(current.front)}
-                    back={String(current.back)}
+                    front={studyFrontText(current)}
+                    back={occlusionParts.answer}
                     options={current.options}
                     disabled={busy}
                     onGrade={(rating) => onGrade(rating, true)}
                   />
                 ) : (
                   <CardFace
-                    front={String(current.front)}
-                    back={String(current.back)}
+                    front={studyFrontText(current)}
+                    back={occlusionParts.answer}
                     type={current.type}
                     mediaR2Keys={current.media_r2_keys}
+                    occlusion={occlusionParts.face}
                     revealed={revealed}
                     onReveal={reveal}
                     onFlipBack={flipBack}
