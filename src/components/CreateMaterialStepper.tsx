@@ -15,6 +15,8 @@ import MenuItem from "@mui/material/MenuItem";
 import Alert from "@mui/material/Alert";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
 import {
   createDeck,
@@ -24,6 +26,7 @@ import {
   uploadMaterialFile,
   uploadPdfWithFigureCrops,
   type Deck,
+  type FigureExtractMode,
   ApiError,
 } from "../api/client";
 import { guestPasteToCards } from "../guest/pasteToCards";
@@ -66,6 +69,8 @@ export default function CreateMaterialStepper({
   const [filename, setFilename] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [figureFiles, setFigureFiles] = useState<File[]>([]);
+  const [figureExtractMode, setFigureExtractMode] =
+    useState<FigureExtractMode>("fast");
 
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -275,14 +280,25 @@ export default function CreateMaterialStepper({
     }
     setBusy(true);
     try {
+      const pdfOpts =
+        contentType === "application/pdf"
+          ? { figureExtractMode }
+          : undefined;
       const material =
         contentType === "application/pdf" && figureFiles.length > 0
           ? await uploadPdfWithFigureCrops(
               selectedDeckId,
               uploadFile,
               figureFiles,
+              undefined,
+              pdfOpts,
             )
-          : await uploadMaterialFile(selectedDeckId, uploadFile);
+          : await uploadMaterialFile(
+              selectedDeckId,
+              uploadFile,
+              undefined,
+              pdfOpts,
+            );
       setUploadFile(null);
       setFigureFiles([]);
       if (material.jobId) {
@@ -492,9 +508,28 @@ export default function CreateMaterialStepper({
                       />
                       <Typography variant="caption" color="text.secondary">
                         Optional: Suggest or drag-crop figures on-device. Accept
-                        appends up to {MAX_CLIENT_FIGURES} PNG crops. Docling
-                        (if configured) still runs on the server.
+                        appends up to {MAX_CLIENT_FIGURES} PNG crops.
                       </Typography>
+                      <ToggleButtonGroup
+                        exclusive
+                        size="small"
+                        value={figureExtractMode}
+                        onChange={(_e, value: FigureExtractMode | null) => {
+                          if (value) setFigureExtractMode(value);
+                        }}
+                        aria-label="Figure extract mode"
+                        color="primary"
+                        disabled={busy}
+                      >
+                        <ToggleButton value="fast">Fast</ToggleButton>
+                        <ToggleButton value="accurate">Accurate</ToggleButton>
+                      </ToggleButtonGroup>
+                      {figureExtractMode === "accurate" ? (
+                        <Typography variant="caption" color="text.secondary">
+                          Better automatic figures; may take several minutes
+                          while the extractor starts.
+                        </Typography>
+                      ) : null}
                     </Stack>
                   ) : null}
                   <Typography variant="caption" color="text.secondary">
