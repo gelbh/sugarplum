@@ -5,14 +5,15 @@ export const GENERATE_SYSTEM_PROMPT = `You generate spaced-repetition flashcards
 Rules:
 - One atomic fact per card; prefer 8–12 high-yield cards and skip redundancy.
 - Only create cards clearly grounded in the source excerpt; skip weak, incomplete, speculative, or table-debris facts. Prefer fewer solid cards over inventing answers.
-- Prefer a mix of short Q&A and single-blank cloze cards.
+- Prefer a mix of short Q&A, single-blank cloze, and multiple-choice (mcq) cards when a short option set fits the excerpt.
 - Keep front/back under ~25 words; provenance.excerpt under ~12 words.
 - Cloze front must use exactly one Anki-style blank: {{c1::answer}}. Never multiple blanks.
 - Cloze back may equal the cloze answer (Anki-normal).
 - Every card must cite a short excerpt from the source (verbatim or lightly trimmed). Answers must be entailed by that excerpt.
 - pages is a list of 1-based page numbers when known; use [1] for plain text pastes.
+- For type "mcq": front is the question; back is the correct option (must appear in options); options is a unique array of 3–5 strings including back. Every distractor must be entailed by or clearly present in the cited excerpt; do not invent trivia or plausible-but-ungrounded wrong answers.
 - Respond with JSON only: an array of objects
-  { "type": "qa"|"cloze", "front": string, "back": string, "provenance": { "pages": number[], "excerpt": string } }
+  { "type": "qa"|"cloze"|"mcq", "front": string, "back": string, "options"?: string[], "provenance": { "pages": number[], "excerpt": string } }
 - Do not wrap the array in markdown fences. Finish every string and close all braces.`;
 
 export const IMAGE_GENERATE_SYSTEM_PROMPT = `You generate image-based spaced-repetition flashcards from a study image or diagram.
@@ -44,13 +45,14 @@ export const GENERATE_COMPACT_SYSTEM_PROMPT = `You generate spaced-repetition fl
 Rules:
 - One atomic fact per card; produce 3–5 high-yield cards only and skip redundancy.
 - Only create cards clearly grounded in the source excerpt; skip weak, incomplete, speculative, or table-debris facts. Prefer fewer solid cards over inventing answers.
-- Prefer a mix of short Q&A and single-blank cloze cards.
+- Prefer a mix of short Q&A, single-blank cloze, and multiple-choice (mcq) cards when a short option set fits the excerpt.
 - Keep front/back under ~15 words; provenance.excerpt under ~12 words.
 - Cloze front must use exactly one Anki-style blank: {{c1::answer}}. Never multiple blanks.
 - Cloze back may equal the cloze answer (Anki-normal).
 - Every card must cite a short excerpt from the source (verbatim or lightly trimmed). Answers must be entailed by that excerpt.
 - pages is a list of 1-based page numbers when known; use [1] for plain text pastes.
-- Respond with JSON only: {"cards":[ { "type": "qa"|"cloze", "front": string, "back": string, "provenance": { "pages": number[], "excerpt": string } } ]}
+- For type "mcq": front is the question; back is the correct option (must appear in options); options is a unique array of 3–5 strings including back. Every distractor must be entailed by or clearly present in the cited excerpt; do not invent trivia or plausible-but-ungrounded wrong answers.
+- Respond with JSON only: {"cards":[ { "type": "qa"|"cloze"|"mcq", "front": string, "back": string, "options"?: string[], "provenance": { "pages": number[], "excerpt": string } } ]}
 - Do not wrap the array in markdown fences. Finish every string and close all braces.`;
 
 export function generateCompactUserPrompt(sourceText: string): string {

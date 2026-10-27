@@ -1,4 +1,4 @@
-import type { CardDraft } from "./schema";
+import { assertValidMcqOptions, type CardDraft } from "./schema";
 
 const MIN_FRONT = 8;
 const MIN_GLOSSARY_FRONT = 3;
@@ -169,7 +169,18 @@ function hasBrokenPunctuation(back: string): boolean {
   return false;
 }
 
+function isInvalidMcq(draft: CardDraft): boolean {
+  if (draft.type !== "mcq") return false;
+  try {
+    assertValidMcqOptions(draft.back, draft.options);
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 function shouldDrop(draft: CardDraft, front: string, back: string): boolean {
+  if (draft.type === "mcq" && isInvalidMcq(draft)) return true;
   if (isIncompleteBack(front, back)) return true;
   if (hasBrokenPunctuation(back)) return true;
   // Table-column suffixes only on non-questions (avoid "What is the host?").

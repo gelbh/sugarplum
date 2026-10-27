@@ -367,6 +367,36 @@ describe("processGenerateJob free path", () => {
     expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBeNull();
   });
 
+  it("persists mcq drafts with answer and options in back_json", async () => {
+    const env = createTestEnv();
+    await seedOwner(env, true);
+    const mcqDraft: CardDraft = {
+      type: "mcq",
+      front: "What is ATP?",
+      back: "Adenosine triphosphate",
+      options: ["Adenosine triphosphate", "Adenosine diphosphate", "RNA"],
+      provenance: { pages: [1], excerpt: "ATP stores energy" },
+    };
+    const llm = spyLlm({
+      generateDrafts: async () => [mcqDraft],
+      complete: async () => JSON.stringify({ cards: [] }),
+    });
+    const msg = await seedPasteJob(
+      env,
+      "ATP (adenosine triphosphate) stores cellular energy.",
+    );
+
+    await processGenerateJob(env, msg, { llm });
+
+    const cards = env.getCards();
+    expect(cards).toHaveLength(1);
+    expect(cards[0]!.type).toBe("mcq");
+    expect(JSON.parse(cards[0]!.back_json)).toEqual({
+      answer: "Adenosine triphosphate",
+      options: mcqDraft.options,
+    });
+  });
+
   it("multi-chunk paste emits generate/critique progress with real total", async () => {
     const env = createTestEnv();
     await seedOwner(env, true);
