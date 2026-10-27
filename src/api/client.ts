@@ -3,6 +3,8 @@ import {
   uploadWithProgress,
 } from "../progress/uploadWithProgress";
 import { endGuestLocal } from "../guest/endGuestLocal";
+import { tryMergeGuestAfterAuth } from "../guest/mergeOnAuth";
+import type { GuestImportPayload } from "../guest/importPayload";
 import { GUEST_USER, isGuest } from "../guest/session";
 import {
   ensureGuestStore,
@@ -82,12 +84,19 @@ export type AuthUser = {
   google_linked?: boolean;
 };
 
+export function importGuestLocal(body: GuestImportPayload) {
+  return api<{ deckCount: number; cardCount: number }>("/api/guest/import", {
+    method: "POST",
+    json: body,
+  });
+}
+
 export async function register(email: string, password: string) {
   const user = await api<AuthUser>("/api/auth/register", {
     method: "POST",
     json: { email, password },
   });
-  endGuestLocal();
+  await tryMergeGuestAfterAuth({ importGuest: importGuestLocal });
   return user;
 }
 
@@ -96,7 +105,7 @@ export async function login(email: string, password: string) {
     method: "POST",
     json: { email, password },
   });
-  endGuestLocal();
+  await tryMergeGuestAfterAuth({ importGuest: importGuestLocal });
   return user;
 }
 

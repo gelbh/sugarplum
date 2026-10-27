@@ -14,6 +14,8 @@ import {
   getJourney,
   type StrugglingRow,
 } from "../api/client";
+import { tryMergeGuestAfterAuth } from "../guest/mergeOnAuth";
+import { isGuest } from "../guest/session";
 import { deriveJourney } from "../journey/derive";
 import type { JourneyView } from "../journey/types";
 import JourneyNextButton from "../components/JourneyNextButton";
@@ -76,6 +78,9 @@ export default function TodayPage() {
     (async () => {
       try {
         const user = await me();
+        if (cancelled) return;
+        // OAuth land: merge guest paste snapshot once session exists (email auth merges in register/login).
+        if (!isGuest()) await tryMergeGuestAfterAuth();
         if (cancelled) return;
         setUserId(user.id);
         refreshPendingCount(user.id);
