@@ -33,6 +33,22 @@ describe("forceOpenDraftReview", () => {
     expect(view.next).toMatchObject({
       label: "Review drafts",
       action: "review",
+      href: "/study",
     });
+  });
+
+  it("sets next href to null when input next href is null", () => {
+    const view = forceOpenDraftReview(
+      baseView({
+        next: { label: "Start study", href: null, action: "study" },
+      }),
+    );
+    expect(view.next.href).toBeNull();
+  });
+
+  it("does not throw when next is absent at runtime", () => {
+    const withoutNext = { ...baseView(), next: undefined } as unknown as JourneyView;
+    const view = forceOpenDraftReview(withoutNext);
+    expect(view.next.href).toBeNull();
   });
 });

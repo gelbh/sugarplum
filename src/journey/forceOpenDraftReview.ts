@@ -8,7 +8,7 @@ export function forceOpenDraftReview(view: JourneyView): JourneyView {
     activeStage: "review",
     next: {
       label: "Review drafts",
-      href: view.next.href,
+      href: view.next?.href ?? null,
       action: "review",
     },
     stages: view.stages.map((s) => {
