@@ -14,6 +14,13 @@
 		"run_worker_first": ["/api/*"]
 	},
 	"upload_source_maps": true,
+	"observability": {
+		"enabled": true,
+		"logs": {
+			"invocation_logs": true,
+			"head_sampling_rate": 1
+		}
+	},
 	// DOCLING_URL: optional. Local compose or prod HTTPS host. When set, DOCLING_API_KEY secret is required (X-Api-Key).
 	"vars": {
 		"APP_URL": "https://sugarplum.gelbhart.dev",
