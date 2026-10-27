@@ -17,8 +17,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import {
   ApiError,
   acceptCard,
-    getJob,
-    getJourney,
+  getJob,
+  getJourney,
   listJobDrafts,
   me,
   patchCard,
@@ -27,26 +27,13 @@ import {
 } from "../api/client";
 import { deriveJourney } from "../journey/derive";
 import type { JourneyView } from "../journey/types";
+import JobProgressPanel from "../progress/JobProgressPanel";
+import { useJobProgress } from "../progress/useJobProgress";
+import { useTrackedOp } from "../progress/useTrackedOp";
 
 function jobIdFromPath(): string | null {
   const match = window.location.pathname.match(/^\/jobs\/([^/]+)\/drafts\/?$/);
   return match?.[1] ? decodeURIComponent(match[1]) : null;
-}
-
-const TERMINAL_OK = new Set(["needs_review", "done"]);
-const TERMINAL_FAIL = new Set(["failed"]);
-
-async function waitForJobReady(jobId: string): Promise<void> {
-  const deadline = Date.now() + 60_000;
-  while (Date.now() < deadline) {
-    const job = await getJob(jobId);
-    if (TERMINAL_OK.has(job.status)) return;
-    if (TERMINAL_FAIL.has(job.status)) {
-      throw new ApiError(400, job.error ?? "Generation failed");
-    }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new ApiError(408, "Timed out waiting for generation");
 }
 
 /** Operate UI: review, edit, accept or reject generation drafts (code-led MUI; no Impeccable comps). */
@@ -58,16 +45,41 @@ export default function DraftReviewPage() {
   const [journeyError, setJourneyError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const [statusLine, setStatusLine] = useState<string | null>(null);
+  const [coverage, setCoverage] = useState<{
+    covered: string[];
+    gaps: string[];
+    draft_count?: number;
+  } | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const jobProgress = useJobProgress(authReady ? jobId : null);
+  const { begin: beginLoad, end: endLoad } = useTrackedOp("Loading drafts…");
+  const { busy, begin, end } = useTrackedOp("Working…");
 
   const load = useCallback(async (id: string) => {
-    const list = await listJobDrafts(id);
+    const [list, job] = await Promise.all([listJobDrafts(id), getJob(id)]);
     setDrafts(list);
     setIndex(0);
     setDirty(false);
+    if (job.coverage_json) {
+      try {
+        const parsed = JSON.parse(job.coverage_json) as {
+          covered?: string[];
+          gaps?: string[];
+          draft_count?: number;
+        };
+        setCoverage({
+          covered: Array.isArray(parsed.covered) ? parsed.covered : [],
+          gaps: Array.isArray(parsed.gaps) ? parsed.gaps : [],
+          draft_count: parsed.draft_count,
+        });
+      } catch {
+        setCoverage(null);
+      }
+    } else {
+      setCoverage(null);
+    }
     return list;
   }, []);
 
@@ -109,20 +121,14 @@ export default function DraftReviewPage() {
       }
       try {
         await me();
-        setStatusLine("Waiting for generation…");
-        await waitForJobReady(jobId);
         if (cancelled) return;
-        setStatusLine(null);
-        const list = await load(jobId);
-        if (!cancelled) await refreshJourney(jobId, list.length);
-        if (!cancelled) setReady(true);
+        setAuthReady(true);
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
           window.location.assign("/login");
           return;
         }
-        setStatusLine(null);
         setError(
           err instanceof ApiError ? err.message : "Failed to load drafts",
         );
@@ -132,7 +138,48 @@ export default function DraftReviewPage() {
     return () => {
       cancelled = true;
     };
-  }, [jobId, load, refreshJourney]);
+  }, [jobId]);
+
+  useEffect(() => {
+    if (jobProgress.error) {
+      setError(jobProgress.error);
+      setReady(true);
+      return;
+    }
+    if (!jobProgress.ready || !jobId) return;
+
+    let cancelled = false;
+    (async () => {
+      beginLoad();
+      try {
+        const list = await load(jobId);
+        if (cancelled) return;
+        await refreshJourney(jobId, list.length);
+        if (cancelled) return;
+        setReady(true);
+        endLoad();
+      } catch (err) {
+        if (cancelled) return;
+        setError(
+          err instanceof ApiError ? err.message : "Failed to load drafts",
+        );
+        setReady(true);
+        endLoad(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      endLoad(false);
+    };
+  }, [
+    beginLoad,
+    endLoad,
+    jobId,
+    jobProgress.error,
+    jobProgress.ready,
+    load,
+    refreshJourney,
+  ]);
 
   const current = drafts[index] ?? null;
 
@@ -150,22 +197,20 @@ export default function DraftReviewPage() {
     if (!current || !dirty) return;
     setError(null);
     setNotice(null);
-    setBusy(true);
+    begin();
     try {
       const updated = await patchCard(current.id, {
         front: current.front,
         back: current.back,
-        type: current.type === "cloze" ? "cloze" : "qa",
+        type: current.type as "qa" | "cloze" | "image_label" | "diagram",
       });
-      setDrafts((prev) =>
-        prev.map((c) => (c.id === updated.id ? updated : c)),
-      );
+      setDrafts((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
       setDirty(false);
       setNotice("Saved edits");
+      end();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not save");
-    } finally {
-      setBusy(false);
+      end(false);
     }
   }
 
@@ -173,23 +218,23 @@ export default function DraftReviewPage() {
     if (!current || !jobId) return;
     setError(null);
     setNotice(null);
-    setBusy(true);
+    begin();
     try {
       if (dirty) {
         await patchCard(current.id, {
           front: current.front,
           back: current.back,
-          type: current.type === "cloze" ? "cloze" : "qa",
+          type: current.type as "qa" | "cloze" | "image_label" | "diagram",
         });
       }
       await acceptCard(current.id);
       const list = await load(jobId);
       await refreshJourney(jobId, list.length);
       setNotice("Card accepted into study");
+      end();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not accept");
-    } finally {
-      setBusy(false);
+      end(false);
     }
   }
 
@@ -197,25 +242,27 @@ export default function DraftReviewPage() {
     if (!current || !jobId) return;
     setError(null);
     setNotice(null);
-    setBusy(true);
+    begin();
     try {
       await rejectCard(current.id);
       const list = await load(jobId);
       await refreshJourney(jobId, list.length);
       setNotice("Card rejected");
+      end();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not reject");
-    } finally {
-      setBusy(false);
+      end(false);
     }
   }
 
   if (!ready) {
     return (
       <Container maxWidth="sm" sx={{ py: 6 }}>
-        <Typography color="text.secondary">
-          {statusLine ?? "Loading drafts…"}
-        </Typography>
+        {jobId && authReady && !jobProgress.error ? (
+          <JobProgressPanel snapshot={jobProgress.snapshot} />
+        ) : (
+          <Typography color="text.secondary">Loading drafts…</Typography>
+        )}
       </Container>
     );
   }
@@ -251,6 +298,22 @@ export default function DraftReviewPage() {
         {error ? <Alert severity="error">{error}</Alert> : null}
         {notice ? <Alert severity="success">{notice}</Alert> : null}
 
+        {coverage && coverage.covered.length > 0 ? (
+          <Alert severity="info">
+            Draft topics
+            {coverage.draft_count != null
+              ? ` (${coverage.draft_count} cards)`
+              : ""}
+            <Box component="ul" sx={{ m: 0, mt: 1, pl: 2 }}>
+              {coverage.covered.slice(0, 5).map((item) => (
+                <Typography component="li" key={item} variant="caption">
+                  {item}
+                </Typography>
+              ))}
+            </Box>
+          </Alert>
+        ) : null}
+
         {!current ? (
           <Paper variant="outlined" sx={{ p: 2 }}>
             <Stack spacing={2}>
@@ -275,7 +338,15 @@ export default function DraftReviewPage() {
               </Typography>
               <Chip
                 size="small"
-                label={current.type === "cloze" ? "Cloze" : "Q&A"}
+                label={
+                  current.type === "cloze"
+                    ? "Cloze"
+                    : current.type === "image_label"
+                      ? "Image label"
+                      : current.type === "diagram"
+                        ? "Diagram"
+                        : "Q&A"
+                }
                 color="secondary"
                 variant="outlined"
               />
@@ -293,7 +364,8 @@ export default function DraftReviewPage() {
               <>
                 <Divider sx={{ my: 2 }} />
                 <Typography variant="caption" color="text.secondary">
-                  Source: {String((current.provenance as { excerpt: string }).excerpt)}
+                  Source:{" "}
+                  {String((current.provenance as { excerpt: string }).excerpt)}
                 </Typography>
               </>
             ) : null}
@@ -305,7 +377,12 @@ export default function DraftReviewPage() {
               useFlexGap
               sx={{ mt: 3 }}
             >
-              <Button variant="text" onClick={onSave} disabled={busy || !dirty}>
+              <Button
+                variant="text"
+                onClick={onSave}
+                disabled={busy || !dirty}
+                startIcon={<CheckIcon />}
+              >
                 Save
               </Button>
               <Button

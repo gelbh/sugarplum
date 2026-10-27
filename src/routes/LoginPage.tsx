@@ -14,7 +14,7 @@ import GoogleSignInButton from "../components/GoogleSignInButton";
 function oauthErrorMessage(code: string | null): string | null {
   if (!code) return null;
   if (code === "oauth_link_required") {
-    return "This email already has a password account. Sign in with email and password (Google linking comes later).";
+    return "This email already has a password account. Sign in with email and password, then link Google under Settings.";
   }
   if (code === "oauth_conflict") {
     return "This email is linked to a different Google account.";
@@ -91,6 +91,15 @@ export default function LoginPage() {
             No account?{" "}
             <Link href="/register" underline="hover">
               Register
+            </Link>
+          </Typography>
+          <Typography variant="body2" textAlign="center" color="text.secondary">
+            <Link href="/privacy" underline="hover">
+              Privacy
+            </Link>
+            {" · "}
+            <Link href="/terms" underline="hover">
+              Terms
             </Link>
           </Typography>
         </Stack>

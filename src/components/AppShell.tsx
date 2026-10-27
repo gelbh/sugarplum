@@ -13,8 +13,11 @@ import ListItemText from "@mui/material/ListItemText";
 import Paper from "@mui/material/Paper";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
+import Link from "@mui/material/Link";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
+import GlobalProgressBar from "../progress/GlobalProgressBar";
+import { ProgressProvider } from "../progress/ProgressProvider";
 
 const DRAWER_WIDTH = 240;
 
@@ -69,46 +72,43 @@ export default function AppShell({ children }: AppShellProps) {
   const path = window.location.pathname;
   const active = activeNavId(path);
 
-  if (mobile) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          minHeight: "100vh",
-          pb: 7,
-        }}
-      >
-        <Box component="main" sx={{ flex: 1 }}>
-          {children}
-        </Box>
-        <Paper
-          elevation={3}
-          sx={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 1100 }}
-        >
-          <BottomNavigation
-            showLabels
-            value={active}
-            onChange={(_e, value: NavId) => {
-              const item = NAV.find((n) => n.id === value);
-              if (item) window.location.assign(item.href);
-            }}
-          >
-            {NAV.map((item) => (
-              <BottomNavigationAction
-                key={item.id}
-                label={item.label}
-                value={item.id}
-                icon={item.icon}
-              />
-            ))}
-          </BottomNavigation>
-        </Paper>
+  const shell = mobile ? (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh",
+        pb: 7,
+      }}
+    >
+      <GlobalProgressBar />
+      <Box component="main" sx={{ flex: 1 }}>
+        {children}
       </Box>
-    );
-  }
-
-  return (
+      <Paper
+        elevation={3}
+        sx={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 1100 }}
+      >
+        <BottomNavigation
+          showLabels
+          value={active}
+          onChange={(_e, value: NavId) => {
+            const item = NAV.find((n) => n.id === value);
+            if (item) window.location.assign(item.href);
+          }}
+        >
+          {NAV.map((item) => (
+            <BottomNavigationAction
+              key={item.id}
+              label={item.label}
+              value={item.id}
+              icon={item.icon}
+            />
+          ))}
+        </BottomNavigation>
+      </Paper>
+    </Box>
+  ) : (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
       <Drawer
         variant="permanent"
@@ -118,6 +118,9 @@ export default function AppShell({ children }: AppShellProps) {
           [`& .MuiDrawer-paper`]: {
             width: DRAWER_WIDTH,
             boxSizing: "border-box",
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
           },
         }}
       >
@@ -145,13 +148,32 @@ export default function AppShell({ children }: AppShellProps) {
             </ListItemButton>
           ))}
         </List>
+        <Box sx={{ flexGrow: 1 }} />
+        <Box sx={{ px: 2, py: 2 }}>
+          <Typography variant="caption" color="text.secondary" component="div">
+            <Link href="/privacy" underline="hover" color="inherit">
+              Privacy
+            </Link>
+            {" · "}
+            <Link href="/terms" underline="hover" color="inherit">
+              Terms
+            </Link>
+            {" · "}
+            <Link href="/data-deletion" underline="hover" color="inherit">
+              Deletion
+            </Link>
+          </Typography>
+        </Box>
       </Drawer>
       <Box
         component="main"
         sx={{ flexGrow: 1, width: { md: `calc(100% - ${DRAWER_WIDTH}px)` } }}
       >
+        <GlobalProgressBar />
         {children}
       </Box>
     </Box>
   );
+
+  return <ProgressProvider>{shell}</ProgressProvider>;
 }

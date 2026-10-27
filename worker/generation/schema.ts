@@ -25,7 +25,7 @@ export const ProvenanceSchema = z.object({
 
 export const CardDraftSchema = z
   .object({
-    type: z.enum(["qa", "cloze"]),
+    type: z.enum(["qa", "cloze", "image_label", "diagram"]),
     front: z.string().min(1),
     back: z.string().min(1),
     provenance: ProvenanceSchema,
@@ -47,7 +47,21 @@ export type CardDraft = z.infer<typeof CardDraftSchema>;
 
 export const CardDraftListSchema = z.array(CardDraftSchema).min(1);
 
-/** Parse and validate LLM draft output; cloze blanks enforced. */
+/**
+ * Parse LLM draft cards. Invalid items (e.g. multi-blank cloze) are skipped;
+ * throws only when nothing valid remains. Matches critique survivor filtering.
+ */
 export function parseCardDrafts(raw: unknown): CardDraft[] {
-  return CardDraftListSchema.parse(raw);
+  if (!Array.isArray(raw)) {
+    throw new Error("LLM cards must be an array");
+  }
+  const drafts: CardDraft[] = [];
+  for (const item of raw) {
+    const result = CardDraftSchema.safeParse(item);
+    if (result.success) drafts.push(result.data);
+  }
+  if (drafts.length === 0) {
+    throw new Error("No schema-valid cards in LLM output");
+  }
+  return drafts;
 }

@@ -34,6 +34,7 @@ type GenerationJobRow = {
   status: string;
   error: string | null;
   coverage_json: string | null;
+  progress_json: string | null;
   created_at: string;
   finished_at: string | null;
 };
@@ -185,6 +186,24 @@ export function createTestEnv(opts?: {
           }
           return null;
         }
+        if (
+          normalized.startsWith(
+            "SELECT id, email, oauth_subject FROM users WHERE id =",
+          ) ||
+          normalized.startsWith(
+            "SELECT id, email, oauth_subject, password_hash FROM users WHERE id =",
+          )
+        ) {
+          const u = users.get(bound[0] as string);
+          return u
+            ? ({
+                id: u.id,
+                email: u.email,
+                oauth_subject: u.oauth_subject,
+                password_hash: u.password_hash,
+              } as T)
+            : null;
+        }
         if (normalized.startsWith("SELECT id, email FROM users WHERE id =")) {
           const u = users.get(bound[0] as string);
           return u ? ({ id: u.id, email: u.email } as T) : null;
@@ -221,6 +240,22 @@ export function createTestEnv(opts?: {
         if (
           normalized.includes("FROM materials m") &&
           normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("m.r2_key =") &&
+          normalized.includes("d.user_id =")
+        ) {
+          const r2Key = bound[0] as string;
+          const userId = bound[1] as string;
+          for (const material of materials.values()) {
+            if (material.r2_key !== r2Key) continue;
+            const deck = decks.get(material.deck_id);
+            if (!deck || deck.user_id !== userId) continue;
+            return { r2_key: material.r2_key } as T;
+          }
+          return null;
+        }
+        if (
+          normalized.includes("FROM materials m") &&
+          normalized.includes("INNER JOIN decks d") &&
           normalized.includes("m.id =") &&
           normalized.includes("d.user_id =")
         ) {
@@ -249,6 +284,7 @@ export function createTestEnv(opts?: {
             status: job.status,
             error: job.error,
             coverage_json: job.coverage_json,
+            progress_json: job.progress_json,
             created_at: job.created_at,
             finished_at: job.finished_at,
           } as T;
@@ -567,9 +603,41 @@ export function createTestEnv(opts?: {
             status,
             error,
             coverage_json,
+            progress_json: null,
             created_at,
             finished_at,
           });
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = ?, finished_at = ?",
+          )
+        ) {
+          const [status, coverage_json, finished_at, id] = bound as [
+            string,
+            string,
+            string,
+            string,
+          ];
+          const row = generationJobs.get(id);
+          if (row) {
+            generationJobs.set(id, {
+              ...row,
+              status,
+              error: null,
+              coverage_json,
+              finished_at,
+            });
+          }
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET progress_json = ? WHERE id = ?",
+          )
+        ) {
+          const [progress_json, id] = bound as [string, string];
+          const row = generationJobs.get(id);
+          if (row) {
+            generationJobs.set(id, { ...row, progress_json });
+          }
         } else if (
           normalized.startsWith(
             "UPDATE generation_jobs SET status = ?, error = NULL, finished_at = ?",
@@ -772,6 +840,11 @@ export function createTestEnv(opts?: {
 
   const env: TestEnv = {
     DB: { prepare, batch } as unknown as D1Database,
+    AI: {
+      run: async () => {
+        throw new Error("AI.run not stubbed in test env");
+      },
+    } as unknown as Ai,
     MATERIALS: {
       async put(key: string, value: string | ArrayBuffer | ReadableStream) {
         const text =
@@ -785,9 +858,14 @@ export function createTestEnv(opts?: {
       async get(key: string) {
         const v = r2.get(key);
         if (v === undefined) return null;
+        const bytes = new TextEncoder().encode(v);
         return {
           text: async () => v,
-          arrayBuffer: async () => new TextEncoder().encode(v).buffer,
+          arrayBuffer: async () => bytes.buffer.slice(
+            bytes.byteOffset,
+            bytes.byteOffset + bytes.byteLength,
+          ),
+          body: bytes,
         };
       },
     } as unknown as R2Bucket,

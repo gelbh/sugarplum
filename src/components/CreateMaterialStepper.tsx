@@ -19,7 +19,9 @@ import Tab from "@mui/material/Tab";
 import {
   createDeck,
   pasteMaterial,
-  uploadPdf,
+  PPTX_MIME,
+  resolveUploadContentType,
+  uploadMaterialFile,
   type Deck,
   ApiError,
 } from "../api/client";
@@ -33,7 +35,14 @@ type Props = {
   onChanged?: () => void | Promise<void>;
 };
 
-const MAX_PDF_BYTES = 25 * 1024 * 1024;
+const MAX_FILE_BYTES = 25 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const ALLOWED_UPLOAD_MIMES = new Set([
+  "application/pdf",
+  PPTX_MIME,
+  ...IMAGE_MIMES,
+]);
 const CREATE_NEW_DECK = "__create_new_deck__";
 
 export default function CreateMaterialStepper({
@@ -47,7 +56,7 @@ export default function CreateMaterialStepper({
   const [selectedDeckId, setSelectedDeckId] = useState("");
   const [pasteText, setPasteText] = useState("");
   const [filename, setFilename] = useState("");
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
 
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -106,8 +115,7 @@ export default function CreateMaterialStepper({
     );
   }
 
-  // material tab: paste or pdf
-  const [tab, setTab] = useState<"paste" | "pdf">("paste");
+  const [tab, setTab] = useState<"paste" | "file">("paste");
 
   async function onCreateDeck(e?: FormEvent) {
     e?.preventDefault();
@@ -147,8 +155,9 @@ export default function CreateMaterialStepper({
       setPasteText("");
       setFilename("");
       if (material.jobId) {
-        // preserve existing behavior: navigate to drafts
-        window.location.assign(`/jobs/${encodeURIComponent(material.jobId)}/drafts`);
+        window.location.assign(
+          `/jobs/${encodeURIComponent(material.jobId)}/drafts`,
+        );
         return;
       }
       setNotice(`Saved paste material (${material.status})`);
@@ -160,7 +169,7 @@ export default function CreateMaterialStepper({
     }
   }
 
-  async function onUploadPdf(e?: FormEvent) {
+  async function onUploadFile(e?: FormEvent) {
     e?.preventDefault();
     setError(null);
     setNotice(null);
@@ -169,35 +178,40 @@ export default function CreateMaterialStepper({
       setError("Select a deck first");
       return;
     }
-    if (!pdfFile) {
-      setError("Choose a PDF file");
+    if (!uploadFile) {
+      setError("Choose a PDF, PPTX, or image file");
       return;
     }
-    if (pdfFile.type && pdfFile.type !== "application/pdf") {
-      setError("Only PDF files are allowed");
+    const contentType = resolveUploadContentType(uploadFile);
+    if (!ALLOWED_UPLOAD_MIMES.has(contentType)) {
+      setError("Only PDF, PPTX, or image (jpeg/png/webp) files are allowed");
       return;
     }
-    if (pdfFile.size > MAX_PDF_BYTES) {
-      setError("PDF must be 25MB or smaller");
+    if (uploadFile.size > MAX_FILE_BYTES) {
+      setError("File must be 25MB or smaller");
+      return;
+    }
+    if (IMAGE_MIMES.has(contentType) && uploadFile.size > MAX_IMAGE_BYTES) {
+      setError("Images for generation must be 8MB or smaller");
       return;
     }
     setBusy(true);
     try {
-      const material = await uploadPdf(selectedDeckId, pdfFile);
-      setPdfFile(null);
+      const material = await uploadMaterialFile(selectedDeckId, uploadFile);
+      setUploadFile(null);
       if (material.jobId) {
         setJobId(material.jobId);
         setNotice(
-          `Stored PDF (${material.status}). Generation started.`,
+          `Stored file (${material.status}). Generation started.`,
         );
         setActiveStep(2);
       } else {
         setNotice(
-          `Stored PDF (${material.status}). Text extraction is not ready yet; use paste for generation.`,
+          `Stored file (${material.status}). Open drafts from a prior generate, or upload a new file.`,
         );
       }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not upload PDF");
+      setError(err instanceof ApiError ? err.message : "Could not upload file");
     } finally {
       setBusy(false);
     }
@@ -284,7 +298,7 @@ export default function CreateMaterialStepper({
               sx={{ mb: 2 }}
             >
               <Tab value="paste" label="Paste" />
-              <Tab value="pdf" label="PDF" />
+              <Tab value="file" label="Upload" />
             </Tabs>
 
             {tab === "paste" && (
@@ -319,36 +333,36 @@ export default function CreateMaterialStepper({
               </Box>
             )}
 
-            {tab === "pdf" && (
-              <Box component="form" onSubmit={onUploadPdf} noValidate>
+            {tab === "file" && (
+              <Box component="form" onSubmit={onUploadFile} noValidate>
                 <Stack spacing={2}>
-                  {deckSelect("pdf-deck-select-label")}
+                  {deckSelect("file-deck-select-label")}
                   <Button
                     variant="outlined"
                     component="label"
                     disabled={busy || !selectedDeckId}
                   >
-                    {pdfFile ? pdfFile.name : "Choose PDF"}
+                    {uploadFile ? uploadFile.name : "Choose PDF, PPTX, or image"}
                     <input
                       type="file"
-                      accept="application/pdf,.pdf"
+                      accept="application/pdf,.pdf,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
                       hidden
                       onChange={(ev) => {
                         const file = ev.target.files?.[0] ?? null;
-                        setPdfFile(file);
+                        setUploadFile(file);
                       }}
                     />
                   </Button>
                   <Typography variant="caption" color="text.secondary">
-                    PDF only, max 25MB. Stored for later; flashcard generation from PDF
-                    text is not available yet (use paste).
+                    PDF/PPTX max 25MB; images max 8MB. Upload starts generation
+                    when complete.
                   </Typography>
                   <Button
                     type="submit"
                     variant="contained"
-                    disabled={busy || !selectedDeckId || !pdfFile}
+                    disabled={busy || !selectedDeckId || !uploadFile}
                   >
-                    {busy ? "Uploading…" : "Upload PDF"}
+                    {busy ? "Uploading…" : "Upload file"}
                   </Button>
                 </Stack>
               </Box>
@@ -362,7 +376,9 @@ export default function CreateMaterialStepper({
               {jobId ? (
                 <>
                   Generation started.{" "}
-                  <a href={`/jobs/${encodeURIComponent(jobId)}/drafts`}>View drafts</a>
+                  <a href={`/jobs/${encodeURIComponent(jobId)}/drafts`}>
+                    View drafts
+                  </a>
                 </>
               ) : (
                 "Done. Add more material or go to drafts when ready."
@@ -379,4 +395,3 @@ export default function CreateMaterialStepper({
     </Box>
   );
 }
-

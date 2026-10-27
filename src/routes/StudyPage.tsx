@@ -18,42 +18,67 @@ import {
   type CardDraftView,
   type StudyRating,
 } from "../api/client";
+import { useTrackedOp } from "../progress/useTrackedOp";
+import { loadDueCache, saveDueCache } from "../study/dueCache";
 
 /** Study session: reveal answer, grade with FSRS (keys 1-4). Code-led MUI. */
 export default function StudyPage() {
   const [queue, setQueue] = useState<CardDraftView[]>([]);
   const [revealed, setRevealed] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
+  const [offlineCopy, setOfflineCopy] = useState(false);
+  const { end: endLoad } = useTrackedOp("Loading study…", {
+    trackOnMount: true,
+  });
+  const { busy, begin, end } = useTrackedOp("Saving grade…");
 
-  const load = useCallback(async () => {
-    const due = await listDueCards();
-    setQueue(due);
-    setRevealed(false);
+  const load = useCallback(async (userId: string) => {
+    try {
+      const due = await listDueCards();
+      saveDueCache(userId, due);
+      setQueue(due);
+      setOfflineCopy(false);
+      setRevealed(false);
+    } catch (err) {
+      const cached = loadDueCache(userId);
+      if (cached && cached.cards.length > 0) {
+        setQueue(cached.cards);
+        setOfflineCopy(true);
+        setRevealed(false);
+        return;
+      }
+      throw err;
+    }
   }, []);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        await me();
-        await load();
-        if (!cancelled) setReady(true);
+        const user = await me();
+        await load(user.id);
+        if (!cancelled) {
+          setReady(true);
+          endLoad();
+        }
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
           window.location.assign("/login");
           return;
         }
-        setError(err instanceof ApiError ? err.message : "Failed to load study");
+        setError(
+          err instanceof ApiError ? err.message : "Failed to load study",
+        );
         setReady(true);
+        endLoad(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [load]);
+  }, [endLoad, load]);
 
   const current = queue[0] ?? null;
 
@@ -61,25 +86,30 @@ export default function StudyPage() {
     async (rating: StudyRating) => {
       if (!current || busy || !revealed) return;
       setError(null);
-      setBusy(true);
+      begin();
       try {
         await reviewCard(current.id, rating);
         setQueue((prev) => prev.slice(1));
         setRevealed(false);
+        end();
       } catch (err) {
-        setError(err instanceof ApiError ? err.message : "Could not save grade");
-      } finally {
-        setBusy(false);
+        setError(
+          err instanceof ApiError ? err.message : "Could not save grade",
+        );
+        end(false);
       }
     },
-    [busy, current, revealed],
+    [begin, busy, current, end, revealed],
   );
 
   useEffect(() => {
     if (!revealed || busy || !current) return;
 
     function onKey(e: KeyboardEvent) {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
         return;
       }
       const map: Record<string, StudyRating> = {
@@ -128,6 +158,12 @@ export default function StudyPage() {
         </Stack>
 
         {error ? <Alert severity="error">{error}</Alert> : null}
+        {offlineCopy ? (
+          <Alert severity="warning">
+            Showing an offline copy of due cards. Grading still needs a network
+            connection.
+          </Alert>
+        ) : null}
 
         {!current ? (
           <Alert severity="success">
@@ -153,7 +189,15 @@ export default function StudyPage() {
               </Typography>
               <Chip
                 size="small"
-                label={current.type === "cloze" ? "Cloze" : "Q&A"}
+                label={
+                  current.type === "cloze"
+                    ? "Cloze"
+                    : current.type === "image_label"
+                      ? "Image label"
+                      : current.type === "diagram"
+                        ? "Diagram"
+                        : "Q&A"
+                }
                 color="secondary"
                 variant="outlined"
               />
@@ -162,6 +206,7 @@ export default function StudyPage() {
             <CardFace
               front={String(current.front)}
               back={String(current.back)}
+              mediaR2Keys={current.media_r2_keys}
               revealed={revealed}
               onReveal={() => setRevealed(true)}
               disabled={busy}

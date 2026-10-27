@@ -14,12 +14,16 @@ import {
 } from "../api/client";
 import { deriveJourney } from "../journey/derive";
 import CreateMaterialStepper from "../components/CreateMaterialStepper";
+import { useTrackedOp } from "../progress/useTrackedOp";
 
 export default function LibraryPage() {
   const [decks, setDecks] = useState<Deck[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
+  const { end: endLoad } = useTrackedOp("Loading library…", {
+    trackOnMount: true,
+  });
 
   const syncStepperFromJourney = useCallback(async () => {
     try {
@@ -39,6 +43,7 @@ export default function LibraryPage() {
         if (cancelled) return;
         setDecks(list);
         setReady(true);
+        endLoad();
         try {
           const derived = deriveJourney(await getJourney());
           if (cancelled) return;
@@ -56,14 +61,17 @@ export default function LibraryPage() {
           window.location.assign("/login");
           return;
         }
-        setError(err instanceof ApiError ? err.message : "Failed to load library");
+        setError(
+          err instanceof ApiError ? err.message : "Failed to load library",
+        );
         setReady(true);
+        endLoad(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [endLoad]);
 
   return (
     <Container maxWidth="sm" sx={{ py: 6 }}>
@@ -75,7 +83,7 @@ export default function LibraryPage() {
             Library
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Create decks, paste notes, or upload PDFs as materials.
+            Create decks, paste notes, or upload PDF, PPTX, or image materials.
           </Typography>
 
           <Stack spacing={4}>

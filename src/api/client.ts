@@ -1,3 +1,5 @@
+import { UploadError, uploadWithProgress } from "../progress/uploadWithProgress";
+
 export type ApiErrorBody = {
   error?: string;
   message?: string;
@@ -47,7 +49,11 @@ export async function api<T>(
   return (await res.json()) as T;
 }
 
-export type AuthUser = { id: string; email: string };
+export type AuthUser = {
+  id: string;
+  email: string;
+  google_linked?: boolean;
+};
 
 export function register(email: string, password: string) {
   return api<AuthUser>("/api/auth/register", {
@@ -112,12 +118,21 @@ export function pasteMaterial(
   });
 }
 
+export type GenerationJobProgress = {
+  stage: string;
+  current: number;
+  total: number;
+  percent: number;
+  label: string;
+};
+
 export type GenerationJob = {
   id: string;
   material_id: string;
   status: string;
   error: string | null;
   coverage_json: string | null;
+  progress: GenerationJobProgress | null;
   created_at: string;
   finished_at: string | null;
 };
@@ -132,7 +147,7 @@ export type UploadUrlResponse = {
   r2Key: string;
 };
 
-export function requestPdfUploadUrl(
+export function requestMaterialUploadUrl(
   deckId: string,
   body: { filename: string; contentType: string; size: number },
 ) {
@@ -177,15 +192,21 @@ export type CardDraftView = {
   id: string;
   deck_id: string;
   job_id: string | null;
-  type: "qa" | "cloze" | string;
+  type: "qa" | "cloze" | "image_label" | "diagram" | string;
   front: string;
   back: string;
+  media_r2_keys?: string[];
   provenance: unknown;
   status: string;
   created_at: string;
   updated_at: string;
   due?: string;
 };
+
+/** Session-gated media URL for an owned R2 object key. */
+export function mediaUrl(r2Key: string): string {
+  return `/api/materials/media?key=${encodeURIComponent(r2Key)}`;
+}
 
 export function listJobDrafts(jobId: string) {
   return api<CardDraftView[]>(`/api/jobs/${jobId}/drafts`);
@@ -207,7 +228,11 @@ export function getJourney() {
 
 export function patchCard(
   cardId: string,
-  body: { front?: string; back?: string; type?: "qa" | "cloze" },
+  body: {
+    front?: string;
+    back?: string;
+    type?: "qa" | "cloze" | "image_label" | "diagram";
+  },
 ) {
   return api<CardDraftView>(`/api/cards/${cardId}`, {
     method: "PATCH",
@@ -238,25 +263,62 @@ export function reviewCard(cardId: string, rating: StudyRating) {
   });
 }
 
-/** Request signed URL, PUT the PDF to R2, then mark ready / enqueue generation. */
-export async function uploadPdf(deckId: string, file: File): Promise<CompleteMaterialResponse> {
-  const { materialId, uploadUrl } = await requestPdfUploadUrl(deckId, {
-    filename: file.name || "upload.pdf",
-    contentType: "application/pdf",
+export const PPTX_MIME =
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+
+const ZIP_MIMES = new Set([
+  "application/zip",
+  "application/x-zip-compressed",
+  "application/octet-stream",
+  "",
+]);
+
+/** Map browser File to upload content-type (prefer extension when type is zip/empty). */
+export function resolveUploadContentType(file: File): string {
+  const name = file.name.toLowerCase();
+  const rawType = (file.type || "").trim().toLowerCase();
+  if (name.endsWith(".pptx") && (ZIP_MIMES.has(rawType) || !rawType)) {
+    return PPTX_MIME;
+  }
+  if (name.endsWith(".pdf") && (!rawType || rawType === "application/octet-stream")) {
+    return "application/pdf";
+  }
+  if (rawType && !ZIP_MIMES.has(rawType)) return file.type;
+  if (name.endsWith(".pdf")) return "application/pdf";
+  if (name.endsWith(".pptx")) return PPTX_MIME;
+  if (name.endsWith(".png")) return "image/png";
+  if (name.endsWith(".webp")) return "image/webp";
+  if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";
+  return rawType || "application/octet-stream";
+}
+
+/** Request signed URL, PUT the file to R2 (optional byte progress), then complete. */
+export async function uploadMaterialFile(
+  deckId: string,
+  file: File,
+  onProgress?: (percent: number) => void,
+): Promise<CompleteMaterialResponse> {
+  const contentType = resolveUploadContentType(file);
+  const { materialId, uploadUrl } = await requestMaterialUploadUrl(deckId, {
+    filename: file.name || "upload.bin",
+    contentType,
     size: file.size,
   });
 
-  const putRes = await fetch(uploadUrl, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Length": String(file.size),
-    },
-    body: file,
-  });
-  if (!putRes.ok) {
-    throw new ApiError(putRes.status, "Failed to upload PDF to storage");
+  try {
+    await uploadWithProgress(uploadUrl, file, onProgress ?? (() => {}), {
+      contentType,
+    });
+  } catch (err) {
+    if (err instanceof UploadError) {
+      throw new ApiError(
+        err.status || 502,
+        err.message || "Failed to upload file to storage",
+      );
+    }
+    throw new ApiError(502, "Failed to upload file to storage");
   }
 
   return completeMaterial(materialId);
 }
+

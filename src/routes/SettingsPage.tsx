@@ -14,7 +14,6 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import { useColorScheme } from "@mui/material/styles";
-import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import Brightness6Icon from "@mui/icons-material/Brightness6";
 import {
   ApiError,
@@ -23,6 +22,7 @@ import {
   putLlmSettings,
   type LlmSettings,
 } from "../api/client";
+import { useTrackedOp } from "../progress/useTrackedOp";
 
 type ThemeMode = "system" | "light" | "dark";
 
@@ -32,15 +32,49 @@ const PROVIDERS = [
   { value: "google", label: "Google" },
 ] as const;
 
+function settingsQueryMessage(): {
+  error: string | null;
+  notice: string | null;
+} {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("linked") === "1") {
+    return { error: null, notice: "Google account linked." };
+  }
+  const code = params.get("error");
+  if (code === "oauth_conflict") {
+    return {
+      error: "That Google account is already linked to a different user.",
+      notice: null,
+    };
+  }
+  if (code === "oauth_email_mismatch") {
+    return {
+      error: "Google email must match your Sugarplum account email.",
+      notice: null,
+    };
+  }
+  if (code === "oauth_denied") {
+    return { error: "Google linking was cancelled.", notice: null };
+  }
+  if (code === "oauth") {
+    return { error: "Google linking failed. Try again.", notice: null };
+  }
+  return { error: null, notice: null };
+}
+
 export default function SettingsPage() {
   const { mode, setMode } = useColorScheme();
   const [provider, setProvider] = useState<string>("openai");
   const [apiKey, setApiKey] = useState("");
   const [current, setCurrent] = useState<LlmSettings | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [googleLinked, setGoogleLinked] = useState(false);
+  const [accountEmail, setAccountEmail] = useState<string | null>(null);
+  const queryMsg = settingsQueryMessage();
+  const [error, setError] = useState<string | null>(queryMsg.error);
+  const [notice, setNotice] = useState<string | null>(queryMsg.notice);
   const [ready, setReady] = useState(false);
+  const { end: endLoad } = useTrackedOp("Loading…", { trackOnMount: true });
+  const { busy, begin, end } = useTrackedOp("Saving…");
 
   const themeMode: ThemeMode =
     mode === "light" || mode === "dark" || mode === "system" ? mode : "system";
@@ -49,12 +83,15 @@ export default function SettingsPage() {
     let cancelled = false;
     (async () => {
       try {
-        await me();
+        const user = await me();
         const settings = await getLlmSettings();
         if (cancelled) return;
+        setAccountEmail(user.email);
+        setGoogleLinked(user.google_linked === true);
         setCurrent(settings);
         if (settings.configured) setProvider(settings.provider);
         setReady(true);
+        endLoad();
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
@@ -65,27 +102,28 @@ export default function SettingsPage() {
           err instanceof ApiError ? err.message : "Failed to load settings",
         );
         setReady(true);
+        endLoad(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [endLoad]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setNotice(null);
-    setBusy(true);
+    begin();
     try {
       const saved = await putLlmSettings(provider, apiKey);
       setCurrent(saved);
       setApiKey("");
       setNotice("API key saved (encrypted at rest).");
+      end();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not save key");
-    } finally {
-      setBusy(false);
+      end(false);
     }
   }
 
@@ -103,9 +141,48 @@ export default function SettingsPage() {
         Settings
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Bring your own LLM API key. Sugarplum encrypts it at rest and never
-        shows the full key again.
+        Optional. Without a key, Sugarplum uses free platform AI (up to 20 jobs
+        per UTC day). Add your own OpenAI, Anthropic, or Google key to skip that
+        cap and for higher quality. Keys are encrypted at rest and never shown
+        in full again.
       </Typography>
+
+      <Stack spacing={1} sx={{ mb: 4 }}>
+        <Typography variant="subtitle1" component="h2">
+          Account
+        </Typography>
+        {accountEmail ? (
+          <Typography variant="body2" color="text.secondary">
+            Signed in as {accountEmail}
+          </Typography>
+        ) : null}
+        {googleLinked ? (
+          <Alert severity="success">Google account linked.</Alert>
+        ) : (
+          <Button variant="outlined" href="/api/auth/google/start?intent=link">
+            Link Google
+          </Button>
+        )}
+      </Stack>
+
+      <Stack spacing={1} sx={{ mb: 4 }}>
+        <Typography variant="subtitle1" component="h2">
+          Legal
+        </Typography>
+        <Typography variant="body2">
+          <Link href="/privacy" underline="hover">
+            Privacy Policy
+          </Link>
+          {" · "}
+          <Link href="/terms" underline="hover">
+            Terms of Service
+          </Link>
+          {" · "}
+          <Link href="/data-deletion" underline="hover">
+            Data deletion
+          </Link>
+        </Typography>
+      </Stack>
 
       <Stack spacing={1} sx={{ mb: 4 }}>
         <Stack direction="row" spacing={1} alignItems="center">
@@ -129,19 +206,13 @@ export default function SettingsPage() {
         </ToggleButtonGroup>
       </Stack>
 
-      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-        <VpnKeyIcon />
-        <Typography variant="subtitle1" component="h2">
-          LLM
-        </Typography>
-      </Stack>
       {current?.configured ? (
         <Alert severity="info" sx={{ mb: 3 }}>
           Configured: {current.provider} · key ending in ···{current.last4}
         </Alert>
       ) : (
-        <Alert severity="warning" sx={{ mb: 3 }}>
-          No API key configured yet.
+        <Alert severity="info" sx={{ mb: 3 }}>
+          No personal API key yet. Generation still works via free platform AI.
         </Alert>
       )}
 
