@@ -8,13 +8,29 @@ const MAX_BACK = 400;
 
 /** Table/slide header tokens: drop even when short glossary-shaped. */
 const TABLE_HEADER_FRONT_RE =
-  /^(phylum|hosts?|family|genus|class|order|species|disease|pathology|lifecycle|life cycle|symptoms?|treatment|diagnosis|notes?)$/i;
+  /^(phylum|hosts?|family|genus|class|order|species|disease|pathology|lifecycle|life cycle|symptoms?|treatment|diagnosis|notes?|definitive|significance|transmission|prevention|reservoir|vector|incubation|prognosis|etiology)$/i;
+
+/** Front ending with a table-column label left as the "term". */
+const TABLE_COLUMN_SUFFIX_RE =
+  /\b(definitive|hosts?|significance|transmission|prevention|reservoir|vector|incubation|prognosis|etiology|family|genus|phylum|species|lifecycle|life cycle|symptoms?|treatment|diagnosis|notes?)$/i;
+
+/** Incomplete / stub answers from table cells. */
+const STUB_BACK_RE =
+  /^(depends on|multiple|mainly|various|variable|unknown|see (above|below|text)|n\/?a|tbd|yes|no)$/i;
+
+/** Preposition-led fragment fronts (lecture debris). */
+const PREPOSITION_FRONT_RE =
+  /^(to|into|in|on|at|from|of|for|with|by|via|as|per|during|after|before|between|among|over|under|through)\b/i;
 
 function sentenceCount(text: string): number {
   return text
     .split(/[.!?]+/)
     .map((s) => s.trim())
     .filter(Boolean).length;
+}
+
+function wordCount(text: string): number {
+  return text.split(/\s+/).filter(Boolean).length;
 }
 
 /**
@@ -27,8 +43,69 @@ function isGlossaryShaped(front: string): boolean {
   const t = front.trim();
   if (t.includes("?")) return false;
   if (TABLE_HEADER_FRONT_RE.test(t)) return false;
+  if (TABLE_COLUMN_SUFFIX_RE.test(t)) return false;
   const words = t.split(/\s+/).filter(Boolean);
   return words.length > 0 && words.length <= 5;
+}
+
+function isFragmentFront(front: string): boolean {
+  const t = front.trim();
+  if (!t) return true;
+  // Leading dash / bullet residue from slides.
+  if (/^[\u2013\u2014\-\u2022*•]\s*/.test(t)) return true;
+  if (PREPOSITION_FRONT_RE.test(t)) return true;
+  // Multi-word phrase starting lowercase (not a proper term / question).
+  // Single-word lowercase glossary terms (e.g. mitochondria) stay.
+  const words = t.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) {
+    const first = t[0];
+    if (
+      first &&
+      first === first.toLowerCase() &&
+      first !== first.toUpperCase()
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function isIncompleteBack(back: string): boolean {
+  const t = back.trim();
+  if (STUB_BACK_RE.test(t)) return true;
+  if (/\.\.\.|…\s*$/.test(t)) return true;
+  if (/[,:;]\s*$/.test(t)) return true;
+  return false;
+}
+
+/** One-word adjective/category back with a non-question front (table cell pair). */
+function isGenericOneWordPair(front: string, back: string): boolean {
+  if (front.includes("?")) return false;
+  if (wordCount(back) !== 1) return false;
+  // Single token with no digits; short category labels like Chronic, Multiple.
+  return /^[A-Za-z][A-Za-z'-]*$/.test(back.trim());
+}
+
+function hasBrokenPunctuation(back: string): boolean {
+  const t = back.trim();
+  // Starts with a closing curly quote (e.g. ”Blackhead”.).
+  if (/^[”’»]/.test(t)) return true;
+  const straight = (t.match(/"/g) ?? []).length;
+  if (straight % 2 !== 0) return true;
+  const curlyOpen = (t.match(/[“‘«]/g) ?? []).length;
+  const curlyClose = (t.match(/[”’»]/g) ?? []).length;
+  if (curlyOpen !== curlyClose) return true;
+  return false;
+}
+
+function shouldDrop(draft: CardDraft, front: string, back: string): boolean {
+  if (isIncompleteBack(back)) return true;
+  if (hasBrokenPunctuation(back)) return true;
+  // Table-column suffixes only on non-questions (avoid "What is the host?").
+  if (!front.includes("?") && TABLE_COLUMN_SUFFIX_RE.test(front)) return true;
+  if (draft.type === "qa" && isFragmentFront(front)) return true;
+  if (draft.type === "qa" && isGenericOneWordPair(front, back)) return true;
+  return false;
 }
 
 /** Layer-1 heuristic gate: drop junk before persist. No LLM. */
@@ -45,6 +122,7 @@ export function filterDraftsByQuality(drafts: CardDraft[]): CardDraft[] {
     // Non-question QA that is not glossary-shaped is junk (header / fragment).
     if (draft.type === "qa" && !front.includes("?") && !glossary) continue;
     if (sentenceCount(back) >= 3) continue;
+    if (shouldDrop(draft, front, back)) continue;
     const key = front.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);

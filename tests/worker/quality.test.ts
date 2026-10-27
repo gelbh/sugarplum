@@ -56,4 +56,32 @@ describe("filterDraftsByQuality", () => {
     };
     expect(filterDraftsByQuality([cloze])).toEqual([cloze]);
   });
+
+  it("keeps questions that end with a table-column word", () => {
+    const hostQ = qa("What is the definitive host?", "Dogs and cats");
+    expect(filterDraftsByQuality([hostQ])).toEqual([hostQ]);
+  });
+
+  it("drops lecture-table junk from real harvest (0c24a8cf)", () => {
+    const mito = qa("mitochondria", "powerhouse of the cell");
+    const atp = qa("What is ATP?", "Adenosine triphosphate");
+    const cloze: CardDraft = {
+      type: "cloze",
+      front: "The powerhouse is the {{c1::mitochondria}}.",
+      back: "mitochondria",
+      provenance: { pages: [1], excerpt: "powerhouse" },
+    };
+    const junk = [
+      qa("Entamoebidae Definitive", "Multiple"),
+      qa("to large intestine", "passed in faeces"),
+      qa("Eimeriidae Definitive", "depends on"),
+      qa("Cats", "Chronic"),
+      qa("comb", "\u201DBlackhead\u201D."),
+    ];
+    expect(filterDraftsByQuality([...junk, mito, atp, cloze])).toEqual([
+      mito,
+      atp,
+      cloze,
+    ]);
+  });
 });
