@@ -310,6 +310,14 @@ export function regenJob(jobId: string) {
   return api<GenerationJob>(`/api/jobs/${jobId}/regen`, { method: "POST" });
 }
 
+/** Soft-clean: reject remaining drafts only; accepted cards stay. No requeue. */
+export function rejectJobDrafts(jobId: string) {
+  if (isGuest()) guestUnsupported("reject remaining drafts");
+  return api<{ rejectedCount: number }>(`/api/jobs/${jobId}/reject-drafts`, {
+    method: "POST",
+  });
+}
+
 export type JobListItem = {
   id: string;
   status: string;
