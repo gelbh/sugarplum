@@ -119,13 +119,21 @@ function harvestLine(line: string): CardDraft[] {
   const forPair = stripBulletPrefix(trimmed);
 
   // Spaced separator only: bare `::` collides with Anki `{{c1::…}}`.
-  const doubleColon = splitOnce(trimmed, " :: ");
+  const doubleColon = splitOnce(forPair, " :: ");
   if (doubleColon) {
+    if (isLectureChromePair(doubleColon.left, doubleColon.right, trimmed)) {
+      return [];
+    }
     return [qaDraft(doubleColon.left, doubleColon.right, line)];
   }
 
   const pipe = splitOnce(trimmed, " | ") ?? splitOnce(trimmed, "|");
-  if (pipe && !trimmed.includes("||") && isUsablePipeQa(pipe.left, pipe.right, trimmed)) {
+  if (
+    pipe &&
+    !trimmed.includes("||") &&
+    isUsablePipeQa(pipe.left, pipe.right, trimmed)
+  ) {
+    if (isLectureChromePair(pipe.left, pipe.right, trimmed)) return [];
     return [qaDraft(pipe.left, pipe.right, line)];
   }
 

@@ -211,4 +211,14 @@ describe("harvestRuleDrafts", () => {
     expect(remainder).toContain("Phylum | Hosts | Family");
     expect(remainder).not.toContain("What is mitosis ::");
   });
+
+  it("does not harvest lecture chrome via spaced double-colon", () => {
+    const text = [
+      "Giardia species :: disease",
+      "lifecycle :: overview",
+      "What is mitosis :: Cell division producing two identical nuclei",
+    ].join("\n");
+    const drafts = harvestRuleDrafts(text);
+    expect(drafts.map((d) => d.front)).toEqual(["What is mitosis"]);
+  });
 });
