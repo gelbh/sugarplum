@@ -139,7 +139,9 @@ export function ProgressProvider({ children }: ProgressProviderProps) {
   );
 
   return (
-    <ProgressContext.Provider value={value}>{children}</ProgressContext.Provider>
+    <ProgressContext.Provider value={value}>
+      {children}
+    </ProgressContext.Provider>
   );
 }
 

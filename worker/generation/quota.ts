@@ -32,6 +32,17 @@ function ttlUntilNextUtcDay(now: Date): number {
   return Math.max(60, Math.ceil((next - now.getTime()) / 1000));
 }
 
+/** Read today's free-gen count without consuming a slot. */
+export async function getFreeGenUsage(
+  env: Env,
+  userId: string,
+): Promise<{ used: number; cap: number; remaining: number }> {
+  const used = await readCount(env, userId);
+  const cap = FREE_GEN_DAILY_CAP;
+  const remaining = Math.max(0, cap - used);
+  return { used, cap, remaining };
+}
+
 /**
  * Reserve one free-gen attempt for this UTC day: read count, throw if at cap,
  * otherwise put count+1 immediately. Call once before Workers AI / pipeline.
