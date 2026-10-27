@@ -391,6 +391,7 @@ export type JobListItem = {
   id: string;
   status: string;
   draft_count: number;
+  deck_id: string;
   deck_title: string;
   filename: string | null;
   created_at: string;

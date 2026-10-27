@@ -124,6 +124,7 @@ describe("GET /api/jobs", () => {
     const body = (await res.json()) as {
       id: string;
       draft_count: number;
+      deck_id: string;
       deck_title: string;
       filename: string | null;
       status: string;
@@ -132,6 +133,7 @@ describe("GET /api/jobs", () => {
     expect(body[0]).toMatchObject({
       id: "job-new",
       draft_count: 2,
+      deck_id: "deck-a",
       deck_title: "Bio",
       filename: "notes.txt",
       status: "needs_review",
@@ -139,6 +141,7 @@ describe("GET /api/jobs", () => {
     expect(body[1]).toMatchObject({
       id: "job-old",
       draft_count: 1,
+      deck_id: "deck-a",
     });
   });
 

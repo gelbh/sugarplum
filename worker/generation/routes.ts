@@ -76,6 +76,7 @@ export type JobListItem = {
   id: string;
   status: string;
   draft_count: number;
+  deck_id: string;
   deck_title: string;
   filename: string | null;
   created_at: string;
@@ -88,7 +89,7 @@ jobRoutes.get("/", async (c) => {
 
   const { results } = await db
     .prepare(
-      `SELECT j.id, j.status, j.created_at, d.title AS deck_title, m.filename,
+      `SELECT j.id, j.status, j.created_at, m.deck_id, d.title AS deck_title, m.filename,
               COUNT(c.id) AS draft_count
        FROM generation_jobs j
        INNER JOIN materials m ON m.id = j.material_id
@@ -103,6 +104,7 @@ jobRoutes.get("/", async (c) => {
       id: string;
       status: string;
       created_at: string;
+      deck_id: string;
       deck_title: string;
       filename: string | null;
       draft_count: number;
@@ -112,6 +114,7 @@ jobRoutes.get("/", async (c) => {
     id: row.id,
     status: row.status,
     draft_count: Number(row.draft_count),
+    deck_id: row.deck_id,
     deck_title: row.deck_title,
     filename: row.filename,
     created_at: row.created_at,

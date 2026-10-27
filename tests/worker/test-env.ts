@@ -574,6 +574,7 @@ export function createTestEnv(opts?: {
                 id: job.id,
                 status: job.status,
                 created_at: job.created_at,
+                deck_id: material.deck_id,
                 deck_title: deck.title,
                 filename: material.filename,
                 draft_count,

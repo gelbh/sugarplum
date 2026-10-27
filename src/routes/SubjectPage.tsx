@@ -347,13 +347,20 @@ export default function SubjectPage({ subjectId }: Props) {
                       py: 1,
                     }}
                   >
-                    <Typography
+                    <Link
+                      href={`/library/decks/${encodeURIComponent(d.id)}`}
+                      underline="hover"
+                      color="inherit"
                       variant="body2"
                       sx={{ flex: 1, minWidth: 0 }}
                       noWrap
+                      onClick={(ev) => {
+                        ev.preventDefault();
+                        navigate(`/library/decks/${encodeURIComponent(d.id)}`);
+                      }}
                     >
                       {d.title}
-                    </Typography>
+                    </Link>
                     <IconButton
                       size="small"
                       aria-label={`Rename ${d.title}`}
