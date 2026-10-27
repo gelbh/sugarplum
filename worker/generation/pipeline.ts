@@ -40,8 +40,9 @@ export type RunGenerationPipelineInput = {
 };
 
 /**
- * Remove lines that were harvested by rules (matched via provenance.excerpt)
- * so the LLM pipeline can run on the prose remainder.
+ * Remove lines claimed by the pre-critique rules harvest (via provenance.excerpt)
+ * so the LLM pipeline does not re-see those lines — including ones Layer-1 or
+ * critique later drop.
  */
 export function remainderAfterRules(
   text: string,
@@ -134,13 +135,21 @@ function parseCritiqueSurvivors(raw: string): CardDraft[] {
   return survivors;
 }
 
-async function critiqueChunk(args: {
+export type CritiqueChunkInput = {
   chunk: string;
   candidates: CardDraft[];
   llm: PipelineLlm;
   apiKey: string;
   provider: string;
-}): Promise<CardDraft[] | null> {
+};
+
+/**
+ * Critique one batch against a source chunk. Unparseable/empty after 1 retry → null
+ * (caller falls back to the pre-critique candidates).
+ */
+export async function critiqueChunk(
+  args: CritiqueChunkInput,
+): Promise<CardDraft[] | null> {
   const { chunk, candidates, llm, apiKey, provider } = args;
   const system = CRITIQUE_SYSTEM_PROMPT;
   const user = critiqueUserPrompt(chunk, candidates);
@@ -154,6 +163,70 @@ async function critiqueChunk(args: {
     }
   }
   return null;
+}
+
+export type CritiqueDraftsAgainstSourceInput = {
+  sourceText: string;
+  candidates: CardDraft[];
+  llm: PipelineLlm;
+  apiKey: string;
+  provider: string;
+};
+
+/**
+ * Critique Layer-1 (or generate) candidates against source text.
+ * Chunks long source; assigns drafts by excerpt containment.
+ * Hard-fail after retries → return the input candidates unchanged.
+ */
+export async function critiqueDraftsAgainstSource(
+  input: CritiqueDraftsAgainstSourceInput,
+): Promise<CardDraft[]> {
+  const { sourceText, candidates, llm, apiKey, provider } = input;
+  if (candidates.length === 0) return [];
+
+  const chunks = chunkText(sourceText).slice(0, MAX_PIPELINE_CHUNKS);
+  if (chunks.length === 0) return candidates;
+
+  if (chunks.length === 1) {
+    const result = await critiqueChunk({
+      chunk: chunks[0]!,
+      candidates,
+      llm,
+      apiKey,
+      provider,
+    });
+    return result ?? candidates;
+  }
+
+  const buckets: CardDraft[][] = chunks.map(() => []);
+  const unmatched: CardDraft[] = [];
+  for (const draft of candidates) {
+    const excerpt = draft.provenance.excerpt.trim();
+    let matched = false;
+    for (let i = 0; i < chunks.length; i++) {
+      if (excerpt && chunks[i]!.includes(excerpt)) {
+        buckets[i]!.push(draft);
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) unmatched.push(draft);
+  }
+
+  const out: CardDraft[] = [...unmatched];
+  for (let i = 0; i < chunks.length; i++) {
+    const bucket = buckets[i]!;
+    if (bucket.length === 0) continue;
+    const result = await critiqueChunk({
+      chunk: chunks[i]!,
+      candidates: bucket,
+      llm,
+      apiKey,
+      provider,
+    });
+    out.push(...(result ?? bucket));
+  }
+  return out;
 }
 
 /**

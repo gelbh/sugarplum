@@ -77,6 +77,36 @@ function spyLlm(base: LlmAdapter = mockLlmAdapter()): LlmAdapter & {
   };
 }
 
+/** Parse critique user prompt candidates and keep those whose front is allowlisted. */
+function critiqueKeepFronts(keepFronts: Set<string> | string[]) {
+  const allow = keepFronts instanceof Set ? keepFronts : new Set(keepFronts);
+  return async ({ user }: { user: string }) => {
+    const marker = "Candidate cards (JSON):\n";
+    const start = user.indexOf(marker);
+    if (start < 0) throw new Error("critique prompt missing candidates");
+    const jsonStart = start + marker.length;
+    const end = user.indexOf("\n\nReturn only", jsonStart);
+    const raw = end >= 0 ? user.slice(jsonStart, end) : user.slice(jsonStart);
+    const candidates = JSON.parse(raw) as CardDraft[];
+    return JSON.stringify({
+      cards: candidates.filter((c) => allow.has(c.front)),
+    });
+  };
+}
+
+/** Echo all critique candidates (rules-only path with no drops). */
+function critiqueEchoCandidates() {
+  return async ({ user }: { user: string }) => {
+    const marker = "Candidate cards (JSON):\n";
+    const start = user.indexOf(marker);
+    if (start < 0) throw new Error("critique prompt missing candidates");
+    const jsonStart = start + marker.length;
+    const end = user.indexOf("\n\nReturn only", jsonStart);
+    const raw = end >= 0 ? user.slice(jsonStart, end) : user.slice(jsonStart);
+    return JSON.stringify({ cards: JSON.parse(raw) });
+  };
+}
+
 describe("mergeAndDedupeDrafts", () => {
   it("keeps rules first and drops near-identical fronts", () => {
     const rules: CardDraft[] = [
@@ -109,6 +139,28 @@ describe("mergeAndDedupeDrafts", () => {
 });
 
 describe("processGenerateJob free path", () => {
+  it("skips when CAS claim loses (job not queued)", async () => {
+    const env = createTestEnv();
+    await seedOwner(env, false);
+    const msg = await seedPasteJob(
+      env,
+      "Mitochondria are the powerhouse of the cell.",
+    );
+    const jobs = env.getGenerationJobs();
+    const job = jobs.find((j) => j.id === msg.jobId)!;
+    env.seedGenerationJob({ ...job, status: "running" });
+
+    const llm = spyLlm();
+    await processGenerateJob(env, msg, { llm });
+
+    expect(llm.generateDrafts).not.toHaveBeenCalled();
+    expect(llm.complete).not.toHaveBeenCalled();
+    expect(env.getCards()).toHaveLength(0);
+    expect(env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status).toBe(
+      "running",
+    );
+  });
+
   it("no secret + mock llm → needs_review and records free-gen", async () => {
     const env = createTestEnv();
     await seedOwner(env, false);
@@ -126,25 +178,64 @@ describe("processGenerateJob free path", () => {
     expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBe("1");
   });
 
-  it("structured-only paste skips LLM entirely", async () => {
+  it("structured-only paste critiques rules via complete and consumes free quota", async () => {
     const env = createTestEnv();
     await seedOwner(env, false);
-    const llm = spyLlm();
+    const llm = spyLlm({
+      generateDrafts: async () => [],
+      complete: critiqueEchoCandidates(),
+    });
     const msg = await seedPasteJob(
       env,
-      "What is ATP :: Adenosine triphosphate\nCapital of France | Paris\n",
+      "What is ATP :: Adenosine triphosphate\nmitochondria: powerhouse of the cell\n",
     );
 
     await processGenerateJob(env, msg, { llm });
 
     expect(llm.generateDrafts).not.toHaveBeenCalled();
-    expect(llm.complete).not.toHaveBeenCalled();
+    expect(llm.complete).toHaveBeenCalled();
+    const critiqueUser = (llm.complete.mock.calls[0]![0] as { user: string })
+      .user;
+    expect(critiqueUser).toContain("What is ATP");
+    expect(critiqueUser).toContain("mitochondria");
 
     const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("needs_review");
     expect(env.getCards().length).toBeGreaterThanOrEqual(2);
-    // Rules-only: free quota not consumed
-    expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBeNull();
+    // Rules critique uses the free LLM path.
+    expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBe("1");
+  });
+
+  it("rules critique drops Layer-1 survivors that the mock rejects", async () => {
+    const env = createTestEnv();
+    await seedOwner(env, false);
+    // "Overview" survives harvest + Layer-1 but is dropped by critique.
+    // "mitochondria" is kept. No prose remainder → generateDrafts unused.
+    const paste = [
+      "mitochondria: powerhouse of the cell",
+      "Overview: general summary of chapter",
+    ].join("\n");
+    const llm = spyLlm({
+      generateDrafts: async () => [],
+      complete: critiqueKeepFronts(["mitochondria"]),
+    });
+    const msg = await seedPasteJob(env, paste);
+
+    await processGenerateJob(env, msg, { llm });
+
+    expect(llm.generateDrafts).not.toHaveBeenCalled();
+    expect(llm.complete).toHaveBeenCalled();
+    const critiqueUser = (llm.complete.mock.calls[0]![0] as { user: string })
+      .user;
+    expect(critiqueUser).toContain("Overview");
+    expect(critiqueUser).toContain("mitochondria");
+
+    const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
+    expect(job?.status).toBe("needs_review");
+    const fronts = env.getCards().map((c) => JSON.parse(c.front_json) as string);
+    expect(fronts).toContain("mitochondria");
+    expect(fronts.some((f) => /overview/i.test(f))).toBe(false);
+    expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBe("1");
   });
 
   it("BYO secret preferred: uses override llm without free quota", async () => {

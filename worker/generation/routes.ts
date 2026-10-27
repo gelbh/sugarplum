@@ -3,6 +3,7 @@ import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
+import { requeueGeneration } from "./enqueue";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -123,5 +124,71 @@ jobRoutes.get("/:id", async (c) => {
     progress: parseProgressJson(row.progress_json),
     created_at: row.created_at,
     finished_at: row.finished_at,
+  });
+});
+
+/** Wipe job cards, reset to queued, and requeue generation (owner only). */
+jobRoutes.post("/:id/regen", async (c) => {
+  const userId = await requireUser(c);
+  const jobId = c.req.param("id");
+  const db = getDb(c.env);
+
+  const row = await db
+    .prepare(
+      `SELECT j.id, j.material_id, j.status, j.error, j.coverage_json, j.progress_json, j.created_at, j.finished_at, m.deck_id
+       FROM generation_jobs j
+       INNER JOIN materials m ON m.id = j.material_id
+       INNER JOIN decks d ON d.id = m.deck_id
+       WHERE j.id = ? AND d.user_id = ?`,
+    )
+    .bind(jobId, userId)
+    .first<JobPollRow & { deck_id: string }>();
+
+  if (!row) throw new HTTPException(404, { message: "Job not found" });
+
+  // Claim first so concurrent regens lose the race before any wipe.
+  const claim = await db
+    .prepare(
+      `UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = NULL, progress_json = NULL, finished_at = NULL
+       WHERE id = ? AND status NOT IN ('queued', 'running')`,
+    )
+    .bind("queued", jobId)
+    .run();
+  if (!claim.meta.changes) {
+    throw new HTTPException(409, { message: "Job already in progress" });
+  }
+
+  await db.prepare("DELETE FROM cards WHERE job_id = ?").bind(jobId).run();
+
+  try {
+    await requeueGeneration(c.env, {
+      jobId: row.id,
+      materialId: row.material_id,
+      deckId: row.deck_id,
+    });
+  } catch (err) {
+    const finishedAt = new Date().toISOString();
+    const messageText =
+      err instanceof Error ? err.message : "Failed to enqueue regeneration";
+    await db
+      .prepare(
+        "UPDATE generation_jobs SET status = ?, error = ?, finished_at = ? WHERE id = ?",
+      )
+      .bind("failed", messageText, finishedAt, jobId)
+      .run();
+    throw new HTTPException(502, {
+      message: "Could not enqueue regeneration; job marked failed",
+    });
+  }
+
+  return c.json({
+    id: row.id,
+    material_id: row.material_id,
+    status: "queued",
+    error: null,
+    coverage_json: null,
+    progress: null,
+    created_at: row.created_at,
+    finished_at: null,
   });
 });
