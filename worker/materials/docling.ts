@@ -77,6 +77,15 @@ export async function extractFiguresViaDocling(
   const baseUrl = env.DOCLING_URL?.trim();
   if (!baseUrl) return { crops: [] };
 
+  const apiKey = env.DOCLING_API_KEY?.trim();
+  if (!apiKey) {
+    return {
+      crops: [],
+      warning:
+        "Docling unavailable (DOCLING_API_KEY required when DOCLING_URL is set)",
+    };
+  }
+
   const fetchFn = opts?.fetchFn ?? fetch;
   const url = `${baseUrl.replace(/\/+$/, "")}/v1/convert/file`;
 
@@ -91,9 +100,7 @@ export async function extractFiguresViaDocling(
   form.append("include_images", "true");
   form.append("image_export_mode", "embedded");
 
-  const headers: Record<string, string> = {};
-  const apiKey = env.DOCLING_API_KEY?.trim();
-  if (apiKey) headers.authorization = `Bearer ${apiKey}`;
+  const headers: Record<string, string> = { "X-Api-Key": apiKey };
 
   try {
     const response = await fetchFn(url, {

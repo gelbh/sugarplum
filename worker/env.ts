@@ -22,8 +22,8 @@ export interface Env {
   GOOGLE_CLIENT_ID?: string;
   /** Secret: `wrangler secret put GOOGLE_CLIENT_SECRET` */
   GOOGLE_CLIENT_SECRET?: string;
-  /** Optional docling-serve base URL (server-only; e.g. http://127.0.0.1:5001). */
+  /** Optional docling-serve base URL (HTTPS in prod; e.g. http://127.0.0.1:5001 locally). */
   DOCLING_URL?: string;
-  /** Optional shared secret for docling-serve when exposed beyond localhost. */
+  /** Required whenever DOCLING_URL is set; sent as X-Api-Key (docling-serve DOCLING_SERVE_API_KEY). */
   DOCLING_API_KEY?: string;
 }
