@@ -188,10 +188,15 @@ function readStore(storage?: Store): GuestStore {
       return seeded;
     }
     const migrated = migrateStore(parsed);
-    // Persist migration so subject_id / subjects stick.
+    // Persist migration so subject_id / subjects stick (incl. dangling ids).
+    const subjectIds = new Set(
+      Array.isArray(parsed.subjects) ? parsed.subjects.map((s) => s.id) : [],
+    );
     const needsWrite =
       !Array.isArray(parsed.subjects) ||
-      parsed.decks.some((d) => !d.subject_id);
+      parsed.decks.some(
+        (d) => !d.subject_id || !subjectIds.has(d.subject_id),
+      );
     if (needsWrite) writeStore(migrated, storage);
     return migrated;
   } catch {

@@ -91,6 +91,41 @@ describe("guest store", () => {
     );
   });
 
+  it("persists remap when deck.subject_id is dangling", () => {
+    storage.setItem(
+      STORE_KEY,
+      JSON.stringify({
+        subjects: [
+          {
+            id: "sub-keep",
+            title: "Kept",
+            created_at: "2024-01-01T00:00:00.000Z",
+          },
+        ],
+        decks: [
+          {
+            id: "deck-orphan",
+            title: "Orphan",
+            subject_id: "sub-missing",
+            subject_hint: "Anatomy",
+            created_at: "2024-01-02T00:00:00.000Z",
+          },
+        ],
+        cards: [],
+        dueIds: [],
+      }),
+    );
+
+    const decks = guestListDecks(undefined, storage);
+    expect(decks[0]?.subject_id).not.toBe("sub-missing");
+    const persisted = JSON.parse(storage.getItem(STORE_KEY)!) as {
+      decks: Array<{ subject_id: string }>;
+      subjects: Array<{ id: string; title: string }>;
+    };
+    expect(persisted.decks[0]?.subject_id).toBe(decks[0]?.subject_id);
+    expect(persisted.subjects.some((s) => s.title === "Anatomy")).toBe(true);
+  });
+
   it("creates subject then deck under subject_id", () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Physiology", storage);

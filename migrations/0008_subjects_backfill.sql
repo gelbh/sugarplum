@@ -1,5 +1,5 @@
 -- Backfill decks.subject_id from subject_hint (account/D1).
--- Mirrors guest migrateStore + worker/subjects/backfill.ts.
+-- Mirrors guest migrateStore (hint → subject title / Unfiled).
 -- Group: user_id + trim(hint) or 'Unfiled'; reuse existing subject title when
 -- present; otherwise insert. Clear subject_hint after attach.
 -- After this, production rows should all have subject_id. Enforcing NOT NULL
