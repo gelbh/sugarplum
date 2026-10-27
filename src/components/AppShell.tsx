@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
 import SettingsIcon from "@mui/icons-material/Settings";
 import TodayIcon from "@mui/icons-material/Today";
 import BottomNavigation from "@mui/material/BottomNavigation";
 import BottomNavigationAction from "@mui/material/BottomNavigationAction";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Drawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
@@ -16,6 +18,11 @@ import Typography from "@mui/material/Typography";
 import Link from "@mui/material/Link";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
+import {
+  canGoBack,
+  isStandaloneDisplay,
+  navigate,
+} from "../nav/navigate";
 import GlobalProgressBar from "../progress/GlobalProgressBar";
 import { ProgressProvider } from "../progress/ProgressProvider";
 import { useStudyChrome } from "../study/StudyChromeContext";
@@ -28,6 +35,7 @@ const SHELL_MUTED = "rgba(245, 245, 245, 0.62)";
 const SHELL_HAIRLINE = "rgba(232, 216, 199, 0.16)";
 /** Selected chrome accent on night shell (matches dark theme primary). */
 const PLUM_ON_DARK = "#CE93D8";
+const BOTTOM_NAV_HEIGHT = 56;
 
 type NavId = "today" | "library" | "settings";
 
@@ -69,6 +77,10 @@ function activeNavId(path: string): NavId {
   return hit?.id ?? "today";
 }
 
+function isDrillDown(path: string): boolean {
+  return path === "/study" || /^\/jobs\/[^/]+\/drafts\/?$/.test(path);
+}
+
 type AppShellProps = {
   children: ReactNode;
 };
@@ -82,6 +94,11 @@ export default function AppShell({ children }: AppShellProps) {
   const active = activeNavId(path);
   const showDrawer = !hideChrome && !mobile;
   const showBottomNav = !hideChrome && mobile;
+  const showStandaloneBack =
+    !hideChrome &&
+    isDrillDown(path) &&
+    isStandaloneDisplay() &&
+    canGoBack();
 
   return (
     <ProgressProvider>
@@ -91,7 +108,11 @@ export default function AppShell({ children }: AppShellProps) {
           flexDirection: "column",
           minHeight: "100vh",
           bgcolor: "background.default",
-          ...(showBottomNav ? { pb: 7 } : {}),
+          ...(showBottomNav
+            ? {
+                pb: `calc(${BOTTOM_NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px))`,
+              }
+            : {}),
         }}
       >
         <GlobalProgressBar />
@@ -145,8 +166,7 @@ export default function AppShell({ children }: AppShellProps) {
                   <ListItemButton
                     key={item.id}
                     selected={selected}
-                    href={item.href}
-                    component="a"
+                    onClick={() => navigate(item.href)}
                     sx={{
                       borderRadius: 1,
                       mb: 0.5,
@@ -223,6 +243,17 @@ export default function AppShell({ children }: AppShellProps) {
               : {}),
           }}
         >
+          {showStandaloneBack ? (
+            <Box sx={{ px: 2, pt: 1.5 }}>
+              <Button
+                size="small"
+                startIcon={<ArrowBackIcon />}
+                onClick={() => window.history.back()}
+              >
+                Back
+              </Button>
+            </Box>
+          ) : null}
           {children}
         </Box>
         {showBottomNav ? (
@@ -239,6 +270,7 @@ export default function AppShell({ children }: AppShellProps) {
               borderTop: `1px solid ${SHELL_HAIRLINE}`,
               backgroundImage: "none",
               borderRadius: 0,
+              pb: "env(safe-area-inset-bottom)",
             }}
           >
             <BottomNavigation
@@ -246,11 +278,12 @@ export default function AppShell({ children }: AppShellProps) {
               value={active}
               onChange={(_e, value: NavId) => {
                 const item = NAV.find((n) => n.id === value);
-                if (item) window.location.assign(item.href);
+                if (item) navigate(item.href);
               }}
               sx={{
                 bgcolor: "transparent",
-                height: 56,
+                height: BOTTOM_NAV_HEIGHT,
+                minHeight: BOTTOM_NAV_HEIGHT,
                 "& .MuiBottomNavigationAction-root": {
                   color: SHELL_MUTED,
                   minWidth: 0,
