@@ -227,6 +227,12 @@ export function FigureSuggestPanel({
       if (boxes.length === 0) {
         setCropNotice("No figures detected. Drag on a page to crop manually.");
       }
+    } catch (err) {
+      const msg =
+        err instanceof Error && err.message
+          ? err.message
+          : "Figure suggest failed. You can still drag to crop manually.";
+      setSessionError(msg);
     } finally {
       setBusySuggest(false);
     }

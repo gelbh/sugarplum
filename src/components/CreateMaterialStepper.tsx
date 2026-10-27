@@ -28,6 +28,7 @@ import {
 } from "../api/client";
 import { guestPasteToCards } from "../guest/pasteToCards";
 import { guestAddAcceptedCards } from "../guest/store";
+import { FigureSuggestPanel } from "./FigureSuggestPanel";
 import { stepperSx } from "./stepperSx";
 
 type Props = {
@@ -481,24 +482,40 @@ export default function CreateMaterialStepper({
                   </Button>
                   {uploadFile &&
                   resolveUploadContentType(uploadFile) === "application/pdf" ? (
-                    <Button
-                      variant="outlined"
-                      component="label"
-                      disabled={busy || !selectedDeckId}
-                    >
-                      {figureFiles.length > 0
-                        ? `${figureFiles.length} figure crop${figureFiles.length === 1 ? "" : "s"} selected`
-                        : "Attach figure crops (PNG)"}
-                      <input
-                        type="file"
-                        accept="image/png,.png"
-                        multiple
-                        hidden
-                        onChange={(ev) => {
-                          setFigureFiles(Array.from(ev.target.files ?? []));
-                        }}
+                    <Stack spacing={1.5}>
+                      <FigureSuggestPanel
+                        pdfFile={uploadFile}
+                        disabled={busy || !selectedDeckId}
+                        onCropsChange={setFigureFiles}
                       />
-                    </Button>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        disabled={busy || !selectedDeckId}
+                      >
+                        {figureFiles.length > 0
+                          ? `${figureFiles.length} figure crop${figureFiles.length === 1 ? "" : "s"} selected`
+                          : "Attach figure crops (PNG)"}
+                        <input
+                          type="file"
+                          accept="image/png,.png"
+                          multiple
+                          hidden
+                          onChange={(ev) => {
+                            const picked = Array.from(ev.target.files ?? []);
+                            // Suggest replaces via onCropsChange; file input appends.
+                            setFigureFiles((prev) => [...prev, ...picked]);
+                            ev.target.value = "";
+                          }}
+                        />
+                      </Button>
+                      <Typography variant="caption" color="text.secondary">
+                        Optional: Suggest figures runs on-device. Manual PNG
+                        attach still works. Docling (if configured) still runs
+                        on the server. Suggest replaces the crop list; file
+                        attach appends.
+                      </Typography>
+                    </Stack>
                   ) : null}
                   <Typography variant="caption" color="text.secondary">
                     PDF/PPTX max 25MB; images max 8MB. Upload starts generation
