@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import AppShell from "./components/AppShell";
 import DraftReviewPage from "./routes/DraftReviewPage";
+import HomePage from "./routes/HomePage";
 import LibraryPage from "./routes/LibraryPage";
 import LoginPage from "./routes/LoginPage";
 import RegisterPage from "./routes/RegisterPage";
@@ -18,6 +19,7 @@ function shell(page: ReactNode) {
 export default function App() {
   const path = window.location.pathname;
 
+  if (path === "/" || path === "") return <HomePage />;
   if (path === "/login") return <LoginPage />;
   if (path === "/register") return <RegisterPage />;
   if (path === "/privacy") return <PrivacyPage />;
