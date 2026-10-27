@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { filterDraftsByQuality } from "../../worker/generation/quality";
+import { harvestRuleDrafts } from "../../worker/generation/rules";
 import type { CardDraft } from "../../worker/generation/schema";
 
 function qa(front: string, back: string): CardDraft {
@@ -21,6 +22,19 @@ describe("filterDraftsByQuality", () => {
       kept,
     ];
     expect(filterDraftsByQuality(drafts)).toEqual([kept]);
+  });
+
+  it("keeps short glossary fronts that rules harvest", () => {
+    const glossary = qa("mitochondria", "powerhouse of the cell");
+    expect(filterDraftsByQuality([glossary])).toEqual([glossary]);
+  });
+
+  it("keeps rule-harvested glossary after Layer-1 (harvest→filter)", () => {
+    const drafts = harvestRuleDrafts("mitochondria: powerhouse of the cell");
+    expect(drafts.map((d) => d.front)).toEqual(["mitochondria"]);
+    expect(filterDraftsByQuality(drafts).map((d) => d.front)).toEqual([
+      "mitochondria",
+    ]);
   });
 
   it("keeps a normal cloze", () => {
