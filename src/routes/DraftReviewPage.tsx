@@ -4,6 +4,11 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Container from "@mui/material/Container";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
@@ -16,6 +21,7 @@ import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import {
   ApiError,
+  acceptAllJobDrafts,
   acceptCard,
   getJob,
   getJourney,
@@ -47,6 +53,7 @@ export default function DraftReviewPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [confirmAll, setConfirmAll] = useState(false);
   const [coverage, setCoverage] = useState<{
     covered: string[];
     gaps: string[];
@@ -255,6 +262,38 @@ export default function DraftReviewPage() {
     }
   }
 
+  async function onAcceptAll() {
+    if (!jobId) return;
+    setError(null);
+    setNotice(null);
+    setConfirmAll(false);
+    begin();
+    try {
+      if (dirty && current) {
+        await patchCard(current.id, {
+          front: current.front,
+          back: current.back,
+          type: current.type as "qa" | "cloze" | "image_label" | "diagram",
+        });
+      }
+      const result = await acceptAllJobDrafts(jobId);
+      await load(jobId);
+      if (result.failed > 0) {
+        setNotice(
+          `Accepted ${result.accepted}; ${result.failed} could not be accepted`,
+        );
+      } else {
+        setNotice(`Accepted ${result.accepted} cards into study`);
+      }
+      end();
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Could not accept all",
+      );
+      end(false);
+    }
+  }
+
   if (!ready) {
     return (
       <Container maxWidth="sm" sx={{ py: 6 }}>
@@ -396,6 +435,14 @@ export default function DraftReviewPage() {
               </Button>
               <Button
                 variant="outlined"
+                color="primary"
+                onClick={() => setConfirmAll(true)}
+                disabled={busy || drafts.length === 0}
+              >
+                Approve all
+              </Button>
+              <Button
+                variant="outlined"
                 color="error"
                 startIcon={<CloseIcon />}
                 onClick={onReject}
@@ -428,6 +475,28 @@ export default function DraftReviewPage() {
             </Stack>
           </Paper>
         )}
+
+        <Dialog open={confirmAll} onClose={() => !busy && setConfirmAll(false)}>
+          <DialogTitle>Accept all drafts?</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Accept all {drafts.length} remaining drafts into study?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setConfirmAll(false)} disabled={busy}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={onAcceptAll}
+              disabled={busy}
+              autoFocus
+            >
+              Confirm
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Stack>
     </Container>
   );

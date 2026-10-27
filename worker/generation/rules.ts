@@ -53,6 +53,48 @@ function isVocabTermLeft(left: string): boolean {
   return true;
 }
 
+const BULLET_PREFIX_RE = /^([•\u2022*]|\-\s|\*\s)/;
+const TABLE_HEADER_LEFT_RE =
+  /^(phylum|hosts?|family|genus|class|order|species|disease|pathology|lifecycle|life cycle|symptoms?|treatment|diagnosis|notes?)$/i;
+const GENERIC_SLIDE_RIGHT_RE =
+  /^(disease|pathology|lifecycle|life cycle|overview|symptoms?|treatment|diagnosis)$/i;
+
+function stripBulletPrefix(line: string): string {
+  return line.replace(/^([•\u2022]\s*|[-*]\s+)/, "").trim();
+}
+
+/** True when colon/dash harvest would be lecture chrome, not glossary. */
+function isLectureChromePair(left: string, right: string, rawLine: string): boolean {
+  if (BULLET_PREFIX_RE.test(rawLine.trim())) return true;
+  if (TABLE_HEADER_LEFT_RE.test(left.trim())) return true;
+  if (GENERIC_SLIDE_RIGHT_RE.test(right.trim()) && left.split(/\s+/).length <= 3) {
+    return true;
+  }
+  // Truncated / paren debris on the left (e.g. "fission) and produce cysts").
+  if (/[)]/.test(left) || left.length < 3) return true;
+  return false;
+}
+
+function isUsablePipeQa(left: string, right: string, rawLine: string): boolean {
+  const pipeCount = (rawLine.match(/\|/g) ?? []).length;
+  if (pipeCount !== 1) return false;
+  if (TABLE_HEADER_LEFT_RE.test(left.trim())) return false;
+  if (TABLE_HEADER_LEFT_RE.test(right.trim())) return false;
+  // Both sides look like short labels with no question mark and ≤2 words → table debris.
+  const leftWords = left.split(/\s+/).filter(Boolean);
+  const rightWords = right.split(/\s+/).filter(Boolean);
+  if (
+    !left.includes("?") &&
+    leftWords.length <= 2 &&
+    rightWords.length <= 2 &&
+    left.length < 20 &&
+    right.length < 20
+  ) {
+    return false;
+  }
+  return left.length >= 3 && right.length >= 2;
+}
+
 /** Split on first occurrence of separator; both sides must be non-empty after trim. */
 function splitOnce(
   line: string,
@@ -74,20 +116,25 @@ function extractAnkiAnswer(marker: string): string {
 function harvestLine(line: string): CardDraft[] {
   const trimmed = line.trim();
   if (!trimmed) return [];
+  const forPair = stripBulletPrefix(trimmed);
 
   // Spaced separator only: bare `::` collides with Anki `{{c1::…}}`.
-  const doubleColon = splitOnce(trimmed, " :: ");
+  const doubleColon = splitOnce(forPair, " :: ");
   if (doubleColon) {
+    if (isLectureChromePair(doubleColon.left, doubleColon.right, trimmed)) {
+      return [];
+    }
     return [qaDraft(doubleColon.left, doubleColon.right, line)];
   }
 
   const pipe = splitOnce(trimmed, " | ") ?? splitOnce(trimmed, "|");
-  if (pipe && !trimmed.includes("||")) {
-    // Single-pipe Q|A only (avoid table-like multi-pipe rows).
-    const pipeCount = (trimmed.match(/\|/g) ?? []).length;
-    if (pipeCount === 1) {
-      return [qaDraft(pipe.left, pipe.right, line)];
-    }
+  if (
+    pipe &&
+    !trimmed.includes("||") &&
+    isUsablePipeQa(pipe.left, pipe.right, trimmed)
+  ) {
+    if (isLectureChromePair(pipe.left, pipe.right, trimmed)) return [];
+    return [qaDraft(pipe.left, pipe.right, line)];
   }
 
   const ankiMatches = [...trimmed.matchAll(ANKI_CLOZE_RE)];
@@ -118,14 +165,20 @@ function harvestLine(line: string): CardDraft[] {
     });
   }
 
-  const colon = splitOnce(trimmed, ": ");
-  if (colon && !colon.left.includes(":") && isVocabTermLeft(colon.left)) {
-    return [qaDraft(colon.left, colon.right, line)];
+  const colon = splitOnce(forPair, ": ");
+  if (colon && !colon.left.includes(":")) {
+    if (isLectureChromePair(colon.left, colon.right, trimmed)) return [];
+    if (isVocabTermLeft(colon.left)) {
+      return [qaDraft(colon.left, colon.right, line)];
+    }
   }
 
-  const dash = splitOnce(trimmed, " - ");
-  if (dash && isVocabTermLeft(dash.left)) {
-    return [qaDraft(dash.left, dash.right, line)];
+  const dash = splitOnce(forPair, " - ");
+  if (dash) {
+    if (isLectureChromePair(dash.left, dash.right, trimmed)) return [];
+    if (isVocabTermLeft(dash.left)) {
+      return [qaDraft(dash.left, dash.right, line)];
+    }
   }
 
   return [];

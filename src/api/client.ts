@@ -244,6 +244,13 @@ export function acceptCard(cardId: string) {
   return api<CardDraftView>(`/api/cards/${cardId}/accept`, { method: "POST" });
 }
 
+export function acceptAllJobDrafts(jobId: string) {
+  return api<{ accepted: number; failed: number }>(
+    `/api/jobs/${jobId}/drafts/accept-all`,
+    { method: "POST" },
+  );
+}
+
 export function rejectCard(cardId: string) {
   return api<CardDraftView>(`/api/cards/${cardId}/reject`, { method: "POST" });
 }

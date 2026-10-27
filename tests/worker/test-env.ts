@@ -810,6 +810,11 @@ export function createTestEnv(opts?: {
             number,
             string | null,
           ];
+          if (schedules.has(card_id)) {
+            throw new Error(
+              "UNIQUE constraint failed: card_schedules.card_id",
+            );
+          }
           schedules.set(card_id, {
             card_id,
             due,

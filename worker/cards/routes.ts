@@ -85,6 +85,45 @@ async function requireOwnedCard(
   return row;
 }
 
+async function acceptDraftCard(
+  db: D1Database,
+  cardId: string,
+): Promise<"accepted" | "conflict"> {
+  const schedule = scheduleColumnsFromCard(newCard());
+  const updatedAt = new Date().toISOString();
+  // Atomic: accepted status + schedule row succeed or fail together.
+  // Status CAS prevents concurrent reject/accept races.
+  const results = await db.batch([
+    db
+      .prepare(
+        `UPDATE cards SET status = ?, updated_at = ? WHERE id = ? AND status = ?`,
+      )
+      .bind("accepted", updatedAt, cardId, "draft"),
+    db
+      .prepare(
+        `INSERT INTO card_schedules (
+           card_id, due, stability, difficulty, elapsed_days, scheduled_days,
+           learning_steps, reps, lapses, state, last_review
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        cardId,
+        schedule.due,
+        schedule.stability,
+        schedule.difficulty,
+        schedule.elapsed_days,
+        schedule.scheduled_days,
+        schedule.learning_steps,
+        schedule.reps,
+        schedule.lapses,
+        schedule.state,
+        schedule.last_review,
+      ),
+  ]);
+  if (!results[0]?.meta.changes) return "conflict";
+  return "accepted";
+}
+
 export const cardRoutes = new Hono<AppEnv>();
 
 /** List draft cards for a generation job (owner only). */
@@ -119,6 +158,46 @@ jobDraftRoutes.get("/:id/drafts", async (c) => {
     .all<CardRow>();
 
   return c.json((results ?? []).map(serializeCard));
+});
+
+jobDraftRoutes.post("/:id/drafts/accept-all", async (c) => {
+  const userId = await requireUser(c);
+  const jobId = c.req.param("id");
+  const db = getDb(c.env);
+
+  const job = await db
+    .prepare(
+      `SELECT j.id
+       FROM generation_jobs j
+       INNER JOIN materials m ON m.id = j.material_id
+       INNER JOIN decks d ON d.id = m.deck_id
+       WHERE j.id = ? AND d.user_id = ?`,
+    )
+    .bind(jobId, userId)
+    .first<{ id: string }>();
+  if (!job) throw new HTTPException(404, { message: "Job not found" });
+
+  const { results } = await db
+    .prepare(
+      `SELECT id FROM cards WHERE job_id = ? AND status = ? ORDER BY created_at ASC`,
+    )
+    .bind(jobId, "draft")
+    .all<{ id: string }>();
+
+  let accepted = 0;
+  let failed = 0;
+  for (const row of results ?? []) {
+    try {
+      const outcome = await acceptDraftCard(db, row.id);
+      if (outcome === "accepted") accepted += 1;
+      else failed += 1;
+    } catch {
+      // CAS/schedule race or D1 abort: count as failed, keep accepting the rest.
+      failed += 1;
+    }
+  }
+
+  return c.json({ accepted, failed });
 });
 
 cardRoutes.patch("/:id", async (c) => {
@@ -204,44 +283,14 @@ cardRoutes.post("/:id/accept", async (c) => {
     });
   }
 
-  const schedule = scheduleColumnsFromCard(newCard());
-  const updatedAt = new Date().toISOString();
-
-  // Atomic: accepted status + schedule row succeed or fail together.
-  // Status CAS prevents concurrent reject/accept races.
-  const results = await db.batch([
-    db
-      .prepare(
-        `UPDATE cards SET status = ?, updated_at = ? WHERE id = ? AND status = ?`,
-      )
-      .bind("accepted", updatedAt, cardId, "draft"),
-    db
-      .prepare(
-        `INSERT INTO card_schedules (
-           card_id, due, stability, difficulty, elapsed_days, scheduled_days,
-           learning_steps, reps, lapses, state, last_review
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .bind(
-        cardId,
-        schedule.due,
-        schedule.stability,
-        schedule.difficulty,
-        schedule.elapsed_days,
-        schedule.scheduled_days,
-        schedule.learning_steps,
-        schedule.reps,
-        schedule.lapses,
-        schedule.state,
-        schedule.last_review,
-      ),
-  ]);
-  if (!results[0]?.meta.changes) {
+  const outcome = await acceptDraftCard(db, cardId);
+  if (outcome === "conflict") {
     throw new HTTPException(409, {
       message: "Card is no longer a draft",
     });
   }
 
+  const updatedAt = new Date().toISOString();
   return c.json(
     serializeCard({ ...row, status: "accepted", updated_at: updatedAt }),
   );
