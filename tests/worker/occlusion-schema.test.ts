@@ -60,6 +60,35 @@ describe("OcclusionFrontSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("rejects overflowing boxes (x+w or y+h > 1)", () => {
+    expect(
+      OcclusionFrontSchema.safeParse({
+        ...validFront,
+        regions: [{ ...validFront.regions[0]!, x: 0.9, w: 0.5 }],
+      }).success,
+    ).toBe(false);
+    expect(
+      OcclusionFrontSchema.safeParse({
+        ...validFront,
+        regions: [{ ...validFront.regions[0]!, y: 0.9, h: 0.5 }],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects more than 8 regions", () => {
+    const regions = Array.from({ length: 9 }, (_, i) => ({
+      id: `r${i}`,
+      x: 0,
+      y: 0,
+      w: 0.1,
+      h: 0.1,
+      label: `L${i}`,
+    }));
+    expect(
+      OcclusionFrontSchema.safeParse({ ...validFront, regions }).success,
+    ).toBe(false);
+  });
 });
 
 describe("CardDraftSchema occlusion", () => {
