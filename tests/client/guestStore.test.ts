@@ -3,6 +3,8 @@ import { endGuestLocal } from "../../src/guest/endGuestLocal";
 import { enterGuest, GUEST_FLAG_KEY, isGuest } from "../../src/guest/session";
 import {
   clearGuestStore,
+  guestAddAcceptedCards,
+  guestCreateDeck,
   guestListDueCards,
   guestReviewCard,
 } from "../../src/guest/store";
@@ -55,5 +57,46 @@ describe("guest store", () => {
     endGuestLocal(storage);
     expect(isGuest(storage)).toBe(false);
     expect(storage.getItem(GUEST_FLAG_KEY)).toBeNull();
+  });
+
+  it("guestAddAcceptedCards writes paste cards and prepends dueIds", () => {
+    enterGuest(storage);
+    const olderDue = guestListDueCards(storage).map((c) => c.id);
+    const deck = guestCreateDeck("Paste deck", storage);
+    const pairs = [
+      { front: "What is osmosis?", back: "Diffusion of water" },
+      { front: "Define mitosis", back: "Cell division producing two nuclei" },
+    ];
+    const added = guestAddAcceptedCards(deck.id, pairs, storage);
+    expect(added).toHaveLength(2);
+    expect(added.every((c) => c.status === "accepted")).toBe(true);
+    expect(added.every((c) => c.deck_id === deck.id)).toBe(true);
+    expect(added.every((c) => c.job_id === null)).toBe(true);
+    expect(
+      added.every(
+        (c) =>
+          (c.provenance as { guest?: boolean; source?: string }).guest ===
+            true &&
+          (c.provenance as { guest?: boolean; source?: string }).source ===
+            "paste",
+      ),
+    ).toBe(true);
+    expect(added.every((c) => c.id.startsWith("guest-card-"))).toBe(true);
+
+    const due = guestListDueCards(storage);
+    const newIds = added.map((c) => c.id);
+    expect(due.slice(0, 2).map((c) => c.id)).toEqual(newIds);
+    expect(due.map((c) => c.id).slice(2)).toEqual(olderDue);
+  });
+
+  it("guestAddAcceptedCards returns [] when deck is missing", () => {
+    enterGuest(storage);
+    expect(
+      guestAddAcceptedCards(
+        "guest-deck-missing",
+        [{ front: "Q?", back: "A" }],
+        storage,
+      ),
+    ).toEqual([]);
   });
 });
