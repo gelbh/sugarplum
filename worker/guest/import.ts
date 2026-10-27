@@ -12,6 +12,10 @@ const MAX_IMPORT_CARDS = 200;
 type ImportDeck = { clientId: string; title: string };
 type ImportCard = { clientDeckId: string; front: string; back: string };
 
+function foldDeckTitle(title: string): string {
+  return title.trim().normalize("NFC").toLowerCase();
+}
+
 function parseImportBody(raw: unknown): {
   decks: ImportDeck[];
   cards: ImportCard[];
@@ -100,25 +104,58 @@ guestRoutes.post("/import", async (c) => {
   const clientToServer = new Map<string, string>();
   const statements: D1PreparedStatement[] = [];
 
-  // One Unfiled subject for the imported decks (matches subject hierarchy on main).
-  const subjectId = crypto.randomUUID();
-  statements.push(
-    db
+  const { results: existingDecks } = await db
+    .prepare(
+      "SELECT id, title, created_at FROM decks WHERE user_id = ? ORDER BY created_at ASC, id ASC",
+    )
+    .bind(userId)
+    .all<{ id: string; title: string; created_at: string }>();
+
+  const byFold = new Map<string, string>();
+  for (const deck of existingDecks ?? []) {
+    const key = foldDeckTitle(deck.title);
+    if (!byFold.has(key)) byFold.set(key, deck.id);
+  }
+
+  const misses = decks.filter((d) => !byFold.has(foldDeckTitle(d.title)));
+  let unfiledId: string | null = null;
+  if (misses.length > 0) {
+    const row = await db
       .prepare(
-        "INSERT INTO subjects (id, user_id, title, created_at) VALUES (?, ?, ?, ?)",
+        "SELECT id FROM subjects WHERE user_id = ? AND title = ? ORDER BY created_at ASC, id ASC LIMIT 1",
       )
-      .bind(subjectId, userId, "Unfiled", now),
-  );
+      .bind(userId, "Unfiled")
+      .first<{ id: string }>();
+    if (row) {
+      unfiledId = row.id;
+    } else {
+      unfiledId = crypto.randomUUID();
+      statements.push(
+        db
+          .prepare(
+            "INSERT INTO subjects (id, user_id, title, created_at) VALUES (?, ?, ?, ?)",
+          )
+          .bind(unfiledId, userId, "Unfiled", now),
+      );
+    }
+  }
 
   for (const deck of decks) {
+    const key = foldDeckTitle(deck.title);
+    const hit = byFold.get(key);
+    if (hit) {
+      clientToServer.set(deck.clientId, hit);
+      continue;
+    }
     const id = crypto.randomUUID();
+    byFold.set(key, id);
     clientToServer.set(deck.clientId, id);
     statements.push(
       db
         .prepare(
           "INSERT INTO decks (id, user_id, title, subject_hint, subject_id, created_at) VALUES (?, ?, ?, NULL, ?, ?)",
         )
-        .bind(id, userId, deck.title, subjectId, now),
+        .bind(id, userId, deck.title, unfiledId!, now),
     );
   }
 
@@ -177,7 +214,9 @@ guestRoutes.post("/import", async (c) => {
     );
   }
 
-  await db.batch(statements);
+  if (statements.length > 0) {
+    await db.batch(statements);
+  }
 
   return c.json({ deckCount: decks.length, cardCount: cards.length });
 });
