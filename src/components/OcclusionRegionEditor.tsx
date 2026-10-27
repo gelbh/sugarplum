@@ -1,9 +1,21 @@
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { useCallback, useRef, useState, type PointerEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent,
+} from "react";
 import { mediaUrl, type OcclusionFrontView } from "../api/client";
 
 export type OcclusionRegion = OcclusionFrontView["regions"][number];
@@ -45,6 +57,46 @@ function answerFromRegions(
   return selected?.label.trim() || selected?.id || "region";
 }
 
+async function decodeImageNaturalSize(
+  blob: Blob,
+): Promise<{ width: number; height: number }> {
+  if (typeof createImageBitmap !== "undefined") {
+    const bitmap = await createImageBitmap(blob);
+    try {
+      return { width: bitmap.width, height: bitmap.height };
+    } finally {
+      bitmap.close();
+    }
+  }
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Could not decode image dimensions"));
+    };
+    img.src = url;
+  });
+}
+
+function suggestErrorMessage(err: unknown): string {
+  const raw = err instanceof Error ? err.message : "";
+  if (raw.includes("failed to load") || raw.includes("OCR worker")) {
+    return "Could not load on-device OCR. Try again, or edit regions manually.";
+  }
+  if (raw.includes("recognition failed") || raw.includes("OCR recognition")) {
+    return "OCR could not read this image. Try again, or edit regions manually.";
+  }
+  if (raw.includes("Image fetch") || raw.includes("decode")) {
+    return "Could not load the crop image for OCR.";
+  }
+  return "Could not suggest regions.";
+}
+
 /** Image + overlay region boxes (drag/resize); study reveal uses region labels. */
 export default function OcclusionRegionEditor({
   front,
@@ -52,10 +104,27 @@ export default function OcclusionRegionEditor({
   onChange,
 }: OcclusionRegionEditorProps) {
   const stageRef = useRef<HTMLDivElement>(null);
+  const frontRef = useRef(front);
+  const suggestGenRef = useRef(0);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(
     front.regions[0]?.id ?? null,
   );
+  const [suggestBusy, setSuggestBusy] = useState(false);
+  const [confirmReplaceOpen, setConfirmReplaceOpen] = useState(false);
+  const [suggestNotice, setSuggestNotice] = useState<{
+    severity: "error" | "warning" | "info";
+    message: string;
+  } | null>(null);
+
+  frontRef.current = front;
+  const editLocked = disabled || suggestBusy;
+
+  useEffect(() => {
+    return () => {
+      suggestGenRef.current += 1;
+    };
+  }, []);
 
   const emit = useCallback(
     (nextFront: OcclusionFrontView, nextSelectedId: string | null) => {
@@ -77,8 +146,65 @@ export default function OcclusionRegionEditor({
     [emit, front, selectedId],
   );
 
+  const runSuggestRegions = useCallback(async () => {
+    const gen = ++suggestGenRef.current;
+    const startedKey = front.image_key;
+    setSuggestBusy(true);
+    setSuggestNotice(null);
+    try {
+      const res = await fetch(mediaUrl(startedKey), {
+        credentials: "same-origin",
+      });
+      if (!res.ok) {
+        throw new Error(`Image fetch failed (${res.status})`);
+      }
+      const blob = await res.blob();
+      const { width, height } = await decodeImageNaturalSize(blob);
+      const { suggestOcclusionRegions } = await import("../lib/occlusionOcr");
+      const regions = await suggestOcclusionRegions(blob, width, height);
+      if (gen !== suggestGenRef.current) return;
+      if (frontRef.current.image_key !== startedKey) return;
+      if (regions.length === 0) {
+        setSuggestNotice({
+          severity: "warning",
+          message:
+            "No text regions found on this image. Adjust the crop or add regions manually.",
+        });
+        return;
+      }
+      const clamped = regions.map((r) => clampRegion(r));
+      const firstId = clamped[0]?.id ?? null;
+      setSelectedId(firstId);
+      emit({ ...frontRef.current, regions: clamped }, firstId);
+    } catch (err) {
+      if (gen !== suggestGenRef.current) return;
+      setSuggestNotice({
+        severity: "error",
+        message: suggestErrorMessage(err),
+      });
+    } finally {
+      if (gen === suggestGenRef.current) {
+        setSuggestBusy(false);
+      }
+    }
+  }, [emit, front.image_key]);
+
+  function onSuggestRegionsClick() {
+    if (editLocked) return;
+    if (front.regions.length > 0) {
+      setConfirmReplaceOpen(true);
+    } else {
+      void runSuggestRegions();
+    }
+  }
+
+  function onConfirmReplaceRegions() {
+    setConfirmReplaceOpen(false);
+    void runSuggestRegions();
+  }
+
   function removeRegion(id: string) {
-    if (disabled || front.regions.length <= 1) return;
+    if (editLocked || front.regions.length <= 1) return;
     const regions = front.regions.filter((r) => r.id !== id);
     const nextSelected =
       selectedId === id ? (regions[0]?.id ?? null) : selectedId;
@@ -91,7 +217,7 @@ export default function OcclusionRegionEditor({
     region: OcclusionRegion,
     kind: DragKind,
   ) {
-    if (disabled) return;
+    if (editLocked) return;
     e.preventDefault();
     e.stopPropagation();
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -106,7 +232,7 @@ export default function OcclusionRegionEditor({
   }
 
   function onPointerMove(e: PointerEvent<HTMLDivElement>) {
-    if (!drag || disabled) return;
+    if (!drag || editLocked) return;
     const el = stageRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
@@ -185,7 +311,7 @@ export default function OcclusionRegionEditor({
                   bgcolor: selected
                     ? "color-mix(in srgb, var(--sp-plum) 28%, transparent)"
                     : "color-mix(in srgb, var(--sp-lamp-glow) 65%, transparent)",
-                  cursor: disabled ? "default" : "move",
+                  cursor: editLocked ? "default" : "move",
                   borderRadius: "4px",
                   boxShadow: selected
                     ? "0 2px 10px color-mix(in srgb, var(--sp-plum) 28%, transparent)"
@@ -216,7 +342,7 @@ export default function OcclusionRegionEditor({
                 >
                   {region.label || region.id}
                 </Typography>
-                {!disabled ? (
+                {!editLocked ? (
                   <Box
                     onPointerDown={(e) => onBoxPointerDown(e, region, "resize")}
                     aria-label="Resize region"
@@ -255,13 +381,65 @@ export default function OcclusionRegionEditor({
         }}
         fullWidth
         size="small"
-        disabled={disabled}
+        disabled={editLocked}
       />
 
       <Typography variant="body2" color="text.secondary">
         Study reveals the hidden region’s label (one region per card via hide_one).
         Delete unused boxes before accept.
       </Typography>
+
+      {suggestNotice ? (
+        <Alert severity={suggestNotice.severity} onClose={() => setSuggestNotice(null)}>
+          {suggestNotice.message}
+        </Alert>
+      ) : null}
+
+      <Stack direction="row" spacing={1} alignItems="center">
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={onSuggestRegionsClick}
+          disabled={editLocked}
+          aria-busy={suggestBusy || undefined}
+        >
+          {suggestBusy ? "Suggesting…" : "Suggest regions"}
+        </Button>
+        {suggestBusy ? (
+          <Typography variant="caption" color="text.secondary">
+            Running OCR on the crop (first run may take a moment).
+          </Typography>
+        ) : null}
+      </Stack>
+
+      <Dialog
+        open={confirmReplaceOpen}
+        onClose={() => !suggestBusy && setConfirmReplaceOpen(false)}
+      >
+        <DialogTitle>Replace existing regions?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            OCR will replace your current region boxes with new suggestions. You
+            can still move, resize, and edit labels afterward.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setConfirmReplaceOpen(false)}
+            disabled={suggestBusy}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={onConfirmReplaceRegions}
+            disabled={suggestBusy}
+            autoFocus
+          >
+            Replace
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Stack spacing={1.5}>
         <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
@@ -284,6 +462,7 @@ export default function OcclusionRegionEditor({
                   : "none",
             }}
             onClick={() => {
+              if (editLocked) return;
               setSelectedId(region.id);
               emit(front, region.id);
             }}
@@ -294,7 +473,7 @@ export default function OcclusionRegionEditor({
               onChange={(e) => updateRegion(region.id, { label: e.target.value })}
               size="small"
               fullWidth
-              disabled={disabled}
+              disabled={editLocked}
               helperText={
                 region.id === selectedId
                   ? "This label is the study answer for hide_one"
@@ -321,12 +500,12 @@ export default function OcclusionRegionEditor({
                     if (Number.isFinite(n)) updateRegion(region.id, { [key]: n });
                   }}
                   size="small"
-                  disabled={disabled}
+                  disabled={editLocked}
                   sx={{ flex: 1 }}
                 />
               ))}
             </Stack>
-            {front.regions.length > 1 && !disabled ? (
+            {front.regions.length > 1 && !editLocked ? (
               <Button
                 size="small"
                 color="error"

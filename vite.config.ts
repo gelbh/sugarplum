@@ -40,8 +40,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // ORT / DocLayout weights are 15–30MB; never precache them.
-        globIgnores: ["**/*.wasm", "**/models/**", "**/ort/**"],
+        // ORT / DocLayout / Tesseract cores are multi-MB; never precache them.
+        globIgnores: ["**/*.wasm", "**/models/**", "**/ort/**", "**/ocr/**"],
         navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {
