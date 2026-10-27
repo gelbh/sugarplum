@@ -30,25 +30,22 @@ import {
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { resolveCardGesture } from "../study/cardGestures";
 import { loadDueCache, saveDueCache } from "../study/dueCache";
-import { useStudyChrome } from "../study/StudyChromeContext";
-import { loadZenPreference, saveZenPreference } from "../study/zenPreference";
+import { useStudyZenMode } from "../study/useStudyZenMode";
 
-/** True when the event target sits in a CardFace content box that overflows. */
-function isInsideScrollableCardFace(target: EventTarget | null): boolean {
-  if (!(target instanceof Element)) return false;
+type PointerStart = {
+  id: number;
+  x: number;
+  y: number;
+  scrollEl: HTMLElement | null;
+  scrollTop: number;
+};
+
+function scrollableCardFace(target: EventTarget | null): HTMLElement | null {
+  if (!(target instanceof Element)) return null;
   const face = target.closest("[data-card-face-content]");
-  if (!(face instanceof HTMLElement)) return false;
-  return face.scrollHeight > face.clientHeight;
-}
-
-function requestStudyFullscreen(): Promise<void> {
-  return document.documentElement.requestFullscreen?.() ?? Promise.resolve();
-}
-
-function exitStudyFullscreen(): void {
-  if (document.fullscreenElement) {
-    void document.exitFullscreen?.();
-  }
+  if (!(face instanceof HTMLElement)) return null;
+  if (face.scrollHeight <= face.clientHeight) return null;
+  return face;
 }
 
 /** Study session: reveal answer, grade with FSRS (keys 1-4). Code-led MUI. */
@@ -58,28 +55,32 @@ export default function StudyPage() {
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [offlineCopy, setOfflineCopy] = useState(false);
-  const [zen, setZen] = useState(() => loadZenPreference());
-  const [needsFullscreenPrompt, setNeedsFullscreenPrompt] = useState(
-    () => loadZenPreference(),
-  );
-  const [fullscreenUnavailable, setFullscreenUnavailable] = useState(false);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
-  const { setHideChrome } = useStudyChrome();
-  const gradeGroupRef = useRef<HTMLDivElement | null>(null);
+  const {
+    zen,
+    fullscreenUnavailable,
+    clearFullscreenUnavailable,
+    toggleZen,
+    exitZen,
+    ensureFullscreenIfNeeded,
+    isZen,
+  } = useStudyZenMode();
+
+  const answerFocusRef = useRef<HTMLElement | null>(null);
+  const showAnswerRef = useRef<HTMLButtonElement | null>(null);
   const swipeHintUsedRef = useRef(false);
-  const pointerRef = useRef<{
-    id: number;
-    x: number;
-    y: number;
-  } | null>(null);
-  const zenRef = useRef(zen);
-  zenRef.current = zen;
+  const focusShowAnswerAfterGradeRef = useRef(false);
+  const pointerRef = useRef<PointerStart | null>(null);
+  const busyRef = useRef(false);
+
   const { end: endLoad } = useTrackedOp("Loading study…", {
     trackOnMount: true,
   });
   const { busy, begin, end } = useTrackedOp("Saving grade…");
-  const busyRef = useRef(busy);
-  busyRef.current = busy;
+
+  useEffect(() => {
+    if (!busy) busyRef.current = false;
+  }, [busy]);
 
   const load = useCallback(async (userId: string) => {
     try {
@@ -99,67 +100,6 @@ export default function StudyPage() {
       throw err;
     }
   }, []);
-
-  useEffect(() => {
-    setHideChrome(loadZenPreference());
-    return () => {
-      setHideChrome(false);
-      exitStudyFullscreen();
-    };
-  }, [setHideChrome]);
-
-  useEffect(() => {
-    function onFullscreenChange() {
-      if (document.fullscreenElement) return;
-      if (!zenRef.current) return;
-      zenRef.current = false;
-      setZen(false);
-      setHideChrome(false);
-      saveZenPreference(false);
-      setNeedsFullscreenPrompt(false);
-    }
-    document.addEventListener("fullscreenchange", onFullscreenChange);
-    return () =>
-      document.removeEventListener("fullscreenchange", onFullscreenChange);
-  }, [setHideChrome]);
-
-  const enterZen = useCallback(async () => {
-    saveZenPreference(true);
-    setZen(true);
-    zenRef.current = true;
-    setHideChrome(true);
-    setNeedsFullscreenPrompt(false);
-    try {
-      await requestStudyFullscreen();
-    } catch {
-      setFullscreenUnavailable(true);
-    }
-  }, [setHideChrome]);
-
-  const exitZen = useCallback(() => {
-    saveZenPreference(false);
-    setZen(false);
-    zenRef.current = false;
-    setHideChrome(false);
-    setNeedsFullscreenPrompt(false);
-    exitStudyFullscreen();
-  }, [setHideChrome]);
-
-  const toggleZen = useCallback(() => {
-    if (zen) {
-      exitZen();
-      return;
-    }
-    void enterZen();
-  }, [enterZen, exitZen, zen]);
-
-  const ensureFullscreenIfNeeded = useCallback(() => {
-    if (!needsFullscreenPrompt || !zen || document.fullscreenElement) return;
-    setNeedsFullscreenPrompt(false);
-    void requestStudyFullscreen().catch(() => {
-      setFullscreenUnavailable(true);
-    });
-  }, [needsFullscreenPrompt, zen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -203,7 +143,13 @@ export default function StudyPage() {
 
   useEffect(() => {
     if (!revealed) return;
-    gradeGroupRef.current?.focus();
+    answerFocusRef.current?.focus();
+  }, [revealed, current?.id]);
+
+  useEffect(() => {
+    if (revealed || !current || !focusShowAnswerAfterGradeRef.current) return;
+    focusShowAnswerAfterGradeRef.current = false;
+    showAnswerRef.current?.focus();
   }, [revealed, current?.id]);
 
   const onGrade = useCallback(
@@ -214,6 +160,7 @@ export default function StudyPage() {
       begin();
       try {
         await reviewCard(current.id, rating);
+        focusShowAnswerAfterGradeRef.current = true;
         setQueue((prev) => prev.slice(1));
         setRevealed(false);
         end();
@@ -238,13 +185,13 @@ export default function StudyPage() {
         return;
       }
       if (e.key === "Escape") {
-        // Browser owns Esc while in FS; fullscreenchange exits zen.
-        if (!zenRef.current || document.fullscreenElement) return;
+        if (!isZen() || document.fullscreenElement) return;
         e.preventDefault();
         exitZen();
         return;
       }
       if (e.key === "z" || e.key === "Z") {
+        if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
         e.preventDefault();
         toggleZen();
         return;
@@ -264,11 +211,19 @@ export default function StudyPage() {
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [current, exitZen, onGrade, ready, revealed, toggleZen]);
+  }, [current, exitZen, isZen, onGrade, ready, revealed, toggleZen]);
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     ensureFullscreenIfNeeded();
-    pointerRef.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
+    const scrollEl = scrollableCardFace(e.target);
+    pointerRef.current = {
+      id: e.pointerId,
+      x: e.clientX,
+      y: e.clientY,
+      scrollEl,
+      scrollTop: scrollEl?.scrollTop ?? 0,
+    };
   };
 
   const onPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -280,7 +235,8 @@ export default function StudyPage() {
     const dy = e.clientY - start.y;
     if (
       Math.abs(dy) >= Math.abs(dx) &&
-      isInsideScrollableCardFace(e.target)
+      start.scrollEl &&
+      start.scrollEl.scrollTop !== start.scrollTop
     ) {
       return;
     }
@@ -354,7 +310,10 @@ export default function StudyPage() {
           </Alert>
         ) : null}
         {fullscreenUnavailable ? (
-          <Alert severity="info" onClose={() => setFullscreenUnavailable(false)}>
+          <Alert
+            severity="info"
+            onClose={clearFullscreenUnavailable}
+          >
             Fullscreen unavailable
           </Alert>
         ) : null}
@@ -412,17 +371,17 @@ export default function StudyPage() {
                 revealed={revealed}
                 onReveal={reveal}
                 disabled={busy}
+                answerFocusRef={answerFocusRef}
+                showAnswerRef={showAnswerRef}
               />
             </Box>
 
             {revealed ? (
-              <Box ref={gradeGroupRef} tabIndex={-1} sx={{ outline: "none" }}>
-                <GradeButtons
-                  disabled={busy}
-                  onGrade={onGrade}
-                  showSwipeHint={showSwipeHint}
-                />
-              </Box>
+              <GradeButtons
+                disabled={busy}
+                onGrade={onGrade}
+                showSwipeHint={showSwipeHint}
+              />
             ) : null}
           </>
         )}

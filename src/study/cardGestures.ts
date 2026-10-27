@@ -21,13 +21,9 @@ export function resolveCardGesture(input: {
   if (!input.revealed) return { type: "reveal" };
 
   if (ax >= ay) {
-    return {
-      type: "grade",
-      rating: (input.dx < 0 ? 1 : 3) as StudyRating,
-    };
+    const rating: StudyRating = input.dx < 0 ? 1 : 3;
+    return { type: "grade", rating };
   }
-  return {
-    type: "grade",
-    rating: (input.dy > 0 ? 2 : 4) as StudyRating,
-  };
+  const rating: StudyRating = input.dy > 0 ? 2 : 4;
+  return { type: "grade", rating };
 }

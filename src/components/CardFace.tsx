@@ -2,7 +2,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-import type { MouseEvent } from "react";
+import type { MouseEvent, Ref } from "react";
 import { mediaUrl } from "../api/client";
 
 type Props = {
@@ -12,6 +12,10 @@ type Props = {
   onReveal: () => void;
   disabled?: boolean;
   mediaR2Keys?: string[];
+  /** Focus target for the answer face after reveal. */
+  answerFocusRef?: Ref<HTMLElement | null>;
+  /** Focus target for Show answer after grading to the next card. */
+  showAnswerRef?: Ref<HTMLButtonElement | null>;
 };
 
 const FACE_SX = {
@@ -31,7 +35,30 @@ const CONTENT_SX = {
   minHeight: 0,
 } as const;
 
-/** Physical study card: 3D Y-flip, or crossfade when prefers-reduced-motion. */
+function faceMotionSx(revealedFace: boolean, thisFaceVisible: boolean) {
+  return {
+    ...FACE_SX,
+    ...(revealedFace
+      ? {
+          position: "absolute" as const,
+          inset: 0,
+          transform: "rotateY(180deg)",
+        }
+      : { position: "relative" as const }),
+    "@media (prefers-reduced-motion: reduce)": {
+      transform: "none",
+      transition: "none",
+      opacity: thisFaceVisible ? 1 : 0,
+      visibility: thisFaceVisible ? "visible" : "hidden",
+      pointerEvents: thisFaceVisible ? "auto" : "none",
+      position: thisFaceVisible ? "relative" : "absolute",
+      inset: thisFaceVisible ? "auto" : 0,
+      width: "100%",
+    },
+  };
+}
+
+/** Physical study card: 3D Y-flip, or instant swap when prefers-reduced-motion. */
 export default function CardFace({
   front,
   back,
@@ -39,6 +66,8 @@ export default function CardFace({
   onReveal,
   disabled,
   mediaR2Keys = [],
+  answerFocusRef,
+  showAnswerRef,
 }: Props) {
   const imageKey = mediaR2Keys[0];
   const canReveal = !revealed && !disabled;
@@ -75,19 +104,7 @@ export default function CardFace({
           elevation={3}
           aria-hidden={revealed}
           inert={revealed || undefined}
-          sx={{
-            ...FACE_SX,
-            position: "relative",
-            "@media (prefers-reduced-motion: reduce)": {
-              transition: "opacity 0.2s ease",
-              opacity: revealed ? 0 : 1,
-              visibility: revealed ? "hidden" : "visible",
-              pointerEvents: revealed ? "none" : "auto",
-              position: revealed ? "absolute" : "relative",
-              inset: revealed ? 0 : "auto",
-              width: "100%",
-            },
-          }}
+          sx={faceMotionSx(false, !revealed)}
         >
           <Box data-card-face-content sx={CONTENT_SX}>
             {imageKey ? (
@@ -95,6 +112,8 @@ export default function CardFace({
                 component="img"
                 src={mediaUrl(imageKey)}
                 alt="Card media"
+                draggable={false}
+                onDragStart={(event) => event.preventDefault()}
                 sx={{
                   display: "block",
                   width: "100%",
@@ -102,6 +121,7 @@ export default function CardFace({
                   objectFit: "contain",
                   mb: 2,
                   borderRadius: 1,
+                  userSelect: "none",
                 }}
               />
             ) : null}
@@ -118,6 +138,7 @@ export default function CardFace({
             {!revealed ? (
               <Box sx={{ mt: 2 }}>
                 <Button
+                  ref={showAnswerRef}
                   variant="contained"
                   onClick={onShowAnswerClick}
                   disabled={!!disabled}
@@ -133,23 +154,14 @@ export default function CardFace({
           elevation={3}
           aria-hidden={!revealed}
           inert={!revealed || undefined}
-          sx={{
-            ...FACE_SX,
-            position: "absolute",
-            inset: 0,
-            transform: "rotateY(180deg)",
-            "@media (prefers-reduced-motion: reduce)": {
-              transform: "none",
-              transition: "opacity 0.2s ease",
-              opacity: revealed ? 1 : 0,
-              visibility: revealed ? "visible" : "hidden",
-              pointerEvents: revealed ? "auto" : "none",
-              position: revealed ? "relative" : "absolute",
-              inset: revealed ? "auto" : 0,
-            },
-          }}
+          sx={faceMotionSx(true, revealed)}
         >
-          <Box data-card-face-content sx={CONTENT_SX}>
+          <Box
+            ref={answerFocusRef}
+            data-card-face-content
+            tabIndex={revealed ? -1 : undefined}
+            sx={{ ...CONTENT_SX, outline: "none" }}
+          >
             <Typography variant="overline" color="text.secondary">
               Back
             </Typography>
