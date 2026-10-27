@@ -163,6 +163,10 @@ export default function CreateMaterialStepper({
     setBusy(true);
     try {
       const added = guestAddAcceptedCards(selectedDeckId, pairs);
+      if (added.length === 0) {
+        setError("Deck missing or could not save. Pick a deck and try again.");
+        return;
+      }
       const deckTitle =
         decks.find((d) => d.id === selectedDeckId)?.title ?? "deck";
       setPasteText("");
@@ -512,6 +516,11 @@ export default function CreateMaterialStepper({
                   <a href={`/jobs/${encodeURIComponent(jobId)}/drafts`}>
                     View drafts
                   </a>
+                </>
+              ) : localOnly ? (
+                <>
+                  Done. Cards are ready on{" "}
+                  <a href="/today">Today</a> or <a href="/study">Study</a>.
                 </>
               ) : (
                 "Done. Add more material or go to drafts when ready."
