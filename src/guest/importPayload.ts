@@ -3,10 +3,11 @@ const MAX_IMPORT_CARDS = 200;
 
 export type GuestImportStoreLike = {
   decks: { id: string; title: string }[];
+  /** Guest store cards may include non-string fronts (occlusion); paste QA are strings. */
   cards: {
     deck_id: string;
-    front: string;
-    back: string;
+    front: unknown;
+    back: unknown;
     provenance?: unknown;
   }[];
 };
@@ -30,8 +31,16 @@ export function buildGuestImportPayload(
 ): GuestImportPayload | null {
   const pasteCards = store.cards
     .filter(
-      (c) =>
-        c.deck_id !== DEMO_DECK_ID && isPasteProvenance(c.provenance),
+      (c): c is {
+        deck_id: string;
+        front: string;
+        back: string;
+        provenance?: unknown;
+      } =>
+        c.deck_id !== DEMO_DECK_ID &&
+        isPasteProvenance(c.provenance) &&
+        typeof c.front === "string" &&
+        typeof c.back === "string",
     )
     .slice(0, MAX_IMPORT_CARDS);
 
