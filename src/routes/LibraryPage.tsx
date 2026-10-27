@@ -36,6 +36,10 @@ import CreateMaterialStepper from "../components/CreateMaterialStepper";
 import { isGuest } from "../guest/session";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
+import {
+  effectiveSubjectDeckCount,
+  subjectDeleteBlocked,
+} from "../subjects/subjectDeleteGuard";
 
 type TitleDialog =
   | { mode: "create" }
@@ -169,14 +173,22 @@ export default function LibraryPage() {
     }
   }
 
+  function localDeckCountForSubject(subjectId: string) {
+    return decks.filter((d) => d.subject_id === subjectId).length;
+  }
+
   async function onDeleteSubject(subject: Subject, ev: MouseEvent) {
     ev.stopPropagation();
-    if ((subject.deck_count ?? 0) > 0) return;
+    const localCount = localDeckCountForSubject(subject.id);
+    if (subjectDeleteBlocked(subject, localCount)) return;
     setError(null);
     try {
       await deleteSubject(subject.id);
       setSubjects((prev) => prev.filter((s) => s.id !== subject.id));
     } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        await Promise.all([refreshSubjects(), refreshDecks()]);
+      }
       setError(
         err instanceof ApiError ? err.message : "Could not delete subject",
       );
@@ -247,8 +259,9 @@ export default function LibraryPage() {
                 sx={{ m: 0, p: 0, listStyle: "none" }}
               >
                 {subjects.map((s) => {
-                  const deckCount = s.deck_count ?? 0;
-                  const deleteBlocked = deckCount > 0;
+                  const localCount = localDeckCountForSubject(s.id);
+                  const deckCount = effectiveSubjectDeckCount(s, localCount);
+                  const deleteBlocked = subjectDeleteBlocked(s, localCount);
                   return (
                     <Box
                       component="li"

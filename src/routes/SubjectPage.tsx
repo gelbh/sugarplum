@@ -35,6 +35,10 @@ import {
 } from "../api/client";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
+import {
+  effectiveSubjectDeckCount,
+  subjectDeleteBlocked,
+} from "../subjects/subjectDeleteGuard";
 
 type Props = {
   subjectId: string;
@@ -70,6 +74,13 @@ export default function SubjectPage({ subjectId }: Props) {
     const found = subjects.find((s) => s.id === subjectId) ?? null;
     setSubject(found);
     setDecks(deckList);
+    return found;
+  }, [subjectId]);
+
+  const syncSubjectFromList = useCallback(async () => {
+    const subjects = await listSubjects();
+    const found = subjects.find((s) => s.id === subjectId) ?? null;
+    setSubject(found);
     return found;
   }, [subjectId]);
 
@@ -134,11 +145,7 @@ export default function SubjectPage({ subjectId }: Props) {
       } else if (titleDialog.kind === "deck-create") {
         const deck = await createDeck(titleValue.trim(), subjectId);
         setDecks((prev) => [...prev, deck]);
-        setSubject((prev) =>
-          prev
-            ? { ...prev, deck_count: (prev.deck_count ?? 0) + 1 }
-            : prev,
-        );
+        await syncSubjectFromList();
       } else {
         const updated = await patchDeck(
           titleDialog.deck.id,
@@ -159,7 +166,7 @@ export default function SubjectPage({ subjectId }: Props) {
   }
 
   async function onDeleteSubject() {
-    if (!subject || (subject.deck_count ?? decks.length) > 0) return;
+    if (!subject || subjectDeleteBlocked(subject, decks.length)) return;
     setError(null);
     try {
       await deleteSubject(subject.id);
@@ -192,14 +199,7 @@ export default function SubjectPage({ subjectId }: Props) {
     try {
       await deleteDeck(deleteTarget.id);
       setDecks((prev) => prev.filter((d) => d.id !== deleteTarget.id));
-      setSubject((prev) =>
-        prev
-          ? {
-              ...prev,
-              deck_count: Math.max(0, (prev.deck_count ?? 1) - 1),
-            }
-          : prev,
-      );
+      await syncSubjectFromList();
       setDeleteTarget(null);
       setDeleteStats(null);
     } catch (err) {
@@ -211,8 +211,12 @@ export default function SubjectPage({ subjectId }: Props) {
     }
   }
 
-  const deckCount = subject?.deck_count ?? decks.length;
-  const deleteSubjectBlocked = deckCount > 0;
+  const deckCount = subject
+    ? effectiveSubjectDeckCount(subject, decks.length)
+    : decks.length;
+  const deleteSubjectBlocked = subject
+    ? subjectDeleteBlocked(subject, decks.length)
+    : decks.length > 0;
   const dialogTitle =
     titleDialog?.kind === "subject"
       ? "Rename subject"
