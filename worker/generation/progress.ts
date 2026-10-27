@@ -27,7 +27,34 @@ export type ProgressPatch = {
   label: string;
 };
 
-/** Effective weights for stages present in this run; skipped weights roll into generate. */
+/** Stage catalogs for generation job paths (weights via effectiveWeights). */
+export const IMAGE_STAGES = [
+  "queued",
+  "extract",
+  "generate",
+  "persist",
+] as const satisfies readonly ProgressStage[];
+
+export const TEXT_LLM_STAGES = [
+  "queued",
+  "extract",
+  "rules",
+  "generate",
+  "critique",
+  "persist",
+] as const satisfies readonly ProgressStage[];
+
+export const RULES_ONLY_STAGES = [
+  "queued",
+  "extract",
+  "rules",
+  "persist",
+] as const satisfies readonly ProgressStage[];
+
+/**
+ * Effective weights for stages present in this run.
+ * Skipped weights roll into generate when present, else into persist.
+ */
 export function effectiveWeights(
   presentStages: readonly ProgressStage[],
 ): Record<ProgressStage, number> {
@@ -42,8 +69,13 @@ export function effectiveWeights(
     }
   }
 
-  if (skipped > 0 && present.has("generate")) {
-    weights.generate += skipped;
+  if (skipped > 0) {
+    if (present.has("generate")) {
+      weights.generate += skipped;
+    } else if (present.has("persist")) {
+      // Rules-only runs omit generate/critique; fold leftover into persist.
+      weights.persist += skipped;
+    }
   }
 
   return weights;
@@ -52,6 +84,7 @@ export function effectiveWeights(
 /**
  * Honest weighted percent: completed stage weights + current stage * (done/total).
  * When total is 0, within-stage fraction is 0. Result clamped to [0, 100].
+ * For interleaved generate/critique chunk loops, use computePipelineBandPercent.
  */
 export function computePercent(
   stage: ProgressStage,
@@ -72,6 +105,28 @@ export function computePercent(
   const within =
     total > 0 ? Math.max(0, current) / total : 0;
   const raw = 100 * (completed + weights[stage] * within);
+  return Math.min(100, Math.max(0, raw));
+}
+
+/**
+ * Monotonic percent for interleaved generate/critique over `chunkTotal` chunks.
+ * Half-steps 0..2n map across weight(generate)+weight(critique) after pre-generate base.
+ */
+export function computePipelineBandPercent(
+  halfStepsDone: number,
+  chunkTotal: number,
+  presentStages: readonly ProgressStage[],
+): number {
+  const weights = effectiveWeights(presentStages);
+  let base = 0;
+  for (const s of STAGE_ORDER) {
+    if (s === "generate") break;
+    if (presentStages.includes(s)) base += weights[s];
+  }
+  const band = weights.generate + weights.critique;
+  const denom = Math.max(1, chunkTotal * 2);
+  const within = Math.min(1, Math.max(0, halfStepsDone) / denom);
+  const raw = 100 * (base + band * within);
   return Math.min(100, Math.max(0, raw));
 }
 

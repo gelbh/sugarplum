@@ -21,11 +21,22 @@ export const MAX_PIPELINE_CHUNKS = 4;
  */
 export type PipelineLlm = LlmAdapter;
 
+export type PipelineProgressEvent = {
+  stage: "generate" | "critique";
+  current: number;
+  total: number;
+  label: string;
+  /** Completed generate+critique half-steps in 0..2*total (monotonic). */
+  halfStepsDone: number;
+};
+
 export type RunGenerationPipelineInput = {
   text: string;
   llm: PipelineLlm;
   apiKey: string;
   provider: string;
+  /** Best-effort; throws from the callback must not abort the pipeline. */
+  onProgress?: (event: PipelineProgressEvent) => void | Promise<void>;
 };
 
 /**
@@ -150,23 +161,63 @@ async function critiqueChunk(args: {
  * Critique unparseable/empty after 1 retry → fall back to schema-valid generate drafts.
  * Empty/whitespace text → [] without calling the LLM.
  */
+async function safeOnProgress(
+  onProgress: RunGenerationPipelineInput["onProgress"],
+  event: PipelineProgressEvent,
+): Promise<void> {
+  if (!onProgress) return;
+  try {
+    await onProgress(event);
+  } catch {
+    // Progress must never fail generation.
+  }
+}
+
 export async function runGenerationPipeline(
   input: RunGenerationPipelineInput,
 ): Promise<CardDraft[]> {
-  const { text, llm, apiKey, provider } = input;
+  const { text, llm, apiKey, provider, onProgress } = input;
   if (!text.trim()) return [];
 
   const chunks = chunkText(text).slice(0, MAX_PIPELINE_CHUNKS);
+  const total = chunks.length;
   const out: CardDraft[] = [];
 
-  for (const chunk of chunks) {
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i]!;
+    const chunkLabel = i + 1;
+    const report = (
+      stage: "generate" | "critique",
+      current: number,
+      halfStepsDone: number,
+    ) =>
+      safeOnProgress(onProgress, {
+        stage,
+        current,
+        total,
+        halfStepsDone,
+        label: `${stage === "generate" ? "Generating" : "Critiquing"} cards (chunk ${chunkLabel}/${total})`,
+      });
+
+    await report("generate", i, 2 * i);
+
     const generateInput: GenerateDraftsInput = {
       text: chunk,
       apiKey,
       provider,
     };
     const generated = await llm.generateDrafts(generateInput);
-    if (generated.length === 0) continue;
+
+    await report("generate", i + 1, 2 * i + 1);
+
+    if (generated.length === 0) {
+      // Keep critique half-steps aligned with total even when generate is empty.
+      await report("critique", i, 2 * i + 1);
+      await report("critique", i + 1, 2 * i + 2);
+      continue;
+    }
+
+    await report("critique", i, 2 * i + 1);
 
     const critiqued = await critiqueChunk({
       chunk,
@@ -175,6 +226,8 @@ export async function runGenerationPipeline(
       apiKey,
       provider,
     });
+
+    await report("critique", i + 1, 2 * i + 2);
 
     out.push(...(critiqued ?? generated));
   }
