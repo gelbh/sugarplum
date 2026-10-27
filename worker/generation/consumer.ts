@@ -3,6 +3,11 @@ import { getDb } from "../db/client";
 import { decryptSecret } from "../crypto/secrets";
 import { extractPdfText } from "../materials/extract-pdf";
 import { extractPptxText } from "../materials/extract-pptx";
+import { extractFiguresViaDocling } from "../materials/docling";
+import {
+  listFigureR2KeysForPdf,
+  persistFigureCrops,
+} from "../materials/figures";
 import { MAX_IMAGE_BYTES } from "../materials/limits";
 import type { GenerateQueueMessage } from "./enqueue";
 import { createLlmAdapter, parseLlmProvider, type LlmAdapter } from "./llm";
@@ -13,6 +18,7 @@ import {
 } from "./pipeline";
 import {
   IMAGE_STAGES,
+  PDF_STAGES,
   TEXT_LLM_STAGES,
   computePercent,
   computePipelineBandPercent,
@@ -385,6 +391,159 @@ export async function processGenerateJob(
         ...d,
         mediaR2Keys: [material.r2_key],
       }));
+      await emit("persist", 0, 1, "Saving drafts");
+      await insertDraftCards(db, { deckId, jobId, drafts });
+      await emit("persist", 1, 1, "Saving drafts");
+    } else if (material.kind === "pdf") {
+      const emit = makeEmit(db, jobId, PDF_STAGES);
+      await emit("queued", 0, 0, "Queued");
+      await emit("extract", 0, 0, "Extracting material");
+      if (!material.r2_key) {
+        throw new Error("PDF material has no R2 object");
+      }
+      const pdfObject = await env.MATERIALS.get(material.r2_key);
+      if (!pdfObject) {
+        throw new Error(`R2 object missing: ${material.r2_key}`);
+      }
+      const pdfBytes = await pdfObject.arrayBuffer();
+      let text = "";
+      let textError: unknown;
+      try {
+        text = await extractPdfText(pdfBytes.slice(0));
+      } catch (err) {
+        textError = err;
+        console.warn("PDF text extraction failed; trying figures", err);
+      }
+      if (textError && !env.DOCLING_URL) {
+        const existingFigureKeys = await listFigureR2KeysForPdf(db, {
+          deckId,
+          pdfMaterialId: material.id,
+        });
+        if (existingFigureKeys.length === 0) throw textError;
+      }
+
+      let figureKeys = await listFigureR2KeysForPdf(db, {
+        deckId,
+        pdfMaterialId: material.id,
+      });
+      if (figureKeys.length === 0 && env.DOCLING_URL) {
+        const figureResult = await extractFiguresViaDocling(env, pdfBytes);
+        if (figureResult.warning) console.warn(figureResult.warning);
+        if (figureResult.crops.length > 0) {
+          const persisted = await persistFigureCrops(env, {
+            deckId,
+            pdfMaterialId: material.id,
+            crops: figureResult.crops,
+          });
+          figureKeys = persisted.map(({ r2Key }) => r2Key);
+        }
+      }
+
+      const figureDrafts: Array<CardDraft & { mediaR2Keys?: string[] }> = [];
+      if (figureKeys.length > 0) {
+        await emit("figures", 0, figureKeys.length, "Processing figures");
+        let vision: { llm: LlmAdapter; apiKey: string; provider: string } | null =
+          null;
+        if (secret || opts?.llm) {
+          vision = secret
+            ? await resolveTextLlm(env, secret, opts)
+            : { llm: opts!.llm!, apiKey: "", provider: "mock" };
+        } else {
+          console.warn(
+            "Skipping PDF figures: vision generation requires an LLM API key.",
+          );
+        }
+        if (vision) {
+          for (let i = 0; i < figureKeys.length; i++) {
+            const figureKey = figureKeys[i]!;
+            try {
+              const figureObject = await env.MATERIALS.get(figureKey);
+              if (!figureObject) {
+                console.warn(`Figure R2 object missing: ${figureKey}`);
+                continue;
+              }
+              const figureBytes = await figureObject.arrayBuffer();
+              if (figureBytes.byteLength > MAX_IMAGE_BYTES) {
+                console.warn(`Skipping oversized PDF figure: ${figureKey}`);
+                continue;
+              }
+              const generated = await vision.llm.generateDrafts({
+                text: "",
+                apiKey: vision.apiKey,
+                provider: vision.provider,
+                image: {
+                  mimeType: mimeFromR2Key(figureKey),
+                  base64: bytesToBase64(figureBytes),
+                },
+              });
+              figureDrafts.push(
+                ...filterDraftsByQuality(generated).map((draft) => ({
+                  ...draft,
+                  mediaR2Keys: [figureKey],
+                })),
+              );
+            } catch (err) {
+              console.warn(`PDF figure generation failed for ${figureKey}`, err);
+            } finally {
+              await emit("figures", i + 1, figureKeys.length, "Processing figures");
+            }
+          }
+        } else {
+          await emit("figures", figureKeys.length, figureKeys.length, "Processing figures");
+        }
+      } else {
+        await emit("figures", 0, 0, "No figures found");
+      }
+
+      let textDrafts: CardDraft[] = [];
+      if (text.trim()) {
+        const rawRules = harvestRuleDrafts(text);
+        const layer1Rules = filterDraftsByQuality(rawRules);
+        const remainder = remainderAfterRules(text, rawRules);
+        const needsLlm = Boolean(remainder.trim()) || layer1Rules.length > 0;
+        if (needsLlm) {
+          const { llm, apiKey, provider } = await resolveTextLlm(
+            env,
+            secret,
+            opts,
+          );
+          if (!secret) await consumeFreeGenSlot(env, deck.user_id);
+          let critiquedRules = layer1Rules;
+          if (layer1Rules.length > 0) {
+            critiquedRules = await critiqueDraftsAgainstSource({
+              sourceText: text,
+              candidates: layer1Rules,
+              llm,
+              apiKey,
+              provider,
+            });
+          }
+          let llmDrafts: CardDraft[] = [];
+          if (remainder.trim()) {
+            llmDrafts = await runGenerationPipeline({
+              text: remainder,
+              llm,
+              apiKey,
+              provider,
+              onProgress: (e) =>
+                emit(e.stage, e.current, e.total, e.label, e.halfStepsDone),
+            });
+          }
+          textDrafts = mergeAndDedupeDrafts(critiquedRules, llmDrafts);
+        }
+      }
+
+      drafts = filterDraftsByQuality([...textDrafts, ...figureDrafts]);
+      if (drafts.length === 0) {
+        if (textError && figureDrafts.length === 0) {
+          throw textError;
+        }
+        throw new Error(
+          text.trim()
+            ? "No flashcard drafts could be produced from this material."
+            : "Extracted material text is empty and no usable figures were found. Upload OCR text or figure crops.",
+        );
+      }
       await emit("persist", 0, 1, "Saving drafts");
       await insertDraftCards(db, { deckId, jobId, drafts });
       await emit("persist", 1, 1, "Saving drafts");

@@ -2,8 +2,9 @@
 export const STAGE_WEIGHTS = {
   queued: 0.02,
   extract: 0.08,
+  figures: 0.1,
   rules: 0.05,
-  generate: 0.45,
+  generate: 0.35,
   critique: 0.3,
   persist: 0.1,
 } as const;
@@ -13,6 +14,7 @@ export type ProgressStage = keyof typeof STAGE_WEIGHTS;
 const STAGE_ORDER: ProgressStage[] = [
   "queued",
   "extract",
+  "figures",
   "rules",
   "generate",
   "critique",
@@ -38,6 +40,16 @@ export const IMAGE_STAGES = [
 export const TEXT_LLM_STAGES = [
   "queued",
   "extract",
+  "rules",
+  "generate",
+  "critique",
+  "persist",
+] as const satisfies readonly ProgressStage[];
+
+export const PDF_STAGES = [
+  "queued",
+  "extract",
+  "figures",
   "rules",
   "generate",
   "critique",
@@ -92,6 +104,7 @@ export function computePercent(
   total: number,
   presentStages: readonly ProgressStage[],
 ): number {
+  if (total > 0 && current >= total) return 100;
   const weights = effectiveWeights(presentStages);
   const present = presentStages.filter((s) => weights[s] > 0 || s === stage);
   const ordered = STAGE_ORDER.filter((s) => present.includes(s));
