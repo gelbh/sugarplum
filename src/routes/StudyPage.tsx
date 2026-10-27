@@ -17,7 +17,9 @@ import Typography from "@mui/material/Typography";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
 import TodayIcon from "@mui/icons-material/Today";
-import CardFace from "../components/CardFace";
+import CardFace, {
+  type OcclusionStudyFace,
+} from "../components/CardFace";
 import GradeButtons from "../components/GradeButtons";
 import McqFace from "../components/McqFace";
 import {
@@ -26,11 +28,13 @@ import {
   me,
   reviewCard,
   type CardDraftView,
+  type OcclusionFrontView,
   type StudyRating,
 } from "../api/client";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { resolveCardGesture } from "../study/cardGestures";
 import { loadDueCache, saveDueCache } from "../study/dueCache";
+import { pickOcclusionRegion } from "../study/pickOcclusionRegion";
 import { useStudyZenMode } from "../study/useStudyZenMode";
 
 type PointerStart = {
@@ -54,11 +58,46 @@ function typeLabel(type: CardDraftView["type"]): string {
   if (type === "mcq") return "Multiple choice";
   if (type === "image_label") return "Image label";
   if (type === "diagram") return "Diagram";
+  if (type === "occlusion") return "Occlusion";
   return "Q&A";
 }
 
 function isMcqCard(card: CardDraftView | null): boolean {
   return card?.type === "mcq";
+}
+
+function isOcclusionFront(
+  front: CardDraftView["front"],
+): front is OcclusionFrontView {
+  return typeof front === "object" && front !== null && "regions" in front;
+}
+
+function studyFrontText(card: CardDraftView): string {
+  if (isOcclusionFront(card.front)) {
+    return card.front.prompt?.trim() || "Identify the hidden region";
+  }
+  return typeof card.front === "string" ? card.front : "";
+}
+
+function studyBackText(card: CardDraftView): string {
+  const { back } = card;
+  if (typeof back === "object" && back !== null && "answer" in back) {
+    return back.answer;
+  }
+  return typeof back === "string" ? back : "";
+}
+
+/** Stable hide_one mask for study; undefined when not an occlusion face. */
+function occlusionStudyFace(card: CardDraftView): OcclusionStudyFace | undefined {
+  if (card.type !== "occlusion" || !isOcclusionFront(card.front)) {
+    return undefined;
+  }
+  const region = pickOcclusionRegion(card.id, card.front.regions);
+  if (!region) return undefined;
+  return {
+    imageKey: card.front.image_key,
+    mask: { x: region.x, y: region.y, w: region.w, h: region.h },
+  };
 }
 
 /** Study session: reveal answer, grade with FSRS (keys 1-4). Code-led MUI. */
@@ -463,18 +502,19 @@ export default function StudyPage() {
                 {mcqMode ? (
                   <McqFace
                     cardId={current.id}
-                    front={String(current.front)}
-                    back={String(current.back)}
+                    front={studyFrontText(current)}
+                    back={studyBackText(current)}
                     options={current.options}
                     disabled={busy}
                     onGrade={(rating) => onGrade(rating, true)}
                   />
                 ) : (
                   <CardFace
-                    front={String(current.front)}
-                    back={String(current.back)}
+                    front={studyFrontText(current)}
+                    back={studyBackText(current)}
                     type={current.type}
                     mediaR2Keys={current.media_r2_keys}
+                    occlusion={occlusionStudyFace(current)}
                     revealed={revealed}
                     onReveal={reveal}
                     onFlipBack={flipBack}
