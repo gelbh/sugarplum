@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { FigureCrop } from "../../worker/materials/docling";
 import {
   figureR2Key,
+  figureR2KeyPrefixBounds,
   listFigureR2KeysForPdf,
   persistFigureCrops,
 } from "../../worker/materials/figures";
@@ -22,6 +23,30 @@ describe("figureR2Key", () => {
     expect(figureR2Key("deck-1", "pdf-mat", 3)).toBe(
       "materials/deck-1/figures/pdf-mat/3.png",
     );
+  });
+});
+
+describe("figureR2KeyPrefixBounds", () => {
+  // D1 caps LIKE/GLOB patterns at 50 bytes; UUID figure prefixes are ~93.
+  const deckId = "f60321ef-35c7-49f2-85f6-19ff95e4911a";
+  const pdfMaterialId = "4439969e-3fa4-4b66-b946-d534509f7baf";
+
+  it("builds a half-open range that covers figure keys under the pdf prefix", () => {
+    const { lower, upper } = figureR2KeyPrefixBounds(deckId, pdfMaterialId);
+    expect(lower).toBe(
+      `materials/${deckId}/figures/${pdfMaterialId}/`,
+    );
+    expect(upper).toBe(`materials/${deckId}/figures/${pdfMaterialId}0`);
+    const key = figureR2Key(deckId, pdfMaterialId, 0);
+    expect(key >= lower && key < upper).toBe(true);
+    expect(`materials/${deckId}/figures/${pdfMaterialId}-other/0.png` < lower).toBe(
+      true,
+    );
+  });
+
+  it("documents that the old LIKE pattern exceeds D1's 50-byte limit", () => {
+    const likePattern = `materials/${deckId}/figures/${pdfMaterialId}/%`;
+    expect(likePattern.length).toBeGreaterThan(50);
   });
 });
 
@@ -103,6 +128,24 @@ describe("listFigureR2KeysForPdf", () => {
       pdfMaterialId: "pdf-parent",
     });
     expect(keys).toEqual([]);
+  });
+
+  it("lists figure keys when deck and pdf ids are production-length UUIDs", async () => {
+    const env = createTestEnv();
+    const deckId = "f60321ef-35c7-49f2-85f6-19ff95e4911a";
+    const pdfMaterialId = "4439969e-3fa4-4b66-b946-d534509f7baf";
+    await persistFigureCrops(env, {
+      deckId,
+      pdfMaterialId,
+      crops: [crop({ index: 0 })],
+    });
+
+    const keys = await listFigureR2KeysForPdf(env.DB, {
+      deckId,
+      pdfMaterialId,
+    });
+
+    expect(keys).toEqual([figureR2Key(deckId, pdfMaterialId, 0)]);
   });
 });
 
