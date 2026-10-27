@@ -11,6 +11,12 @@ import { GENERATE_SYSTEM_PROMPT } from "./prompts";
 /** Free-plan-eligible Workers AI instruct model (locked). */
 export const WORKERS_AI_MODEL = "@cf/zai-org/glm-4.7-flash" as const;
 
+/**
+ * Workers AI defaults max_tokens to 256 when omitted, which truncates
+ * multi-card JSON mid-string. Match Anthropic BYO budget.
+ */
+export const WORKERS_AI_MAX_TOKENS = 4096;
+
 const CAPACITY_ERROR =
   "Workers AI is temporarily at capacity. " +
   "Add your own API key in Settings for BYO generation, or retry after UTC midnight.";
@@ -44,10 +50,19 @@ function contentFromAiRun(result: unknown): string {
 
   const choices = (result as { choices?: unknown }).choices;
   if (Array.isArray(choices) && choices.length > 0) {
-    const message = (choices[0] as { message?: { content?: unknown } })
-      ?.message;
-    const content = message?.content;
-    if (typeof content === "string" && content.length > 0) return content;
+    const choice = choices[0] as {
+      message?: { content?: unknown };
+      finish_reason?: unknown;
+    };
+    const content = choice.message?.content;
+    if (typeof content === "string" && content.length > 0) {
+      if (choice.finish_reason === "length") {
+        throw new Error(
+          "Workers AI response truncated (hit token limit). Try a shorter source or fewer facts.",
+        );
+      }
+      return content;
+    }
   }
 
   // Older text-generation shape used by some Workers AI models.
@@ -76,6 +91,7 @@ export function createWorkersAiAdapter(env: Env): LlmAdapter {
           { role: "system", content: system },
           { role: "user", content: user },
         ],
+        max_tokens: WORKERS_AI_MAX_TOKENS,
         temperature: 0.3,
         chat_template_kwargs: { enable_thinking: false },
       });

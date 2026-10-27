@@ -3,7 +3,7 @@
 export const GENERATE_SYSTEM_PROMPT = `You generate spaced-repetition flashcards from study material.
 
 Rules:
-- One atomic fact per card.
+- One atomic fact per card; at most 8 cards.
 - Prefer a mix of short Q&A and single-blank cloze cards.
 - Cloze front must use exactly one Anki-style blank: {{c1::answer}}. Never multiple blanks.
 - Every card must cite a short excerpt from the source (verbatim or lightly trimmed).
@@ -24,7 +24,7 @@ Rules:
 - Do not wrap the array in markdown fences.`;
 
 export function generateUserPrompt(sourceText: string): string {
-  return `Create flashcards from this material. Cover the main facts without redundancy.
+  return `Create up to 8 flashcards from this material. Cover the main facts without redundancy.
 
 --- MATERIAL ---
 ${sourceText}
