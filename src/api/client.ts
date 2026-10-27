@@ -290,6 +290,17 @@ export type GenerationJobProgress = {
   total: number;
   percent: number;
   label: string;
+  tokens_used?: number;
+  tokens_prompt?: number;
+  tokens_completion?: number;
+  drafts_so_far?: number;
+  events?: {
+    at: string;
+    kind: "excerpt" | "draft" | "stage";
+    stage: string;
+    text: string;
+  }[];
+  path?: "free" | "byo";
 };
 
 export type GenerationJob = {
@@ -299,6 +310,7 @@ export type GenerationJob = {
   error: string | null;
   coverage_json: string | null;
   progress: GenerationJobProgress | null;
+  free_quota: { used: number; cap: number; remaining: number } | null;
   created_at: string;
   finished_at: string | null;
 };

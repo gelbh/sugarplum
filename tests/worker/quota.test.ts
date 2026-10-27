@@ -3,6 +3,7 @@ import {
   FREE_GEN_DAILY_CAP,
   consumeFreeGenSlot,
   freeGenKvKey,
+  getFreeGenUsage,
 } from "../../worker/generation/quota";
 import { createTestEnv } from "./test-env";
 
@@ -36,6 +37,24 @@ describe("free generation quota", () => {
     await expect(consumeFreeGenSlot(env, userId)).rejects.toThrow(
       /free generation|daily|Settings|BYO|UTC midnight/i,
     );
+  });
+
+  it("getFreeGenUsage is read-only and reflects consumeFreeGenSlot", async () => {
+    const env = createTestEnv();
+    const userId = "user-read-usage";
+
+    await consumeFreeGenSlot(env, userId);
+
+    const first = await getFreeGenUsage(env, userId);
+    expect(first).toEqual({
+      used: 1,
+      cap: FREE_GEN_DAILY_CAP,
+      remaining: FREE_GEN_DAILY_CAP - 1,
+    });
+
+    const second = await getFreeGenUsage(env, userId);
+    expect(second).toEqual(first);
+    expect(await env.SESSIONS.get(freeGenKvKey(userId))).toBe("1");
   });
 
   it("day key uses UTC date, not local timezone", async () => {

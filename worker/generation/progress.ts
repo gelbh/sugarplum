@@ -21,13 +21,80 @@ const STAGE_ORDER: ProgressStage[] = [
   "persist",
 ];
 
+export type ProgressEvent = {
+  at: string;
+  kind: "excerpt" | "draft" | "stage";
+  stage: string;
+  text: string;
+};
+
 export type ProgressPatch = {
   stage: ProgressStage;
   current: number;
   total: number;
   percent: number;
   label: string;
+  tokens_used?: number;
+  tokens_prompt?: number;
+  tokens_completion?: number;
+  drafts_so_far?: number;
+  events?: ProgressEvent[];
+  path?: "free" | "byo";
 };
+
+/** Strip C0 control chars except newline and space; cap length. */
+export function truncateProgressText(text: string, max = 160): string {
+  let out = "";
+  for (const ch of text) {
+    const code = ch.charCodeAt(0);
+    if (code === 0x0a || code === 0x20 || (code > 0x20 && code !== 0x7f)) {
+      out += ch;
+    }
+  }
+  return out.length <= max ? out : out.slice(0, max);
+}
+
+/** Append a progress event; keep at most `max` newest (drop oldest). */
+export function pushProgressEvent(
+  events: ProgressEvent[] | undefined,
+  event: ProgressEvent,
+  max = 12,
+): ProgressEvent[] {
+  const next = [...(events ?? []), event];
+  if (next.length <= max) return next;
+  return next.slice(next.length - max);
+}
+
+export type TokenUsageAcc = {
+  tokens_used?: number;
+  tokens_prompt?: number;
+  tokens_completion?: number;
+};
+
+export type TokenUsageDelta = {
+  prompt_tokens?: number | null;
+  completion_tokens?: number | null;
+  total_tokens?: number | null;
+};
+
+/** Sum LLM usage into a progress accumulator (multi-call jobs). */
+export function accumulateTokenUsage(
+  acc: TokenUsageAcc,
+  usage: TokenUsageDelta,
+): void {
+  if (usage.completion_tokens != null) {
+    acc.tokens_completion =
+      (acc.tokens_completion ?? 0) + usage.completion_tokens;
+  }
+  if (usage.prompt_tokens != null) {
+    acc.tokens_prompt = (acc.tokens_prompt ?? 0) + usage.prompt_tokens;
+  }
+  if (usage.total_tokens != null) {
+    acc.tokens_used = (acc.tokens_used ?? 0) + usage.total_tokens;
+  } else if (acc.tokens_prompt != null || acc.tokens_completion != null) {
+    acc.tokens_used = (acc.tokens_prompt ?? 0) + (acc.tokens_completion ?? 0);
+  }
+}
 
 /** Stage catalogs for generation job paths (weights via effectiveWeights). */
 export const IMAGE_STAGES = [
@@ -123,8 +190,7 @@ export function computePercent(
     completed += weights[s];
   }
 
-  const within =
-    total > 0 ? Math.max(0, current) / total : 0;
+  const within = total > 0 ? Math.max(0, current) / total : 0;
   const raw = 100 * (completed + weights[stage] * within);
   const capped = Math.min(100, Math.max(0, raw));
   // Last catalog stage finished: snap float dust to 100.
@@ -163,13 +229,24 @@ export function computePipelineBandPercent(
 
 /** Serialize server-side progress fields for progress_json column. */
 export function toProgressJson(patch: ProgressPatch): string {
-  return JSON.stringify({
+  const body: Record<string, unknown> = {
     stage: patch.stage,
     current: patch.current,
     total: patch.total,
     percent: patch.percent,
     label: patch.label,
-  });
+  };
+  if (patch.tokens_used !== undefined) body.tokens_used = patch.tokens_used;
+  if (patch.tokens_prompt !== undefined)
+    body.tokens_prompt = patch.tokens_prompt;
+  if (patch.tokens_completion !== undefined) {
+    body.tokens_completion = patch.tokens_completion;
+  }
+  if (patch.drafts_so_far !== undefined)
+    body.drafts_so_far = patch.drafts_so_far;
+  if (patch.events !== undefined) body.events = patch.events;
+  if (patch.path !== undefined) body.path = patch.path;
+  return JSON.stringify(body);
 }
 
 /** Persist progress_json on a generation_jobs row. */

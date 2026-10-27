@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   STAGE_WEIGHTS,
+  accumulateTokenUsage,
   computePercent,
   computePipelineBandPercent,
+  pushProgressEvent,
   toProgressJson,
+  truncateProgressText,
   writeJobProgress,
 } from "../../worker/generation/progress";
 import { createTestEnv } from "./test-env";
@@ -36,33 +39,38 @@ describe("STAGE_WEIGHTS", () => {
 describe("computePercent", () => {
   it("computes mid-chunk generate percent with full stage set", () => {
     // completed: queued+extract+rules = 0.15; generate 0.45 * (2/5) = 0.18 → 33%
-    expect(
-      computePercent("generate", 2, 5, [...FULL_STAGES]),
-    ).toBeCloseTo(33, 5);
+    expect(computePercent("generate", 2, 5, [...FULL_STAGES])).toBeCloseTo(
+      33,
+      5,
+    );
   });
 
   it("rolls skipped rules and critique weights into generate", () => {
     // generate effective = 0.45 + 0.05 + 0.30 = 0.80
     // completed: queued+extract = 0.10; within = 2/5 → 0.10 + 0.32 = 0.42 → 42%
-    expect(
-      computePercent("generate", 2, 5, [...NO_FREE_GEN]),
-    ).toBeCloseTo(42, 5);
+    expect(computePercent("generate", 2, 5, [...NO_FREE_GEN])).toBeCloseTo(
+      42,
+      5,
+    );
 
     // at start of generate (0/5): only completed weight
-    expect(
-      computePercent("generate", 0, 5, [...NO_FREE_GEN]),
-    ).toBeCloseTo(10, 5);
+    expect(computePercent("generate", 0, 5, [...NO_FREE_GEN])).toBeCloseTo(
+      10,
+      5,
+    );
 
     // after generate chunks done, still in generate: 0.10 + 0.80 = 0.90 → 90%
-    expect(
-      computePercent("generate", 5, 5, [...NO_FREE_GEN]),
-    ).toBeCloseTo(90, 5);
+    expect(computePercent("generate", 5, 5, [...NO_FREE_GEN])).toBeCloseTo(
+      90,
+      5,
+    );
 
     // persist with no within-stage units: completed before persist
     // 0.02+0.08+0.80 = 0.90 → 90%
-    expect(
-      computePercent("persist", 0, 0, [...NO_FREE_GEN]),
-    ).toBeCloseTo(90, 5);
+    expect(computePercent("persist", 0, 0, [...NO_FREE_GEN])).toBeCloseTo(
+      90,
+      5,
+    );
   });
 
   it("clamps to [0, 100]", () => {
@@ -72,9 +80,7 @@ describe("computePercent", () => {
 
   it("treats total 0 as within-stage 0", () => {
     // still in extract: only queued completed = 2%
-    expect(
-      computePercent("extract", 0, 0, [...FULL_STAGES]),
-    ).toBeCloseTo(2, 5);
+    expect(computePercent("extract", 0, 0, [...FULL_STAGES])).toBeCloseTo(2, 5);
   });
 
   it("is monotonic as generate current increases", () => {
@@ -133,6 +139,38 @@ describe("computePipelineBandPercent", () => {
   });
 });
 
+describe("truncateProgressText", () => {
+  it("strips C0 control chars except newline and space, then slices", () => {
+    const withControls = "hello\u0000\u0007world\nok\tthere";
+    expect(truncateProgressText(withControls)).toBe("helloworld\nokthere");
+    expect(truncateProgressText("a".repeat(200))).toBe("a".repeat(160));
+    expect(truncateProgressText("short", 160)).toBe("short");
+  });
+});
+
+describe("pushProgressEvent", () => {
+  const sample = (i: number) => ({
+    at: "2026-10-27T00:00:00.000Z",
+    kind: "stage" as const,
+    stage: "generate",
+    text: `event ${i}`,
+  });
+
+  it("starts from empty when events undefined", () => {
+    expect(pushProgressEvent(undefined, sample(1))).toEqual([sample(1)]);
+  });
+
+  it("drops oldest when exceeding max (default 12)", () => {
+    let events: ReturnType<typeof sample>[] = [];
+    for (let i = 0; i < 13; i++) {
+      events = pushProgressEvent(events, sample(i));
+    }
+    expect(events).toHaveLength(12);
+    expect(events[0].text).toBe("event 1");
+    expect(events[11].text).toBe("event 12");
+  });
+});
+
 describe("toProgressJson", () => {
   it("serializes server progress snapshot fields", () => {
     const json = toProgressJson({
@@ -149,6 +187,68 @@ describe("toProgressJson", () => {
       percent: 42,
       label: "Generating cards (chunk 2/5)",
     });
+  });
+
+  it("includes optional fields when set and omits when absent", () => {
+    const full = toProgressJson({
+      stage: "generate",
+      current: 1,
+      total: 3,
+      percent: 10,
+      label: "Gen",
+      tokens_used: 100,
+      tokens_prompt: 60,
+      tokens_completion: 40,
+      drafts_so_far: 2,
+      path: "free",
+      events: [
+        {
+          at: "2026-10-27T00:00:00.000Z",
+          kind: "draft",
+          stage: "generate",
+          text: "card draft",
+        },
+      ],
+    });
+    expect(JSON.parse(full)).toEqual({
+      stage: "generate",
+      current: 1,
+      total: 3,
+      percent: 10,
+      label: "Gen",
+      tokens_used: 100,
+      tokens_prompt: 60,
+      tokens_completion: 40,
+      drafts_so_far: 2,
+      path: "free",
+      events: [
+        {
+          at: "2026-10-27T00:00:00.000Z",
+          kind: "draft",
+          stage: "generate",
+          text: "card draft",
+        },
+      ],
+    });
+
+    const minimal = toProgressJson({
+      stage: "queued",
+      current: 0,
+      total: 0,
+      percent: 0,
+      label: "Queued",
+    });
+    const parsed = JSON.parse(minimal) as Record<string, unknown>;
+    expect(parsed).toEqual({
+      stage: "queued",
+      current: 0,
+      total: 0,
+      percent: 0,
+      label: "Queued",
+    });
+    expect(parsed).not.toHaveProperty("tokens_used");
+    expect(parsed).not.toHaveProperty("events");
+    expect(parsed).not.toHaveProperty("path");
   });
 });
 
@@ -192,11 +292,65 @@ describe("writeJobProgress", () => {
       total: 5,
       percent: 42,
       label: "Generating cards (chunk 2/5)",
+      path: "free" as const,
+      drafts_so_far: 3,
+      events: [
+        {
+          at: "2026-10-26T12:00:00.000Z",
+          kind: "draft" as const,
+          stage: "generate",
+          text: "Sample draft preview",
+        },
+      ],
     };
     await writeJobProgress(env.DB, "j1", patch);
 
     const jobs = env.getGenerationJobs();
     expect(jobs).toHaveLength(1);
     expect(jobs[0].progress_json).toBe(toProgressJson(patch));
+    const roundTrip = JSON.parse(jobs[0].progress_json!) as Record<
+      string,
+      unknown
+    >;
+    expect(roundTrip.path).toBe("free");
+    expect(roundTrip.drafts_so_far).toBe(3);
+    expect(roundTrip.events).toHaveLength(1);
+  });
+});
+
+describe("accumulateTokenUsage", () => {
+  it("sums prompt/completion/total across two LLM calls", () => {
+    const acc: {
+      tokens_used?: number;
+      tokens_prompt?: number;
+      tokens_completion?: number;
+    } = {};
+    accumulateTokenUsage(acc, {
+      prompt_tokens: 10,
+      completion_tokens: 5,
+      total_tokens: 15,
+    });
+    accumulateTokenUsage(acc, {
+      prompt_tokens: 20,
+      completion_tokens: 8,
+      total_tokens: 28,
+    });
+    expect(acc.tokens_prompt).toBe(30);
+    expect(acc.tokens_completion).toBe(13);
+    expect(acc.tokens_used).toBe(43);
+  });
+
+  it("derives total from prompt+completion when total_tokens absent", () => {
+    const acc: {
+      tokens_used?: number;
+      tokens_prompt?: number;
+      tokens_completion?: number;
+    } = {};
+    accumulateTokenUsage(acc, { prompt_tokens: 4, completion_tokens: 6 });
+    expect(acc.tokens_used).toBe(10);
+    accumulateTokenUsage(acc, { prompt_tokens: 1, completion_tokens: 2 });
+    expect(acc.tokens_prompt).toBe(5);
+    expect(acc.tokens_completion).toBe(8);
+    expect(acc.tokens_used).toBe(13);
   });
 });

@@ -31,6 +31,8 @@ type AiRunContent = {
   content: string;
   finishReason: string | null;
   completionTokens: number | null;
+  promptTokens: number | null;
+  totalTokens: number | null;
 };
 
 function isWorkersAiCapacityError(err: unknown): boolean {
@@ -60,11 +62,25 @@ function contentFromAiRun(result: unknown): AiRunContent {
     throw new Error("Workers AI returned empty content");
   }
 
-  const usage = (result as { usage?: { completion_tokens?: unknown } }).usage;
+  const usage = (
+    result as {
+      usage?: {
+        completion_tokens?: unknown;
+        prompt_tokens?: unknown;
+        total_tokens?: unknown;
+      };
+    }
+  ).usage;
   const completionTokens =
     usage && typeof usage.completion_tokens === "number"
       ? usage.completion_tokens
       : null;
+  const promptTokens =
+    usage && typeof usage.prompt_tokens === "number"
+      ? usage.prompt_tokens
+      : null;
+  const totalTokens =
+    usage && typeof usage.total_tokens === "number" ? usage.total_tokens : null;
 
   const choices = (result as { choices?: unknown }).choices;
   if (Array.isArray(choices) && choices.length > 0) {
@@ -83,6 +99,8 @@ function contentFromAiRun(result: unknown): AiRunContent {
             ? choice.finish_reason
             : null,
         completionTokens,
+        promptTokens,
+        totalTokens,
       };
     }
   }
@@ -94,6 +112,8 @@ function contentFromAiRun(result: unknown): AiRunContent {
       content: response,
       finishReason: null,
       completionTokens,
+      promptTokens: null,
+      totalTokens: null,
     };
   }
 
@@ -115,7 +135,16 @@ function withAiDiagnostics(err: unknown, run: AiRunContent): Error {
  * Platform free path: `env.AI` binding, no user API key.
  * Implements generate + complete for the critique pipeline.
  */
-export function createWorkersAiAdapter(env: Env): LlmAdapter {
+export function createWorkersAiAdapter(
+  env: Env,
+  opts?: {
+    onUsage?: (usage: {
+      prompt_tokens?: number | null;
+      completion_tokens?: number | null;
+      total_tokens?: number | null;
+    }) => void;
+  },
+): LlmAdapter {
   if (!env.AI) {
     throw new Error("Workers AI binding (env.AI) is not configured");
   }
@@ -142,6 +171,15 @@ export function createWorkersAiAdapter(env: Env): LlmAdapter {
   async function complete(input: CompleteInput): Promise<string> {
     // apiKey ignored: Workers AI uses the binding, not BYO secrets.
     const run = await runChat(input.system, input.user);
+    try {
+      opts?.onUsage?.({
+        prompt_tokens: run.promptTokens,
+        completion_tokens: run.completionTokens,
+        total_tokens: run.totalTokens,
+      });
+    } catch {
+      // best-effort
+    }
     if (run.finishReason === "length") {
       throw new Error(
         "Workers AI response truncated (hit token limit). Try a shorter source or fewer facts.",
@@ -167,23 +205,37 @@ export function createWorkersAiAdapter(env: Env): LlmAdapter {
         }
       };
 
+      const reportUsage = (run: AiRunContent) => {
+        try {
+          opts?.onUsage?.({
+            prompt_tokens: run.promptTokens,
+            completion_tokens: run.completionTokens,
+            total_tokens: run.totalTokens,
+          });
+        } catch {
+          // best-effort
+        }
+      };
+
       // One compact retry: live monoxenous failures end mid-first-card with
       // nothing to salvage; a smaller ask often completes within budget.
       return withCompactTruncationRetry(
-        async () =>
-          parseOrThrow(
-            await runChat(
-              GENERATE_SYSTEM_PROMPT,
-              userPromptForJson(input.text),
-            ),
-          ),
-        async () =>
-          parseOrThrow(
-            await runChat(
-              GENERATE_COMPACT_SYSTEM_PROMPT,
-              generateCompactUserPrompt(input.text),
-            ),
-          ),
+        async () => {
+          const run = await runChat(
+            GENERATE_SYSTEM_PROMPT,
+            userPromptForJson(input.text),
+          );
+          reportUsage(run);
+          return parseOrThrow(run);
+        },
+        async () => {
+          const run = await runChat(
+            GENERATE_COMPACT_SYSTEM_PROMPT,
+            generateCompactUserPrompt(input.text),
+          );
+          reportUsage(run);
+          return parseOrThrow(run);
+        },
       );
     },
   };
