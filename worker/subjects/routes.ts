@@ -139,10 +139,7 @@ subjectRoutes.delete("/:id", async (c) => {
 
   const deck_count = await deckCountForSubject(db, subjectId);
   if (deck_count > 0) {
-    return c.json(
-      { error: "Subject still has decks", deck_count },
-      409,
-    );
+    return c.json({ error: "Subject still has decks", deck_count }, 409);
   }
 
   const result = await db

@@ -80,10 +80,7 @@ describe("guest store", () => {
     );
 
     const subjects = guestListSubjects(storage);
-    expect(subjects.map((s) => s.title).sort()).toEqual([
-      "Anatomy",
-      "Unfiled",
-    ]);
+    expect(subjects.map((s) => s.title).sort()).toEqual(["Anatomy", "Unfiled"]);
     const byTitle = Object.fromEntries(subjects.map((s) => [s.title, s.id]));
     const decks = guestListDecks(undefined, storage);
     expect(decks.find((d) => d.id === "legacy-deck-1")?.subject_id).toBe(

@@ -4,11 +4,7 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import { enqueueGeneration } from "../generation/enqueue";
-import {
-  MAX_FILE_BYTES,
-  MAX_IMAGE_BYTES,
-  MAX_PASTE_BYTES,
-} from "./limits";
+import { MAX_FILE_BYTES, MAX_IMAGE_BYTES, MAX_PASTE_BYTES } from "./limits";
 import { MAX_FIGURES_PER_PDF } from "./docling";
 import { figureR2Key } from "./figures";
 import { createR2PutUrl } from "./r2-presign";
@@ -44,11 +40,7 @@ const FILE_READY = "ready";
 const PDF_CONTENT_TYPE = "application/pdf";
 const PPTX_CONTENT_TYPE =
   "application/vnd.openxmlformats-officedocument.presentationml.presentation";
-const IMAGE_CONTENT_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-]);
+const IMAGE_CONTENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const DEFAULT_R2_BUCKET = "sugarplum-materials";
 const ZIP_CONTENT_TYPES = new Set([
   "application/zip",
@@ -65,10 +57,7 @@ function resolveUpload(
   const lowerName = filename.toLowerCase();
   if (contentType === PDF_CONTENT_TYPE) return { kind: "pdf", ext: "pdf" };
   if (contentType === PPTX_CONTENT_TYPE) return { kind: "pptx", ext: "pptx" };
-  if (
-    ZIP_CONTENT_TYPES.has(contentType) &&
-    lowerName.endsWith(".pptx")
-  ) {
+  if (ZIP_CONTENT_TYPES.has(contentType) && lowerName.endsWith(".pptx")) {
     return { kind: "pptx", ext: "pptx" };
   }
   if (IMAGE_CONTENT_TYPES.has(contentType)) {
@@ -122,9 +111,7 @@ async function requireOwnedSubjectId(
   userId: string,
 ): Promise<void> {
   const subject = await db
-    .prepare(
-      "SELECT id, user_id FROM subjects WHERE id = ? AND user_id = ?",
-    )
+    .prepare("SELECT id, user_id FROM subjects WHERE id = ? AND user_id = ?")
     .bind(subjectId, userId)
     .first<{ id: string; user_id: string }>();
   if (!subject) throw new HTTPException(404, { message: "Subject not found" });
@@ -400,8 +387,7 @@ deckRoutes.post("/:id/materials/upload-url", async (c) => {
   const resolved = resolveUpload(contentType, filenameHint);
   if (!resolved) {
     throw new HTTPException(400, {
-      message:
-        "Only PDF, PPTX, or image (jpeg/png/webp) uploads are allowed",
+      message: "Only PDF, PPTX, or image (jpeg/png/webp) uploads are allowed",
     });
   }
 
@@ -500,7 +486,9 @@ materialRoutes.post("/:id/figures/presign", async (c) => {
       ? body.filename.trim()
       : "figure.png";
   if (body.contentType !== "image/png") {
-    throw new HTTPException(400, { message: "Figure crops must be PNG images" });
+    throw new HTTPException(400, {
+      message: "Figure crops must be PNG images",
+    });
   }
   const size = typeof body.size === "number" ? body.size : Number(body.size);
   if (!Number.isFinite(size) || size <= 0 || size > MAX_IMAGE_BYTES) {
@@ -508,12 +496,9 @@ materialRoutes.post("/:id/figures/presign", async (c) => {
       message: `Figure crops must be ${MAX_IMAGE_BYTES / (1024 * 1024)}MB or smaller`,
     });
   }
-  const index = typeof body.index === "number" ? body.index : Number(body.index);
-  if (
-    !Number.isInteger(index) ||
-    index < 0 ||
-    index >= MAX_FIGURES_PER_PDF
-  ) {
+  const index =
+    typeof body.index === "number" ? body.index : Number(body.index);
+  if (!Number.isInteger(index) || index < 0 || index >= MAX_FIGURES_PER_PDF) {
     throw new HTTPException(400, {
       message: `Figure crop index must be an integer from 0 to ${MAX_FIGURES_PER_PDF - 1}`,
     });
@@ -595,14 +580,13 @@ materialRoutes.get("/media", async (c) => {
     throw new HTTPException(404, { message: "Media not found" });
   }
   const lower = key.toLowerCase();
-  const contentType =
-    lower.endsWith(".png")
-      ? "image/png"
-      : lower.endsWith(".webp")
-        ? "image/webp"
-        : lower.endsWith(".jpg") || lower.endsWith(".jpeg")
-          ? "image/jpeg"
-          : "application/octet-stream";
+  const contentType = lower.endsWith(".png")
+    ? "image/png"
+    : lower.endsWith(".webp")
+      ? "image/webp"
+      : lower.endsWith(".jpg") || lower.endsWith(".jpeg")
+        ? "image/jpeg"
+        : "application/octet-stream";
   return new Response(obj.body, {
     headers: {
       "content-type": contentType,
@@ -632,9 +616,7 @@ materialRoutes.post("/:id/complete", async (c) => {
   }
 
   const cas = await db
-    .prepare(
-      "UPDATE materials SET status = ? WHERE id = ? AND status = ?",
-    )
+    .prepare("UPDATE materials SET status = ? WHERE id = ? AND status = ?")
     .bind(FILE_READY, materialId, FILE_UPLOADING)
     .run();
   if (!cas.meta.changes) {

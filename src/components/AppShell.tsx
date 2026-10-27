@@ -248,11 +248,7 @@ export default function AppShell({ children }: AppShellProps) {
           {children}
         </Box>
         {showMobileChrome ? (
-          <BottomChrome
-            active={active}
-            items={NAV}
-            onNavigate={navigate}
-          />
+          <BottomChrome active={active} items={NAV} onNavigate={navigate} />
         ) : null}
       </Box>
     </ProgressProvider>

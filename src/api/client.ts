@@ -201,9 +201,7 @@ export function deleteSubject(id: string) {
 
 export function listDecks(subjectId?: string) {
   if (isGuest()) return Promise.resolve(guestListDecks(subjectId));
-  const q = subjectId
-    ? `?subjectId=${encodeURIComponent(subjectId)}`
-    : "";
+  const q = subjectId ? `?subjectId=${encodeURIComponent(subjectId)}` : "";
   return api<Deck[]>(`/api/decks${q}`);
 }
 

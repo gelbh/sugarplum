@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useState, type FormEvent, type MouseEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type FormEvent,
+  type MouseEvent,
+} from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -42,9 +48,7 @@ import {
 } from "../subjects/subjectDeleteGuard";
 
 type TitleDialog =
-  | { mode: "create" }
-  | { mode: "rename"; subject: Subject }
-  | null;
+  { mode: "create" } | { mode: "rename"; subject: Subject } | null;
 
 export default function LibraryPage() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -243,7 +247,11 @@ export default function LibraryPage() {
               >
                 Your subjects
               </Typography>
-              <Button size="small" variant="outlined" onClick={openCreateSubject}>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={openCreateSubject}
+              >
                 Create subject
               </Button>
             </Stack>
@@ -281,9 +289,7 @@ export default function LibraryPage() {
                           {s.title}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {deckCount === 1
-                            ? "1 deck"
-                            : `${deckCount} decks`}
+                          {deckCount === 1 ? "1 deck" : `${deckCount} decks`}
                         </Typography>
                       </Box>
                       <IconButton
@@ -413,7 +419,9 @@ export default function LibraryPage() {
       >
         <Box component="form" onSubmit={onTitleDialogSubmit} noValidate>
           <DialogTitle>
-            {titleDialog?.mode === "rename" ? "Rename subject" : "Create subject"}
+            {titleDialog?.mode === "rename"
+              ? "Rename subject"
+              : "Create subject"}
           </DialogTitle>
           <DialogContent>
             {dialogError ? (

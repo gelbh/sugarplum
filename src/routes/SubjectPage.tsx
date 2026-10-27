@@ -144,19 +144,14 @@ export default function SubjectPage({ subjectId }: Props) {
         setDecks((prev) => [...prev, deck]);
         await syncSubjectFromList();
       } else {
-        const updated = await patchDeck(
-          titleDialog.deck.id,
-          titleValue.trim(),
-        );
+        const updated = await patchDeck(titleDialog.deck.id, titleValue.trim());
         setDecks((prev) =>
           prev.map((d) => (d.id === updated.id ? updated : d)),
         );
       }
       setTitleDialog(null);
     } catch (err) {
-      setDialogError(
-        err instanceof ApiError ? err.message : "Could not save",
-      );
+      setDialogError(err instanceof ApiError ? err.message : "Could not save");
     } finally {
       setDialogBusy(false);
     }
@@ -200,9 +195,7 @@ export default function SubjectPage({ subjectId }: Props) {
       setDeleteTarget(null);
       setDeleteStats(null);
     } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Could not delete deck",
-      );
+      setError(err instanceof ApiError ? err.message : "Could not delete deck");
     } finally {
       setDeleteBusy(false);
     }
@@ -342,7 +335,11 @@ export default function SubjectPage({ subjectId }: Props) {
                       py: 1,
                     }}
                   >
-                    <Typography variant="body2" sx={{ flex: 1, minWidth: 0 }} noWrap>
+                    <Typography
+                      variant="body2"
+                      sx={{ flex: 1, minWidth: 0 }}
+                      noWrap
+                    >
                       {d.title}
                     </Typography>
                     <IconButton
