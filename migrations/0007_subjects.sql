@@ -1,6 +1,7 @@
 -- Subjects own decks. subject_id is nullable here so existing decks keep
--- loading; deploy must backfill subject_id (and then enforce NOT NULL) before
--- production treats hierarchy as required. Tests always insert subject_id.
+-- loading; 0008_subjects_backfill.sql assigns subject_id from subject_hint.
+-- A later migration can enforce NOT NULL (SQLite needs a table rebuild).
+-- Tests always insert subject_id.
 
 CREATE TABLE subjects (
   id TEXT PRIMARY KEY NOT NULL,
