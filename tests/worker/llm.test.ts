@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createLlmAdapter,
+  isTruncationParseError,
   parseCardsPayload,
   parseLlmProvider,
   providerRequestUrl,
+  withCompactTruncationRetry,
 } from "../../worker/generation/llm";
 
 const sampleCardsJson = JSON.stringify({
@@ -229,5 +231,107 @@ describe("parseCardsPayload", () => {
         '{"cards":[{"type":"cloze","front":"Monoxenous protozoa are defined by having a {}',
       ),
     ).toThrow(/truncated/i);
+  });
+});
+
+describe("isTruncationParseError", () => {
+  it("matches mid-JSON truncation errors only", () => {
+    expect(
+      isTruncationParseError(new Error("LLM response truncated mid-JSON")),
+    ).toBe(true);
+    expect(
+      isTruncationParseError(
+        new Error("LLM response truncated mid-JSON (preview: {) [len=12]"),
+      ),
+    ).toBe(true);
+    expect(isTruncationParseError(new Error("LLM returned non-JSON content"))).toBe(
+      false,
+    );
+    expect(isTruncationParseError("truncated mid-JSON")).toBe(false);
+  });
+});
+
+describe("withCompactTruncationRetry", () => {
+  it("returns first success without calling retry", async () => {
+    const retry = vi.fn(async () => "retry");
+    await expect(
+      withCompactTruncationRetry(async () => "ok", retry),
+    ).resolves.toBe("ok");
+    expect(retry).not.toHaveBeenCalled();
+  });
+
+  it("retries once on truncation parse error", async () => {
+    const first = vi.fn(async () => {
+      throw new Error("LLM response truncated mid-JSON");
+    });
+    const retry = vi.fn(async () => "compact-ok");
+    await expect(withCompactTruncationRetry(first, retry)).resolves.toBe(
+      "compact-ok",
+    );
+    expect(first).toHaveBeenCalledOnce();
+    expect(retry).toHaveBeenCalledOnce();
+  });
+
+  it("does not retry non-truncation errors", async () => {
+    const retry = vi.fn(async () => "retry");
+    await expect(
+      withCompactTruncationRetry(async () => {
+        throw new Error("LLM returned non-JSON content");
+      }, retry),
+    ).rejects.toThrow(/non-JSON/i);
+    expect(retry).not.toHaveBeenCalled();
+  });
+});
+
+describe("BYO generateDrafts compact retry", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("retries once with compact prompts when openai truncates mid-JSON", async () => {
+    const truncated =
+      '{"cards":[{"type":"qa","front":"What defines monoxenous protozoa?","back":"Direc';
+    const compactOk = JSON.stringify({
+      cards: [
+        {
+          type: "qa",
+          front: "What defines monoxenous protozoa?",
+          back: "Direct lifecycle in one host.",
+          provenance: { pages: [1], excerpt: "monoxenous" },
+        },
+      ],
+    });
+
+    const bodies: { messages?: { role: string; content: string }[] }[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+        const body = JSON.parse(String(init?.body)) as {
+          messages?: { role: string; content: string }[];
+        };
+        bodies.push(body);
+        const content = bodies.length === 1 ? truncated : compactOk;
+        return new Response(
+          JSON.stringify({
+            choices: [{ message: { content } }],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }),
+    );
+
+    const drafts = await createLlmAdapter("openai").generateDrafts({
+      text: "notes about monoxenous protozoa",
+      apiKey: "sk-openai",
+      provider: "openai",
+    });
+
+    expect(drafts).toHaveLength(1);
+    expect(drafts[0]?.front).toContain("monoxenous");
+    expect(bodies).toHaveLength(2);
+    expect(bodies[1]?.messages?.[0]?.content).toMatch(
+      /3–5 high-yield cards only/i,
+    );
+    expect(bodies[1]?.messages?.[1]?.content).toMatch(/3–5 short/i);
   });
 });

@@ -29,6 +29,8 @@ export type CardRow = {
 
 const OcclusionBackSchema = z.object({ answer: z.string().min(1) });
 const TextFaceSchema = z.string().min(1);
+/** Cloze Extra may be empty; other text backs still validated in the handler. */
+const TextBackPatchSchema = z.string();
 const CardTypeSchema = z.enum([
   "qa",
   "cloze",
@@ -42,7 +44,7 @@ const CardTypeSchema = z.enum([
 const PatchDraftSchema = z
   .object({
     front: z.union([TextFaceSchema, OcclusionFrontSchema]).optional(),
-    back: z.union([TextFaceSchema, OcclusionBackSchema]).optional(),
+    back: z.union([TextBackPatchSchema, OcclusionBackSchema]).optional(),
     options: z.array(z.string()).optional(),
     type: CardTypeSchema.optional(),
   })
@@ -414,6 +416,10 @@ cardRoutes.patch("/:id", async (c) => {
     }
     nextBack =
       typeof parsed.data.back === "string" ? parsed.data.back : storedBack.back;
+    // Cloze Extra may be ""; other text types still need a non-empty back.
+    if (nextType !== "cloze" && nextBack.trim().length < 1) {
+      throw new HTTPException(400, { message: "Back cannot be empty" });
+    }
   }
 
   const nextBackJson = encodeStoredBack(nextType, nextBack, nextOptions);

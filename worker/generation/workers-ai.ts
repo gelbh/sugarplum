@@ -2,6 +2,7 @@ import type { Env } from "../env";
 import {
   parseCardsPayload,
   userPromptForJson,
+  withCompactTruncationRetry,
   type CompleteInput,
   type GenerateDraftsInput,
   type LlmAdapter,
@@ -119,10 +120,6 @@ function contentFromAiRun(result: unknown): AiRunContent {
   throw new Error("Workers AI returned empty content");
 }
 
-function isTruncationParseError(err: unknown): boolean {
-  return err instanceof Error && /truncated mid-JSON/i.test(err.message);
-}
-
 function withAiDiagnostics(err: unknown, run: AiRunContent): Error {
   const base =
     err instanceof Error ? err.message : String(err ?? "Generation failed");
@@ -208,41 +205,38 @@ export function createWorkersAiAdapter(
         }
       };
 
-      const first = await runChat(
-        GENERATE_SYSTEM_PROMPT,
-        userPromptForJson(input.text),
-      );
-      try {
-        opts?.onUsage?.({
-          prompt_tokens: first.promptTokens,
-          completion_tokens: first.completionTokens,
-          total_tokens: first.totalTokens,
-        });
-      } catch {
-        // best-effort
-      }
-      try {
-        return parseOrThrow(first);
-      } catch (err) {
-        if (!isTruncationParseError(err)) throw err;
-
-        // One compact retry: live monoxenous failures end mid-first-card with
-        // nothing to salvage; a smaller ask often completes within budget.
-        const second = await runChat(
-          GENERATE_COMPACT_SYSTEM_PROMPT,
-          generateCompactUserPrompt(input.text),
-        );
+      const reportUsage = (run: AiRunContent) => {
         try {
           opts?.onUsage?.({
-            prompt_tokens: second.promptTokens,
-            completion_tokens: second.completionTokens,
-            total_tokens: second.totalTokens,
+            prompt_tokens: run.promptTokens,
+            completion_tokens: run.completionTokens,
+            total_tokens: run.totalTokens,
           });
         } catch {
           // best-effort
         }
-        return parseOrThrow(second);
-      }
+      };
+
+      // One compact retry: live monoxenous failures end mid-first-card with
+      // nothing to salvage; a smaller ask often completes within budget.
+      return withCompactTruncationRetry(
+        async () => {
+          const run = await runChat(
+            GENERATE_SYSTEM_PROMPT,
+            userPromptForJson(input.text),
+          );
+          reportUsage(run);
+          return parseOrThrow(run);
+        },
+        async () => {
+          const run = await runChat(
+            GENERATE_COMPACT_SYSTEM_PROMPT,
+            generateCompactUserPrompt(input.text),
+          );
+          reportUsage(run);
+          return parseOrThrow(run);
+        },
+      );
     },
   };
 }

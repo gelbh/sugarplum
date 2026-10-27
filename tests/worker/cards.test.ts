@@ -745,6 +745,40 @@ describe("draft review / accept gate", () => {
     expect(stored!.back_json).toBe(JSON.stringify("Original A"));
   });
 
+  it("patch cloze allows empty Extra back", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedCard({
+      id: "card-cloze-extra",
+      deck_id: "deck-a",
+      job_id: "job-1",
+      type: "cloze",
+      front_json: JSON.stringify("The {{c1::mitochondria}} is the powerhouse."),
+      back_json: JSON.stringify("old extra"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "ex" }),
+      status: "draft",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/cards/card-cloze-extra",
+      {
+        method: "PATCH",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({ back: "" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const stored = env.getCards().find((c) => c.id === "card-cloze-extra");
+    expect(stored!.back_json).toBe(JSON.stringify(""));
+  });
+
   it("accept-all returns 404 for another user", async () => {
     const env = createTestEnv();
     seedOwner(env);

@@ -21,3 +21,12 @@ export function extractClozeAnswer(front: string): string | null {
   if (!match) return null;
   return match[1] ?? null;
 }
+
+/** Extra subtitle on the study answer face; null when unused. */
+export function clozeExtraSubtitle(back: string): string | null {
+  const trimmed = back.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+/** Draft editor label for cloze back (Anki Extra). */
+export const CLOZE_EXTRA_LABEL = "Extra (optional)";

@@ -339,7 +339,11 @@ export function filterDraftsByQuality(drafts: CardDraft[]): CardDraft[] {
     const glossary = isGlossaryShaped(front);
     const minFront = glossary ? MIN_GLOSSARY_FRONT : MIN_FRONT;
     if (front.length < minFront || front.length > MAX_FRONT) continue;
-    if (back.length < MIN_BACK || back.length > MAX_BACK) continue;
+    // Cloze Extra may be empty; answer lives in the front blank.
+    const emptyClozeExtra = draft.type === "cloze" && back.length === 0;
+    if (!emptyClozeExtra && (back.length < MIN_BACK || back.length > MAX_BACK)) {
+      continue;
+    }
     // Non-question QA that is not glossary-shaped is junk (header / fragment).
     if (draft.type === "qa" && !front.includes("?") && !glossary) continue;
     if (sentenceCount(back) >= 3) continue;

@@ -95,6 +95,21 @@ describe("drop-biased quality prompts (5B)", () => {
     expect(user).toMatch(/ambiguous/);
     expect(user).toMatch(/not\s+among|among\s+the\s+options/);
   });
+
+  it("generate and critique prompts treat cloze Extra/back as optional", () => {
+    for (const prompt of [
+      GENERATE_SYSTEM_PROMPT,
+      GENERATE_COMPACT_SYSTEM_PROMPT,
+      CRITIQUE_SYSTEM_PROMPT,
+    ]) {
+      const p = prompt.toLowerCase();
+      expect(p).toMatch(/extra|optional/);
+      expect(p).toMatch(/cloze/);
+      expect(p).toMatch(/empty|omit|optional/);
+    }
+    const user = critiqueUserPrompt("source", sample).toLowerCase();
+    expect(user).toMatch(/extra|optional|empty/);
+  });
 });
 
 /** Organism / taxon / cloze-topic / single-fact MCQ phrases (post-regen PR2). */
