@@ -5,7 +5,11 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { StudyRating } from "../api/client";
-import { mcqTapRating, shuffledMcqOptions } from "../study/mcqStudy";
+import {
+  mcqOptionButtonDisabled,
+  mcqTapRating,
+  shuffledMcqOptions,
+} from "../study/mcqStudy";
 
 const FACE_SANS = '"Source Sans 3", "Helvetica", "Arial", sans-serif';
 const FEEDBACK_MS = 650;
@@ -152,16 +156,18 @@ export default function McqFace({
               {choices.map((option, index) => {
                 const isPicked = picked === option;
                 const isCorrect = option.trim() === back.trim();
+                const locked = picked !== null;
+                // Hex on ivory face: theme success/error.main shift under dark scheme.
                 let borderColor = "currentColor";
                 let bgcolor = "transparent";
                 let opacity = 0.88;
-                if (picked !== null) {
+                if (locked) {
                   if (isCorrect) {
-                    borderColor = "success.main";
+                    borderColor = "#2e7d32";
                     bgcolor = "rgba(46, 125, 50, 0.18)";
                     opacity = 1;
                   } else if (isPicked) {
-                    borderColor = "error.main";
+                    borderColor = "#c62828";
                     bgcolor = "rgba(211, 47, 47, 0.14)";
                     opacity = 1;
                   } else {
@@ -172,7 +178,9 @@ export default function McqFace({
                   <Button
                     key={`${index}-${option}`}
                     fullWidth
-                    disabled={disabled || picked !== null}
+                    disabled={mcqOptionButtonDisabled(disabled, locked)}
+                    aria-disabled={disabled || locked}
+                    tabIndex={locked ? -1 : undefined}
                     onClick={() => onPick(option)}
                     sx={{
                       justifyContent: "flex-start",
@@ -185,6 +193,7 @@ export default function McqFace({
                       border: "1px solid",
                       borderColor,
                       opacity,
+                      pointerEvents: disabled || locked ? "none" : "auto",
                       textTransform: "none",
                       fontFamily: FACE_SANS,
                       fontSize: "0.9375rem",
@@ -195,6 +204,12 @@ export default function McqFace({
                           picked === null
                             ? "color-mix(in srgb, currentColor 10%, transparent)"
                             : bgcolor,
+                      },
+                      "&.Mui-disabled": {
+                        color: "inherit",
+                        borderColor,
+                        bgcolor,
+                        opacity,
                       },
                     }}
                   >
