@@ -2,12 +2,15 @@ import { describe, expect, it } from "vitest";
 import type { FigureCrop } from "../../worker/materials/docling";
 import {
   figureR2Key,
+  figureR2KeyPrefixBounds,
   listFigureR2KeysForPdf,
   persistFigureCrops,
 } from "../../worker/materials/figures";
 import { createTestEnv } from "./test-env";
 
-function crop(overrides: Partial<FigureCrop> & Pick<FigureCrop, "index">): FigureCrop {
+function crop(
+  overrides: Partial<FigureCrop> & Pick<FigureCrop, "index">,
+): FigureCrop {
   return {
     page: overrides.page ?? 1,
     index: overrides.index,
@@ -25,13 +28,36 @@ describe("figureR2Key", () => {
   });
 });
 
+describe("figureR2KeyPrefixBounds", () => {
+  // D1 caps LIKE/GLOB patterns at 50 bytes; UUID figure prefixes are ~93.
+  const deckId = "f60321ef-35c7-49f2-85f6-19ff95e4911a";
+  const pdfMaterialId = "4439969e-3fa4-4b66-b946-d534509f7baf";
+
+  it("builds a half-open range that covers figure keys under the pdf prefix", () => {
+    const { lower, upper } = figureR2KeyPrefixBounds(deckId, pdfMaterialId);
+    expect(lower).toBe(`materials/${deckId}/figures/${pdfMaterialId}/`);
+    expect(upper).toBe(`materials/${deckId}/figures/${pdfMaterialId}0`);
+    const key = figureR2Key(deckId, pdfMaterialId, 0);
+    expect(key >= lower && key < upper).toBe(true);
+    expect(
+      `materials/${deckId}/figures/${pdfMaterialId}-other/0.png` < lower,
+    ).toBe(true);
+    // Exclusive upper: stem0… sorts at/after upper (ASCII '/' then '0').
+    const atUpper = `materials/${deckId}/figures/${pdfMaterialId}0/0.png`;
+    expect(atUpper >= upper).toBe(true);
+    expect(atUpper < upper).toBe(false);
+  });
+
+  it("documents that the old LIKE pattern exceeds D1's 50-byte limit", () => {
+    const likePattern = `materials/${deckId}/figures/${pdfMaterialId}/%`;
+    expect(likePattern.length).toBeGreaterThan(50);
+  });
+});
+
 describe("persistFigureCrops", () => {
   it("stores each crop in R2 and inserts ready image materials", async () => {
     const env = createTestEnv();
-    const crops = [
-      crop({ page: 2, index: 0 }),
-      crop({ page: 5, index: 1 }),
-    ];
+    const crops = [crop({ page: 2, index: 0 }), crop({ page: 5, index: 1 })];
 
     const persisted = await persistFigureCrops(env, {
       deckId: "deck-a",
@@ -104,6 +130,24 @@ describe("listFigureR2KeysForPdf", () => {
     });
     expect(keys).toEqual([]);
   });
+
+  it("lists figure keys when deck and pdf ids are production-length UUIDs", async () => {
+    const env = createTestEnv();
+    const deckId = "f60321ef-35c7-49f2-85f6-19ff95e4911a";
+    const pdfMaterialId = "4439969e-3fa4-4b66-b946-d534509f7baf";
+    await persistFigureCrops(env, {
+      deckId,
+      pdfMaterialId,
+      crops: [crop({ index: 0 })],
+    });
+
+    const keys = await listFigureR2KeysForPdf(env.DB, {
+      deckId,
+      pdfMaterialId,
+    });
+
+    expect(keys).toEqual([figureR2Key(deckId, pdfMaterialId, 0)]);
+  });
 });
 
 describe("persistFigureCrops race with client uploads", () => {
@@ -129,8 +173,8 @@ describe("persistFigureCrops race with client uploads", () => {
     expect(persisted.map((p) => p.r2Key)).toEqual([
       "materials/deck-a/figures/pdf-parent/1.png",
     ]);
-    expect(
-      env.getMaterials().filter((m) => m.kind === "image"),
-    ).toHaveLength(2);
+    expect(env.getMaterials().filter((m) => m.kind === "image")).toHaveLength(
+      2,
+    );
   });
 });
