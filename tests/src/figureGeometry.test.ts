@@ -32,8 +32,10 @@ describe("canvasSourceScale", () => {
 
 describe("constants", () => {
   it("exports figure filter thresholds and caps", () => {
-    expect(FIGURE_LABELS).toEqual(new Set(["figure", "image", "chart", "picture"]));
-    expect(MIN_BOX_SCORE).toBe(0.4);
+    expect(FIGURE_LABELS).toEqual(
+      new Set(["image", "chart", "header_image", "footer_image"]),
+    );
+    expect(MIN_BOX_SCORE).toBe(0.5);
     expect(MIN_BOX_AREA_FRACTION).toBe(0.01);
     expect(MAX_PAGES_TO_SCAN).toBe(15);
     expect(MAX_CLIENT_FIGURES).toBe(20);
@@ -46,17 +48,22 @@ describe("filterFigureBoxes", () => {
 
   it("filters out low score, non-figure labels, and tiny area", () => {
     const boxes: PageBox[] = [
-      box({ score: 0.9, label: "figure", w: 200, h: 200 }),
-      box({ score: 0.39, label: "figure", w: 200, h: 200 }),
+      box({ score: 0.9, label: "image", w: 200, h: 200 }),
+      box({ score: 0.39, label: "image", w: 200, h: 200 }),
       box({ score: 0.9, label: "text", w: 200, h: 200 }),
       box({ score: 0.9, label: "chart", w: 50, h: 50 }),
-      box({ score: 0.4, label: "image", w: 100, h: 100 }),
+      box({ score: 0.55, label: "footer_image", w: 100, h: 100 }),
       box({ score: 0.8, label: "picture", w: 200, h: 200 }),
+      box({ score: 0.7, label: "header_image", w: 120, h: 120 }),
     ];
 
     const filtered = filterFigureBoxes(boxes, pageW, pageH);
 
-    expect(filtered.map((b) => b.label)).toEqual(["figure", "picture", "image"]);
+    expect(filtered.map((b) => b.label)).toEqual([
+      "image",
+      "header_image",
+      "footer_image",
+    ]);
     expect(filtered.every((b) => b.score >= MIN_BOX_SCORE)).toBe(true);
     expect(
       filtered.every(
@@ -68,8 +75,8 @@ describe("filterFigureBoxes", () => {
   it("preserves order by score desc and does not cap to MAX_CLIENT_FIGURES", () => {
     const boxes: PageBox[] = Array.from({ length: 25 }, (_, i) =>
       box({
-        score: 0.4 + i * 0.01,
-        label: "figure",
+        score: 0.5 + i * 0.01,
+        label: "image",
         w: 200,
         h: 200,
         pageIndex: i,

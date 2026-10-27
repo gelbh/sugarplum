@@ -93,9 +93,15 @@ export function FigureSuggestPanel({
   const displayCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const cropSeqRef = useRef(0);
   const cropsRef = useRef(crops);
-  cropsRef.current = crops;
   const onCropsChangeRef = useRef(onCropsChange);
-  onCropsChangeRef.current = onCropsChange;
+
+  useEffect(() => {
+    cropsRef.current = crops;
+  }, [crops]);
+
+  useEffect(() => {
+    onCropsChangeRef.current = onCropsChange;
+  }, [onCropsChange]);
 
   const scanCount = Math.min(pageCount, MAX_PAGES_TO_SCAN);
 
@@ -221,7 +227,15 @@ export function FigureSuggestPanel({
         const canvas = await ensurePageCanvas(i);
         if (!canvas) continue;
         const detected = await detectFigureBoxesOnCanvas(canvas, i);
-        for (const box of detected) {
+        if (!detected.ok) {
+          setSessionError(
+            detected.reason ||
+              "Figure detect failed. You can still drag to crop manually.",
+          );
+          setSuggestions([]);
+          return;
+        }
+        for (const box of detected.boxes) {
           boxes.push({ ...box, key: `s-${keySeq++}` });
         }
       }

@@ -8,8 +8,15 @@ export type PageBox = {
   label: string;
 };
 
-export const FIGURE_LABELS = new Set(["figure", "image", "chart", "picture"]);
-export const MIN_BOX_SCORE = 0.4;
+/** PP-DocLayout-L figure-like classes from public/models/labels.json. */
+export const FIGURE_LABELS = new Set([
+  "image",
+  "chart",
+  "header_image",
+  "footer_image",
+]);
+/** Match labels.json threshold (0.5). */
+export const MIN_BOX_SCORE = 0.5;
 export const MIN_BOX_AREA_FRACTION = 0.01;
 export const MAX_PAGES_TO_SCAN = 15;
 export const MAX_CLIENT_FIGURES = 20;

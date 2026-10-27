@@ -35,7 +35,7 @@ type RunResult = Record<string, { data: Float32Array | Int32Array; dims: number[
 let mockRun: ReturnType<typeof vi.fn<(feeds: unknown) => Promise<RunResult>>>;
 let createShouldFail = false;
 
-vi.mock("onnxruntime-web", () => {
+vi.mock("onnxruntime-web/wasm", () => {
   class Tensor {
     dims: number[];
     type: string;
@@ -237,8 +237,11 @@ describe("ensureLayoutSession / detectFigureBoxesOnCanvas", () => {
       clientHeight: 200,
     });
 
-    const boxes = await detectFigureBoxesOnCanvas(canvas, 3);
+    const result = await detectFigureBoxesOnCanvas(canvas, 3);
 
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const boxes = result.boxes;
     expect(mockRun).toHaveBeenCalled();
     // Only image + chart survive FIGURE_LABELS + area; scores desc
     expect(boxes.every((b) => b.pageIndex === 3)).toBe(true);
@@ -254,7 +257,7 @@ describe("ensureLayoutSession / detectFigureBoxesOnCanvas", () => {
     expect(image.h).toBeCloseTo(100, 0);
   });
 
-  it("detectFigureBoxesOnCanvas soft-fails to [] on inference error", async () => {
+  it("detectFigureBoxesOnCanvas returns ok:false on inference error", async () => {
     mockRun = vi.fn(async () => {
       throw new Error("run boom");
     });
@@ -264,12 +267,33 @@ describe("ensureLayoutSession / detectFigureBoxesOnCanvas", () => {
       clientWidth: 64,
       clientHeight: 64,
     });
-    await expect(detectFigureBoxesOnCanvas(canvas, 0)).resolves.toEqual([]);
+    await expect(detectFigureBoxesOnCanvas(canvas, 0)).resolves.toEqual({
+      ok: false,
+      reason: expect.stringMatching(/run boom/i),
+    });
   });
 
-  it("sets ort.env.wasm.wasmPaths to /ort/", async () => {
-    const ort = await import("onnxruntime-web");
+  it("detectFigureBoxesOnCanvas returns empty boxes when only non-figures", async () => {
+    mockRun = vi.fn(async () =>
+      detectionsTensor([
+        [2, 0.99, 10, 10, 200, 200], // text
+      ]),
+    );
+    const canvas = mockCanvas({
+      width: 64,
+      height: 64,
+      clientWidth: 64,
+      clientHeight: 64,
+    });
+    await expect(detectFigureBoxesOnCanvas(canvas, 0)).resolves.toEqual({
+      ok: true,
+      boxes: [],
+    });
+  });
+
+  it("does not override ort.env.wasm.wasmPaths", async () => {
+    const ort = await import("onnxruntime-web/wasm");
     await ensureLayoutSession();
-    expect(ort.env.wasm.wasmPaths).toBe("/ort/");
+    expect(ort.env.wasm.wasmPaths).toBe("");
   });
 });

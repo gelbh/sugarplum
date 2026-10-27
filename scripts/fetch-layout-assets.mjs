@@ -1,51 +1,40 @@
 /**
- * Fetch first-party browser layout assets into public/.
+ * Fetch first-party DocLayout model into public/models/.
  *
  * After clone (ONNX is gitignored): node scripts/fetch-layout-assets.mjs
+ * Also runs as npm prebuild.
  *
  * Source (Apache-2.0): https://huggingface.co/Ralutet/PP-DocLayout-L-onnx-int8
- *   - pp-doclayout-l.onnx (int8 weights, ~34 MB)
- *   - labels.json (class names + 640x640 input size)
- *
- * ORT wasm/mjs are copied from node_modules/onnxruntime-web/dist/
- * (run npm install first). Refuse AGPL DocLayout-YOLO URLs.
+ * ORT wasm is loaded via onnxruntime-web/wasm (Vite-bundled); not copied here.
  */
-import { copyFile, mkdir, readdir, stat, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const modelsDir = join(root, "public", "models");
-const ortDir = join(root, "public", "ort");
-const ortDistDir = join(root, "node_modules", "onnxruntime-web", "dist");
 
-/** @type {const} Pinned Hugging Face resolve URLs (Apache PP-DocLayout-L int8). */
+/**
+ * Pinned Hugging Face resolve URLs + SHA-256 of expected bytes.
+ * Update both when bumping the model.
+ */
 const MODEL_FILES = [
   {
     url: "https://huggingface.co/Ralutet/PP-DocLayout-L-onnx-int8/resolve/main/pp-doclayout-l.onnx",
     dest: join(modelsDir, "pp-doclayout-l.onnx"),
+    sha256:
+      "9ce1ea78167419015fc8880e0e7baca9016131b1f456f6f0210ad517474dfbeb",
   },
   {
     url: "https://huggingface.co/Ralutet/PP-DocLayout-L-onnx-int8/resolve/main/labels.json",
     dest: join(modelsDir, "labels.json"),
+    sha256:
+      "4d8175c77d0a82011d5aab0a23224d5e4497404c75c5726768466fd393f96790",
   },
 ];
 
 const AGPL_REFUSE = /doclayout-yolo|yolo.?doclayout/i;
-/** Base wasm EP pair (not jsep/asyncify/jspi variants). */
-const ORT_FILES = [
-  "ort-wasm-simd-threaded.wasm",
-  "ort-wasm-simd-threaded.mjs",
-];
-
-async function isNonEmptyFile(path) {
-  try {
-    const s = await stat(path);
-    return s.isFile() && s.size > 0;
-  } catch {
-    return false;
-  }
-}
 
 function assertApacheUrl(url) {
   if (AGPL_REFUSE.test(url)) {
@@ -56,12 +45,12 @@ function assertApacheUrl(url) {
   }
 }
 
-async function downloadIfMissing(url, dest) {
+function sha256Hex(buf) {
+  return createHash("sha256").update(buf).digest("hex");
+}
+
+async function downloadAndVerify(url, dest, expectedSha256) {
   assertApacheUrl(url);
-  if (await isNonEmptyFile(dest)) {
-    console.log(`skip (present): ${dest}`);
-    return;
-  }
   console.log(`fetch: ${url}`);
   const res = await fetch(url);
   if (!res.ok) {
@@ -71,44 +60,22 @@ async function downloadIfMissing(url, dest) {
   if (buf.length === 0) {
     throw new Error(`empty download: ${url}`);
   }
-  await writeFile(dest, buf);
-  console.log(`wrote ${buf.length} bytes → ${dest}`);
-}
-
-async function copyOrtWasm() {
-  try {
-    await readdir(ortDistDir);
-  } catch {
+  const got = sha256Hex(buf);
+  if (got !== expectedSha256) {
     throw new Error(
-      `missing ${ortDistDir}; run npm install onnxruntime-web first`,
+      `SHA-256 mismatch for ${dest}: expected ${expectedSha256}, got ${got}`,
     );
   }
-  for (const name of ORT_FILES) {
-    const src = join(ortDistDir, name);
-    const dest = join(ortDir, name);
-    if (!(await isNonEmptyFile(src))) {
-      throw new Error(`missing required ORT file: ${src}`);
-    }
-    if (await isNonEmptyFile(dest)) {
-      console.log(`skip (present): ${dest}`);
-      continue;
-    }
-    await copyFile(src, dest);
-    console.log(`copied → ${dest}`);
-  }
+  await writeFile(dest, buf);
+  console.log(`wrote ${buf.length} bytes → ${dest} (sha256 ok)`);
 }
 
 async function main() {
-  for (const { url } of MODEL_FILES) {
-    assertApacheUrl(url);
-  }
   await mkdir(modelsDir, { recursive: true });
-  await mkdir(ortDir, { recursive: true });
-  for (const { url, dest } of MODEL_FILES) {
-    await downloadIfMissing(url, dest);
+  for (const { url, dest, sha256 } of MODEL_FILES) {
+    await downloadAndVerify(url, dest, sha256);
   }
-  await copyOrtWasm();
-  console.log("layout assets ready under public/models and public/ort");
+  console.log("layout model ready under public/models (ORT via onnxruntime-web/wasm)");
 }
 
 main().catch((err) => {

@@ -32,10 +32,14 @@ export type ParsedDetection = {
 
 const MODEL_URL = "/models/pp-doclayout-l.onnx";
 const LABELS_URL = "/models/labels.json";
-const WASM_PATHS = "/ort/";
 
-type OrtModule = typeof import("onnxruntime-web");
-type OrtSession = import("onnxruntime-web").InferenceSession;
+/** Non-jsep wasm EP; Vite bundles its own wasm (no public/ort override). */
+type OrtModule = typeof import("onnxruntime-web/wasm");
+type OrtSession = import("onnxruntime-web/wasm").InferenceSession;
+
+export type DetectFigureResult =
+  | { ok: true; boxes: PageBox[] }
+  | { ok: false; reason: string };
 
 let ortMod: OrtModule | null = null;
 let session: OrtSession | null = null;
@@ -151,8 +155,7 @@ export async function ensureLayoutSession(): Promise<LayoutLoadResult> {
 
   loadPromise = (async (): Promise<LayoutLoadResult> => {
     try {
-      const ort = await import("onnxruntime-web");
-      ort.env.wasm.wasmPaths = WASM_PATHS;
+      const ort = await import("onnxruntime-web/wasm");
       ortMod = ort;
 
       const labelsRes = await fetch(LABELS_URL);
@@ -183,23 +186,32 @@ export async function ensureLayoutSession(): Promise<LayoutLoadResult> {
   return loadPromise;
 }
 
-/** Run on a rendered page canvas; returns CSS-space PageBox[]. Soft-fails to []. */
+/** Run on a rendered page canvas; empty vs failure are distinct. */
 export async function detectFigureBoxesOnCanvas(
   canvas: HTMLCanvasElement,
   pageIndex: number,
-): Promise<PageBox[]> {
+): Promise<DetectFigureResult> {
   try {
     const loaded = await ensureLayoutSession();
-    if (!loaded.ok || !session || !labelsConfig || !ortMod) return [];
+    if (!loaded.ok) {
+      return { ok: false, reason: loaded.reason };
+    }
+    if (!session || !labelsConfig || !ortMod) {
+      return { ok: false, reason: "layout session not ready" };
+    }
 
     const srcW = canvas.width;
     const srcH = canvas.height;
     const cssW = canvas.clientWidth;
     const cssH = canvas.clientHeight;
-    if (srcW <= 0 || srcH <= 0 || cssW <= 0 || cssH <= 0) return [];
+    if (srcW <= 0 || srcH <= 0 || cssW <= 0 || cssH <= 0) {
+      return { ok: false, reason: "page canvas has no size" };
+    }
 
     const ctx = canvas.getContext("2d");
-    if (!ctx) return [];
+    if (!ctx) {
+      return { ok: false, reason: "2d context unavailable" };
+    }
     const { data: rgba } = ctx.getImageData(0, 0, srcW, srcH);
 
     const target = labelsConfig.size[0] ?? 640;
@@ -224,18 +236,23 @@ export async function detectFigureBoxesOnCanvas(
       [1, 2],
     );
 
-    const feeds: Record<string, import("onnxruntime-web").Tensor> = {
+    const feeds = {
       image,
       im_shape: imShape,
       scale_factor: scaleFactor,
     };
     const results = await session.run(feeds);
 
-    const out0Name = session.outputNames[0] ?? "fetch_name_0";
-    const out1Name = session.outputNames[1] ?? "fetch_name_1";
+    const out0Name = session.outputNames[0];
+    const out1Name = session.outputNames[1];
+    if (!out0Name) {
+      return { ok: false, reason: "model has no detection output" };
+    }
     const out0 = results[out0Name];
-    const out1 = results[out1Name];
-    if (!out0) return [];
+    const out1 = out1Name ? results[out1Name] : undefined;
+    if (!out0) {
+      return { ok: false, reason: "missing detection tensor" };
+    }
 
     const count =
       out1 && out1.data.length > 0 ? Number(out1.data[0]) : out0.dims[0] ?? 0;
@@ -269,8 +286,8 @@ export async function detectFigureBoxesOnCanvas(
       };
     });
 
-    return filterFigureBoxes(boxes, cssW, cssH);
-  } catch {
-    return [];
+    return { ok: true, boxes: filterFigureBoxes(boxes, cssW, cssH) };
+  } catch (err) {
+    return { ok: false, reason: reasonOf(err) };
   }
 }
