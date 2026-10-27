@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   CHUNK_CHAR_LIMIT,
   MAX_PIPELINE_CHUNKS,
+  critiqueDraftsAgainstSource,
   remainderAfterRules,
   runGenerationPipeline,
   type PipelineLlm,
@@ -369,5 +370,52 @@ describe("remainderAfterRules", () => {
     expect(remainder).toContain("The mitochondria produces ATP");
     expect(remainder).not.toContain("What is ATP ::");
     expect(remainder).not.toContain("glycolysis - breakdown");
+  });
+});
+
+describe("critiqueDraftsAgainstSource", () => {
+  it("critiques candidates and falls back to them when complete hard-fails", async () => {
+    const kept = validDraft({
+      front: "mitochondria",
+      back: "powerhouse of the cell",
+      provenance: {
+        pages: [1],
+        excerpt: "mitochondria: powerhouse of the cell",
+      },
+    });
+    const dropped = validDraft({
+      front: "Overview",
+      back: "general summary of chapter",
+      provenance: {
+        pages: [1],
+        excerpt: "Overview: general summary of chapter",
+      },
+    });
+
+    const dropLlm = mockPipelineLlm({
+      complete: async () => JSON.stringify({ cards: [kept] }),
+    });
+    const survivors = await critiqueDraftsAgainstSource({
+      sourceText: "mitochondria: powerhouse of the cell\nOverview: general summary of chapter",
+      candidates: [kept, dropped],
+      llm: dropLlm,
+      apiKey: "k",
+      provider: "mock",
+    });
+    expect(survivors).toEqual([kept]);
+    expect(dropLlm.complete).toHaveBeenCalledTimes(1);
+
+    const failLlm = mockPipelineLlm({
+      complete: async () => "NOT JSON {{{",
+    });
+    const fallback = await critiqueDraftsAgainstSource({
+      sourceText: "mitochondria: powerhouse of the cell",
+      candidates: [kept, dropped],
+      llm: failLlm,
+      apiKey: "k",
+      provider: "mock",
+    });
+    expect(failLlm.complete).toHaveBeenCalledTimes(2);
+    expect(fallback).toEqual([kept, dropped]);
   });
 });
