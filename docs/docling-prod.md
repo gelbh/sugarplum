@@ -1,6 +1,6 @@
 # Docling production runbook
 
-Sugarplum's Worker calls [docling-serve](https://github.com/docling-project/docling-serve) for PDF figure extraction when `DOCLING_URL` is set. Task 1 requires a matching API key on both sides (`DOCLING_API_KEY` on the Worker, `DOCLING_SERVE_API_KEY` on the host).
+Sugarplum's Worker calls [docling-serve](https://github.com/docling-project/docling-serve) for PDF figure extraction when `DOCLING_URL` is set. Worker and host must share the same API key (`DOCLING_API_KEY` on the Worker, `DOCLING_SERVE_API_KEY` on the host).
 
 ## Image
 
@@ -51,7 +51,7 @@ Configure your orchestrator to use these paths on the Docling listen port (5001 
 
 ## Worker configuration
 
-When Docling is enabled, the Worker fail-closes if `DOCLING_URL` is set without `DOCLING_API_KEY`. Requests use header `X-Api-Key`.
+When Docling is enabled, if `DOCLING_URL` is set without `DOCLING_API_KEY`, the Worker skips the Docling POST (soft-fail: empty crops + progress warning; text generation continues). Requests use header `X-Api-Key`.
 
 ```bash
 npx wrangler secret put DOCLING_API_KEY
@@ -67,10 +67,14 @@ Replace `HOST`, `KEY`, and path to a small PDF:
 ```bash
 curl -sS -H "X-Api-Key: $KEY" \
   -F "files=@sample.pdf" \
+  -F "from_formats=pdf" \
+  -F "to_formats=json" \
+  -F "include_images=true" \
+  -F "image_export_mode=embedded" \
   "https://HOST/v1/convert/file"
 ```
 
-Expect a JSON response from the convert endpoint when the service is healthy and authenticated.
+Expect a JSON response from the convert endpoint when the service is healthy and authenticated (same form fields the Worker sends).
 
 ## Out of scope (this slice)
 
