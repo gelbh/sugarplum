@@ -228,21 +228,20 @@ async function resolveTextLlm(
   );
 }
 
-async function insertDraftCards(
+export async function insertDraftCards(
   db: D1Database,
   args: {
     deckId: string;
     jobId: string;
-    drafts: CardDraft[];
-    mediaR2Keys: string[] | null;
+    drafts: Array<CardDraft & { mediaR2Keys?: string[] | null }>;
   },
 ): Promise<void> {
   const now = new Date().toISOString();
-  const mediaJson =
-    args.mediaR2Keys && args.mediaR2Keys.length > 0
-      ? JSON.stringify(args.mediaR2Keys)
-      : null;
   for (const draft of args.drafts) {
+    const mediaJson =
+      draft.mediaR2Keys && draft.mediaR2Keys.length > 0
+        ? JSON.stringify(draft.mediaR2Keys)
+        : null;
     const id = newId();
     await db
       .prepare(
@@ -321,8 +320,7 @@ export async function processGenerateJob(
       .bind(deck.user_id)
       .first<SecretRow>();
 
-    let drafts: CardDraft[];
-    let mediaR2Keys: string[] | null = null;
+    let drafts: Array<CardDraft & { mediaR2Keys?: string[] | null }>;
 
     if (material.kind === "image") {
       const emit = makeEmit(db, jobId, IMAGE_STAGES);
@@ -379,13 +377,16 @@ export async function processGenerateJob(
         },
       });
       await emit("generate", generateTotal, generateTotal, "Generating cards");
-      mediaR2Keys = [material.r2_key];
       drafts = filterDraftsByQuality(drafts);
       if (drafts.length === 0) {
         throw new Error("Generation produced no valid draft cards");
       }
+      drafts = drafts.map((d) => ({
+        ...d,
+        mediaR2Keys: [material.r2_key],
+      }));
       await emit("persist", 0, 1, "Saving drafts");
-      await insertDraftCards(db, { deckId, jobId, drafts, mediaR2Keys });
+      await insertDraftCards(db, { deckId, jobId, drafts });
       await emit("persist", 1, 1, "Saving drafts");
     } else {
       // TEXT_LLM catalog until harvest decides; emit before extract so failures leave progress.
@@ -455,7 +456,7 @@ export async function processGenerateJob(
         throw new Error("Generation produced no valid draft cards");
       }
       await emit("persist", 0, 1, "Saving drafts");
-      await insertDraftCards(db, { deckId, jobId, drafts, mediaR2Keys });
+      await insertDraftCards(db, { deckId, jobId, drafts });
       await emit("persist", 1, 1, "Saving drafts");
     }
 
