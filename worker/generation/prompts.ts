@@ -4,7 +4,7 @@ export const GENERATE_SYSTEM_PROMPT = `You generate spaced-repetition flashcards
 
 Rules:
 - One atomic fact per card; prefer 8–12 high-yield cards and skip redundancy.
-- One organism (or clearly one compared pair) per card; do not AND-merge adjacent table cells that name distinct species into one stem/answer.
+- One organism per card; do not AND-merge adjacent table cells that name distinct species into one stem/answer.
 - Front taxon must be supported by the cited excerpt; skip misattributed table-row answers.
 - Only create cards clearly grounded in the source excerpt; skip weak, incomplete, speculative, or table-debris facts. Prefer fewer solid cards over inventing answers.
 - Prefer a mix of short Q&A, single-blank cloze, and multiple-choice (mcq) cards when a short option set fits the excerpt.
@@ -50,7 +50,7 @@ export const GENERATE_COMPACT_SYSTEM_PROMPT = `You generate spaced-repetition fl
 
 Rules:
 - One atomic fact per card; produce 3–5 high-yield cards only and skip redundancy.
-- One organism (or clearly one compared pair) per card; do not AND-merge adjacent table cells that name distinct species into one stem/answer.
+- One organism per card; do not AND-merge adjacent table cells that name distinct species into one stem/answer.
 - Front taxon must be supported by the cited excerpt; skip misattributed table-row answers.
 - Only create cards clearly grounded in the source excerpt; skip weak, incomplete, speculative, or table-debris facts. Prefer fewer solid cards over inventing answers.
 - Prefer a mix of short Q&A, single-blank cloze, and multiple-choice (mcq) cards when a short option set fits the excerpt.

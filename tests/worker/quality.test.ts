@@ -12,11 +12,7 @@ function qa(front: string, back: string): CardDraft {
   };
 }
 
-function mcq(
-  front: string,
-  back: string,
-  options: string[],
-): CardDraft {
+function mcq(front: string, back: string, options: string[]): CardDraft {
   return {
     type: "mcq",
     front,
@@ -125,10 +121,7 @@ describe("filterDraftsByQuality", () => {
   });
 
   it("keeps QA backs with typographic apostrophe contractions", () => {
-    const dna = qa(
-      "What is DNA?",
-      "Deoxyribonucleic acid. It\u2019s genetic.",
-    );
+    const dna = qa("What is DNA?", "Deoxyribonucleic acid. It\u2019s genetic.");
     expect(filterDraftsByQuality([dna])).toEqual([dna]);
   });
 
@@ -204,7 +197,73 @@ describe("filterDraftsByQuality", () => {
       "Does insulin increase or decrease blood glucose?",
       "Decrease blood glucose",
     );
-    expect(filterDraftsByQuality([insulin])).toEqual([insulin]);
+    const shortChoice: CardDraft = {
+      type: "qa",
+      front: "Does glucagon increase or decrease blood glucose?",
+      back: "Increase",
+      provenance: {
+        pages: [1],
+        excerpt: "glucagon increases blood glucose",
+      },
+    };
+    const caseous: CardDraft = {
+      type: "qa",
+      front: "Is the lesion caseous or purulent?",
+      back: "Caseous",
+      provenance: { pages: [1], excerpt: "caseous necrosis" },
+    };
+    expect(filterDraftsByQuality([insulin, shortChoice, caseous])).toEqual([
+      insulin,
+      shortChoice,
+      caseous,
+    ]);
+  });
+
+  it("keeps English-stem questions with short excerpts (not false binomials)", () => {
+    const hosts: CardDraft = {
+      type: "qa",
+      front: "What are the definitive hosts of Eimeria tenella?",
+      back: "Chickens",
+      provenance: {
+        pages: [1],
+        excerpt: "Eimeria tenella infects chickens",
+      },
+    };
+    const transmit: CardDraft = {
+      type: "qa",
+      front: "How does Giardia duodenalis transmit between hosts?",
+      back: "Faecal-oral route",
+      provenance: {
+        pages: [1],
+        excerpt: "Giardia duodenalis transmits faecal-orally",
+      },
+    };
+    expect(filterDraftsByQuality([hosts, transmit])).toEqual([hosts, transmit]);
+  });
+
+  it("keeps leading drug/organ clozes (not only topic-genus blanks)", () => {
+    const metro: CardDraft = {
+      type: "cloze",
+      front: "{{c1::Metronidazole}} is the drug of choice for trichomoniasis.",
+      back: "Metronidazole",
+      provenance: {
+        pages: [1],
+        excerpt: "Metronidazole is the drug of choice",
+      },
+    };
+    const liverLead: CardDraft = {
+      type: "cloze",
+      front: "{{c1::Liver}} is reached via the portal vein.",
+      back: "Liver",
+      provenance: {
+        pages: [1],
+        excerpt: "reach the liver via the portal vein",
+      },
+    };
+    expect(filterDraftsByQuality([metro, liverLead])).toEqual([
+      metro,
+      liverLead,
+    ]);
   });
 
   it("drops post-regen failures from live cards (0c24a8cf) and keeps controls", () => {

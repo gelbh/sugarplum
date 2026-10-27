@@ -58,14 +58,19 @@ describe("drop-biased quality prompts (5B)", () => {
     ]) {
       const p = prompt.toLowerCase();
       expect(p).toMatch(/ground|excerpt|source/);
-      expect(p).toMatch(/skip|omit|do\s+not\s+invent|only\s+(facts|cards)\s+(clearly|clearly\s+)?(?:in|from)|drop/);
+      expect(p).toMatch(
+        /skip|omit|do\s+not\s+invent|only\s+(facts|cards)\s+(clearly|clearly\s+)?(?:in|from)|drop/,
+      );
       expect(p).toMatch(/atomic|one\s+atomic/);
       assertNoAlwaysRewrite(prompt);
     }
   });
 
   it("generate prompts allow mcq with grounded distractors", () => {
-    for (const prompt of [GENERATE_SYSTEM_PROMPT, GENERATE_COMPACT_SYSTEM_PROMPT]) {
+    for (const prompt of [
+      GENERATE_SYSTEM_PROMPT,
+      GENERATE_COMPACT_SYSTEM_PROMPT,
+    ]) {
       const p = prompt.toLowerCase();
       expect(p).toMatch(/\bmcq\b/);
       expect(p).toMatch(/options/);
@@ -106,7 +111,9 @@ function assertOrganismClozeMcqPhrases(text: string) {
   expect(p).toMatch(/misattribut/);
   // cloze blanks a high-yield fact, not the topic genus
   expect(p).toMatch(/cloze/);
-  expect(p).toMatch(/high[-\s]?yield\s+fact|blanks?\s+a\s+(?:high[-\s]?yield\s+)?fact/);
+  expect(p).toMatch(
+    /high[-\s]?yield\s+fact|blanks?\s+a\s+(?:high[-\s]?yield\s+)?fact/,
+  );
   expect(p).toMatch(/topic\s+genus|not\s+(?:the\s+)?(?:topic\s+)?genus/);
   // MCQ single-fact stem (no multi-species AND)
   expect(p).toMatch(/\bmcq\b/);
