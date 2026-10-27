@@ -55,7 +55,12 @@ describe("runPendingFlush", () => {
   it("flushes, persists remaining, refreshes due cache", async () => {
     const replacePending = vi.fn();
     const saveDue = vi.fn();
-    const due = [card("c1"), card("c2")];
+    const duePre = [card("c1"), card("c2")];
+    const duePost = [card("c2")];
+    const listDue = vi
+      .fn()
+      .mockResolvedValueOnce(duePre)
+      .mockResolvedValueOnce(duePost);
     const review = vi
       .fn()
       .mockResolvedValueOnce({})
@@ -63,17 +68,38 @@ describe("runPendingFlush", () => {
     const result = await runPendingFlush("u1", {
       isGuestFn: () => false,
       listPending: () => [grade("c1", 1), grade("c2", 2), grade("c3", 3)],
-      listDue: async () => due,
+      listDue,
       review,
       replacePending,
       saveDue,
     });
-    expect(result).toEqual({ applied: 1, skipped: 0 });
+    expect(result).toEqual({ applied: 1, skipped: 0, due: duePost });
     expect(replacePending).toHaveBeenCalledWith("u1", [
       grade("c2", 2),
       grade("c3", 3),
     ]);
-    expect(saveDue).toHaveBeenCalledWith("u1", due);
+    expect(listDue).toHaveBeenCalledTimes(2);
+    expect(saveDue).toHaveBeenCalledWith("u1", duePost);
+    expect(saveDue).not.toHaveBeenCalledWith("u1", duePre);
+  });
+
+  it("skips saveDue of pre-flush due when refresh fails after applied > 0", async () => {
+    const saveDue = vi.fn();
+    const duePre = [card("c1")];
+    const listDue = vi
+      .fn()
+      .mockResolvedValueOnce(duePre)
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    const result = await runPendingFlush("u1", {
+      isGuestFn: () => false,
+      listPending: () => [grade("c1", 1)],
+      listDue,
+      review: async () => ({}),
+      replacePending: () => {},
+      saveDue,
+    });
+    expect(result).toEqual({ applied: 1, skipped: 0, due: null });
+    expect(saveDue).not.toHaveBeenCalled();
   });
 });
 

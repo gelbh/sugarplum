@@ -16,6 +16,8 @@ import {
 export type FlushSummary = {
   applied: number;
   skipped: number;
+  /** Post-flush due list when refreshed; null if refresh failed after applied > 0. */
+  due: CardDraftView[] | null;
 };
 
 export type RunPendingFlushDeps = {
@@ -54,12 +56,34 @@ export async function runPendingFlush(
     review,
   });
   replacePending(userId, result.remaining);
+
+  // Re-fetch after applied grades so dueCache is not poisoned with pre-flush cards.
+  if (result.applied > 0) {
+    try {
+      const refreshed = await listDue();
+      saveDue(userId, refreshed);
+      return {
+        applied: result.applied,
+        skipped: result.skipped,
+        due: refreshed,
+      };
+    } catch {
+      return {
+        applied: result.applied,
+        skipped: result.skipped,
+        due: null,
+      };
+    }
+  }
+
   saveDue(userId, due);
-  return { applied: result.applied, skipped: result.skipped };
+  return { applied: result.applied, skipped: result.skipped, due };
 }
 
 /** Banner line after a flush that applied or skipped at least one grade. */
-export function formatFlushSummary(summary: FlushSummary): string {
+export function formatFlushSummary(
+  summary: Pick<FlushSummary, "applied" | "skipped">,
+): string {
   const parts: string[] = [];
   if (summary.applied > 0) {
     parts.push(

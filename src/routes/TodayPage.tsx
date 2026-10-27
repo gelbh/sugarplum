@@ -137,6 +137,22 @@ export default function TodayPage() {
           const summary = await runPendingFlush(userId);
           applyFlushSummary(summary);
           refreshPendingCount(userId);
+          if (summary && summary.applied > 0) {
+            if (summary.due) {
+              setDueCount(summary.due.length);
+              setOfflineCopy(false);
+            } else {
+              try {
+                const due = await listDueCards();
+                saveDueCache(userId, due);
+                warmDueMedia(due);
+                setDueCount(due.length);
+                setOfflineCopy(false);
+              } catch {
+                /* keep current due count */
+              }
+            }
+          }
         } catch {
           /* keep current due count */
         }

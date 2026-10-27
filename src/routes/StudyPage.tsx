@@ -267,6 +267,18 @@ export default function StudyPage() {
           const summary = await runPendingFlush(userId);
           applyFlushSummary(summary);
           refreshPendingCount(userId);
+          if (summary && summary.applied > 0) {
+            if (summary.due) {
+              warmDueMedia(summary.due);
+              applyDueQueue(
+                summary.due,
+                cardIdFromSearch(window.location.search),
+              );
+              setOfflineCopy(false);
+            } else {
+              await load(userId);
+            }
+          }
         } catch {
           /* stay on current queue */
         }
@@ -275,7 +287,7 @@ export default function StudyPage() {
 
     window.addEventListener("online", onOnline);
     return () => window.removeEventListener("online", onOnline);
-  }, [applyFlushSummary, refreshPendingCount, userId]);
+  }, [applyDueQueue, applyFlushSummary, load, refreshPendingCount, userId]);
 
   const current = queue[0] ?? null;
   const mcqMode = isMcqCard(current);
