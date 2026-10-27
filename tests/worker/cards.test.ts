@@ -222,6 +222,100 @@ describe("draft review / accept gate", () => {
     expect(env.getSchedules()).toHaveLength(2);
   });
 
+  it("accept-all CAS miss does not insert a schedule or 500", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedMaterial({
+      id: "mat-1",
+      deck_id: "deck-a",
+      kind: "paste",
+      r2_key: null,
+      filename: null,
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    await env.DB.prepare(
+      "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    )
+      .bind(
+        "job-cas",
+        "mat-1",
+        "needs_review",
+        null,
+        null,
+        "2026-01-01T00:00:00.000Z",
+        null,
+      )
+      .run();
+
+    env.seedCard({
+      id: "d-cas",
+      deck_id: "deck-a",
+      job_id: "job-cas",
+      type: "qa",
+      front_json: JSON.stringify("Cas?"),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "c" }),
+      status: "draft",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedCard({
+      id: "d-ok",
+      deck_id: "deck-a",
+      job_id: "job-cas",
+      type: "qa",
+      front_json: JSON.stringify("Ok?"),
+      back_json: JSON.stringify("B"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "o" }),
+      status: "draft",
+      created_at: "2026-01-01T00:00:01.000Z",
+      updated_at: "2026-01-01T00:00:01.000Z",
+    });
+
+    // After drafts are listed, flip d-cas so UPDATE CAS misses (concurrent accept).
+    const originalAll = env.DB.prepare.bind(env.DB);
+    let flipped = false;
+    env.DB.prepare = ((sql: string) => {
+      const stmt = originalAll(sql);
+      const originalAllFn = stmt.all.bind(stmt);
+      stmt.all = async <T>() => {
+        const out = await originalAllFn<T>();
+        if (
+          !flipped &&
+          sql.includes("FROM cards") &&
+          sql.includes("job_id =") &&
+          sql.includes("status =")
+        ) {
+          flipped = true;
+          const row = env.getCards().find((c) => c.id === "d-cas");
+          if (row) {
+            env.seedCard({ ...row, status: "accepted" });
+          }
+        }
+        return out;
+      };
+      return stmt;
+    }) as typeof env.DB.prepare;
+
+    const res = await app.request(
+      "/api/jobs/job-cas/drafts/accept-all",
+      {
+        method: "POST",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { accepted: number; failed: number };
+    expect(body.accepted).toBe(1);
+    expect(body.failed).toBe(1);
+    expect(env.getSchedules().map((s) => s.card_id).sort()).toEqual(["d-ok"]);
+  });
+
   it("accept-all counts schedule races as failed without 500", async () => {
     const env = createTestEnv();
     seedOwner(env);

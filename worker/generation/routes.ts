@@ -48,6 +48,53 @@ function parseProgressJson(
 
 export const jobRoutes = new Hono<AppEnv>();
 
+export type JobListItem = {
+  id: string;
+  status: string;
+  draft_count: number;
+  deck_title: string;
+  filename: string | null;
+  created_at: string;
+};
+
+/** List owner jobs that still have draft cards (newest first). */
+jobRoutes.get("/", async (c) => {
+  const userId = await requireUser(c);
+  const db = getDb(c.env);
+
+  const { results } = await db
+    .prepare(
+      `SELECT j.id, j.status, j.created_at, d.title AS deck_title, m.filename,
+              COUNT(c.id) AS draft_count
+       FROM generation_jobs j
+       INNER JOIN materials m ON m.id = j.material_id
+       INNER JOIN decks d ON d.id = m.deck_id
+       INNER JOIN cards c ON c.job_id = j.id AND c.status = 'draft'
+       WHERE d.user_id = ?
+       GROUP BY j.id
+       ORDER BY j.created_at DESC`,
+    )
+    .bind(userId)
+    .all<{
+      id: string;
+      status: string;
+      created_at: string;
+      deck_title: string;
+      filename: string | null;
+      draft_count: number;
+    }>();
+
+  const items: JobListItem[] = (results ?? []).map((row) => ({
+    id: row.id,
+    status: row.status,
+    draft_count: Number(row.draft_count),
+    deck_title: row.deck_title,
+    filename: row.filename,
+    created_at: row.created_at,
+  }));
+  return c.json(items);
+});
+
 /** Poll generation job status (owner only). */
 jobRoutes.get("/:id", async (c) => {
   const userId = await requireUser(c);
