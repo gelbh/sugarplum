@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  mcqOptionButtonDisabled,
   mcqTapRating,
   shuffledMcqOptions,
 } from "../../src/study/mcqStudy";
@@ -13,6 +14,18 @@ describe("mcqTapRating", () => {
   it("trims whitespace so padded options still grade Good", () => {
     expect(mcqTapRating("ATP ", "ATP")).toBe(3);
     expect(mcqTapRating("ATP", "ATP ")).toBe(3);
+  });
+});
+
+describe("mcqOptionButtonDisabled", () => {
+  it("does not MUI-disable for feedback lock (dark action.disabled washes ivory card)", () => {
+    expect(mcqOptionButtonDisabled(false, true)).toBe(false);
+    expect(mcqOptionButtonDisabled(undefined, true)).toBe(false);
+  });
+
+  it("still respects parent disabled", () => {
+    expect(mcqOptionButtonDisabled(true, false)).toBe(true);
+    expect(mcqOptionButtonDisabled(true, true)).toBe(true);
   });
 });
 

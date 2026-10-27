@@ -42,3 +42,15 @@ export function mcqTapRating(
 ): StudyRating {
   return selected.trim() === correctAnswer.trim() ? 3 : 1;
 }
+
+/**
+ * Whether an MCQ choice Button should use MUI `disabled`.
+ * Feedback lock must stay enabled: dark-scheme `action.disabled` paints
+ * light text/borders on the ivory card face.
+ */
+export function mcqOptionButtonDisabled(
+  parentDisabled: boolean | undefined,
+  _feedbackLocked: boolean,
+): boolean {
+  return Boolean(parentDisabled);
+}
