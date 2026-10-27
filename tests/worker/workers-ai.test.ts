@@ -93,24 +93,131 @@ describe("Workers AI adapter", () => {
     expect(drafts[2]?.type).toBe("cloze");
   });
 
-  it("rejects truncated completions (finish_reason length)", async () => {
+  it("salvages complete cards when finish_reason is length", async () => {
+    const completeCard = {
+      type: "qa",
+      front: "What defines monoxenous protozoa?",
+      back: "A single host.",
+      provenance: { pages: [1], excerpt: "monoxenous" },
+    };
+    const truncated =
+      '{"cards":[' +
+      JSON.stringify(completeCard) +
+      ',{"type":"qa","front":"What is Direct';
+
     const run = vi.fn(async () => ({
-      ...chatCompletionResult(
-        '{"cards":[{"type":"qa","front":"What defines monoxenous protozoa',
-      ),
+      ...chatCompletionResult(truncated),
       choices: [
         {
           index: 0,
           message: {
             role: "assistant" as const,
-            content:
-              '{"cards":[{"type":"qa","front":"What defines monoxenous protozoa',
+            content: truncated,
             refusal: null,
           },
           finish_reason: "length" as const,
           logprobs: null,
         },
       ],
+      usage: {
+        prompt_tokens: 100,
+        completion_tokens: 256,
+        total_tokens: 356,
+      },
+    }));
+
+    const env = createTestEnv();
+    env.AI = { run } as unknown as Ai;
+    const adapter = createWorkersAiAdapter(env);
+
+    const drafts = await adapter.generateDrafts({
+      text: "notes",
+      apiKey: "",
+      provider: "workers-ai",
+    });
+    expect(drafts).toHaveLength(1);
+    expect(drafts[0]?.front).toContain("monoxenous");
+    expect(run).toHaveBeenCalledOnce();
+  });
+
+  it("retries once with a compact prompt when mid-JSON has nothing to salvage", async () => {
+    const truncatedMidFirst =
+      '{"cards":[{"type":"qa","front":"What defines monoxenous protozoa?","back":"Direc';
+    const compactOk = JSON.stringify({
+      cards: [
+        {
+          type: "qa",
+          front: "What defines monoxenous protozoa?",
+          back: "Direct lifecycle in one host.",
+          provenance: { pages: [1], excerpt: "monoxenous" },
+        },
+      ],
+    });
+
+    const run = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ...chatCompletionResult(truncatedMidFirst),
+        choices: [
+          {
+            index: 0,
+            message: {
+              role: "assistant" as const,
+              content: truncatedMidFirst,
+              refusal: null,
+            },
+            finish_reason: "stop" as const,
+            logprobs: null,
+          },
+        ],
+        usage: {
+          prompt_tokens: 100,
+          completion_tokens: 40,
+          total_tokens: 140,
+        },
+      })
+      .mockResolvedValueOnce(chatCompletionResult(compactOk));
+
+    const env = createTestEnv();
+    env.AI = { run } as unknown as Ai;
+    const adapter = createWorkersAiAdapter(env);
+
+    const drafts = await adapter.generateDrafts({
+      text: "notes about monoxenous protozoa",
+      apiKey: "",
+      provider: "workers-ai",
+    });
+
+    expect(drafts).toHaveLength(1);
+    expect(run).toHaveBeenCalledTimes(2);
+    const secondUser = (
+      run.mock.calls[1]![1] as { messages: { content: string }[] }
+    ).messages[1]!.content;
+    expect(secondUser).toMatch(/3–5 short/i);
+  });
+
+  it("names truncation with diagnostics when retry also fails", async () => {
+    const truncatedMidFirst =
+      '{"cards":[{"type":"qa","front":"What defines monoxenous protozoa?","back":"Direc';
+    const run = vi.fn(async () => ({
+      ...chatCompletionResult(truncatedMidFirst),
+      choices: [
+        {
+          index: 0,
+          message: {
+            role: "assistant" as const,
+            content: truncatedMidFirst,
+            refusal: null,
+          },
+          finish_reason: "stop" as const,
+          logprobs: null,
+        },
+      ],
+      usage: {
+        prompt_tokens: 100,
+        completion_tokens: 40,
+        total_tokens: 140,
+      },
     }));
 
     const env = createTestEnv();
@@ -123,7 +230,8 @@ describe("Workers AI adapter", () => {
         apiKey: "",
         provider: "workers-ai",
       }),
-    ).rejects.toThrow(/truncated|token limit/i);
+    ).rejects.toThrow(/truncated mid-JSON.*len=\d+.*finish=stop/i);
+    expect(run).toHaveBeenCalledTimes(2);
   });
 
   it("complete returns assistant content and ignores apiKey", async () => {

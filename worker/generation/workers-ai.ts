@@ -22,6 +22,12 @@ const CAPACITY_ERROR =
   "Workers AI is temporarily at capacity. " +
   "Add your own API key in Settings for BYO generation, or retry after UTC midnight.";
 
+type AiRunContent = {
+  content: string;
+  finishReason: string | null;
+  completionTokens: number | null;
+};
+
 function isWorkersAiCapacityError(err: unknown): boolean {
   const status =
     err && typeof err === "object" && "status" in err
@@ -44,10 +50,16 @@ function mapWorkersAiRunError(err: unknown): never {
   throw err instanceof Error ? err : new Error(String(err));
 }
 
-function contentFromAiRun(result: unknown): string {
+function contentFromAiRun(result: unknown): AiRunContent {
   if (!result || typeof result !== "object") {
     throw new Error("Workers AI returned empty content");
   }
+
+  const usage = (result as { usage?: { completion_tokens?: unknown } }).usage;
+  const completionTokens =
+    usage && typeof usage.completion_tokens === "number"
+      ? usage.completion_tokens
+      : null;
 
   const choices = (result as { choices?: unknown }).choices;
   if (Array.isArray(choices) && choices.length > 0) {
@@ -57,20 +69,57 @@ function contentFromAiRun(result: unknown): string {
     };
     const content = choice.message?.content;
     if (typeof content === "string" && content.length > 0) {
-      if (choice.finish_reason === "length") {
-        throw new Error(
-          "Workers AI response truncated (hit token limit). Try a shorter source or fewer facts.",
-        );
-      }
-      return content;
+      // Keep truncated bodies: parseCardsPayload salvages complete early cards.
+      // Throwing here discarded recoverable drafts when finish_reason was length.
+      return {
+        content,
+        finishReason:
+          typeof choice.finish_reason === "string"
+            ? choice.finish_reason
+            : null,
+        completionTokens,
+      };
     }
   }
 
   // Older text-generation shape used by some Workers AI models.
   const response = (result as { response?: unknown }).response;
-  if (typeof response === "string" && response.length > 0) return response;
+  if (typeof response === "string" && response.length > 0) {
+    return {
+      content: response,
+      finishReason: null,
+      completionTokens,
+    };
+  }
 
   throw new Error("Workers AI returned empty content");
+}
+
+/** Compact retry after mid-JSON truncation: fewer, shorter cards. */
+export function userPromptForCompactRetry(text: string): string {
+  return `Create 3–5 short high-yield flashcards from this material. Keep each front/back under 15 words. Respond with JSON only as {"cards":[...]}. Finish every string and close all braces.
+
+--- MATERIAL ---
+${text}
+--- END ---`;
+}
+
+function isTruncationParseError(err: unknown): boolean {
+  return (
+    err instanceof Error &&
+    /truncated mid-JSON|truncated \(hit token limit\)/i.test(err.message)
+  );
+}
+
+function withAiDiagnostics(err: unknown, run: AiRunContent): Error {
+  const base =
+    err instanceof Error ? err.message : String(err ?? "Generation failed");
+  const bits = [`len=${run.content.length}`];
+  if (run.finishReason) bits.push(`finish=${run.finishReason}`);
+  if (run.completionTokens != null) {
+    bits.push(`completion_tokens=${run.completionTokens}`);
+  }
+  return new Error(`${base} [${bits.join(" ")}]`);
 }
 
 /**
@@ -82,9 +131,7 @@ export function createWorkersAiAdapter(env: Env): LlmAdapter {
     throw new Error("Workers AI binding (env.AI) is not configured");
   }
 
-  async function complete(input: CompleteInput): Promise<string> {
-    const { system, user } = input;
-    // apiKey ignored: Workers AI uses the binding, not BYO secrets.
+  async function runChat(system: string, user: string): Promise<AiRunContent> {
     let result: unknown;
     try {
       result = await env.AI!.run(WORKERS_AI_MODEL, {
@@ -103,6 +150,12 @@ export function createWorkersAiAdapter(env: Env): LlmAdapter {
     return contentFromAiRun(result);
   }
 
+  async function complete(input: CompleteInput): Promise<string> {
+    // apiKey ignored: Workers AI uses the binding, not BYO secrets.
+    const run = await runChat(input.system, input.user);
+    return run.content;
+  }
+
   return {
     complete,
     async generateDrafts(input: GenerateDraftsInput) {
@@ -111,13 +164,32 @@ export function createWorkersAiAdapter(env: Env): LlmAdapter {
           "Workers AI free path does not support image generation. Add a BYO API key in Settings.",
         );
       }
-      const content = await complete({
-        system: GENERATE_SYSTEM_PROMPT,
-        user: userPromptForJson(input.text),
-        apiKey: input.apiKey,
-        provider: input.provider,
-      });
-      return parseCardsPayload(content);
+
+      const parseOrThrow = (run: AiRunContent) => {
+        try {
+          return parseCardsPayload(run.content);
+        } catch (err) {
+          throw withAiDiagnostics(err, run);
+        }
+      };
+
+      const first = await runChat(
+        GENERATE_SYSTEM_PROMPT,
+        userPromptForJson(input.text),
+      );
+      try {
+        return parseOrThrow(first);
+      } catch (err) {
+        if (!isTruncationParseError(err)) throw err;
+
+        // One compact retry: live monoxenous failures end mid-first-card with
+        // nothing to salvage; a smaller ask often completes within budget.
+        const second = await runChat(
+          GENERATE_SYSTEM_PROMPT,
+          userPromptForCompactRetry(input.text),
+        );
+        return parseOrThrow(second);
+      }
     },
   };
 }
