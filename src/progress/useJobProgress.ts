@@ -2,12 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ApiError, getJob } from "../api/client";
 import { useProgressRegistry } from "./ProgressProvider";
 import type { ProgressSnapshot } from "./types";
-import {
-  etaMs,
-  projectTokens,
-  projectCardsThisJob,
-  remainingCardsToday,
-} from "./estimates";
+import { etaMs, projectTokens, projectCardsThisJob, remainingCardsToday } from "./estimates";
 
 const POLL_MS = 500;
 const TIMEOUT_MS = 10 * 60_000;
@@ -26,7 +21,7 @@ export type UseJobProgressResult = {
   pending: boolean;
   ready: boolean;
   error: string | null;
-  snapshot: (ProgressSnapshot & { startedAt?: number }) | null;
+  snapshot: ProgressSnapshot | null;
   freeQuota: { used: number; cap: number; remaining: number } | null;
   estimates: Estimates | null;
 };
@@ -36,7 +31,7 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
   const [pending, setPending] = useState(Boolean(jobId));
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [snapshot, setSnapshot] = useState<(ProgressSnapshot & { startedAt?: number }) | null>(null);
+  const [snapshot, setSnapshot] = useState<ProgressSnapshot | null>(null);
   const [freeQuota, setFreeQuota] = useState<{ used: number; cap: number; remaining: number } | null>(null);
   const [estimates, setEstimates] = useState<Estimates | null>(null);
   const settledRef = useRef(false);
@@ -87,8 +82,7 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
           source: "job",
         };
       }
-      const detail =
-        progress.total > 0 ? `chunk ${progress.current}/${progress.total}` : undefined;
+      const detail = progress.total > 0 ? `chunk ${progress.current}/${progress.total}` : undefined;
       const measurable = progress.total > 0;
       return {
         id: jobId,
@@ -118,8 +112,10 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
           ext.current = job.progress.current;
           ext.total = job.progress.total;
           ext.draftsSoFar = job.progress.drafts_so_far;
-          ext.path = job.progress.path;
+          ext.path = job.progress.path ?? null;
           ext.freeQuota = job.free_quota ?? null;
+          ext.stage = job.progress.stage;
+
           if (job.progress.events) {
             ext.events = job.progress.events.map((e: any) => ({
               at: Date.parse(e.at),
@@ -127,16 +123,33 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
               stage: e.stage,
               text: e.text,
             }));
+          } else {
+            ext.events = [];
           }
+
+          // derive ordered unique presentStages from events (chronological) and current stage
+          const seen = new Set<string>();
+          const ordered: string[] = [];
+          for (const ev of ext.events || []) {
+            if (ev.stage && !seen.has(ev.stage)) {
+              seen.add(ev.stage);
+              ordered.push(ev.stage);
+            }
+          }
+          if (ext.stage && !seen.has(ext.stage)) {
+            ordered.push(ext.stage);
+            seen.add(ext.stage);
+          }
+          ext.presentStages = ordered;
         }
-        setSnapshot(ext);
+
         setFreeQuota(job.free_quota ?? null);
         if (!settledRef.current) upsert(ext);
 
-        let eta = null;
-        let projectedTokens = null;
-        let projectedCards = null;
-        let remainingCards = null;
+        let eta: number | null = null;
+        let projectedTokens: number | null = null;
+        let projectedCards: number | null = null;
+        let remainingCards: number | null = null;
         if (ext.startedAt && job.progress) {
           const elapsed = Date.now() - ext.startedAt;
           eta = etaMs(elapsed, job.progress.percent);
@@ -164,6 +177,20 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
           projectedCards,
           remainingCardsToday: remainingCards,
         });
+
+        // attach estimates onto snapshot so consumers like JobProgressPanel can prefer hook-provided values
+        const snapshotWithEstimates = {
+          ...ext,
+          projectedTokens: projectedTokens ?? null,
+          projectedCards: projectedCards ?? null,
+          remainingCardsToday: remainingCards ?? null,
+        } as ProgressSnapshot & {
+          projectedTokens?: number | null;
+          projectedCards?: number | null;
+          remainingCardsToday?: number | null;
+        };
+
+        setSnapshot(snapshotWithEstimates as ProgressSnapshot);
 
         if (TERMINAL_OK.has(job.status)) {
           settleOk();
