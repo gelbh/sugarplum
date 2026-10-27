@@ -29,7 +29,8 @@ export default function App() {
   if (path === "/settings") return shell(<SettingsPage />);
   if (path === "/study") return shell(<StudyPage />);
   if (path === "/today") return shell(<TodayPage />);
-  if (/^\/jobs\/[^/]+\/drafts\/?$/.test(path)) return shell(<DraftReviewPage />);
+  if (/^\/jobs\/[^/]+\/drafts\/?$/.test(path))
+    return shell(<DraftReviewPage />);
 
   return shell(<TodayPage />);
 }

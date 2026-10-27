@@ -26,7 +26,9 @@ describe("legal content disclosures", () => {
     const t = privacyPlainText();
     expect(t).toMatch(/verified email/i);
     expect(t).toMatch(/\bsub\b/);
-    expect(t).toMatch(/do not store.*display name|profile picture/i);
+    expect(t).toMatch(
+      /do not store your Google display name, profile picture/i,
+    );
     expect(t).toMatch(/Limited Use/i);
     expect(t).toMatch(/advertising/i);
     expect(t).toMatch(/oauth_subject/);

@@ -6,11 +6,7 @@ import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { me } from "../api/client";
-import {
-  HOME_BRAND,
-  HOME_PURPOSE,
-  HOME_TAGLINE,
-} from "../home/homeCopy";
+import { HOME_BRAND, HOME_PURPOSE, HOME_TAGLINE } from "../home/homeCopy";
 
 /** Public logged-out homepage for Google brand verification (no AppShell). */
 export default function HomePage() {
@@ -41,7 +37,12 @@ export default function HomePage() {
       <Typography variant="h3" component="h1" gutterBottom color="primary">
         {HOME_BRAND}
       </Typography>
-      <Typography variant="h6" component="p" color="text.secondary" sx={{ mb: 3 }}>
+      <Typography
+        variant="h6"
+        component="p"
+        color="text.secondary"
+        sx={{ mb: 3 }}
+      >
         {HOME_TAGLINE}
       </Typography>
       <Typography
