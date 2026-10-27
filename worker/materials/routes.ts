@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import { z } from "zod";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
@@ -7,6 +8,16 @@ import {
   enqueueGeneration,
   type FigureExtractMode,
 } from "../generation/enqueue";
+import {
+  assertSingleCloze,
+  assertValidMcqOptions,
+} from "../generation/schema";
+import {
+  encodeStoredBack,
+  serializeCard,
+  type CardRow,
+} from "../cards/routes";
+import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
 import { MAX_FILE_BYTES, MAX_IMAGE_BYTES, MAX_PASTE_BYTES } from "./limits";
 import { MAX_FIGURES_PER_PDF } from "./docling";
 import { figureR2Key } from "./figures";
@@ -259,6 +270,146 @@ deckRoutes.get("/:id/stats", async (c) => {
     draft: draft?.count ?? 0,
     materials: materials?.count ?? 0,
   });
+});
+
+const HubCreateCardSchema = z.object({
+  type: z.enum(["qa", "cloze", "mcq"]),
+  front: z.string().min(1),
+  back: z.string().min(1),
+  options: z.array(z.string()).optional(),
+});
+
+deckRoutes.get("/:id/cards", async (c) => {
+  const userId = await requireUser(c);
+  const deckId = c.req.param("id");
+  const db = getDb(c.env);
+  await requireOwnedDeck(db, deckId, userId);
+
+  const { results } = await db
+    .prepare(
+      `SELECT id, deck_id, job_id, type, front_json, back_json,
+              media_r2_keys_json, provenance_json, status, created_at, updated_at
+       FROM cards
+       WHERE deck_id = ? AND status = ?
+       ORDER BY created_at ASC`,
+    )
+    .bind(deckId, "accepted")
+    .all<CardRow>();
+
+  return c.json((results ?? []).map(serializeCard));
+});
+
+deckRoutes.post("/:id/cards", async (c) => {
+  const userId = await requireUser(c);
+  const deckId = c.req.param("id");
+  const db = getDb(c.env);
+  await requireOwnedDeck(db, deckId, userId);
+
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+
+  const parsed = HubCreateCardSchema.safeParse(body);
+  if (!parsed.success) {
+    throw new HTTPException(400, {
+      message: parsed.error.issues[0]?.message ?? "Invalid card body",
+    });
+  }
+
+  const { type, front } = parsed.data;
+  let back = parsed.data.back;
+  let options = parsed.data.options;
+
+  if (type === "cloze") {
+    try {
+      assertSingleCloze(front);
+    } catch (err) {
+      throw new HTTPException(400, {
+        message: err instanceof Error ? err.message : "Invalid cloze",
+      });
+    }
+  }
+
+  if (type === "mcq") {
+    try {
+      const mcq = assertValidMcqOptions(back, options);
+      back = mcq.back;
+      options = mcq.options;
+    } catch (err) {
+      throw new HTTPException(400, {
+        message: err instanceof Error ? err.message : "Invalid MCQ",
+      });
+    }
+  }
+
+  const id = newId();
+  const now = new Date().toISOString();
+  const frontJson = JSON.stringify(front);
+  const backJson = encodeStoredBack(type, back, options);
+  const schedule = scheduleColumnsFromCard(newCard());
+
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO cards (
+          id, deck_id, job_id, type, front_json, back_json,
+          media_r2_keys_json, provenance_json, status, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        id,
+        deckId,
+        null,
+        type,
+        frontJson,
+        backJson,
+        null,
+        null,
+        "accepted",
+        now,
+        now,
+      ),
+    db
+      .prepare(
+        `INSERT INTO card_schedules (
+           card_id, due, stability, difficulty, elapsed_days, scheduled_days,
+           learning_steps, reps, lapses, state, last_review
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        id,
+        schedule.due,
+        schedule.stability,
+        schedule.difficulty,
+        schedule.elapsed_days,
+        schedule.scheduled_days,
+        schedule.learning_steps,
+        schedule.reps,
+        schedule.lapses,
+        schedule.state,
+        schedule.last_review,
+      ),
+  ]);
+
+  return c.json(
+    serializeCard({
+      id,
+      deck_id: deckId,
+      job_id: null,
+      type,
+      front_json: frontJson,
+      back_json: backJson,
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "accepted",
+      created_at: now,
+      updated_at: now,
+    }),
+    201,
+  );
 });
 
 deckRoutes.patch("/:id", async (c) => {

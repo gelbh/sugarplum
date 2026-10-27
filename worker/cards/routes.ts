@@ -84,7 +84,8 @@ function decodeStoredBack(
   return { back: parseJsonField<string>(backJson, "") };
 }
 
-function encodeStoredBack(
+/** Persist card back JSON (MCQ nests answer + options). */
+export function encodeStoredBack(
   type: string,
   back: string,
   options?: string[],
@@ -503,4 +504,65 @@ cardRoutes.post("/:id/reject", async (c) => {
   return c.json(
     serializeCard({ ...row, status: "rejected", updated_at: updatedAt }),
   );
+});
+
+cardRoutes.post("/:id/reset-schedule", async (c) => {
+  const userId = await requireUser(c);
+  const cardId = c.req.param("id");
+  const db = getDb(c.env);
+  const row = await requireOwnedCard(db, cardId, userId);
+
+  if (row.status !== "accepted") {
+    throw new HTTPException(404, { message: "Card not found" });
+  }
+
+  const schedule = scheduleColumnsFromCard(newCard());
+  const updated = await db
+    .prepare(
+      `UPDATE card_schedules SET
+         due = ?, stability = ?, difficulty = ?, elapsed_days = ?,
+         scheduled_days = ?, learning_steps = ?, reps = ?, lapses = ?,
+         state = ?, last_review = ?
+       WHERE card_id = ?`,
+    )
+    .bind(
+      schedule.due,
+      schedule.stability,
+      schedule.difficulty,
+      schedule.elapsed_days,
+      schedule.scheduled_days,
+      schedule.learning_steps,
+      schedule.reps,
+      schedule.lapses,
+      schedule.state,
+      schedule.last_review,
+      cardId,
+    )
+    .run();
+
+  if (!updated.meta.changes) {
+    await db
+      .prepare(
+        `INSERT INTO card_schedules (
+           card_id, due, stability, difficulty, elapsed_days, scheduled_days,
+           learning_steps, reps, lapses, state, last_review
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        cardId,
+        schedule.due,
+        schedule.stability,
+        schedule.difficulty,
+        schedule.elapsed_days,
+        schedule.scheduled_days,
+        schedule.learning_steps,
+        schedule.reps,
+        schedule.lapses,
+        schedule.state,
+        schedule.last_review,
+      )
+      .run();
+  }
+
+  return c.json(serializeCard(row));
 });
