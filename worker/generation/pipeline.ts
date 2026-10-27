@@ -1,7 +1,4 @@
-import {
-  CRITIQUE_SYSTEM_PROMPT,
-  critiqueUserPrompt,
-} from "./critique-prompts";
+import { CRITIQUE_SYSTEM_PROMPT, critiqueUserPrompt } from "./critique-prompts";
 import {
   unwrapLlmJsonText,
   type GenerateDraftsInput,
@@ -37,6 +34,8 @@ export type RunGenerationPipelineInput = {
   provider: string;
   /** Best-effort; throws from the callback must not abort the pipeline. */
   onProgress?: (event: PipelineProgressEvent) => void | Promise<void>;
+  /** Fired after each chunk's critique (or generate fallback). Best-effort. */
+  onChunkDrafts?: (drafts: CardDraft[]) => void | Promise<void>;
 };
 
 /**
@@ -246,10 +245,22 @@ async function safeOnProgress(
   }
 }
 
+async function safeOnChunkDrafts(
+  onChunkDrafts: RunGenerationPipelineInput["onChunkDrafts"],
+  drafts: CardDraft[],
+): Promise<void> {
+  if (!onChunkDrafts) return;
+  try {
+    await onChunkDrafts(drafts);
+  } catch {
+    // Progress must never fail generation.
+  }
+}
+
 export async function runGenerationPipeline(
   input: RunGenerationPipelineInput,
 ): Promise<CardDraft[]> {
-  const { text, llm, apiKey, provider, onProgress } = input;
+  const { text, llm, apiKey, provider, onProgress, onChunkDrafts } = input;
   if (!text.trim()) return [];
 
   const chunks = chunkText(text).slice(0, MAX_PIPELINE_CHUNKS);
@@ -302,7 +313,9 @@ export async function runGenerationPipeline(
 
     await report("critique", i + 1, 2 * i + 2);
 
-    out.push(...(critiqued ?? generated));
+    const batch = critiqued ?? generated;
+    out.push(...batch);
+    await safeOnChunkDrafts(onChunkDrafts, batch);
   }
 
   return out;

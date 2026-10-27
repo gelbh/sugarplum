@@ -33,9 +33,7 @@ export type JobPollRow = {
   finished_at: string | null;
 };
 
-function parseProgressJson(
-  raw: string | null,
-): JobProgressPayload | null {
+function parseProgressJson(raw: string | null): JobProgressPayload | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
@@ -55,12 +53,17 @@ function parseProgressJson(
       percent: parsed.percent as number,
       label: parsed.label as string,
     };
-    if (typeof parsed.tokens_used === "number") out.tokens_used = parsed.tokens_used as number;
-    if (typeof parsed.tokens_prompt === "number") out.tokens_prompt = parsed.tokens_prompt as number;
-    if (typeof parsed.tokens_completion === "number") out.tokens_completion = parsed.tokens_completion as number;
-    if (typeof parsed.drafts_so_far === "number") out.drafts_so_far = parsed.drafts_so_far as number;
+    if (typeof parsed.tokens_used === "number")
+      out.tokens_used = parsed.tokens_used as number;
+    if (typeof parsed.tokens_prompt === "number")
+      out.tokens_prompt = parsed.tokens_prompt as number;
+    if (typeof parsed.tokens_completion === "number")
+      out.tokens_completion = parsed.tokens_completion as number;
+    if (typeof parsed.drafts_so_far === "number")
+      out.drafts_so_far = parsed.drafts_so_far as number;
     if (Array.isArray(parsed.events)) out.events = parsed.events as any;
-    if (parsed.path === "free" || parsed.path === "byo") out.path = parsed.path as "free" | "byo";
+    if (parsed.path === "free" || parsed.path === "byo")
+      out.path = parsed.path as "free" | "byo";
     return out;
   } catch {
     return null;
@@ -136,7 +139,8 @@ jobRoutes.get("/:id", async (c) => {
   if (!row) throw new HTTPException(404, { message: "Job not found" });
 
   const progress = parseProgressJson(row.progress_json);
-  let free_quota: { used: number; cap: number; remaining: number } | null = null;
+  let free_quota: { used: number; cap: number; remaining: number } | null =
+    null;
   if (progress && progress.path === "free") {
     free_quota = await getFreeGenUsage(c.env, userId);
   }

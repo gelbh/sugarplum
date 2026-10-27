@@ -21,7 +21,8 @@ export function projectCardsThisJob(
   current: number,
   total: number,
 ): number | null {
-  if (draftsSoFar == null || current <= 0 || total <= 0) {
+  // Mid-job drafts_so_far stays 0 until first batch; treat as unknown.
+  if (draftsSoFar == null || draftsSoFar <= 0 || current <= 0 || total <= 0) {
     return null;
   }
   return Math.ceil((draftsSoFar * total) / current);
@@ -34,7 +35,7 @@ export function remainingCardsToday(args: {
   freeRemaining: number;
   priorCardsPerJob?: number | null;
 }): number | null {
-  if (args.draftsSoFar == null) {
+  if (args.draftsSoFar == null || args.draftsSoFar <= 0) {
     return null;
   }
   const projected =
@@ -46,7 +47,5 @@ export function remainingCardsToday(args: {
     return null;
   }
   const cardsLeftThisJob = Math.max(0, projected - args.draftsSoFar);
-  return Math.floor(
-    cardsLeftThisJob + args.freeRemaining * projected,
-  );
+  return Math.floor(cardsLeftThisJob + args.freeRemaining * projected);
 }

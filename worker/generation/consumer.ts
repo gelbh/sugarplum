@@ -25,6 +25,7 @@ import {
   computePercent,
   computePipelineBandPercent,
   writeJobProgress,
+  accumulateTokenUsage,
   type ProgressPatch,
   type ProgressStage,
   type ProgressEvent,
@@ -53,7 +54,25 @@ export type JobProgressEmit = {
   }) => void;
   addDrafts: (n: number) => void;
   setPath: (p: "free" | "byo") => void;
+  setPresentStages: (stages: readonly ProgressStage[]) => void;
 };
+
+function draftFrontPreview(d: CardDraft): string {
+  return typeof d.front === "string"
+    ? d.front
+    : String(d.front.prompt ?? d.front.image_key ?? JSON.stringify(d.front));
+}
+
+function recordDraftPreviews(
+  emit: JobProgressEmit,
+  stage: string,
+  drafts: CardDraft[],
+) {
+  emit.addDrafts(drafts.length);
+  for (let i = 0; i < Math.min(2, drafts.length); i++) {
+    emit.addEvent("draft", stage, draftFrontPreview(drafts[i]!));
+  }
+}
 
 function makeEmit(
   db: D1Database,
@@ -61,6 +80,8 @@ function makeEmit(
   presentStages: readonly ProgressStage[],
 ) {
   // Mutable accumulator merged into every progress write.
+  // drafts_so_far stays unset until the first batch (avoids mid-job "0 cards left").
+  let stages = presentStages;
   const acc: {
     path?: "free" | "byo";
     tokens_used?: number;
@@ -69,7 +90,6 @@ function makeEmit(
     drafts_so_far?: number;
     events?: ProgressEvent[];
   } = {
-    drafts_so_far: 0,
     events: [],
   };
 
@@ -83,8 +103,8 @@ function makeEmit(
     const percent =
       halfStepsDone !== undefined &&
       (stage === "generate" || stage === "critique")
-        ? computePipelineBandPercent(halfStepsDone, total, presentStages)
-        : computePercent(stage, current, total, presentStages);
+        ? computePipelineBandPercent(halfStepsDone, total, stages)
+        : computePercent(stage, current, total, stages);
 
     return {
       stage,
@@ -92,12 +112,18 @@ function makeEmit(
       total,
       percent,
       label,
-      ...(acc.tokens_used !== undefined ? { tokens_used: acc.tokens_used } : {}),
-      ...(acc.tokens_prompt !== undefined ? { tokens_prompt: acc.tokens_prompt } : {}),
+      ...(acc.tokens_used !== undefined
+        ? { tokens_used: acc.tokens_used }
+        : {}),
+      ...(acc.tokens_prompt !== undefined
+        ? { tokens_prompt: acc.tokens_prompt }
+        : {}),
       ...(acc.tokens_completion !== undefined
         ? { tokens_completion: acc.tokens_completion }
         : {}),
-      ...(acc.drafts_so_far !== undefined ? { drafts_so_far: acc.drafts_so_far } : {}),
+      ...(acc.drafts_so_far !== undefined
+        ? { drafts_so_far: acc.drafts_so_far }
+        : {}),
       ...(acc.events && acc.events.length > 0 ? { events: acc.events } : {}),
       ...(acc.path !== undefined ? { path: acc.path } : {}),
     };
@@ -121,11 +147,7 @@ function makeEmit(
     }
   }
 
-  function addEvent(
-    kind: ProgressEvent["kind"],
-    stage: string,
-    text: string,
-  ) {
+  function addEvent(kind: ProgressEvent["kind"], stage: string, text: string) {
     const e: ProgressEvent = {
       at: new Date().toISOString(),
       kind,
@@ -140,22 +162,11 @@ function makeEmit(
     completion_tokens?: number | null;
     total_tokens?: number | null;
   }) {
-    try {
-      if (usage.completion_tokens != null) {
-        acc.tokens_completion = usage.completion_tokens;
-      }
-      if (usage.prompt_tokens != null) acc.tokens_prompt = usage.prompt_tokens;
-      if (usage.total_tokens != null) acc.tokens_used = usage.total_tokens;
-      else if (acc.tokens_prompt != null || acc.tokens_completion != null) {
-        acc.tokens_used =
-          (acc.tokens_prompt ?? 0) + (acc.tokens_completion ?? 0);
-      }
-    } catch {
-      // best-effort
-    }
+    accumulateTokenUsage(acc, usage);
   }
 
   function addDrafts(n: number) {
+    if (n <= 0) return;
     acc.drafts_so_far = (acc.drafts_so_far ?? 0) + n;
   }
 
@@ -163,7 +174,11 @@ function makeEmit(
     acc.path = p;
   }
 
-  return { emit, addEvent, addUsage, addDrafts, setPath };
+  function setPresentStages(next: readonly ProgressStage[]) {
+    stages = next;
+  }
+
+  return { emit, addEvent, addUsage, addDrafts, setPath, setPresentStages };
 }
 
 type MaterialRow = {
@@ -281,9 +296,7 @@ async function extractMaterialText(
     return extractPptxText(bytes);
   }
 
-  throw new Error(
-    `Unsupported material kind for generation: ${material.kind}`,
-  );
+  throw new Error(`Unsupported material kind for generation: ${material.kind}`);
 }
 
 /** Chunked so large images do not blow the call stack via spread. */
@@ -304,7 +317,11 @@ async function resolveTextLlm(
   env: Env,
   secret: SecretRow | null,
   opts?: ProcessGenerateOptions,
-  onUsage?: (usage: { prompt_tokens?: number | null; completion_tokens?: number | null; total_tokens?: number | null }) => void,
+  onUsage?: (usage: {
+    prompt_tokens?: number | null;
+    completion_tokens?: number | null;
+    total_tokens?: number | null;
+  }) => void,
 ): Promise<{ llm: LlmAdapter; apiKey: string; provider: string }> {
   if (secret) {
     const wrapKey = env.SECRETS_WRAP_KEY;
@@ -381,6 +398,9 @@ async function runTextDraftPipeline(args: {
       provider,
     });
   }
+  if (args.emit && critiquedRules.length > 0) {
+    recordDraftPreviews(args.emit, "rules", critiquedRules);
+  }
 
   let llmDrafts: CardDraft[] = [];
   if (remainder.trim()) {
@@ -399,18 +419,10 @@ async function runTextDraftPipeline(args: {
               e.halfStepsDone,
             )
         : undefined,
+      onChunkDrafts: args.emit
+        ? (drafts) => recordDraftPreviews(args.emit!, "generate", drafts)
+        : undefined,
     });
-  }
-  if (args.emit && llmDrafts.length > 0) {
-    args.emit.addDrafts(llmDrafts.length);
-    for (let i = 0; i < Math.min(2, llmDrafts.length); i++) {
-      const d = llmDrafts[i]!;
-      const frontText =
-        typeof d.front === "string"
-          ? d.front
-          : String(d.front.prompt ?? d.front.image_key ?? JSON.stringify(d.front));
-      args.emit.addEvent("draft", "generate", frontText.slice(0, 160));
-    }
   }
 
   return mergeAndDedupeDrafts(critiquedRules, llmDrafts);
@@ -578,16 +590,7 @@ export async function processGenerateJob(
           base64: bytesToBase64(bytes),
         },
       });
-      // Record drafts produced and emit draft events (max 2 previews).
-      progress.addDrafts(drafts.length);
-      for (let i = 0; i < Math.min(2, drafts.length); i++) {
-        const d = drafts[i]!;
-        const frontText =
-          typeof d.front === "string"
-            ? d.front
-            : String(d.front.prompt ?? d.front.image_key ?? JSON.stringify(d.front));
-        progress.addEvent("draft", "generate", frontText.slice(0, 160));
-      }
+      recordDraftPreviews(progress, "generate", drafts);
       await progress.emit(
         "generate",
         generateTotal,
@@ -609,7 +612,7 @@ export async function processGenerateJob(
     } else if (material.kind === "pdf") {
       // Start with full PDF catalog; switch to figure-only after extract if no text.
       let presentStages: readonly ProgressStage[] = PDF_STAGES;
-      let progress = makeEmit(db, jobId, presentStages);
+      const progress = makeEmit(db, jobId, presentStages);
       await progress.emit("queued", 0, 0, "Queued");
       await progress.emit("extract", 0, 0, "Extracting material");
       if (!material.r2_key) {
@@ -652,7 +655,7 @@ export async function processGenerateJob(
 
       if (!text.trim()) {
         presentStages = PDF_FIGURE_ONLY_STAGES;
-        progress = makeEmit(db, jobId, presentStages);
+        progress.setPresentStages(presentStages);
       }
 
       type FigureRef = {
@@ -694,8 +697,11 @@ export async function processGenerateJob(
       const figureDrafts: Array<CardDraft & { mediaR2Keys?: string[] }> = [];
       if (figures.length > 0) {
         await progress.emit("figures", 0, figures.length, "Processing figures");
-        let vision: { llm: LlmAdapter; apiKey: string; provider: string } | null =
-          null;
+        let vision: {
+          llm: LlmAdapter;
+          apiKey: string;
+          provider: string;
+        } | null = null;
         if (secret || opts?.llm) {
           vision = secret
             ? await resolveTextLlm(env, secret, opts, (usage) =>
@@ -735,23 +741,9 @@ export async function processGenerateJob(
                   base64: bytesToBase64(figureBytes),
                 },
               });
-              // Record drafts produced for figures and emit draft previews.
-              progress.addDrafts(generated.length);
-              for (let j = 0; j < Math.min(2, generated.length); j++) {
-                const d = generated[j]!;
-                const frontText =
-                  typeof d.front === "string"
-                    ? d.front
-                    : String(d.front.prompt ?? d.front.image_key ?? JSON.stringify(d.front));
-                progress.addEvent(
-                  "draft",
-                  "figures",
-                  frontText.slice(0, 160),
-                );
-              }
+              recordDraftPreviews(progress, "figures", generated);
               const excerpt =
-                figure.caption?.trim() ||
-                `Figure p.${figure.page ?? "?"}#${i}`;
+                figure.caption?.trim() || `Figure p.${figure.page ?? "?"}#${i}`;
               const pages =
                 figure.page && figure.page >= 1 ? [figure.page] : [];
               figureDrafts.push(
@@ -760,13 +752,15 @@ export async function processGenerateJob(
                   mediaR2Keys: [figure.r2Key],
                   provenance: {
                     pages: pages.length > 0 ? pages : draft.provenance.pages,
-                    excerpt:
-                      draft.provenance.excerpt?.trim() || excerpt,
+                    excerpt: draft.provenance.excerpt?.trim() || excerpt,
                   },
                 })),
               );
             } catch (err) {
-              console.warn(`PDF figure generation failed for ${figure.r2Key}`, err);
+              console.warn(
+                `PDF figure generation failed for ${figure.r2Key}`,
+                err,
+              );
             } finally {
               await progress.emit(
                 "figures",

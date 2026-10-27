@@ -32,6 +32,9 @@ describe("projectCardsThisJob", () => {
   it("returns null when drafts_so_far is absent", () => {
     expect(projectCardsThisJob(undefined, 2, 4)).toBeNull();
   });
+  it("returns null when drafts_so_far is 0 (unknown mid-job)", () => {
+    expect(projectCardsThisJob(0, 2, 4)).toBeNull();
+  });
   it("ceil-scales drafts by total/current", () => {
     expect(projectCardsThisJob(5, 2, 4)).toBe(10);
   });
@@ -63,6 +66,16 @@ describe("remainingCardsToday", () => {
     expect(
       remainingCardsToday({
         draftsSoFar: undefined,
+        current: 2,
+        total: 4,
+        freeRemaining: 3,
+      }),
+    ).toBeNull();
+  });
+  it("returns null when drafts_so_far is 0 mid-job (avoids 0 cards left)", () => {
+    expect(
+      remainingCardsToday({
+        draftsSoFar: 0,
         current: 2,
         total: 4,
         freeRemaining: 3,

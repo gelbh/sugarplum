@@ -61,13 +61,15 @@ function contentFromAiRun(result: unknown): AiRunContent {
     throw new Error("Workers AI returned empty content");
   }
 
-  const usage = (result as {
-    usage?: {
-      completion_tokens?: unknown;
-      prompt_tokens?: unknown;
-      total_tokens?: unknown;
-    };
-  }).usage;
+  const usage = (
+    result as {
+      usage?: {
+        completion_tokens?: unknown;
+        prompt_tokens?: unknown;
+        total_tokens?: unknown;
+      };
+    }
+  ).usage;
   const completionTokens =
     usage && typeof usage.completion_tokens === "number"
       ? usage.completion_tokens
@@ -138,7 +140,13 @@ function withAiDiagnostics(err: unknown, run: AiRunContent): Error {
  */
 export function createWorkersAiAdapter(
   env: Env,
-  opts?: { onUsage?: (usage: { prompt_tokens?: number | null; completion_tokens?: number | null; total_tokens?: number | null }) => void },
+  opts?: {
+    onUsage?: (usage: {
+      prompt_tokens?: number | null;
+      completion_tokens?: number | null;
+      total_tokens?: number | null;
+    }) => void;
+  },
 ): LlmAdapter {
   if (!env.AI) {
     throw new Error("Workers AI binding (env.AI) is not configured");

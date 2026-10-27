@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { ApiError, getJob } from "../api/client";
 import { useProgressRegistry } from "./ProgressProvider";
 import type { ProgressSnapshot } from "./types";
-import { etaMs, projectTokens, projectCardsThisJob, remainingCardsToday } from "./estimates";
+import {
+  etaMs,
+  projectTokens,
+  projectCardsThisJob,
+  remainingCardsToday,
+} from "./estimates";
 
 const POLL_MS = 500;
 const TIMEOUT_MS = 10 * 60_000;
@@ -32,7 +37,11 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [snapshot, setSnapshot] = useState<ProgressSnapshot | null>(null);
-  const [freeQuota, setFreeQuota] = useState<{ used: number; cap: number; remaining: number } | null>(null);
+  const [freeQuota, setFreeQuota] = useState<{
+    used: number;
+    cap: number;
+    remaining: number;
+  } | null>(null);
   const [estimates, setEstimates] = useState<Estimates | null>(null);
   const settledRef = useRef(false);
   const startedAtRef = useRef<number | undefined>(undefined);
@@ -72,7 +81,10 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
       setPending(false);
     };
 
-    const snapshotFromJob = (jobId: string, progress: any | null): ProgressSnapshot => {
+    const snapshotFromJob = (
+      jobId: string,
+      progress: any | null,
+    ): ProgressSnapshot => {
       if (!progress) {
         return {
           id: jobId,
@@ -82,7 +94,10 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
           source: "job",
         };
       }
-      const detail = progress.total > 0 ? `chunk ${progress.current}/${progress.total}` : undefined;
+      const detail =
+        progress.total > 0
+          ? `chunk ${progress.current}/${progress.total}`
+          : undefined;
       const measurable = progress.total > 0;
       return {
         id: jobId,
@@ -160,7 +175,10 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
               job.progress.total,
             );
           }
-          if (typeof job.progress.drafts_so_far === "number") {
+          if (
+            typeof job.progress.drafts_so_far === "number" &&
+            job.progress.drafts_so_far > 0
+          ) {
             projectedCards = projectCardsThisJob(
               job.progress.drafts_so_far,
               job.progress.current,
@@ -211,8 +229,8 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
           err instanceof ApiError
             ? err.message
             : err instanceof Error
-            ? err.message
-            : "Failed to poll job";
+              ? err.message
+              : "Failed to poll job";
         settleFail(message);
         return;
       }

@@ -65,6 +65,37 @@ export function pushProgressEvent(
   return next.slice(next.length - max);
 }
 
+export type TokenUsageAcc = {
+  tokens_used?: number;
+  tokens_prompt?: number;
+  tokens_completion?: number;
+};
+
+export type TokenUsageDelta = {
+  prompt_tokens?: number | null;
+  completion_tokens?: number | null;
+  total_tokens?: number | null;
+};
+
+/** Sum LLM usage into a progress accumulator (multi-call jobs). */
+export function accumulateTokenUsage(
+  acc: TokenUsageAcc,
+  usage: TokenUsageDelta,
+): void {
+  if (usage.completion_tokens != null) {
+    acc.tokens_completion =
+      (acc.tokens_completion ?? 0) + usage.completion_tokens;
+  }
+  if (usage.prompt_tokens != null) {
+    acc.tokens_prompt = (acc.tokens_prompt ?? 0) + usage.prompt_tokens;
+  }
+  if (usage.total_tokens != null) {
+    acc.tokens_used = (acc.tokens_used ?? 0) + usage.total_tokens;
+  } else if (acc.tokens_prompt != null || acc.tokens_completion != null) {
+    acc.tokens_used = (acc.tokens_prompt ?? 0) + (acc.tokens_completion ?? 0);
+  }
+}
+
 /** Stage catalogs for generation job paths (weights via effectiveWeights). */
 export const IMAGE_STAGES = [
   "queued",
@@ -159,8 +190,7 @@ export function computePercent(
     completed += weights[s];
   }
 
-  const within =
-    total > 0 ? Math.max(0, current) / total : 0;
+  const within = total > 0 ? Math.max(0, current) / total : 0;
   const raw = 100 * (completed + weights[stage] * within);
   const capped = Math.min(100, Math.max(0, raw));
   // Last catalog stage finished: snap float dust to 100.
@@ -207,11 +237,13 @@ export function toProgressJson(patch: ProgressPatch): string {
     label: patch.label,
   };
   if (patch.tokens_used !== undefined) body.tokens_used = patch.tokens_used;
-  if (patch.tokens_prompt !== undefined) body.tokens_prompt = patch.tokens_prompt;
+  if (patch.tokens_prompt !== undefined)
+    body.tokens_prompt = patch.tokens_prompt;
   if (patch.tokens_completion !== undefined) {
     body.tokens_completion = patch.tokens_completion;
   }
-  if (patch.drafts_so_far !== undefined) body.drafts_so_far = patch.drafts_so_far;
+  if (patch.drafts_so_far !== undefined)
+    body.drafts_so_far = patch.drafts_so_far;
   if (patch.events !== undefined) body.events = patch.events;
   if (patch.path !== undefined) body.path = patch.path;
   return JSON.stringify(body);
