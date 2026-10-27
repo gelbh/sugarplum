@@ -641,14 +641,12 @@ export function createTestEnv(opts?: {
           return { results: rows as T[] };
         }
         if (
-          normalized.includes("r2_key LIKE ?") &&
+          normalized.includes("r2_key >= ?") &&
+          normalized.includes("r2_key < ?") &&
           normalized.includes("kind = 'image'") &&
           normalized.includes("ORDER BY r2_key")
         ) {
-          const [deckId, likePrefix] = bound as [string, string];
-          const prefix = likePrefix.endsWith("%")
-            ? likePrefix.slice(0, -1)
-            : likePrefix;
+          const [deckId, lower, upper] = bound as [string, string, string];
           const allowUploading = normalized.includes("'uploading'");
           const rows = [...materials.values()]
             .filter(
@@ -658,7 +656,8 @@ export function createTestEnv(opts?: {
                 (m.status === "ready" ||
                   (allowUploading && m.status === "uploading")) &&
                 m.r2_key != null &&
-                m.r2_key.startsWith(prefix),
+                m.r2_key >= lower &&
+                m.r2_key < upper,
             )
             .sort((a, b) => (a.r2_key ?? "").localeCompare(b.r2_key ?? ""))
             .map((m) =>
