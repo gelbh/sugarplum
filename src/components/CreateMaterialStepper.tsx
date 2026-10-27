@@ -18,6 +18,8 @@ import Tab from "@mui/material/Tab";
 
 import {
   createDeck,
+  createSubject,
+  listSubjects,
   pasteMaterial,
   PPTX_MIME,
   resolveUploadContentType,
@@ -132,7 +134,15 @@ export default function CreateMaterialStepper({
     setNotice(null);
     setBusy(true);
     try {
-      const deck = await createDeck(title);
+      // Task 4: subjectId required. Task 5 adds subject picker UI; until then
+      // reuse first subject or create Unfiled so create still works.
+      const subjects = await listSubjects();
+      let subjectId = subjects[0]?.id;
+      if (!subjectId) {
+        const created = await createSubject("Unfiled");
+        subjectId = created.id;
+      }
+      const deck = await createDeck(title, subjectId);
       setDecks((prev) => [...prev, deck]);
       setSelectedDeckId(deck.id);
       setTitle("");
