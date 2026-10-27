@@ -8,7 +8,7 @@ dist/
 *.log
 .DS_Store
 public/logo-photo.png
-# Large; fetch after clone / prebuild: node scripts/fetch-layout-assets.mjs
+# ONNX is loaded from pinned HF (not shipped; CF asset limit 25 MiB)
 public/models/*.onnx
 # Legacy ORT copies (runtime uses Vite-bundled onnxruntime-web/wasm)
 public/ort/

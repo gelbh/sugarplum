@@ -30,7 +30,12 @@ export type ParsedDetection = {
   y2: number;
 };
 
-const MODEL_URL = "/models/pp-doclayout-l.onnx";
+/**
+ * ONNX is ~32MB (above Cloudflare static asset 25 MiB). Load from pinned HF
+ * revision; labels stay first-party under /models/.
+ */
+const HF_LAYOUT_REV = "361fe8f94b5bbd2fe83d1cf3eb4b78203ba934b5";
+const MODEL_URL = `https://huggingface.co/Ralutet/PP-DocLayout-L-onnx-int8/resolve/${HF_LAYOUT_REV}/pp-doclayout-l.onnx`;
 const LABELS_URL = "/models/labels.json";
 
 /** Non-jsep wasm EP; Vite bundles its own wasm (no public/ort override). */

@@ -185,6 +185,7 @@ export function FigureSuggestPanel({
       cancelled = true;
       const pdf = pdfRef.current;
       pdfRef.current = null;
+      // PDFDocumentProxy exposes cleanup(); destroy() lives on the loading task.
       void pdf?.cleanup();
       canvasesRef.current.clear();
     };

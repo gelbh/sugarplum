@@ -1,11 +1,10 @@
 /**
- * Fetch first-party DocLayout model into public/models/.
+ * Fetch labels.json into public/models/ (ONNX loads from pinned HF at runtime).
  *
- * After clone (ONNX is gitignored): node scripts/fetch-layout-assets.mjs
- * Also runs as npm prebuild.
+ * After clone / npm prebuild: node scripts/fetch-layout-assets.mjs
  *
  * Source (Apache-2.0): https://huggingface.co/Ralutet/PP-DocLayout-L-onnx-int8
- * ORT wasm is loaded via onnxruntime-web/wasm (Vite-bundled); not copied here.
+ * ORT wasm: Vite-bundled via onnxruntime-web/wasm (under 25 MiB).
  */
 import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -15,19 +14,12 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const modelsDir = join(root, "public", "models");
 
-/**
- * Pinned Hugging Face resolve URLs + SHA-256 of expected bytes.
- * Update both when bumping the model.
- */
+/** Pinned commit on Ralutet/PP-DocLayout-L-onnx-int8 (not mutable main). */
+const HF_REV = "361fe8f94b5bbd2fe83d1cf3eb4b78203ba934b5";
+
 const MODEL_FILES = [
   {
-    url: "https://huggingface.co/Ralutet/PP-DocLayout-L-onnx-int8/resolve/main/pp-doclayout-l.onnx",
-    dest: join(modelsDir, "pp-doclayout-l.onnx"),
-    sha256:
-      "9ce1ea78167419015fc8880e0e7baca9016131b1f456f6f0210ad517474dfbeb",
-  },
-  {
-    url: "https://huggingface.co/Ralutet/PP-DocLayout-L-onnx-int8/resolve/main/labels.json",
+    url: `https://huggingface.co/Ralutet/PP-DocLayout-L-onnx-int8/resolve/${HF_REV}/labels.json`,
     dest: join(modelsDir, "labels.json"),
     sha256:
       "4d8175c77d0a82011d5aab0a23224d5e4497404c75c5726768466fd393f96790",
@@ -75,7 +67,9 @@ async function main() {
   for (const { url, dest, sha256 } of MODEL_FILES) {
     await downloadAndVerify(url, dest, sha256);
   }
-  console.log("layout model ready under public/models (ORT via onnxruntime-web/wasm)");
+  console.log(
+    "labels ready under public/models (ONNX from pinned HF; ORT via onnxruntime-web/wasm)",
+  );
 }
 
 main().catch((err) => {
