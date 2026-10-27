@@ -168,4 +168,38 @@ describe("POST /api/guest/import", () => {
     expect(res.status).toBe(400);
     expect(env.getCards()).toHaveLength(0);
   });
+
+  it("returns 400 when decks repeat clientId", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+
+    const res = await app.request(
+      "/api/guest/import",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          decks: [
+            { clientId: "guest-deck-1", title: "A" },
+            { clientId: "guest-deck-1", title: "B" },
+          ],
+          cards: [
+            {
+              clientDeckId: "guest-deck-1",
+              front: "Q",
+              back: "A",
+            },
+          ],
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(400);
+    expect(env.getCards()).toHaveLength(0);
+    expect(env.getDecks()).toHaveLength(0);
+  });
 });

@@ -82,6 +82,9 @@ guestRoutes.post("/import", async (c) => {
   }
 
   const clientIds = new Set(decks.map((d) => d.clientId));
+  if (clientIds.size !== decks.length) {
+    throw new HTTPException(400, { message: "Duplicate clientId" });
+  }
   for (const card of cards) {
     if (!clientIds.has(card.clientDeckId)) {
       throw new HTTPException(400, { message: "Unknown clientDeckId" });
