@@ -150,4 +150,56 @@ describe("extractFiguresViaDocling", () => {
     const headers = new Headers(init.headers);
     expect(headers.get("authorization")).toBe("Bearer secret");
   });
+
+  it("preserves JPEG MIME from the data URL", async () => {
+    // Minimal JPEG SOI/EOI markers (not a full image; decoding only needs bytes).
+    const jpegB64 = Buffer.from([0xff, 0xd8, 0xff, 0xd9]).toString("base64");
+    const fetchFn = vi.fn(async () =>
+      Response.json(
+        doclingSuccessBody([
+          {
+            prov: [{ page_no: 1 }],
+            captions: [],
+            image: {
+              mimetype: "image/jpeg",
+              uri: `data:image/jpeg;base64,${jpegB64}`,
+            },
+          },
+        ]),
+      ),
+    );
+    const result = await extractFiguresViaDocling(
+      { DOCLING_URL: "http://127.0.0.1:5001" },
+      new ArrayBuffer(0),
+      { fetchFn },
+    );
+    expect(result.crops).toHaveLength(1);
+    expect(result.crops[0].mimeType).toBe("image/jpeg");
+  });
+
+  it("drops pictures with unsupported MIME types", async () => {
+    const fetchFn = vi.fn(async () =>
+      Response.json(
+        doclingSuccessBody([
+          {
+            prov: [{ page_no: 1 }],
+            captions: [],
+            image: {
+              mimetype: "image/gif",
+              uri: `data:image/gif;base64,${TINY_PNG_B64}`,
+            },
+          },
+          onePicture(2),
+        ]),
+      ),
+    );
+    const result = await extractFiguresViaDocling(
+      { DOCLING_URL: "http://127.0.0.1:5001" },
+      new ArrayBuffer(0),
+      { fetchFn },
+    );
+    expect(result.crops).toHaveLength(1);
+    expect(result.crops[0].page).toBe(2);
+    expect(result.crops[0].mimeType).toBe("image/png");
+  });
 });

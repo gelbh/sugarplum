@@ -11,8 +11,8 @@
 
 services:
   docling-serve:
-    image: quay.io/docling-project/docling-serve
+    image: quay.io/docling-project/docling-serve:v1.38.2
     ports:
-      - "5001:5001"
+      - "127.0.0.1:5001:5001"
     environment:
       DOCLING_SERVE_ENABLE_UI: "1"

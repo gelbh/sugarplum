@@ -56,6 +56,14 @@ export const PDF_STAGES = [
   "persist",
 ] as const satisfies readonly ProgressStage[];
 
+/** PDF with figures but no usable text (no rules/generate/critique band). */
+export const PDF_FIGURE_ONLY_STAGES = [
+  "queued",
+  "extract",
+  "figures",
+  "persist",
+] as const satisfies readonly ProgressStage[];
+
 export const RULES_ONLY_STAGES = [
   "queued",
   "extract",

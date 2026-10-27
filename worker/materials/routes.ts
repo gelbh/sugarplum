@@ -9,6 +9,7 @@ import {
   MAX_IMAGE_BYTES,
   MAX_PASTE_BYTES,
 } from "./limits";
+import { MAX_FIGURES_PER_PDF } from "./docling";
 import { figureR2Key } from "./figures";
 import { createR2PutUrl } from "./r2-presign";
 
@@ -378,9 +379,13 @@ materialRoutes.post("/:id/figures/presign", async (c) => {
     });
   }
   const index = typeof body.index === "number" ? body.index : Number(body.index);
-  if (!Number.isInteger(index) || index < 0 || index >= 20) {
+  if (
+    !Number.isInteger(index) ||
+    index < 0 ||
+    index >= MAX_FIGURES_PER_PDF
+  ) {
     throw new HTTPException(400, {
-      message: "Figure crop index must be an integer from 0 to 19",
+      message: `Figure crop index must be an integer from 0 to ${MAX_FIGURES_PER_PDF - 1}`,
     });
   }
 

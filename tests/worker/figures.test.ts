@@ -105,3 +105,32 @@ describe("listFigureR2KeysForPdf", () => {
     expect(keys).toEqual([]);
   });
 });
+
+describe("persistFigureCrops race with client uploads", () => {
+  it("skips crops whose r2_key is already uploading or ready", async () => {
+    const env = createTestEnv();
+    env.seedMaterial({
+      id: "client-crop",
+      deck_id: "deck-a",
+      kind: "image",
+      r2_key: "materials/deck-a/figures/pdf-parent/0.png",
+      filename: "crop.png",
+      page_count: null,
+      status: "uploading",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const persisted = await persistFigureCrops(env, {
+      deckId: "deck-a",
+      pdfMaterialId: "pdf-parent",
+      crops: [crop({ index: 0 }), crop({ index: 1 })],
+    });
+
+    expect(persisted.map((p) => p.r2Key)).toEqual([
+      "materials/deck-a/figures/pdf-parent/1.png",
+    ]);
+    expect(
+      env.getMaterials().filter((m) => m.kind === "image"),
+    ).toHaveLength(2);
+  });
+});

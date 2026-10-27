@@ -205,5 +205,49 @@ describe("PDF consumer figure stage", () => {
 
     expect(env.getGenerationJobs()[0]?.status).toBe("needs_review");
     expect(env.getCards().some((card) => card.media_r2_keys_json)).toBe(true);
+    const progress = JSON.parse(
+      env.getGenerationJobs()[0]!.progress_json!,
+    ) as { stage: string; percent: number };
+    expect(progress.stage).toBe("persist");
+    expect(progress.percent).toBe(100);
+  });
+
+  it("skips Docling when figure children are still uploading", async () => {
+    const env = createTestEnv();
+    seedPdf(env);
+    env.DOCLING_URL = "http://docling.test";
+    env.seedMaterial({
+      id: "figure-uploading",
+      deck_id: "deck-a",
+      kind: "image",
+      r2_key: "materials/deck-a/figures/mat-pdf/0.png",
+      filename: "crop.png",
+      page_count: null,
+      status: "uploading",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    const fetchFn = vi.fn(async () => new Response("{}", { status: 200 }));
+    const oldFetch = globalThis.fetch;
+    globalThis.fetch = fetchFn as typeof fetch;
+
+    try {
+      const jobId = await enqueueGeneration(env, {
+        materialId: "mat-pdf",
+        deckId: "deck-a",
+      });
+      await processGenerateJob(
+        env,
+        { jobId, materialId: "mat-pdf", deckId: "deck-a" },
+        { llm: visionLlm() },
+      );
+
+      expect(fetchFn).not.toHaveBeenCalled();
+      expect(env.getGenerationJobs()[0]?.status).toBe("needs_review");
+      expect(
+        env.getCards().every((card) => card.media_r2_keys_json === null),
+      ).toBe(true);
+    } finally {
+      globalThis.fetch = oldFetch;
+    }
   });
 });

@@ -133,4 +133,83 @@ describe("PDF figure crop materials", () => {
     expect(env.getGenerationJobs()).toHaveLength(1);
     expect(env.getQueueMessages()).toHaveLength(1);
   });
+
+  it("returns 404 when another user tries to presign figures", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedUser({
+      id: "user-b",
+      email: "b@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSession("sess-b", "user-b");
+    env.seedMaterial({
+      id: "pdf-1",
+      deck_id: "deck-a",
+      kind: "pdf",
+      r2_key: "materials/deck-a/pdf-1.pdf",
+      filename: "lecture.pdf",
+      page_count: null,
+      status: "uploading",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/materials/pdf-1/figures/presign",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-b`,
+        },
+        body: JSON.stringify({
+          filename: "crop.png",
+          contentType: "image/png",
+          size: 1024,
+          index: 0,
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 400 when the parent material is not a PDF", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedMaterial({
+      id: "paste-1",
+      deck_id: "deck-a",
+      kind: "paste",
+      r2_key: null,
+      filename: null,
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+      body_text: "notes",
+    });
+
+    const res = await app.request(
+      "/api/materials/paste-1/figures/presign",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          filename: "crop.png",
+          contentType: "image/png",
+          size: 1024,
+          index: 0,
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(400);
+  });
 });

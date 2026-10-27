@@ -1,11 +1,13 @@
 import type { Env } from "../env";
 import { MAX_IMAGE_BYTES } from "./limits";
 
+export type FigureMime = "image/png" | "image/jpeg" | "image/webp";
+
 export type FigureCrop = {
   page: number;
   index: number;
   caption: string;
-  mimeType: "image/png";
+  mimeType: FigureMime;
   bytes: ArrayBuffer;
 };
 
@@ -29,6 +31,12 @@ type DoclingJsonDocument = {
   texts?: DoclingTextItem[];
 };
 
+const ALLOWED_MIME = new Set<FigureMime>([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+]);
+
 /** Narrow adapter: Docling convert JSON → crop DTOs (embedded base64 today; zip/referenced swappable). */
 export function parseFigureCropsFromDoclingJson(
   jsonContent: unknown,
@@ -41,9 +49,10 @@ export function parseFigureCropsFromDoclingJson(
 
   for (let index = 0; index < doc.pictures.length; index++) {
     const picture = doc.pictures[index];
-    const bytes = decodePictureUri(picture.image?.uri);
-    if (!bytes || bytes.byteLength === 0) continue;
-    if (bytes.byteLength > MAX_IMAGE_BYTES) continue;
+    const decoded = decodePictureUri(picture.image?.uri, picture.image?.mimetype);
+    if (!decoded) continue;
+    if (decoded.bytes.byteLength === 0) continue;
+    if (decoded.bytes.byteLength > MAX_IMAGE_BYTES) continue;
 
     const page = picture.prov?.[0]?.page_no ?? 1;
     const caption = resolvePictureCaption(picture, captionByRef);
@@ -52,8 +61,8 @@ export function parseFigureCropsFromDoclingJson(
       page: page >= 1 ? page : 1,
       index,
       caption,
-      mimeType: "image/png",
-      bytes,
+      mimeType: decoded.mimeType,
+      bytes: decoded.bytes,
     });
   }
 
@@ -130,6 +139,9 @@ function normalizeDoclingJsonContent(
   jsonContent: unknown,
 ): DoclingJsonDocument | null {
   if (!jsonContent || typeof jsonContent !== "object") return null;
+  const obj = jsonContent as Record<string, unknown>;
+  if (obj.pictures !== undefined && !Array.isArray(obj.pictures)) return null;
+  if (obj.texts !== undefined && !Array.isArray(obj.texts)) return null;
   return jsonContent as DoclingJsonDocument;
 }
 
@@ -154,20 +166,44 @@ function resolvePictureCaption(
   return "";
 }
 
-function decodePictureUri(uri: string | undefined): ArrayBuffer | null {
+function normalizeMime(raw: string | undefined): FigureMime | null {
+  if (!raw) return null;
+  const lower = raw.trim().toLowerCase();
+  if (lower === "image/jpg") return "image/jpeg";
+  if (ALLOWED_MIME.has(lower as FigureMime)) return lower as FigureMime;
+  return null;
+}
+
+function decodePictureUri(
+  uri: string | undefined,
+  declaredMime: string | undefined,
+): { bytes: ArrayBuffer; mimeType: FigureMime } | null {
   if (!uri) return null;
   const trimmed = uri.trim();
   if (!trimmed) return null;
 
   const dataUrlMatch = /^data:([^;,]+)?;base64,(.+)$/i.exec(trimmed);
-  const b64 = dataUrlMatch ? dataUrlMatch[2] : trimmed.includes("/") ? null : trimmed;
+  const b64 = dataUrlMatch
+    ? dataUrlMatch[2]
+    : trimmed.includes("/")
+      ? null
+      : trimmed;
   if (!b64) return null;
+
+  let mimeType: FigureMime;
+  if (dataUrlMatch?.[1]) {
+    const fromUri = normalizeMime(dataUrlMatch[1]);
+    // Explicit data-URL MIME that we do not support → drop the picture.
+    if (!fromUri) return null;
+    mimeType = fromUri;
+  } else {
+    mimeType = normalizeMime(declaredMime) ?? "image/png";
+  }
 
   try {
     const binary = atob(b64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    return bytes.buffer;
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+    return { bytes: bytes.buffer, mimeType };
   } catch {
     return null;
   }

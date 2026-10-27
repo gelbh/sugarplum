@@ -5,7 +5,8 @@ import { extractPdfText } from "../materials/extract-pdf";
 import { extractPptxText } from "../materials/extract-pptx";
 import { extractFiguresViaDocling } from "../materials/docling";
 import {
-  listFigureR2KeysForPdf,
+  listFigureChildrenForPdf,
+  mimeFromR2Key,
   persistFigureCrops,
 } from "../materials/figures";
 import { MAX_IMAGE_BYTES } from "../materials/limits";
@@ -18,6 +19,7 @@ import {
 } from "./pipeline";
 import {
   IMAGE_STAGES,
+  PDF_FIGURE_ONLY_STAGES,
   PDF_STAGES,
   TEXT_LLM_STAGES,
   computePercent,
@@ -180,14 +182,6 @@ async function extractMaterialText(
   );
 }
 
-function mimeFromR2Key(r2Key: string): string {
-  const lower = r2Key.toLowerCase();
-  if (lower.endsWith(".png")) return "image/png";
-  if (lower.endsWith(".webp")) return "image/webp";
-  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
-  return "image/jpeg";
-}
-
 /** Chunked so large images do not blow the call stack via spread. */
 function bytesToBase64(bytes: ArrayBuffer): string {
   const arr = new Uint8Array(bytes);
@@ -232,6 +226,75 @@ async function resolveTextLlm(
     "Workers AI is not available and no LLM API key is configured. " +
       "Add an OpenAI, Anthropic, or Google API key under Settings, or retry later.",
   );
+}
+
+type TextPipelineEmit = (
+  stage: ProgressStage,
+  current: number,
+  total: number,
+  label: string,
+  halfStepsDone?: number,
+) => Promise<void>;
+
+/**
+ * Shared text path: harvest → critique Layer-1 → generate remainder → merge.
+ * Returns [] when text has nothing harvestable and no remainder for LLM.
+ */
+async function runTextDraftPipeline(args: {
+  text: string;
+  env: Env;
+  userId: string;
+  secret: SecretRow | null;
+  opts?: ProcessGenerateOptions;
+  emit?: TextPipelineEmit;
+  /** Emit rules stage before LLM when using TEXT_LLM_STAGES catalog. */
+  emitRulesStage?: boolean;
+}): Promise<CardDraft[]> {
+  const rawRules = harvestRuleDrafts(args.text);
+  const layer1Rules = filterDraftsByQuality(rawRules);
+  const remainder = remainderAfterRules(args.text, rawRules);
+  const needsLlm = Boolean(remainder.trim()) || layer1Rules.length > 0;
+  if (!needsLlm) return [];
+
+  if (args.emitRulesStage && args.emit) {
+    await args.emit("rules", 0, 0, "Harvesting rules");
+  }
+
+  const { llm, apiKey, provider } = await resolveTextLlm(
+    args.env,
+    args.secret,
+    args.opts,
+  );
+  if (!args.secret) {
+    await consumeFreeGenSlot(args.env, args.userId);
+  }
+
+  let critiquedRules = layer1Rules;
+  if (layer1Rules.length > 0) {
+    critiquedRules = await critiqueDraftsAgainstSource({
+      sourceText: args.text,
+      candidates: layer1Rules,
+      llm,
+      apiKey,
+      provider,
+    });
+  }
+
+  let llmDrafts: CardDraft[] = [];
+  if (remainder.trim()) {
+    llmDrafts = await runGenerationPipeline({
+      text: remainder,
+      llm,
+      apiKey,
+      provider,
+      onProgress: args.emit
+        ? (e) =>
+            args.emit!(e.stage, e.current, e.total, e.label, e.halfStepsDone)
+        : undefined,
+    });
+  }
+
+  return mergeAndDedupeDrafts(critiquedRules, llmDrafts);
 }
 
 export async function insertDraftCards(
@@ -396,7 +459,9 @@ export async function processGenerateJob(
       await insertDraftCards(db, { deckId, jobId, drafts });
       await emit("persist", 1, 1, "Saving drafts");
     } else if (material.kind === "pdf") {
-      const emit = makeEmit(db, jobId, PDF_STAGES);
+      // Start with full PDF catalog; switch to figure-only after extract if no text.
+      let presentStages: readonly ProgressStage[] = PDF_STAGES;
+      let emit = makeEmit(db, jobId, presentStages);
       await emit("queued", 0, 0, "Queued");
       await emit("extract", 0, 0, "Extracting material");
       if (!material.r2_key) {
@@ -415,12 +480,25 @@ export async function processGenerateJob(
         textError = err;
         console.warn("PDF text extraction failed; trying figures", err);
       }
-      if (textError && !env.DOCLING_URL) {
-        const existingFigureKeys = await listFigureR2KeysForPdf(db, {
-          deckId,
-          pdfMaterialId: material.id,
-        });
-        if (existingFigureKeys.length === 0) throw textError;
+
+      const figureChildren = await listFigureChildrenForPdf(db, {
+        deckId,
+        pdfMaterialId: material.id,
+      });
+      const readyFigureKeys = figureChildren
+        .filter((row) => row.status === "ready")
+        .map((row) => row.r2_key);
+      const hasUploadingFigures = figureChildren.some(
+        (row) => row.status === "uploading",
+      );
+
+      if (textError && !env.DOCLING_URL && readyFigureKeys.length === 0) {
+        throw textError;
+      }
+
+      if (!text.trim()) {
+        presentStages = PDF_FIGURE_ONLY_STAGES;
+        emit = makeEmit(db, jobId, presentStages);
       }
 
       type FigureRef = {
@@ -428,14 +506,15 @@ export async function processGenerateJob(
         page?: number;
         caption?: string;
       };
-      let figures: FigureRef[] = (
-        await listFigureR2KeysForPdf(db, {
-          deckId,
-          pdfMaterialId: material.id,
-        })
-      ).map((r2Key) => ({ r2Key }));
+      let figures: FigureRef[] = readyFigureKeys.map((r2Key) => ({ r2Key }));
       let figureWarning: string | undefined;
-      if (figures.length === 0 && env.DOCLING_URL) {
+
+      // Manual/client crops (ready or still uploading) win over Docling for this PDF.
+      if (figures.length === 0 && hasUploadingFigures) {
+        figureWarning =
+          "Waiting on in-flight figure uploads; skipped Docling for this run";
+        console.warn(figureWarning);
+      } else if (figures.length === 0 && env.DOCLING_URL) {
         const doclingTimeout = AbortSignal.timeout(60_000);
         const figureResult = await extractFiguresViaDocling(env, pdfBytes, {
           signal: doclingTimeout,
@@ -544,40 +623,14 @@ export async function processGenerateJob(
 
       let textDrafts: CardDraft[] = [];
       if (text.trim()) {
-        const rawRules = harvestRuleDrafts(text);
-        const layer1Rules = filterDraftsByQuality(rawRules);
-        const remainder = remainderAfterRules(text, rawRules);
-        const needsLlm = Boolean(remainder.trim()) || layer1Rules.length > 0;
-        if (needsLlm) {
-          const { llm, apiKey, provider } = await resolveTextLlm(
-            env,
-            secret,
-            opts,
-          );
-          if (!secret) await consumeFreeGenSlot(env, deck.user_id);
-          let critiquedRules = layer1Rules;
-          if (layer1Rules.length > 0) {
-            critiquedRules = await critiqueDraftsAgainstSource({
-              sourceText: text,
-              candidates: layer1Rules,
-              llm,
-              apiKey,
-              provider,
-            });
-          }
-          let llmDrafts: CardDraft[] = [];
-          if (remainder.trim()) {
-            llmDrafts = await runGenerationPipeline({
-              text: remainder,
-              llm,
-              apiKey,
-              provider,
-              onProgress: (e) =>
-                emit(e.stage, e.current, e.total, e.label, e.halfStepsDone),
-            });
-          }
-          textDrafts = mergeAndDedupeDrafts(critiquedRules, llmDrafts);
-        }
+        textDrafts = await runTextDraftPipeline({
+          text,
+          env,
+          userId: deck.user_id,
+          secret,
+          opts,
+          emit,
+        });
       }
 
       drafts = filterDraftsByQuality([...textDrafts, ...figureDrafts]);
@@ -595,71 +648,30 @@ export async function processGenerateJob(
       await insertDraftCards(db, { deckId, jobId, drafts });
       await emit("persist", 1, 1, "Saving drafts");
     } else {
-      // TEXT_LLM catalog until harvest decides; emit before extract so failures leave progress.
-      const preHarvest = makeEmit(db, jobId, TEXT_LLM_STAGES);
-      await preHarvest("queued", 0, 0, "Queued");
-      await preHarvest("extract", 0, 0, "Extracting material");
+      // TEXT_LLM catalog; emit before extract so failures leave progress.
+      const emit = makeEmit(db, jobId, TEXT_LLM_STAGES);
+      await emit("queued", 0, 0, "Queued");
+      await emit("extract", 0, 0, "Extracting material");
 
       const text = await extractMaterialText(env, material);
       if (!text.trim()) {
         throw new Error("Extracted material text is empty");
       }
 
-      const rawRules = harvestRuleDrafts(text);
-      const layer1Rules = filterDraftsByQuality(rawRules);
-      // Remainder strips pre-critique harvest excerpts so critique drops stay out of LLM.
-      const remainder = remainderAfterRules(text, rawRules);
-
-      const needsLlm = Boolean(remainder.trim()) || layer1Rules.length > 0;
-      if (!needsLlm) {
+      drafts = await runTextDraftPipeline({
+        text,
+        env,
+        userId: deck.user_id,
+        secret,
+        opts,
+        emit,
+        emitRulesStage: true,
+      });
+      drafts = filterDraftsByQuality(drafts);
+      if (drafts.length === 0) {
         throw new Error(
           "No flashcard drafts could be produced from this material.",
         );
-      }
-
-      // Rules critique and/or remainder generate both need LLM stage weights.
-      const stages = TEXT_LLM_STAGES;
-      const emit = makeEmit(db, jobId, stages);
-      await emit("rules", 0, 0, "Harvesting rules");
-
-      const { llm, apiKey, provider } = await resolveTextLlm(
-        env,
-        secret,
-        opts,
-      );
-      if (!secret) {
-        // Charge before LLM (rules critique and/or generate) so failures count.
-        await consumeFreeGenSlot(env, deck.user_id);
-      }
-
-      // Critique hard-fail → keep Layer-1 survivors only (never raw harvest).
-      let critiquedRules = layer1Rules;
-      if (layer1Rules.length > 0) {
-        critiquedRules = await critiqueDraftsAgainstSource({
-          sourceText: text,
-          candidates: layer1Rules,
-          llm,
-          apiKey,
-          provider,
-        });
-      }
-
-      let llmDrafts: CardDraft[] = [];
-      if (remainder.trim()) {
-        llmDrafts = await runGenerationPipeline({
-          text: remainder,
-          llm,
-          apiKey,
-          provider,
-          onProgress: (e) =>
-            emit(e.stage, e.current, e.total, e.label, e.halfStepsDone),
-        });
-      }
-
-      drafts = mergeAndDedupeDrafts(critiquedRules, llmDrafts);
-      drafts = filterDraftsByQuality(drafts);
-      if (drafts.length === 0) {
-        throw new Error("Generation produced no valid draft cards");
       }
       await emit("persist", 0, 1, "Saving drafts");
       await insertDraftCards(db, { deckId, jobId, drafts });

@@ -482,17 +482,23 @@ export function createTestEnv(opts?: {
           const prefix = likePrefix.endsWith("%")
             ? likePrefix.slice(0, -1)
             : likePrefix;
+          const allowUploading = normalized.includes("'uploading'");
           const rows = [...materials.values()]
             .filter(
               (m) =>
                 m.deck_id === deckId &&
                 m.kind === "image" &&
-                m.status === "ready" &&
+                (m.status === "ready" ||
+                  (allowUploading && m.status === "uploading")) &&
                 m.r2_key != null &&
                 m.r2_key.startsWith(prefix),
             )
             .sort((a, b) => (a.r2_key ?? "").localeCompare(b.r2_key ?? ""))
-            .map((m) => ({ r2_key: m.r2_key }));
+            .map((m) =>
+              allowUploading
+                ? { r2_key: m.r2_key, status: m.status }
+                : { r2_key: m.r2_key },
+            );
           return { results: rows as T[] };
         }
         if (normalized.includes("FROM materials WHERE deck_id =")) {
