@@ -1,8 +1,6 @@
+import { CRITIQUE_SYSTEM_PROMPT, critiqueUserPrompt } from "./critique-prompts";
 import {
-  CRITIQUE_SYSTEM_PROMPT,
-  critiqueUserPrompt,
-} from "./critique-prompts";
-import {
+  salvageCompleteJsonObjects,
   unwrapLlmJsonText,
   type GenerateDraftsInput,
   type LlmAdapter,
@@ -37,6 +35,8 @@ export type RunGenerationPipelineInput = {
   provider: string;
   /** Best-effort; throws from the callback must not abort the pipeline. */
   onProgress?: (event: PipelineProgressEvent) => void | Promise<void>;
+  /** Fired after each chunk's critique (or generate fallback). Best-effort. */
+  onChunkDrafts?: (drafts: CardDraft[]) => void | Promise<void>;
 };
 
 /**
@@ -95,11 +95,32 @@ export function chunkText(
   return chunks;
 }
 
+function isCardShape(obj: unknown): boolean {
+  return (
+    !!obj &&
+    typeof obj === "object" &&
+    "type" in obj &&
+    "front" in obj &&
+    "back" in obj
+  );
+}
+
 function unwrapCardsJson(raw: string): unknown {
+  const unwrapped = unwrapLlmJsonText(raw);
   let parsed: unknown;
   try {
-    parsed = JSON.parse(unwrapLlmJsonText(raw));
+    parsed = JSON.parse(unwrapped);
   } catch {
+    // Same salvage path as parseCardsPayload: keep complete card objects
+    // when the critique reply truncates mid-array.
+    const salvaged = [
+      ...salvageCompleteJsonObjects(raw),
+      ...salvageCompleteJsonObjects(unwrapped),
+    ].filter(isCardShape);
+    const unique = [
+      ...new Map(salvaged.map((c) => [JSON.stringify(c), c])).values(),
+    ];
+    if (unique.length > 0) return unique;
     throw new Error("Critique returned non-JSON content");
   }
 
@@ -246,10 +267,22 @@ async function safeOnProgress(
   }
 }
 
+async function safeOnChunkDrafts(
+  onChunkDrafts: RunGenerationPipelineInput["onChunkDrafts"],
+  drafts: CardDraft[],
+): Promise<void> {
+  if (!onChunkDrafts) return;
+  try {
+    await onChunkDrafts(drafts);
+  } catch {
+    // Progress must never fail generation.
+  }
+}
+
 export async function runGenerationPipeline(
   input: RunGenerationPipelineInput,
 ): Promise<CardDraft[]> {
-  const { text, llm, apiKey, provider, onProgress } = input;
+  const { text, llm, apiKey, provider, onProgress, onChunkDrafts } = input;
   if (!text.trim()) return [];
 
   const chunks = chunkText(text).slice(0, MAX_PIPELINE_CHUNKS);
@@ -302,7 +335,9 @@ export async function runGenerationPipeline(
 
     await report("critique", i + 1, 2 * i + 2);
 
-    out.push(...(critiqued ?? generated));
+    const batch = critiqued ?? generated;
+    out.push(...batch);
+    await safeOnChunkDrafts(onChunkDrafts, batch);
   }
 
   return out;

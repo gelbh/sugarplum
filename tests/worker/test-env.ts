@@ -8,11 +8,20 @@ type UserRow = {
   created_at: string;
 };
 
+type SubjectRow = {
+  id: string;
+  user_id: string;
+  title: string;
+  created_at: string;
+};
+
 type DeckRow = {
   id: string;
   user_id: string;
   title: string;
   subject_hint: string | null;
+  /** Nullable until backfill; omitted on legacy seedDeck calls → null. */
+  subject_id?: string | null;
   created_at: string;
 };
 
@@ -94,6 +103,7 @@ export const TEST_SECRETS_WRAP_KEY = "0123456789abcdef0123456789abcdef";
 /** In-memory Worker bindings for route tests (no Miniflare). */
 export type TestEnv = Env & {
   seedUser: (row: UserRow) => void;
+  seedSubject: (row: SubjectRow) => void;
   seedDeck: (row: DeckRow) => void;
   seedMaterial: (row: MaterialRow) => void;
   seedSession: (id: string, userId: string, ttlMs?: number) => void;
@@ -117,6 +127,7 @@ export function createTestEnv(opts?: {
   secretsWrapKey?: string | null;
 }): TestEnv {
   const users = new Map<string, UserRow>();
+  const subjects = new Map<string, SubjectRow>();
   const decks = new Map<string, DeckRow>();
   const materials = new Map<string, MaterialRow>();
   const generationJobs = new Map<string, GenerationJobRow>();
@@ -223,6 +234,70 @@ export function createTestEnv(opts?: {
           return u ? ({ id: u.id, email: u.email } as T) : null;
         }
         if (
+          normalized.includes("FROM subjects WHERE id =") &&
+          normalized.includes("user_id =")
+        ) {
+          const subject = subjects.get(bound[0] as string);
+          if (!subject || subject.user_id !== bound[1]) return null;
+          return subject as T;
+        }
+        if (
+          normalized.startsWith("SELECT id, user_id FROM subjects WHERE id =")
+        ) {
+          const subject = subjects.get(bound[0] as string);
+          return subject
+            ? ({ id: subject.id, user_id: subject.user_id } as T)
+            : null;
+        }
+        if (
+          normalized.startsWith(
+            "SELECT id, title, created_at FROM subjects WHERE id =",
+          )
+        ) {
+          const subject = subjects.get(bound[0] as string);
+          return subject
+            ? ({
+                id: subject.id,
+                title: subject.title,
+                created_at: subject.created_at,
+              } as T)
+            : null;
+        }
+        if (
+          normalized.startsWith("SELECT COUNT(*)") &&
+          normalized.includes("FROM decks WHERE subject_id =")
+        ) {
+          const subjectId = bound[0] as string;
+          const cnt = [...decks.values()].filter(
+            (d) => d.subject_id === subjectId,
+          ).length;
+          return { count: cnt } as unknown as T;
+        }
+        if (
+          normalized.startsWith("SELECT COUNT(*)") &&
+          normalized.includes("FROM cards WHERE deck_id =") &&
+          normalized.includes("status =")
+        ) {
+          const deckId = bound[0] as string;
+          // Literal status in SQL (e.g. status = 'accepted') uses one bind (deck_id).
+          const statusLiteral = normalized.match(/status = '([^']+)'/)?.[1];
+          const wantStatus = statusLiteral ?? (bound[1] as string);
+          const cnt = [...cards.values()].filter(
+            (c) => c.deck_id === deckId && c.status === wantStatus,
+          ).length;
+          return { count: cnt } as unknown as T;
+        }
+        if (
+          normalized.startsWith("SELECT COUNT(*)") &&
+          normalized.includes("FROM materials WHERE deck_id =")
+        ) {
+          const deckId = bound[0] as string;
+          const cnt = [...materials.values()].filter(
+            (m) => m.deck_id === deckId,
+          ).length;
+          return { count: cnt } as unknown as T;
+        }
+        if (
           normalized.includes("FROM decks WHERE id =") &&
           normalized.includes("user_id =")
         ) {
@@ -232,9 +307,7 @@ export function createTestEnv(opts?: {
         }
         if (normalized.startsWith("SELECT id, user_id FROM decks WHERE id =")) {
           const deck = decks.get(bound[0] as string);
-          return deck
-            ? ({ id: deck.id, user_id: deck.user_id } as T)
-            : null;
+          return deck ? ({ id: deck.id, user_id: deck.user_id } as T) : null;
         }
         if (
           normalized.startsWith(
@@ -321,7 +394,8 @@ export function createTestEnv(opts?: {
           normalized.includes("INNER JOIN materials m") &&
           normalized.includes("INNER JOIN decks d") &&
           normalized.includes("j.status = 'needs_review'") &&
-          (normalized.includes("EXISTS") || normalized.includes("INNER JOIN cards"))
+          (normalized.includes("EXISTS") ||
+            normalized.includes("INNER JOIN cards"))
         ) {
           const userId = bound[0] as string;
           const matched = [...generationJobs.values()].filter((job) => {
@@ -378,10 +452,15 @@ export function createTestEnv(opts?: {
           return null;
         }
         // COUNT(*) handlers
-        if (normalized.startsWith("SELECT COUNT(*)") && normalized.includes("FROM decks WHERE user_id =")) {
+        if (
+          normalized.startsWith("SELECT COUNT(*)") &&
+          normalized.includes("FROM decks WHERE user_id =")
+        ) {
           const userId = bound[0] as string;
-          const cnt = [...decks.values()].filter((d) => d.user_id === userId).length;
-          return ({ count: cnt } as unknown) as T;
+          const cnt = [...decks.values()].filter(
+            (d) => d.user_id === userId,
+          ).length;
+          return { count: cnt } as unknown as T;
         }
         if (
           normalized.startsWith("SELECT COUNT(*)") &&
@@ -397,7 +476,7 @@ export function createTestEnv(opts?: {
             if (!schedule || schedule.due > now) return false;
             return true;
           }).length;
-          return ({ count: cnt } as unknown) as T;
+          return { count: cnt } as unknown as T;
         }
         if (
           normalized.startsWith("SELECT COUNT(*)") &&
@@ -412,7 +491,7 @@ export function createTestEnv(opts?: {
             if (c.status !== "accepted") return false;
             return true;
           }).length;
-          return ({ count: cnt } as unknown) as T;
+          return { count: cnt } as unknown as T;
         }
         if (
           normalized.startsWith(
@@ -484,16 +563,79 @@ export function createTestEnv(opts?: {
           return { results: rows as T[] };
         }
         if (
-          normalized.includes("FROM decks WHERE user_id =") &&
+          normalized.includes("FROM subjects WHERE user_id =") &&
           normalized.includes("ORDER BY created_at")
         ) {
-          const rows = [...decks.values()]
-            .filter((d) => d.user_id === bound[0])
+          const userId = bound[0] as string;
+          const withCount =
+            normalized.includes("deck_count") || normalized.includes("COUNT(");
+          const rows = [...subjects.values()]
+            .filter((s) => s.user_id === userId)
             .sort((a, b) => a.created_at.localeCompare(b.created_at))
-            .map(({ id, title, subject_hint, created_at }) => ({
+            .map((s) => {
+              const base = {
+                id: s.id,
+                title: s.title,
+                created_at: s.created_at,
+              };
+              if (!withCount) return base;
+              const deck_count = [...decks.values()].filter(
+                (d) => d.subject_id === s.id,
+              ).length;
+              return { ...base, deck_count };
+            });
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM decks WHERE user_id =") &&
+          normalized.includes("AND subject_id =") &&
+          normalized.includes("ORDER BY created_at")
+        ) {
+          const [userId, subjectId] = bound as [string, string];
+          const rows = [...decks.values()]
+            .filter((d) => d.user_id === userId && d.subject_id === subjectId)
+            .sort((a, b) => a.created_at.localeCompare(b.created_at))
+            .map(({ id, title, subject_hint, subject_id, created_at }) => ({
               id,
               title,
               subject_hint,
+              subject_id: subject_id ?? null,
+              created_at,
+            }));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM decks WHERE user_id =") &&
+          normalized.includes("ORDER BY created_at")
+        ) {
+          const includeSubjectId = normalized.includes("subject_id");
+          const rows = [...decks.values()]
+            .filter((d) => d.user_id === bound[0])
+            .sort((a, b) => a.created_at.localeCompare(b.created_at))
+            .map(({ id, title, subject_hint, subject_id, created_at }) => {
+              const row: Record<string, unknown> = {
+                id,
+                title,
+                subject_hint,
+                created_at,
+              };
+              if (includeSubjectId) row.subject_id = subject_id ?? null;
+              return row;
+            });
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM decks WHERE subject_id =") &&
+          normalized.includes("ORDER BY created_at")
+        ) {
+          const rows = [...decks.values()]
+            .filter((d) => d.subject_id === bound[0])
+            .sort((a, b) => a.created_at.localeCompare(b.created_at))
+            .map(({ id, title, subject_hint, subject_id, created_at }) => ({
+              id,
+              title,
+              subject_hint,
+              subject_id: subject_id ?? null,
               created_at,
             }));
           return { results: rows as T[] };
@@ -524,6 +666,26 @@ export function createTestEnv(opts?: {
                 ? { r2_key: m.r2_key, status: m.status }
                 : { r2_key: m.r2_key },
             );
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM materials WHERE deck_id =") &&
+          normalized.includes("r2_key IS NOT NULL")
+        ) {
+          const rows = [...materials.values()]
+            .filter((m) => m.deck_id === bound[0] && m.r2_key != null)
+            .map((m) => ({ r2_key: m.r2_key }));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM cards WHERE deck_id =") &&
+          normalized.includes("media_r2_keys_json")
+        ) {
+          const rows = [...cards.values()]
+            .filter(
+              (c) => c.deck_id === bound[0] && c.media_r2_keys_json != null,
+            )
+            .map((c) => ({ media_r2_keys_json: c.media_r2_keys_json }));
           return { results: rows as T[] };
         }
         if (normalized.includes("FROM materials WHERE deck_id =")) {
@@ -601,9 +763,7 @@ export function createTestEnv(opts?: {
               };
             })
             .filter((row) =>
-              filterSurvivors
-                ? row.lapses >= 2 || row.again_14d >= 2
-                : true,
+              filterSurvivors ? row.lapses >= 2 || row.again_14d >= 2 : true,
             );
           return { results: rows as T[] };
         }
@@ -611,13 +771,8 @@ export function createTestEnv(opts?: {
       },
       async run(): Promise<D1Result> {
         if (normalized.startsWith("INSERT INTO users")) {
-          const [id, email, password_hash, oauth_subject, created_at] = bound as [
-            string,
-            string,
-            string | null,
-            string | null,
-            string,
-          ];
+          const [id, email, password_hash, oauth_subject, created_at] =
+            bound as [string, string, string | null, string | null, string];
           for (const existing of users.values()) {
             if (existing.email === email) {
               throw new Error("UNIQUE constraint failed: users.email");
@@ -636,9 +791,7 @@ export function createTestEnv(opts?: {
             oauth_subject,
             created_at,
           });
-        } else if (
-          normalized.startsWith("UPDATE users SET oauth_subject =")
-        ) {
+        } else if (normalized.startsWith("UPDATE users SET oauth_subject =")) {
           const [oauth_subject, id] = bound as [string, string];
           const u = users.get(id);
           if (u) {
@@ -647,20 +800,165 @@ export function createTestEnv(opts?: {
                 existing.id !== id &&
                 existing.oauth_subject === oauth_subject
               ) {
-                throw new Error("UNIQUE constraint failed: users.oauth_subject");
+                throw new Error(
+                  "UNIQUE constraint failed: users.oauth_subject",
+                );
               }
             }
             users.set(id, { ...u, oauth_subject });
           }
-        } else if (normalized.startsWith("INSERT INTO decks")) {
-          const [id, user_id, title, subject_hint, created_at] = bound as [
+        } else if (normalized.startsWith("INSERT INTO subjects")) {
+          const [id, user_id, title, created_at] = bound as [
             string,
             string,
             string,
-            string | null,
             string,
           ];
-          decks.set(id, { id, user_id, title, subject_hint, created_at });
+          subjects.set(id, { id, user_id, title, created_at });
+        } else if (normalized.startsWith("UPDATE subjects SET title =")) {
+          const [title, id, userId] = bound as [string, string, string];
+          const row = subjects.get(id);
+          if (row && row.user_id === userId) {
+            subjects.set(id, { ...row, title });
+            return { success: true, meta: { changes: 1 } } as D1Result;
+          }
+          return { success: true, meta: { changes: 0 } } as D1Result;
+        } else if (normalized.startsWith("DELETE FROM subjects WHERE id =")) {
+          const id = bound[0] as string;
+          const userId = bound[1] as string | undefined;
+          const row = subjects.get(id);
+          if (!row || (userId != null && row.user_id !== userId)) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          subjects.delete(id);
+          return { success: true, meta: { changes: 1 } } as D1Result;
+        } else if (normalized.startsWith("UPDATE decks SET title =")) {
+          const [title, id, userId] = bound as [string, string, string];
+          const row = decks.get(id);
+          if (row && row.user_id === userId) {
+            decks.set(id, { ...row, title });
+            return { success: true, meta: { changes: 1 } } as D1Result;
+          }
+          return { success: true, meta: { changes: 0 } } as D1Result;
+        } else if (normalized.startsWith("DELETE FROM decks WHERE id =")) {
+          const id = bound[0] as string;
+          const userId = bound[1] as string | undefined;
+          const row = decks.get(id);
+          if (!row || (userId != null && row.user_id !== userId)) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          // FK cascade: materials → jobs; cards → schedules + review_logs.
+          for (const [mid, material] of [...materials.entries()]) {
+            if (material.deck_id !== id) continue;
+            for (const [jid, job] of [...generationJobs.entries()]) {
+              if (job.material_id === mid) generationJobs.delete(jid);
+            }
+            materials.delete(mid);
+          }
+          for (const [cid, card] of [...cards.entries()]) {
+            if (card.deck_id !== id) continue;
+            cards.delete(cid);
+            schedules.delete(cid);
+            for (let i = reviewLogs.length - 1; i >= 0; i--) {
+              if (reviewLogs[i].card_id === cid) reviewLogs.splice(i, 1);
+            }
+          }
+          decks.delete(id);
+          return { success: true, meta: { changes: 1 } } as D1Result;
+        } else if (normalized.startsWith("INSERT INTO decks")) {
+          // Legacy: (id, user_id, title, subject_hint, created_at) — subject_id null.
+          // Current worker SQL uses NULL for subject_hint → 4 binds.
+          // With subject_id column: bind subject_id when present in SQL.
+          if (normalized.includes("subject_id")) {
+            if (
+              normalized.includes("subject_hint") &&
+              /VALUES \(\?, \?, \?, NULL, \?, \?\)/.test(normalized)
+            ) {
+              const [id, user_id, title, subject_id, created_at] = bound as [
+                string,
+                string,
+                string,
+                string | null,
+                string,
+              ];
+              decks.set(id, {
+                id,
+                user_id,
+                title,
+                subject_hint: null,
+                subject_id,
+                created_at,
+              });
+            } else if (normalized.includes("subject_hint")) {
+              const [id, user_id, title, subject_hint, subject_id, created_at] =
+                bound as [
+                  string,
+                  string,
+                  string,
+                  string | null,
+                  string | null,
+                  string,
+                ];
+              decks.set(id, {
+                id,
+                user_id,
+                title,
+                subject_hint,
+                subject_id,
+                created_at,
+              });
+            } else {
+              const [id, user_id, title, subject_id, created_at] = bound as [
+                string,
+                string,
+                string,
+                string | null,
+                string,
+              ];
+              decks.set(id, {
+                id,
+                user_id,
+                title,
+                subject_hint: null,
+                subject_id,
+                created_at,
+              });
+            }
+          } else if (
+            normalized.includes("subject_hint") &&
+            /VALUES \(\?, \?, \?, NULL, \?\)/.test(normalized)
+          ) {
+            const [id, user_id, title, created_at] = bound as [
+              string,
+              string,
+              string,
+              string,
+            ];
+            decks.set(id, {
+              id,
+              user_id,
+              title,
+              subject_hint: null,
+              subject_id: null,
+              created_at,
+            });
+          } else {
+            const [id, user_id, title, subject_hint, created_at] = bound as [
+              string,
+              string,
+              string,
+              string | null,
+              string,
+            ];
+            decks.set(id, {
+              id,
+              user_id,
+              title,
+              subject_hint,
+              subject_id: null,
+              created_at,
+            });
+          }
         } else if (normalized.startsWith("INSERT INTO materials")) {
           const [
             id,
@@ -810,11 +1108,7 @@ export function createTestEnv(opts?: {
             "UPDATE generation_jobs SET status = ?, error = NULL, finished_at = ?",
           )
         ) {
-          const [status, finished_at, id] = bound as [
-            string,
-            string,
-            string,
-          ];
+          const [status, finished_at, id] = bound as [string, string, string];
           const row = generationJobs.get(id);
           if (row) {
             generationJobs.set(id, {
@@ -829,7 +1123,11 @@ export function createTestEnv(opts?: {
             "UPDATE generation_jobs SET status = ?, error = NULL WHERE id = ? AND status =",
           )
         ) {
-          const [status, id, requiredStatus] = bound as [string, string, string];
+          const [status, id, requiredStatus] = bound as [
+            string,
+            string,
+            string,
+          ];
           const row = generationJobs.get(id);
           if (!row || row.status !== requiredStatus) {
             return { success: true, meta: { changes: 0 } } as D1Result;
@@ -940,6 +1238,24 @@ export function createTestEnv(opts?: {
           }
         } else if (
           normalized.startsWith(
+            "UPDATE cards SET status = ?, updated_at = ? WHERE job_id = ? AND status = ?",
+          )
+        ) {
+          const [status, updated_at, jobId, expected] = bound as [
+            string,
+            string,
+            string,
+            string,
+          ];
+          let changes = 0;
+          for (const [id, card] of [...cards.entries()]) {
+            if (card.job_id !== jobId || card.status !== expected) continue;
+            cards.set(id, { ...card, status, updated_at });
+            changes += 1;
+          }
+          return { success: true, meta: { changes } } as D1Result;
+        } else if (
+          normalized.startsWith(
             "UPDATE cards SET status = ?, updated_at = ? WHERE id = ? AND status = ?",
           )
         ) {
@@ -979,15 +1295,7 @@ export function createTestEnv(opts?: {
             elapsed_days,
             reviewed_at,
             state_json,
-          ] = bound as [
-            string,
-            string,
-            number,
-            number,
-            number,
-            string,
-            string,
-          ];
+          ] = bound as [string, string, number, number, number, string, string];
           reviewLogs.push({
             id,
             card_id,
@@ -1083,9 +1391,7 @@ export function createTestEnv(opts?: {
             string | null,
           ];
           if (schedules.has(card_id)) {
-            throw new Error(
-              "UNIQUE constraint failed: card_schedules.card_id",
-            );
+            throw new Error("UNIQUE constraint failed: card_schedules.card_id");
           }
           schedules.set(card_id, {
             card_id,
@@ -1138,12 +1444,16 @@ export function createTestEnv(opts?: {
         const bytes = new TextEncoder().encode(v);
         return {
           text: async () => v,
-          arrayBuffer: async () => bytes.buffer.slice(
-            bytes.byteOffset,
-            bytes.byteOffset + bytes.byteLength,
-          ),
+          arrayBuffer: async () =>
+            bytes.buffer.slice(
+              bytes.byteOffset,
+              bytes.byteOffset + bytes.byteLength,
+            ),
           body: bytes,
         };
+      },
+      async delete(key: string) {
+        r2.delete(key);
       },
     } as unknown as R2Bucket,
     SESSIONS: {
@@ -1173,8 +1483,14 @@ export function createTestEnv(opts?: {
     seedUser(row) {
       users.set(row.id, row);
     },
+    seedSubject(row) {
+      subjects.set(row.id, row);
+    },
     seedDeck(row) {
-      decks.set(row.id, row);
+      decks.set(row.id, {
+        ...row,
+        subject_id: row.subject_id ?? null,
+      });
     },
     seedMaterial(row) {
       materials.set(row.id, row);

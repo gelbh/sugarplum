@@ -568,6 +568,14 @@ describe("decks list scoping", () => {
 
     expect(res.status).toBe(200);
     const decks = (await res.json()) as { id: string; title: string }[];
-    expect(decks).toEqual([{ id: "deck-a", title: "A deck", subject_hint: null, created_at: "2026-01-01T00:00:00.000Z" }]);
+    expect(decks).toEqual([
+      {
+        id: "deck-a",
+        title: "A deck",
+        subject_hint: null,
+        subject_id: null,
+        created_at: "2026-01-01T00:00:00.000Z",
+      },
+    ]);
   });
 });

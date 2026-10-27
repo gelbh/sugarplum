@@ -28,7 +28,12 @@ import {
   computePercent,
   computePipelineBandPercent,
   writeJobProgress,
+  accumulateTokenUsage,
+  type ProgressPatch,
   type ProgressStage,
+  type ProgressEvent,
+  truncateProgressText,
+  pushProgressEvent,
 } from "./progress";
 import { consumeFreeGenSlot } from "./quota";
 import { filterDraftsByQuality } from "./quality";
@@ -39,32 +44,39 @@ import { createWorkersAiAdapter } from "./workers-ai";
 /** ponytail: 240s ceiling for Fly wake + model load; raise if cold starts exceed client 10m poll. */
 const DOCLING_ACCURATE_TIMEOUT_MS = 240_000;
 
-async function emitProgress(
-  db: D1Database,
-  jobId: string,
-  stage: ProgressStage,
-  current: number,
-  total: number,
-  label: string,
-  presentStages: readonly ProgressStage[],
-  halfStepsDone?: number,
-): Promise<void> {
-  // Best-effort: progress must never flip a successful job to failed.
-  try {
-    const percent =
-      halfStepsDone !== undefined &&
-      (stage === "generate" || stage === "critique")
-        ? computePipelineBandPercent(halfStepsDone, total, presentStages)
-        : computePercent(stage, current, total, presentStages);
-    await writeJobProgress(db, jobId, {
-      stage,
-      current,
-      total,
-      percent,
-      label,
-    });
-  } catch (err) {
-    console.error("writeJobProgress failed", jobId, stage, err);
+export type JobProgressEmit = {
+  emit: (
+    stage: ProgressStage,
+    current: number,
+    total: number,
+    label: string,
+    halfStepsDone?: number,
+  ) => Promise<void>;
+  addEvent: (kind: ProgressEvent["kind"], stage: string, text: string) => void;
+  addUsage: (usage: {
+    prompt_tokens?: number | null;
+    completion_tokens?: number | null;
+    total_tokens?: number | null;
+  }) => void;
+  addDrafts: (n: number) => void;
+  setPath: (p: "free" | "byo") => void;
+  setPresentStages: (stages: readonly ProgressStage[]) => void;
+};
+
+function draftFrontPreview(d: CardDraft): string {
+  return typeof d.front === "string"
+    ? d.front
+    : String(d.front.prompt ?? d.front.image_key ?? JSON.stringify(d.front));
+}
+
+function recordDraftPreviews(
+  emit: JobProgressEmit,
+  stage: string,
+  drafts: CardDraft[],
+) {
+  emit.addDrafts(drafts.length);
+  for (let i = 0; i < Math.min(2, drafts.length); i++) {
+    emit.addEvent("draft", stage, draftFrontPreview(drafts[i]!));
   }
 }
 
@@ -73,23 +85,106 @@ function makeEmit(
   jobId: string,
   presentStages: readonly ProgressStage[],
 ) {
-  return (
+  // Mutable accumulator merged into every progress write.
+  // drafts_so_far stays unset until the first batch (avoids mid-job "0 cards left").
+  let stages = presentStages;
+  const acc: {
+    path?: "free" | "byo";
+    tokens_used?: number;
+    tokens_prompt?: number;
+    tokens_completion?: number;
+    drafts_so_far?: number;
+    events?: ProgressEvent[];
+  } = {
+    events: [],
+  };
+
+  function progressPatch(
     stage: ProgressStage,
     current: number,
     total: number,
     label: string,
     halfStepsDone?: number,
-  ) =>
-    emitProgress(
-      db,
-      jobId,
+  ): ProgressPatch {
+    const percent =
+      halfStepsDone !== undefined &&
+      (stage === "generate" || stage === "critique")
+        ? computePipelineBandPercent(halfStepsDone, total, stages)
+        : computePercent(stage, current, total, stages);
+
+    return {
       stage,
       current,
       total,
+      percent,
       label,
-      presentStages,
-      halfStepsDone,
-    );
+      ...(acc.tokens_used !== undefined
+        ? { tokens_used: acc.tokens_used }
+        : {}),
+      ...(acc.tokens_prompt !== undefined
+        ? { tokens_prompt: acc.tokens_prompt }
+        : {}),
+      ...(acc.tokens_completion !== undefined
+        ? { tokens_completion: acc.tokens_completion }
+        : {}),
+      ...(acc.drafts_so_far !== undefined
+        ? { drafts_so_far: acc.drafts_so_far }
+        : {}),
+      ...(acc.events && acc.events.length > 0 ? { events: acc.events } : {}),
+      ...(acc.path !== undefined ? { path: acc.path } : {}),
+    };
+  }
+
+  async function emit(
+    stage: ProgressStage,
+    current: number,
+    total: number,
+    label: string,
+    halfStepsDone?: number,
+  ) {
+    try {
+      await writeJobProgress(
+        db,
+        jobId,
+        progressPatch(stage, current, total, label, halfStepsDone),
+      );
+    } catch (err) {
+      console.error("writeJobProgress failed", jobId, stage, err);
+    }
+  }
+
+  function addEvent(kind: ProgressEvent["kind"], stage: string, text: string) {
+    const e: ProgressEvent = {
+      at: new Date().toISOString(),
+      kind,
+      stage,
+      text: truncateProgressText(text),
+    };
+    acc.events = pushProgressEvent(acc.events, e);
+  }
+
+  function addUsage(usage: {
+    prompt_tokens?: number | null;
+    completion_tokens?: number | null;
+    total_tokens?: number | null;
+  }) {
+    accumulateTokenUsage(acc, usage);
+  }
+
+  function addDrafts(n: number) {
+    if (n <= 0) return;
+    acc.drafts_so_far = (acc.drafts_so_far ?? 0) + n;
+  }
+
+  function setPath(p: "free" | "byo") {
+    acc.path = p;
+  }
+
+  function setPresentStages(next: readonly ProgressStage[]) {
+    stages = next;
+  }
+
+  return { emit, addEvent, addUsage, addDrafts, setPath, setPresentStages };
 }
 
 type MaterialRow = {
@@ -207,9 +302,7 @@ async function extractMaterialText(
     return extractPptxText(bytes);
   }
 
-  throw new Error(
-    `Unsupported material kind for generation: ${material.kind}`,
-  );
+  throw new Error(`Unsupported material kind for generation: ${material.kind}`);
 }
 
 /** Chunked so large images do not blow the call stack via spread. */
@@ -230,6 +323,11 @@ async function resolveTextLlm(
   env: Env,
   secret: SecretRow | null,
   opts?: ProcessGenerateOptions,
+  onUsage?: (usage: {
+    prompt_tokens?: number | null;
+    completion_tokens?: number | null;
+    total_tokens?: number | null;
+  }) => void,
 ): Promise<{ llm: LlmAdapter; apiKey: string; provider: string }> {
   if (secret) {
     const wrapKey = env.SECRETS_WRAP_KEY;
@@ -247,7 +345,7 @@ async function resolveTextLlm(
   }
   if (env.AI) {
     return {
-      llm: createWorkersAiAdapter(env),
+      llm: createWorkersAiAdapter(env, { onUsage }),
       apiKey: "",
       provider: "workers-ai",
     };
@@ -257,14 +355,6 @@ async function resolveTextLlm(
       "Add an OpenAI, Anthropic, or Google API key under Settings, or retry later.",
   );
 }
-
-type TextPipelineEmit = (
-  stage: ProgressStage,
-  current: number,
-  total: number,
-  label: string,
-  halfStepsDone?: number,
-) => Promise<void>;
 
 /**
  * Shared text path: harvest → critique Layer-1 → generate remainder → merge.
@@ -276,7 +366,7 @@ async function runTextDraftPipeline(args: {
   userId: string;
   secret: SecretRow | null;
   opts?: ProcessGenerateOptions;
-  emit?: TextPipelineEmit;
+  emit?: JobProgressEmit;
   /** Emit rules stage before LLM when using TEXT_LLM_STAGES catalog. */
   emitRulesStage?: boolean;
 }): Promise<CardDraft[]> {
@@ -287,14 +377,19 @@ async function runTextDraftPipeline(args: {
   if (!needsLlm) return [];
 
   if (args.emitRulesStage && args.emit) {
-    await args.emit("rules", 0, 0, "Harvesting rules");
+    await args.emit.emit("rules", 0, 0, "Harvesting rules");
   }
 
   const { llm, apiKey, provider } = await resolveTextLlm(
     args.env,
     args.secret,
     args.opts,
+    args.emit ? (usage) => args.emit!.addUsage(usage) : undefined,
   );
+  if (args.emit) {
+    const path = !args.secret && provider === "workers-ai" ? "free" : "byo";
+    args.emit.setPath(path);
+  }
   if (!args.secret) {
     await consumeFreeGenSlot(args.env, args.userId);
   }
@@ -309,6 +404,9 @@ async function runTextDraftPipeline(args: {
       provider,
     });
   }
+  if (args.emit && critiquedRules.length > 0) {
+    recordDraftPreviews(args.emit, "rules", critiquedRules);
+  }
 
   let llmDrafts: CardDraft[] = [];
   if (remainder.trim()) {
@@ -319,7 +417,16 @@ async function runTextDraftPipeline(args: {
       provider,
       onProgress: args.emit
         ? (e) =>
-            args.emit!(e.stage, e.current, e.total, e.label, e.halfStepsDone)
+            args.emit!.emit(
+              e.stage,
+              e.current,
+              e.total,
+              e.label,
+              e.halfStepsDone,
+            )
+        : undefined,
+      onChunkDrafts: args.emit
+        ? (drafts) => recordDraftPreviews(args.emit!, "generate", drafts)
         : undefined,
     });
   }
@@ -432,7 +539,7 @@ export async function processGenerateJob(
     let drafts: Array<CardDraft & { mediaR2Keys?: string[] | null }>;
 
     if (material.kind === "image") {
-      const emit = makeEmit(db, jobId, IMAGE_STAGES);
+      const progress = makeEmit(db, jobId, IMAGE_STAGES);
       // Vision needs a BYO provider; free Workers AI path is text-only.
       if (!secret && !opts?.llm) {
         throw new Error(
@@ -458,9 +565,11 @@ export async function processGenerateJob(
         provider = parseLlmProvider(secret.provider);
         llm = createLlmAdapter(provider);
       }
+      // Image generation always uses a BYO provider.
+      progress.setPath("byo");
 
-      await emit("queued", 0, 0, "Queued");
-      await emit("extract", 0, 0, "Loading image");
+      await progress.emit("queued", 0, 0, "Queued");
+      await progress.emit("extract", 0, 0, "Loading image");
       if (!material.r2_key) {
         throw new Error("Image material has no R2 object");
       }
@@ -476,7 +585,7 @@ export async function processGenerateJob(
         );
       }
       const generateTotal = 1;
-      await emit("generate", 0, generateTotal, "Generating cards");
+      await progress.emit("generate", 0, generateTotal, "Generating cards");
       drafts = await llm.generateDrafts({
         text: "",
         apiKey,
@@ -487,7 +596,13 @@ export async function processGenerateJob(
           base64: bytesToBase64(bytes),
         },
       });
-      await emit("generate", generateTotal, generateTotal, "Generating cards");
+      recordDraftPreviews(progress, "generate", drafts);
+      await progress.emit(
+        "generate",
+        generateTotal,
+        generateTotal,
+        "Generating cards",
+      );
       drafts = bindOcclusionImageKey(drafts, material.r2_key);
       drafts = filterDraftsByQuality(drafts);
       if (drafts.length === 0) {
@@ -497,15 +612,15 @@ export async function processGenerateJob(
         ...d,
         mediaR2Keys: [imageR2Key],
       }));
-      await emit("persist", 0, 1, "Saving drafts");
+      await progress.emit("persist", 0, 1, "Saving drafts");
       await insertDraftCards(db, { deckId, jobId, drafts });
-      await emit("persist", 1, 1, "Saving drafts");
+      await progress.emit("persist", 1, 1, "Saving drafts");
     } else if (material.kind === "pdf") {
       // Start with full PDF catalog; switch to figure-only after extract if no text.
       let presentStages: readonly ProgressStage[] = PDF_STAGES;
-      let emit = makeEmit(db, jobId, presentStages);
-      await emit("queued", 0, 0, "Queued");
-      await emit("extract", 0, 0, "Extracting material");
+      const progress = makeEmit(db, jobId, presentStages);
+      await progress.emit("queued", 0, 0, "Queued");
+      await progress.emit("extract", 0, 0, "Extracting material");
       if (!material.r2_key) {
         throw new Error("PDF material has no R2 object");
       }
@@ -521,6 +636,12 @@ export async function processGenerateJob(
       } catch (err) {
         textError = err;
         console.warn("PDF text extraction failed; trying figures", err);
+      }
+
+      // Emit an excerpt event after extraction when text is present.
+      if (text.trim()) {
+        const excerpt = text.split(/\r?\n/).find((l) => l.trim()) ?? text;
+        progress.addEvent("excerpt", "extract", excerpt.slice(0, 160));
       }
 
       const figureChildren = await listFigureChildrenForPdf(db, {
@@ -556,7 +677,7 @@ export async function processGenerateJob(
 
       if (!text.trim()) {
         presentStages = PDF_FIGURE_ONLY_STAGES;
-        emit = makeEmit(db, jobId, presentStages);
+        progress.setPresentStages(presentStages);
       }
 
       type FigureRef = {
@@ -573,8 +694,8 @@ export async function processGenerateJob(
           "Waiting on in-flight figure uploads; skipped Docling for this run";
         console.warn(figureWarning);
       } else if (willAttemptDocling) {
-        await emit("figures", 0, 0, "Waking figure extractor…");
-        await emit("figures", 0, 0, "Detecting figures…");
+        await progress.emit("figures", 0, 0, "Waking figure extractor…");
+        await progress.emit("figures", 0, 0, "Detecting figures…");
         const figureResult = await extractFiguresViaDocling(env, pdfBytes, {
           signal: AbortSignal.timeout(DOCLING_ACCURATE_TIMEOUT_MS),
         });
@@ -598,12 +719,17 @@ export async function processGenerateJob(
 
       const figureDrafts: Array<CardDraft & { mediaR2Keys?: string[] }> = [];
       if (figures.length > 0) {
-        await emit("figures", 0, figures.length, "Processing figures");
-        let vision: { llm: LlmAdapter; apiKey: string; provider: string } | null =
-          null;
+        await progress.emit("figures", 0, figures.length, "Processing figures");
+        let vision: {
+          llm: LlmAdapter;
+          apiKey: string;
+          provider: string;
+        } | null = null;
         if (secret || opts?.llm) {
           vision = secret
-            ? await resolveTextLlm(env, secret, opts)
+            ? await resolveTextLlm(env, secret, opts, (usage) =>
+                progress.addUsage(usage),
+              )
             : { llm: opts!.llm!, apiKey: "", provider: "mock" };
         } else {
           figureWarning =
@@ -611,6 +737,10 @@ export async function processGenerateJob(
           console.warn(figureWarning);
         }
         if (vision) {
+          // Mark path for progress (free vs byo) when vision LLM resolved.
+          progress.setPath(
+            !secret && vision.provider === "workers-ai" ? "free" : "byo",
+          );
           for (let i = 0; i < figures.length; i++) {
             const figure = figures[i]!;
             try {
@@ -634,9 +764,9 @@ export async function processGenerateJob(
                   base64: bytesToBase64(figureBytes),
                 },
               });
+              recordDraftPreviews(progress, "figures", generated);
               const excerpt =
-                figure.caption?.trim() ||
-                `Figure p.${figure.page ?? "?"}#${i}`;
+                figure.caption?.trim() || `Figure p.${figure.page ?? "?"}#${i}`;
               const pages =
                 figure.page && figure.page >= 1 ? [figure.page] : [];
               figureDrafts.push(
@@ -645,15 +775,17 @@ export async function processGenerateJob(
                   mediaR2Keys: [figure.r2Key],
                   provenance: {
                     pages: pages.length > 0 ? pages : draft.provenance.pages,
-                    excerpt:
-                      draft.provenance.excerpt?.trim() || excerpt,
+                    excerpt: draft.provenance.excerpt?.trim() || excerpt,
                   },
                 })),
               );
             } catch (err) {
-              console.warn(`PDF figure generation failed for ${figure.r2Key}`, err);
+              console.warn(
+                `PDF figure generation failed for ${figure.r2Key}`,
+                err,
+              );
             } finally {
-              await emit(
+              await progress.emit(
                 "figures",
                 i + 1,
                 figures.length,
@@ -664,7 +796,7 @@ export async function processGenerateJob(
             }
           }
         } else {
-          await emit(
+          await progress.emit(
             "figures",
             figures.length,
             figures.length,
@@ -672,7 +804,7 @@ export async function processGenerateJob(
           );
         }
       } else {
-        await emit(
+        await progress.emit(
           "figures",
           0,
           0,
@@ -688,7 +820,7 @@ export async function processGenerateJob(
           userId: deck.user_id,
           secret,
           opts,
-          emit,
+          emit: progress,
         });
       }
 
@@ -703,16 +835,21 @@ export async function processGenerateJob(
             : "Extracted material text is empty and no usable figures were found. Upload OCR text or figure crops.",
         );
       }
-      await emit("persist", 0, 1, "Saving drafts");
+      await progress.emit("persist", 0, 1, "Saving drafts");
       await insertDraftCards(db, { deckId, jobId, drafts });
-      await emit("persist", 1, 1, "Saving drafts");
+      await progress.emit("persist", 1, 1, "Saving drafts");
     } else {
       // TEXT_LLM catalog; emit before extract so failures leave progress.
-      const emit = makeEmit(db, jobId, TEXT_LLM_STAGES);
-      await emit("queued", 0, 0, "Queued");
-      await emit("extract", 0, 0, "Extracting material");
+      const progress = makeEmit(db, jobId, TEXT_LLM_STAGES);
+      await progress.emit("queued", 0, 0, "Queued");
+      await progress.emit("extract", 0, 0, "Extracting material");
 
       const text = await extractMaterialText(env, material);
+      // Emit an excerpt event after extraction.
+      if (text.trim()) {
+        const excerpt = text.split(/\r?\n/).find((l) => l.trim()) ?? text;
+        progress.addEvent("excerpt", "extract", excerpt.slice(0, 160));
+      }
       if (!text.trim()) {
         throw new Error("Extracted material text is empty");
       }
@@ -723,7 +860,7 @@ export async function processGenerateJob(
         userId: deck.user_id,
         secret,
         opts,
-        emit,
+        emit: progress,
         emitRulesStage: true,
       });
       drafts = filterDraftsByQuality(drafts);
@@ -732,9 +869,9 @@ export async function processGenerateJob(
           "No flashcard drafts could be produced from this material.",
         );
       }
-      await emit("persist", 0, 1, "Saving drafts");
+      await progress.emit("persist", 0, 1, "Saving drafts");
       await insertDraftCards(db, { deckId, jobId, drafts });
-      await emit("persist", 1, 1, "Saving drafts");
+      await progress.emit("persist", 1, 1, "Saving drafts");
     }
 
     const covered = drafts.map((d) => {

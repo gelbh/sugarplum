@@ -11,7 +11,7 @@ Rules:
 - Keep front/back under ~25 words; provenance.excerpt under ~12 words.
 - Cloze front must use exactly one Anki-style blank: {{c1::answer}}. Never multiple blanks.
 - Cloze: blank a high-yield fact (organ, route, drug, species distinction), never the topic genus the sentence is already about.
-- Cloze back may equal the cloze answer (Anki-normal).
+- Cloze Extra (back) is optional: use "" when unused. Study answer comes from the {{c1::…}} blank, not Extra. Extra may equal the cloze answer when present (Anki-normal).
 - Every card must cite a short excerpt from the source (verbatim or lightly trimmed). Answers must be entailed by that excerpt.
 - pages is a list of 1-based page numbers when known; use [1] for plain text pastes.
 - For type "mcq": front is a single-fact question; back is the correct option (must appear in options); options is a unique array of 3–5 strings including back. Every distractor must be entailed by or clearly present in the cited excerpt; do not invent trivia or plausible-but-ungrounded wrong answers. Drop multi-species AND stems that require two different species.
@@ -57,7 +57,7 @@ Rules:
 - Keep front/back under ~15 words; provenance.excerpt under ~12 words.
 - Cloze front must use exactly one Anki-style blank: {{c1::answer}}. Never multiple blanks.
 - Cloze: blank a high-yield fact (organ, route, drug, species distinction), never the topic genus the sentence is already about.
-- Cloze back may equal the cloze answer (Anki-normal).
+- Cloze Extra (back) is optional: use "" when unused. Study answer comes from the {{c1::…}} blank, not Extra. Extra may equal the cloze answer when present (Anki-normal).
 - Every card must cite a short excerpt from the source (verbatim or lightly trimmed). Answers must be entailed by that excerpt.
 - pages is a list of 1-based page numbers when known; use [1] for plain text pastes.
 - For type "mcq": front is a single-fact question; back is the correct option (must appear in options); options is a unique array of 3–5 strings including back. Every distractor must be entailed by or clearly present in the cited excerpt; do not invent trivia or plausible-but-ungrounded wrong answers. Drop multi-species AND stems that require two different species.

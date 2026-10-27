@@ -54,6 +54,29 @@ describe("CardDraft schema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("parses cloze with empty Extra back", () => {
+    const result = CardDraftSchema.safeParse({
+      type: "cloze",
+      front: "The organelle is {{c1::mitochondria}}.",
+      back: "",
+      provenance: { pages: [1], excerpt: "organelle" },
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.back).toBe("");
+    }
+  });
+
+  it("rejects qa with empty back", () => {
+    const result = CardDraftSchema.safeParse({
+      type: "qa",
+      front: "What is ATP?",
+      back: "",
+      provenance: { pages: [1], excerpt: "ATP" },
+    });
+    expect(result.success).toBe(false);
+  });
+
   const mcqBase = {
     type: "mcq" as const,
     front: "What is ATP?",

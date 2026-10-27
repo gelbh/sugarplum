@@ -3,13 +3,25 @@ import {
   uploadWithProgress,
 } from "../progress/uploadWithProgress";
 import { endGuestLocal } from "../guest/endGuestLocal";
+import {
+  clearGuestMergeArtifacts,
+  tryMergeGuestAfterAuth,
+} from "../guest/mergeOnAuth";
+import type { GuestImportPayload } from "../guest/importPayload";
 import { GUEST_USER, isGuest } from "../guest/session";
 import {
   ensureGuestStore,
   guestCreateDeck,
+  guestCreateSubject,
+  guestDeckStats,
+  guestDeleteDeck,
+  guestDeleteSubject,
   guestJourney,
   guestListDecks,
   guestListDueCards,
+  guestListSubjects,
+  guestPatchDeck,
+  guestPatchSubject,
   guestReviewCard,
 } from "../guest/store";
 import { clearDueCache } from "../study/dueCache";
@@ -75,12 +87,19 @@ export type AuthUser = {
   google_linked?: boolean;
 };
 
+export function importGuestLocal(body: GuestImportPayload) {
+  return api<{ deckCount: number; cardCount: number }>("/api/guest/import", {
+    method: "POST",
+    json: body,
+  });
+}
+
 export async function register(email: string, password: string) {
   const user = await api<AuthUser>("/api/auth/register", {
     method: "POST",
     json: { email, password },
   });
-  endGuestLocal();
+  await tryMergeGuestAfterAuth({ importGuest: importGuestLocal });
   return user;
 }
 
@@ -89,7 +108,7 @@ export async function login(email: string, password: string) {
     method: "POST",
     json: { email, password },
   });
-  endGuestLocal();
+  await tryMergeGuestAfterAuth({ importGuest: importGuestLocal });
   return user;
 }
 
@@ -103,6 +122,7 @@ export async function logout() {
   });
   clearDueCache();
   clearPendingGrades();
+  clearGuestMergeArtifacts();
   if (typeof caches !== "undefined") {
     try {
       await caches.delete(STUDY_MEDIA_CACHE);
@@ -121,11 +141,26 @@ export function me() {
   return api<AuthUser>("/api/auth/me");
 }
 
+export type Subject = {
+  id: string;
+  title: string;
+  created_at: string;
+  deck_count?: number;
+};
+
 export type Deck = {
   id: string;
   title: string;
-  subject_hint: string | null;
+  subject_id: string;
+  /** Unused after hierarchy migrate; kept optional for compat. */
+  subject_hint?: string | null;
   created_at: string;
+};
+
+export type DeckStats = {
+  accepted: number;
+  draft: number;
+  materials: number;
 };
 
 export type Material = {
@@ -139,19 +174,103 @@ export type Material = {
   created_at: string;
 };
 
-export function listDecks() {
-  if (isGuest()) return Promise.resolve(guestListDecks());
-  return api<Deck[]>("/api/decks");
+export function listSubjects() {
+  if (isGuest()) return Promise.resolve(guestListSubjects());
+  return api<Subject[]>("/api/subjects");
 }
 
-export function createDeck(title: string) {
-  if (isGuest()) return Promise.resolve(guestCreateDeck(title));
-  return api<Deck>("/api/decks", {
+export function createSubject(title: string) {
+  if (isGuest()) return Promise.resolve(guestCreateSubject(title));
+  return api<Subject>("/api/subjects", {
     method: "POST",
     json: { title },
   });
 }
 
+export function patchSubject(id: string, title: string) {
+  if (isGuest()) return Promise.resolve(guestPatchSubject(id, title));
+  return api<Subject>(`/api/subjects/${id}`, {
+    method: "PATCH",
+    json: { title },
+  });
+}
+
+/** Guest: throws ApiError 409 when decks remain (message "Subject still has decks"). */
+export function deleteSubject(id: string) {
+  if (isGuest()) {
+    try {
+      guestDeleteSubject(id);
+      return Promise.resolve(undefined);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Request failed";
+      if (message === "Subject still has decks") {
+        throw new ApiError(409, message);
+      }
+      throw new ApiError(404, message);
+    }
+  }
+  return api<void>(`/api/subjects/${id}`, { method: "DELETE" });
+}
+
+export function listDecks(subjectId?: string) {
+  if (isGuest()) return Promise.resolve(guestListDecks(subjectId));
+  const q = subjectId ? `?subjectId=${encodeURIComponent(subjectId)}` : "";
+  return api<Deck[]>(`/api/decks${q}`);
+}
+
+export function createDeck(title: string, subjectId: string) {
+  if (isGuest()) return Promise.resolve(guestCreateDeck(title, subjectId));
+  return api<Deck>("/api/decks", {
+    method: "POST",
+    json: { title, subjectId },
+  });
+}
+
+export function patchDeck(id: string, title: string) {
+  if (isGuest()) {
+    try {
+      return Promise.resolve(guestPatchDeck(id, title));
+    } catch (err) {
+      throw new ApiError(
+        404,
+        err instanceof Error ? err.message : "Deck not found",
+      );
+    }
+  }
+  return api<Deck>(`/api/decks/${id}`, {
+    method: "PATCH",
+    json: { title },
+  });
+}
+
+export function deleteDeck(id: string) {
+  if (isGuest()) {
+    try {
+      guestDeleteDeck(id);
+      return Promise.resolve(undefined);
+    } catch (err) {
+      throw new ApiError(
+        404,
+        err instanceof Error ? err.message : "Deck not found",
+      );
+    }
+  }
+  return api<void>(`/api/decks/${id}`, { method: "DELETE" });
+}
+
+export function deckStats(id: string) {
+  if (isGuest()) {
+    try {
+      return Promise.resolve(guestDeckStats(id));
+    } catch (err) {
+      throw new ApiError(
+        404,
+        err instanceof Error ? err.message : "Deck not found",
+      );
+    }
+  }
+  return api<DeckStats>(`/api/decks/${id}/stats`);
+}
 export type PasteMaterialResponse = Material & { jobId: string };
 
 export function pasteMaterial(
@@ -171,6 +290,17 @@ export type GenerationJobProgress = {
   total: number;
   percent: number;
   label: string;
+  tokens_used?: number;
+  tokens_prompt?: number;
+  tokens_completion?: number;
+  drafts_so_far?: number;
+  events?: {
+    at: string;
+    kind: "excerpt" | "draft" | "stage";
+    stage: string;
+    text: string;
+  }[];
+  path?: "free" | "byo";
 };
 
 export type GenerationJob = {
@@ -180,6 +310,7 @@ export type GenerationJob = {
   error: string | null;
   coverage_json: string | null;
   progress: GenerationJobProgress | null;
+  free_quota: { used: number; cap: number; remaining: number } | null;
   created_at: string;
   finished_at: string | null;
 };
@@ -193,6 +324,14 @@ export function getJob(jobId: string) {
 export function regenJob(jobId: string) {
   if (isGuest()) guestUnsupported("regenerate cards");
   return api<GenerationJob>(`/api/jobs/${jobId}/regen`, { method: "POST" });
+}
+
+/** Soft-clean: reject remaining drafts only; accepted cards stay. No requeue. */
+export function rejectJobDrafts(jobId: string) {
+  if (isGuest()) guestUnsupported("reject remaining drafts");
+  return api<{ rejectedCount: number }>(`/api/jobs/${jobId}/reject-drafts`, {
+    method: "POST",
+  });
 }
 
 export type JobListItem = {
