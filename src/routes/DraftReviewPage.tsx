@@ -321,9 +321,9 @@ export default function DraftReviewPage() {
     begin();
     try {
       const result = await rejectJobDrafts(jobId);
-      setDrafts([]);
-      setIndex(0);
+      const list = await load(jobId);
       setDirty(false);
+      await refreshJourney(jobId, list.length);
       setNotice(
         result.rejectedCount === 0
           ? "No remaining drafts to reject"
