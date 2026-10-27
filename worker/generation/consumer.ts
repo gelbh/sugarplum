@@ -27,6 +27,7 @@ import {
   TEXT_LLM_STAGES,
   computePercent,
   computePipelineBandPercent,
+  isRunningJobStale,
   writeJobProgress,
   accumulateTokenUsage,
   type ProgressPatch,
@@ -118,6 +119,7 @@ function makeEmit(
       total,
       percent,
       label,
+      updated_at: new Date().toISOString(),
       ...(acc.tokens_used !== undefined
         ? { tokens_used: acc.tokens_used }
         : {}),
@@ -489,11 +491,13 @@ export async function insertDraftCards(
  * text → harvest → Layer-1 → rules critique → remainder LLM → merge → Layer-1.
  * On failure marks the job failed with an actionable error (does not throw after mark).
  */
+export type ProcessGenerateResult = "done" | "busy";
+
 export async function processGenerateJob(
   env: Env,
   message: GenerateQueueMessage,
   opts?: ProcessGenerateOptions,
-): Promise<void> {
+): Promise<ProcessGenerateResult> {
   const db = getDb(env);
   const { jobId, materialId, deckId } = message;
 
@@ -505,7 +509,27 @@ export async function processGenerateJob(
     .run();
   // Duplicate / stale queue delivery: another worker already claimed or finished.
   if (!claim.meta.changes) {
-    return;
+    const existing = await db
+      .prepare(
+        "SELECT status, progress_json, created_at FROM generation_jobs WHERE id = ?",
+      )
+      .bind(jobId)
+      .first<{
+        status: string;
+        progress_json: string | null;
+        created_at: string;
+      }>();
+    if (
+      existing?.status === "running" &&
+      isRunningJobStale(existing.progress_json, existing.created_at)
+    ) {
+      // Dead consumer left status=running; reclaim and continue.
+    } else if (existing?.status === "running") {
+      // Still heartbeating; ask the queue to retry later instead of ack-abandoning.
+      return "busy";
+    } else {
+      return "done";
+    }
   }
 
   try {
@@ -821,6 +845,7 @@ export async function processGenerateJob(
           secret,
           opts,
           emit: progress,
+          emitRulesStage: true,
         });
       }
 
@@ -893,11 +918,13 @@ export async function processGenerateJob(
       )
       .bind("needs_review", coverageJson, finishedAt, jobId)
       .run();
+    return "done";
   } catch (err) {
     // Leave last progress_json; only mark status failed.
     const messageText =
       err instanceof Error ? err.message : "Generation failed";
     await markJobFailed(db, jobId, messageText);
+    return "done";
   }
 }
 
@@ -907,7 +934,11 @@ export async function handleGenerateQueue(
   env: Env,
 ): Promise<void> {
   for (const msg of batch.messages) {
-    await processGenerateJob(env, msg.body);
-    msg.ack();
+    const result = await processGenerateJob(env, msg.body);
+    if (result === "busy") {
+      msg.retry({ delaySeconds: 60 });
+    } else {
+      msg.ack();
+    }
   }
 }

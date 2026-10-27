@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  RUNNING_JOB_STALE_MS,
   STAGE_WEIGHTS,
   accumulateTokenUsage,
   computePercent,
   computePipelineBandPercent,
+  isRunningJobStale,
   pushProgressEvent,
   toProgressJson,
   truncateProgressText,
@@ -168,6 +170,56 @@ describe("pushProgressEvent", () => {
     expect(events).toHaveLength(12);
     expect(events[0].text).toBe("event 1");
     expect(events[11].text).toBe("event 12");
+  });
+});
+
+describe("isRunningJobStale", () => {
+  const createdAt = "2026-10-27T17:00:00.000Z";
+  const createdMs = Date.parse(createdAt);
+
+  it("is stale when only created_at is older than the threshold", () => {
+    expect(
+      isRunningJobStale(null, createdAt, createdMs + RUNNING_JOB_STALE_MS),
+    ).toBe(true);
+  });
+
+  it("is fresh when updated_at is within the threshold", () => {
+    const updatedAt = "2026-10-27T17:10:00.000Z";
+    const now = Date.parse(updatedAt) + RUNNING_JOB_STALE_MS - 1;
+    expect(
+      isRunningJobStale(
+        JSON.stringify({ updated_at: updatedAt }),
+        createdAt,
+        now,
+      ),
+    ).toBe(false);
+  });
+
+  it("uses the newest event at when updated_at is absent", () => {
+    const eventAt = "2026-10-27T17:15:00.000Z";
+    const now = Date.parse(eventAt) + RUNNING_JOB_STALE_MS - 1;
+    expect(
+      isRunningJobStale(
+        JSON.stringify({
+          events: [{ at: eventAt, kind: "excerpt", stage: "extract", text: "x" }],
+        }),
+        createdAt,
+        now,
+      ),
+    ).toBe(false);
+  });
+
+  it("does not let a fresh created_at mask a stale updated_at", () => {
+    const updatedAt = "2026-10-27T17:00:00.000Z";
+    const freshCreated = "2026-10-27T18:00:00.000Z";
+    const now = Date.parse(updatedAt) + RUNNING_JOB_STALE_MS;
+    expect(
+      isRunningJobStale(
+        JSON.stringify({ updated_at: updatedAt }),
+        freshCreated,
+        now,
+      ),
+    ).toBe(true);
   });
 });
 

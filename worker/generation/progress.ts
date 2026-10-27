@@ -34,6 +34,8 @@ export type ProgressPatch = {
   total: number;
   percent: number;
   label: string;
+  /** ISO heartbeat written on every progress emit (stale-running reclaim). */
+  updated_at?: string;
   tokens_used?: number;
   tokens_prompt?: number;
   tokens_completion?: number;
@@ -41,6 +43,49 @@ export type ProgressPatch = {
   events?: ProgressEvent[];
   path?: "free" | "byo";
 };
+
+/** Queue redelivery may reclaim `running` jobs with no progress newer than this. */
+export const RUNNING_JOB_STALE_MS = 20 * 60 * 1000;
+
+/**
+ * True when the newest progress heartbeat (updated_at, else events[].at, else
+ * created_at) is at least RUNNING_JOB_STALE_MS before now.
+ */
+export function isRunningJobStale(
+  progressJson: string | null | undefined,
+  createdAt: string,
+  nowMs: number = Date.now(),
+): boolean {
+  let lastMs = Number.NaN;
+
+  if (progressJson) {
+    try {
+      const parsed = JSON.parse(progressJson) as {
+        updated_at?: unknown;
+        events?: Array<{ at?: unknown }>;
+      };
+      if (typeof parsed.updated_at === "string") {
+        const t = Date.parse(parsed.updated_at);
+        if (Number.isFinite(t)) lastMs = t;
+      }
+      for (const event of parsed.events ?? []) {
+        if (typeof event?.at !== "string") continue;
+        const t = Date.parse(event.at);
+        if (!Number.isFinite(t)) continue;
+        lastMs = Number.isFinite(lastMs) ? Math.max(lastMs, t) : t;
+      }
+    } catch {
+      // Corrupt progress_json: fall back to created_at.
+    }
+  }
+
+  if (!Number.isFinite(lastMs)) {
+    lastMs = Date.parse(createdAt);
+    if (!Number.isFinite(lastMs)) lastMs = 0;
+  }
+
+  return nowMs - lastMs >= RUNNING_JOB_STALE_MS;
+}
 
 /** Strip C0 control chars except newline and space; cap length. */
 export function truncateProgressText(text: string, max = 160): string {
@@ -236,6 +281,7 @@ export function toProgressJson(patch: ProgressPatch): string {
     percent: patch.percent,
     label: patch.label,
   };
+  if (patch.updated_at !== undefined) body.updated_at = patch.updated_at;
   if (patch.tokens_used !== undefined) body.tokens_used = patch.tokens_used;
   if (patch.tokens_prompt !== undefined)
     body.tokens_prompt = patch.tokens_prompt;

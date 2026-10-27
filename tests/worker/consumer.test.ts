@@ -3,10 +3,12 @@ import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { encryptSecret } from "../../worker/crypto/secrets";
 import {
+  handleGenerateQueue,
   insertDraftCards,
   mergeAndDedupeDrafts,
   processGenerateJob,
 } from "../../worker/generation/consumer";
+import { RUNNING_JOB_STALE_MS } from "../../worker/generation/progress";
 import { enqueueGeneration } from "../../worker/generation/enqueue";
 import { mockLlmAdapter, type LlmAdapter } from "../../worker/generation/llm";
 import { CHUNK_CHAR_LIMIT } from "../../worker/generation/pipeline";
@@ -186,7 +188,7 @@ describe("mergeAndDedupeDrafts", () => {
 });
 
 describe("processGenerateJob free path", () => {
-  it("skips when CAS claim loses (job not queued)", async () => {
+  it("returns busy when claim loses to a fresh running job", async () => {
     const env = createTestEnv();
     await seedOwner(env, false);
     const msg = await seedPasteJob(
@@ -195,17 +197,111 @@ describe("processGenerateJob free path", () => {
     );
     const jobs = env.getGenerationJobs();
     const job = jobs.find((j) => j.id === msg.jobId)!;
-    env.seedGenerationJob({ ...job, status: "running" });
+    env.seedGenerationJob({
+      ...job,
+      status: "running",
+      progress_json: JSON.stringify({
+        updated_at: new Date().toISOString(),
+        stage: "generate",
+        current: 0,
+        total: 1,
+        percent: 25,
+        label: "Generating",
+      }),
+    });
 
     const llm = spyLlm();
-    await processGenerateJob(env, msg, { llm });
+    const result = await processGenerateJob(env, msg, { llm });
 
+    expect(result).toBe("busy");
     expect(llm.generateDrafts).not.toHaveBeenCalled();
     expect(llm.complete).not.toHaveBeenCalled();
     expect(env.getCards()).toHaveLength(0);
     expect(env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status).toBe(
       "running",
     );
+  });
+
+  it("reclaims a stale running job and finishes", async () => {
+    const env = createTestEnv();
+    await seedOwner(env, false);
+    const msg = await seedPasteJob(
+      env,
+      "Mitochondria are the powerhouse of the cell.",
+    );
+    const jobs = env.getGenerationJobs();
+    const job = jobs.find((j) => j.id === msg.jobId)!;
+    const staleAt = new Date(Date.now() - RUNNING_JOB_STALE_MS - 1000).toISOString();
+    env.seedGenerationJob({
+      ...job,
+      status: "running",
+      progress_json: JSON.stringify({
+        updated_at: staleAt,
+        stage: "figures",
+        current: 1,
+        total: 1,
+        percent: 20,
+        label: "Skipping PDF figures",
+      }),
+    });
+
+    const result = await processGenerateJob(env, msg, {
+      llm: mockLlmAdapter(),
+    });
+
+    expect(result).toBe("done");
+    expect(env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status).toBe(
+      "needs_review",
+    );
+    expect(env.getCards().length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("retries queue delivery when process returns busy", async () => {
+    const env = createTestEnv();
+    await seedOwner(env, false);
+    const msgBody = await seedPasteJob(
+      env,
+      "Mitochondria are the powerhouse of the cell.",
+    );
+    const jobs = env.getGenerationJobs();
+    const job = jobs.find((j) => j.id === msgBody.jobId)!;
+    env.seedGenerationJob({
+      ...job,
+      status: "running",
+      progress_json: JSON.stringify({
+        updated_at: new Date().toISOString(),
+        stage: "generate",
+        current: 0,
+        total: 1,
+        percent: 25,
+        label: "Generating",
+      }),
+    });
+
+    const ack = vi.fn();
+    const retry = vi.fn();
+    await handleGenerateQueue(
+      {
+        queue: "sugarplum-generate",
+        messages: [
+          {
+            id: "m1",
+            timestamp: new Date(),
+            body: msgBody,
+            attempts: 2,
+            ack,
+            retry,
+          },
+        ],
+        ackAll: vi.fn(),
+        retryAll: vi.fn(),
+        metadata: { metrics: {} as never },
+      },
+      env,
+    );
+
+    expect(retry).toHaveBeenCalledWith({ delaySeconds: 60 });
+    expect(ack).not.toHaveBeenCalled();
   });
 
   it("no secret + mock llm → needs_review and records free-gen", async () => {
