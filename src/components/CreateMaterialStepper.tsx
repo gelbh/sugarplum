@@ -26,6 +26,8 @@ import {
   type Deck,
   ApiError,
 } from "../api/client";
+import { guestPasteToCards } from "../guest/pasteToCards";
+import { guestAddAcceptedCards } from "../guest/store";
 import { stepperSx } from "./stepperSx";
 
 type Props = {
@@ -34,7 +36,7 @@ type Props = {
   activeStep: number;
   setActiveStep: (n: number) => void;
   onChanged?: () => void | Promise<void>;
-  /** Guest: decks ok; paste/upload generation needs a signed-in account. */
+  /** Guest: local paste into browser storage; uploads/AI need a signed-in account. */
   localOnly?: boolean;
 };
 
@@ -137,6 +139,61 @@ export default function CreateMaterialStepper({
       await onChanged?.();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not create deck");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onGuestPaste(e?: FormEvent) {
+    e?.preventDefault();
+    setError(null);
+    setNotice(null);
+    setJobId(null);
+    if (!selectedDeckId) {
+      setError("Select a deck first");
+      return;
+    }
+    const { cards: pairs, truncated } = guestPasteToCards(pasteText);
+    if (pairs.length === 0) {
+      setError(
+        "Paste needs clearer paragraphs or Q&A lines (blank line between cards).",
+      );
+      return;
+    }
+    setBusy(true);
+    try {
+      const added = guestAddAcceptedCards(selectedDeckId, pairs);
+      if (added.length === 0) {
+        setError("Deck missing or could not save. Pick a deck and try again.");
+        return;
+      }
+      const deckTitle =
+        decks.find((d) => d.id === selectedDeckId)?.title ?? "deck";
+      setPasteText("");
+      const truncNote = truncated
+        ? ` (kept first ${added.length}; paste was longer than the 40-card limit)`
+        : "";
+      setNotice(
+        `Added ${added.length} local cards to “${deckTitle}”${truncNote}`,
+      );
+      try {
+        await onChanged?.();
+      } catch {
+        /* refresh must not look like a save failure */
+      }
+      // After journey sync (which only maps to steps 0/1), lock Done.
+      setActiveStep(2);
+    } catch (err) {
+      if (
+        err instanceof DOMException &&
+        (err.name === "QuotaExceededError" || err.code === 22)
+      ) {
+        setError(
+          "Browser storage is full. Shorten the paste or clear guest data, then try again.",
+        );
+      } else {
+        setError("Could not save local cards");
+      }
     } finally {
       setBusy(false);
     }
@@ -319,18 +376,34 @@ export default function CreateMaterialStepper({
         {activeStep === 1 && localOnly ? (
           <Stack spacing={2}>
             <Alert severity="info">
-              Guest mode keeps study local in this browser. Sign in to paste or
-              upload materials and generate cards with AI.
+              Cards stay in this browser only. Sign in for uploads and AI
+              generation.
             </Alert>
-            <Button variant="contained" href="/register">
-              Create account
-            </Button>
-            <Button variant="text" href="/login">
-              Sign in
-            </Button>
-            <Button variant="outlined" onClick={() => setActiveStep(0)}>
-              Back to decks
-            </Button>
+            <Box component="form" onSubmit={onGuestPaste} noValidate>
+              <Stack spacing={2}>
+                {deckSelect("guest-deck-select-label")}
+                <TextField
+                  label="Paste text"
+                  name="text"
+                  value={pasteText}
+                  onChange={(ev) => setPasteText(ev.target.value)}
+                  required
+                  fullWidth
+                  multiline
+                  minRows={6}
+                />
+                <Typography variant="caption" color="text.secondary">
+                  File upload is available after you sign in.
+                </Typography>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={busy || !selectedDeckId || !pasteText.trim()}
+                >
+                  {busy ? "Saving…" : "Save paste"}
+                </Button>
+              </Stack>
+            </Box>
           </Stack>
         ) : null}
 
@@ -453,6 +526,11 @@ export default function CreateMaterialStepper({
                   <a href={`/jobs/${encodeURIComponent(jobId)}/drafts`}>
                     View drafts
                   </a>
+                </>
+              ) : localOnly ? (
+                <>
+                  Done. Cards are ready on <a href="/today">Today</a> or{" "}
+                  <a href="/study">Study</a>.
                 </>
               ) : (
                 "Done. Add more material or go to drafts when ready."

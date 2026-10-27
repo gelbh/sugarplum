@@ -141,6 +141,36 @@ export function guestCreateDeck(title: string, storage?: Store): Deck {
   return deck;
 }
 
+/** Persist paste pairs as accepted cards; prepend ids to the due queue. */
+export function guestAddAcceptedCards(
+  deckId: string,
+  pairs: { front: string; back: string }[],
+  storage?: Store,
+): CardDraftView[] {
+  const store = readStore(storage);
+  if (!store.decks.some((d) => d.id === deckId)) {
+    return [];
+  }
+  const created = nowIso();
+  const cards: CardDraftView[] = pairs.map((p) => ({
+    id: `guest-card-${crypto.randomUUID()}`,
+    deck_id: deckId,
+    job_id: null,
+    type: "qa",
+    front: p.front,
+    back: p.back,
+    provenance: { guest: true, source: "paste" },
+    status: "accepted",
+    created_at: created,
+    updated_at: created,
+    due: created,
+  }));
+  store.cards = [...cards, ...store.cards];
+  store.dueIds = [...cards.map((c) => c.id), ...store.dueIds];
+  writeStore(store, storage);
+  return cards;
+}
+
 export function guestListDueCards(storage?: Store): CardDraftView[] {
   let store = readStore(storage);
   // Heal emptied queues from older guest builds that dequeued forever.

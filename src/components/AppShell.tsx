@@ -1,47 +1,40 @@
 import type { ReactNode } from "react";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import InsightsIcon from "@mui/icons-material/Insights";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
 import SettingsIcon from "@mui/icons-material/Settings";
 import TodayIcon from "@mui/icons-material/Today";
-import BottomNavigation from "@mui/material/BottomNavigation";
-import BottomNavigationAction from "@mui/material/BottomNavigationAction";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Drawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import Paper from "@mui/material/Paper";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Link from "@mui/material/Link";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import {
-  canGoBack,
-  isStandaloneDisplay,
-  navigate,
-} from "../nav/navigate";
+import { navigate } from "../nav/navigate";
 import GlobalProgressBar from "../progress/GlobalProgressBar";
 import { ProgressProvider } from "../progress/ProgressProvider";
 import { useStudyChrome } from "../study/StudyChromeContext";
+import BottomChrome from "./shell/BottomChrome";
+import TopChrome from "./shell/TopChrome";
+import {
+  BOTTOM_NAV_HEIGHT,
+  PLUM_ON_DARK,
+  SHELL_BG,
+  SHELL_FG,
+  SHELL_HAIRLINE,
+  SHELL_MUTED,
+  TOP_BAR_HEIGHT,
+} from "./shell/chromeTokens";
+import type { ShellNavId } from "./shell/shellNav";
 
-/** Dense monochrome shell (north-star top bar, mapped to drawer / bottom nav). */
 const DRAWER_WIDTH = 220;
-const SHELL_BG = "#1e0d1b";
-const SHELL_FG = "#F5F5F5";
-const SHELL_MUTED = "rgba(245, 245, 245, 0.62)";
-const SHELL_HAIRLINE = "rgba(232, 216, 199, 0.16)";
-/** Selected chrome accent on night shell (matches dark theme primary). */
-const PLUM_ON_DARK = "#CE93D8";
-const BOTTOM_NAV_HEIGHT = 56;
-
-type NavId = "today" | "insights" | "library" | "settings";
 
 type NavItem = {
-  id: NavId;
+  id: ShellNavId;
   label: string;
   href: string;
   icon: ReactNode;
@@ -80,20 +73,16 @@ const NAV: NavItem[] = [
   },
 ];
 
-function activeNavId(path: string): NavId {
+function activeNavId(path: string): ShellNavId {
   const hit = NAV.find((item) => item.match(path));
   return hit?.id ?? "today";
-}
-
-function isDrillDown(path: string): boolean {
-  return path === "/study" || /^\/jobs\/[^/]+\/drafts\/?$/.test(path);
 }
 
 type AppShellProps = {
   children: ReactNode;
 };
 
-/** Authenticated chrome: permanent drawer on desktop, bottom nav on mobile. */
+/** Authenticated chrome: permanent drawer on desktop, top + bottom chrome on mobile. */
 export default function AppShell({ children }: AppShellProps) {
   const { hideChrome } = useStudyChrome();
   const theme = useTheme();
@@ -101,12 +90,7 @@ export default function AppShell({ children }: AppShellProps) {
   const path = window.location.pathname;
   const active = activeNavId(path);
   const showDrawer = !hideChrome && !mobile;
-  const showBottomNav = !hideChrome && mobile;
-  const showStandaloneBack =
-    !hideChrome &&
-    isDrillDown(path) &&
-    isStandaloneDisplay() &&
-    canGoBack();
+  const showMobileChrome = !hideChrome && mobile;
 
   return (
     <ProgressProvider>
@@ -116,14 +100,22 @@ export default function AppShell({ children }: AppShellProps) {
           flexDirection: "column",
           minHeight: "100vh",
           bgcolor: "background.default",
-          ...(showBottomNav
+          ...(showMobileChrome
             ? {
+                pt: `calc(${TOP_BAR_HEIGHT}px + env(safe-area-inset-top, 0px))`,
                 pb: `calc(${BOTTOM_NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px))`,
               }
             : {}),
         }}
       >
-        <GlobalProgressBar />
+        <GlobalProgressBar
+          stickyTop={
+            showMobileChrome
+              ? `calc(${TOP_BAR_HEIGHT}px + env(safe-area-inset-top, 0px))`
+              : 0
+          }
+        />
+        {showMobileChrome ? <TopChrome /> : null}
         {showDrawer ? (
           <Drawer
             variant="permanent"
@@ -251,77 +243,14 @@ export default function AppShell({ children }: AppShellProps) {
               : {}),
           }}
         >
-          {showStandaloneBack ? (
-            <Box sx={{ px: 2, pt: 1.5 }}>
-              <Button
-                size="small"
-                startIcon={<ArrowBackIcon />}
-                onClick={() => window.history.back()}
-              >
-                Back
-              </Button>
-            </Box>
-          ) : null}
           {children}
         </Box>
-        {showBottomNav ? (
-          <Paper
-            elevation={0}
-            sx={{
-              position: "fixed",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              zIndex: 1100,
-              bgcolor: SHELL_BG,
-              color: SHELL_FG,
-              borderTop: `1px solid ${SHELL_HAIRLINE}`,
-              backgroundImage: "none",
-              borderRadius: 0,
-              pb: "env(safe-area-inset-bottom)",
-            }}
-          >
-            <BottomNavigation
-              showLabels
-              value={active}
-              onChange={(_e, value: NavId) => {
-                const item = NAV.find((n) => n.id === value);
-                if (item) navigate(item.href);
-              }}
-              sx={{
-                bgcolor: "transparent",
-                height: BOTTOM_NAV_HEIGHT,
-                minHeight: BOTTOM_NAV_HEIGHT,
-                "& .MuiBottomNavigationAction-root": {
-                  color: SHELL_MUTED,
-                  minWidth: 0,
-                  "&.Mui-selected": {
-                    color: SHELL_FG,
-                  },
-                },
-                "& .MuiBottomNavigationAction-label": {
-                  fontSize: "0.7rem",
-                  "&.Mui-selected": {
-                    fontSize: "0.7rem",
-                  },
-                },
-              }}
-            >
-              {NAV.map((item) => (
-                <BottomNavigationAction
-                  key={item.id}
-                  label={item.label}
-                  value={item.id}
-                  icon={item.icon}
-                  sx={{
-                    "&.Mui-selected": {
-                      borderTop: `2px solid ${PLUM_ON_DARK}`,
-                    },
-                  }}
-                />
-              ))}
-            </BottomNavigation>
-          </Paper>
+        {showMobileChrome ? (
+          <BottomChrome
+            active={active}
+            items={NAV}
+            onNavigate={navigate}
+          />
         ) : null}
       </Box>
     </ProgressProvider>
