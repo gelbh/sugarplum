@@ -95,11 +95,34 @@ function systemPromptFor(input: GenerateDraftsInput): string {
   return input.image ? IMAGE_GENERATE_SYSTEM_PROMPT : GENERATE_SYSTEM_PROMPT;
 }
 
-/** Strip ``` / ```json fences GLM and other models wrap around JSON. */
+/**
+ * Extract JSON text from Workers AI / GLM replies.
+ * Handles whole-string fences, embedded fences, and prose around a raw
+ * object/array. Does not invent structure when none is present.
+ */
 export function unwrapLlmJsonText(content: string): string {
   const trimmed = content.trim();
-  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
-  return fenced?.[1]?.trim() ?? trimmed;
+  if (!trimmed) return trimmed;
+
+  const wholeFence = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  if (wholeFence?.[1]) return wholeFence[1].trim();
+
+  const embeddedFence = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (embeddedFence?.[1]) return embeddedFence[1].trim();
+
+  const startObj = trimmed.indexOf("{");
+  const startArr = trimmed.indexOf("[");
+  let start = -1;
+  if (startObj >= 0 && startArr >= 0) start = Math.min(startObj, startArr);
+  else start = Math.max(startObj, startArr);
+  if (start < 0) return trimmed;
+
+  const open = trimmed[start]!;
+  const close = open === "{" ? "}" : "]";
+  const end = trimmed.lastIndexOf(close);
+  if (end > start) return trimmed.slice(start, end + 1).trim();
+
+  return trimmed;
 }
 
 export function parseCardsPayload(content: string): CardDraft[] {
@@ -107,7 +130,12 @@ export function parseCardsPayload(content: string): CardDraft[] {
   try {
     parsed = JSON.parse(unwrapLlmJsonText(content));
   } catch {
-    throw new Error("LLM returned non-JSON content");
+    const preview = content.trim().replace(/\s+/g, " ").slice(0, 80);
+    throw new Error(
+      preview
+        ? `LLM returned non-JSON content (preview: ${preview})`
+        : "LLM returned non-JSON content",
+    );
   }
 
   const cards =
