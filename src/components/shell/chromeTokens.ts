@@ -1,0 +1,9 @@
+/** Dense monochrome shell (north-star top bar, mapped to drawer / bottom nav). */
+export const TOP_BAR_HEIGHT = 48;
+export const BOTTOM_NAV_HEIGHT = 56;
+export const SHELL_BG = "#1e0d1b";
+export const SHELL_FG = "#F5F5F5";
+export const SHELL_MUTED = "rgba(245, 245, 245, 0.62)";
+export const SHELL_HAIRLINE = "rgba(232, 216, 199, 0.16)";
+/** Selected chrome accent on night shell (matches dark theme primary). */
+export const PLUM_ON_DARK = "#CE93D8";
