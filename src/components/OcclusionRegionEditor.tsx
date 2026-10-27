@@ -1,10 +1,17 @@
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useCallback, useRef, useState, type PointerEvent } from "react";
 import { mediaUrl, type OcclusionFrontView } from "../api/client";
+import { suggestOcclusionRegions } from "../lib/occlusionOcr";
 
 export type OcclusionRegion = OcclusionFrontView["regions"][number];
 
@@ -45,6 +52,37 @@ function answerFromRegions(
   return selected?.label.trim() || selected?.id || "region";
 }
 
+async function decodeImageNaturalSize(
+  blob: Blob,
+): Promise<{ width: number; height: number }> {
+  if (typeof createImageBitmap !== "undefined") {
+    const bitmap = await createImageBitmap(blob);
+    try {
+      return { width: bitmap.width, height: bitmap.height };
+    } finally {
+      bitmap.close();
+    }
+  }
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Could not decode image dimensions"));
+    };
+    img.src = url;
+  });
+}
+
+function suggestErrorMessage(err: unknown): string {
+  if (err instanceof Error && err.message) return err.message;
+  return "Could not suggest regions.";
+}
+
 /** Image + overlay region boxes (drag/resize); study reveal uses region labels. */
 export default function OcclusionRegionEditor({
   front,
@@ -56,6 +94,12 @@ export default function OcclusionRegionEditor({
   const [selectedId, setSelectedId] = useState<string | null>(
     front.regions[0]?.id ?? null,
   );
+  const [suggestBusy, setSuggestBusy] = useState(false);
+  const [confirmReplaceOpen, setConfirmReplaceOpen] = useState(false);
+  const [suggestNotice, setSuggestNotice] = useState<{
+    severity: "error" | "warning" | "info";
+    message: string;
+  } | null>(null);
 
   const emit = useCallback(
     (nextFront: OcclusionFrontView, nextSelectedId: string | null) => {
@@ -76,6 +120,54 @@ export default function OcclusionRegionEditor({
     },
     [emit, front, selectedId],
   );
+
+  const runSuggestRegions = useCallback(async () => {
+    setSuggestBusy(true);
+    setSuggestNotice(null);
+    try {
+      const res = await fetch(mediaUrl(front.image_key), {
+        credentials: "same-origin",
+      });
+      if (!res.ok) {
+        throw new Error(`Image fetch failed (${res.status})`);
+      }
+      const blob = await res.blob();
+      const { width, height } = await decodeImageNaturalSize(blob);
+      const regions = await suggestOcclusionRegions(blob, width, height);
+      if (regions.length === 0) {
+        setSuggestNotice({
+          severity: "warning",
+          message:
+            "No text regions found on this image. Adjust the crop or add regions manually.",
+        });
+        return;
+      }
+      const firstId = regions[0]?.id ?? null;
+      setSelectedId(firstId);
+      emit({ ...front, regions }, firstId);
+    } catch (err) {
+      setSuggestNotice({
+        severity: "error",
+        message: suggestErrorMessage(err),
+      });
+    } finally {
+      setSuggestBusy(false);
+    }
+  }, [emit, front]);
+
+  function onSuggestRegionsClick() {
+    if (disabled || suggestBusy) return;
+    if (front.regions.length > 0) {
+      setConfirmReplaceOpen(true);
+    } else {
+      void runSuggestRegions();
+    }
+  }
+
+  function onConfirmReplaceRegions() {
+    setConfirmReplaceOpen(false);
+    void runSuggestRegions();
+  }
 
   function removeRegion(id: string) {
     if (disabled || front.regions.length <= 1) return;
@@ -262,6 +354,57 @@ export default function OcclusionRegionEditor({
         Study reveals the hidden region’s label (one region per card via hide_one).
         Delete unused boxes before accept.
       </Typography>
+
+      {suggestNotice ? (
+        <Alert severity={suggestNotice.severity} onClose={() => setSuggestNotice(null)}>
+          {suggestNotice.message}
+        </Alert>
+      ) : null}
+
+      <Stack direction="row" spacing={1} alignItems="center">
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={onSuggestRegionsClick}
+          disabled={disabled || suggestBusy}
+        >
+          {suggestBusy ? "Suggesting…" : "Suggest regions"}
+        </Button>
+        {suggestBusy ? (
+          <Typography variant="caption" color="text.secondary">
+            Running OCR on the crop (first run may take a moment).
+          </Typography>
+        ) : null}
+      </Stack>
+
+      <Dialog
+        open={confirmReplaceOpen}
+        onClose={() => !suggestBusy && setConfirmReplaceOpen(false)}
+      >
+        <DialogTitle>Replace existing regions?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            OCR will replace your current region boxes with new suggestions. You
+            can still move, resize, and edit labels afterward.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setConfirmReplaceOpen(false)}
+            disabled={suggestBusy}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={onConfirmReplaceRegions}
+            disabled={suggestBusy}
+            autoFocus
+          >
+            Replace
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Stack spacing={1.5}>
         <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
