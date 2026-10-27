@@ -318,8 +318,7 @@ describe("PDF upload-url validation", () => {
 });
 
 describe("material complete", () => {
-  it("marks ready and queues a generation job for the owner", async () => {
-    const env = createTestEnv();
+  function seedUploadingPdf(env: ReturnType<typeof createTestEnv>) {
     env.seedUser({
       id: "user-a",
       email: "a@example.com",
@@ -345,6 +344,11 @@ describe("material complete", () => {
       status: "uploading",
       created_at: "2026-01-01T00:00:00.000Z",
     });
+  }
+
+  it("marks ready and queues a generation job for the owner", async () => {
+    const env = createTestEnv();
+    seedUploadingPdf(env);
 
     const res = await app.request(
       "/api/materials/mat-1/complete",
@@ -367,7 +371,56 @@ describe("material complete", () => {
     expect(env.getMaterials()[0]?.status).toBe("ready");
     expect(env.getGenerationJobs()).toHaveLength(1);
     expect(env.getGenerationJobs()[0]?.status).toBe("queued");
+    expect(env.getGenerationJobs()[0]?.figure_extract_mode).toBe("fast");
     expect(env.getQueueMessages()).toHaveLength(1);
+  });
+
+  it("enqueues accurate figureExtractMode from JSON body", async () => {
+    const env = createTestEnv();
+    seedUploadingPdf(env);
+
+    const res = await app.request(
+      "/api/materials/mat-1/complete",
+      {
+        method: "POST",
+        headers: {
+          cookie: `${SESSION_COOKIE}=sess-a`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ figureExtractMode: "accurate" }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(200);
+    expect(env.getGenerationJobs()).toHaveLength(1);
+    expect(env.getGenerationJobs()[0]?.figure_extract_mode).toBe("accurate");
+    const messages = env.getQueueMessages() as Array<{
+      figureExtractMode?: string;
+    }>;
+    expect(messages[0]?.figureExtractMode).toBe("accurate");
+  });
+
+  it("rejects unknown figureExtractMode with 400", async () => {
+    const env = createTestEnv();
+    seedUploadingPdf(env);
+
+    const res = await app.request(
+      "/api/materials/mat-1/complete",
+      {
+        method: "POST",
+        headers: {
+          cookie: `${SESSION_COOKIE}=sess-a`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ figureExtractMode: "turbo" }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(400);
+    expect(env.getGenerationJobs()).toHaveLength(0);
+    expect(env.getMaterials()[0]?.status).toBe("uploading");
   });
 
   it("returns 404 when completing another user's material", async () => {
