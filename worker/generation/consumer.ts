@@ -541,10 +541,7 @@ export async function processGenerateJob(
         .bind(jobId)
         .first<{ figure_extract_mode: string | null }>();
       const figureExtractMode: FigureExtractMode =
-        jobModeRow?.figure_extract_mode === "accurate" ||
-        message.figureExtractMode === "accurate"
-          ? "accurate"
-          : "fast";
+        jobModeRow?.figure_extract_mode === "accurate" ? "accurate" : "fast";
 
       const willAttemptDocling =
         figureExtractMode === "accurate" &&

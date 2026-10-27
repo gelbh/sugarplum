@@ -7,22 +7,15 @@ export type GenerateQueueMessage = {
   jobId: string;
   materialId: string;
   deckId: string;
-  figureExtractMode?: FigureExtractMode;
 };
 
 function newId(): string {
   return crypto.randomUUID();
 }
 
-function resolveFigureExtractMode(
-  mode: FigureExtractMode | undefined,
-): FigureExtractMode {
-  return mode === "accurate" ? "accurate" : "fast";
-}
-
 /**
  * Insert a queued generation_jobs row and send to GENERATE_QUEUE when bound.
- * Returns the new job id.
+ * Returns the new job id. Mode lives on D1 only (regen requeues without it).
  */
 export async function enqueueGeneration(
   env: Env,
@@ -34,7 +27,8 @@ export async function enqueueGeneration(
 ): Promise<string> {
   const jobId = newId();
   const createdAt = new Date().toISOString();
-  const figureExtractMode = resolveFigureExtractMode(args.figureExtractMode);
+  const figureExtractMode =
+    args.figureExtractMode === "accurate" ? "accurate" : "fast";
   const db = getDb(env);
 
   await db
@@ -57,7 +51,6 @@ export async function enqueueGeneration(
     jobId,
     materialId: args.materialId,
     deckId: args.deckId,
-    figureExtractMode,
   });
 
   return jobId;
