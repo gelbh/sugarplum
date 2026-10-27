@@ -48,6 +48,13 @@ function scrollableCardFace(target: EventTarget | null): HTMLElement | null {
   return face;
 }
 
+function typeLabel(type: CardDraftView["type"]): string {
+  if (type === "cloze") return "Cloze";
+  if (type === "image_label") return "Image label";
+  if (type === "diagram") return "Diagram";
+  return "Q&A";
+}
+
 /** Study session: reveal answer, grade with FSRS (keys 1-4). Code-led MUI. */
 export default function StudyPage() {
   const [queue, setQueue] = useState<CardDraftView[]>([]);
@@ -139,6 +146,12 @@ export default function StudyPage() {
     } else {
       setShowSwipeHint(false);
     }
+  }, []);
+
+  const flipBack = useCallback(() => {
+    setRevealed(false);
+    setShowSwipeHint(false);
+    focusShowAnswerAfterGradeRef.current = true;
   }, []);
 
   useEffect(() => {
@@ -263,129 +276,197 @@ export default function StudyPage() {
   }
 
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
-      <Stack spacing={2}>
+    <Box
+      className={zen ? "sp-stage" : undefined}
+      sx={{
+        minHeight: zen ? "100vh" : undefined,
+        ...(zen
+          ? {
+              color: "var(--sp-ivory)",
+              "& .MuiIconButton-root": { color: "var(--sp-ivory)" },
+            }
+          : {}),
+      }}
+    >
+      <Container
+        maxWidth="sm"
+        sx={{
+          py: zen ? { xs: 2, sm: 3 } : 4,
+          minHeight: zen ? "100vh" : undefined,
+          display: "flex",
+          flexDirection: "column",
+          position: "relative",
+        }}
+      >
         <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="flex-start"
-          spacing={1}
+          spacing={zen ? 1.5 : 2}
+          sx={{ flex: 1, minHeight: zen ? "100%" : undefined }}
         >
-          <Box sx={{ minWidth: 0 }}>
-            <Typography variant="h4" component="h1" color="primary" gutterBottom>
-              Study
-            </Typography>
-            {!zen ? (
-              <Typography variant="body2" color="text.secondary">
-                Reveal the answer, then grade. Keys 1-4 on desktop.
-              </Typography>
-            ) : null}
-          </Box>
-          <IconButton
-            aria-label={zen ? "Exit zen mode" : "Enter zen mode"}
-            aria-pressed={zen}
-            onClick={toggleZen}
-            color="primary"
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="flex-start"
+            spacing={1}
+            sx={{ position: "relative" }}
           >
-            {zen ? <FullscreenExitIcon /> : <FullscreenIcon />}
-          </IconButton>
-        </Stack>
-
-        {!zen ? (
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Link href="/today" underline="hover">
-              Today
-            </Link>
-            <Link href="/library" underline="hover">
-              Library
-            </Link>
+            {zen ? (
+              <Typography
+                variant="h6"
+                component="p"
+                sx={{
+                  width: "100%",
+                  textAlign: "center",
+                  fontWeight: 400,
+                  letterSpacing: "0.02em",
+                  color: "var(--sp-ivory)",
+                  opacity: 0.92,
+                  pr: 5,
+                  pl: 5,
+                }}
+              >
+                Sugarplum
+              </Typography>
+            ) : (
+              <Box sx={{ minWidth: 0, flex: 1 }}>
+                <Typography
+                  variant="h4"
+                  component="h1"
+                  color="primary"
+                  gutterBottom
+                >
+                  Study
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Reveal the answer, then grade. Keys 1-4 on desktop.
+                </Typography>
+              </Box>
+            )}
+            <IconButton
+              aria-label={zen ? "Exit zen mode" : "Enter zen mode"}
+              aria-pressed={zen}
+              onClick={toggleZen}
+              color="primary"
+              sx={zen ? { position: "absolute", right: 0, top: -4 } : undefined}
+            >
+              {zen ? <FullscreenExitIcon /> : <FullscreenIcon />}
+            </IconButton>
           </Stack>
-        ) : null}
 
-        {error ? <Alert severity="error">{error}</Alert> : null}
-        {offlineCopy ? (
-          <Alert severity="warning">
-            Showing an offline copy of due cards. Grading still needs a network
-            connection.
-          </Alert>
-        ) : null}
-        {fullscreenUnavailable ? (
-          <Alert
-            severity="info"
-            onClose={clearFullscreenUnavailable}
-          >
-            Fullscreen unavailable
-          </Alert>
-        ) : null}
-
-        {!current ? (
-          <Alert severity="success">
-            Session complete.{" "}
-            <Button
-              variant="contained"
-              href="/today"
-              startIcon={<TodayIcon fontSize="small" />}
-              size="small"
-            >
-              Today
-            </Button>
-          </Alert>
-        ) : (
-          <>
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-            >
-              <Typography variant="subtitle1">
-                {queue.length} remaining
-              </Typography>
-              {!zen ? (
-                <Chip
-                  size="small"
-                  label={
-                    current.type === "cloze"
-                      ? "Cloze"
-                      : current.type === "image_label"
-                        ? "Image label"
-                        : current.type === "diagram"
-                          ? "Diagram"
-                          : "Q&A"
-                  }
-                  color="secondary"
-                  variant="outlined"
-                />
-              ) : null}
+          {!zen ? (
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Link href="/today" underline="hover">
+                Today
+              </Link>
+              <Link href="/library" underline="hover">
+                Library
+              </Link>
             </Stack>
+          ) : null}
 
-            <Box
-              onPointerDown={onPointerDown}
-              onPointerUp={onPointerUp}
-              onPointerCancel={onPointerCancel}
-              sx={{ touchAction: "manipulation" }}
-            >
-              <CardFace
-                front={String(current.front)}
-                back={String(current.back)}
-                mediaR2Keys={current.media_r2_keys}
-                revealed={revealed}
-                onReveal={reveal}
-                disabled={busy}
-                answerFocusRef={answerFocusRef}
-                showAnswerRef={showAnswerRef}
-              />
-            </Box>
+          {error ? <Alert severity="error">{error}</Alert> : null}
+          {offlineCopy ? (
+            <Alert severity="warning">
+              Showing an offline copy of due cards. Grading still needs a
+              network connection.
+            </Alert>
+          ) : null}
+          {fullscreenUnavailable ? (
+            <Alert severity="info" onClose={clearFullscreenUnavailable}>
+              Fullscreen unavailable
+            </Alert>
+          ) : null}
 
-            {revealed ? (
-              <GradeButtons
-                disabled={busy}
-                onGrade={onGrade}
-                showSwipeHint={showSwipeHint}
-              />
-            ) : null}
-          </>
-        )}
-      </Stack>
-    </Container>
+          {!current ? (
+            <Alert severity="success">
+              Session complete.{" "}
+              <Button
+                variant="contained"
+                href="/today"
+                startIcon={<TodayIcon fontSize="small" />}
+                size="small"
+              >
+                Today
+              </Button>
+            </Alert>
+          ) : (
+            <>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                sx={{ opacity: zen ? 0.7 : 1 }}
+              >
+                <Typography
+                  variant="caption"
+                  color={zen ? undefined : "text.secondary"}
+                  sx={{
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                    ...(zen ? { color: "var(--sp-ivory)" } : {}),
+                  }}
+                >
+                  {queue.length} remaining
+                </Typography>
+                {!zen ? (
+                  <Chip
+                    size="small"
+                    label={typeLabel(current.type)}
+                    variant="outlined"
+                    sx={{
+                      height: 24,
+                      fontWeight: 400,
+                      letterSpacing: "0.04em",
+                      borderColor: "divider",
+                      color: "text.secondary",
+                      bgcolor: "transparent",
+                      "& .MuiChip-label": { px: 1 },
+                    }}
+                  />
+                ) : null}
+              </Stack>
+
+              <Box
+                onPointerDown={onPointerDown}
+                onPointerUp={onPointerUp}
+                onPointerCancel={onPointerCancel}
+                sx={{
+                  touchAction: "manipulation",
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  py: zen ? 2 : 1,
+                  minHeight: 0,
+                }}
+              >
+                <CardFace
+                  front={String(current.front)}
+                  back={String(current.back)}
+                  mediaR2Keys={current.media_r2_keys}
+                  revealed={revealed}
+                  onReveal={reveal}
+                  onFlipBack={flipBack}
+                  disabled={busy}
+                  answerFocusRef={answerFocusRef}
+                  showAnswerRef={showAnswerRef}
+                />
+              </Box>
+
+              {revealed ? (
+                <Box sx={{ pb: zen ? 1 : 0, mt: "auto" }}>
+                  <GradeButtons
+                    disabled={busy}
+                    onGrade={onGrade}
+                    showSwipeHint={showSwipeHint}
+                  />
+                </Box>
+              ) : (
+                <Box sx={{ minHeight: 72 }} aria-hidden />
+              )}
+            </>
+          )}
+        </Stack>
+      </Container>
+    </Box>
   );
 }

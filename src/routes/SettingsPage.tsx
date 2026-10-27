@@ -7,6 +7,7 @@ import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import Link from "@mui/material/Link";
 import MenuItem from "@mui/material/MenuItem";
+import Paper from "@mui/material/Paper";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
@@ -18,10 +19,12 @@ import Brightness6Icon from "@mui/icons-material/Brightness6";
 import {
   ApiError,
   getLlmSettings,
+  logout,
   me,
   putLlmSettings,
   type LlmSettings,
 } from "../api/client";
+import { isGuest } from "../guest/session";
 import { useTrackedOp } from "../progress/useTrackedOp";
 
 type ThemeMode = "system" | "light" | "dark";
@@ -69,6 +72,7 @@ export default function SettingsPage() {
   const [current, setCurrent] = useState<LlmSettings | null>(null);
   const [googleLinked, setGoogleLinked] = useState(false);
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
+  const [guest, setGuest] = useState(false);
   const queryMsg = settingsQueryMessage();
   const [error, setError] = useState<string | null>(queryMsg.error);
   const [notice, setNotice] = useState<string | null>(queryMsg.notice);
@@ -86,6 +90,7 @@ export default function SettingsPage() {
         const user = await me();
         const settings = await getLlmSettings();
         if (cancelled) return;
+        setGuest(isGuest());
         setAccountEmail(user.email);
         setGoogleLinked(user.google_linked === true);
         setCurrent(settings);
@@ -109,6 +114,11 @@ export default function SettingsPage() {
       cancelled = true;
     };
   }, [endLoad]);
+
+  async function endGuestSession() {
+    await logout();
+    window.location.assign("/login");
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -136,126 +146,247 @@ export default function SettingsPage() {
   }
 
   return (
-    <Container maxWidth="sm" sx={{ py: 6 }}>
-      <Typography variant="h4" component="h1" gutterBottom color="primary">
-        Settings
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Optional. Without a key, Sugarplum uses free platform AI (up to 20 jobs
-        per UTC day). Add your own OpenAI, Anthropic, or Google key to skip that
-        cap and for higher quality. Keys are encrypted at rest and never shown
-        in full again.
-      </Typography>
-
-      <Stack spacing={1} sx={{ mb: 4 }}>
-        <Typography variant="subtitle1" component="h2">
-          Account
-        </Typography>
-        {accountEmail ? (
+    <Container maxWidth="sm" sx={{ py: { xs: 4, md: 5 } }}>
+      <Stack spacing={3}>
+        <Box>
+          <Typography
+            variant="h4"
+            component="h1"
+            gutterBottom
+            sx={{ color: "text.primary", fontWeight: 600 }}
+          >
+            Settings
+          </Typography>
           <Typography variant="body2" color="text.secondary">
-            Signed in as {accountEmail}
+            Optional. Without a key, Sugarplum uses free platform AI (up to 20
+            jobs per UTC day). Add your own OpenAI, Anthropic, or Google key to
+            skip that cap and for higher quality. Keys are encrypted at rest and
+            never shown in full again.
           </Typography>
-        ) : null}
-        {googleLinked ? (
-          <Alert severity="success">Google account linked.</Alert>
-        ) : (
-          <Button variant="outlined" href="/api/auth/google/start?intent=link">
-            Link Google
-          </Button>
-        )}
-      </Stack>
+        </Box>
 
-      <Stack spacing={1} sx={{ mb: 4 }}>
-        <Typography variant="subtitle1" component="h2">
-          Legal
-        </Typography>
-        <Typography variant="body2">
-          <Link href="/privacy" underline="hover">
-            Privacy Policy
-          </Link>
-          {" · "}
-          <Link href="/terms" underline="hover">
-            Terms of Service
-          </Link>
-          {" · "}
-          <Link href="/data-deletion" underline="hover">
-            Data deletion
-          </Link>
-        </Typography>
-      </Stack>
-
-      <Stack spacing={1} sx={{ mb: 4 }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Brightness6Icon />
-          <Typography variant="subtitle1" component="h2">
-            Appearance
-          </Typography>
-        </Stack>
-        <ToggleButtonGroup
-          exclusive
-          size="small"
-          value={themeMode}
-          onChange={(_e, value: ThemeMode | null) => {
-            if (value) setMode(value);
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 2.5,
+            bgcolor: "background.paper",
+            borderColor: "divider",
           }}
-          aria-label="Color scheme"
         >
-          <ToggleButton value="system">System</ToggleButton>
-          <ToggleButton value="light">Light</ToggleButton>
-          <ToggleButton value="dark">Dark</ToggleButton>
-        </ToggleButtonGroup>
-      </Stack>
+          <Typography
+            variant="subtitle1"
+            component="h2"
+            sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+          >
+            Account
+          </Typography>
+          <Stack spacing={1.5}>
+            {guest ? (
+              <>
+                <Alert severity="info">
+                  Guest mode: decks and reviews stay in this browser only.
+                </Alert>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => void endGuestSession()}
+                >
+                  End guest session
+                </Button>
+                <Button variant="outlined" href="/register">
+                  Create account
+                </Button>
+              </>
+            ) : (
+              <>
+                {accountEmail ? (
+                  <Typography variant="body2" color="text.secondary">
+                    Signed in as {accountEmail}
+                  </Typography>
+                ) : null}
+                {googleLinked ? (
+                  <Alert severity="success">Google account linked.</Alert>
+                ) : (
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    href="/api/auth/google/start?intent=link"
+                  >
+                    Link Google
+                  </Button>
+                )}
+              </>
+            )}
+          </Stack>
+        </Paper>
 
-      {current?.configured ? (
-        <Alert severity="info" sx={{ mb: 3 }}>
-          Configured: {current.provider} · key ending in ···{current.last4}
-        </Alert>
-      ) : (
-        <Alert severity="info" sx={{ mb: 3 }}>
-          No personal API key yet. Generation still works via free platform AI.
-        </Alert>
-      )}
-
-      <Box component="form" onSubmit={onSubmit} noValidate>
-        <Stack spacing={2}>
-          {error ? <Alert severity="error">{error}</Alert> : null}
-          {notice ? <Alert severity="success">{notice}</Alert> : null}
-          <FormControl fullWidth>
-            <InputLabel id="provider-label">Provider</InputLabel>
-            <Select
-              labelId="provider-label"
-              label="Provider"
-              value={provider}
-              onChange={(ev) => setProvider(ev.target.value)}
-            >
-              {PROVIDERS.map((p) => (
-                <MenuItem key={p.value} value={p.value}>
-                  {p.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <TextField
-            label="API key"
-            type="password"
-            name="apiKey"
-            autoComplete="off"
-            value={apiKey}
-            onChange={(ev) => setApiKey(ev.target.value)}
-            required
-            fullWidth
-            helperText="Paste a new key to replace the stored one."
-          />
-          <Button type="submit" variant="contained" disabled={busy || !apiKey}>
-            {busy ? "Saving…" : "Save API key"}
-          </Button>
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 2.5,
+            bgcolor: "background.paper",
+            borderColor: "divider",
+          }}
+        >
+          <Typography
+            variant="subtitle1"
+            component="h2"
+            sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+          >
+            Legal
+          </Typography>
           <Typography variant="body2">
-            <Link href="/library" underline="hover">
-              Back to library
+            <Link href="/privacy" underline="hover" color="primary">
+              Privacy Policy
+            </Link>
+            {" · "}
+            <Link href="/terms" underline="hover" color="primary">
+              Terms of Service
+            </Link>
+            {" · "}
+            <Link href="/data-deletion" underline="hover" color="primary">
+              Data deletion
             </Link>
           </Typography>
-        </Stack>
-      </Box>
+        </Paper>
+
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 2.5,
+            bgcolor: "background.paper",
+            borderColor: "divider",
+          }}
+        >
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            sx={{ mb: 1.5 }}
+          >
+            <Brightness6Icon color="primary" fontSize="small" />
+            <Typography
+              variant="subtitle1"
+              component="h2"
+              sx={{ fontWeight: 600, color: "primary.main" }}
+            >
+              Appearance
+            </Typography>
+          </Stack>
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={themeMode}
+            onChange={(_e, value: ThemeMode | null) => {
+              if (value) setMode(value);
+            }}
+            aria-label="Color scheme"
+            color="primary"
+          >
+            <ToggleButton value="system">System</ToggleButton>
+            <ToggleButton value="light">Light</ToggleButton>
+            <ToggleButton value="dark">Dark</ToggleButton>
+          </ToggleButtonGroup>
+        </Paper>
+
+        {guest ? (
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 2.5,
+              bgcolor: "background.paper",
+              borderColor: "divider",
+            }}
+          >
+            <Typography
+              variant="subtitle1"
+              component="h2"
+              sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+            >
+              Generation
+            </Typography>
+            <Alert severity="info">
+              Guest mode cannot save API keys or run AI generation. Create an
+              account to upload materials and generate cards.
+            </Alert>
+          </Paper>
+        ) : (
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 2.5,
+              bgcolor: "background.paper",
+              borderColor: "divider",
+            }}
+          >
+            <Typography
+              variant="subtitle1"
+              component="h2"
+              sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+            >
+              API key
+            </Typography>
+            {current?.configured ? (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Configured: {current.provider} · key ending in ···
+                {current.last4}
+              </Alert>
+            ) : (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                No personal API key yet. Generation still works via free
+                platform AI.
+              </Alert>
+            )}
+
+            <Box component="form" onSubmit={onSubmit} noValidate>
+              <Stack spacing={2}>
+                {error ? <Alert severity="error">{error}</Alert> : null}
+                {notice ? <Alert severity="success">{notice}</Alert> : null}
+                <FormControl fullWidth>
+                  <InputLabel id="provider-label">Provider</InputLabel>
+                  <Select
+                    labelId="provider-label"
+                    label="Provider"
+                    value={provider}
+                    onChange={(ev) => setProvider(ev.target.value)}
+                  >
+                    {PROVIDERS.map((p) => (
+                      <MenuItem key={p.value} value={p.value}>
+                        {p.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <TextField
+                  label="API key"
+                  type="password"
+                  name="apiKey"
+                  autoComplete="off"
+                  value={apiKey}
+                  onChange={(ev) => setApiKey(ev.target.value)}
+                  required
+                  fullWidth
+                  helperText="Paste a new key to replace the stored one."
+                />
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  disabled={busy || !apiKey}
+                >
+                  {busy ? "Saving…" : "Save API key"}
+                </Button>
+              </Stack>
+            </Box>
+          </Paper>
+        )}
+
+        <Typography variant="body2">
+          <Link href="/library" underline="hover" color="primary">
+            Back to library
+          </Link>
+        </Typography>
+      </Stack>
     </Container>
   );
 }

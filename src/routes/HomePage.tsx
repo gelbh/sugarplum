@@ -6,6 +6,8 @@ import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { me } from "../api/client";
+import { continueAsGuest } from "../guest/enterGuest";
+import { isGuest } from "../guest/session";
 import { HOME_BRAND, HOME_PURPOSE, HOME_TAGLINE } from "../home/homeCopy";
 
 /** Public logged-out homepage for Google brand verification (no AppShell). */
@@ -20,6 +22,10 @@ export default function HomePage() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (isGuest()) {
+        if (!cancelled) window.location.assign("/today");
+        return;
+      }
       try {
         await me();
         if (!cancelled) window.location.assign("/today");
@@ -58,6 +64,9 @@ export default function HomePage() {
         </Button>
         <Button variant="outlined" href="/register" fullWidth>
           Create account
+        </Button>
+        <Button variant="text" fullWidth onClick={() => continueAsGuest()}>
+          Continue as guest
         </Button>
       </Stack>
       <Box component="nav" aria-label="Legal">

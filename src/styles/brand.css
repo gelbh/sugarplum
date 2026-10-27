@@ -1,0 +1,25 @@
+/* Sugarplum brand skin: stage + playing-card tokens for zen Study. Thin CSS only. */
+:root {
+  --sp-stage-bg: #1e0d1b;
+  --sp-card-face: #e8d8c7;
+  --sp-ivory: #e8d8c7;
+  --sp-plum: #5b2c6f;
+  --sp-lamp-glow: rgba(196, 165, 116, 0.28);
+  /* Standard playing card ~2.5 × 3.5 (5/7). */
+  --sp-card-aspect: 5 / 7;
+}
+
+.sp-stage {
+  background-color: var(--sp-stage-bg);
+  background-image: radial-gradient(
+    ellipse 70% 55% at 50% 42%,
+    var(--sp-lamp-glow) 0%,
+    transparent 70%
+  );
+}
+
+.sp-playing-card {
+  aspect-ratio: var(--sp-card-aspect);
+  background-color: var(--sp-card-face);
+  color: var(--sp-stage-bg);
+}

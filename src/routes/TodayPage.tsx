@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
@@ -12,7 +13,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { loadDueCache, saveDueCache } from "../study/dueCache";
 
-/** Home: due count and start a study session. Code-led MUI; no Impeccable comps. */
+/** Home: giant due proof + Start study (today-dash-b). */
 export default function TodayPage() {
   const [dueCount, setDueCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -82,34 +83,82 @@ export default function TodayPage() {
   const showJourneyNext =
     view != null && dueCount === 0 && view.next.href !== "/today";
 
+  const dueCaption = dueCount === 1 ? "card due" : "cards due";
+
   return (
-    <Container maxWidth="sm" sx={{ py: 6 }}>
-      <Stack spacing={3}>
-        <Typography variant="h3" component="h1" color="primary">
-          Today
-        </Typography>
+    <Container
+      maxWidth="sm"
+      sx={{
+        py: { xs: 6, md: 8 },
+        minHeight: { md: "calc(100vh - 32px)" },
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: { md: "center" },
+      }}
+    >
+      <Stack spacing={3} alignItems="center" textAlign="center">
+        <Box>
+          <Typography
+            component="p"
+            aria-label={`${dueCount} ${dueCaption}`}
+            sx={{
+              m: 0,
+              fontSize: { xs: "5.5rem", sm: "7rem", md: "8rem" },
+              fontWeight: 700,
+              lineHeight: 0.95,
+              letterSpacing: "-0.04em",
+              color: "text.primary",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {dueCount}
+          </Typography>
+          <Typography
+            variant="h6"
+            component="p"
+            sx={{
+              mt: 1,
+              fontFamily: "inherit",
+              fontWeight: 500,
+              color: "text.primary",
+              letterSpacing: "0.02em",
+            }}
+          >
+            {dueCaption}
+          </Typography>
+        </Box>
 
-        <Typography variant="body1" color="text.secondary">
-          {dueCount === 0
-            ? "Nothing due right now."
-            : dueCount === 1
-              ? "1 card is due."
-              : `${dueCount} cards are due.`}
-        </Typography>
-
-        {error ? <Alert severity="error">{error}</Alert> : null}
+        {error ? (
+          <Alert severity="error" sx={{ width: "100%", textAlign: "left" }}>
+            {error}
+          </Alert>
+        ) : null}
         {offlineCopy ? (
-          <Alert severity="warning">
+          <Alert severity="warning" sx={{ width: "100%", textAlign: "left" }}>
             Showing an offline copy of your due count.
           </Alert>
         ) : null}
 
-        <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+        <Stack
+          direction="column"
+          spacing={1.5}
+          alignItems="stretch"
+          sx={{ width: "100%", maxWidth: 360 }}
+        >
           {dueCount > 0 ? (
             <Button
               variant="contained"
+              color="primary"
+              size="large"
               href="/study"
               startIcon={<PlayArrowIcon />}
+              sx={{
+                py: 1.5,
+                px: 3,
+                fontWeight: 600,
+                fontSize: "1.05rem",
+                borderRadius: 1.5,
+              }}
             >
               Start study
             </Button>
@@ -128,12 +177,6 @@ export default function TodayPage() {
               }}
             />
           ) : null}
-          <Button variant="outlined" href="/library">
-            Library
-          </Button>
-          <Button variant="outlined" href="/settings">
-            Settings
-          </Button>
         </Stack>
       </Stack>
     </Container>

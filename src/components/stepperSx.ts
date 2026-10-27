@@ -2,7 +2,7 @@ import { alpha } from "@mui/material/styles";
 import type { Theme } from "@mui/material/styles";
 
 /** Keep in sync with `theme.ts` dark.palette.primary (Theme has no colorSchemes). */
-const DARK_PRIMARY = { main: "#CE93D8", contrastText: "#121212" };
+const DARK_PRIMARY = { main: "#CE93D8", contrastText: "#180816" };
 
 /** Stepper colors from the active palette (matches headings / primary CTAs). */
 export const stepperSx = (theme: Theme) => {

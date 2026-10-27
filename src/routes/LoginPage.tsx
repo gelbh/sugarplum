@@ -10,6 +10,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { ApiError, login } from "../api/client";
 import GoogleSignInButton from "../components/GoogleSignInButton";
+import { continueAsGuest } from "../guest/enterGuest";
 
 function oauthErrorMessage(code: string | null): string | null {
   if (!code) return null;
@@ -87,6 +88,17 @@ export default function LoginPage() {
           </Button>
           <Divider>or</Divider>
           <GoogleSignInButton />
+          <Button
+            variant="text"
+            fullWidth
+            disabled={busy}
+            onClick={() => continueAsGuest()}
+          >
+            Continue as guest
+          </Button>
+          <Typography variant="body2" textAlign="center" color="text.secondary">
+            Guest keeps decks and reviews in this browser only.
+          </Typography>
           <Typography variant="body2" textAlign="center">
             No account?{" "}
             <Link href="/register" underline="hover">
