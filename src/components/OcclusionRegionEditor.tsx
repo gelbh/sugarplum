@@ -1,4 +1,5 @@
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -9,7 +10,6 @@ export type OcclusionRegion = OcclusionFrontView["regions"][number];
 
 export type OcclusionRegionEditorProps = {
   front: OcclusionFrontView;
-  backAnswer: string;
   disabled?: boolean;
   onChange: (next: { front: OcclusionFrontView; back: { answer: string } }) => void;
 };
@@ -36,10 +36,18 @@ function clampRegion(r: OcclusionRegion): OcclusionRegion {
   return { ...r, x, y, w, h };
 }
 
-/** Image + overlay region boxes (drag/resize) and label / answer fields. */
+function answerFromRegions(
+  regions: OcclusionRegion[],
+  selectedId: string | null,
+): string {
+  const selected =
+    regions.find((r) => r.id === selectedId) ?? regions[0] ?? null;
+  return selected?.label.trim() || selected?.id || "region";
+}
+
+/** Image + overlay region boxes (drag/resize); study reveal uses region labels. */
 export default function OcclusionRegionEditor({
   front,
-  backAnswer,
   disabled = false,
   onChange,
 }: OcclusionRegionEditorProps) {
@@ -49,24 +57,34 @@ export default function OcclusionRegionEditor({
     front.regions[0]?.id ?? null,
   );
 
-  const emitFront = useCallback(
-    (nextFront: OcclusionFrontView) => {
-      onChange({ front: nextFront, back: { answer: backAnswer } });
+  const emit = useCallback(
+    (nextFront: OcclusionFrontView, nextSelectedId: string | null) => {
+      onChange({
+        front: nextFront,
+        back: { answer: answerFromRegions(nextFront.regions, nextSelectedId) },
+      });
     },
-    [onChange, backAnswer],
+    [onChange],
   );
 
   const updateRegion = useCallback(
     (id: string, patch: Partial<OcclusionRegion>) => {
-      emitFront({
-        ...front,
-        regions: front.regions.map((r) =>
-          r.id === id ? clampRegion({ ...r, ...patch }) : r,
-        ),
-      });
+      const regions = front.regions.map((r) =>
+        r.id === id ? clampRegion({ ...r, ...patch }) : r,
+      );
+      emit({ ...front, regions }, selectedId);
     },
-    [emitFront, front],
+    [emit, front, selectedId],
   );
+
+  function removeRegion(id: string) {
+    if (disabled || front.regions.length <= 1) return;
+    const regions = front.regions.filter((r) => r.id !== id);
+    const nextSelected =
+      selectedId === id ? (regions[0]?.id ?? null) : selectedId;
+    setSelectedId(nextSelected);
+    emit({ ...front, regions }, nextSelected);
+  }
 
   function onBoxPointerDown(
     e: PointerEvent<HTMLDivElement>,
@@ -135,80 +153,80 @@ export default function OcclusionRegionEditor({
             touchAction: "none",
           }}
         >
-        <Box
-          component="img"
-          src={mediaUrl(front.image_key)}
-          alt="Occlusion draft"
-          draggable={false}
-          sx={{
-            display: "block",
-            width: "100%",
-            height: "auto",
-            pointerEvents: "none",
-          }}
-        />
-        {front.regions.map((region) => {
-          const selected = region.id === selectedId;
-          return (
-            <Box
-              key={region.id}
-              onPointerDown={(e) => onBoxPointerDown(e, region, "move")}
-              sx={{
-                position: "absolute",
-                left: `${region.x * 100}%`,
-                top: `${region.y * 100}%`,
-                width: `${region.w * 100}%`,
-                height: `${region.h * 100}%`,
-                boxSizing: "border-box",
-                border: 2,
-                borderColor: selected ? "primary.main" : "warning.main",
-                bgcolor: selected
-                  ? "rgba(25, 118, 210, 0.22)"
-                  : "rgba(237, 108, 2, 0.18)",
-                cursor: disabled ? "default" : "move",
-                borderRadius: 0.5,
-              }}
-            >
-              <Typography
-                variant="caption"
+          <Box
+            component="img"
+            src={mediaUrl(front.image_key)}
+            alt="Occlusion draft"
+            draggable={false}
+            sx={{
+              display: "block",
+              width: "100%",
+              height: "auto",
+              pointerEvents: "none",
+            }}
+          />
+          {front.regions.map((region) => {
+            const selected = region.id === selectedId;
+            return (
+              <Box
+                key={region.id}
+                onPointerDown={(e) => onBoxPointerDown(e, region, "move")}
                 sx={{
                   position: "absolute",
-                  left: 4,
-                  top: 2,
-                  px: 0.5,
-                  bgcolor: "rgba(0,0,0,0.55)",
-                  color: "common.white",
+                  left: `${region.x * 100}%`,
+                  top: `${region.y * 100}%`,
+                  width: `${region.w * 100}%`,
+                  height: `${region.h * 100}%`,
+                  boxSizing: "border-box",
+                  border: 2,
+                  borderColor: selected ? "primary.main" : "warning.main",
+                  bgcolor: selected
+                    ? "rgba(25, 118, 210, 0.22)"
+                    : "rgba(237, 108, 2, 0.18)",
+                  cursor: disabled ? "default" : "move",
                   borderRadius: 0.5,
-                  maxWidth: "95%",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  lineHeight: 1.4,
-                  pointerEvents: "none",
                 }}
               >
-                {region.label || region.id}
-              </Typography>
-              {!disabled ? (
-                <Box
-                  onPointerDown={(e) => onBoxPointerDown(e, region, "resize")}
+                <Typography
+                  variant="caption"
                   sx={{
                     position: "absolute",
-                    right: -5,
-                    bottom: -5,
-                    width: 12,
-                    height: 12,
-                    bgcolor: "primary.main",
-                    borderRadius: "2px",
-                    cursor: "nwse-resize",
-                    border: 1,
-                    borderColor: "background.paper",
+                    left: 4,
+                    top: 2,
+                    px: 0.5,
+                    bgcolor: "rgba(0,0,0,0.55)",
+                    color: "common.white",
+                    borderRadius: 0.5,
+                    maxWidth: "95%",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    lineHeight: 1.4,
+                    pointerEvents: "none",
                   }}
-                />
-              ) : null}
-            </Box>
-          );
-        })}
+                >
+                  {region.label || region.id}
+                </Typography>
+                {!disabled ? (
+                  <Box
+                    onPointerDown={(e) => onBoxPointerDown(e, region, "resize")}
+                    sx={{
+                      position: "absolute",
+                      right: -5,
+                      bottom: -5,
+                      width: 12,
+                      height: 12,
+                      bgcolor: "primary.main",
+                      borderRadius: "2px",
+                      cursor: "nwse-resize",
+                      border: 1,
+                      borderColor: "background.paper",
+                    }}
+                  />
+                ) : null}
+              </Box>
+            );
+          })}
         </Box>
       </Box>
 
@@ -217,27 +235,23 @@ export default function OcclusionRegionEditor({
         value={front.prompt ?? ""}
         onChange={(e) => {
           const prompt = e.target.value;
-          emitFront({
-            ...front,
-            prompt: prompt.length > 0 ? prompt : undefined,
-          });
+          emit(
+            {
+              ...front,
+              prompt: prompt.length > 0 ? prompt : undefined,
+            },
+            selectedId,
+          );
         }}
         fullWidth
         size="small"
         disabled={disabled}
       />
 
-      <TextField
-        label="Answer"
-        value={backAnswer}
-        onChange={(e) =>
-          onChange({ front, back: { answer: e.target.value } })
-        }
-        multiline
-        minRows={2}
-        fullWidth
-        disabled={disabled}
-      />
+      <Typography variant="body2" color="text.secondary">
+        Study reveals the hidden region’s label (one region per card via hide_one).
+        Delete unused boxes before accept.
+      </Typography>
 
       <Stack spacing={1.5}>
         <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
@@ -255,7 +269,10 @@ export default function OcclusionRegionEditor({
               borderRadius: 1,
               bgcolor: "background.paper",
             }}
-            onClick={() => setSelectedId(region.id)}
+            onClick={() => {
+              setSelectedId(region.id);
+              emit(front, region.id);
+            }}
           >
             <TextField
               label={`Label (${region.id})`}
@@ -264,6 +281,11 @@ export default function OcclusionRegionEditor({
               size="small"
               fullWidth
               disabled={disabled}
+              helperText={
+                region.id === selectedId
+                  ? "This label is the study answer for hide_one"
+                  : undefined
+              }
             />
             <Stack direction="row" spacing={1}>
               {(
@@ -290,6 +312,18 @@ export default function OcclusionRegionEditor({
                 />
               ))}
             </Stack>
+            {front.regions.length > 1 && !disabled ? (
+              <Button
+                size="small"
+                color="error"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeRegion(region.id);
+                }}
+              >
+                Remove region
+              </Button>
+            ) : null}
           </Stack>
         ))}
       </Stack>
