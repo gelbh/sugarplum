@@ -1,15 +1,13 @@
 import { alpha } from "@mui/material/styles";
-import type { SxProps, Theme } from "@mui/material/styles";
+import type { Theme } from "@mui/material/styles";
+
+/** Keep in sync with `theme.ts` dark.palette.primary (Theme has no colorSchemes). */
+const DARK_PRIMARY = { main: "#CE93D8", contrastText: "#121212" };
 
 /** Stepper colors from the active palette (matches headings / primary CTAs). */
-export const stepperSx: SxProps<Theme> = (theme) => {
-  const lightPrimary = theme.palette.primary;
-  const darkPrimary =
-    theme.colorSchemes?.dark?.palette?.primary ?? lightPrimary;
-  const upcomingDisc = alpha(lightPrimary.main, 0.35);
-  const upcomingGlyph = lightPrimary.main;
-  const darkUpcomingDisc = alpha(darkPrimary.main, 0.35);
-  const darkUpcomingGlyph = darkPrimary.main;
+export const stepperSx = (theme: Theme) => {
+  const upcomingDisc = alpha(theme.palette.primary.main, 0.35);
+  const upcomingGlyph = theme.palette.primary.main;
 
   return {
     "& .MuiStepLabel-label, & .MuiStepLabel-labelContainer, & .MuiStepLabel-label.Mui-disabled":
@@ -26,13 +24,13 @@ export const stepperSx: SxProps<Theme> = (theme) => {
     "& .MuiStepIcon-root": {
       color: upcomingDisc,
       ...theme.applyStyles("dark", {
-        color: darkUpcomingDisc,
+        color: alpha(DARK_PRIMARY.main, 0.35),
       }),
     },
     "& .MuiStepIcon-root .MuiStepIcon-text": {
       fill: upcomingGlyph,
       ...theme.applyStyles("dark", {
-        fill: darkUpcomingGlyph,
+        fill: DARK_PRIMARY.main,
       }),
     },
     "& .MuiStepIcon-root.Mui-active, & .MuiStepIcon-root.Mui-completed": {
@@ -40,9 +38,9 @@ export const stepperSx: SxProps<Theme> = (theme) => {
     },
     "& .MuiStepIcon-root.Mui-active .MuiStepIcon-text, & .MuiStepIcon-root.Mui-completed .MuiStepIcon-text":
       {
-        fill: lightPrimary.contrastText,
+        fill: theme.palette.primary.contrastText,
         ...theme.applyStyles("dark", {
-          fill: darkPrimary.contrastText,
+          fill: DARK_PRIMARY.contrastText,
         }),
       },
   };
