@@ -6,6 +6,19 @@ import type { MouseEvent, Ref } from "react";
 import { mediaUrl } from "../api/client";
 import { blankClozeFront, revealClozeFront } from "../lib/clozeFormat";
 
+/** Normalized 0–1 hide_one box over the study image until reveal. */
+export type OcclusionMaskBox = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+};
+
+export type OcclusionStudyFace = {
+  imageKey: string;
+  mask: OcclusionMaskBox;
+};
+
 type Props = {
   front: string;
   back: string;
@@ -16,11 +29,17 @@ type Props = {
   onFlipBack: () => void;
   disabled?: boolean;
   mediaR2Keys?: string[];
+  /** When set, front masks this region; back shows the same image unmasked. */
+  occlusion?: OcclusionStudyFace;
   /** Focus target for the answer face after reveal. */
   answerFocusRef?: Ref<HTMLElement | null>;
   /** Focus target for Show answer after grading / flip-back. */
   showAnswerRef?: Ref<HTMLButtonElement | null>;
 };
+
+function displayClozeFront(front: string, revealed: boolean): string {
+  return revealed ? revealClozeFront(front) : blankClozeFront(front);
+}
 
 const FACE_SANS = '"Source Sans 3", "Helvetica", "Arial", sans-serif';
 
@@ -108,11 +127,87 @@ function FaceOverline({ label }: { label: string }) {
   );
 }
 
-/** Physical study card: 3D Y-flip, or instant swap when prefers-reduced-motion. */
-function displayClozeFront(front: string, revealed: boolean): string {
-  return revealed ? revealClozeFront(front) : blankClozeFront(front);
+const MEDIA_IMG_SX = {
+  display: "block",
+  width: "100%",
+  maxHeight: "36%",
+  objectFit: "contain" as const,
+  mb: 2,
+  borderRadius: 1,
+  userSelect: "none" as const,
+};
+
+/** Image with optional hide_one mask; stage matches editor (box = img bounds). */
+function StudyMedia({
+  imageKey,
+  mask,
+  masked,
+}: {
+  imageKey: string;
+  mask?: OcclusionMaskBox;
+  masked: boolean;
+}) {
+  if (mask) {
+    return (
+      <Box
+        sx={{
+          position: "relative",
+          width: "100%",
+          maxHeight: "42%",
+          lineHeight: 0,
+          mb: 2,
+          borderRadius: 1,
+          overflow: "hidden",
+        }}
+      >
+        <Box
+          component="img"
+          src={mediaUrl(imageKey)}
+          alt="Card media"
+          draggable={false}
+          onDragStart={(event) => event.preventDefault()}
+          sx={{
+            display: "block",
+            width: "100%",
+            height: "auto",
+            maxHeight: "42vh",
+            objectFit: "contain",
+            userSelect: "none",
+          }}
+        />
+        {masked ? (
+          <Box
+            aria-hidden
+            data-occlusion-mask
+            sx={{
+              position: "absolute",
+              left: `${mask.x * 100}%`,
+              top: `${mask.y * 100}%`,
+              width: `${mask.w * 100}%`,
+              height: `${mask.h * 100}%`,
+              bgcolor: "rgba(30, 13, 27, 0.92)",
+              borderRadius: 0.5,
+              pointerEvents: "none",
+            }}
+          />
+        ) : null}
+      </Box>
+    );
+  }
+
+  return (
+    <Box
+      component="img"
+      src={mediaUrl(imageKey)}
+      alt="Card media"
+      draggable={false}
+      onDragStart={(event) => event.preventDefault()}
+      sx={MEDIA_IMG_SX}
+    />
+  );
 }
 
+/** Physical study card: 3D Y-flip, or instant swap when prefers-reduced-motion. */
 export default function CardFace({
   front,
   back,
@@ -122,6 +217,7 @@ export default function CardFace({
   onFlipBack,
   disabled,
   mediaR2Keys = [],
+  occlusion,
   answerFocusRef,
   showAnswerRef,
 }: Props) {
@@ -129,7 +225,7 @@ export default function CardFace({
     type === "cloze" ? displayClozeFront(front, false) : front;
   const answerFaceFront =
     type === "cloze" ? displayClozeFront(front, true) : front;
-  const imageKey = mediaR2Keys[0];
+  const imageKey = occlusion?.imageKey ?? mediaR2Keys[0];
   const canReveal = !revealed && !disabled;
   const canFlipBack = revealed && !disabled;
 
@@ -194,36 +290,27 @@ export default function CardFace({
           <Box data-card-face-content sx={FACE_BODY_SX}>
             <Box sx={PROMPT_SX}>
               {imageKey ? (
-                <Box
-                  component="img"
-                  src={mediaUrl(imageKey)}
-                  alt="Card media"
-                  draggable={false}
-                  onDragStart={(event) => event.preventDefault()}
-                  sx={{
-                    display: "block",
-                    width: "100%",
-                    maxHeight: "36%",
-                    objectFit: "contain",
-                    mb: 2,
-                    borderRadius: 1,
-                    userSelect: "none",
-                  }}
+                <StudyMedia
+                  imageKey={imageKey}
+                  mask={occlusion?.mask}
+                  masked={!!occlusion}
                 />
               ) : null}
-              <Typography
-                component="p"
-                sx={{
-                  fontFamily: FACE_SANS,
-                  fontSize: { xs: "1.125rem", sm: "1.35rem" },
-                  fontWeight: 400,
-                  lineHeight: 1.35,
-                  whiteSpace: "pre-wrap",
-                  color: "inherit",
-                }}
-              >
-                {questionFront}
-              </Typography>
+              {questionFront ? (
+                <Typography
+                  component="p"
+                  sx={{
+                    fontFamily: FACE_SANS,
+                    fontSize: { xs: "1.125rem", sm: "1.35rem" },
+                    fontWeight: 400,
+                    lineHeight: 1.35,
+                    whiteSpace: "pre-wrap",
+                    color: "inherit",
+                  }}
+                >
+                  {questionFront}
+                </Typography>
+              ) : null}
             </Box>
             {!revealed ? (
               <Box sx={{ pt: 2, width: "100%", flexShrink: 0 }}>
@@ -232,7 +319,7 @@ export default function CardFace({
                   variant="contained"
                   onClick={onShowAnswerClick}
                   disabled={!!disabled}
-                  sx={{ fontFamily: FACE_SANS }}
+                  sx={{ fontFamily: FACE_SANS, minHeight: 44 }}
                 >
                   Show answer
                 </Button>
@@ -250,23 +337,31 @@ export default function CardFace({
         >
           <FaceOverline label="Back" />
           <Box data-card-face-content sx={FACE_BODY_SX}>
-            <Typography
-              component="p"
-              sx={{
-                fontFamily: FACE_SANS,
-                fontSize: "0.8125rem",
-                fontWeight: 500,
-                lineHeight: 1.35,
-                whiteSpace: "pre-wrap",
-                color: "inherit",
-                opacity: 0.55,
-                textAlign: "center",
-                mb: 1.5,
-                flexShrink: 0,
-              }}
-            >
-              {answerFaceFront}
-            </Typography>
+            {occlusion && imageKey ? (
+              <StudyMedia
+                imageKey={imageKey}
+                mask={occlusion.mask}
+                masked={false}
+              />
+            ) : answerFaceFront ? (
+              <Typography
+                component="p"
+                sx={{
+                  fontFamily: FACE_SANS,
+                  fontSize: "0.8125rem",
+                  fontWeight: 500,
+                  lineHeight: 1.35,
+                  whiteSpace: "pre-wrap",
+                  color: "inherit",
+                  opacity: 0.55,
+                  textAlign: "center",
+                  mb: 1.5,
+                  flexShrink: 0,
+                }}
+              >
+                {answerFaceFront}
+              </Typography>
+            ) : null}
             <Box
               ref={answerFocusRef}
               tabIndex={revealed ? -1 : undefined}
@@ -300,6 +395,7 @@ export default function CardFace({
                   disabled={!!disabled}
                   sx={{
                     fontFamily: FACE_SANS,
+                    minHeight: 44,
                     borderColor: "currentColor",
                     color: "inherit",
                     opacity: 0.85,
