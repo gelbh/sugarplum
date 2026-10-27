@@ -54,9 +54,10 @@ describe("Workers AI adapter", () => {
     );
   });
 
-  it("generateDrafts calls env.AI.run with locked model and system/user messages", async () => {
-    const run = vi.fn(async (_model: string, inputs: { messages?: unknown }) => {
+  it("generateDrafts calls env.AI.run with locked model, max_tokens, and system/user messages", async () => {
+    const run = vi.fn(async (_model: string, inputs: { messages?: unknown; max_tokens?: number }) => {
       expect(_model).toBe(WORKERS_AI_MODEL);
+      expect(inputs.max_tokens).toBe(4096);
       expect(inputs.messages).toEqual([
         expect.objectContaining({ role: "system" }),
         expect.objectContaining({
@@ -81,6 +82,39 @@ describe("Workers AI adapter", () => {
     expect(drafts).toHaveLength(3);
     expect(drafts[0]?.type).toBe("qa");
     expect(drafts[2]?.type).toBe("cloze");
+  });
+
+  it("rejects truncated completions (finish_reason length)", async () => {
+    const run = vi.fn(async () => ({
+      ...chatCompletionResult(
+        '{"cards":[{"type":"qa","front":"What defines monoxenous protozoa',
+      ),
+      choices: [
+        {
+          index: 0,
+          message: {
+            role: "assistant" as const,
+            content:
+              '{"cards":[{"type":"qa","front":"What defines monoxenous protozoa',
+            refusal: null,
+          },
+          finish_reason: "length" as const,
+          logprobs: null,
+        },
+      ],
+    }));
+
+    const env = createTestEnv();
+    env.AI = { run } as unknown as Ai;
+    const adapter = createWorkersAiAdapter(env);
+
+    await expect(
+      adapter.generateDrafts({
+        text: "notes",
+        apiKey: "",
+        provider: "workers-ai",
+      }),
+    ).rejects.toThrow(/truncated|token limit/i);
   });
 
   it("complete returns assistant content and ignores apiKey", async () => {
