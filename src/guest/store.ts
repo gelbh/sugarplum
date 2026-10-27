@@ -8,6 +8,7 @@ import type {
   StudyRating,
   Subject,
 } from "../api/client";
+import { assertSingleCloze } from "../lib/clozeFormat";
 import { GUEST_USER_ID } from "./session";
 
 export type GuestHubCardBody = {
@@ -462,14 +463,16 @@ export function guestCreateDeckCard(
   }
   let back = body.back.trim();
   let options = body.options;
-  if (body.type === "mcq") {
+  if (body.type === "cloze") {
+    assertSingleCloze(front);
+    // Extra (back) may be ""
+  } else if (body.type === "mcq") {
     const mcq = guestAssertValidMcq(body.back, body.options);
     back = mcq.back;
     options = mcq.options;
   } else if (body.type === "qa" && !back) {
     throw new Error("Front and back required");
   }
-  // cloze: Extra (back) may be ""
   const created = nowIso();
   const card: CardDraftView = {
     id: `guest-card-${crypto.randomUUID()}`,
@@ -512,14 +515,41 @@ export function guestPatchCard(
   ) {
     throw new Error("No fields to update");
   }
+  const nextType = body.type ?? current.type;
+  const nextFront = body.front !== undefined ? body.front : current.front;
+  let nextBack = body.back !== undefined ? body.back : current.back;
+  let nextOptions =
+    body.options !== undefined ? body.options : current.options;
+
+  if (nextType === "cloze" && typeof nextFront === "string") {
+    assertSingleCloze(nextFront);
+  }
+  if (nextType === "mcq") {
+    const answer =
+      typeof nextBack === "string"
+        ? nextBack
+        : nextBack &&
+            typeof nextBack === "object" &&
+            "answer" in nextBack
+          ? nextBack.answer
+          : "";
+    const mcq = guestAssertValidMcq(answer, nextOptions);
+    nextBack = mcq.back;
+    nextOptions = mcq.options;
+  }
+
   const updated: CardDraftView = {
     ...current,
-    ...(body.type !== undefined ? { type: body.type } : {}),
-    ...(body.front !== undefined ? { front: body.front } : {}),
-    ...(body.back !== undefined ? { back: body.back } : {}),
-    ...(body.options !== undefined ? { options: body.options } : {}),
+    type: nextType,
+    front: nextFront,
+    back: nextBack,
     updated_at: nowIso(),
   };
+  if (nextType === "mcq") {
+    updated.options = nextOptions;
+  } else {
+    delete updated.options;
+  }
   store.cards[idx] = updated;
   writeStore(store, storage);
   return updated;

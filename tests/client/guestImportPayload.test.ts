@@ -39,7 +39,7 @@ describe("buildGuestImportPayload", () => {
     expect(buildGuestImportPayload({ decks: [], cards: [] })).toBeNull();
   });
 
-  it("skips guest-deck-demo and non-paste cards", () => {
+  it("skips guest-deck-demo and non-paste/non-hub cards", () => {
     const payload = buildGuestImportPayload({
       decks: [demoDeck, userDeck],
       cards: [seedCard, pasteCard],
@@ -53,6 +53,27 @@ describe("buildGuestImportPayload", () => {
         clientDeckId: userDeck.id,
         front: pasteCard.front,
         back: pasteCard.back,
+      },
+    ]);
+  });
+
+  it("includes hub DIY string cards in the import payload", () => {
+    const hubCard = {
+      deck_id: userDeck.id,
+      front: "What is ATP?",
+      back: "Energy currency",
+      provenance: { guest: true, source: "hub" as const },
+    };
+    const payload = buildGuestImportPayload({
+      decks: [userDeck],
+      cards: [hubCard],
+    });
+    expect(payload).not.toBeNull();
+    expect(payload!.cards).toEqual([
+      {
+        clientDeckId: userDeck.id,
+        front: hubCard.front,
+        back: hubCard.back,
       },
     ]);
   });

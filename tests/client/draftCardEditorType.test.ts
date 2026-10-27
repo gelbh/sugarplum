@@ -1,0 +1,25 @@
+import { describe, expect, it } from "vitest";
+import type { CardType } from "../../src/api/client";
+import { resolveEditorType } from "../../src/components/DraftCardEditor";
+
+describe("resolveEditorType (hub allowedTypes)", () => {
+  const diy: CardType[] = ["qa", "cloze", "mcq"];
+
+  it("does not coerce image_label to qa", () => {
+    const resolved = resolveEditorType("image_label", diy);
+    expect(resolved.typeSelectLocked).toBe(true);
+    expect(resolved.typeValue).toBe("image_label");
+  });
+
+  it("does not coerce diagram to qa", () => {
+    const resolved = resolveEditorType("diagram", diy);
+    expect(resolved.typeSelectLocked).toBe(true);
+    expect(resolved.typeValue).toBe("diagram");
+  });
+
+  it("leaves qa unlocked within DIY set", () => {
+    const resolved = resolveEditorType("qa", diy);
+    expect(resolved.typeSelectLocked).toBe(false);
+    expect(resolved.typeValue).toBe("qa");
+  });
+});

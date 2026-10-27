@@ -9,15 +9,9 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
-import FormControl from "@mui/material/FormControl";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
-import InputLabel from "@mui/material/InputLabel";
 import Link from "@mui/material/Link";
-import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
-import Radio from "@mui/material/Radio";
-import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
@@ -57,7 +51,6 @@ import { FigureSuggestPanel } from "../components/FigureSuggestPanel";
 import { isGuest } from "../guest/session";
 import { guestPasteToCards } from "../guest/pasteToCards";
 import { guestAddAcceptedCards } from "../guest/store";
-import { CLOZE_EXTRA_LABEL } from "../lib/clozeFormat";
 import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
@@ -66,10 +59,22 @@ type Props = {
   deckId: string;
 };
 
-type HubCardType = "qa" | "cloze" | "mcq";
+const HUB_DIY_TYPES: CardType[] = ["qa", "cloze", "mcq"];
 
-const MCQ_MIN = 3;
-const MCQ_MAX = 5;
+function blankHubCreateCard(deckId: string): CardDraftView {
+  return {
+    id: "hub-create-draft",
+    deck_id: deckId,
+    job_id: null,
+    type: "qa",
+    front: "",
+    back: "",
+    status: "draft",
+    created_at: "",
+    updated_at: "",
+  };
+}
+
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -140,10 +145,9 @@ export default function DeckHubPage({ deckId }: Props) {
   const [confirmReset, setConfirmReset] = useState(false);
   const [resetBusy, setResetBusy] = useState(false);
 
-  const [createType, setCreateType] = useState<HubCardType>("qa");
-  const [createFront, setCreateFront] = useState("");
-  const [createBack, setCreateBack] = useState("");
-  const [createOptions, setCreateOptions] = useState(["", "", ""]);
+  const [createCard, setCreateCard] = useState<CardDraftView>(() =>
+    blankHubCreateCard(deckId),
+  );
   const [createBusy, setCreateBusy] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
@@ -323,66 +327,50 @@ export default function DeckHubPage({ deckId }: Props) {
     }
   }
 
-  function onCreateTypeChange(type: HubCardType) {
-    setCreateType(type);
-    setCreateError(null);
-    if (type === "mcq") {
-      const back = createBack.trim();
-      setCreateOptions(
-        back
-          ? [back, "", ""].slice(0, MCQ_MIN)
-          : ["", "", ""],
-      );
-    }
-  }
-
-  function updateCreateOption(index: number, value: string) {
-    const wasCorrect = createBack === createOptions[index];
-    setCreateOptions((prev) => {
-      const next = [...prev];
-      next[index] = value;
-      return next;
-    });
-    if (wasCorrect) setCreateBack(value);
+  function onCreateChange(next: DraftEditorChange) {
+    setCreateCard((prev) => ({
+      ...prev,
+      front: next.front,
+      back: next.back,
+      type: next.type,
+      options: next.options,
+    }));
   }
 
   async function onCreateCard(e?: FormEvent) {
     e?.preventDefault();
     setCreateError(null);
-    const front = createFront.trim();
+    const type = createCard.type;
+    if (type !== "qa" && type !== "cloze" && type !== "mcq") {
+      setCreateError("Choose Q&A, cloze, or multiple choice");
+      return;
+    }
+    const front =
+      typeof createCard.front === "string" ? createCard.front.trim() : "";
     if (!front) {
       setCreateError("Front is required");
       return;
     }
-    let back = createBack.trim();
+    const backRaw =
+      typeof createCard.back === "string" ? createCard.back : "";
+    const back = type === "cloze" ? backRaw.trim() : backRaw.trim();
     let options: string[] | undefined;
-    if (createType === "mcq") {
-      options = createOptions.map((o) => o.trim()).filter(Boolean);
-      if (options.length < MCQ_MIN) {
-        setCreateError(`MCQ needs at least ${MCQ_MIN} choices`);
-        return;
-      }
-      if (!back || !options.includes(back)) {
-        setCreateError("Pick the correct choice");
-        return;
-      }
-    } else if (createType === "qa" && !back) {
+    if (type === "mcq") {
+      options = (createCard.options ?? []).map((o) => o.trim()).filter(Boolean);
+    } else if (type === "qa" && !back) {
       setCreateError("Back is required");
       return;
     }
     setCreateBusy(true);
     try {
       const created = await createDeckCard(deckId, {
-        type: createType,
+        type,
         front,
-        back: createType === "cloze" ? createBack.trim() : back,
+        back,
         ...(options ? { options } : {}),
       });
-      setCards((prev) => [created, ...prev]);
-      setCreateFront("");
-      setCreateBack("");
-      setCreateOptions(["", "", ""]);
-      setCreateType("qa");
+      setCards((prev) => [...prev, created]);
+      setCreateCard(blankHubCreateCard(deckId));
       setNotice("Card added");
     } catch (err) {
       setCreateError(
@@ -907,147 +895,12 @@ export default function DeckHubPage({ deckId }: Props) {
               ) : null}
               <Box component="form" onSubmit={onCreateCard} noValidate>
                 <Stack spacing={2}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel id="hub-create-type">Type</InputLabel>
-                    <Select
-                      labelId="hub-create-type"
-                      label="Type"
-                      value={createType}
-                      onChange={(ev) =>
-                        onCreateTypeChange(ev.target.value as HubCardType)
-                      }
-                    >
-                      <MenuItem value="qa">Q&A</MenuItem>
-                      <MenuItem value="cloze">Fill in the blank</MenuItem>
-                      <MenuItem value="mcq">Multiple choice</MenuItem>
-                    </Select>
-                  </FormControl>
-                  {createType === "cloze" ? (
-                    <>
-                      <TextField
-                        label="Front (sentence with blank markup)"
-                        value={createFront}
-                        onChange={(ev) => setCreateFront(ev.target.value)}
-                        multiline
-                        minRows={2}
-                        fullWidth
-                        required
-                        helperText="Use Anki-style {{c1::answer}} for the blank."
-                      />
-                      <TextField
-                        label={CLOZE_EXTRA_LABEL}
-                        value={createBack}
-                        onChange={(ev) => setCreateBack(ev.target.value)}
-                        multiline
-                        minRows={2}
-                        fullWidth
-                      />
-                    </>
-                  ) : createType === "mcq" ? (
-                    <>
-                      <TextField
-                        label="Question"
-                        value={createFront}
-                        onChange={(ev) => setCreateFront(ev.target.value)}
-                        multiline
-                        minRows={2}
-                        fullWidth
-                        required
-                      />
-                      <Typography variant="body2" fontWeight={500}>
-                        Choices
-                      </Typography>
-                      <Stack spacing={1.5}>
-                        {createOptions.map((option, index) => (
-                          <Stack
-                            key={index}
-                            direction="row"
-                            spacing={1}
-                            alignItems="flex-start"
-                          >
-                            <FormControlLabel
-                              sx={{ m: 0, flexShrink: 0, pt: 1 }}
-                              control={
-                                <Radio
-                                  checked={createBack === option && option !== ""}
-                                  onChange={() => setCreateBack(option)}
-                                  inputProps={{
-                                    "aria-label": `Correct choice ${index + 1}`,
-                                  }}
-                                />
-                              }
-                              label="Correct"
-                            />
-                            <TextField
-                              label={`Choice ${index + 1}`}
-                              value={option}
-                              onChange={(ev) =>
-                                updateCreateOption(index, ev.target.value)
-                              }
-                              fullWidth
-                              size="small"
-                            />
-                            <Button
-                              variant="text"
-                              color="inherit"
-                              size="small"
-                              disabled={createOptions.length <= MCQ_MIN}
-                              onClick={() => {
-                                if (createOptions.length <= MCQ_MIN) return;
-                                const removed = createOptions[index];
-                                const next = createOptions.filter(
-                                  (_, i) => i !== index,
-                                );
-                                setCreateOptions(next);
-                                if (createBack === removed) {
-                                  setCreateBack(
-                                    next.find((o) => o.trim()) ?? next[0] ?? "",
-                                  );
-                                }
-                              }}
-                              sx={{ flexShrink: 0, mt: 0.5 }}
-                            >
-                              Remove
-                            </Button>
-                          </Stack>
-                        ))}
-                      </Stack>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        disabled={createOptions.length >= MCQ_MAX}
-                        onClick={() =>
-                          setCreateOptions((prev) =>
-                            prev.length >= MCQ_MAX ? prev : [...prev, ""],
-                          )
-                        }
-                        sx={{ alignSelf: "flex-start" }}
-                      >
-                        Add choice
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <TextField
-                        label="Front"
-                        value={createFront}
-                        onChange={(ev) => setCreateFront(ev.target.value)}
-                        multiline
-                        minRows={2}
-                        fullWidth
-                        required
-                      />
-                      <TextField
-                        label="Back"
-                        value={createBack}
-                        onChange={(ev) => setCreateBack(ev.target.value)}
-                        multiline
-                        minRows={2}
-                        fullWidth
-                        required
-                      />
-                    </>
-                  )}
+                  <DraftCardEditor
+                    card={createCard}
+                    disabled={createBusy}
+                    onChange={onCreateChange}
+                    allowedTypes={HUB_DIY_TYPES}
+                  />
                   <Button
                     type="submit"
                     variant="contained"
@@ -1155,7 +1008,7 @@ export default function DeckHubPage({ deckId }: Props) {
                 card={editCard}
                 disabled={editBusy || resetBusy}
                 onChange={onEditChange}
-                allowedTypes={["qa", "cloze", "mcq"]}
+                allowedTypes={HUB_DIY_TYPES}
               />
             </Box>
           ) : null}

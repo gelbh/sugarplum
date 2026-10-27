@@ -288,6 +288,42 @@ describe("guest store", () => {
     ).toThrow(/MCQ requires options/);
   });
 
+  it("createDeckCard rejects multi-blank cloze", () => {
+    enterGuest(storage);
+    const subject = guestCreateSubject("Cloze bad", storage);
+    const deck = guestCreateDeck("Cloze bad deck", subject.id, storage);
+    expect(() =>
+      guestCreateDeckCard(
+        deck.id,
+        {
+          type: "cloze",
+          front: "The {{c1::a}} and {{c1::b}}",
+          back: "",
+        },
+        storage,
+      ),
+    ).toThrow(/at most one blank/);
+  });
+
+  it("patchCard rejects invalid MCQ options", () => {
+    enterGuest(storage);
+    const subject = guestCreateSubject("Patch mcq", storage);
+    const deck = guestCreateDeck("Patch mcq deck", subject.id, storage);
+    const card = guestCreateDeckCard(
+      deck.id,
+      {
+        type: "mcq",
+        front: "Pick",
+        back: "A",
+        options: ["A", "B", "C"],
+      },
+      storage,
+    );
+    expect(() =>
+      guestPatchCard(card.id, { options: ["A", ""] }, storage),
+    ).toThrow(/MCQ/);
+  });
+
   it("patchCard updates front on an accepted card", () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Edit subject", storage);

@@ -17,19 +17,18 @@ export type GuestImportPayload = {
   cards: { clientDeckId: string; front: string; back: string }[];
 };
 
-function isPasteProvenance(provenance: unknown): boolean {
-  return (
-    provenance != null &&
-    typeof provenance === "object" &&
-    (provenance as { source?: unknown }).source === "paste"
-  );
+/** Paste and hub DIY string cards are importable; cloze/MCQ typed merge still parked. */
+function isImportableProvenance(provenance: unknown): boolean {
+  if (provenance == null || typeof provenance !== "object") return false;
+  const source = (provenance as { source?: unknown }).source;
+  return source === "paste" || source === "hub";
 }
 
-/** Pure: paste cards + non-demo decks (or empty user guest-deck-*); null if seed-only/empty. */
+/** Pure: paste/hub cards + non-demo decks (or empty user guest-deck-*); null if seed-only/empty. */
 export function buildGuestImportPayload(
   store: GuestImportStoreLike,
 ): GuestImportPayload | null {
-  const pasteCards = store.cards
+  const importCards = store.cards
     .filter(
       (c): c is {
         deck_id: string;
@@ -38,25 +37,25 @@ export function buildGuestImportPayload(
         provenance?: unknown;
       } =>
         c.deck_id !== DEMO_DECK_ID &&
-        isPasteProvenance(c.provenance) &&
+        isImportableProvenance(c.provenance) &&
         typeof c.front === "string" &&
         typeof c.back === "string",
     )
     .slice(0, MAX_IMPORT_CARDS);
 
-  const pasteDeckIds = new Set(pasteCards.map((c) => c.deck_id));
+  const importDeckIds = new Set(importCards.map((c) => c.deck_id));
 
   const decks = store.decks.filter((d) => {
     if (d.id === DEMO_DECK_ID) return false;
-    if (pasteDeckIds.has(d.id)) return true;
+    if (importDeckIds.has(d.id)) return true;
     return d.id.startsWith("guest-deck-");
   });
 
-  if (decks.length === 0 && pasteCards.length === 0) return null;
+  if (decks.length === 0 && importCards.length === 0) return null;
 
   return {
     decks: decks.map((d) => ({ clientId: d.id, title: d.title })),
-    cards: pasteCards.map((c) => ({
+    cards: importCards.map((c) => ({
       clientDeckId: c.deck_id,
       front: c.front,
       back: c.back,
