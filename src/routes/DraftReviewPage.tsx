@@ -9,6 +9,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
+import Chip from "@mui/material/Chip";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -30,6 +31,7 @@ import {
   regenJob,
   rejectCard,
   type CardDraftView,
+  type CardType,
 } from "../api/client";
 import { deriveJourney } from "../journey/derive";
 import { forceOpenDraftReview } from "../journey/forceOpenDraftReview";
@@ -44,12 +46,7 @@ function jobIdFromPath(): string | null {
 }
 
 function cardPatchBody(card: CardDraftView): Parameters<typeof patchCard>[1] {
-  const type = card.type as
-    | "qa"
-    | "cloze"
-    | "image_label"
-    | "diagram"
-    | "mcq";
+  const type = card.type as CardType;
   const body: Parameters<typeof patchCard>[1] = {
     front: card.front,
     back: card.back,
@@ -59,6 +56,15 @@ function cardPatchBody(card: CardDraftView): Parameters<typeof patchCard>[1] {
     body.options = card.options;
   }
   return body;
+}
+
+function draftTypeLabel(type: CardDraftView["type"]): string {
+  if (type === "occlusion") return "Occlusion";
+  if (type === "cloze") return "Cloze";
+  if (type === "mcq") return "Multiple choice";
+  if (type === "image_label") return "Image label";
+  if (type === "diagram") return "Diagram";
+  return "Q&A";
 }
 
 /** Operate UI: review, edit, accept or reject generation drafts (code-led MUI; no Impeccable comps). */
@@ -438,9 +444,22 @@ export default function DraftReviewPage() {
               borderColor: "divider",
             }}
           >
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-              Card {index + 1} of {drafts.length}
-            </Typography>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              sx={{ mb: 2 }}
+            >
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                Card {index + 1} of {drafts.length}
+              </Typography>
+              <Chip
+                size="small"
+                label={draftTypeLabel(current.type)}
+                color="primary"
+                variant="outlined"
+              />
+            </Stack>
 
             <DraftCardEditor
               card={current}

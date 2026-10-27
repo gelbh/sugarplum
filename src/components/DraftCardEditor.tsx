@@ -14,11 +14,17 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { mediaUrl, type CardDraftView } from "../api/client";
+import {
+  mediaUrl,
+  type CardDraftView,
+  type CardType,
+  type OcclusionFrontView,
+} from "../api/client";
 import {
   blankClozeFront,
   extractClozeAnswer,
 } from "../lib/clozeFormat";
+import OcclusionRegionEditor from "./OcclusionRegionEditor";
 
 export type DraftEditorChange = Pick<
   CardDraftView,
@@ -31,10 +37,29 @@ export type DraftCardEditorProps = {
   onChange: (next: DraftEditorChange) => void;
 };
 
-type CardType = "qa" | "cloze" | "image_label" | "diagram" | "mcq";
+const TEXT_TYPES: CardType[] = [
+  "qa",
+  "cloze",
+  "image_label",
+  "diagram",
+  "mcq",
+];
 
 const MCQ_MIN = 3;
 const MCQ_MAX = 5;
+
+function isOcclusionFront(
+  front: CardDraftView["front"],
+): front is OcclusionFrontView {
+  return typeof front === "object" && front !== null && "regions" in front;
+}
+
+function backAnswer(back: CardDraftView["back"]): string {
+  if (typeof back === "object" && back !== null && "answer" in back) {
+    return back.answer;
+  }
+  return typeof back === "string" ? back : "";
+}
 
 function defaultMcqOptions(card: CardDraftView): string[] {
   if (
@@ -44,7 +69,7 @@ function defaultMcqOptions(card: CardDraftView): string[] {
   ) {
     return [...card.options];
   }
-  const back = card.back.trim();
+  const back = backAnswer(card.back).trim();
   if (back) {
     return [back, "", ""];
   }
@@ -56,14 +81,16 @@ function onTypeChange(
   type: CardType,
   onChange: (next: DraftEditorChange) => void,
 ) {
+  const frontText = typeof card.front === "string" ? card.front : "";
+  const backText = backAnswer(card.back);
   if (type === "mcq") {
     const options = defaultMcqOptions(card);
     const back =
-      card.back.trim() && options.includes(card.back.trim())
-        ? card.back.trim()
+      backText.trim() && options.includes(backText.trim())
+        ? backText.trim()
         : (options.find((o) => o.trim()) ?? options[0] ?? "");
     onChange({
-      front: card.front,
+      front: frontText,
       back,
       type,
       options,
@@ -71,8 +98,8 @@ function onTypeChange(
     return;
   }
   onChange({
-    front: card.front,
-    back: card.back,
+    front: frontText,
+    back: backText,
     type,
   });
 }
@@ -83,19 +110,37 @@ export default function DraftCardEditor({
   disabled = false,
   onChange,
 }: DraftCardEditorProps) {
+  if (card.type === "occlusion" && isOcclusionFront(card.front)) {
+    return (
+      <OcclusionRegionEditor
+        front={card.front}
+        backAnswer={backAnswer(card.back)}
+        disabled={disabled}
+        onChange={({ front, back }) =>
+          onChange({ front, back, type: "occlusion" })
+        }
+      />
+    );
+  }
+
   const imageKey = card.media_r2_keys?.[0];
-  const isCloze = card.type === "cloze";
-  const isMcq = card.type === "mcq";
+  const frontText = typeof card.front === "string" ? card.front : "";
+  const backText = backAnswer(card.back);
+  const typeValue = TEXT_TYPES.includes(card.type as CardType)
+    ? (card.type as CardType)
+    : "qa";
+  const isCloze = typeValue === "cloze";
+  const isMcq = typeValue === "mcq";
   const mcqOptions = isMcq ? (card.options ?? defaultMcqOptions(card)) : [];
   const clozeAnswer = isCloze
-    ? (extractClozeAnswer(card.front) ?? (card.back.trim() || null))
+    ? (extractClozeAnswer(frontText) ?? (backText.trim() || null))
     : null;
 
   function patch(partial: Partial<DraftEditorChange>) {
     onChange({
-      front: partial.front ?? card.front,
-      back: partial.back ?? card.back,
-      type: partial.type ?? card.type,
+      front: partial.front ?? frontText,
+      back: partial.back ?? backText,
+      type: partial.type ?? typeValue,
       ...(partial.options !== undefined
         ? { options: partial.options }
         : isMcq
@@ -106,11 +151,11 @@ export default function DraftCardEditor({
 
   function updateMcqOption(index: number, value: string) {
     const options = [...mcqOptions];
-    const wasCorrect = card.back === options[index];
+    const wasCorrect = backText === options[index];
     options[index] = value;
     patch({
       options,
-      back: wasCorrect ? value : card.back,
+      back: wasCorrect ? value : backText,
     });
   }
 
@@ -127,7 +172,7 @@ export default function DraftCardEditor({
     if (mcqOptions.length <= MCQ_MIN) return;
     const removed = mcqOptions[index];
     const options = mcqOptions.filter((_, i) => i !== index);
-    let back = card.back;
+    let back = backText;
     if (back === removed) {
       back = options.find((o) => o.trim()) ?? options[0] ?? "";
     }
@@ -155,7 +200,7 @@ export default function DraftCardEditor({
         <Select
           labelId={`card-type-${card.id}`}
           label="Type"
-          value={card.type}
+          value={typeValue}
           onChange={(e) =>
             onTypeChange(card, e.target.value as CardType, onChange)
           }
@@ -187,7 +232,7 @@ export default function DraftCardEditor({
               variant="body1"
               sx={{ whiteSpace: "pre-wrap", mb: clozeAnswer ? 1.5 : 0 }}
             >
-              {blankClozeFront(card.front)}
+              {blankClozeFront(frontText)}
             </Typography>
             {clozeAnswer ? (
               <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
@@ -221,7 +266,7 @@ export default function DraftCardEditor({
               <Stack spacing={2}>
                 <TextField
                   label="Front (sentence with blank markup)"
-                  value={card.front}
+                  value={frontText}
                   onChange={(e) => patch({ front: e.target.value })}
                   multiline
                   minRows={2}
@@ -231,7 +276,7 @@ export default function DraftCardEditor({
                 />
                 <TextField
                   label="Back"
-                  value={card.back}
+                  value={backText}
                   onChange={(e) => patch({ back: e.target.value })}
                   multiline
                   minRows={2}
@@ -246,7 +291,7 @@ export default function DraftCardEditor({
         <>
           <TextField
             label="Question"
-            value={card.front}
+            value={frontText}
             onChange={(e) => patch({ front: e.target.value })}
             multiline
             minRows={2}
@@ -268,7 +313,7 @@ export default function DraftCardEditor({
                   sx={{ m: 0, flexShrink: 0, pt: 1 }}
                   control={
                     <Radio
-                      checked={card.back === option}
+                      checked={backText === option}
                       onChange={() => setMcqCorrect(index)}
                       disabled={disabled}
                       inputProps={{ "aria-label": `Correct choice ${index + 1}` }}
@@ -314,7 +359,7 @@ export default function DraftCardEditor({
         <>
           <TextField
             label="Front"
-            value={card.front}
+            value={frontText}
             onChange={(e) => patch({ front: e.target.value })}
             multiline
             minRows={2}
@@ -323,7 +368,7 @@ export default function DraftCardEditor({
           />
           <TextField
             label="Back"
-            value={card.back}
+            value={backText}
             onChange={(e) => patch({ back: e.target.value })}
             multiline
             minRows={2}
