@@ -26,7 +26,8 @@ const SHELL_BG = "#1e0d1b";
 const SHELL_FG = "#F5F5F5";
 const SHELL_MUTED = "rgba(245, 245, 245, 0.62)";
 const SHELL_HAIRLINE = "rgba(232, 216, 199, 0.16)";
-const PLUM = "#5B2C6F";
+/** Selected chrome accent on night shell (matches dark theme primary). */
+const PLUM_ON_DARK = "#CE93D8";
 
 type NavId = "today" | "library" | "settings";
 
@@ -116,7 +117,12 @@ export default function AppShell({ children }: AppShellProps) {
           >
             <Toolbar
               variant="dense"
-              sx={{ gap: 1.25, minHeight: 56, px: 2, borderBottom: `1px solid ${SHELL_HAIRLINE}` }}
+              sx={{
+                gap: 1.25,
+                minHeight: 56,
+                px: 2,
+                borderBottom: `1px solid ${SHELL_HAIRLINE}`,
+              }}
             >
               <Box
                 component="img"
@@ -124,7 +130,11 @@ export default function AppShell({ children }: AppShellProps) {
                 alt=""
                 sx={{ height: 28, width: "auto", display: "block" }}
               />
-              <Typography variant="h6" noWrap sx={{ color: SHELL_FG, letterSpacing: 0.2 }}>
+              <Typography
+                variant="h6"
+                noWrap
+                sx={{ color: SHELL_FG, letterSpacing: 0.2 }}
+              >
                 Sugarplum
               </Typography>
             </Toolbar>
@@ -141,7 +151,9 @@ export default function AppShell({ children }: AppShellProps) {
                       borderRadius: 1,
                       mb: 0.5,
                       color: selected ? SHELL_FG : SHELL_MUTED,
-                      borderLeft: selected ? `3px solid ${PLUM}` : "3px solid transparent",
+                      borderLeft: selected
+                        ? `3px solid ${PLUM_ON_DARK}`
+                        : "3px solid transparent",
                       "&.Mui-selected": {
                         bgcolor: "rgba(91, 44, 111, 0.28)",
                       },
@@ -262,7 +274,7 @@ export default function AppShell({ children }: AppShellProps) {
                   icon={item.icon}
                   sx={{
                     "&.Mui-selected": {
-                      borderTop: `2px solid ${PLUM}`,
+                      borderTop: `2px solid ${PLUM_ON_DARK}`,
                     },
                   }}
                 />

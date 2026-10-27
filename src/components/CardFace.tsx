@@ -10,11 +10,13 @@ type Props = {
   back: string;
   revealed: boolean;
   onReveal: () => void;
+  /** Flip from answer back to the question face. */
+  onFlipBack: () => void;
   disabled?: boolean;
   mediaR2Keys?: string[];
   /** Focus target for the answer face after reveal. */
   answerFocusRef?: Ref<HTMLElement | null>;
-  /** Focus target for Show answer after grading to the next card. */
+  /** Focus target for Show answer after grading / flip-back. */
   showAnswerRef?: Ref<HTMLButtonElement | null>;
 };
 
@@ -48,12 +50,19 @@ const FACE_SX = {
 } as const;
 
 const FACE_BODY_SX = {
-  overflow: "auto",
+  overflowX: "hidden",
+  overflowY: "auto",
   flex: 1,
   minHeight: 0,
   display: "flex",
   flexDirection: "column",
   width: "100%",
+  // Never show a focus ring on the scrollport (Study focuses the answer text instead).
+  outline: "none",
+  boxShadow: "none",
+  WebkitTapHighlightColor: "transparent",
+  "&:focus": { outline: "none" },
+  "&:focus-visible": { outline: "none" },
 } as const;
 
 const PROMPT_SX = {
@@ -93,17 +102,6 @@ function FaceOverline({ label }: { label: string }) {
       <Typography component="div" sx={OVERLINE_SX}>
         {label}
       </Typography>
-      <Box
-        aria-hidden
-        sx={{
-          width: 28,
-          height: 1,
-          bgcolor: "currentColor",
-          opacity: 0.35,
-          mx: "auto",
-          mt: 0.75,
-        }}
-      />
     </Box>
   );
 }
@@ -114,6 +112,7 @@ export default function CardFace({
   back,
   revealed,
   onReveal,
+  onFlipBack,
   disabled,
   mediaR2Keys = [],
   answerFocusRef,
@@ -121,15 +120,26 @@ export default function CardFace({
 }: Props) {
   const imageKey = mediaR2Keys[0];
   const canReveal = !revealed && !disabled;
+  const canFlipBack = revealed && !disabled;
 
   const reveal = () => {
     if (!canReveal) return;
     onReveal();
   };
 
+  const flipBack = () => {
+    if (!canFlipBack) return;
+    onFlipBack();
+  };
+
   const onShowAnswerClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     reveal();
+  };
+
+  const onShowQuestionClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    flipBack();
   };
 
   return (
@@ -143,7 +153,7 @@ export default function CardFace({
     >
       <Box
         className="sp-playing-card"
-        onClick={canReveal ? reveal : undefined}
+        onClick={canReveal ? reveal : canFlipBack ? flipBack : undefined}
         sx={{
           position: "relative",
           width: "100%",
@@ -152,7 +162,7 @@ export default function CardFace({
           transformStyle: "preserve-3d",
           transition: "transform 0.45s ease",
           transform: revealed ? "rotateY(180deg)" : "rotateY(0deg)",
-          cursor: canReveal ? "pointer" : "default",
+          cursor: canReveal || canFlipBack ? "pointer" : "default",
           "@media (prefers-reduced-motion: reduce)": {
             transform: "none",
             transition: "none",
@@ -228,13 +238,35 @@ export default function CardFace({
           sx={faceMotionSx(true, revealed)}
         >
           <FaceOverline label="Back" />
-          <Box
-            ref={answerFocusRef}
-            data-card-face-content
-            tabIndex={revealed ? -1 : undefined}
-            sx={{ ...FACE_BODY_SX, outline: "none" }}
-          >
-            <Box sx={PROMPT_SX}>
+          <Box data-card-face-content sx={FACE_BODY_SX}>
+            <Typography
+              component="p"
+              sx={{
+                fontFamily: FACE_SANS,
+                fontSize: "0.8125rem",
+                fontWeight: 500,
+                lineHeight: 1.35,
+                whiteSpace: "pre-wrap",
+                color: "inherit",
+                opacity: 0.55,
+                textAlign: "center",
+                mb: 1.5,
+                flexShrink: 0,
+              }}
+            >
+              {front}
+            </Typography>
+            <Box
+              ref={answerFocusRef}
+              tabIndex={revealed ? -1 : undefined}
+              sx={{
+                ...PROMPT_SX,
+                outline: "none",
+                WebkitTapHighlightColor: "transparent",
+                "&:focus": { outline: "none" },
+                "&:focus-visible": { outline: "none" },
+              }}
+            >
               <Typography
                 component="p"
                 sx={{
@@ -249,6 +281,27 @@ export default function CardFace({
                 {back}
               </Typography>
             </Box>
+            {revealed ? (
+              <Box sx={{ pt: 2, width: "100%", flexShrink: 0 }}>
+                <Button
+                  variant="outlined"
+                  onClick={onShowQuestionClick}
+                  disabled={!!disabled}
+                  sx={{
+                    fontFamily: FACE_SANS,
+                    borderColor: "currentColor",
+                    color: "inherit",
+                    opacity: 0.85,
+                    "&:hover": {
+                      borderColor: "currentColor",
+                      bgcolor: "rgba(30, 13, 27, 0.06)",
+                    },
+                  }}
+                >
+                  Show question
+                </Button>
+              </Box>
+            ) : null}
           </Box>
         </Paper>
       </Box>

@@ -33,6 +33,8 @@ type Props = {
   activeStep: number;
   setActiveStep: (n: number) => void;
   onChanged?: () => void | Promise<void>;
+  /** Guest: decks ok; paste/upload generation needs a signed-in account. */
+  localOnly?: boolean;
 };
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
@@ -51,6 +53,7 @@ export default function CreateMaterialStepper({
   activeStep,
   setActiveStep,
   onChanged,
+  localOnly = false,
 }: Props) {
   const [title, setTitle] = useState("");
   const [selectedDeckId, setSelectedDeckId] = useState("");
@@ -201,9 +204,7 @@ export default function CreateMaterialStepper({
       setUploadFile(null);
       if (material.jobId) {
         setJobId(material.jobId);
-        setNotice(
-          `Stored file (${material.status}). Generation started.`,
-        );
+        setNotice(`Stored file (${material.status}). Generation started.`);
         setActiveStep(2);
       } else {
         setNotice(
@@ -239,7 +240,9 @@ export default function CreateMaterialStepper({
               <Stack spacing={2}>
                 <Typography variant="h6">Choose a deck</Typography>
                 <FormControl fullWidth>
-                  <InputLabel id="existing-deck-label">Existing deck</InputLabel>
+                  <InputLabel id="existing-deck-label">
+                    Existing deck
+                  </InputLabel>
                   <Select
                     labelId="existing-deck-label"
                     label="Existing deck"
@@ -289,7 +292,25 @@ export default function CreateMaterialStepper({
           </Stack>
         )}
 
-        {activeStep === 1 && (
+        {activeStep === 1 && localOnly ? (
+          <Stack spacing={2}>
+            <Alert severity="info">
+              Guest mode keeps study local in this browser. Sign in to paste or
+              upload materials and generate cards with AI.
+            </Alert>
+            <Button variant="contained" href="/register">
+              Create account
+            </Button>
+            <Button variant="text" href="/login">
+              Sign in
+            </Button>
+            <Button variant="outlined" onClick={() => setActiveStep(0)}>
+              Back to decks
+            </Button>
+          </Stack>
+        ) : null}
+
+        {activeStep === 1 && !localOnly && (
           <Box>
             <Tabs
               value={tab}
@@ -342,7 +363,9 @@ export default function CreateMaterialStepper({
                     component="label"
                     disabled={busy || !selectedDeckId}
                   >
-                    {uploadFile ? uploadFile.name : "Choose PDF, PPTX, or image"}
+                    {uploadFile
+                      ? uploadFile.name
+                      : "Choose PDF, PPTX, or image"}
                     <input
                       type="file"
                       accept="application/pdf,.pdf,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"

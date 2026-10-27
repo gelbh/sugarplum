@@ -287,9 +287,7 @@ export default function DraftReviewPage() {
       }
       end();
     } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Could not accept all",
-      );
+      setError(err instanceof ApiError ? err.message : "Could not accept all");
       end(false);
     }
   }
@@ -324,9 +322,7 @@ export default function DraftReviewPage() {
           </Typography>
         </Box>
         {view ? <JourneyRail view={view} /> : null}
-        {journeyError ? (
-          <Alert severity="warning">{journeyError}</Alert>
-        ) : null}
+        {journeyError ? <Alert severity="warning">{journeyError}</Alert> : null}
 
         <Stack
           direction="row"

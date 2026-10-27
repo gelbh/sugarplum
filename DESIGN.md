@@ -102,7 +102,7 @@ components:
     textColor: "inherit"
     rounded: "{rounded.sm}"
     padding: "8px 4px"
-    height: "44px"
+    height: "56px"
   card-playing:
     backgroundColor: "{colors.ivory}"
     textColor: "{colors.stage}"
@@ -227,7 +227,7 @@ Gentle MUI radii: 4px on nav items and grade ticks, 6px on the large Start study
 ### Buttons
 - **Shape:** Soft rectangle (6px on hero CTA; default MUI elsewhere; 4px on grade cells).
 - **Primary:** Fruit plum fill, white (light) or ivory (dark scheme) contrast; Today Start study uses large size, weight 600, ~1.05rem, `py` 12 / `px` 24.
-- **Grade rail:** Transparent fill, inherit color (ivory on stage), min-height 44px, dose-tick glyph (1.5×10px) above label; hover `action.hover` only.
+- **Grade rail:** Outlined cells, inherit color (ivory on stage), min-height 56px; swipe-direction icons (← Again · ↓ Hard · → Good · ↑ Easy) above label; desktop key chip; soft ivory hover wash.
 - **Show answer:** Contained primary on the card face, Source Sans 3.
 
 ### Cards / Containers
@@ -245,8 +245,8 @@ Gentle MUI radii: 4px on nav items and grade ticks, 6px on the large Start study
 ### Signature: Due Proof
 Centered tabular count + “cards due” caption + single plum Start study when due > 0. No stage rail, no card chrome on this surface.
 
-### Signature: Grade Dose Rail
-Four equal columns (Again / Hard / Good / Easy), keys 1–4 on desktop, swipe hints when shown. Inherits stage ivory in zen.
+### Signature: Grade Rail
+Four equal columns (Again / Hard / Good / Easy) with swipe-direction icons matching gestures, keys 1–4 as chips on desktop, swipe hints when shown. Inherits stage ivory in zen; no traffic-light grade colors.
 
 ## Do's and Don'ts
 

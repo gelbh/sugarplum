@@ -18,6 +18,7 @@ import {
 } from "../api/client";
 import { deriveJourney } from "../journey/derive";
 import CreateMaterialStepper from "../components/CreateMaterialStepper";
+import { isGuest } from "../guest/session";
 import { useTrackedOp } from "../progress/useTrackedOp";
 
 export default function LibraryPage() {
@@ -26,6 +27,7 @@ export default function LibraryPage() {
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
+  const guest = isGuest();
   const { end: endLoad } = useTrackedOp("Loading library…", {
     trackOnMount: true,
   });
@@ -106,7 +108,8 @@ export default function LibraryPage() {
               Library
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Create decks, paste notes, or upload PDF, PPTX, or image materials.
+              Create decks, paste notes, or upload PDF, PPTX, or image
+              materials.
             </Typography>
           </Box>
 
@@ -219,6 +222,7 @@ export default function LibraryPage() {
               setDecks={setDecks}
               activeStep={activeStep}
               setActiveStep={setActiveStep}
+              localOnly={guest}
               onChanged={async () => {
                 await syncStepperFromJourney();
                 await refreshDraftJobs();

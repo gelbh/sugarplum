@@ -14,7 +14,11 @@ registerSW({ immediate: true });
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <InitColorSchemeScript attribute="data" defaultMode="system" />
-    <ThemeProvider theme={theme} defaultMode="system" modeStorageKey="sugarplum-mode">
+    <ThemeProvider
+      theme={theme}
+      defaultMode="system"
+      modeStorageKey="sugarplum-mode"
+    >
       <CssBaseline enableColorScheme />
       <App />
     </ThemeProvider>

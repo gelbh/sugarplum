@@ -19,10 +19,12 @@ import Brightness6Icon from "@mui/icons-material/Brightness6";
 import {
   ApiError,
   getLlmSettings,
+  logout,
   me,
   putLlmSettings,
   type LlmSettings,
 } from "../api/client";
+import { isGuest } from "../guest/session";
 import { useTrackedOp } from "../progress/useTrackedOp";
 
 type ThemeMode = "system" | "light" | "dark";
@@ -70,6 +72,7 @@ export default function SettingsPage() {
   const [current, setCurrent] = useState<LlmSettings | null>(null);
   const [googleLinked, setGoogleLinked] = useState(false);
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
+  const [guest, setGuest] = useState(false);
   const queryMsg = settingsQueryMessage();
   const [error, setError] = useState<string | null>(queryMsg.error);
   const [notice, setNotice] = useState<string | null>(queryMsg.notice);
@@ -87,6 +90,7 @@ export default function SettingsPage() {
         const user = await me();
         const settings = await getLlmSettings();
         if (cancelled) return;
+        setGuest(isGuest());
         setAccountEmail(user.email);
         setGoogleLinked(user.google_linked === true);
         setCurrent(settings);
@@ -110,6 +114,11 @@ export default function SettingsPage() {
       cancelled = true;
     };
   }, [endLoad]);
+
+  async function endGuestSession() {
+    await logout();
+    window.location.assign("/login");
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -172,21 +181,41 @@ export default function SettingsPage() {
             Account
           </Typography>
           <Stack spacing={1.5}>
-            {accountEmail ? (
-              <Typography variant="body2" color="text.secondary">
-                Signed in as {accountEmail}
-              </Typography>
-            ) : null}
-            {googleLinked ? (
-              <Alert severity="success">Google account linked.</Alert>
+            {guest ? (
+              <>
+                <Alert severity="info">
+                  Guest mode: decks and reviews stay in this browser only.
+                </Alert>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => void endGuestSession()}
+                >
+                  End guest session
+                </Button>
+                <Button variant="outlined" href="/register">
+                  Create account
+                </Button>
+              </>
             ) : (
-              <Button
-                variant="outlined"
-                color="primary"
-                href="/api/auth/google/start?intent=link"
-              >
-                Link Google
-              </Button>
+              <>
+                {accountEmail ? (
+                  <Typography variant="body2" color="text.secondary">
+                    Signed in as {accountEmail}
+                  </Typography>
+                ) : null}
+                {googleLinked ? (
+                  <Alert severity="success">Google account linked.</Alert>
+                ) : (
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    href="/api/auth/google/start?intent=link"
+                  >
+                    Link Google
+                  </Button>
+                )}
+              </>
             )}
           </Stack>
         </Paper>
@@ -229,7 +258,12 @@ export default function SettingsPage() {
             borderColor: "divider",
           }}
         >
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            sx={{ mb: 1.5 }}
+          >
             <Brightness6Icon color="primary" fontSize="small" />
             <Typography
               variant="subtitle1"
@@ -255,73 +289,97 @@ export default function SettingsPage() {
           </ToggleButtonGroup>
         </Paper>
 
-        <Paper
-          variant="outlined"
-          sx={{
-            p: 2.5,
-            bgcolor: "background.paper",
-            borderColor: "divider",
-          }}
-        >
-          <Typography
-            variant="subtitle1"
-            component="h2"
-            sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+        {guest ? (
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 2.5,
+              bgcolor: "background.paper",
+              borderColor: "divider",
+            }}
           >
-            API key
-          </Typography>
-          {current?.configured ? (
-            <Alert severity="info" sx={{ mb: 2 }}>
-              Configured: {current.provider} · key ending in ···{current.last4}
+            <Typography
+              variant="subtitle1"
+              component="h2"
+              sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+            >
+              Generation
+            </Typography>
+            <Alert severity="info">
+              Guest mode cannot save API keys or run AI generation. Create an
+              account to upload materials and generate cards.
             </Alert>
-          ) : (
-            <Alert severity="info" sx={{ mb: 2 }}>
-              No personal API key yet. Generation still works via free platform
-              AI.
-            </Alert>
-          )}
+          </Paper>
+        ) : (
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 2.5,
+              bgcolor: "background.paper",
+              borderColor: "divider",
+            }}
+          >
+            <Typography
+              variant="subtitle1"
+              component="h2"
+              sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+            >
+              API key
+            </Typography>
+            {current?.configured ? (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Configured: {current.provider} · key ending in ···
+                {current.last4}
+              </Alert>
+            ) : (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                No personal API key yet. Generation still works via free
+                platform AI.
+              </Alert>
+            )}
 
-          <Box component="form" onSubmit={onSubmit} noValidate>
-            <Stack spacing={2}>
-              {error ? <Alert severity="error">{error}</Alert> : null}
-              {notice ? <Alert severity="success">{notice}</Alert> : null}
-              <FormControl fullWidth>
-                <InputLabel id="provider-label">Provider</InputLabel>
-                <Select
-                  labelId="provider-label"
-                  label="Provider"
-                  value={provider}
-                  onChange={(ev) => setProvider(ev.target.value)}
+            <Box component="form" onSubmit={onSubmit} noValidate>
+              <Stack spacing={2}>
+                {error ? <Alert severity="error">{error}</Alert> : null}
+                {notice ? <Alert severity="success">{notice}</Alert> : null}
+                <FormControl fullWidth>
+                  <InputLabel id="provider-label">Provider</InputLabel>
+                  <Select
+                    labelId="provider-label"
+                    label="Provider"
+                    value={provider}
+                    onChange={(ev) => setProvider(ev.target.value)}
+                  >
+                    {PROVIDERS.map((p) => (
+                      <MenuItem key={p.value} value={p.value}>
+                        {p.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <TextField
+                  label="API key"
+                  type="password"
+                  name="apiKey"
+                  autoComplete="off"
+                  value={apiKey}
+                  onChange={(ev) => setApiKey(ev.target.value)}
+                  required
+                  fullWidth
+                  helperText="Paste a new key to replace the stored one."
+                />
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  disabled={busy || !apiKey}
                 >
-                  {PROVIDERS.map((p) => (
-                    <MenuItem key={p.value} value={p.value}>
-                      {p.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <TextField
-                label="API key"
-                type="password"
-                name="apiKey"
-                autoComplete="off"
-                value={apiKey}
-                onChange={(ev) => setApiKey(ev.target.value)}
-                required
-                fullWidth
-                helperText="Paste a new key to replace the stored one."
-              />
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                disabled={busy || !apiKey}
-              >
-                {busy ? "Saving…" : "Save API key"}
-              </Button>
-            </Stack>
-          </Box>
-        </Paper>
+                  {busy ? "Saving…" : "Save API key"}
+                </Button>
+              </Stack>
+            </Box>
+          </Paper>
+        )}
 
         <Typography variant="body2">
           <Link href="/library" underline="hover" color="primary">

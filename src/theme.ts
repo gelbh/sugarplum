@@ -1,7 +1,9 @@
 import { createTheme } from "@mui/material/styles";
 
-/** Sugarplum brand: fruit plum accent shared by both Operate registers. */
+/** Sugarplum brand: fruit plum for light surfaces / filled CTAs. */
 const PLUM = "#5B2C6F";
+/** Lighter plum for dark-scheme text and accents on night stage (WCAG on #1e0d1b). */
+const PLUM_ON_DARK = "#CE93D8";
 /** Muted candied amber/gold; secondary only. */
 const AMBER = "#C4A574";
 /** Evening desk stage (zen). */
@@ -40,7 +42,7 @@ export const theme = createTheme({
     },
     dark: {
       palette: {
-        primary: { main: PLUM, contrastText: IVORY },
+        primary: { main: PLUM_ON_DARK, contrastText: STAGE_DEEP },
         secondary: { main: AMBER, contrastText: STAGE_DEEP },
         background: {
           default: STAGE,

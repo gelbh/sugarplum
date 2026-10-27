@@ -1,4 +1,17 @@
-import { UploadError, uploadWithProgress } from "../progress/uploadWithProgress";
+import {
+  UploadError,
+  uploadWithProgress,
+} from "../progress/uploadWithProgress";
+import { endGuestLocal } from "../guest/endGuestLocal";
+import { GUEST_USER, isGuest } from "../guest/session";
+import {
+  ensureGuestStore,
+  guestCreateDeck,
+  guestJourney,
+  guestListDecks,
+  guestListDueCards,
+  guestReviewCard,
+} from "../guest/store";
 
 export type ApiErrorBody = {
   error?: string;
@@ -13,6 +26,10 @@ export class ApiError extends Error {
     this.name = "ApiError";
     this.status = status;
   }
+}
+
+function guestUnsupported(action: string): never {
+  throw new ApiError(403, `Guest mode is local-only. Sign in to ${action}.`);
 }
 
 /** JSON fetch helper; always sends cookies for session auth. */
@@ -55,25 +72,37 @@ export type AuthUser = {
   google_linked?: boolean;
 };
 
-export function register(email: string, password: string) {
-  return api<AuthUser>("/api/auth/register", {
+export async function register(email: string, password: string) {
+  const user = await api<AuthUser>("/api/auth/register", {
     method: "POST",
     json: { email, password },
   });
+  endGuestLocal();
+  return user;
 }
 
-export function login(email: string, password: string) {
-  return api<AuthUser>("/api/auth/login", {
+export async function login(email: string, password: string) {
+  const user = await api<AuthUser>("/api/auth/login", {
     method: "POST",
     json: { email, password },
   });
+  endGuestLocal();
+  return user;
 }
 
 export function logout() {
+  if (isGuest()) {
+    endGuestLocal();
+    return Promise.resolve({ ok: true });
+  }
   return api<{ ok: boolean }>("/api/auth/logout", { method: "POST" });
 }
 
 export function me() {
+  if (isGuest()) {
+    ensureGuestStore();
+    return Promise.resolve({ ...GUEST_USER });
+  }
   return api<AuthUser>("/api/auth/me");
 }
 
@@ -96,10 +125,12 @@ export type Material = {
 };
 
 export function listDecks() {
+  if (isGuest()) return Promise.resolve(guestListDecks());
   return api<Deck[]>("/api/decks");
 }
 
 export function createDeck(title: string) {
+  if (isGuest()) return Promise.resolve(guestCreateDeck(title));
   return api<Deck>("/api/decks", {
     method: "POST",
     json: { title },
@@ -112,6 +143,7 @@ export function pasteMaterial(
   deckId: string,
   body: { text: string; filename?: string },
 ) {
+  if (isGuest()) guestUnsupported("generate cards from materials");
   return api<PasteMaterialResponse>(`/api/decks/${deckId}/materials/paste`, {
     method: "POST",
     json: body,
@@ -138,6 +170,7 @@ export type GenerationJob = {
 };
 
 export function getJob(jobId: string) {
+  if (isGuest()) guestUnsupported("view generation jobs");
   return api<GenerationJob>(`/api/jobs/${jobId}`);
 }
 
@@ -152,6 +185,7 @@ export type JobListItem = {
 
 /** Owner jobs that still have draft cards (newest first). */
 export function listJobsWithDrafts() {
+  if (isGuest()) return Promise.resolve([]);
   return api<JobListItem[]>("/api/jobs");
 }
 
@@ -165,6 +199,7 @@ export function requestMaterialUploadUrl(
   deckId: string,
   body: { filename: string; contentType: string; size: number },
 ) {
+  if (isGuest()) guestUnsupported("upload materials");
   return api<UploadUrlResponse>(`/api/decks/${deckId}/materials/upload-url`, {
     method: "POST",
     json: body,
@@ -174,9 +209,13 @@ export function requestMaterialUploadUrl(
 export type CompleteMaterialResponse = Material & { jobId: string | null };
 
 export function completeMaterial(materialId: string) {
-  return api<CompleteMaterialResponse>(`/api/materials/${materialId}/complete`, {
-    method: "POST",
-  });
+  if (isGuest()) guestUnsupported("complete material uploads");
+  return api<CompleteMaterialResponse>(
+    `/api/materials/${materialId}/complete`,
+    {
+      method: "POST",
+    },
+  );
 }
 
 export type LlmSettingsConfigured = {
@@ -192,10 +231,15 @@ export type LlmSettingsMissing = {
 export type LlmSettings = LlmSettingsConfigured | LlmSettingsMissing;
 
 export function getLlmSettings() {
+  if (isGuest()) {
+    const missing: LlmSettingsMissing = { configured: false };
+    return Promise.resolve(missing);
+  }
   return api<LlmSettings>("/api/settings/llm");
 }
 
 export function putLlmSettings(provider: string, apiKey: string) {
+  if (isGuest()) guestUnsupported("save LLM settings");
   return api<LlmSettingsConfigured>("/api/settings/llm", {
     method: "PUT",
     json: { provider, apiKey },
@@ -223,6 +267,7 @@ export function mediaUrl(r2Key: string): string {
 }
 
 export function listJobDrafts(jobId: string) {
+  if (isGuest()) guestUnsupported("review draft cards");
   return api<CardDraftView[]>(`/api/jobs/${jobId}/drafts`);
 }
 
@@ -237,6 +282,7 @@ export type JourneyStatus = {
 };
 
 export function getJourney() {
+  if (isGuest()) return Promise.resolve(guestJourney());
   return api<JourneyStatus>("/api/journey");
 }
 
@@ -248,6 +294,7 @@ export function patchCard(
     type?: "qa" | "cloze" | "image_label" | "diagram";
   },
 ) {
+  if (isGuest()) guestUnsupported("edit cards");
   return api<CardDraftView>(`/api/cards/${cardId}`, {
     method: "PATCH",
     json: body,
@@ -255,10 +302,12 @@ export function patchCard(
 }
 
 export function acceptCard(cardId: string) {
+  if (isGuest()) guestUnsupported("accept cards");
   return api<CardDraftView>(`/api/cards/${cardId}/accept`, { method: "POST" });
 }
 
 export function acceptAllJobDrafts(jobId: string) {
+  if (isGuest()) guestUnsupported("accept cards");
   return api<{ accepted: number; failed: number }>(
     `/api/jobs/${jobId}/drafts/accept-all`,
     { method: "POST" },
@@ -266,10 +315,12 @@ export function acceptAllJobDrafts(jobId: string) {
 }
 
 export function rejectCard(cardId: string) {
+  if (isGuest()) guestUnsupported("reject cards");
   return api<CardDraftView>(`/api/cards/${cardId}/reject`, { method: "POST" });
 }
 
 export function listDueCards() {
+  if (isGuest()) return Promise.resolve(guestListDueCards());
   return api<CardDraftView[]>("/api/study/due");
 }
 
@@ -278,6 +329,7 @@ export type StudyRating = 1 | 2 | 3 | 4;
 export type ReviewResult = { due: string };
 
 export function reviewCard(cardId: string, rating: StudyRating) {
+  if (isGuest()) return Promise.resolve(guestReviewCard(cardId, rating));
   return api<ReviewResult>("/api/study/review", {
     method: "POST",
     json: { cardId, rating },
@@ -301,7 +353,10 @@ export function resolveUploadContentType(file: File): string {
   if (name.endsWith(".pptx") && (ZIP_MIMES.has(rawType) || !rawType)) {
     return PPTX_MIME;
   }
-  if (name.endsWith(".pdf") && (!rawType || rawType === "application/octet-stream")) {
+  if (
+    name.endsWith(".pdf") &&
+    (!rawType || rawType === "application/octet-stream")
+  ) {
     return "application/pdf";
   }
   if (rawType && !ZIP_MIMES.has(rawType)) return file.type;
@@ -342,4 +397,3 @@ export async function uploadMaterialFile(
 
   return completeMaterial(materialId);
 }
-

@@ -148,6 +148,12 @@ export default function StudyPage() {
     }
   }, []);
 
+  const flipBack = useCallback(() => {
+    setRevealed(false);
+    setShowSwipeHint(false);
+    focusShowAnswerAfterGradeRef.current = true;
+  }, []);
+
   useEffect(() => {
     if (!revealed) return;
     answerFocusRef.current?.focus();
@@ -340,11 +346,7 @@ export default function StudyPage() {
               aria-pressed={zen}
               onClick={toggleZen}
               color="primary"
-              sx={
-                zen
-                  ? { position: "absolute", right: 0, top: -4 }
-                  : undefined
-              }
+              sx={zen ? { position: "absolute", right: 0, top: -4 } : undefined}
             >
               {zen ? <FullscreenExitIcon /> : <FullscreenIcon />}
             </IconButton>
@@ -364,15 +366,12 @@ export default function StudyPage() {
           {error ? <Alert severity="error">{error}</Alert> : null}
           {offlineCopy ? (
             <Alert severity="warning">
-              Showing an offline copy of due cards. Grading still needs a network
-              connection.
+              Showing an offline copy of due cards. Grading still needs a
+              network connection.
             </Alert>
           ) : null}
           {fullscreenUnavailable ? (
-            <Alert
-              severity="info"
-              onClose={clearFullscreenUnavailable}
-            >
+            <Alert severity="info" onClose={clearFullscreenUnavailable}>
               Fullscreen unavailable
             </Alert>
           ) : null}
@@ -446,6 +445,7 @@ export default function StudyPage() {
                   mediaR2Keys={current.media_r2_keys}
                   revealed={revealed}
                   onReveal={reveal}
+                  onFlipBack={flipBack}
                   disabled={busy}
                   answerFocusRef={answerFocusRef}
                   showAnswerRef={showAnswerRef}
@@ -461,7 +461,7 @@ export default function StudyPage() {
                   />
                 </Box>
               ) : (
-                <Box sx={{ minHeight: 44 }} aria-hidden />
+                <Box sx={{ minHeight: 72 }} aria-hidden />
               )}
             </>
           )}
