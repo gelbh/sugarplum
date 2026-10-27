@@ -267,6 +267,32 @@ export function createTestEnv(opts?: {
           return ({ count: cnt } as unknown) as T;
         }
         if (
+          normalized.startsWith("SELECT COUNT(*)") &&
+          normalized.includes("FROM cards WHERE deck_id =") &&
+          normalized.includes("status =")
+        ) {
+          const deckId = bound[0] as string;
+          // Literal status in SQL (e.g. status = 'accepted') uses one bind (deck_id).
+          const statusLiteral = normalized.match(
+            /status = '([^']+)'/,
+          )?.[1];
+          const wantStatus = statusLiteral ?? (bound[1] as string);
+          const cnt = [...cards.values()].filter(
+            (c) => c.deck_id === deckId && c.status === wantStatus,
+          ).length;
+          return ({ count: cnt } as unknown) as T;
+        }
+        if (
+          normalized.startsWith("SELECT COUNT(*)") &&
+          normalized.includes("FROM materials WHERE deck_id =")
+        ) {
+          const deckId = bound[0] as string;
+          const cnt = [...materials.values()].filter(
+            (m) => m.deck_id === deckId,
+          ).length;
+          return ({ count: cnt } as unknown) as T;
+        }
+        if (
           normalized.includes("FROM decks WHERE id =") &&
           normalized.includes("user_id =")
         ) {
@@ -543,6 +569,26 @@ export function createTestEnv(opts?: {
         }
         if (
           normalized.includes("FROM decks WHERE user_id =") &&
+          normalized.includes("AND subject_id =") &&
+          normalized.includes("ORDER BY created_at")
+        ) {
+          const [userId, subjectId] = bound as [string, string];
+          const rows = [...decks.values()]
+            .filter(
+              (d) => d.user_id === userId && d.subject_id === subjectId,
+            )
+            .sort((a, b) => a.created_at.localeCompare(b.created_at))
+            .map(({ id, title, subject_hint, subject_id, created_at }) => ({
+              id,
+              title,
+              subject_hint,
+              subject_id: subject_id ?? null,
+              created_at,
+            }));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM decks WHERE user_id =") &&
           normalized.includes("ORDER BY created_at")
         ) {
           const includeSubjectId = normalized.includes("subject_id");
@@ -757,6 +803,41 @@ export function createTestEnv(opts?: {
             return { success: true, meta: { changes: 0 } } as D1Result;
           }
           subjects.delete(id);
+          return { success: true, meta: { changes: 1 } } as D1Result;
+        } else if (
+          normalized.startsWith("UPDATE decks SET title =")
+        ) {
+          const [title, id, userId] = bound as [string, string, string];
+          const row = decks.get(id);
+          if (row && row.user_id === userId) {
+            decks.set(id, { ...row, title });
+            return { success: true, meta: { changes: 1 } } as D1Result;
+          }
+          return { success: true, meta: { changes: 0 } } as D1Result;
+        } else if (normalized.startsWith("DELETE FROM decks WHERE id =")) {
+          const id = bound[0] as string;
+          const userId = bound[1] as string | undefined;
+          const row = decks.get(id);
+          if (!row || (userId != null && row.user_id !== userId)) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          // FK cascade: materials → jobs; cards → schedules + review_logs.
+          for (const [mid, material] of [...materials.entries()]) {
+            if (material.deck_id !== id) continue;
+            for (const [jid, job] of [...generationJobs.entries()]) {
+              if (job.material_id === mid) generationJobs.delete(jid);
+            }
+            materials.delete(mid);
+          }
+          for (const [cid, card] of [...cards.entries()]) {
+            if (card.deck_id !== id) continue;
+            cards.delete(cid);
+            schedules.delete(cid);
+            for (let i = reviewLogs.length - 1; i >= 0; i--) {
+              if (reviewLogs[i].card_id === cid) reviewLogs.splice(i, 1);
+            }
+          }
+          decks.delete(id);
           return { success: true, meta: { changes: 1 } } as D1Result;
         } else if (normalized.startsWith("INSERT INTO decks")) {
           // Legacy: (id, user_id, title, subject_hint, created_at) — subject_id null.

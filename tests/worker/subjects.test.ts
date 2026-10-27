@@ -132,7 +132,6 @@ describe("subject CRUD", () => {
       title: "Has decks",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    // Task 3 will require subjectId on POST /api/decks; seed with subject_id for now.
     env.seedDeck({
       id: "deck-1",
       user_id: "user-a",

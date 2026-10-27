@@ -22,6 +22,7 @@ export type DeckRow = {
   user_id: string;
   title: string;
   subject_hint: string | null;
+  subject_id: string | null;
   created_at: string;
 };
 
@@ -107,12 +108,42 @@ export async function requireOwnedDeck(
 ): Promise<DeckRow> {
   const deck = await db
     .prepare(
-      "SELECT id, user_id, title, subject_hint, created_at FROM decks WHERE id = ? AND user_id = ?",
+      "SELECT id, user_id, title, subject_hint, subject_id, created_at FROM decks WHERE id = ? AND user_id = ?",
     )
     .bind(deckId, userId)
     .first<DeckRow>();
   if (!deck) throw new HTTPException(404, { message: "Deck not found" });
   return deck;
+}
+
+async function requireOwnedSubjectId(
+  db: D1Database,
+  subjectId: string,
+  userId: string,
+): Promise<void> {
+  const subject = await db
+    .prepare(
+      "SELECT id, user_id FROM subjects WHERE id = ? AND user_id = ?",
+    )
+    .bind(subjectId, userId)
+    .first<{ id: string; user_id: string }>();
+  if (!subject) throw new HTTPException(404, { message: "Subject not found" });
+}
+
+function deckJson(deck: {
+  id: string;
+  title: string;
+  subject_hint: string | null;
+  subject_id: string | null;
+  created_at: string;
+}) {
+  return {
+    id: deck.id,
+    title: deck.title,
+    subject_hint: deck.subject_hint,
+    subject_id: deck.subject_id,
+    created_at: deck.created_at,
+  };
 }
 
 async function requireOwnedMaterial(
@@ -137,6 +168,115 @@ export const deckRoutes = new Hono<AppEnv>();
 
 deckRoutes.post("/", async (c) => {
   const userId = await requireUser(c);
+  let body: { title?: unknown; subjectId?: unknown };
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+
+  const title = typeof body.title === "string" ? body.title.trim() : "";
+  if (!title) throw new HTTPException(400, { message: "Title required" });
+
+  const subjectId =
+    typeof body.subjectId === "string" ? body.subjectId.trim() : "";
+  if (!subjectId) {
+    throw new HTTPException(400, { message: "subjectId required" });
+  }
+
+  const id = newId();
+  const createdAt = new Date().toISOString();
+  const db = getDb(c.env);
+  await requireOwnedSubjectId(db, subjectId, userId);
+
+  await db
+    .prepare(
+      "INSERT INTO decks (id, user_id, title, subject_hint, subject_id, created_at) VALUES (?, ?, ?, NULL, ?, ?)",
+    )
+    .bind(id, userId, title, subjectId, createdAt)
+    .run();
+
+  return c.json(
+    deckJson({
+      id,
+      title,
+      subject_hint: null,
+      subject_id: subjectId,
+      created_at: createdAt,
+    }),
+    201,
+  );
+});
+
+deckRoutes.get("/", async (c) => {
+  const userId = await requireUser(c);
+  const db = getDb(c.env);
+  const subjectId = c.req.query("subjectId")?.trim() || null;
+
+  type DeckListRow = {
+    id: string;
+    title: string;
+    subject_hint: string | null;
+    subject_id: string | null;
+    created_at: string;
+  };
+
+  if (subjectId) {
+    const { results } = await db
+      .prepare(
+        "SELECT id, title, subject_hint, subject_id, created_at FROM decks WHERE user_id = ? AND subject_id = ? ORDER BY created_at ASC",
+      )
+      .bind(userId, subjectId)
+      .all<DeckListRow>();
+    return c.json(results ?? []);
+  }
+
+  const { results } = await db
+    .prepare(
+      "SELECT id, title, subject_hint, subject_id, created_at FROM decks WHERE user_id = ? ORDER BY created_at ASC",
+    )
+    .bind(userId)
+    .all<DeckListRow>();
+
+  return c.json(results ?? []);
+});
+
+deckRoutes.get("/:id/stats", async (c) => {
+  const userId = await requireUser(c);
+  const deckId = c.req.param("id");
+  const db = getDb(c.env);
+  await requireOwnedDeck(db, deckId, userId);
+
+  const accepted = await db
+    .prepare(
+      "SELECT COUNT(*) AS count FROM cards WHERE deck_id = ? AND status = 'accepted'",
+    )
+    .bind(deckId)
+    .first<{ count: number }>();
+  const draft = await db
+    .prepare(
+      "SELECT COUNT(*) AS count FROM cards WHERE deck_id = ? AND status = 'draft'",
+    )
+    .bind(deckId)
+    .first<{ count: number }>();
+  const materials = await db
+    .prepare("SELECT COUNT(*) AS count FROM materials WHERE deck_id = ?")
+    .bind(deckId)
+    .first<{ count: number }>();
+
+  return c.json({
+    accepted: accepted?.count ?? 0,
+    draft: draft?.count ?? 0,
+    materials: materials?.count ?? 0,
+  });
+});
+
+deckRoutes.patch("/:id", async (c) => {
+  const userId = await requireUser(c);
+  const deckId = c.req.param("id");
+  const db = getDb(c.env);
+  const deck = await requireOwnedDeck(db, deckId, userId);
+
   let body: { title?: unknown };
   try {
     body = await c.req.json();
@@ -147,44 +287,34 @@ deckRoutes.post("/", async (c) => {
   const title = typeof body.title === "string" ? body.title.trim() : "";
   if (!title) throw new HTTPException(400, { message: "Title required" });
 
-  const id = newId();
-  const createdAt = new Date().toISOString();
-  const db = getDb(c.env);
-
   await db
-    .prepare(
-      "INSERT INTO decks (id, user_id, title, subject_hint, created_at) VALUES (?, ?, ?, NULL, ?)",
-    )
-    .bind(id, userId, title, createdAt)
+    .prepare("UPDATE decks SET title = ? WHERE id = ? AND user_id = ?")
+    .bind(title, deckId, userId)
     .run();
 
   return c.json(
-    {
-      id,
+    deckJson({
+      id: deck.id,
       title,
-      subject_hint: null,
-      created_at: createdAt,
-    },
-    201,
+      subject_hint: deck.subject_hint,
+      subject_id: deck.subject_id ?? null,
+      created_at: deck.created_at,
+    }),
   );
 });
 
-deckRoutes.get("/", async (c) => {
+deckRoutes.delete("/:id", async (c) => {
   const userId = await requireUser(c);
+  const deckId = c.req.param("id");
   const db = getDb(c.env);
-  const { results } = await db
-    .prepare(
-      "SELECT id, title, subject_hint, created_at FROM decks WHERE user_id = ? ORDER BY created_at ASC",
-    )
-    .bind(userId)
-    .all<{
-      id: string;
-      title: string;
-      subject_hint: string | null;
-      created_at: string;
-    }>();
+  await requireOwnedDeck(db, deckId, userId);
 
-  return c.json(results ?? []);
+  await db
+    .prepare("DELETE FROM decks WHERE id = ? AND user_id = ?")
+    .bind(deckId, userId)
+    .run();
+
+  return c.body(null, 204);
 });
 
 deckRoutes.post("/:id/materials/paste", async (c) => {
