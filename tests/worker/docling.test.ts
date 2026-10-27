@@ -58,7 +58,10 @@ describe("extractFiguresViaDocling", () => {
       Response.json(doclingSuccessBody([onePicture(3)])),
     );
     const result = await extractFiguresViaDocling(
-      { DOCLING_URL: "http://127.0.0.1:5001" },
+      {
+        DOCLING_URL: "http://127.0.0.1:5001",
+        DOCLING_API_KEY: "test-key",
+      },
       new ArrayBuffer(8),
       { fetchFn },
     );
@@ -82,7 +85,10 @@ describe("extractFiguresViaDocling", () => {
   it("soft-fails on HTTP 500 with a warning", async () => {
     const fetchFn = vi.fn(async () => new Response("boom", { status: 500 }));
     const result = await extractFiguresViaDocling(
-      { DOCLING_URL: "http://127.0.0.1:5001/" },
+      {
+        DOCLING_URL: "http://127.0.0.1:5001/",
+        DOCLING_API_KEY: "test-key",
+      },
       new ArrayBuffer(0),
       { fetchFn },
     );
@@ -96,7 +102,10 @@ describe("extractFiguresViaDocling", () => {
       Response.json(doclingSuccessBody(pictures)),
     );
     const result = await extractFiguresViaDocling(
-      { DOCLING_URL: "http://127.0.0.1:5001" },
+      {
+        DOCLING_URL: "http://127.0.0.1:5001",
+        DOCLING_API_KEY: "test-key",
+      },
       new ArrayBuffer(0),
       { fetchFn },
     );
@@ -126,7 +135,10 @@ describe("extractFiguresViaDocling", () => {
       ),
     );
     const result = await extractFiguresViaDocling(
-      { DOCLING_URL: "http://127.0.0.1:5001" },
+      {
+        DOCLING_URL: "http://127.0.0.1:5001",
+        DOCLING_API_KEY: "test-key",
+      },
       new ArrayBuffer(0),
       { fetchFn },
     );
@@ -134,7 +146,7 @@ describe("extractFiguresViaDocling", () => {
     expect(result.crops[0].page).toBe(2);
   });
 
-  it("sends DOCLING_API_KEY when set", async () => {
+  it("sends DOCLING_API_KEY as X-Api-Key when set", async () => {
     const fetchFn = vi.fn(async () =>
       Response.json(doclingSuccessBody([])),
     );
@@ -148,7 +160,32 @@ describe("extractFiguresViaDocling", () => {
     );
     const [, init] = fetchFn.mock.calls[0] as [string, RequestInit];
     const headers = new Headers(init.headers);
-    expect(headers.get("authorization")).toBe("Bearer secret");
+    expect(headers.get("x-api-key")).toBe("secret");
+    expect(headers.get("authorization")).toBeNull();
+  });
+
+  it("does not POST when DOCLING_URL is set but API key is missing", async () => {
+    const fetchFn = vi.fn();
+    const result = await extractFiguresViaDocling(
+      { DOCLING_URL: "https://docling.example.com" },
+      new ArrayBuffer(8),
+      { fetchFn },
+    );
+    expect(fetchFn).not.toHaveBeenCalled();
+    expect(result.crops).toEqual([]);
+    expect(result.warning).toMatch(/api key|DOCLING_API_KEY/i);
+  });
+
+  it("does not POST when DOCLING_URL is set but API key is whitespace", async () => {
+    const fetchFn = vi.fn();
+    const result = await extractFiguresViaDocling(
+      { DOCLING_URL: "https://docling.example.com", DOCLING_API_KEY: "  " },
+      new ArrayBuffer(8),
+      { fetchFn },
+    );
+    expect(fetchFn).not.toHaveBeenCalled();
+    expect(result.crops).toEqual([]);
+    expect(result.warning).toMatch(/api key|DOCLING_API_KEY/i);
   });
 
   it("preserves JPEG MIME from the data URL", async () => {
@@ -169,7 +206,10 @@ describe("extractFiguresViaDocling", () => {
       ),
     );
     const result = await extractFiguresViaDocling(
-      { DOCLING_URL: "http://127.0.0.1:5001" },
+      {
+        DOCLING_URL: "http://127.0.0.1:5001",
+        DOCLING_API_KEY: "test-key",
+      },
       new ArrayBuffer(0),
       { fetchFn },
     );
@@ -194,7 +234,10 @@ describe("extractFiguresViaDocling", () => {
       ),
     );
     const result = await extractFiguresViaDocling(
-      { DOCLING_URL: "http://127.0.0.1:5001" },
+      {
+        DOCLING_URL: "http://127.0.0.1:5001",
+        DOCLING_API_KEY: "test-key",
+      },
       new ArrayBuffer(0),
       { fetchFn },
     );

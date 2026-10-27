@@ -83,6 +83,7 @@ describe("PDF consumer figure stage", () => {
     const env = createTestEnv();
     seedPdf(env);
     env.DOCLING_URL = "http://docling.test";
+    env.DOCLING_API_KEY = "test-key";
     const oldFetch = globalThis.fetch;
     globalThis.fetch = vi.fn(async () => {
       const uri = `data:image/png;base64,${btoa("crop")}`;
@@ -140,6 +141,7 @@ describe("PDF consumer figure stage", () => {
     const env = createTestEnv();
     seedPdf(env);
     env.DOCLING_URL = "http://docling.test";
+    env.DOCLING_API_KEY = "test-key";
     const oldFetch = globalThis.fetch;
     globalThis.fetch = vi.fn(async () => new Response("down", { status: 500 }));
 

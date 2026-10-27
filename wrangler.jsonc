@@ -2,7 +2,7 @@
  * Sugarplum Worker config.
  * Binding IDs below are placeholders until `wrangler` create succeeds against a Cloudflare account.
  * Secrets (set via `wrangler secret put`): SECRETS_WRAP_KEY,
- * R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
+ * R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, DOCLING_API_KEY (when DOCLING_URL is set)
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
@@ -14,7 +14,7 @@
 		"run_worker_first": ["/api/*"]
 	},
 	"upload_source_maps": true,
-	// DOCLING_URL is optional (local/dev only); set when using docker-compose.docling.yml, not a secret.
+	// DOCLING_URL: optional. Local compose or prod HTTPS host. When set, DOCLING_API_KEY secret is required (X-Api-Key).
 	"vars": {
 		"APP_URL": "https://sugarplum.gelbhart.dev",
 		"R2_ACCOUNT_ID": "578279c4ee8d8a1b0bda8ecf8ecc3f67",
