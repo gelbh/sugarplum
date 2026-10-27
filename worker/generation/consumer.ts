@@ -16,6 +16,7 @@ import {
   type ProgressStage,
 } from "./progress";
 import { consumeFreeGenSlot } from "./quota";
+import { filterDraftsByQuality } from "./quality";
 import { harvestRuleDrafts } from "./rules";
 import type { CardDraft } from "./schema";
 import { createWorkersAiAdapter } from "./workers-ai";
@@ -412,6 +413,8 @@ export async function processGenerateJob(
 
       drafts = mergeAndDedupeDrafts(rulesDrafts, llmDrafts);
     }
+
+    drafts = filterDraftsByQuality(drafts);
 
     if (drafts.length === 0) {
       throw new Error("Generation produced no valid draft cards");
