@@ -153,23 +153,27 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
         if (ext.startedAt && job.progress) {
           const elapsed = Date.now() - ext.startedAt;
           eta = etaMs(elapsed, job.progress.percent);
-          projectedTokens = projectTokens(
-            job.progress.tokens_used ?? 0,
-            job.progress.current,
-            job.progress.total,
-          );
-          projectedCards = projectCardsThisJob(
-            job.progress.drafts_so_far ?? 0,
-            job.progress.current,
-            job.progress.total,
-          );
-          remainingCards = remainingCardsToday({
-            draftsSoFar: job.progress.drafts_so_far ?? 0,
-            current: job.progress.current,
-            total: job.progress.total,
-            freeRemaining: job.free_quota?.remaining ?? 0,
-            priorCardsPerJob: null,
-          });
+          if (typeof job.progress.tokens_used === "number") {
+            projectedTokens = projectTokens(
+              job.progress.tokens_used,
+              job.progress.current,
+              job.progress.total,
+            );
+          }
+          if (typeof job.progress.drafts_so_far === "number") {
+            projectedCards = projectCardsThisJob(
+              job.progress.drafts_so_far,
+              job.progress.current,
+              job.progress.total,
+            );
+            remainingCards = remainingCardsToday({
+              draftsSoFar: job.progress.drafts_so_far,
+              current: job.progress.current,
+              total: job.progress.total,
+              freeRemaining: job.free_quota?.remaining ?? 0,
+              priorCardsPerJob: null,
+            });
+          }
         }
         setEstimates({
           etaMs: eta,

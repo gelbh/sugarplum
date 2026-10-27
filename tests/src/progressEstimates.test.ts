@@ -17,6 +17,9 @@ describe("etaMs", () => {
 });
 
 describe("projectTokens", () => {
+  it("returns null when tokens used is absent", () => {
+    expect(projectTokens(undefined, 2, 4)).toBeNull();
+  });
   it("returns null when current or total is 0", () => {
     expect(projectTokens(100, 0, 4)).toBeNull();
   });
@@ -26,6 +29,9 @@ describe("projectTokens", () => {
 });
 
 describe("projectCardsThisJob", () => {
+  it("returns null when drafts_so_far is absent", () => {
+    expect(projectCardsThisJob(undefined, 2, 4)).toBeNull();
+  });
   it("ceil-scales drafts by total/current", () => {
     expect(projectCardsThisJob(5, 2, 4)).toBe(10);
   });
@@ -49,6 +55,16 @@ describe("remainingCardsToday", () => {
         draftsSoFar: 0,
         current: 0,
         total: 0,
+        freeRemaining: 3,
+      }),
+    ).toBeNull();
+  });
+  it("returns null when drafts_so_far is absent", () => {
+    expect(
+      remainingCardsToday({
+        draftsSoFar: undefined,
+        current: 2,
+        total: 4,
         freeRemaining: 3,
       }),
     ).toBeNull();
