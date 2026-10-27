@@ -1,14 +1,23 @@
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 
+export type FigureExtractMode = "fast" | "accurate";
+
 export type GenerateQueueMessage = {
   jobId: string;
   materialId: string;
   deckId: string;
+  figureExtractMode?: FigureExtractMode;
 };
 
 function newId(): string {
   return crypto.randomUUID();
+}
+
+function resolveFigureExtractMode(
+  mode: FigureExtractMode | undefined,
+): FigureExtractMode {
+  return mode === "accurate" ? "accurate" : "fast";
 }
 
 /**
@@ -17,23 +26,38 @@ function newId(): string {
  */
 export async function enqueueGeneration(
   env: Env,
-  args: { materialId: string; deckId: string },
+  args: {
+    materialId: string;
+    deckId: string;
+    figureExtractMode?: FigureExtractMode;
+  },
 ): Promise<string> {
   const jobId = newId();
   const createdAt = new Date().toISOString();
+  const figureExtractMode = resolveFigureExtractMode(args.figureExtractMode);
   const db = getDb(env);
 
   await db
     .prepare(
-      "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at, figure_extract_mode) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
     )
-    .bind(jobId, args.materialId, "queued", null, null, createdAt, null)
+    .bind(
+      jobId,
+      args.materialId,
+      "queued",
+      null,
+      null,
+      createdAt,
+      null,
+      figureExtractMode,
+    )
     .run();
 
   await requeueGeneration(env, {
     jobId,
     materialId: args.materialId,
     deckId: args.deckId,
+    figureExtractMode,
   });
 
   return jobId;
