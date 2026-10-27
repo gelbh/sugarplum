@@ -442,6 +442,7 @@ export default function StudyPage() {
                 <CardFace
                   front={String(current.front)}
                   back={String(current.back)}
+                  type={current.type}
                   mediaR2Keys={current.media_r2_keys}
                   revealed={revealed}
                   onReveal={reveal}

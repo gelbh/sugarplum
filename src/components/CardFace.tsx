@@ -4,10 +4,12 @@ import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import type { MouseEvent, Ref } from "react";
 import { mediaUrl } from "../api/client";
+import { blankClozeFront, revealClozeFront } from "../lib/clozeFormat";
 
 type Props = {
   front: string;
   back: string;
+  type?: string;
   revealed: boolean;
   onReveal: () => void;
   /** Flip from answer back to the question face. */
@@ -107,9 +109,14 @@ function FaceOverline({ label }: { label: string }) {
 }
 
 /** Physical study card: 3D Y-flip, or instant swap when prefers-reduced-motion. */
+function displayClozeFront(front: string, revealed: boolean): string {
+  return revealed ? revealClozeFront(front) : blankClozeFront(front);
+}
+
 export default function CardFace({
   front,
   back,
+  type,
   revealed,
   onReveal,
   onFlipBack,
@@ -118,6 +125,10 @@ export default function CardFace({
   answerFocusRef,
   showAnswerRef,
 }: Props) {
+  const questionFront =
+    type === "cloze" ? displayClozeFront(front, false) : front;
+  const answerFaceFront =
+    type === "cloze" ? displayClozeFront(front, true) : front;
   const imageKey = mediaR2Keys[0];
   const canReveal = !revealed && !disabled;
   const canFlipBack = revealed && !disabled;
@@ -211,7 +222,7 @@ export default function CardFace({
                   color: "inherit",
                 }}
               >
-                {front}
+                {questionFront}
               </Typography>
             </Box>
             {!revealed ? (
@@ -254,7 +265,7 @@ export default function CardFace({
                 flexShrink: 0,
               }}
             >
-              {front}
+              {answerFaceFront}
             </Typography>
             <Box
               ref={answerFocusRef}

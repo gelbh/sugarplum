@@ -115,4 +115,56 @@ describe("filterDraftsByQuality", () => {
     const yesJunk = qa("ATP present", "yes");
     expect(filterDraftsByQuality([yesQ, yesJunk])).toEqual([yesQ]);
   });
+
+  it("drops residual regen leftovers: section headers, thin glossary, tautology", () => {
+    const mito = qa("mitochondria", "powerhouse of the cell");
+    const atp = qa("What is ATP?", "Adenosine triphosphate");
+    const cloze: CardDraft = {
+      type: "cloze",
+      front: "The powerhouse is the {{c1::mitochondria}}.",
+      back: "mitochondria",
+      provenance: { pages: [1], excerpt: "powerhouse" },
+    };
+    const residual = [
+      qa("Pathogenesis in cattle", "Females affected: abortion."),
+      qa("Endometriosis", "Inflammation."),
+      qa(
+        "What is the significance of Trichomonas in free-range flocks?",
+        "Especially in free-range flocks.",
+      ),
+    ];
+    expect(filterDraftsByQuality([...residual, mito, atp, cloze])).toEqual([
+      mito,
+      atp,
+      cloze,
+    ]);
+  });
+
+  it("keeps section-header-shaped fronts when the back is substantive", () => {
+    const treatment = qa(
+      "Treatment of choice for coccidiosis",
+      "Amprolium mixed in feed for poultry",
+    );
+    const diagnosis = qa(
+      "Diagnosis of blackhead",
+      "Necrotic lesions in the caecum and liver",
+    );
+    const clinical = qa(
+      "Clinical signs in dogs",
+      "Bloody diarrhoea and weight loss",
+    );
+    expect(filterDraftsByQuality([treatment, diagnosis, clinical])).toEqual([
+      treatment,
+      diagnosis,
+      clinical,
+    ]);
+  });
+
+  it("keeps either/or answers that reuse question nouns", () => {
+    const insulin = qa(
+      "Does insulin increase or decrease blood glucose?",
+      "Decrease blood glucose",
+    );
+    expect(filterDraftsByQuality([insulin])).toEqual([insulin]);
+  });
 });

@@ -679,7 +679,7 @@ export async function processGenerateJob(
     }
 
     const covered = drafts.map(
-      (d) => d.provenance.excerpt.slice(0, 80) || d.front.slice(0, 80),
+      (d) => d.front.slice(0, 80) || d.provenance.excerpt.slice(0, 80),
     );
     const coverageJson = JSON.stringify({
       covered,
