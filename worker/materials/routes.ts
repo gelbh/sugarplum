@@ -490,26 +490,6 @@ materialRoutes.post("/:id/complete", async (c) => {
   const db = getDb(c.env);
   const material = await requireOwnedMaterial(db, materialId, userId);
 
-  let figureExtractMode: FigureExtractMode | undefined;
-  const rawBody = await c.req.text();
-  if (rawBody.trim()) {
-    let body: { figureExtractMode?: unknown };
-    try {
-      body = JSON.parse(rawBody) as { figureExtractMode?: unknown };
-    } catch {
-      throw new HTTPException(400, { message: "Invalid JSON body" });
-    }
-    const rawMode = body.figureExtractMode;
-    if (rawMode !== undefined) {
-      if (rawMode !== "fast" && rawMode !== "accurate") {
-        throw new HTTPException(400, {
-          message: "Invalid figureExtractMode",
-        });
-      }
-      figureExtractMode = rawMode;
-    }
-  }
-
   if (material.status === FILE_READY) {
     return c.json({
       id: material.id,
@@ -522,6 +502,30 @@ materialRoutes.post("/:id/complete", async (c) => {
       created_at: material.created_at,
       jobId: null,
     });
+  }
+
+  let figureExtractMode: FigureExtractMode | undefined;
+  const rawBody = await c.req.text();
+  if (rawBody.trim()) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(rawBody);
+    } catch {
+      throw new HTTPException(400, { message: "Invalid JSON body" });
+    }
+    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new HTTPException(400, { message: "Invalid JSON body" });
+    }
+    const body = parsed as { figureExtractMode?: unknown };
+    const rawMode = body.figureExtractMode;
+    if (rawMode !== undefined) {
+      if (rawMode !== "fast" && rawMode !== "accurate") {
+        throw new HTTPException(400, {
+          message: "Invalid figureExtractMode",
+        });
+      }
+      figureExtractMode = rawMode;
+    }
   }
 
   const cas = await db
