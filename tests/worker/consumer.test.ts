@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { encryptSecret } from "../../worker/crypto/secrets";
 import {
+  insertDraftCards,
   mergeAndDedupeDrafts,
   processGenerateJob,
 } from "../../worker/generation/consumer";
@@ -106,6 +107,49 @@ function critiqueEchoCandidates() {
     return JSON.stringify({ cards: JSON.parse(raw) });
   };
 }
+
+describe("insertDraftCards", () => {
+  it("stores distinct media_r2_keys_json per draft", async () => {
+    const env = createTestEnv();
+    await seedOwner(env, false);
+    const provenance = { pages: [1], excerpt: "fig" };
+    const drafts = [
+      {
+        type: "image_label" as const,
+        front: "Label A",
+        back: "A",
+        provenance,
+        mediaR2Keys: ["materials/deck-a/figures/pdf/0.png"],
+      },
+      {
+        type: "diagram" as const,
+        front: "Label B",
+        back: "B",
+        provenance,
+        mediaR2Keys: ["materials/deck-a/figures/pdf/1.png"],
+      },
+    ];
+    await insertDraftCards(env.DB, {
+      deckId: "deck-a",
+      jobId: "job-media",
+      drafts,
+    });
+    const cards = env.getCards();
+    expect(cards).toHaveLength(2);
+    const mediaByFront = new Map(
+      cards.map((c) => [
+        JSON.parse(c.front_json) as string,
+        JSON.parse(c.media_r2_keys_json!) as string[],
+      ]),
+    );
+    expect(mediaByFront.get("Label A")).toEqual([
+      "materials/deck-a/figures/pdf/0.png",
+    ]);
+    expect(mediaByFront.get("Label B")).toEqual([
+      "materials/deck-a/figures/pdf/1.png",
+    ]);
+  });
+});
 
 describe("mergeAndDedupeDrafts", () => {
   it("keeps rules first and drops near-identical fronts", () => {

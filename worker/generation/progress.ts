@@ -2,8 +2,9 @@
 export const STAGE_WEIGHTS = {
   queued: 0.02,
   extract: 0.08,
+  figures: 0.1,
   rules: 0.05,
-  generate: 0.45,
+  generate: 0.35,
   critique: 0.3,
   persist: 0.1,
 } as const;
@@ -13,6 +14,7 @@ export type ProgressStage = keyof typeof STAGE_WEIGHTS;
 const STAGE_ORDER: ProgressStage[] = [
   "queued",
   "extract",
+  "figures",
   "rules",
   "generate",
   "critique",
@@ -41,6 +43,24 @@ export const TEXT_LLM_STAGES = [
   "rules",
   "generate",
   "critique",
+  "persist",
+] as const satisfies readonly ProgressStage[];
+
+export const PDF_STAGES = [
+  "queued",
+  "extract",
+  "figures",
+  "rules",
+  "generate",
+  "critique",
+  "persist",
+] as const satisfies readonly ProgressStage[];
+
+/** PDF with figures but no usable text (no rules/generate/critique band). */
+export const PDF_FIGURE_ONLY_STAGES = [
+  "queued",
+  "extract",
+  "figures",
   "persist",
 ] as const satisfies readonly ProgressStage[];
 
@@ -92,6 +112,7 @@ export function computePercent(
   total: number,
   presentStages: readonly ProgressStage[],
 ): number {
+  // Do not jump to 100 when a mid-pipeline stage finishes; later stages still weigh.
   const weights = effectiveWeights(presentStages);
   const present = presentStages.filter((s) => weights[s] > 0 || s === stage);
   const ordered = STAGE_ORDER.filter((s) => present.includes(s));
@@ -105,7 +126,17 @@ export function computePercent(
   const within =
     total > 0 ? Math.max(0, current) / total : 0;
   const raw = 100 * (completed + weights[stage] * within);
-  return Math.min(100, Math.max(0, raw));
+  const capped = Math.min(100, Math.max(0, raw));
+  // Last catalog stage finished: snap float dust to 100.
+  if (
+    total > 0 &&
+    current >= total &&
+    ordered.length > 0 &&
+    stage === ordered[ordered.length - 1]
+  ) {
+    return 100;
+  }
+  return capped;
 }
 
 /**
