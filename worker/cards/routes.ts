@@ -187,9 +187,14 @@ jobDraftRoutes.post("/:id/drafts/accept-all", async (c) => {
   let accepted = 0;
   let failed = 0;
   for (const row of results ?? []) {
-    const outcome = await acceptDraftCard(db, row.id);
-    if (outcome === "accepted") accepted += 1;
-    else failed += 1;
+    try {
+      const outcome = await acceptDraftCard(db, row.id);
+      if (outcome === "accepted") accepted += 1;
+      else failed += 1;
+    } catch {
+      // CAS/schedule race or D1 abort: count as failed, keep accepting the rest.
+      failed += 1;
+    }
   }
 
   return c.json({ accepted, failed });
