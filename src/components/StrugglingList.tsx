@@ -19,7 +19,7 @@ type StrugglingListProps = {
   emptyMessage?: string;
 };
 
-/** Ranked struggling rows; Study CTA only when is_due (no deep-link). */
+/** Ranked struggling rows; Study CTA only when is_due (deep-links ?card=). */
 export default function StrugglingList({
   rows,
   emptyMessage = "No struggling cards right now.",
@@ -71,7 +71,7 @@ export default function StrugglingList({
               <Button
                 variant="contained"
                 size="small"
-                href="/study"
+                href={`/study?card=${encodeURIComponent(row.id)}`}
                 sx={{ alignSelf: "flex-start", fontWeight: 600 }}
               >
                 Study

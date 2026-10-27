@@ -38,6 +38,10 @@ import {
   occlusionRevealAnswer,
   pickOcclusionRegion,
 } from "../study/pickOcclusionRegion";
+import {
+  cardIdFromSearch,
+  prioritizeDueCard,
+} from "../study/prioritizeDueCard";
 import { useStudyZenMode } from "../study/useStudyZenMode";
 
 type PointerStart = {
@@ -125,6 +129,7 @@ export default function StudyPage() {
   const [ready, setReady] = useState(false);
   const [offlineCopy, setOfflineCopy] = useState(false);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
+  const [deepLinkMiss, setDeepLinkMiss] = useState(false);
   const {
     zen,
     fullscreenUnavailable,
@@ -151,24 +156,37 @@ export default function StudyPage() {
     if (!busy) busyRef.current = false;
   }, [busy]);
 
-  const load = useCallback(async (userId: string) => {
-    try {
-      const due = await listDueCards();
-      saveDueCache(userId, due);
-      setQueue(due);
-      setOfflineCopy(false);
+  const applyDueQueue = useCallback(
+    (cards: CardDraftView[], wanted: string | null) => {
+      const { queue: next, found } = prioritizeDueCard(cards, wanted);
+      setQueue(next);
+      // Only when there are other due cards to study (avoids contradicting empty session).
+      setDeepLinkMiss(Boolean(wanted) && !found && next.length > 0);
       setRevealed(false);
-    } catch (err) {
-      const cached = loadDueCache(userId);
-      if (cached && cached.cards.length > 0) {
-        setQueue(cached.cards);
-        setOfflineCopy(true);
-        setRevealed(false);
-        return;
+    },
+    [],
+  );
+
+  const load = useCallback(
+    async (userId: string) => {
+      const wanted = cardIdFromSearch(window.location.search);
+      try {
+        const due = await listDueCards();
+        saveDueCache(userId, due);
+        applyDueQueue(due, wanted);
+        setOfflineCopy(false);
+      } catch (err) {
+        const cached = loadDueCache(userId);
+        if (cached && cached.cards.length > 0) {
+          applyDueQueue(cached.cards, wanted);
+          setOfflineCopy(true);
+          return;
+        }
+        throw err;
       }
-      throw err;
-    }
-  }, []);
+    },
+    [applyDueQueue],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -448,6 +466,11 @@ export default function StudyPage() {
             <Alert severity="warning">
               Showing an offline copy of due cards. Grading still needs a
               network connection.
+            </Alert>
+          ) : null}
+          {deepLinkMiss ? (
+            <Alert severity="info" onClose={() => setDeepLinkMiss(false)}>
+              Card not in due queue. Studying your due cards instead.
             </Alert>
           ) : null}
           {fullscreenUnavailable ? (
