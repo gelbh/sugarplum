@@ -63,4 +63,31 @@ describe("drop-biased quality prompts (5B)", () => {
       assertNoAlwaysRewrite(prompt);
     }
   });
+
+  it("generate prompts allow mcq with grounded distractors", () => {
+    for (const prompt of [GENERATE_SYSTEM_PROMPT, GENERATE_COMPACT_SYSTEM_PROMPT]) {
+      const p = prompt.toLowerCase();
+      expect(p).toMatch(/\bmcq\b/);
+      expect(p).toMatch(/options/);
+      expect(p).toMatch(/3.?5|3–5/);
+      expect(p).toMatch(/distractor/);
+      expect(p).toMatch(/entail|present\s+in\s+the\s+cited/);
+      expect(p).toMatch(/do\s+not\s+invent|ungrounded|trivia/);
+    }
+  });
+
+  it("critique prompts drop invalid or ungrounded mcq", () => {
+    const sys = CRITIQUE_SYSTEM_PROMPT.toLowerCase();
+    expect(sys).toMatch(/\bmcq\b/);
+    expect(sys).toMatch(/distractor|options/);
+    expect(sys).toMatch(/ambiguous/);
+    expect(sys).toMatch(/entail|present\s+in\s+the\s+cited/);
+    expect(sys).toMatch(/not\s+among|missing\s+from\s+options|one\s+of\s+them/);
+
+    const user = critiqueUserPrompt("source", sample).toLowerCase();
+    expect(user).toMatch(/\bmcq\b/);
+    expect(user).toMatch(/distractor|ungrounded/);
+    expect(user).toMatch(/ambiguous/);
+    expect(user).toMatch(/not\s+among|among\s+the\s+options/);
+  });
 });
