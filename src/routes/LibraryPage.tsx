@@ -8,8 +8,10 @@ import Typography from "@mui/material/Typography";
 import {
   ApiError,
   listDecks,
+  listJobsWithDrafts,
   me,
   type Deck,
+  type JobListItem,
   getJourney,
 } from "../api/client";
 import { deriveJourney } from "../journey/derive";
@@ -18,6 +20,7 @@ import { useTrackedOp } from "../progress/useTrackedOp";
 
 export default function LibraryPage() {
   const [decks, setDecks] = useState<Deck[]>([]);
+  const [draftJobs, setDraftJobs] = useState<JobListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
@@ -34,14 +37,26 @@ export default function LibraryPage() {
     }
   }, []);
 
+  const refreshDraftJobs = useCallback(async () => {
+    try {
+      setDraftJobs(await listJobsWithDrafts());
+    } catch {
+      /* draft links are optional; decks/stepper still work */
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         await me();
-        const list = await listDecks();
+        const [list, jobs] = await Promise.all([
+          listDecks(),
+          listJobsWithDrafts().catch(() => [] as JobListItem[]),
+        ]);
         if (cancelled) return;
         setDecks(list);
+        setDraftJobs(jobs);
         setReady(true);
         endLoad();
         try {
@@ -108,12 +123,47 @@ export default function LibraryPage() {
               )}
             </Box>
 
+            {draftJobs.length > 0 ? (
+              <Box>
+                <Typography variant="h6" component="h2" gutterBottom>
+                  Draft reviews
+                </Typography>
+                <Stack component="ul" spacing={0.5} sx={{ m: 0, pl: 2 }}>
+                  {draftJobs.map((job) => {
+                    const filename = job.filename?.trim() || null;
+                    const label = filename || job.deck_title;
+                    const countLabel =
+                      job.draft_count === 1
+                        ? "1 draft"
+                        : `${job.draft_count} drafts`;
+                    const suffix = filename
+                      ? ` · ${countLabel} · ${job.deck_title}`
+                      : ` · ${countLabel}`;
+                    return (
+                      <Typography component="li" key={job.id} variant="body2">
+                        <Link
+                          href={`/jobs/${encodeURIComponent(job.id)}/drafts`}
+                          underline="hover"
+                        >
+                          {label}
+                        </Link>
+                        {suffix}
+                      </Typography>
+                    );
+                  })}
+                </Stack>
+              </Box>
+            ) : null}
+
             <CreateMaterialStepper
               decks={decks}
               setDecks={setDecks}
               activeStep={activeStep}
               setActiveStep={setActiveStep}
-              onChanged={syncStepperFromJourney}
+              onChanged={async () => {
+                await syncStepperFromJourney();
+                await refreshDraftJobs();
+              }}
             />
 
             <Typography variant="body2">

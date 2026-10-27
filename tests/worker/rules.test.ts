@@ -221,4 +221,12 @@ describe("harvestRuleDrafts", () => {
     const drafts = harvestRuleDrafts(text);
     expect(drafts.map((d) => d.front)).toEqual(["What is mitosis"]);
   });
+
+  it("does not treat bare * in emphasis as a bullet prefix", () => {
+    const drafts = harvestRuleDrafts(
+      "*ATP* - adenosine triphosphate\n* real bullet - should skip",
+    );
+    expect(drafts.map((d) => d.front)).toEqual(["*ATP*"]);
+    expect(drafts.map((d) => d.back)).toEqual(["adenosine triphosphate"]);
+  });
 });
