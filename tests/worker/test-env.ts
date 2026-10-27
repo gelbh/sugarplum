@@ -656,6 +656,26 @@ export function createTestEnv(opts?: {
             );
           return { results: rows as T[] };
         }
+        if (
+          normalized.includes("FROM materials WHERE deck_id =") &&
+          normalized.includes("r2_key IS NOT NULL")
+        ) {
+          const rows = [...materials.values()]
+            .filter((m) => m.deck_id === bound[0] && m.r2_key != null)
+            .map((m) => ({ r2_key: m.r2_key }));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM cards WHERE deck_id =") &&
+          normalized.includes("media_r2_keys_json")
+        ) {
+          const rows = [...cards.values()]
+            .filter(
+              (c) => c.deck_id === bound[0] && c.media_r2_keys_json != null,
+            )
+            .map((c) => ({ media_r2_keys_json: c.media_r2_keys_json }));
+          return { results: rows as T[] };
+        }
         if (normalized.includes("FROM materials WHERE deck_id =")) {
           const rows = [...materials.values()].filter(
             (m) => m.deck_id === bound[0],
@@ -1398,6 +1418,9 @@ export function createTestEnv(opts?: {
             ),
           body: bytes,
         };
+      },
+      async delete(key: string) {
+        r2.delete(key);
       },
     } as unknown as R2Bucket,
     SESSIONS: {

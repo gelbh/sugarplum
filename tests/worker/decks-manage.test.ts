@@ -409,6 +409,67 @@ describe("DELETE /api/decks/:id", () => {
     expect(await listRes.json()).toEqual([]);
   });
 
+  it("deletes R2 keys for materials and card media before cascading", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedSubject({
+      id: "sub-1",
+      user_id: "user-a",
+      title: "Anatomy",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-r2",
+      user_id: "user-a",
+      title: "Bones",
+      subject_hint: null,
+      subject_id: "sub-1",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    const materialKey = "materials/deck-r2/mat-1.pdf";
+    const mediaKey = "materials/deck-r2/figures/0.png";
+    env.seedR2(materialKey, "pdf-bytes");
+    env.seedR2(mediaKey, "png-bytes");
+    env.seedR2("materials/other-deck/keep.pdf", "keep");
+    env.seedMaterial({
+      id: "mat-r2",
+      deck_id: "deck-r2",
+      kind: "pdf",
+      r2_key: materialKey,
+      filename: "mat-1.pdf",
+      page_count: 1,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedCard({
+      id: "card-r2",
+      deck_id: "deck-r2",
+      job_id: null,
+      type: "image_label",
+      front_json: "{}",
+      back_json: "{}",
+      media_r2_keys_json: JSON.stringify([mediaKey]),
+      provenance_json: null,
+      status: "accepted",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/decks/deck-r2",
+      {
+        method: "DELETE",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+
+    expect(res.status).toBe(204);
+    expect(env.getR2Keys()).toEqual(["materials/other-deck/keep.pdf"]);
+    expect(env.getMaterials()).toHaveLength(0);
+    expect(env.getCards()).toHaveLength(0);
+  });
+
   it("returns 404 when deleting another user's deck", async () => {
     const env = createTestEnv();
     seedOwner(env);

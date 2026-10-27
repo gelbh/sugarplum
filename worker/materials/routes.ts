@@ -296,6 +296,43 @@ deckRoutes.delete("/:id", async (c) => {
   const db = getDb(c.env);
   await requireOwnedDeck(db, deckId, userId);
 
+  const keys = new Set<string>();
+  const { results: materialKeys } = await db
+    .prepare(
+      "SELECT r2_key FROM materials WHERE deck_id = ? AND r2_key IS NOT NULL",
+    )
+    .bind(deckId)
+    .all<{ r2_key: string }>();
+  for (const row of materialKeys ?? []) {
+    if (row.r2_key) keys.add(row.r2_key);
+  }
+  const { results: cardMedia } = await db
+    .prepare(
+      "SELECT media_r2_keys_json FROM cards WHERE deck_id = ? AND media_r2_keys_json IS NOT NULL",
+    )
+    .bind(deckId)
+    .all<{ media_r2_keys_json: string }>();
+  for (const row of cardMedia ?? []) {
+    try {
+      const parsed = JSON.parse(row.media_r2_keys_json) as unknown;
+      if (Array.isArray(parsed)) {
+        for (const key of parsed) {
+          if (typeof key === "string" && key) keys.add(key);
+        }
+      }
+    } catch {
+      /* ignore bad JSON */
+    }
+  }
+
+  for (const key of keys) {
+    try {
+      await c.env.MATERIALS.delete(key);
+    } catch {
+      /* best-effort; D1 row still removed */
+    }
+  }
+
   await db
     .prepare("DELETE FROM decks WHERE id = ? AND user_id = ?")
     .bind(deckId, userId)
