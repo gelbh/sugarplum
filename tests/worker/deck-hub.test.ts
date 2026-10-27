@@ -230,6 +230,63 @@ describe("POST /api/decks/:id/cards", () => {
   });
 });
 
+describe("PATCH /api/cards/:id (accepted hub edit)", () => {
+  it("patches front on an accepted card without changing schedule", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedCard({
+      id: "card-acc",
+      deck_id: "deck-a",
+      job_id: null,
+      type: "qa",
+      front_json: JSON.stringify("Old Q?"),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "accepted",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSchedule({
+      card_id: "card-acc",
+      due: "2030-01-01T00:00:00.000Z",
+      stability: 40,
+      difficulty: 7,
+      elapsed_days: 10,
+      scheduled_days: 30,
+      learning_steps: 2,
+      reps: 8,
+      lapses: 3,
+      state: 2,
+      last_review: "2026-06-01T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/cards/card-acc",
+      {
+        method: "PATCH",
+        headers: authHeaders({ "content-type": "application/json" }),
+        body: JSON.stringify({ front: "New Q?" }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as CardBody;
+    expect(body).toMatchObject({
+      id: "card-acc",
+      status: "accepted",
+      front: "New Q?",
+      back: "A",
+    });
+
+    const schedule = env.getSchedules().find((s) => s.card_id === "card-acc");
+    expect(schedule?.due).toBe("2030-01-01T00:00:00.000Z");
+    expect(schedule?.reps).toBe(8);
+    expect(schedule?.lapses).toBe(3);
+  });
+});
+
 describe("POST /api/cards/:id/reset-schedule", () => {
   it("rewrites schedule from newCard (due ~now, reps/lapses cleared)", async () => {
     const env = createTestEnv();

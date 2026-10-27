@@ -297,8 +297,10 @@ cardRoutes.patch("/:id", async (c) => {
   const db = getDb(c.env);
   const row = await requireOwnedCard(db, cardId, userId);
 
-  if (row.status !== "draft") {
-    throw new HTTPException(400, { message: "Only draft cards can be edited" });
+  if (row.status !== "draft" && row.status !== "accepted") {
+    throw new HTTPException(400, {
+      message: "Only draft or accepted cards can be edited",
+    });
   }
 
   let body: unknown;

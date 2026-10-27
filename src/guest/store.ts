@@ -1,12 +1,28 @@
 import type {
   CardDraftView,
+  CardType,
   Deck,
   JourneyStatus,
+  OcclusionFrontView,
   ReviewResult,
   StudyRating,
   Subject,
 } from "../api/client";
 import { GUEST_USER_ID } from "./session";
+
+export type GuestHubCardBody = {
+  type: "qa" | "cloze" | "mcq";
+  front: string;
+  back: string;
+  options?: string[];
+};
+
+type GuestCardPatch = {
+  front?: string | OcclusionFrontView;
+  back?: string | { answer: string };
+  options?: string[];
+  type?: CardType;
+};
 
 export const GUEST_STORE_KEY = "sugarplum.guest.store.v1";
 
@@ -380,6 +396,117 @@ export function guestAddAcceptedCards(
   store.dueIds = [...cards.map((c) => c.id), ...store.dueIds];
   writeStore(store, storage);
   return cards;
+}
+
+/** Accepted cards for a deck, oldest first (hub list). */
+export function guestListDeckCards(
+  deckId: string,
+  storage?: Store,
+): CardDraftView[] {
+  const store = readStore(storage);
+  if (!store.decks.some((d) => d.id === deckId)) {
+    throw new Error("Deck not found");
+  }
+  return store.cards
+    .filter((c) => c.deck_id === deckId && c.status === "accepted")
+    .slice()
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+}
+
+/** Create an accepted hub card (qa|cloze|mcq) and prepend to due. */
+export function guestCreateDeckCard(
+  deckId: string,
+  body: GuestHubCardBody,
+  storage?: Store,
+): CardDraftView {
+  const store = readStore(storage);
+  if (!store.decks.some((d) => d.id === deckId)) {
+    throw new Error("Deck not found");
+  }
+  const allowed = new Set(["qa", "cloze", "mcq"]);
+  if (!allowed.has(body.type)) {
+    throw new Error("Unsupported card type");
+  }
+  const front = body.front.trim();
+  const back = body.back.trim();
+  if (!front || !back) {
+    throw new Error("Front and back required");
+  }
+  const created = nowIso();
+  const card: CardDraftView = {
+    id: `guest-card-${crypto.randomUUID()}`,
+    deck_id: deckId,
+    job_id: null,
+    type: body.type,
+    front,
+    back,
+    ...(body.type === "mcq" && body.options
+      ? { options: body.options }
+      : {}),
+    provenance: { guest: true, source: "hub" },
+    status: "accepted",
+    created_at: created,
+    updated_at: created,
+    due: created,
+  };
+  store.cards = [card, ...store.cards];
+  store.dueIds = [card.id, ...store.dueIds];
+  writeStore(store, storage);
+  return card;
+}
+
+/** Patch content on an accepted guest card (no schedule change). */
+export function guestPatchCard(
+  cardId: string,
+  body: GuestCardPatch,
+  storage?: Store,
+): CardDraftView {
+  const store = readStore(storage);
+  const idx = store.cards.findIndex((c) => c.id === cardId);
+  if (idx < 0) throw new Error("Card not found");
+  const current = store.cards[idx]!;
+  if (current.status !== "accepted") {
+    throw new Error("Only accepted cards can be edited");
+  }
+  if (
+    body.front === undefined &&
+    body.back === undefined &&
+    body.options === undefined &&
+    body.type === undefined
+  ) {
+    throw new Error("No fields to update");
+  }
+  const updated: CardDraftView = {
+    ...current,
+    ...(body.type !== undefined ? { type: body.type } : {}),
+    ...(body.front !== undefined ? { front: body.front } : {}),
+    ...(body.back !== undefined ? { back: body.back } : {}),
+    ...(body.options !== undefined ? { options: body.options } : {}),
+    updated_at: nowIso(),
+  };
+  store.cards[idx] = updated;
+  writeStore(store, storage);
+  return updated;
+}
+
+/** Reset one card's due: due=now and id at front of dueIds. */
+export function guestResetCardSchedule(
+  cardId: string,
+  storage?: Store,
+): CardDraftView {
+  const store = readStore(storage);
+  const idx = store.cards.findIndex((c) => c.id === cardId);
+  if (idx < 0) throw new Error("Card not found");
+  const current = store.cards[idx]!;
+  if (current.status !== "accepted") {
+    throw new Error("Card not found");
+  }
+  const due = nowIso();
+  const updated: CardDraftView = { ...current, due, updated_at: due };
+  store.cards[idx] = updated;
+  store.dueIds = [cardId, ...store.dueIds.filter((id) => id !== cardId)];
+  writeStore(store, storage);
+  return updated;
 }
 
 export function guestListDueCards(storage?: Store): CardDraftView[] {

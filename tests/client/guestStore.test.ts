@@ -5,11 +5,15 @@ import {
   clearGuestStore,
   guestAddAcceptedCards,
   guestCreateDeck,
+  guestCreateDeckCard,
   guestCreateSubject,
   guestDeleteSubject,
+  guestListDeckCards,
   guestListDecks,
   guestListDueCards,
   guestListSubjects,
+  guestPatchCard,
+  guestResetCardSchedule,
   guestReviewCard,
 } from "../../src/guest/store";
 
@@ -219,5 +223,76 @@ describe("guest store", () => {
         storage,
       ),
     ).toEqual([]);
+  });
+
+  it("createDeckCard accepts qa and lands the id in dueIds", () => {
+    enterGuest(storage);
+    const subject = guestCreateSubject("Hub subject", storage);
+    const deck = guestCreateDeck("Hub deck", subject.id, storage);
+    const olderDue = guestListDueCards(storage).map((c) => c.id);
+
+    const card = guestCreateDeckCard(
+      deck.id,
+      { type: "qa", front: "What is ATP?", back: "Energy currency" },
+      storage,
+    );
+
+    expect(card).toMatchObject({
+      deck_id: deck.id,
+      type: "qa",
+      front: "What is ATP?",
+      back: "Energy currency",
+      status: "accepted",
+      job_id: null,
+    });
+    expect(card.id.startsWith("guest-card-")).toBe(true);
+    expect(card.due).toBeTruthy();
+
+    const listed = guestListDeckCards(deck.id, storage);
+    expect(listed.map((c) => c.id)).toContain(card.id);
+    expect(listed.every((c) => c.status === "accepted")).toBe(true);
+
+    const due = guestListDueCards(storage);
+    expect(due[0]?.id).toBe(card.id);
+    expect(due.map((c) => c.id).slice(1)).toEqual(olderDue);
+  });
+
+  it("patchCard updates front on an accepted card", () => {
+    enterGuest(storage);
+    const subject = guestCreateSubject("Edit subject", storage);
+    const deck = guestCreateDeck("Edit deck", subject.id, storage);
+    const card = guestCreateDeckCard(
+      deck.id,
+      { type: "qa", front: "Old front", back: "Keep back" },
+      storage,
+    );
+
+    const patched = guestPatchCard(card.id, { front: "New front" }, storage);
+    expect(patched.front).toBe("New front");
+    expect(patched.back).toBe("Keep back");
+    expect(patched.status).toBe("accepted");
+    expect(guestListDeckCards(deck.id, storage)[0]?.front).toBe("New front");
+  });
+
+  it("resetCardSchedule puts id at front of due and sets due now", () => {
+    enterGuest(storage);
+    const subject = guestCreateSubject("Reset subject", storage);
+    const deck = guestCreateDeck("Reset deck", subject.id, storage);
+    const card = guestCreateDeckCard(
+      deck.id,
+      { type: "qa", front: "Q?", back: "A" },
+      storage,
+    );
+    // Bury the card at the end so reset must move it forward.
+    guestReviewCard(card.id, 3, storage);
+    expect(guestListDueCards(storage).at(-1)?.id).toBe(card.id);
+
+    const before = Date.now();
+    const reset = guestResetCardSchedule(card.id, storage);
+    expect(reset.id).toBe(card.id);
+    expect(guestListDueCards(storage)[0]?.id).toBe(card.id);
+    const dueMs = Date.parse(reset.due!);
+    expect(dueMs).toBeGreaterThanOrEqual(before - 5_000);
+    expect(dueMs).toBeLessThanOrEqual(Date.now() + 5_000);
   });
 });
