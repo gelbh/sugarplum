@@ -1,6 +1,6 @@
 # Docling production runbook
 
-Sugarplum's Worker calls [docling-serve](https://github.com/docling-project/docling-serve) for PDF figure extraction when `DOCLING_URL` is set. Worker and host must share the same API key (`DOCLING_API_KEY` on the Worker, `DOCLING_SERVE_API_KEY` on the host).
+Sugarplum's Worker calls [docling-serve](https://github.com/docling-project/docling-serve) for PDF figure extraction only on the **Accurate** path (`figure_extract_mode=accurate`), and only when `DOCLING_URL` is set (plus API key). Fast uploads never open a Docling request. Worker and host must share the same API key (`DOCLING_API_KEY` on the Worker, `DOCLING_SERVE_API_KEY` on the host).
 
 ## Image
 
