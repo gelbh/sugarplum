@@ -22,7 +22,11 @@ function stageDone(id: JourneyStageId, status: JourneyStatus): boolean {
     case "material":
       return status.hasGenerationJob;
     case "review":
-      return status.hasGenerationJob && status.openReviewJobId === null;
+      return (
+        status.hasGenerationJob &&
+        status.openReviewJobId === null &&
+        status.pendingGenerationJobId === null
+      );
     case "study":
       return status.acceptedCount > 0;
     default: {
@@ -49,14 +53,16 @@ function nextForStage(
         href: null,
         action: "add_material",
       };
-    case "review":
+    case "review": {
+      const jobId = status.openReviewJobId ?? status.pendingGenerationJobId;
       return {
-        label: "Review drafts",
-        href: status.openReviewJobId
-          ? `/jobs/${status.openReviewJobId}/drafts`
-          : null,
+        label: status.openReviewJobId
+          ? "Review drafts"
+          : "Check generation",
+        href: jobId ? `/jobs/${jobId}/drafts` : null,
         action: "review",
       };
+    }
     case "study":
       if (status.dueCount > 0) {
         return { label: "Start study", href: "/study", action: "study" };

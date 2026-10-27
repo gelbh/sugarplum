@@ -30,8 +30,6 @@ type Props = {
   setDecks: (updater: (prev: Deck[]) => Deck[]) => void;
   activeStep: number;
   setActiveStep: (n: number) => void;
-  focusTitle?: boolean;
-  onFocusedTitleHandled?: () => void;
   onChanged?: () => void | Promise<void>;
 };
 
@@ -43,8 +41,6 @@ export default function CreateMaterialStepper({
   setDecks,
   activeStep,
   setActiveStep,
-  focusTitle,
-  onFocusedTitleHandled,
   onChanged,
 }: Props) {
   const [title, setTitle] = useState("");
@@ -68,12 +64,11 @@ export default function CreateMaterialStepper({
   }, [decks]);
 
   useEffect(() => {
-    if (focusTitle || focusCreateTitle) {
+    if (focusCreateTitle && activeStep === 0) {
       titleRef.current?.focus();
-      onFocusedTitleHandled?.();
       setFocusCreateTitle(false);
     }
-  }, [focusTitle, focusCreateTitle, onFocusedTitleHandled, activeStep]);
+  }, [focusCreateTitle, activeStep]);
 
   function onDeckSelect(value: string) {
     if (value === CREATE_NEW_DECK) {
@@ -188,13 +183,16 @@ export default function CreateMaterialStepper({
     try {
       const material = await uploadPdf(selectedDeckId, pdfFile);
       setPdfFile(null);
-      setNotice(
-        `Stored PDF (${material.status}). Text extraction is not ready yet — use paste for generation.`,
-      );
-      // if the backend enqueues a jobId, show done
       if (material.jobId) {
         setJobId(material.jobId);
+        setNotice(
+          `Stored PDF (${material.status}). Generation started.`,
+        );
         setActiveStep(2);
+      } else {
+        setNotice(
+          `Stored PDF (${material.status}). Text extraction is not ready yet; use paste for generation.`,
+        );
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not upload PDF");

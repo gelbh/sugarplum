@@ -277,6 +277,27 @@ export function createTestEnv(opts?: {
           matched.sort((a, b) => b.created_at.localeCompare(a.created_at));
           return { id: matched[0]!.id } as T;
         }
+        // SELECT j.id ... WHERE d.user_id = ? AND j.status IN ('queued', 'running', 'failed')
+        if (
+          normalized.includes("FROM generation_jobs j") &&
+          normalized.includes("INNER JOIN materials m") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("j.status IN") &&
+          normalized.includes("queued")
+        ) {
+          const userId = bound[0] as string;
+          const pending = new Set(["queued", "running", "failed"]);
+          const matched = [...generationJobs.values()].filter((job) => {
+            if (!pending.has(job.status)) return false;
+            const material = materials.get(job.material_id);
+            if (!material) return false;
+            const deck = decks.get(material.deck_id);
+            return !!deck && deck.user_id === userId;
+          });
+          if (matched.length === 0) return null;
+          matched.sort((a, b) => b.created_at.localeCompare(a.created_at));
+          return { id: matched[0]!.id } as T;
+        }
         // SELECT 1 as exists FROM generation_jobs ... WHERE d.user_id = ? LIMIT 1
         if (
           normalized.startsWith("SELECT 1") &&

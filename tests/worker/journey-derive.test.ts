@@ -7,6 +7,7 @@ function status(overrides: Partial<JourneyStatus> = {}): JourneyStatus {
     deckCount: 0,
     hasGenerationJob: false,
     openReviewJobId: null,
+    pendingGenerationJobId: null,
     acceptedCount: 0,
     dueCount: 0,
     ...overrides,
@@ -136,5 +137,24 @@ describe("deriveJourney", () => {
     );
     expect(view.activeStage).toBe("study");
     expect(JSON.stringify(view.next)).not.toContain("/jobs/null");
+  });
+
+  it("queued/running/failed job keeps review incomplete", () => {
+    const view = deriveJourney(
+      status({
+        deckCount: 1,
+        hasGenerationJob: true,
+        openReviewJobId: null,
+        pendingGenerationJobId: "job-pending",
+        acceptedCount: 0,
+      }),
+    );
+    expect(view.activeStage).toBe("review");
+    expect(view.stages.find((s) => s.id === "review")?.done).toBe(false);
+    expect(view.next).toEqual({
+      label: "Check generation",
+      href: "/jobs/job-pending/drafts",
+      action: "review",
+    });
   });
 });

@@ -20,19 +20,11 @@ export default function LibraryPage() {
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
-  const [focusTitle, setFocusTitle] = useState(false);
 
   const syncStepperFromJourney = useCallback(async () => {
     try {
       const derived = deriveJourney(await getJourney());
-      if (
-        derived.next.action === "add_material" ||
-        derived.next.action === "add_more"
-      ) {
-        setActiveStep(1);
-      } else if (derived.next.action === "create_deck") {
-        setActiveStep(0);
-      }
+      setActiveStep(derived.next.action === "create_deck" ? 0 : 1);
     } catch {
       /* journey is optional for Library */
     }
@@ -47,7 +39,17 @@ export default function LibraryPage() {
         if (cancelled) return;
         setDecks(list);
         setReady(true);
-        await syncStepperFromJourney();
+        try {
+          const derived = deriveJourney(await getJourney());
+          if (cancelled) return;
+          if (derived.next.action === "create_deck") {
+            setActiveStep(0);
+          } else if (list.length > 0) {
+            setActiveStep(1);
+          }
+        } catch {
+          /* ignore */
+        }
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
@@ -61,64 +63,59 @@ export default function LibraryPage() {
     return () => {
       cancelled = true;
     };
-  }, [syncStepperFromJourney]);
-
-  if (!ready) {
-    return (
-      <Container maxWidth="sm" sx={{ py: 6 }}>
-        <Typography color="text.secondary">Loading library…</Typography>
-      </Container>
-    );
-  }
+  }, []);
 
   return (
     <Container maxWidth="sm" sx={{ py: 6 }}>
-      <Typography variant="h4" component="h1" gutterBottom color="primary">
-        Library
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Create decks, paste notes, or upload PDFs as materials.
-      </Typography>
-
-      <Stack spacing={4}>
-        {error ? <Alert severity="error">{error}</Alert> : null}
-
-        <Box>
-          <Typography variant="h6" component="h2" gutterBottom>
-            Your decks
+      {!ready ? (
+        <Typography color="text.secondary">Loading library…</Typography>
+      ) : (
+        <>
+          <Typography variant="h4" component="h1" gutterBottom color="primary">
+            Library
           </Typography>
-          {decks.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              No decks yet. Create one below.
-            </Typography>
-          ) : (
-            <Stack component="ul" spacing={0.5} sx={{ m: 0, pl: 2 }}>
-              {decks.map((d) => (
-                <Typography component="li" key={d.id} variant="body2">
-                  {d.title}
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Create decks, paste notes, or upload PDFs as materials.
+          </Typography>
+
+          <Stack spacing={4}>
+            {error ? <Alert severity="error">{error}</Alert> : null}
+
+            <Box>
+              <Typography variant="h6" component="h2" gutterBottom>
+                Your decks
+              </Typography>
+              {decks.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  No decks yet. Create one below.
                 </Typography>
-              ))}
-            </Stack>
-          )}
-        </Box>
+              ) : (
+                <Stack component="ul" spacing={0.5} sx={{ m: 0, pl: 2 }}>
+                  {decks.map((d) => (
+                    <Typography component="li" key={d.id} variant="body2">
+                      {d.title}
+                    </Typography>
+                  ))}
+                </Stack>
+              )}
+            </Box>
 
-        {/* Create stepper owns Library progress; journey rail lives on Today/Review. */}
-        <CreateMaterialStepper
-          decks={decks}
-          setDecks={setDecks}
-          activeStep={activeStep}
-          setActiveStep={setActiveStep}
-          focusTitle={focusTitle}
-          onFocusedTitleHandled={() => setFocusTitle(false)}
-          onChanged={syncStepperFromJourney}
-        />
+            <CreateMaterialStepper
+              decks={decks}
+              setDecks={setDecks}
+              activeStep={activeStep}
+              setActiveStep={setActiveStep}
+              onChanged={syncStepperFromJourney}
+            />
 
-        <Typography variant="body2">
-          <Link href="/" underline="hover">
-            Back home
-          </Link>
-        </Typography>
-      </Stack>
+            <Typography variant="body2">
+              <Link href="/" underline="hover">
+                Back home
+              </Link>
+            </Typography>
+          </Stack>
+        </>
+      )}
     </Container>
   );
 }

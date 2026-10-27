@@ -30,6 +30,7 @@ describe("GET /api/journey", () => {
       deckCount: 0,
       hasGenerationJob: false,
       openReviewJobId: null,
+      pendingGenerationJobId: null,
       acceptedCount: 0,
       dueCount: 0,
     });
@@ -95,6 +96,56 @@ describe("GET /api/journey", () => {
     const body = await res.json();
     expect(body.openReviewJobId).toBe("job-need");
     expect(body.hasGenerationJob).toBe(true);
+    expect(body.pendingGenerationJobId).toBeNull();
+  });
+
+  it("queued job sets pendingGenerationJobId", async () => {
+    const env = createTestEnv();
+    env.seedUser({
+      id: "u-pend",
+      email: "p@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-p",
+      user_id: "u-pend",
+      title: "T",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedMaterial({
+      id: "mat-p",
+      deck_id: "deck-p",
+      kind: "text",
+      r2_key: null,
+      filename: null,
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedGenerationJob({
+      id: "job-queued",
+      material_id: "mat-p",
+      status: "queued",
+      error: null,
+      coverage_json: null,
+      created_at: "2026-01-02T00:00:00.000Z",
+      finished_at: null,
+    });
+    env.seedSession("sess-p", "u-pend");
+
+    const res = await app.request(
+      "/api/journey",
+      { headers: { Cookie: `${SESSION_COOKIE}=sess-p` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.hasGenerationJob).toBe(true);
+    expect(body.openReviewJobId).toBeNull();
+    expect(body.pendingGenerationJobId).toBe("job-queued");
   });
 
   it("accepted card increments acceptedCount; draft does not", async () => {

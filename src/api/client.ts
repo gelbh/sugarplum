@@ -195,6 +195,8 @@ export type JourneyStatus = {
   deckCount: number;
   hasGenerationJob: boolean;
   openReviewJobId: string | null;
+  /** Latest queued/running/failed job; Review stays incomplete until settled. */
+  pendingGenerationJobId: string | null;
   acceptedCount: number;
   dueCount: number;
 };
