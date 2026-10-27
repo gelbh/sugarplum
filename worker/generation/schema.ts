@@ -55,7 +55,27 @@ export const ProvenanceSchema = z.object({
   excerpt: z.string(),
 });
 
-export const CardDraftSchema = z
+export const OcclusionFrontSchema = z.object({
+  image_key: z.string().min(1),
+  prompt: z.string().optional(),
+  regions: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        x: z.number().min(0).max(1),
+        y: z.number().min(0).max(1),
+        w: z.number().gt(0).max(1),
+        h: z.number().gt(0).max(1),
+        label: z.string().min(1),
+      }),
+    )
+    .min(1),
+  mode: z.literal("hide_one"),
+});
+
+export type OcclusionFront = z.infer<typeof OcclusionFrontSchema>;
+
+const TextCardDraftSchema = z
   .object({
     type: z.enum(["qa", "cloze", "image_label", "diagram", "mcq"]),
     front: z.string().min(1),
@@ -87,6 +107,22 @@ export const CardDraftSchema = z
       }
     }
   });
+
+const OcclusionCardDraftSchema = z.object({
+  type: z.literal("occlusion"),
+  front: OcclusionFrontSchema,
+  back: z.object({
+    answer: z.string().min(1),
+  }),
+  provenance: ProvenanceSchema,
+  media_keys: z.array(z.string().min(1)).optional(),
+});
+
+/** Discriminated by `type`: string front/back for text cards; structured for occlusion. */
+export const CardDraftSchema = z.union([
+  TextCardDraftSchema,
+  OcclusionCardDraftSchema,
+]);
 
 export type CardDraft = z.infer<typeof CardDraftSchema>;
 

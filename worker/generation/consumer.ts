@@ -120,6 +120,15 @@ function normalizeFront(front: string): string {
   return front.trim().toLowerCase();
 }
 
+function draftDedupeKey(draft: CardDraft): string {
+  if (draft.type === "occlusion") {
+    return `occlusion:${draft.front.image_key}:${draft.front.regions
+      .map((r) => r.id)
+      .join(",")}`;
+  }
+  return normalizeFront(draft.front);
+}
+
 /** Merge rules then LLM drafts; drop near-identical fronts (trim + lower). */
 export function mergeAndDedupeDrafts(
   rulesDrafts: CardDraft[],
@@ -128,7 +137,7 @@ export function mergeAndDedupeDrafts(
   const seen = new Set<string>();
   const out: CardDraft[] = [];
   for (const draft of [...rulesDrafts, ...llmDrafts]) {
-    const key = normalizeFront(draft.front);
+    const key = draftDedupeKey(draft);
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(draft);
@@ -688,9 +697,12 @@ export async function processGenerateJob(
       await emit("persist", 1, 1, "Saving drafts");
     }
 
-    const covered = drafts.map(
-      (d) => d.front.slice(0, 80) || d.provenance.excerpt.slice(0, 80),
-    );
+    const covered = drafts.map((d) => {
+      const excerpt = d.provenance.excerpt.slice(0, 80);
+      if (excerpt) return excerpt;
+      if (typeof d.front === "string") return d.front.slice(0, 80);
+      return (d.front.prompt ?? d.front.image_key).slice(0, 80);
+    });
     const coverageJson = JSON.stringify({
       covered,
       gaps: [] as string[],
