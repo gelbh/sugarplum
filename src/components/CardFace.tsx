@@ -137,7 +137,7 @@ const MEDIA_IMG_SX = {
   userSelect: "none" as const,
 };
 
-/** Image with optional hide_one mask; stage matches editor (box = img bounds). */
+/** Hide_one stage: editor contract (scroll shell + natural-aspect img, no contain letterbox). */
 function StudyMedia({
   imageKey,
   mask,
@@ -151,46 +151,50 @@ function StudyMedia({
     return (
       <Box
         sx={{
-          position: "relative",
+          maxHeight: "42vh",
+          overflow: "auto",
           width: "100%",
-          maxHeight: "42%",
-          lineHeight: 0,
           mb: 2,
           borderRadius: 1,
-          overflow: "hidden",
         }}
       >
         <Box
-          component="img"
-          src={mediaUrl(imageKey)}
-          alt="Card media"
-          draggable={false}
-          onDragStart={(event) => event.preventDefault()}
           sx={{
-            display: "block",
+            position: "relative",
             width: "100%",
-            height: "auto",
-            maxHeight: "42vh",
-            objectFit: "contain",
-            userSelect: "none",
+            lineHeight: 0,
           }}
-        />
-        {masked ? (
+        >
           <Box
-            aria-hidden
-            data-occlusion-mask
+            component="img"
+            src={mediaUrl(imageKey)}
+            alt="Card media"
+            draggable={false}
+            onDragStart={(event) => event.preventDefault()}
             sx={{
-              position: "absolute",
-              left: `${mask.x * 100}%`,
-              top: `${mask.y * 100}%`,
-              width: `${mask.w * 100}%`,
-              height: `${mask.h * 100}%`,
-              bgcolor: "rgba(30, 13, 27, 0.92)",
-              borderRadius: 0.5,
-              pointerEvents: "none",
+              display: "block",
+              width: "100%",
+              height: "auto",
+              userSelect: "none",
             }}
           />
-        ) : null}
+          {masked ? (
+            <Box
+              aria-hidden
+              data-occlusion-mask
+              sx={{
+                position: "absolute",
+                left: `${mask.x * 100}%`,
+                top: `${mask.y * 100}%`,
+                width: `${mask.w * 100}%`,
+                height: `${mask.h * 100}%`,
+                bgcolor: "rgba(30, 13, 27, 0.92)",
+                borderRadius: 0.5,
+                pointerEvents: "none",
+              }}
+            />
+          ) : null}
+        </Box>
       </Box>
     );
   }
