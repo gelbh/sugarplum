@@ -92,4 +92,27 @@ describe("filterDraftsByQuality", () => {
     );
     expect(filterDraftsByQuality([dna])).toEqual([dna]);
   });
+
+  it("keeps question fronts that start with a preposition", () => {
+    const organelle = qa(
+      "In which organelle does glycolysis occur?",
+      "Cytoplasm",
+    );
+    const atp = qa("what is ATP?", "Adenosine triphosphate");
+    expect(filterDraftsByQuality([organelle, atp])).toEqual([organelle, atp]);
+  });
+
+  it("keeps glossary/pipe pairs with a one-word back", () => {
+    const harvested = harvestRuleDrafts("Capital of France | Paris\n");
+    expect(harvested.map((d) => d.front)).toEqual(["Capital of France"]);
+    expect(filterDraftsByQuality(harvested).map((d) => d.back)).toEqual([
+      "Paris",
+    ]);
+  });
+
+  it("keeps yes/no answers only when the front is a question", () => {
+    const yesQ = qa("Is ATP a nucleotide?", "yes");
+    const yesJunk = qa("ATP present", "yes");
+    expect(filterDraftsByQuality([yesQ, yesJunk])).toEqual([yesQ]);
+  });
 });

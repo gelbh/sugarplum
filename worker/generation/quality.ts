@@ -14,9 +14,12 @@ const TABLE_HEADER_FRONT_RE =
 const TABLE_COLUMN_SUFFIX_RE =
   /\b(definitive|hosts?|significance|transmission|prevention|reservoir|vector|incubation|prognosis|etiology|family|genus|phylum|species|lifecycle|life cycle|symptoms?|treatment|diagnosis|notes?)$/i;
 
-/** Incomplete / stub answers from table cells. */
+/** Incomplete / stub answers from table cells (non-question fronts). */
 const STUB_BACK_RE =
-  /^(depends on|multiple|mainly|various|variable|unknown|see (above|below|text)|n\/?a|tbd|yes|no)$/i;
+  /^(depends on|multiple|mainly|various|variable|unknown|see (above|below|text)|n\/?a|tbd)$/i;
+
+/** Yes/no stubs only when the front is not a question. */
+const YES_NO_BACK_RE = /^(yes|no)$/i;
 
 /** Preposition-led fragment fronts (lecture debris). */
 const PREPOSITION_FRONT_RE =
@@ -51,6 +54,8 @@ function isGlossaryShaped(front: string): boolean {
 function isFragmentFront(front: string): boolean {
   const t = front.trim();
   if (!t) return true;
+  // Real questions are never lecture fragments (e.g. "In which organelle…?").
+  if (t.includes("?")) return false;
   // Leading dash / bullet residue from slides.
   if (/^[\u2013\u2014\-\u2022*•]\s*/.test(t)) return true;
   if (PREPOSITION_FRONT_RE.test(t)) return true;
@@ -70,17 +75,23 @@ function isFragmentFront(front: string): boolean {
   return false;
 }
 
-function isIncompleteBack(back: string): boolean {
+function isIncompleteBack(front: string, back: string): boolean {
   const t = back.trim();
   if (STUB_BACK_RE.test(t)) return true;
+  if (!front.includes("?") && YES_NO_BACK_RE.test(t)) return true;
   if (/\.\.\.|…\s*$/.test(t)) return true;
   if (/[,:;]\s*$/.test(t)) return true;
   return false;
 }
 
-/** One-word alphabetic back with a non-question front (table cell pair). */
+/**
+ * One-word alphabetic back with a non-question front (table cell).
+ * Multi-word glossary fronts (e.g. "Capital of France | Paris") are exempt;
+ * single-word front + single-word back (e.g. Cats/Chronic) still drops.
+ */
 function isGenericOneWordPair(front: string, back: string): boolean {
   if (front.includes("?")) return false;
+  if (isGlossaryShaped(front) && wordCount(front) >= 2) return false;
   if (wordCount(back) !== 1) return false;
   // Single token with no digits; short category labels like Chronic, Multiple.
   return /^[A-Za-z][A-Za-z'-]*$/.test(back.trim());
@@ -100,7 +111,7 @@ function hasBrokenPunctuation(back: string): boolean {
 }
 
 function shouldDrop(draft: CardDraft, front: string, back: string): boolean {
-  if (isIncompleteBack(back)) return true;
+  if (isIncompleteBack(front, back)) return true;
   if (hasBrokenPunctuation(back)) return true;
   // Table-column suffixes only on non-questions (avoid "What is the host?").
   if (!front.includes("?") && TABLE_COLUMN_SUFFIX_RE.test(front)) return true;

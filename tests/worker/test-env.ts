@@ -640,6 +640,25 @@ export function createTestEnv(opts?: {
           });
         } else if (
           normalized.startsWith(
+            "UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = NULL, progress_json = NULL, finished_at = NULL WHERE id = ? AND status NOT IN",
+          )
+        ) {
+          const [status, id] = bound as [string, string];
+          const row = generationJobs.get(id);
+          if (!row || row.status === "queued" || row.status === "running") {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          generationJobs.set(id, {
+            ...row,
+            status,
+            error: null,
+            coverage_json: null,
+            progress_json: null,
+            finished_at: null,
+          });
+          return { success: true, meta: { changes: 1 } } as D1Result;
+        } else if (
+          normalized.startsWith(
             "UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = NULL, progress_json = NULL, finished_at = NULL WHERE id =",
           )
         ) {
@@ -705,6 +724,18 @@ export function createTestEnv(opts?: {
               finished_at,
             });
           }
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET status = ?, error = NULL WHERE id = ? AND status =",
+          )
+        ) {
+          const [status, id, requiredStatus] = bound as [string, string, string];
+          const row = generationJobs.get(id);
+          if (!row || row.status !== requiredStatus) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          generationJobs.set(id, { ...row, status, error: null });
+          return { success: true, meta: { changes: 1 } } as D1Result;
         } else if (
           normalized.startsWith(
             "UPDATE generation_jobs SET status = ?, error = NULL WHERE id =",

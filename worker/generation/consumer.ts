@@ -283,10 +283,16 @@ export async function processGenerateJob(
   const db = getDb(env);
   const { jobId, materialId, deckId } = message;
 
-  await db
-    .prepare("UPDATE generation_jobs SET status = ?, error = NULL WHERE id = ?")
-    .bind("running", jobId)
+  const claim = await db
+    .prepare(
+      "UPDATE generation_jobs SET status = ?, error = NULL WHERE id = ? AND status = ?",
+    )
+    .bind("running", jobId, "queued")
     .run();
+  // Duplicate / stale queue delivery: another worker already claimed or finished.
+  if (!claim.meta.changes) {
+    return;
+  }
 
   try {
     const material = await db

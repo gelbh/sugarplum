@@ -139,6 +139,28 @@ describe("mergeAndDedupeDrafts", () => {
 });
 
 describe("processGenerateJob free path", () => {
+  it("skips when CAS claim loses (job not queued)", async () => {
+    const env = createTestEnv();
+    await seedOwner(env, false);
+    const msg = await seedPasteJob(
+      env,
+      "Mitochondria are the powerhouse of the cell.",
+    );
+    const jobs = env.getGenerationJobs();
+    const job = jobs.find((j) => j.id === msg.jobId)!;
+    env.seedGenerationJob({ ...job, status: "running" });
+
+    const llm = spyLlm();
+    await processGenerateJob(env, msg, { llm });
+
+    expect(llm.generateDrafts).not.toHaveBeenCalled();
+    expect(llm.complete).not.toHaveBeenCalled();
+    expect(env.getCards()).toHaveLength(0);
+    expect(env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status).toBe(
+      "running",
+    );
+  });
+
   it("no secret + mock llm → needs_review and records free-gen", async () => {
     const env = createTestEnv();
     await seedOwner(env, false);

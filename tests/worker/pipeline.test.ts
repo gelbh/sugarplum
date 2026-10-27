@@ -374,6 +374,46 @@ describe("remainderAfterRules", () => {
 });
 
 describe("critiqueDraftsAgainstSource", () => {
+  it("passes unmatched excerpts through without forcing them into chunk 0", async () => {
+    // Two chunks so bucketing runs; unmatched must not enter either critique call.
+    // Put markers at the start so slice(CHUNK_CHAR_LIMIT) cannot cut them off.
+    const chunkA = `marker-a ${"alpha ".repeat(900)}`.slice(0, CHUNK_CHAR_LIMIT);
+    const chunkB = `marker-b ${"beta ".repeat(900)}`.slice(0, CHUNK_CHAR_LIMIT);
+    const sourceText = `${chunkA}\n\n${chunkB}`;
+    expect(sourceText.length).toBeGreaterThan(CHUNK_CHAR_LIMIT);
+
+    const matched = validDraft({
+      front: "What is marker-a?",
+      back: "alpha region",
+      provenance: { pages: [1], excerpt: "marker-a" },
+    });
+    const orphan = validDraft({
+      front: "What is orphan?",
+      back: "not in any chunk",
+      provenance: { pages: [1], excerpt: "orphan-excerpt-xyz" },
+    });
+
+    const llm = mockPipelineLlm({
+      // Keep matched; empty would fall back to the whole bucket.
+      complete: async () => JSON.stringify({ cards: [matched] }),
+    });
+    const survivors = await critiqueDraftsAgainstSource({
+      sourceText,
+      candidates: [matched, orphan],
+      llm,
+      apiKey: "k",
+      provider: "mock",
+    });
+
+    expect(survivors).toEqual([orphan, matched]);
+    expect(llm.complete).toHaveBeenCalled();
+    for (const call of llm.complete.mock.calls) {
+      const user = (call[0] as { user: string }).user;
+      expect(user).not.toContain("orphan-excerpt-xyz");
+      expect(user).not.toContain("What is orphan?");
+    }
+  });
+
   it("critiques candidates and falls back to them when complete hard-fails", async () => {
     const kept = validDraft({
       front: "mitochondria",

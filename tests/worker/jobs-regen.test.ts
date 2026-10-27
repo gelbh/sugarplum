@@ -193,6 +193,73 @@ describe("POST /api/jobs/:id/regen", () => {
     expect(env.getQueueMessages()).toHaveLength(0);
   });
 
+  it("returns 409 when job is queued", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedGenerationJob({
+      id: "job-q",
+      material_id: "mat-a",
+      status: "queued",
+      error: null,
+      coverage_json: null,
+      created_at: "2026-01-01T01:00:00.000Z",
+      finished_at: null,
+    });
+    env.seedCard({
+      id: "c-q",
+      deck_id: "deck-a",
+      job_id: "job-q",
+      type: "qa",
+      front_json: JSON.stringify("Q?"),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "ex" }),
+      status: "draft",
+      created_at: "2026-01-01T01:06:00.000Z",
+      updated_at: "2026-01-01T01:06:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/jobs/job-q/regen",
+      {
+        method: "POST",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+    expect(res.status).toBe(409);
+    expect(env.getCards()).toHaveLength(1);
+    expect(env.getQueueMessages()).toHaveLength(0);
+  });
+
+  it("second concurrent regen loses CAS and returns 409 without double enqueue", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedNeedsReviewJob(env);
+
+    const first = await app.request(
+      "/api/jobs/job-a/regen",
+      {
+        method: "POST",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+    expect(first.status).toBe(200);
+
+    const second = await app.request(
+      "/api/jobs/job-a/regen",
+      {
+        method: "POST",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+    expect(second.status).toBe(409);
+    expect(env.getQueueMessages()).toHaveLength(1);
+    expect(env.getGenerationJobs()[0]!.status).toBe("queued");
+  });
+
   it("returns 409 when job is running", async () => {
     const env = createTestEnv();
     seedOwner(env);

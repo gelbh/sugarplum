@@ -146,24 +146,40 @@ jobRoutes.post("/:id/regen", async (c) => {
 
   if (!row) throw new HTTPException(404, { message: "Job not found" });
 
-  if (row.status === "queued" || row.status === "running") {
+  // Claim first so concurrent regens lose the race before any wipe.
+  const claim = await db
+    .prepare(
+      `UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = NULL, progress_json = NULL, finished_at = NULL
+       WHERE id = ? AND status NOT IN ('queued', 'running')`,
+    )
+    .bind("queued", jobId)
+    .run();
+  if (!claim.meta.changes) {
     throw new HTTPException(409, { message: "Job already in progress" });
   }
 
   await db.prepare("DELETE FROM cards WHERE job_id = ?").bind(jobId).run();
 
-  await db
-    .prepare(
-      `UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = NULL, progress_json = NULL, finished_at = NULL WHERE id = ?`,
-    )
-    .bind("queued", jobId)
-    .run();
-
-  await requeueGeneration(c.env, {
-    jobId: row.id,
-    materialId: row.material_id,
-    deckId: row.deck_id,
-  });
+  try {
+    await requeueGeneration(c.env, {
+      jobId: row.id,
+      materialId: row.material_id,
+      deckId: row.deck_id,
+    });
+  } catch (err) {
+    const finishedAt = new Date().toISOString();
+    const messageText =
+      err instanceof Error ? err.message : "Failed to enqueue regeneration";
+    await db
+      .prepare(
+        "UPDATE generation_jobs SET status = ?, error = ?, finished_at = ? WHERE id = ?",
+      )
+      .bind("failed", messageText, finishedAt, jobId)
+      .run();
+    throw new HTTPException(502, {
+      message: "Could not enqueue regeneration; job marked failed",
+    });
+  }
 
   return c.json({
     id: row.id,

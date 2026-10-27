@@ -199,19 +199,21 @@ export async function critiqueDraftsAgainstSource(
   }
 
   const buckets: CardDraft[][] = chunks.map(() => []);
+  const unmatched: CardDraft[] = [];
   for (const draft of candidates) {
     const excerpt = draft.provenance.excerpt.trim();
-    let idx = 0;
+    let matched = false;
     for (let i = 0; i < chunks.length; i++) {
       if (excerpt && chunks[i]!.includes(excerpt)) {
-        idx = i;
+        buckets[i]!.push(draft);
+        matched = true;
         break;
       }
     }
-    buckets[idx]!.push(draft);
+    if (!matched) unmatched.push(draft);
   }
 
-  const out: CardDraft[] = [];
+  const out: CardDraft[] = [...unmatched];
   for (let i = 0; i < chunks.length; i++) {
     const bucket = buckets[i]!;
     if (bucket.length === 0) continue;
