@@ -271,13 +271,36 @@ export function putLlmSettings(provider: string, apiKey: string) {
   });
 }
 
+/** Occlusion front payload stored in front_json (normalized region boxes). */
+export type OcclusionFrontView = {
+  image_key: string;
+  prompt?: string;
+  regions: Array<{
+    id: string;
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    label: string;
+  }>;
+  mode: "hide_one";
+};
+
+export type CardType =
+  | "qa"
+  | "cloze"
+  | "image_label"
+  | "diagram"
+  | "mcq"
+  | "occlusion";
+
 export type CardDraftView = {
   id: string;
   deck_id: string;
   job_id: string | null;
-  type: "qa" | "cloze" | "image_label" | "diagram" | "mcq" | string;
-  front: string;
-  back: string;
+  type: CardType | string;
+  front: string | OcclusionFrontView;
+  back: string | { answer: string };
   options?: string[];
   media_r2_keys?: string[];
   provenance: unknown;
@@ -315,10 +338,10 @@ export function getJourney() {
 export function patchCard(
   cardId: string,
   body: {
-    front?: string;
-    back?: string;
+    front?: string | OcclusionFrontView;
+    back?: string | { answer: string };
     options?: string[];
-    type?: "qa" | "cloze" | "image_label" | "diagram" | "mcq";
+    type?: CardType;
   },
 ) {
   if (isGuest()) guestUnsupported("edit cards");
