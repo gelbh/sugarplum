@@ -155,7 +155,7 @@ describe("Google OAuth", () => {
     expect(res.status).toBe(503);
   });
 
-  it("callback creates OAuth-only user and sets session", async () => {
+  it("callback redirects to /today and sets session", async () => {
     const env = createTestEnv();
     const state = "state-new";
     await env.SESSIONS.put(
@@ -173,7 +173,7 @@ describe("Google OAuth", () => {
       env,
     );
     expect(res.status).toBe(302);
-    expect(res.headers.get("location")).toBe("http://localhost/");
+    expect(res.headers.get("location")).toBe("http://localhost/today");
     const setCookie = res.headers.get("set-cookie") ?? "";
     expect(setCookie).toContain(`${SESSION_COOKIE}=`);
 
@@ -185,6 +185,46 @@ describe("Google OAuth", () => {
     expect(me.status).toBe(200);
     const body = (await me.json()) as { email: string };
     expect(body.email).toBe("oauth@example.com");
+  });
+
+  it("duplicate callback with same code after success redirects to /today without error", async () => {
+    const env = createTestEnv();
+    const state = "state-dup";
+    await env.SESSIONS.put(
+      `${OAUTH_KV_PREFIX}${state}`,
+      JSON.stringify({ codeVerifier: "verifier", createdAt: Date.now() }),
+    );
+    stubGoogleTokenAndProfile({
+      sub: "g-sub-dup",
+      email: "dup@example.com",
+    });
+
+    const first = await app.request(
+      `/api/auth/google/callback?code=dup-code&state=${state}`,
+      { method: "GET" },
+      env,
+    );
+    expect(first.status).toBe(302);
+    expect(first.headers.get("location")).toBe("http://localhost/today");
+
+    const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>;
+    const tokenCallsAfterFirst = fetchMock.mock.calls.filter(
+      (call) => String(call[0]) === GOOGLE_TOKEN_URL,
+    ).length;
+
+    const second = await app.request(
+      `/api/auth/google/callback?code=dup-code&state=${state}`,
+      { method: "GET" },
+      env,
+    );
+    expect(second.status).toBe(302);
+    expect(second.headers.get("location")).toBe("http://localhost/today");
+    expect(second.headers.get("location")).not.toContain("error=");
+
+    const tokenCallsAfterSecond = fetchMock.mock.calls.filter(
+      (call) => String(call[0]) === GOOGLE_TOKEN_URL,
+    ).length;
+    expect(tokenCallsAfterSecond).toBe(tokenCallsAfterFirst);
   });
 
   it("callback refuses to auto-link a password account (hijack guard)", async () => {
@@ -242,7 +282,7 @@ describe("Google OAuth", () => {
       env,
     );
     expect(res.status).toBe(302);
-    expect(res.headers.get("location")).toBe("http://localhost/");
+    expect(res.headers.get("location")).toBe("http://localhost/today");
     const setCookie = res.headers.get("set-cookie") ?? "";
     const me = await app.request(
       "/api/auth/me",

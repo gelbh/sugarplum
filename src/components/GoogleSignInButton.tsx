@@ -1,17 +1,16 @@
 import Button from "@mui/material/Button";
 import { endGuestLocal } from "../guest/endGuestLocal";
 
-/** Navigates to the Worker Google OAuth start endpoint. */
+/** Top-level navigation to Worker Google OAuth start (iOS Home Screen friendly). */
 export default function GoogleSignInButton() {
   return (
     <Button
-      type="button"
+      component="a"
+      href="/api/auth/google/start"
       variant="outlined"
       fullWidth
       onClick={() => {
-        // Drop guest before OAuth so callback `me()` is the real account.
         endGuestLocal();
-        window.location.assign("/api/auth/google/start");
       }}
     >
       Continue with Google

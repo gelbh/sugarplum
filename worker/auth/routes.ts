@@ -15,6 +15,11 @@ import {
   type GoogleOAuthPending,
 } from "./google";
 import {
+  OAUTH_DONE_TTL_SECONDS,
+  oauthDoneKey,
+  parseOAuthDone,
+} from "./oauth-replay";
+import {
   hashPassword,
   isPasswordLongEnough,
   verifyPassword,
@@ -231,6 +236,21 @@ authRoutes.get("/google/start", async (c) => {
   return c.redirect(url, 302);
 });
 
+function oauthSuccessHome(appUrl: string): string {
+  const home = appUrl.replace(/\/$/, "") || "";
+  return `${home}/today`;
+}
+
+async function storeOAuthDone(
+  sessions: Env["SESSIONS"],
+  state: string,
+  done: { userId: string; intent: "login" | "link" },
+): Promise<void> {
+  await sessions.put(oauthDoneKey(state), JSON.stringify(done), {
+    expirationTtl: OAUTH_DONE_TTL_SECONDS,
+  });
+}
+
 /** Google OAuth callback: login upsert or authenticated Settings link. */
 authRoutes.get("/google/callback", async (c) => {
   const { clientId, clientSecret } = requireGoogleCreds(c.env);
@@ -242,6 +262,20 @@ authRoutes.get("/google/callback", async (c) => {
 
   const kvKey = state ? `${OAUTH_KV_PREFIX}${state}` : null;
   const rawPending = kvKey ? await c.env.SESSIONS.get(kvKey) : null;
+
+  // Pending already consumed: replay local success, never re-exchange the code.
+  if (state && !rawPending) {
+    const doneRaw = await c.env.SESSIONS.get(oauthDoneKey(state));
+    const done = doneRaw ? parseOAuthDone(doneRaw) : null;
+    if (done) {
+      if (done.intent === "link") {
+        return oauthSettingsRedirect(appUrl, { linked: "1" });
+      }
+      await createSession(c, done.userId);
+      return c.redirect(oauthSuccessHome(appUrl), 302);
+    }
+  }
+
   if (kvKey) await c.env.SESSIONS.delete(kvKey);
 
   let pending: GoogleOAuthPending | null = null;
@@ -329,6 +363,10 @@ authRoutes.get("/google/callback", async (c) => {
         .bind(subject, account.id)
         .run();
     }
+    await storeOAuthDone(c.env.SESSIONS, state, {
+      userId: account.id,
+      intent: "link",
+    });
     return oauthSettingsRedirect(appUrl, { linked: "1" });
   }
 
@@ -390,6 +428,6 @@ authRoutes.get("/google/callback", async (c) => {
   }
 
   await createSession(c, userId);
-  const home = appUrl.replace(/\/$/, "") || "/";
-  return c.redirect(`${home}/`, 302);
+  await storeOAuthDone(c.env.SESSIONS, state, { userId, intent: "login" });
+  return c.redirect(oauthSuccessHome(appUrl), 302);
 });
