@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
 import Container from "@mui/material/Container";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -33,6 +32,7 @@ import {
   type CardDraftView,
 } from "../api/client";
 import { deriveJourney } from "../journey/derive";
+import { forceOpenDraftReview } from "../journey/forceOpenDraftReview";
 import type { JourneyView } from "../journey/types";
 import JobProgressPanel from "../progress/JobProgressPanel";
 import { useJobProgress } from "../progress/useJobProgress";
@@ -64,9 +64,7 @@ export default function DraftReviewPage() {
     draft_count?: number;
   } | null>(null);
   const [authReady, setAuthReady] = useState(false);
-  const jobProgress = useJobProgress(
-    authReady && progressGate ? jobId : null,
-  );
+  const jobProgress = useJobProgress(authReady && progressGate ? jobId : null);
   const { begin: beginLoad, end: endLoad } = useTrackedOp("Loading drafts…");
   const { busy, begin, end } = useTrackedOp("Working…");
 
@@ -105,18 +103,14 @@ export default function DraftReviewPage() {
   const refreshJourney = useCallback(async (id: string, draftCount: number) => {
     try {
       const journey = await getJourney();
-      const derived = deriveJourney(journey);
+      let derived = deriveJourney(journey);
       if (draftCount > 0) {
-        derived.collapsed = false;
+        derived = forceOpenDraftReview(derived);
         derived.next = {
           label: "Review drafts",
           href: `/jobs/${id}/drafts`,
           action: "review",
         };
-        derived.stages = derived.stages.map((s) => ({
-          ...s,
-          active: s.id === "review",
-        }));
       }
       setJourneyError(null);
       setView(derived);
@@ -289,7 +283,8 @@ export default function DraftReviewPage() {
         });
       }
       const result = await acceptAllJobDrafts(jobId);
-      await load(jobId);
+      const list = await load(jobId);
+      await refreshJourney(jobId, list.length);
       if (result.failed > 0) {
         setNotice(
           `Accepted ${result.accepted}; ${result.failed} could not be accepted`,
@@ -320,9 +315,7 @@ export default function DraftReviewPage() {
       setProgressGate(false);
       end();
     } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Could not regenerate",
-      );
+      setError(err instanceof ApiError ? err.message : "Could not regenerate");
       end(false);
     }
   }
@@ -371,7 +364,7 @@ export default function DraftReviewPage() {
             borderColor: "divider",
           }}
         >
-          <Link href="/library" underline="hover" color="primary">
+          <Link href="/library" underline="hover" color="text.secondary">
             Library
           </Link>
           {jobId ? (
@@ -415,7 +408,7 @@ export default function DraftReviewPage() {
                 {view ? (
                   <JourneyNextButton view={view} />
                 ) : (
-                  <Link href="/library" color="primary">
+                  <Link href="/library" color="text.secondary">
                     Back to library
                   </Link>
                 )}
@@ -439,30 +432,9 @@ export default function DraftReviewPage() {
               borderColor: "divider",
             }}
           >
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              sx={{ mb: 2 }}
-            >
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                Card {index + 1} of {drafts.length}
-              </Typography>
-              <Chip
-                size="small"
-                label={
-                  current.type === "cloze"
-                    ? "Cloze"
-                    : current.type === "image_label"
-                      ? "Image label"
-                      : current.type === "diagram"
-                        ? "Diagram"
-                        : "Q&A"
-                }
-                color="primary"
-                variant="outlined"
-              />
-            </Stack>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+              Card {index + 1} of {drafts.length}
+            </Typography>
 
             <DraftCardEditor
               card={current}
@@ -483,76 +455,88 @@ export default function DraftReviewPage() {
             ) : null}
 
             <Stack
-              direction="row"
               spacing={1.5}
-              flexWrap="wrap"
-              useFlexGap
               sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: "divider" }}
             >
-              <Button
-                variant="text"
-                onClick={onSave}
-                disabled={busy || !dirty}
-                startIcon={<CheckIcon />}
+              <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<CheckIcon />}
+                  onClick={onAccept}
+                  disabled={busy}
+                >
+                  Accept
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<CloseIcon />}
+                  onClick={onReject}
+                  disabled={busy}
+                >
+                  Reject
+                </Button>
+              </Stack>
+              <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => setConfirmAll(true)}
+                  disabled={busy || drafts.length === 0}
+                >
+                  Approve all
+                </Button>
+              </Stack>
+              <Stack
+                direction="row"
+                spacing={1.5}
+                flexWrap="wrap"
+                useFlexGap
+                alignItems="center"
+                sx={{ pt: 1, borderTop: 1, borderColor: "divider" }}
               >
-                Save
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<CheckIcon />}
-                onClick={onAccept}
-                disabled={busy}
-              >
-                Accept
-              </Button>
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={() => setConfirmAll(true)}
-                disabled={busy || drafts.length === 0}
-              >
-                Approve all
-              </Button>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<CloseIcon />}
-                onClick={onReject}
-                disabled={busy}
-              >
-                Reject
-              </Button>
-              <Button
-                variant="outlined"
-                color="error"
-                onClick={() => setConfirmRegen(true)}
-                disabled={regenDisabled}
-              >
-                Regenerate
-              </Button>
-              <Button
-                variant="text"
-                disabled={busy || index <= 0}
-                onClick={() => {
-                  setIndex((i) => Math.max(0, i - 1));
-                  setDirty(false);
-                  setNotice(null);
-                }}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="text"
-                disabled={busy || index >= drafts.length - 1}
-                onClick={() => {
-                  setIndex((i) => Math.min(drafts.length - 1, i + 1));
-                  setDirty(false);
-                  setNotice(null);
-                }}
-              >
-                Next
-              </Button>
+                <Button
+                  variant="text"
+                  onClick={onSave}
+                  disabled={busy || !dirty}
+                  startIcon={<CheckIcon />}
+                >
+                  Save
+                </Button>
+                <Button
+                  variant="text"
+                  disabled={busy || index <= 0}
+                  onClick={() => {
+                    setIndex((i) => Math.max(0, i - 1));
+                    setDirty(false);
+                    setNotice(null);
+                  }}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="text"
+                  disabled={busy || index >= drafts.length - 1}
+                  onClick={() => {
+                    setIndex((i) => Math.min(drafts.length - 1, i + 1));
+                    setDirty(false);
+                    setNotice(null);
+                  }}
+                >
+                  Next
+                </Button>
+              </Stack>
+              <Box>
+                <Button
+                  variant="text"
+                  color="error"
+                  onClick={() => setConfirmRegen(true)}
+                  disabled={regenDisabled}
+                >
+                  Regenerate
+                </Button>
+              </Box>
             </Stack>
           </Paper>
         )}
