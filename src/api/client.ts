@@ -12,6 +12,8 @@ import {
   guestListDueCards,
   guestReviewCard,
 } from "../guest/store";
+import { clearDueCache } from "../study/dueCache";
+import { clearPendingGrades } from "../study/pendingGrades";
 
 export type ApiErrorBody = {
   error?: string;
@@ -90,10 +92,19 @@ export async function login(email: string, password: string) {
   return user;
 }
 
+const STUDY_MEDIA_CACHE = "sugarplum-study-media";
+
 export function logout() {
   if (isGuest()) {
     endGuestLocal();
     return Promise.resolve({ ok: true });
+  }
+  clearDueCache();
+  clearPendingGrades();
+  if (typeof caches !== "undefined") {
+    void caches.delete(STUDY_MEDIA_CACHE).catch(() => {
+      /* Cache API missing / denied */
+    });
   }
   return api<{ ok: boolean }>("/api/auth/logout", { method: "POST" });
 }
