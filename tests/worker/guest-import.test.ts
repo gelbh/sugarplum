@@ -78,12 +78,13 @@ describe("POST /api/guest/import", () => {
     expect(schedules[0].card_id).toBe(cards[0].id);
 
     const { results: decks } = await env.DB.prepare(
-      "SELECT id, title, subject_hint, created_at FROM decks WHERE user_id = ? ORDER BY created_at ASC",
+      "SELECT id, title, subject_hint, subject_id, created_at FROM decks WHERE user_id = ? ORDER BY created_at ASC",
     )
       .bind("user-a")
-      .all<{ id: string; title: string }>();
+      .all<{ id: string; title: string; subject_id: string | null }>();
     expect(decks).toHaveLength(1);
     expect(decks![0].title).toBe("Paste deck");
+    expect(decks![0].subject_id).toBeTruthy();
     expect(cards[0].deck_id).toBe(decks![0].id);
   });
 

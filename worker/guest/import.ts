@@ -100,15 +100,25 @@ guestRoutes.post("/import", async (c) => {
   const clientToServer = new Map<string, string>();
   const statements: D1PreparedStatement[] = [];
 
+  // One Unfiled subject for the imported decks (matches subject hierarchy on main).
+  const subjectId = crypto.randomUUID();
+  statements.push(
+    db
+      .prepare(
+        "INSERT INTO subjects (id, user_id, title, created_at) VALUES (?, ?, ?, ?)",
+      )
+      .bind(subjectId, userId, "Unfiled", now),
+  );
+
   for (const deck of decks) {
     const id = crypto.randomUUID();
     clientToServer.set(deck.clientId, id);
     statements.push(
       db
         .prepare(
-          "INSERT INTO decks (id, user_id, title, subject_hint, created_at) VALUES (?, ?, ?, NULL, ?)",
+          "INSERT INTO decks (id, user_id, title, subject_hint, subject_id, created_at) VALUES (?, ?, ?, NULL, ?, ?)",
         )
-        .bind(id, userId, deck.title, now),
+        .bind(id, userId, deck.title, subjectId, now),
     );
   }
 

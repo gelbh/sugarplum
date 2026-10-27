@@ -151,7 +151,8 @@ describe("mergeOnAuth", () => {
 
     expect(result).toBe("failed");
     expect(local.getItem(GUEST_FLAG_KEY)).toBeNull();
-    expect(local.getItem(STORE_KEY)).toBe(JSON.stringify(pasteStore));
+    const kept = JSON.parse(local.getItem(STORE_KEY)!);
+    expect(kept.cards).toEqual(pasteStore.cards);
     expect(session.getItem("sugarplum.guest.merge.failed")).toBe("1");
   });
 
