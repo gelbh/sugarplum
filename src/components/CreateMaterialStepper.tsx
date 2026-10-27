@@ -26,6 +26,7 @@ import {
   uploadMaterialFile,
   uploadPdfWithFigureCrops,
   type Deck,
+  type Subject,
   ApiError,
 } from "../api/client";
 import { guestPasteToCards } from "../guest/pasteToCards";
@@ -37,6 +38,8 @@ import { stepperSx } from "./stepperSx";
 type Props = {
   decks: Deck[];
   setDecks: (updater: (prev: Deck[]) => Deck[]) => void;
+  subjects?: Subject[];
+  setSubjects?: (updater: (prev: Subject[]) => Subject[]) => void;
   activeStep: number;
   setActiveStep: (n: number) => void;
   onChanged?: () => void | Promise<void>;
@@ -53,17 +56,26 @@ const ALLOWED_UPLOAD_MIMES = new Set([
   ...IMAGE_MIMES,
 ]);
 const CREATE_NEW_DECK = "__create_new_deck__";
+const CREATE_NEW_SUBJECT = "__create_new_subject__";
 
 export default function CreateMaterialStepper({
   decks,
   setDecks,
+  subjects: subjectsProp,
+  setSubjects: setSubjectsProp,
   activeStep,
   setActiveStep,
   onChanged,
   localOnly = false,
 }: Props) {
+  const [localSubjects, setLocalSubjects] = useState<Subject[]>([]);
+  const subjects = subjectsProp ?? localSubjects;
+  const setSubjects = setSubjectsProp ?? setLocalSubjects;
+
   const [title, setTitle] = useState("");
   const [selectedDeckId, setSelectedDeckId] = useState("");
+  const [selectedSubjectId, setSelectedSubjectId] = useState("");
+  const [newSubjectTitle, setNewSubjectTitle] = useState("");
   const [pasteText, setPasteText] = useState("");
   const [filename, setFilename] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -78,10 +90,34 @@ export default function CreateMaterialStepper({
   const titleRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
+    if (subjectsProp) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const list = await listSubjects();
+        if (!cancelled) setLocalSubjects(list);
+      } catch {
+        /* subject list optional until create */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [subjectsProp]);
+
+  useEffect(() => {
     setSelectedDeckId((prev) =>
       prev && decks.some((d) => d.id === prev) ? prev : (decks[0]?.id ?? ""),
     );
   }, [decks]);
+
+  useEffect(() => {
+    setSelectedSubjectId((prev) => {
+      if (prev === CREATE_NEW_SUBJECT) return prev;
+      if (prev && subjects.some((s) => s.id === prev)) return prev;
+      return subjects[0]?.id ?? CREATE_NEW_SUBJECT;
+    });
+  }, [subjects]);
 
   useEffect(() => {
     if (focusCreateTitle && activeStep === 0) {
@@ -126,23 +162,38 @@ export default function CreateMaterialStepper({
     );
   }
 
+  const creatingNewSubject = selectedSubjectId === CREATE_NEW_SUBJECT;
+  const canCreateDeck =
+    Boolean(title.trim()) &&
+    (creatingNewSubject
+      ? Boolean(newSubjectTitle.trim())
+      : Boolean(selectedSubjectId));
+
   const [tab, setTab] = useState<"paste" | "file">("paste");
 
   async function onCreateDeck(e?: FormEvent) {
     e?.preventDefault();
     setError(null);
     setNotice(null);
+    if (!canCreateDeck) {
+      setError(
+        creatingNewSubject
+          ? "Enter a subject title and deck title"
+          : "Choose a subject and enter a deck title",
+      );
+      return;
+    }
     setBusy(true);
     try {
-      // Task 4: subjectId required. Task 5 adds subject picker UI; until then
-      // reuse first subject or create Unfiled so create still works.
-      const subjects = await listSubjects();
-      let subjectId = subjects[0]?.id;
-      if (!subjectId) {
-        const created = await createSubject("Unfiled");
+      let subjectId = selectedSubjectId;
+      if (creatingNewSubject) {
+        const created = await createSubject(newSubjectTitle.trim());
+        setSubjects((prev) => [...prev, created]);
         subjectId = created.id;
+        setSelectedSubjectId(created.id);
+        setNewSubjectTitle("");
       }
-      const deck = await createDeck(title, subjectId);
+      const deck = await createDeck(title.trim(), subjectId);
       setDecks((prev) => [...prev, deck]);
       setSelectedDeckId(deck.id);
       setTitle("");
@@ -364,8 +415,37 @@ export default function CreateMaterialStepper({
                 <Typography variant="h6">
                   {decks.length > 0 ? "New deck" : "Create a deck"}
                 </Typography>
+                <FormControl fullWidth>
+                  <InputLabel id="new-deck-subject-label">Subject</InputLabel>
+                  <Select
+                    labelId="new-deck-subject-label"
+                    label="Subject"
+                    value={selectedSubjectId}
+                    onChange={(ev) => setSelectedSubjectId(ev.target.value)}
+                  >
+                    {subjects.map((s) => (
+                      <MenuItem key={s.id} value={s.id}>
+                        {s.title}
+                      </MenuItem>
+                    ))}
+                    {subjects.length > 0 ? <Divider component="li" /> : null}
+                    <MenuItem value={CREATE_NEW_SUBJECT}>
+                      Create new subject…
+                    </MenuItem>
+                  </Select>
+                </FormControl>
+                {creatingNewSubject ? (
+                  <TextField
+                    label="New subject title"
+                    name="subjectTitle"
+                    value={newSubjectTitle}
+                    onChange={(ev) => setNewSubjectTitle(ev.target.value)}
+                    required
+                    fullWidth
+                  />
+                ) : null}
                 <TextField
-                  label="Title"
+                  label="Deck title"
                   name="title"
                   value={title}
                   onChange={(ev) => setTitle(ev.target.value)}
@@ -376,7 +456,7 @@ export default function CreateMaterialStepper({
                 <Button
                   type="submit"
                   variant="contained"
-                  disabled={busy || !title.trim()}
+                  disabled={busy || !canCreateDeck}
                 >
                   {busy ? "Working…" : "Create deck"}
                 </Button>

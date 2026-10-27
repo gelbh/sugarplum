@@ -10,4 +10,12 @@ describe("navigate", () => {
     expect(paths.at(-1)).toBe("/library");
     unsub();
   });
+
+  it("supports subject library paths", () => {
+    const paths: string[] = [];
+    const unsub = subscribePath((p) => paths.push(p));
+    navigate("/library/subjects/subj_1");
+    expect(paths.at(-1)).toBe("/library/subjects/subj_1");
+    unsub();
+  });
 });

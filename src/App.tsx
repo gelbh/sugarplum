@@ -3,6 +3,7 @@ import AppShell from "./components/AppShell";
 import DraftReviewPage from "./routes/DraftReviewPage";
 import HomePage from "./routes/HomePage";
 import LibraryPage from "./routes/LibraryPage";
+import SubjectPage from "./routes/SubjectPage";
 import LoginPage from "./routes/LoginPage";
 import RegisterPage from "./routes/RegisterPage";
 import PrivacyPage from "./routes/PrivacyPage";
@@ -14,6 +15,8 @@ import StudyPage from "./routes/StudyPage";
 import TodayPage from "./routes/TodayPage";
 import { subscribePath } from "./nav/navigate";
 import { StudyChromeProvider } from "./study/StudyChromeContext";
+
+const SUBJECT_PATH = /^\/library\/subjects\/([^/]+)\/?$/;
 
 function shell(page: ReactNode) {
   return <AppShell>{page}</AppShell>;
@@ -38,6 +41,12 @@ function AppInner() {
   if (path === "/privacy") return <PrivacyPage />;
   if (path === "/terms") return <TermsPage />;
   if (path === "/data-deletion") return <DataDeletionPage />;
+  const subjectMatch = path.match(SUBJECT_PATH);
+  if (subjectMatch) {
+    return shell(
+      <SubjectPage subjectId={decodeURIComponent(subjectMatch[1])} />,
+    );
+  }
   if (path === "/library") return shell(<LibraryPage />);
   if (path === "/settings") return shell(<SettingsPage />);
   if (path === "/study") return shell(<StudyPage />);
