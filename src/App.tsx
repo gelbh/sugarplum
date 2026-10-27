@@ -11,12 +11,21 @@ import DataDeletionPage from "./routes/DataDeletionPage";
 import SettingsPage from "./routes/SettingsPage";
 import StudyPage from "./routes/StudyPage";
 import TodayPage from "./routes/TodayPage";
+import { StudyChromeProvider } from "./study/StudyChromeContext";
 
 function shell(page: ReactNode) {
   return <AppShell>{page}</AppShell>;
 }
 
 export default function App() {
+  return (
+    <StudyChromeProvider>
+      <AppInner />
+    </StudyChromeProvider>
+  );
+}
+
+function AppInner() {
   const path = window.location.pathname;
 
   if (path === "/" || path === "") return <HomePage />;

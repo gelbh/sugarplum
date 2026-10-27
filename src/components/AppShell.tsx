@@ -18,6 +18,7 @@ import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import GlobalProgressBar from "../progress/GlobalProgressBar";
 import { ProgressProvider } from "../progress/ProgressProvider";
+import { useStudyChrome } from "../study/StudyChromeContext";
 
 const DRAWER_WIDTH = 240;
 
@@ -67,12 +68,20 @@ type AppShellProps = {
 
 /** Authenticated chrome: permanent drawer on desktop, bottom nav on mobile. */
 export default function AppShell({ children }: AppShellProps) {
+  const { hideChrome } = useStudyChrome();
   const theme = useTheme();
   const mobile = useMediaQuery(theme.breakpoints.down("md"));
   const path = window.location.pathname;
   const active = activeNavId(path);
 
-  const shell = mobile ? (
+  const shell = hideChrome ? (
+    <>
+      <GlobalProgressBar />
+      <Box component="main" sx={{ minHeight: "100vh" }}>
+        {children}
+      </Box>
+    </>
+  ) : mobile ? (
     <Box
       sx={{
         display: "flex",
