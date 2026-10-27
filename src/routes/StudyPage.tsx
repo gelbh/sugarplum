@@ -17,9 +17,7 @@ import Typography from "@mui/material/Typography";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
 import TodayIcon from "@mui/icons-material/Today";
-import CardFace, {
-  type OcclusionStudyFace,
-} from "../components/CardFace";
+import CardFace, { type OcclusionStudyFace } from "../components/CardFace";
 import GradeButtons from "../components/GradeButtons";
 import McqFace from "../components/McqFace";
 import {
@@ -31,9 +29,16 @@ import {
   type OcclusionFrontView,
   type StudyRating,
 } from "../api/client";
+import { isGuest } from "../guest/session";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { resolveCardGesture } from "../study/cardGestures";
-import { loadDueCache, saveDueCache } from "../study/dueCache";
+import {
+  filterDueExcludingPending,
+  loadDueCache,
+  pruneDueCacheCard,
+  saveDueCache,
+} from "../study/dueCache";
+import { enqueuePendingGrade, pendingCardIdSet } from "../study/pendingGrades";
 import {
   occlusionRevealAnswer,
   pickOcclusionRegion,
@@ -42,7 +47,10 @@ import {
   cardIdFromSearch,
   prioritizeDueCard,
 } from "../study/prioritizeDueCard";
+import { isNetworkGradeError } from "../study/runPendingFlush";
+import { usePendingGradeSync } from "../study/usePendingGradeSync";
 import { useStudyZenMode } from "../study/useStudyZenMode";
+import { warmDueMedia } from "../study/warmDueMedia";
 
 type PointerStart = {
   id: number;
@@ -168,17 +176,23 @@ export default function StudyPage() {
   );
 
   const load = useCallback(
-    async (userId: string) => {
+    async (uid: string) => {
       const wanted = cardIdFromSearch(window.location.search);
       try {
         const due = await listDueCards();
-        saveDueCache(userId, due);
+        saveDueCache(uid, due);
+        warmDueMedia(due);
         applyDueQueue(due, wanted);
         setOfflineCopy(false);
       } catch (err) {
-        const cached = loadDueCache(userId);
+        const cached = loadDueCache(uid);
         if (cached && cached.cards.length > 0) {
-          applyDueQueue(cached.cards, wanted);
+          const filtered = filterDueExcludingPending(
+            cached.cards,
+            pendingCardIdSet(uid),
+          );
+          if (filtered.length === 0) throw err;
+          applyDueQueue(filtered, wanted);
           setOfflineCopy(true);
           return;
         }
@@ -188,13 +202,35 @@ export default function StudyPage() {
     [applyDueQueue],
   );
 
+  const {
+    userId,
+    setUserId,
+    pendingCount,
+    syncSummary,
+    setSyncSummary,
+    refreshPendingCount,
+    flushOnMount,
+  } = usePendingGradeSync({
+    onDueRefreshed: (due) => {
+      applyDueQueue(due, cardIdFromSearch(window.location.search));
+      setOfflineCopy(false);
+    },
+    onDueRefreshFailed: (uid) => load(uid),
+  });
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const user = await me();
+        if (cancelled) return;
+        setUserId(user.id);
+        refreshPendingCount(user.id);
+        await flushOnMount(user.id);
+        if (cancelled) return;
         await load(user.id);
         if (!cancelled) {
+          refreshPendingCount(user.id);
           setReady(true);
           endLoad();
         }
@@ -214,7 +250,7 @@ export default function StudyPage() {
     return () => {
       cancelled = true;
     };
-  }, [endLoad, load]);
+  }, [endLoad, flushOnMount, load, refreshPendingCount, setUserId]);
 
   const current = queue[0] ?? null;
   const mcqMode = isMcqCard(current);
@@ -249,6 +285,14 @@ export default function StudyPage() {
     showAnswerRef.current?.focus();
   }, [revealed, current?.id]);
 
+  const advanceAfterGrade = useCallback((fromMcq: boolean) => {
+    if (!fromMcq) {
+      focusShowAnswerAfterGradeRef.current = true;
+    }
+    setQueue((prev) => prev.slice(1));
+    setRevealed(false);
+  }, []);
+
   const onGrade = useCallback(
     async (rating: StudyRating, fromMcq = false): Promise<boolean> => {
       if (!current || busyRef.current) return false;
@@ -256,16 +300,33 @@ export default function StudyPage() {
       busyRef.current = true;
       setError(null);
       begin();
+
+      const queueOffline = (uid: string) => {
+        if (!enqueuePendingGrade(uid, current.id, rating)) {
+          setError("Could not save grade offline (storage full).");
+          end(false);
+          return false;
+        }
+        pruneDueCacheCard(uid, current.id);
+        refreshPendingCount(uid);
+        advanceAfterGrade(fromMcq);
+        end();
+        return true;
+      };
+
+      if (!isGuest() && offlineCopy && userId) {
+        return queueOffline(userId);
+      }
+
       try {
         await reviewCard(current.id, rating);
-        if (!fromMcq) {
-          focusShowAnswerAfterGradeRef.current = true;
-        }
-        setQueue((prev) => prev.slice(1));
-        setRevealed(false);
+        advanceAfterGrade(fromMcq);
         end();
         return true;
       } catch (err) {
+        if (!isGuest() && userId && isNetworkGradeError(err)) {
+          return queueOffline(userId);
+        }
         setError(
           err instanceof ApiError ? err.message : "Could not save grade",
         );
@@ -273,7 +334,16 @@ export default function StudyPage() {
         return false;
       }
     },
-    [begin, current, end, revealed],
+    [
+      advanceAfterGrade,
+      begin,
+      current,
+      end,
+      offlineCopy,
+      refreshPendingCount,
+      revealed,
+      userId,
+    ],
   );
 
   useEffect(() => {
@@ -462,10 +532,22 @@ export default function StudyPage() {
           ) : null}
 
           {error ? <Alert severity="error">{error}</Alert> : null}
+          {syncSummary ? (
+            <Alert severity="info" onClose={() => setSyncSummary(null)}>
+              {syncSummary}
+            </Alert>
+          ) : null}
           {offlineCopy ? (
             <Alert severity="warning">
-              Showing an offline copy of due cards. Grading still needs a
-              network connection.
+              Showing an offline copy of due cards.
+              {pendingCount > 0
+                ? ` ${pendingCount} ${pendingCount === 1 ? "grade" : "grades"} waiting to sync.`
+                : ""}
+            </Alert>
+          ) : pendingCount > 0 ? (
+            <Alert severity="info">
+              {pendingCount} {pendingCount === 1 ? "grade" : "grades"} waiting
+              to sync.
             </Alert>
           ) : null}
           {deepLinkMiss ? (
