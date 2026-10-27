@@ -28,6 +28,7 @@ import {
   listJobDrafts,
   me,
   patchCard,
+  regenJob,
   rejectCard,
   type CardDraftView,
 } from "../api/client";
@@ -54,15 +55,26 @@ export default function DraftReviewPage() {
   const [ready, setReady] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [confirmAll, setConfirmAll] = useState(false);
+  const [confirmRegen, setConfirmRegen] = useState(false);
+  /** When false, drop jobId from useJobProgress so the same id can remount and poll again after regen. */
+  const [progressGate, setProgressGate] = useState(true);
   const [coverage, setCoverage] = useState<{
     covered: string[];
     gaps: string[];
     draft_count?: number;
   } | null>(null);
   const [authReady, setAuthReady] = useState(false);
-  const jobProgress = useJobProgress(authReady ? jobId : null);
+  const jobProgress = useJobProgress(
+    authReady && progressGate ? jobId : null,
+  );
   const { begin: beginLoad, end: endLoad } = useTrackedOp("Loading drafts…");
   const { busy, begin, end } = useTrackedOp("Working…");
+
+  useEffect(() => {
+    if (!progressGate && authReady && jobId) {
+      setProgressGate(true);
+    }
+  }, [progressGate, authReady, jobId]);
 
   const load = useCallback(async (id: string) => {
     const [list, job] = await Promise.all([listJobDrafts(id), getJob(id)]);
@@ -292,6 +304,31 @@ export default function DraftReviewPage() {
     }
   }
 
+  async function onRegen() {
+    if (!jobId) return;
+    setError(null);
+    setNotice(null);
+    setConfirmRegen(false);
+    begin();
+    try {
+      await regenJob(jobId);
+      setDrafts([]);
+      setCoverage(null);
+      setIndex(0);
+      setDirty(false);
+      setReady(false);
+      setProgressGate(false);
+      end();
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Could not regenerate",
+      );
+      end(false);
+    }
+  }
+
+  const regenDisabled = busy || jobProgress.pending;
+
   if (!ready) {
     return (
       <Container maxWidth="sm" sx={{ py: 6 }}>
@@ -374,13 +411,23 @@ export default function DraftReviewPage() {
           >
             <Stack spacing={2}>
               <Typography>No drafts left for this job.</Typography>
-              {view ? (
-                <JourneyNextButton view={view} />
-              ) : (
-                <Link href="/library" color="primary">
-                  Back to library
-                </Link>
-              )}
+              <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
+                {view ? (
+                  <JourneyNextButton view={view} />
+                ) : (
+                  <Link href="/library" color="primary">
+                    Back to library
+                  </Link>
+                )}
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => setConfirmRegen(true)}
+                  disabled={regenDisabled}
+                >
+                  Regenerate
+                </Button>
+              </Stack>
             </Stack>
           </Paper>
         ) : (
@@ -477,6 +524,14 @@ export default function DraftReviewPage() {
                 Reject
               </Button>
               <Button
+                variant="outlined"
+                color="error"
+                onClick={() => setConfirmRegen(true)}
+                disabled={regenDisabled}
+              >
+                Regenerate
+              </Button>
+              <Button
                 variant="text"
                 disabled={busy || index <= 0}
                 onClick={() => {
@@ -520,6 +575,33 @@ export default function DraftReviewPage() {
               autoFocus
             >
               Confirm
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={confirmRegen}
+          onClose={() => !busy && setConfirmRegen(false)}
+        >
+          <DialogTitle>Regenerate this job?</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              This deletes all cards from this job, including any you already
+              accepted into study, then regenerates from the material.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setConfirmRegen(false)} disabled={busy}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={onRegen}
+              disabled={busy}
+              autoFocus
+            >
+              Regenerate
             </Button>
           </DialogActions>
         </Dialog>

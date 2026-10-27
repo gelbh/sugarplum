@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   CHUNK_CHAR_LIMIT,
   MAX_PIPELINE_CHUNKS,
+  critiqueDraftsAgainstSource,
   remainderAfterRules,
   runGenerationPipeline,
   type PipelineLlm,
@@ -369,5 +370,92 @@ describe("remainderAfterRules", () => {
     expect(remainder).toContain("The mitochondria produces ATP");
     expect(remainder).not.toContain("What is ATP ::");
     expect(remainder).not.toContain("glycolysis - breakdown");
+  });
+});
+
+describe("critiqueDraftsAgainstSource", () => {
+  it("passes unmatched excerpts through without forcing them into chunk 0", async () => {
+    // Two chunks so bucketing runs; unmatched must not enter either critique call.
+    // Put markers at the start so slice(CHUNK_CHAR_LIMIT) cannot cut them off.
+    const chunkA = `marker-a ${"alpha ".repeat(900)}`.slice(0, CHUNK_CHAR_LIMIT);
+    const chunkB = `marker-b ${"beta ".repeat(900)}`.slice(0, CHUNK_CHAR_LIMIT);
+    const sourceText = `${chunkA}\n\n${chunkB}`;
+    expect(sourceText.length).toBeGreaterThan(CHUNK_CHAR_LIMIT);
+
+    const matched = validDraft({
+      front: "What is marker-a?",
+      back: "alpha region",
+      provenance: { pages: [1], excerpt: "marker-a" },
+    });
+    const orphan = validDraft({
+      front: "What is orphan?",
+      back: "not in any chunk",
+      provenance: { pages: [1], excerpt: "orphan-excerpt-xyz" },
+    });
+
+    const llm = mockPipelineLlm({
+      // Keep matched; empty would fall back to the whole bucket.
+      complete: async () => JSON.stringify({ cards: [matched] }),
+    });
+    const survivors = await critiqueDraftsAgainstSource({
+      sourceText,
+      candidates: [matched, orphan],
+      llm,
+      apiKey: "k",
+      provider: "mock",
+    });
+
+    expect(survivors).toEqual([orphan, matched]);
+    expect(llm.complete).toHaveBeenCalled();
+    for (const call of llm.complete.mock.calls) {
+      const user = (call[0] as { user: string }).user;
+      expect(user).not.toContain("orphan-excerpt-xyz");
+      expect(user).not.toContain("What is orphan?");
+    }
+  });
+
+  it("critiques candidates and falls back to them when complete hard-fails", async () => {
+    const kept = validDraft({
+      front: "mitochondria",
+      back: "powerhouse of the cell",
+      provenance: {
+        pages: [1],
+        excerpt: "mitochondria: powerhouse of the cell",
+      },
+    });
+    const dropped = validDraft({
+      front: "Overview",
+      back: "general summary of chapter",
+      provenance: {
+        pages: [1],
+        excerpt: "Overview: general summary of chapter",
+      },
+    });
+
+    const dropLlm = mockPipelineLlm({
+      complete: async () => JSON.stringify({ cards: [kept] }),
+    });
+    const survivors = await critiqueDraftsAgainstSource({
+      sourceText: "mitochondria: powerhouse of the cell\nOverview: general summary of chapter",
+      candidates: [kept, dropped],
+      llm: dropLlm,
+      apiKey: "k",
+      provider: "mock",
+    });
+    expect(survivors).toEqual([kept]);
+    expect(dropLlm.complete).toHaveBeenCalledTimes(1);
+
+    const failLlm = mockPipelineLlm({
+      complete: async () => "NOT JSON {{{",
+    });
+    const fallback = await critiqueDraftsAgainstSource({
+      sourceText: "mitochondria: powerhouse of the cell",
+      candidates: [kept, dropped],
+      llm: failLlm,
+      apiKey: "k",
+      provider: "mock",
+    });
+    expect(failLlm.complete).toHaveBeenCalledTimes(2);
+    expect(fallback).toEqual([kept, dropped]);
   });
 });

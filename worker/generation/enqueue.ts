@@ -30,15 +30,21 @@ export async function enqueueGeneration(
     .bind(jobId, args.materialId, "queued", null, null, createdAt, null)
     .run();
 
-  const message: GenerateQueueMessage = {
+  await requeueGeneration(env, {
     jobId,
     materialId: args.materialId,
     deckId: args.deckId,
-  };
+  });
 
+  return jobId;
+}
+
+/** Send an existing job onto GENERATE_QUEUE when bound (no new row). */
+export async function requeueGeneration(
+  env: Env,
+  message: GenerateQueueMessage,
+): Promise<void> {
   if (env.GENERATE_QUEUE) {
     await env.GENERATE_QUEUE.send(message);
   }
-
-  return jobId;
 }

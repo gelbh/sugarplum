@@ -174,6 +174,12 @@ export function getJob(jobId: string) {
   return api<GenerationJob>(`/api/jobs/${jobId}`);
 }
 
+/** Wipe all job cards (including accepted), reset to queued, and requeue generation. */
+export function regenJob(jobId: string) {
+  if (isGuest()) guestUnsupported("regenerate cards");
+  return api<GenerationJob>(`/api/jobs/${jobId}/regen`, { method: "POST" });
+}
+
 export type JobListItem = {
   id: string;
   status: string;
