@@ -156,25 +156,29 @@ export default function StudyPage() {
     if (!busy) busyRef.current = false;
   }, [busy]);
 
-  const applyDueQueue = useCallback((cards: CardDraftView[]) => {
-    const wanted = cardIdFromSearch(window.location.search);
-    const { queue: next, found } = prioritizeDueCard(cards, wanted);
-    setQueue(next);
-    setDeepLinkMiss(Boolean(wanted) && !found);
-    setRevealed(false);
-  }, []);
+  const applyDueQueue = useCallback(
+    (cards: CardDraftView[], wanted: string | null) => {
+      const { queue: next, found } = prioritizeDueCard(cards, wanted);
+      setQueue(next);
+      // Only when there are other due cards to study (avoids contradicting empty session).
+      setDeepLinkMiss(Boolean(wanted) && !found && next.length > 0);
+      setRevealed(false);
+    },
+    [],
+  );
 
   const load = useCallback(
     async (userId: string) => {
+      const wanted = cardIdFromSearch(window.location.search);
       try {
         const due = await listDueCards();
         saveDueCache(userId, due);
-        applyDueQueue(due);
+        applyDueQueue(due, wanted);
         setOfflineCopy(false);
       } catch (err) {
         const cached = loadDueCache(userId);
         if (cached && cached.cards.length > 0) {
-          applyDueQueue(cached.cards);
+          applyDueQueue(cached.cards, wanted);
           setOfflineCopy(true);
           return;
         }

@@ -17,11 +17,8 @@ export function prioritizeDueCard<T extends { id: string }>(
   if (index === 0) {
     return { queue: [...queue], found: true };
   }
-  const next = [...queue];
-  const [card] = next.splice(index, 1);
-  if (!card) {
-    return { queue: [...queue], found: false };
-  }
+  const card = queue[index]!;
+  const next = [...queue.slice(0, index), ...queue.slice(index + 1)];
   next.unshift(card);
   return { queue: next, found: true };
 }
