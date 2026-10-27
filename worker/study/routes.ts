@@ -83,20 +83,25 @@ studyRoutes.get("/struggling", async (c) => {
   const nowIso = now.toISOString();
   const since = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
+  // Filter lapses/again in SQL so JS only ranks survivors (Today always hits this).
   const { results } = await db
     .prepare(
-      `SELECT c.id, c.deck_id, c.front_json,
-              s.lapses, s.difficulty, s.due, s.last_review,
-              (
-                SELECT COUNT(*) FROM review_logs rl
-                WHERE rl.card_id = c.id
-                  AND rl.rating = 1
-                  AND rl.reviewed_at >= ?
-              ) AS again_14d
-       FROM cards c
-       INNER JOIN card_schedules s ON s.card_id = c.id
-       INNER JOIN decks d ON d.id = c.deck_id
-       WHERE d.user_id = ? AND c.status = ?`,
+      `SELECT id, deck_id, front_json, lapses, difficulty, due, last_review, again_14d
+       FROM (
+         SELECT c.id, c.deck_id, c.front_json,
+                s.lapses, s.difficulty, s.due, s.last_review,
+                (
+                  SELECT COUNT(*) FROM review_logs rl
+                  WHERE rl.card_id = c.id
+                    AND rl.rating = 1
+                    AND rl.reviewed_at >= ?
+                ) AS again_14d
+         FROM cards c
+         INNER JOIN card_schedules s ON s.card_id = c.id
+         INNER JOIN decks d ON d.id = c.deck_id
+         WHERE d.user_id = ? AND c.status = ?
+       )
+       WHERE lapses >= 2 OR again_14d >= 2`,
     )
     .bind(since, userId, "accepted")
     .all<StrugglingSqlRow>();

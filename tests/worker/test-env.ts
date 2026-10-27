@@ -551,7 +551,7 @@ export function createTestEnv(opts?: {
             .sort((a, b) => a.due.localeCompare(b.due));
           return { results: rows as T[] };
         }
-        // GET /api/study/struggling: accepted + schedule + again_14d subquery
+        // GET /api/study/struggling: accepted + schedule + again_14d; SQL filters survivors
         if (
           normalized.includes("FROM cards c") &&
           normalized.includes("INNER JOIN card_schedules s") &&
@@ -559,6 +559,9 @@ export function createTestEnv(opts?: {
           normalized.includes("c.status =")
         ) {
           const [since, userId, status] = bound as [string, string, string];
+          const filterSurvivors =
+            normalized.includes("lapses >= 2") ||
+            normalized.includes("again_14d >= 2");
           const rows = [...cards.values()]
             .filter((c) => {
               if (c.status !== status) return false;
@@ -584,7 +587,12 @@ export function createTestEnv(opts?: {
                 last_review: schedule.last_review,
                 again_14d,
               };
-            });
+            })
+            .filter((row) =>
+              filterSurvivors
+                ? row.lapses >= 2 || row.again_14d >= 2
+                : true,
+            );
           return { results: rows as T[] };
         }
         return { results: [] };
