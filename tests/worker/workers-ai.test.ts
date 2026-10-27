@@ -54,10 +54,19 @@ describe("Workers AI adapter", () => {
     );
   });
 
-  it("generateDrafts calls env.AI.run with locked model, max_tokens, and system/user messages", async () => {
-    const run = vi.fn(async (_model: string, inputs: { messages?: unknown; max_tokens?: number }) => {
+  it("generateDrafts calls env.AI.run with locked model, completion budget, and system/user messages", async () => {
+    const run = vi.fn(
+      async (
+        _model: string,
+        inputs: {
+          messages?: unknown;
+          max_tokens?: number;
+          max_completion_tokens?: number;
+        },
+      ) => {
       expect(_model).toBe(WORKERS_AI_MODEL);
-      expect(inputs.max_tokens).toBe(4096);
+      expect(inputs.max_completion_tokens).toBe(8192);
+      expect(inputs.max_tokens).toBe(8192);
       expect(inputs.messages).toEqual([
         expect.objectContaining({ role: "system" }),
         expect.objectContaining({

@@ -125,12 +125,115 @@ export function unwrapLlmJsonText(content: string): string {
   return trimmed;
 }
 
+/**
+ * Pull complete top-level `{...}` values from a truncated JSON array/object
+ * body (string-aware). Used when the model hits a completion cap mid-card.
+ */
+export function salvageCompleteJsonObjects(text: string): unknown[] {
+  const out: unknown[] = [];
+  let i = 0;
+  while (i < text.length) {
+    if (text[i] !== "{") {
+      i += 1;
+      continue;
+    }
+    let depth = 0;
+    let inString = false;
+    let escape = false;
+    let end = -1;
+    for (let j = i; j < text.length; j += 1) {
+      const ch = text[j]!;
+      if (inString) {
+        if (escape) escape = false;
+        else if (ch === "\\") escape = true;
+        else if (ch === '"') inString = false;
+        continue;
+      }
+      if (ch === '"') {
+        inString = true;
+        continue;
+      }
+      if (ch === "{") depth += 1;
+      else if (ch === "}") {
+        depth -= 1;
+        if (depth === 0) {
+          end = j;
+          break;
+        }
+      }
+    }
+    if (end < 0) {
+      // Unclosed object (truncation): skip this `{` and keep scanning
+      // for complete nested objects (e.g. finished cards).
+      i += 1;
+      continue;
+    }
+    const slice = text.slice(i, end + 1);
+    try {
+      out.push(JSON.parse(slice));
+    } catch {
+      /* skip non-card fragments */
+    }
+    i = end + 1;
+  }
+  return out;
+}
+
+function looksLikeTruncatedJson(text: string): boolean {
+  const t = text.trim();
+  if (!(t.startsWith("{") || t.startsWith("["))) return false;
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  for (const ch of t) {
+    if (inString) {
+      if (escape) escape = false;
+      else if (ch === "\\") escape = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (ch === "{" || ch === "[") depth += 1;
+    else if (ch === "}" || ch === "]") depth -= 1;
+  }
+  return inString || depth !== 0;
+}
+
 export function parseCardsPayload(content: string): CardDraft[] {
+  const unwrapped = unwrapLlmJsonText(content);
   let parsed: unknown;
   try {
-    parsed = JSON.parse(unwrapLlmJsonText(content));
+    parsed = JSON.parse(unwrapped);
   } catch {
+    const isCardShape = (obj: unknown) =>
+      !!obj &&
+      typeof obj === "object" &&
+      "type" in obj &&
+      "front" in obj &&
+      "back" in obj;
+    // Prefer raw text: unwrap's last-`}` slice can clip a truncated payload
+    // to an incomplete wrapper and hide complete card objects.
+    const salvaged = [
+      ...salvageCompleteJsonObjects(content),
+      ...salvageCompleteJsonObjects(unwrapped),
+    ].filter(isCardShape);
+    const unique = [
+      ...new Map(salvaged.map((c) => [JSON.stringify(c), c])).values(),
+    ];
+    if (unique.length > 0) {
+      return parseCardDrafts(unique);
+    }
     const preview = content.trim().replace(/\s+/g, " ").slice(0, 80);
+    if (
+      looksLikeTruncatedJson(unwrapped) ||
+      looksLikeTruncatedJson(content.trim())
+    ) {
+      throw new Error(
+        preview
+          ? `LLM response truncated mid-JSON (preview: ${preview})`
+          : "LLM response truncated mid-JSON",
+      );
+    }
     throw new Error(
       preview
         ? `LLM returned non-JSON content (preview: ${preview})`

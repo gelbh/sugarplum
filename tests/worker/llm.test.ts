@@ -207,4 +207,27 @@ describe("parseCardsPayload", () => {
       /non-JSON/i,
     );
   });
+
+  it("salvages complete cards when the model truncates mid-JSON", () => {
+    const truncated =
+      '{"cards":[' +
+      JSON.stringify({
+        type: "qa",
+        front: "What defines monoxenous protozoa?",
+        back: "A single host.",
+        provenance: { pages: [1], excerpt: "monoxenous" },
+      }) +
+      ',{"type":"cloze","front":"Monoxenous protozoa are defined by having a {';
+    const drafts = parseCardsPayload(truncated);
+    expect(drafts).toHaveLength(1);
+    expect(drafts[0]?.type).toBe("qa");
+  });
+
+  it("names truncation when no complete card objects can be salvaged", () => {
+    expect(() =>
+      parseCardsPayload(
+        '{"cards":[{"type":"cloze","front":"Monoxenous protozoa are defined by having a {}',
+      ),
+    ).toThrow(/truncated/i);
+  });
 });
