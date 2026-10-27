@@ -17,6 +17,23 @@ For CPU-only hosts, use the project's `docling-serve-cpu` image at the **same ve
 - **Local / default:** in-process engine (same as `docker-compose.docling.yml`).
 - **RQ / Redis queue:** not used in this slice; parked for later if you need horizontal workers.
 
+## Host (prod default: Fly scale-to-zero)
+
+For Sugarplum's Accurate PDF figure path, run Docling on **Fly Machines** with autostop and autostart so the machine sits at zero until a request wakes it:
+
+```toml
+[http_service]
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+```
+
+Use a ~4GB RAM CPU machine while it runs (pin the CPU `docling-serve` / `docling-serve-cpu` image from Image above). When stopped, Fly does not bill CPU or RAM; rootfs or volume storage can still incur a small cost.
+
+**Hetzner (or similar VPS):** still fine for always-on Docling. A powered-off VPS usually still bills, so it is a poor scale-to-zero host for Accurate-only traffic.
+
+**Accurate cold start vs timeouts:** machine wake is typically seconds; Docling model load is often minutes. The Accurate Worker abort is 240s (`DOCLING_ACCURATE_TIMEOUT_MS`). The client polls the job for up to 10 minutes (`useJobProgress`). If wake plus convert exceeds the Worker abort, figures soft-fail and text generation continues.
+
 ## Host environment
 
 Set on the Docling container or VM:
