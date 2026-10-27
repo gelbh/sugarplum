@@ -139,4 +139,32 @@ describe("filterDraftsByQuality", () => {
       cloze,
     ]);
   });
+
+  it("keeps section-header-shaped fronts when the back is substantive", () => {
+    const treatment = qa(
+      "Treatment of choice for coccidiosis",
+      "Amprolium mixed in feed for poultry",
+    );
+    const diagnosis = qa(
+      "Diagnosis of blackhead",
+      "Necrotic lesions in the caecum and liver",
+    );
+    const clinical = qa(
+      "Clinical signs in dogs",
+      "Bloody diarrhoea and weight loss",
+    );
+    expect(filterDraftsByQuality([treatment, diagnosis, clinical])).toEqual([
+      treatment,
+      diagnosis,
+      clinical,
+    ]);
+  });
+
+  it("keeps either/or answers that reuse question nouns", () => {
+    const insulin = qa(
+      "Does insulin increase or decrease blood glucose?",
+      "Decrease blood glucose",
+    );
+    expect(filterDraftsByQuality([insulin])).toEqual([insulin]);
+  });
 });

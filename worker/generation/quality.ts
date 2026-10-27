@@ -110,6 +110,19 @@ function isSectionHeaderFront(front: string): boolean {
   return SECTION_HEADER_FRONT_RE.test(front.trim());
 }
 
+/**
+ * Slide section title used as a card with thin/stub debris back
+ * (e.g. Pathogenesis in cattle / Females affected: abortion.).
+ * Keeps real glossary fronts like Treatment of choice for X with a real answer.
+ */
+function isSectionHeaderDebris(front: string, back: string): boolean {
+  if (!isSectionHeaderFront(front)) return false;
+  if (isIncompleteBack(front, back)) return true;
+  if (isThinOneWordGlossaryPair(front, back)) return true;
+  // Short slide titles (≤3 words) with short debris backs (≤4 words).
+  return wordCount(front) <= 3 && wordCount(back) <= 4;
+}
+
 /** One-word term with a one-token gloss (Inflammation.), not a real definition. */
 function isThinOneWordGlossaryPair(front: string, back: string): boolean {
   if (!isGlossaryShaped(front) || wordCount(front) !== 1) return false;
@@ -127,18 +140,20 @@ function normalizeContainment(text: string): string {
     .trim();
 }
 
-/** Answer restates the question with no new fact (normalized back mostly in front). */
+/**
+ * Answer echoes the question (lead-in filler or prepositional phrase only).
+ * Does not use word-overlap ratios (those drop real either/or answers).
+ */
 function isTautologicalQa(front: string, back: string): boolean {
   if (!front.includes("?")) return false;
   const nf = normalizeContainment(front);
-  let nb = normalizeContainment(back);
-  if (nb.length < 6) return false;
-  nb = nb.replace(TAUTOLOGY_BACK_LEAD_RE, "");
-  if (nb.length >= 6 && nf.includes(nb)) return true;
-  const backWords = nb.split(/\s+/).filter((w) => w.length > 2);
-  if (backWords.length < 2) return false;
-  const matched = backWords.filter((w) => nf.includes(w));
-  return matched.length / backWords.length >= 0.85;
+  const rawNb = normalizeContainment(back);
+  if (rawNb.length < 6) return false;
+  const hadLead = TAUTOLOGY_BACK_LEAD_RE.test(rawNb);
+  const nb = rawNb.replace(TAUTOLOGY_BACK_LEAD_RE, "").trim();
+  if (nb.length < 6 || !nf.includes(nb)) return false;
+  if (hadLead) return true;
+  return /^(in|on|at|of|for|with|to|from|via|among|between)\s+/.test(nb);
 }
 
 function hasBrokenPunctuation(back: string): boolean {
@@ -161,7 +176,7 @@ function shouldDrop(draft: CardDraft, front: string, back: string): boolean {
   if (!front.includes("?") && TABLE_COLUMN_SUFFIX_RE.test(front)) return true;
   if (draft.type === "qa" && isFragmentFront(front)) return true;
   if (draft.type === "qa" && isGenericOneWordPair(front, back)) return true;
-  if (draft.type === "qa" && isSectionHeaderFront(front)) return true;
+  if (draft.type === "qa" && isSectionHeaderDebris(front, back)) return true;
   if (draft.type === "qa" && isThinOneWordGlossaryPair(front, back)) return true;
   if (draft.type === "qa" && isTautologicalQa(front, back)) return true;
   return false;
