@@ -36,6 +36,8 @@ export type DraftCardEditorProps = {
   card: CardDraftView;
   disabled?: boolean;
   onChange: (next: DraftEditorChange) => void;
+  /** When set, type Select is limited to these values (hub DIY: qa|cloze|mcq). */
+  allowedTypes?: CardType[];
 };
 
 const TEXT_TYPES: CardType[] = [
@@ -45,6 +47,32 @@ const TEXT_TYPES: CardType[] = [
   "diagram",
   "mcq",
 ];
+
+const TYPE_LABELS: Record<string, string> = {
+  qa: "Q&A",
+  cloze: "Fill in the blank",
+  mcq: "Multiple choice",
+  image_label: "Image label",
+  diagram: "Diagram",
+};
+
+/** Resolve Select value when `allowedTypes` is set. Never coerce outside the set to qa. */
+export function resolveEditorType(
+  cardType: CardType,
+  allowedTypes?: CardType[],
+): { typeValue: CardType; typeSelectLocked: boolean } {
+  const selectable =
+    allowedTypes && allowedTypes.length > 0
+      ? allowedTypes.filter((t) => TEXT_TYPES.includes(t))
+      : TEXT_TYPES;
+  if (selectable.includes(cardType)) {
+    return { typeValue: cardType, typeSelectLocked: false };
+  }
+  if (allowedTypes && allowedTypes.length > 0) {
+    return { typeValue: cardType, typeSelectLocked: true };
+  }
+  return { typeValue: "qa", typeSelectLocked: false };
+}
 
 const MCQ_MIN = 3;
 const MCQ_MAX = 5;
@@ -110,6 +138,7 @@ export default function DraftCardEditor({
   card,
   disabled = false,
   onChange,
+  allowedTypes,
 }: DraftCardEditorProps) {
   if (card.type === "occlusion" && isOcclusionFront(card.front)) {
     return (
@@ -124,12 +153,17 @@ export default function DraftCardEditor({
     );
   }
 
+  const selectableTypes =
+    allowedTypes && allowedTypes.length > 0
+      ? allowedTypes.filter((t) => TEXT_TYPES.includes(t))
+      : TEXT_TYPES;
   const imageKey = card.media_r2_keys?.[0];
   const frontText = typeof card.front === "string" ? card.front : "";
   const backText = backAnswer(card.back);
-  const typeValue = TEXT_TYPES.includes(card.type as CardType)
-    ? (card.type as CardType)
-    : "qa";
+  const { typeValue, typeSelectLocked } = resolveEditorType(
+    card.type as CardType,
+    allowedTypes,
+  );
   const isCloze = typeValue === "cloze";
   const isMcq = typeValue === "mcq";
   const mcqOptions = isMcq ? (card.options ?? defaultMcqOptions(card)) : [];
@@ -196,7 +230,7 @@ export default function DraftCardEditor({
           }}
         />
       ) : null}
-      <FormControl fullWidth size="small" disabled={disabled}>
+      <FormControl fullWidth size="small" disabled={disabled || typeSelectLocked}>
         <InputLabel id={`card-type-${card.id}`}>Type</InputLabel>
         <Select
           labelId={`card-type-${card.id}`}
@@ -206,11 +240,17 @@ export default function DraftCardEditor({
             onTypeChange(card, e.target.value as CardType, onChange)
           }
         >
-          <MenuItem value="qa">Q&A</MenuItem>
-          <MenuItem value="cloze">Fill in the blank</MenuItem>
-          <MenuItem value="mcq">Multiple choice</MenuItem>
-          <MenuItem value="image_label">Image label</MenuItem>
-          <MenuItem value="diagram">Diagram</MenuItem>
+          {typeSelectLocked ? (
+            <MenuItem value={typeValue}>
+              {TYPE_LABELS[typeValue] ?? typeValue}
+            </MenuItem>
+          ) : (
+            selectableTypes.map((t) => (
+              <MenuItem key={t} value={t}>
+                {TYPE_LABELS[t] ?? t}
+              </MenuItem>
+            ))
+          )}
         </Select>
       </FormControl>
 

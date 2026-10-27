@@ -12,17 +12,22 @@ import { GUEST_USER, isGuest } from "../guest/session";
 import {
   ensureGuestStore,
   guestCreateDeck,
+  guestCreateDeckCard,
   guestCreateSubject,
   guestDeckStats,
   guestDeleteDeck,
   guestDeleteSubject,
   guestJourney,
+  guestListDeckCards,
   guestListDecks,
   guestListDueCards,
   guestListSubjects,
+  guestPatchCard,
   guestPatchDeck,
   guestPatchSubject,
+  guestResetCardSchedule,
   guestReviewCard,
+  type GuestHubCardBody,
 } from "../guest/store";
 import { clearDueCache } from "../study/dueCache";
 import { clearPendingGrades } from "../study/pendingGrades";
@@ -271,6 +276,54 @@ export function deckStats(id: string) {
   }
   return api<DeckStats>(`/api/decks/${id}/stats`);
 }
+
+export function listDeckCards(deckId: string) {
+  if (isGuest()) {
+    try {
+      return Promise.resolve(guestListDeckCards(deckId));
+    } catch (err) {
+      throw new ApiError(
+        404,
+        err instanceof Error ? err.message : "Deck not found",
+      );
+    }
+  }
+  return api<CardDraftView[]>(`/api/decks/${deckId}/cards`);
+}
+
+export function createDeckCard(deckId: string, body: GuestHubCardBody) {
+  if (isGuest()) {
+    try {
+      return Promise.resolve(guestCreateDeckCard(deckId, body));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Deck not found";
+      throw new ApiError(
+        message === "Deck not found" ? 404 : 400,
+        message,
+      );
+    }
+  }
+  return api<CardDraftView>(`/api/decks/${deckId}/cards`, {
+    method: "POST",
+    json: body,
+  });
+}
+
+export function resetCardSchedule(cardId: string) {
+  if (isGuest()) {
+    try {
+      return Promise.resolve(guestResetCardSchedule(cardId));
+    } catch (err) {
+      throw new ApiError(
+        404,
+        err instanceof Error ? err.message : "Card not found",
+      );
+    }
+  }
+  return api<CardDraftView>(`/api/cards/${cardId}/reset-schedule`, {
+    method: "POST",
+  });
+}
 export type PasteMaterialResponse = Material & { jobId: string };
 
 export function pasteMaterial(
@@ -338,6 +391,7 @@ export type JobListItem = {
   id: string;
   status: string;
   draft_count: number;
+  deck_id: string;
   deck_title: string;
   filename: string | null;
   created_at: string;
@@ -501,7 +555,17 @@ export function patchCard(
     type?: CardType;
   },
 ) {
-  if (isGuest()) guestUnsupported("edit cards");
+  if (isGuest()) {
+    try {
+      return Promise.resolve(guestPatchCard(cardId, body));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Card not found";
+      throw new ApiError(
+        message === "Card not found" ? 404 : 400,
+        message,
+      );
+    }
+  }
   return api<CardDraftView>(`/api/cards/${cardId}`, {
     method: "PATCH",
     json: body,

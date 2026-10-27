@@ -84,7 +84,8 @@ function decodeStoredBack(
   return { back: parseJsonField<string>(backJson, "") };
 }
 
-function encodeStoredBack(
+/** Persist card back JSON (MCQ nests answer + options). */
+export function encodeStoredBack(
   type: string,
   back: string,
   options?: string[],
@@ -296,8 +297,10 @@ cardRoutes.patch("/:id", async (c) => {
   const db = getDb(c.env);
   const row = await requireOwnedCard(db, cardId, userId);
 
-  if (row.status !== "draft") {
-    throw new HTTPException(400, { message: "Only draft cards can be edited" });
+  if (row.status !== "draft" && row.status !== "accepted") {
+    throw new HTTPException(400, {
+      message: "Only draft or accepted cards can be edited",
+    });
   }
 
   let body: unknown;
@@ -503,4 +506,51 @@ cardRoutes.post("/:id/reject", async (c) => {
   return c.json(
     serializeCard({ ...row, status: "rejected", updated_at: updatedAt }),
   );
+});
+
+cardRoutes.post("/:id/reset-schedule", async (c) => {
+  const userId = await requireUser(c);
+  const cardId = c.req.param("id");
+  const db = getDb(c.env);
+  const row = await requireOwnedCard(db, cardId, userId);
+
+  if (row.status !== "accepted") {
+    throw new HTTPException(404, { message: "Card not found" });
+  }
+
+  const schedule = scheduleColumnsFromCard(newCard());
+  await db
+    .prepare(
+      `INSERT INTO card_schedules (
+         card_id, due, stability, difficulty, elapsed_days, scheduled_days,
+         learning_steps, reps, lapses, state, last_review
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(card_id) DO UPDATE SET
+         due = excluded.due,
+         stability = excluded.stability,
+         difficulty = excluded.difficulty,
+         elapsed_days = excluded.elapsed_days,
+         scheduled_days = excluded.scheduled_days,
+         learning_steps = excluded.learning_steps,
+         reps = excluded.reps,
+         lapses = excluded.lapses,
+         state = excluded.state,
+         last_review = excluded.last_review`,
+    )
+    .bind(
+      cardId,
+      schedule.due,
+      schedule.stability,
+      schedule.difficulty,
+      schedule.elapsed_days,
+      schedule.scheduled_days,
+      schedule.learning_steps,
+      schedule.reps,
+      schedule.lapses,
+      schedule.state,
+      schedule.last_review,
+    )
+    .run();
+
+  return c.json(serializeCard(row));
 });

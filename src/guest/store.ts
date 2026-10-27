@@ -1,12 +1,29 @@
 import type {
   CardDraftView,
+  CardType,
   Deck,
   JourneyStatus,
+  OcclusionFrontView,
   ReviewResult,
   StudyRating,
   Subject,
 } from "../api/client";
+import { assertSingleCloze } from "../lib/clozeFormat";
 import { GUEST_USER_ID } from "./session";
+
+export type GuestHubCardBody = {
+  type: "qa" | "cloze" | "mcq";
+  front: string;
+  back: string;
+  options?: string[];
+};
+
+type GuestCardPatch = {
+  front?: string | OcclusionFrontView;
+  back?: string | { answer: string };
+  options?: string[];
+  type?: CardType;
+};
 
 export const GUEST_STORE_KEY = "sugarplum.guest.store.v1";
 
@@ -380,6 +397,182 @@ export function guestAddAcceptedCards(
   store.dueIds = [...cards.map((c) => c.id), ...store.dueIds];
   writeStore(store, storage);
   return cards;
+}
+
+/** Accepted cards for a deck, oldest first (hub list). */
+export function guestListDeckCards(
+  deckId: string,
+  storage?: Store,
+): CardDraftView[] {
+  const store = readStore(storage);
+  if (!store.decks.some((d) => d.id === deckId)) {
+    throw new Error("Deck not found");
+  }
+  return store.cards
+    .filter((c) => c.deck_id === deckId && c.status === "accepted")
+    .slice()
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+}
+
+/** Mirror worker assertValidMcqOptions for guest hub create. */
+function guestAssertValidMcq(
+  back: string,
+  options: string[] | undefined,
+): { back: string; options: string[] } {
+  if (options === undefined) {
+    throw new Error("MCQ requires options");
+  }
+  const trimmed = options.map((o) => o.trim());
+  if (trimmed.length < 3 || trimmed.length > 5) {
+    throw new Error("MCQ must have 3–5 options");
+  }
+  if (trimmed.some((o) => o.length === 0)) {
+    throw new Error("MCQ options must be non-empty");
+  }
+  const seen = new Set<string>();
+  for (const o of trimmed) {
+    if (seen.has(o)) {
+      throw new Error("MCQ options must be unique");
+    }
+    seen.add(o);
+  }
+  const answer = back.trim();
+  if (!trimmed.includes(answer)) {
+    throw new Error("MCQ back must be one of the options");
+  }
+  return { back: answer, options: trimmed };
+}
+
+/** Create an accepted hub card (qa|cloze|mcq) and prepend to due. */
+export function guestCreateDeckCard(
+  deckId: string,
+  body: GuestHubCardBody,
+  storage?: Store,
+): CardDraftView {
+  const store = readStore(storage);
+  if (!store.decks.some((d) => d.id === deckId)) {
+    throw new Error("Deck not found");
+  }
+  const allowed = new Set(["qa", "cloze", "mcq"]);
+  if (!allowed.has(body.type)) {
+    throw new Error("Unsupported card type");
+  }
+  const front = body.front.trim();
+  if (!front) {
+    throw new Error("Front required");
+  }
+  let back = body.back.trim();
+  let options = body.options;
+  if (body.type === "cloze") {
+    assertSingleCloze(front);
+    // Extra (back) may be ""
+  } else if (body.type === "mcq") {
+    const mcq = guestAssertValidMcq(body.back, body.options);
+    back = mcq.back;
+    options = mcq.options;
+  } else if (body.type === "qa" && !back) {
+    throw new Error("Front and back required");
+  }
+  const created = nowIso();
+  const card: CardDraftView = {
+    id: `guest-card-${crypto.randomUUID()}`,
+    deck_id: deckId,
+    job_id: null,
+    type: body.type,
+    front,
+    back,
+    ...(body.type === "mcq" && options ? { options } : {}),
+    provenance: { guest: true, source: "hub" },
+    status: "accepted",
+    created_at: created,
+    updated_at: created,
+    due: created,
+  };
+  store.cards = [card, ...store.cards];
+  store.dueIds = [card.id, ...store.dueIds];
+  writeStore(store, storage);
+  return card;
+}
+
+/** Patch content on an accepted guest card (no schedule change). */
+export function guestPatchCard(
+  cardId: string,
+  body: GuestCardPatch,
+  storage?: Store,
+): CardDraftView {
+  const store = readStore(storage);
+  const idx = store.cards.findIndex((c) => c.id === cardId);
+  if (idx < 0) throw new Error("Card not found");
+  const current = store.cards[idx]!;
+  if (current.status !== "accepted") {
+    throw new Error("Only accepted cards can be edited");
+  }
+  if (
+    body.front === undefined &&
+    body.back === undefined &&
+    body.options === undefined &&
+    body.type === undefined
+  ) {
+    throw new Error("No fields to update");
+  }
+  const nextType = body.type ?? current.type;
+  const nextFront = body.front !== undefined ? body.front : current.front;
+  let nextBack = body.back !== undefined ? body.back : current.back;
+  let nextOptions =
+    body.options !== undefined ? body.options : current.options;
+
+  if (nextType === "cloze" && typeof nextFront === "string") {
+    assertSingleCloze(nextFront);
+  }
+  if (nextType === "mcq") {
+    const answer =
+      typeof nextBack === "string"
+        ? nextBack
+        : nextBack &&
+            typeof nextBack === "object" &&
+            "answer" in nextBack
+          ? nextBack.answer
+          : "";
+    const mcq = guestAssertValidMcq(answer, nextOptions);
+    nextBack = mcq.back;
+    nextOptions = mcq.options;
+  }
+
+  const updated: CardDraftView = {
+    ...current,
+    type: nextType,
+    front: nextFront,
+    back: nextBack,
+    updated_at: nowIso(),
+  };
+  if (nextType === "mcq") {
+    updated.options = nextOptions;
+  } else {
+    delete updated.options;
+  }
+  store.cards[idx] = updated;
+  writeStore(store, storage);
+  return updated;
+}
+
+/** Reset one card's due: due=now and id at front of dueIds. */
+export function guestResetCardSchedule(
+  cardId: string,
+  storage?: Store,
+): CardDraftView {
+  const store = readStore(storage);
+  const idx = store.cards.findIndex((c) => c.id === cardId);
+  if (idx < 0) throw new Error("Card not found");
+  const current = store.cards[idx]!;
+  if (current.status !== "accepted") {
+    throw new Error("Card not found");
+  }
+  const due = nowIso();
+  const updated: CardDraftView = { ...current, due, updated_at: due };
+  store.cards[idx] = updated;
+  store.dueIds = [cardId, ...store.dueIds.filter((id) => id !== cardId)];
+  writeStore(store, storage);
+  return updated;
 }
 
 export function guestListDueCards(storage?: Store): CardDraftView[] {
