@@ -1,15 +1,24 @@
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Container from "@mui/material/Container";
+import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import FullscreenIcon from "@mui/icons-material/Fullscreen";
+import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
+import TodayIcon from "@mui/icons-material/Today";
 import CardFace from "../components/CardFace";
 import GradeButtons from "../components/GradeButtons";
-import TodayIcon from "@mui/icons-material/Today";
 import {
   ApiError,
   listDueCards,
@@ -19,7 +28,25 @@ import {
   type StudyRating,
 } from "../api/client";
 import { useTrackedOp } from "../progress/useTrackedOp";
+import { resolveCardGesture } from "../study/cardGestures";
 import { loadDueCache, saveDueCache } from "../study/dueCache";
+import { useStudyZenMode } from "../study/useStudyZenMode";
+
+type PointerStart = {
+  id: number;
+  x: number;
+  y: number;
+  scrollEl: HTMLElement | null;
+  scrollTop: number;
+};
+
+function scrollableCardFace(target: EventTarget | null): HTMLElement | null {
+  if (!(target instanceof Element)) return null;
+  const face = target.closest("[data-card-face-content]");
+  if (!(face instanceof HTMLElement)) return null;
+  if (face.scrollHeight <= face.clientHeight) return null;
+  return face;
+}
 
 /** Study session: reveal answer, grade with FSRS (keys 1-4). Code-led MUI. */
 export default function StudyPage() {
@@ -28,10 +55,32 @@ export default function StudyPage() {
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [offlineCopy, setOfflineCopy] = useState(false);
+  const [showSwipeHint, setShowSwipeHint] = useState(false);
+  const {
+    zen,
+    fullscreenUnavailable,
+    clearFullscreenUnavailable,
+    toggleZen,
+    exitZen,
+    ensureFullscreenIfNeeded,
+    isZen,
+  } = useStudyZenMode();
+
+  const answerFocusRef = useRef<HTMLElement | null>(null);
+  const showAnswerRef = useRef<HTMLButtonElement | null>(null);
+  const swipeHintUsedRef = useRef(false);
+  const focusShowAnswerAfterGradeRef = useRef(false);
+  const pointerRef = useRef<PointerStart | null>(null);
+  const busyRef = useRef(false);
+
   const { end: endLoad } = useTrackedOp("Loading study…", {
     trackOnMount: true,
   });
   const { busy, begin, end } = useTrackedOp("Saving grade…");
+
+  useEffect(() => {
+    if (!busy) busyRef.current = false;
+  }, [busy]);
 
   const load = useCallback(async (userId: string) => {
     try {
@@ -82,13 +131,36 @@ export default function StudyPage() {
 
   const current = queue[0] ?? null;
 
+  const reveal = useCallback(() => {
+    setRevealed(true);
+    if (!swipeHintUsedRef.current) {
+      swipeHintUsedRef.current = true;
+      setShowSwipeHint(true);
+    } else {
+      setShowSwipeHint(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!revealed) return;
+    answerFocusRef.current?.focus();
+  }, [revealed, current?.id]);
+
+  useEffect(() => {
+    if (revealed || !current || !focusShowAnswerAfterGradeRef.current) return;
+    focusShowAnswerAfterGradeRef.current = false;
+    showAnswerRef.current?.focus();
+  }, [revealed, current?.id]);
+
   const onGrade = useCallback(
     async (rating: StudyRating) => {
-      if (!current || busy || !revealed) return;
+      if (!current || busyRef.current || !revealed) return;
+      busyRef.current = true;
       setError(null);
       begin();
       try {
         await reviewCard(current.id, rating);
+        focusShowAnswerAfterGradeRef.current = true;
         setQueue((prev) => prev.slice(1));
         setRevealed(false);
         end();
@@ -99,11 +171,11 @@ export default function StudyPage() {
         end(false);
       }
     },
-    [begin, busy, current, end, revealed],
+    [begin, current, end, revealed],
   );
 
   useEffect(() => {
-    if (!revealed || busy || !current) return;
+    if (!ready) return;
 
     function onKey(e: KeyboardEvent) {
       if (
@@ -112,6 +184,19 @@ export default function StudyPage() {
       ) {
         return;
       }
+      if (e.key === "Escape") {
+        if (!isZen() || document.fullscreenElement) return;
+        e.preventDefault();
+        exitZen();
+        return;
+      }
+      if (e.key === "z" || e.key === "Z") {
+        if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+        e.preventDefault();
+        toggleZen();
+        return;
+      }
+      if (!revealed || busyRef.current || !current) return;
       const map: Record<string, StudyRating> = {
         "1": 1,
         "2": 2,
@@ -126,7 +211,48 @@ export default function StudyPage() {
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [busy, current, onGrade, revealed]);
+  }, [current, exitZen, isZen, onGrade, ready, revealed, toggleZen]);
+
+  const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    ensureFullscreenIfNeeded();
+    if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
+    const scrollEl = scrollableCardFace(e.target);
+    pointerRef.current = {
+      id: e.pointerId,
+      x: e.clientX,
+      y: e.clientY,
+      scrollEl,
+      scrollTop: scrollEl?.scrollTop ?? 0,
+    };
+  };
+
+  const onPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const start = pointerRef.current;
+    pointerRef.current = null;
+    if (!start || start.id !== e.pointerId || busyRef.current || !current)
+      return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    if (
+      Math.abs(dy) >= Math.abs(dx) &&
+      start.scrollEl &&
+      start.scrollEl.scrollTop !== start.scrollTop
+    ) {
+      return;
+    }
+    const result = resolveCardGesture({ revealed, dx, dy });
+    if (result.type === "reveal") {
+      reveal();
+      return;
+    }
+    if (result.type === "grade") {
+      void onGrade(result.rating);
+    }
+  };
+
+  const onPointerCancel = () => {
+    pointerRef.current = null;
+  };
 
   if (!ready) {
     return (
@@ -139,29 +265,56 @@ export default function StudyPage() {
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
       <Stack spacing={2}>
-        <Box>
-          <Typography variant="h4" component="h1" color="primary" gutterBottom>
-            Study
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Reveal the answer, then grade. Keys 1-4 on desktop.
-          </Typography>
-        </Box>
-
-        <Stack direction="row" spacing={2} alignItems="center">
-          <Link href="/today" underline="hover">
-            Today
-          </Link>
-          <Link href="/library" underline="hover">
-            Library
-          </Link>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="flex-start"
+          spacing={1}
+        >
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="h4" component="h1" color="primary" gutterBottom>
+              Study
+            </Typography>
+            {!zen ? (
+              <Typography variant="body2" color="text.secondary">
+                Reveal the answer, then grade. Keys 1-4 on desktop.
+              </Typography>
+            ) : null}
+          </Box>
+          <IconButton
+            aria-label={zen ? "Exit zen mode" : "Enter zen mode"}
+            aria-pressed={zen}
+            onClick={toggleZen}
+            color="primary"
+          >
+            {zen ? <FullscreenExitIcon /> : <FullscreenIcon />}
+          </IconButton>
         </Stack>
+
+        {!zen ? (
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Link href="/today" underline="hover">
+              Today
+            </Link>
+            <Link href="/library" underline="hover">
+              Library
+            </Link>
+          </Stack>
+        ) : null}
 
         {error ? <Alert severity="error">{error}</Alert> : null}
         {offlineCopy ? (
           <Alert severity="warning">
             Showing an offline copy of due cards. Grading still needs a network
             connection.
+          </Alert>
+        ) : null}
+        {fullscreenUnavailable ? (
+          <Alert
+            severity="info"
+            onClose={clearFullscreenUnavailable}
+          >
+            Fullscreen unavailable
           </Alert>
         ) : null}
 
@@ -187,33 +340,48 @@ export default function StudyPage() {
               <Typography variant="subtitle1">
                 {queue.length} remaining
               </Typography>
-              <Chip
-                size="small"
-                label={
-                  current.type === "cloze"
-                    ? "Cloze"
-                    : current.type === "image_label"
-                      ? "Image label"
-                      : current.type === "diagram"
-                        ? "Diagram"
-                        : "Q&A"
-                }
-                color="secondary"
-                variant="outlined"
-              />
+              {!zen ? (
+                <Chip
+                  size="small"
+                  label={
+                    current.type === "cloze"
+                      ? "Cloze"
+                      : current.type === "image_label"
+                        ? "Image label"
+                        : current.type === "diagram"
+                          ? "Diagram"
+                          : "Q&A"
+                  }
+                  color="secondary"
+                  variant="outlined"
+                />
+              ) : null}
             </Stack>
 
-            <CardFace
-              front={String(current.front)}
-              back={String(current.back)}
-              mediaR2Keys={current.media_r2_keys}
-              revealed={revealed}
-              onReveal={() => setRevealed(true)}
-              disabled={busy}
-            />
+            <Box
+              onPointerDown={onPointerDown}
+              onPointerUp={onPointerUp}
+              onPointerCancel={onPointerCancel}
+              sx={{ touchAction: "manipulation" }}
+            >
+              <CardFace
+                front={String(current.front)}
+                back={String(current.back)}
+                mediaR2Keys={current.media_r2_keys}
+                revealed={revealed}
+                onReveal={reveal}
+                disabled={busy}
+                answerFocusRef={answerFocusRef}
+                showAnswerRef={showAnswerRef}
+              />
+            </Box>
 
             {revealed ? (
-              <GradeButtons disabled={busy} onGrade={onGrade} />
+              <GradeButtons
+                disabled={busy}
+                onGrade={onGrade}
+                showSwipeHint={showSwipeHint}
+              />
             ) : null}
           </>
         )}
