@@ -332,6 +332,36 @@ describe("runGenerationPipeline", () => {
     expect(drafts).toEqual([generated]);
   });
 
+  it("salvages complete critique cards when JSON truncates mid-array", async () => {
+    const generated = validDraft({
+      front: "What produces ATP?",
+      back: "mitochondria",
+    });
+    const survivor = validDraft({
+      front: "What organelle produces ATP?",
+      back: "The mitochondria",
+    });
+    const truncated =
+      '{"cards":[' +
+      JSON.stringify(survivor) +
+      ',{"type":"qa","front":"What is the capital of';
+
+    const llm = mockPipelineLlm({
+      generate: async () => [generated],
+      complete: async () => truncated,
+    });
+
+    const drafts = await runGenerationPipeline({
+      text: "The mitochondria produces ATP.",
+      llm,
+      apiKey: "k",
+      provider: "mock",
+    });
+
+    expect(llm.complete).toHaveBeenCalledTimes(1);
+    expect(drafts).toEqual([survivor]);
+  });
+
   it("falls back to generate drafts when critique returns empty after retry", async () => {
     const generated = validDraft({
       front: "What produces ATP?",
