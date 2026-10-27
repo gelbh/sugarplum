@@ -10,6 +10,7 @@ import { jobRoutes } from "./generation/routes";
 import { cardRoutes, jobDraftRoutes } from "./cards/routes";
 import { studyRoutes } from "./study/routes";
 import { journeyRoutes } from "./journey/routes";
+import { guestRoutes } from "./guest/import";
 import { handleGenerateQueue } from "./generation/consumer";
 import type { GenerateQueueMessage } from "./generation/enqueue";
 import { isAllowedMutatingOrigin } from "./security/origin";
@@ -44,6 +45,7 @@ app.route("/api/jobs", jobDraftRoutes);
 app.route("/api/cards", cardRoutes);
 app.route("/api/journey", journeyRoutes);
 app.route("/api/study", studyRoutes);
+app.route("/api/guest", guestRoutes);
 
 export { app };
 
