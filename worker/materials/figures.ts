@@ -17,12 +17,25 @@ export function figureR2Key(
   return `materials/${deckId}/figures/${pdfMaterialId}/${index}.${figureExtForMime(mime)}`;
 }
 
+/**
+ * Half-open prefix range for figure children under a PDF.
+ * D1 rejects LIKE/GLOB patterns longer than 50 bytes; UUID prefixes are ~93.
+ * Range `[lower, upper)` matches `lower*` without LIKE (`/` < `0` in ASCII).
+ */
+export function figureR2KeyPrefixBounds(
+  deckId: string,
+  pdfMaterialId: string,
+): { lower: string; upper: string } {
+  const stem = `materials/${deckId}/figures/${pdfMaterialId}`;
+  return { lower: `${stem}/`, upper: `${stem}0` };
+}
+
 export function isFigureR2KeyForPdf(
   r2Key: string,
   deckId: string,
   pdfMaterialId: string,
 ): boolean {
-  const prefix = `materials/${deckId}/figures/${pdfMaterialId}/`;
+  const { lower: prefix } = figureR2KeyPrefixBounds(deckId, pdfMaterialId);
   if (!r2Key.startsWith(prefix)) return false;
   const rest = r2Key.slice(prefix.length);
   return /^[0-9]+\.(png|jpe?g|webp)$/i.test(rest);
@@ -42,15 +55,19 @@ export async function listFigureChildrenForPdf(
   db: D1Database,
   args: { deckId: string; pdfMaterialId: string },
 ): Promise<FigureChildRow[]> {
-  const prefix = `materials/${args.deckId}/figures/${args.pdfMaterialId}/%`;
+  const { lower, upper } = figureR2KeyPrefixBounds(
+    args.deckId,
+    args.pdfMaterialId,
+  );
   const { results } = await db
     .prepare(
       `SELECT r2_key, status FROM materials
-       WHERE deck_id = ? AND kind = 'image' AND r2_key LIKE ?
+       WHERE deck_id = ? AND kind = 'image'
+         AND r2_key >= ? AND r2_key < ?
          AND status IN ('ready', 'uploading')
        ORDER BY r2_key ASC`,
     )
-    .bind(args.deckId, prefix)
+    .bind(args.deckId, lower, upper)
     .all<{ r2_key: string; status: string }>();
 
   return (results ?? []).filter(
