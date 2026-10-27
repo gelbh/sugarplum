@@ -238,12 +238,20 @@ export function createTestEnv(opts?: {
         ) {
           const userId = bound[0] as string;
           const title = bound[1] as string;
-          for (const subject of subjects.values()) {
-            if (subject.user_id === userId && subject.title === title) {
-              return { id: subject.id } as T;
-            }
-          }
-          return null;
+          const matches = [...subjects.values()]
+            .filter((s) => s.user_id === userId && s.title === title)
+            .sort((a, b) =>
+              a.created_at !== b.created_at
+                ? a.created_at < b.created_at
+                  ? -1
+                  : 1
+                : a.id < b.id
+                  ? -1
+                  : a.id > b.id
+                    ? 1
+                    : 0,
+            );
+          return matches[0] ? ({ id: matches[0].id } as T) : null;
         }
         if (
           normalized.includes("FROM subjects WHERE id =") &&

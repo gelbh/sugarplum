@@ -330,6 +330,104 @@ describe("POST /api/guest/import", () => {
     expect(cards.every((c) => c.deck_id === "deck-a")).toBe(true);
   });
 
+  it("coalesces same-payload fold-equal miss decks into one", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+
+    const res = await app.request(
+      "/api/guest/import",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          decks: [
+            { clientId: "guest-deck-1", title: "Anatomy" },
+            { clientId: "guest-deck-2", title: "anatomy" },
+          ],
+          cards: [
+            {
+              clientDeckId: "guest-deck-1",
+              front: "Q1",
+              back: "A1",
+            },
+            {
+              clientDeckId: "guest-deck-2",
+              front: "Q2",
+              back: "A2",
+            },
+          ],
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ deckCount: 2, cardCount: 2 });
+
+    const { results: decks } = await env.DB.prepare(
+      "SELECT id, title, subject_hint, subject_id, created_at FROM decks WHERE user_id = ? ORDER BY created_at ASC",
+    )
+      .bind("user-a")
+      .all<{ id: string }>();
+    expect(decks).toHaveLength(1);
+
+    const cards = env.getCards();
+    expect(cards).toHaveLength(2);
+    expect(cards.every((c) => c.deck_id === decks![0].id)).toBe(true);
+  });
+
+  it("places miss decks under the oldest Unfiled subject", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedSubject({
+      id: "subj-unfiled-old",
+      user_id: "user-a",
+      title: "Unfiled",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSubject({
+      id: "subj-unfiled-new",
+      user_id: "user-a",
+      title: "Unfiled",
+      created_at: "2026-01-02T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/guest/import",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          decks: [{ clientId: "guest-deck-1", title: "Paste deck" }],
+          cards: [
+            {
+              clientDeckId: "guest-deck-1",
+              front: "Q",
+              back: "A",
+            },
+          ],
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(200);
+
+    const { results: decks } = await env.DB.prepare(
+      "SELECT id, title, subject_hint, subject_id, created_at FROM decks WHERE user_id = ? ORDER BY created_at ASC",
+    )
+      .bind("user-a")
+      .all<{ subject_id: string | null }>();
+    expect(decks).toHaveLength(1);
+    expect(decks![0].subject_id).toBe("subj-unfiled-old");
+  });
+
   it("returns 400 when cards exceed 200", async () => {
     const env = createTestEnv();
     seedOwner(env);

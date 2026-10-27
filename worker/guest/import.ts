@@ -4,7 +4,6 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
-import { foldDeckTitle } from "./titleKey";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -12,6 +11,10 @@ const MAX_IMPORT_CARDS = 200;
 
 type ImportDeck = { clientId: string; title: string };
 type ImportCard = { clientDeckId: string; front: string; back: string };
+
+function foldDeckTitle(title: string): string {
+  return title.trim().normalize("NFC").toLowerCase();
+}
 
 function parseImportBody(raw: unknown): {
   decks: ImportDeck[];
@@ -103,69 +106,56 @@ guestRoutes.post("/import", async (c) => {
 
   const { results: existingDecks } = await db
     .prepare(
-      "SELECT id, title, subject_id, created_at FROM decks WHERE user_id = ? ORDER BY created_at ASC",
+      "SELECT id, title, created_at FROM decks WHERE user_id = ? ORDER BY created_at ASC, id ASC",
     )
     .bind(userId)
-    .all<{
-      id: string;
-      title: string;
-      subject_id: string | null;
-      created_at: string;
-    }>();
+    .all<{ id: string; title: string; created_at: string }>();
 
-  type IndexedDeck = { id: string; created_at: string };
-  const byFold = new Map<string, IndexedDeck>();
+  const byFold = new Map<string, string>();
   for (const deck of existingDecks ?? []) {
     const key = foldDeckTitle(deck.title);
-    const prev = byFold.get(key);
-    if (
-      !prev ||
-      deck.created_at < prev.created_at ||
-      (deck.created_at === prev.created_at && deck.id < prev.id)
-    ) {
-      byFold.set(key, { id: deck.id, created_at: deck.created_at });
-    }
+    if (!byFold.has(key)) byFold.set(key, deck.id);
   }
 
+  const misses = decks.filter((d) => !byFold.has(foldDeckTitle(d.title)));
   let unfiledId: string | null = null;
-  async function ensureUnfiled(): Promise<string> {
-    if (unfiledId) return unfiledId;
+  if (misses.length > 0) {
     const row = await db
       .prepare(
-        "SELECT id FROM subjects WHERE user_id = ? AND title = ? LIMIT 1",
+        "SELECT id FROM subjects WHERE user_id = ? AND title = ? ORDER BY created_at ASC, id ASC LIMIT 1",
       )
       .bind(userId, "Unfiled")
       .first<{ id: string }>();
     if (row) {
       unfiledId = row.id;
-      return unfiledId;
+    } else {
+      unfiledId = crypto.randomUUID();
+      statements.push(
+        db
+          .prepare(
+            "INSERT INTO subjects (id, user_id, title, created_at) VALUES (?, ?, ?, ?)",
+          )
+          .bind(unfiledId, userId, "Unfiled", now),
+      );
     }
-    unfiledId = crypto.randomUUID();
-    statements.push(
-      db
-        .prepare(
-          "INSERT INTO subjects (id, user_id, title, created_at) VALUES (?, ?, ?, ?)",
-        )
-        .bind(unfiledId, userId, "Unfiled", now),
-    );
-    return unfiledId;
   }
 
   for (const deck of decks) {
-    const hit = byFold.get(foldDeckTitle(deck.title));
+    const key = foldDeckTitle(deck.title);
+    const hit = byFold.get(key);
     if (hit) {
-      clientToServer.set(deck.clientId, hit.id);
+      clientToServer.set(deck.clientId, hit);
       continue;
     }
-    const subjectId = await ensureUnfiled();
     const id = crypto.randomUUID();
+    byFold.set(key, id);
     clientToServer.set(deck.clientId, id);
     statements.push(
       db
         .prepare(
           "INSERT INTO decks (id, user_id, title, subject_hint, subject_id, created_at) VALUES (?, ?, ?, NULL, ?, ?)",
         )
-        .bind(id, userId, deck.title, subjectId, now),
+        .bind(id, userId, deck.title, unfiledId!, now),
     );
   }
 
@@ -224,7 +214,9 @@ guestRoutes.post("/import", async (c) => {
     );
   }
 
-  await db.batch(statements);
+  if (statements.length > 0) {
+    await db.batch(statements);
+  }
 
   return c.json({ deckCount: decks.length, cardCount: cards.length });
 });
