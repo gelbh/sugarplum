@@ -4,7 +4,7 @@ import { useProgressRegistry } from "./ProgressProvider";
 import type { ProgressSnapshot } from "./types";
 
 const POLL_MS = 500;
-const TIMEOUT_MS = 60_000;
+const TIMEOUT_MS = 10 * 60_000;
 
 const TERMINAL_OK = new Set(["needs_review", "done"]);
 const TERMINAL_FAIL = new Set(["failed"]);
