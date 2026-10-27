@@ -37,8 +37,8 @@ export default function JourneyRail({ view }: Props) {
           },
         ]}
       >
-        {view.stages.map((s) => (
-          <Step key={s.id} completed={s.done}>
+        {view.stages.map((s, index) => (
+          <Step key={s.id} completed={index < activeIndex && s.done}>
             <StepLabel>{s.label}</StepLabel>
           </Step>
         ))}

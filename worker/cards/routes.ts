@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
-import { assertSingleCloze } from "../generation/schema";
+import { assertSingleCloze, assertValidMcqOptions } from "../generation/schema";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
@@ -27,15 +27,57 @@ const PatchDraftSchema = z
   .object({
     front: z.string().min(1).optional(),
     back: z.string().min(1).optional(),
-    type: z.enum(["qa", "cloze", "image_label", "diagram"]).optional(),
+    options: z.array(z.string()).optional(),
+    type: z
+      .enum(["qa", "cloze", "image_label", "diagram", "mcq"])
+      .optional(),
   })
   .refine(
     (body) =>
       body.front !== undefined ||
       body.back !== undefined ||
+      body.options !== undefined ||
       body.type !== undefined,
     { message: "No fields to update" },
   );
+
+type McqBackJson = { answer: string; options: string[] };
+
+function isMcqBackJson(value: unknown): value is McqBackJson {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "answer" in value &&
+    typeof (value as McqBackJson).answer === "string" &&
+    "options" in value &&
+    Array.isArray((value as McqBackJson).options)
+  );
+}
+
+function decodeStoredBack(
+  type: string,
+  backJson: string,
+): { back: string; options?: string[] } {
+  if (type !== "mcq") {
+    return { back: parseJsonField<string>(backJson, backJson) };
+  }
+  const parsed = parseJsonField<unknown>(backJson, null);
+  if (isMcqBackJson(parsed)) {
+    return { back: parsed.answer, options: parsed.options };
+  }
+  return { back: parseJsonField<string>(backJson, "") };
+}
+
+function encodeStoredBack(
+  type: string,
+  back: string,
+  options?: string[],
+): string {
+  if (type === "mcq") {
+    return JSON.stringify({ answer: back, options: options ?? [] });
+  }
+  return JSON.stringify(back);
+}
 
 function parseJsonField<T>(raw: string, fallback: T): T {
   try {
@@ -47,13 +89,14 @@ function parseJsonField<T>(raw: string, fallback: T): T {
 
 /** Public card JSON for draft review / study clients. */
 export function serializeCard(row: CardRow) {
-  return {
+  const { back, options } = decodeStoredBack(row.type, row.back_json);
+  const card = {
     id: row.id,
     deck_id: row.deck_id,
     job_id: row.job_id,
     type: row.type,
     front: parseJsonField(row.front_json, row.front_json),
-    back: parseJsonField(row.back_json, row.back_json),
+    back,
     media_r2_keys: row.media_r2_keys_json
       ? parseJsonField<string[]>(row.media_r2_keys_json, [])
       : [],
@@ -64,6 +107,10 @@ export function serializeCard(row: CardRow) {
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
+  if (row.type === "mcq" && options !== undefined) {
+    return { ...card, options };
+  }
+  return card;
 }
 
 async function requireOwnedCard(
@@ -87,8 +134,18 @@ async function requireOwnedCard(
 
 async function acceptDraftCard(
   db: D1Database,
-  cardId: string,
-): Promise<"accepted" | "conflict"> {
+  card: { id: string; type: string; back_json: string; status: string },
+): Promise<"accepted" | "conflict" | "invalid"> {
+  if (card.status !== "draft") return "conflict";
+  if (card.type === "mcq") {
+    const decoded = decodeStoredBack(card.type, card.back_json);
+    try {
+      assertValidMcqOptions(decoded.back, decoded.options);
+    } catch {
+      return "invalid";
+    }
+  }
+
   const schedule = scheduleColumnsFromCard(newCard());
   const updatedAt = new Date().toISOString();
   // One batch: CAS update + schedule insert only when this accept won
@@ -99,7 +156,7 @@ async function acceptDraftCard(
       .prepare(
         `UPDATE cards SET status = ?, updated_at = ? WHERE id = ? AND status = ?`,
       )
-      .bind("accepted", updatedAt, cardId, "draft"),
+      .bind("accepted", updatedAt, card.id, "draft"),
     db
       .prepare(
         `INSERT INTO card_schedules (
@@ -121,7 +178,7 @@ async function acceptDraftCard(
         schedule.lapses,
         schedule.state,
         schedule.last_review,
-        cardId,
+        card.id,
         "accepted",
         updatedAt,
       ),
@@ -185,16 +242,17 @@ jobDraftRoutes.post("/:id/drafts/accept-all", async (c) => {
 
   const { results } = await db
     .prepare(
-      `SELECT id FROM cards WHERE job_id = ? AND status = ? ORDER BY created_at ASC`,
+      `SELECT id, type, back_json, status FROM cards
+       WHERE job_id = ? AND status = ? ORDER BY created_at ASC`,
     )
     .bind(jobId, "draft")
-    .all<{ id: string }>();
+    .all<{ id: string; type: string; back_json: string; status: string }>();
 
   let accepted = 0;
   let failed = 0;
   for (const row of results ?? []) {
     try {
-      const outcome = await acceptDraftCard(db, row.id);
+      const outcome = await acceptDraftCard(db, row);
       if (outcome === "accepted") accepted += 1;
       else failed += 1;
     } catch (err) {
@@ -234,10 +292,15 @@ cardRoutes.patch("/:id", async (c) => {
   const nextType = parsed.data.type ?? row.type;
   const nextFront =
     parsed.data.front ?? parseJsonField<string>(row.front_json, "");
-  const nextBack =
-    parsed.data.back ?? parseJsonField<string>(row.back_json, "");
+  const storedBack = decodeStoredBack(row.type, row.back_json);
 
-  const allowedTypes = new Set(["qa", "cloze", "image_label", "diagram"]);
+  const allowedTypes = new Set([
+    "qa",
+    "cloze",
+    "image_label",
+    "diagram",
+    "mcq",
+  ]);
   if (!allowedTypes.has(nextType)) {
     throw new HTTPException(400, { message: "Unsupported card type" });
   }
@@ -251,6 +314,31 @@ cardRoutes.patch("/:id", async (c) => {
     }
   }
 
+  let nextBack: string;
+  let nextOptions: string[] | undefined;
+  if (nextType === "mcq") {
+    const prior =
+      row.type === "mcq"
+        ? storedBack
+        : { back: parsed.data.back ?? "", options: undefined as string[] | undefined };
+    try {
+      const mcq = assertValidMcqOptions(
+        parsed.data.back ?? prior.back,
+        parsed.data.options ?? prior.options,
+      );
+      nextBack = mcq.back;
+      nextOptions = mcq.options;
+    } catch (err) {
+      throw new HTTPException(400, {
+        message: err instanceof Error ? err.message : "Invalid MCQ",
+      });
+    }
+  } else {
+    nextBack = parsed.data.back ?? storedBack.back;
+  }
+
+  const nextBackJson = encodeStoredBack(nextType, nextBack, nextOptions);
+
   const updatedAt = new Date().toISOString();
   await db
     .prepare(
@@ -258,13 +346,7 @@ cardRoutes.patch("/:id", async (c) => {
        SET type = ?, front_json = ?, back_json = ?, updated_at = ?
        WHERE id = ?`,
     )
-    .bind(
-      nextType,
-      JSON.stringify(nextFront),
-      JSON.stringify(nextBack),
-      updatedAt,
-      cardId,
-    )
+    .bind(nextType, JSON.stringify(nextFront), nextBackJson, updatedAt, cardId)
     .run();
 
   return c.json(
@@ -272,7 +354,7 @@ cardRoutes.patch("/:id", async (c) => {
       ...row,
       type: nextType,
       front_json: JSON.stringify(nextFront),
-      back_json: JSON.stringify(nextBack),
+      back_json: nextBackJson,
       updated_at: updatedAt,
     }),
   );
@@ -290,10 +372,15 @@ cardRoutes.post("/:id/accept", async (c) => {
     });
   }
 
-  const outcome = await acceptDraftCard(db, cardId);
+  const outcome = await acceptDraftCard(db, row);
   if (outcome === "conflict") {
     throw new HTTPException(409, {
       message: "Card is no longer a draft",
+    });
+  }
+  if (outcome === "invalid") {
+    throw new HTTPException(400, {
+      message: "Invalid MCQ card; fix options before accepting",
     });
   }
 

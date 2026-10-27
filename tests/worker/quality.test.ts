@@ -12,6 +12,20 @@ function qa(front: string, back: string): CardDraft {
   };
 }
 
+function mcq(
+  front: string,
+  back: string,
+  options: string[],
+): CardDraft {
+  return {
+    type: "mcq",
+    front,
+    back,
+    options,
+    provenance: { pages: [1], excerpt: front },
+  };
+}
+
 describe("filterDraftsByQuality", () => {
   it("drops short fronts, table-header dumps, and multi-sentence backs", () => {
     const kept = qa("What is ATP?", "Adenosine triphosphate");
@@ -45,6 +59,31 @@ describe("filterDraftsByQuality", () => {
     expect(filterDraftsByQuality(drafts).map((d) => d.front)).toEqual([
       "mitochondria",
     ]);
+  });
+
+  it("keeps valid mcq and drops invalid option sets", () => {
+    const valid = mcq("What is ATP?", "Adenosine triphosphate", [
+      "Adenosine triphosphate",
+      "Glucose",
+      "DNA",
+    ]);
+    const tooFew = mcq("What is ATP?", "Adenosine triphosphate", [
+      "Adenosine triphosphate",
+      "Glucose",
+    ]);
+    const dupes = mcq("What is ATP?", "Adenosine triphosphate", [
+      "Adenosine triphosphate",
+      "Glucose",
+      "Glucose",
+    ]);
+    const wrongBack = mcq("What is ATP?", "Water", [
+      "Adenosine triphosphate",
+      "Glucose",
+      "DNA",
+    ]);
+    expect(filterDraftsByQuality([valid])).toEqual([valid]);
+    expect(filterDraftsByQuality([tooFew, dupes, wrongBack])).toEqual([]);
+    expect(filterDraftsByQuality([valid, tooFew])).toEqual([valid]);
   });
 
   it("keeps a normal cloze", () => {
@@ -114,5 +153,57 @@ describe("filterDraftsByQuality", () => {
     const yesQ = qa("Is ATP a nucleotide?", "yes");
     const yesJunk = qa("ATP present", "yes");
     expect(filterDraftsByQuality([yesQ, yesJunk])).toEqual([yesQ]);
+  });
+
+  it("drops residual regen leftovers: section headers, thin glossary, tautology", () => {
+    const mito = qa("mitochondria", "powerhouse of the cell");
+    const atp = qa("What is ATP?", "Adenosine triphosphate");
+    const cloze: CardDraft = {
+      type: "cloze",
+      front: "The powerhouse is the {{c1::mitochondria}}.",
+      back: "mitochondria",
+      provenance: { pages: [1], excerpt: "powerhouse" },
+    };
+    const residual = [
+      qa("Pathogenesis in cattle", "Females affected: abortion."),
+      qa("Endometriosis", "Inflammation."),
+      qa(
+        "What is the significance of Trichomonas in free-range flocks?",
+        "Especially in free-range flocks.",
+      ),
+    ];
+    expect(filterDraftsByQuality([...residual, mito, atp, cloze])).toEqual([
+      mito,
+      atp,
+      cloze,
+    ]);
+  });
+
+  it("keeps section-header-shaped fronts when the back is substantive", () => {
+    const treatment = qa(
+      "Treatment of choice for coccidiosis",
+      "Amprolium mixed in feed for poultry",
+    );
+    const diagnosis = qa(
+      "Diagnosis of blackhead",
+      "Necrotic lesions in the caecum and liver",
+    );
+    const clinical = qa(
+      "Clinical signs in dogs",
+      "Bloody diarrhoea and weight loss",
+    );
+    expect(filterDraftsByQuality([treatment, diagnosis, clinical])).toEqual([
+      treatment,
+      diagnosis,
+      clinical,
+    ]);
+  });
+
+  it("keeps either/or answers that reuse question nouns", () => {
+    const insulin = qa(
+      "Does insulin increase or decrease blood glucose?",
+      "Decrease blood glucose",
+    );
+    expect(filterDraftsByQuality([insulin])).toEqual([insulin]);
   });
 });

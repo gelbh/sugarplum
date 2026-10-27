@@ -9,6 +9,8 @@ import {
   MAX_IMAGE_BYTES,
   MAX_PASTE_BYTES,
 } from "./limits";
+import { MAX_FIGURES_PER_PDF } from "./docling";
+import { figureR2Key } from "./figures";
 import { createR2PutUrl } from "./r2-presign";
 
 export { MAX_IMAGE_BYTES } from "./limits";
@@ -336,6 +338,109 @@ deckRoutes.post("/:id/materials/upload-url", async (c) => {
 
 export const materialRoutes = new Hono<AppEnv>();
 
+materialRoutes.post("/:id/figures/presign", async (c) => {
+  const userId = await requireUser(c);
+  const pdfMaterialId = c.req.param("id");
+  const db = getDb(c.env);
+  const parent = await requireOwnedMaterial(db, pdfMaterialId, userId);
+
+  if (
+    parent.kind !== "pdf" ||
+    (parent.status !== FILE_UPLOADING && parent.status !== FILE_READY)
+  ) {
+    throw new HTTPException(400, {
+      message: "Figure crops can only be attached to an uploading or ready PDF",
+    });
+  }
+
+  let body: {
+    filename?: unknown;
+    contentType?: unknown;
+    size?: unknown;
+    index?: unknown;
+  };
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+
+  const filename =
+    typeof body.filename === "string" && body.filename.trim()
+      ? body.filename.trim()
+      : "figure.png";
+  if (body.contentType !== "image/png") {
+    throw new HTTPException(400, { message: "Figure crops must be PNG images" });
+  }
+  const size = typeof body.size === "number" ? body.size : Number(body.size);
+  if (!Number.isFinite(size) || size <= 0 || size > MAX_IMAGE_BYTES) {
+    throw new HTTPException(400, {
+      message: `Figure crops must be ${MAX_IMAGE_BYTES / (1024 * 1024)}MB or smaller`,
+    });
+  }
+  const index = typeof body.index === "number" ? body.index : Number(body.index);
+  if (
+    !Number.isInteger(index) ||
+    index < 0 ||
+    index >= MAX_FIGURES_PER_PDF
+  ) {
+    throw new HTTPException(400, {
+      message: `Figure crop index must be an integer from 0 to ${MAX_FIGURES_PER_PDF - 1}`,
+    });
+  }
+
+  const r2Key = figureR2Key(parent.deck_id, pdfMaterialId, index);
+  const existingFigure = await db
+    .prepare("SELECT id FROM materials WHERE r2_key = ?")
+    .bind(r2Key)
+    .first<{ id: string }>();
+  if (existingFigure) {
+    throw new HTTPException(409, {
+      message: `Figure crop index ${index} is already attached to this PDF`,
+    });
+  }
+
+  const materialId = newId();
+  const createdAt = new Date().toISOString();
+  const accountId = c.env.R2_ACCOUNT_ID;
+  const accessKeyId = c.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = c.env.R2_SECRET_ACCESS_KEY;
+  if (!accountId || !accessKeyId || !secretAccessKey) {
+    throw new HTTPException(500, {
+      message: "R2 upload signing is not configured",
+    });
+  }
+  assertConfiguredR2AccountId(accountId);
+
+  const uploadUrl = await createR2PutUrl({
+    accountId,
+    accessKeyId,
+    secretAccessKey,
+    bucket: c.env.R2_BUCKET_NAME ?? DEFAULT_R2_BUCKET,
+    key: r2Key,
+    contentType: "image/png",
+    contentLength: size,
+  });
+
+  await db
+    .prepare(
+      "INSERT INTO materials (id, deck_id, kind, r2_key, filename, page_count, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    )
+    .bind(
+      materialId,
+      parent.deck_id,
+      "image",
+      r2Key,
+      filename,
+      null,
+      FILE_UPLOADING,
+      createdAt,
+    )
+    .run();
+
+  return c.json({ materialId, uploadUrl, r2Key });
+});
+
 /** Session-gated media fetch by R2 key (must belong to a material the user owns). */
 materialRoutes.get("/media", async (c) => {
   const userId = await requireUser(c);
@@ -408,10 +513,13 @@ materialRoutes.post("/:id/complete", async (c) => {
     });
   }
 
-  const jobId = await enqueueGeneration(c.env, {
-    materialId,
-    deckId: material.deck_id,
-  });
+  const isFigure = material.r2_key?.includes("/figures/") ?? false;
+  const jobId = isFigure
+    ? null
+    : await enqueueGeneration(c.env, {
+        materialId,
+        deckId: material.deck_id,
+      });
 
   return c.json({
     id: material.id,

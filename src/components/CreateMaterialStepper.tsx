@@ -22,6 +22,7 @@ import {
   PPTX_MIME,
   resolveUploadContentType,
   uploadMaterialFile,
+  uploadPdfWithFigureCrops,
   type Deck,
   ApiError,
 } from "../api/client";
@@ -60,6 +61,7 @@ export default function CreateMaterialStepper({
   const [pasteText, setPasteText] = useState("");
   const [filename, setFilename] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [figureFiles, setFigureFiles] = useState<File[]>([]);
 
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -198,10 +200,32 @@ export default function CreateMaterialStepper({
       setError("Images for generation must be 8MB or smaller");
       return;
     }
+    if (figureFiles.length > 20) {
+      setError("Attach at most 20 figure crops");
+      return;
+    }
+    for (const figure of figureFiles) {
+      if (resolveUploadContentType(figure) !== "image/png") {
+        setError("Figure crops must be PNG images");
+        return;
+      }
+      if (figure.size > MAX_IMAGE_BYTES) {
+        setError("Figure crops must be 8MB or smaller");
+        return;
+      }
+    }
     setBusy(true);
     try {
-      const material = await uploadMaterialFile(selectedDeckId, uploadFile);
+      const material =
+        contentType === "application/pdf" && figureFiles.length > 0
+          ? await uploadPdfWithFigureCrops(
+              selectedDeckId,
+              uploadFile,
+              figureFiles,
+            )
+          : await uploadMaterialFile(selectedDeckId, uploadFile);
       setUploadFile(null);
+      setFigureFiles([]);
       if (material.jobId) {
         setJobId(material.jobId);
         setNotice(`Stored file (${material.status}). Generation started.`);
@@ -373,9 +397,36 @@ export default function CreateMaterialStepper({
                       onChange={(ev) => {
                         const file = ev.target.files?.[0] ?? null;
                         setUploadFile(file);
+                        if (
+                          !file ||
+                          resolveUploadContentType(file) !== "application/pdf"
+                        ) {
+                          setFigureFiles([]);
+                        }
                       }}
                     />
                   </Button>
+                  {uploadFile &&
+                  resolveUploadContentType(uploadFile) === "application/pdf" ? (
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      disabled={busy || !selectedDeckId}
+                    >
+                      {figureFiles.length > 0
+                        ? `${figureFiles.length} figure crop${figureFiles.length === 1 ? "" : "s"} selected`
+                        : "Attach figure crops (PNG)"}
+                      <input
+                        type="file"
+                        accept="image/png,.png"
+                        multiple
+                        hidden
+                        onChange={(ev) => {
+                          setFigureFiles(Array.from(ev.target.files ?? []));
+                        }}
+                      />
+                    </Button>
+                  ) : null}
                   <Typography variant="caption" color="text.secondary">
                     PDF/PPTX max 25MB; images max 8MB. Upload starts generation
                     when complete.

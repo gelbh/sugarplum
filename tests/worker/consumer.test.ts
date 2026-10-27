@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { encryptSecret } from "../../worker/crypto/secrets";
 import {
+  insertDraftCards,
   mergeAndDedupeDrafts,
   processGenerateJob,
 } from "../../worker/generation/consumer";
@@ -106,6 +107,49 @@ function critiqueEchoCandidates() {
     return JSON.stringify({ cards: JSON.parse(raw) });
   };
 }
+
+describe("insertDraftCards", () => {
+  it("stores distinct media_r2_keys_json per draft", async () => {
+    const env = createTestEnv();
+    await seedOwner(env, false);
+    const provenance = { pages: [1], excerpt: "fig" };
+    const drafts = [
+      {
+        type: "image_label" as const,
+        front: "Label A",
+        back: "A",
+        provenance,
+        mediaR2Keys: ["materials/deck-a/figures/pdf/0.png"],
+      },
+      {
+        type: "diagram" as const,
+        front: "Label B",
+        back: "B",
+        provenance,
+        mediaR2Keys: ["materials/deck-a/figures/pdf/1.png"],
+      },
+    ];
+    await insertDraftCards(env.DB, {
+      deckId: "deck-a",
+      jobId: "job-media",
+      drafts,
+    });
+    const cards = env.getCards();
+    expect(cards).toHaveLength(2);
+    const mediaByFront = new Map(
+      cards.map((c) => [
+        JSON.parse(c.front_json) as string,
+        JSON.parse(c.media_r2_keys_json!) as string[],
+      ]),
+    );
+    expect(mediaByFront.get("Label A")).toEqual([
+      "materials/deck-a/figures/pdf/0.png",
+    ]);
+    expect(mediaByFront.get("Label B")).toEqual([
+      "materials/deck-a/figures/pdf/1.png",
+    ]);
+  });
+});
 
 describe("mergeAndDedupeDrafts", () => {
   it("keeps rules first and drops near-identical fronts", () => {
@@ -321,6 +365,36 @@ describe("processGenerateJob free path", () => {
     expect(job?.error).not.toMatch(/Gemini/i);
     // Slot not consumed when AI binding is missing
     expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBeNull();
+  });
+
+  it("persists mcq drafts with answer and options in back_json", async () => {
+    const env = createTestEnv();
+    await seedOwner(env, true);
+    const mcqDraft: CardDraft = {
+      type: "mcq",
+      front: "What is ATP?",
+      back: "Adenosine triphosphate",
+      options: ["Adenosine triphosphate", "Adenosine diphosphate", "RNA"],
+      provenance: { pages: [1], excerpt: "ATP stores energy" },
+    };
+    const llm = spyLlm({
+      generateDrafts: async () => [mcqDraft],
+      complete: async () => JSON.stringify({ cards: [] }),
+    });
+    const msg = await seedPasteJob(
+      env,
+      "ATP (adenosine triphosphate) stores cellular energy.",
+    );
+
+    await processGenerateJob(env, msg, { llm });
+
+    const cards = env.getCards();
+    expect(cards).toHaveLength(1);
+    expect(cards[0]!.type).toBe("mcq");
+    expect(JSON.parse(cards[0]!.back_json)).toEqual({
+      answer: "Adenosine triphosphate",
+      options: mcqDraft.options,
+    });
   });
 
   it("multi-chunk paste emits generate/critique progress with real total", async () => {

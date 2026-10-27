@@ -212,6 +212,25 @@ export function requestMaterialUploadUrl(
   });
 }
 
+export function presignPdfFigure(
+  pdfMaterialId: string,
+  body: {
+    filename: string;
+    contentType: "image/png";
+    size: number;
+    index: number;
+  },
+) {
+  if (isGuest()) guestUnsupported("upload PDF figure crops");
+  return api<UploadUrlResponse>(
+    `/api/materials/${pdfMaterialId}/figures/presign`,
+    {
+      method: "POST",
+      json: body,
+    },
+  );
+}
+
 export type CompleteMaterialResponse = Material & { jobId: string | null };
 
 export function completeMaterial(materialId: string) {
@@ -256,9 +275,10 @@ export type CardDraftView = {
   id: string;
   deck_id: string;
   job_id: string | null;
-  type: "qa" | "cloze" | "image_label" | "diagram" | string;
+  type: "qa" | "cloze" | "image_label" | "diagram" | "mcq" | string;
   front: string;
   back: string;
+  options?: string[];
   media_r2_keys?: string[];
   provenance: unknown;
   status: string;
@@ -297,7 +317,8 @@ export function patchCard(
   body: {
     front?: string;
     back?: string;
-    type?: "qa" | "cloze" | "image_label" | "diagram";
+    options?: string[];
+    type?: "qa" | "cloze" | "image_label" | "diagram" | "mcq";
   },
 ) {
   if (isGuest()) guestUnsupported("edit cards");
@@ -398,6 +419,49 @@ export async function uploadMaterialFile(
         err.message || "Failed to upload file to storage",
       );
     }
+    throw new ApiError(502, "Failed to upload file to storage");
+  }
+
+  return completeMaterial(materialId);
+}
+
+export async function uploadPdfWithFigureCrops(
+  deckId: string,
+  pdfFile: File,
+  figureFiles: File[],
+  onProgress?: (percent: number) => void,
+): Promise<CompleteMaterialResponse> {
+  const contentType = resolveUploadContentType(pdfFile);
+  const { materialId, uploadUrl } = await requestMaterialUploadUrl(deckId, {
+    filename: pdfFile.name || "upload.pdf",
+    contentType,
+    size: pdfFile.size,
+  });
+
+  try {
+    await uploadWithProgress(uploadUrl, pdfFile, onProgress ?? (() => {}), {
+      contentType,
+    });
+    for (const [index, figure] of figureFiles.entries()) {
+      const crop = await presignPdfFigure(materialId, {
+        filename: figure.name || `figure-${index}.png`,
+        contentType: "image/png",
+        size: figure.size,
+        index,
+      });
+      await uploadWithProgress(crop.uploadUrl, figure, () => {}, {
+        contentType: "image/png",
+      });
+      await completeMaterial(crop.materialId);
+    }
+  } catch (err) {
+    if (err instanceof UploadError) {
+      throw new ApiError(
+        err.status || 502,
+        err.message || "Failed to upload file to storage",
+      );
+    }
+    if (err instanceof ApiError) throw err;
     throw new ApiError(502, "Failed to upload file to storage");
   }
 
