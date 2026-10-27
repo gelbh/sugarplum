@@ -137,8 +137,9 @@ export default function OcclusionRegionEditor({
           maxHeight: "45vh",
           overflow: "auto",
           borderRadius: "6px",
-          bgcolor: "#FFFFFF",
-          border: "1px solid rgba(30, 13, 27, 0.12)",
+          bgcolor: "background.paper",
+          border: "1px solid",
+          borderColor: "divider",
         }}
       >
         <Box
@@ -180,14 +181,14 @@ export default function OcclusionRegionEditor({
                   height: `${region.h * 100}%`,
                   boxSizing: "border-box",
                   border: "2px solid",
-                  borderColor: selected ? "#5B2C6F" : "#C4A574",
+                  borderColor: selected ? "primary.main" : "secondary.main",
                   bgcolor: selected
-                    ? "rgba(91, 44, 111, 0.28)"
-                    : "rgba(196, 165, 116, 0.18)",
+                    ? "color-mix(in srgb, var(--sp-plum) 28%, transparent)"
+                    : "color-mix(in srgb, var(--sp-lamp-glow) 65%, transparent)",
                   cursor: disabled ? "default" : "move",
                   borderRadius: "4px",
                   boxShadow: selected
-                    ? "0 2px 10px rgba(91, 44, 111, 0.28)"
+                    ? "0 2px 10px color-mix(in srgb, var(--sp-plum) 28%, transparent)"
                     : "none",
                 }}
               >
@@ -198,8 +199,8 @@ export default function OcclusionRegionEditor({
                     left: 4,
                     top: 2,
                     px: 0.5,
-                    bgcolor: "#1e0d1b",
-                    color: "#e8d8c7",
+                    bgcolor: "var(--sp-stage-bg)",
+                    color: "var(--sp-ivory)",
                     borderRadius: "4px",
                     maxWidth: "95%",
                     overflow: "hidden",
@@ -225,10 +226,11 @@ export default function OcclusionRegionEditor({
                       bottom: -5,
                       width: 12,
                       height: 12,
-                      bgcolor: "#5B2C6F",
+                      bgcolor: "primary.main",
                       borderRadius: "2px",
                       cursor: "nwse-resize",
-                      border: "1px solid #FFFFFF",
+                      border: "1px solid",
+                      borderColor: "background.paper",
                     }}
                   />
                 ) : null}
@@ -273,14 +275,12 @@ export default function OcclusionRegionEditor({
               p: 1.5,
               border: "1px solid",
               borderColor:
-                region.id === selectedId
-                  ? "#5B2C6F"
-                  : "rgba(30, 13, 27, 0.12)",
+                region.id === selectedId ? "primary.main" : "divider",
               borderRadius: "6px",
-              bgcolor: "#FFFFFF",
+              bgcolor: "background.paper",
               boxShadow:
                 region.id === selectedId
-                  ? "0 0 0 1px rgba(91, 44, 111, 0.2)"
+                  ? "0 0 0 1px color-mix(in srgb, var(--sp-plum) 20%, transparent)"
                   : "none",
             }}
             onClick={() => {
