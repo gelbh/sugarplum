@@ -351,6 +351,23 @@ export function listDueCards() {
   return api<CardDraftView[]>("/api/study/due");
 }
 
+/** Accepted cards struggling by lapses or recent Again (online-only; guest gets []). */
+export type StrugglingRow = {
+  id: string;
+  deck_id: string;
+  front_preview: string;
+  lapses: number;
+  again_14d: number;
+  difficulty: number;
+  due: string;
+  is_due: boolean;
+};
+
+export function listStrugglingCards() {
+  if (isGuest()) return Promise.resolve([] as StrugglingRow[]);
+  return api<StrugglingRow[]>("/api/study/struggling");
+}
+
 export type StudyRating = 1 | 2 | 3 | 4;
 
 export type ReviewResult = { due: string };
