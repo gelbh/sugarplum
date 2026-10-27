@@ -47,14 +47,14 @@ journeyRoutes.get("/", async (c) => {
         .first<{ id: string }>(),
       db
         .prepare(
-          `SELECT j.id FROM generation_jobs j
+          `SELECT j.id, j.status FROM generation_jobs j
        INNER JOIN materials m ON m.id = j.material_id
        INNER JOIN decks d ON d.id = m.deck_id
-       WHERE d.user_id = ? AND j.status IN ('queued', 'running', 'failed')
+       WHERE d.user_id = ?
        ORDER BY j.created_at DESC LIMIT 1`,
         )
         .bind(userId)
-        .first<{ id: string }>(),
+        .first<{ id: string; status: string }>(),
       db
         .prepare(
           "SELECT COUNT(*) AS count FROM cards c INNER JOIN decks d ON d.id = c.deck_id WHERE d.user_id = ? AND c.status = 'accepted'",
@@ -72,11 +72,15 @@ journeyRoutes.get("/", async (c) => {
         .first<{ count: number }>(),
     ]);
 
+  const pendingStatuses = new Set(["queued", "running", "failed"]);
   const res: JourneyStatus = {
     deckCount: deckRow?.count ?? 0,
     hasGenerationJob: !!existsJob,
     openReviewJobId: openJob?.id ?? null,
-    pendingGenerationJobId: pendingJob?.id ?? null,
+    pendingGenerationJobId:
+      pendingJob && pendingStatuses.has(pendingJob.status)
+        ? pendingJob.id
+        : null,
     acceptedCount: acceptedRow?.count ?? 0,
     dueCount: dueRow?.count ?? 0,
   };

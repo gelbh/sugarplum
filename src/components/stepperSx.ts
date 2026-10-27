@@ -3,8 +3,13 @@ import type { SxProps, Theme } from "@mui/material/styles";
 
 /** Stepper colors from the active palette (matches headings / primary CTAs). */
 export const stepperSx: SxProps<Theme> = (theme) => {
-  const upcomingDisc = alpha(theme.palette.primary.main, 0.35);
-  const upcomingGlyph = theme.palette.primary.main;
+  const lightPrimary = theme.palette.primary;
+  const darkPrimary =
+    theme.colorSchemes?.dark?.palette?.primary ?? lightPrimary;
+  const upcomingDisc = alpha(lightPrimary.main, 0.35);
+  const upcomingGlyph = lightPrimary.main;
+  const darkUpcomingDisc = alpha(darkPrimary.main, 0.35);
+  const darkUpcomingGlyph = darkPrimary.main;
 
   return {
     "& .MuiStepLabel-label, & .MuiStepLabel-labelContainer, & .MuiStepLabel-label.Mui-disabled":
@@ -20,16 +25,25 @@ export const stepperSx: SxProps<Theme> = (theme) => {
     // Upcoming: muted primary disc + primary numeral (same family as Library heading).
     "& .MuiStepIcon-root": {
       color: upcomingDisc,
+      ...theme.applyStyles("dark", {
+        color: darkUpcomingDisc,
+      }),
     },
     "& .MuiStepIcon-root .MuiStepIcon-text": {
       fill: upcomingGlyph,
+      ...theme.applyStyles("dark", {
+        fill: darkUpcomingGlyph,
+      }),
     },
     "& .MuiStepIcon-root.Mui-active, & .MuiStepIcon-root.Mui-completed": {
       color: "primary.main",
     },
     "& .MuiStepIcon-root.Mui-active .MuiStepIcon-text, & .MuiStepIcon-root.Mui-completed .MuiStepIcon-text":
       {
-        fill: theme.palette.primary.contrastText,
+        fill: lightPrimary.contrastText,
+        ...theme.applyStyles("dark", {
+          fill: darkPrimary.contrastText,
+        }),
       },
   };
 };

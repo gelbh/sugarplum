@@ -133,6 +133,7 @@ export default function CreateMaterialStepper({
     e?.preventDefault();
     setError(null);
     setNotice(null);
+    setJobId(null);
     if (!selectedDeckId) {
       setError("Select a deck first");
       return;
@@ -163,6 +164,7 @@ export default function CreateMaterialStepper({
     e?.preventDefault();
     setError(null);
     setNotice(null);
+    setJobId(null);
     if (!selectedDeckId) {
       setError("Select a deck first");
       return;
