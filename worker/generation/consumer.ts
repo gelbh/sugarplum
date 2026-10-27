@@ -25,6 +25,7 @@ import {
   computePercent,
   computePipelineBandPercent,
   writeJobProgress,
+  type ProgressPatch,
   type ProgressStage,
   type ProgressEvent,
   truncateProgressText,
@@ -36,34 +37,23 @@ import { harvestRuleDrafts } from "./rules";
 import { assertValidMcqOptions, type CardDraft } from "./schema";
 import { createWorkersAiAdapter } from "./workers-ai";
 
-async function emitProgress(
-  db: D1Database,
-  jobId: string,
-  stage: ProgressStage,
-  current: number,
-  total: number,
-  label: string,
-  presentStages: readonly ProgressStage[],
-  halfStepsDone?: number,
-): Promise<void> {
-  // Best-effort: progress must never flip a successful job to failed.
-  try {
-    const percent =
-      halfStepsDone !== undefined &&
-      (stage === "generate" || stage === "critique")
-        ? computePipelineBandPercent(halfStepsDone, total, presentStages)
-        : computePercent(stage, current, total, presentStages);
-    await writeJobProgress(db, jobId, {
-      stage,
-      current,
-      total,
-      percent,
-      label,
-    });
-  } catch (err) {
-    console.error("writeJobProgress failed", jobId, stage, err);
-  }
-}
+export type JobProgressEmit = {
+  emit: (
+    stage: ProgressStage,
+    current: number,
+    total: number,
+    label: string,
+    halfStepsDone?: number,
+  ) => Promise<void>;
+  addEvent: (kind: ProgressEvent["kind"], stage: string, text: string) => void;
+  addUsage: (usage: {
+    prompt_tokens?: number | null;
+    completion_tokens?: number | null;
+    total_tokens?: number | null;
+  }) => void;
+  addDrafts: (n: number) => void;
+  setPath: (p: "free" | "byo") => void;
+};
 
 function makeEmit(
   db: D1Database,
@@ -83,21 +73,20 @@ function makeEmit(
     events: [],
   };
 
-  async function emit(
+  function progressPatch(
     stage: ProgressStage,
     current: number,
     total: number,
     label: string,
     halfStepsDone?: number,
-  ) {
-    // Build patch by merging acc fields
+  ): ProgressPatch {
     const percent =
       halfStepsDone !== undefined &&
       (stage === "generate" || stage === "critique")
         ? computePipelineBandPercent(halfStepsDone, total, presentStages)
         : computePercent(stage, current, total, presentStages);
 
-    const patch = {
+    return {
       stage,
       current,
       total,
@@ -105,21 +94,38 @@ function makeEmit(
       label,
       ...(acc.tokens_used !== undefined ? { tokens_used: acc.tokens_used } : {}),
       ...(acc.tokens_prompt !== undefined ? { tokens_prompt: acc.tokens_prompt } : {}),
-      ...(acc.tokens_completion !== undefined ? { tokens_completion: acc.tokens_completion } : {}),
+      ...(acc.tokens_completion !== undefined
+        ? { tokens_completion: acc.tokens_completion }
+        : {}),
       ...(acc.drafts_so_far !== undefined ? { drafts_so_far: acc.drafts_so_far } : {}),
       ...(acc.events && acc.events.length > 0 ? { events: acc.events } : {}),
       ...(acc.path !== undefined ? { path: acc.path } : {}),
-    } as const;
+    };
+  }
 
+  async function emit(
+    stage: ProgressStage,
+    current: number,
+    total: number,
+    label: string,
+    halfStepsDone?: number,
+  ) {
     try {
-      await writeJobProgress(db, jobId, patch as any);
+      await writeJobProgress(
+        db,
+        jobId,
+        progressPatch(stage, current, total, label, halfStepsDone),
+      );
     } catch (err) {
       console.error("writeJobProgress failed", jobId, stage, err);
     }
   }
 
-  // Helpers to update accumulator.
-  (emit as any).addEvent = (kind: ProgressEvent["kind"], stage: string, text: string) => {
+  function addEvent(
+    kind: ProgressEvent["kind"],
+    stage: string,
+    text: string,
+  ) {
     const e: ProgressEvent = {
       at: new Date().toISOString(),
       kind,
@@ -127,41 +133,37 @@ function makeEmit(
       text: truncateProgressText(text),
     };
     acc.events = pushProgressEvent(acc.events, e);
-  };
+  }
 
-  (emit as any).addUsage = (usage: { prompt_tokens?: number | null; completion_tokens?: number | null; total_tokens?: number | null }) => {
+  function addUsage(usage: {
+    prompt_tokens?: number | null;
+    completion_tokens?: number | null;
+    total_tokens?: number | null;
+  }) {
     try {
-      if (usage.completion_tokens != null) acc.tokens_completion = usage.completion_tokens;
+      if (usage.completion_tokens != null) {
+        acc.tokens_completion = usage.completion_tokens;
+      }
       if (usage.prompt_tokens != null) acc.tokens_prompt = usage.prompt_tokens;
       if (usage.total_tokens != null) acc.tokens_used = usage.total_tokens;
       else if (acc.tokens_prompt != null || acc.tokens_completion != null) {
-        acc.tokens_used = (acc.tokens_prompt ?? 0) + (acc.tokens_completion ?? 0);
+        acc.tokens_used =
+          (acc.tokens_prompt ?? 0) + (acc.tokens_completion ?? 0);
       }
     } catch {
       // best-effort
     }
-  };
+  }
 
-  (emit as any).addDrafts = (n: number) => {
+  function addDrafts(n: number) {
     acc.drafts_so_far = (acc.drafts_so_far ?? 0) + n;
-  };
+  }
 
-  (emit as any).setPath = (p: "free" | "byo") => {
+  function setPath(p: "free" | "byo") {
     acc.path = p;
-  };
+  }
 
-  return emit as unknown as (
-    stage: ProgressStage,
-    current: number,
-    total: number,
-    label: string,
-    halfStepsDone?: number,
-  ) => Promise<void> & {
-    addEvent: (kind: ProgressEvent["kind"], stage: string, text: string) => void;
-    addUsage: (usage: { prompt_tokens?: number | null; completion_tokens?: number | null; total_tokens?: number | null }) => void;
-    addDrafts: (n: number) => void;
-    setPath: (p: "free" | "byo") => void;
-  };
+  return { emit, addEvent, addUsage, addDrafts, setPath };
 }
 
 type MaterialRow = {
@@ -331,14 +333,6 @@ async function resolveTextLlm(
   );
 }
 
-type TextPipelineEmit = (
-  stage: ProgressStage,
-  current: number,
-  total: number,
-  label: string,
-  halfStepsDone?: number,
-) => Promise<void>;
-
 /**
  * Shared text path: harvest → critique Layer-1 → generate remainder → merge.
  * Returns [] when text has nothing harvestable and no remainder for LLM.
@@ -349,7 +343,7 @@ async function runTextDraftPipeline(args: {
   userId: string;
   secret: SecretRow | null;
   opts?: ProcessGenerateOptions;
-  emit?: TextPipelineEmit;
+  emit?: JobProgressEmit;
   /** Emit rules stage before LLM when using TEXT_LLM_STAGES catalog. */
   emitRulesStage?: boolean;
 }): Promise<CardDraft[]> {
@@ -360,18 +354,18 @@ async function runTextDraftPipeline(args: {
   if (!needsLlm) return [];
 
   if (args.emitRulesStage && args.emit) {
-    await args.emit("rules", 0, 0, "Harvesting rules");
+    await args.emit.emit("rules", 0, 0, "Harvesting rules");
   }
 
   const { llm, apiKey, provider } = await resolveTextLlm(
     args.env,
     args.secret,
     args.opts,
-    args.emit ? (usage) => (args.emit as any).addUsage?.(usage) : undefined,
+    args.emit ? (usage) => args.emit!.addUsage(usage) : undefined,
   );
   if (args.emit) {
     const path = !args.secret && provider === "workers-ai" ? "free" : "byo";
-    (args.emit as any).setPath(path);
+    args.emit.setPath(path);
   }
   if (!args.secret) {
     await consumeFreeGenSlot(args.env, args.userId);
@@ -397,19 +391,25 @@ async function runTextDraftPipeline(args: {
       provider,
       onProgress: args.emit
         ? (e) =>
-            args.emit!(e.stage, e.current, e.total, e.label, e.halfStepsDone)
+            args.emit!.emit(
+              e.stage,
+              e.current,
+              e.total,
+              e.label,
+              e.halfStepsDone,
+            )
         : undefined,
     });
   }
   if (args.emit && llmDrafts.length > 0) {
-    (args.emit as any).addDrafts(llmDrafts.length);
+    args.emit.addDrafts(llmDrafts.length);
     for (let i = 0; i < Math.min(2, llmDrafts.length); i++) {
       const d = llmDrafts[i]!;
       const frontText =
         typeof d.front === "string"
           ? d.front
           : String(d.front.prompt ?? d.front.image_key ?? JSON.stringify(d.front));
-      (args.emit as any).addEvent("draft", "generate", frontText.slice(0, 160));
+      args.emit.addEvent("draft", "generate", frontText.slice(0, 160));
     }
   }
 
@@ -521,7 +521,7 @@ export async function processGenerateJob(
     let drafts: Array<CardDraft & { mediaR2Keys?: string[] | null }>;
 
     if (material.kind === "image") {
-      const emit = makeEmit(db, jobId, IMAGE_STAGES);
+      const progress = makeEmit(db, jobId, IMAGE_STAGES);
       // Vision needs a BYO provider; free Workers AI path is text-only.
       if (!secret && !opts?.llm) {
         throw new Error(
@@ -548,10 +548,10 @@ export async function processGenerateJob(
         llm = createLlmAdapter(provider);
       }
       // Image generation always uses a BYO provider.
-      (emit as any).setPath("byo");
+      progress.setPath("byo");
 
-      await emit("queued", 0, 0, "Queued");
-      await emit("extract", 0, 0, "Loading image");
+      await progress.emit("queued", 0, 0, "Queued");
+      await progress.emit("extract", 0, 0, "Loading image");
       if (!material.r2_key) {
         throw new Error("Image material has no R2 object");
       }
@@ -567,7 +567,7 @@ export async function processGenerateJob(
         );
       }
       const generateTotal = 1;
-      await emit("generate", 0, generateTotal, "Generating cards");
+      await progress.emit("generate", 0, generateTotal, "Generating cards");
       drafts = await llm.generateDrafts({
         text: "",
         apiKey,
@@ -579,16 +579,21 @@ export async function processGenerateJob(
         },
       });
       // Record drafts produced and emit draft events (max 2 previews).
-      (emit as any).addDrafts(drafts.length);
+      progress.addDrafts(drafts.length);
       for (let i = 0; i < Math.min(2, drafts.length); i++) {
         const d = drafts[i]!;
         const frontText =
           typeof d.front === "string"
             ? d.front
             : String(d.front.prompt ?? d.front.image_key ?? JSON.stringify(d.front));
-        (emit as any).addEvent("draft", "generate", frontText.slice(0, 160));
+        progress.addEvent("draft", "generate", frontText.slice(0, 160));
       }
-      await emit("generate", generateTotal, generateTotal, "Generating cards");
+      await progress.emit(
+        "generate",
+        generateTotal,
+        generateTotal,
+        "Generating cards",
+      );
       drafts = bindOcclusionImageKey(drafts, material.r2_key);
       drafts = filterDraftsByQuality(drafts);
       if (drafts.length === 0) {
@@ -598,15 +603,15 @@ export async function processGenerateJob(
         ...d,
         mediaR2Keys: [imageR2Key],
       }));
-      await emit("persist", 0, 1, "Saving drafts");
+      await progress.emit("persist", 0, 1, "Saving drafts");
       await insertDraftCards(db, { deckId, jobId, drafts });
-      await emit("persist", 1, 1, "Saving drafts");
+      await progress.emit("persist", 1, 1, "Saving drafts");
     } else if (material.kind === "pdf") {
       // Start with full PDF catalog; switch to figure-only after extract if no text.
       let presentStages: readonly ProgressStage[] = PDF_STAGES;
-      let emit = makeEmit(db, jobId, presentStages);
-      await emit("queued", 0, 0, "Queued");
-      await emit("extract", 0, 0, "Extracting material");
+      let progress = makeEmit(db, jobId, presentStages);
+      await progress.emit("queued", 0, 0, "Queued");
+      await progress.emit("extract", 0, 0, "Extracting material");
       if (!material.r2_key) {
         throw new Error("PDF material has no R2 object");
       }
@@ -627,7 +632,7 @@ export async function processGenerateJob(
       // Emit an excerpt event after extraction when text is present.
       if (text.trim()) {
         const excerpt = text.split(/\r?\n/).find((l) => l.trim()) ?? text;
-        emit.addEvent("excerpt", "extract", excerpt.slice(0, 160));
+        progress.addEvent("excerpt", "extract", excerpt.slice(0, 160));
       }
 
       const figureChildren = await listFigureChildrenForPdf(db, {
@@ -647,7 +652,7 @@ export async function processGenerateJob(
 
       if (!text.trim()) {
         presentStages = PDF_FIGURE_ONLY_STAGES;
-        emit = makeEmit(db, jobId, presentStages);
+        progress = makeEmit(db, jobId, presentStages);
       }
 
       type FigureRef = {
@@ -688,12 +693,14 @@ export async function processGenerateJob(
 
       const figureDrafts: Array<CardDraft & { mediaR2Keys?: string[] }> = [];
       if (figures.length > 0) {
-        await emit("figures", 0, figures.length, "Processing figures");
+        await progress.emit("figures", 0, figures.length, "Processing figures");
         let vision: { llm: LlmAdapter; apiKey: string; provider: string } | null =
           null;
         if (secret || opts?.llm) {
           vision = secret
-            ? await resolveTextLlm(env, secret, opts, (usage) => (emit as any).addUsage?.(usage))
+            ? await resolveTextLlm(env, secret, opts, (usage) =>
+                progress.addUsage(usage),
+              )
             : { llm: opts!.llm!, apiKey: "", provider: "mock" };
         } else {
           figureWarning =
@@ -702,7 +709,9 @@ export async function processGenerateJob(
         }
         if (vision) {
           // Mark path for progress (free vs byo) when vision LLM resolved.
-          (emit as any).setPath(!secret && vision.provider === "workers-ai" ? "free" : "byo");
+          progress.setPath(
+            !secret && vision.provider === "workers-ai" ? "free" : "byo",
+          );
           for (let i = 0; i < figures.length; i++) {
             const figure = figures[i]!;
             try {
@@ -727,14 +736,18 @@ export async function processGenerateJob(
                 },
               });
               // Record drafts produced for figures and emit draft previews.
-              (emit as any).addDrafts(generated.length);
+              progress.addDrafts(generated.length);
               for (let j = 0; j < Math.min(2, generated.length); j++) {
                 const d = generated[j]!;
                 const frontText =
                   typeof d.front === "string"
                     ? d.front
                     : String(d.front.prompt ?? d.front.image_key ?? JSON.stringify(d.front));
-                (emit as any).addEvent("draft", "figures", frontText.slice(0, 160));
+                progress.addEvent(
+                  "draft",
+                  "figures",
+                  frontText.slice(0, 160),
+                );
               }
               const excerpt =
                 figure.caption?.trim() ||
@@ -755,7 +768,7 @@ export async function processGenerateJob(
             } catch (err) {
               console.warn(`PDF figure generation failed for ${figure.r2Key}`, err);
             } finally {
-              await emit(
+              await progress.emit(
                 "figures",
                 i + 1,
                 figures.length,
@@ -766,7 +779,7 @@ export async function processGenerateJob(
             }
           }
         } else {
-          await emit(
+          await progress.emit(
             "figures",
             figures.length,
             figures.length,
@@ -774,7 +787,7 @@ export async function processGenerateJob(
           );
         }
       } else {
-        await emit(
+        await progress.emit(
           "figures",
           0,
           0,
@@ -790,7 +803,7 @@ export async function processGenerateJob(
           userId: deck.user_id,
           secret,
           opts,
-          emit,
+          emit: progress,
         });
       }
 
@@ -805,20 +818,20 @@ export async function processGenerateJob(
             : "Extracted material text is empty and no usable figures were found. Upload OCR text or figure crops.",
         );
       }
-      await emit("persist", 0, 1, "Saving drafts");
+      await progress.emit("persist", 0, 1, "Saving drafts");
       await insertDraftCards(db, { deckId, jobId, drafts });
-      await emit("persist", 1, 1, "Saving drafts");
+      await progress.emit("persist", 1, 1, "Saving drafts");
     } else {
       // TEXT_LLM catalog; emit before extract so failures leave progress.
-      const emit = makeEmit(db, jobId, TEXT_LLM_STAGES);
-      await emit("queued", 0, 0, "Queued");
-      await emit("extract", 0, 0, "Extracting material");
+      const progress = makeEmit(db, jobId, TEXT_LLM_STAGES);
+      await progress.emit("queued", 0, 0, "Queued");
+      await progress.emit("extract", 0, 0, "Extracting material");
 
       const text = await extractMaterialText(env, material);
       // Emit an excerpt event after extraction.
       if (text.trim()) {
         const excerpt = text.split(/\r?\n/).find((l) => l.trim()) ?? text;
-        emit.addEvent("excerpt", "extract", excerpt.slice(0, 160));
+        progress.addEvent("excerpt", "extract", excerpt.slice(0, 160));
       }
       if (!text.trim()) {
         throw new Error("Extracted material text is empty");
@@ -830,7 +843,7 @@ export async function processGenerateJob(
         userId: deck.user_id,
         secret,
         opts,
-        emit,
+        emit: progress,
         emitRulesStage: true,
       });
       drafts = filterDraftsByQuality(drafts);
@@ -839,9 +852,9 @@ export async function processGenerateJob(
           "No flashcard drafts could be produced from this material.",
         );
       }
-      await emit("persist", 0, 1, "Saving drafts");
+      await progress.emit("persist", 0, 1, "Saving drafts");
       await insertDraftCards(db, { deckId, jobId, drafts });
-      await emit("persist", 1, 1, "Saving drafts");
+      await progress.emit("persist", 1, 1, "Saving drafts");
     }
 
     const covered = drafts.map((d) => {

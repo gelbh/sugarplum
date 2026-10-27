@@ -288,11 +288,28 @@ describe("writeJobProgress", () => {
       total: 5,
       percent: 42,
       label: "Generating cards (chunk 2/5)",
+      path: "free" as const,
+      drafts_so_far: 3,
+      events: [
+        {
+          at: "2026-10-26T12:00:00.000Z",
+          kind: "draft" as const,
+          stage: "generate",
+          text: "Sample draft preview",
+        },
+      ],
     };
     await writeJobProgress(env.DB, "j1", patch);
 
     const jobs = env.getGenerationJobs();
     expect(jobs).toHaveLength(1);
     expect(jobs[0].progress_json).toBe(toProgressJson(patch));
+    const roundTrip = JSON.parse(jobs[0].progress_json!) as Record<
+      string,
+      unknown
+    >;
+    expect(roundTrip.path).toBe("free");
+    expect(roundTrip.drafts_so_far).toBe(3);
+    expect(roundTrip.events).toHaveLength(1);
   });
 });

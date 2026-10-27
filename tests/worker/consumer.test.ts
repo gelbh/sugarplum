@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import { app } from "../../worker/index";
+import { SESSION_COOKIE } from "../../worker/auth/session";
 import { encryptSecret } from "../../worker/crypto/secrets";
 import {
   insertDraftCards,
@@ -31,6 +33,7 @@ function seedOwner(env: ReturnType<typeof createTestEnv>, withSecret = false) {
     subject_hint: null,
     created_at: "2026-01-01T00:00:00.000Z",
   });
+  env.seedSession("sess-a", "user-a");
   return withSecret
     ? encryptSecret("sk-test-mock-key", TEST_SECRETS_WRAP_KEY).then(
         (ciphertext) => {
@@ -220,6 +223,26 @@ describe("processGenerateJob free path", () => {
     expect(job?.error).toBeNull();
     expect(env.getCards().length).toBeGreaterThanOrEqual(1);
     expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBe("1");
+
+    const stored = JSON.parse(job!.progress_json!) as { path?: string };
+    expect(stored.path).toBe("free");
+
+    const pollRes = await app.request(
+      `/api/jobs/${msg.jobId}`,
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(pollRes.status).toBe(200);
+    const poll = (await pollRes.json()) as {
+      progress: { path?: string } | null;
+      free_quota: { used: number; cap: number; remaining: number } | null;
+    };
+    expect(poll.progress?.path).toBe("free");
+    expect(poll.free_quota).toEqual({
+      used: 1,
+      cap: FREE_GEN_DAILY_CAP,
+      remaining: FREE_GEN_DAILY_CAP - 1,
+    });
   });
 
   it("structured-only paste critiques rules via complete and consumes free quota", async () => {
@@ -297,6 +320,22 @@ describe("processGenerateJob free path", () => {
     const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("needs_review");
     expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBeNull();
+
+    const stored = JSON.parse(job!.progress_json!) as { path?: string };
+    expect(stored.path).toBe("byo");
+
+    const pollRes = await app.request(
+      `/api/jobs/${msg.jobId}`,
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(pollRes.status).toBe(200);
+    const poll = (await pollRes.json()) as {
+      progress: { path?: string } | null;
+      free_quota: unknown;
+    };
+    expect(poll.progress?.path).toBe("byo");
+    expect(poll.free_quota).toBeNull();
   });
 
   it("cap exceeded → failed job with actionable error", async () => {
