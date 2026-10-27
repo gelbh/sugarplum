@@ -115,4 +115,28 @@ describe("filterDraftsByQuality", () => {
     const yesJunk = qa("ATP present", "yes");
     expect(filterDraftsByQuality([yesQ, yesJunk])).toEqual([yesQ]);
   });
+
+  it("drops residual regen leftovers: section headers, thin glossary, tautology", () => {
+    const mito = qa("mitochondria", "powerhouse of the cell");
+    const atp = qa("What is ATP?", "Adenosine triphosphate");
+    const cloze: CardDraft = {
+      type: "cloze",
+      front: "The powerhouse is the {{c1::mitochondria}}.",
+      back: "mitochondria",
+      provenance: { pages: [1], excerpt: "powerhouse" },
+    };
+    const residual = [
+      qa("Pathogenesis in cattle", "Females affected: abortion."),
+      qa("Endometriosis", "Inflammation."),
+      qa(
+        "What is the significance of Trichomonas in free-range flocks?",
+        "Especially in free-range flocks.",
+      ),
+    ];
+    expect(filterDraftsByQuality([...residual, mito, atp, cloze])).toEqual([
+      mito,
+      atp,
+      cloze,
+    ]);
+  });
 });
