@@ -4,11 +4,7 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import { enqueueGeneration } from "../generation/enqueue";
-import {
-  MAX_FILE_BYTES,
-  MAX_IMAGE_BYTES,
-  MAX_PASTE_BYTES,
-} from "./limits";
+import { MAX_FILE_BYTES, MAX_IMAGE_BYTES, MAX_PASTE_BYTES } from "./limits";
 import { MAX_FIGURES_PER_PDF } from "./docling";
 import { figureR2Key } from "./figures";
 import { createR2PutUrl } from "./r2-presign";
@@ -22,6 +18,7 @@ export type DeckRow = {
   user_id: string;
   title: string;
   subject_hint: string | null;
+  subject_id: string | null;
   created_at: string;
 };
 
@@ -43,11 +40,7 @@ const FILE_READY = "ready";
 const PDF_CONTENT_TYPE = "application/pdf";
 const PPTX_CONTENT_TYPE =
   "application/vnd.openxmlformats-officedocument.presentationml.presentation";
-const IMAGE_CONTENT_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-]);
+const IMAGE_CONTENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const DEFAULT_R2_BUCKET = "sugarplum-materials";
 const ZIP_CONTENT_TYPES = new Set([
   "application/zip",
@@ -64,10 +57,7 @@ function resolveUpload(
   const lowerName = filename.toLowerCase();
   if (contentType === PDF_CONTENT_TYPE) return { kind: "pdf", ext: "pdf" };
   if (contentType === PPTX_CONTENT_TYPE) return { kind: "pptx", ext: "pptx" };
-  if (
-    ZIP_CONTENT_TYPES.has(contentType) &&
-    lowerName.endsWith(".pptx")
-  ) {
+  if (ZIP_CONTENT_TYPES.has(contentType) && lowerName.endsWith(".pptx")) {
     return { kind: "pptx", ext: "pptx" };
   }
   if (IMAGE_CONTENT_TYPES.has(contentType)) {
@@ -107,12 +97,40 @@ export async function requireOwnedDeck(
 ): Promise<DeckRow> {
   const deck = await db
     .prepare(
-      "SELECT id, user_id, title, subject_hint, created_at FROM decks WHERE id = ? AND user_id = ?",
+      "SELECT id, user_id, title, subject_hint, subject_id, created_at FROM decks WHERE id = ? AND user_id = ?",
     )
     .bind(deckId, userId)
     .first<DeckRow>();
   if (!deck) throw new HTTPException(404, { message: "Deck not found" });
   return deck;
+}
+
+async function requireOwnedSubjectId(
+  db: D1Database,
+  subjectId: string,
+  userId: string,
+): Promise<void> {
+  const subject = await db
+    .prepare("SELECT id, user_id FROM subjects WHERE id = ? AND user_id = ?")
+    .bind(subjectId, userId)
+    .first<{ id: string; user_id: string }>();
+  if (!subject) throw new HTTPException(404, { message: "Subject not found" });
+}
+
+function deckJson(deck: {
+  id: string;
+  title: string;
+  subject_hint: string | null;
+  subject_id: string | null;
+  created_at: string;
+}) {
+  return {
+    id: deck.id,
+    title: deck.title,
+    subject_hint: deck.subject_hint,
+    subject_id: deck.subject_id,
+    created_at: deck.created_at,
+  };
 }
 
 async function requireOwnedMaterial(
@@ -137,6 +155,115 @@ export const deckRoutes = new Hono<AppEnv>();
 
 deckRoutes.post("/", async (c) => {
   const userId = await requireUser(c);
+  let body: { title?: unknown; subjectId?: unknown };
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+
+  const title = typeof body.title === "string" ? body.title.trim() : "";
+  if (!title) throw new HTTPException(400, { message: "Title required" });
+
+  const subjectId =
+    typeof body.subjectId === "string" ? body.subjectId.trim() : "";
+  if (!subjectId) {
+    throw new HTTPException(400, { message: "subjectId required" });
+  }
+
+  const id = newId();
+  const createdAt = new Date().toISOString();
+  const db = getDb(c.env);
+  await requireOwnedSubjectId(db, subjectId, userId);
+
+  await db
+    .prepare(
+      "INSERT INTO decks (id, user_id, title, subject_hint, subject_id, created_at) VALUES (?, ?, ?, NULL, ?, ?)",
+    )
+    .bind(id, userId, title, subjectId, createdAt)
+    .run();
+
+  return c.json(
+    deckJson({
+      id,
+      title,
+      subject_hint: null,
+      subject_id: subjectId,
+      created_at: createdAt,
+    }),
+    201,
+  );
+});
+
+deckRoutes.get("/", async (c) => {
+  const userId = await requireUser(c);
+  const db = getDb(c.env);
+  const subjectId = c.req.query("subjectId")?.trim() || null;
+
+  type DeckListRow = {
+    id: string;
+    title: string;
+    subject_hint: string | null;
+    subject_id: string | null;
+    created_at: string;
+  };
+
+  if (subjectId) {
+    const { results } = await db
+      .prepare(
+        "SELECT id, title, subject_hint, subject_id, created_at FROM decks WHERE user_id = ? AND subject_id = ? ORDER BY created_at ASC",
+      )
+      .bind(userId, subjectId)
+      .all<DeckListRow>();
+    return c.json(results ?? []);
+  }
+
+  const { results } = await db
+    .prepare(
+      "SELECT id, title, subject_hint, subject_id, created_at FROM decks WHERE user_id = ? ORDER BY created_at ASC",
+    )
+    .bind(userId)
+    .all<DeckListRow>();
+
+  return c.json(results ?? []);
+});
+
+deckRoutes.get("/:id/stats", async (c) => {
+  const userId = await requireUser(c);
+  const deckId = c.req.param("id");
+  const db = getDb(c.env);
+  await requireOwnedDeck(db, deckId, userId);
+
+  const accepted = await db
+    .prepare(
+      "SELECT COUNT(*) AS count FROM cards WHERE deck_id = ? AND status = 'accepted'",
+    )
+    .bind(deckId)
+    .first<{ count: number }>();
+  const draft = await db
+    .prepare(
+      "SELECT COUNT(*) AS count FROM cards WHERE deck_id = ? AND status = 'draft'",
+    )
+    .bind(deckId)
+    .first<{ count: number }>();
+  const materials = await db
+    .prepare("SELECT COUNT(*) AS count FROM materials WHERE deck_id = ?")
+    .bind(deckId)
+    .first<{ count: number }>();
+
+  return c.json({
+    accepted: accepted?.count ?? 0,
+    draft: draft?.count ?? 0,
+    materials: materials?.count ?? 0,
+  });
+});
+
+deckRoutes.patch("/:id", async (c) => {
+  const userId = await requireUser(c);
+  const deckId = c.req.param("id");
+  const db = getDb(c.env);
+  const deck = await requireOwnedDeck(db, deckId, userId);
+
   let body: { title?: unknown };
   try {
     body = await c.req.json();
@@ -147,44 +274,71 @@ deckRoutes.post("/", async (c) => {
   const title = typeof body.title === "string" ? body.title.trim() : "";
   if (!title) throw new HTTPException(400, { message: "Title required" });
 
-  const id = newId();
-  const createdAt = new Date().toISOString();
-  const db = getDb(c.env);
-
   await db
-    .prepare(
-      "INSERT INTO decks (id, user_id, title, subject_hint, created_at) VALUES (?, ?, ?, NULL, ?)",
-    )
-    .bind(id, userId, title, createdAt)
+    .prepare("UPDATE decks SET title = ? WHERE id = ? AND user_id = ?")
+    .bind(title, deckId, userId)
     .run();
 
   return c.json(
-    {
-      id,
+    deckJson({
+      id: deck.id,
       title,
-      subject_hint: null,
-      created_at: createdAt,
-    },
-    201,
+      subject_hint: deck.subject_hint,
+      subject_id: deck.subject_id ?? null,
+      created_at: deck.created_at,
+    }),
   );
 });
 
-deckRoutes.get("/", async (c) => {
+deckRoutes.delete("/:id", async (c) => {
   const userId = await requireUser(c);
+  const deckId = c.req.param("id");
   const db = getDb(c.env);
-  const { results } = await db
-    .prepare(
-      "SELECT id, title, subject_hint, created_at FROM decks WHERE user_id = ? ORDER BY created_at ASC",
-    )
-    .bind(userId)
-    .all<{
-      id: string;
-      title: string;
-      subject_hint: string | null;
-      created_at: string;
-    }>();
+  await requireOwnedDeck(db, deckId, userId);
 
-  return c.json(results ?? []);
+  const keys = new Set<string>();
+  const { results: materialKeys } = await db
+    .prepare(
+      "SELECT r2_key FROM materials WHERE deck_id = ? AND r2_key IS NOT NULL",
+    )
+    .bind(deckId)
+    .all<{ r2_key: string }>();
+  for (const row of materialKeys ?? []) {
+    if (row.r2_key) keys.add(row.r2_key);
+  }
+  const { results: cardMedia } = await db
+    .prepare(
+      "SELECT media_r2_keys_json FROM cards WHERE deck_id = ? AND media_r2_keys_json IS NOT NULL",
+    )
+    .bind(deckId)
+    .all<{ media_r2_keys_json: string }>();
+  for (const row of cardMedia ?? []) {
+    try {
+      const parsed = JSON.parse(row.media_r2_keys_json) as unknown;
+      if (Array.isArray(parsed)) {
+        for (const key of parsed) {
+          if (typeof key === "string" && key) keys.add(key);
+        }
+      }
+    } catch {
+      /* ignore bad JSON */
+    }
+  }
+
+  for (const key of keys) {
+    try {
+      await c.env.MATERIALS.delete(key);
+    } catch {
+      /* best-effort; D1 row still removed */
+    }
+  }
+
+  await db
+    .prepare("DELETE FROM decks WHERE id = ? AND user_id = ?")
+    .bind(deckId, userId)
+    .run();
+
+  return c.body(null, 204);
 });
 
 deckRoutes.post("/:id/materials/paste", async (c) => {
@@ -270,8 +424,7 @@ deckRoutes.post("/:id/materials/upload-url", async (c) => {
   const resolved = resolveUpload(contentType, filenameHint);
   if (!resolved) {
     throw new HTTPException(400, {
-      message:
-        "Only PDF, PPTX, or image (jpeg/png/webp) uploads are allowed",
+      message: "Only PDF, PPTX, or image (jpeg/png/webp) uploads are allowed",
     });
   }
 
@@ -370,7 +523,9 @@ materialRoutes.post("/:id/figures/presign", async (c) => {
       ? body.filename.trim()
       : "figure.png";
   if (body.contentType !== "image/png") {
-    throw new HTTPException(400, { message: "Figure crops must be PNG images" });
+    throw new HTTPException(400, {
+      message: "Figure crops must be PNG images",
+    });
   }
   const size = typeof body.size === "number" ? body.size : Number(body.size);
   if (!Number.isFinite(size) || size <= 0 || size > MAX_IMAGE_BYTES) {
@@ -378,12 +533,9 @@ materialRoutes.post("/:id/figures/presign", async (c) => {
       message: `Figure crops must be ${MAX_IMAGE_BYTES / (1024 * 1024)}MB or smaller`,
     });
   }
-  const index = typeof body.index === "number" ? body.index : Number(body.index);
-  if (
-    !Number.isInteger(index) ||
-    index < 0 ||
-    index >= MAX_FIGURES_PER_PDF
-  ) {
+  const index =
+    typeof body.index === "number" ? body.index : Number(body.index);
+  if (!Number.isInteger(index) || index < 0 || index >= MAX_FIGURES_PER_PDF) {
     throw new HTTPException(400, {
       message: `Figure crop index must be an integer from 0 to ${MAX_FIGURES_PER_PDF - 1}`,
     });
@@ -465,14 +617,13 @@ materialRoutes.get("/media", async (c) => {
     throw new HTTPException(404, { message: "Media not found" });
   }
   const lower = key.toLowerCase();
-  const contentType =
-    lower.endsWith(".png")
-      ? "image/png"
-      : lower.endsWith(".webp")
-        ? "image/webp"
-        : lower.endsWith(".jpg") || lower.endsWith(".jpeg")
-          ? "image/jpeg"
-          : "application/octet-stream";
+  const contentType = lower.endsWith(".png")
+    ? "image/png"
+    : lower.endsWith(".webp")
+      ? "image/webp"
+      : lower.endsWith(".jpg") || lower.endsWith(".jpeg")
+        ? "image/jpeg"
+        : "application/octet-stream";
   return new Response(obj.body, {
     headers: {
       "content-type": contentType,
@@ -502,9 +653,7 @@ materialRoutes.post("/:id/complete", async (c) => {
   }
 
   const cas = await db
-    .prepare(
-      "UPDATE materials SET status = ? WHERE id = ? AND status = ?",
-    )
+    .prepare("UPDATE materials SET status = ? WHERE id = ? AND status = ?")
     .bind(FILE_READY, materialId, FILE_UPLOADING)
     .run();
   if (!cas.meta.changes) {

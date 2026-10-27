@@ -5,9 +5,15 @@ import {
   clearGuestStore,
   guestAddAcceptedCards,
   guestCreateDeck,
+  guestCreateSubject,
+  guestDeleteSubject,
+  guestListDecks,
   guestListDueCards,
+  guestListSubjects,
   guestReviewCard,
 } from "../../src/guest/store";
+
+const STORE_KEY = "sugarplum.guest.store.v1";
 
 function memoryStorage() {
   const map = new Map<string, string>();
@@ -40,6 +46,120 @@ describe("guest store", () => {
     expect(due[0]?.front.length).toBeGreaterThan(0);
   });
 
+  it("seeds Anatomy subject and attaches demo deck subject_id", () => {
+    enterGuest(storage);
+    const subjects = guestListSubjects(storage);
+    expect(subjects.some((s) => s.title === "Anatomy")).toBe(true);
+    const anatomy = subjects.find((s) => s.title === "Anatomy")!;
+    const decks = guestListDecks(undefined, storage);
+    expect(decks.length).toBeGreaterThan(0);
+    expect(decks.every((d) => d.subject_id === anatomy.id)).toBe(true);
+  });
+
+  it("migrates old store without subjects into Unfiled / subject_hint", () => {
+    storage.setItem(
+      STORE_KEY,
+      JSON.stringify({
+        decks: [
+          {
+            id: "legacy-deck-1",
+            title: "Bones",
+            subject_hint: "Anatomy",
+            created_at: "2024-01-01T00:00:00.000Z",
+          },
+          {
+            id: "legacy-deck-2",
+            title: "Loose notes",
+            subject_hint: null,
+            created_at: "2024-01-02T00:00:00.000Z",
+          },
+        ],
+        cards: [],
+        dueIds: [],
+      }),
+    );
+
+    const subjects = guestListSubjects(storage);
+    expect(subjects.map((s) => s.title).sort()).toEqual(["Anatomy", "Unfiled"]);
+    const byTitle = Object.fromEntries(subjects.map((s) => [s.title, s.id]));
+    const decks = guestListDecks(undefined, storage);
+    expect(decks.find((d) => d.id === "legacy-deck-1")?.subject_id).toBe(
+      byTitle.Anatomy,
+    );
+    expect(decks.find((d) => d.id === "legacy-deck-2")?.subject_id).toBe(
+      byTitle.Unfiled,
+    );
+  });
+
+  it("persists remap when deck.subject_id is dangling", () => {
+    storage.setItem(
+      STORE_KEY,
+      JSON.stringify({
+        subjects: [
+          {
+            id: "sub-keep",
+            title: "Kept",
+            created_at: "2024-01-01T00:00:00.000Z",
+          },
+        ],
+        decks: [
+          {
+            id: "deck-orphan",
+            title: "Orphan",
+            subject_id: "sub-missing",
+            subject_hint: "Anatomy",
+            created_at: "2024-01-02T00:00:00.000Z",
+          },
+        ],
+        cards: [],
+        dueIds: [],
+      }),
+    );
+
+    const decks = guestListDecks(undefined, storage);
+    expect(decks[0]?.subject_id).not.toBe("sub-missing");
+    const persisted = JSON.parse(storage.getItem(STORE_KEY)!) as {
+      decks: Array<{ subject_id: string }>;
+      subjects: Array<{ id: string; title: string }>;
+    };
+    expect(persisted.decks[0]?.subject_id).toBe(decks[0]?.subject_id);
+    expect(persisted.subjects.some((s) => s.title === "Anatomy")).toBe(true);
+  });
+
+  it("creates subject then deck under subject_id", () => {
+    enterGuest(storage);
+    const subject = guestCreateSubject("Physiology", storage);
+    expect(subject.title).toBe("Physiology");
+    expect(subject.deck_count).toBe(0);
+
+    const deck = guestCreateDeck("Cardiac", subject.id, storage);
+    expect(deck.subject_id).toBe(subject.id);
+    expect(deck.title).toBe("Cardiac");
+
+    const listed = guestListSubjects(storage).find((s) => s.id === subject.id);
+    expect(listed?.deck_count).toBe(1);
+    expect(guestListDecks(subject.id, storage)).toHaveLength(1);
+  });
+
+  it("deleteSubject throws when decks remain; empty subject deletes", () => {
+    enterGuest(storage);
+    const subject = guestCreateSubject("Emptyable", storage);
+    const withDecks = guestCreateSubject("Busy", storage);
+    guestCreateDeck("Keep me", withDecks.id, storage);
+
+    expect(() => guestDeleteSubject(withDecks.id, storage)).toThrow(
+      /Subject still has decks/,
+    );
+    expect(guestListSubjects(storage).some((s) => s.id === withDecks.id)).toBe(
+      true,
+    );
+
+    guestDeleteSubject(subject.id, storage);
+    expect(guestListSubjects(storage).some((s) => s.id === subject.id)).toBe(
+      false,
+    );
+  });
+
   it("cycles graded card to the end of the due queue", () => {
     enterGuest(storage);
     const due = guestListDueCards(storage);
@@ -62,7 +182,8 @@ describe("guest store", () => {
   it("guestAddAcceptedCards writes paste cards and prepends dueIds", () => {
     enterGuest(storage);
     const olderDue = guestListDueCards(storage).map((c) => c.id);
-    const deck = guestCreateDeck("Paste deck", storage);
+    const subject = guestCreateSubject("Paste subject", storage);
+    const deck = guestCreateDeck("Paste deck", subject.id, storage);
     const pairs = [
       { front: "What is osmosis?", back: "Diffusion of water" },
       { front: "Define mitosis", back: "Cell division producing two nuclei" },
