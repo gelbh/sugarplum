@@ -252,6 +252,17 @@ export function createTestEnv(opts?: {
           } as T;
         }
         if (
+          normalized.startsWith(
+            "SELECT figure_extract_mode FROM generation_jobs WHERE id =",
+          )
+        ) {
+          const job = generationJobs.get(bound[0] as string);
+          if (!job) return null;
+          return {
+            figure_extract_mode: job.figure_extract_mode ?? "fast",
+          } as T;
+        }
+        if (
           normalized.includes("FROM materials m") &&
           normalized.includes("INNER JOIN decks d") &&
           normalized.includes("m.r2_key =") &&

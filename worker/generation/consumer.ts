@@ -10,7 +10,10 @@ import {
   persistFigureCrops,
 } from "../materials/figures";
 import { MAX_IMAGE_BYTES } from "../materials/limits";
-import type { GenerateQueueMessage } from "./enqueue";
+import type {
+  FigureExtractMode,
+  GenerateQueueMessage,
+} from "./enqueue";
 import { createLlmAdapter, parseLlmProvider, type LlmAdapter } from "./llm";
 import {
   critiqueDraftsAgainstSource,
@@ -32,6 +35,9 @@ import { filterDraftsByQuality } from "./quality";
 import { harvestRuleDrafts } from "./rules";
 import { assertValidMcqOptions, type CardDraft } from "./schema";
 import { createWorkersAiAdapter } from "./workers-ai";
+
+/** ponytail: 240s ceiling for Fly wake + model load; raise if cold starts exceed client 10m poll. */
+const DOCLING_ACCURATE_TIMEOUT_MS = 240_000;
 
 async function emitProgress(
   db: D1Database,
@@ -528,7 +534,26 @@ export async function processGenerateJob(
         (row) => row.status === "uploading",
       );
 
-      if (textError && !env.DOCLING_URL && readyFigureKeys.length === 0) {
+      const jobModeRow = await db
+        .prepare(
+          "SELECT figure_extract_mode FROM generation_jobs WHERE id = ?",
+        )
+        .bind(jobId)
+        .first<{ figure_extract_mode: string | null }>();
+      const figureExtractMode: FigureExtractMode =
+        jobModeRow?.figure_extract_mode === "accurate" ||
+        message.figureExtractMode === "accurate"
+          ? "accurate"
+          : "fast";
+
+      const willAttemptDocling =
+        figureExtractMode === "accurate" &&
+        Boolean(env.DOCLING_URL) &&
+        readyFigureKeys.length === 0 &&
+        !hasUploadingFigures;
+
+      // Soft-continue only when Accurate Docling may still produce figures.
+      if (textError && !willAttemptDocling && readyFigureKeys.length === 0) {
         throw textError;
       }
 
@@ -550,10 +575,11 @@ export async function processGenerateJob(
         figureWarning =
           "Waiting on in-flight figure uploads; skipped Docling for this run";
         console.warn(figureWarning);
-      } else if (figures.length === 0 && env.DOCLING_URL) {
-        const doclingTimeout = AbortSignal.timeout(60_000);
+      } else if (willAttemptDocling) {
+        await emit("figures", 0, 0, "Waking figure extractor…");
+        await emit("figures", 0, 0, "Detecting figures…");
         const figureResult = await extractFiguresViaDocling(env, pdfBytes, {
-          signal: doclingTimeout,
+          signal: AbortSignal.timeout(DOCLING_ACCURATE_TIMEOUT_MS),
         });
         if (figureResult.warning) {
           figureWarning = figureResult.warning;
