@@ -55,21 +55,36 @@ export const ProvenanceSchema = z.object({
   excerpt: z.string(),
 });
 
+const OcclusionRegionSchema = z
+  .object({
+    id: z.string().min(1),
+    x: z.number().min(0).max(1),
+    y: z.number().min(0).max(1),
+    w: z.number().gt(0).max(1),
+    h: z.number().gt(0).max(1),
+    label: z.string().min(1),
+  })
+  .superRefine((region, ctx) => {
+    if (region.x + region.w > 1) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Region must stay within image bounds (x + w <= 1)",
+        path: ["w"],
+      });
+    }
+    if (region.y + region.h > 1) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Region must stay within image bounds (y + h <= 1)",
+        path: ["h"],
+      });
+    }
+  });
+
 export const OcclusionFrontSchema = z.object({
   image_key: z.string().min(1),
   prompt: z.string().optional(),
-  regions: z
-    .array(
-      z.object({
-        id: z.string().min(1),
-        x: z.number().min(0).max(1),
-        y: z.number().min(0).max(1),
-        w: z.number().gt(0).max(1),
-        h: z.number().gt(0).max(1),
-        label: z.string().min(1),
-      }),
-    )
-    .min(1),
+  regions: z.array(OcclusionRegionSchema).min(1).max(8),
   mode: z.literal("hide_one"),
 });
 
