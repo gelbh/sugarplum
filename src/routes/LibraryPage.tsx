@@ -117,7 +117,7 @@ export default function LibraryPage() {
             />
 
             <Typography variant="body2">
-              <Link href="/" underline="hover">
+              <Link href="/today" underline="hover">
                 Back home
               </Link>
             </Typography>

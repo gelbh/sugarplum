@@ -149,7 +149,7 @@ export default function StudyPage() {
         </Box>
 
         <Stack direction="row" spacing={2} alignItems="center">
-          <Link href="/" underline="hover">
+          <Link href="/today" underline="hover">
             Today
           </Link>
           <Link href="/library" underline="hover">

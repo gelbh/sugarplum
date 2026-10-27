@@ -29,7 +29,7 @@ export default function RegisterPage() {
     setBusy(true);
     try {
       await register(email, password);
-      window.location.assign("/");
+      window.location.assign("/today");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Registration failed");
     } finally {

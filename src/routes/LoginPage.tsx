@@ -43,7 +43,7 @@ export default function LoginPage() {
     setBusy(true);
     try {
       await login(email, password);
-      window.location.assign("/");
+      window.location.assign("/today");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Login failed");
     } finally {

@@ -37,7 +37,7 @@ const NAV: NavItem[] = [
     label: "Today",
     href: "/today",
     icon: <TodayIcon />,
-    match: (path) => path === "/" || path === "/today" || path === "/study",
+    match: (path) => path === "/today" || path === "/study",
   },
   {
     id: "library",
