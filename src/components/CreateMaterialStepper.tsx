@@ -28,6 +28,8 @@ import {
 } from "../api/client";
 import { guestPasteToCards } from "../guest/pasteToCards";
 import { guestAddAcceptedCards } from "../guest/store";
+import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
+import { FigureSuggestPanel } from "./FigureSuggestPanel";
 import { stepperSx } from "./stepperSx";
 
 type Props = {
@@ -257,8 +259,8 @@ export default function CreateMaterialStepper({
       setError("Images for generation must be 8MB or smaller");
       return;
     }
-    if (figureFiles.length > 20) {
-      setError("Attach at most 20 figure crops");
+    if (figureFiles.length > MAX_CLIENT_FIGURES) {
+      setError(`Attach at most ${MAX_CLIENT_FIGURES} figure crops`);
       return;
     }
     for (const figure of figureFiles) {
@@ -481,24 +483,19 @@ export default function CreateMaterialStepper({
                   </Button>
                   {uploadFile &&
                   resolveUploadContentType(uploadFile) === "application/pdf" ? (
-                    <Button
-                      variant="outlined"
-                      component="label"
-                      disabled={busy || !selectedDeckId}
-                    >
-                      {figureFiles.length > 0
-                        ? `${figureFiles.length} figure crop${figureFiles.length === 1 ? "" : "s"} selected`
-                        : "Attach figure crops (PNG)"}
-                      <input
-                        type="file"
-                        accept="image/png,.png"
-                        multiple
-                        hidden
-                        onChange={(ev) => {
-                          setFigureFiles(Array.from(ev.target.files ?? []));
-                        }}
+                    <Stack spacing={1.5}>
+                      <FigureSuggestPanel
+                        pdfFile={uploadFile}
+                        disabled={busy || !selectedDeckId}
+                        crops={figureFiles}
+                        onCropsChange={setFigureFiles}
                       />
-                    </Button>
+                      <Typography variant="caption" color="text.secondary">
+                        Optional: Suggest or drag-crop figures on-device. Accept
+                        appends up to {MAX_CLIENT_FIGURES} PNG crops. Docling
+                        (if configured) still runs on the server.
+                      </Typography>
+                    </Stack>
                   ) : null}
                   <Typography variant="caption" color="text.secondary">
                     PDF/PPTX max 25MB; images max 8MB. Upload starts generation

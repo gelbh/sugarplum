@@ -40,6 +40,8 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // ORT / DocLayout weights are 15–30MB; never precache them.
+        globIgnores: ["**/*.wasm", "**/models/**", "**/ort/**"],
         navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {
