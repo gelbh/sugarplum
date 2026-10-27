@@ -33,6 +33,7 @@ import {
   type CardDraftView,
 } from "../api/client";
 import { deriveJourney } from "../journey/derive";
+import { forceOpenDraftReview } from "../journey/forceOpenDraftReview";
 import type { JourneyView } from "../journey/types";
 import JobProgressPanel from "../progress/JobProgressPanel";
 import { useJobProgress } from "../progress/useJobProgress";
@@ -105,18 +106,14 @@ export default function DraftReviewPage() {
   const refreshJourney = useCallback(async (id: string, draftCount: number) => {
     try {
       const journey = await getJourney();
-      const derived = deriveJourney(journey);
+      let derived = deriveJourney(journey);
       if (draftCount > 0) {
-        derived.collapsed = false;
+        derived = forceOpenDraftReview(derived);
         derived.next = {
           label: "Review drafts",
           href: `/jobs/${id}/drafts`,
           action: "review",
         };
-        derived.stages = derived.stages.map((s) => ({
-          ...s,
-          active: s.id === "review",
-        }));
       }
       setJourneyError(null);
       setView(derived);
