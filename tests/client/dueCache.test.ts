@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   clearDueCache,
+  filterDueExcludingPending,
   loadDueCache,
+  pruneDueCacheCard,
   saveDueCache,
 } from "../../src/study/dueCache";
 import type { CardDraftView } from "../../src/api/client";
@@ -82,5 +84,21 @@ describe("dueCache", () => {
     expect(loadDueCache("user-b")?.cards).toHaveLength(1);
     clearDueCache();
     expect(loadDueCache("user-b")).toBeNull();
+  });
+
+  it("pruneDueCacheCard removes one card from the snapshot", () => {
+    const other = { ...sample, id: "c2" };
+    saveDueCache("user-a", [sample, other]);
+    pruneDueCacheCard("user-a", "c1");
+    expect(loadDueCache("user-a")?.cards.map((c) => c.id)).toEqual(["c2"]);
+  });
+
+  it("filterDueExcludingPending drops pending card ids", () => {
+    const other = { ...sample, id: "c2" };
+    expect(
+      filterDueExcludingPending([sample, other], new Set(["c1"])).map(
+        (c) => c.id,
+      ),
+    ).toEqual(["c2"]);
   });
 });

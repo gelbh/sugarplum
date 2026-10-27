@@ -12,6 +12,9 @@ import {
   guestListDueCards,
   guestReviewCard,
 } from "../guest/store";
+import { clearDueCache } from "../study/dueCache";
+import { clearPendingGrades } from "../study/pendingGrades";
+import { STUDY_MEDIA_CACHE } from "../study/studyMediaCache";
 
 export type ApiErrorBody = {
   error?: string;
@@ -90,12 +93,24 @@ export async function login(email: string, password: string) {
   return user;
 }
 
-export function logout() {
+export async function logout() {
   if (isGuest()) {
     endGuestLocal();
-    return Promise.resolve({ ok: true });
+    return { ok: true };
   }
-  return api<{ ok: boolean }>("/api/auth/logout", { method: "POST" });
+  const result = await api<{ ok: boolean }>("/api/auth/logout", {
+    method: "POST",
+  });
+  clearDueCache();
+  clearPendingGrades();
+  if (typeof caches !== "undefined") {
+    try {
+      await caches.delete(STUDY_MEDIA_CACHE);
+    } catch {
+      /* Cache API missing / denied */
+    }
+  }
+  return result;
 }
 
 export function me() {
@@ -287,12 +302,7 @@ export type OcclusionFrontView = {
 };
 
 export type CardType =
-  | "qa"
-  | "cloze"
-  | "image_label"
-  | "diagram"
-  | "mcq"
-  | "occlusion";
+  "qa" | "cloze" | "image_label" | "diagram" | "mcq" | "occlusion";
 
 export type CardDraftView = {
   id: string;

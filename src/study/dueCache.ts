@@ -40,6 +40,24 @@ export function loadDueCache(userId: string): DueCacheSnapshot | null {
   }
 }
 
+/** Remove one card from the cached due list (after offline grade). */
+export function pruneDueCacheCard(userId: string, cardId: string): void {
+  const snap = loadDueCache(userId);
+  if (!snap) return;
+  const next = snap.cards.filter((c) => c.id !== cardId);
+  if (next.length === snap.cards.length) return;
+  saveDueCache(userId, next);
+}
+
+/** Drop cards that already have a pending offline grade. */
+export function filterDueExcludingPending(
+  cards: CardDraftView[],
+  pendingIds: Set<string>,
+): CardDraftView[] {
+  if (pendingIds.size === 0) return cards;
+  return cards.filter((c) => !pendingIds.has(c.id));
+}
+
 /** Drop cached due cards for a user (e.g. on logout). */
 export function clearDueCache(userId?: string): void {
   try {

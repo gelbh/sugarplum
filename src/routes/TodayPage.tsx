@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -20,7 +20,14 @@ import JourneyNextButton from "../components/JourneyNextButton";
 import StrugglingList from "../components/StrugglingList";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { useTrackedOp } from "../progress/useTrackedOp";
-import { loadDueCache, saveDueCache } from "../study/dueCache";
+import {
+  filterDueExcludingPending,
+  loadDueCache,
+  saveDueCache,
+} from "../study/dueCache";
+import { pendingCardIdSet } from "../study/pendingGrades";
+import { usePendingGradeSync } from "../study/usePendingGradeSync";
+import { warmDueMedia } from "../study/warmDueMedia";
 
 /** Home: giant due proof + Start study (today-dash-b). */
 export default function TodayPage() {
@@ -37,28 +44,66 @@ export default function TodayPage() {
     trackOnMount: true,
   });
 
+  const refreshDueFromNetwork = useCallback(async (uid: string) => {
+    try {
+      const due = await listDueCards();
+      saveDueCache(uid, due);
+      warmDueMedia(due);
+      setDueCount(due.length);
+      setOfflineCopy(false);
+    } catch {
+      /* keep current due count */
+    }
+  }, []);
+
+  const {
+    setUserId,
+    pendingCount,
+    syncSummary,
+    setSyncSummary,
+    refreshPendingCount,
+    flushOnMount,
+  } = usePendingGradeSync({
+    onDueRefreshed: (due) => {
+      setDueCount(due.length);
+      setOfflineCopy(false);
+    },
+    onDueRefreshFailed: (uid) => refreshDueFromNetwork(uid),
+  });
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const user = await me();
+        if (cancelled) return;
+        setUserId(user.id);
+        refreshPendingCount(user.id);
+        await flushOnMount(user.id);
+        if (cancelled) return;
         try {
           const due = await listDueCards();
           if (cancelled) return;
           saveDueCache(user.id, due);
+          warmDueMedia(due);
           setDueCount(due.length);
           setOfflineCopy(false);
         } catch (err) {
           if (cancelled) return;
           const cached = loadDueCache(user.id);
           if (cached) {
-            setDueCount(cached.cards.length);
+            const filtered = filterDueExcludingPending(
+              cached.cards,
+              pendingCardIdSet(user.id),
+            );
+            setDueCount(filtered.length);
             setOfflineCopy(true);
           } else {
             throw err;
           }
         }
         if (!cancelled) {
+          refreshPendingCount(user.id);
           setReady(true);
           endLoad();
         }
@@ -88,7 +133,7 @@ export default function TodayPage() {
     return () => {
       cancelled = true;
     };
-  }, [endLoad]);
+  }, [endLoad, flushOnMount, refreshPendingCount, setUserId]);
 
   if (!ready) {
     return (
@@ -114,7 +159,9 @@ export default function TodayPage() {
         minHeight: { md: "calc(100vh - 32px)" },
         display: "flex",
         flexDirection: "column",
-        justifyContent: { md: strugglingTop !== undefined ? "flex-start" : "center" },
+        justifyContent: {
+          md: strugglingTop !== undefined ? "flex-start" : "center",
+        },
       }}
     >
       <Stack spacing={3} alignItems="center" textAlign="center">
@@ -154,9 +201,26 @@ export default function TodayPage() {
             {error}
           </Alert>
         ) : null}
+        {syncSummary ? (
+          <Alert
+            severity="info"
+            sx={{ width: "100%", textAlign: "left" }}
+            onClose={() => setSyncSummary(null)}
+          >
+            {syncSummary}
+          </Alert>
+        ) : null}
         {offlineCopy ? (
           <Alert severity="warning" sx={{ width: "100%", textAlign: "left" }}>
             Showing an offline copy of your due count.
+            {pendingCount > 0
+              ? ` ${pendingCount} ${pendingCount === 1 ? "grade" : "grades"} waiting to sync.`
+              : ""}
+          </Alert>
+        ) : pendingCount > 0 ? (
+          <Alert severity="info" sx={{ width: "100%", textAlign: "left" }}>
+            {pendingCount} {pendingCount === 1 ? "grade" : "grades"} waiting to
+            sync.
           </Alert>
         ) : null}
 
