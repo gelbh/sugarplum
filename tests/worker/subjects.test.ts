@@ -198,3 +198,81 @@ describe("subject CRUD", () => {
     ]);
   });
 });
+
+describe("subject ownership", () => {
+  it("returns 404 when PATCH targets another user's subject", async () => {
+    const env = createTestEnv();
+    env.seedUser({
+      id: "user-a",
+      email: "a@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedUser({
+      id: "user-b",
+      email: "b@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSubject({
+      id: "sub-a",
+      user_id: "user-a",
+      title: "Owner subject",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSession("sess-b", "user-b");
+
+    const res = await app.request(
+      "/api/subjects/sub-a",
+      {
+        method: "PATCH",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-b`,
+        },
+        body: JSON.stringify({ title: "Stolen rename" }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 404 when DELETE targets another user's subject", async () => {
+    const env = createTestEnv();
+    env.seedUser({
+      id: "user-a",
+      email: "a@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedUser({
+      id: "user-b",
+      email: "b@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSubject({
+      id: "sub-a",
+      user_id: "user-a",
+      title: "Owner subject",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSession("sess-b", "user-b");
+
+    const res = await app.request(
+      "/api/subjects/sub-a",
+      {
+        method: "DELETE",
+        headers: { cookie: `${SESSION_COOKIE}=sess-b` },
+      },
+      env,
+    );
+
+    expect(res.status).toBe(404);
+  });
+});
