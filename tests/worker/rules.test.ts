@@ -133,7 +133,7 @@ describe("harvestRuleDrafts", () => {
       "First :: one",
       "term: two",
       "Line with **three** here.",
-      "Four | four-back",
+      "What is four | four-back",
       "five - five-back",
     ].join("\n");
     const drafts = harvestRuleDrafts(text);
@@ -141,7 +141,7 @@ describe("harvestRuleDrafts", () => {
       "First",
       "term",
       "Line with {{c1::three}} here.",
-      "Four",
+      "What is four",
       "five",
     ]);
     expect(drafts.every((d) => d.provenance.pages[0] === 1)).toBe(true);
@@ -149,7 +149,7 @@ describe("harvestRuleDrafts", () => {
       "First :: one",
       "term: two",
       "Line with **three** here.",
-      "Four | four-back",
+      "What is four | four-back",
       "five - five-back",
     ]);
   });
@@ -187,5 +187,38 @@ describe("harvestRuleDrafts", () => {
       harvestRuleDrafts("The {{c1::foo}} and ___ blank"),
     ).not.toThrow();
     expect(harvestRuleDrafts("The {{c1::foo}} and ___ blank")).toEqual([]);
+  });
+
+  it("does not harvest lecture/PDF chrome colon-dash and table rows", () => {
+    const text = [
+      "• Extraintestinal - rare invasion of tissues",
+      "Giardia species - disease",
+      "Phylum | Hosts | Family",
+      "Apicomplexa | humans | Plasmodiidae",
+      "fission) and produce cysts: leftover fragment",
+      "disease: pathology slide title alone",
+      "lifecycle - overview",
+      "What is mitosis :: Cell division producing two identical nuclei",
+      "mitochondria: powerhouse of the cell",
+    ].join("\n");
+    const drafts = harvestRuleDrafts(text);
+    expect(drafts.map((d) => d.front)).toEqual([
+      "What is mitosis",
+      "mitochondria",
+    ]);
+    const remainder = remainderAfterRules(text, drafts);
+    expect(remainder).toContain("Giardia species - disease");
+    expect(remainder).toContain("Phylum | Hosts | Family");
+    expect(remainder).not.toContain("What is mitosis ::");
+  });
+
+  it("does not harvest lecture chrome via spaced double-colon", () => {
+    const text = [
+      "Giardia species :: disease",
+      "lifecycle :: overview",
+      "What is mitosis :: Cell division producing two identical nuclei",
+    ].join("\n");
+    const drafts = harvestRuleDrafts(text);
+    expect(drafts.map((d) => d.front)).toEqual(["What is mitosis"]);
   });
 });
