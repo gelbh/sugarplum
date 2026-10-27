@@ -189,11 +189,29 @@ function StudyMedia({
                 width: `${mask.w * 100}%`,
                 height: `${mask.h * 100}%`,
                 bgcolor: "rgba(30, 13, 27, 0.92)",
-                borderRadius: 0.5,
+                border: "1.5px solid #C4A574",
+                borderRadius: "4px",
+                boxShadow: "0 2px 12px rgba(196, 165, 116, 0.28)",
                 pointerEvents: "none",
               }}
             />
-          ) : null}
+          ) : (
+            <Box
+              aria-hidden
+              data-occlusion-reveal-outline
+              sx={{
+                position: "absolute",
+                left: `${mask.x * 100}%`,
+                top: `${mask.y * 100}%`,
+                width: `${mask.w * 100}%`,
+                height: `${mask.h * 100}%`,
+                border: "1.5px solid rgba(196, 165, 116, 0.85)",
+                borderRadius: "4px",
+                boxShadow: "0 0 0 1px rgba(30, 13, 27, 0.35)",
+                pointerEvents: "none",
+              }}
+            />
+          )}
         </Box>
       </Box>
     );
