@@ -29,13 +29,12 @@ import {
   SHELL_MUTED,
   TOP_BAR_HEIGHT,
 } from "./shell/chromeTokens";
+import type { ShellNavId } from "./shell/shellNav";
 
 const DRAWER_WIDTH = 220;
 
-type NavId = "today" | "insights" | "library" | "settings";
-
 type NavItem = {
-  id: NavId;
+  id: ShellNavId;
   label: string;
   href: string;
   icon: ReactNode;
@@ -74,7 +73,7 @@ const NAV: NavItem[] = [
   },
 ];
 
-function activeNavId(path: string): NavId {
+function activeNavId(path: string): ShellNavId {
   const hit = NAV.find((item) => item.match(path));
   return hit?.id ?? "today";
 }
@@ -109,7 +108,13 @@ export default function AppShell({ children }: AppShellProps) {
             : {}),
         }}
       >
-        <GlobalProgressBar />
+        <GlobalProgressBar
+          stickyTop={
+            showMobileChrome
+              ? `calc(${TOP_BAR_HEIGHT}px + env(safe-area-inset-top, 0px))`
+              : 0
+          }
+        />
         {showMobileChrome ? <TopChrome /> : null}
         {showDrawer ? (
           <Drawer

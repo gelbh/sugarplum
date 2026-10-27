@@ -10,16 +10,17 @@ import {
   SHELL_HAIRLINE,
   SHELL_MUTED,
 } from "./chromeTokens";
+import type { ShellNavId } from "./shellNav";
 
 export type BottomChromeItem = {
-  id: string;
+  id: ShellNavId;
   label: string;
   href: string;
   icon: ReactNode;
 };
 
 type BottomChromeProps = {
-  active: string;
+  active: ShellNavId;
   items: BottomChromeItem[];
   onNavigate: (href: string) => void;
 };
@@ -50,7 +51,7 @@ export default function BottomChrome({
       <BottomNavigation
         showLabels
         value={active}
-        onChange={(_e, value: string) => {
+        onChange={(_e, value: ShellNavId) => {
           const item = items.find((n) => n.id === value);
           if (item) onNavigate(item.href);
         }}

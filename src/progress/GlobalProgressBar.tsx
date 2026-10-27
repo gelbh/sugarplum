@@ -2,8 +2,15 @@ import Box from "@mui/material/Box";
 import LinearProgress from "@mui/material/LinearProgress";
 import { useProgressRegistry } from "./ProgressProvider";
 
+type GlobalProgressBarProps = {
+  /** Sticky offset when a fixed top chrome sits above the page (e.g. mobile TopChrome). */
+  stickyTop?: string | number;
+};
+
 /** Thin top bar for the primary active progress op (prefer job source). */
-export default function GlobalProgressBar() {
+export default function GlobalProgressBar({
+  stickyTop = 0,
+}: GlobalProgressBarProps) {
   const { primary } = useProgressRegistry();
 
   if (!primary) return null;
@@ -14,7 +21,7 @@ export default function GlobalProgressBar() {
     <Box
       sx={{
         position: "sticky",
-        top: 0,
+        top: stickyTop,
         zIndex: 1200,
         width: "100%",
       }}
