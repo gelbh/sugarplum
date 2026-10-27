@@ -48,9 +48,11 @@ describe("flattenBlocksToWords", () => {
 });
 
 describe("suggestOcclusionRegions", () => {
-  afterEach(() => {
+  afterEach(async () => {
     resetOcrWorkerForTests();
     recognize.mockReset();
+    const { createWorker } = await import("tesseract.js");
+    vi.mocked(createWorker).mockClear();
   });
 
   it("maps recognized words through the region mapper", async () => {

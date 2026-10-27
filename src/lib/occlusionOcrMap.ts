@@ -17,11 +17,12 @@ export type MappedOcclusionRegion = {
   label: string;
 };
 
+/** Trim and strip incidental punctuation; keep alnum-adjacent +/- (e.g. Na+, -5). */
 function cleanOcrLabel(text: string): string {
   return text
     .trim()
-    .replace(/^[\p{P}\p{S}\s]+/u, "")
-    .replace(/[\p{P}\p{S}\s]+$/u, "");
+    .replace(/^[^\p{L}\p{N}+\-]+/u, "")
+    .replace(/[^\p{L}\p{N}+\-]+$/u, "");
 }
 
 function clampPixelBox(

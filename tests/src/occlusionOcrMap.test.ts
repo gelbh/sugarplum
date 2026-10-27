@@ -113,6 +113,23 @@ describe("mapOcrWordsToRegions", () => {
     expect(regions[0]?.label).toBe("valid");
   });
 
+  it("keeps alnum-adjacent +/- in labels (Na+, -5)", () => {
+    const box = { x0: 0, y0: 0, x1: 100, y1: 100 };
+    const regions = mapOcrWordsToRegions(
+      [
+        word({ text: "Na+", bbox: box }),
+        word({
+          text: "-5",
+          bbox: { x0: 0, y0: 200, x1: 100, y1: 300 },
+        }),
+      ],
+      imageW,
+      imageH,
+    );
+
+    expect(regions.map((r) => r.label)).toEqual(["Na+", "-5"]);
+  });
+
   it("sorts survivors in reading order (top then left)", () => {
     const regions = mapOcrWordsToRegions(
       [

@@ -9,7 +9,13 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { useCallback, useRef, useState, type PointerEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent,
+} from "react";
 import { mediaUrl, type OcclusionFrontView } from "../api/client";
 
 export type OcclusionRegion = OcclusionFrontView["regions"][number];
@@ -98,6 +104,8 @@ export default function OcclusionRegionEditor({
   onChange,
 }: OcclusionRegionEditorProps) {
   const stageRef = useRef<HTMLDivElement>(null);
+  const frontRef = useRef(front);
+  const suggestGenRef = useRef(0);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(
     front.regions[0]?.id ?? null,
@@ -108,6 +116,15 @@ export default function OcclusionRegionEditor({
     severity: "error" | "warning" | "info";
     message: string;
   } | null>(null);
+
+  frontRef.current = front;
+  const editLocked = disabled || suggestBusy;
+
+  useEffect(() => {
+    return () => {
+      suggestGenRef.current += 1;
+    };
+  }, []);
 
   const emit = useCallback(
     (nextFront: OcclusionFrontView, nextSelectedId: string | null) => {
@@ -130,10 +147,12 @@ export default function OcclusionRegionEditor({
   );
 
   const runSuggestRegions = useCallback(async () => {
+    const gen = ++suggestGenRef.current;
+    const startedKey = front.image_key;
     setSuggestBusy(true);
     setSuggestNotice(null);
     try {
-      const res = await fetch(mediaUrl(front.image_key), {
+      const res = await fetch(mediaUrl(startedKey), {
         credentials: "same-origin",
       });
       if (!res.ok) {
@@ -143,6 +162,8 @@ export default function OcclusionRegionEditor({
       const { width, height } = await decodeImageNaturalSize(blob);
       const { suggestOcclusionRegions } = await import("../lib/occlusionOcr");
       const regions = await suggestOcclusionRegions(blob, width, height);
+      if (gen !== suggestGenRef.current) return;
+      if (frontRef.current.image_key !== startedKey) return;
       if (regions.length === 0) {
         setSuggestNotice({
           severity: "warning",
@@ -151,21 +172,25 @@ export default function OcclusionRegionEditor({
         });
         return;
       }
-      const firstId = regions[0]?.id ?? null;
+      const clamped = regions.map((r) => clampRegion(r));
+      const firstId = clamped[0]?.id ?? null;
       setSelectedId(firstId);
-      emit({ ...front, regions }, firstId);
+      emit({ ...frontRef.current, regions: clamped }, firstId);
     } catch (err) {
+      if (gen !== suggestGenRef.current) return;
       setSuggestNotice({
         severity: "error",
         message: suggestErrorMessage(err),
       });
     } finally {
-      setSuggestBusy(false);
+      if (gen === suggestGenRef.current) {
+        setSuggestBusy(false);
+      }
     }
-  }, [emit, front]);
+  }, [emit, front.image_key]);
 
   function onSuggestRegionsClick() {
-    if (disabled || suggestBusy) return;
+    if (editLocked) return;
     if (front.regions.length > 0) {
       setConfirmReplaceOpen(true);
     } else {
@@ -179,7 +204,7 @@ export default function OcclusionRegionEditor({
   }
 
   function removeRegion(id: string) {
-    if (disabled || front.regions.length <= 1) return;
+    if (editLocked || front.regions.length <= 1) return;
     const regions = front.regions.filter((r) => r.id !== id);
     const nextSelected =
       selectedId === id ? (regions[0]?.id ?? null) : selectedId;
@@ -192,7 +217,7 @@ export default function OcclusionRegionEditor({
     region: OcclusionRegion,
     kind: DragKind,
   ) {
-    if (disabled) return;
+    if (editLocked) return;
     e.preventDefault();
     e.stopPropagation();
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -207,7 +232,7 @@ export default function OcclusionRegionEditor({
   }
 
   function onPointerMove(e: PointerEvent<HTMLDivElement>) {
-    if (!drag || disabled) return;
+    if (!drag || editLocked) return;
     const el = stageRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
@@ -286,7 +311,7 @@ export default function OcclusionRegionEditor({
                   bgcolor: selected
                     ? "color-mix(in srgb, var(--sp-plum) 28%, transparent)"
                     : "color-mix(in srgb, var(--sp-lamp-glow) 65%, transparent)",
-                  cursor: disabled ? "default" : "move",
+                  cursor: editLocked ? "default" : "move",
                   borderRadius: "4px",
                   boxShadow: selected
                     ? "0 2px 10px color-mix(in srgb, var(--sp-plum) 28%, transparent)"
@@ -317,7 +342,7 @@ export default function OcclusionRegionEditor({
                 >
                   {region.label || region.id}
                 </Typography>
-                {!disabled ? (
+                {!editLocked ? (
                   <Box
                     onPointerDown={(e) => onBoxPointerDown(e, region, "resize")}
                     aria-label="Resize region"
@@ -356,7 +381,7 @@ export default function OcclusionRegionEditor({
         }}
         fullWidth
         size="small"
-        disabled={disabled}
+        disabled={editLocked}
       />
 
       <Typography variant="body2" color="text.secondary">
@@ -375,7 +400,8 @@ export default function OcclusionRegionEditor({
           variant="outlined"
           size="small"
           onClick={onSuggestRegionsClick}
-          disabled={disabled || suggestBusy}
+          disabled={editLocked}
+          aria-busy={suggestBusy || undefined}
         >
           {suggestBusy ? "Suggesting…" : "Suggest regions"}
         </Button>
@@ -436,6 +462,7 @@ export default function OcclusionRegionEditor({
                   : "none",
             }}
             onClick={() => {
+              if (editLocked) return;
               setSelectedId(region.id);
               emit(front, region.id);
             }}
@@ -446,7 +473,7 @@ export default function OcclusionRegionEditor({
               onChange={(e) => updateRegion(region.id, { label: e.target.value })}
               size="small"
               fullWidth
-              disabled={disabled}
+              disabled={editLocked}
               helperText={
                 region.id === selectedId
                   ? "This label is the study answer for hide_one"
@@ -473,12 +500,12 @@ export default function OcclusionRegionEditor({
                     if (Number.isFinite(n)) updateRegion(region.id, { [key]: n });
                   }}
                   size="small"
-                  disabled={disabled}
+                  disabled={editLocked}
                   sx={{ flex: 1 }}
                 />
               ))}
             </Stack>
-            {front.regions.length > 1 && !disabled ? (
+            {front.regions.length > 1 && !editLocked ? (
               <Button
                 size="small"
                 color="error"
