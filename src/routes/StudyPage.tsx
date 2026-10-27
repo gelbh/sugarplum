@@ -19,6 +19,7 @@ import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
 import TodayIcon from "@mui/icons-material/Today";
 import CardFace from "../components/CardFace";
 import GradeButtons from "../components/GradeButtons";
+import McqFace from "../components/McqFace";
 import {
   ApiError,
   listDueCards,
@@ -50,9 +51,14 @@ function scrollableCardFace(target: EventTarget | null): HTMLElement | null {
 
 function typeLabel(type: CardDraftView["type"]): string {
   if (type === "cloze") return "Cloze";
+  if (type === "mcq") return "Multiple choice";
   if (type === "image_label") return "Image label";
   if (type === "diagram") return "Diagram";
   return "Q&A";
+}
+
+function isMcqCard(card: CardDraftView | null): boolean {
+  return card?.type === "mcq";
 }
 
 /** Study session: reveal answer, grade with FSRS (keys 1-4). Code-led MUI. */
@@ -137,6 +143,7 @@ export default function StudyPage() {
   }, [endLoad, load]);
 
   const current = queue[0] ?? null;
+  const mcqMode = isMcqCard(current);
 
   const reveal = useCallback(() => {
     setRevealed(true);
@@ -166,14 +173,17 @@ export default function StudyPage() {
   }, [revealed, current?.id]);
 
   const onGrade = useCallback(
-    async (rating: StudyRating) => {
-      if (!current || busyRef.current || !revealed) return;
+    async (rating: StudyRating, fromMcq = false) => {
+      if (!current || busyRef.current) return;
+      if (!fromMcq && !revealed) return;
       busyRef.current = true;
       setError(null);
       begin();
       try {
         await reviewCard(current.id, rating);
-        focusShowAnswerAfterGradeRef.current = true;
+        if (!fromMcq) {
+          focusShowAnswerAfterGradeRef.current = true;
+        }
         setQueue((prev) => prev.slice(1));
         setRevealed(false);
         end();
@@ -209,7 +219,8 @@ export default function StudyPage() {
         toggleZen();
         return;
       }
-      if (!revealed || busyRef.current || !current) return;
+      if (isMcqCard(current) || !revealed || busyRef.current || !current)
+        return;
       const map: Record<string, StudyRating> = {
         "1": 1,
         "2": 2,
@@ -242,7 +253,13 @@ export default function StudyPage() {
   const onPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
     const start = pointerRef.current;
     pointerRef.current = null;
-    if (!start || start.id !== e.pointerId || busyRef.current || !current)
+    if (
+      !start ||
+      start.id !== e.pointerId ||
+      busyRef.current ||
+      !current ||
+      isMcqCard(current)
+    )
       return;
     const dx = e.clientX - start.x;
     const dy = e.clientY - start.y;
@@ -337,7 +354,9 @@ export default function StudyPage() {
                   Study
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Reveal the answer, then grade. Keys 1-4 on desktop.
+                  {mcqMode
+                    ? "Tap the best answer. Wrong counts as Again; right as Good."
+                    : "Reveal the answer, then grade. Keys 1-4 on desktop."}
                 </Typography>
               </Box>
             )}
@@ -439,21 +458,34 @@ export default function StudyPage() {
                   minHeight: 0,
                 }}
               >
-                <CardFace
-                  front={String(current.front)}
-                  back={String(current.back)}
-                  type={current.type}
-                  mediaR2Keys={current.media_r2_keys}
-                  revealed={revealed}
-                  onReveal={reveal}
-                  onFlipBack={flipBack}
-                  disabled={busy}
-                  answerFocusRef={answerFocusRef}
-                  showAnswerRef={showAnswerRef}
-                />
+                {mcqMode ? (
+                  <McqFace
+                    cardId={current.id}
+                    front={String(current.front)}
+                    back={String(current.back)}
+                    options={current.options}
+                    disabled={busy}
+                    onGrade={(rating) => void onGrade(rating, true)}
+                  />
+                ) : (
+                  <CardFace
+                    front={String(current.front)}
+                    back={String(current.back)}
+                    type={current.type}
+                    mediaR2Keys={current.media_r2_keys}
+                    revealed={revealed}
+                    onReveal={reveal}
+                    onFlipBack={flipBack}
+                    disabled={busy}
+                    answerFocusRef={answerFocusRef}
+                    showAnswerRef={showAnswerRef}
+                  />
+                )}
               </Box>
 
-              {revealed ? (
+              {mcqMode ? (
+                <Box sx={{ minHeight: 72 }} aria-hidden />
+              ) : revealed ? (
                 <Box sx={{ pb: zen ? 1 : 0, mt: "auto" }}>
                   <GradeButtons
                     disabled={busy}
