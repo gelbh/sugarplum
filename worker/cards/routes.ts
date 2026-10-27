@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
-import { assertSingleCloze } from "../generation/schema";
+import { assertSingleCloze, assertValidMcqOptions } from "../generation/schema";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
@@ -27,15 +27,57 @@ const PatchDraftSchema = z
   .object({
     front: z.string().min(1).optional(),
     back: z.string().min(1).optional(),
-    type: z.enum(["qa", "cloze", "image_label", "diagram"]).optional(),
+    options: z.array(z.string()).optional(),
+    type: z
+      .enum(["qa", "cloze", "image_label", "diagram", "mcq"])
+      .optional(),
   })
   .refine(
     (body) =>
       body.front !== undefined ||
       body.back !== undefined ||
+      body.options !== undefined ||
       body.type !== undefined,
     { message: "No fields to update" },
   );
+
+type McqBackJson = { answer: string; options: string[] };
+
+function isMcqBackJson(value: unknown): value is McqBackJson {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "answer" in value &&
+    typeof (value as McqBackJson).answer === "string" &&
+    "options" in value &&
+    Array.isArray((value as McqBackJson).options)
+  );
+}
+
+function decodeStoredBack(
+  type: string,
+  backJson: string,
+): { back: string; options?: string[] } {
+  if (type !== "mcq") {
+    return { back: parseJsonField<string>(backJson, backJson) };
+  }
+  const parsed = parseJsonField<unknown>(backJson, null);
+  if (isMcqBackJson(parsed)) {
+    return { back: parsed.answer, options: parsed.options };
+  }
+  return { back: parseJsonField<string>(backJson, "") };
+}
+
+function encodeStoredBack(
+  type: string,
+  back: string,
+  options?: string[],
+): string {
+  if (type === "mcq") {
+    return JSON.stringify({ answer: back, options: options ?? [] });
+  }
+  return JSON.stringify(back);
+}
 
 function parseJsonField<T>(raw: string, fallback: T): T {
   try {
@@ -47,13 +89,14 @@ function parseJsonField<T>(raw: string, fallback: T): T {
 
 /** Public card JSON for draft review / study clients. */
 export function serializeCard(row: CardRow) {
-  return {
+  const { back, options } = decodeStoredBack(row.type, row.back_json);
+  const card = {
     id: row.id,
     deck_id: row.deck_id,
     job_id: row.job_id,
     type: row.type,
     front: parseJsonField(row.front_json, row.front_json),
-    back: parseJsonField(row.back_json, row.back_json),
+    back,
     media_r2_keys: row.media_r2_keys_json
       ? parseJsonField<string[]>(row.media_r2_keys_json, [])
       : [],
@@ -64,6 +107,10 @@ export function serializeCard(row: CardRow) {
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
+  if (row.type === "mcq" && options !== undefined) {
+    return { ...card, options };
+  }
+  return card;
 }
 
 async function requireOwnedCard(
@@ -234,10 +281,15 @@ cardRoutes.patch("/:id", async (c) => {
   const nextType = parsed.data.type ?? row.type;
   const nextFront =
     parsed.data.front ?? parseJsonField<string>(row.front_json, "");
-  const nextBack =
-    parsed.data.back ?? parseJsonField<string>(row.back_json, "");
+  const storedBack = decodeStoredBack(row.type, row.back_json);
 
-  const allowedTypes = new Set(["qa", "cloze", "image_label", "diagram"]);
+  const allowedTypes = new Set([
+    "qa",
+    "cloze",
+    "image_label",
+    "diagram",
+    "mcq",
+  ]);
   if (!allowedTypes.has(nextType)) {
     throw new HTTPException(400, { message: "Unsupported card type" });
   }
@@ -251,6 +303,28 @@ cardRoutes.patch("/:id", async (c) => {
     }
   }
 
+  let nextBack: string;
+  let nextOptions: string[] | undefined;
+  if (nextType === "mcq") {
+    const prior =
+      row.type === "mcq"
+        ? storedBack
+        : { back: parsed.data.back ?? "", options: undefined as string[] | undefined };
+    nextBack = parsed.data.back ?? prior.back;
+    nextOptions = parsed.data.options ?? prior.options;
+    try {
+      assertValidMcqOptions(nextBack, nextOptions);
+    } catch (err) {
+      throw new HTTPException(400, {
+        message: err instanceof Error ? err.message : "Invalid MCQ",
+      });
+    }
+  } else {
+    nextBack = parsed.data.back ?? storedBack.back;
+  }
+
+  const nextBackJson = encodeStoredBack(nextType, nextBack, nextOptions);
+
   const updatedAt = new Date().toISOString();
   await db
     .prepare(
@@ -258,13 +332,7 @@ cardRoutes.patch("/:id", async (c) => {
        SET type = ?, front_json = ?, back_json = ?, updated_at = ?
        WHERE id = ?`,
     )
-    .bind(
-      nextType,
-      JSON.stringify(nextFront),
-      JSON.stringify(nextBack),
-      updatedAt,
-      cardId,
-    )
+    .bind(nextType, JSON.stringify(nextFront), nextBackJson, updatedAt, cardId)
     .run();
 
   return c.json(
@@ -272,7 +340,7 @@ cardRoutes.patch("/:id", async (c) => {
       ...row,
       type: nextType,
       front_json: JSON.stringify(nextFront),
-      back_json: JSON.stringify(nextBack),
+      back_json: nextBackJson,
       updated_at: updatedAt,
     }),
   );

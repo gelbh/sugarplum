@@ -312,6 +312,10 @@ export async function insertDraftCards(
         ? JSON.stringify(draft.mediaR2Keys)
         : null;
     const id = newId();
+    const backJson =
+      draft.type === "mcq"
+        ? JSON.stringify({ answer: draft.back, options: draft.options ?? [] })
+        : JSON.stringify(draft.back);
     await db
       .prepare(
         `INSERT INTO cards (
@@ -325,7 +329,7 @@ export async function insertDraftCards(
         args.jobId,
         draft.type,
         JSON.stringify(draft.front),
-        JSON.stringify(draft.back),
+        backJson,
         mediaJson,
         JSON.stringify(draft.provenance),
         "draft",

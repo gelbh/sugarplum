@@ -401,6 +401,151 @@ describe("draft review / accept gate", () => {
     );
   });
 
+  it("lists mcq drafts with back and options", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedMaterial({
+      id: "mat-mcq",
+      deck_id: "deck-a",
+      kind: "paste",
+      r2_key: null,
+      filename: null,
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    await env.DB.prepare(
+      "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    )
+      .bind(
+        "job-mcq",
+        "mat-mcq",
+        "needs_review",
+        null,
+        null,
+        "2026-01-01T00:00:00.000Z",
+        null,
+      )
+      .run();
+    const options = ["Adenosine triphosphate", "Adenosine diphosphate", "RNA"];
+    env.seedCard({
+      id: "card-mcq",
+      deck_id: "deck-a",
+      job_id: "job-mcq",
+      type: "mcq",
+      front_json: JSON.stringify("What is ATP?"),
+      back_json: JSON.stringify({
+        answer: "Adenosine triphosphate",
+        options,
+      }),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "ATP" }),
+      status: "draft",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/jobs/job-mcq/drafts",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      id: string;
+      type: string;
+      back: string;
+      options: string[];
+    }[];
+    expect(body).toHaveLength(1);
+    expect(body[0]!.type).toBe("mcq");
+    expect(body[0]!.back).toBe("Adenosine triphosphate");
+    expect(body[0]!.options).toEqual(options);
+  });
+
+  it("patch updates mcq correct answer and options", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const options = ["Aorta", "Vena cava", "Pulmonary artery"];
+    env.seedCard({
+      id: "card-mcq-patch",
+      deck_id: "deck-a",
+      job_id: "job-1",
+      type: "mcq",
+      front_json: JSON.stringify("Which vessel carries oxygenated blood from the heart?"),
+      back_json: JSON.stringify({ answer: "Aorta", options }),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "aorta" }),
+      status: "draft",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const newOptions = ["Aorta", "Vena cava", "Pulmonary vein"];
+    const res = await app.request(
+      "/api/cards/card-mcq-patch",
+      {
+        method: "PATCH",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          back: "Pulmonary vein",
+          options: newOptions,
+        }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      back: string;
+      options: string[];
+    };
+    expect(body.back).toBe("Pulmonary vein");
+    expect(body.options).toEqual(newOptions);
+
+    const stored = env.getCards().find((c) => c.id === "card-mcq-patch");
+    expect(JSON.parse(stored!.back_json)).toEqual({
+      answer: "Pulmonary vein",
+      options: newOptions,
+    });
+  });
+
+  it("patch qa card keeps string back_json", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedCard({
+      id: "card-qa",
+      deck_id: "deck-a",
+      job_id: "job-1",
+      type: "qa",
+      front_json: JSON.stringify("Q?"),
+      back_json: JSON.stringify("Original A"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "ex" }),
+      status: "draft",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/cards/card-qa",
+      {
+        method: "PATCH",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({ front: "Updated Q?" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const stored = env.getCards().find((c) => c.id === "card-qa");
+    expect(stored!.back_json).toBe(JSON.stringify("Original A"));
+  });
+
   it("accept-all returns 404 for another user", async () => {
     const env = createTestEnv();
     seedOwner(env);
