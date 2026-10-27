@@ -36,8 +36,8 @@ import {
 import { deriveJourney } from "../journey/derive";
 import { forceOpenDraftReview } from "../journey/forceOpenDraftReview";
 import type { JourneyView } from "../journey/types";
-import JobProgressPanel from "../progress/JobProgressPanel";
-import { useJobProgress } from "../progress/useJobProgress";
+import JobProgressPanel from "../progress/JobProgressPanelNew";
+import { useJobProgress } from "../progress/useJobProgressLocal";
 import { useTrackedOp } from "../progress/useTrackedOp";
 
 function jobIdFromPath(): string | null {
