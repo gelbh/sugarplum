@@ -2,10 +2,13 @@ import { useEffect, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
-import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { ApiError, listDueCards, me } from "../api/client";
+import { ApiError, listDueCards, me, getJourney } from "../api/client";
+import { deriveJourney } from "../journey/derive";
+import type { JourneyView } from "../journey/types";
+import JourneyNextButton from "../components/JourneyNextButton";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { loadDueCache, saveDueCache } from "../study/dueCache";
 
@@ -15,6 +18,7 @@ export default function TodayPage() {
   const [error, setError] = useState<string | null>(null);
   const [offlineCopy, setOfflineCopy] = useState(false);
   const [ready, setReady] = useState(false);
+  const [view, setView] = useState<JourneyView | null>(null);
   const { end: endLoad } = useTrackedOp("Loading today…", {
     trackOnMount: true,
   });
@@ -44,6 +48,12 @@ export default function TodayPage() {
           setReady(true);
           endLoad();
         }
+        try {
+          const journey = await getJourney();
+          if (!cancelled) setView(deriveJourney(journey));
+        } catch {
+          if (!cancelled) setView(null);
+        }
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
@@ -68,12 +78,17 @@ export default function TodayPage() {
     );
   }
 
+  // Today is due/study, not setup. Offer a single Next CTA when idle; no stage rail.
+  const showJourneyNext =
+    view != null && dueCount === 0 && view.next.href !== "/today";
+
   return (
     <Container maxWidth="sm" sx={{ py: 6 }}>
       <Stack spacing={3}>
         <Typography variant="h3" component="h1" color="primary">
           Today
         </Typography>
+
         <Typography variant="body1" color="text.secondary">
           {dueCount === 0
             ? "Nothing due right now."
@@ -90,9 +105,29 @@ export default function TodayPage() {
         ) : null}
 
         <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-          <Button variant="contained" href="/study" disabled={dueCount === 0}>
-            Start study
-          </Button>
+          {dueCount > 0 ? (
+            <Button
+              variant="contained"
+              href="/study"
+              startIcon={<PlayArrowIcon />}
+            >
+              Start study
+            </Button>
+          ) : null}
+          {showJourneyNext ? (
+            <JourneyNextButton
+              view={view}
+              onAction={(action) => {
+                if (
+                  action === "create_deck" ||
+                  action === "add_material" ||
+                  action === "add_more"
+                ) {
+                  window.location.assign("/library");
+                }
+              }}
+            />
+          ) : null}
           <Button variant="outlined" href="/library">
             Library
           </Button>
@@ -100,16 +135,6 @@ export default function TodayPage() {
             Settings
           </Button>
         </Stack>
-
-        <Typography variant="body2" color="text.secondary">
-          <Link href="/login" underline="hover">
-            Sign in
-          </Link>
-          {" · "}
-          <Link href="/register" underline="hover">
-            Register
-          </Link>
-        </Typography>
       </Stack>
     </Container>
   );

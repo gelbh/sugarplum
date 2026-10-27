@@ -1,10 +1,5 @@
 import { createTheme } from "@mui/material/styles";
 
-const brand = {
-  primary: { main: "#5B2C6F" },
-  secondary: { main: "#1ABC9C" },
-};
-
 export const theme = createTheme({
   cssVariables: {
     colorSchemeSelector: "data",
@@ -12,12 +7,25 @@ export const theme = createTheme({
   colorSchemes: {
     light: {
       palette: {
-        ...brand,
+        primary: { main: "#5B2C6F" },
+        secondary: { main: "#1ABC9C" },
       },
     },
     dark: {
       palette: {
-        ...brand,
+        primary: { main: "#CE93D8", contrastText: "#121212" },
+        secondary: { main: "#4ECDC4", contrastText: "#121212" },
+        text: {
+          primary: "#F5F5F5",
+          secondary: "rgba(255, 255, 255, 0.75)",
+          disabled: "rgba(255, 255, 255, 0.5)",
+        },
+        action: {
+          active: "#fff",
+          disabled: "rgba(255, 255, 255, 0.4)",
+          disabledBackground: "rgba(255, 255, 255, 0.12)",
+        },
+        divider: "rgba(255, 255, 255, 0.16)",
       },
     },
   },

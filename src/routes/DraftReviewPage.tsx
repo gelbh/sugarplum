@@ -15,17 +15,24 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import DraftCardEditor from "../components/DraftCardEditor";
+import JourneyRail from "../components/JourneyRail";
+import JourneyNextButton from "../components/JourneyNextButton";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
 import {
   ApiError,
   acceptAllJobDrafts,
   acceptCard,
   getJob,
+  getJourney,
   listJobDrafts,
   me,
   patchCard,
   rejectCard,
   type CardDraftView,
 } from "../api/client";
+import { deriveJourney } from "../journey/derive";
+import type { JourneyView } from "../journey/types";
 import JobProgressPanel from "../progress/JobProgressPanel";
 import { useJobProgress } from "../progress/useJobProgress";
 import { useTrackedOp } from "../progress/useTrackedOp";
@@ -40,6 +47,8 @@ export default function DraftReviewPage() {
   const jobId = jobIdFromPath();
   const [drafts, setDrafts] = useState<CardDraftView[]>([]);
   const [index, setIndex] = useState(0);
+  const [view, setView] = useState<JourneyView | null>(null);
+  const [journeyError, setJourneyError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -77,6 +86,35 @@ export default function DraftReviewPage() {
       }
     } else {
       setCoverage(null);
+    }
+    return list;
+  }, []);
+
+  const refreshJourney = useCallback(async (id: string, draftCount: number) => {
+    try {
+      const journey = await getJourney();
+      const derived = deriveJourney(journey);
+      if (draftCount > 0) {
+        derived.collapsed = false;
+        derived.next = {
+          label: "Review drafts",
+          href: `/jobs/${id}/drafts`,
+          action: "review",
+        };
+        derived.stages = derived.stages.map((s) => ({
+          ...s,
+          active: s.id === "review",
+        }));
+      }
+      setJourneyError(null);
+      setView(derived);
+    } catch (err) {
+      setView(null);
+      setJourneyError(
+        err instanceof ApiError
+          ? err.message
+          : "Could not load journey progress",
+      );
     }
   }, []);
 
@@ -121,7 +159,9 @@ export default function DraftReviewPage() {
     (async () => {
       beginLoad();
       try {
-        await load(jobId);
+        const list = await load(jobId);
+        if (cancelled) return;
+        await refreshJourney(jobId, list.length);
         if (cancelled) return;
         setReady(true);
         endLoad();
@@ -138,7 +178,15 @@ export default function DraftReviewPage() {
       cancelled = true;
       endLoad(false);
     };
-  }, [beginLoad, endLoad, jobId, jobProgress.error, jobProgress.ready, load]);
+  }, [
+    beginLoad,
+    endLoad,
+    jobId,
+    jobProgress.error,
+    jobProgress.ready,
+    load,
+    refreshJourney,
+  ]);
 
   const current = drafts[index] ?? null;
 
@@ -187,7 +235,8 @@ export default function DraftReviewPage() {
         });
       }
       await acceptCard(current.id);
-      await load(jobId);
+      const list = await load(jobId);
+      await refreshJourney(jobId, list.length);
       setNotice("Card accepted into study");
       end();
     } catch (err) {
@@ -203,7 +252,8 @@ export default function DraftReviewPage() {
     begin();
     try {
       await rejectCard(current.id);
-      await load(jobId);
+      const list = await load(jobId);
+      await refreshJourney(jobId, list.length);
       setNotice("Card rejected");
       end();
     } catch (err) {
@@ -268,6 +318,10 @@ export default function DraftReviewPage() {
             accepted.
           </Typography>
         </Box>
+        {view ? <JourneyRail view={view} /> : null}
+        {journeyError ? (
+          <Alert severity="warning">{journeyError}</Alert>
+        ) : null}
 
         <Stack direction="row" spacing={2} alignItems="center">
           <Link href="/library" underline="hover">
@@ -300,10 +354,16 @@ export default function DraftReviewPage() {
         ) : null}
 
         {!current ? (
-          <Alert severity="info">
-            No drafts left for this job.{" "}
-            <Link href="/library">Back to library</Link>
-          </Alert>
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Stack spacing={2}>
+              <Typography>No drafts left for this job.</Typography>
+              {view ? (
+                <JourneyNextButton view={view} />
+              ) : (
+                <Link href="/library">Back to library</Link>
+              )}
+            </Stack>
+          </Paper>
         ) : (
           <Paper variant="outlined" sx={{ p: 2.5 }}>
             <Stack
@@ -357,15 +417,17 @@ export default function DraftReviewPage() {
               sx={{ mt: 3 }}
             >
               <Button
-                variant="outlined"
+                variant="text"
                 onClick={onSave}
                 disabled={busy || !dirty}
+                startIcon={<CheckIcon />}
               >
                 Save
               </Button>
               <Button
                 variant="contained"
                 color="primary"
+                startIcon={<CheckIcon />}
                 onClick={onAccept}
                 disabled={busy}
               >
@@ -382,6 +444,7 @@ export default function DraftReviewPage() {
               <Button
                 variant="outlined"
                 color="error"
+                startIcon={<CloseIcon />}
                 onClick={onReject}
                 disabled={busy}
               >

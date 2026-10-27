@@ -4,10 +4,12 @@ import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Container from "@mui/material/Container";
 import Link from "@mui/material/Link";
+import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import CardFace from "../components/CardFace";
 import GradeButtons from "../components/GradeButtons";
+import TodayIcon from "@mui/icons-material/Today";
 import {
   ApiError,
   listDueCards,
@@ -166,9 +168,14 @@ export default function StudyPage() {
         {!current ? (
           <Alert severity="success">
             Session complete.{" "}
-            <Link href="/" underline="hover">
-              Back to today
-            </Link>
+            <Button
+              variant="contained"
+              href="/today"
+              startIcon={<TodayIcon fontSize="small" />}
+              size="small"
+            >
+              Today
+            </Button>
           </Alert>
         ) : (
           <>
