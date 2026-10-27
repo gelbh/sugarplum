@@ -141,8 +141,9 @@ function normalizeContainment(text: string): string {
 }
 
 /**
- * Answer echoes the question (lead-in filler or prepositional phrase only).
- * Does not use word-overlap ratios (those drop real either/or answers).
+ * Answer echoes the question after normalize + lead-strip (min length 6).
+ * Drops host-noun echoes (≤2 words ⊆ front), lead-filler, and prep-led
+ * restatements. Keeps either/or answers that reuse longer noun phrases.
  */
 function isTautologicalQa(front: string, back: string): boolean {
   if (!front.includes("?")) return false;
@@ -153,7 +154,70 @@ function isTautologicalQa(front: string, back: string): boolean {
   const nb = rawNb.replace(TAUTOLOGY_BACK_LEAD_RE, "").trim();
   if (nb.length < 6 || !nf.includes(nb)) return false;
   if (hadLead) return true;
-  return /^(in|on|at|of|for|with|to|from|via|among|between)\s+/.test(nb);
+  if (/^(in|on|at|of|for|with|to|from|via|among|between)\s+/.test(nb)) {
+    return true;
+  }
+  // Host-noun tautology: short answer wholly contained in the question.
+  return wordCount(nb) <= 2;
+}
+
+const TAXON_FULL_RE = /\b([A-Z][a-z]{2,})\s+([a-z]{3,})\b/g;
+const TAXON_ABBREV_RE = /\b([A-Z])\.\s*([a-z]{3,})\b/g;
+
+/** Second tokens that are ranks, not species epithets (bare-genus stems). */
+const NON_EPITHET = new Set([
+  "species",
+  "genus",
+  "family",
+  "phylum",
+  "order",
+  "class",
+]);
+
+/**
+ * Specific taxon in front (Genus species / G. species) must appear in excerpt
+ * as epithet or full genus. Bare-genus stems (no specific taxon) skip.
+ */
+function isTaxonUnsupportedByExcerpt(front: string, excerpt: string): boolean {
+  const taxa: { genus: string; epithet: string; abbrev: boolean }[] = [];
+  for (const m of front.matchAll(TAXON_FULL_RE)) {
+    const epithet = m[2]!;
+    if (NON_EPITHET.has(epithet.toLowerCase())) continue;
+    taxa.push({ genus: m[1]!, epithet, abbrev: false });
+  }
+  for (const m of front.matchAll(TAXON_ABBREV_RE)) {
+    taxa.push({ genus: m[1]!, epithet: m[2]!, abbrev: true });
+  }
+  if (taxa.length === 0) return false;
+  const ex = excerpt.toLowerCase();
+  for (const t of taxa) {
+    const epithet = t.epithet.toLowerCase();
+    if (ex.includes(epithet)) continue;
+    if (!t.abbrev && ex.includes(t.genus.toLowerCase())) continue;
+    return true;
+  }
+  return false;
+}
+
+const CLOZE_ANSWER_RE = /\{\{c\d+::([^}:]+)/;
+const LEADING_GENUS_CLOZE_RE = /^\{\{c\d+::[A-Z][A-Za-z-]+\}\}/;
+
+function clozeAnswerText(front: string): string | null {
+  const m = front.match(CLOZE_ANSWER_RE);
+  return m?.[1]?.trim() ?? null;
+}
+
+function isLongCloze(front: string, back: string): boolean {
+  const fromMarkup = clozeAnswerText(front);
+  // Fixture blank is 6 tokens; plan said >6 for a "7-word" live card.
+  if (fromMarkup !== null) return wordCount(fromMarkup) >= 6;
+  // Underscore blank: blank region is the whole back.
+  if (/_{2,}/.test(front)) return wordCount(back) >= 6;
+  return false;
+}
+
+function isLeadingGenusCloze(front: string): boolean {
+  return LEADING_GENUS_CLOZE_RE.test(front.trim());
 }
 
 function hasBrokenPunctuation(back: string): boolean {
@@ -190,6 +254,14 @@ function shouldDrop(draft: CardDraft, front: string, back: string): boolean {
   if (draft.type === "qa" && isSectionHeaderDebris(front, back)) return true;
   if (draft.type === "qa" && isThinOneWordGlossaryPair(front, back)) return true;
   if (draft.type === "qa" && isTautologicalQa(front, back)) return true;
+  if (
+    (draft.type === "qa" || draft.type === "mcq") &&
+    isTaxonUnsupportedByExcerpt(front, draft.provenance?.excerpt ?? "")
+  ) {
+    return true;
+  }
+  if (draft.type === "cloze" && isLeadingGenusCloze(front)) return true;
+  if (draft.type === "cloze" && isLongCloze(front, back)) return true;
   return false;
 }
 
