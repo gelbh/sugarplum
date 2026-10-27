@@ -69,6 +69,7 @@ function blankHubCreateCard(deckId: string): CardDraftView {
     type: "qa",
     front: "",
     back: "",
+    provenance: null,
     status: "draft",
     created_at: "",
     updated_at: "",
