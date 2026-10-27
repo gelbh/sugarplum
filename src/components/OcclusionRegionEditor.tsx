@@ -136,8 +136,10 @@ export default function OcclusionRegionEditor({
         sx={{
           maxHeight: "45vh",
           overflow: "auto",
-          borderRadius: 1,
-          bgcolor: "action.hover",
+          borderRadius: "6px",
+          bgcolor: "background.paper",
+          border: "1px solid",
+          borderColor: "divider",
         }}
       >
         <Box
@@ -178,13 +180,16 @@ export default function OcclusionRegionEditor({
                   width: `${region.w * 100}%`,
                   height: `${region.h * 100}%`,
                   boxSizing: "border-box",
-                  border: 2,
-                  borderColor: selected ? "primary.main" : "warning.main",
+                  border: "2px solid",
+                  borderColor: selected ? "primary.main" : "secondary.main",
                   bgcolor: selected
-                    ? "rgba(25, 118, 210, 0.22)"
-                    : "rgba(237, 108, 2, 0.18)",
+                    ? "color-mix(in srgb, var(--sp-plum) 28%, transparent)"
+                    : "color-mix(in srgb, var(--sp-lamp-glow) 65%, transparent)",
                   cursor: disabled ? "default" : "move",
-                  borderRadius: 0.5,
+                  borderRadius: "4px",
+                  boxShadow: selected
+                    ? "0 2px 10px color-mix(in srgb, var(--sp-plum) 28%, transparent)"
+                    : "none",
                 }}
               >
                 <Typography
@@ -194,15 +199,19 @@ export default function OcclusionRegionEditor({
                     left: 4,
                     top: 2,
                     px: 0.5,
-                    bgcolor: "rgba(0,0,0,0.55)",
-                    color: "common.white",
-                    borderRadius: 0.5,
+                    bgcolor: "var(--sp-stage-bg)",
+                    color: "var(--sp-ivory)",
+                    borderRadius: "4px",
                     maxWidth: "95%",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
                     lineHeight: 1.4,
                     pointerEvents: "none",
+                    fontFamily:
+                      '"Source Sans 3", "Helvetica", "Arial", sans-serif',
+                    fontSize: "0.6875rem",
+                    letterSpacing: "0.02em",
                   }}
                 >
                   {region.label || region.id}
@@ -210,6 +219,7 @@ export default function OcclusionRegionEditor({
                 {!disabled ? (
                   <Box
                     onPointerDown={(e) => onBoxPointerDown(e, region, "resize")}
+                    aria-label="Resize region"
                     sx={{
                       position: "absolute",
                       right: -5,
@@ -219,7 +229,7 @@ export default function OcclusionRegionEditor({
                       bgcolor: "primary.main",
                       borderRadius: "2px",
                       cursor: "nwse-resize",
-                      border: 1,
+                      border: "1px solid",
                       borderColor: "background.paper",
                     }}
                   />
@@ -263,11 +273,15 @@ export default function OcclusionRegionEditor({
             spacing={1}
             sx={{
               p: 1.5,
-              border: 1,
+              border: "1px solid",
               borderColor:
                 region.id === selectedId ? "primary.main" : "divider",
-              borderRadius: 1,
+              borderRadius: "6px",
               bgcolor: "background.paper",
+              boxShadow:
+                region.id === selectedId
+                  ? "0 0 0 1px color-mix(in srgb, var(--sp-plum) 20%, transparent)"
+                  : "none",
             }}
             onClick={() => {
               setSelectedId(region.id);

@@ -178,22 +178,36 @@ function StudyMedia({
               userSelect: "none",
             }}
           />
-          {masked ? (
-            <Box
-              aria-hidden
-              data-occlusion-mask
-              sx={{
-                position: "absolute",
-                left: `${mask.x * 100}%`,
-                top: `${mask.y * 100}%`,
-                width: `${mask.w * 100}%`,
-                height: `${mask.h * 100}%`,
-                bgcolor: "rgba(30, 13, 27, 0.92)",
-                borderRadius: 0.5,
-                pointerEvents: "none",
-              }}
-            />
-          ) : null}
+          <Box
+            aria-hidden
+            {...(masked
+              ? { "data-occlusion-mask": true }
+              : { "data-occlusion-reveal-outline": true })}
+            sx={{
+              position: "absolute",
+              left: `${mask.x * 100}%`,
+              top: `${mask.y * 100}%`,
+              width: `${mask.w * 100}%`,
+              height: `${mask.h * 100}%`,
+              borderRadius: "4px",
+              pointerEvents: "none",
+              ...(masked
+                ? {
+                    bgcolor:
+                      "color-mix(in srgb, var(--sp-stage-bg) 92%, transparent)",
+                    border: "1.5px solid",
+                    borderColor: "secondary.main",
+                    boxShadow: "0 2px 12px var(--sp-lamp-glow)",
+                  }
+                : {
+                    border: "1.5px solid",
+                    borderColor: "secondary.main",
+                    opacity: 0.85,
+                    boxShadow:
+                      "0 0 0 1px color-mix(in srgb, var(--sp-stage-bg) 35%, transparent)",
+                  }),
+            }}
+          />
         </Box>
       </Box>
     );
