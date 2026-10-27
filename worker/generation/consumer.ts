@@ -7,12 +7,12 @@ import { MAX_IMAGE_BYTES } from "../materials/limits";
 import type { GenerateQueueMessage } from "./enqueue";
 import { createLlmAdapter, parseLlmProvider, type LlmAdapter } from "./llm";
 import {
+  critiqueDraftsAgainstSource,
   remainderAfterRules,
   runGenerationPipeline,
 } from "./pipeline";
 import {
   IMAGE_STAGES,
-  RULES_ONLY_STAGES,
   TEXT_LLM_STAGES,
   computePercent,
   computePipelineBandPercent,
@@ -270,7 +270,8 @@ async function insertDraftCards(
 
 /**
  * Process one generate queue message:
- * image → vision generate; text → rules harvest → (optional) LLM pipeline → merge.
+ * image → vision generate;
+ * text → harvest → Layer-1 → rules critique → remainder LLM → merge → Layer-1.
  * On failure marks the job failed with an actionable error (does not throw after mark).
  */
 export async function processGenerateJob(
@@ -281,10 +282,16 @@ export async function processGenerateJob(
   const db = getDb(env);
   const { jobId, materialId, deckId } = message;
 
-  await db
-    .prepare("UPDATE generation_jobs SET status = ?, error = NULL WHERE id = ?")
-    .bind("running", jobId)
+  const claim = await db
+    .prepare(
+      "UPDATE generation_jobs SET status = ?, error = NULL WHERE id = ? AND status = ?",
+    )
+    .bind("running", jobId, "queued")
     .run();
+  // Duplicate / stale queue delivery: another worker already claimed or finished.
+  if (!claim.meta.changes) {
+    return;
+  }
 
   try {
     const material = await db
@@ -391,30 +398,47 @@ export async function processGenerateJob(
         throw new Error("Extracted material text is empty");
       }
 
-      const rulesDrafts = harvestRuleDrafts(text);
-      const remainder = remainderAfterRules(text, rulesDrafts);
-      if (!remainder.trim() && rulesDrafts.length === 0) {
+      const rawRules = harvestRuleDrafts(text);
+      const layer1Rules = filterDraftsByQuality(rawRules);
+      // Remainder strips pre-critique harvest excerpts so critique drops stay out of LLM.
+      const remainder = remainderAfterRules(text, rawRules);
+
+      const needsLlm = Boolean(remainder.trim()) || layer1Rules.length > 0;
+      if (!needsLlm) {
         throw new Error(
           "No flashcard drafts could be produced from this material.",
         );
       }
 
-      const stages = remainder.trim() ? TEXT_LLM_STAGES : RULES_ONLY_STAGES;
+      // Rules critique and/or remainder generate both need LLM stage weights.
+      const stages = TEXT_LLM_STAGES;
       const emit = makeEmit(db, jobId, stages);
       await emit("rules", 0, 0, "Harvesting rules");
 
+      const { llm, apiKey, provider } = await resolveTextLlm(
+        env,
+        secret,
+        opts,
+      );
+      if (!secret) {
+        // Charge before LLM (rules critique and/or generate) so failures count.
+        await consumeFreeGenSlot(env, deck.user_id);
+      }
+
+      // Critique hard-fail → keep Layer-1 survivors only (never raw harvest).
+      let critiquedRules = layer1Rules;
+      if (layer1Rules.length > 0) {
+        critiquedRules = await critiqueDraftsAgainstSource({
+          sourceText: text,
+          candidates: layer1Rules,
+          llm,
+          apiKey,
+          provider,
+        });
+      }
+
       let llmDrafts: CardDraft[] = [];
       if (remainder.trim()) {
-        const { llm, apiKey, provider } = await resolveTextLlm(
-          env,
-          secret,
-          opts,
-        );
-        if (!secret) {
-          // Charge the attempt before LLM so failures still count toward the cap.
-          await consumeFreeGenSlot(env, deck.user_id);
-        }
-
         llmDrafts = await runGenerationPipeline({
           text: remainder,
           llm,
@@ -425,7 +449,7 @@ export async function processGenerateJob(
         });
       }
 
-      drafts = mergeAndDedupeDrafts(rulesDrafts, llmDrafts);
+      drafts = mergeAndDedupeDrafts(critiquedRules, llmDrafts);
       drafts = filterDraftsByQuality(drafts);
       if (drafts.length === 0) {
         throw new Error("Generation produced no valid draft cards");
