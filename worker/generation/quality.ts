@@ -126,7 +126,10 @@ function isSectionHeaderDebris(front: string, back: string): boolean {
 /** One-word term with a one-token gloss (Inflammation.), not a real definition. */
 function isThinOneWordGlossaryPair(front: string, back: string): boolean {
   if (!isGlossaryShaped(front) || wordCount(front) !== 1) return false;
-  const token = back.trim().replace(/[.!?]+$/, "").trim();
+  const token = back
+    .trim()
+    .replace(/[.!?]+$/, "")
+    .trim();
   if (!/^[A-Za-z][A-Za-z'-]*$/.test(token)) return false;
   return wordCount(back.replace(/[.!?]+$/, "")) === 1;
 }
@@ -141,8 +144,9 @@ function normalizeContainment(text: string): string {
 }
 
 /**
- * Answer echoes the question (lead-in filler or prepositional phrase only).
- * Does not use word-overlap ratios (those drop real either/or answers).
+ * Answer echoes the question after normalize + lead-strip (min length 6).
+ * Drops host-noun echoes (≤2 words ⊆ front), lead-filler, and prep-led
+ * restatements. Keeps either/or short answers that appear in the stem.
  */
 function isTautologicalQa(front: string, back: string): boolean {
   if (!front.includes("?")) return false;
@@ -153,7 +157,123 @@ function isTautologicalQa(front: string, back: string): boolean {
   const nb = rawNb.replace(TAUTOLOGY_BACK_LEAD_RE, "").trim();
   if (nb.length < 6 || !nf.includes(nb)) return false;
   if (hadLead) return true;
-  return /^(in|on|at|of|for|with|to|from|via|among|between)\s+/.test(nb);
+  if (/^(in|on|at|of|for|with|to|from|via|among|between)\s+/.test(nb)) {
+    return true;
+  }
+  // Host-noun tautology: short answer wholly contained in the question.
+  // Either/or stems keep short choice answers (Decrease, Caseous).
+  if (wordCount(nb) <= 2) {
+    if (/\bor\b/i.test(front) || /\beither\b/i.test(front)) return false;
+    return true;
+  }
+  return false;
+}
+
+const TAXON_FULL_RE = /\b([A-Z][a-z]{2,})\s+([a-z]{3,})\b/g;
+const TAXON_ABBREV_RE = /\b([A-Z])\.\s*([a-z]{3,})\b/g;
+
+/** Second tokens that are ranks, not species epithets (bare-genus stems). */
+const NON_EPITHET = new Set([
+  "species",
+  "genus",
+  "family",
+  "phylum",
+  "order",
+  "class",
+]);
+
+/** English stems that match TAXON_FULL_RE but are not biological genera. */
+const ENGLISH_GENUS_STOP = new Set([
+  "what",
+  "how",
+  "does",
+  "did",
+  "gram",
+  "clinical",
+  "primary",
+  "which",
+  "when",
+  "where",
+  "why",
+  "is",
+  "are",
+  "can",
+  "the",
+  "for",
+  "and",
+  "or",
+  "but",
+  "not",
+  "this",
+  "that",
+  "with",
+  "from",
+  "into",
+  "onto",
+  "over",
+  "under",
+  "after",
+  "before",
+  "during",
+  "among",
+  "between",
+  "about",
+  "major",
+  "minor",
+  "main",
+  "most",
+  "some",
+  "many",
+  "other",
+  "each",
+  "every",
+  "define",
+  "describe",
+  "explain",
+  "list",
+  "name",
+  "state",
+  "give",
+  "identify",
+  "compare",
+]);
+
+function isPlausibleGenus(genus: string): boolean {
+  if (ENGLISH_GENUS_STOP.has(genus.toLowerCase())) return false;
+  if (genus.length >= 6) return true;
+  return /(ia|ium|ella|oides|ina|oma)$/i.test(genus);
+}
+
+/**
+ * Specific taxon in front (Genus species / G. species) must appear in excerpt
+ * as epithet or full genus. Bare-genus stems and English Cap+lower pairs skip.
+ */
+function isTaxonUnsupportedByExcerpt(front: string, excerpt: string): boolean {
+  const ex = excerpt.toLowerCase();
+  for (const m of front.matchAll(TAXON_FULL_RE)) {
+    const genus = m[1]!;
+    const epithet = m[2]!;
+    if (NON_EPITHET.has(epithet.toLowerCase())) continue;
+    if (!isPlausibleGenus(genus)) continue;
+    const ep = epithet.toLowerCase();
+    if (ex.includes(ep) || ex.includes(genus.toLowerCase())) continue;
+    return true;
+  }
+  for (const m of front.matchAll(TAXON_ABBREV_RE)) {
+    const epithet = m[2]!.toLowerCase();
+    if (ex.includes(epithet)) continue;
+    return true;
+  }
+  return false;
+}
+
+/** Topic-genus cloze: blank at start followed by species/spp. */
+const LEADING_GENUS_CLOZE_RE =
+  /^\{\{c\d+::[A-Z][A-Za-z-]+\}\}\s+(species|spp\.?)\b/i;
+
+/** Long cloze blanks: back mirrors the Anki answer (rules/LLM always set both). */
+function isLongCloze(_front: string, back: string): boolean {
+  return wordCount(back) >= 6;
 }
 
 function hasBrokenPunctuation(back: string): boolean {
@@ -188,8 +308,19 @@ function shouldDrop(draft: CardDraft, front: string, back: string): boolean {
   if (draft.type === "qa" && isFragmentFront(front)) return true;
   if (draft.type === "qa" && isGenericOneWordPair(front, back)) return true;
   if (draft.type === "qa" && isSectionHeaderDebris(front, back)) return true;
-  if (draft.type === "qa" && isThinOneWordGlossaryPair(front, back)) return true;
+  if (draft.type === "qa" && isThinOneWordGlossaryPair(front, back))
+    return true;
   if (draft.type === "qa" && isTautologicalQa(front, back)) return true;
+  if (
+    (draft.type === "qa" || draft.type === "mcq") &&
+    isTaxonUnsupportedByExcerpt(front, draft.provenance?.excerpt ?? "")
+  ) {
+    return true;
+  }
+  if (draft.type === "cloze" && LEADING_GENUS_CLOZE_RE.test(front.trim())) {
+    return true;
+  }
+  if (draft.type === "cloze" && isLongCloze(front, back)) return true;
   return false;
 }
 

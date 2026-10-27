@@ -12,11 +12,7 @@ function qa(front: string, back: string): CardDraft {
   };
 }
 
-function mcq(
-  front: string,
-  back: string,
-  options: string[],
-): CardDraft {
+function mcq(front: string, back: string, options: string[]): CardDraft {
   return {
     type: "mcq",
     front,
@@ -125,10 +121,7 @@ describe("filterDraftsByQuality", () => {
   });
 
   it("keeps QA backs with typographic apostrophe contractions", () => {
-    const dna = qa(
-      "What is DNA?",
-      "Deoxyribonucleic acid. It\u2019s genetic.",
-    );
+    const dna = qa("What is DNA?", "Deoxyribonucleic acid. It\u2019s genetic.");
     expect(filterDraftsByQuality([dna])).toEqual([dna]);
   });
 
@@ -204,6 +197,170 @@ describe("filterDraftsByQuality", () => {
       "Does insulin increase or decrease blood glucose?",
       "Decrease blood glucose",
     );
-    expect(filterDraftsByQuality([insulin])).toEqual([insulin]);
+    const shortChoice: CardDraft = {
+      type: "qa",
+      front: "Does glucagon increase or decrease blood glucose?",
+      back: "Increase",
+      provenance: {
+        pages: [1],
+        excerpt: "glucagon increases blood glucose",
+      },
+    };
+    const caseous: CardDraft = {
+      type: "qa",
+      front: "Is the lesion caseous or purulent?",
+      back: "Caseous",
+      provenance: { pages: [1], excerpt: "caseous necrosis" },
+    };
+    expect(filterDraftsByQuality([insulin, shortChoice, caseous])).toEqual([
+      insulin,
+      shortChoice,
+      caseous,
+    ]);
+  });
+
+  it("keeps English-stem questions with short excerpts (not false binomials)", () => {
+    const hosts: CardDraft = {
+      type: "qa",
+      front: "What are the definitive hosts of Eimeria tenella?",
+      back: "Chickens",
+      provenance: {
+        pages: [1],
+        excerpt: "Eimeria tenella infects chickens",
+      },
+    };
+    const transmit: CardDraft = {
+      type: "qa",
+      front: "How does Giardia duodenalis transmit between hosts?",
+      back: "Faecal-oral route",
+      provenance: {
+        pages: [1],
+        excerpt: "Giardia duodenalis transmits faecal-orally",
+      },
+    };
+    expect(filterDraftsByQuality([hosts, transmit])).toEqual([hosts, transmit]);
+  });
+
+  it("keeps leading drug/organ clozes (not only topic-genus blanks)", () => {
+    const metro: CardDraft = {
+      type: "cloze",
+      front: "{{c1::Metronidazole}} is the drug of choice for trichomoniasis.",
+      back: "Metronidazole",
+      provenance: {
+        pages: [1],
+        excerpt: "Metronidazole is the drug of choice",
+      },
+    };
+    const liverLead: CardDraft = {
+      type: "cloze",
+      front: "{{c1::Liver}} is reached via the portal vein.",
+      back: "Liver",
+      provenance: {
+        pages: [1],
+        excerpt: "reach the liver via the portal vein",
+      },
+    };
+    expect(filterDraftsByQuality([metro, liverLead])).toEqual([
+      metro,
+      liverLead,
+    ]);
+  });
+
+  it("drops post-regen failures from live cards (0c24a8cf) and keeps controls", () => {
+    const mito = qa("mitochondria", "powerhouse of the cell");
+    const gallinaeHost: CardDraft = {
+      type: "qa",
+      front: "What is the primary host for Trichomonas gallinae?",
+      back: "Pigeons and other birds",
+      provenance: {
+        pages: [1],
+        excerpt: "Trichomonas gallinae primarily infects pigeons.",
+      },
+    };
+    const liverCloze: CardDraft = {
+      type: "cloze",
+      front:
+        "Histomonas meleagridis trophozoites reach the {{c1::liver}} via the portal vein.",
+      back: "liver",
+      provenance: {
+        pages: [1],
+        excerpt: "trophozoites reach the liver via the portal vein",
+      },
+    };
+    const cryptoMcq: CardDraft = {
+      type: "mcq",
+      front:
+        "Which Cryptosporidium species is the primary cause of disease in young calves?",
+      back: "C. parvum",
+      options: ["C. parvum", "C. baileyi", "C. meleagridis"],
+      provenance: {
+        pages: [1],
+        excerpt:
+          "In cattle, C. parvum is the primary cause of disease in young calves.",
+      },
+    };
+    const leadFillerTautology = qa(
+      "What is the significance of Trichomonas in free-range flocks?",
+      "Especially in free-range flocks.",
+    );
+
+    const hostTautologies = [
+      qa(
+        "What is the significance of Encephalitozoon cuniculi in rabbits?",
+        "Rabbits",
+      ),
+      qa(
+        "What is the significance of Encephalitozoon cuniculi in wild rodents?",
+        "Wild rodents",
+      ),
+      qa(
+        "What is the significance of Encephalitozoon cuniculi in humans?",
+        "Humans",
+      ),
+    ];
+    const wrongOrganism: CardDraft = {
+      type: "qa",
+      front: "What is the major organ infected by Trichomonas gallinae?",
+      back: "Liver and caecum (large intestine)",
+      provenance: {
+        pages: [1],
+        excerpt: "Liver and caecum (large intestine).",
+      },
+    };
+    const longCloze: CardDraft = {
+      type: "cloze",
+      front:
+        "Giardia duodenalis cysts are passed in the faeces of infected individuals and ingested by the next host in {{c1::faecally contaminated food, water or hands}}.",
+      back: "faecally contaminated food, water or hands",
+      provenance: {
+        pages: [1],
+        excerpt:
+          "Ingested by next host in faecally contaminated food, water or hands",
+      },
+    };
+    const leadingGenusCloze: CardDraft = {
+      type: "cloze",
+      front:
+        "{{c1::Eimeria}} species are transmitted via ingestion of oocysts passed in the faeces of infected animals.",
+      back: "Eimeria",
+      provenance: {
+        pages: [1],
+        excerpt: "Oocysts passed in faeces...",
+      },
+    };
+
+    expect(
+      filterDraftsByQuality([
+        ...hostTautologies,
+        wrongOrganism,
+        longCloze,
+        leadingGenusCloze,
+        leadFillerTautology,
+        mito,
+        gallinaeHost,
+        liverCloze,
+        cryptoMcq,
+      ]),
+    ).toEqual([mito, gallinaeHost, liverCloze, cryptoMcq]);
   });
 });
