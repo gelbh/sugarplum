@@ -35,10 +35,7 @@ import {
 } from "../api/client";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
-import {
-  effectiveSubjectDeckCount,
-  subjectDeleteBlocked,
-} from "../subjects/subjectDeleteGuard";
+import { subjectDeleteBlocked } from "../subjects/subjectDeleteGuard";
 
 type Props = {
   subjectId: string;
@@ -211,9 +208,6 @@ export default function SubjectPage({ subjectId }: Props) {
     }
   }
 
-  const deckCount = subject
-    ? effectiveSubjectDeckCount(subject, decks.length)
-    : decks.length;
   const deleteSubjectBlocked = subject
     ? subjectDeleteBlocked(subject, decks.length)
     : decks.length > 0;
