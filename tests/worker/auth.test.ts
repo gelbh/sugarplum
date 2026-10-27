@@ -7,6 +7,10 @@ import {
   googleOauthSubject,
 } from "../../worker/auth/google";
 import {
+  OAUTH_CTX_COOKIE,
+  oauthDoneKey,
+} from "../../worker/auth/oauth-replay";
+import {
   hashPassword,
   isPasswordLongEnough,
   verifyPassword,
@@ -19,6 +23,10 @@ import {
   sessionCookieSecure,
 } from "../../worker/auth/session";
 import { createTestEnv } from "./test-env";
+
+function oauthCtxHeader(state: string): { cookie: string } {
+  return { cookie: `${OAUTH_CTX_COOKIE}=${state}` };
+}
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -145,6 +153,7 @@ describe("Google OAuth", () => {
     expect(loc).toMatch(/^https:\/\/accounts\.google\.com\/o\/oauth2\/v2\/auth\?/);
     expect(loc).toContain("client_id=test-google-client-id");
     expect(loc).toContain("code_challenge_method=S256");
+    expect(res.headers.get("set-cookie") ?? "").toContain(`${OAUTH_CTX_COOKIE}=`);
   });
 
   it("start returns 503 when Google secrets are missing", async () => {
@@ -169,7 +178,7 @@ describe("Google OAuth", () => {
 
     const res = await app.request(
       `/api/auth/google/callback?code=abc&state=${state}`,
-      { method: "GET" },
+      { method: "GET", headers: oauthCtxHeader(state) },
       env,
     );
     expect(res.status).toBe(302);
@@ -187,6 +196,32 @@ describe("Google OAuth", () => {
     expect(body.email).toBe("oauth@example.com");
   });
 
+  it("callback without oauth ctx cookie fails", async () => {
+    const env = createTestEnv();
+    const state = "state-no-ctx";
+    await env.SESSIONS.put(
+      `${OAUTH_KV_PREFIX}${state}`,
+      JSON.stringify({ codeVerifier: "verifier", createdAt: Date.now() }),
+    );
+    stubGoogleTokenAndProfile({
+      sub: "g-sub-no-ctx",
+      email: "noct@example.com",
+    });
+
+    const res = await app.request(
+      `/api/auth/google/callback?code=abc&state=${state}`,
+      { method: "GET" },
+      env,
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toBe(
+      "http://localhost/login?error=oauth",
+    );
+    expect(res.headers.get("set-cookie") ?? "").not.toContain(
+      `${SESSION_COOKIE}=`,
+    );
+  });
+
   it("duplicate callback with same code after success redirects to /today without error", async () => {
     const env = createTestEnv();
     const state = "state-dup";
@@ -201,11 +236,13 @@ describe("Google OAuth", () => {
 
     const first = await app.request(
       `/api/auth/google/callback?code=dup-code&state=${state}`,
-      { method: "GET" },
+      { method: "GET", headers: oauthCtxHeader(state) },
       env,
     );
     expect(first.status).toBe(302);
     expect(first.headers.get("location")).toBe("http://localhost/today");
+    expect(await env.SESSIONS.get(`${OAUTH_KV_PREFIX}${state}`)).toBeNull();
+    expect(await env.SESSIONS.get(oauthDoneKey(state))).toBeTruthy();
 
     const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>;
     const tokenCallsAfterFirst = fetchMock.mock.calls.filter(
@@ -214,7 +251,7 @@ describe("Google OAuth", () => {
 
     const second = await app.request(
       `/api/auth/google/callback?code=dup-code&state=${state}`,
-      { method: "GET" },
+      { method: "GET", headers: oauthCtxHeader(state) },
       env,
     );
     expect(second.status).toBe(302);
@@ -225,6 +262,77 @@ describe("Google OAuth", () => {
       (call) => String(call[0]) === GOOGLE_TOKEN_URL,
     ).length;
     expect(tokenCallsAfterSecond).toBe(tokenCallsAfterFirst);
+  });
+
+  it("done replay without oauth ctx cookie does not mint a session", async () => {
+    const env = createTestEnv();
+    const state = "state-naked";
+    await env.SESSIONS.put(
+      `${OAUTH_KV_PREFIX}${state}`,
+      JSON.stringify({ codeVerifier: "verifier", createdAt: Date.now() }),
+    );
+    stubGoogleTokenAndProfile({
+      sub: "g-sub-naked",
+      email: "naked@example.com",
+    });
+
+    const first = await app.request(
+      `/api/auth/google/callback?code=naked&state=${state}`,
+      { method: "GET", headers: oauthCtxHeader(state) },
+      env,
+    );
+    expect(first.status).toBe(302);
+    expect(first.headers.get("location")).toBe("http://localhost/today");
+
+    const second = await app.request(
+      `/api/auth/google/callback?state=${state}`,
+      { method: "GET" },
+      env,
+    );
+    expect(second.status).toBe(302);
+    expect(second.headers.get("location")).toBe(
+      "http://localhost/login?error=oauth",
+    );
+    expect(second.headers.get("set-cookie") ?? "").not.toContain(
+      `${SESSION_COOKIE}=`,
+    );
+  });
+
+  it("done replay with matching session cookie redirects home without reminting", async () => {
+    const env = createTestEnv();
+    const state = "state-sess-replay";
+    await env.SESSIONS.put(
+      `${OAUTH_KV_PREFIX}${state}`,
+      JSON.stringify({ codeVerifier: "verifier", createdAt: Date.now() }),
+    );
+    stubGoogleTokenAndProfile({
+      sub: "g-sub-sess-replay",
+      email: "sessreplay@example.com",
+    });
+
+    const first = await app.request(
+      `/api/auth/google/callback?code=sess-replay&state=${state}`,
+      { method: "GET", headers: oauthCtxHeader(state) },
+      env,
+    );
+    expect(first.status).toBe(302);
+    const sessionPair = (first.headers.get("set-cookie") ?? "")
+      .split(",")
+      .flatMap((part) => part.split(";"))
+      .map((part) => part.trim())
+      .find((part) => part.startsWith(`${SESSION_COOKIE}=`));
+    expect(sessionPair).toBeTruthy();
+
+    const second = await app.request(
+      `/api/auth/google/callback?state=${state}`,
+      { method: "GET", headers: { cookie: sessionPair! } },
+      env,
+    );
+    expect(second.status).toBe(302);
+    expect(second.headers.get("location")).toBe("http://localhost/today");
+    expect(second.headers.get("set-cookie") ?? "").not.toContain(
+      `${SESSION_COOKIE}=`,
+    );
   });
 
   it("callback refuses to auto-link a password account (hijack guard)", async () => {
@@ -248,7 +356,7 @@ describe("Google OAuth", () => {
 
     const res = await app.request(
       `/api/auth/google/callback?code=abc&state=${state}`,
-      { method: "GET" },
+      { method: "GET", headers: oauthCtxHeader(state) },
       env,
     );
     expect(res.status).toBe(302);
@@ -278,7 +386,7 @@ describe("Google OAuth", () => {
 
     const res = await app.request(
       `/api/auth/google/callback?code=abc&state=${state}`,
-      { method: "GET" },
+      { method: "GET", headers: oauthCtxHeader(state) },
       env,
     );
     expect(res.status).toBe(302);
@@ -313,7 +421,7 @@ describe("Google OAuth", () => {
 
     const res = await app.request(
       `/api/auth/google/callback?code=abc&state=${state}`,
-      { method: "GET" },
+      { method: "GET", headers: oauthCtxHeader(state) },
       env,
     );
     expect(res.status).toBe(302);
@@ -337,7 +445,7 @@ describe("Google OAuth", () => {
 
     const res = await app.request(
       `/api/auth/google/callback?code=abc&state=${state}`,
-      { method: "GET" },
+      { method: "GET", headers: oauthCtxHeader(state) },
       env,
     );
     expect(res.status).toBe(302);
@@ -433,7 +541,9 @@ describe("Google OAuth", () => {
       `/api/auth/google/callback?code=abc&state=${state}`,
       {
         method: "GET",
-        headers: { cookie: `${SESSION_COOKIE}=sess-pw` },
+        headers: {
+          cookie: `${SESSION_COOKIE}=sess-pw; ${OAUTH_CTX_COOKIE}=${state}`,
+        },
       },
       env,
     );
@@ -485,7 +595,9 @@ describe("Google OAuth", () => {
       `/api/auth/google/callback?code=abc&state=${state}`,
       {
         method: "GET",
-        headers: { cookie: `${SESSION_COOKIE}=sess-mm` },
+        headers: {
+          cookie: `${SESSION_COOKIE}=sess-mm; ${OAUTH_CTX_COOKIE}=${state}`,
+        },
       },
       env,
     );
@@ -531,7 +643,9 @@ describe("Google OAuth", () => {
       `/api/auth/google/callback?code=abc&state=${state}`,
       {
         method: "GET",
-        headers: { cookie: `${SESSION_COOKIE}=sess-want` },
+        headers: {
+          cookie: `${SESSION_COOKIE}=sess-want; ${OAUTH_CTX_COOKIE}=${state}`,
+        },
       },
       env,
     );

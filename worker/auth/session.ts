@@ -102,6 +102,17 @@ export async function requireUser(c: AuthContext): Promise<string> {
   return record.userId;
 }
 
+/** Session userId if cookie+KV are valid; otherwise null (no throw). */
+export async function peekSessionUserId(
+  c: AuthContext,
+): Promise<string | null> {
+  try {
+    return await requireUser(c);
+  } catch {
+    return null;
+  }
+}
+
 /** Parse a session JSON blob (for unit tests / helpers). */
 export function parseSessionRecord(raw: string): SessionRecord | null {
   try {

@@ -3,6 +3,9 @@ import {
   type GoogleOAuthIntent,
 } from "./google";
 
+/** HttpOnly cookie set at /google/start; must match `state` on callback/replay. */
+export const OAUTH_CTX_COOKIE = "sp_oauth";
+
 /** Short TTL so a duplicate iOS callback can replay without re-hitting Google. */
 export const OAUTH_DONE_TTL_SECONDS = 120;
 
