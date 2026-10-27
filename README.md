@@ -32,7 +32,7 @@ node scripts/fetch-ocr-assets.mjs      # public/ocr for occlusion Suggest region
 npm run dev
 ```
 
-**Optional PDF figures (Docling):** not required for core dev. To extract figures from PDFs locally, start [docling-serve](https://github.com/docling-project/docling-serve) via `docker compose -f docker-compose.docling.yml up -d`, then set in `.dev.vars` both `DOCLING_URL=http://127.0.0.1:5001` and `DOCLING_API_KEY=dev-docling-key` (must match compose). Production hosting checklist: [docs/docling-prod.md](docs/docling-prod.md).
+**Optional PDF figures (Docling):** not required for core dev. Fast uploads never call Docling. For Accurate extraction locally, start [docling-serve](https://github.com/docling-project/docling-serve) via `docker compose -f docker-compose.docling.yml up -d`, set in `.dev.vars` both `DOCLING_URL=http://127.0.0.1:5001` and `DOCLING_API_KEY=dev-docling-key` (must match compose), and choose **Accurate** in the create-material stepper when uploading a PDF. Production hosting checklist: [docs/docling-prod.md](docs/docling-prod.md).
 
 ## CI / CD
 

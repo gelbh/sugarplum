@@ -46,6 +46,7 @@ type GenerationJobRow = {
   progress_json: string | null;
   created_at: string;
   finished_at: string | null;
+  figure_extract_mode?: string;
 };
 
 type UserSecretRow = {
@@ -321,6 +322,17 @@ export function createTestEnv(opts?: {
             kind: material.kind,
             r2_key: material.r2_key,
             status: material.status,
+          } as T;
+        }
+        if (
+          normalized.startsWith(
+            "SELECT figure_extract_mode FROM generation_jobs WHERE id =",
+          )
+        ) {
+          const job = generationJobs.get(bound[0] as string);
+          if (!job) return null;
+          return {
+            figure_extract_mode: job.figure_extract_mode ?? "fast",
           } as T;
         }
         if (
@@ -1002,6 +1014,7 @@ export function createTestEnv(opts?: {
             coverage_json,
             created_at,
             finished_at,
+            figure_extract_mode,
           ] = bound as [
             string,
             string,
@@ -1010,6 +1023,7 @@ export function createTestEnv(opts?: {
             string | null,
             string,
             string | null,
+            string | undefined,
           ];
           generationJobs.set(id, {
             id,
@@ -1020,6 +1034,7 @@ export function createTestEnv(opts?: {
             progress_json: null,
             created_at,
             finished_at,
+            figure_extract_mode: figure_extract_mode ?? "fast",
           });
         } else if (
           normalized.startsWith(

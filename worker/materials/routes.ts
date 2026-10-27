@@ -3,7 +3,10 @@ import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
-import { enqueueGeneration } from "../generation/enqueue";
+import {
+  enqueueGeneration,
+  type FigureExtractMode,
+} from "../generation/enqueue";
 import { MAX_FILE_BYTES, MAX_IMAGE_BYTES, MAX_PASTE_BYTES } from "./limits";
 import { MAX_FIGURES_PER_PDF } from "./docling";
 import { figureR2Key } from "./figures";
@@ -652,6 +655,30 @@ materialRoutes.post("/:id/complete", async (c) => {
     });
   }
 
+  let figureExtractMode: FigureExtractMode | undefined;
+  const rawBody = await c.req.text();
+  if (rawBody.trim()) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(rawBody);
+    } catch {
+      throw new HTTPException(400, { message: "Invalid JSON body" });
+    }
+    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new HTTPException(400, { message: "Invalid JSON body" });
+    }
+    const body = parsed as { figureExtractMode?: unknown };
+    const rawMode = body.figureExtractMode;
+    if (rawMode !== undefined) {
+      if (rawMode !== "fast" && rawMode !== "accurate") {
+        throw new HTTPException(400, {
+          message: "Invalid figureExtractMode",
+        });
+      }
+      figureExtractMode = rawMode;
+    }
+  }
+
   const cas = await db
     .prepare("UPDATE materials SET status = ? WHERE id = ? AND status = ?")
     .bind(FILE_READY, materialId, FILE_UPLOADING)
@@ -668,6 +695,7 @@ materialRoutes.post("/:id/complete", async (c) => {
     : await enqueueGeneration(c.env, {
         materialId,
         deckId: material.deck_id,
+        figureExtractMode,
       });
 
   return c.json({

@@ -78,36 +78,72 @@ function visionLlm() {
   } satisfies LlmAdapter;
 }
 
+function mockDoclingCropFetch(onCall?: () => void) {
+  return vi.fn(async () => {
+    onCall?.();
+    const uri = `data:image/png;base64,${btoa("crop")}`;
+    return new Response(
+      JSON.stringify({
+        document: {
+          json_content: JSON.stringify({
+            pictures: [
+              {
+                prov: [{ page_no: 1 }],
+                image: { uri },
+              },
+            ],
+          }),
+        },
+      }),
+      { status: 200 },
+    );
+  }) as typeof fetch;
+}
+
 describe("PDF consumer figure stage", () => {
-  it("generates figure cards and stores the crop media key", async () => {
+  it("fast mode does not call Docling even when DOCLING_URL is set", async () => {
     const env = createTestEnv();
     seedPdf(env);
     env.DOCLING_URL = "http://docling.test";
     env.DOCLING_API_KEY = "test-key";
+    const fetchFn = vi.fn(async () => new Response("{}", { status: 200 }));
     const oldFetch = globalThis.fetch;
-    globalThis.fetch = vi.fn(async () => {
-      const uri = `data:image/png;base64,${btoa("crop")}`;
-      return new Response(
-        JSON.stringify({
-          document: {
-            json_content: JSON.stringify({
-              pictures: [
-                {
-                  prov: [{ page_no: 1 }],
-                  image: { uri },
-                },
-              ],
-            }),
-          },
-        }),
-        { status: 200 },
-      );
-    }) as typeof fetch;
+    globalThis.fetch = fetchFn as typeof fetch;
 
     try {
       const jobId = await enqueueGeneration(env, {
         materialId: "mat-pdf",
         deckId: "deck-a",
+      });
+      await processGenerateJob(
+        env,
+        { jobId, materialId: "mat-pdf", deckId: "deck-a" },
+        { llm: visionLlm() },
+      );
+
+      expect(fetchFn).not.toHaveBeenCalled();
+      expect(env.getGenerationJobs()[0]?.status).toBe("needs_review");
+      expect(
+        env.getCards().every((card) => card.media_r2_keys_json === null),
+      ).toBe(true);
+    } finally {
+      globalThis.fetch = oldFetch;
+    }
+  });
+
+  it("accurate mode calls Docling and stores crop media keys", async () => {
+    const env = createTestEnv();
+    seedPdf(env);
+    env.DOCLING_URL = "http://docling.test";
+    env.DOCLING_API_KEY = "test-key";
+    const oldFetch = globalThis.fetch;
+    globalThis.fetch = mockDoclingCropFetch();
+
+    try {
+      const jobId = await enqueueGeneration(env, {
+        materialId: "mat-pdf",
+        deckId: "deck-a",
+        figureExtractMode: "accurate",
       });
       const llm = visionLlm();
       await processGenerateJob(
@@ -116,6 +152,7 @@ describe("PDF consumer figure stage", () => {
         { llm },
       );
 
+      expect(globalThis.fetch).toHaveBeenCalled();
       expect(
         env.getGenerationJobs()[0]?.status,
         env.getGenerationJobs()[0]?.error ?? "",
@@ -137,6 +174,46 @@ describe("PDF consumer figure stage", () => {
     }
   });
 
+  it("accurate mode emits indeterminate figures progress before Docling returns", async () => {
+    const env = createTestEnv();
+    seedPdf(env);
+    env.DOCLING_URL = "http://docling.test";
+    env.DOCLING_API_KEY = "test-key";
+    const seen: Array<{ stage: string; total: number; label: string }> = [];
+    const oldFetch = globalThis.fetch;
+    globalThis.fetch = mockDoclingCropFetch(() => {
+      const job = env.getGenerationJobs()[0];
+      if (job?.progress_json) {
+        seen.push(JSON.parse(job.progress_json));
+      }
+    });
+
+    try {
+      const jobId = await enqueueGeneration(env, {
+        materialId: "mat-pdf",
+        deckId: "deck-a",
+        figureExtractMode: "accurate",
+      });
+      await processGenerateJob(
+        env,
+        { jobId, materialId: "mat-pdf", deckId: "deck-a" },
+        { llm: visionLlm() },
+      );
+
+      expect(seen.length).toBeGreaterThanOrEqual(1);
+      expect(
+        seen.some(
+          (p) =>
+            p.stage === "figures" &&
+            p.total === 0 &&
+            /Waking figure extractor|Detecting figures/.test(p.label),
+        ),
+      ).toBe(true);
+    } finally {
+      globalThis.fetch = oldFetch;
+    }
+  });
+
   it("keeps text generation working when Docling fails", async () => {
     const env = createTestEnv();
     seedPdf(env);
@@ -149,6 +226,7 @@ describe("PDF consumer figure stage", () => {
       const jobId = await enqueueGeneration(env, {
         materialId: "mat-pdf",
         deckId: "deck-a",
+        figureExtractMode: "accurate",
       });
       await processGenerateJob(
         env,
@@ -188,6 +266,34 @@ describe("PDF consumer figure stage", () => {
       expect.objectContaining({ image: expect.any(Object) }),
     );
     expect(env.getCards().some((card) => card.media_r2_keys_json)).toBe(true);
+  });
+
+  it("accurate mode skips Docling when client ready crops win", async () => {
+    const env = createTestEnv();
+    seedPdf(env, true);
+    env.DOCLING_URL = "http://docling.test";
+    env.DOCLING_API_KEY = "test-key";
+    const fetchFn = vi.fn(async () => new Response("{}", { status: 200 }));
+    const oldFetch = globalThis.fetch;
+    globalThis.fetch = fetchFn as typeof fetch;
+
+    try {
+      const jobId = await enqueueGeneration(env, {
+        materialId: "mat-pdf",
+        deckId: "deck-a",
+        figureExtractMode: "accurate",
+      });
+      await processGenerateJob(
+        env,
+        { jobId, materialId: "mat-pdf", deckId: "deck-a" },
+        { llm: visionLlm() },
+      );
+
+      expect(fetchFn).not.toHaveBeenCalled();
+      expect(env.getCards().some((card) => card.media_r2_keys_json)).toBe(true);
+    } finally {
+      globalThis.fetch = oldFetch;
+    }
   });
 
   it("allows figure-only generation when PDF text is empty", async () => {
@@ -236,6 +342,7 @@ describe("PDF consumer figure stage", () => {
       const jobId = await enqueueGeneration(env, {
         materialId: "mat-pdf",
         deckId: "deck-a",
+        figureExtractMode: "accurate",
       });
       await processGenerateJob(
         env,
