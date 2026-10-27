@@ -28,6 +28,7 @@ import {
 } from "../api/client";
 import { guestPasteToCards } from "../guest/pasteToCards";
 import { guestAddAcceptedCards } from "../guest/store";
+import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
 import { FigureSuggestPanel } from "./FigureSuggestPanel";
 import { stepperSx } from "./stepperSx";
 
@@ -486,6 +487,7 @@ export default function CreateMaterialStepper({
                       <FigureSuggestPanel
                         pdfFile={uploadFile}
                         disabled={busy || !selectedDeckId}
+                        crops={figureFiles}
                         onCropsChange={setFigureFiles}
                       />
                       <Button
@@ -504,7 +506,9 @@ export default function CreateMaterialStepper({
                           onChange={(ev) => {
                             const picked = Array.from(ev.target.files ?? []);
                             // Suggest replaces via onCropsChange; file input appends.
-                            setFigureFiles((prev) => [...prev, ...picked]);
+                            setFigureFiles((prev) =>
+                              [...prev, ...picked].slice(0, MAX_CLIENT_FIGURES),
+                            );
                             ev.target.value = "";
                           }}
                         />

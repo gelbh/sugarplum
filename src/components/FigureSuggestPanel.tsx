@@ -33,6 +33,8 @@ import {
 export type FigureSuggestPanelProps = {
   pdfFile: File;
   disabled?: boolean;
+  /** Controlled crop list (parent owns state). */
+  crops: File[];
   onCropsChange: (files: File[]) => void;
 };
 
@@ -70,6 +72,7 @@ function pointerToCss(
 export function FigureSuggestPanel({
   pdfFile,
   disabled = false,
+  crops,
   onCropsChange,
 }: FigureSuggestPanelProps) {
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -80,7 +83,6 @@ export function FigureSuggestPanel({
   const [activePage, setActivePage] = useState(0);
   const [thumbUrls, setThumbUrls] = useState<(string | null)[]>([]);
   const [suggestions, setSuggestions] = useState<SuggestedBox[]>([]);
-  const [cropFiles, setCropFiles] = useState<File[]>([]);
   const [drag, setDrag] = useState<DragRect | null>(null);
   const [cropNotice, setCropNotice] = useState<string | null>(null);
   const [pageSize, setPageSize] = useState({ w: 0, h: 0 });
@@ -90,15 +92,15 @@ export function FigureSuggestPanel({
   const pageViewRef = useRef<HTMLDivElement | null>(null);
   const displayCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const cropSeqRef = useRef(0);
+  const cropsRef = useRef(crops);
+  cropsRef.current = crops;
   const onCropsChangeRef = useRef(onCropsChange);
   onCropsChangeRef.current = onCropsChange;
 
   const scanCount = Math.min(pageCount, MAX_PAGES_TO_SCAN);
 
   const pushCrops = useCallback((next: File[]) => {
-    const capped = next.slice(0, MAX_CLIENT_FIGURES);
-    setCropFiles(capped);
-    onCropsChangeRef.current(capped);
+    onCropsChangeRef.current(next.slice(0, MAX_CLIENT_FIGURES));
   }, []);
 
   const ensurePageCanvas = useCallback(
@@ -247,13 +249,13 @@ export function FigureSuggestPanel({
     setBusyAccept(true);
     setCropNotice(null);
     try {
-      const room = MAX_CLIENT_FIGURES - cropFiles.length;
+      const room = MAX_CLIENT_FIGURES - cropsRef.current.length;
       if (room <= 0) {
         setCropNotice(`Figure crop limit is ${MAX_CLIENT_FIGURES}.`);
         return;
       }
       const toAccept = suggestions.slice(0, room);
-      const next = [...cropFiles];
+      const next = [...cropsRef.current];
       let skipped = 0;
       for (const box of toAccept) {
         const canvas = await ensurePageCanvas(box.pageIndex);
@@ -305,7 +307,7 @@ export function FigureSuggestPanel({
     h: number;
   }) {
     if (disabled) return;
-    if (cropFiles.length >= MAX_CLIENT_FIGURES) {
+    if (cropsRef.current.length >= MAX_CLIENT_FIGURES) {
       setCropNotice(`Figure crop limit is ${MAX_CLIENT_FIGURES}.`);
       return;
     }
@@ -332,7 +334,7 @@ export function FigureSuggestPanel({
         clamped,
         `figure-p${activePage + 1}-${cropSeqRef.current}.png`,
       );
-      pushCrops([...cropFiles, file]);
+      pushCrops([...cropsRef.current, file]);
       setCropNotice(null);
     } catch (err) {
       const msg =
@@ -419,7 +421,7 @@ export function FigureSuggestPanel({
             : `Accept remaining (${suggestions.length})`}
         </Button>
         <Typography variant="caption" color="text.secondary" alignSelf="center">
-          {cropFiles.length} / {MAX_CLIENT_FIGURES} accepted
+          {crops.length} / {MAX_CLIENT_FIGURES} accepted
           {scanCount < pageCount
             ? ` · scanning first ${scanCount} of ${pageCount} pages`
             : null}
