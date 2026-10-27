@@ -141,6 +141,20 @@ export function getJob(jobId: string) {
   return api<GenerationJob>(`/api/jobs/${jobId}`);
 }
 
+export type JobListItem = {
+  id: string;
+  status: string;
+  draft_count: number;
+  deck_title: string;
+  filename: string | null;
+  created_at: string;
+};
+
+/** Owner jobs that still have draft cards (newest first). */
+export function listJobsWithDrafts() {
+  return api<JobListItem[]>("/api/jobs");
+}
+
 export type UploadUrlResponse = {
   materialId: string;
   uploadUrl: string;

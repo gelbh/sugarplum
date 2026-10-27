@@ -428,6 +428,36 @@ export function createTestEnv(opts?: {
       },
       async all<T>(): Promise<{ results: T[] }> {
         if (
+          normalized.includes("FROM generation_jobs j") &&
+          normalized.includes("COUNT(c.id)") &&
+          normalized.includes("c.status = 'draft'") &&
+          normalized.includes("d.user_id =")
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...generationJobs.values()]
+            .map((job) => {
+              const material = materials.get(job.material_id);
+              if (!material) return null;
+              const deck = decks.get(material.deck_id);
+              if (!deck || deck.user_id !== userId) return null;
+              const draft_count = [...cards.values()].filter(
+                (c) => c.job_id === job.id && c.status === "draft",
+              ).length;
+              if (draft_count === 0) return null;
+              return {
+                id: job.id,
+                status: job.status,
+                created_at: job.created_at,
+                deck_title: deck.title,
+                filename: material.filename,
+                draft_count,
+              };
+            })
+            .filter((row): row is NonNullable<typeof row> => row != null)
+            .sort((a, b) => b.created_at.localeCompare(a.created_at));
+          return { results: rows as T[] };
+        }
+        if (
           normalized.includes("FROM decks WHERE user_id =") &&
           normalized.includes("ORDER BY created_at")
         ) {
@@ -785,6 +815,65 @@ export function createTestEnv(opts?: {
           const row = cards.get(id);
           if (row) cards.set(id, { ...row, status, updated_at });
         } else if (normalized.startsWith("INSERT INTO card_schedules")) {
+          // Conditional accept: INSERT…SELECT WHERE status/updated_at match CAS.
+          if (normalized.includes("SELECT c.id")) {
+            const [
+              due,
+              stability,
+              difficulty,
+              elapsed_days,
+              scheduled_days,
+              learning_steps,
+              reps,
+              lapses,
+              state,
+              last_review,
+              card_id,
+              status,
+              updated_at,
+            ] = bound as [
+              string,
+              number,
+              number,
+              number,
+              number,
+              number,
+              number,
+              number,
+              number,
+              string | null,
+              string,
+              string,
+              string,
+            ];
+            const card = cards.get(card_id);
+            if (
+              !card ||
+              card.status !== status ||
+              card.updated_at !== updated_at
+            ) {
+              return { success: true, meta: { changes: 0 } } as D1Result;
+            }
+            if (schedules.has(card_id)) {
+              throw new Error(
+                "UNIQUE constraint failed: card_schedules.card_id",
+              );
+            }
+            schedules.set(card_id, {
+              card_id,
+              due,
+              stability,
+              difficulty,
+              elapsed_days,
+              scheduled_days,
+              learning_steps,
+              reps,
+              lapses,
+              state,
+              last_review,
+            });
+            return { success: true, meta: { changes: 1 } } as D1Result;
+          }
           const [
             card_id,
             due,

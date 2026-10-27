@@ -91,8 +91,9 @@ async function acceptDraftCard(
 ): Promise<"accepted" | "conflict"> {
   const schedule = scheduleColumnsFromCard(newCard());
   const updatedAt = new Date().toISOString();
-  // Atomic: accepted status + schedule row succeed or fail together.
-  // Status CAS prevents concurrent reject/accept races.
+  // One batch: CAS update + schedule insert only when this accept won
+  // (INSERT…SELECT matches the new accepted row). CAS miss inserts 0 rows;
+  // INSERT failure rolls the batch back on D1 so status is not stranded.
   const results = await db.batch([
     db
       .prepare(
@@ -104,10 +105,12 @@ async function acceptDraftCard(
         `INSERT INTO card_schedules (
            card_id, due, stability, difficulty, elapsed_days, scheduled_days,
            learning_steps, reps, lapses, state, last_review
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         )
+         SELECT c.id, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+         FROM cards c
+         WHERE c.id = ? AND c.status = ? AND c.updated_at = ?`,
       )
       .bind(
-        cardId,
         schedule.due,
         schedule.stability,
         schedule.difficulty,
@@ -118,6 +121,9 @@ async function acceptDraftCard(
         schedule.lapses,
         schedule.state,
         schedule.last_review,
+        cardId,
+        "accepted",
+        updatedAt,
       ),
   ]);
   if (!results[0]?.meta.changes) return "conflict";
@@ -191,8 +197,9 @@ jobDraftRoutes.post("/:id/drafts/accept-all", async (c) => {
       const outcome = await acceptDraftCard(db, row.id);
       if (outcome === "accepted") accepted += 1;
       else failed += 1;
-    } catch {
-      // CAS/schedule race or D1 abort: count as failed, keep accepting the rest.
+    } catch (err) {
+      // Schedule race or D1 abort: count as failed, keep accepting the rest.
+      console.error("accept-all failed for card", row.id, err);
       failed += 1;
     }
   }

@@ -53,7 +53,8 @@ function isVocabTermLeft(left: string): boolean {
   return true;
 }
 
-const BULLET_PREFIX_RE = /^([•\u2022*]|\-\s|\*\s)/;
+// Require whitespace after - / * so emphasis like *ATP* is not a bullet.
+const BULLET_PREFIX_RE = /^([•\u2022]|[-*]\s)/;
 const TABLE_HEADER_LEFT_RE =
   /^(phylum|hosts?|family|genus|class|order|species|disease|pathology|lifecycle|life cycle|symptoms?|treatment|diagnosis|notes?)$/i;
 const GENERIC_SLIDE_RIGHT_RE =
