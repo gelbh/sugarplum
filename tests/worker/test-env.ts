@@ -287,6 +287,7 @@ export function createTestEnv(opts?: {
             progress_json: job.progress_json,
             created_at: job.created_at,
             finished_at: job.finished_at,
+            deck_id: material.deck_id,
           } as T;
         }
         // SELECT j.id ... WHERE d.user_id = ? AND j.status = 'needs_review' AND EXISTS (SELECT 1 FROM cards c WHERE c.job_id = j.id AND c.status = 'draft') ORDER BY j.created_at DESC LIMIT 1
@@ -639,6 +640,23 @@ export function createTestEnv(opts?: {
           });
         } else if (
           normalized.startsWith(
+            "UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = NULL, progress_json = NULL, finished_at = NULL WHERE id =",
+          )
+        ) {
+          const [status, id] = bound as [string, string];
+          const row = generationJobs.get(id);
+          if (row) {
+            generationJobs.set(id, {
+              ...row,
+              status,
+              error: null,
+              coverage_json: null,
+              progress_json: null,
+              finished_at: null,
+            });
+          }
+        } else if (
+          normalized.startsWith(
             "UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = ?, finished_at = ?",
           )
         ) {
@@ -814,6 +832,13 @@ export function createTestEnv(opts?: {
           const [status, updated_at, id] = bound as [string, string, string];
           const row = cards.get(id);
           if (row) cards.set(id, { ...row, status, updated_at });
+        } else if (normalized.startsWith("DELETE FROM cards WHERE job_id =")) {
+          const jobId = bound[0] as string;
+          for (const [id, card] of [...cards.entries()]) {
+            if (card.job_id !== jobId) continue;
+            cards.delete(id);
+            schedules.delete(id);
+          }
         } else if (normalized.startsWith("INSERT INTO card_schedules")) {
           // Conditional accept: INSERT…SELECT WHERE status/updated_at match CAS.
           if (normalized.includes("SELECT c.id")) {
