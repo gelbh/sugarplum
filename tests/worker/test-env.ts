@@ -233,6 +233,19 @@ export function createTestEnv(opts?: {
           return u ? ({ id: u.id, email: u.email } as T) : null;
         }
         if (
+          normalized.startsWith("SELECT id FROM subjects WHERE user_id =") &&
+          normalized.includes("title =")
+        ) {
+          const userId = bound[0] as string;
+          const title = bound[1] as string;
+          for (const subject of subjects.values()) {
+            if (subject.user_id === userId && subject.title === title) {
+              return { id: subject.id } as T;
+            }
+          }
+          return null;
+        }
+        if (
           normalized.includes("FROM subjects WHERE id =") &&
           normalized.includes("user_id =")
         ) {

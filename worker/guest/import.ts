@@ -4,6 +4,7 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
+import { foldDeckTitle } from "./titleKey";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -100,17 +101,63 @@ guestRoutes.post("/import", async (c) => {
   const clientToServer = new Map<string, string>();
   const statements: D1PreparedStatement[] = [];
 
-  // One Unfiled subject for the imported decks (matches subject hierarchy on main).
-  const subjectId = crypto.randomUUID();
-  statements.push(
-    db
+  const { results: existingDecks } = await db
+    .prepare(
+      "SELECT id, title, subject_id, created_at FROM decks WHERE user_id = ? ORDER BY created_at ASC",
+    )
+    .bind(userId)
+    .all<{
+      id: string;
+      title: string;
+      subject_id: string | null;
+      created_at: string;
+    }>();
+
+  type IndexedDeck = { id: string; created_at: string };
+  const byFold = new Map<string, IndexedDeck>();
+  for (const deck of existingDecks ?? []) {
+    const key = foldDeckTitle(deck.title);
+    const prev = byFold.get(key);
+    if (
+      !prev ||
+      deck.created_at < prev.created_at ||
+      (deck.created_at === prev.created_at && deck.id < prev.id)
+    ) {
+      byFold.set(key, { id: deck.id, created_at: deck.created_at });
+    }
+  }
+
+  let unfiledId: string | null = null;
+  async function ensureUnfiled(): Promise<string> {
+    if (unfiledId) return unfiledId;
+    const row = await db
       .prepare(
-        "INSERT INTO subjects (id, user_id, title, created_at) VALUES (?, ?, ?, ?)",
+        "SELECT id FROM subjects WHERE user_id = ? AND title = ? LIMIT 1",
       )
-      .bind(subjectId, userId, "Unfiled", now),
-  );
+      .bind(userId, "Unfiled")
+      .first<{ id: string }>();
+    if (row) {
+      unfiledId = row.id;
+      return unfiledId;
+    }
+    unfiledId = crypto.randomUUID();
+    statements.push(
+      db
+        .prepare(
+          "INSERT INTO subjects (id, user_id, title, created_at) VALUES (?, ?, ?, ?)",
+        )
+        .bind(unfiledId, userId, "Unfiled", now),
+    );
+    return unfiledId;
+  }
 
   for (const deck of decks) {
+    const hit = byFold.get(foldDeckTitle(deck.title));
+    if (hit) {
+      clientToServer.set(deck.clientId, hit.id);
+      continue;
+    }
+    const subjectId = await ensureUnfiled();
     const id = crypto.randomUUID();
     clientToServer.set(deck.clientId, id);
     statements.push(
