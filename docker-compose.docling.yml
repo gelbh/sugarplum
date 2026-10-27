@@ -1,0 +1,18 @@
+# Local docling-serve for PDF figure extraction during development.
+#
+# Start:
+#   docker compose -f docker-compose.docling.yml up -d
+#
+# Point the Worker at the service (local wrangler):
+#   DOCLING_URL=http://127.0.0.1:5001
+#
+# Smoke: open http://127.0.0.1:5001/docs (UI when DOCLING_SERVE_ENABLE_UI=1).
+# Stop: docker compose -f docker-compose.docling.yml down
+
+services:
+  docling-serve:
+    image: quay.io/docling-project/docling-serve
+    ports:
+      - "5001:5001"
+    environment:
+      DOCLING_SERVE_ENABLE_UI: "1"
