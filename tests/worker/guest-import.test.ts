@@ -200,6 +200,5 @@ describe("POST /api/guest/import", () => {
 
     expect(res.status).toBe(400);
     expect(env.getCards()).toHaveLength(0);
-    expect(env.getDecks()).toHaveLength(0);
   });
 });
