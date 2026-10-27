@@ -22,27 +22,32 @@ function readList(userId: string): PendingGrade[] {
   }
 }
 
-function writeList(userId: string, items: PendingGrade[]): void {
+/** Persist list; returns false on quota / private mode failure. */
+function writeList(userId: string, items: PendingGrade[]): boolean {
   try {
     localStorage.setItem(storageKey(userId), JSON.stringify(items));
+    return true;
   } catch {
-    /* quota / private mode */
+    return false;
   }
 }
 
-/** Append a pending grade for offline flush later. */
+/**
+ * Queue (or replace) a pending grade for offline flush later.
+ * Coalesces by cardId: last rating wins. Returns false if storage write failed.
+ */
 export function enqueuePendingGrade(
   userId: string,
   cardId: string,
   rating: 1 | 2 | 3 | 4,
-): void {
-  const items = readList(userId);
+): boolean {
+  const items = readList(userId).filter((p) => p.cardId !== cardId);
   items.push({
     cardId,
     rating,
     queuedAt: new Date().toISOString(),
   });
-  writeList(userId, items);
+  return writeList(userId, items);
 }
 
 /** Read pending grades for a user (empty if missing/corrupt). */
@@ -50,12 +55,17 @@ export function listPendingGrades(userId: string): PendingGrade[] {
   return readList(userId);
 }
 
+/** Card ids currently waiting to sync. */
+export function pendingCardIdSet(userId: string): Set<string> {
+  return new Set(readList(userId).map((p) => p.cardId));
+}
+
 /** Replace the entire pending queue for a user (e.g. after flush). */
 export function replacePendingGrades(
   userId: string,
   items: PendingGrade[],
-): void {
-  writeList(userId, items);
+): boolean {
+  return writeList(userId, items);
 }
 
 /** Drop pending grades for one user, or all keys with the pending prefix. */

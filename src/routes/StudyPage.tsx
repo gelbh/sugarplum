@@ -17,9 +17,7 @@ import Typography from "@mui/material/Typography";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
 import TodayIcon from "@mui/icons-material/Today";
-import CardFace, {
-  type OcclusionStudyFace,
-} from "../components/CardFace";
+import CardFace, { type OcclusionStudyFace } from "../components/CardFace";
 import GradeButtons from "../components/GradeButtons";
 import McqFace from "../components/McqFace";
 import {
@@ -34,11 +32,13 @@ import {
 import { isGuest } from "../guest/session";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { resolveCardGesture } from "../study/cardGestures";
-import { loadDueCache, saveDueCache } from "../study/dueCache";
 import {
-  enqueuePendingGrade,
-  listPendingGrades,
-} from "../study/pendingGrades";
+  filterDueExcludingPending,
+  loadDueCache,
+  pruneDueCacheCard,
+  saveDueCache,
+} from "../study/dueCache";
+import { enqueuePendingGrade, pendingCardIdSet } from "../study/pendingGrades";
 import {
   occlusionRevealAnswer,
   pickOcclusionRegion,
@@ -47,12 +47,8 @@ import {
   cardIdFromSearch,
   prioritizeDueCard,
 } from "../study/prioritizeDueCard";
-import {
-  formatFlushSummary,
-  isNetworkGradeError,
-  runPendingFlush,
-  type FlushSummary,
-} from "../study/runPendingFlush";
+import { isNetworkGradeError } from "../study/runPendingFlush";
+import { usePendingGradeSync } from "../study/usePendingGradeSync";
 import { useStudyZenMode } from "../study/useStudyZenMode";
 import { warmDueMedia } from "../study/warmDueMedia";
 
@@ -140,9 +136,6 @@ export default function StudyPage() {
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [offlineCopy, setOfflineCopy] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [pendingCount, setPendingCount] = useState(0);
-  const [syncSummary, setSyncSummary] = useState<string | null>(null);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
   const [deepLinkMiss, setDeepLinkMiss] = useState(false);
   const {
@@ -182,16 +175,6 @@ export default function StudyPage() {
     [],
   );
 
-  const refreshPendingCount = useCallback((uid: string) => {
-    setPendingCount(listPendingGrades(uid).length);
-  }, []);
-
-  const applyFlushSummary = useCallback((summary: FlushSummary | null) => {
-    if (!summary) return;
-    if (summary.applied <= 0 && summary.skipped <= 0) return;
-    setSyncSummary(formatFlushSummary(summary));
-  }, []);
-
   const load = useCallback(
     async (uid: string) => {
       const wanted = cardIdFromSearch(window.location.search);
@@ -204,7 +187,12 @@ export default function StudyPage() {
       } catch (err) {
         const cached = loadDueCache(uid);
         if (cached && cached.cards.length > 0) {
-          applyDueQueue(cached.cards, wanted);
+          const filtered = filterDueExcludingPending(
+            cached.cards,
+            pendingCardIdSet(uid),
+          );
+          if (filtered.length === 0) throw err;
+          applyDueQueue(filtered, wanted);
           setOfflineCopy(true);
           return;
         }
@@ -214,6 +202,22 @@ export default function StudyPage() {
     [applyDueQueue],
   );
 
+  const {
+    userId,
+    setUserId,
+    pendingCount,
+    syncSummary,
+    setSyncSummary,
+    refreshPendingCount,
+    flushOnMount,
+  } = usePendingGradeSync({
+    onDueRefreshed: (due) => {
+      applyDueQueue(due, cardIdFromSearch(window.location.search));
+      setOfflineCopy(false);
+    },
+    onDueRefreshFailed: (uid) => load(uid),
+  });
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -222,17 +226,8 @@ export default function StudyPage() {
         if (cancelled) return;
         setUserId(user.id);
         refreshPendingCount(user.id);
-        if (!isGuest()) {
-          try {
-            const summary = await runPendingFlush(user.id);
-            if (!cancelled) {
-              applyFlushSummary(summary);
-              refreshPendingCount(user.id);
-            }
-          } catch {
-            /* still load due / offline copy */
-          }
-        }
+        await flushOnMount(user.id);
+        if (cancelled) return;
         await load(user.id);
         if (!cancelled) {
           refreshPendingCount(user.id);
@@ -255,39 +250,7 @@ export default function StudyPage() {
     return () => {
       cancelled = true;
     };
-  }, [applyFlushSummary, endLoad, load, refreshPendingCount]);
-
-  useEffect(() => {
-    if (!userId || isGuest()) return;
-
-    function onOnline() {
-      if (!userId) return;
-      void (async () => {
-        try {
-          const summary = await runPendingFlush(userId);
-          applyFlushSummary(summary);
-          refreshPendingCount(userId);
-          if (summary && summary.applied > 0) {
-            if (summary.due) {
-              warmDueMedia(summary.due);
-              applyDueQueue(
-                summary.due,
-                cardIdFromSearch(window.location.search),
-              );
-              setOfflineCopy(false);
-            } else {
-              await load(userId);
-            }
-          }
-        } catch {
-          /* stay on current queue */
-        }
-      })();
-    }
-
-    window.addEventListener("online", onOnline);
-    return () => window.removeEventListener("online", onOnline);
-  }, [applyDueQueue, applyFlushSummary, load, refreshPendingCount, userId]);
+  }, [endLoad, flushOnMount, load, refreshPendingCount, setUserId]);
 
   const current = queue[0] ?? null;
   const mcqMode = isMcqCard(current);
@@ -339,7 +302,12 @@ export default function StudyPage() {
       begin();
 
       const queueOffline = (uid: string) => {
-        enqueuePendingGrade(uid, current.id, rating);
+        if (!enqueuePendingGrade(uid, current.id, rating)) {
+          setError("Could not save grade offline (storage full).");
+          end(false);
+          return false;
+        }
+        pruneDueCacheCard(uid, current.id);
         refreshPendingCount(uid);
         advanceAfterGrade(fromMcq);
         end();
@@ -578,8 +546,8 @@ export default function StudyPage() {
             </Alert>
           ) : pendingCount > 0 ? (
             <Alert severity="info">
-              {pendingCount}{" "}
-              {pendingCount === 1 ? "grade" : "grades"} waiting to sync.
+              {pendingCount} {pendingCount === 1 ? "grade" : "grades"} waiting
+              to sync.
             </Alert>
           ) : null}
           {deepLinkMiss ? (

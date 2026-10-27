@@ -2,6 +2,7 @@ import react from "@vitejs/plugin-react";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+import { STUDY_MEDIA_CACHE } from "./src/study/studyMediaCache";
 
 export default defineConfig({
   plugins: [
@@ -29,8 +30,18 @@ export default defineConfig({
         theme_color: "#5B2C6F",
         background_color: "#1e0d1b",
         icons: [
-          { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
-          { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+          {
+            src: "/icon-192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "any",
+          },
+          {
+            src: "/icon-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any",
+          },
           {
             src: "/maskable-icon-512.png",
             sizes: "512x512",
@@ -50,7 +61,8 @@ export default defineConfig({
               url.pathname.startsWith("/api/materials/media"),
             handler: "CacheFirst",
             options: {
-              cacheName: "sugarplum-study-media",
+              cacheName: STUDY_MEDIA_CACHE,
+              cacheableResponse: { statuses: [200] },
               expiration: {
                 maxEntries: 200,
                 maxAgeSeconds: 60 * 60 * 24 * 7,

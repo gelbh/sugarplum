@@ -3,15 +3,13 @@ import type { CardDraftView } from "../../src/api/client";
 import {
   formatFlushSummary,
   isNetworkGradeError,
+  mergeFlushRemaining,
   runPendingFlush,
 } from "../../src/study/runPendingFlush";
 import type { PendingGrade } from "../../src/study/pendingGrades";
 import { ApiError } from "../../src/api/client";
 
-function grade(
-  cardId: string,
-  rating: 1 | 2 | 3 | 4,
-): PendingGrade {
+function grade(cardId: string, rating: 1 | 2 | 3 | 4): PendingGrade {
   return { cardId, rating, queuedAt: "2026-01-01T00:00:00.000Z" };
 }
 
@@ -101,6 +99,99 @@ describe("runPendingFlush", () => {
     expect(result).toEqual({ applied: 1, skipped: 0, due: null });
     expect(saveDue).not.toHaveBeenCalled();
   });
+
+  it("merges mid-flush enqueues into remaining instead of wiping them", async () => {
+    const snapshot = [grade("c1", 1)];
+    const midFlush = [
+      grade("c1", 1),
+      {
+        cardId: "c9",
+        rating: 3 as const,
+        queuedAt: "2026-02-01T00:00:00.000Z",
+      },
+    ];
+    let calls = 0;
+    const listPending = vi.fn(() => {
+      calls++;
+      return calls === 1 ? snapshot : midFlush;
+    });
+    const replacePending = vi.fn();
+    const listDue = vi
+      .fn()
+      .mockResolvedValueOnce([card("c1")])
+      .mockResolvedValueOnce([]);
+    await runPendingFlush("u1", {
+      isGuestFn: () => false,
+      listPending,
+      listDue,
+      review: async () => ({}),
+      replacePending,
+      saveDue: () => {},
+    });
+    expect(replacePending).toHaveBeenCalledWith("u1", [
+      {
+        cardId: "c9",
+        rating: 3,
+        queuedAt: "2026-02-01T00:00:00.000Z",
+      },
+    ]);
+  });
+
+  it("shares one in-flight flush per userId", async () => {
+    let resolveReview!: () => void;
+    const reviewGate = new Promise<void>((r) => {
+      resolveReview = r;
+    });
+    const review = vi.fn(async () => {
+      await reviewGate;
+      return {};
+    });
+    const listDue = vi.fn().mockResolvedValue([card("c1")]);
+    const p1 = runPendingFlush("u1", {
+      isGuestFn: () => false,
+      listPending: () => [grade("c1", 1)],
+      listDue,
+      review,
+      replacePending: () => {},
+      saveDue: () => {},
+    });
+    const p2 = runPendingFlush("u1", {
+      isGuestFn: () => false,
+      listPending: () => [grade("c1", 1)],
+      listDue,
+      review,
+      replacePending: () => {},
+      saveDue: () => {},
+    });
+    expect(p1).toBe(p2);
+    resolveReview();
+    await p1;
+    expect(review).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("mergeFlushRemaining", () => {
+  it("keeps remaining and mid-flush grades, coalesced by cardId", () => {
+    const snap = [grade("c1", 1)];
+    const remaining = [grade("c2", 2)];
+    const after = [
+      grade("c1", 1),
+      grade("c2", 2),
+      {
+        cardId: "c3",
+        rating: 3 as const,
+        queuedAt: "2026-03-01T00:00:00.000Z",
+      },
+    ];
+    expect(mergeFlushRemaining(remaining, after, snap)).toEqual([
+      grade("c2", 2),
+      {
+        cardId: "c3",
+        rating: 3,
+        queuedAt: "2026-03-01T00:00:00.000Z",
+      },
+    ]);
+  });
 });
 
 describe("formatFlushSummary", () => {
@@ -111,9 +202,7 @@ describe("formatFlushSummary", () => {
     expect(formatFlushSummary({ applied: 1, skipped: 0 })).toBe(
       "Synced 1 grade.",
     );
-    expect(formatFlushSummary({ applied: 0, skipped: 3 })).toBe(
-      "Skipped 3.",
-    );
+    expect(formatFlushSummary({ applied: 0, skipped: 3 })).toBe("Skipped 3.");
   });
 });
 
@@ -121,5 +210,6 @@ describe("isNetworkGradeError", () => {
   it("treats ApiError as non-network and TypeError as network", () => {
     expect(isNetworkGradeError(new ApiError(500, "boom"))).toBe(false);
     expect(isNetworkGradeError(new TypeError("Failed to fetch"))).toBe(true);
+    expect(isNetworkGradeError(new Error("boom"))).toBe(false);
   });
 });

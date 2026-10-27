@@ -18,21 +18,25 @@ export async function flushPendingGrades(
   deps: FlushDeps,
 ): Promise<{ applied: number; skipped: number; remaining: PendingGrade[] }> {
   const isSkipStatus = deps.isSkipStatus ?? defaultIsSkipStatus;
+  const dueIds = deps.dueIds;
   let applied = 0;
   let skipped = 0;
 
   for (let i = 0; i < deps.pending.length; i++) {
     const item = deps.pending[i]!;
-    if (!deps.dueIds.has(item.cardId)) {
+    if (!dueIds.has(item.cardId)) {
       skipped++;
       continue;
     }
     try {
       await deps.review(item.cardId, item.rating);
       applied++;
+      // Prevent a duplicate pending for the same card from applying again.
+      dueIds.delete(item.cardId);
     } catch (err) {
       if (isSkipStatus(err)) {
         skipped++;
+        dueIds.delete(item.cardId);
         continue;
       }
       return {

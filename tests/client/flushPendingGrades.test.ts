@@ -72,14 +72,28 @@ describe("flushPendingGrades", () => {
     expect(result.remaining).toEqual([grade("b", 2), grade("c", 3)]);
   });
 
+  it("applies only once when the same cardId appears twice in pending", async () => {
+    const review = vi.fn().mockResolvedValue({});
+    const pending = [grade("c1", 1), grade("c1", 4)];
+    const dueIds = new Set(["c1"]);
+    const result = await flushPendingGrades({
+      pending,
+      dueIds,
+      review,
+    });
+    expect(review).toHaveBeenCalledTimes(1);
+    expect(review).toHaveBeenCalledWith("c1", 1);
+    expect(result).toEqual({ applied: 1, skipped: 1, remaining: [] });
+    expect(dueIds.has("c1")).toBe(false);
+  });
+
   it("uses custom isSkipStatus when provided", async () => {
     const review = vi.fn().mockRejectedValue(new ApiError(409, "conflict"));
     const result = await flushPendingGrades({
       pending: [grade("a", 1), grade("b", 2)],
       dueIds: new Set(["a", "b"]),
       review,
-      isSkipStatus: (err) =>
-        err instanceof ApiError && err.status === 409,
+      isSkipStatus: (err) => err instanceof ApiError && err.status === 409,
     });
     expect(result).toEqual({ applied: 0, skipped: 2, remaining: [] });
   });

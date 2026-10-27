@@ -14,20 +14,19 @@ import {
   getJourney,
   type StrugglingRow,
 } from "../api/client";
-import { isGuest } from "../guest/session";
 import { deriveJourney } from "../journey/derive";
 import type { JourneyView } from "../journey/types";
 import JourneyNextButton from "../components/JourneyNextButton";
 import StrugglingList from "../components/StrugglingList";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { useTrackedOp } from "../progress/useTrackedOp";
-import { loadDueCache, saveDueCache } from "../study/dueCache";
-import { listPendingGrades } from "../study/pendingGrades";
 import {
-  formatFlushSummary,
-  runPendingFlush,
-  type FlushSummary,
-} from "../study/runPendingFlush";
+  filterDueExcludingPending,
+  loadDueCache,
+  saveDueCache,
+} from "../study/dueCache";
+import { pendingCardIdSet } from "../study/pendingGrades";
+import { usePendingGradeSync } from "../study/usePendingGradeSync";
 import { warmDueMedia } from "../study/warmDueMedia";
 
 /** Home: giant due proof + Start study (today-dash-b). */
@@ -35,9 +34,6 @@ export default function TodayPage() {
   const [dueCount, setDueCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [offlineCopy, setOfflineCopy] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [pendingCount, setPendingCount] = useState(0);
-  const [syncSummary, setSyncSummary] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [view, setView] = useState<JourneyView | null>(null);
   /** undefined = hide (loading/fail); array = show section (may be empty). */
@@ -48,15 +44,32 @@ export default function TodayPage() {
     trackOnMount: true,
   });
 
-  const refreshPendingCount = useCallback((uid: string) => {
-    setPendingCount(listPendingGrades(uid).length);
+  const refreshDueFromNetwork = useCallback(async (uid: string) => {
+    try {
+      const due = await listDueCards();
+      saveDueCache(uid, due);
+      warmDueMedia(due);
+      setDueCount(due.length);
+      setOfflineCopy(false);
+    } catch {
+      /* keep current due count */
+    }
   }, []);
 
-  const applyFlushSummary = useCallback((summary: FlushSummary | null) => {
-    if (!summary) return;
-    if (summary.applied <= 0 && summary.skipped <= 0) return;
-    setSyncSummary(formatFlushSummary(summary));
-  }, []);
+  const {
+    setUserId,
+    pendingCount,
+    syncSummary,
+    setSyncSummary,
+    refreshPendingCount,
+    flushOnMount,
+  } = usePendingGradeSync({
+    onDueRefreshed: (due) => {
+      setDueCount(due.length);
+      setOfflineCopy(false);
+    },
+    onDueRefreshFailed: (uid) => refreshDueFromNetwork(uid),
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -66,17 +79,8 @@ export default function TodayPage() {
         if (cancelled) return;
         setUserId(user.id);
         refreshPendingCount(user.id);
-        if (!isGuest()) {
-          try {
-            const summary = await runPendingFlush(user.id);
-            if (!cancelled) {
-              applyFlushSummary(summary);
-              refreshPendingCount(user.id);
-            }
-          } catch {
-            /* still load due / offline copy */
-          }
-        }
+        await flushOnMount(user.id);
+        if (cancelled) return;
         try {
           const due = await listDueCards();
           if (cancelled) return;
@@ -88,7 +92,11 @@ export default function TodayPage() {
           if (cancelled) return;
           const cached = loadDueCache(user.id);
           if (cached) {
-            setDueCount(cached.cards.length);
+            const filtered = filterDueExcludingPending(
+              cached.cards,
+              pendingCardIdSet(user.id),
+            );
+            setDueCount(filtered.length);
             setOfflineCopy(true);
           } else {
             throw err;
@@ -125,43 +133,7 @@ export default function TodayPage() {
     return () => {
       cancelled = true;
     };
-  }, [applyFlushSummary, endLoad, refreshPendingCount]);
-
-  useEffect(() => {
-    if (!userId || isGuest()) return;
-
-    function onOnline() {
-      if (!userId) return;
-      void (async () => {
-        try {
-          const summary = await runPendingFlush(userId);
-          applyFlushSummary(summary);
-          refreshPendingCount(userId);
-          if (summary && summary.applied > 0) {
-            if (summary.due) {
-              setDueCount(summary.due.length);
-              setOfflineCopy(false);
-            } else {
-              try {
-                const due = await listDueCards();
-                saveDueCache(userId, due);
-                warmDueMedia(due);
-                setDueCount(due.length);
-                setOfflineCopy(false);
-              } catch {
-                /* keep current due count */
-              }
-            }
-          }
-        } catch {
-          /* keep current due count */
-        }
-      })();
-    }
-
-    window.addEventListener("online", onOnline);
-    return () => window.removeEventListener("online", onOnline);
-  }, [applyFlushSummary, refreshPendingCount, userId]);
+  }, [endLoad, flushOnMount, refreshPendingCount, setUserId]);
 
   if (!ready) {
     return (
@@ -187,7 +159,9 @@ export default function TodayPage() {
         minHeight: { md: "calc(100vh - 32px)" },
         display: "flex",
         flexDirection: "column",
-        justifyContent: { md: strugglingTop !== undefined ? "flex-start" : "center" },
+        justifyContent: {
+          md: strugglingTop !== undefined ? "flex-start" : "center",
+        },
       }}
     >
       <Stack spacing={3} alignItems="center" textAlign="center">
@@ -245,8 +219,8 @@ export default function TodayPage() {
           </Alert>
         ) : pendingCount > 0 ? (
           <Alert severity="info" sx={{ width: "100%", textAlign: "left" }}>
-            {pendingCount}{" "}
-            {pendingCount === 1 ? "grade" : "grades"} waiting to sync.
+            {pendingCount} {pendingCount === 1 ? "grade" : "grades"} waiting to
+            sync.
           </Alert>
         ) : null}
 
