@@ -19,6 +19,8 @@
     "aws4fetch": "^1.0.20",
     "hono": "^4.9.12",
     "jszip": "^3.10.2",
+    "onnxruntime-web": "^1.31.1",
+    "pdfjs-dist": "^6.4.299",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "ts-fsrs": "^5.2.3",

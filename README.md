@@ -27,6 +27,7 @@ React + Vite PWA on Cloudflare Workers, Material UI, D1 / R2 / KV / Queues / Wor
 
 ```bash
 npm install
+node scripts/fetch-layout-assets.mjs   # PP-DocLayout-L ONNX + ORT wasm (gitignored .onnx)
 npm run dev
 ```
 

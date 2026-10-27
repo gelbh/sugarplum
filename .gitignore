@@ -8,3 +8,5 @@ dist/
 *.log
 .DS_Store
 public/logo-photo.png
+# Large; fetch after clone: node scripts/fetch-layout-assets.mjs
+public/models/*.onnx
