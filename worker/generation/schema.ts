@@ -18,6 +18,38 @@ export function assertSingleCloze(front: string): void {
   }
 }
 
+/**
+ * MCQ: 3–5 unique trimmed non-empty options; back must match one option.
+ * Returns trimmed fields so persist/grade use the same exact strings.
+ */
+export function assertValidMcqOptions(
+  back: string,
+  options: string[] | undefined,
+): { back: string; options: string[] } {
+  if (options === undefined) {
+    throw new Error("MCQ requires options");
+  }
+  const trimmed = options.map((o) => o.trim());
+  if (trimmed.length < 3 || trimmed.length > 5) {
+    throw new Error("MCQ must have 3–5 options");
+  }
+  if (trimmed.some((o) => o.length === 0)) {
+    throw new Error("MCQ options must be non-empty");
+  }
+  const seen = new Set<string>();
+  for (const o of trimmed) {
+    if (seen.has(o)) {
+      throw new Error("MCQ options must be unique");
+    }
+    seen.add(o);
+  }
+  const answer = back.trim();
+  if (!trimmed.includes(answer)) {
+    throw new Error("MCQ back must be one of the options");
+  }
+  return { back: answer, options: trimmed };
+}
+
 export const ProvenanceSchema = z.object({
   pages: z.array(z.number().int().positive()),
   excerpt: z.string(),
@@ -25,21 +57,34 @@ export const ProvenanceSchema = z.object({
 
 export const CardDraftSchema = z
   .object({
-    type: z.enum(["qa", "cloze", "image_label", "diagram"]),
+    type: z.enum(["qa", "cloze", "image_label", "diagram", "mcq"]),
     front: z.string().min(1),
     back: z.string().min(1),
+    options: z.array(z.string()).optional(),
     provenance: ProvenanceSchema,
   })
   .superRefine((draft, ctx) => {
-    if (draft.type !== "cloze") return;
-    try {
-      assertSingleCloze(draft.front);
-    } catch (err) {
-      ctx.addIssue({
-        code: "custom",
-        message: err instanceof Error ? err.message : "Invalid cloze",
-        path: ["front"],
-      });
+    if (draft.type === "cloze") {
+      try {
+        assertSingleCloze(draft.front);
+      } catch (err) {
+        ctx.addIssue({
+          code: "custom",
+          message: err instanceof Error ? err.message : "Invalid cloze",
+          path: ["front"],
+        });
+      }
+    }
+    if (draft.type === "mcq") {
+      try {
+        assertValidMcqOptions(draft.back, draft.options);
+      } catch (err) {
+        ctx.addIssue({
+          code: "custom",
+          message: err instanceof Error ? err.message : "Invalid MCQ",
+          path: ["options"],
+        });
+      }
     }
   });
 

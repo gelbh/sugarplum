@@ -12,6 +12,20 @@ function qa(front: string, back: string): CardDraft {
   };
 }
 
+function mcq(
+  front: string,
+  back: string,
+  options: string[],
+): CardDraft {
+  return {
+    type: "mcq",
+    front,
+    back,
+    options,
+    provenance: { pages: [1], excerpt: front },
+  };
+}
+
 describe("filterDraftsByQuality", () => {
   it("drops short fronts, table-header dumps, and multi-sentence backs", () => {
     const kept = qa("What is ATP?", "Adenosine triphosphate");
@@ -45,6 +59,31 @@ describe("filterDraftsByQuality", () => {
     expect(filterDraftsByQuality(drafts).map((d) => d.front)).toEqual([
       "mitochondria",
     ]);
+  });
+
+  it("keeps valid mcq and drops invalid option sets", () => {
+    const valid = mcq("What is ATP?", "Adenosine triphosphate", [
+      "Adenosine triphosphate",
+      "Glucose",
+      "DNA",
+    ]);
+    const tooFew = mcq("What is ATP?", "Adenosine triphosphate", [
+      "Adenosine triphosphate",
+      "Glucose",
+    ]);
+    const dupes = mcq("What is ATP?", "Adenosine triphosphate", [
+      "Adenosine triphosphate",
+      "Glucose",
+      "Glucose",
+    ]);
+    const wrongBack = mcq("What is ATP?", "Water", [
+      "Adenosine triphosphate",
+      "Glucose",
+      "DNA",
+    ]);
+    expect(filterDraftsByQuality([valid])).toEqual([valid]);
+    expect(filterDraftsByQuality([tooFew, dupes, wrongBack])).toEqual([]);
+    expect(filterDraftsByQuality([valid, tooFew])).toEqual([valid]);
   });
 
   it("keeps a normal cloze", () => {

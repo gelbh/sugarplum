@@ -43,6 +43,24 @@ function jobIdFromPath(): string | null {
   return match?.[1] ? decodeURIComponent(match[1]) : null;
 }
 
+function cardPatchBody(card: CardDraftView): Parameters<typeof patchCard>[1] {
+  const type = card.type as
+    | "qa"
+    | "cloze"
+    | "image_label"
+    | "diagram"
+    | "mcq";
+  const body: Parameters<typeof patchCard>[1] = {
+    front: card.front,
+    back: card.back,
+    type,
+  };
+  if (type === "mcq" && card.options) {
+    body.options = card.options;
+  }
+  return body;
+}
+
 /** Operate UI: review, edit, accept or reject generation drafts (code-led MUI; no Impeccable comps). */
 export default function DraftReviewPage() {
   const jobId = jobIdFromPath();
@@ -197,7 +215,7 @@ export default function DraftReviewPage() {
   const current = drafts[index] ?? null;
 
   function onEditorChange(
-    next: Pick<CardDraftView, "front" | "back" | "type">,
+    next: Pick<CardDraftView, "front" | "back" | "type" | "options">,
   ) {
     if (!current) return;
     setDrafts((prev) =>
@@ -212,11 +230,7 @@ export default function DraftReviewPage() {
     setNotice(null);
     begin();
     try {
-      const updated = await patchCard(current.id, {
-        front: current.front,
-        back: current.back,
-        type: current.type as "qa" | "cloze" | "image_label" | "diagram",
-      });
+      const updated = await patchCard(current.id, cardPatchBody(current));
       setDrafts((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
       setDirty(false);
       setNotice("Saved edits");
@@ -234,11 +248,7 @@ export default function DraftReviewPage() {
     begin();
     try {
       if (dirty) {
-        await patchCard(current.id, {
-          front: current.front,
-          back: current.back,
-          type: current.type as "qa" | "cloze" | "image_label" | "diagram",
-        });
+        await patchCard(current.id, cardPatchBody(current));
       }
       await acceptCard(current.id);
       const list = await load(jobId);
@@ -276,11 +286,7 @@ export default function DraftReviewPage() {
     begin();
     try {
       if (dirty && current) {
-        await patchCard(current.id, {
-          front: current.front,
-          back: current.back,
-          type: current.type as "qa" | "cloze" | "image_label" | "diagram",
-        });
+        await patchCard(current.id, cardPatchBody(current));
       }
       const result = await acceptAllJobDrafts(jobId);
       const list = await load(jobId);

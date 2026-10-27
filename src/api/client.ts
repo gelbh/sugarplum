@@ -275,9 +275,10 @@ export type CardDraftView = {
   id: string;
   deck_id: string;
   job_id: string | null;
-  type: "qa" | "cloze" | "image_label" | "diagram" | string;
+  type: "qa" | "cloze" | "image_label" | "diagram" | "mcq" | string;
   front: string;
   back: string;
+  options?: string[];
   media_r2_keys?: string[];
   provenance: unknown;
   status: string;
@@ -316,7 +317,8 @@ export function patchCard(
   body: {
     front?: string;
     back?: string;
-    type?: "qa" | "cloze" | "image_label" | "diagram";
+    options?: string[];
+    type?: "qa" | "cloze" | "image_label" | "diagram" | "mcq";
   },
 ) {
   if (isGuest()) guestUnsupported("edit cards");

@@ -54,6 +54,89 @@ describe("CardDraft schema", () => {
     expect(result.success).toBe(false);
   });
 
+  const mcqBase = {
+    type: "mcq" as const,
+    front: "What is ATP?",
+    back: "Adenosine triphosphate",
+    options: ["Adenosine triphosphate", "Glucose", "DNA"],
+    provenance: { pages: [1], excerpt: "ATP energy" },
+  };
+
+  it("parses valid mcq with 3–5 options", () => {
+    expect(CardDraftSchema.safeParse(mcqBase).success).toBe(true);
+    const four = {
+      ...mcqBase,
+      options: [...mcqBase.options, "RNA"],
+    };
+    expect(CardDraftSchema.safeParse(four).success).toBe(true);
+    const five = {
+      ...mcqBase,
+      options: [...mcqBase.options, "RNA", "Lipids"],
+    };
+    expect(CardDraftSchema.safeParse(five).success).toBe(true);
+  });
+
+  it("rejects mcq with fewer than 3 or more than 5 options", () => {
+    expect(
+      CardDraftSchema.safeParse({
+        ...mcqBase,
+        options: ["Adenosine triphosphate", "Glucose"],
+      }).success,
+    ).toBe(false);
+    expect(
+      CardDraftSchema.safeParse({
+        ...mcqBase,
+        options: [
+          "Adenosine triphosphate",
+          "Glucose",
+          "DNA",
+          "RNA",
+          "Lipids",
+          "Water",
+        ],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects mcq with duplicate or empty options", () => {
+    expect(
+      CardDraftSchema.safeParse({
+        ...mcqBase,
+        options: ["Adenosine triphosphate", "Glucose", "Glucose"],
+      }).success,
+    ).toBe(false);
+    expect(
+      CardDraftSchema.safeParse({
+        ...mcqBase,
+        options: ["Adenosine triphosphate", "  ", "DNA"],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects mcq when back is not one of the options", () => {
+    expect(
+      CardDraftSchema.safeParse({
+        ...mcqBase,
+        back: "Not an option",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("keeps valid mcq when parseCardDrafts skips invalid mcq drafts", () => {
+    const drafts = parseCardDrafts([
+      mcqBase,
+      { ...mcqBase, options: ["a", "b"] },
+      {
+        type: "qa",
+        front: "Q?",
+        back: "A",
+        provenance: { pages: [1], excerpt: "ex" },
+      },
+    ]);
+    expect(drafts).toHaveLength(2);
+    expect(drafts.map((d) => d.type)).toEqual(["mcq", "qa"]);
+  });
+
   it("keeps valid cards when some cloze drafts are multi-blank", () => {
     const drafts = parseCardDrafts([
       {
