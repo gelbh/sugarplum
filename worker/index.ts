@@ -4,6 +4,7 @@ import type { Env } from "./env";
 import { authRoutes } from "./auth/routes";
 import type { AuthVariables } from "./auth/session";
 import { deckRoutes, materialRoutes } from "./materials/routes";
+import { subjectRoutes } from "./subjects/routes";
 import { settingsRoutes } from "./settings/routes";
 import { jobRoutes } from "./generation/routes";
 import { cardRoutes, jobDraftRoutes } from "./cards/routes";
@@ -34,6 +35,7 @@ app.use("/api/*", async (c, next) => {
 });
 
 app.route("/api/auth", authRoutes);
+app.route("/api/subjects", subjectRoutes);
 app.route("/api/decks", deckRoutes);
 app.route("/api/materials", materialRoutes);
 app.route("/api/settings", settingsRoutes);
