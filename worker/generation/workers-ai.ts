@@ -6,7 +6,11 @@ import {
   type GenerateDraftsInput,
   type LlmAdapter,
 } from "./llm";
-import { GENERATE_SYSTEM_PROMPT } from "./prompts";
+import {
+  GENERATE_COMPACT_SYSTEM_PROMPT,
+  GENERATE_SYSTEM_PROMPT,
+  generateCompactUserPrompt,
+} from "./prompts";
 
 /** Free-plan-eligible Workers AI instruct model (locked). */
 export const WORKERS_AI_MODEL = "@cf/zai-org/glm-4.7-flash" as const;
@@ -69,8 +73,8 @@ function contentFromAiRun(result: unknown): AiRunContent {
     };
     const content = choice.message?.content;
     if (typeof content === "string" && content.length > 0) {
-      // Keep truncated bodies: parseCardsPayload salvages complete early cards.
-      // Throwing here discarded recoverable drafts when finish_reason was length.
+      // Keep truncated bodies for generateDrafts salvage. complete() rejects
+      // finish_reason length separately so critique does not get mid-JSON.
       return {
         content,
         finishReason:
@@ -95,20 +99,8 @@ function contentFromAiRun(result: unknown): AiRunContent {
   throw new Error("Workers AI returned empty content");
 }
 
-/** Compact retry after mid-JSON truncation: fewer, shorter cards. */
-export function userPromptForCompactRetry(text: string): string {
-  return `Create 3–5 short high-yield flashcards from this material. Keep each front/back under 15 words. Respond with JSON only as {"cards":[...]}. Finish every string and close all braces.
-
---- MATERIAL ---
-${text}
---- END ---`;
-}
-
 function isTruncationParseError(err: unknown): boolean {
-  return (
-    err instanceof Error &&
-    /truncated mid-JSON|truncated \(hit token limit\)/i.test(err.message)
-  );
+  return err instanceof Error && /truncated mid-JSON/i.test(err.message);
 }
 
 function withAiDiagnostics(err: unknown, run: AiRunContent): Error {
@@ -153,6 +145,11 @@ export function createWorkersAiAdapter(env: Env): LlmAdapter {
   async function complete(input: CompleteInput): Promise<string> {
     // apiKey ignored: Workers AI uses the binding, not BYO secrets.
     const run = await runChat(input.system, input.user);
+    if (run.finishReason === "length") {
+      throw new Error(
+        "Workers AI response truncated (hit token limit). Try a shorter source or fewer facts.",
+      );
+    }
     return run.content;
   }
 
@@ -185,8 +182,8 @@ export function createWorkersAiAdapter(env: Env): LlmAdapter {
         // One compact retry: live monoxenous failures end mid-first-card with
         // nothing to salvage; a smaller ask often completes within budget.
         const second = await runChat(
-          GENERATE_SYSTEM_PROMPT,
-          userPromptForCompactRetry(input.text),
+          GENERATE_COMPACT_SYSTEM_PROMPT,
+          generateCompactUserPrompt(input.text),
         );
         return parseOrThrow(second);
       }

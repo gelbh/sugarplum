@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { createLlmAdapter, parseLlmProvider } from "../../worker/generation/llm";
+import {
+  createLlmAdapter,
+  parseLlmProvider,
+} from "../../worker/generation/llm";
 import {
   WORKERS_AI_MODEL,
   createWorkersAiAdapter,
@@ -64,18 +67,19 @@ describe("Workers AI adapter", () => {
           max_completion_tokens?: number;
         },
       ) => {
-      expect(_model).toBe(WORKERS_AI_MODEL);
-      expect(inputs.max_completion_tokens).toBe(8192);
-      expect(inputs.max_tokens).toBe(8192);
-      expect(inputs.messages).toEqual([
-        expect.objectContaining({ role: "system" }),
-        expect.objectContaining({
-          role: "user",
-          content: expect.stringContaining("notes"),
-        }),
-      ]);
-      return chatCompletionResult(sampleCardsJson);
-    });
+        expect(_model).toBe(WORKERS_AI_MODEL);
+        expect(inputs.max_completion_tokens).toBe(8192);
+        expect(inputs.max_tokens).toBe(8192);
+        expect(inputs.messages).toEqual([
+          expect.objectContaining({ role: "system" }),
+          expect.objectContaining({
+            role: "user",
+            content: expect.stringContaining("notes"),
+          }),
+        ]);
+        return chatCompletionResult(sampleCardsJson);
+      },
+    );
 
     const env = createTestEnv();
     env.AI = { run } as unknown as Ai;
@@ -190,10 +194,11 @@ describe("Workers AI adapter", () => {
 
     expect(drafts).toHaveLength(1);
     expect(run).toHaveBeenCalledTimes(2);
-    const secondUser = (
-      run.mock.calls[1]![1] as { messages: { content: string }[] }
-    ).messages[1]!.content;
-    expect(secondUser).toMatch(/3–5 short/i);
+    const secondMessages = (
+      run.mock.calls[1]![1] as { messages: { role: string; content: string }[] }
+    ).messages;
+    expect(secondMessages[0]!.content).toMatch(/3–5 high-yield cards only/i);
+    expect(secondMessages[1]!.content).toMatch(/3–5 short/i);
   });
 
   it("names truncation with diagnostics when retry also fails", async () => {
@@ -235,17 +240,19 @@ describe("Workers AI adapter", () => {
   });
 
   it("complete returns assistant content and ignores apiKey", async () => {
-    const run = vi.fn(async (_model: string, inputs: { messages?: unknown[] }) => {
-      expect(inputs.messages?.[0]).toEqual({
-        role: "system",
-        content: "critique-system",
-      });
-      expect(inputs.messages?.[1]).toEqual({
-        role: "user",
-        content: "critique-user",
-      });
-      return chatCompletionResult('{"cards":[]}');
-    });
+    const run = vi.fn(
+      async (_model: string, inputs: { messages?: unknown[] }) => {
+        expect(inputs.messages?.[0]).toEqual({
+          role: "system",
+          content: "critique-system",
+        });
+        expect(inputs.messages?.[1]).toEqual({
+          role: "user",
+          content: "critique-user",
+        });
+        return chatCompletionResult('{"cards":[]}');
+      },
+    );
 
     const env = createTestEnv();
     env.AI = { run } as unknown as Ai;
@@ -262,6 +269,37 @@ describe("Workers AI adapter", () => {
     expect(run).toHaveBeenCalledOnce();
     const [, inputs] = run.mock.calls[0]!;
     expect(JSON.stringify(inputs)).not.toContain("should-not-matter");
+  });
+
+  it("complete rejects finish_reason length without salvage", async () => {
+    const run = vi.fn(async () => ({
+      ...chatCompletionResult('{"cards":[{"type":"qa","front":"Q","back":"A'),
+      choices: [
+        {
+          index: 0,
+          message: {
+            role: "assistant" as const,
+            content: '{"cards":[{"type":"qa","front":"Q","back":"A',
+            refusal: null,
+          },
+          finish_reason: "length" as const,
+          logprobs: null,
+        },
+      ],
+    }));
+
+    const env = createTestEnv();
+    env.AI = { run } as unknown as Ai;
+    const adapter = createWorkersAiAdapter(env);
+
+    await expect(
+      adapter.complete({
+        system: "critique-system",
+        user: "critique-user",
+        apiKey: "",
+        provider: "workers-ai",
+      }),
+    ).rejects.toThrow(/hit token limit/i);
   });
 
   it("throws when AI binding is missing", () => {
