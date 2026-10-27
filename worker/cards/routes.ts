@@ -4,7 +4,11 @@ import { z } from "zod";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
-import { assertSingleCloze, assertValidMcqOptions } from "../generation/schema";
+import {
+  assertSingleCloze,
+  assertValidMcqOptions,
+  OcclusionFrontSchema,
+} from "../generation/schema";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
@@ -23,14 +27,24 @@ export type CardRow = {
   updated_at: string;
 };
 
+const OcclusionBackSchema = z.object({ answer: z.string().min(1) });
+const TextFaceSchema = z.string().min(1);
+const CardTypeSchema = z.enum([
+  "qa",
+  "cloze",
+  "image_label",
+  "diagram",
+  "mcq",
+  "occlusion",
+]);
+
+/** PATCH body: string faces for text/MCQ; structured faces for occlusion. */
 const PatchDraftSchema = z
   .object({
-    front: z.string().min(1).optional(),
-    back: z.string().min(1).optional(),
+    front: z.union([TextFaceSchema, OcclusionFrontSchema]).optional(),
+    back: z.union([TextFaceSchema, OcclusionBackSchema]).optional(),
     options: z.array(z.string()).optional(),
-    type: z
-      .enum(["qa", "cloze", "image_label", "diagram", "mcq"])
-      .optional(),
+    type: CardTypeSchema.optional(),
   })
   .refine(
     (body) =>
@@ -89,24 +103,33 @@ function parseJsonField<T>(raw: string, fallback: T): T {
 
 /** Public card JSON for draft review / study clients. */
 export function serializeCard(row: CardRow) {
-  const { back, options } = decodeStoredBack(row.type, row.back_json);
-  const card = {
+  const front = parseJsonField(row.front_json, row.front_json);
+  const media_r2_keys = row.media_r2_keys_json
+    ? parseJsonField<string[]>(row.media_r2_keys_json, [])
+    : [];
+  const provenance = row.provenance_json
+    ? parseJsonField(row.provenance_json, null)
+    : null;
+  const base = {
     id: row.id,
     deck_id: row.deck_id,
     job_id: row.job_id,
     type: row.type,
-    front: parseJsonField(row.front_json, row.front_json),
-    back,
-    media_r2_keys: row.media_r2_keys_json
-      ? parseJsonField<string[]>(row.media_r2_keys_json, [])
-      : [],
-    provenance: row.provenance_json
-      ? parseJsonField(row.provenance_json, null)
-      : null,
+    front,
+    media_r2_keys,
+    provenance,
     status: row.status,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
+  if (row.type === "occlusion") {
+    return {
+      ...base,
+      back: parseJsonField(row.back_json, row.back_json),
+    };
+  }
+  const { back, options } = decodeStoredBack(row.type, row.back_json);
+  const card = { ...base, back };
   if (row.type === "mcq" && options !== undefined) {
     return { ...card, options };
   }
@@ -291,9 +314,48 @@ cardRoutes.patch("/:id", async (c) => {
 
   const nextType = parsed.data.type ?? row.type;
   const nextFront =
-    parsed.data.front ?? parseJsonField<string>(row.front_json, "");
-  const storedBack = decodeStoredBack(row.type, row.back_json);
+    parsed.data.front ?? parseJsonField(row.front_json, row.front_json);
 
+  if (nextType === "occlusion") {
+    const nextBack =
+      parsed.data.back ?? parseJsonField(row.back_json, row.back_json);
+    const frontOk = OcclusionFrontSchema.safeParse(nextFront);
+    const backOk = OcclusionBackSchema.safeParse(nextBack);
+    if (!frontOk.success || !backOk.success) {
+      throw new HTTPException(400, {
+        message:
+          "Occlusion cards need structured front regions and back.answer",
+      });
+    }
+    const persistFront = frontOk.data;
+    const persistBack = backOk.data;
+    const updatedAt = new Date().toISOString();
+    await db
+      .prepare(
+        `UPDATE cards
+         SET type = ?, front_json = ?, back_json = ?, updated_at = ?
+         WHERE id = ?`,
+      )
+      .bind(
+        nextType,
+        JSON.stringify(persistFront),
+        JSON.stringify(persistBack),
+        updatedAt,
+        cardId,
+      )
+      .run();
+    return c.json(
+      serializeCard({
+        ...row,
+        type: nextType,
+        front_json: JSON.stringify(persistFront),
+        back_json: JSON.stringify(persistBack),
+        updated_at: updatedAt,
+      }),
+    );
+  }
+
+  const storedBack = decodeStoredBack(row.type, row.back_json);
   const allowedTypes = new Set([
     "qa",
     "cloze",
@@ -303,6 +365,11 @@ cardRoutes.patch("/:id", async (c) => {
   ]);
   if (!allowedTypes.has(nextType)) {
     throw new HTTPException(400, { message: "Unsupported card type" });
+  }
+  if (typeof nextFront !== "string") {
+    throw new HTTPException(400, {
+      message: "Text card front must be a string",
+    });
   }
   if (nextType === "cloze") {
     try {
@@ -320,10 +387,16 @@ cardRoutes.patch("/:id", async (c) => {
     const prior =
       row.type === "mcq"
         ? storedBack
-        : { back: parsed.data.back ?? "", options: undefined as string[] | undefined };
+        : {
+            back:
+              typeof parsed.data.back === "string" ? parsed.data.back : "",
+            options: undefined as string[] | undefined,
+          };
+    const patchBack =
+      typeof parsed.data.back === "string" ? parsed.data.back : prior.back;
     try {
       const mcq = assertValidMcqOptions(
-        parsed.data.back ?? prior.back,
+        patchBack,
         parsed.data.options ?? prior.options,
       );
       nextBack = mcq.back;
@@ -334,7 +407,13 @@ cardRoutes.patch("/:id", async (c) => {
       });
     }
   } else {
-    nextBack = parsed.data.back ?? storedBack.back;
+    if (parsed.data.back !== undefined && typeof parsed.data.back !== "string") {
+      throw new HTTPException(400, {
+        message: "Text card back must be a string",
+      });
+    }
+    nextBack =
+      typeof parsed.data.back === "string" ? parsed.data.back : storedBack.back;
   }
 
   const nextBackJson = encodeStoredBack(nextType, nextBack, nextOptions);

@@ -198,6 +198,11 @@ export function filterDraftsByQuality(drafts: CardDraft[]): CardDraft[] {
   const seen = new Set<string>();
   const out: CardDraft[] = [];
   for (const draft of drafts) {
+    // Occlusion is media-shaped; cloze / glossary length rules do not apply.
+    if (draft.type === "occlusion") {
+      out.push(draft);
+      continue;
+    }
     const front = draft.front.trim();
     const back = draft.back.trim();
     const glossary = isGlossaryShaped(front);

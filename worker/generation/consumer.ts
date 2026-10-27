@@ -120,6 +120,30 @@ function normalizeFront(front: string): string {
   return front.trim().toLowerCase();
 }
 
+function draftDedupeKey(draft: CardDraft): string {
+  if (draft.type === "occlusion") {
+    return `occlusion:${draft.front.image_key}:${draft.front.regions
+      .map((r) => r.id)
+      .join(",")}`;
+  }
+  return normalizeFront(draft.front);
+}
+
+/** Stamp material R2 key onto occlusion fronts (LLM must not invent storage keys). */
+function bindOcclusionImageKey(
+  drafts: CardDraft[],
+  imageKey: string,
+): CardDraft[] {
+  return drafts.map((draft) => {
+    if (draft.type !== "occlusion") return draft;
+    return {
+      ...draft,
+      front: { ...draft.front, image_key: imageKey },
+      media_keys: [imageKey],
+    };
+  });
+}
+
 /** Merge rules then LLM drafts; drop near-identical fronts (trim + lower). */
 export function mergeAndDedupeDrafts(
   rulesDrafts: CardDraft[],
@@ -128,7 +152,7 @@ export function mergeAndDedupeDrafts(
   const seen = new Set<string>();
   const out: CardDraft[] = [];
   for (const draft of [...rulesDrafts, ...llmDrafts]) {
-    const key = normalizeFront(draft.front);
+    const key = draftDedupeKey(draft);
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(draft);
@@ -451,12 +475,14 @@ export async function processGenerateJob(
         text: "",
         apiKey,
         provider,
+        imageKey: material.r2_key,
         image: {
           mimeType: mimeFromR2Key(imageR2Key),
           base64: bytesToBase64(bytes),
         },
       });
       await emit("generate", generateTotal, generateTotal, "Generating cards");
+      drafts = bindOcclusionImageKey(drafts, material.r2_key);
       drafts = filterDraftsByQuality(drafts);
       if (drafts.length === 0) {
         throw new Error("Generation produced no valid draft cards");
@@ -688,9 +714,12 @@ export async function processGenerateJob(
       await emit("persist", 1, 1, "Saving drafts");
     }
 
-    const covered = drafts.map(
-      (d) => d.front.slice(0, 80) || d.provenance.excerpt.slice(0, 80),
-    );
+    const covered = drafts.map((d) => {
+      const excerpt = d.provenance.excerpt.slice(0, 80);
+      if (excerpt) return excerpt;
+      if (typeof d.front === "string") return d.front.slice(0, 80);
+      return (d.front.prompt ?? d.front.image_key).slice(0, 80);
+    });
     const coverageJson = JSON.stringify({
       covered,
       gaps: [] as string[],

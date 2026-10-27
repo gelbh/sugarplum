@@ -164,6 +164,125 @@ describe("draft review / accept gate", () => {
     );
   });
 
+  it("patch round-trips occlusion structured front and keeps type", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const front = {
+      image_key: "materials/deck-a/m1.png",
+      prompt: "Identify the hidden structure",
+      regions: [
+        {
+          id: "r1",
+          x: 0.1,
+          y: 0.2,
+          w: 0.3,
+          h: 0.25,
+          label: "Femur head",
+        },
+      ],
+      mode: "hide_one" as const,
+    };
+    env.seedCard({
+      id: "card-occ",
+      deck_id: "deck-a",
+      job_id: "job-1",
+      type: "occlusion",
+      front_json: JSON.stringify(front),
+      back_json: JSON.stringify({ answer: "Femur head" }),
+      media_r2_keys_json: JSON.stringify(["materials/deck-a/m1.png"]),
+      provenance_json: JSON.stringify({ pages: [], excerpt: "fig" }),
+      status: "draft",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const nextFront = {
+      ...front,
+      regions: [
+        {
+          id: "r1",
+          x: 0.15,
+          y: 0.22,
+          w: 0.28,
+          h: 0.3,
+          label: "Femoral head",
+        },
+      ],
+    };
+    const res = await app.request(
+      "/api/cards/card-occ",
+      {
+        method: "PATCH",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          front: nextFront,
+          back: { answer: "Femoral head" },
+          type: "occlusion",
+        }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      type: string;
+      front: typeof nextFront;
+      back: { answer: string };
+    };
+    expect(body.type).toBe("occlusion");
+    expect(body.front).toEqual(nextFront);
+    expect(body.back).toEqual({ answer: "Femoral head" });
+
+    const stored = env.getCards().find((c) => c.id === "card-occ");
+    expect(stored?.type).toBe("occlusion");
+    expect(JSON.parse(stored!.front_json)).toEqual(nextFront);
+    expect(JSON.parse(stored!.back_json)).toEqual({ answer: "Femoral head" });
+  });
+
+  it("patch rejects occlusion with string front", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedCard({
+      id: "card-occ-bad",
+      deck_id: "deck-a",
+      job_id: "job-1",
+      type: "occlusion",
+      front_json: JSON.stringify({
+        image_key: "materials/deck-a/m1.png",
+        regions: [
+          { id: "r1", x: 0.1, y: 0.1, w: 0.2, h: 0.2, label: "A" },
+        ],
+        mode: "hide_one",
+      }),
+      back_json: JSON.stringify({ answer: "A" }),
+      media_r2_keys_json: JSON.stringify(["materials/deck-a/m1.png"]),
+      provenance_json: JSON.stringify({ pages: [], excerpt: "fig" }),
+      status: "draft",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/cards/card-occ-bad",
+      {
+        method: "PATCH",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          front: "not a structured front",
+          back: { answer: "A" },
+          type: "occlusion",
+        }),
+      },
+      env,
+    );
+    expect(res.status).toBe(400);
+  });
+
   it("accept-all accepts every draft for the job and schedules them", async () => {
     const env = createTestEnv();
     seedOwner(env);
