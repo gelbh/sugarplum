@@ -1385,6 +1385,49 @@ export function createTestEnv(opts?: {
             last_review,
           });
           return { success: true, meta: { changes: 1 } } as D1Result;
+        } else if (
+          normalized.startsWith("INSERT INTO card_schedules") &&
+          normalized.includes("ON CONFLICT(card_id) DO UPDATE")
+        ) {
+          const [
+            card_id,
+            due,
+            stability,
+            difficulty,
+            elapsed_days,
+            scheduled_days,
+            learning_steps,
+            reps,
+            lapses,
+            state,
+            last_review,
+          ] = bound as [
+            string,
+            string,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            string | null,
+          ];
+          schedules.set(card_id, {
+            card_id,
+            due,
+            stability,
+            difficulty,
+            elapsed_days,
+            scheduled_days,
+            learning_steps,
+            reps,
+            lapses,
+            state,
+            last_review,
+          });
+          return { success: true, meta: { changes: 1 } } as D1Result;
         } else if (normalized.startsWith("INSERT INTO card_schedules")) {
           // Conditional accept: INSERT…SELECT WHERE status/updated_at match CAS.
           if (normalized.includes("SELECT c.id")) {

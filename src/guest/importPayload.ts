@@ -8,6 +8,8 @@ export type GuestImportStoreLike = {
     deck_id: string;
     front: unknown;
     back: unknown;
+    /** Present on guest store cards; import API is still QA-only. */
+    type?: string;
     provenance?: unknown;
   }[];
 };
@@ -34,12 +36,15 @@ export function buildGuestImportPayload(
         deck_id: string;
         front: string;
         back: string;
+        type?: string;
         provenance?: unknown;
       } =>
         c.deck_id !== DEMO_DECK_ID &&
         isImportableProvenance(c.provenance) &&
         typeof c.front === "string" &&
-        typeof c.back === "string",
+        typeof c.back === "string" &&
+        // Guest import API still inserts type "qa" only; cloze/MCQ merge parked.
+        (c.type === undefined || c.type === "qa"),
     )
     .slice(0, MAX_IMPORT_CARDS);
 

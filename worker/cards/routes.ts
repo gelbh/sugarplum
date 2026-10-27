@@ -519,15 +519,26 @@ cardRoutes.post("/:id/reset-schedule", async (c) => {
   }
 
   const schedule = scheduleColumnsFromCard(newCard());
-  const updated = await db
+  await db
     .prepare(
-      `UPDATE card_schedules SET
-         due = ?, stability = ?, difficulty = ?, elapsed_days = ?,
-         scheduled_days = ?, learning_steps = ?, reps = ?, lapses = ?,
-         state = ?, last_review = ?
-       WHERE card_id = ?`,
+      `INSERT INTO card_schedules (
+         card_id, due, stability, difficulty, elapsed_days, scheduled_days,
+         learning_steps, reps, lapses, state, last_review
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(card_id) DO UPDATE SET
+         due = excluded.due,
+         stability = excluded.stability,
+         difficulty = excluded.difficulty,
+         elapsed_days = excluded.elapsed_days,
+         scheduled_days = excluded.scheduled_days,
+         learning_steps = excluded.learning_steps,
+         reps = excluded.reps,
+         lapses = excluded.lapses,
+         state = excluded.state,
+         last_review = excluded.last_review`,
     )
     .bind(
+      cardId,
       schedule.due,
       schedule.stability,
       schedule.difficulty,
@@ -538,33 +549,8 @@ cardRoutes.post("/:id/reset-schedule", async (c) => {
       schedule.lapses,
       schedule.state,
       schedule.last_review,
-      cardId,
     )
     .run();
-
-  if (!updated.meta.changes) {
-    await db
-      .prepare(
-        `INSERT INTO card_schedules (
-           card_id, due, stability, difficulty, elapsed_days, scheduled_days,
-           learning_steps, reps, lapses, state, last_review
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .bind(
-        cardId,
-        schedule.due,
-        schedule.stability,
-        schedule.difficulty,
-        schedule.elapsed_days,
-        schedule.scheduled_days,
-        schedule.learning_steps,
-        schedule.reps,
-        schedule.lapses,
-        schedule.state,
-        schedule.last_review,
-      )
-      .run();
-  }
 
   return c.json(serializeCard(row));
 });

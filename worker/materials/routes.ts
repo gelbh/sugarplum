@@ -275,12 +275,15 @@ deckRoutes.get("/:id/stats", async (c) => {
 const HubCreateCardSchema = z
   .object({
     type: z.enum(["qa", "cloze", "mcq"]),
-    front: z.string().min(1),
+    front: z
+      .string()
+      .transform((s) => s.trim())
+      .pipe(z.string().min(1)),
     /** Cloze Extra may be ""; study answer comes from the blank. */
-    back: z.string(),
+    back: z.string().transform((s) => s.trim()),
     options: z.array(z.string()).optional(),
   })
-  .refine((body) => body.type === "cloze" || body.back.trim().length > 0, {
+  .refine((body) => body.type === "cloze" || body.back.length > 0, {
     message: "Back is required",
     path: ["back"],
   });
