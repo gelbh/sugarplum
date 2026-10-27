@@ -34,4 +34,9 @@ export type ProgressSnapshot = {
   stage?: string;
   /** Ordered unique stages present in this run (derived from events + stage) */
   presentStages?: string[];
+  /** Hook-computed estimates (job polling); optional on other snapshots */
+  etaMs?: number | null;
+  projectedTokens?: number | null;
+  projectedCards?: number | null;
+  remainingCardsToday?: number | null;
 };

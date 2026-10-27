@@ -39,43 +39,36 @@ export default function JobProgressPanel({
     return `~${rem}s`;
   }
 
+  const hookEtaMs = snapshot?.etaMs;
   let etaLabel = "Calculating…";
-  if (startedAt && percent != null) {
-    const e = etaMs(Date.now() - startedAt, percent);
-    etaLabel = fmtEta(e);
+  if (hookEtaMs != null) {
+    etaLabel = fmtEta(hookEtaMs);
+  } else if (startedAt && percent != null) {
+    etaLabel = fmtEta(etaMs(Date.now() - startedAt, percent));
   }
 
-  let tokensLabel = "Calculating…";
+  const hookProjectedTokens = snapshot?.projectedTokens;
   const projectedTokens =
-    tokensUsed != null && current != null && total != null
-      ? projectTokens(tokensUsed, current, total)
-      : null;
+    hookProjectedTokens != null
+      ? hookProjectedTokens
+      : tokensUsed != null && current != null && total != null
+        ? projectTokens(tokensUsed, current, total)
+        : null;
+
+  let tokensLabel = "Calculating…";
   if (projectedTokens != null) tokensLabel = `${Math.round(projectedTokens)} tokens`;
   else if (tokensUsed != null) tokensLabel = `${Math.round(tokensUsed)} tokens`;
 
-  // Remaining line logic per spec:
-  // If freeQuota non-null and cards estimate available -> show cards;
-  // else if freeQuota non-null -> show jobs left; else hide remaining line.
-  const projectedCards = (snapshot as any)?.projectedCards ?? null;
-  const remainingCardsToday = (snapshot as any)?.remainingCardsToday ?? null;
+  const remainingCardsToday = snapshot?.remainingCardsToday ?? null;
 
-  const showRemainingLine = (() => {
-    if (freeQuota != null) {
-      if (projectedCards != null) return true; // show cards
-      return true; // show jobs left
-    }
-    // no freeQuota: show cards only if we have a cards estimate
-    return projectedCards != null || remainingCardsToday != null;
-  })();
+  const showRemainingLine = freeQuota != null;
 
   const remainingLabel = (() => {
-    if (freeQuota != null) {
-      if (projectedCards != null) return `${Math.round(projectedCards)} cards left`;
-      return `${freeQuota.remaining} free jobs left`;
+    if (freeQuota == null) return "";
+    if (remainingCardsToday != null) {
+      return `${Math.round(remainingCardsToday)} cards left`;
     }
-    if (projectedCards != null) return `${Math.round(projectedCards)} cards left`;
-    if (remainingCardsToday != null) return `${Math.round(remainingCardsToday)} cards left`;
-    return "";
+    return `${freeQuota.remaining} free jobs left`;
   })();
 
   // Stage timeline: derive from snapshot.presentStages (hook may provide) or from events + snapshot.stage

@@ -179,18 +179,15 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
         });
 
         // attach estimates onto snapshot so consumers like JobProgressPanel can prefer hook-provided values
-        const snapshotWithEstimates = {
+        const snapshotWithEstimates: ProgressSnapshot = {
           ...ext,
-          projectedTokens: projectedTokens ?? null,
-          projectedCards: projectedCards ?? null,
-          remainingCardsToday: remainingCards ?? null,
-        } as ProgressSnapshot & {
-          projectedTokens?: number | null;
-          projectedCards?: number | null;
-          remainingCardsToday?: number | null;
+          etaMs: eta,
+          projectedTokens,
+          projectedCards,
+          remainingCardsToday: remainingCards,
         };
 
-        setSnapshot(snapshotWithEstimates as ProgressSnapshot);
+        setSnapshot(snapshotWithEstimates);
 
         if (TERMINAL_OK.has(job.status)) {
           settleOk();
