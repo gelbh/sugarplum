@@ -361,9 +361,10 @@ export async function processGenerateJob(
       if (!material.r2_key) {
         throw new Error("Image material has no R2 object");
       }
-      const obj = await env.MATERIALS.get(material.r2_key);
+      const imageR2Key = material.r2_key;
+      const obj = await env.MATERIALS.get(imageR2Key);
       if (!obj) {
-        throw new Error(`R2 object missing: ${material.r2_key}`);
+        throw new Error(`R2 object missing: ${imageR2Key}`);
       }
       const bytes = await obj.arrayBuffer();
       if (bytes.byteLength > MAX_IMAGE_BYTES) {
@@ -378,7 +379,7 @@ export async function processGenerateJob(
         apiKey,
         provider,
         image: {
-          mimeType: mimeFromR2Key(material.r2_key),
+          mimeType: mimeFromR2Key(imageR2Key),
           base64: bytesToBase64(bytes),
         },
       });
@@ -389,7 +390,7 @@ export async function processGenerateJob(
       }
       drafts = drafts.map((d) => ({
         ...d,
-        mediaR2Keys: [material.r2_key],
+        mediaR2Keys: [imageR2Key],
       }));
       await emit("persist", 0, 1, "Saving drafts");
       await insertDraftCards(db, { deckId, jobId, drafts });
