@@ -13,7 +13,6 @@ import {
 } from "./pipeline";
 import {
   IMAGE_STAGES,
-  RULES_ONLY_STAGES,
   TEXT_LLM_STAGES,
   computePercent,
   computePipelineBandPercent,
