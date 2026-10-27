@@ -62,7 +62,9 @@ const NAV: NavItem[] = [
     href: "/library",
     icon: <LibraryBooksIcon fontSize="small" />,
     match: (path) =>
-      path === "/library" || /^\/jobs\/[^/]+\/drafts\/?$/.test(path),
+      path === "/library" ||
+      path.startsWith("/library/") ||
+      /^\/jobs\/[^/]+\/drafts\/?$/.test(path),
   },
   {
     id: "settings",
@@ -246,11 +248,7 @@ export default function AppShell({ children }: AppShellProps) {
           {children}
         </Box>
         {showMobileChrome ? (
-          <BottomChrome
-            active={active}
-            items={NAV}
-            onNavigate={navigate}
-          />
+          <BottomChrome active={active} items={NAV} onNavigate={navigate} />
         ) : null}
       </Box>
     </ProgressProvider>
