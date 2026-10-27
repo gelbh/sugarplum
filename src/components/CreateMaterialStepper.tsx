@@ -153,7 +153,7 @@ export default function CreateMaterialStepper({
       setError("Select a deck first");
       return;
     }
-    const pairs = guestPasteToCards(pasteText);
+    const { cards: pairs, truncated } = guestPasteToCards(pasteText);
     if (pairs.length === 0) {
       setError(
         "Paste needs clearer paragraphs or Q&A lines (blank line between cards).",
@@ -170,9 +170,19 @@ export default function CreateMaterialStepper({
       const deckTitle =
         decks.find((d) => d.id === selectedDeckId)?.title ?? "deck";
       setPasteText("");
-      setNotice(`Added ${added.length} local cards to “${deckTitle}”`);
+      const truncNote = truncated
+        ? ` (kept first ${added.length}; paste was longer than the 40-card limit)`
+        : "";
+      setNotice(
+        `Added ${added.length} local cards to “${deckTitle}”${truncNote}`,
+      );
+      try {
+        await onChanged?.();
+      } catch {
+        /* refresh must not look like a save failure */
+      }
+      // After journey sync (which only maps to steps 0/1), lock Done.
       setActiveStep(2);
-      await onChanged?.();
     } catch (err) {
       if (
         err instanceof DOMException &&
@@ -519,8 +529,8 @@ export default function CreateMaterialStepper({
                 </>
               ) : localOnly ? (
                 <>
-                  Done. Cards are ready on{" "}
-                  <a href="/today">Today</a> or <a href="/study">Study</a>.
+                  Done. Cards are ready on <a href="/today">Today</a> or{" "}
+                  <a href="/study">Study</a>.
                 </>
               ) : (
                 "Done. Add more material or go to drafts when ready."

@@ -92,7 +92,11 @@ describe("guest store", () => {
   it("guestAddAcceptedCards returns [] when deck is missing", () => {
     enterGuest(storage);
     expect(
-      guestAddAcceptedCards("guest-deck-missing", [{ front: "Q?", back: "A" }], storage),
+      guestAddAcceptedCards(
+        "guest-deck-missing",
+        [{ front: "Q?", back: "A" }],
+        storage,
+      ),
     ).toEqual([]);
   });
 });

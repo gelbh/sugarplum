@@ -1,8 +1,33 @@
 export type GuestPasteCard = { front: string; back: string };
 
+export type GuestPasteResult = {
+  cards: GuestPasteCard[];
+  truncated: boolean;
+};
+
 const MIN_CHUNK = 12;
 const MAX_CARDS = 40;
 const FRONT_CAP = 160;
+/** Reject Term: splits when the left side is longer than a short label. */
+const COLON_FRONT_MAX = 60;
+
+function colonSplit(chunk: string): GuestPasteCard | null {
+  const colonIdx = chunk.indexOf(":");
+  if (colonIdx < 0) return null;
+
+  const front = chunk.slice(0, colonIdx).trim();
+  const back = chunk.slice(colonIdx + 1).trim();
+  if (!front || !back) return null;
+
+  // URLs (`https://…`), times (`3:30`), drive letters (`C:\…`)
+  if (/:\/\//.test(chunk)) return null;
+  if (/^https?$/i.test(front)) return null;
+  if (/\d$/.test(front) && /^\d/.test(back)) return null;
+  if (/^[A-Za-z]$/.test(front)) return null;
+  if (front.length > COLON_FRONT_MAX) return null;
+
+  return { front, back };
+}
 
 function cardFromChunk(chunk: string): GuestPasteCard | null {
   const lines = chunk.split("\n");
@@ -16,13 +41,8 @@ function cardFromChunk(chunk: string): GuestPasteCard | null {
     return { front, back: back || "Review your notes." };
   }
 
-  const colonIdx = chunk.indexOf(":");
-  if (colonIdx >= 0) {
-    const front = chunk.slice(0, colonIdx).trim();
-    const back = chunk.slice(colonIdx + 1).trim();
-    if (!front || !back) return null;
-    return { front, back };
-  }
+  const fromColon = colonSplit(chunk);
+  if (fromColon) return fromColon;
 
   const dotSpace = chunk.indexOf(". ");
   const ideographic = chunk.indexOf("。");
@@ -57,9 +77,9 @@ function cardFromChunk(chunk: string): GuestPasteCard | null {
 }
 
 /** Pure client paste → Q&A cards. No store writes. */
-export function guestPasteToCards(text: string): GuestPasteCard[] {
+export function guestPasteToCards(text: string): GuestPasteResult {
   const trimmed = text.trim();
-  if (!trimmed) return [];
+  if (!trimmed) return { cards: [], truncated: false };
 
   const chunks = trimmed
     .split(/\n\s*\n/)
@@ -67,10 +87,12 @@ export function guestPasteToCards(text: string): GuestPasteCard[] {
     .filter((c) => c.length >= MIN_CHUNK);
 
   const cards: GuestPasteCard[] = [];
+  let eligible = 0;
   for (const chunk of chunks) {
-    if (cards.length >= MAX_CARDS) break;
     const card = cardFromChunk(chunk);
-    if (card) cards.push(card);
+    if (!card) continue;
+    eligible += 1;
+    if (cards.length < MAX_CARDS) cards.push(card);
   }
-  return cards;
+  return { cards, truncated: eligible > MAX_CARDS };
 }
