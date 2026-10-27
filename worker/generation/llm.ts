@@ -3,8 +3,10 @@ import {
   type CardDraft,
 } from "./schema";
 import {
+  GENERATE_COMPACT_SYSTEM_PROMPT,
   GENERATE_SYSTEM_PROMPT,
   IMAGE_GENERATE_SYSTEM_PROMPT,
+  generateCompactUserPrompt,
   generateImageUserPrompt,
   generateUserPrompt,
 } from "./prompts";
@@ -87,6 +89,47 @@ export function providerRequestUrl(provider: LlmProvider): string {
 
 export function userPromptForJson(text: string): string {
   return `${generateUserPrompt(text)}\n\nReturn JSON as {"cards":[...]}`;
+}
+
+/** True when parseCardsPayload (or a wrapped caller) hit mid-JSON truncation. */
+export function isTruncationParseError(err: unknown): boolean {
+  return err instanceof Error && /truncated mid-JSON/i.test(err.message);
+}
+
+/**
+ * Run `first`; on mid-JSON truncation parse error only, run `retry` once.
+ * Used by Workers AI and BYO generateDrafts text paths.
+ */
+export async function withCompactTruncationRetry<T>(
+  first: () => Promise<T>,
+  retry: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await first();
+  } catch (err) {
+    if (!isTruncationParseError(err)) throw err;
+    return await retry();
+  }
+}
+
+/** Text generate: full prompt, then one compact retry on mid-JSON truncation. */
+async function generateTextDraftsWithCompactRetry(
+  text: string,
+  completeOnce: (system: string, user: string) => Promise<string>,
+): Promise<CardDraft[]> {
+  return withCompactTruncationRetry(
+    async () =>
+      parseCardsPayload(
+        await completeOnce(GENERATE_SYSTEM_PROMPT, userPromptForJson(text)),
+      ),
+    async () =>
+      parseCardsPayload(
+        await completeOnce(
+          GENERATE_COMPACT_SYSTEM_PROMPT,
+          generateCompactUserPrompt(text),
+        ),
+      ),
+  );
 }
 
 function imagePromptForJson(imageKey: string): string {
@@ -398,13 +441,14 @@ function openAiAdapter(): LlmAdapter {
     async generateDrafts(input) {
       const { text, apiKey, image } = input;
       if (!image) {
-        const content = await complete({
-          system: GENERATE_SYSTEM_PROMPT,
-          user: userPromptForJson(text),
-          apiKey,
-          provider: input.provider,
-        });
-        return parseCardsPayload(content);
+        return generateTextDraftsWithCompactRetry(text, (system, user) =>
+          complete({
+            system,
+            user,
+            apiKey,
+            provider: input.provider,
+          }),
+        );
       }
 
       const imageKey = input.imageKey ?? "material";
@@ -492,13 +536,14 @@ function anthropicAdapter(): LlmAdapter {
     async generateDrafts(input) {
       const { text, apiKey, image } = input;
       if (!image) {
-        const content = await complete({
-          system: GENERATE_SYSTEM_PROMPT,
-          user: userPromptForJson(text),
-          apiKey,
-          provider: input.provider,
-        });
-        return parseCardsPayload(content);
+        return generateTextDraftsWithCompactRetry(text, (system, user) =>
+          complete({
+            system,
+            user,
+            apiKey,
+            provider: input.provider,
+          }),
+        );
       }
 
       const imageKey = input.imageKey ?? "material";
@@ -589,13 +634,14 @@ function googleAdapter(): LlmAdapter {
     async generateDrafts(input) {
       const { text, apiKey, image } = input;
       if (!image) {
-        const content = await complete({
-          system: GENERATE_SYSTEM_PROMPT,
-          user: userPromptForJson(text),
-          apiKey,
-          provider: input.provider,
-        });
-        return parseCardsPayload(content);
+        return generateTextDraftsWithCompactRetry(text, (system, user) =>
+          complete({
+            system,
+            user,
+            apiKey,
+            provider: input.provider,
+          }),
+        );
       }
 
       const imageKey = input.imageKey ?? "material";

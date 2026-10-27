@@ -94,11 +94,19 @@ const TextCardDraftSchema = z
   .object({
     type: z.enum(["qa", "cloze", "image_label", "diagram", "mcq"]),
     front: z.string().min(1),
-    back: z.string().min(1),
+    /** Cloze Extra may be ""; other text types require min(1) via refine. */
+    back: z.string(),
     options: z.array(z.string()).optional(),
     provenance: ProvenanceSchema,
   })
   .superRefine((draft, ctx) => {
+    if (draft.type !== "cloze" && draft.back.length < 1) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Back must be non-empty",
+        path: ["back"],
+      });
+    }
     if (draft.type === "cloze") {
       try {
         assertSingleCloze(draft.front);

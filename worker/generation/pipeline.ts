@@ -3,6 +3,7 @@ import {
   critiqueUserPrompt,
 } from "./critique-prompts";
 import {
+  salvageCompleteJsonObjects,
   unwrapLlmJsonText,
   type GenerateDraftsInput,
   type LlmAdapter,
@@ -95,11 +96,32 @@ export function chunkText(
   return chunks;
 }
 
+function isCardShape(obj: unknown): boolean {
+  return (
+    !!obj &&
+    typeof obj === "object" &&
+    "type" in obj &&
+    "front" in obj &&
+    "back" in obj
+  );
+}
+
 function unwrapCardsJson(raw: string): unknown {
+  const unwrapped = unwrapLlmJsonText(raw);
   let parsed: unknown;
   try {
-    parsed = JSON.parse(unwrapLlmJsonText(raw));
+    parsed = JSON.parse(unwrapped);
   } catch {
+    // Same salvage path as parseCardsPayload: keep complete card objects
+    // when the critique reply truncates mid-array.
+    const salvaged = [
+      ...salvageCompleteJsonObjects(raw),
+      ...salvageCompleteJsonObjects(unwrapped),
+    ].filter(isCardShape);
+    const unique = [
+      ...new Map(salvaged.map((c) => [JSON.stringify(c), c])).values(),
+    ];
+    if (unique.length > 0) return unique;
     throw new Error("Critique returned non-JSON content");
   }
 

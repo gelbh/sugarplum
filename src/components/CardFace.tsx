@@ -4,7 +4,11 @@ import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import type { MouseEvent, Ref } from "react";
 import { mediaUrl } from "../api/client";
-import { blankClozeFront, revealClozeFront } from "../lib/clozeFormat";
+import {
+  blankClozeFront,
+  clozeExtraSubtitle,
+  extractClozeAnswer,
+} from "../lib/clozeFormat";
 
 /** Normalized 0–1 hide_one box over the study image until reveal. */
 export type OcclusionMaskBox = {
@@ -36,10 +40,6 @@ type Props = {
   /** Focus target for Show answer after grading / flip-back. */
   showAnswerRef?: Ref<HTMLButtonElement | null>;
 };
-
-function displayClozeFront(front: string, revealed: boolean): string {
-  return revealed ? revealClozeFront(front) : blankClozeFront(front);
-}
 
 const FACE_SANS = '"Source Sans 3", "Helvetica", "Arial", sans-serif';
 
@@ -239,10 +239,10 @@ export default function CardFace({
   answerFocusRef,
   showAnswerRef,
 }: Props) {
-  const questionFront =
-    type === "cloze" ? displayClozeFront(front, false) : front;
-  const answerFaceFront =
-    type === "cloze" ? displayClozeFront(front, true) : front;
+  const isCloze = type === "cloze";
+  const questionFront = isCloze ? blankClozeFront(front) : front;
+  const clozeExtra = isCloze ? clozeExtraSubtitle(back) : null;
+  const answerText = isCloze ? (extractClozeAnswer(front) ?? "") : back;
   const imageKey = occlusion?.imageKey ?? mediaR2Keys[0];
   const canReveal = !revealed && !disabled;
   const canFlipBack = revealed && !disabled;
@@ -361,7 +361,7 @@ export default function CardFace({
                 mask={occlusion.mask}
                 masked={false}
               />
-            ) : answerFaceFront ? (
+            ) : !isCloze && front ? (
               <Typography
                 component="p"
                 sx={{
@@ -377,7 +377,7 @@ export default function CardFace({
                   flexShrink: 0,
                 }}
               >
-                {answerFaceFront}
+                {front}
               </Typography>
             ) : null}
             <Box
@@ -402,8 +402,25 @@ export default function CardFace({
                   color: "inherit",
                 }}
               >
-                {back}
+                {answerText}
               </Typography>
+              {clozeExtra ? (
+                <Typography
+                  component="p"
+                  sx={{
+                    fontFamily: FACE_SANS,
+                    fontSize: "0.8125rem",
+                    fontWeight: 400,
+                    lineHeight: 1.4,
+                    whiteSpace: "pre-wrap",
+                    color: "inherit",
+                    opacity: 0.6,
+                    mt: 1.5,
+                  }}
+                >
+                  {clozeExtra}
+                </Typography>
+              ) : null}
             </Box>
             {revealed ? (
               <Box sx={{ pt: 2, width: "100%", flexShrink: 0 }}>

@@ -127,6 +127,40 @@ jobRoutes.get("/:id", async (c) => {
   });
 });
 
+/** Soft-clean: mark remaining drafts rejected; keep accepted; no requeue (owner only). */
+jobRoutes.post("/:id/reject-drafts", async (c) => {
+  const userId = await requireUser(c);
+  const jobId = c.req.param("id");
+  const db = getDb(c.env);
+
+  const row = await db
+    .prepare(
+      `SELECT j.id, j.material_id, j.status, j.error, j.coverage_json, j.progress_json, j.created_at, j.finished_at
+       FROM generation_jobs j
+       INNER JOIN materials m ON m.id = j.material_id
+       INNER JOIN decks d ON d.id = m.deck_id
+       WHERE j.id = ? AND d.user_id = ?`,
+    )
+    .bind(jobId, userId)
+    .first<JobPollRow>();
+
+  if (!row) throw new HTTPException(404, { message: "Job not found" });
+
+  if (row.status === "queued" || row.status === "running") {
+    throw new HTTPException(409, { message: "Job already in progress" });
+  }
+
+  const updatedAt = new Date().toISOString();
+  const result = await db
+    .prepare(
+      `UPDATE cards SET status = ?, updated_at = ? WHERE job_id = ? AND status = ?`,
+    )
+    .bind("rejected", updatedAt, jobId, "draft")
+    .run();
+
+  return c.json({ rejectedCount: result.meta.changes ?? 0 });
+});
+
 /** Wipe job cards, reset to queued, and requeue generation (owner only). */
 jobRoutes.post("/:id/regen", async (c) => {
   const userId = await requireUser(c);

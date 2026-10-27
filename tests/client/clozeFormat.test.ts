@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   blankClozeFront,
+  CLOZE_EXTRA_LABEL,
+  clozeExtraSubtitle,
   extractClozeAnswer,
   revealClozeFront,
 } from "../../src/lib/clozeFormat";
@@ -62,5 +64,22 @@ describe("extractClozeAnswer", () => {
 
   it("returns null when no cloze marker", () => {
     expect(extractClozeAnswer("Plain question")).toBeNull();
+  });
+});
+
+describe("clozeExtraSubtitle", () => {
+  it("returns null for empty Extra", () => {
+    expect(clozeExtraSubtitle("")).toBeNull();
+    expect(clozeExtraSubtitle("   ")).toBeNull();
+  });
+
+  it("returns trimmed Extra when non-empty", () => {
+    expect(clozeExtraSubtitle("  Anki Extra note  ")).toBe("Anki Extra note");
+  });
+});
+
+describe("DraftCardEditor cloze Extra label", () => {
+  it("labels the back field Extra (optional)", () => {
+    expect(CLOZE_EXTRA_LABEL).toBe("Extra (optional)");
   });
 });

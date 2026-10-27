@@ -8,7 +8,7 @@ import type {
 } from "../api/client";
 import { GUEST_USER_ID } from "./session";
 
-const STORE_KEY = "sugarplum.guest.store.v1";
+export const GUEST_STORE_KEY = "sugarplum.guest.store.v1";
 
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -167,15 +167,12 @@ function seedStore(): GuestStore {
   };
 }
 
-function readStore(storage?: Store): GuestStore {
+/** Read guest store without seeding (for merge / snapshot). */
+export function peekGuestStore(storage?: Store): GuestStore | null {
   const s = backend(storage);
   try {
-    const raw = s.getItem(STORE_KEY);
-    if (!raw) {
-      const seeded = seedStore();
-      writeStore(seeded, storage);
-      return seeded;
-    }
+    const raw = s.getItem(GUEST_STORE_KEY);
+    if (!raw) return null;
     const parsed = JSON.parse(raw) as LegacyGuestStore;
     if (
       !parsed ||
@@ -183,9 +180,7 @@ function readStore(storage?: Store): GuestStore {
       !Array.isArray(parsed.cards) ||
       !Array.isArray(parsed.dueIds)
     ) {
-      const seeded = seedStore();
-      writeStore(seeded, storage);
-      return seeded;
+      return null;
     }
     const migrated = migrateStore(parsed);
     // Persist migration so subject_id / subjects stick (incl. dangling ids).
@@ -200,18 +195,24 @@ function readStore(storage?: Store): GuestStore {
     if (needsWrite) writeStore(migrated, storage);
     return migrated;
   } catch {
-    const seeded = seedStore();
-    try {
-      writeStore(seeded, storage);
-    } catch {
-      /* ignore */
-    }
-    return seeded;
+    return null;
   }
 }
 
+function readStore(storage?: Store): GuestStore {
+  const peeked = peekGuestStore(storage);
+  if (peeked) return peeked;
+  const seeded = seedStore();
+  try {
+    writeStore(seeded, storage);
+  } catch {
+    /* ignore */
+  }
+  return seeded;
+}
+
 function writeStore(store: GuestStore, storage?: Store): void {
-  backend(storage).setItem(STORE_KEY, JSON.stringify(store));
+  backend(storage).setItem(GUEST_STORE_KEY, JSON.stringify(store));
 }
 
 /** Ensure seed exists (call after enterGuest). */
@@ -221,7 +222,7 @@ export function ensureGuestStore(storage?: Store): void {
 
 export function clearGuestStore(storage?: Store): void {
   try {
-    backend(storage).removeItem(STORE_KEY);
+    backend(storage).removeItem(GUEST_STORE_KEY);
   } catch {
     /* ignore */
   }
