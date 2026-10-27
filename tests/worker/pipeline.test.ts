@@ -121,6 +121,98 @@ describe("runGenerationPipeline", () => {
     expect(drafts.length).toBeGreaterThan(0);
   });
 
+  it("emits onProgress generate then critique per chunk with stable total", async () => {
+    const events: Array<{
+      stage: string;
+      current: number;
+      total: number;
+      label: string;
+      halfStepsDone: number;
+    }> = [];
+    const llm = mockPipelineLlm({
+      generate: async (text) => [
+        validDraft({
+          front: `Q?`,
+          back: "A",
+          provenance: { pages: [1], excerpt: text.slice(0, 40) },
+        }),
+      ],
+      complete: async () =>
+        JSON.stringify({
+          cards: [
+            validDraft({
+              front: "kept",
+              back: "yes",
+            }),
+          ],
+        }),
+    });
+
+    const block = "x".repeat(3500);
+    const text = `${block}\n\n${block}`;
+
+    await runGenerationPipeline({
+      text,
+      llm,
+      apiKey: "k",
+      provider: "mock",
+      onProgress: (e) => {
+        events.push({ ...e });
+      },
+    });
+
+    const n = 2;
+    expect(events.length).toBe(n * 4);
+    for (const e of events) {
+      expect(e.total).toBe(n);
+    }
+    // Per chunk: generate start/done, critique start/done; half-steps never rewind
+    expect(events.map((e) => [e.stage, e.current, e.halfStepsDone])).toEqual([
+      ["generate", 0, 0],
+      ["generate", 1, 1],
+      ["critique", 0, 1],
+      ["critique", 1, 2],
+      ["generate", 1, 2],
+      ["generate", 2, 3],
+      ["critique", 1, 3],
+      ["critique", 2, 4],
+    ]);
+    let prevHalf = -1;
+    for (const e of events) {
+      expect(e.halfStepsDone).toBeGreaterThanOrEqual(prevHalf);
+      prevHalf = e.halfStepsDone;
+    }
+    expect(events[0]!.label).toContain("chunk 1/2");
+    expect(events[2]!.label).toContain("chunk 1/2");
+    expect(events[4]!.label).toContain("chunk 2/2");
+  });
+
+  it("advances critique half-steps when generate returns empty", async () => {
+    const events: Array<{ stage: string; halfStepsDone: number }> = [];
+    const llm = mockPipelineLlm({
+      generate: async () => [],
+      complete: async () => JSON.stringify({ cards: [] }),
+    });
+
+    await runGenerationPipeline({
+      text: "short remainder that is one chunk",
+      llm,
+      apiKey: "k",
+      provider: "mock",
+      onProgress: (e) => {
+        events.push({ stage: e.stage, halfStepsDone: e.halfStepsDone });
+      },
+    });
+
+    expect(events.map((e) => [e.stage, e.halfStepsDone])).toEqual([
+      ["generate", 0],
+      ["generate", 1],
+      ["critique", 1],
+      ["critique", 2],
+    ]);
+    expect(llm.complete).not.toHaveBeenCalled();
+  });
+
   it("caps generateDrafts calls at MAX_PIPELINE_CHUNKS", async () => {
     const llm = mockPipelineLlm({
       generate: async () => [

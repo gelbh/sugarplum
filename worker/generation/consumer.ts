@@ -11,7 +11,11 @@ import {
   runGenerationPipeline,
 } from "./pipeline";
 import {
+  IMAGE_STAGES,
+  RULES_ONLY_STAGES,
+  TEXT_LLM_STAGES,
   computePercent,
+  computePipelineBandPercent,
   writeJobProgress,
   type ProgressStage,
 } from "./progress";
@@ -21,13 +25,6 @@ import { harvestRuleDrafts } from "./rules";
 import type { CardDraft } from "./schema";
 import { createWorkersAiAdapter } from "./workers-ai";
 
-const PRESENT_STAGES = [
-  "queued",
-  "extract",
-  "generate",
-  "persist",
-] as const satisfies readonly ProgressStage[];
-
 async function emitProgress(
   db: D1Database,
   jobId: string,
@@ -35,19 +32,50 @@ async function emitProgress(
   current: number,
   total: number,
   label: string,
+  presentStages: readonly ProgressStage[],
+  halfStepsDone?: number,
 ): Promise<void> {
   // Best-effort: progress must never flip a successful job to failed.
   try {
+    const percent =
+      halfStepsDone !== undefined &&
+      (stage === "generate" || stage === "critique")
+        ? computePipelineBandPercent(halfStepsDone, total, presentStages)
+        : computePercent(stage, current, total, presentStages);
     await writeJobProgress(db, jobId, {
       stage,
       current,
       total,
-      percent: computePercent(stage, current, total, PRESENT_STAGES),
+      percent,
       label,
     });
   } catch (err) {
     console.error("writeJobProgress failed", jobId, stage, err);
   }
+}
+
+function makeEmit(
+  db: D1Database,
+  jobId: string,
+  presentStages: readonly ProgressStage[],
+) {
+  return (
+    stage: ProgressStage,
+    current: number,
+    total: number,
+    label: string,
+    halfStepsDone?: number,
+  ) =>
+    emitProgress(
+      db,
+      jobId,
+      stage,
+      current,
+      total,
+      label,
+      presentStages,
+      halfStepsDone,
+    );
 }
 
 type MaterialRow = {
@@ -259,8 +287,6 @@ export async function processGenerateJob(
     .run();
 
   try {
-    await emitProgress(db, jobId, "queued", 0, 0, "Queued");
-
     const material = await db
       .prepare(
         "SELECT id, deck_id, kind, r2_key, status FROM materials WHERE id = ?",
@@ -292,6 +318,7 @@ export async function processGenerateJob(
     let mediaR2Keys: string[] | null = null;
 
     if (material.kind === "image") {
+      const emit = makeEmit(db, jobId, IMAGE_STAGES);
       // Vision needs a BYO provider; free Workers AI path is text-only.
       if (!secret && !opts?.llm) {
         throw new Error(
@@ -318,7 +345,8 @@ export async function processGenerateJob(
         llm = createLlmAdapter(provider);
       }
 
-      await emitProgress(db, jobId, "extract", 0, 0, "Loading image");
+      await emit("queued", 0, 0, "Queued");
+      await emit("extract", 0, 0, "Loading image");
       if (!material.r2_key) {
         throw new Error("Image material has no R2 object");
       }
@@ -333,14 +361,7 @@ export async function processGenerateJob(
         );
       }
       const generateTotal = 1;
-      await emitProgress(
-        db,
-        jobId,
-        "generate",
-        0,
-        generateTotal,
-        "Generating cards",
-      );
+      await emit("generate", 0, generateTotal, "Generating cards");
       drafts = await llm.generateDrafts({
         text: "",
         apiKey,
@@ -350,17 +371,21 @@ export async function processGenerateJob(
           base64: bytesToBase64(bytes),
         },
       });
-      await emitProgress(
-        db,
-        jobId,
-        "generate",
-        generateTotal,
-        generateTotal,
-        "Generating cards",
-      );
+      await emit("generate", generateTotal, generateTotal, "Generating cards");
       mediaR2Keys = [material.r2_key];
+      drafts = filterDraftsByQuality(drafts);
+      if (drafts.length === 0) {
+        throw new Error("Generation produced no valid draft cards");
+      }
+      await emit("persist", 0, 1, "Saving drafts");
+      await insertDraftCards(db, { deckId, jobId, drafts, mediaR2Keys });
+      await emit("persist", 1, 1, "Saving drafts");
     } else {
-      await emitProgress(db, jobId, "extract", 0, 0, "Extracting material");
+      // TEXT_LLM catalog until harvest decides; emit before extract so failures leave progress.
+      const preHarvest = makeEmit(db, jobId, TEXT_LLM_STAGES);
+      await preHarvest("queued", 0, 0, "Queued");
+      await preHarvest("extract", 0, 0, "Extracting material");
+
       const text = await extractMaterialText(env, material);
       if (!text.trim()) {
         throw new Error("Extracted material text is empty");
@@ -368,9 +393,17 @@ export async function processGenerateJob(
 
       const rulesDrafts = harvestRuleDrafts(text);
       const remainder = remainderAfterRules(text, rulesDrafts);
+      if (!remainder.trim() && rulesDrafts.length === 0) {
+        throw new Error(
+          "No flashcard drafts could be produced from this material.",
+        );
+      }
+
+      const stages = remainder.trim() ? TEXT_LLM_STAGES : RULES_ONLY_STAGES;
+      const emit = makeEmit(db, jobId, stages);
+      await emit("rules", 0, 0, "Harvesting rules");
 
       let llmDrafts: CardDraft[] = [];
-
       if (remainder.trim()) {
         const { llm, apiKey, provider } = await resolveTextLlm(
           env,
@@ -382,48 +415,25 @@ export async function processGenerateJob(
           await consumeFreeGenSlot(env, deck.user_id);
         }
 
-        const generateTotal = 1;
-        await emitProgress(
-          db,
-          jobId,
-          "generate",
-          0,
-          generateTotal,
-          "Generating cards",
-        );
         llmDrafts = await runGenerationPipeline({
           text: remainder,
           llm,
           apiKey,
           provider,
+          onProgress: (e) =>
+            emit(e.stage, e.current, e.total, e.label, e.halfStepsDone),
         });
-        await emitProgress(
-          db,
-          jobId,
-          "generate",
-          generateTotal,
-          generateTotal,
-          "Generating cards",
-        );
-      } else if (rulesDrafts.length === 0) {
-        throw new Error(
-          "No flashcard drafts could be produced from this material.",
-        );
       }
 
       drafts = mergeAndDedupeDrafts(rulesDrafts, llmDrafts);
+      drafts = filterDraftsByQuality(drafts);
+      if (drafts.length === 0) {
+        throw new Error("Generation produced no valid draft cards");
+      }
+      await emit("persist", 0, 1, "Saving drafts");
+      await insertDraftCards(db, { deckId, jobId, drafts, mediaR2Keys });
+      await emit("persist", 1, 1, "Saving drafts");
     }
-
-    drafts = filterDraftsByQuality(drafts);
-
-    if (drafts.length === 0) {
-      throw new Error("Generation produced no valid draft cards");
-    }
-
-    await emitProgress(db, jobId, "persist", 0, 1, "Saving drafts");
-    await insertDraftCards(db, { deckId, jobId, drafts, mediaR2Keys });
-    // Final progress before terminal status so pollers never stop below 100%.
-    await emitProgress(db, jobId, "persist", 1, 1, "Saving drafts");
 
     const covered = drafts.map(
       (d) => d.provenance.excerpt.slice(0, 80) || d.front.slice(0, 80),
