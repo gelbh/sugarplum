@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   clearDueCache,
   dueCacheKey,
+  dueScopeFromSearch,
   filterDueExcludingPending,
   loadDueCache,
   pruneDueCacheCard,
@@ -74,6 +75,24 @@ describe("dueCacheKey", () => {
 
   it("prefers deckId when both are set", () => {
     expect(dueCacheKey({ deckId: "d1", subjectId: "s1" })).toBe("due:deck:d1");
+  });
+});
+
+describe("dueScopeFromSearch", () => {
+  it("returns undefined for bare study", () => {
+    expect(dueScopeFromSearch("")).toBeUndefined();
+    expect(dueScopeFromSearch("?card=c1")).toBeUndefined();
+  });
+
+  it("parses deckId or subjectId", () => {
+    expect(dueScopeFromSearch("?deckId=d1")).toEqual({ deckId: "d1" });
+    expect(dueScopeFromSearch("?subjectId=s1")).toEqual({ subjectId: "s1" });
+  });
+
+  it("prefers deckId when both are present", () => {
+    expect(dueScopeFromSearch("?deckId=d1&subjectId=s1")).toEqual({
+      deckId: "d1",
+    });
   });
 });
 

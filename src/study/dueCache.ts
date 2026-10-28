@@ -17,6 +17,21 @@ export function dueCacheKey(opts?: DueScopeOpts): string {
   return "due:global";
 }
 
+/**
+ * Read optional `deckId` / `subjectId` from a location search string.
+ * Both set → prefer deckId (CTAs never emit both; avoids Worker 400).
+ */
+export function dueScopeFromSearch(search: string): DueScopeOpts | undefined {
+  const params = new URLSearchParams(
+    search.startsWith("?") ? search.slice(1) : search,
+  );
+  const deckId = params.get("deckId")?.trim() || "";
+  const subjectId = params.get("subjectId")?.trim() || "";
+  if (deckId) return { deckId };
+  if (subjectId) return { subjectId };
+  return undefined;
+}
+
 function storageKey(userId: string, opts?: DueScopeOpts): string {
   return `${STORAGE_KEY}:${userId}:${dueCacheKey(opts)}`;
 }

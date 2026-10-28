@@ -596,9 +596,27 @@ export default function DeckHubPage({ deckId }: Props) {
                 </Stack>
               ) : null}
             </Stack>
-            <Typography variant="body2" color="text.secondary">
-              Cards, materials, and drafts for this deck.
-            </Typography>
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              sx={{ mt: 1 }}
+            >
+              {deck ? (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() =>
+                    navigate(`/study?deckId=${encodeURIComponent(deck.id)}`)
+                  }
+                >
+                  Study this deck
+                </Button>
+              ) : null}
+              <Typography variant="body2" color="text.secondary">
+                Cards, materials, and drafts for this deck.
+              </Typography>
+            </Stack>
           </Box>
 
           {error ? <Alert severity="error">{error}</Alert> : null}
