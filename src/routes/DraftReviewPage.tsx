@@ -322,6 +322,10 @@ export default function DraftReviewPage() {
         setNotice(
           `Accepted ${result.accepted}; ${result.failed} could not be accepted`,
         );
+      } else if (result.rejectedSiblingCount > 0) {
+        setNotice(
+          `Accepted ${result.accepted} cards into study; discarded ${result.rejectedSiblingCount} drafts from other jobs`,
+        );
       } else {
         setNotice(`Accepted ${result.accepted} cards into study`);
       }

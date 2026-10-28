@@ -609,7 +609,7 @@ export function acceptCard(cardId: string) {
 
 export function acceptAllJobDrafts(jobId: string) {
   if (isGuest()) guestUnsupported("accept cards");
-  return api<{ accepted: number; failed: number }>(
+  return api<{ accepted: number; failed: number; rejectedSiblingCount: number }>(
     `/api/jobs/${jobId}/drafts/accept-all`,
     { method: "POST" },
   );
