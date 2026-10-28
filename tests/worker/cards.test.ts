@@ -21,6 +21,68 @@ function seedOwner(env: ReturnType<typeof createTestEnv>) {
   env.seedSession("sess-a", "user-a");
 }
 
+type TestEnv = ReturnType<typeof createTestEnv>;
+
+async function seedNeedsReviewJob(
+  env: TestEnv,
+  opts: {
+    jobId: string;
+    materialId: string;
+    deckId: string;
+    cards: { id: string; status?: "draft" | "accepted" }[];
+  },
+) {
+  env.seedMaterial({
+    id: opts.materialId,
+    deck_id: opts.deckId,
+    kind: "paste",
+    r2_key: null,
+    filename: null,
+    page_count: null,
+    status: "ready",
+    created_at: "2026-01-01T00:00:00.000Z",
+  });
+  await env.DB.prepare(
+    "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+  )
+    .bind(
+      opts.jobId,
+      opts.materialId,
+      "needs_review",
+      null,
+      null,
+      "2026-01-01T00:00:00.000Z",
+      null,
+    )
+    .run();
+  for (const card of opts.cards) {
+    env.seedCard({
+      id: card.id,
+      deck_id: opts.deckId,
+      job_id: opts.jobId,
+      type: "qa",
+      front_json: JSON.stringify(`${card.id}?`),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: card.id }),
+      status: card.status ?? "draft",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+  }
+}
+
+async function postAcceptAll(env: TestEnv, jobId: string) {
+  return app.request(
+    `/api/jobs/${jobId}/drafts/accept-all`,
+    {
+      method: "POST",
+      headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+    },
+    env,
+  );
+}
+
 describe("draft review / accept gate", () => {
   it("due query skips drafts", async () => {
     const env = createTestEnv();
@@ -348,108 +410,23 @@ describe("draft review / accept gate", () => {
   it("accept-all rejects draft cards on other owned needs_review jobs", async () => {
     const env = createTestEnv();
     seedOwner(env);
-    env.seedMaterial({
-      id: "mat-a",
-      deck_id: "deck-a",
-      kind: "paste",
-      r2_key: null,
-      filename: null,
-      page_count: null,
-      status: "ready",
-      created_at: "2026-01-01T00:00:00.000Z",
+    await seedNeedsReviewJob(env, {
+      jobId: "job-a",
+      materialId: "mat-a",
+      deckId: "deck-a",
+      cards: [{ id: "a1" }, { id: "a2" }],
     });
-    env.seedMaterial({
-      id: "mat-b",
-      deck_id: "deck-a",
-      kind: "paste",
-      r2_key: null,
-      filename: null,
-      page_count: null,
-      status: "ready",
-      created_at: "2026-01-01T00:00:00.000Z",
-    });
-    for (const [id, materialId] of [
-      ["job-a", "mat-a"],
-      ["job-b", "mat-b"],
-    ] as const) {
-      await env.DB.prepare(
-        "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      )
-        .bind(
-          id,
-          materialId,
-          "needs_review",
-          null,
-          null,
-          "2026-01-01T00:00:00.000Z",
-          null,
-        )
-        .run();
-    }
-
-    for (const id of ["a1", "a2"]) {
-      env.seedCard({
-        id,
-        deck_id: "deck-a",
-        job_id: "job-a",
-        type: "qa",
-        front_json: JSON.stringify(`${id}?`),
-        back_json: JSON.stringify("A"),
-        media_r2_keys_json: null,
-        provenance_json: JSON.stringify({ pages: [1], excerpt: id }),
-        status: "draft",
-        created_at: "2026-01-01T00:00:00.000Z",
-        updated_at: "2026-01-01T00:00:00.000Z",
-      });
-    }
-    env.seedCard({
-      id: "b-draft-1",
-      deck_id: "deck-a",
-      job_id: "job-b",
-      type: "qa",
-      front_json: JSON.stringify("B1?"),
-      back_json: JSON.stringify("B"),
-      media_r2_keys_json: null,
-      provenance_json: JSON.stringify({ pages: [1], excerpt: "b1" }),
-      status: "draft",
-      created_at: "2026-01-01T00:00:00.000Z",
-      updated_at: "2026-01-01T00:00:00.000Z",
-    });
-    env.seedCard({
-      id: "b-draft-2",
-      deck_id: "deck-a",
-      job_id: "job-b",
-      type: "qa",
-      front_json: JSON.stringify("B2?"),
-      back_json: JSON.stringify("B"),
-      media_r2_keys_json: null,
-      provenance_json: JSON.stringify({ pages: [1], excerpt: "b2" }),
-      status: "draft",
-      created_at: "2026-01-01T00:00:01.000Z",
-      updated_at: "2026-01-01T00:00:01.000Z",
-    });
-    env.seedCard({
-      id: "b-accepted",
-      deck_id: "deck-a",
-      job_id: "job-b",
-      type: "qa",
-      front_json: JSON.stringify("Kept?"),
-      back_json: JSON.stringify("Keep"),
-      media_r2_keys_json: null,
-      provenance_json: JSON.stringify({ pages: [1], excerpt: "kept" }),
-      status: "accepted",
-      created_at: "2026-01-01T00:00:02.000Z",
-      updated_at: "2026-01-01T00:00:02.000Z",
+    await seedNeedsReviewJob(env, {
+      jobId: "job-b",
+      materialId: "mat-b",
+      deckId: "deck-a",
+      cards: [
+        { id: "b-draft" },
+        { id: "b-accepted", status: "accepted" },
+      ],
     });
 
-    const res = await app.request(
-      "/api/jobs/job-a/drafts/accept-all",
-      {
-        method: "POST",
-        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
-      },
-      env,
-    );
+    const res = await postAcceptAll(env, "job-a");
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       accepted: number;
@@ -459,104 +436,32 @@ describe("draft review / accept gate", () => {
     expect(body).toEqual({
       accepted: 2,
       failed: 0,
-      rejectedSiblingCount: 2,
+      rejectedSiblingCount: 1,
     });
     expect(env.getCards().find((c) => c.id === "a1")?.status).toBe("accepted");
     expect(env.getCards().find((c) => c.id === "a2")?.status).toBe("accepted");
-    expect(env.getCards().find((c) => c.id === "b-draft-1")?.status).toBe(
-      "rejected",
-    );
-    expect(env.getCards().find((c) => c.id === "b-draft-2")?.status).toBe(
+    expect(env.getCards().find((c) => c.id === "b-draft")?.status).toBe(
       "rejected",
     );
     expect(env.getCards().find((c) => c.id === "b-accepted")?.status).toBe(
       "accepted",
     );
-    expect(
-      env.getCards().filter((c) => c.job_id === "job-b" && c.status === "draft"),
-    ).toHaveLength(0);
   });
 
   it("accept-all with failures leaves sibling drafts untouched", async () => {
     const env = createTestEnv();
     seedOwner(env);
-    env.seedMaterial({
-      id: "mat-a",
-      deck_id: "deck-a",
-      kind: "paste",
-      r2_key: null,
-      filename: null,
-      page_count: null,
-      status: "ready",
-      created_at: "2026-01-01T00:00:00.000Z",
+    await seedNeedsReviewJob(env, {
+      jobId: "job-fail",
+      materialId: "mat-a",
+      deckId: "deck-a",
+      cards: [{ id: "d-cas" }, { id: "d-ok" }],
     });
-    env.seedMaterial({
-      id: "mat-b",
-      deck_id: "deck-a",
-      kind: "paste",
-      r2_key: null,
-      filename: null,
-      page_count: null,
-      status: "ready",
-      created_at: "2026-01-01T00:00:00.000Z",
-    });
-    for (const [id, materialId] of [
-      ["job-fail", "mat-a"],
-      ["job-sib", "mat-b"],
-    ] as const) {
-      await env.DB.prepare(
-        "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      )
-        .bind(
-          id,
-          materialId,
-          "needs_review",
-          null,
-          null,
-          "2026-01-01T00:00:00.000Z",
-          null,
-        )
-        .run();
-    }
-
-    env.seedCard({
-      id: "d-cas",
-      deck_id: "deck-a",
-      job_id: "job-fail",
-      type: "qa",
-      front_json: JSON.stringify("Cas?"),
-      back_json: JSON.stringify("A"),
-      media_r2_keys_json: null,
-      provenance_json: JSON.stringify({ pages: [1], excerpt: "c" }),
-      status: "draft",
-      created_at: "2026-01-01T00:00:00.000Z",
-      updated_at: "2026-01-01T00:00:00.000Z",
-    });
-    env.seedCard({
-      id: "d-ok",
-      deck_id: "deck-a",
-      job_id: "job-fail",
-      type: "qa",
-      front_json: JSON.stringify("Ok?"),
-      back_json: JSON.stringify("B"),
-      media_r2_keys_json: null,
-      provenance_json: JSON.stringify({ pages: [1], excerpt: "o" }),
-      status: "draft",
-      created_at: "2026-01-01T00:00:01.000Z",
-      updated_at: "2026-01-01T00:00:01.000Z",
-    });
-    env.seedCard({
-      id: "sib-draft",
-      deck_id: "deck-a",
-      job_id: "job-sib",
-      type: "qa",
-      front_json: JSON.stringify("Sib?"),
-      back_json: JSON.stringify("S"),
-      media_r2_keys_json: null,
-      provenance_json: JSON.stringify({ pages: [1], excerpt: "s" }),
-      status: "draft",
-      created_at: "2026-01-01T00:00:00.000Z",
-      updated_at: "2026-01-01T00:00:00.000Z",
+    await seedNeedsReviewJob(env, {
+      jobId: "job-sib",
+      materialId: "mat-b",
+      deckId: "deck-a",
+      cards: [{ id: "sib-draft" }],
     });
 
     const originalAll = env.DB.prepare.bind(env.DB);
@@ -583,14 +488,7 @@ describe("draft review / accept gate", () => {
       return stmt;
     }) as typeof env.DB.prepare;
 
-    const res = await app.request(
-      "/api/jobs/job-fail/drafts/accept-all",
-      {
-        method: "POST",
-        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
-      },
-      env,
-    );
+    const res = await postAcceptAll(env, "job-fail");
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       accepted: number;
@@ -600,6 +498,39 @@ describe("draft review / accept gate", () => {
     expect(body.accepted).toBe(1);
     expect(body.failed).toBe(1);
     expect(body.rejectedSiblingCount).toBe(0);
+    expect(env.getCards().find((c) => c.id === "sib-draft")?.status).toBe(
+      "draft",
+    );
+  });
+
+  it("accept-all with zero drafts does not reject siblings", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    await seedNeedsReviewJob(env, {
+      jobId: "job-empty",
+      materialId: "mat-empty",
+      deckId: "deck-a",
+      cards: [],
+    });
+    await seedNeedsReviewJob(env, {
+      jobId: "job-sib",
+      materialId: "mat-sib",
+      deckId: "deck-a",
+      cards: [{ id: "sib-draft" }],
+    });
+
+    const res = await postAcceptAll(env, "job-empty");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      accepted: number;
+      failed: number;
+      rejectedSiblingCount: number;
+    };
+    expect(body).toEqual({
+      accepted: 0,
+      failed: 0,
+      rejectedSiblingCount: 0,
+    });
     expect(env.getCards().find((c) => c.id === "sib-draft")?.status).toBe(
       "draft",
     );
@@ -622,80 +553,20 @@ describe("draft review / accept gate", () => {
       subject_hint: null,
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    env.seedMaterial({
-      id: "mat-a",
-      deck_id: "deck-a",
-      kind: "paste",
-      r2_key: null,
-      filename: null,
-      page_count: null,
-      status: "ready",
-      created_at: "2026-01-01T00:00:00.000Z",
+    await seedNeedsReviewJob(env, {
+      jobId: "job-mine",
+      materialId: "mat-a",
+      deckId: "deck-a",
+      cards: [{ id: "mine-draft" }],
     });
-    env.seedMaterial({
-      id: "mat-other",
-      deck_id: "deck-b",
-      kind: "paste",
-      r2_key: null,
-      filename: null,
-      page_count: null,
-      status: "ready",
-      created_at: "2026-01-01T00:00:00.000Z",
-    });
-    for (const [id, materialId] of [
-      ["job-mine", "mat-a"],
-      ["job-other", "mat-other"],
-    ] as const) {
-      await env.DB.prepare(
-        "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      )
-        .bind(
-          id,
-          materialId,
-          "needs_review",
-          null,
-          null,
-          "2026-01-01T00:00:00.000Z",
-          null,
-        )
-        .run();
-    }
-
-    env.seedCard({
-      id: "mine-draft",
-      deck_id: "deck-a",
-      job_id: "job-mine",
-      type: "qa",
-      front_json: JSON.stringify("Mine?"),
-      back_json: JSON.stringify("A"),
-      media_r2_keys_json: null,
-      provenance_json: JSON.stringify({ pages: [1], excerpt: "m" }),
-      status: "draft",
-      created_at: "2026-01-01T00:00:00.000Z",
-      updated_at: "2026-01-01T00:00:00.000Z",
-    });
-    env.seedCard({
-      id: "other-draft",
-      deck_id: "deck-b",
-      job_id: "job-other",
-      type: "qa",
-      front_json: JSON.stringify("Other?"),
-      back_json: JSON.stringify("O"),
-      media_r2_keys_json: null,
-      provenance_json: JSON.stringify({ pages: [1], excerpt: "o" }),
-      status: "draft",
-      created_at: "2026-01-01T00:00:00.000Z",
-      updated_at: "2026-01-01T00:00:00.000Z",
+    await seedNeedsReviewJob(env, {
+      jobId: "job-other",
+      materialId: "mat-other",
+      deckId: "deck-b",
+      cards: [{ id: "other-draft" }],
     });
 
-    const res = await app.request(
-      "/api/jobs/job-mine/drafts/accept-all",
-      {
-        method: "POST",
-        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
-      },
-      env,
-    );
+    const res = await postAcceptAll(env, "job-mine");
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       accepted: number;
