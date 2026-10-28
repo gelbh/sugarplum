@@ -543,7 +543,9 @@ export default function DeckHubPage({ deckId }: Props) {
         back,
         ...(options ? { options } : {}),
       });
-      setCards((prev) => [...prev, created]);
+      if (!showArchived) {
+        setCards((prev) => [...prev, created]);
+      }
       setCreateCard(blankHubCreateCard(deckId));
       setNotice("Card added");
     } catch (err) {
