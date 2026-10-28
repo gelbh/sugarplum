@@ -520,4 +520,402 @@ describe("POST /api/guest/import", () => {
     expect(res.status).toBe(400);
     expect(env.getCards()).toHaveLength(0);
   });
+
+  it("matches import subjects by folded title to existing", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedSubject({
+      id: "subj-science",
+      user_id: "user-a",
+      title: "Science",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/guest/import",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          subjects: [{ clientId: "guest-sub-1", title: " SCIENCE " }],
+          decks: [
+            {
+              clientId: "guest-deck-1",
+              title: "Bio",
+              clientSubjectId: "guest-sub-1",
+            },
+          ],
+          cards: [
+            {
+              clientDeckId: "guest-deck-1",
+              type: "qa",
+              front: "Cell?",
+              back: "Unit",
+              source: "paste",
+            },
+          ],
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(200);
+
+    const { results: subjects } = await env.DB.prepare(
+      "SELECT id, title, created_at FROM subjects WHERE user_id = ? ORDER BY created_at ASC",
+    )
+      .bind("user-a")
+      .all<{ id: string; title: string }>();
+    expect(subjects).toHaveLength(1);
+    expect(subjects![0].id).toBe("subj-science");
+
+    const { results: decks } = await env.DB.prepare(
+      "SELECT id, title, subject_hint, subject_id, created_at FROM decks WHERE user_id = ? ORDER BY created_at ASC",
+    )
+      .bind("user-a")
+      .all<{ subject_id: string | null }>();
+    expect(decks).toHaveLength(1);
+    expect(decks![0].subject_id).toBe("subj-science");
+  });
+
+  it("creates a new subject on fold miss", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+
+    const res = await app.request(
+      "/api/guest/import",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          subjects: [{ clientId: "guest-sub-bio", title: "Biology" }],
+          decks: [
+            {
+              clientId: "guest-deck-1",
+              title: "Cells",
+              clientSubjectId: "guest-sub-bio",
+            },
+          ],
+          cards: [
+            {
+              clientDeckId: "guest-deck-1",
+              type: "qa",
+              front: "Q",
+              back: "A",
+              source: "hub",
+            },
+          ],
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(200);
+
+    const { results: subjects } = await env.DB.prepare(
+      "SELECT id, title, created_at FROM subjects WHERE user_id = ? ORDER BY created_at ASC",
+    )
+      .bind("user-a")
+      .all<{ id: string; title: string }>();
+    expect(subjects).toHaveLength(1);
+    expect(subjects![0].title).toBe("Biology");
+
+    const cards = env.getCards();
+    expect(JSON.parse(cards[0].provenance_json!)).toEqual({
+      guest_import: true,
+      source: "hub",
+    });
+  });
+
+  it("does not reparent a deck when title matches but clientSubjectId differs", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedSubject({
+      id: "subj-anatomy",
+      user_id: "user-a",
+      title: "Anatomy",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSubject({
+      id: "subj-biology",
+      user_id: "user-a",
+      title: "Biology",
+      created_at: "2026-01-02T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-anatomy",
+      user_id: "user-a",
+      title: "Heart",
+      subject_hint: null,
+      subject_id: "subj-anatomy",
+      created_at: "2026-01-03T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/guest/import",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          subjects: [{ clientId: "guest-sub-bio", title: "Biology" }],
+          decks: [
+            {
+              clientId: "guest-deck-1",
+              title: "heart",
+              clientSubjectId: "guest-sub-bio",
+            },
+          ],
+          cards: [
+            {
+              clientDeckId: "guest-deck-1",
+              type: "qa",
+              front: "Q",
+              back: "A",
+              source: "paste",
+            },
+          ],
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(200);
+
+    const { results: decks } = await env.DB.prepare(
+      "SELECT id, subject_id FROM decks WHERE user_id = ? ORDER BY created_at ASC",
+    )
+      .bind("user-a")
+      .all<{ id: string; subject_id: string | null }>();
+    expect(decks).toHaveLength(1);
+    expect(decks![0].id).toBe("deck-anatomy");
+    expect(decks![0].subject_id).toBe("subj-anatomy");
+  });
+
+  it("imports cloze with empty back", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+
+    const res = await app.request(
+      "/api/guest/import",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          subjects: [],
+          decks: [
+            {
+              clientId: "guest-deck-1",
+              title: "Cloze deck",
+              clientSubjectId: "",
+            },
+          ],
+          cards: [
+            {
+              clientDeckId: "guest-deck-1",
+              type: "cloze",
+              front: "Water moves by {{c1::osmosis}}",
+              back: "",
+              source: "paste",
+            },
+          ],
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(200);
+    const cards = env.getCards();
+    expect(cards[0].type).toBe("cloze");
+    expect(cards[0].back_json).toBe(JSON.stringify(""));
+  });
+
+  it("imports mcq with validated options", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+
+    const res = await app.request(
+      "/api/guest/import",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          subjects: [],
+          decks: [
+            {
+              clientId: "guest-deck-1",
+              title: "MCQ deck",
+              clientSubjectId: "",
+            },
+          ],
+          cards: [
+            {
+              clientDeckId: "guest-deck-1",
+              type: "mcq",
+              front: "Pick one",
+              back: "B",
+              options: ["A", "B", "C"],
+              source: "hub",
+            },
+          ],
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(200);
+    const cards = env.getCards();
+    expect(cards[0].type).toBe("mcq");
+    expect(JSON.parse(cards[0].back_json!)).toEqual({
+      answer: "B",
+      options: ["A", "B", "C"],
+    });
+  });
+
+  it("returns 400 for mcq without valid options", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+
+    const res = await app.request(
+      "/api/guest/import",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          subjects: [],
+          decks: [
+            {
+              clientId: "guest-deck-1",
+              title: "Bad MCQ",
+              clientSubjectId: "",
+            },
+          ],
+          cards: [
+            {
+              clientDeckId: "guest-deck-1",
+              type: "mcq",
+              front: "Pick",
+              back: "X",
+              options: ["A", "B"],
+              source: "paste",
+            },
+          ],
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(400);
+    expect(env.getCards()).toHaveLength(0);
+  });
+
+  it("places new decks under Unfiled when clientSubjectId is unknown", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+
+    const res = await app.request(
+      "/api/guest/import",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          subjects: [{ clientId: "guest-sub-1", title: "Physics" }],
+          decks: [
+            {
+              clientId: "guest-deck-1",
+              title: "Orphan deck",
+              clientSubjectId: "unknown-subject-id",
+            },
+          ],
+          cards: [
+            {
+              clientDeckId: "guest-deck-1",
+              type: "qa",
+              front: "Q",
+              back: "A",
+              source: "paste",
+            },
+          ],
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(200);
+
+    const { results: subjects } = await env.DB.prepare(
+      "SELECT id, title, created_at FROM subjects WHERE user_id = ? ORDER BY created_at ASC",
+    )
+      .bind("user-a")
+      .all<{ id: string; title: string }>();
+    const unfiled = (subjects ?? []).find((s) => s.title === "Unfiled");
+    expect(unfiled).toBeTruthy();
+
+    const { results: decks } = await env.DB.prepare(
+      "SELECT id, title, subject_hint, subject_id, created_at FROM decks WHERE user_id = ? ORDER BY created_at ASC",
+    )
+      .bind("user-a")
+      .all<{ subject_id: string | null }>();
+    expect(decks).toHaveLength(1);
+    expect(decks![0].subject_id).toBe(unfiled!.id);
+  });
+
+  it("returns 400 for invalid card source", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+
+    const res = await app.request(
+      "/api/guest/import",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          subjects: [],
+          decks: [
+            {
+              clientId: "guest-deck-1",
+              title: "Deck",
+              clientSubjectId: "",
+            },
+          ],
+          cards: [
+            {
+              clientDeckId: "guest-deck-1",
+              type: "qa",
+              front: "Q",
+              back: "A",
+              source: "llm",
+            },
+          ],
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(400);
+    expect(env.getCards()).toHaveLength(0);
+  });
 });
