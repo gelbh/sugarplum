@@ -1346,6 +1346,25 @@ export function createTestEnv(opts?: {
           });
         } else if (
           normalized.startsWith(
+            "UPDATE cards SET type = ?, front_json = ?, back_json = ?, provenance_json = ?, media_r2_keys_json = NULL, updated_at = ?",
+          )
+        ) {
+          const [type, front_json, back_json, provenance_json, updated_at, id] =
+            bound as [string, string, string, string, string, string];
+          const row = cards.get(id);
+          if (row) {
+            cards.set(id, {
+              ...row,
+              type,
+              front_json,
+              back_json,
+              provenance_json,
+              media_r2_keys_json: null,
+              updated_at,
+            });
+          }
+        } else if (
+          normalized.startsWith(
             "UPDATE cards SET type = ?, front_json = ?, back_json = ?, updated_at = ?",
           )
         ) {

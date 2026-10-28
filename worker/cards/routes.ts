@@ -9,6 +9,13 @@ import {
   assertValidMcqOptions,
   OcclusionFrontSchema,
 } from "../generation/schema";
+import {
+  capRegenSourceText,
+  generateOneCard,
+  loadCardSourceText,
+  REGEN_CARD_TYPES,
+  resolveRegenLlm,
+} from "../generation/card-regen";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
@@ -505,6 +512,110 @@ cardRoutes.post("/:id/reject", async (c) => {
 
   return c.json(
     serializeCard({ ...row, status: "rejected", updated_at: updatedAt }),
+  );
+});
+
+const RegenBodySchema = z.object({
+  type: z.enum(REGEN_CARD_TYPES),
+});
+
+/** Single-card regen: UPDATE one row only; never job-wide DELETE. */
+cardRoutes.post("/:id/regen", async (c) => {
+  const userId = await requireUser(c);
+  const cardId = c.req.param("id");
+  const db = getDb(c.env);
+  const row = await requireOwnedCard(db, cardId, userId);
+
+  if (row.status !== "draft" && row.status !== "accepted") {
+    throw new HTTPException(400, {
+      message: "Only draft or accepted cards can be regenerated",
+    });
+  }
+
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+  const parsed = RegenBodySchema.safeParse(body);
+  if (!parsed.success) {
+    throw new HTTPException(400, {
+      message: parsed.error.issues[0]?.message ?? "Invalid regen body",
+    });
+  }
+
+  const sourceRaw = await loadCardSourceText(c.env, row);
+  if (!sourceRaw) {
+    throw new HTTPException(422, {
+      message:
+        "No source text available for this card. Edit manually or regenerate from material with text.",
+    });
+  }
+  const sourceText = capRegenSourceText(sourceRaw);
+
+  let llmBundle: Awaited<ReturnType<typeof resolveRegenLlm>>;
+  try {
+    llmBundle = await resolveRegenLlm(c.env, userId);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "LLM unavailable";
+    const freeGenCap = message.includes("Daily free generation limit");
+    throw new HTTPException(freeGenCap ? 429 : 502, { message });
+  }
+
+  const existingFront = parseJsonField<unknown>(row.front_json, null);
+  let draft: Awaited<ReturnType<typeof generateOneCard>>;
+  try {
+    draft = await generateOneCard({
+      text: sourceText,
+      type: parsed.data.type,
+      existingFront:
+        typeof existingFront === "string" ? existingFront : undefined,
+      llm: llmBundle.llm,
+      apiKey: llmBundle.apiKey,
+      provider: llmBundle.provider,
+    });
+  } catch (err) {
+    throw new HTTPException(502, {
+      message: err instanceof Error ? err.message : "Card regeneration failed",
+    });
+  }
+
+  const nextBackJson =
+    draft.type === "mcq"
+      ? encodeStoredBack(draft.type, draft.back, draft.options)
+      : encodeStoredBack(draft.type, draft.back);
+  const nextFrontJson = JSON.stringify(draft.front);
+  const nextProvenanceJson = JSON.stringify(draft.provenance);
+  const updatedAt = new Date().toISOString();
+
+  await db
+    .prepare(
+      `UPDATE cards
+       SET type = ?, front_json = ?, back_json = ?, provenance_json = ?,
+           media_r2_keys_json = NULL, updated_at = ?
+       WHERE id = ?`,
+    )
+    .bind(
+      draft.type,
+      nextFrontJson,
+      nextBackJson,
+      nextProvenanceJson,
+      updatedAt,
+      cardId,
+    )
+    .run();
+
+  return c.json(
+    serializeCard({
+      ...row,
+      type: draft.type,
+      front_json: nextFrontJson,
+      back_json: nextBackJson,
+      provenance_json: nextProvenanceJson,
+      media_r2_keys_json: null,
+      updated_at: updatedAt,
+    }),
   );
 });
 
