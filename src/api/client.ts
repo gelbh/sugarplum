@@ -622,6 +622,33 @@ export function putLlmSettings(provider: string, apiKey: string) {
   });
 }
 
+export type StudyPrefs = {
+  introBudget: number;
+  reviewBudget: number;
+  rFloor: number;
+};
+
+const DEFAULT_STUDY_PREFS: StudyPrefs = {
+  introBudget: 20,
+  reviewBudget: 200,
+  rFloor: 0.8,
+};
+
+export function getStudyPrefs() {
+  if (isGuest()) {
+    return Promise.resolve({ ...DEFAULT_STUDY_PREFS });
+  }
+  return api<StudyPrefs>("/api/settings/study");
+}
+
+export function putStudyPrefs(prefs: StudyPrefs) {
+  if (isGuest()) guestUnsupported("save study prefs");
+  return api<StudyPrefs>("/api/settings/study", {
+    method: "PUT",
+    json: prefs,
+  });
+}
+
 /** Occlusion front payload stored in front_json (normalized region boxes). */
 export type OcclusionFrontView = {
   image_key: string;

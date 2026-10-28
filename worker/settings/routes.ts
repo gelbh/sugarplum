@@ -8,6 +8,12 @@ import {
   isUserLlmProvider,
   USER_LLM_PROVIDERS,
 } from "../generation/llm";
+import {
+  clampStudyPrefs,
+  loadStudyPrefs,
+  saveStudyPrefs,
+} from "../study/prefs";
+import type { StudyPrefs } from "../study/queue";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -117,4 +123,29 @@ settingsRoutes.put("/llm", async (c) => {
     last4: meta.last4,
     configured: true,
   } satisfies LlmSettingsConfigured);
+});
+
+settingsRoutes.get("/study", async (c) => {
+  const userId = await requireUser(c);
+  const prefs = await loadStudyPrefs(getDb(c.env), userId);
+  return c.json(prefs satisfies StudyPrefs);
+});
+
+settingsRoutes.put("/study", async (c) => {
+  const userId = await requireUser(c);
+
+  let body: {
+    introBudget?: unknown;
+    reviewBudget?: unknown;
+    rFloor?: unknown;
+  };
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+
+  const clamped = clampStudyPrefs(body);
+  const prefs = await saveStudyPrefs(getDb(c.env), userId, clamped);
+  return c.json(prefs satisfies StudyPrefs);
 });

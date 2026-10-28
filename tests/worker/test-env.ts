@@ -59,6 +59,14 @@ type UserSecretRow = {
   updated_at: string;
 };
 
+type UserStudyPrefsRow = {
+  user_id: string;
+  intro_budget: number;
+  review_budget: number;
+  r_floor: number;
+  updated_at: string;
+};
+
 export type CardRow = {
   id: string;
   deck_id: string;
@@ -122,6 +130,7 @@ export type TestEnv = Env & {
   seedMaterial: (row: MaterialRow) => void;
   seedSession: (id: string, userId: string, ttlMs?: number) => void;
   seedUserSecret: (row: UserSecretRow) => void;
+  seedUserStudyPrefs: (row: UserStudyPrefsRow) => void;
   seedCard: (row: CardRow) => void;
   seedGenerationJob: (row: GenerationJobRow) => void;
   seedSchedule: (row: ScheduleRow) => void;
@@ -131,6 +140,7 @@ export type TestEnv = Env & {
   getExportJobs: () => ExportJobRow[];
   getGenerationJobs: () => GenerationJobRow[];
   getUserSecrets: () => UserSecretRow[];
+  getUserStudyPrefs: () => UserStudyPrefsRow[];
   getCards: () => CardRow[];
   getSchedules: () => ScheduleRow[];
   getReviewLogs: () => ReviewLogRow[];
@@ -147,6 +157,7 @@ export function createTestEnv(opts?: {
   const materials = new Map<string, MaterialRow>();
   const generationJobs = new Map<string, GenerationJobRow>();
   const userSecrets = new Map<string, UserSecretRow>();
+  const userStudyPrefs = new Map<string, UserStudyPrefsRow>();
   const cards = new Map<string, CardRow>();
   const schedules = new Map<string, ScheduleRow>();
   const reviewLogs: ReviewLogRow[] = [];
@@ -578,6 +589,19 @@ export function createTestEnv(opts?: {
           const row = userSecrets.get(bound[0] as string);
           return row
             ? ({ provider: row.provider, ciphertext: row.ciphertext } as T)
+            : null;
+        }
+        if (
+          normalized.includes("FROM user_study_prefs") &&
+          normalized.includes("WHERE user_id =")
+        ) {
+          const row = userStudyPrefs.get(bound[0] as string);
+          return row
+            ? ({
+                intro_budget: row.intro_budget,
+                review_budget: row.review_budget,
+                r_floor: row.r_floor,
+              } as T)
             : null;
         }
         if (
@@ -1633,6 +1657,16 @@ export function createTestEnv(opts?: {
             created_at: existing?.created_at ?? created_at,
             updated_at,
           });
+        } else if (normalized.startsWith("INSERT INTO user_study_prefs")) {
+          const [user_id, intro_budget, review_budget, r_floor, updated_at] =
+            bound as [string, number, number, number, string];
+          userStudyPrefs.set(user_id, {
+            user_id,
+            intro_budget,
+            review_budget,
+            r_floor,
+            updated_at,
+          });
         } else if (normalized.startsWith("INSERT INTO cards")) {
           const [
             id,
@@ -2131,6 +2165,9 @@ export function createTestEnv(opts?: {
     seedUserSecret(row) {
       userSecrets.set(row.user_id, row);
     },
+    seedUserStudyPrefs(row) {
+      userStudyPrefs.set(row.user_id, row);
+    },
     seedCard(row) {
       cards.set(row.id, row);
     },
@@ -2150,6 +2187,7 @@ export function createTestEnv(opts?: {
     getExportJobs: () => [...exportJobs.values()],
     getGenerationJobs: () => [...generationJobs.values()],
     getUserSecrets: () => [...userSecrets.values()],
+    getUserStudyPrefs: () => [...userStudyPrefs.values()],
     getCards: () => [...cards.values()],
     getSchedules: () => [...schedules.values()],
     getReviewLogs: () => [...reviewLogs],
