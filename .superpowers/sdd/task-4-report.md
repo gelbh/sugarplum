@@ -24,3 +24,10 @@ Follow-up evidence:
 - Rewrote mapped existing image sources, stored string sort fields, added a stable non-zero FNV-1a checksum, and parsed cloze ordinals.
 - `npx vitest run tests/worker/export-build-apkg.test.ts`: 3 passed.
 - `npx tsc -p tsconfig.worker.json --pretty false`: passed.
+
+SHA-1 csum + all-field media rewrite:
+- Replaced FNV-1a with Anki's sort-field checksum: SHA-1, first 8 hex digits as decimal (`crypto.subtle.digest`).
+- `rewriteMediaSources` runs on every field after basic front img append.
+- Added golden tests for csum and cloze Text media rewrite.
+- `npx vitest run tests/worker/export-build-apkg.test.ts`: 5 passed.
+- Commit: `fix(export): anki sha1 csum and rewrite all media fields`.
