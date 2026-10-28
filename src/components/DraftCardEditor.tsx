@@ -38,6 +38,12 @@ export type DraftCardEditorProps = {
   onChange: (next: DraftEditorChange) => void;
   /** When set, type Select is limited to these values (hub DIY: qa|cloze|mcq). */
   allowedTypes?: CardType[];
+  /** Optional single-card regen control rendered next to the type Select. */
+  regenAction?: {
+    busy: boolean;
+    disabled?: boolean;
+    onClick: () => void;
+  };
 };
 
 const TEXT_TYPES: CardType[] = [
@@ -139,6 +145,7 @@ export default function DraftCardEditor({
   disabled = false,
   onChange,
   allowedTypes,
+  regenAction,
 }: DraftCardEditorProps) {
   if (card.type === "occlusion" && isOcclusionFront(card.front)) {
     return (
@@ -230,29 +237,51 @@ export default function DraftCardEditor({
           }}
         />
       ) : null}
-      <FormControl fullWidth size="small" disabled={disabled || typeSelectLocked}>
-        <InputLabel id={`card-type-${card.id}`}>Type</InputLabel>
-        <Select
-          labelId={`card-type-${card.id}`}
-          label="Type"
-          value={typeValue}
-          onChange={(e) =>
-            onTypeChange(card, e.target.value as CardType, onChange)
-          }
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={1.5}
+        alignItems={{ sm: "flex-start" }}
+      >
+        <FormControl
+          fullWidth
+          size="small"
+          disabled={disabled || typeSelectLocked}
         >
-          {typeSelectLocked ? (
-            <MenuItem value={typeValue}>
-              {TYPE_LABELS[typeValue] ?? typeValue}
-            </MenuItem>
-          ) : (
-            selectableTypes.map((t) => (
-              <MenuItem key={t} value={t}>
-                {TYPE_LABELS[t] ?? t}
+          <InputLabel id={`card-type-${card.id}`}>Type</InputLabel>
+          <Select
+            labelId={`card-type-${card.id}`}
+            label="Type"
+            value={typeValue}
+            onChange={(e) =>
+              onTypeChange(card, e.target.value as CardType, onChange)
+            }
+          >
+            {typeSelectLocked ? (
+              <MenuItem value={typeValue}>
+                {TYPE_LABELS[typeValue] ?? typeValue}
               </MenuItem>
-            ))
-          )}
-        </Select>
-      </FormControl>
+            ) : (
+              selectableTypes.map((t) => (
+                <MenuItem key={t} value={t}>
+                  {TYPE_LABELS[t] ?? t}
+                </MenuItem>
+              ))
+            )}
+          </Select>
+        </FormControl>
+        {regenAction ? (
+          <Button
+            variant="outlined"
+            onClick={regenAction.onClick}
+            disabled={
+              disabled || regenAction.busy || regenAction.disabled === true
+            }
+            sx={{ flexShrink: 0, whiteSpace: "nowrap" }}
+          >
+            {regenAction.busy ? "Regenerating…" : "Regenerate this card"}
+          </Button>
+        ) : null}
+      </Stack>
 
       {isCloze ? (
         <>
