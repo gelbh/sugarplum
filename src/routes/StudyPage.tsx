@@ -147,6 +147,8 @@ export default function StudyPage() {
     dueScopeFromSearch(window.location.search),
   );
   const [scopeLabel, setScopeLabel] = useState<string | null>(null);
+  /** True once this mount showed at least one due card (scoped session-complete). */
+  const [hadCards, setHadCards] = useState(false);
   const {
     zen,
     fullscreenUnavailable,
@@ -177,6 +179,7 @@ export default function StudyPage() {
     (cards: CardDraftView[], wanted: string | null) => {
       const { queue: next, found } = prioritizeDueCard(cards, wanted);
       setQueue(next);
+      if (next.length > 0) setHadCards(true);
       // Only when there are other due cards to study (avoids contradicting empty session).
       setDeepLinkMiss(Boolean(wanted) && !found && next.length > 0);
       setRevealed(false);
@@ -222,7 +225,12 @@ export default function StudyPage() {
   } = usePendingGradeSync({
     // Flush refreshes global due; reload with page scope so queues do not bleed.
     onDueRefreshed: () => {
-      if (userId) void load(userId);
+      if (!userId) return;
+      void load(userId).catch((err) => {
+        setError(
+          err instanceof ApiError ? err.message : "Failed to refresh study",
+        );
+      });
     },
     onDueRefreshFailed: (uid) => load(uid),
   });
@@ -615,7 +623,7 @@ export default function StudyPage() {
           ) : null}
 
           {!current ? (
-            scopeOpts ? (
+            scopeOpts && !hadCards ? (
               <Alert severity="info">
                 No cards due in this{" "}
                 {scopeOpts.deckId ? "deck" : "subject"}
@@ -642,14 +650,35 @@ export default function StudyPage() {
             ) : (
               <Alert severity="success">
                 Session complete.{" "}
-                <Button
-                  variant="contained"
-                  href="/today"
-                  startIcon={<TodayIcon fontSize="small" />}
-                  size="small"
-                >
-                  Today
-                </Button>
+                {scopeOpts ? (
+                  <Link
+                    href={
+                      scopeOpts.deckId
+                        ? `/library/decks/${encodeURIComponent(scopeOpts.deckId)}`
+                        : `/library/subjects/${encodeURIComponent(scopeOpts.subjectId!)}`
+                    }
+                    underline="hover"
+                    onClick={(ev) => {
+                      ev.preventDefault();
+                      navigate(
+                        scopeOpts.deckId
+                          ? `/library/decks/${encodeURIComponent(scopeOpts.deckId)}`
+                          : `/library/subjects/${encodeURIComponent(scopeOpts.subjectId!)}`,
+                      );
+                    }}
+                  >
+                    Back to {scopeOpts.deckId ? "deck" : "subject"}
+                  </Link>
+                ) : (
+                  <Button
+                    variant="contained"
+                    href="/today"
+                    startIcon={<TodayIcon fontSize="small" />}
+                    size="small"
+                  >
+                    Today
+                  </Button>
+                )}
               </Alert>
             )
           ) : (
