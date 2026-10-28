@@ -590,7 +590,8 @@ cardRoutes.post("/:id/regen", async (c) => {
   await db
     .prepare(
       `UPDATE cards
-       SET type = ?, front_json = ?, back_json = ?, provenance_json = ?, updated_at = ?
+       SET type = ?, front_json = ?, back_json = ?, provenance_json = ?,
+           media_r2_keys_json = NULL, updated_at = ?
        WHERE id = ?`,
     )
     .bind(
@@ -610,6 +611,7 @@ cardRoutes.post("/:id/regen", async (c) => {
       front_json: nextFrontJson,
       back_json: nextBackJson,
       provenance_json: nextProvenanceJson,
+      media_r2_keys_json: null,
       updated_at: updatedAt,
     }),
   );

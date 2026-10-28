@@ -189,6 +189,61 @@ describe("POST /api/cards/:id/regen", () => {
     expect(JSON.parse(mid.front_json)).toBe("Which organelle produces ATP?");
   });
 
+  it("clears media_r2_keys when regenerating a visual card as text", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedGenerationJob({
+      id: "job-vis",
+      material_id: "mat-a",
+      status: "needs_review",
+      error: null,
+      coverage_json: null,
+      created_at: "2026-01-01T01:00:00.000Z",
+      finished_at: "2026-01-01T01:05:00.000Z",
+    });
+    env.seedCard({
+      id: "c-vis",
+      deck_id: "deck-a",
+      job_id: "job-vis",
+      type: "image_label",
+      front_json: JSON.stringify("Label the organelle"),
+      back_json: JSON.stringify("Mitochondria"),
+      media_r2_keys_json: JSON.stringify(["materials/deck-a/fig.png"]),
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "mito" }),
+      status: "draft",
+      created_at: "2026-01-01T01:06:00.000Z",
+      updated_at: "2026-01-01T01:06:00.000Z",
+    });
+    env.seedR2(
+      "materials/deck-a/mat-a.txt",
+      "Mitochondria produce ATP in eukaryotic cells.",
+    );
+    stubWorkersAiMcq(env);
+
+    const res = await app.request(
+      "/api/cards/c-vis/regen",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({ type: "mcq" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      type: string;
+      media_r2_keys?: string[];
+    };
+    expect(body.type).toBe("mcq");
+    expect(body.media_r2_keys ?? []).toEqual([]);
+    expect(env.getCards().find((c) => c.id === "c-vis")!.media_r2_keys_json).toBe(
+      null,
+    );
+  });
+
   it("returns 422 when provenance and material text are both missing", async () => {
     const env = createTestEnv();
     seedOwner(env);
