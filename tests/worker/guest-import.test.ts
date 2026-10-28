@@ -700,6 +700,45 @@ describe("POST /api/guest/import", () => {
     expect(decks![0].subject_id).toBe("subj-anatomy");
   });
 
+  it("rejects cloze without a single valid blank", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+
+    const res = await app.request(
+      "/api/guest/import",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          subjects: [],
+          decks: [
+            {
+              clientId: "guest-deck-1",
+              title: "Cloze deck",
+              clientSubjectId: "",
+            },
+          ],
+          cards: [
+            {
+              clientDeckId: "guest-deck-1",
+              type: "cloze",
+              front: "No blank here",
+              back: "",
+              source: "paste",
+            },
+          ],
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(400);
+    expect(env.getCards()).toHaveLength(0);
+  });
+
   it("imports cloze with empty back", async () => {
     const env = createTestEnv();
     seedOwner(env);

@@ -4,7 +4,10 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
-import { assertValidMcqOptions } from "../generation/schema";
+import {
+  assertSingleCloze,
+  assertValidMcqOptions,
+} from "../generation/schema";
 import { encodeStoredBack } from "../cards/routes";
 import { foldDeckTitle } from "./titleKey";
 
@@ -190,6 +193,15 @@ guestRoutes.post("/import", async (c) => {
   for (const card of cards) {
     if (!clientIds.has(card.clientDeckId)) {
       throw new HTTPException(400, { message: "Unknown clientDeckId" });
+    }
+    if (card.type === "cloze") {
+      try {
+        assertSingleCloze(card.front);
+      } catch (err) {
+        throw new HTTPException(400, {
+          message: err instanceof Error ? err.message : "Invalid cloze",
+        });
+      }
     }
     if (card.type === "mcq") {
       try {
