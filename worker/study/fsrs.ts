@@ -69,6 +69,23 @@ function toIso(value: Date | string | undefined | null): string | null {
   return String(value);
 }
 
+/**
+ * Numeric FSRS retrievability at `now`, or null when unavailable / on error.
+ * Uses `get_retrievability(..., false)` from ts-fsrs ^5.
+ */
+export function retrievability(
+  card: Card,
+  now: Date = new Date(),
+): number | null {
+  try {
+    const r = fsrs().get_retrievability(card, now, false);
+    if (typeof r !== "number" || Number.isNaN(r)) return null;
+    return r;
+  } catch {
+    return null;
+  }
+}
+
 /** Map a ts-fsrs Card into card_schedules column values. */
 export function scheduleColumnsFromCard(card: Card): {
   due: string;
