@@ -29,3 +29,20 @@ export function normalizeTopicHints(raw: unknown): string[] | null {
   }
   return cleaned.length === 0 ? null : cleaned;
 }
+
+/** Parse persisted `topic_hints_json` from a generation job row. */
+export function parseTopicHintsJson(
+  raw: string | null | undefined,
+): string[] {
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (item): item is string =>
+        typeof item === "string" && item.trim().length > 0,
+    );
+  } catch {
+    return [];
+  }
+}
