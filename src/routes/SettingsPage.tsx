@@ -26,6 +26,7 @@ import {
 } from "../api/client";
 import { isGuest } from "../guest/session";
 import { useTrackedOp } from "../progress/useTrackedOp";
+import { freeGenFaqBody, freeGenIntroBlurb } from "../settings/freeGenFaq";
 
 type ThemeMode = "system" | "light" | "dark";
 
@@ -158,12 +159,29 @@ export default function SettingsPage() {
             Settings
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Optional. Without a key, Sugarplum uses free platform AI (up to 20
-            jobs per UTC day). Add your own OpenAI, Anthropic, or Google key to
-            skip that cap and for higher quality. Keys are encrypted at rest and
-            never shown in full again.
+            {freeGenIntroBlurb()}
           </Typography>
         </Box>
+
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 2.5,
+            bgcolor: "background.paper",
+            borderColor: "divider",
+          }}
+        >
+          <Typography
+            variant="subtitle1"
+            component="h2"
+            sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+          >
+            Free generations
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {freeGenFaqBody()}
+          </Typography>
+        </Paper>
 
         <Paper
           variant="outlined"
