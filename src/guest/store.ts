@@ -575,7 +575,12 @@ export function guestResetCardSchedule(
   return updated;
 }
 
-export function guestListDueCards(storage?: Store): CardDraftView[] {
+export type GuestDueOpts = { deckId?: string; subjectId?: string };
+
+export function guestListDueCards(
+  opts?: GuestDueOpts,
+  storage?: Store,
+): CardDraftView[] {
   let store = readStore(storage);
   // Heal emptied queues from older guest builds that dequeued forever.
   if (store.cards.length > 0 && store.dueIds.length === 0) {
@@ -583,9 +588,20 @@ export function guestListDueCards(storage?: Store): CardDraftView[] {
     store = readStore(storage);
   }
   const byId = new Map(store.cards.map((c) => [c.id, c]));
-  return store.dueIds
+  let cards = store.dueIds
     .map((id) => byId.get(id))
     .filter((c): c is CardDraftView => c != null);
+  if (opts?.deckId) {
+    cards = cards.filter((c) => c.deck_id === opts.deckId);
+  } else if (opts?.subjectId) {
+    const deckIds = new Set(
+      store.decks
+        .filter((d) => d.subject_id === opts.subjectId)
+        .map((d) => d.id),
+    );
+    cards = cards.filter((c) => deckIds.has(c.deck_id));
+  }
+  return cards;
 }
 
 export function guestReviewCard(
