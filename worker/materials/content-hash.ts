@@ -2,13 +2,18 @@
 export async function sha256Hex(
   data: ArrayBuffer | Uint8Array | string,
 ): Promise<string> {
-  const bytes: BufferSource =
-    typeof data === "string"
-      ? new TextEncoder().encode(data)
-      : data instanceof Uint8Array
-        ? data
-        : data;
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  let bytes: Uint8Array;
+  if (typeof data === "string") {
+    bytes = new TextEncoder().encode(data);
+  } else if (data instanceof Uint8Array) {
+    bytes = data;
+  } else {
+    bytes = new Uint8Array(data);
+  }
+  // Copy into a fresh ArrayBuffer-backed view for crypto.subtle typing.
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  const digest = await crypto.subtle.digest("SHA-256", copy);
   return [...new Uint8Array(digest)]
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
