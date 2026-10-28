@@ -33,6 +33,8 @@ export type RunGenerationPipelineInput = {
   llm: PipelineLlm;
   apiKey: string;
   provider: string;
+  /** Optional also-cover topic hints from the generation job. */
+  topicHints?: string[];
   /** Best-effort; throws from the callback must not abort the pipeline. */
   onProgress?: (event: PipelineProgressEvent) => void | Promise<void>;
   /** Fired after each chunk's critique (or generate fallback). Best-effort. */
@@ -282,7 +284,8 @@ async function safeOnChunkDrafts(
 export async function runGenerationPipeline(
   input: RunGenerationPipelineInput,
 ): Promise<CardDraft[]> {
-  const { text, llm, apiKey, provider, onProgress, onChunkDrafts } = input;
+  const { text, llm, apiKey, provider, topicHints, onProgress, onChunkDrafts } =
+    input;
   if (!text.trim()) return [];
 
   const chunks = chunkText(text).slice(0, MAX_PIPELINE_CHUNKS);
@@ -311,6 +314,7 @@ export async function runGenerationPipeline(
       text: chunk,
       apiKey,
       provider,
+      topicHints,
     };
     const generated = await llm.generateDrafts(generateInput);
 

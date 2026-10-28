@@ -10,6 +10,7 @@ import {
 import {
   GENERATE_COMPACT_SYSTEM_PROMPT,
   GENERATE_SYSTEM_PROMPT,
+  appendTopicHintsSuffix,
   generateCompactUserPrompt,
 } from "./prompts";
 
@@ -219,11 +220,12 @@ export function createWorkersAiAdapter(
 
       // One compact retry: live monoxenous failures end mid-first-card with
       // nothing to salvage; a smaller ask often completes within budget.
+      const hints = input.topicHints ?? [];
       return withCompactTruncationRetry(
         async () => {
           const run = await runChat(
             GENERATE_SYSTEM_PROMPT,
-            userPromptForJson(input.text),
+            appendTopicHintsSuffix(userPromptForJson(input.text), hints),
           );
           reportUsage(run);
           return parseOrThrow(run);
@@ -231,7 +233,10 @@ export function createWorkersAiAdapter(
         async () => {
           const run = await runChat(
             GENERATE_COMPACT_SYSTEM_PROMPT,
-            generateCompactUserPrompt(input.text),
+            appendTopicHintsSuffix(
+              generateCompactUserPrompt(input.text),
+              hints,
+            ),
           );
           reportUsage(run);
           return parseOrThrow(run);
