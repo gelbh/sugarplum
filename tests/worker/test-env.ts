@@ -128,6 +128,7 @@ export type TestEnv = Env & {
   seedReviewLog: (row: ReviewLogRow) => void;
   seedR2: (key: string, value: string) => void;
   getMaterials: () => MaterialRow[];
+  getExportJobs: () => ExportJobRow[];
   getGenerationJobs: () => GenerationJobRow[];
   getUserSecrets: () => UserSecretRow[];
   getCards: () => CardRow[];
@@ -2039,6 +2040,7 @@ export function createTestEnv(opts?: {
       r2.set(key, value);
     },
     getMaterials: () => [...materials.values()],
+    getExportJobs: () => [...exportJobs.values()],
     getGenerationJobs: () => [...generationJobs.values()],
     getUserSecrets: () => [...userSecrets.values()],
     getCards: () => [...cards.values()],

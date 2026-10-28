@@ -47,7 +47,7 @@ function parseJson(raw: string): unknown {
 }
 
 function mediaName(key: string): string {
-  return key.slice(key.lastIndexOf("/") + 1) || key;
+  return encodeURIComponent(key);
 }
 
 function hasSchedule(row: CardRow): row is CardRow & {

@@ -17,3 +17,8 @@ declare module "sql.js" {
   const initSqlJs: (config?: SqlJsConfig) => Promise<SqlJs>;
   export default initSqlJs;
 }
+
+declare module "*.wasm?arraybuffer" {
+  const wasmBinary: ArrayBuffer;
+  export default wasmBinary;
+}

@@ -137,7 +137,6 @@ exportRoutes.post("/", async (c) => {
       201,
     );
   } catch (error) {
-    if (error instanceof HTTPException) throw error;
     await db
       .prepare("UPDATE export_jobs SET status = ?, error = ?, updated_at = ? WHERE id = ?")
       .bind(
@@ -147,6 +146,7 @@ exportRoutes.post("/", async (c) => {
         id,
       )
       .run();
+    if (error instanceof HTTPException) throw error;
     throw new HTTPException(500, { message: "Export failed" });
   }
 });

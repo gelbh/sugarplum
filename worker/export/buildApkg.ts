@@ -1,4 +1,5 @@
 import JSZip from "jszip";
+import { readFile } from "node:fs/promises";
 import initSqlJs from "sql.js";
 import wasmUrl from "sql.js/dist/sql-wasm.wasm?url";
 import type { AnkiFsrsFields } from "./fsrsMap";
@@ -146,6 +147,14 @@ function rewriteMediaSources(
   );
 }
 
+function mediaBasename(name: string): string {
+  try {
+    return decodeURIComponent(name).slice(name.lastIndexOf("/") + 1);
+  } catch {
+    return name.slice(name.lastIndexOf("/") + 1);
+  }
+}
+
 async function checksumSortField(value: string): Promise<number> {
   const digest = await crypto.subtle.digest(
     "SHA-1",
@@ -172,18 +181,17 @@ export async function buildApkg(args: {
   deckName: string;
   entries: ApkgEntry[];
 }): Promise<Uint8Array> {
-  // Workers use Vite's asset URL; Vitest's Node runtime needs the package path.
-  const nodeProcess = (
-    globalThis as typeof globalThis & {
-      process?: { cwd(): string };
-    }
-  ).process;
-  const wasmPath =
-    nodeProcess && wasmUrl.startsWith("/")
-      ? `${nodeProcess.cwd()}${wasmUrl}`
-      : wasmUrl;
+  // Read the Vite asset as bytes so Workers do not resolve a relative asset URL.
+  const wasmBinary =
+    typeof process !== "undefined"
+      ? await readFile(
+          new URL("../../node_modules/sql.js/dist/sql-wasm.wasm", import.meta.url),
+        ) as unknown as Uint8Array
+      : await fetch(new URL(wasmUrl, import.meta.url)).then((response) =>
+          response.arrayBuffer(),
+        );
   const SQL = await initSqlJs({
-    locateFile: () => wasmPath,
+    wasmBinary,
   }).catch((error: unknown) => {
     throw new Error("Unable to load sql.js WASM", { cause: error });
   });
@@ -296,6 +304,8 @@ export async function buildApkg(args: {
       if (!mediaNames.has(media.name)) {
         const filename = String(mediaIndex++);
         mediaNames.set(media.name, filename);
+        const basename = mediaBasename(media.name);
+        if (!mediaNames.has(basename)) mediaNames.set(basename, filename);
         mediaMap[filename] = media.name;
         zip.file(filename, media.data);
       }
@@ -309,11 +319,24 @@ export async function buildApkg(args: {
     const fields = fieldsForNote(entry.note);
     if (entry.note.model === "basic" && entry.media.length > 0) {
       const frontIndex = 0;
-      if (!/<img\b/i.test(fields[frontIndex])) {
-        fields[frontIndex] += entry.media
-          .map((media) => `<img src="${escapeMediaName(mediaNames.get(media.name) ?? "")}">`)
-          .join("");
-      }
+      const existingSources = new Set(
+        Array.from(
+          fields[frontIndex].matchAll(
+            /<img\b[^>]*\bsrc\s*=\s*(["'])([^"']+)\1/gi,
+          ),
+        ).map((match) => match[2]),
+      );
+      fields[frontIndex] += entry.media
+        .filter(
+          (media) =>
+            !existingSources.has(media.name) &&
+            !existingSources.has(mediaBasename(media.name)),
+        )
+        .map(
+          (media) =>
+            `<img src="${escapeMediaName(mediaNames.get(media.name) ?? "")}">`,
+        )
+        .join("");
     }
     for (let fieldIndex = 0; fieldIndex < fields.length; fieldIndex += 1) {
       fields[fieldIndex] = rewriteMediaSources(fields[fieldIndex], mediaNames);
@@ -366,7 +389,7 @@ export async function buildApkg(args: {
         now,
         -1,
         type,
-        type,
+        type === 1 || type === 3 ? 1 : type,
         due,
         schedule?.scheduledDays ?? 0,
         schedule ? Math.round(schedule.difficulty * 10) : 0,

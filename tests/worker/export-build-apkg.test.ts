@@ -93,6 +93,31 @@ describe("buildApkg", () => {
     );
   });
 
+  it("keeps media with the same basename separate", async () => {
+    const bytes = await buildApkg({
+      deckName: "Sugarplum",
+      entries: [
+        {
+          note: { model: "basic", fields: { Front: "A", Back: "A" } },
+          schedule: null,
+          media: [{ name: "deck-a/figure.png", data: new Uint8Array([1]) }],
+        },
+        {
+          note: { model: "basic", fields: { Front: "B", Back: "B" } },
+          schedule: null,
+          media: [{ name: "deck-b/figure.png", data: new Uint8Array([2]) }],
+        },
+      ],
+    });
+    const zip = await JSZip.loadAsync(bytes);
+    expect(JSON.parse(await zip.file("media")!.async("string"))).toEqual({
+      "0": "deck-a/figure.png",
+      "1": "deck-b/figure.png",
+    });
+    expect(await zip.file("0")!.async("uint8array")).toEqual(new Uint8Array([1]));
+    expect(await zip.file("1")!.async("uint8array")).toEqual(new Uint8Array([2]));
+  });
+
   it("stores Anki csum as decimal of first 8 SHA-1 hex digits of sort field", async () => {
     const sortField = "Question";
     const bytes = await buildApkg({
@@ -145,6 +170,33 @@ describe("buildApkg", () => {
     );
   });
 
+  it("appends media not already present in a basic front", async () => {
+    const bytes = await buildApkg({
+      deckName: "Sugarplum",
+      entries: [
+        {
+          note: {
+            model: "basic",
+            fields: { Front: '<img src="first.png">', Back: "Answer" },
+          },
+          schedule: null,
+          media: [
+            { name: "first.png", data: new Uint8Array([1]) },
+            { name: "second.png", data: new Uint8Array([2]) },
+          ],
+        },
+      ],
+    });
+    const zip = await JSZip.loadAsync(bytes);
+    const SQL = await initSqlJs();
+    const db = new SQL.Database(
+      await zip.file("collection.anki2")!.async("uint8array"),
+    );
+    const fields = String(db.exec("select flds from notes")[0]?.values[0]?.[0]);
+    expect(fields).toContain('<img src="0">');
+    expect(fields).toContain('<img src="1">');
+  });
+
   it("preserves learning card state and cloze ordinal", async () => {
     const bytes = await buildApkg({
       deckName: "Sugarplum",
@@ -188,5 +240,37 @@ describe("buildApkg", () => {
     expect(
       db.exec("select ord from cards order by nid limit 1 offset 1")[0]?.values[0]?.[0],
     ).toBe(1);
+  });
+
+  it("maps relearning state 3 to Anki queue 1", async () => {
+    const bytes = await buildApkg({
+      deckName: "Sugarplum",
+      entries: [
+        {
+          note: {
+            model: "basic",
+            fields: { Front: "Relearning", Back: "Answer" },
+          },
+          schedule: {
+            due: 1_798_000_000,
+            stability: 1,
+            difficulty: 5,
+            elapsedDays: 0,
+            scheduledDays: 1,
+            reps: 1,
+            lapses: 1,
+            state: 3,
+            lastReview: null,
+          },
+          media: [],
+        },
+      ],
+    });
+    const zip = await JSZip.loadAsync(bytes);
+    const SQL = await initSqlJs();
+    const db = new SQL.Database(
+      await zip.file("collection.anki2")!.async("uint8array"),
+    );
+    expect(db.exec("select type, queue from cards")[0]?.values[0]).toEqual([3, 1]);
   });
 });

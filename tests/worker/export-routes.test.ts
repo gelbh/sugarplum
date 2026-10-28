@@ -105,6 +105,23 @@ describe("export routes", () => {
     });
   });
 
+  it("marks a missing deck export as failed", async () => {
+    const env = setup();
+    const response = await app.request(
+      "/api/exports",
+      {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ type: "deck", deckId: "missing-deck" }),
+      },
+      env,
+    );
+
+    expect(response.status).toBe(404);
+    expect(env.getExportJobs()).toHaveLength(1);
+    expect(env.getExportJobs()[0]?.status).toBe("failed");
+  });
+
   it("builds a ready export and serves APKG bytes", async () => {
     const env = setup();
     seedCard(env);
