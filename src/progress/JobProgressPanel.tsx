@@ -1,10 +1,17 @@
+import { useState } from "react";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import Chip from "@mui/material/Chip";
-import CheckIcon from "@mui/icons-material/Check";
 import type { ProgressSnapshot } from "./types";
+import {
+  friendlyStageHeadline,
+  formatEtaSubline,
+  formatRelativeAge,
+  orderPresentStages,
+  progressDetailsModel,
+} from "./copy";
 
 type JobProgressPanelProps = {
   snapshot: ProgressSnapshot | null;
@@ -12,65 +19,102 @@ type JobProgressPanelProps = {
   fallbackLabel?: string;
 };
 
-function fmtEta(ms: number | null | undefined) {
-  if (ms == null) return "Calculating…";
-  if (ms <= 1000) return "~0s";
-  const s = Math.round(ms / 1000);
-  const m = Math.floor(s / 60);
-  const rem = s % 60;
-  if (m > 0) return `~${m}m ${rem}s`;
-  return `~${rem}s`;
+function truncateEventText(text: string): string {
+  return text.length > 120 ? text.slice(0, 117) + "…" : text;
 }
 
 export default function JobProgressPanel({
   snapshot,
   fallbackLabel = "Waiting for generation…",
 }: JobProgressPanelProps) {
-  const label = snapshot?.label ?? fallbackLabel;
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
   const determinate = snapshot?.mode === "determinate";
   const percent = snapshot?.percent ?? 0;
-  const detail = snapshot?.detail;
+  const headline = snapshot?.stage
+    ? friendlyStageHeadline(snapshot.stage)
+    : (snapshot?.label ?? fallbackLabel);
+  const subline = formatEtaSubline(snapshot?.etaMs);
 
-  const tokensUsed = snapshot?.tokensUsed;
-  const freeQuota = snapshot?.freeQuota ?? null;
-  const events = snapshot?.events ?? [];
-
-  const etaLabel = fmtEta(snapshot?.etaMs);
-
-  const projectedTokens = snapshot?.projectedTokens ?? null;
-  const showTokens =
-    projectedTokens != null ||
-    (tokensUsed != null && Number.isFinite(tokensUsed));
-  const tokensLabel =
-    projectedTokens != null
-      ? `${Math.round(projectedTokens)} tokens`
-      : tokensUsed != null
-        ? `${Math.round(tokensUsed)} tokens`
-        : null;
-
-  const remainingCardsToday = snapshot?.remainingCardsToday ?? null;
-  const showRemainingLine = freeQuota != null;
-  const remainingLabel =
-    freeQuota == null
-      ? ""
-      : remainingCardsToday != null
-        ? `${Math.round(remainingCardsToday)} cards left`
-        : `${freeQuota.remaining} free jobs left`;
-
-  const stages = snapshot?.presentStages ?? [];
+  const stages = orderPresentStages(snapshot?.presentStages ?? []);
   const currentStage = snapshot?.stage ?? null;
   const currentIndex = stages.findIndex((s) => s === currentStage);
 
+  const details = progressDetailsModel({
+    current: snapshot?.current,
+    total: snapshot?.total,
+    draftsSoFar: snapshot?.draftsSoFar,
+    projectedCards: snapshot?.projectedCards,
+    projectedTokens: snapshot?.projectedTokens,
+    tokensUsed: snapshot?.tokensUsed,
+    freeQuota: snapshot?.freeQuota ?? null,
+  });
+
+  const recentEvents = (snapshot?.events ?? []).slice().reverse().slice(0, 3);
+
+  const barAriaLabel = determinate
+    ? `${headline}, ${Math.round(percent)}%`
+    : headline;
+
   return (
-    <Stack spacing={1.5} sx={{ width: "100%" }}>
-      <Typography variant="body2" color="text.secondary">
-        {label}
-      </Typography>
+    <Stack spacing={2} sx={{ width: "100%", alignItems: "center" }}>
+      {determinate ? (
+        <Typography
+          variant="h3"
+          component="p"
+          sx={{ fontWeight: 600, lineHeight: 1.1, m: 0 }}
+        >
+          {Math.round(percent)}%
+        </Typography>
+      ) : null}
+
+      <Stack spacing={0.5} sx={{ width: "100%", alignItems: "center" }}>
+        <Typography variant="body1" textAlign="center">
+          {headline}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" textAlign="center">
+          {subline}
+        </Typography>
+      </Stack>
+
+      {stages.length > 0 ? (
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          justifyContent="center"
+          aria-hidden
+          sx={{ py: 0.5 }}
+        >
+          {stages.map((s, i) => {
+            const completed = currentIndex >= 0 && i < currentIndex;
+            const isCurrent =
+              i === currentIndex ||
+              (currentIndex === -1 && i === stages.length - 1);
+            return (
+              <Box
+                key={s}
+                sx={{
+                  width: isCurrent ? 10 : 8,
+                  height: isCurrent ? 10 : 8,
+                  borderRadius: "50%",
+                  bgcolor: completed || isCurrent ? "primary.main" : "action.disabled",
+                  outline: isCurrent ? "2px solid" : "none",
+                  outlineColor: isCurrent ? "primary.light" : undefined,
+                  outlineOffset: 2,
+                  opacity: completed ? 0.85 : 1,
+                }}
+              />
+            );
+          })}
+        </Stack>
+      ) : null}
+
       <Box sx={{ width: "100%" }}>
         <LinearProgress
           variant={determinate ? "determinate" : "indeterminate"}
           value={determinate ? percent : undefined}
-          aria-label={label}
+          aria-label={barAriaLabel}
           {...(determinate
             ? {
                 "aria-valuenow": Math.round(percent),
@@ -81,76 +125,53 @@ export default function JobProgressPanel({
         />
       </Box>
 
-      <Stack direction="row" spacing={2} sx={{ mt: 0.5 }} alignItems="center">
-        <Typography variant="caption" color="text.secondary">
-          ETA: {etaLabel}
-        </Typography>
-        {showTokens && tokensLabel ? (
-          <Typography variant="caption" color="text.secondary">
-            {tokensLabel}
-          </Typography>
-        ) : null}
-        {showRemainingLine ? (
-          <Typography variant="caption" color="text.secondary">
-            {remainingLabel}
-          </Typography>
-        ) : null}
-      </Stack>
+      <Button
+        size="small"
+        onClick={() => setDetailsOpen((open) => !open)}
+        aria-expanded={detailsOpen}
+      >
+        {detailsOpen ? "Hide details" : "Show details"}
+      </Button>
 
-      {stages.length > 0 ? (
-        <Stack direction="row" spacing={1} sx={{ mt: 0.5, flexWrap: "wrap" }}>
-          {stages.map((s, i) => {
-            const completed = currentIndex >= 0 && i < currentIndex;
-            const isCurrent =
-              i === currentIndex ||
-              (currentIndex === -1 && i === stages.length - 1);
-            return (
-              <Chip
-                key={s}
-                size="small"
-                label={s}
-                icon={completed ? <CheckIcon fontSize="small" /> : undefined}
-                color={isCurrent ? "primary" : "default"}
-                variant={isCurrent ? "filled" : "outlined"}
-              />
-            );
-          })}
-        </Stack>
-      ) : null}
-
-      {detail ? (
-        <Typography variant="caption" color="text.secondary">
-          {detail}
-        </Typography>
-      ) : null}
-
-      {determinate ? (
-        <Typography variant="caption" color="text.secondary">
-          {Math.round(percent)}%
-        </Typography>
-      ) : null}
-
-      {events.length > 0 ? (
-        <Stack spacing={0.5} sx={{ mt: 1 }}>
-          {events
-            .slice()
-            .reverse()
-            .map((e) => {
-              const ageMs = Date.now() - e.at;
-              const age =
-                ageMs < 1000 ? "just now" : `${Math.round(ageMs / 1000)}s ago`;
-              const text =
-                e.text.length > 120 ? e.text.slice(0, 117) + "…" : e.text;
-              return (
-                <Typography
-                  key={`${e.at}-${e.stage}-${e.kind}`}
-                  variant="caption"
-                  color="text.secondary"
-                >
-                  {e.stage} · {text} · {age}
-                </Typography>
-              );
-            })}
+      {detailsOpen ? (
+        <Stack spacing={0.75} sx={{ width: "100%" }}>
+          {details.sectionLine ? (
+            <Typography variant="caption" color="text.secondary">
+              {details.sectionLine}
+            </Typography>
+          ) : null}
+          {details.jobLine ? (
+            <Typography variant="caption" color="text.secondary">
+              {details.jobLine}
+            </Typography>
+          ) : null}
+          {details.tokensLine ? (
+            <Typography variant="caption" color="text.secondary">
+              {details.tokensLine}
+            </Typography>
+          ) : null}
+          {details.freeJobsLine ? (
+            <Typography variant="caption" color="text.secondary">
+              {details.freeJobsLine}
+            </Typography>
+          ) : null}
+          {recentEvents.length > 0 ? (
+            <Stack spacing={0.5} sx={{ mt: 0.5 }}>
+              {recentEvents.map((e) => {
+                const age = formatRelativeAge(Date.now() - e.at);
+                const text = truncateEventText(e.text);
+                return (
+                  <Typography
+                    key={`${e.at}-${e.stage}-${e.kind}`}
+                    variant="caption"
+                    color="text.secondary"
+                  >
+                    {friendlyStageHeadline(e.stage)} · {text} · {age}
+                  </Typography>
+                );
+              })}
+            </Stack>
+          ) : null}
         </Stack>
       ) : null}
     </Stack>

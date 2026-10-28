@@ -51,3 +51,51 @@ export function formatRelativeAge(ageMs: number): string {
   if (ageMs < 1000) return "just now";
   return `${Math.round(ageMs / 1000)}s ago`;
 }
+
+export type ProgressDetailsModel = {
+  sectionLine: string | null;
+  jobLine: string | null;
+  tokensLine: string | null;
+  freeJobsLine: string | null;
+};
+
+export function progressDetailsModel(snapshot: {
+  current?: number;
+  total?: number;
+  draftsSoFar?: number;
+  projectedCards?: number | null;
+  projectedTokens?: number | null;
+  tokensUsed?: number;
+  freeQuota?: { remaining: number } | null;
+}): ProgressDetailsModel {
+  const total = snapshot.total ?? 0;
+  const sectionLine =
+    total > 0
+      ? `Section ${Math.min(total, Math.max(1, snapshot.current || 1))} of ${total}`
+      : null;
+
+  let jobLine: string | null = null;
+  if ((snapshot.draftsSoFar ?? 0) > 0) {
+    const drafts = snapshot.draftsSoFar!;
+    jobLine =
+      snapshot.projectedCards != null
+        ? `${drafts} cards drafted · ~${Math.round(snapshot.projectedCards)} expected`
+        : `${drafts} cards drafted`;
+  }
+
+  const tokenValue =
+    snapshot.projectedTokens != null
+      ? snapshot.projectedTokens
+      : snapshot.tokensUsed;
+  const tokensLine =
+    tokenValue != null && Number.isFinite(tokenValue)
+      ? `${Math.round(tokenValue)} tokens`
+      : null;
+
+  const freeJobsLine =
+    snapshot.freeQuota != null
+      ? `${snapshot.freeQuota.remaining} free jobs left`
+      : null;
+
+  return { sectionLine, jobLine, tokensLine, freeJobsLine };
+}
