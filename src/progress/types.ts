@@ -24,6 +24,7 @@ export type ProgressSnapshot = {
   tokensUsed?: number;
   tokensPrompt?: number;
   tokensCompletion?: number;
+  /** During generate/critique, values are 1-based section indices (`current` of `total`). */
   current?: number;
   total?: number;
   draftsSoFar?: number;
