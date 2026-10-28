@@ -3,6 +3,8 @@ import {
   friendlyStageHeadline,
   orderPresentStages,
   formatEtaSubline,
+  formatQueuedSubline,
+  formatProgressSubline,
   formatRelativeAge,
   progressDetailsModel,
 } from "../../src/progress/copy";
@@ -32,6 +34,25 @@ describe("formatEtaSubline", () => {
   });
   it("About Ns left", () => {
     expect(formatEtaSubline(52_000)).toBe("About 52s left");
+  });
+});
+
+describe("formatQueuedSubline", () => {
+  it("explains the wait", () => {
+    expect(formatQueuedSubline()).toBe("Another generation is finishing first");
+  });
+});
+
+describe("formatProgressSubline", () => {
+  it("uses queued copy when stage is queued", () => {
+    expect(formatProgressSubline({ stage: "queued", etaMs: null })).toBe(
+      "Another generation is finishing first",
+    );
+  });
+  it("falls through to ETA otherwise", () => {
+    expect(formatProgressSubline({ stage: "generate", etaMs: null })).toBe(
+      "Calculating…",
+    );
   });
 });
 

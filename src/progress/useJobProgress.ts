@@ -7,7 +7,7 @@ import {
   projectTokensFromPercent,
   projectCardsFromPercent,
 } from "./estimates";
-import { friendlyStageHeadline } from "./copy";
+import { buildJobProgressSnapshot } from "./jobSnapshot";
 
 const POLL_MS = 500;
 const TIMEOUT_MS = 10 * 60_000;
@@ -80,39 +80,21 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
       setPending(false);
     };
 
-    const snapshotFromJob = (
-      jobId: string,
-      progress: any | null,
-    ): ProgressSnapshot => {
-      if (!progress) {
-        return {
-          id: jobId,
-          label: "Waiting for generation…",
-          mode: "indeterminate",
-          percent: 0,
-          source: "job",
-        };
-      }
-      const measurable = progress.total > 0;
-      const label = progress.stage
-        ? friendlyStageHeadline(progress.stage)
-        : progress.label || "Waiting for generation…";
-      return {
-        id: jobId,
-        label,
-        mode: measurable ? "determinate" : "indeterminate",
-        percent: progress.percent,
-        source: "job",
-      };
-    };
-
     const tick = async () => {
       try {
         const job = await getJob(jobId);
         if (cancelled) return;
 
-        const snapBase = snapshotFromJob(jobId, job.progress);
-        if (job.progress && startedAtRef.current === undefined) {
+        const snapBase = buildJobProgressSnapshot(
+          jobId,
+          job.status,
+          job.progress,
+        );
+        if (
+          job.progress &&
+          job.status !== "queued" &&
+          startedAtRef.current === undefined
+        ) {
           startedAtRef.current = Date.now();
         }
         const ext: any = { ...snapBase };
@@ -126,7 +108,6 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
           ext.draftsSoFar = job.progress.drafts_so_far;
           ext.path = job.progress.path ?? null;
           ext.freeQuota = job.free_quota ?? null;
-          ext.stage = job.progress.stage;
 
           if (job.progress.events) {
             ext.events = job.progress.events.map((e: any) => ({
@@ -139,20 +120,27 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
             ext.events = [];
           }
 
-          // derive ordered unique presentStages from events (chronological) and current stage
-          const seen = new Set<string>();
-          const ordered: string[] = [];
-          for (const ev of ext.events || []) {
-            if (ev.stage && !seen.has(ev.stage)) {
-              seen.add(ev.stage);
-              ordered.push(ev.stage);
+          if (job.status === "queued") {
+            ext.stage = "queued";
+            ext.presentStages = ["queued"];
+          } else {
+            ext.stage = job.progress.stage;
+
+            // derive ordered unique presentStages from events (chronological) and current stage
+            const seen = new Set<string>();
+            const ordered: string[] = [];
+            for (const ev of ext.events || []) {
+              if (ev.stage && !seen.has(ev.stage)) {
+                seen.add(ev.stage);
+                ordered.push(ev.stage);
+              }
             }
+            if (ext.stage && !seen.has(ext.stage)) {
+              ordered.push(ext.stage);
+              seen.add(ext.stage);
+            }
+            ext.presentStages = ordered;
           }
-          if (ext.stage && !seen.has(ext.stage)) {
-            ordered.push(ext.stage);
-            seen.add(ext.stage);
-          }
-          ext.presentStages = ordered;
         }
 
         setFreeQuota(job.free_quota ?? null);

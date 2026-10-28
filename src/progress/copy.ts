@@ -49,6 +49,18 @@ export function formatEtaSubline(etaMs: number | null | undefined): string {
   return `About ${fmtEtaCore(etaMs)} left`;
 }
 
+export function formatQueuedSubline(): string {
+  return "Another generation is finishing first";
+}
+
+export function formatProgressSubline(args: {
+  stage?: string | null;
+  etaMs?: number | null;
+}): string {
+  if (args.stage === "queued") return formatQueuedSubline();
+  return formatEtaSubline(args.etaMs);
+}
+
 export function formatRelativeAge(ageMs: number): string {
   if (ageMs < 1000) return "just now";
   return `${Math.round(ageMs / 1000)}s ago`;
