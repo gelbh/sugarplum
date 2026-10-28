@@ -302,6 +302,34 @@ describe("guest store", () => {
     expect(due.map((c) => c.id).slice(1)).toEqual(olderDue);
   });
 
+  it("createDeckCard rejects occlusion and image_label", () => {
+    enterGuest(storage);
+    const subject = guestCreateSubject("Image subject", storage);
+    const deck = guestCreateDeck("Image deck", subject.id, storage);
+    expect(() =>
+      guestCreateDeckCard(
+        deck.id,
+        {
+          type: "occlusion",
+          front: "ignored",
+          back: "ignored",
+        } as Parameters<typeof guestCreateDeckCard>[1],
+        storage,
+      ),
+    ).toThrow(/Unsupported card type/);
+    expect(() =>
+      guestCreateDeckCard(
+        deck.id,
+        {
+          type: "image_label",
+          front: "Label",
+          back: "Answer",
+        } as Parameters<typeof guestCreateDeckCard>[1],
+        storage,
+      ),
+    ).toThrow(/Unsupported card type/);
+  });
+
   it("createDeckCard allows cloze with empty Extra", () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Cloze subject", storage);

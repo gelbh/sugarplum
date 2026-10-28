@@ -301,7 +301,21 @@ export function listDeckCards(deckId: string, opts?: ListDeckCardsOpts) {
   return api<CardDraftView[]>(`/api/decks/${deckId}/cards${q}`);
 }
 
-export function createDeckCard(deckId: string, body: GuestHubCardBody) {
+export type HubCreateCardBody =
+  | GuestHubCardBody
+  | {
+      type: "image_label";
+      front: string;
+      back: string;
+      media_r2_keys: string[];
+    }
+  | {
+      type: "occlusion";
+      front: OcclusionFrontView;
+      back: { answer: string };
+    };
+
+export function createDeckCard(deckId: string, body: HubCreateCardBody) {
   if (isGuest()) {
     try {
       return Promise.resolve(guestCreateDeckCard(deckId, body));
