@@ -3,6 +3,18 @@ import initSqlJs from "sql.js";
 import { describe, expect, it } from "vitest";
 import { buildApkg } from "../../worker/export/buildApkg";
 
+async function ankiSortFieldCsum(sortField: string): Promise<number> {
+  const digest = await crypto.subtle.digest(
+    "SHA-1",
+    new TextEncoder().encode(sortField),
+  );
+  const hex = Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+  const parsed = Number.parseInt(hex.slice(0, 8), 16);
+  return parsed || 1;
+}
+
 describe("buildApkg", () => {
   it("builds an importable collection with basic, cloze, and MCQ notes", async () => {
     const bytes = await buildApkg({
@@ -72,6 +84,58 @@ describe("buildApkg", () => {
     expect(await zip.file("0")!.async("uint8array")).toEqual(
       new Uint8Array([137, 80, 78, 71]),
     );
+    const SQL = await initSqlJs();
+    const db = new SQL.Database(
+      await zip.file("collection.anki2")!.async("uint8array"),
+    );
+    expect(db.exec("select flds from notes")[0]?.values[0]?.[0]).toContain(
+      '<img src="0">',
+    );
+  });
+
+  it("stores Anki csum as decimal of first 8 SHA-1 hex digits of sort field", async () => {
+    const sortField = "Question";
+    const bytes = await buildApkg({
+      deckName: "Sugarplum",
+      entries: [
+        {
+          note: {
+            model: "basic",
+            fields: { Front: sortField, Back: "Answer" },
+          },
+          schedule: null,
+          media: [],
+        },
+      ],
+    });
+    const zip = await JSZip.loadAsync(bytes);
+    const SQL = await initSqlJs();
+    const db = new SQL.Database(
+      await zip.file("collection.anki2")!.async("uint8array"),
+    );
+    expect(db.exec("select csum from notes")[0]?.values[0]?.[0]).toBe(
+      await ankiSortFieldCsum(sortField),
+    );
+  });
+
+  it("rewrites media sources in every note field including cloze Text", async () => {
+    const bytes = await buildApkg({
+      deckName: "Sugarplum",
+      entries: [
+        {
+          note: {
+            model: "cloze",
+            fields: {
+              Text: '<img src="photo.png">',
+              Extra: "",
+            },
+          },
+          schedule: null,
+          media: [{ name: "photo.png", data: new Uint8Array([1, 2, 3]) }],
+        },
+      ],
+    });
+    const zip = await JSZip.loadAsync(bytes);
     const SQL = await initSqlJs();
     const db = new SQL.Database(
       await zip.file("collection.anki2")!.async("uint8array"),

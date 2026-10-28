@@ -146,15 +146,16 @@ function rewriteMediaSources(
   );
 }
 
-function checksumSortField(value: string): number {
-  // Anki uses the first 8 SHA-1 hex digits; this stable FNV-1a checksum keeps
-  // the same non-zero integer shape without adding a crypto dependency.
-  let hash = 0x811c9dc5;
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= value.charCodeAt(index);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return hash >>> 0 || 1;
+async function checksumSortField(value: string): Promise<number> {
+  const digest = await crypto.subtle.digest(
+    "SHA-1",
+    new TextEncoder().encode(value),
+  );
+  const hex = Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+  const parsed = Number.parseInt(hex.slice(0, 8), 16);
+  return parsed || 1;
 }
 
 function cardTypeForState(state: number): number {
@@ -301,19 +302,21 @@ export async function buildApkg(args: {
     }
   }
 
-  args.entries.forEach((entry, index) => {
+  for (const [index, entry] of args.entries.entries()) {
     const nid = now * 1_000_000 + index + 1;
     const cid = nid;
     const model = models[entry.note.model];
     const fields = fieldsForNote(entry.note);
     if (entry.note.model === "basic" && entry.media.length > 0) {
       const frontIndex = 0;
-      fields[frontIndex] = rewriteMediaSources(fields[frontIndex], mediaNames);
       if (!/<img\b/i.test(fields[frontIndex])) {
         fields[frontIndex] += entry.media
           .map((media) => `<img src="${escapeMediaName(mediaNames.get(media.name) ?? "")}">`)
           .join("");
       }
+    }
+    for (let fieldIndex = 0; fieldIndex < fields.length; fieldIndex += 1) {
+      fields[fieldIndex] = rewriteMediaSources(fields[fieldIndex], mediaNames);
     }
     const flds = fields.join("\x1f");
     const tags = (entry.note.tags ?? []).join(" ");
@@ -348,7 +351,7 @@ export async function buildApkg(args: {
         tags,
         flds,
         fields[0],
-        checksumSortField(fields[0]),
+        await checksumSortField(fields[0]),
         0,
         "{}",
       ],
@@ -376,7 +379,7 @@ export async function buildApkg(args: {
         data,
       ],
     );
-  });
+  }
 
   zip.file("collection.anki2", db.export());
   zip.file("media", JSON.stringify(mediaMap));
