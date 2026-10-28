@@ -854,9 +854,41 @@ export function createTestEnv(opts?: {
           return { results: rows as T[] };
         }
         if (normalized.includes("FROM materials WHERE deck_id =")) {
-          const rows = [...materials.values()].filter(
+          let rows = [...materials.values()].filter(
             (m) => m.deck_id === bound[0],
           );
+          if (normalized.includes("ORDER BY created_at DESC")) {
+            rows = rows.sort((a, b) =>
+              b.created_at.localeCompare(a.created_at),
+            );
+          }
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM materials m") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("d.title AS deck_title") &&
+          normalized.includes("WHERE d.user_id =")
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...materials.values()]
+            .map((m) => {
+              const deck = decks.get(m.deck_id);
+              if (!deck || deck.user_id !== userId) return null;
+              return {
+                id: m.id,
+                deck_id: m.deck_id,
+                kind: m.kind,
+                r2_key: m.r2_key,
+                filename: m.filename,
+                page_count: m.page_count,
+                status: m.status,
+                created_at: m.created_at,
+                deck_title: deck.title,
+              };
+            })
+            .filter((row): row is NonNullable<typeof row> => row != null)
+            .sort((a, b) => b.created_at.localeCompare(a.created_at));
           return { results: rows as T[] };
         }
         if (

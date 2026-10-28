@@ -249,6 +249,21 @@ deckRoutes.get("/", async (c) => {
   return c.json(results ?? []);
 });
 
+deckRoutes.get("/:id/materials", async (c) => {
+  const userId = await requireUser(c);
+  const deckId = c.req.param("id");
+  const db = getDb(c.env);
+  await requireOwnedDeck(db, deckId, userId);
+  const { results } = await db
+    .prepare(
+      `SELECT id, deck_id, kind, r2_key, filename, page_count, status, created_at
+       FROM materials WHERE deck_id = ? ORDER BY created_at DESC`,
+    )
+    .bind(deckId)
+    .all();
+  return c.json(results ?? []);
+});
+
 deckRoutes.get("/:id/stats", async (c) => {
   const userId = await requireUser(c);
   const deckId = c.req.param("id");
@@ -1038,6 +1053,23 @@ materialRoutes.get("/media", async (c) => {
       "cache-control": "private, max-age=3600",
     },
   });
+});
+
+materialRoutes.get("/", async (c) => {
+  const userId = await requireUser(c);
+  const db = getDb(c.env);
+  const { results } = await db
+    .prepare(
+      `SELECT m.id, m.deck_id, m.kind, m.r2_key, m.filename, m.page_count,
+              m.status, m.created_at, d.title AS deck_title
+       FROM materials m
+       INNER JOIN decks d ON d.id = m.deck_id
+       WHERE d.user_id = ?
+       ORDER BY m.created_at DESC`,
+    )
+    .bind(userId)
+    .all();
+  return c.json(results ?? []);
 });
 
 materialRoutes.post("/:id/complete", async (c) => {
