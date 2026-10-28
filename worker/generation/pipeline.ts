@@ -308,7 +308,7 @@ export async function runGenerationPipeline(
         label: `${stage === "generate" ? "Generating" : "Critiquing"} cards (chunk ${chunkLabel}/${total})`,
       });
 
-    await report("generate", i, 2 * i);
+    await report("generate", chunkLabel, 2 * i);
 
     const generateInput: GenerateDraftsInput = {
       text: chunk,
@@ -318,16 +318,16 @@ export async function runGenerationPipeline(
     };
     const generated = await llm.generateDrafts(generateInput);
 
-    await report("generate", i + 1, 2 * i + 1);
+    await report("generate", chunkLabel, 2 * i + 1);
 
     if (generated.length === 0) {
       // Keep critique half-steps aligned with total even when generate is empty.
-      await report("critique", i, 2 * i + 1);
-      await report("critique", i + 1, 2 * i + 2);
+      await report("critique", chunkLabel, 2 * i + 1);
+      await report("critique", chunkLabel, 2 * i + 2);
       continue;
     }
 
-    await report("critique", i, 2 * i + 1);
+    await report("critique", chunkLabel, 2 * i + 1);
 
     const critiqued = await critiqueChunk({
       chunk,
@@ -337,7 +337,7 @@ export async function runGenerationPipeline(
       provider,
     });
 
-    await report("critique", i + 1, 2 * i + 2);
+    await report("critique", chunkLabel, 2 * i + 2);
 
     const batch = critiqued ?? generated;
     out.push(...batch);
