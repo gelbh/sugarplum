@@ -765,6 +765,26 @@ export function createTestEnv(opts?: {
           return { results: rows as T[] };
         }
         if (
+          normalized.includes("SELECT id, r2_key FROM materials") &&
+          normalized.includes("r2_key >= ?") &&
+          normalized.includes("r2_key < ?") &&
+          normalized.includes("kind = 'image'")
+        ) {
+          // Material hard-delete: figure children under pdf prefix (any status).
+          const [deckId, lower, upper] = bound as [string, string, string];
+          const rows = [...materials.values()]
+            .filter(
+              (m) =>
+                m.deck_id === deckId &&
+                m.kind === "image" &&
+                m.r2_key != null &&
+                m.r2_key >= lower &&
+                m.r2_key < upper,
+            )
+            .map((m) => ({ id: m.id, r2_key: m.r2_key }));
+          return { results: rows as T[] };
+        }
+        if (
           normalized.includes("r2_key >= ?") &&
           normalized.includes("r2_key < ?") &&
           normalized.includes("kind = 'image'") &&
@@ -789,6 +809,15 @@ export function createTestEnv(opts?: {
                 ? { r2_key: m.r2_key, status: m.status }
                 : { r2_key: m.r2_key },
             );
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.startsWith("SELECT id FROM generation_jobs WHERE material_id =")
+        ) {
+          const materialId = bound[0] as string;
+          const rows = [...generationJobs.values()]
+            .filter((j) => j.material_id === materialId)
+            .map((j) => ({ id: j.id }));
           return { results: rows as T[] };
         }
         if (
@@ -1759,6 +1788,18 @@ export function createTestEnv(opts?: {
           const [status, updated_at, id] = bound as [string, string, string];
           const row = cards.get(id);
           if (row) cards.set(id, { ...row, status, updated_at });
+        } else if (
+          normalized.startsWith("DELETE FROM cards WHERE job_id IN") &&
+          normalized.includes("status IN ('draft', 'rejected')")
+        ) {
+          // Material hard-delete: remove draft/rejected cards for the material's jobs.
+          const jobIds = new Set(bound as string[]);
+          for (const [id, card] of [...cards.entries()]) {
+            if (!card.job_id || !jobIds.has(card.job_id)) continue;
+            if (card.status !== "draft" && card.status !== "rejected") continue;
+            cards.delete(id);
+            schedules.delete(id);
+          }
         } else if (normalized.startsWith("DELETE FROM cards WHERE job_id =")) {
           const jobId = bound[0] as string;
           for (const [id, card] of [...cards.entries()]) {
@@ -1766,6 +1807,24 @@ export function createTestEnv(opts?: {
             cards.delete(id);
             schedules.delete(id);
           }
+        } else if (normalized.startsWith("DELETE FROM materials WHERE id =")) {
+          // Material hard-delete: cascade jobs; SET NULL job_id on remaining cards.
+          const materialId = bound[0] as string;
+          if (!materials.has(materialId)) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          const deletedJobIds = new Set<string>();
+          for (const [jid, job] of [...generationJobs.entries()]) {
+            if (job.material_id !== materialId) continue;
+            deletedJobIds.add(jid);
+            generationJobs.delete(jid);
+          }
+          for (const [cid, card] of [...cards.entries()]) {
+            if (!card.job_id || !deletedJobIds.has(card.job_id)) continue;
+            cards.set(cid, { ...card, job_id: null });
+          }
+          materials.delete(materialId);
+          return { success: true, meta: { changes: 1 } } as D1Result;
         } else if (normalized.startsWith("INSERT INTO review_logs")) {
           const [
             id,
