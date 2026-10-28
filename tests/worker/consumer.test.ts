@@ -771,7 +771,7 @@ describe("processGenerateJob free path", () => {
     expect(midGenerate.length).toBeGreaterThanOrEqual(1);
     expect(midGenerate[0]!.stage).toBe("generate");
     expect(midGenerate[0]!.total).toBeGreaterThanOrEqual(2);
-    expect(midGenerate[0]!.current).toBe(0);
+    expect(midGenerate[0]!.current).toBe(1);
     expect(midGenerate[0]!.label).toMatch(/chunk 1\//);
 
     const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
