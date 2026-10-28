@@ -326,12 +326,39 @@ export function resetCardSchedule(cardId: string) {
 }
 export type PasteMaterialResponse = Material & { jobId: string };
 
+/** Soft client caps; server remains source of truth. */
+export const MAX_TOPIC_HINTS = 5;
+export const MAX_TOPIC_HINT_CHARS = 200;
+
+/** One non-empty line per hint; strips empties and soft-caps length/count. */
+export function topicHintsFromLines(raw: string): string[] | undefined {
+  const cleaned = raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => line.slice(0, MAX_TOPIC_HINT_CHARS))
+    .slice(0, MAX_TOPIC_HINTS);
+  return cleaned.length > 0 ? cleaned : undefined;
+}
+
 export function pasteMaterial(
   deckId: string,
-  body: { text: string; filename?: string },
+  body: { text: string; filename?: string; topicHints?: string[] },
 ) {
   if (isGuest()) guestUnsupported("generate cards from materials");
   return api<PasteMaterialResponse>(`/api/decks/${deckId}/materials/paste`, {
+    method: "POST",
+    json: body,
+  });
+}
+
+/** Queue generation for an existing ready material with a single topic hint. */
+export function topicGenerate(
+  deckId: string,
+  body: { topic: string; materialId?: string },
+) {
+  if (isGuest()) guestUnsupported("generate cards for a topic");
+  return api<{ jobId: string }>(`/api/decks/${deckId}/topic-generate`, {
     method: "POST",
     json: body,
   });
@@ -475,16 +502,27 @@ export type FigureExtractMode = "fast" | "accurate";
 
 export function completeMaterial(
   materialId: string,
-  opts?: { figureExtractMode?: FigureExtractMode },
+  opts?: {
+    figureExtractMode?: FigureExtractMode;
+    topicHints?: string[];
+  },
 ) {
   if (isGuest()) guestUnsupported("complete material uploads");
+  const json: {
+    figureExtractMode?: FigureExtractMode;
+    topicHints?: string[];
+  } = {};
+  if (opts?.figureExtractMode !== undefined) {
+    json.figureExtractMode = opts.figureExtractMode;
+  }
+  if (opts?.topicHints !== undefined) {
+    json.topicHints = opts.topicHints;
+  }
   return api<CompleteMaterialResponse>(
     `/api/materials/${materialId}/complete`,
     {
       method: "POST",
-      ...(opts?.figureExtractMode !== undefined
-        ? { json: { figureExtractMode: opts.figureExtractMode } }
-        : {}),
+      ...(Object.keys(json).length > 0 ? { json } : {}),
     },
   );
 }
@@ -698,7 +736,7 @@ export async function uploadMaterialFile(
   deckId: string,
   file: File,
   onProgress?: (percent: number) => void,
-  opts?: { figureExtractMode?: FigureExtractMode },
+  opts?: { figureExtractMode?: FigureExtractMode; topicHints?: string[] },
 ): Promise<CompleteMaterialResponse> {
   const contentType = resolveUploadContentType(file);
   const { materialId, uploadUrl } = await requestMaterialUploadUrl(deckId, {
@@ -729,7 +767,7 @@ export async function uploadPdfWithFigureCrops(
   pdfFile: File,
   figureFiles: File[],
   onProgress?: (percent: number) => void,
-  opts?: { figureExtractMode?: FigureExtractMode },
+  opts?: { figureExtractMode?: FigureExtractMode; topicHints?: string[] },
 ): Promise<CompleteMaterialResponse> {
   const contentType = resolveUploadContentType(pdfFile);
   const { materialId, uploadUrl } = await requestMaterialUploadUrl(deckId, {

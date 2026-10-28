@@ -6,6 +6,7 @@ import {
   GENERATE_COMPACT_SYSTEM_PROMPT,
   GENERATE_SYSTEM_PROMPT,
   IMAGE_GENERATE_SYSTEM_PROMPT,
+  appendTopicHintsSuffix,
   generateCompactUserPrompt,
   generateImageUserPrompt,
   generateUserPrompt,
@@ -36,6 +37,8 @@ export type GenerateDraftsInput = {
   image?: GenerateImageInput;
   /** Material R2 key for vision; required in prompts and occlusion fronts. */
   imageKey?: string;
+  /** Optional also-cover topic hints from the generation job. */
+  topicHints?: string[];
 };
 
 export type CompleteInput = {
@@ -116,17 +119,21 @@ export async function withCompactTruncationRetry<T>(
 async function generateTextDraftsWithCompactRetry(
   text: string,
   completeOnce: (system: string, user: string) => Promise<string>,
+  topicHints: string[] = [],
 ): Promise<CardDraft[]> {
   return withCompactTruncationRetry(
     async () =>
       parseCardsPayload(
-        await completeOnce(GENERATE_SYSTEM_PROMPT, userPromptForJson(text)),
+        await completeOnce(
+          GENERATE_SYSTEM_PROMPT,
+          appendTopicHintsSuffix(userPromptForJson(text), topicHints),
+        ),
       ),
     async () =>
       parseCardsPayload(
         await completeOnce(
           GENERATE_COMPACT_SYSTEM_PROMPT,
-          generateCompactUserPrompt(text),
+          appendTopicHintsSuffix(generateCompactUserPrompt(text), topicHints),
         ),
       ),
   );
@@ -441,13 +448,16 @@ function openAiAdapter(): LlmAdapter {
     async generateDrafts(input) {
       const { text, apiKey, image } = input;
       if (!image) {
-        return generateTextDraftsWithCompactRetry(text, (system, user) =>
-          complete({
-            system,
-            user,
-            apiKey,
-            provider: input.provider,
-          }),
+        return generateTextDraftsWithCompactRetry(
+          text,
+          (system, user) =>
+            complete({
+              system,
+              user,
+              apiKey,
+              provider: input.provider,
+            }),
+          input.topicHints ?? [],
         );
       }
 
@@ -536,13 +546,16 @@ function anthropicAdapter(): LlmAdapter {
     async generateDrafts(input) {
       const { text, apiKey, image } = input;
       if (!image) {
-        return generateTextDraftsWithCompactRetry(text, (system, user) =>
-          complete({
-            system,
-            user,
-            apiKey,
-            provider: input.provider,
-          }),
+        return generateTextDraftsWithCompactRetry(
+          text,
+          (system, user) =>
+            complete({
+              system,
+              user,
+              apiKey,
+              provider: input.provider,
+            }),
+          input.topicHints ?? [],
         );
       }
 
@@ -634,13 +647,16 @@ function googleAdapter(): LlmAdapter {
     async generateDrafts(input) {
       const { text, apiKey, image } = input;
       if (!image) {
-        return generateTextDraftsWithCompactRetry(text, (system, user) =>
-          complete({
-            system,
-            user,
-            apiKey,
-            provider: input.provider,
-          }),
+        return generateTextDraftsWithCompactRetry(
+          text,
+          (system, user) =>
+            complete({
+              system,
+              user,
+              apiKey,
+              provider: input.provider,
+            }),
+          input.topicHints ?? [],
         );
       }
 

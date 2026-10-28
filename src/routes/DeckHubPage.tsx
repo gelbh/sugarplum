@@ -38,6 +38,7 @@ import {
   regenCard,
   resetCardSchedule,
   resolveUploadContentType,
+  topicGenerate,
   uploadMaterialFile,
   uploadPdfWithFigureCrops,
   type CardDraftView,
@@ -165,6 +166,11 @@ export default function DeckHubPage({ deckId }: Props) {
   const [materialBusy, setMaterialBusy] = useState(false);
   const [materialError, setMaterialError] = useState<string | null>(null);
   const [materialNotice, setMaterialNotice] = useState<string | null>(null);
+
+  const [topicOpen, setTopicOpen] = useState(false);
+  const [topicValue, setTopicValue] = useState("");
+  const [topicBusy, setTopicBusy] = useState(false);
+  const [topicError, setTopicError] = useState<string | null>(null);
 
   const { end: endLoad } = useTrackedOp("Loading deck…", {
     trackOnMount: true,
@@ -458,6 +464,29 @@ export default function DeckHubPage({ deckId }: Props) {
     }
   }
 
+  async function onTopicGenerate(e?: FormEvent) {
+    e?.preventDefault();
+    const topic = topicValue.trim();
+    if (!topic) {
+      setTopicError("Enter a topic");
+      return;
+    }
+    setTopicBusy(true);
+    setTopicError(null);
+    try {
+      const { jobId } = await topicGenerate(deckId, { topic });
+      setTopicOpen(false);
+      setTopicValue("");
+      window.location.assign(`/jobs/${encodeURIComponent(jobId)}/drafts`);
+    } catch (err) {
+      setTopicError(
+        err instanceof ApiError ? err.message : "Could not start generation",
+      );
+    } finally {
+      setTopicBusy(false);
+    }
+  }
+
   async function onAccountPaste(e?: FormEvent) {
     e?.preventDefault();
     setMaterialError(null);
@@ -645,6 +674,19 @@ export default function DeckHubPage({ deckId }: Props) {
                   }
                 >
                   Study this deck
+                </Button>
+              ) : null}
+              {!guest && deck ? (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => {
+                    setTopicError(null);
+                    setTopicValue("");
+                    setTopicOpen(true);
+                  }}
+                >
+                  Generate cards for topic…
                 </Button>
               ) : null}
               <Typography variant="body2" color="text.secondary">
@@ -1005,6 +1047,50 @@ export default function DeckHubPage({ deckId }: Props) {
               disabled={renameBusy || !renameValue.trim()}
             >
               {renameBusy ? "Saving…" : "Save"}
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+
+      <Dialog
+        open={topicOpen}
+        onClose={() => !topicBusy && setTopicOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <Box component="form" onSubmit={onTopicGenerate} noValidate>
+          <DialogTitle>Generate cards for topic</DialogTitle>
+          <DialogContent>
+            <DialogContentText sx={{ mb: 2 }}>
+              Uses the latest ready paste or PDF on this deck. Existing cards
+              stay.
+            </DialogContentText>
+            {topicError ? (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {topicError}
+              </Alert>
+            ) : null}
+            <TextField
+              autoFocus
+              label="Topic"
+              value={topicValue}
+              onChange={(ev) => setTopicValue(ev.target.value)}
+              required
+              fullWidth
+              disabled={topicBusy}
+              inputProps={{ maxLength: 200 }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setTopicOpen(false)} disabled={topicBusy}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={topicBusy || !topicValue.trim()}
+            >
+              {topicBusy ? "Starting…" : "Generate"}
             </Button>
           </DialogActions>
         </Box>
