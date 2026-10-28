@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -68,14 +75,19 @@ import { isGuest } from "../guest/session";
 import { guestPasteToCards } from "../guest/pasteToCards";
 import { guestAddAcceptedCards } from "../guest/store";
 import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
+import {
+  collectDeckImageKeys,
+  hubDiyTypes,
+  isOcclusionFront,
+  starterOcclusionFront,
+  validateHubCreateCard,
+} from "../lib/hubDiyCreate";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 
 type Props = {
   deckId: string;
 };
-
-const HUB_DIY_TYPES: CardType[] = ["qa", "cloze", "mcq"];
 
 function blankHubCreateCard(deckId: string): CardDraftView {
   return {
@@ -176,7 +188,18 @@ export default function DeckHubPage({ deckId }: Props) {
     blankHubCreateCard(deckId),
   );
   const [createBusy, setCreateBusy] = useState(false);
+  const [createImageBusy, setCreateImageBusy] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const createImageInputRef = useRef<HTMLInputElement>(null);
+
+  const hubDiyAllowedTypes = hubDiyTypes(guest);
+  const deckImageKeys = useMemo(() => collectDeckImageKeys(cards), [cards]);
+  const createImageKey =
+    createCard.media_r2_keys?.[0] ??
+    (isOcclusionFront(createCard.front) ? createCard.front.image_key : "");
+  const createNeedsImage =
+    !guest &&
+    (createCard.type === "occlusion" || createCard.type === "image_label");
 
   const [materialTab, setMaterialTab] = useState<"paste" | "file">("paste");
   const [pasteText, setPasteText] = useState("");
@@ -501,48 +524,89 @@ export default function DeckHubPage({ deckId }: Props) {
     }
   }
 
+  function applyCreateImageKey(key: string) {
+    setCreateCard((prev) => {
+      if (prev.type === "occlusion" && isOcclusionFront(prev.front)) {
+        return {
+          ...prev,
+          media_r2_keys: [key],
+          front: { ...prev.front, image_key: key },
+        };
+      }
+      return { ...prev, media_r2_keys: [key] };
+    });
+  }
+
+  async function onCreateImageUpload(file: File) {
+    setCreateError(null);
+    const contentType = resolveUploadContentType(file);
+    if (!IMAGE_MIMES.has(contentType)) {
+      setCreateError("Use a JPEG, PNG, or WebP image");
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setCreateError("Images must be 8MB or smaller");
+      return;
+    }
+    setCreateImageBusy(true);
+    try {
+      const material = await uploadMaterialFile(deckId, file);
+      if (!material.r2_key) {
+        setCreateError("Upload did not return an image key");
+        return;
+      }
+      applyCreateImageKey(material.r2_key);
+      if (material.jobId) {
+        setNotice(
+          "Image saved on the deck. A generation job also started in the background.",
+        );
+      }
+    } catch (err) {
+      setCreateError(
+        err instanceof ApiError ? err.message : "Could not upload image",
+      );
+    } finally {
+      setCreateImageBusy(false);
+      if (createImageInputRef.current) {
+        createImageInputRef.current.value = "";
+      }
+    }
+  }
+
   function onCreateChange(next: DraftEditorChange) {
-    setCreateCard((prev) => ({
-      ...prev,
-      front: next.front,
-      back: next.back,
-      type: next.type,
-      options: next.options,
-    }));
+    setCreateCard((prev) => {
+      const imageKey = prev.media_r2_keys?.[0] ?? "";
+      let front = next.front;
+      let back = next.back;
+      if (
+        next.type === "occlusion" &&
+        typeof front === "string" &&
+        !isOcclusionFront(front)
+      ) {
+        front = starterOcclusionFront(imageKey);
+        back = { answer: "r1" };
+      }
+      return {
+        ...prev,
+        front,
+        back,
+        type: next.type,
+        options: next.options,
+      };
+    });
   }
 
   async function onCreateCard(e?: FormEvent) {
     e?.preventDefault();
     setCreateError(null);
-    const type = createCard.type;
-    if (type !== "qa" && type !== "cloze" && type !== "mcq") {
-      setCreateError("Choose Q&A, cloze, or multiple choice");
-      return;
-    }
-    const front =
-      typeof createCard.front === "string" ? createCard.front.trim() : "";
-    if (!front) {
-      setCreateError("Front is required");
-      return;
-    }
-    const backRaw =
-      typeof createCard.back === "string" ? createCard.back : "";
-    const back = type === "cloze" ? backRaw.trim() : backRaw.trim();
-    let options: string[] | undefined;
-    if (type === "mcq") {
-      options = (createCard.options ?? []).map((o) => o.trim()).filter(Boolean);
-    } else if (type === "qa" && !back) {
-      setCreateError("Back is required");
+    const validated = validateHubCreateCard(createCard);
+    if (!validated.ok) {
+      setCreateError(validated.error);
       return;
     }
     setCreateBusy(true);
     try {
-      const created = await createDeckCard(deckId, {
-        type,
-        front,
-        back,
-        ...(options ? { options } : {}),
-      });
+      const created = await createDeckCard(deckId, validated.body);
       if (!showArchived) {
         setCards((prev) => [...prev, created]);
       }
@@ -1182,16 +1246,68 @@ export default function DeckHubPage({ deckId }: Props) {
               ) : null}
               <Box component="form" onSubmit={onCreateCard} noValidate>
                 <Stack spacing={2}>
+                  {createNeedsImage ? (
+                    <Stack spacing={1}>
+                      <Typography variant="body2" color="text.secondary">
+                        Image (deck material)
+                      </Typography>
+                      <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                        {deckImageKeys.length > 0 ? (
+                          <FormControl fullWidth size="small">
+                            <InputLabel id="hub-create-image-key">
+                              Existing image
+                            </InputLabel>
+                            <Select
+                              labelId="hub-create-image-key"
+                              label="Existing image"
+                              value={createImageKey || ""}
+                              disabled={createBusy || createImageBusy}
+                              onChange={(ev) =>
+                                applyCreateImageKey(String(ev.target.value))
+                              }
+                            >
+                              <MenuItem value="">
+                                <em>Select…</em>
+                              </MenuItem>
+                              {deckImageKeys.map((key) => (
+                                <MenuItem key={key} value={key}>
+                                  {key.split("/").pop() ?? key}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        ) : null}
+                        <Button
+                          variant="outlined"
+                          component="label"
+                          disabled={createBusy || createImageBusy}
+                          sx={{ flexShrink: 0, whiteSpace: "nowrap" }}
+                        >
+                          {createImageBusy ? "Uploading…" : "Upload image"}
+                          <input
+                            ref={createImageInputRef}
+                            type="file"
+                            hidden
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={(ev) => {
+                              const file = ev.target.files?.[0];
+                              if (file) void onCreateImageUpload(file);
+                            }}
+                          />
+                        </Button>
+                      </Stack>
+                    </Stack>
+                  ) : null}
                   <DraftCardEditor
                     card={createCard}
-                    disabled={createBusy}
+                    disabled={createBusy || createImageBusy}
                     onChange={onCreateChange}
-                    allowedTypes={HUB_DIY_TYPES}
+                    allowedTypes={hubDiyAllowedTypes}
                   />
                   <Button
                     type="submit"
                     variant="contained"
-                    disabled={createBusy}
+                    disabled={createBusy || createImageBusy}
                   >
                     {createBusy ? "Adding…" : "Add card"}
                   </Button>
@@ -1339,7 +1455,7 @@ export default function DeckHubPage({ deckId }: Props) {
                 card={editCard}
                 disabled={editDialogBusy}
                 onChange={onEditChange}
-                allowedTypes={HUB_DIY_TYPES}
+                allowedTypes={hubDiyAllowedTypes}
                 regenAction={
                   guest
                     ? undefined
