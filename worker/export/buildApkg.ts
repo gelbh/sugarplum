@@ -1,5 +1,6 @@
 import JSZip from "jszip";
 import initSqlJs from "sql.js";
+import wasmUrl from "sql.js/dist/sql-wasm.wasm?url";
 import type { AnkiFsrsFields } from "./fsrsMap";
 import type { AnkiNoteSpec } from "./notes";
 
@@ -130,6 +131,37 @@ function escapeMediaName(name: string): string {
   return name.replaceAll('"', "&quot;");
 }
 
+function rewriteMediaSources(
+  field: string,
+  mediaNames: Map<string, string>,
+): string {
+  return field.replace(
+    /(<img\b[^>]*\bsrc\s*=\s*)(["'])([^"']+)\2/gi,
+    (match, prefix: string, quote: string, source: string) => {
+      const numericName = mediaNames.get(source);
+      return numericName
+        ? `${prefix}${quote}${escapeMediaName(numericName)}${quote}`
+        : match;
+    },
+  );
+}
+
+function checksumSortField(value: string): number {
+  // Anki uses the first 8 SHA-1 hex digits; this stable FNV-1a checksum keeps
+  // the same non-zero integer shape without adding a crypto dependency.
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0 || 1;
+}
+
+function cardTypeForState(state: number): number {
+  if (state >= 0 && state <= 3) return state;
+  throw new Error(`Unsupported FSRS state: ${state}`);
+}
+
 function unixSecondsToAnkiDue(due: number, crt: number, state: number): number {
   if (state === 1 || state === 3) return due;
   return Math.max(0, Math.floor((due - crt) / DAY_SECONDS));
@@ -139,7 +171,21 @@ export async function buildApkg(args: {
   deckName: string;
   entries: ApkgEntry[];
 }): Promise<Uint8Array> {
-  const SQL = await initSqlJs();
+  // Workers use Vite's asset URL; Vitest's Node runtime needs the package path.
+  const nodeProcess = (
+    globalThis as typeof globalThis & {
+      process?: { cwd(): string };
+    }
+  ).process;
+  const wasmPath =
+    nodeProcess && wasmUrl.startsWith("/")
+      ? `${nodeProcess.cwd()}${wasmUrl}`
+      : wasmUrl;
+  const SQL = await initSqlJs({
+    locateFile: () => wasmPath,
+  }).catch((error: unknown) => {
+    throw new Error("Unable to load sql.js WASM", { cause: error });
+  });
   const db = new SQL.Database();
   const now = Math.floor(Date.now() / 1000);
   const deckId = now * 1000;
@@ -171,7 +217,7 @@ export async function buildApkg(args: {
     CREATE TABLE notes (
       id integer primary key, guid text not null, mid integer not null,
       mod integer not null, usn integer not null, tags text not null,
-      flds text not null, sfld integer not null, csum integer not null,
+      flds text not null, sfld text not null, csum integer not null,
       flags integer not null, data text not null
     );
     CREATE TABLE cards (
@@ -262,6 +308,7 @@ export async function buildApkg(args: {
     const fields = fieldsForNote(entry.note);
     if (entry.note.model === "basic" && entry.media.length > 0) {
       const frontIndex = 0;
+      fields[frontIndex] = rewriteMediaSources(fields[frontIndex], mediaNames);
       if (!/<img\b/i.test(fields[frontIndex])) {
         fields[frontIndex] += entry.media
           .map((media) => `<img src="${escapeMediaName(mediaNames.get(media.name) ?? "")}">`)
@@ -272,9 +319,15 @@ export async function buildApkg(args: {
     const tags = (entry.note.tags ?? []).join(" ");
     const schedule = entry.schedule;
     const state = schedule?.state ?? 0;
-    const due = schedule
-      ? unixSecondsToAnkiDue(schedule.due, now, state)
-      : index;
+    const due =
+      schedule && state !== 0
+        ? unixSecondsToAnkiDue(schedule.due, now, state)
+        : index;
+    const type = schedule ? cardTypeForState(state) : 0;
+    const ord =
+      entry.note.model === "cloze"
+        ? Math.max(0, Number(/\{\{c(\d+)::/i.exec(fields[0])?.[1] ?? 1) - 1)
+        : 0;
     const data = schedule
       ? JSON.stringify({
           stability: schedule.stability,
@@ -286,7 +339,19 @@ export async function buildApkg(args: {
       : "{}";
     db.run(
       "INSERT INTO notes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [nid, `${nid}`, model.id, now, -1, tags, flds, fields[0].length, 0, 0, "{}"],
+      [
+        nid,
+        `${nid}`,
+        model.id,
+        now,
+        -1,
+        tags,
+        flds,
+        fields[0],
+        checksumSortField(fields[0]),
+        0,
+        "{}",
+      ],
     );
     db.run(
       "INSERT INTO cards VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -294,11 +359,11 @@ export async function buildApkg(args: {
         cid,
         nid,
         deckId,
-        0,
+        ord,
         now,
         -1,
-        schedule ? (state === 0 ? 0 : 2) : 0,
-        schedule ? state : 0,
+        type,
+        type,
         due,
         schedule?.scheduledDays ?? 0,
         schedule ? Math.round(schedule.difficulty * 10) : 0,

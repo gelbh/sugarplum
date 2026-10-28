@@ -17,3 +17,10 @@ Implemented:
 Concerns:
 - Anki desktop import was not available for direct validation; SQLite schema and golden parsing passed.
 - Worker deployment must preserve sql.js WASM loading when this exporter is wired into a route.
+
+Follow-up evidence:
+- Fixed FSRS state mapping so card type and queue preserve states 0 through 3, with new cards using positional due values.
+- Added sql.js WASM asset resolution for Vite Workers and Vitest Node, with loud initialization errors.
+- Rewrote mapped existing image sources, stored string sort fields, added a stable non-zero FNV-1a checksum, and parsed cloze ordinals.
+- `npx vitest run tests/worker/export-build-apkg.test.ts`: 3 passed.
+- `npx tsc -p tsconfig.worker.json --pretty false`: passed.

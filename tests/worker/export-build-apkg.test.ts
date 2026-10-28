@@ -57,7 +57,7 @@ describe("buildApkg", () => {
         {
           note: {
             model: "basic",
-            fields: { Front: "Question", Back: "Answer" },
+            fields: { Front: '<img src="diagram.png">', Back: "Answer" },
           },
           schedule: null,
           media: [{ name: "diagram.png", data: new Uint8Array([137, 80, 78, 71]) }],
@@ -72,5 +72,57 @@ describe("buildApkg", () => {
     expect(await zip.file("0")!.async("uint8array")).toEqual(
       new Uint8Array([137, 80, 78, 71]),
     );
+    const SQL = await initSqlJs();
+    const db = new SQL.Database(
+      await zip.file("collection.anki2")!.async("uint8array"),
+    );
+    expect(db.exec("select flds from notes")[0]?.values[0]?.[0]).toContain(
+      '<img src="0">',
+    );
+  });
+
+  it("preserves learning card state and cloze ordinal", async () => {
+    const bytes = await buildApkg({
+      deckName: "Sugarplum",
+      entries: [
+        {
+          note: {
+            model: "basic",
+            fields: { Front: "Learning", Back: "Answer" },
+          },
+          schedule: {
+            due: 1_798_000_000,
+            stability: 1,
+            difficulty: 5,
+            elapsedDays: 0,
+            scheduledDays: 0,
+            reps: 1,
+            lapses: 0,
+            state: 1,
+            lastReview: null,
+          },
+          media: [],
+        },
+        {
+          note: {
+            model: "cloze",
+            fields: { Text: "{{c2::x}}", Extra: "" },
+          },
+          schedule: null,
+          media: [],
+        },
+      ],
+    });
+    const zip = await JSZip.loadAsync(bytes);
+    const SQL = await initSqlJs();
+    const db = new SQL.Database(
+      await zip.file("collection.anki2")!.async("uint8array"),
+    );
+    expect(
+      db.exec("select type, queue from cards order by nid limit 1")[0]?.values[0],
+    ).toEqual([1, 1]);
+    expect(
+      db.exec("select ord from cards order by nid limit 1 offset 1")[0]?.values[0]?.[0],
+    ).toBe(1);
   });
 });

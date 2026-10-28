@@ -1,6 +1,7 @@
 declare module "sql.js" {
   type SqlJsConfig = {
     locateFile?: (file: string) => string;
+    wasmBinary?: ArrayBuffer | Uint8Array;
   };
 
   type Database = {
