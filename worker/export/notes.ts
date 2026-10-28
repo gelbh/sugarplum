@@ -47,5 +47,7 @@ export function cardToAnkiNote(card: CardForAnkiNote): AnkiNoteResult {
       };
     case "occlusion":
       return { skip: true, reason: "occlusion-phase3" };
+    default:
+      return { skip: true, reason: `unsupported-type:${card.type}` };
   }
 }

@@ -46,6 +46,16 @@ describe("cardToAnkiNote", () => {
     });
   });
 
+  it("skips unknown card types", () => {
+    expect(
+      cardToAnkiNote({
+        type: "flashcard_v2",
+        front: "Q",
+        back: "A",
+      }),
+    ).toEqual({ skip: true, reason: "unsupported-type:flashcard_v2" });
+  });
+
   it("skips occlusion in Phase 1", () => {
     expect(
       cardToAnkiNote({
