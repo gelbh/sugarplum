@@ -7,10 +7,12 @@ import {
   accumulateTokenUsage,
   computePercent,
   computePipelineBandPercent,
+  isFreeGenCharged,
   isRunningJobStale,
   pushProgressEvent,
   toProgressJson,
   truncateProgressText,
+  withFreeGenCharged,
   withUpdatedAt,
   writeJobProgress,
 } from "../../worker/generation/progress";
@@ -262,6 +264,25 @@ describe("isRunningJobStale", () => {
       label: "Processing figures",
       updated_at: "2026-10-27T19:00:00.000Z",
     });
+  });
+
+  it("withFreeGenCharged sets marker and isFreeGenCharged reads it", () => {
+    expect(isFreeGenCharged(null)).toBe(false);
+    expect(isFreeGenCharged('{"stage":"extract"}')).toBe(false);
+    const next = JSON.parse(
+      withFreeGenCharged(
+        JSON.stringify({
+          stage: "extract",
+          current: 0,
+          total: 0,
+          percent: 5,
+          label: "Extracting material",
+        }),
+      ),
+    );
+    expect(next.free_gen_charged).toBe(true);
+    expect(next.stage).toBe("extract");
+    expect(isFreeGenCharged(JSON.stringify(next))).toBe(true);
   });
 
   it("queue retry constants span the stale window", () => {
