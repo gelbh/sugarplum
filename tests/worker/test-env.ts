@@ -35,6 +35,7 @@ type MaterialRow = {
   status: string;
   created_at: string;
   body_text?: string | null;
+  content_hash?: string | null;
 };
 
 type GenerationJobRow = {
@@ -585,6 +586,20 @@ export function createTestEnv(opts?: {
           if (!deck || deck.user_id !== bound[1]) return null;
           return { id: job.id } as T;
         }
+        if (
+          normalized.includes("FROM generation_jobs") &&
+          normalized.includes("WHERE material_id = ?") &&
+          normalized.includes("ORDER BY created_at DESC")
+        ) {
+          const materialId = bound[0] as string;
+          const rows = [...generationJobs.values()]
+            .filter((j) => j.material_id === materialId)
+            .sort((a, b) => b.created_at.localeCompare(a.created_at));
+          const job = rows[0];
+          return job
+            ? ({ id: job.id, created_at: job.created_at } as T)
+            : null;
+        }
         return null;
       },
       async all<T>(): Promise<{ results: T[] }> {
@@ -754,6 +769,36 @@ export function createTestEnv(opts?: {
               (c) => c.deck_id === bound[0] && c.media_r2_keys_json != null,
             )
             .map((c) => ({ media_r2_keys_json: c.media_r2_keys_json }));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM materials") &&
+          normalized.includes("WHERE deck_id = ? AND status = ? AND content_hash = ?")
+        ) {
+          const [deckId, status, contentHash] = bound as [
+            string,
+            string,
+            string,
+          ];
+          const rows = [...materials.values()].filter(
+            (m) =>
+              m.deck_id === deckId &&
+              m.status === status &&
+              (m.content_hash ?? null) === contentHash,
+          );
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM generation_jobs") &&
+          normalized.includes("WHERE material_id = ?") &&
+          normalized.includes("ORDER BY created_at DESC")
+        ) {
+          const materialId = bound[0] as string;
+          const rows = [...generationJobs.values()]
+            .filter((j) => j.material_id === materialId)
+            .sort((a, b) => b.created_at.localeCompare(a.created_at))
+            .slice(0, 1)
+            .map((j) => ({ id: j.id, created_at: j.created_at }));
           return { results: rows as T[] };
         }
         if (normalized.includes("FROM materials WHERE deck_id =")) {
@@ -1040,35 +1085,87 @@ export function createTestEnv(opts?: {
             });
           }
         } else if (normalized.startsWith("INSERT INTO materials")) {
-          const [
-            id,
-            deck_id,
-            kind,
-            r2_key,
-            filename,
-            page_count,
-            status,
-            created_at,
-          ] = bound as [
-            string,
-            string,
+          if (normalized.includes("content_hash")) {
+            const [
+              id,
+              deck_id,
+              kind,
+              r2_key,
+              filename,
+              page_count,
+              status,
+              created_at,
+              content_hash,
+            ] = bound as [
+              string,
+              string,
+              string,
+              string | null,
+              string | null,
+              number | null,
+              string,
+              string,
+              string | null,
+            ];
+            materials.set(id, {
+              id,
+              deck_id,
+              kind,
+              r2_key,
+              filename,
+              page_count,
+              status,
+              created_at,
+              content_hash,
+            });
+          } else {
+            const [
+              id,
+              deck_id,
+              kind,
+              r2_key,
+              filename,
+              page_count,
+              status,
+              created_at,
+            ] = bound as [
+              string,
+              string,
+              string,
+              string | null,
+              string | null,
+              number | null,
+              string,
+              string,
+            ];
+            materials.set(id, {
+              id,
+              deck_id,
+              kind,
+              r2_key,
+              filename,
+              page_count,
+              status,
+              created_at,
+            });
+          }
+        } else if (
+          normalized.startsWith(
+            "UPDATE materials SET status = ?, content_hash = ? WHERE id = ? AND status = ?",
+          )
+        ) {
+          const [status, content_hash, id, expected] = bound as [
             string,
             string | null,
-            string | null,
-            number | null,
             string,
             string,
           ];
-          materials.set(id, {
-            id,
-            deck_id,
-            kind,
-            r2_key,
-            filename,
-            page_count,
-            status,
-            created_at,
-          });
+          const row = materials.get(id);
+          if (row && row.status === expected) {
+            materials.set(id, { ...row, status, content_hash });
+            return { success: true, meta: { changes: 1 } } as D1Result;
+          }
+          return { success: true, meta: { changes: 0 } } as D1Result;
         } else if (
           normalized.startsWith(
             "UPDATE materials SET status = ? WHERE id = ? AND status = ?",
@@ -1085,6 +1182,13 @@ export function createTestEnv(opts?: {
           const [status, id] = bound as [string, string];
           const row = materials.get(id);
           if (row) materials.set(id, { ...row, status });
+        } else if (normalized.startsWith("DELETE FROM materials WHERE id =")) {
+          const id = bound[0] as string;
+          const existed = materials.delete(id);
+          return {
+            success: true,
+            meta: { changes: existed ? 1 : 0 },
+          } as D1Result;
         } else if (normalized.startsWith("INSERT INTO generation_jobs")) {
           const [
             id,

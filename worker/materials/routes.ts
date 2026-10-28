@@ -10,6 +10,10 @@ import {
 } from "../generation/enqueue";
 import { normalizeTopicHints } from "../generation/topic-hints";
 import {
+  findReadyMaterialByContentHash,
+  sha256Hex,
+} from "./content-hash";
+import {
   assertSingleCloze,
   assertValidMcqOptions,
 } from "../generation/schema";
@@ -46,6 +50,7 @@ export type MaterialRow = {
   page_count: number | null;
   status: string;
   created_at: string;
+  content_hash?: string | null;
 };
 
 /** Pastes ≤100KB use the same R2 path; schema has no body_text column for D1 inline. */
@@ -541,6 +546,50 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
       ? body.filename.trim()
       : null;
 
+  const contentHash = await sha256Hex(text);
+  const hit = await findReadyMaterialByContentHash(db, deckId, contentHash);
+
+  if (hit?.jobId) {
+    return c.json(
+      {
+        id: hit.materialId,
+        deck_id: hit.deck_id,
+        kind: hit.kind,
+        r2_key: hit.r2_key,
+        filename: hit.filename,
+        page_count: hit.page_count,
+        status: hit.status,
+        created_at: hit.created_at,
+        jobId: hit.jobId,
+        reused: true,
+      },
+      200,
+    );
+  }
+
+  if (hit && !hit.jobId) {
+    const jobId = await enqueueGeneration(c.env, {
+      materialId: hit.materialId,
+      deckId,
+      topicHints,
+    });
+    return c.json(
+      {
+        id: hit.materialId,
+        deck_id: hit.deck_id,
+        kind: hit.kind,
+        r2_key: hit.r2_key,
+        filename: hit.filename,
+        page_count: hit.page_count,
+        status: hit.status,
+        created_at: hit.created_at,
+        jobId,
+        reused: false,
+      },
+      200,
+    );
+  }
+
   const id = newId();
   const createdAt = new Date().toISOString();
   const r2Key = `materials/${deckId}/${id}.txt`;
@@ -551,9 +600,19 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
 
   await db
     .prepare(
-      "INSERT INTO materials (id, deck_id, kind, r2_key, filename, page_count, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO materials (id, deck_id, kind, r2_key, filename, page_count, status, created_at, content_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
-    .bind(id, deckId, "paste", r2Key, filename, null, PASTE_READY, createdAt)
+    .bind(
+      id,
+      deckId,
+      "paste",
+      r2Key,
+      filename,
+      null,
+      PASTE_READY,
+      createdAt,
+      contentHash,
+    )
     .run();
 
   const jobId = await enqueueGeneration(c.env, {
@@ -571,6 +630,7 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
     page_count: null,
     status: PASTE_READY,
     created_at: createdAt,
+    content_hash: contentHash,
   };
 
   return c.json({ ...material, jobId }, 201);
@@ -946,9 +1006,75 @@ materialRoutes.post("/:id/complete", async (c) => {
     }
   }
 
+  const isFigure = material.r2_key?.includes("/figures/") ?? false;
+
+  let contentHash: string | null = null;
+  if (!isFigure && material.r2_key) {
+    const obj = await c.env.MATERIALS.get(material.r2_key);
+    if (obj) {
+      contentHash = await sha256Hex(await obj.arrayBuffer());
+      const hit = await findReadyMaterialByContentHash(
+        db,
+        material.deck_id,
+        contentHash,
+        materialId,
+      );
+      if (hit?.jobId) {
+        await db
+          .prepare("DELETE FROM materials WHERE id = ?")
+          .bind(materialId)
+          .run();
+        if (material.r2_key) {
+          await c.env.MATERIALS.delete(material.r2_key);
+        }
+        return c.json({
+          id: hit.materialId,
+          deck_id: hit.deck_id,
+          kind: hit.kind,
+          r2_key: hit.r2_key,
+          filename: hit.filename,
+          page_count: hit.page_count,
+          status: hit.status,
+          created_at: hit.created_at,
+          jobId: hit.jobId,
+          reused: true,
+        });
+      }
+      if (hit && !hit.jobId) {
+        await db
+          .prepare("DELETE FROM materials WHERE id = ?")
+          .bind(materialId)
+          .run();
+        if (material.r2_key) {
+          await c.env.MATERIALS.delete(material.r2_key);
+        }
+        const jobId = await enqueueGeneration(c.env, {
+          materialId: hit.materialId,
+          deckId: material.deck_id,
+          figureExtractMode,
+          topicHints,
+        });
+        return c.json({
+          id: hit.materialId,
+          deck_id: hit.deck_id,
+          kind: hit.kind,
+          r2_key: hit.r2_key,
+          filename: hit.filename,
+          page_count: hit.page_count,
+          status: hit.status,
+          created_at: hit.created_at,
+          jobId,
+          reused: false,
+        });
+      }
+    }
+  }
+
   const cas = await db
-    .prepare("UPDATE materials SET status = ? WHERE id = ? AND status = ?")
-    .bind(FILE_READY, materialId, FILE_UPLOADING)
+    .prepare(
+      "UPDATE materials SET status = ?, content_hash = ? WHERE id = ? AND status = ?",
+    )
+    .bind(FILE_READY, contentHash, materialId, FILE_UPLOADING)
     .run();
   if (!cas.meta.changes) {
     throw new HTTPException(409, {
@@ -956,7 +1082,6 @@ materialRoutes.post("/:id/complete", async (c) => {
     });
   }
 
-  const isFigure = material.r2_key?.includes("/figures/") ?? false;
   const jobId = isFigure
     ? null
     : await enqueueGeneration(c.env, {
