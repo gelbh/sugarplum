@@ -199,3 +199,130 @@ describe("GET /api/materials", () => {
     expect(body.some((row) => row.id === "theirs")).toBe(false);
   });
 });
+
+describe("GET /api/materials/:id/download", () => {
+  it("returns paste bytes with attachment disposition", async () => {
+    const env = createTestEnv();
+    env.seedUser({
+      id: "user-a",
+      email: "a@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-a",
+      user_id: "user-a",
+      title: "Owner deck",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSession("sess-a", "user-a");
+    env.seedMaterial({
+      id: "paste-1",
+      deck_id: "deck-a",
+      kind: "paste",
+      r2_key: "materials/deck-a/paste-1.txt",
+      filename: "notes.txt",
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T01:00:00.000Z",
+    });
+    env.seedR2("materials/deck-a/paste-1.txt", "hello paste body");
+
+    const res = await app.request(
+      "/api/materials/paste-1/download",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe("hello paste body");
+    expect(res.headers.get("content-type")).toMatch(/^text\/plain/);
+    expect(res.headers.get("content-disposition")).toBe(
+      'attachment; filename="notes.txt"',
+    );
+  });
+
+  it("returns 404 when another user downloads", async () => {
+    const env = createTestEnv();
+    env.seedUser({
+      id: "user-a",
+      email: "a@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedUser({
+      id: "user-b",
+      email: "b@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-a",
+      user_id: "user-a",
+      title: "Owner deck",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedMaterial({
+      id: "paste-1",
+      deck_id: "deck-a",
+      kind: "paste",
+      r2_key: "materials/deck-a/paste-1.txt",
+      filename: "notes.txt",
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T01:00:00.000Z",
+    });
+    env.seedR2("materials/deck-a/paste-1.txt", "secret");
+    env.seedSession("sess-b", "user-b");
+
+    const res = await app.request(
+      "/api/materials/paste-1/download",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-b` } },
+      env,
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 404 when R2 object is missing", async () => {
+    const env = createTestEnv();
+    env.seedUser({
+      id: "user-a",
+      email: "a@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-a",
+      user_id: "user-a",
+      title: "Owner deck",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSession("sess-a", "user-a");
+    env.seedMaterial({
+      id: "paste-1",
+      deck_id: "deck-a",
+      kind: "paste",
+      r2_key: "materials/deck-a/paste-1.txt",
+      filename: "notes.txt",
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T01:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/materials/paste-1/download",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+
+    expect(res.status).toBe(404);
+  });
+});

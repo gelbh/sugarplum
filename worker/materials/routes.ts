@@ -172,6 +172,55 @@ async function requireOwnedMaterial(
   return row;
 }
 
+function sanitizeDownloadFilename(filename: string | null): string {
+  const raw = (filename ?? "").trim();
+  const base = raw.split(/[/\\]/).pop() ?? "";
+  const cleaned = base.replace(/["\r\n]/g, "").trim();
+  return cleaned || "download.bin";
+}
+
+function contentTypeForMaterial(
+  kind: string,
+  r2Key: string,
+  filename: string | null,
+): string {
+  const lowerKey = r2Key.toLowerCase();
+  const lowerName = (filename ?? "").toLowerCase();
+  if (
+    kind === "paste" ||
+    lowerKey.endsWith(".txt") ||
+    lowerName.endsWith(".txt")
+  ) {
+    return "text/plain; charset=utf-8";
+  }
+  if (kind === "pdf" || lowerKey.endsWith(".pdf") || lowerName.endsWith(".pdf")) {
+    return PDF_CONTENT_TYPE;
+  }
+  if (
+    kind === "pptx" ||
+    lowerKey.endsWith(".pptx") ||
+    lowerName.endsWith(".pptx")
+  ) {
+    return PPTX_CONTENT_TYPE;
+  }
+  if (lowerKey.endsWith(".png") || lowerName.endsWith(".png")) {
+    return "image/png";
+  }
+  if (lowerKey.endsWith(".webp") || lowerName.endsWith(".webp")) {
+    return "image/webp";
+  }
+  if (
+    lowerKey.endsWith(".jpg") ||
+    lowerKey.endsWith(".jpeg") ||
+    lowerName.endsWith(".jpg") ||
+    lowerName.endsWith(".jpeg")
+  ) {
+    return "image/jpeg";
+  }
+  if (kind === "image") return "application/octet-stream";
+  return "application/octet-stream";
+}
+
 export const deckRoutes = new Hono<AppEnv>();
 
 deckRoutes.post("/", async (c) => {
@@ -1050,6 +1099,34 @@ materialRoutes.get("/media", async (c) => {
   return new Response(obj.body, {
     headers: {
       "content-type": contentType,
+      "cache-control": "private, max-age=3600",
+    },
+  });
+});
+
+materialRoutes.get("/:id/download", async (c) => {
+  const userId = await requireUser(c);
+  const materialId = c.req.param("id");
+  const db = getDb(c.env);
+  const material = await requireOwnedMaterial(db, materialId, userId);
+  const key = material.r2_key?.trim();
+  if (!key) {
+    throw new HTTPException(404, { message: "Material not found" });
+  }
+  const obj = await c.env.MATERIALS.get(key);
+  if (!obj) {
+    throw new HTTPException(404, { message: "Material not found" });
+  }
+  const filename = sanitizeDownloadFilename(material.filename);
+  const contentType = contentTypeForMaterial(
+    material.kind,
+    key,
+    material.filename,
+  );
+  return new Response(obj.body, {
+    headers: {
+      "content-type": contentType,
+      "content-disposition": `attachment; filename="${filename}"`,
       "cache-control": "private, max-age=3600",
     },
   });
