@@ -1,11 +1,31 @@
+/** Pathname + search for SPA location equality (query-only study scopes). */
+export function locationKey(href = window.location.href): string {
+  const url = new URL(href, window.location.origin);
+  return `${url.pathname}${url.search}`;
+}
+
 export function navigate(path: string): void {
-  if (window.location.pathname === path) return;
-  window.history.pushState({}, "", path);
+  const next = locationKey(new URL(path, window.location.origin).href);
+  if (locationKey() === next) return;
+  window.history.pushState({}, "", next);
   window.dispatchEvent(new PopStateEvent("popstate"));
 }
 
 export function subscribePath(listener: (path: string) => void): () => void {
   const handler = () => listener(window.location.pathname);
+  window.addEventListener("popstate", handler);
+  return () => window.removeEventListener("popstate", handler);
+}
+
+/** Pathname + search; fires on pushState navigate and browser Back/Forward. */
+export function subscribeLocation(
+  listener: (loc: { pathname: string; search: string }) => void,
+): () => void {
+  const handler = () =>
+    listener({
+      pathname: window.location.pathname,
+      search: window.location.search,
+    });
   window.addEventListener("popstate", handler);
   return () => window.removeEventListener("popstate", handler);
 }

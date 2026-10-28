@@ -316,14 +316,29 @@ export default function SubjectPage({ subjectId }: Props) {
               >
                 Decks
               </Typography>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={openCreateDeck}
-                disabled={!subject}
-              >
-                Create deck
-              </Button>
+              <Stack direction="row" spacing={1}>
+                {subject ? (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() =>
+                      navigate(
+                        `/study?subjectId=${encodeURIComponent(subject.id)}`,
+                      )
+                    }
+                  >
+                    Study this subject
+                  </Button>
+                ) : null}
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={openCreateDeck}
+                  disabled={!subject}
+                >
+                  Create deck
+                </Button>
+              </Stack>
             </Stack>
             {decks.length === 0 ? (
               <Typography variant="body2" color="text.secondary">

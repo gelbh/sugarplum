@@ -5,6 +5,7 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import { serializeCard, type CardRow } from "../cards/routes";
+import { requireOwnedDeck } from "../materials/routes";
 import {
   Rating,
   cardFromScheduleRow,
@@ -44,25 +45,53 @@ export const studyRoutes = new Hono<AppEnv>();
 /**
  * Cards ready for study: accepted + schedule due <= now.
  * Drafts never appear here.
+ * Optional mutually exclusive deckId or subjectId scopes the queue; omit both = global.
  */
 studyRoutes.get("/due", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
   const now = new Date().toISOString();
+  const deckId = c.req.query("deckId")?.trim() || null;
+  const subjectId = c.req.query("subjectId")?.trim() || null;
 
-  const { results } = await db
-    .prepare(
-      `SELECT c.id, c.deck_id, c.job_id, c.type, c.front_json, c.back_json,
+  if (deckId && subjectId) {
+    throw new HTTPException(400, {
+      message: "deckId and subjectId are mutually exclusive",
+    });
+  }
+
+  if (deckId) {
+    await requireOwnedDeck(db, deckId, userId);
+  } else if (subjectId) {
+    const subject = await db
+      .prepare("SELECT id FROM subjects WHERE id = ? AND user_id = ?")
+      .bind(subjectId, userId)
+      .first<{ id: string }>();
+    if (!subject) {
+      throw new HTTPException(404, { message: "Subject not found" });
+    }
+  }
+
+  let sql = `SELECT c.id, c.deck_id, c.job_id, c.type, c.front_json, c.back_json,
               c.media_r2_keys_json, c.provenance_json, c.status, c.created_at, c.updated_at,
               s.due
        FROM cards c
        INNER JOIN card_schedules s ON s.card_id = c.id
        INNER JOIN decks d ON d.id = c.deck_id
-       WHERE d.user_id = ? AND c.status = ? AND s.due <= ?
-       ORDER BY s.due ASC`,
-    )
-    .bind(userId, "accepted", now)
-    .all<DueRow>();
+       WHERE d.user_id = ? AND c.status = ? AND s.due <= ?`;
+  const binds: unknown[] = [userId, "accepted", now];
+
+  if (deckId) {
+    sql += " AND c.deck_id = ?";
+    binds.push(deckId);
+  } else if (subjectId) {
+    sql += " AND d.subject_id = ?";
+    binds.push(subjectId);
+  }
+
+  sql += " ORDER BY s.due ASC";
+
+  const { results } = await db.prepare(sql).bind(...binds).all<DueRow>();
 
   return c.json(
     (results ?? []).map((row) => ({

@@ -590,9 +590,16 @@ export function rejectCard(cardId: string) {
   return api<CardDraftView>(`/api/cards/${cardId}/reject`, { method: "POST" });
 }
 
-export function listDueCards() {
-  if (isGuest()) return Promise.resolve(guestListDueCards());
-  return api<CardDraftView[]>("/api/study/due");
+export type ListDueOpts = { deckId?: string; subjectId?: string };
+
+export function listDueCards(opts?: ListDueOpts) {
+  if (isGuest()) return Promise.resolve(guestListDueCards(opts));
+  const q = opts?.deckId
+    ? `?deckId=${encodeURIComponent(opts.deckId)}`
+    : opts?.subjectId
+      ? `?subjectId=${encodeURIComponent(opts.subjectId)}`
+      : "";
+  return api<CardDraftView[]>(`/api/study/due${q}`);
 }
 
 /** Accepted cards struggling by lapses or recent Again (online-only; guest gets []). */
