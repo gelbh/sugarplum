@@ -664,6 +664,14 @@ export function rejectCard(cardId: string) {
   return api<CardDraftView>(`/api/cards/${cardId}/reject`, { method: "POST" });
 }
 
+export function moveCard(cardId: string, deckId: string) {
+  if (isGuest()) guestUnsupported("move cards");
+  return api<CardDraftView>(`/api/cards/${cardId}/move`, {
+    method: "POST",
+    json: { deckId },
+  });
+}
+
 export type ListDueOpts = { deckId?: string; subjectId?: string };
 
 export function listDueCards(opts?: ListDueOpts) {
