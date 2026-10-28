@@ -1062,6 +1062,7 @@ materialRoutes.post("/:id/complete", async (c) => {
 
   let figureExtractMode: FigureExtractMode | undefined;
   let topicHints: string[] | null = null;
+  let attachOnly = false;
   const rawBody = await c.req.text();
   if (rawBody.trim()) {
     let parsed: unknown;
@@ -1076,6 +1077,7 @@ materialRoutes.post("/:id/complete", async (c) => {
     const body = parsed as {
       figureExtractMode?: unknown;
       topicHints?: unknown;
+      attachOnly?: unknown;
     };
     const rawMode = body.figureExtractMode;
     if (rawMode !== undefined) {
@@ -1092,6 +1094,12 @@ materialRoutes.post("/:id/complete", async (c) => {
       throw new HTTPException(400, {
         message: err instanceof Error ? err.message : "Invalid topicHints",
       });
+    }
+    if (body.attachOnly !== undefined && body.attachOnly !== false) {
+      if (body.attachOnly !== true) {
+        throw new HTTPException(400, { message: "Invalid attachOnly" });
+      }
+      attachOnly = true;
     }
   }
 
@@ -1171,9 +1179,10 @@ materialRoutes.post("/:id/complete", async (c) => {
     });
   }
 
-  const jobId = isFigure
-    ? null
-    : await enqueueGeneration(c.env, {
+  const jobId =
+    isFigure || attachOnly
+      ? null
+      : await enqueueGeneration(c.env, {
         materialId,
         deckId: material.deck_id,
         figureExtractMode,

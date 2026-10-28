@@ -315,9 +315,18 @@ export type HubCreateCardBody =
       back: { answer: string };
     };
 
+function isGuestHubCardBody(body: HubCreateCardBody): body is GuestHubCardBody {
+  return (
+    body.type === "qa" || body.type === "cloze" || body.type === "mcq"
+  );
+}
+
 export function createDeckCard(deckId: string, body: HubCreateCardBody) {
   if (isGuest()) {
     try {
+      if (!isGuestHubCardBody(body)) {
+        throw new Error("Unsupported card type");
+      }
       return Promise.resolve(guestCreateDeckCard(deckId, body));
     } catch (err) {
       const message = err instanceof Error ? err.message : "Deck not found";
@@ -535,18 +544,24 @@ export function completeMaterial(
   opts?: {
     figureExtractMode?: FigureExtractMode;
     topicHints?: string[];
+    /** Register uploaded bytes only; do not start card generation. */
+    attachOnly?: boolean;
   },
 ) {
   if (isGuest()) guestUnsupported("complete material uploads");
   const json: {
     figureExtractMode?: FigureExtractMode;
     topicHints?: string[];
+    attachOnly?: boolean;
   } = {};
   if (opts?.figureExtractMode !== undefined) {
     json.figureExtractMode = opts.figureExtractMode;
   }
   if (opts?.topicHints !== undefined) {
     json.topicHints = opts.topicHints;
+  }
+  if (opts?.attachOnly === true) {
+    json.attachOnly = true;
   }
   return api<CompleteMaterialResponse>(
     `/api/materials/${materialId}/complete`,
@@ -818,7 +833,11 @@ export async function uploadMaterialFile(
   deckId: string,
   file: File,
   onProgress?: (percent: number) => void,
-  opts?: { figureExtractMode?: FigureExtractMode; topicHints?: string[] },
+  opts?: {
+    figureExtractMode?: FigureExtractMode;
+    topicHints?: string[];
+    attachOnly?: boolean;
+  },
 ): Promise<CompleteMaterialResponse> {
   const contentType = resolveUploadContentType(file);
   const { materialId, uploadUrl } = await requestMaterialUploadUrl(deckId, {

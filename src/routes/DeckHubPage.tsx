@@ -550,17 +550,14 @@ export default function DeckHubPage({ deckId }: Props) {
     }
     setCreateImageBusy(true);
     try {
-      const material = await uploadMaterialFile(deckId, file);
+      const material = await uploadMaterialFile(deckId, file, undefined, {
+        attachOnly: true,
+      });
       if (!material.r2_key) {
         setCreateError("Upload did not return an image key");
         return;
       }
       applyCreateImageKey(material.r2_key);
-      if (material.jobId) {
-        setNotice(
-          "Image saved on the deck. A generation job also started in the background.",
-        );
-      }
     } catch (err) {
       setCreateError(
         err instanceof ApiError ? err.message : "Could not upload image",
