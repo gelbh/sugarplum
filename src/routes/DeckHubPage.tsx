@@ -353,6 +353,7 @@ export default function DeckHubPage({ deckId }: Props) {
   }
 
   function openEdit(card: CardDraftView) {
+    if (card.status === "archived") return;
     setEditError(null);
     setEditCard({ ...card, options: card.options ? [...card.options] : undefined });
   }
@@ -1116,14 +1117,16 @@ export default function DeckHubPage({ deckId }: Props) {
                       >
                         <DriveFileMoveOutlinedIcon fontSize="small" />
                       </IconButton>
-                      <IconButton
-                        size="small"
-                        aria-label="Edit card"
-                        disabled={archiveBusyId !== null}
-                        onClick={() => openEdit(card)}
-                      >
-                        <EditOutlinedIcon fontSize="small" />
-                      </IconButton>
+                      {!showArchived && card.status !== "archived" ? (
+                        <IconButton
+                          size="small"
+                          aria-label="Edit card"
+                          disabled={archiveBusyId !== null}
+                          onClick={() => openEdit(card)}
+                        >
+                          <EditOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      ) : null}
                       {showArchived ? (
                         <IconButton
                           size="small"
@@ -1291,7 +1294,7 @@ export default function DeckHubPage({ deckId }: Props) {
         <DialogContent>
           <DialogContentText>
             {deck && deleteStats
-              ? `Delete “${deck.title}”? This removes ${deleteStats.accepted} accepted card${deleteStats.accepted === 1 ? "" : "s"}, ${deleteStats.draft} draft${deleteStats.draft === 1 ? "" : "s"}, and ${deleteStats.materials} material${deleteStats.materials === 1 ? "" : "s"}.`
+              ? `Delete “${deck.title}”? This removes ${deleteStats.accepted} accepted card${deleteStats.accepted === 1 ? "" : "s"}, ${deleteStats.draft} draft${deleteStats.draft === 1 ? "" : "s"}, ${deleteStats.archived} archived card${deleteStats.archived === 1 ? "" : "s"}, and ${deleteStats.materials} material${deleteStats.materials === 1 ? "" : "s"}.`
               : deck
                 ? `Loading counts for “${deck.title}”…`
                 : ""}

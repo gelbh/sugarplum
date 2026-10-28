@@ -356,7 +356,7 @@ export function guestDeleteDeck(id: string, storage?: Store): void {
 export function guestDeckStats(
   id: string,
   storage?: Store,
-): { accepted: number; draft: number; materials: number } {
+): { accepted: number; draft: number; archived: number; materials: number } {
   const store = readStore(storage);
   if (!store.decks.some((d) => d.id === id)) {
     throw new Error("Deck not found");
@@ -365,6 +365,7 @@ export function guestDeckStats(
   return {
     accepted: cards.filter((c) => c.status === "accepted").length,
     draft: cards.filter((c) => c.status === "draft").length,
+    archived: cards.filter((c) => c.status === "archived").length,
     materials: 0,
   };
 }

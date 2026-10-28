@@ -266,6 +266,12 @@ deckRoutes.get("/:id/stats", async (c) => {
     )
     .bind(deckId)
     .first<{ count: number }>();
+  const archived = await db
+    .prepare(
+      "SELECT COUNT(*) AS count FROM cards WHERE deck_id = ? AND status = 'archived'",
+    )
+    .bind(deckId)
+    .first<{ count: number }>();
   const materials = await db
     .prepare("SELECT COUNT(*) AS count FROM materials WHERE deck_id = ?")
     .bind(deckId)
@@ -274,6 +280,7 @@ deckRoutes.get("/:id/stats", async (c) => {
   return c.json({
     accepted: accepted?.count ?? 0,
     draft: draft?.count ?? 0,
+    archived: archived?.count ?? 0,
     materials: materials?.count ?? 0,
   });
 });

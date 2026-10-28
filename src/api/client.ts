@@ -168,6 +168,7 @@ export type Deck = {
 export type DeckStats = {
   accepted: number;
   draft: number;
+  archived: number;
   materials: number;
 };
 
