@@ -42,6 +42,8 @@ export type ProgressPatch = {
   drafts_so_far?: number;
   events?: ProgressEvent[];
   path?: "free" | "byo";
+  /** Set once free-gen KV slot was reserved for this job (reclaim must not re-charge). */
+  free_gen_charged?: boolean;
 };
 
 /** Queue redelivery may reclaim `running` jobs with no progress newer than this. */
@@ -98,22 +100,50 @@ export function isRunningJobStale(
   return nowMs - lastMs >= RUNNING_JOB_STALE_MS;
 }
 
+function parseProgressObject(
+  progressJson: string | null | undefined,
+): Record<string, unknown> {
+  if (!progressJson) return {};
+  try {
+    const parsed = JSON.parse(progressJson) as unknown;
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return { ...(parsed as Record<string, unknown>) };
+    }
+  } catch {
+    // Corrupt progress_json: treat as empty.
+  }
+  return {};
+}
+
+/** True when this job already reserved a free-gen daily slot. */
+export function isFreeGenCharged(
+  progressJson: string | null | undefined,
+): boolean {
+  return parseProgressObject(progressJson).free_gen_charged === true;
+}
+
+/** Merge/set `free_gen_charged` on progress_json (durable consume marker). */
+export function withFreeGenCharged(
+  progressJson: string | null | undefined,
+): string {
+  const base = parseProgressObject(progressJson);
+  if (typeof base.stage !== "string") {
+    base.stage = "queued";
+    base.current = 0;
+    base.total = 0;
+    base.percent = 0;
+    base.label = typeof base.label === "string" ? base.label : "Claimed";
+  }
+  base.free_gen_charged = true;
+  return JSON.stringify(base);
+}
+
 /** Merge/set `updated_at` on progress_json (claim + reclaim CAS). */
 export function withUpdatedAt(
   progressJson: string | null | undefined,
   at: string = new Date().toISOString(),
 ): string {
-  let base: Record<string, unknown> = {};
-  if (progressJson) {
-    try {
-      const parsed = JSON.parse(progressJson) as unknown;
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        base = { ...(parsed as Record<string, unknown>) };
-      }
-    } catch {
-      base = {};
-    }
-  }
+  const base = parseProgressObject(progressJson);
   if (typeof base.stage !== "string") {
     base.stage = "queued";
     base.current = 0;
@@ -330,6 +360,9 @@ export function toProgressJson(patch: ProgressPatch): string {
     body.drafts_so_far = patch.drafts_so_far;
   if (patch.events !== undefined) body.events = patch.events;
   if (patch.path !== undefined) body.path = patch.path;
+  if (patch.free_gen_charged !== undefined) {
+    body.free_gen_charged = patch.free_gen_charged;
+  }
   return JSON.stringify(body);
 }
 

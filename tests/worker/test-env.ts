@@ -370,6 +370,15 @@ export function createTestEnv(opts?: {
           } as T;
         }
         if (
+          normalized.startsWith(
+            "SELECT progress_json FROM generation_jobs WHERE id =",
+          )
+        ) {
+          const job = generationJobs.get(bound[0] as string);
+          if (!job) return null;
+          return { progress_json: job.progress_json } as T;
+        }
+        if (
           normalized.includes("FROM materials m") &&
           normalized.includes("INNER JOIN decks d") &&
           normalized.includes("m.r2_key =") &&

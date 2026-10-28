@@ -262,6 +262,109 @@ describe("processGenerateJob free path", () => {
     expect(env.getCards().length).toBeGreaterThanOrEqual(1);
   });
 
+  it("reclaim wipes prior drafts and does not double-charge free-gen", async () => {
+    const env = createTestEnv();
+    await seedOwner(env, false);
+    const msg = await seedPasteJob(
+      env,
+      "Mitochondria are the powerhouse of the cell.",
+    );
+    const jobs = env.getGenerationJobs();
+    const job = jobs.find((j) => j.id === msg.jobId)!;
+    const staleAt = new Date(
+      Date.now() - RUNNING_JOB_STALE_MS - 1000,
+    ).toISOString();
+    env.seedGenerationJob({
+      ...job,
+      status: "running",
+      progress_json: JSON.stringify({
+        updated_at: staleAt,
+        stage: "persist",
+        current: 0,
+        total: 1,
+        percent: 90,
+        label: "Saving drafts",
+        free_gen_charged: true,
+      }),
+    });
+    // Mid-run death left a draft before the worker died.
+    env.seedCard({
+      id: "c-orphan-draft",
+      deck_id: "deck-a",
+      job_id: msg.jobId,
+      type: "qa",
+      front_json: JSON.stringify("Orphan draft from dead worker?"),
+      back_json: JSON.stringify("Should be wiped on reclaim"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "orphan" }),
+      status: "draft",
+      created_at: "2026-01-01T01:00:00.000Z",
+      updated_at: "2026-01-01T01:00:00.000Z",
+    });
+    // Prior attempt already consumed the free-gen slot.
+    await consumeFreeGenSlot(env, "user-a");
+    expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBe("1");
+
+    const result = await processGenerateJob(env, msg, {
+      llm: mockLlmAdapter(),
+    });
+
+    expect(result).toBe("done");
+    expect(
+      env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
+    ).toBe("needs_review");
+    const jobCards = env.getCards().filter((c) => c.job_id === msg.jobId);
+    expect(jobCards).toHaveLength(3);
+    expect(jobCards.some((c) => c.id === "c-orphan-draft")).toBe(false);
+    expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBe("1");
+    const progress = JSON.parse(
+      env.getGenerationJobs().find((j) => j.id === msg.jobId)!.progress_json!,
+    ) as { free_gen_charged?: boolean };
+    expect(progress.free_gen_charged).toBe(true);
+  });
+
+  it("reclaim before first free-gen consume still charges once", async () => {
+    const env = createTestEnv();
+    await seedOwner(env, false);
+    const msg = await seedPasteJob(
+      env,
+      "Mitochondria are the powerhouse of the cell.",
+    );
+    const jobs = env.getGenerationJobs();
+    const job = jobs.find((j) => j.id === msg.jobId)!;
+    const staleAt = new Date(
+      Date.now() - RUNNING_JOB_STALE_MS - 1000,
+    ).toISOString();
+    // Died during extract: never reached consumeFreeGenSlot.
+    env.seedGenerationJob({
+      ...job,
+      status: "running",
+      progress_json: JSON.stringify({
+        updated_at: staleAt,
+        stage: "extract",
+        current: 0,
+        total: 0,
+        percent: 5,
+        label: "Extracting material",
+      }),
+    });
+    expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBeNull();
+
+    const result = await processGenerateJob(env, msg, {
+      llm: mockLlmAdapter(),
+    });
+
+    expect(result).toBe("done");
+    expect(
+      env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
+    ).toBe("needs_review");
+    expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBe("1");
+    const progress = JSON.parse(
+      env.getGenerationJobs().find((j) => j.id === msg.jobId)!.progress_json!,
+    ) as { free_gen_charged?: boolean };
+    expect(progress.free_gen_charged).toBe(true);
+  });
+
   it("retries queue delivery when process returns busy", async () => {
     const env = createTestEnv();
     await seedOwner(env, false);

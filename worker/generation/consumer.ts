@@ -28,7 +28,9 @@ import {
   computePercent,
   computePipelineBandPercent,
   GENERATE_QUEUE_RETRY_DELAY_SEC,
+  isFreeGenCharged,
   isRunningJobStale,
+  withFreeGenCharged,
   withUpdatedAt,
   writeJobProgress,
   accumulateTokenUsage,
@@ -64,6 +66,8 @@ export type JobProgressEmit = {
   addDrafts: (n: number) => void;
   setPath: (p: "free" | "byo") => void;
   setPresentStages: (stages: readonly ProgressStage[]) => void;
+  /** Keep emit accumulator aligned after durable free-gen marker write. */
+  noteFreeGenCharged: () => void;
 };
 
 function draftFrontPreview(d: CardDraft): string {
@@ -87,12 +91,14 @@ function makeEmit(
   db: D1Database,
   jobId: string,
   presentStages: readonly ProgressStage[],
+  opts?: { freeGenCharged?: boolean },
 ) {
   // Mutable accumulator merged into every progress write.
   // drafts_so_far stays unset until the first batch (avoids mid-job "0 cards left").
   let stages = presentStages;
   const acc: {
     path?: "free" | "byo";
+    free_gen_charged?: boolean;
     tokens_used?: number;
     tokens_prompt?: number;
     tokens_completion?: number;
@@ -100,6 +106,7 @@ function makeEmit(
     events?: ProgressEvent[];
   } = {
     events: [],
+    ...(opts?.freeGenCharged ? { free_gen_charged: true } : {}),
   };
 
   function progressPatch(
@@ -136,6 +143,7 @@ function makeEmit(
         : {}),
       ...(acc.events && acc.events.length > 0 ? { events: acc.events } : {}),
       ...(acc.path !== undefined ? { path: acc.path } : {}),
+      ...(acc.free_gen_charged ? { free_gen_charged: true } : {}),
     };
   }
 
@@ -188,7 +196,19 @@ function makeEmit(
     stages = next;
   }
 
-  return { emit, addEvent, addUsage, addDrafts, setPath, setPresentStages };
+  function noteFreeGenCharged() {
+    acc.free_gen_charged = true;
+  }
+
+  return {
+    emit,
+    addEvent,
+    addUsage,
+    addDrafts,
+    setPath,
+    setPresentStages,
+    noteFreeGenCharged,
+  };
 }
 
 type MaterialRow = {
@@ -368,6 +388,7 @@ async function runTextDraftPipeline(args: {
   text: string;
   env: Env;
   userId: string;
+  jobId: string;
   secret: SecretRow | null;
   opts?: ProcessGenerateOptions;
   emit?: JobProgressEmit;
@@ -395,7 +416,21 @@ async function runTextDraftPipeline(args: {
     args.emit.setPath(path);
   }
   if (!args.secret) {
-    await consumeFreeGenSlot(args.env, args.userId);
+    const db = getDb(args.env);
+    const row = await db
+      .prepare("SELECT progress_json FROM generation_jobs WHERE id = ?")
+      .bind(args.jobId)
+      .first<{ progress_json: string | null }>();
+    if (!isFreeGenCharged(row?.progress_json)) {
+      await consumeFreeGenSlot(args.env, args.userId);
+      await db
+        .prepare(
+          "UPDATE generation_jobs SET progress_json = ? WHERE id = ?",
+        )
+        .bind(withFreeGenCharged(row?.progress_json), args.jobId)
+        .run();
+      args.emit?.noteFreeGenCharged();
+    }
   }
 
   let critiquedRules = layer1Rules;
@@ -504,6 +539,7 @@ export async function processGenerateJob(
   const { jobId, materialId, deckId } = message;
 
   const claimHeartbeat = withUpdatedAt(null);
+  let reclaimed = false;
   const claim = await db
     .prepare(
       "UPDATE generation_jobs SET status = ?, error = NULL, progress_json = ? WHERE id = ? AND status = ?",
@@ -551,9 +587,15 @@ export async function processGenerateJob(
     if (!reclaim.meta.changes) {
       return "busy";
     }
+    reclaimed = true;
   }
 
   try {
+    if (reclaimed) {
+      // Same wipe as regen: mid-run death can leave drafts; reclaim must not duplicate.
+      await db.prepare("DELETE FROM cards WHERE job_id = ?").bind(jobId).run();
+    }
+
     const material = await db
       .prepare(
         "SELECT id, deck_id, kind, r2_key, status FROM materials WHERE id = ?",
@@ -581,10 +623,16 @@ export async function processGenerateJob(
       .bind(deck.user_id)
       .first<SecretRow>();
 
+    const progressRow = await db
+      .prepare("SELECT progress_json FROM generation_jobs WHERE id = ?")
+      .bind(jobId)
+      .first<{ progress_json: string | null }>();
+    const freeGenCharged = isFreeGenCharged(progressRow?.progress_json);
+
     let drafts: Array<CardDraft & { mediaR2Keys?: string[] | null }>;
 
     if (material.kind === "image") {
-      const progress = makeEmit(db, jobId, IMAGE_STAGES);
+      const progress = makeEmit(db, jobId, IMAGE_STAGES, { freeGenCharged });
       // Vision needs a BYO provider; free Workers AI path is text-only.
       if (!secret && !opts?.llm) {
         throw new Error(
@@ -663,7 +711,7 @@ export async function processGenerateJob(
     } else if (material.kind === "pdf") {
       // Start with full PDF catalog; switch to figure-only after extract if no text.
       let presentStages: readonly ProgressStage[] = PDF_STAGES;
-      const progress = makeEmit(db, jobId, presentStages);
+      const progress = makeEmit(db, jobId, presentStages, { freeGenCharged });
       await progress.emit("queued", 0, 0, "Queued");
       await progress.emit("extract", 0, 0, "Extracting material");
       if (!material.r2_key) {
@@ -863,6 +911,7 @@ export async function processGenerateJob(
           text,
           env,
           userId: deck.user_id,
+          jobId,
           secret,
           opts,
           emit: progress,
@@ -886,7 +935,7 @@ export async function processGenerateJob(
       await progress.emit("persist", 1, 1, "Saving drafts");
     } else {
       // TEXT_LLM catalog; emit before extract so failures leave progress.
-      const progress = makeEmit(db, jobId, TEXT_LLM_STAGES);
+      const progress = makeEmit(db, jobId, TEXT_LLM_STAGES, { freeGenCharged });
       await progress.emit("queued", 0, 0, "Queued");
       await progress.emit("extract", 0, 0, "Extracting material");
 
@@ -904,6 +953,7 @@ export async function processGenerateJob(
         text,
         env,
         userId: deck.user_id,
+        jobId,
         secret,
         opts,
         emit: progress,
