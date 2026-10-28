@@ -37,9 +37,12 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import {
   ApiError,
+  apkgFilenameForDeckTitle,
   archiveCard,
   createDeckCard,
+  createDeckExport,
   deckStats,
+  downloadExport,
   deleteDeck,
   listDeckCards,
   listDecks,
@@ -157,6 +160,7 @@ export default function DeckHubPage({ deckId }: Props) {
   const [draftJobs, setDraftJobs] = useState<JobListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [exportWarning, setExportWarning] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
   const [renameOpen, setRenameOpen] = useState(false);
@@ -221,6 +225,9 @@ export default function DeckHubPage({ deckId }: Props) {
   const { end: endLoad } = useTrackedOp("Loading deck…", {
     trackOnMount: true,
   });
+  const { busy: exportBusy, run: runExport } = useTrackedOp(
+    "Exporting to Anki…",
+  );
 
   const refreshCards = useCallback(async () => {
     setCards(
@@ -660,6 +667,40 @@ export default function DeckHubPage({ deckId }: Props) {
     }
   }
 
+  async function onExportAnki() {
+    if (!deck || guest) return;
+    setError(null);
+    setExportWarning(null);
+    try {
+      await runExport(async () => {
+        const job = await createDeckExport(deck.id);
+        const { missingMedia, skippedCards } = job.warnings;
+        if (missingMedia > 0 || skippedCards > 0) {
+          const parts: string[] = [];
+          if (skippedCards > 0) {
+            parts.push(
+              `${skippedCards} card${skippedCards === 1 ? "" : "s"} skipped`,
+            );
+          }
+          if (missingMedia > 0) {
+            parts.push(
+              `${missingMedia} missing media file${missingMedia === 1 ? "" : "s"}`,
+            );
+          }
+          setExportWarning(
+            `Download started. Export warnings: ${parts.join("; ")}.`,
+          );
+        }
+        await downloadExport(job.id, apkgFilenameForDeckTitle(deck.title));
+        if (missingMedia === 0 && skippedCards === 0) {
+          setNotice("Anki deck downloaded");
+        }
+      });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Export failed");
+    }
+  }
+
   async function onTopicGenerate(e?: FormEvent) {
     e?.preventDefault();
     const topic = topicValue.trim();
@@ -885,6 +926,18 @@ export default function DeckHubPage({ deckId }: Props) {
                   Generate cards for topic…
                 </Button>
               ) : null}
+              {!guest && deck ? (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  disabled={exportBusy || cards.length === 0}
+                  onClick={() => {
+                    void onExportAnki();
+                  }}
+                >
+                  {exportBusy ? "Exporting…" : "Export to Anki"}
+                </Button>
+              ) : null}
               <Typography variant="body2" color="text.secondary">
                 Cards, materials, and drafts for this deck.
               </Typography>
@@ -895,6 +948,11 @@ export default function DeckHubPage({ deckId }: Props) {
           {notice ? (
             <Alert severity="success" onClose={() => setNotice(null)}>
               {notice}
+            </Alert>
+          ) : null}
+          {exportWarning ? (
+            <Alert severity="warning" onClose={() => setExportWarning(null)}>
+              {exportWarning}
             </Alert>
           ) : null}
 

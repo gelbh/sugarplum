@@ -796,6 +796,99 @@ export function reviewCard(cardId: string, rating: StudyRating) {
   });
 }
 
+export type ExportWarnings = {
+  missingMedia: number;
+  skippedCards: number;
+};
+
+export type ExportJobView = {
+  id: string;
+  status: string;
+  warnings: ExportWarnings;
+  downloadPath: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  expiresAt?: string;
+};
+
+export type CreateDeckExportResponse = {
+  id: string;
+  status: string;
+  warnings: ExportWarnings;
+  downloadPath: string;
+};
+
+export function createDeckExport(deckId: string) {
+  if (isGuest()) guestUnsupported("export decks to Anki");
+  return api<CreateDeckExportResponse>("/api/exports", {
+    method: "POST",
+    json: { type: "deck", deckId },
+  });
+}
+
+export function getExport(id: string) {
+  if (isGuest()) guestUnsupported("view exports");
+  return api<ExportJobView>(`/api/exports/${id}`);
+}
+
+function filenameFromContentDisposition(header: string | null): string | null {
+  if (!header) return null;
+  const star = /filename\*=UTF-8''([^;]+)/i.exec(header);
+  if (star) {
+    try {
+      return decodeURIComponent(star[1]);
+    } catch {
+      /* ignore malformed encoding */
+    }
+  }
+  const quoted = /filename="([^"]+)"/i.exec(header);
+  if (quoted) return quoted[1];
+  const plain = /filename=([^;\s]+)/i.exec(header);
+  return plain ? plain[1].trim() : null;
+}
+
+/** Suggested `.apkg` basename from deck title (fallback when header omits name). */
+export function apkgFilenameForDeckTitle(title: string): string {
+  const base = title.trim().replace(/[^\w\s-]+/g, "").replace(/\s+/g, " ").trim();
+  return `${base || "deck"}.apkg`;
+}
+
+/** Fetch export bytes and trigger a browser download. */
+export async function downloadExport(id: string, fallbackFilename?: string) {
+  if (isGuest()) guestUnsupported("download exports");
+  const res = await fetch(
+    `/api/exports/${encodeURIComponent(id)}/download`,
+    { credentials: "include" },
+  );
+  if (!res.ok) {
+    let message = res.statusText || "Download failed";
+    try {
+      const data = (await res.json()) as ApiErrorBody;
+      message = data.message ?? data.error ?? message;
+    } catch {
+      /* ignore non-JSON error bodies */
+    }
+    throw new ApiError(res.status, message);
+  }
+  const blob = await res.blob();
+  const filename =
+    fallbackFilename ??
+    filenameFromContentDisposition(res.headers.get("content-disposition")) ??
+    `${id}.apkg`;
+  const url = URL.createObjectURL(blob);
+  try {
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.rel = "noopener";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 export const PPTX_MIME =
   "application/vnd.openxmlformats-officedocument.presentationml.presentation";
 
