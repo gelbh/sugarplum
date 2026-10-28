@@ -665,10 +665,10 @@ export function rejectCard(cardId: string) {
   return api<CardDraftView>(`/api/cards/${cardId}/reject`, { method: "POST" });
 }
 
-export function moveCard(cardId: string, deckId: string) {
+export async function moveCard(cardId: string, deckId: string) {
   if (isGuest()) {
     try {
-      return Promise.resolve(guestMoveCard(cardId, deckId));
+      return guestMoveCard(cardId, deckId);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Card not found";
       throw new ApiError(
@@ -677,10 +677,12 @@ export function moveCard(cardId: string, deckId: string) {
       );
     }
   }
-  return api<CardDraftView>(`/api/cards/${cardId}/move`, {
+  const card = await api<CardDraftView>(`/api/cards/${cardId}/move`, {
     method: "POST",
     json: { deckId },
   });
+  clearDueCache();
+  return card;
 }
 
 export type ListDueOpts = { deckId?: string; subjectId?: string };

@@ -379,7 +379,6 @@ export default function DeckHubPage({ deckId }: Props) {
       );
       setMoveDeckId(firstDeck?.id ?? "");
     } catch (err) {
-      setMoveTarget(null);
       setMoveError(
         err instanceof ApiError ? err.message : "Could not load decks",
       );
