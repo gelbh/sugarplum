@@ -23,17 +23,22 @@ export async function enqueueGeneration(
     materialId: string;
     deckId: string;
     figureExtractMode?: FigureExtractMode;
+    topicHints?: string[] | null;
   },
 ): Promise<string> {
   const jobId = newId();
   const createdAt = new Date().toISOString();
   const figureExtractMode =
     args.figureExtractMode === "accurate" ? "accurate" : "fast";
+  const topicHintsJson =
+    args.topicHints && args.topicHints.length > 0
+      ? JSON.stringify(args.topicHints)
+      : null;
   const db = getDb(env);
 
   await db
     .prepare(
-      "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at, figure_extract_mode) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at, figure_extract_mode, topic_hints_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(
       jobId,
@@ -44,6 +49,7 @@ export async function enqueueGeneration(
       createdAt,
       null,
       figureExtractMode,
+      topicHintsJson,
     )
     .run();
 

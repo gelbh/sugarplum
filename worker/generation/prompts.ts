@@ -75,3 +75,9 @@ ${sourceText}
 export function generateImageUserPrompt(imageKey: string): string {
   return `Create flashcards for this lecture image or diagram. Prefer occlusion with 1–8 labelled regions when structures are clearly labelled. Use image_key "${imageKey}". Region x,y,w,h are normalized 0–1. Allow image_label / diagram when occlusion does not fit. Skip anything not clearly visible or grounded in the image.`;
 }
+
+/** Optional generate-prompt suffix when the job has topic hints. */
+export function topicHintsPromptSuffix(hints: string[]): string {
+  if (hints.length === 0) return "";
+  return `Also cover these topics if grounded in the material (do not invent ungrounded facts): ${hints.join("; ")}.`;
+}

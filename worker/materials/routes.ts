@@ -8,6 +8,7 @@ import {
   enqueueGeneration,
   type FigureExtractMode,
 } from "../generation/enqueue";
+import { normalizeTopicHints } from "../generation/topic-hints";
 import {
   assertSingleCloze,
   assertValidMcqOptions,
@@ -510,7 +511,7 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
   const db = getDb(c.env);
   await requireOwnedDeck(db, deckId, userId);
 
-  let body: { text?: unknown; filename?: unknown };
+  let body: { text?: unknown; filename?: unknown; topicHints?: unknown };
   try {
     body = await c.req.json();
   } catch {
@@ -523,6 +524,15 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
   if (textBytes > MAX_PASTE_BYTES) {
     throw new HTTPException(400, {
       message: "Paste must be 100KB or smaller",
+    });
+  }
+
+  let topicHints: string[] | null = null;
+  try {
+    topicHints = normalizeTopicHints(body.topicHints);
+  } catch (err) {
+    throw new HTTPException(400, {
+      message: err instanceof Error ? err.message : "Invalid topicHints",
     });
   }
 
@@ -549,6 +559,7 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
   const jobId = await enqueueGeneration(c.env, {
     materialId: id,
     deckId,
+    topicHints,
   });
 
   const material: MaterialRow = {
@@ -816,6 +827,7 @@ materialRoutes.post("/:id/complete", async (c) => {
   }
 
   let figureExtractMode: FigureExtractMode | undefined;
+  let topicHints: string[] | null = null;
   const rawBody = await c.req.text();
   if (rawBody.trim()) {
     let parsed: unknown;
@@ -827,7 +839,10 @@ materialRoutes.post("/:id/complete", async (c) => {
     if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
       throw new HTTPException(400, { message: "Invalid JSON body" });
     }
-    const body = parsed as { figureExtractMode?: unknown };
+    const body = parsed as {
+      figureExtractMode?: unknown;
+      topicHints?: unknown;
+    };
     const rawMode = body.figureExtractMode;
     if (rawMode !== undefined) {
       if (rawMode !== "fast" && rawMode !== "accurate") {
@@ -836,6 +851,13 @@ materialRoutes.post("/:id/complete", async (c) => {
         });
       }
       figureExtractMode = rawMode;
+    }
+    try {
+      topicHints = normalizeTopicHints(body.topicHints);
+    } catch (err) {
+      throw new HTTPException(400, {
+        message: err instanceof Error ? err.message : "Invalid topicHints",
+      });
     }
   }
 
@@ -856,6 +878,7 @@ materialRoutes.post("/:id/complete", async (c) => {
         materialId,
         deckId: material.deck_id,
         figureExtractMode,
+        topicHints,
       });
 
   return c.json({

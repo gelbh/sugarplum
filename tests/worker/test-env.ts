@@ -47,6 +47,7 @@ type GenerationJobRow = {
   created_at: string;
   finished_at: string | null;
   figure_extract_mode?: string;
+  topic_hints_json?: string | null;
 };
 
 type UserSecretRow = {
@@ -1082,6 +1083,7 @@ export function createTestEnv(opts?: {
             created_at,
             finished_at,
             figure_extract_mode,
+            topic_hints_json,
           ] = bound as [
             string,
             string,
@@ -1091,6 +1093,7 @@ export function createTestEnv(opts?: {
             string,
             string | null,
             string | undefined,
+            string | null | undefined,
           ];
           generationJobs.set(id, {
             id,
@@ -1102,6 +1105,7 @@ export function createTestEnv(opts?: {
             created_at,
             finished_at,
             figure_extract_mode: figure_extract_mode ?? "fast",
+            topic_hints_json: topic_hints_json ?? null,
           });
         } else if (
           normalized.startsWith(
