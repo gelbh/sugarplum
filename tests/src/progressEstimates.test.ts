@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   etaMs,
+  projectTokensFromPercent,
+  projectCardsFromPercent,
   projectTokens,
   projectCardsThisJob,
   remainingCardsToday,
@@ -13,6 +15,33 @@ describe("etaMs", () => {
   it("extrapolates remaining time", () => {
     // 20% in 10s → 40s remaining
     expect(etaMs(10_000, 20)).toBe(40_000);
+  });
+});
+
+describe("projectTokensFromPercent", () => {
+  it("returns null when tokens used is absent", () => {
+    expect(projectTokensFromPercent(undefined, 20)).toBeNull();
+  });
+  it("returns null when percent < 5", () => {
+    expect(projectTokensFromPercent(100, 4.9)).toBeNull();
+  });
+  it("scales used by 100/percent", () => {
+    expect(projectTokensFromPercent(100, 20)).toBe(500);
+  });
+});
+
+describe("projectCardsFromPercent", () => {
+  it("returns null when drafts_so_far is absent", () => {
+    expect(projectCardsFromPercent(undefined, 20)).toBeNull();
+  });
+  it("returns null when drafts_so_far is 0", () => {
+    expect(projectCardsFromPercent(0, 20)).toBeNull();
+  });
+  it("returns null when percent < 5", () => {
+    expect(projectCardsFromPercent(5, 4.9)).toBeNull();
+  });
+  it("ceil-scales drafts by 100/percent", () => {
+    expect(projectCardsFromPercent(5, 20)).toBe(25);
   });
 });
 

@@ -169,13 +169,13 @@ describe("runGenerationPipeline", () => {
     }
     // Per chunk: generate start/done, critique start/done; half-steps never rewind
     expect(events.map((e) => [e.stage, e.current, e.halfStepsDone])).toEqual([
-      ["generate", 0, 0],
+      ["generate", 1, 0],
       ["generate", 1, 1],
-      ["critique", 0, 1],
+      ["critique", 1, 1],
       ["critique", 1, 2],
-      ["generate", 1, 2],
+      ["generate", 2, 2],
       ["generate", 2, 3],
-      ["critique", 1, 3],
+      ["critique", 2, 3],
       ["critique", 2, 4],
     ]);
     let prevHalf = -1;
