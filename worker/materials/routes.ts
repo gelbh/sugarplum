@@ -8,6 +8,7 @@ import {
   enqueueGeneration,
   type FigureExtractMode,
 } from "../generation/enqueue";
+import { normalizeTopicHints } from "../generation/topic-hints";
 import {
   assertSingleCloze,
   assertValidMcqOptions,
@@ -510,7 +511,7 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
   const db = getDb(c.env);
   await requireOwnedDeck(db, deckId, userId);
 
-  let body: { text?: unknown; filename?: unknown };
+  let body: { text?: unknown; filename?: unknown; topicHints?: unknown };
   try {
     body = await c.req.json();
   } catch {
@@ -523,6 +524,15 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
   if (textBytes > MAX_PASTE_BYTES) {
     throw new HTTPException(400, {
       message: "Paste must be 100KB or smaller",
+    });
+  }
+
+  let topicHints: string[] | null = null;
+  try {
+    topicHints = normalizeTopicHints(body.topicHints);
+  } catch (err) {
+    throw new HTTPException(400, {
+      message: err instanceof Error ? err.message : "Invalid topicHints",
     });
   }
 
@@ -549,6 +559,7 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
   const jobId = await enqueueGeneration(c.env, {
     materialId: id,
     deckId,
+    topicHints,
   });
 
   const material: MaterialRow = {
@@ -563,6 +574,91 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
   };
 
   return c.json({ ...material, jobId }, 201);
+});
+
+deckRoutes.post("/:id/topic-generate", async (c) => {
+  const userId = await requireUser(c);
+  const deckId = c.req.param("id");
+  const db = getDb(c.env);
+  await requireOwnedDeck(db, deckId, userId);
+
+  let body: { topic?: unknown; materialId?: unknown };
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+
+  const topicRaw = typeof body.topic === "string" ? body.topic : "";
+  let topicHints: string[] | null;
+  try {
+    topicHints = normalizeTopicHints([topicRaw]);
+  } catch (err) {
+    throw new HTTPException(400, {
+      message: err instanceof Error ? err.message : "Invalid topic",
+    });
+  }
+  if (!topicHints) {
+    throw new HTTPException(400, { message: "Topic required" });
+  }
+
+  const explicitMaterialId =
+    typeof body.materialId === "string" && body.materialId.trim()
+      ? body.materialId.trim()
+      : null;
+
+  let materialId: string;
+  if (explicitMaterialId) {
+    const material = await requireOwnedMaterial(
+      db,
+      explicitMaterialId,
+      userId,
+    );
+    if (material.deck_id !== deckId) {
+      throw new HTTPException(404, { message: "Material not found" });
+    }
+    if (
+      (material.kind !== "paste" && material.kind !== "pdf") ||
+      material.status !== PASTE_READY
+    ) {
+      throw new HTTPException(422, {
+        message: "No material available for topic generation",
+      });
+    }
+    materialId = material.id;
+  } else {
+    const { results } = await db
+      .prepare(
+        "SELECT id, kind, status, created_at FROM materials WHERE deck_id = ?",
+      )
+      .bind(deckId)
+      .all<{
+        id: string;
+        kind: string;
+        status: string;
+        created_at: string;
+      }>();
+    const latest = (results ?? [])
+      .filter(
+        (m) =>
+          (m.kind === "paste" || m.kind === "pdf") && m.status === PASTE_READY,
+      )
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+    if (!latest) {
+      throw new HTTPException(422, {
+        message: "No material available for topic generation",
+      });
+    }
+    materialId = latest.id;
+  }
+
+  const jobId = await enqueueGeneration(c.env, {
+    materialId,
+    deckId,
+    topicHints,
+  });
+
+  return c.json({ jobId }, 201);
 });
 
 deckRoutes.post("/:id/materials/upload-url", async (c) => {
@@ -816,6 +912,7 @@ materialRoutes.post("/:id/complete", async (c) => {
   }
 
   let figureExtractMode: FigureExtractMode | undefined;
+  let topicHints: string[] | null = null;
   const rawBody = await c.req.text();
   if (rawBody.trim()) {
     let parsed: unknown;
@@ -827,7 +924,10 @@ materialRoutes.post("/:id/complete", async (c) => {
     if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
       throw new HTTPException(400, { message: "Invalid JSON body" });
     }
-    const body = parsed as { figureExtractMode?: unknown };
+    const body = parsed as {
+      figureExtractMode?: unknown;
+      topicHints?: unknown;
+    };
     const rawMode = body.figureExtractMode;
     if (rawMode !== undefined) {
       if (rawMode !== "fast" && rawMode !== "accurate") {
@@ -836,6 +936,13 @@ materialRoutes.post("/:id/complete", async (c) => {
         });
       }
       figureExtractMode = rawMode;
+    }
+    try {
+      topicHints = normalizeTopicHints(body.topicHints);
+    } catch (err) {
+      throw new HTTPException(400, {
+        message: err instanceof Error ? err.message : "Invalid topicHints",
+      });
     }
   }
 
@@ -856,6 +963,7 @@ materialRoutes.post("/:id/complete", async (c) => {
         materialId,
         deckId: material.deck_id,
         figureExtractMode,
+        topicHints,
       });
 
   return c.json({

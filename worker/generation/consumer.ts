@@ -44,6 +44,7 @@ import { consumeFreeGenSlot } from "./quota";
 import { filterDraftsByQuality } from "./quality";
 import { harvestRuleDrafts } from "./rules";
 import { assertValidMcqOptions, type CardDraft } from "./schema";
+import { parseTopicHintsJson } from "./topic-hints";
 import { createWorkersAiAdapter } from "./workers-ai";
 
 /** ponytail: 240s ceiling for Fly wake + model load; raise if cold starts exceed client 10m poll. */
@@ -392,6 +393,8 @@ async function runTextDraftPipeline(args: {
   secret: SecretRow | null;
   opts?: ProcessGenerateOptions;
   emit?: JobProgressEmit;
+  /** Also-cover topic hints from the job (`topic_hints_json`). */
+  topicHints?: string[];
   /** Emit rules stage before LLM when using TEXT_LLM_STAGES catalog. */
   emitRulesStage?: boolean;
 }): Promise<CardDraft[]> {
@@ -454,6 +457,7 @@ async function runTextDraftPipeline(args: {
       llm,
       apiKey,
       provider,
+      topicHints: args.topicHints,
       onProgress: args.emit
         ? (e) =>
             args.emit!.emit(
@@ -624,10 +628,16 @@ export async function processGenerateJob(
       .first<SecretRow>();
 
     const progressRow = await db
-      .prepare("SELECT progress_json FROM generation_jobs WHERE id = ?")
+      .prepare(
+        "SELECT progress_json, topic_hints_json FROM generation_jobs WHERE id = ?",
+      )
       .bind(jobId)
-      .first<{ progress_json: string | null }>();
+      .first<{
+        progress_json: string | null;
+        topic_hints_json: string | null;
+      }>();
     const freeGenCharged = isFreeGenCharged(progressRow?.progress_json);
+    const topicHints = parseTopicHintsJson(progressRow?.topic_hints_json);
 
     let drafts: Array<CardDraft & { mediaR2Keys?: string[] | null }>;
 
@@ -915,6 +925,7 @@ export async function processGenerateJob(
           secret,
           opts,
           emit: progress,
+          topicHints,
           emitRulesStage: true,
         });
       }
@@ -957,6 +968,7 @@ export async function processGenerateJob(
         secret,
         opts,
         emit: progress,
+        topicHints,
         emitRulesStage: true,
       });
       drafts = filterDraftsByQuality(drafts);
