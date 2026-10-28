@@ -33,11 +33,13 @@ export type ProgressSnapshot = {
   events?: ProgressEvent[];
   /** Current catalog stage name (e.g. "generate") */
   stage?: string;
-  /** Ordered unique stages present in this run (derived from events + stage) */
+  /**
+   * Stages seen this run (presence). UI orders via PROGRESS_STAGE_ORDER;
+   * discovery order from the hook is not display order.
+   */
   presentStages?: string[];
   /** Hook-computed estimates (job polling); optional on other snapshots */
   etaMs?: number | null;
   projectedTokens?: number | null;
   projectedCards?: number | null;
-  remainingCardsToday?: number | null;
 };

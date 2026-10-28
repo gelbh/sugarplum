@@ -31,9 +31,7 @@ export default function JobProgressPanel({
 
   const determinate = snapshot?.mode === "determinate";
   const percent = snapshot?.percent ?? 0;
-  const headline = snapshot?.stage
-    ? friendlyStageHeadline(snapshot.stage)
-    : (snapshot?.label ?? fallbackLabel);
+  const headline = snapshot?.label ?? fallbackLabel;
   const subline = formatEtaSubline(snapshot?.etaMs);
 
   const stages = orderPresentStages(snapshot?.presentStages ?? []);
@@ -98,7 +96,8 @@ export default function JobProgressPanel({
                   width: isCurrent ? 10 : 8,
                   height: isCurrent ? 10 : 8,
                   borderRadius: "50%",
-                  bgcolor: completed || isCurrent ? "primary.main" : "action.disabled",
+                  bgcolor:
+                    completed || isCurrent ? "primary.main" : "action.disabled",
                   outline: isCurrent ? "2px solid" : "none",
                   outlineColor: isCurrent ? "primary.light" : undefined,
                   outlineOffset: 2,

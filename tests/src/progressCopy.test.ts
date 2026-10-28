@@ -53,8 +53,21 @@ describe("progressDetailsModel", () => {
     });
     expect(m.sectionLine).toBe("Section 3 of 3");
     expect(m.freeJobsLine).toBe("2 free jobs left");
-    expect(m.jobLine).toMatch(/10/);
-    expect(m.tokensLine).toMatch(/40000|40/);
+    expect(m.jobLine).toBe("10 cards drafted · ~120 expected");
+    expect(m.tokensLine).toBe("~40000 tokens expected");
+  });
+
+  it("labels used tokens when no projection", () => {
+    expect(
+      progressDetailsModel({ tokensUsed: 1200, freeQuota: null }).tokensLine,
+    ).toBe("1200 tokens");
+  });
+
+  it("omits section when current is below 1", () => {
+    expect(
+      progressDetailsModel({ current: 0, total: 1, freeQuota: null })
+        .sectionLine,
+    ).toBeNull();
   });
 
   it("omits free jobs when quota null", () => {

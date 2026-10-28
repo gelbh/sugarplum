@@ -4,9 +4,8 @@ import { useProgressRegistry } from "./ProgressProvider";
 import type { ProgressSnapshot } from "./types";
 import {
   etaMs,
-  projectTokens,
-  projectCardsThisJob,
-  remainingCardsToday,
+  projectTokensFromPercent,
+  projectCardsFromPercent,
 } from "./estimates";
 import { friendlyStageHeadline } from "./copy";
 
@@ -20,7 +19,6 @@ export type Estimates = {
   etaMs: number | null;
   projectedTokens: number | null;
   projectedCards: number | null;
-  remainingCardsToday: number | null;
 };
 
 export type UseJobProgressResult = {
@@ -163,40 +161,30 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
         let eta: number | null = null;
         let projectedTokens: number | null = null;
         let projectedCards: number | null = null;
-        let remainingCards: number | null = null;
         if (ext.startedAt && job.progress) {
           const elapsed = Date.now() - ext.startedAt;
-          eta = etaMs(elapsed, job.progress.percent);
+          const percent = job.progress.percent;
+          eta = etaMs(elapsed, percent);
           if (typeof job.progress.tokens_used === "number") {
-            projectedTokens = projectTokens(
+            projectedTokens = projectTokensFromPercent(
               job.progress.tokens_used,
-              job.progress.current,
-              job.progress.total,
+              percent,
             );
           }
           if (
             typeof job.progress.drafts_so_far === "number" &&
             job.progress.drafts_so_far > 0
           ) {
-            projectedCards = projectCardsThisJob(
+            projectedCards = projectCardsFromPercent(
               job.progress.drafts_so_far,
-              job.progress.current,
-              job.progress.total,
+              percent,
             );
-            remainingCards = remainingCardsToday({
-              draftsSoFar: job.progress.drafts_so_far,
-              current: job.progress.current,
-              total: job.progress.total,
-              freeRemaining: job.free_quota?.remaining ?? 0,
-              priorCardsPerJob: null,
-            });
           }
         }
         setEstimates({
           etaMs: eta,
           projectedTokens,
           projectedCards,
-          remainingCardsToday: remainingCards,
         });
 
         // attach estimates onto snapshot so consumers like JobProgressPanel can prefer hook-provided values
@@ -205,7 +193,6 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
           etaMs: eta,
           projectedTokens,
           projectedCards,
-          remainingCardsToday: remainingCards,
         };
 
         setSnapshot(snapshotWithEstimates);

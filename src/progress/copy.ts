@@ -20,7 +20,9 @@ const STAGE_HEADLINES: Record<(typeof PROGRESS_STAGE_ORDER)[number], string> = {
 
 const FALLBACK_HEADLINE = "Preparing your cards";
 
-export function friendlyStageHeadline(stage: string | null | undefined): string {
+export function friendlyStageHeadline(
+  stage: string | null | undefined,
+): string {
   if (stage == null) return FALLBACK_HEADLINE;
   if (stage in STAGE_HEADLINES) {
     return STAGE_HEADLINES[stage as keyof typeof STAGE_HEADLINES];
@@ -69,9 +71,10 @@ export function progressDetailsModel(snapshot: {
   freeQuota?: { remaining: number } | null;
 }): ProgressDetailsModel {
   const total = snapshot.total ?? 0;
+  const current = snapshot.current;
   const sectionLine =
-    total > 0
-      ? `Section ${Math.min(total, Math.max(1, snapshot.current || 1))} of ${total}`
+    total > 0 && current != null && current >= 1
+      ? `Section ${Math.min(total, current)} of ${total}`
       : null;
 
   let jobLine: string | null = null;
@@ -83,14 +86,18 @@ export function progressDetailsModel(snapshot: {
         : `${drafts} cards drafted`;
   }
 
-  const tokenValue =
-    snapshot.projectedTokens != null
-      ? snapshot.projectedTokens
-      : snapshot.tokensUsed;
-  const tokensLine =
-    tokenValue != null && Number.isFinite(tokenValue)
-      ? `${Math.round(tokenValue)} tokens`
-      : null;
+  let tokensLine: string | null = null;
+  if (
+    snapshot.projectedTokens != null &&
+    Number.isFinite(snapshot.projectedTokens)
+  ) {
+    tokensLine = `~${Math.round(snapshot.projectedTokens)} tokens expected`;
+  } else if (
+    snapshot.tokensUsed != null &&
+    Number.isFinite(snapshot.tokensUsed)
+  ) {
+    tokensLine = `${Math.round(snapshot.tokensUsed)} tokens`;
+  }
 
   const freeJobsLine =
     snapshot.freeQuota != null
