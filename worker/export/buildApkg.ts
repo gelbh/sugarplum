@@ -1,9 +1,33 @@
 import JSZip from "jszip";
-import { readFile } from "node:fs/promises";
 import initSqlJs from "sql.js";
 import wasmUrl from "sql.js/dist/sql-wasm.wasm?url";
 import type { AnkiFsrsFields } from "./fsrsMap";
 import type { AnkiNoteSpec } from "./notes";
+
+/**
+ * Load sql.js WASM as bytes. Vitest/Node reads the package file; Workers fetch
+ * the Vite-emitted asset via absolute APP_URL (relative /assets URLs fail in
+ * isolates, and `process` may exist under nodejs_compat without real fs).
+ */
+async function loadSqlWasmBinary(appUrl: string): Promise<Uint8Array> {
+  const nodeVersion = (
+    globalThis as { process?: { versions?: { node?: string } } }
+  ).process?.versions?.node;
+  if (nodeVersion) {
+    const { readFile } = await import("node:fs/promises");
+    const { createRequire } = await import("node:module");
+    const require = createRequire(import.meta.url);
+    return new Uint8Array(
+      await readFile(require.resolve("sql.js/dist/sql-wasm.wasm")),
+    );
+  }
+  const origin = appUrl.endsWith("/") ? appUrl : `${appUrl}/`;
+  const response = await fetch(new URL(wasmUrl, origin));
+  if (!response.ok) {
+    throw new Error(`sql.js WASM fetch failed: ${response.status}`);
+  }
+  return new Uint8Array(await response.arrayBuffer());
+}
 
 type ApkgEntry = {
   note: AnkiNoteSpec;
@@ -180,16 +204,10 @@ function unixSecondsToAnkiDue(due: number, crt: number, state: number): number {
 export async function buildApkg(args: {
   deckName: string;
   entries: ApkgEntry[];
+  /** Site origin used to fetch the Vite-emitted sql-wasm asset in Workers. */
+  appUrl: string;
 }): Promise<Uint8Array> {
-  // Read the Vite asset as bytes so Workers do not resolve a relative asset URL.
-  const wasmBinary =
-    typeof process !== "undefined"
-      ? await readFile(
-          new URL("../../node_modules/sql.js/dist/sql-wasm.wasm", import.meta.url),
-        ) as unknown as Uint8Array
-      : await fetch(new URL(wasmUrl, import.meta.url)).then((response) =>
-          response.arrayBuffer(),
-        );
+  const wasmBinary = await loadSqlWasmBinary(args.appUrl);
   const SQL = await initSqlJs({
     wasmBinary,
   }).catch((error: unknown) => {

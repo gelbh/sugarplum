@@ -118,6 +118,7 @@ exportRoutes.post("/", async (c) => {
     const bytes = await buildApkg({
       deckName: loaded.deckName,
       entries: loaded.entries,
+      appUrl: c.env.APP_URL,
     });
     await c.env.MATERIALS.put(r2Key, bytes);
     const updatedAt = new Date().toISOString();

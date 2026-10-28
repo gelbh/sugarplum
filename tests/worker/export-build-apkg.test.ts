@@ -18,6 +18,7 @@ async function ankiSortFieldCsum(sortField: string): Promise<number> {
 describe("buildApkg", () => {
   it("builds an importable collection with basic, cloze, and MCQ notes", async () => {
     const bytes = await buildApkg({
+      appUrl: "http://localhost/",
       deckName: "Sugarplum",
       entries: [
         {
@@ -64,6 +65,7 @@ describe("buildApkg", () => {
 
   it("stores media files under numeric names and writes a media map", async () => {
     const bytes = await buildApkg({
+      appUrl: "http://localhost/",
       deckName: "Sugarplum",
       entries: [
         {
@@ -95,6 +97,7 @@ describe("buildApkg", () => {
 
   it("keeps media with the same basename separate", async () => {
     const bytes = await buildApkg({
+      appUrl: "http://localhost/",
       deckName: "Sugarplum",
       entries: [
         {
@@ -121,6 +124,7 @@ describe("buildApkg", () => {
   it("stores Anki csum as decimal of first 8 SHA-1 hex digits of sort field", async () => {
     const sortField = "Question";
     const bytes = await buildApkg({
+      appUrl: "http://localhost/",
       deckName: "Sugarplum",
       entries: [
         {
@@ -145,6 +149,7 @@ describe("buildApkg", () => {
 
   it("rewrites media sources in every note field including cloze Text", async () => {
     const bytes = await buildApkg({
+      appUrl: "http://localhost/",
       deckName: "Sugarplum",
       entries: [
         {
@@ -172,6 +177,7 @@ describe("buildApkg", () => {
 
   it("appends media not already present in a basic front", async () => {
     const bytes = await buildApkg({
+      appUrl: "http://localhost/",
       deckName: "Sugarplum",
       entries: [
         {
@@ -199,6 +205,7 @@ describe("buildApkg", () => {
 
   it("preserves learning card state and cloze ordinal", async () => {
     const bytes = await buildApkg({
+      appUrl: "http://localhost/",
       deckName: "Sugarplum",
       entries: [
         {
@@ -244,6 +251,7 @@ describe("buildApkg", () => {
 
   it("maps relearning state 3 to Anki queue 1", async () => {
     const bytes = await buildApkg({
+      appUrl: "http://localhost/",
       deckName: "Sugarplum",
       entries: [
         {
