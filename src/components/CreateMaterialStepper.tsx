@@ -25,6 +25,7 @@ import {
   pasteMaterial,
   PPTX_MIME,
   resolveUploadContentType,
+  topicHintsFromLines,
   uploadMaterialFile,
   uploadPdfWithFigureCrops,
   type Deck,
@@ -81,6 +82,7 @@ export default function CreateMaterialStepper({
   const [newSubjectTitle, setNewSubjectTitle] = useState("");
   const [pasteText, setPasteText] = useState("");
   const [filename, setFilename] = useState("");
+  const [alsoCover, setAlsoCover] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [figureFiles, setFigureFiles] = useState<File[]>([]);
   const [figureExtractMode, setFigureExtractMode] =
@@ -278,12 +280,15 @@ export default function CreateMaterialStepper({
     }
     setBusy(true);
     try {
+      const topicHints = topicHintsFromLines(alsoCover);
       const material = await pasteMaterial(selectedDeckId, {
         text: pasteText,
         ...(filename.trim() ? { filename: filename.trim() } : {}),
+        ...(topicHints ? { topicHints } : {}),
       });
       setPasteText("");
       setFilename("");
+      setAlsoCover("");
       if (material.jobId) {
         window.location.assign(
           `/jobs/${encodeURIComponent(material.jobId)}/drafts`,
@@ -341,10 +346,16 @@ export default function CreateMaterialStepper({
     }
     setBusy(true);
     try {
+      const topicHints = topicHintsFromLines(alsoCover);
       const pdfOpts =
         contentType === "application/pdf"
-          ? { figureExtractMode }
-          : undefined;
+          ? {
+              figureExtractMode,
+              ...(topicHints ? { topicHints } : {}),
+            }
+          : topicHints
+            ? { topicHints }
+            : undefined;
       const material =
         contentType === "application/pdf" && figureFiles.length > 0
           ? await uploadPdfWithFigureCrops(
@@ -362,6 +373,7 @@ export default function CreateMaterialStepper({
             );
       setUploadFile(null);
       setFigureFiles([]);
+      setAlsoCover("");
       if (material.jobId) {
         setJobId(material.jobId);
         setNotice(`Stored file (${material.status}). Generation started.`);
@@ -379,6 +391,19 @@ export default function CreateMaterialStepper({
   }
 
   const steps = ["Deck", "Material", "Done"] as const;
+
+  const alsoCoverField = (
+    <TextField
+      label="Also cover (optional)"
+      name="alsoCover"
+      value={alsoCover}
+      onChange={(ev) => setAlsoCover(ev.target.value)}
+      fullWidth
+      multiline
+      minRows={2}
+      helperText="One topic per line, up to 5"
+    />
+  );
 
   return (
     <Box>
@@ -548,6 +573,7 @@ export default function CreateMaterialStepper({
                     multiline
                     minRows={6}
                   />
+                  {alsoCoverField}
                   <Button
                     type="submit"
                     variant="contained"
@@ -626,6 +652,7 @@ export default function CreateMaterialStepper({
                     PDF/PPTX max 25MB; images max 8MB. Upload starts generation
                     when complete.
                   </Typography>
+                  {alsoCoverField}
                   <Button
                     type="submit"
                     variant="contained"
