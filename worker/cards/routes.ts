@@ -295,7 +295,26 @@ jobDraftRoutes.post("/:id/drafts/accept-all", async (c) => {
     }
   }
 
-  return c.json({ accepted, failed });
+  let rejectedSiblingCount = 0;
+  if (failed === 0) {
+    const updatedAt = new Date().toISOString();
+    const result = await db
+      .prepare(
+        `UPDATE cards SET status = ?, updated_at = ?
+         WHERE status = ?
+           AND job_id IN (
+             SELECT j.id FROM generation_jobs j
+             INNER JOIN materials m ON m.id = j.material_id
+             INNER JOIN decks d ON d.id = m.deck_id
+             WHERE d.user_id = ? AND j.status = ? AND j.id != ?
+           )`,
+      )
+      .bind("rejected", updatedAt, "draft", userId, "needs_review", jobId)
+      .run();
+    rejectedSiblingCount = result.meta.changes ?? 0;
+  }
+
+  return c.json({ accepted, failed, rejectedSiblingCount });
 });
 
 cardRoutes.patch("/:id", async (c) => {
