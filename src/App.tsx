@@ -14,7 +14,7 @@ import SettingsPage from "./routes/SettingsPage";
 import InsightsPage from "./routes/InsightsPage";
 import StudyPage from "./routes/StudyPage";
 import TodayPage from "./routes/TodayPage";
-import { subscribePath } from "./nav/navigate";
+import { subscribeLocation } from "./nav/navigate";
 import { StudyChromeProvider } from "./study/StudyChromeContext";
 
 const SUBJECT_PATH = /^\/library\/subjects\/([^/]+)\/?$/;
@@ -33,9 +33,14 @@ export default function App() {
 }
 
 function AppInner() {
-  const [path, setPath] = useState(() => window.location.pathname);
+  const [loc, setLoc] = useState(() => ({
+    pathname: window.location.pathname,
+    search: window.location.search,
+  }));
 
-  useEffect(() => subscribePath(setPath), []);
+  useEffect(() => subscribeLocation(setLoc), []);
+
+  const path = loc.pathname;
 
   if (path === "/" || path === "") return <HomePage />;
   if (path === "/login") return <LoginPage />;
@@ -55,7 +60,10 @@ function AppInner() {
   }
   if (path === "/library") return shell(<LibraryPage />);
   if (path === "/settings") return shell(<SettingsPage />);
-  if (path === "/study") return shell(<StudyPage />);
+  // Remount when search changes so scoped study does not freeze the old filter.
+  if (path === "/study") {
+    return shell(<StudyPage key={loc.search || "global"} />);
+  }
   if (path === "/today") return shell(<TodayPage />);
   if (path === "/insights") return shell(<InsightsPage />);
   if (/^\/jobs\/[^/]+\/drafts\/?$/.test(path))

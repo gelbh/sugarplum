@@ -45,7 +45,7 @@ describe("guest store", () => {
   it("seeds due cards after enterGuest + list", () => {
     enterGuest(storage);
     expect(storage.getItem(GUEST_FLAG_KEY)).toBe("1");
-    const due = guestListDueCards(storage);
+    const due = guestListDueCards(undefined, storage);
     expect(due.length).toBeGreaterThan(0);
     expect(due[0]?.front.length).toBeGreaterThan(0);
   });
@@ -166,13 +166,55 @@ describe("guest store", () => {
 
   it("cycles graded card to the end of the due queue", () => {
     enterGuest(storage);
-    const due = guestListDueCards(storage);
+    const due = guestListDueCards(undefined, storage);
     const id = due[0]!.id;
     guestReviewCard(id, 3, storage);
-    const next = guestListDueCards(storage);
+    const next = guestListDueCards(undefined, storage);
     expect(next.length).toBe(due.length);
     expect(next[next.length - 1]?.id).toBe(id);
     expect(next[0]?.id).not.toBe(id);
+  });
+
+  it("filters due cards by deckId", () => {
+    enterGuest(storage);
+    const subject = guestCreateSubject("Filter subject", storage);
+    const deckA = guestCreateDeck("Deck A", subject.id, storage);
+    const deckB = guestCreateDeck("Deck B", subject.id, storage);
+    const [a] = guestAddAcceptedCards(
+      deckA.id,
+      [{ front: "A?", back: "a" }],
+      storage,
+    );
+    const [b] = guestAddAcceptedCards(
+      deckB.id,
+      [{ front: "B?", back: "b" }],
+      storage,
+    );
+    const due = guestListDueCards({ deckId: deckA.id }, storage);
+    expect(due.map((c) => c.id)).toContain(a!.id);
+    expect(due.map((c) => c.id)).not.toContain(b!.id);
+    expect(due.every((c) => c.deck_id === deckA.id)).toBe(true);
+  });
+
+  it("filters due cards by subjectId via deck.subject_id", () => {
+    enterGuest(storage);
+    const sub1 = guestCreateSubject("Subject One", storage);
+    const sub2 = guestCreateSubject("Subject Two", storage);
+    const deck1 = guestCreateDeck("D1", sub1.id, storage);
+    const deck2 = guestCreateDeck("D2", sub2.id, storage);
+    const [c1] = guestAddAcceptedCards(
+      deck1.id,
+      [{ front: "S1?", back: "1" }],
+      storage,
+    );
+    const [c2] = guestAddAcceptedCards(
+      deck2.id,
+      [{ front: "S2?", back: "2" }],
+      storage,
+    );
+    const due = guestListDueCards({ subjectId: sub1.id }, storage);
+    expect(due.map((c) => c.id)).toContain(c1!.id);
+    expect(due.map((c) => c.id)).not.toContain(c2!.id);
   });
 
   it("endGuestLocal clears the guest flag so auth can take over", () => {
@@ -185,7 +227,7 @@ describe("guest store", () => {
 
   it("guestAddAcceptedCards writes paste cards and prepends dueIds", () => {
     enterGuest(storage);
-    const olderDue = guestListDueCards(storage).map((c) => c.id);
+    const olderDue = guestListDueCards(undefined, storage).map((c) => c.id);
     const subject = guestCreateSubject("Paste subject", storage);
     const deck = guestCreateDeck("Paste deck", subject.id, storage);
     const pairs = [
@@ -208,7 +250,7 @@ describe("guest store", () => {
     ).toBe(true);
     expect(added.every((c) => c.id.startsWith("guest-card-"))).toBe(true);
 
-    const due = guestListDueCards(storage);
+    const due = guestListDueCards(undefined, storage);
     const newIds = added.map((c) => c.id);
     expect(due.slice(0, 2).map((c) => c.id)).toEqual(newIds);
     expect(due.map((c) => c.id).slice(2)).toEqual(olderDue);
@@ -229,7 +271,7 @@ describe("guest store", () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Hub subject", storage);
     const deck = guestCreateDeck("Hub deck", subject.id, storage);
-    const olderDue = guestListDueCards(storage).map((c) => c.id);
+    const olderDue = guestListDueCards(undefined, storage).map((c) => c.id);
 
     const card = guestCreateDeckCard(
       deck.id,
@@ -252,7 +294,7 @@ describe("guest store", () => {
     expect(listed.map((c) => c.id)).toContain(card.id);
     expect(listed.every((c) => c.status === "accepted")).toBe(true);
 
-    const due = guestListDueCards(storage);
+    const due = guestListDueCards(undefined, storage);
     expect(due[0]?.id).toBe(card.id);
     expect(due.map((c) => c.id).slice(1)).toEqual(olderDue);
   });
@@ -272,7 +314,7 @@ describe("guest store", () => {
     );
     expect(card.type).toBe("cloze");
     expect(card.back).toBe("");
-    expect(guestListDueCards(storage)[0]?.id).toBe(card.id);
+    expect(guestListDueCards(undefined, storage)[0]?.id).toBe(card.id);
   });
 
   it("createDeckCard rejects MCQ without valid options", () => {
@@ -352,12 +394,12 @@ describe("guest store", () => {
     );
     // Bury the card at the end so reset must move it forward.
     guestReviewCard(card.id, 3, storage);
-    expect(guestListDueCards(storage).at(-1)?.id).toBe(card.id);
+    expect(guestListDueCards(undefined, storage).at(-1)?.id).toBe(card.id);
 
     const before = Date.now();
     const reset = guestResetCardSchedule(card.id, storage);
     expect(reset.id).toBe(card.id);
-    expect(guestListDueCards(storage)[0]?.id).toBe(card.id);
+    expect(guestListDueCards(undefined, storage)[0]?.id).toBe(card.id);
     const dueMs = Date.parse(reset.due!);
     expect(dueMs).toBeGreaterThanOrEqual(before - 5_000);
     expect(dueMs).toBeLessThanOrEqual(Date.now() + 5_000);

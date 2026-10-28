@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   clearDueCache,
+  dueCacheKey,
+  dueScopeFromSearch,
   filterDueExcludingPending,
   loadDueCache,
   pruneDueCacheCard,
@@ -57,6 +59,43 @@ afterEach(() => {
   localStorage.clear();
 });
 
+describe("dueCacheKey", () => {
+  it("returns due:global when no scope", () => {
+    expect(dueCacheKey()).toBe("due:global");
+    expect(dueCacheKey({})).toBe("due:global");
+  });
+
+  it("returns due:deck:id when deckId is set", () => {
+    expect(dueCacheKey({ deckId: "d1" })).toBe("due:deck:d1");
+  });
+
+  it("returns due:subject:id when subjectId is set", () => {
+    expect(dueCacheKey({ subjectId: "s1" })).toBe("due:subject:s1");
+  });
+
+  it("prefers deckId when both are set", () => {
+    expect(dueCacheKey({ deckId: "d1", subjectId: "s1" })).toBe("due:deck:d1");
+  });
+});
+
+describe("dueScopeFromSearch", () => {
+  it("returns undefined for bare study", () => {
+    expect(dueScopeFromSearch("")).toBeUndefined();
+    expect(dueScopeFromSearch("?card=c1")).toBeUndefined();
+  });
+
+  it("parses deckId or subjectId", () => {
+    expect(dueScopeFromSearch("?deckId=d1")).toEqual({ deckId: "d1" });
+    expect(dueScopeFromSearch("?subjectId=s1")).toEqual({ subjectId: "s1" });
+  });
+
+  it("prefers deckId when both are present", () => {
+    expect(dueScopeFromSearch("?deckId=d1&subjectId=s1")).toEqual({
+      deckId: "d1",
+    });
+  });
+});
+
 describe("dueCache", () => {
   it("round-trips due cards through localStorage for a user", () => {
     saveDueCache("user-a", [sample]);
@@ -65,6 +104,17 @@ describe("dueCache", () => {
     expect(snap?.cards).toHaveLength(1);
     expect(snap?.cards[0]?.id).toBe("c1");
     expect(snap?.savedAt).toBeTruthy();
+  });
+
+  it("isolates scoped cache keys from global", () => {
+    saveDueCache("user-a", [sample]);
+    const scoped = { ...sample, id: "c-deck" };
+    saveDueCache("user-a", [scoped], { deckId: "d1" });
+    expect(loadDueCache("user-a")?.cards.map((c) => c.id)).toEqual(["c1"]);
+    expect(
+      loadDueCache("user-a", { deckId: "d1" })?.cards.map((c) => c.id),
+    ).toEqual(["c-deck"]);
+    expect(loadDueCache("user-a", { subjectId: "s1" })).toBeNull();
   });
 
   it("returns null when empty", () => {

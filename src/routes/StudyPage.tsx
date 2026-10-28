@@ -22,7 +22,9 @@ import GradeButtons from "../components/GradeButtons";
 import McqFace from "../components/McqFace";
 import {
   ApiError,
+  listDecks,
   listDueCards,
+  listSubjects,
   me,
   reviewCard,
   type CardDraftView,
@@ -30,13 +32,16 @@ import {
   type StudyRating,
 } from "../api/client";
 import { isGuest } from "../guest/session";
+import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { resolveCardGesture } from "../study/cardGestures";
 import {
+  dueScopeFromSearch,
   filterDueExcludingPending,
   loadDueCache,
   pruneDueCacheCard,
   saveDueCache,
+  type DueScopeOpts,
 } from "../study/dueCache";
 import { enqueuePendingGrade, pendingCardIdSet } from "../study/pendingGrades";
 import {
@@ -138,6 +143,12 @@ export default function StudyPage() {
   const [offlineCopy, setOfflineCopy] = useState(false);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
   const [deepLinkMiss, setDeepLinkMiss] = useState(false);
+  const [scopeOpts] = useState<DueScopeOpts | undefined>(() =>
+    dueScopeFromSearch(window.location.search),
+  );
+  const [scopeLabel, setScopeLabel] = useState<string | null>(null);
+  /** True once this mount showed at least one due card (scoped session-complete). */
+  const [hadCards, setHadCards] = useState(false);
   const {
     zen,
     fullscreenUnavailable,
@@ -168,6 +179,7 @@ export default function StudyPage() {
     (cards: CardDraftView[], wanted: string | null) => {
       const { queue: next, found } = prioritizeDueCard(cards, wanted);
       setQueue(next);
+      if (next.length > 0) setHadCards(true);
       // Only when there are other due cards to study (avoids contradicting empty session).
       setDeepLinkMiss(Boolean(wanted) && !found && next.length > 0);
       setRevealed(false);
@@ -179,13 +191,13 @@ export default function StudyPage() {
     async (uid: string) => {
       const wanted = cardIdFromSearch(window.location.search);
       try {
-        const due = await listDueCards();
-        saveDueCache(uid, due);
+        const due = await listDueCards(scopeOpts);
+        saveDueCache(uid, due, scopeOpts);
         warmDueMedia(due);
         applyDueQueue(due, wanted);
         setOfflineCopy(false);
       } catch (err) {
-        const cached = loadDueCache(uid);
+        const cached = loadDueCache(uid, scopeOpts);
         if (cached && cached.cards.length > 0) {
           const filtered = filterDueExcludingPending(
             cached.cards,
@@ -199,7 +211,7 @@ export default function StudyPage() {
         throw err;
       }
     },
-    [applyDueQueue],
+    [applyDueQueue, scopeOpts],
   );
 
   const {
@@ -211,12 +223,49 @@ export default function StudyPage() {
     refreshPendingCount,
     flushOnMount,
   } = usePendingGradeSync({
-    onDueRefreshed: (due) => {
-      applyDueQueue(due, cardIdFromSearch(window.location.search));
-      setOfflineCopy(false);
+    // Flush refreshes global due; reload with page scope so queues do not bleed.
+    onDueRefreshed: () => {
+      if (!userId) return;
+      void load(userId).catch((err) => {
+        setError(
+          err instanceof ApiError ? err.message : "Failed to refresh study",
+        );
+      });
     },
     onDueRefreshFailed: (uid) => load(uid),
   });
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!scopeOpts) {
+      setScopeLabel(null);
+      return;
+    }
+    (async () => {
+      try {
+        if (scopeOpts.deckId) {
+          const decks = await listDecks();
+          if (cancelled) return;
+          const deck = decks.find((d) => d.id === scopeOpts.deckId);
+          setScopeLabel(deck?.title ?? "This deck");
+          return;
+        }
+        if (scopeOpts.subjectId) {
+          const subjects = await listSubjects();
+          if (cancelled) return;
+          const subject = subjects.find((s) => s.id === scopeOpts.subjectId);
+          setScopeLabel(subject?.title ?? "This subject");
+        }
+      } catch {
+        if (!cancelled) {
+          setScopeLabel(scopeOpts.deckId ? "This deck" : "This subject");
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [scopeOpts]);
 
   useEffect(() => {
     let cancelled = false;
@@ -307,7 +356,7 @@ export default function StudyPage() {
           end(false);
           return false;
         }
-        pruneDueCacheCard(uid, current.id);
+        pruneDueCacheCard(uid, current.id, scopeOpts);
         refreshPendingCount(uid);
         advanceAfterGrade(fromMcq);
         end();
@@ -342,6 +391,7 @@ export default function StudyPage() {
       offlineCopy,
       refreshPendingCount,
       revealed,
+      scopeOpts,
       userId,
     ],
   );
@@ -528,6 +578,17 @@ export default function StudyPage() {
               <Link href="/library" underline="hover">
                 Library
               </Link>
+              {scopeLabel ? (
+                <Chip
+                  size="small"
+                  label={
+                    scopeOpts?.deckId
+                      ? `Deck: ${scopeLabel}`
+                      : `Subject: ${scopeLabel}`
+                  }
+                  variant="outlined"
+                />
+              ) : null}
             </Stack>
           ) : null}
 
@@ -562,17 +623,64 @@ export default function StudyPage() {
           ) : null}
 
           {!current ? (
-            <Alert severity="success">
-              Session complete.{" "}
-              <Button
-                variant="contained"
-                href="/today"
-                startIcon={<TodayIcon fontSize="small" />}
-                size="small"
-              >
-                Today
-              </Button>
-            </Alert>
+            scopeOpts && !hadCards ? (
+              <Alert severity="info">
+                No cards due in this{" "}
+                {scopeOpts.deckId ? "deck" : "subject"}
+                {scopeLabel ? ` (${scopeLabel})` : ""}.{" "}
+                <Link
+                  href={
+                    scopeOpts.deckId
+                      ? `/library/decks/${encodeURIComponent(scopeOpts.deckId)}`
+                      : `/library/subjects/${encodeURIComponent(scopeOpts.subjectId!)}`
+                  }
+                  underline="hover"
+                  onClick={(ev) => {
+                    ev.preventDefault();
+                    navigate(
+                      scopeOpts.deckId
+                        ? `/library/decks/${encodeURIComponent(scopeOpts.deckId)}`
+                        : `/library/subjects/${encodeURIComponent(scopeOpts.subjectId!)}`,
+                    );
+                  }}
+                >
+                  Back to {scopeOpts.deckId ? "deck" : "subject"}
+                </Link>
+              </Alert>
+            ) : (
+              <Alert severity="success">
+                Session complete.{" "}
+                {scopeOpts ? (
+                  <Link
+                    href={
+                      scopeOpts.deckId
+                        ? `/library/decks/${encodeURIComponent(scopeOpts.deckId)}`
+                        : `/library/subjects/${encodeURIComponent(scopeOpts.subjectId!)}`
+                    }
+                    underline="hover"
+                    onClick={(ev) => {
+                      ev.preventDefault();
+                      navigate(
+                        scopeOpts.deckId
+                          ? `/library/decks/${encodeURIComponent(scopeOpts.deckId)}`
+                          : `/library/subjects/${encodeURIComponent(scopeOpts.subjectId!)}`,
+                      );
+                    }}
+                  >
+                    Back to {scopeOpts.deckId ? "deck" : "subject"}
+                  </Link>
+                ) : (
+                  <Button
+                    variant="contained"
+                    href="/today"
+                    startIcon={<TodayIcon fontSize="small" />}
+                    size="small"
+                  >
+                    Today
+                  </Button>
+                )}
+              </Alert>
+            )
           ) : (
             <>
               <Stack

@@ -325,6 +325,19 @@ export default function LibraryPage() {
                           {deckCount === 1 ? "1 deck" : `${deckCount} decks`}
                         </Typography>
                       </Box>
+                      <Button
+                        size="small"
+                        variant="text"
+                        aria-label={`Study this subject ${s.title}`}
+                        onClick={(ev) => {
+                          ev.stopPropagation();
+                          navigate(
+                            `/study?subjectId=${encodeURIComponent(s.id)}`,
+                          );
+                        }}
+                      >
+                        Study
+                      </Button>
                       <IconButton
                         size="small"
                         aria-label={`Rename ${s.title}`}
