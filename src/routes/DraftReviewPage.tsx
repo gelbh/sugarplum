@@ -16,9 +16,9 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import DraftCardEditor from "../components/DraftCardEditor";
 import JourneyRail from "../components/JourneyRail";
-import JourneyNextButton from "../components/JourneyNextButton";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import {
   ApiError,
   acceptAllJobDrafts,
@@ -33,8 +33,10 @@ import {
   rejectJobDrafts,
   type CardDraftView,
   type CardType,
+  type JourneyStatus,
 } from "../api/client";
 import { deriveJourney } from "../journey/derive";
+import { emptyJobDraftCtas } from "../journey/emptyJobDraftCtas";
 import { forceOpenDraftReview } from "../journey/forceOpenDraftReview";
 import type { JourneyView } from "../journey/types";
 import JobProgressPanel from "../progress/JobProgressPanel";
@@ -74,6 +76,10 @@ export default function DraftReviewPage() {
   const [drafts, setDrafts] = useState<CardDraftView[]>([]);
   const [index, setIndex] = useState(0);
   const [view, setView] = useState<JourneyView | null>(null);
+  const [journeyStatus, setJourneyStatus] = useState<Pick<
+    JourneyStatus,
+    "openReviewJobId" | "dueCount"
+  > | null>(null);
   const [journeyError, setJourneyError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -129,6 +135,10 @@ export default function DraftReviewPage() {
   const refreshJourney = useCallback(async (id: string, draftCount: number) => {
     try {
       const journey = await getJourney();
+      setJourneyStatus({
+        openReviewJobId: journey.openReviewJobId,
+        dueCount: journey.dueCount,
+      });
       let derived = deriveJourney(journey);
       if (draftCount > 0) {
         derived = forceOpenDraftReview(derived);
@@ -141,6 +151,7 @@ export default function DraftReviewPage() {
       setJourneyError(null);
       setView(derived);
     } catch (err) {
+      setJourneyStatus(null);
       setView(null);
       setJourneyError(
         err instanceof ApiError
@@ -362,6 +373,14 @@ export default function DraftReviewPage() {
   }
 
   const jobActionDisabled = busy || jobProgress.pending;
+  const emptyCtas =
+    !current && jobId && journeyStatus
+      ? emptyJobDraftCtas({
+          jobId,
+          openReviewJobId: journeyStatus.openReviewJobId,
+          dueCount: journeyStatus.dueCount,
+        })
+      : null;
 
   if (!ready) {
     return (
@@ -446,8 +465,29 @@ export default function DraftReviewPage() {
             <Stack spacing={2}>
               <Typography>No drafts left for this job.</Typography>
               <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
-                {view ? (
-                  <JourneyNextButton view={view} />
+                {emptyCtas ? (
+                  <>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      href={emptyCtas.primary.href}
+                      startIcon={
+                        emptyCtas.primary.href === "/study" ? (
+                          <PlayArrowIcon />
+                        ) : undefined
+                      }
+                    >
+                      {emptyCtas.primary.label}
+                    </Button>
+                    {emptyCtas.otherDrafts ? (
+                      <Button
+                        variant="outlined"
+                        href={emptyCtas.otherDrafts.href}
+                      >
+                        {emptyCtas.otherDrafts.label}
+                      </Button>
+                    ) : null}
+                  </>
                 ) : (
                   <Link href="/library" color="text.secondary">
                     Back to library
