@@ -1,4 +1,5 @@
 import type { JourneyStatus } from "../api/client";
+import { studyPrimaryCta } from "./studyPrimaryCta";
 import type { JourneyStageId, JourneyView } from "./types";
 
 const STAGE_ORDER: JourneyStageId[] = [
@@ -64,10 +65,7 @@ function nextForStage(
       };
     }
     case "study":
-      if (status.dueCount > 0) {
-        return { label: "Start study", href: "/study", action: "study" };
-      }
-      return { label: "Go to Today", href: "/today", action: "study" };
+      return studyPrimaryCta(status.dueCount);
     default: {
       const _exhaustive: never = activeStage;
       return _exhaustive;
@@ -94,12 +92,12 @@ export function deriveJourney(status: JourneyStatus): JourneyView {
 
   const next = collapsed
     ? status.dueCount > 0
-      ? { label: "Start study", href: "/study", action: "study" as const }
+      ? studyPrimaryCta(status.dueCount)
       : {
-        label: "Add more material",
-        href: "/library",
-        action: "add_more" as const,
-      }
+          label: "Add more material",
+          href: "/library",
+          action: "add_more" as const,
+        }
     : nextForStage(activeStage!, status);
 
   return { stages, activeStage, collapsed, next };

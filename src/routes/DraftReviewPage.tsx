@@ -16,9 +16,9 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import DraftCardEditor from "../components/DraftCardEditor";
 import JourneyRail from "../components/JourneyRail";
-import JourneyNextButton from "../components/JourneyNextButton";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import {
   ApiError,
   acceptAllJobDrafts,
@@ -35,6 +35,10 @@ import {
   type CardType,
 } from "../api/client";
 import { deriveJourney } from "../journey/derive";
+import {
+  emptyJobDraftCtas,
+  type EmptyJobDraftCtas,
+} from "../journey/emptyJobDraftCtas";
 import { forceOpenDraftReview } from "../journey/forceOpenDraftReview";
 import type { JourneyView } from "../journey/types";
 import JobProgressPanel from "../progress/JobProgressPanel";
@@ -74,6 +78,7 @@ export default function DraftReviewPage() {
   const [drafts, setDrafts] = useState<CardDraftView[]>([]);
   const [index, setIndex] = useState(0);
   const [view, setView] = useState<JourneyView | null>(null);
+  const [emptyCtas, setEmptyCtas] = useState<EmptyJobDraftCtas | null>(null);
   const [journeyError, setJourneyError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -137,10 +142,20 @@ export default function DraftReviewPage() {
           href: `/jobs/${id}/drafts`,
           action: "review",
         };
+        setEmptyCtas(null);
+      } else {
+        setEmptyCtas(
+          emptyJobDraftCtas({
+            jobId: id,
+            openReviewJobId: journey.openReviewJobId,
+            dueCount: journey.dueCount,
+          }),
+        );
       }
       setJourneyError(null);
       setView(derived);
     } catch (err) {
+      setEmptyCtas(null);
       setView(null);
       setJourneyError(
         err instanceof ApiError
@@ -446,8 +461,29 @@ export default function DraftReviewPage() {
             <Stack spacing={2}>
               <Typography>No drafts left for this job.</Typography>
               <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
-                {view ? (
-                  <JourneyNextButton view={view} />
+                {emptyCtas ? (
+                  <>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      href={emptyCtas.primary.href}
+                      startIcon={
+                        emptyCtas.primary.label === "Start study" ? (
+                          <PlayArrowIcon />
+                        ) : undefined
+                      }
+                    >
+                      {emptyCtas.primary.label}
+                    </Button>
+                    {emptyCtas.otherDrafts ? (
+                      <Button
+                        variant="outlined"
+                        href={emptyCtas.otherDrafts.href}
+                      >
+                        {emptyCtas.otherDrafts.label}
+                      </Button>
+                    ) : null}
+                  </>
                 ) : (
                   <Link href="/library" color="text.secondary">
                     Back to library
