@@ -1421,6 +1421,33 @@ export function createTestEnv(opts?: {
           return { success: true, meta: { changes } } as D1Result;
         } else if (
           normalized.startsWith(
+            "UPDATE cards SET status = ?, updated_at = ? WHERE status = ?",
+          ) &&
+          normalized.includes("job_id IN") &&
+          normalized.includes("FROM generation_jobs")
+        ) {
+          // Accept-all sibling reject: draft cards on other owned needs_review jobs.
+          const [status, updated_at, expected, userId, jobStatus, excludeJobId] =
+            bound as [string, string, string, string, string, string];
+          const siblingJobIds = new Set<string>();
+          for (const job of generationJobs.values()) {
+            if (job.id === excludeJobId || job.status !== jobStatus) continue;
+            const material = materials.get(job.material_id);
+            if (!material) continue;
+            const deck = decks.get(material.deck_id);
+            if (!deck || deck.user_id !== userId) continue;
+            siblingJobIds.add(job.id);
+          }
+          let changes = 0;
+          for (const [id, card] of [...cards.entries()]) {
+            if (card.status !== expected) continue;
+            if (!card.job_id || !siblingJobIds.has(card.job_id)) continue;
+            cards.set(id, { ...card, status, updated_at });
+            changes += 1;
+          }
+          return { success: true, meta: { changes } } as D1Result;
+        } else if (
+          normalized.startsWith(
             "UPDATE cards SET status = ?, updated_at = ? WHERE id = ? AND status = ?",
           )
         ) {
