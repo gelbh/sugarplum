@@ -33,10 +33,12 @@ import {
   rejectJobDrafts,
   type CardDraftView,
   type CardType,
-  type JourneyStatus,
 } from "../api/client";
 import { deriveJourney } from "../journey/derive";
-import { emptyJobDraftCtas } from "../journey/emptyJobDraftCtas";
+import {
+  emptyJobDraftCtas,
+  type EmptyJobDraftCtas,
+} from "../journey/emptyJobDraftCtas";
 import { forceOpenDraftReview } from "../journey/forceOpenDraftReview";
 import type { JourneyView } from "../journey/types";
 import JobProgressPanel from "../progress/JobProgressPanel";
@@ -76,10 +78,7 @@ export default function DraftReviewPage() {
   const [drafts, setDrafts] = useState<CardDraftView[]>([]);
   const [index, setIndex] = useState(0);
   const [view, setView] = useState<JourneyView | null>(null);
-  const [journeyStatus, setJourneyStatus] = useState<Pick<
-    JourneyStatus,
-    "openReviewJobId" | "dueCount"
-  > | null>(null);
+  const [emptyCtas, setEmptyCtas] = useState<EmptyJobDraftCtas | null>(null);
   const [journeyError, setJourneyError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -135,10 +134,6 @@ export default function DraftReviewPage() {
   const refreshJourney = useCallback(async (id: string, draftCount: number) => {
     try {
       const journey = await getJourney();
-      setJourneyStatus({
-        openReviewJobId: journey.openReviewJobId,
-        dueCount: journey.dueCount,
-      });
       let derived = deriveJourney(journey);
       if (draftCount > 0) {
         derived = forceOpenDraftReview(derived);
@@ -147,11 +142,20 @@ export default function DraftReviewPage() {
           href: `/jobs/${id}/drafts`,
           action: "review",
         };
+        setEmptyCtas(null);
+      } else {
+        setEmptyCtas(
+          emptyJobDraftCtas({
+            jobId: id,
+            openReviewJobId: journey.openReviewJobId,
+            dueCount: journey.dueCount,
+          }),
+        );
       }
       setJourneyError(null);
       setView(derived);
     } catch (err) {
-      setJourneyStatus(null);
+      setEmptyCtas(null);
       setView(null);
       setJourneyError(
         err instanceof ApiError
@@ -373,14 +377,6 @@ export default function DraftReviewPage() {
   }
 
   const jobActionDisabled = busy || jobProgress.pending;
-  const emptyCtas =
-    !current && jobId && journeyStatus
-      ? emptyJobDraftCtas({
-          jobId,
-          openReviewJobId: journeyStatus.openReviewJobId,
-          dueCount: journeyStatus.dueCount,
-        })
-      : null;
 
   if (!ready) {
     return (
@@ -472,7 +468,7 @@ export default function DraftReviewPage() {
                       color="primary"
                       href={emptyCtas.primary.href}
                       startIcon={
-                        emptyCtas.primary.href === "/study" ? (
+                        emptyCtas.primary.label === "Start study" ? (
                           <PlayArrowIcon />
                         ) : undefined
                       }

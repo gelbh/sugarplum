@@ -10,7 +10,7 @@ describe("emptyJobDraftCtas", () => {
         dueCount: 3,
       }),
     ).toEqual({
-      primary: { label: "Start study", href: "/study" },
+      primary: { label: "Start study", href: "/study", action: "study" },
       otherDrafts: null,
     });
   });
@@ -22,7 +22,7 @@ describe("emptyJobDraftCtas", () => {
         openReviewJobId: null,
         dueCount: 0,
       }).primary,
-    ).toEqual({ label: "Go to Today", href: "/today" });
+    ).toEqual({ label: "Go to Today", href: "/today", action: "study" });
   });
 
   it("secondary Review other drafts when openReviewJobId differs", () => {
@@ -46,5 +46,21 @@ describe("emptyJobDraftCtas", () => {
         dueCount: 1,
       }).otherDrafts,
     ).toBeNull();
+  });
+
+  it("dueCount 0 with sibling still uses Go to Today primary", () => {
+    expect(
+      emptyJobDraftCtas({
+        jobId: "job-a",
+        openReviewJobId: "job-b",
+        dueCount: 0,
+      }),
+    ).toEqual({
+      primary: { label: "Go to Today", href: "/today", action: "study" },
+      otherDrafts: {
+        label: "Review other drafts",
+        href: "/jobs/job-b/drafts",
+      },
+    });
   });
 });

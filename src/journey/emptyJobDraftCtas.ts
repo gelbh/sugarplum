@@ -1,5 +1,10 @@
+import {
+  studyPrimaryCta,
+  type StudyPrimaryCta,
+} from "./studyPrimaryCta";
+
 export type EmptyJobDraftCtas = {
-  primary: { label: "Start study" | "Go to Today"; href: "/study" | "/today" };
+  primary: StudyPrimaryCta;
   otherDrafts: { label: "Review other drafts"; href: string } | null;
 };
 
@@ -8,18 +13,13 @@ export function emptyJobDraftCtas(args: {
   openReviewJobId: string | null;
   dueCount: number;
 }): EmptyJobDraftCtas {
-  const primary =
-    args.dueCount > 0
-      ? ({ label: "Start study", href: "/study" } as const)
-      : ({ label: "Go to Today", href: "/today" } as const);
-
   const sibling =
     args.openReviewJobId != null && args.openReviewJobId !== args.jobId
       ? args.openReviewJobId
       : null;
 
   return {
-    primary,
+    primary: studyPrimaryCta(args.dueCount),
     otherDrafts: sibling
       ? {
           label: "Review other drafts",
