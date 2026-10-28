@@ -21,6 +21,68 @@ function seedOwner(env: ReturnType<typeof createTestEnv>) {
   env.seedSession("sess-a", "user-a");
 }
 
+type TestEnv = ReturnType<typeof createTestEnv>;
+
+async function seedNeedsReviewJob(
+  env: TestEnv,
+  opts: {
+    jobId: string;
+    materialId: string;
+    deckId: string;
+    cards: { id: string; status?: "draft" | "accepted" }[];
+  },
+) {
+  env.seedMaterial({
+    id: opts.materialId,
+    deck_id: opts.deckId,
+    kind: "paste",
+    r2_key: null,
+    filename: null,
+    page_count: null,
+    status: "ready",
+    created_at: "2026-01-01T00:00:00.000Z",
+  });
+  await env.DB.prepare(
+    "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+  )
+    .bind(
+      opts.jobId,
+      opts.materialId,
+      "needs_review",
+      null,
+      null,
+      "2026-01-01T00:00:00.000Z",
+      null,
+    )
+    .run();
+  for (const card of opts.cards) {
+    env.seedCard({
+      id: card.id,
+      deck_id: opts.deckId,
+      job_id: opts.jobId,
+      type: "qa",
+      front_json: JSON.stringify(`${card.id}?`),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: card.id }),
+      status: card.status ?? "draft",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+  }
+}
+
+async function postAcceptAll(env: TestEnv, jobId: string) {
+  return app.request(
+    `/api/jobs/${jobId}/drafts/accept-all`,
+    {
+      method: "POST",
+      headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+    },
+    env,
+  );
+}
+
 describe("draft review / accept gate", () => {
   it("due query skips drafts", async () => {
     const env = createTestEnv();
@@ -335,10 +397,190 @@ describe("draft review / accept gate", () => {
       env,
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { accepted: number; failed: number };
-    expect(body).toEqual({ accepted: 2, failed: 0 });
+    const body = (await res.json()) as {
+      accepted: number;
+      failed: number;
+      rejectedSiblingCount: number;
+    };
+    expect(body).toEqual({ accepted: 2, failed: 0, rejectedSiblingCount: 0 });
     expect(env.getCards().every((c) => c.status === "accepted")).toBe(true);
     expect(env.getSchedules()).toHaveLength(2);
+  });
+
+  it("accept-all rejects draft cards on other owned needs_review jobs", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    await seedNeedsReviewJob(env, {
+      jobId: "job-a",
+      materialId: "mat-a",
+      deckId: "deck-a",
+      cards: [{ id: "a1" }, { id: "a2" }],
+    });
+    await seedNeedsReviewJob(env, {
+      jobId: "job-b",
+      materialId: "mat-b",
+      deckId: "deck-a",
+      cards: [
+        { id: "b-draft" },
+        { id: "b-accepted", status: "accepted" },
+      ],
+    });
+
+    const res = await postAcceptAll(env, "job-a");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      accepted: number;
+      failed: number;
+      rejectedSiblingCount: number;
+    };
+    expect(body).toEqual({
+      accepted: 2,
+      failed: 0,
+      rejectedSiblingCount: 1,
+    });
+    expect(env.getCards().find((c) => c.id === "a1")?.status).toBe("accepted");
+    expect(env.getCards().find((c) => c.id === "a2")?.status).toBe("accepted");
+    expect(env.getCards().find((c) => c.id === "b-draft")?.status).toBe(
+      "rejected",
+    );
+    expect(env.getCards().find((c) => c.id === "b-accepted")?.status).toBe(
+      "accepted",
+    );
+  });
+
+  it("accept-all with failures leaves sibling drafts untouched", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    await seedNeedsReviewJob(env, {
+      jobId: "job-fail",
+      materialId: "mat-a",
+      deckId: "deck-a",
+      cards: [{ id: "d-cas" }, { id: "d-ok" }],
+    });
+    await seedNeedsReviewJob(env, {
+      jobId: "job-sib",
+      materialId: "mat-b",
+      deckId: "deck-a",
+      cards: [{ id: "sib-draft" }],
+    });
+
+    const originalAll = env.DB.prepare.bind(env.DB);
+    let flipped = false;
+    env.DB.prepare = ((sql: string) => {
+      const stmt = originalAll(sql);
+      const originalAllFn = stmt.all.bind(stmt);
+      stmt.all = async <T>() => {
+        const out = await originalAllFn<T>();
+        if (
+          !flipped &&
+          sql.includes("FROM cards") &&
+          sql.includes("job_id =") &&
+          sql.includes("status =")
+        ) {
+          flipped = true;
+          const row = env.getCards().find((c) => c.id === "d-cas");
+          if (row) {
+            env.seedCard({ ...row, status: "accepted" });
+          }
+        }
+        return out;
+      };
+      return stmt;
+    }) as typeof env.DB.prepare;
+
+    const res = await postAcceptAll(env, "job-fail");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      accepted: number;
+      failed: number;
+      rejectedSiblingCount: number;
+    };
+    expect(body.accepted).toBe(1);
+    expect(body.failed).toBe(1);
+    expect(body.rejectedSiblingCount).toBe(0);
+    expect(env.getCards().find((c) => c.id === "sib-draft")?.status).toBe(
+      "draft",
+    );
+  });
+
+  it("accept-all with zero drafts does not reject siblings", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    await seedNeedsReviewJob(env, {
+      jobId: "job-empty",
+      materialId: "mat-empty",
+      deckId: "deck-a",
+      cards: [],
+    });
+    await seedNeedsReviewJob(env, {
+      jobId: "job-sib",
+      materialId: "mat-sib",
+      deckId: "deck-a",
+      cards: [{ id: "sib-draft" }],
+    });
+
+    const res = await postAcceptAll(env, "job-empty");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      accepted: number;
+      failed: number;
+      rejectedSiblingCount: number;
+    };
+    expect(body).toEqual({
+      accepted: 0,
+      failed: 0,
+      rejectedSiblingCount: 0,
+    });
+    expect(env.getCards().find((c) => c.id === "sib-draft")?.status).toBe(
+      "draft",
+    );
+  });
+
+  it("accept-all does not reject another user's needs_review drafts", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedUser({
+      id: "user-b",
+      email: "b@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-b",
+      user_id: "user-b",
+      title: "Chem",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    await seedNeedsReviewJob(env, {
+      jobId: "job-mine",
+      materialId: "mat-a",
+      deckId: "deck-a",
+      cards: [{ id: "mine-draft" }],
+    });
+    await seedNeedsReviewJob(env, {
+      jobId: "job-other",
+      materialId: "mat-other",
+      deckId: "deck-b",
+      cards: [{ id: "other-draft" }],
+    });
+
+    const res = await postAcceptAll(env, "job-mine");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      accepted: number;
+      failed: number;
+      rejectedSiblingCount: number;
+    };
+    expect(body).toEqual({
+      accepted: 1,
+      failed: 0,
+      rejectedSiblingCount: 0,
+    });
+    expect(env.getCards().find((c) => c.id === "other-draft")?.status).toBe(
+      "draft",
+    );
   });
 
   it("accept-all CAS miss does not insert a schedule or 500", async () => {
@@ -429,9 +671,14 @@ describe("draft review / accept gate", () => {
       env,
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { accepted: number; failed: number };
+    const body = (await res.json()) as {
+      accepted: number;
+      failed: number;
+      rejectedSiblingCount: number;
+    };
     expect(body.accepted).toBe(1);
     expect(body.failed).toBe(1);
+    expect(body.rejectedSiblingCount).toBe(0);
     expect(env.getSchedules().map((s) => s.card_id).sort()).toEqual(["d-ok"]);
   });
 
@@ -512,9 +759,14 @@ describe("draft review / accept gate", () => {
       env,
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { accepted: number; failed: number };
+    const body = (await res.json()) as {
+      accepted: number;
+      failed: number;
+      rejectedSiblingCount: number;
+    };
     expect(body.accepted).toBe(1);
     expect(body.failed).toBe(1);
+    expect(body.rejectedSiblingCount).toBe(0);
     expect(env.getCards().find((c) => c.id === "d-ok")?.status).toBe(
       "accepted",
     );

@@ -165,6 +165,35 @@ async function requireOwnedCard(
   return row;
 }
 
+/** Reject draft cards on other owned needs_review jobs (any deck). */
+async function rejectOwnedSiblingDrafts(
+  db: D1Database,
+  args: { userId: string; excludeJobId: string },
+): Promise<number> {
+  const updatedAt = new Date().toISOString();
+  const result = await db
+    .prepare(
+      `UPDATE cards SET status = ?, updated_at = ?
+       WHERE status = ?
+         AND job_id IN (
+           SELECT j.id FROM generation_jobs j
+           INNER JOIN materials m ON m.id = j.material_id
+           INNER JOIN decks d ON d.id = m.deck_id
+           WHERE d.user_id = ? AND j.status = ? AND j.id != ?
+         )`,
+    )
+    .bind(
+      "rejected",
+      updatedAt,
+      "draft",
+      args.userId,
+      "needs_review",
+      args.excludeJobId,
+    )
+    .run();
+  return result.meta.changes ?? 0;
+}
+
 async function acceptDraftCard(
   db: D1Database,
   card: { id: string; type: string; back_json: string; status: string },
@@ -295,7 +324,12 @@ jobDraftRoutes.post("/:id/drafts/accept-all", async (c) => {
     }
   }
 
-  return c.json({ accepted, failed });
+  const rejectedSiblingCount =
+    accepted > 0 && failed === 0
+      ? await rejectOwnedSiblingDrafts(db, { userId, excludeJobId: jobId })
+      : 0;
+
+  return c.json({ accepted, failed, rejectedSiblingCount });
 });
 
 cardRoutes.patch("/:id", async (c) => {
