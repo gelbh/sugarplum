@@ -28,13 +28,14 @@ import {
   listJobDrafts,
   me,
   patchCard,
+  asRegenType,
+  cardHasRegenSource,
   regenCard,
   regenJob,
   rejectCard,
   rejectJobDrafts,
   type CardDraftView,
   type CardType,
-  type RegenCardType,
 } from "../api/client";
 import { deriveJourney } from "../journey/derive";
 import {
@@ -72,11 +73,6 @@ function draftTypeLabel(type: CardDraftView["type"]): string {
   if (type === "image_label") return "Image label";
   if (type === "diagram") return "Diagram";
   return "Q&A";
-}
-
-function asRegenType(type: CardDraftView["type"]): RegenCardType | null {
-  if (type === "qa" || type === "cloze" || type === "mcq") return type;
-  return null;
 }
 
 /** Operate UI: review, edit, accept or reject generation drafts (code-led MUI; no Impeccable comps). */
@@ -574,7 +570,9 @@ export default function DraftReviewPage() {
               onChange={onEditorChange}
               regenAction={{
                 busy: cardRegenBusy,
-                disabled: asRegenType(current.type) === null,
+                disabled:
+                  asRegenType(current.type) === null ||
+                  !cardHasRegenSource(current),
                 onClick: () => {
                   void onRegenThisCard();
                 },

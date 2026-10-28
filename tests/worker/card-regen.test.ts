@@ -1,6 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
+import {
+  capRegenSourceText,
+} from "../../worker/generation/card-regen";
+import { CHUNK_CHAR_LIMIT } from "../../worker/generation/pipeline";
+import {
+  FREE_GEN_DAILY_CAP,
+  consumeFreeGenSlot,
+} from "../../worker/generation/quota";
 import { WORKERS_AI_MODEL } from "../../worker/generation/workers-ai";
 import { createTestEnv } from "./test-env";
 
@@ -187,6 +195,68 @@ describe("POST /api/cards/:id/regen", () => {
     expect(JSON.parse(right.front_json)).toBe("Right {{c1::blank}}.");
     expect(mid.type).toBe("mcq");
     expect(JSON.parse(mid.front_json)).toBe("Which organelle produces ATP?");
+  });
+
+  it("returns 429 when free-gen daily cap is exhausted on workers-ai", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedThreeDrafts(env);
+    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    stubWorkersAiMcq(env);
+    for (let i = 0; i < FREE_GEN_DAILY_CAP; i++) {
+      await consumeFreeGenSlot(env, "user-a");
+    }
+
+    const res = await app.request(
+      "/api/cards/c-mid/regen",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({ type: "mcq" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(429);
+    expect(JSON.parse(env.getCards().find((c) => c.id === "c-mid")!.front_json)).toBe(
+      "Middle front?",
+    );
+  });
+
+  it("caps oversized material text before the LLM prompt", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedThreeDrafts(env);
+    const huge = `${"Mitochondria produce ATP. ".repeat(400)}${"X".repeat(CHUNK_CHAR_LIMIT)}`;
+    expect(huge.length).toBeGreaterThan(CHUNK_CHAR_LIMIT);
+    env.seedR2("materials/deck-a/mat-a.txt", huge);
+    const run = stubWorkersAiMcq(env);
+
+    const res = await app.request(
+      "/api/cards/c-mid/regen",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({ type: "mcq" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    expect(run).toHaveBeenCalled();
+    const body = run.mock.calls[0]![1] as {
+      messages?: { role: string; content: string }[];
+    };
+    const userMsg = body.messages?.find((m) => m.role === "user")?.content ?? "";
+    expect(userMsg).toContain("--- MATERIAL ---");
+    const material = userMsg.split("--- MATERIAL ---")[1]?.split("--- END ---")[0] ?? "";
+    expect(material.trim().length).toBeLessThanOrEqual(CHUNK_CHAR_LIMIT);
+    expect(material).not.toContain("XXXX");
+    expect(capRegenSourceText(huge).length).toBe(CHUNK_CHAR_LIMIT);
   });
 
   it("clears media_r2_keys when regenerating a visual card as text", async () => {

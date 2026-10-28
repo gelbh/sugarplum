@@ -9,6 +9,8 @@ import {
   parseLlmProvider,
   type LlmAdapter,
 } from "./llm";
+import { CHUNK_CHAR_LIMIT } from "./pipeline";
+import { consumeFreeGenSlot } from "./quota";
 import { createWorkersAiAdapter } from "./workers-ai";
 import {
   assertValidMcqOptions,
@@ -18,10 +20,19 @@ import {
 export const REGEN_CARD_TYPES = ["qa", "cloze", "mcq"] as const;
 export type RegenCardType = (typeof REGEN_CARD_TYPES)[number];
 
-type TextRegenDraft = Extract<
-  CardDraft,
-  { type: "qa" | "cloze" | "mcq" | "image_label" | "diagram" }
->;
+/** Cap sync regen prompts to one pipeline chunk (job path uses the same limit). */
+export function capRegenSourceText(text: string): string {
+  if (text.length <= CHUNK_CHAR_LIMIT) return text;
+  return text.slice(0, CHUNK_CHAR_LIMIT);
+}
+
+type TextRegenDraft = {
+  type: RegenCardType;
+  front: string;
+  back: string;
+  options?: string[];
+  provenance: CardDraft["provenance"];
+};
 
 const REGEN_ONE_SYSTEM_PROMPT = `You regenerate a single spaced-repetition flashcard from study material.
 
@@ -71,15 +82,22 @@ export async function generateOneCard(args: {
     provider: args.provider,
   });
   const drafts = parseCardsPayload(raw);
-  const match = drafts.find(
-    (d): d is TextRegenDraft =>
-      d.type === args.type && typeof d.front === "string",
+  const hit = drafts.find(
+    (d) => d.type === args.type && typeof d.front === "string",
   );
-  if (!match) {
+  if (!hit || typeof hit.front !== "string" || typeof hit.back !== "string") {
     throw new Error(`LLM did not return a ${args.type} card`);
   }
+  const match: TextRegenDraft = {
+    type: args.type,
+    front: hit.front,
+    back: hit.back,
+    options: hit.type === "mcq" ? hit.options : undefined,
+    provenance: hit.provenance,
+  };
   if (match.type === "mcq") {
-    assertValidMcqOptions(match.back, match.options);
+    const mcq = assertValidMcqOptions(match.back, match.options);
+    return { ...match, back: mcq.back, options: mcq.options };
   }
   return match;
 }
@@ -149,6 +167,10 @@ export async function loadCardSourceText(
   return provenanceExcerpt(card.provenance_json);
 }
 
+/**
+ * Thin fork of consumer `resolveTextLlm` for sync single-card regen (no job
+ * emit / usage hooks). Shared extract deferred; keep behavior aligned manually.
+ */
 export async function resolveRegenLlm(
   env: Env,
   userId: string,
@@ -172,6 +194,8 @@ export async function resolveRegenLlm(
   }
 
   if (env.AI) {
+    // Same free-path policy as job consumer: reserve a daily slot before AI.run.
+    await consumeFreeGenSlot(env, userId);
     return {
       llm: createWorkersAiAdapter(env),
       apiKey: "",

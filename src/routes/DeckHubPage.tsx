@@ -33,6 +33,8 @@ import {
   patchCard,
   patchDeck,
   PPTX_MIME,
+  asRegenType,
+  cardHasRegenSource,
   regenCard,
   resetCardSchedule,
   resolveUploadContentType,
@@ -43,7 +45,6 @@ import {
   type Deck,
   type DeckStats,
   type JobListItem,
-  type RegenCardType,
   type Subject,
 } from "../api/client";
 import DraftCardEditor, {
@@ -148,6 +149,7 @@ export default function DeckHubPage({ deckId }: Props) {
   const [cardRegenBusy, setCardRegenBusy] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [resetBusy, setResetBusy] = useState(false);
+  const editDialogBusy = editBusy || resetBusy || cardRegenBusy;
 
   const [createCard, setCreateCard] = useState<CardDraftView>(() =>
     blankHubCreateCard(deckId),
@@ -333,17 +335,21 @@ export default function DeckHubPage({ deckId }: Props) {
 
   async function onRegenEditCard() {
     if (!editCard || guest) return;
-    const type = editCard.type;
-    if (type !== "qa" && type !== "cloze" && type !== "mcq") {
+    const type = asRegenType(editCard.type);
+    if (!type) {
       setEditError("Choose Q&A, cloze, or multiple choice before regenerating");
+      return;
+    }
+    if (!cardHasRegenSource(editCard)) {
+      setEditError(
+        "No source text for this card. Edit manually or regenerate from a job with material.",
+      );
       return;
     }
     setCardRegenBusy(true);
     setEditError(null);
     try {
-      const updated = await regenCard(editCard.id, {
-        type: type as RegenCardType,
-      });
+      const updated = await regenCard(editCard.id, { type });
       setCards((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
       setEditCard(updated);
       setNotice("Card regenerated");
@@ -1038,9 +1044,7 @@ export default function DeckHubPage({ deckId }: Props) {
 
       <Dialog
         open={editCard !== null}
-        onClose={() =>
-          !editBusy && !resetBusy && !cardRegenBusy && setEditCard(null)
-        }
+        onClose={() => !editDialogBusy && setEditCard(null)}
         fullWidth
         maxWidth="sm"
       >
@@ -1055,7 +1059,7 @@ export default function DeckHubPage({ deckId }: Props) {
             <Box sx={{ pt: 1 }}>
               <DraftCardEditor
                 card={editCard}
-                disabled={editBusy || resetBusy || cardRegenBusy}
+                disabled={editDialogBusy}
                 onChange={onEditChange}
                 allowedTypes={HUB_DIY_TYPES}
                 regenAction={
@@ -1063,6 +1067,9 @@ export default function DeckHubPage({ deckId }: Props) {
                     ? undefined
                     : {
                         busy: cardRegenBusy,
+                        disabled:
+                          asRegenType(editCard.type) === null ||
+                          !cardHasRegenSource(editCard),
                         onClick: () => {
                           void onRegenEditCard();
                         },
@@ -1075,7 +1082,7 @@ export default function DeckHubPage({ deckId }: Props) {
         <DialogActions sx={{ flexWrap: "wrap", gap: 1 }}>
           <Button
             color="warning"
-            disabled={editBusy || resetBusy || cardRegenBusy || !editCard}
+            disabled={editDialogBusy || !editCard}
             onClick={() => setConfirmReset(true)}
           >
             Reset schedule
@@ -1083,13 +1090,13 @@ export default function DeckHubPage({ deckId }: Props) {
           <Box sx={{ flex: 1 }} />
           <Button
             onClick={() => setEditCard(null)}
-            disabled={editBusy || resetBusy || cardRegenBusy}
+            disabled={editDialogBusy}
           >
             Cancel
           </Button>
           <Button
             variant="contained"
-            disabled={editBusy || resetBusy || cardRegenBusy || !editCard}
+            disabled={editDialogBusy || !editCard}
             onClick={saveEdit}
           >
             {editBusy ? "Saving…" : "Save"}

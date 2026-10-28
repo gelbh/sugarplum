@@ -381,6 +381,25 @@ export function regenJob(jobId: string) {
 
 export type RegenCardType = "qa" | "cloze" | "mcq";
 
+export function asRegenType(type: string): RegenCardType | null {
+  if (type === "qa" || type === "cloze" || type === "mcq") return type;
+  return null;
+}
+
+/** True when the card has material/job or a non-empty provenance excerpt for regen. */
+export function cardHasRegenSource(card: {
+  job_id?: string | null;
+  provenance?: unknown;
+}): boolean {
+  if (card.job_id) return true;
+  const p = card.provenance;
+  if (p && typeof p === "object" && "excerpt" in p) {
+    const excerpt = (p as { excerpt?: unknown }).excerpt;
+    return typeof excerpt === "string" && excerpt.trim().length > 0;
+  }
+  return false;
+}
+
 /** Rebuild one card as qa/cloze/mcq; siblings and FSRS schedule stay. Account-only. */
 export function regenCard(cardId: string, body: { type: RegenCardType }) {
   if (isGuest()) guestUnsupported("regenerate a single card");

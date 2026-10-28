@@ -10,6 +10,7 @@ import {
   OcclusionFrontSchema,
 } from "../generation/schema";
 import {
+  capRegenSourceText,
   generateOneCard,
   loadCardSourceText,
   REGEN_CARD_TYPES,
@@ -544,21 +545,22 @@ cardRoutes.post("/:id/regen", async (c) => {
     });
   }
 
-  const sourceText = await loadCardSourceText(c.env, row);
-  if (!sourceText) {
+  const sourceRaw = await loadCardSourceText(c.env, row);
+  if (!sourceRaw) {
     throw new HTTPException(422, {
       message:
         "No source text available for this card. Edit manually or regenerate from material with text.",
     });
   }
+  const sourceText = capRegenSourceText(sourceRaw);
 
   let llmBundle: Awaited<ReturnType<typeof resolveRegenLlm>>;
   try {
     llmBundle = await resolveRegenLlm(c.env, userId);
   } catch (err) {
-    throw new HTTPException(502, {
-      message: err instanceof Error ? err.message : "LLM unavailable",
-    });
+    const message = err instanceof Error ? err.message : "LLM unavailable";
+    const freeGenCap = message.includes("Daily free generation limit");
+    throw new HTTPException(freeGenCap ? 429 : 502, { message });
   }
 
   const existingFront = parseJsonField<unknown>(row.front_json, null);
