@@ -155,6 +155,22 @@ describe("POST /api/cards/:id/move", () => {
     expect(res.status).toBe(400);
   });
 
+  it("updates deck_id for archived card", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedAcceptedCard(env, {
+      id: "card-arch",
+      deckId: "deck-a",
+      status: "archived",
+    });
+
+    const res = await postMove(env, "card-arch", "deck-b");
+    expect(res.status).toBe(200);
+    expect(env.getCards().find((c) => c.id === "card-arch")!.deck_id).toBe(
+      "deck-b",
+    );
+  });
+
   it("returns 404 for another user's card", async () => {
     const env = createTestEnv();
     seedOwner(env);

@@ -18,11 +18,13 @@ import {
   guestDeleteDeck,
   guestDeleteSubject,
   guestJourney,
+  guestArchiveCard,
   guestListDeckCards,
   guestListDecks,
   guestListDueCards,
   guestListSubjects,
   guestMoveCard,
+  guestRestoreCard,
   guestPatchCard,
   guestPatchDeck,
   guestPatchSubject,
@@ -278,10 +280,12 @@ export function deckStats(id: string) {
   return api<DeckStats>(`/api/decks/${id}/stats`);
 }
 
-export function listDeckCards(deckId: string) {
+export type ListDeckCardsOpts = { status?: "archived" };
+
+export function listDeckCards(deckId: string, opts?: ListDeckCardsOpts) {
   if (isGuest()) {
     try {
-      return Promise.resolve(guestListDeckCards(deckId));
+      return Promise.resolve(guestListDeckCards(deckId, undefined, opts));
     } catch (err) {
       throw new ApiError(
         404,
@@ -289,7 +293,11 @@ export function listDeckCards(deckId: string) {
       );
     }
   }
-  return api<CardDraftView[]>(`/api/decks/${deckId}/cards`);
+  const q =
+    opts?.status === "archived"
+      ? "?status=archived"
+      : "";
+  return api<CardDraftView[]>(`/api/decks/${deckId}/cards${q}`);
 }
 
 export function createDeckCard(deckId: string, body: GuestHubCardBody) {
@@ -680,6 +688,38 @@ export async function moveCard(cardId: string, deckId: string) {
   const card = await api<CardDraftView>(`/api/cards/${cardId}/move`, {
     method: "POST",
     json: { deckId },
+  });
+  clearDueCache();
+  return card;
+}
+
+export async function archiveCard(cardId: string) {
+  if (isGuest()) {
+    try {
+      return guestArchiveCard(cardId);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Card not found";
+      throw new ApiError(message === "Card not found" ? 404 : 400, message);
+    }
+  }
+  const card = await api<CardDraftView>(`/api/cards/${cardId}/archive`, {
+    method: "POST",
+  });
+  clearDueCache();
+  return card;
+}
+
+export async function restoreCard(cardId: string) {
+  if (isGuest()) {
+    try {
+      return guestRestoreCard(cardId);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Card not found";
+      throw new ApiError(message === "Card not found" ? 404 : 400, message);
+    }
+  }
+  const card = await api<CardDraftView>(`/api/cards/${cardId}/restore`, {
+    method: "POST",
   });
   clearDueCache();
   return card;

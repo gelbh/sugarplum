@@ -12,9 +12,11 @@ import {
   guestListDecks,
   guestListDueCards,
   guestListSubjects,
+  guestArchiveCard,
   guestMoveCard,
   guestPatchCard,
   guestResetCardSchedule,
+  guestRestoreCard,
   guestReviewCard,
 } from "../../src/guest/store";
 
@@ -384,6 +386,47 @@ describe("guest store", () => {
     expect(guestListDeckCards(deck.id, storage)[0]?.front).toBe("New front");
   });
 
+  it("archiveCard sets archived and removes id from due list", () => {
+    enterGuest(storage);
+    const subject = guestCreateSubject("Archive subject", storage);
+    const deck = guestCreateDeck("Archive deck", subject.id, storage);
+    const card = guestCreateDeckCard(
+      deck.id,
+      { type: "qa", front: "Archive me?", back: "Yes" },
+      storage,
+    );
+    expect(guestListDueCards(undefined, storage).some((c) => c.id === card.id))
+      .toBe(true);
+
+    const archived = guestArchiveCard(card.id, storage);
+    expect(archived.status).toBe("archived");
+    expect(guestListDeckCards(deck.id, storage).map((c) => c.id)).not.toContain(
+      card.id,
+    );
+    expect(
+      guestListDueCards(undefined, storage).some((c) => c.id === card.id),
+    ).toBe(false);
+  });
+
+  it("restoreCard sets accepted and prepends to due list", () => {
+    enterGuest(storage);
+    const subject = guestCreateSubject("Restore subject", storage);
+    const deck = guestCreateDeck("Restore deck", subject.id, storage);
+    const card = guestCreateDeckCard(
+      deck.id,
+      { type: "qa", front: "Restore me?", back: "Yes" },
+      storage,
+    );
+    guestArchiveCard(card.id, storage);
+
+    const restored = guestRestoreCard(card.id, storage);
+    expect(restored.status).toBe("accepted");
+    expect(guestListDeckCards(deck.id, storage).map((c) => c.id)).toContain(
+      card.id,
+    );
+    expect(guestListDueCards(undefined, storage)[0]?.id).toBe(card.id);
+  });
+
   it("moveCard updates deck_id and leaves dueIds unchanged", () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Move subject", storage);
@@ -407,6 +450,23 @@ describe("guest store", () => {
     expect(guestListDueCards(undefined, storage).map((c) => c.id)).toEqual(
       dueBefore,
     );
+  });
+
+  it("moveCard allows archived cards", () => {
+    enterGuest(storage);
+    const subject = guestCreateSubject("Move arch subject", storage);
+    const deckA = guestCreateDeck("Deck A", subject.id, storage);
+    const deckB = guestCreateDeck("Deck B", subject.id, storage);
+    const card = guestCreateDeckCard(
+      deckA.id,
+      { type: "qa", front: "Archived move?", back: "Yes" },
+      storage,
+    );
+    guestArchiveCard(card.id, storage);
+
+    const moved = guestMoveCard(card.id, deckB.id, storage);
+    expect(moved.deck_id).toBe(deckB.id);
+    expect(moved.status).toBe("archived");
   });
 
   it("resetCardSchedule puts id at front of due and sets due now", () => {

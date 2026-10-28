@@ -300,6 +300,17 @@ deckRoutes.get("/:id/cards", async (c) => {
   const db = getDb(c.env);
   await requireOwnedDeck(db, deckId, userId);
 
+  const statusParam = c.req.query("status");
+  const listStatus =
+    statusParam === "archived"
+      ? "archived"
+      : statusParam === undefined || statusParam === "accepted"
+        ? "accepted"
+        : null;
+  if (listStatus === null) {
+    throw new HTTPException(400, { message: "Invalid status filter" });
+  }
+
   const { results } = await db
     .prepare(
       `SELECT id, deck_id, job_id, type, front_json, back_json,
@@ -308,7 +319,7 @@ deckRoutes.get("/:id/cards", async (c) => {
        WHERE deck_id = ? AND status = ?
        ORDER BY created_at ASC`,
     )
-    .bind(deckId, "accepted")
+    .bind(deckId, listStatus)
     .all<CardRow>();
 
   return c.json((results ?? []).map(serializeCard));
