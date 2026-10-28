@@ -700,7 +700,7 @@ describe("POST /api/guest/import", () => {
     expect(decks![0].subject_id).toBe("subj-anatomy");
   });
 
-  it("rejects cloze without a single valid blank", async () => {
+  it("rejects cloze with more than one blank", async () => {
     const env = createTestEnv();
     seedOwner(env);
 
@@ -725,7 +725,7 @@ describe("POST /api/guest/import", () => {
             {
               clientDeckId: "guest-deck-1",
               type: "cloze",
-              front: "No blank here",
+              front: "{{c1::one}} and {{c2::two}}",
               back: "",
               source: "paste",
             },
