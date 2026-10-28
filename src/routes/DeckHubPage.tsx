@@ -10,10 +10,12 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
 import FormControl from "@mui/material/FormControl";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
+import Switch from "@mui/material/Switch";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -21,11 +23,14 @@ import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import {
   ApiError,
+  archiveCard,
   createDeckCard,
   deckStats,
   deleteDeck,
@@ -43,6 +48,7 @@ import {
   cardHasRegenSource,
   regenCard,
   resetCardSchedule,
+  restoreCard,
   resolveUploadContentType,
   topicGenerate,
   uploadMaterialFile,
@@ -186,13 +192,21 @@ export default function DeckHubPage({ deckId }: Props) {
   const [topicBusy, setTopicBusy] = useState(false);
   const [topicError, setTopicError] = useState<string | null>(null);
 
+  const [showArchived, setShowArchived] = useState(false);
+  const [archiveBusyId, setArchiveBusyId] = useState<string | null>(null);
+
   const { end: endLoad } = useTrackedOp("Loading deck…", {
     trackOnMount: true,
   });
 
   const refreshCards = useCallback(async () => {
-    setCards(await listDeckCards(deckId));
-  }, [deckId]);
+    setCards(
+      await listDeckCards(
+        deckId,
+        showArchived ? { status: "archived" } : undefined,
+      ),
+    );
+  }, [deckId, showArchived]);
 
   const refreshDraftJobs = useCallback(async () => {
     if (guest) {
@@ -220,10 +234,10 @@ export default function DeckHubPage({ deckId }: Props) {
         : null,
     );
     if (found) {
-      await Promise.all([refreshCards(), refreshDraftJobs()]);
+      await refreshDraftJobs();
     }
     return found;
-  }, [deckId, refreshCards, refreshDraftJobs]);
+  }, [deckId, refreshDraftJobs]);
 
   useEffect(() => {
     let cancelled = false;
@@ -250,6 +264,45 @@ export default function DeckHubPage({ deckId }: Props) {
       cancelled = true;
     };
   }, [endLoad, load]);
+
+  useEffect(() => {
+    if (!ready || !deck) return;
+    void refreshCards();
+  }, [deck, ready, refreshCards, showArchived]);
+
+  async function onArchiveCard(card: CardDraftView) {
+    setArchiveBusyId(card.id);
+    setError(null);
+    try {
+      await archiveCard(card.id);
+      setCards((prev) => prev.filter((c) => c.id !== card.id));
+      if (editCard?.id === card.id) {
+        setEditCard(null);
+      }
+      setNotice("Card archived");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not archive card");
+    } finally {
+      setArchiveBusyId(null);
+    }
+  }
+
+  async function onRestoreCard(card: CardDraftView) {
+    setArchiveBusyId(card.id);
+    setError(null);
+    try {
+      await restoreCard(card.id);
+      setCards((prev) => prev.filter((c) => c.id !== card.id));
+      if (editCard?.id === card.id) {
+        setEditCard(null);
+      }
+      setNotice("Card restored");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not restore card");
+    } finally {
+      setArchiveBusyId(null);
+    }
+  }
 
   async function onRenameSubmit(e?: FormEvent) {
     e?.preventDefault();
@@ -995,16 +1048,37 @@ export default function DeckHubPage({ deckId }: Props) {
                 borderColor: "divider",
               }}
             >
-              <Typography
-                variant="subtitle1"
-                component="h2"
-                sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ mb: 1.5 }}
               >
-                Cards
-              </Typography>
+                <Typography
+                  variant="subtitle1"
+                  component="h2"
+                  sx={{ fontWeight: 600, color: "primary.main" }}
+                >
+                  Cards
+                </Typography>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      size="small"
+                      checked={showArchived}
+                      onChange={(_ev, checked) => setShowArchived(checked)}
+                      disabled={archiveBusyId !== null}
+                    />
+                  }
+                  label="Show archived"
+                  sx={{ mr: 0 }}
+                />
+              </Stack>
               {cards.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
-                  No accepted cards yet. Add one below or paste material.
+                  {showArchived
+                    ? "No archived cards."
+                    : "No accepted cards yet. Add one below or paste material."}
                 </Typography>
               ) : (
                 <Stack
@@ -1035,6 +1109,7 @@ export default function DeckHubPage({ deckId }: Props) {
                       <IconButton
                         size="small"
                         aria-label="Move card"
+                        disabled={archiveBusyId !== null}
                         onClick={() => {
                           void openMove(card);
                         }}
@@ -1044,10 +1119,34 @@ export default function DeckHubPage({ deckId }: Props) {
                       <IconButton
                         size="small"
                         aria-label="Edit card"
+                        disabled={archiveBusyId !== null}
                         onClick={() => openEdit(card)}
                       >
                         <EditOutlinedIcon fontSize="small" />
                       </IconButton>
+                      {showArchived ? (
+                        <IconButton
+                          size="small"
+                          aria-label="Restore card"
+                          disabled={archiveBusyId !== null}
+                          onClick={() => {
+                            void onRestoreCard(card);
+                          }}
+                        >
+                          <UnarchiveOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      ) : (
+                        <IconButton
+                          size="small"
+                          aria-label="Archive card"
+                          disabled={archiveBusyId !== null}
+                          onClick={() => {
+                            void onArchiveCard(card);
+                          }}
+                        >
+                          <ArchiveOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      )}
                     </Box>
                   ))}
                 </Stack>
