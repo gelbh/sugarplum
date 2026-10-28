@@ -28,11 +28,13 @@ import {
   listJobDrafts,
   me,
   patchCard,
+  regenCard,
   regenJob,
   rejectCard,
   rejectJobDrafts,
   type CardDraftView,
   type CardType,
+  type RegenCardType,
 } from "../api/client";
 import { deriveJourney } from "../journey/derive";
 import {
@@ -72,6 +74,11 @@ function draftTypeLabel(type: CardDraftView["type"]): string {
   return "Q&A";
 }
 
+function asRegenType(type: CardDraftView["type"]): RegenCardType | null {
+  if (type === "qa" || type === "cloze" || type === "mcq") return type;
+  return null;
+}
+
 /** Operate UI: review, edit, accept or reject generation drafts (code-led MUI; no Impeccable comps). */
 export default function DraftReviewPage() {
   const jobId = jobIdFromPath();
@@ -87,6 +94,7 @@ export default function DraftReviewPage() {
   const [confirmAll, setConfirmAll] = useState(false);
   const [confirmRejectDrafts, setConfirmRejectDrafts] = useState(false);
   const [confirmRegen, setConfirmRegen] = useState(false);
+  const [cardRegenBusy, setCardRegenBusy] = useState(false);
   /** When false, drop jobId from useJobProgress so the same id can remount and poll again after regen. */
   const [progressGate, setProgressGate] = useState(true);
   const [coverage, setCoverage] = useState<{
@@ -355,6 +363,33 @@ export default function DraftReviewPage() {
     }
   }
 
+  async function onRegenThisCard() {
+    if (!current) return;
+    const type = asRegenType(current.type);
+    if (!type) {
+      setError("Choose Q&A, cloze, or multiple choice before regenerating");
+      return;
+    }
+    setError(null);
+    setNotice(null);
+    setCardRegenBusy(true);
+    begin("Regenerating card…");
+    try {
+      const updated = await regenCard(current.id, { type });
+      setDrafts((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+      setDirty(false);
+      setNotice("Card regenerated");
+      end();
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Could not regenerate card",
+      );
+      end(false);
+    } finally {
+      setCardRegenBusy(false);
+    }
+  }
+
   async function onRegen() {
     if (!jobId) return;
     setError(null);
@@ -371,8 +406,7 @@ export default function DraftReviewPage() {
       setProgressGate(false);
       end();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not regenerate");
-      end(false);
+      setError(err instanceof ApiError ? err.message : "Could not regenerate");      end(false);
     }
   }
 
@@ -536,8 +570,15 @@ export default function DraftReviewPage() {
 
             <DraftCardEditor
               card={current}
-              disabled={busy}
+              disabled={busy || cardRegenBusy}
               onChange={onEditorChange}
+              regenAction={{
+                busy: cardRegenBusy,
+                disabled: asRegenType(current.type) === null,
+                onClick: () => {
+                  void onRegenThisCard();
+                },
+              }}
             />
 
             {current.provenance &&
@@ -709,11 +750,12 @@ export default function DraftReviewPage() {
           open={confirmRegen}
           onClose={() => !busy && setConfirmRegen(false)}
         >
-          <DialogTitle>Regenerate this job?</DialogTitle>
+          <DialogTitle>Replace all drafts for this job?</DialogTitle>
           <DialogContent>
             <DialogContentText>
-              This deletes all cards from this job, including any you already
-              accepted into study, then regenerates from the material.
+              This deletes all cards from this job (drafts and any you already
+              accepted into study) and starts generation over from the material.
+              To change only one card, use Regenerate this card instead.
             </DialogContentText>
           </DialogContent>
           <DialogActions>

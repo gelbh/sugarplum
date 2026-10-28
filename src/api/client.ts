@@ -379,6 +379,17 @@ export function regenJob(jobId: string) {
   return api<GenerationJob>(`/api/jobs/${jobId}/regen`, { method: "POST" });
 }
 
+export type RegenCardType = "qa" | "cloze" | "mcq";
+
+/** Rebuild one card as qa/cloze/mcq; siblings and FSRS schedule stay. Account-only. */
+export function regenCard(cardId: string, body: { type: RegenCardType }) {
+  if (isGuest()) guestUnsupported("regenerate a single card");
+  return api<CardDraftView>(`/api/cards/${cardId}/regen`, {
+    method: "POST",
+    json: body,
+  });
+}
+
 /** Soft-clean: reject remaining drafts only; accepted cards stay. No requeue. */
 export function rejectJobDrafts(jobId: string) {
   if (isGuest()) guestUnsupported("reject remaining drafts");
