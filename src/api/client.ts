@@ -324,7 +324,10 @@ export function resetCardSchedule(cardId: string) {
     method: "POST",
   });
 }
-export type PasteMaterialResponse = Material & { jobId: string };
+export type PasteMaterialResponse = Material & {
+  jobId: string;
+  reused?: boolean;
+};
 
 /** Soft client caps; server remains source of truth. */
 export const MAX_TOPIC_HINTS = 5;
@@ -496,7 +499,10 @@ export function presignPdfFigure(
   );
 }
 
-export type CompleteMaterialResponse = Material & { jobId: string | null };
+export type CompleteMaterialResponse = Material & {
+  jobId: string | null;
+  reused?: boolean;
+};
 
 export type FigureExtractMode = "fast" | "accurate";
 
