@@ -22,6 +22,7 @@ import {
   guestListDecks,
   guestListDueCards,
   guestListSubjects,
+  guestMoveCard,
   guestPatchCard,
   guestPatchDeck,
   guestPatchSubject,
@@ -665,7 +666,17 @@ export function rejectCard(cardId: string) {
 }
 
 export function moveCard(cardId: string, deckId: string) {
-  if (isGuest()) guestUnsupported("move cards");
+  if (isGuest()) {
+    try {
+      return Promise.resolve(guestMoveCard(cardId, deckId));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Card not found";
+      throw new ApiError(
+        message === "Card not found" || message === "Deck not found" ? 404 : 400,
+        message,
+      );
+    }
+  }
   return api<CardDraftView>(`/api/cards/${cardId}/move`, {
     method: "POST",
     json: { deckId },
