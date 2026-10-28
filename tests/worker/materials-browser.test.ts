@@ -480,6 +480,78 @@ describe("DELETE /api/materials/:id", () => {
     expect(env.getR2Keys()).toContain(figureKey);
   });
 
+  it("returns 409 when deleting pdf parent whose figure is referenced by accepted card media", async () => {
+    const env = createTestEnv();
+    env.seedUser({
+      id: "user-a",
+      email: "a@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-a",
+      user_id: "user-a",
+      title: "Owner deck",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSession("sess-a", "user-a");
+    const pdfKey = "materials/deck-a/pdf-1.pdf";
+    const figureKey = "materials/deck-a/figures/pdf-1/0.png";
+    env.seedMaterial({
+      id: "pdf-1",
+      deck_id: "deck-a",
+      kind: "pdf",
+      r2_key: pdfKey,
+      filename: "slides.pdf",
+      page_count: 2,
+      status: "ready",
+      created_at: "2026-01-01T01:00:00.000Z",
+    });
+    env.seedMaterial({
+      id: "figure-1",
+      deck_id: "deck-a",
+      kind: "image",
+      r2_key: figureKey,
+      filename: "crop.png",
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T02:00:00.000Z",
+    });
+    env.seedR2(pdfKey, "pdf-bytes");
+    env.seedR2(figureKey, "png-bytes");
+    env.seedCard({
+      id: "c-media",
+      deck_id: "deck-a",
+      job_id: null,
+      type: "image_label",
+      front_json: "{}",
+      back_json: "{}",
+      media_r2_keys_json: JSON.stringify([figureKey]),
+      provenance_json: null,
+      status: "accepted",
+      created_at: "2026-01-01T03:00:00.000Z",
+      updated_at: "2026-01-01T03:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/materials/pdf-1",
+      {
+        method: "DELETE",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+
+    expect(res.status).toBe(409);
+    expect(env.getMaterials().map((m) => m.id).sort()).toEqual([
+      "figure-1",
+      "pdf-1",
+    ]);
+    expect(env.getR2Keys().sort()).toEqual([figureKey, pdfKey].sort());
+  });
+
   it("deletes pdf parent and unreferenced figure children plus R2", async () => {
     const env = createTestEnv();
     env.seedUser({
