@@ -22,4 +22,17 @@ describe("resolveEditorType (hub allowedTypes)", () => {
     expect(resolved.typeSelectLocked).toBe(false);
     expect(resolved.typeValue).toBe("qa");
   });
+
+  it("leaves occlusion unlocked when allowed", () => {
+    const accountDiy: CardType[] = [
+      "qa",
+      "cloze",
+      "mcq",
+      "occlusion",
+      "image_label",
+    ];
+    const resolved = resolveEditorType("occlusion", accountDiy);
+    expect(resolved.typeSelectLocked).toBe(false);
+    expect(resolved.typeValue).toBe("occlusion");
+  });
 });

@@ -7,10 +7,11 @@ type CardBody = {
   id: string;
   deck_id: string;
   type: string;
-  front: string;
-  back: string;
+  front: string | Record<string, unknown>;
+  back: string | { answer: string };
   status: string;
   options?: string[];
+  media_r2_keys?: string[];
 };
 
 function seedOwner(env: ReturnType<typeof createTestEnv>) {
@@ -255,6 +256,159 @@ describe("POST /api/decks/:id/cards", () => {
     );
 
     expect(res.status).toBe(404);
+  });
+
+  it("creates an accepted occlusion card with media and schedule", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const imageKey = "materials/deck-a/slide.png";
+    env.seedMaterial({
+      id: "mat-img",
+      deck_id: "deck-a",
+      kind: "image",
+      r2_key: imageKey,
+      filename: "slide.png",
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    const occlusionFront = {
+      image_key: imageKey,
+      regions: [
+        {
+          id: "r1",
+          x: 0.1,
+          y: 0.2,
+          w: 0.3,
+          h: 0.25,
+          label: "Femur head",
+        },
+      ],
+      mode: "hide_one" as const,
+    };
+
+    const res = await app.request(
+      "/api/decks/deck-a/cards",
+      {
+        method: "POST",
+        headers: authHeaders({ "content-type": "application/json" }),
+        body: JSON.stringify({
+          type: "occlusion",
+          front: occlusionFront,
+          back: { answer: "Femur head" },
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as CardBody;
+    expect(body).toMatchObject({
+      deck_id: "deck-a",
+      type: "occlusion",
+      front: occlusionFront,
+      back: { answer: "Femur head" },
+      status: "accepted",
+      media_r2_keys: [imageKey],
+    });
+    expect(env.getSchedules().some((s) => s.card_id === body.id)).toBe(true);
+  });
+
+  it("creates an accepted image_label card with media_r2_keys", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const imageKey = "materials/deck-a/diagram.png";
+    env.seedMaterial({
+      id: "mat-diag",
+      deck_id: "deck-a",
+      kind: "image",
+      r2_key: imageKey,
+      filename: "diagram.png",
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/decks/deck-a/cards",
+      {
+        method: "POST",
+        headers: authHeaders({ "content-type": "application/json" }),
+        body: JSON.stringify({
+          type: "image_label",
+          front: "Name the labelled structure",
+          back: "Femur",
+          media_r2_keys: [imageKey],
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as CardBody;
+    expect(body).toMatchObject({
+      type: "image_label",
+      front: "Name the labelled structure",
+      back: "Femur",
+      status: "accepted",
+      media_r2_keys: [imageKey],
+    });
+    expect(env.getSchedules().some((s) => s.card_id === body.id)).toBe(true);
+  });
+
+  it("rejects occlusion when image_key is not deck material", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+
+    const res = await app.request(
+      "/api/decks/deck-a/cards",
+      {
+        method: "POST",
+        headers: authHeaders({ "content-type": "application/json" }),
+        body: JSON.stringify({
+          type: "occlusion",
+          front: {
+            image_key: "materials/other-deck/stolen.png",
+            regions: [
+              {
+                id: "r1",
+                x: 0.1,
+                y: 0.1,
+                w: 0.2,
+                h: 0.2,
+                label: "X",
+              },
+            ],
+            mode: "hide_one",
+          },
+          back: { answer: "X" },
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects image_label without media_r2_keys", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+
+    const res = await app.request(
+      "/api/decks/deck-a/cards",
+      {
+        method: "POST",
+        headers: authHeaders({ "content-type": "application/json" }),
+        body: JSON.stringify({
+          type: "image_label",
+          front: "Label",
+          back: "Answer",
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(400);
   });
 });
 

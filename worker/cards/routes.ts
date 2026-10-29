@@ -560,9 +560,9 @@ cardRoutes.post("/:id/move", async (c) => {
   const db = getDb(c.env);
   const row = await requireOwnedCard(db, cardId, userId);
 
-  if (row.status !== "accepted") {
+  if (row.status !== "accepted" && row.status !== "archived") {
     throw new HTTPException(400, {
-      message: "Only accepted cards can be moved",
+      message: "Only accepted or archived cards can be moved",
     });
   }
 
@@ -702,6 +702,66 @@ cardRoutes.post("/:id/regen", async (c) => {
       media_r2_keys_json: null,
       updated_at: updatedAt,
     }),
+  );
+});
+
+cardRoutes.post("/:id/archive", async (c) => {
+  const userId = await requireUser(c);
+  const cardId = c.req.param("id");
+  const db = getDb(c.env);
+  const row = await requireOwnedCard(db, cardId, userId);
+
+  if (row.status !== "accepted") {
+    throw new HTTPException(400, {
+      message: "Only accepted cards can be archived",
+    });
+  }
+
+  const updatedAt = new Date().toISOString();
+  const result = await db
+    .prepare(
+      `UPDATE cards SET status = ?, updated_at = ? WHERE id = ? AND status = ?`,
+    )
+    .bind("archived", updatedAt, cardId, "accepted")
+    .run();
+  if (!result.meta.changes) {
+    throw new HTTPException(400, {
+      message: "Only accepted cards can be archived",
+    });
+  }
+
+  return c.json(
+    serializeCard({ ...row, status: "archived", updated_at: updatedAt }),
+  );
+});
+
+cardRoutes.post("/:id/restore", async (c) => {
+  const userId = await requireUser(c);
+  const cardId = c.req.param("id");
+  const db = getDb(c.env);
+  const row = await requireOwnedCard(db, cardId, userId);
+
+  if (row.status !== "archived") {
+    throw new HTTPException(400, {
+      message: "Only archived cards can be restored",
+    });
+  }
+
+  const updatedAt = new Date().toISOString();
+  const result = await db
+    .prepare(
+      `UPDATE cards SET status = ?, updated_at = ? WHERE id = ? AND status = ?`,
+    )
+    .bind("accepted", updatedAt, cardId, "archived")
+    .run();
+  if (!result.meta.changes) {
+    throw new HTTPException(400, {
+      message: "Only archived cards can be restored",
+    });
+  }
+
+  return c.json(
+    serializeCard({ ...row, status: "accepted", updated_at: updatedAt }),
   );
 });
 

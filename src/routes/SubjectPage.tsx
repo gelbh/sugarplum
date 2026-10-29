@@ -475,7 +475,7 @@ export default function SubjectPage({ subjectId }: Props) {
         <DialogContent>
           <DialogContentText>
             {deleteTarget && deleteStats
-              ? `Delete “${deleteTarget.title}”? This removes ${deleteStats.accepted} accepted card${deleteStats.accepted === 1 ? "" : "s"}, ${deleteStats.draft} draft${deleteStats.draft === 1 ? "" : "s"}, and ${deleteStats.materials} material${deleteStats.materials === 1 ? "" : "s"}.`
+              ? `Delete “${deleteTarget.title}”? This removes ${deleteStats.accepted} accepted card${deleteStats.accepted === 1 ? "" : "s"}, ${deleteStats.draft} draft${deleteStats.draft === 1 ? "" : "s"}, ${deleteStats.archived} archived card${deleteStats.archived === 1 ? "" : "s"}, and ${deleteStats.materials} material${deleteStats.materials === 1 ? "" : "s"}.`
               : deleteTarget
                 ? `Loading counts for “${deleteTarget.title}”…`
                 : ""}

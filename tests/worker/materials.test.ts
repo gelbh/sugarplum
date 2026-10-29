@@ -398,6 +398,41 @@ describe("material complete", () => {
     expect(env.getQueueMessages()).toHaveLength(1);
   });
 
+  it("completes attachOnly uploads without enqueueing generation", async () => {
+    const env = createTestEnv();
+    seedUploadingPdf(env);
+    env.seedMaterial({
+      id: "mat-img",
+      deck_id: "deck-a",
+      kind: "image",
+      r2_key: "materials/deck-a/mat-img.png",
+      filename: "diagram.png",
+      page_count: null,
+      status: "uploading",
+      created_at: "2026-01-02T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/materials/mat-img/complete",
+      {
+        method: "POST",
+        headers: {
+          cookie: `${SESSION_COOKIE}=sess-a`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ attachOnly: true }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(200);
+    expect((await res.json()) as { jobId: string | null }).toMatchObject({
+      jobId: null,
+    });
+    expect(env.getGenerationJobs()).toHaveLength(0);
+    expect(env.getQueueMessages()).toHaveLength(0);
+  });
+
   it("rejects unknown figureExtractMode with 400", async () => {
     const env = createTestEnv();
     seedUploadingPdf(env);

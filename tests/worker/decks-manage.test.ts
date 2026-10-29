@@ -263,7 +263,7 @@ describe("PATCH /api/decks/:id", () => {
 });
 
 describe("GET /api/decks/:id/stats", () => {
-  it("returns accepted, draft, and materials counts", async () => {
+  it("returns accepted, draft, archived, and materials counts", async () => {
     const env = createTestEnv();
     seedOwner(env);
     env.seedSubject({
@@ -306,6 +306,19 @@ describe("GET /api/decks/:id/stats", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       updated_at: "2026-01-01T00:00:00.000Z",
     });
+    env.seedCard({
+      id: "c-arch",
+      deck_id: "deck-1",
+      job_id: null,
+      type: "qa",
+      front_json: '"Q3"',
+      back_json: '"A3"',
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "archived",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
     env.seedMaterial({
       id: "mat-1",
       deck_id: "deck-1",
@@ -327,6 +340,7 @@ describe("GET /api/decks/:id/stats", () => {
     expect(await res.json()).toEqual({
       accepted: 1,
       draft: 1,
+      archived: 1,
       materials: 1,
     });
   });
