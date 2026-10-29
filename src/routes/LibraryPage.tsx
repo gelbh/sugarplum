@@ -82,7 +82,7 @@ export default function LibraryPage() {
   const [showCreateFlow, setShowCreateFlow] = useState(false);
   const createFlowSeededRef = useRef(false);
   const [selectMode, setSelectMode] = useState(false);
-  const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([]);
+  /** Selection is deck ids only; subject checkbox toggles all decks in that subject. */
   const [selectedDeckIds, setSelectedDeckIds] = useState<string[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   const [exportWarning, setExportWarning] = useState<string | null>(null);
@@ -275,16 +275,7 @@ export default function LibraryPage() {
 
   function exitSelectMode() {
     setSelectMode(false);
-    setSelectedSubjectIds([]);
     setSelectedDeckIds([]);
-  }
-
-  function toggleSubjectSelected(subjectId: string) {
-    setSelectedSubjectIds((prev) =>
-      prev.includes(subjectId)
-        ? prev.filter((id) => id !== subjectId)
-        : [...prev, subjectId],
-    );
   }
 
   function toggleDeckSelected(deckId: string) {
@@ -295,11 +286,26 @@ export default function LibraryPage() {
     );
   }
 
+  function toggleSubjectDecks(subjectId: string) {
+    const childIds = decks
+      .filter((d) => d.subject_id === subjectId)
+      .map((d) => d.id);
+    if (childIds.length === 0) return;
+    setSelectedDeckIds((prev) => {
+      const selected = new Set(prev);
+      const allOn = childIds.every((id) => selected.has(id));
+      if (allOn) {
+        for (const id of childIds) selected.delete(id);
+      } else {
+        for (const id of childIds) selected.add(id);
+      }
+      return [...selected];
+    });
+  }
+
   async function onExportSelected() {
     if (guest) return;
-    if (selectedSubjectIds.length === 0 && selectedDeckIds.length === 0) {
-      return;
-    }
+    if (selectedDeckIds.length === 0) return;
     setError(null);
     setNotice(null);
     setExportWarning(null);
@@ -308,7 +314,7 @@ export default function LibraryPage() {
         const warnings = await runAnkiExportDownload(
           () =>
             createSelectionExport({
-              subjectIds: selectedSubjectIds,
+              subjectIds: [],
               deckIds: selectedDeckIds,
             }),
           apkgFilenameForDeckTitle("Sugarplum export"),
@@ -326,9 +332,9 @@ export default function LibraryPage() {
     }
   }
 
-  const selectionCount = selectedSubjectIds.length + selectedDeckIds.length;
+  const selectedDeckIdSet = new Set(selectedDeckIds);
+  const selectionCount = selectedDeckIds.length;
   const orphanDecks = decks.filter((d) => d.subject_id == null);
-
   return (
     <Container maxWidth="sm" sx={{ py: { xs: 4, md: 5 } }}>
       {!ready ? (
@@ -346,7 +352,7 @@ export default function LibraryPage() {
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {selectMode
-                ? "Select subjects and decks to export."
+                ? "Select decks to export (subject checkbox selects all decks in that subject)."
                 : "Pick a subject, or add material to make cards."}
             </Typography>
           </Box>
@@ -524,7 +530,14 @@ export default function LibraryPage() {
                   const deckCount = effectiveSubjectDeckCount(s, localCount);
                   const deleteBlocked = subjectDeleteBlocked(s, localCount);
                   const subjectDecks = decks.filter((d) => d.subject_id === s.id);
-                  const subjectSelected = selectedSubjectIds.includes(s.id);
+                  const selectedChildCount = subjectDecks.filter((d) =>
+                    selectedDeckIdSet.has(d.id),
+                  ).length;
+                  const subjectFullySelected =
+                    subjectDecks.length > 0 &&
+                    selectedChildCount === subjectDecks.length;
+                  const subjectPartiallySelected =
+                    selectedChildCount > 0 && !subjectFullySelected;
                   return (
                     <Box component="li" key={s.id} sx={{ py: 1 }}>
                       <Box
@@ -540,10 +553,12 @@ export default function LibraryPage() {
                         {selectMode ? (
                           <Checkbox
                             size="small"
-                            checked={subjectSelected}
-                            onChange={() => toggleSubjectSelected(s.id)}
+                            checked={subjectFullySelected}
+                            indeterminate={subjectPartiallySelected}
+                            disabled={subjectDecks.length === 0}
+                            onChange={() => toggleSubjectDecks(s.id)}
                             inputProps={{
-                              "aria-label": `Select subject ${s.title}`,
+                              "aria-label": `Select all decks in ${s.title}`,
                             }}
                           />
                         ) : null}
@@ -552,12 +567,12 @@ export default function LibraryPage() {
                           tabIndex={0}
                           aria-label={
                             selectMode
-                              ? `Select subject ${s.title}`
+                              ? `Select all decks in ${s.title}`
                               : `Open subject ${s.title}`
                           }
                           onClick={() => {
                             if (selectMode) {
-                              toggleSubjectSelected(s.id);
+                              toggleSubjectDecks(s.id);
                               return;
                             }
                             openSubject(s.id);
@@ -566,7 +581,7 @@ export default function LibraryPage() {
                             if (ev.key === "Enter" || ev.key === " ") {
                               ev.preventDefault();
                               if (selectMode) {
-                                toggleSubjectSelected(s.id);
+                                toggleSubjectDecks(s.id);
                                 return;
                               }
                               openSubject(s.id);
@@ -666,7 +681,7 @@ export default function LibraryPage() {
                             >
                               <Checkbox
                                 size="small"
-                                checked={selectedDeckIds.includes(deck.id)}
+                                checked={selectedDeckIdSet.has(deck.id)}
                                 onChange={() => toggleDeckSelected(deck.id)}
                                 inputProps={{
                                   "aria-label": `Select deck ${deck.title}`,
@@ -707,7 +722,7 @@ export default function LibraryPage() {
                     >
                       <Checkbox
                         size="small"
-                        checked={selectedDeckIds.includes(deck.id)}
+                        checked={selectedDeckIdSet.has(deck.id)}
                         onChange={() => toggleDeckSelected(deck.id)}
                         inputProps={{
                           "aria-label": `Select deck ${deck.title}`,

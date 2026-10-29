@@ -168,7 +168,11 @@ export async function loadDeckCards(
   }
 
   return {
-    deckName: ankiDeckName(subject?.title ?? "Uncategorized", deck.title),
+    deckName: ankiDeckName(
+      subject?.title ?? "Uncategorized",
+      deck.title,
+      deck.id,
+    ),
     entries,
     warnings,
   };
