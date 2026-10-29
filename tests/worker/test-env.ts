@@ -156,6 +156,7 @@ export type TestEnv = Env & {
 
 export function createTestEnv(opts?: {
   secretsWrapKey?: string | null;
+  adminEmails?: string;
 }): TestEnv {
   const users = new Map<string, UserRow>();
   const subjects = new Map<string, SubjectRow>();
@@ -266,6 +267,10 @@ export function createTestEnv(opts?: {
         if (normalized.startsWith("SELECT id, email FROM users WHERE id =")) {
           const u = users.get(bound[0] as string);
           return u ? ({ id: u.id, email: u.email } as T) : null;
+        }
+        if (normalized.startsWith("SELECT email FROM users WHERE id =")) {
+          const u = users.get(bound[0] as string);
+          return u ? ({ email: u.email } as T) : null;
         }
         if (
           normalized.startsWith("SELECT id FROM subjects WHERE user_id =") &&
@@ -2236,6 +2241,7 @@ export function createTestEnv(opts?: {
     R2_SECRET_ACCESS_KEY: "test-secret-key",
     GOOGLE_CLIENT_ID: "test-google-client-id",
     GOOGLE_CLIENT_SECRET: "test-google-client-secret",
+    ADMIN_EMAILS: opts?.adminEmails,
     seedUser(row) {
       users.set(row.id, row);
     },
