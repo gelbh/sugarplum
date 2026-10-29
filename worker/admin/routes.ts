@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import type { AuthVariables } from "../auth/session";
 import { getDb } from "../db/client";
@@ -16,6 +17,16 @@ export type AdminUserListItem = {
   jobCount: number;
 };
 
+export type AdminUserDetail = {
+  id: string;
+  email: string;
+  created_at: string;
+  google_linked: boolean;
+  counts: { decks: number; cards: number; jobs: number; materials: number };
+  recentJobs: { id: string; status: string; created_at: string }[];
+  recentStudyDays: { day: string; intros_used: number }[];
+};
+
 export const adminRoutes = new Hono<AppEnv>();
 
 const LIST_USERS_SQL = `
@@ -29,6 +40,38 @@ SELECT u.id, u.email, u.created_at, u.oauth_subject,
 FROM users u
 WHERE (? = '' OR lower(u.email) LIKE '%' || lower(?) || '%')
 ORDER BY u.created_at DESC
+LIMIT ?
+`.replace(/\s+/g, " ");
+
+const USER_DETAIL_SQL = `
+SELECT u.id, u.email, u.created_at, u.oauth_subject,
+  (SELECT COUNT(*) FROM decks d WHERE d.user_id = u.id) AS deck_count,
+  (SELECT COUNT(*) FROM cards c
+     INNER JOIN decks d ON d.id = c.deck_id WHERE d.user_id = u.id) AS card_count,
+  (SELECT COUNT(*) FROM generation_jobs j
+     INNER JOIN materials m ON m.id = j.material_id
+     INNER JOIN decks d ON d.id = m.deck_id WHERE d.user_id = u.id) AS job_count,
+  (SELECT COUNT(*) FROM materials m
+     INNER JOIN decks d ON d.id = m.deck_id WHERE d.user_id = u.id) AS material_count
+FROM users u
+WHERE u.id = ?
+`.replace(/\s+/g, " ");
+
+const RECENT_JOBS_SQL = `
+SELECT j.id, j.status, j.created_at
+FROM generation_jobs j
+INNER JOIN materials m ON m.id = j.material_id
+INNER JOIN decks d ON d.id = m.deck_id
+WHERE d.user_id = ?
+ORDER BY j.created_at DESC
+LIMIT ?
+`.replace(/\s+/g, " ");
+
+const RECENT_STUDY_DAYS_SQL = `
+SELECT day, intros_used
+FROM user_study_day
+WHERE user_id = ?
+ORDER BY day DESC
 LIMIT ?
 `.replace(/\s+/g, " ");
 
@@ -89,4 +132,48 @@ adminRoutes.get("/users", async (c) => {
     jobCount: row.job_count,
   }));
   return c.json({ users });
+});
+
+adminRoutes.get("/users/:id", async (c) => {
+  await requireAdmin(c);
+  const id = c.req.param("id");
+  const db = getDb(c.env);
+  const row = await db.prepare(USER_DETAIL_SQL).bind(id).first<{
+    id: string;
+    email: string;
+    created_at: string;
+    oauth_subject: string | null;
+    deck_count: number;
+    card_count: number;
+    job_count: number;
+    material_count: number;
+  }>();
+  if (!row) throw new HTTPException(404, { message: "User not found" });
+
+  const [{ results: jobRows }, { results: studyRows }] = await Promise.all([
+    db
+      .prepare(RECENT_JOBS_SQL)
+      .bind(id, 20)
+      .all<{ id: string; status: string; created_at: string }>(),
+    db
+      .prepare(RECENT_STUDY_DAYS_SQL)
+      .bind(id, 14)
+      .all<{ day: string; intros_used: number }>(),
+  ]);
+
+  const detail: AdminUserDetail = {
+    id: row.id,
+    email: row.email,
+    created_at: row.created_at,
+    google_linked: row.oauth_subject != null,
+    counts: {
+      decks: row.deck_count,
+      cards: row.card_count,
+      jobs: row.job_count,
+      materials: row.material_count,
+    },
+    recentJobs: jobRows ?? [],
+    recentStudyDays: studyRows ?? [],
+  };
+  return c.json(detail);
 });

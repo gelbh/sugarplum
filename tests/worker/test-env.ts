@@ -151,6 +151,7 @@ export type TestEnv = Env & {
   seedSession: (id: string, userId: string, ttlMs?: number) => void;
   seedUserSecret: (row: UserSecretRow) => void;
   seedUserStudyPrefs: (row: UserStudyPrefsRow) => void;
+  seedUserStudyDay: (row: UserStudyDayRow) => void;
   seedCard: (row: CardRow) => void;
   seedGenerationJob: (row: GenerationJobRow) => void;
   seedSchedule: (row: ScheduleRow) => void;
@@ -478,7 +479,7 @@ export function createTestEnv(opts?: {
         if (
           normalized.includes("FROM materials m") &&
           normalized.includes("INNER JOIN decks d") &&
-          normalized.includes("m.id =") &&
+          normalized.includes("WHERE m.id =") &&
           normalized.includes("d.user_id =")
         ) {
           const material = materials.get(bound[0] as string);
@@ -713,9 +714,95 @@ export function createTestEnv(opts?: {
             created_last_7d: createdLast7d,
           } as T;
         }
+        if (
+          normalized.includes("FROM users u") &&
+          normalized.includes("WHERE u.id =") &&
+          normalized.includes("AS material_count")
+        ) {
+          const userId = bound[0] as string;
+          const u = users.get(userId);
+          if (!u) return null;
+          const userDeckIds = new Set(
+            [...decks.values()]
+              .filter((d) => d.user_id === u.id)
+              .map((d) => d.id),
+          );
+          const deck_count = userDeckIds.size;
+          const card_count = [...cards.values()].filter((c) =>
+            userDeckIds.has(c.deck_id),
+          ).length;
+          const job_count = [...generationJobs.values()].filter((j) => {
+            const material = materials.get(j.material_id);
+            if (!material) return false;
+            return userDeckIds.has(material.deck_id);
+          }).length;
+          const material_count = [...materials.values()].filter((m) =>
+            userDeckIds.has(m.deck_id),
+          ).length;
+          return {
+            id: u.id,
+            email: u.email,
+            created_at: u.created_at,
+            oauth_subject: u.oauth_subject,
+            deck_count,
+            card_count,
+            job_count,
+            material_count,
+          } as T;
+        }
         return null;
       },
       async all<T>(): Promise<{ results: T[] }> {
+        if (
+          normalized.includes("SELECT j.id, j.status, j.created_at") &&
+          normalized.includes("FROM generation_jobs j") &&
+          normalized.includes("INNER JOIN materials m") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("d.user_id =") &&
+          normalized.includes("ORDER BY j.created_at DESC") &&
+          normalized.includes("LIMIT ?")
+        ) {
+          const userId = bound[0] as string;
+          const limitRaw = bound[1] as number | undefined;
+          const limit =
+            typeof limitRaw === "number" && Number.isFinite(limitRaw)
+              ? limitRaw
+              : 20;
+          const rows = [...generationJobs.values()]
+            .map((job) => {
+              const material = materials.get(job.material_id);
+              if (!material) return null;
+              const deck = decks.get(material.deck_id);
+              if (!deck || deck.user_id !== userId) return null;
+              return {
+                id: job.id,
+                status: job.status,
+                created_at: job.created_at,
+              };
+            })
+            .filter((row): row is NonNullable<typeof row> => row != null)
+            .sort((a, b) => b.created_at.localeCompare(a.created_at))
+            .slice(0, limit);
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM user_study_day") &&
+          normalized.includes("WHERE user_id =") &&
+          normalized.includes("ORDER BY day DESC")
+        ) {
+          const userId = bound[0] as string;
+          const limitRaw = bound[1] as number | undefined;
+          const limit =
+            typeof limitRaw === "number" && Number.isFinite(limitRaw)
+              ? limitRaw
+              : 14;
+          const rows = [...userStudyDay.values()]
+            .filter((row) => row.user_id === userId)
+            .sort((a, b) => b.day.localeCompare(a.day))
+            .slice(0, limit)
+            .map((row) => ({ day: row.day, intros_used: row.intros_used }));
+          return { results: rows as T[] };
+        }
         if (
           normalized.includes("FROM users u") &&
           normalized.includes("AS deck_count") &&
@@ -2350,6 +2437,9 @@ export function createTestEnv(opts?: {
     },
     seedUserStudyPrefs(row) {
       userStudyPrefs.set(row.user_id, row);
+    },
+    seedUserStudyDay(row) {
+      userStudyDay.set(`${row.user_id}\0${row.day}`, row);
     },
     seedCard(row) {
       cards.set(row.id, row);

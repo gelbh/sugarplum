@@ -20,6 +20,7 @@ import {
   type AdminOverview,
   type AdminUserListItem,
 } from "../api/client";
+import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -197,7 +198,16 @@ export default function AdminPage() {
                       </TableRow>
                     ) : (
                       users.map((user) => (
-                        <TableRow key={user.id} hover>
+                        <TableRow
+                          key={user.id}
+                          hover
+                          sx={{ cursor: "pointer" }}
+                          onClick={() =>
+                            navigate(
+                              `/admin/users/${encodeURIComponent(user.id)}`,
+                            )
+                          }
+                        >
                           <TableCell>{user.email}</TableCell>
                           <TableCell>{formatCreated(user.created_at)}</TableCell>
                           <TableCell align="center">

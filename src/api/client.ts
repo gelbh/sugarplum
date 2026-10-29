@@ -182,6 +182,20 @@ export function adminListUsers(q?: string, limit?: number) {
   );
 }
 
+export type AdminUserDetail = {
+  id: string;
+  email: string;
+  created_at: string;
+  google_linked: boolean;
+  counts: { decks: number; cards: number; jobs: number; materials: number };
+  recentJobs: { id: string; status: string; created_at: string }[];
+  recentStudyDays: { day: string; intros_used: number }[];
+};
+
+export function adminGetUser(id: string) {
+  return api<AdminUserDetail>(`/api/admin/users/${encodeURIComponent(id)}`);
+}
+
 export type Subject = {
   id: string;
   title: string;
