@@ -802,6 +802,13 @@ export function createTestEnv(opts?: {
           return row ? ({ intros_used: row.intros_used } as T) : null;
         }
         if (
+          normalized.includes("FROM card_schedules") &&
+          normalized.includes("WHERE card_id =")
+        ) {
+          const schedule = schedules.get(bound[0] as string);
+          return schedule ? (schedule as T) : null;
+        }
+        if (
           normalized.includes("FROM cards c") &&
           normalized.includes("INNER JOIN decks d") &&
           normalized.includes("c.id =") &&

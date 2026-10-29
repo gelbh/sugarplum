@@ -19,6 +19,7 @@ import {
 import { recordRegenUsageEvent } from "../generation/usage";
 import { requireOwnedDeck } from "../materials/routes";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
+import { onCardAccepted } from "../gamification/onStudyEvent";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -314,11 +315,20 @@ jobDraftRoutes.post("/:id/drafts/accept-all", async (c) => {
 
   let accepted = 0;
   let failed = 0;
+  const unlocks: string[] = [];
   for (const row of results ?? []) {
     try {
       const outcome = await acceptDraftCard(db, row);
-      if (outcome === "accepted") accepted += 1;
-      else failed += 1;
+      if (outcome === "accepted") {
+        accepted += 1;
+        const cardUnlocks = await onCardAccepted(db, userId, {
+          cardId: row.id,
+          cardType: row.type,
+        });
+        for (const id of cardUnlocks) {
+          if (!unlocks.includes(id)) unlocks.push(id);
+        }
+      } else failed += 1;
     } catch (err) {
       // Schedule race or D1 abort: count as failed, keep accepting the rest.
       console.error("accept-all failed for card", row.id, err);
@@ -331,7 +341,7 @@ jobDraftRoutes.post("/:id/drafts/accept-all", async (c) => {
       ? await rejectOwnedSiblingDrafts(db, { userId, excludeJobId: jobId })
       : 0;
 
-  return c.json({ accepted, failed, rejectedSiblingCount });
+  return c.json({ accepted, failed, rejectedSiblingCount, unlocks });
 });
 
 cardRoutes.patch("/:id", async (c) => {
@@ -516,9 +526,14 @@ cardRoutes.post("/:id/accept", async (c) => {
   }
 
   const updatedAt = new Date().toISOString();
-  return c.json(
-    serializeCard({ ...row, status: "accepted", updated_at: updatedAt }),
-  );
+  const unlocks = await onCardAccepted(db, userId, {
+    cardId: row.id,
+    cardType: row.type,
+  });
+  return c.json({
+    ...serializeCard({ ...row, status: "accepted", updated_at: updatedAt }),
+    unlocks,
+  });
 });
 
 cardRoutes.post("/:id/reject", async (c) => {
