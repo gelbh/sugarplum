@@ -204,15 +204,13 @@ async function generateTextDraftsWithCompactRetry(
   completeOnce: (system: string, user: string) => Promise<CompleteResult>,
   extraUserSuffix = "",
 ): Promise<CardDraft[]> {
-  const withSuffix = (prompt: string) =>
-    appendExtraUserSuffix(prompt, extraUserSuffix);
   return withCompactTruncationRetry(
     async () =>
       parseCardsPayload(
         (
           await completeOnce(
             GENERATE_SYSTEM_PROMPT,
-            withSuffix(userPromptForJson(text)),
+            appendExtraUserSuffix(userPromptForJson(text), extraUserSuffix),
           )
         ).text,
       ),
@@ -221,7 +219,10 @@ async function generateTextDraftsWithCompactRetry(
         (
           await completeOnce(
             GENERATE_COMPACT_SYSTEM_PROMPT,
-            withSuffix(generateCompactUserPrompt(text)),
+            appendExtraUserSuffix(
+              generateCompactUserPrompt(text),
+              extraUserSuffix,
+            ),
           )
         ).text,
       ),

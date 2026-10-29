@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import {
-  appendAvoidPatternsSuffix,
   appendExtraUserSuffix,
   avoidPatternsPromptSuffix,
   buildAvoidPatternsFromRejectedFronts,
@@ -60,19 +59,6 @@ describe("avoidPatternsPromptSuffix", () => {
     expect(suffix.toLowerCase()).toContain("bad stem");
     expect(suffix.toLowerCase()).toMatch(/avoid/);
     expect(suffix.toLowerCase()).toMatch(/do not invent/);
-  });
-});
-
-describe("appendAvoidPatternsSuffix", () => {
-  it("is a no-op when patterns are empty", () => {
-    expect(appendAvoidPatternsSuffix("base prompt", [])).toBe("base prompt");
-  });
-
-  it("appends the avoid suffix after the prompt", () => {
-    const prompt = appendAvoidPatternsSuffix("base prompt", ["bad stem"]);
-    expect(prompt.startsWith("base prompt")).toBe(true);
-    expect(prompt.toLowerCase()).toContain("bad stem");
-    expect(prompt.toLowerCase()).toMatch(/avoid/);
   });
 });
 

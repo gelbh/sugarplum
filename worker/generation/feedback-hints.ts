@@ -1,7 +1,11 @@
-import { topicHintsPromptSuffix } from "./prompts";
-
 const MAX_PATTERN_LEN = 80;
 const MAX_PATTERNS = 8;
+
+/** Optional generate-prompt suffix when the job has topic hints. */
+export function topicHintsPromptSuffix(hints: string[]): string {
+  if (hints.length === 0) return "";
+  return `You must attempt cards covering each of these topics if grounded in the material; do not invent ungrounded facts: ${hints.join("; ")}.`;
+}
 
 /** Build capped avoid-pattern stems from rejected card fronts. */
 export function buildAvoidPatternsFromRejectedFronts(
@@ -30,15 +34,6 @@ export function buildAvoidPatternsFromRejectedFronts(
 export function avoidPatternsPromptSuffix(patterns: string[]): string {
   if (patterns.length === 0) return "";
   return `Avoid near-duplicates of these rejected stems; do not invent ungrounded facts: ${patterns.join("; ")}.`;
-}
-
-/** Append avoid-patterns instruction when patterns are present. */
-export function appendAvoidPatternsSuffix(
-  prompt: string,
-  patterns: string[],
-): string {
-  const suffix = avoidPatternsPromptSuffix(patterns);
-  return suffix ? `${prompt}\n\n${suffix}` : prompt;
 }
 
 /** Compact clarity/atomicity nudge when the card has recent Again or lapses. */

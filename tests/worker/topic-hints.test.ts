@@ -8,12 +8,12 @@ import {
   mockLlmAdapter,
   type LlmAdapter,
 } from "../../worker/generation/llm";
-import { buildExtraUserSuffix } from "../../worker/generation/feedback-hints";
 import {
-  appendTopicHintsSuffix,
-  generateUserPrompt,
+  appendExtraUserSuffix,
+  buildExtraUserSuffix,
   topicHintsPromptSuffix,
-} from "../../worker/generation/prompts";
+} from "../../worker/generation/feedback-hints";
+import { generateUserPrompt } from "../../worker/generation/prompts";
 import { createTestEnv } from "./test-env";
 
 function seedPasteOwner(env: ReturnType<typeof createTestEnv>) {
@@ -117,9 +117,9 @@ describe("topicHints prompt suffix", () => {
   });
 
   it("built generate user prompt includes the hint phrase", () => {
-    const prompt = appendTopicHintsSuffix(
+    const prompt = appendExtraUserSuffix(
       generateUserPrompt("brainstem notes"),
-      ["cranial nerves"],
+      buildExtraUserSuffix({ topicHints: ["cranial nerves"] }),
     );
     expect(prompt.toLowerCase()).toContain("cranial nerves");
     expect(prompt.toLowerCase()).toMatch(/must attempt/);

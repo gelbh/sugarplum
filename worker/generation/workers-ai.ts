@@ -250,13 +250,12 @@ export function createWorkersAiAdapter(
 
       // One compact retry: live monoxenous failures end mid-first-card with
       // nothing to salvage; a smaller ask often completes within budget.
-      const withSuffix = (prompt: string) =>
-        appendExtraUserSuffix(prompt, input.extraUserSuffix ?? "");
+      const suffix = input.extraUserSuffix ?? "";
       return withCompactTruncationRetry(
         async () => {
           const run = await runChat(
             GENERATE_SYSTEM_PROMPT,
-            withSuffix(userPromptForJson(input.text)),
+            appendExtraUserSuffix(userPromptForJson(input.text), suffix),
           );
           reportUsage(run);
           return parseOrThrow(run);
@@ -264,7 +263,10 @@ export function createWorkersAiAdapter(
         async () => {
           const run = await runChat(
             GENERATE_COMPACT_SYSTEM_PROMPT,
-            withSuffix(generateCompactUserPrompt(input.text)),
+            appendExtraUserSuffix(
+              generateCompactUserPrompt(input.text),
+              suffix,
+            ),
           );
           reportUsage(run);
           return parseOrThrow(run);
