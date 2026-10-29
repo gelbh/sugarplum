@@ -109,7 +109,9 @@ function AppShellChrome({ children }: AppShellProps) {
       sx={{
         display: "flex",
         flexDirection: "column",
-        minHeight: "100vh",
+        height: "100dvh",
+        maxHeight: "100dvh",
+        overflow: "hidden",
         bgcolor: "background.default",
         ...(showMobileChrome
           ? {
@@ -270,6 +272,9 @@ function AppShellChrome({ children }: AppShellProps) {
         sx={{
           flex: 1,
           minWidth: 0,
+          minHeight: 0,
+          overflowY: "auto",
+          overscrollBehavior: "contain",
           bgcolor: "background.default",
           ...(showDrawer
             ? {

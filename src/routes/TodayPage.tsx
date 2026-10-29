@@ -170,7 +170,6 @@ export default function TodayPage() {
       maxWidth="sm"
       sx={{
         py: { xs: 6, md: 8 },
-        minHeight: { md: "calc(100vh - 32px)" },
         display: "flex",
         flexDirection: "column",
         justifyContent: {
