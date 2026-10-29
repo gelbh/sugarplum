@@ -212,6 +212,7 @@ export function buildGuestStruggling(
     candidates.push({
       id: card.id,
       deck_id: card.deck_id,
+      type: String(card.type),
       front_json: frontJsonFor(card),
       lapses: sched?.lapses ?? 0,
       again_14d: tallies.again_14d,

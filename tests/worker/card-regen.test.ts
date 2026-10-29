@@ -3,7 +3,9 @@ import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import {
   capRegenSourceText,
+  regenerateOneUserPrompt,
 } from "../../worker/generation/card-regen";
+import { studyStrugglePromptSuffix } from "../../worker/generation/feedback-hints";
 import { CHUNK_CHAR_LIMIT } from "../../worker/generation/pipeline";
 import {
   FREE_GEN_DAILY_CAP,
@@ -477,5 +479,103 @@ describe("POST /api/cards/:id/regen", () => {
     expect(env.getSchedules()).toHaveLength(1);
     expect(env.getSchedules()[0]!.due).toBe(due);
     expect(env.getSchedules()[0]!.reps).toBe(2);
+  });
+
+  it("includes study struggle text in the regen prompt when again/lapses > 0", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedGenerationJob({
+      id: "job-struggle",
+      material_id: "mat-a",
+      status: "needs_review",
+      error: null,
+      coverage_json: null,
+      created_at: "2026-01-01T01:00:00.000Z",
+      finished_at: "2026-01-01T01:05:00.000Z",
+    });
+    env.seedCard({
+      id: "c-struggle",
+      deck_id: "deck-a",
+      job_id: "job-struggle",
+      type: "qa",
+      front_json: JSON.stringify("Struggle Q?"),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "ex" }),
+      status: "accepted",
+      created_at: "2026-01-01T01:06:00.000Z",
+      updated_at: "2026-01-01T01:06:00.000Z",
+    });
+    env.seedSchedule({
+      card_id: "c-struggle",
+      due: "2026-03-15T12:00:00.000Z",
+      stability: 2.5,
+      difficulty: 5,
+      elapsed_days: 1,
+      scheduled_days: 3,
+      learning_steps: 0,
+      reps: 2,
+      lapses: 2,
+      state: 2,
+      last_review: "2026-03-12T12:00:00.000Z",
+    });
+    env.seedReviewLog({
+      id: "rl-struggle-1",
+      card_id: "c-struggle",
+      rating: 1,
+      scheduled_days: 1,
+      elapsed_days: 0,
+      reviewed_at: new Date().toISOString(),
+      state_json: "{}",
+    });
+    env.seedR2(
+      "materials/deck-a/mat-a.txt",
+      "Mitochondria produce ATP in eukaryotic cells.",
+    );
+    const run = stubWorkersAiMcq(env);
+
+    const res = await app.request(
+      "/api/cards/c-struggle/regen",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({ type: "mcq" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    expect(run).toHaveBeenCalled();
+    const body = run.mock.calls[0]![1] as {
+      messages?: { role: string; content: string }[];
+    };
+    const userMsg = body.messages?.find((m) => m.role === "user")?.content ?? "";
+    const expected = studyStrugglePromptSuffix({ again_14d: 1, lapses: 2 });
+    expect(expected.length).toBeGreaterThan(0);
+    expect(userMsg).toContain(expected);
+  });
+});
+
+describe("regenerateOneUserPrompt", () => {
+  it("appends study struggle suffix when again or lapses are positive", () => {
+    const suffix = studyStrugglePromptSuffix({ again_14d: 2, lapses: 0 });
+    const prompt = regenerateOneUserPrompt({
+      text: "source",
+      type: "qa",
+      studyStruggle: { again_14d: 2, lapses: 0 },
+    });
+    expect(suffix.length).toBeGreaterThan(0);
+    expect(prompt).toContain(suffix);
+  });
+
+  it("omits struggle text when again and lapses are zero", () => {
+    const prompt = regenerateOneUserPrompt({
+      text: "source",
+      type: "qa",
+      studyStruggle: { again_14d: 0, lapses: 0 },
+    });
+    expect(prompt).not.toContain("struggling in study");
   });
 });

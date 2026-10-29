@@ -20,6 +20,8 @@ import { recordRegenUsageEvent } from "../generation/usage";
 import { requireOwnedDeck } from "../materials/routes";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
 
+const STUDY_STRUGGLE_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
+
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
 export type CardRow = {
@@ -650,6 +652,23 @@ cardRoutes.post("/:id/regen", async (c) => {
     throw new HTTPException(freeGenCap ? 429 : 502, { message });
   }
 
+  const since = new Date(Date.now() - STUDY_STRUGGLE_WINDOW_MS).toISOString();
+  const scheduleRow = await db
+    .prepare(`SELECT lapses FROM card_schedules WHERE card_id = ?`)
+    .bind(cardId)
+    .first<{ lapses: number }>();
+  const againRow = await db
+    .prepare(
+      `SELECT COUNT(*) AS again_14d FROM review_logs
+       WHERE card_id = ? AND rating = 1 AND reviewed_at >= ?`,
+    )
+    .bind(cardId, since)
+    .first<{ again_14d: number }>();
+  const studyStruggle = {
+    again_14d: Number(againRow?.again_14d) || 0,
+    lapses: Number(scheduleRow?.lapses) || 0,
+  };
+
   const existingFront = parseJsonField<unknown>(row.front_json, null);
   let generated: Awaited<ReturnType<typeof generateOneCard>>;
   try {
@@ -658,6 +677,7 @@ cardRoutes.post("/:id/regen", async (c) => {
       type: parsed.data.type,
       existingFront:
         typeof existingFront === "string" ? existingFront : undefined,
+      studyStruggle,
       llm: llmBundle.llm,
       apiKey: llmBundle.apiKey,
       provider: llmBundle.provider,

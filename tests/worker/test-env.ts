@@ -720,6 +720,30 @@ export function createTestEnv(opts?: {
         }
         // COUNT(*) handlers
         if (
+          normalized.startsWith(
+            "SELECT lapses FROM card_schedules WHERE card_id =",
+          )
+        ) {
+          const schedule = schedules.get(bound[0] as string);
+          return schedule ? ({ lapses: schedule.lapses } as T) : null;
+        }
+        if (
+          normalized.startsWith("SELECT COUNT(*)") &&
+          normalized.includes("FROM review_logs") &&
+          normalized.includes("card_id =") &&
+          normalized.includes("rating = 1")
+        ) {
+          const cardId = bound[0] as string;
+          const since = bound[1] as string;
+          const again_14d = reviewLogs.filter(
+            (rl) =>
+              rl.card_id === cardId &&
+              rl.rating === 1 &&
+              rl.reviewed_at >= since,
+          ).length;
+          return { again_14d, count: again_14d } as T;
+        }
+        if (
           normalized.startsWith("SELECT COUNT(*)") &&
           normalized.includes("FROM decks WHERE user_id =")
         ) {
@@ -1823,6 +1847,7 @@ export function createTestEnv(opts?: {
               return {
                 id: c.id,
                 deck_id: c.deck_id,
+                type: c.type,
                 front_json: c.front_json,
                 lapses: schedule.lapses,
                 difficulty: schedule.difficulty,

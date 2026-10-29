@@ -1,10 +1,17 @@
+import { useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import type { StrugglingRow } from "../api/client";
+import {
+  ApiError,
+  asRegenType,
+  regenCard,
+  type StrugglingRow,
+} from "../api/client";
+import { isGuest } from "../guest/session";
 
 export function formatStrugglingCaption(row: {
   again_14d: number;
@@ -42,6 +49,32 @@ export default function StrugglingList({
   rows,
   emptyMessage = "No struggling cards right now.",
 }: StrugglingListProps) {
+  const guest = isGuest();
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [errorById, setErrorById] = useState<Record<string, string>>({});
+
+  async function onImprove(row: StrugglingRow) {
+    const type = asRegenType(row.type);
+    if (!type || guest) return;
+    setBusyId(row.id);
+    setErrorById((prev) => {
+      const next = { ...prev };
+      delete next[row.id];
+      return next;
+    });
+    try {
+      await regenCard(row.id, { type });
+    } catch (err) {
+      setErrorById((prev) => ({
+        ...prev,
+        [row.id]:
+          err instanceof ApiError ? err.message : "Could not improve card",
+      }));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   if (rows.length === 0) {
     return (
       <Typography variant="body2" color="text.secondary">
@@ -57,55 +90,85 @@ export default function StrugglingList({
       divider={<Divider flexItem />}
       sx={{ m: 0, p: 0, listStyle: "none", width: "100%", textAlign: "left" }}
     >
-      {rows.map((row) => (
-        <Box
-          component="li"
-          key={row.id}
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 1,
-            py: 1,
-          }}
-        >
-          <Stack
-            direction="row"
-            spacing={1}
-            alignItems="flex-start"
-            justifyContent="space-between"
+      {rows.map((row) => {
+        const regenType = asRegenType(row.type);
+        const showImprove = !guest && regenType != null;
+        const busy = busyId === row.id;
+        const error = errorById[row.id];
+        return (
+          <Box
+            component="li"
+            key={row.id}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+              py: 1,
+            }}
           >
-            <Typography
-              variant="body1"
-              sx={{ fontWeight: 500, flex: 1, minWidth: 0 }}
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="flex-start"
+              justifyContent="space-between"
             >
-              {row.front_preview || "(no preview)"}
+              <Typography
+                variant="body1"
+                sx={{ fontWeight: 500, flex: 1, minWidth: 0 }}
+              >
+                {row.front_preview || "(no preview)"}
+              </Typography>
+              <Chip
+                size="small"
+                label={row.is_due ? "Due" : "Not due"}
+                color={row.is_due ? "warning" : "default"}
+                variant={row.is_due ? "filled" : "outlined"}
+              />
+            </Stack>
+            <Typography variant="caption" color="text.secondary">
+              {formatStrugglingCaption(row)}
             </Typography>
-            <Chip
-              size="small"
-              label={row.is_due ? "Due" : "Not due"}
-              color={row.is_due ? "warning" : "default"}
-              variant={row.is_due ? "filled" : "outlined"}
-            />
-          </Stack>
-          <Typography variant="caption" color="text.secondary">
-            {formatStrugglingCaption(row)}
-          </Typography>
-          {row.is_due ? (
-            <Button
-              variant="contained"
-              size="small"
-              href={`/study?card=${encodeURIComponent(row.id)}`}
-              sx={{ alignSelf: "flex-start", fontWeight: 600 }}
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              flexWrap="wrap"
+              useFlexGap
             >
-              Study
-            </Button>
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              Due {formatStrugglingDue(row.due)}
-            </Typography>
-          )}
-        </Box>
-      ))}
+              {row.is_due ? (
+                <Button
+                  variant="contained"
+                  size="small"
+                  href={`/study?card=${encodeURIComponent(row.id)}`}
+                  sx={{ fontWeight: 600 }}
+                >
+                  Study
+                </Button>
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  Due {formatStrugglingDue(row.due)}
+                </Typography>
+              )}
+              {showImprove ? (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  disabled={busy}
+                  onClick={() => void onImprove(row)}
+                  sx={{ fontWeight: 600 }}
+                >
+                  {busy ? "Improving…" : "Improve"}
+                </Button>
+              ) : null}
+            </Stack>
+            {error ? (
+              <Typography variant="caption" color="error">
+                {error}
+              </Typography>
+            ) : null}
+          </Box>
+        );
+      })}
     </Stack>
   );
 }
