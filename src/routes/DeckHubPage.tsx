@@ -42,7 +42,6 @@ import {
   createDeckCard,
   createDeckExport,
   deckStats,
-  downloadExport,
   deleteDeck,
   listDeckCards,
   listDeckMaterials,
@@ -89,6 +88,10 @@ import {
   validateHubCreateCard,
 } from "../lib/hubDiyCreate";
 import { navigate } from "../nav/navigate";
+import {
+  formatExportWarnings,
+  runAnkiExportDownload,
+} from "../export/runAnkiExport";
 import { useTrackedOp } from "../progress/useTrackedOp";
 
 type Props = {
@@ -739,24 +742,13 @@ export default function DeckHubPage({ deckId }: Props) {
     setExportWarning(null);
     try {
       await runExport(async () => {
-        const job = await createDeckExport(deck.id);
-        const { missingMedia, skippedCards } = job.warnings;
-        await downloadExport(job.id, apkgFilenameForDeckTitle(deck.title));
-        if (missingMedia > 0 || skippedCards > 0) {
-          const parts: string[] = [];
-          if (skippedCards > 0) {
-            parts.push(
-              `${skippedCards} card${skippedCards === 1 ? "" : "s"} skipped`,
-            );
-          }
-          if (missingMedia > 0) {
-            parts.push(
-              `${missingMedia} missing media file${missingMedia === 1 ? "" : "s"}`,
-            );
-          }
-          setExportWarning(
-            `Download started. Export warnings: ${parts.join("; ")}.`,
-          );
+        const warnings = await runAnkiExportDownload(
+          () => createDeckExport(deck.id),
+          apkgFilenameForDeckTitle(deck.title),
+        );
+        const warningText = formatExportWarnings(warnings);
+        if (warningText) {
+          setExportWarning(warningText);
         } else {
           setNotice("Anki deck downloaded");
         }

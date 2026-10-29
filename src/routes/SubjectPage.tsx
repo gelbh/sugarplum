@@ -21,7 +21,9 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import {
   ApiError,
+  apkgFilenameForDeckTitle,
   createDeck,
+  createSubjectExport,
   deckStats,
   deleteDeck,
   deleteSubject,
@@ -34,6 +36,11 @@ import {
   type DeckStats,
   type Subject,
 } from "../api/client";
+import {
+  formatExportWarnings,
+  runAnkiExportDownload,
+} from "../export/runAnkiExport";
+import { isGuest } from "../guest/session";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { subjectDeleteBlocked } from "../subjects/subjectDeleteGuard";
@@ -62,9 +69,14 @@ export default function SubjectPage({ subjectId }: Props) {
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [confirmSubjectDelete, setConfirmSubjectDelete] = useState(false);
   const [subjectDeleteBusy, setSubjectDeleteBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [exportWarning, setExportWarning] = useState<string | null>(null);
+  const guest = isGuest();
   const { end: endLoad } = useTrackedOp("Loading subject…", {
     trackOnMount: true,
   });
+  const { busy: exportBusy, run: runExport } =
+    useTrackedOp("Exporting to Anki…");
 
   const load = useCallback(async () => {
     const [subjects, deckList] = await Promise.all([
@@ -214,6 +226,29 @@ export default function SubjectPage({ subjectId }: Props) {
     }
   }
 
+  async function onExportAnki() {
+    if (!subject || guest) return;
+    setError(null);
+    setNotice(null);
+    setExportWarning(null);
+    try {
+      await runExport(async () => {
+        const warnings = await runAnkiExportDownload(
+          () => createSubjectExport(subject.id),
+          apkgFilenameForDeckTitle(subject.title),
+        );
+        const warningText = formatExportWarnings(warnings);
+        if (warningText) {
+          setExportWarning(warningText);
+        } else {
+          setNotice("Anki package downloaded");
+        }
+      });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Export failed");
+    }
+  }
+
   const deleteSubjectBlocked = subject
     ? subjectDeleteBlocked(subject, decks.length)
     : decks.length > 0;
@@ -288,6 +323,16 @@ export default function SubjectPage({ subjectId }: Props) {
           </Box>
 
           {error ? <Alert severity="error">{error}</Alert> : null}
+          {notice ? (
+            <Alert severity="success" onClose={() => setNotice(null)}>
+              {notice}
+            </Alert>
+          ) : null}
+          {exportWarning ? (
+            <Alert severity="warning" onClose={() => setExportWarning(null)}>
+              {exportWarning}
+            </Alert>
+          ) : null}
 
           <Paper
             variant="outlined"
@@ -323,6 +368,18 @@ export default function SubjectPage({ subjectId }: Props) {
                     }
                   >
                     Study
+                  </Button>
+                ) : null}
+                {!guest && subject && decks.length > 0 ? (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    disabled={exportBusy}
+                    onClick={() => {
+                      void onExportAnki();
+                    }}
+                  >
+                    {exportBusy ? "Exporting…" : "Export to Anki"}
                   </Button>
                 ) : null}
                 <Button
