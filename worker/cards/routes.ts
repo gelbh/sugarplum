@@ -653,17 +653,19 @@ cardRoutes.post("/:id/regen", async (c) => {
   }
 
   const since = new Date(Date.now() - STUDY_STRUGGLE_WINDOW_MS).toISOString();
-  const scheduleRow = await db
-    .prepare(`SELECT lapses FROM card_schedules WHERE card_id = ?`)
-    .bind(cardId)
-    .first<{ lapses: number }>();
-  const againRow = await db
-    .prepare(
-      `SELECT COUNT(*) AS again_14d FROM review_logs
-       WHERE card_id = ? AND rating = 1 AND reviewed_at >= ?`,
-    )
-    .bind(cardId, since)
-    .first<{ again_14d: number }>();
+  const [scheduleRow, againRow] = await Promise.all([
+    db
+      .prepare(`SELECT lapses FROM card_schedules WHERE card_id = ?`)
+      .bind(cardId)
+      .first<{ lapses: number }>(),
+    db
+      .prepare(
+        `SELECT COUNT(*) AS again_14d FROM review_logs
+         WHERE card_id = ? AND rating = 1 AND reviewed_at >= ?`,
+      )
+      .bind(cardId, since)
+      .first<{ again_14d: number }>(),
+  ]);
   const studyStruggle = {
     again_14d: Number(againRow?.again_14d) || 0,
     lapses: Number(scheduleRow?.lapses) || 0,

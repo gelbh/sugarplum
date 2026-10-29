@@ -457,6 +457,7 @@ async function runTextDraftPipeline(args: {
       llm,
       apiKey,
       provider,
+      avoidPatterns: args.avoidPatterns,
     });
   }
   if (args.emit && critiquedRules.length > 0) {

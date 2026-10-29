@@ -52,6 +52,7 @@ export default function StrugglingList({
   const guest = isGuest();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [errorById, setErrorById] = useState<Record<string, string>>({});
+  const [previewById, setPreviewById] = useState<Record<string, string>>({});
 
   async function onImprove(row: StrugglingRow) {
     const type = asRegenType(row.type);
@@ -63,7 +64,12 @@ export default function StrugglingList({
       return next;
     });
     try {
-      await regenCard(row.id, { type });
+      const updated = await regenCard(row.id, { type });
+      const front =
+        typeof updated.front === "string" ? updated.front.trim() : "";
+      if (front) {
+        setPreviewById((prev) => ({ ...prev, [row.id]: front }));
+      }
     } catch (err) {
       setErrorById((prev) => ({
         ...prev,
@@ -116,7 +122,7 @@ export default function StrugglingList({
                 variant="body1"
                 sx={{ fontWeight: 500, flex: 1, minWidth: 0 }}
               >
-                {row.front_preview || "(no preview)"}
+                {previewById[row.id] || row.front_preview || "(no preview)"}
               </Typography>
               <Chip
                 size="small"

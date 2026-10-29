@@ -202,6 +202,7 @@ export type CritiqueDraftsAgainstSourceInput = {
   llm: PipelineLlm;
   apiKey: string;
   provider: string;
+  avoidPatterns?: string[];
 };
 
 /**
@@ -212,7 +213,8 @@ export type CritiqueDraftsAgainstSourceInput = {
 export async function critiqueDraftsAgainstSource(
   input: CritiqueDraftsAgainstSourceInput,
 ): Promise<CardDraft[]> {
-  const { sourceText, candidates, llm, apiKey, provider } = input;
+  const { sourceText, candidates, llm, apiKey, provider, avoidPatterns } =
+    input;
   if (candidates.length === 0) return [];
 
   const chunks = chunkText(sourceText).slice(0, MAX_PIPELINE_CHUNKS);
@@ -225,6 +227,7 @@ export async function critiqueDraftsAgainstSource(
       llm,
       apiKey,
       provider,
+      avoidPatterns,
     });
     return result ?? candidates;
   }
@@ -254,6 +257,7 @@ export async function critiqueDraftsAgainstSource(
       llm,
       apiKey,
       provider,
+      avoidPatterns,
     });
     out.push(...(result ?? bucket));
   }
