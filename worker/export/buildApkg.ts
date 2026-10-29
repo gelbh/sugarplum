@@ -1,11 +1,9 @@
-import { DatabaseSync } from "node:sqlite";
 import JSZip from "jszip";
+import { openExportDb } from "./exportDb";
 import type { AnkiFsrsFields } from "./fsrsMap";
 import type { AnkiNoteSpec } from "./notes";
 
 const DEFAULT_ANKI_EASE_FACTOR = 2500;
-
-// Workers disallow dynamic WebAssembly.instantiate (sql.js). Use node:sqlite.
 
 type ApkgEntry = {
   note: AnkiNoteSpec;
@@ -215,7 +213,7 @@ export async function buildApkg(args: {
   deckName: string;
   entries: ApkgEntry[];
 }): Promise<Uint8Array> {
-  const db = new DatabaseSync(":memory:");
+  const db = await openExportDb();
   const now = Math.floor(Date.now() / 1000);
   const deckId = now * 1000;
   const modelIds = {
@@ -296,9 +294,7 @@ export async function buildApkg(args: {
       lapse: { delays: [10], mult: 0, minInt: 1, leechFails: 8 },
     },
   };
-  db.prepare(
-    "INSERT INTO col VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-  ).run(
+  db.run("INSERT INTO col VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
     1,
     now,
     now,
@@ -312,7 +308,7 @@ export async function buildApkg(args: {
     JSON.stringify(decks),
     JSON.stringify(dconf),
     JSON.stringify([]),
-  );
+  ]);
 
   const zip = new JSZip();
   const mediaMap: Record<string, string> = {};
@@ -381,9 +377,7 @@ export async function buildApkg(args: {
         ? Math.max(0, Number(/\{\{c(\d+)::/i.exec(fields[0])?.[1] ?? 1) - 1)
         : 0;
     const data = schedule ? ankiFsrsCardData(schedule) : "{}";
-    db.prepare(
-      "INSERT INTO notes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    ).run(
+    db.run("INSERT INTO notes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
       nid,
       `${nid}`,
       model.id,
@@ -395,33 +389,33 @@ export async function buildApkg(args: {
       await checksumSortField(fields[0]),
       0,
       "{}",
-    );
-    db.prepare(
+    ]);
+    db.run(
       "INSERT INTO cards VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    ).run(
-      cid,
-      nid,
-      deckId,
-      ord,
-      now,
-      -1,
-      type,
-      type === 1 || type === 3 ? 1 : type,
-      due,
-      schedule?.scheduledDays ?? 0,
-      schedule ? DEFAULT_ANKI_EASE_FACTOR : 0,
-      schedule?.reps ?? 0,
-      schedule?.lapses ?? 0,
-      0,
-      0,
-      0,
-      0,
-      data,
+      [
+        cid,
+        nid,
+        deckId,
+        ord,
+        now,
+        -1,
+        type,
+        type === 1 || type === 3 ? 1 : type,
+        due,
+        schedule?.scheduledDays ?? 0,
+        schedule ? DEFAULT_ANKI_EASE_FACTOR : 0,
+        schedule?.reps ?? 0,
+        schedule?.lapses ?? 0,
+        0,
+        0,
+        0,
+        0,
+        data,
+      ],
     );
   }
 
-  const collectionBytes = new Uint8Array(db.serialize());
-  zip.file("collection.anki2", collectionBytes);
+  zip.file("collection.anki2", db.exportBytes());
   zip.file("media", JSON.stringify(mediaMap));
   db.close();
   return zip.generateAsync({ type: "uint8array" });

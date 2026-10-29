@@ -10,6 +10,9 @@
 	"main": "worker/index.ts",
 	"compatibility_date": "2026-10-26",
 	"compatibility_flags": ["nodejs_compat"],
+	"rules": [
+		{ "type": "CompiledWasm", "globs": ["**/*.wasm"] }
+	],
 	"assets": {
 		"binding": "ASSETS",
 		"not_found_handling": "single-page-application",

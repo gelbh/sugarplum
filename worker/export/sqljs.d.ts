@@ -2,6 +2,13 @@ declare module "sql.js" {
   type SqlJsConfig = {
     locateFile?: (file: string) => string;
     wasmBinary?: ArrayBuffer | Uint8Array;
+    instantiateWasm?: (
+      imports: WebAssembly.Imports,
+      receiveInstance: (
+        instance: WebAssembly.Instance,
+        module: WebAssembly.Module,
+      ) => void,
+    ) => WebAssembly.Exports;
   };
 
   type Database = {
@@ -18,11 +25,7 @@ declare module "sql.js" {
   export default initSqlJs;
 }
 
-declare module "sql.js/dist/sql-wasm-inline.js" {
-  export { default } from "sql.js";
-}
-
-declare module "*.wasm?arraybuffer" {
-  const wasmBinary: ArrayBuffer;
-  export default wasmBinary;
+declare module "sql.js/dist/sql-wasm.wasm" {
+  const sqlWasm: WebAssembly.Module;
+  export default sqlWasm;
 }
