@@ -7,7 +7,7 @@ const KEY_PREFIX = "free-gen:";
 
 const CAP_ERROR =
   `Daily free generation limit of ${FREE_GEN_DAILY_CAP} reached. ` +
-  "Add your own API key in Settings for BYO generation, or retry after UTC midnight.";
+  "Add your own OpenAI, Anthropic, Google, or Z.ai (free Flash) API key in Settings for BYO generation, or retry after UTC midnight.";
 
 /** KV key for a user's free-gen counter on a UTC calendar day. */
 export function freeGenKvKey(userId: string, now: Date = new Date()): string {

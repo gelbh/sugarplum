@@ -27,7 +27,7 @@ export const WORKERS_AI_MAX_TOKENS = 8192;
 
 const CAPACITY_ERROR =
   "Workers AI is temporarily at capacity. " +
-  "Add your own API key in Settings for BYO generation, or retry after UTC midnight.";
+  "Add your own OpenAI, Anthropic, Google, or Z.ai (free Flash) API key in Settings for BYO generation, or retry after UTC midnight.";
 
 type AiRunContent = {
   content: string;
