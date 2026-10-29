@@ -55,4 +55,24 @@ describe("buildCoverageLedger", () => {
     const ledger = buildCoverageLedger(material, []);
     expect(ledger.gaps).toEqual(["ATP is adenosine triphosphate."]);
   });
+
+  it("handles occlusion drafts without throwing", () => {
+    const material = "Labelled liver on the plate.\nUnrelated kidney note here.";
+    const occlusion: CardDraft = {
+      type: "occlusion",
+      front: {
+        image_key: "img1",
+        regions: [
+          { id: "r1", x: 0.1, y: 0.1, w: 0.2, h: 0.2, label: "liver" },
+        ],
+        mode: "hide_one",
+      },
+      back: { answer: "liver" },
+      provenance: { pages: [1], excerpt: "Labelled liver on the plate" },
+    };
+    const ledger = buildCoverageLedger(material, [occlusion]);
+    expect(ledger.draft_count).toBe(1);
+    expect(ledger.covered[0]).toContain("Labelled liver");
+    expect(ledger.gaps.some((g) => /kidney/i.test(g))).toBe(true);
+  });
 });

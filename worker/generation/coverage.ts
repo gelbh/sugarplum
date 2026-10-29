@@ -19,14 +19,16 @@ function draftParts(draft: CardDraft): string[] {
     typeof draft.front === "string"
       ? draft.front
       : (draft.front.prompt ?? draft.front.image_key);
-  const excerpt = draft.provenance?.excerpt ?? "";
-  return [front, draft.back, excerpt]
+  const back =
+    typeof draft.back === "string" ? draft.back : draft.back.answer;
+  const excerpt = draft.provenance.excerpt;
+  return [front, back, excerpt]
     .map((s) => normalizeWs(s).toLowerCase())
     .filter((s) => s.length > 0);
 }
 
 function coveredLabel(draft: CardDraft): string {
-  const excerpt = (draft.provenance?.excerpt ?? "").slice(0, COVERED_MAX);
+  const excerpt = draft.provenance.excerpt.slice(0, COVERED_MAX);
   if (excerpt) return excerpt;
   if (typeof draft.front === "string") return draft.front.slice(0, COVERED_MAX);
   return (draft.front.prompt ?? draft.front.image_key).slice(0, COVERED_MAX);
