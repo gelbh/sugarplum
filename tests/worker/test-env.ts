@@ -64,6 +64,7 @@ type GenerationJobRow = {
   finished_at: string | null;
   figure_extract_mode?: string;
   topic_hints_json?: string | null;
+  avoid_patterns_json?: string | null;
 };
 
 type UserSecretRow = {
@@ -565,6 +566,19 @@ export function createTestEnv(opts?: {
             status: job.status,
             progress_json: job.progress_json,
             created_at: job.created_at,
+          } as T;
+        }
+        if (
+          normalized.startsWith(
+            "SELECT progress_json, topic_hints_json, avoid_patterns_json FROM generation_jobs WHERE id =",
+          )
+        ) {
+          const job = generationJobs.get(bound[0] as string);
+          if (!job) return null;
+          return {
+            progress_json: job.progress_json,
+            topic_hints_json: job.topic_hints_json ?? null,
+            avoid_patterns_json: job.avoid_patterns_json ?? null,
           } as T;
         }
         if (
@@ -2482,7 +2496,25 @@ export function createTestEnv(opts?: {
             finished_at,
             figure_extract_mode: figure_extract_mode ?? "fast",
             topic_hints_json: topic_hints_json ?? null,
+            avoid_patterns_json: null,
           });
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET avoid_patterns_json = ? WHERE id =",
+          )
+        ) {
+          const [avoid_patterns_json, id] = bound as [
+            string | null,
+            string,
+          ];
+          const row = generationJobs.get(id);
+          if (row) {
+            generationJobs.set(id, {
+              ...row,
+              avoid_patterns_json,
+            });
+          }
+          return { success: true, meta: { changes: row ? 1 : 0 } } as D1Result;
         } else if (
           normalized.startsWith(
             "UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = NULL, progress_json = NULL, finished_at = NULL WHERE id = ? AND status NOT IN",

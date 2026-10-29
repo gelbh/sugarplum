@@ -2,6 +2,7 @@ import {
   parseCardDrafts,
   type CardDraft,
 } from "./schema";
+import { appendAvoidPatternsSuffix } from "./feedback-hints";
 import {
   GENERATE_COMPACT_SYSTEM_PROMPT,
   GENERATE_SYSTEM_PROMPT,
@@ -39,6 +40,8 @@ export type GenerateDraftsInput = {
   imageKey?: string;
   /** Optional also-cover topic hints from the generation job. */
   topicHints?: string[];
+  /** Optional reject avoid-patterns snapshotted on job regen. */
+  avoidPatterns?: string[];
 };
 
 export type CompleteInput = {
@@ -203,14 +206,20 @@ async function generateTextDraftsWithCompactRetry(
   text: string,
   completeOnce: (system: string, user: string) => Promise<CompleteResult>,
   topicHints: string[] = [],
+  avoidPatterns: string[] = [],
 ): Promise<CardDraft[]> {
+  const withSuffixes = (prompt: string) =>
+    appendAvoidPatternsSuffix(
+      appendTopicHintsSuffix(prompt, topicHints),
+      avoidPatterns,
+    );
   return withCompactTruncationRetry(
     async () =>
       parseCardsPayload(
         (
           await completeOnce(
             GENERATE_SYSTEM_PROMPT,
-            appendTopicHintsSuffix(userPromptForJson(text), topicHints),
+            withSuffixes(userPromptForJson(text)),
           )
         ).text,
       ),
@@ -219,7 +228,7 @@ async function generateTextDraftsWithCompactRetry(
         (
           await completeOnce(
             GENERATE_COMPACT_SYSTEM_PROMPT,
-            appendTopicHintsSuffix(generateCompactUserPrompt(text), topicHints),
+            withSuffixes(generateCompactUserPrompt(text)),
           )
         ).text,
       ),
@@ -548,6 +557,7 @@ function openAiAdapter(): LlmAdapter {
               provider: input.provider,
             }),
           input.topicHints ?? [],
+          input.avoidPatterns ?? [],
         );
       }
 
@@ -646,6 +656,7 @@ function anthropicAdapter(): LlmAdapter {
               provider: input.provider,
             }),
           input.topicHints ?? [],
+          input.avoidPatterns ?? [],
         );
       }
 
@@ -747,6 +758,7 @@ function googleAdapter(): LlmAdapter {
               provider: input.provider,
             }),
           input.topicHints ?? [],
+          input.avoidPatterns ?? [],
         );
       }
 

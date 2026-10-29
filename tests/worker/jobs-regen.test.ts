@@ -323,4 +323,100 @@ describe("POST /api/jobs/:id/regen", () => {
     expect(res.status).toBe(200);
     expect(env.getGenerationJobs().map((j) => j.id)).toEqual(["job-a"]);
   });
+
+  it("snapshots rejected fronts into avoid_patterns_json before wiping cards", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedNeedsReviewJob(env);
+    env.seedGenerationJob({
+      ...env.getGenerationJobs()[0]!,
+      topic_hints_json: JSON.stringify(["keep-me"]),
+    });
+    const longFront = `Rejected stem ${"x".repeat(100)}`;
+    env.seedCard({
+      id: "c-rejected-long",
+      deck_id: "deck-a",
+      job_id: "job-a",
+      type: "qa",
+      front_json: JSON.stringify(longFront),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "ex" }),
+      status: "rejected",
+      created_at: "2026-01-01T01:09:00.000Z",
+      updated_at: "2026-01-01T01:09:00.000Z",
+    });
+    env.seedCard({
+      id: "c-rejected-obj",
+      deck_id: "deck-a",
+      job_id: "job-a",
+      type: "occlusion",
+      front_json: JSON.stringify({ regions: [{ id: "r1" }] }),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "ex" }),
+      status: "rejected",
+      created_at: "2026-01-01T01:10:00.000Z",
+      updated_at: "2026-01-01T01:10:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/jobs/job-a/regen",
+      {
+        method: "POST",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    expect(env.getCards().filter((c) => c.job_id === "job-a")).toHaveLength(0);
+
+    const job = env.getGenerationJobs()[0]!;
+    expect(job.topic_hints_json).toBe(JSON.stringify(["keep-me"]));
+    const patterns = JSON.parse(job.avoid_patterns_json as string) as string[];
+    expect(patterns).toContain("Rejected?");
+    expect(patterns.some((p) => p.startsWith("Rejected stem") && p.length === 80)).toBe(
+      true,
+    );
+    expect(patterns.some((p) => p.includes("regions"))).toBe(false);
+  });
+
+  it("sets avoid_patterns_json to null when no rejected string fronts", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedGenerationJob({
+      id: "job-a",
+      material_id: "mat-a",
+      status: "needs_review",
+      error: null,
+      coverage_json: null,
+      created_at: "2026-01-01T01:00:00.000Z",
+      finished_at: "2026-01-01T01:05:00.000Z",
+      avoid_patterns_json: JSON.stringify(["stale"]),
+    });
+    env.seedCard({
+      id: "c-draft-only",
+      deck_id: "deck-a",
+      job_id: "job-a",
+      type: "qa",
+      front_json: JSON.stringify("Draft only?"),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "ex" }),
+      status: "draft",
+      created_at: "2026-01-01T01:06:00.000Z",
+      updated_at: "2026-01-01T01:06:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/jobs/job-a/regen",
+      {
+        method: "POST",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    expect(env.getGenerationJobs()[0]!.avoid_patterns_json).toBeNull();
+  });
 });

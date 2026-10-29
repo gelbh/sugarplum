@@ -1,4 +1,5 @@
 import { CRITIQUE_SYSTEM_PROMPT, critiqueUserPrompt } from "./critique-prompts";
+import { appendAvoidPatternsSuffix } from "./feedback-hints";
 import {
   salvageCompleteJsonObjects,
   unwrapLlmJsonText,
@@ -35,6 +36,8 @@ export type RunGenerationPipelineInput = {
   provider: string;
   /** Optional also-cover topic hints from the generation job. */
   topicHints?: string[];
+  /** Optional reject avoid-patterns snapshotted on job regen. */
+  avoidPatterns?: string[];
   /** Best-effort; throws from the callback must not abort the pipeline. */
   onProgress?: (event: PipelineProgressEvent) => void | Promise<void>;
   /** Fired after each chunk's critique (or generate fallback). Best-effort. */
@@ -164,6 +167,8 @@ export type CritiqueChunkInput = {
   llm: PipelineLlm;
   apiKey: string;
   provider: string;
+  /** Optional reject avoid-patterns snapshotted on job regen. */
+  avoidPatterns?: string[];
 };
 
 /**
@@ -173,9 +178,12 @@ export type CritiqueChunkInput = {
 export async function critiqueChunk(
   args: CritiqueChunkInput,
 ): Promise<CardDraft[] | null> {
-  const { chunk, candidates, llm, apiKey, provider } = args;
+  const { chunk, candidates, llm, apiKey, provider, avoidPatterns } = args;
   const system = CRITIQUE_SYSTEM_PROMPT;
-  const user = critiqueUserPrompt(chunk, candidates);
+  const user = appendAvoidPatternsSuffix(
+    critiqueUserPrompt(chunk, candidates),
+    avoidPatterns ?? [],
+  );
 
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
@@ -284,8 +292,16 @@ async function safeOnChunkDrafts(
 export async function runGenerationPipeline(
   input: RunGenerationPipelineInput,
 ): Promise<CardDraft[]> {
-  const { text, llm, apiKey, provider, topicHints, onProgress, onChunkDrafts } =
-    input;
+  const {
+    text,
+    llm,
+    apiKey,
+    provider,
+    topicHints,
+    avoidPatterns,
+    onProgress,
+    onChunkDrafts,
+  } = input;
   if (!text.trim()) return [];
 
   const chunks = chunkText(text).slice(0, MAX_PIPELINE_CHUNKS);
@@ -315,6 +331,7 @@ export async function runGenerationPipeline(
       apiKey,
       provider,
       topicHints,
+      avoidPatterns,
     };
     const generated = await llm.generateDrafts(generateInput);
 
@@ -335,6 +352,7 @@ export async function runGenerationPipeline(
       llm,
       apiKey,
       provider,
+      avoidPatterns,
     });
 
     await report("critique", chunkLabel, 2 * i + 2);
