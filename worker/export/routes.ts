@@ -9,7 +9,8 @@ import {
   parseExportWarningsJson,
 } from "./types";
 import { buildApkg } from "./buildApkg";
-import { loadDeckCards } from "./loadDeckCards";
+import { loadExportCards } from "./loadDeckCards";
+import { resolveExportDeckIds } from "./resolveExportDecks";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 type ExportRow = {
@@ -102,9 +103,30 @@ exportRoutes.post("/", async (c) => {
     )
     .run();
 
-  let loaded;
   try {
-    loaded = await loadDeckCards(c.env, userId, parsed.data.deckId);
+    const deckIds = await resolveExportDeckIds(c.env, userId, parsed.data);
+    if (deckIds.length === 0) {
+      const emptyMessage = "No decks to export";
+      await db
+        .prepare(
+          "UPDATE export_jobs SET status = ?, error = ?, warning_json = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+        )
+        .bind(
+          "failed",
+          emptyMessage,
+          JSON.stringify(EMPTY_EXPORT_WARNINGS),
+          new Date().toISOString(),
+          id,
+          userId,
+        )
+        .run();
+      return c.json(
+        { message: emptyMessage, warnings: EMPTY_EXPORT_WARNINGS },
+        400,
+      );
+    }
+
+    const loaded = await loadExportCards(c.env, userId, deckIds);
     if (loaded.entries.length === 0) {
       const emptyMessage =
         loaded.warnings.skippedCards > 0
@@ -125,10 +147,7 @@ exportRoutes.post("/", async (c) => {
         .run();
       return c.json({ message: emptyMessage, warnings: loaded.warnings }, 400);
     }
-    const bytes = await buildApkg({
-      deckName: loaded.deckName,
-      entries: loaded.entries,
-    });
+    const bytes = await buildApkg({ entries: loaded.entries });
     await c.env.MATERIALS.put(r2Key, bytes);
     const updatedAt = new Date().toISOString();
     await db

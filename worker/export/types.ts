@@ -35,11 +35,8 @@ export const ExportScopeSchema = z.discriminatedUnion("type", [
   }),
 ]);
 
-/** POST /api/exports body (deck-only until routes dispatch Task 3). */
-export const CreateExportBodySchema = z.object({
-  type: z.literal("deck"),
-  deckId: z.string().min(1),
-});
+/** POST /api/exports body. */
+export const CreateExportBodySchema = ExportScopeSchema;
 
 export type CreateExportBody = z.infer<typeof CreateExportBodySchema>;
 

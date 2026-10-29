@@ -242,4 +242,142 @@ describe("export routes", () => {
     );
     expect(download.status).toBe(410);
   });
+
+  it("exports a subject of owned decks", async () => {
+    const env = setup();
+    env.seedDeck({
+      id: "deck-b",
+      user_id: user.id,
+      title: "Muscles",
+      subject_hint: null,
+      subject_id: "subject-a",
+      created_at: "2026-01-01T00:00:01.000Z",
+    });
+    seedCard(env);
+    seedCard(env, {
+      id: "card-b",
+      deck_id: "deck-b",
+      front_json: JSON.stringify("Biceps?"),
+      back_json: JSON.stringify("Arm flexor"),
+    });
+
+    const response = await app.request(
+      "/api/exports",
+      {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ type: "subject", subjectId: "subject-a" }),
+      },
+      env,
+    );
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({
+      status: "ready",
+      warnings: { missingMedia: 0, skippedCards: 0 },
+    });
+  });
+
+  it("exports a selection union of subject and deck ids", async () => {
+    const env = setup();
+    env.seedDeck({
+      id: "deck-solo",
+      user_id: user.id,
+      title: "Loose",
+      subject_hint: null,
+      subject_id: null,
+      created_at: user.created_at,
+    });
+    seedCard(env);
+    seedCard(env, {
+      id: "card-solo",
+      deck_id: "deck-solo",
+      front_json: JSON.stringify("Solo?"),
+      back_json: JSON.stringify("Yes"),
+    });
+
+    const response = await app.request(
+      "/api/exports",
+      {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({
+          type: "selection",
+          subjectIds: ["subject-a"],
+          deckIds: ["deck-solo"],
+        }),
+      },
+      env,
+    );
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ status: "ready" });
+  });
+
+  it("returns 400 when selection resolves to no owned decks", async () => {
+    const env = setup();
+    const response = await app.request(
+      "/api/exports",
+      {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({
+          type: "selection",
+          subjectIds: [],
+          deckIds: [],
+        }),
+      },
+      env,
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      message: "No decks to export",
+    });
+    expect(env.getExportJobs()[0]?.status).toBe("failed");
+  });
+
+  it("omits foreign selection ids and 400s when none remain", async () => {
+    const env = setup();
+    env.seedUser({
+      id: "user-b",
+      email: "b@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: user.created_at,
+    });
+    env.seedSubject({
+      id: "subject-b",
+      user_id: "user-b",
+      title: "Foreign",
+      created_at: user.created_at,
+    });
+    env.seedDeck({
+      id: "deck-b",
+      user_id: "user-b",
+      title: "Other",
+      subject_hint: null,
+      subject_id: "subject-b",
+      created_at: user.created_at,
+    });
+
+    const response = await app.request(
+      "/api/exports",
+      {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({
+          type: "selection",
+          subjectIds: ["subject-b"],
+          deckIds: ["deck-b"],
+        }),
+      },
+      env,
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      message: "No decks to export",
+    });
+  });
 });

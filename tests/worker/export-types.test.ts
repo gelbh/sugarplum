@@ -43,13 +43,13 @@ describe("CreateExportBodySchema", () => {
     ).toBe(true);
   });
 
-  it("rejects non-deck create body until routes Task 3", () => {
+  it("accepts subject create body", () => {
     expect(
       CreateExportBodySchema.safeParse({
         type: "subject",
         subjectId: "sub-1",
       }).success,
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it("rejects unknown scope type", () => {
