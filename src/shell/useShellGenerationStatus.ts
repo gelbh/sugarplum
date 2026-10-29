@@ -85,7 +85,9 @@ export function useShellGenerationStatus(
         if (!cancelled && gen === tickGen) schedule(delay);
       } catch {
         if (cancelled || gen !== tickGen) return;
-        schedule(POLL_ERROR_MS);
+        schedule(
+          document.visibilityState === "hidden" ? 30_000 : POLL_ERROR_MS,
+        );
       } finally {
         inFlight = false;
         if (!cancelled && queuedWhileInFlight) {
