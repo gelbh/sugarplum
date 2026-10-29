@@ -58,6 +58,10 @@
 			{
 				"binding": "GENERATE_QUEUE",
 				"queue": "sugarplum-generate"
+			},
+			{
+				"binding": "EXPORT_QUEUE",
+				"queue": "sugarplum-export"
 			}
 		],
 		"consumers": [
@@ -69,6 +73,13 @@
 				// Keep in sync with GENERATE_QUEUE_* in worker/generation/progress.ts
 				"max_retries": 21,
 				"retry_delay": 60
+			},
+			{
+				"queue": "sugarplum-export",
+				"max_batch_size": 1,
+				"max_concurrency": 1,
+				"max_retries": 3,
+				"retry_delay": 30
 			}
 		]
 	}

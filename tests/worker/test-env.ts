@@ -165,7 +165,9 @@ export type TestEnv = Env & {
   getSchedules: () => ScheduleRow[];
   getReviewLogs: () => ReviewLogRow[];
   getQueueMessages: () => unknown[];
+  getExportQueueMessages: () => unknown[];
   getR2Keys: () => string[];
+  getR2: (key: string) => string | ArrayBuffer | undefined;
 };
 
 export function createTestEnv(opts?: {
@@ -187,6 +189,7 @@ export function createTestEnv(opts?: {
   const exportJobs = new Map<string, ExportJobRow>();
   const r2 = new Map<string, string | ArrayBuffer>();
   const queueMessages: unknown[] = [];
+  const exportQueueMessages: unknown[] = [];
 
   // Test harness only: missing wrap key → fixed 32-byte test key.
   const wrapKey =
@@ -695,6 +698,13 @@ export function createTestEnv(opts?: {
         ) {
           const row = exportJobs.get(bound[0] as string);
           return row && row.user_id === bound[1] ? (row as T) : null;
+        }
+        if (
+          normalized.includes("FROM export_jobs WHERE id =") &&
+          !normalized.includes("user_id =")
+        ) {
+          const row = exportJobs.get(bound[0] as string);
+          return row ? (row as T) : null;
         }
         if (
           normalized.includes("AS user_count") &&
@@ -1276,6 +1286,21 @@ export function createTestEnv(opts?: {
           ];
           const row = exportJobs.get(id);
           if (row) exportJobs.set(id, { ...row, status, error, updated_at });
+        } else if (
+          normalized.startsWith(
+            "UPDATE export_jobs SET status = ?, updated_at = ? WHERE id = ? AND status = ?",
+          )
+        ) {
+          const [status, updated_at, id, expectedStatus] = bound as [
+            string,
+            string,
+            string,
+            string,
+          ];
+          const row = exportJobs.get(id);
+          if (row && row.status === expectedStatus) {
+            exportJobs.set(id, { ...row, status, updated_at });
+          }
         } else if (normalized.startsWith("INSERT INTO users")) {
           const [id, email, password_hash, oauth_subject, created_at] =
             bound as [string, string, string | null, string | null, string];
@@ -2320,6 +2345,11 @@ export function createTestEnv(opts?: {
         queueMessages.push(body);
       },
     } as unknown as Queue,
+    EXPORT_QUEUE: {
+      send: async (body: unknown) => {
+        exportQueueMessages.push(body);
+      },
+    } as unknown as Queue,
     APP_URL: "http://localhost",
     ASSETS: {
       fetch: async () =>
@@ -2385,7 +2415,9 @@ export function createTestEnv(opts?: {
     getSchedules: () => [...schedules.values()],
     getReviewLogs: () => [...reviewLogs],
     getQueueMessages: () => [...queueMessages],
+    getExportQueueMessages: () => [...exportQueueMessages],
     getR2Keys: () => [...r2.keys()],
+    getR2: (key: string) => r2.get(key),
   };
 
   return env;
