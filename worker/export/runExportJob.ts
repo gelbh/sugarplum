@@ -133,6 +133,7 @@ export async function runExportJob(
       };
     }
 
+    console.error("export job failed", row.id, error);
     await markFailed(db, row.id, row.user_id, message, EMPTY_EXPORT_WARNINGS);
     return {
       ok: false,
