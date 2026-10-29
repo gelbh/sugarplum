@@ -241,7 +241,6 @@ jobRoutes.post("/:id/regen", async (c) => {
     try {
       fronts.push(JSON.parse(row.front_json) as unknown);
     } catch {
-      // Skip unparseable front_json.
     }
   }
   const patterns = buildAvoidPatternsFromRejectedFronts(fronts);
