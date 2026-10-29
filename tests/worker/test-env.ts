@@ -1,5 +1,19 @@
 import type { Env } from "../../worker/env";
 
+/** Mirrors SQL `lower(email) LIKE '%' || lower(q) || '%'` (% and _ wildcards). */
+function emailMatchesAdminListQuery(email: string, q: string): boolean {
+  const hay = email.toLowerCase();
+  const pattern = q.toLowerCase();
+  let re = ".*";
+  for (const ch of pattern) {
+    if (ch === "%") re += ".*";
+    else if (ch === "_") re += ".";
+    else re += ch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+  re += ".*";
+  return new RegExp(re).test(hay);
+}
+
 type UserRow = {
   id: string;
   email: string;
@@ -156,6 +170,7 @@ export type TestEnv = Env & {
 
 export function createTestEnv(opts?: {
   secretsWrapKey?: string | null;
+  adminEmails?: string;
 }): TestEnv {
   const users = new Map<string, UserRow>();
   const subjects = new Map<string, SubjectRow>();
@@ -266,6 +281,20 @@ export function createTestEnv(opts?: {
         if (normalized.startsWith("SELECT id, email FROM users WHERE id =")) {
           const u = users.get(bound[0] as string);
           return u ? ({ id: u.id, email: u.email } as T) : null;
+        }
+        if (
+          normalized.startsWith(
+            "SELECT email, oauth_subject FROM users WHERE id =",
+          )
+        ) {
+          const u = users.get(bound[0] as string);
+          return u
+            ? ({ email: u.email, oauth_subject: u.oauth_subject } as T)
+            : null;
+        }
+        if (normalized.startsWith("SELECT email FROM users WHERE id =")) {
+          const u = users.get(bound[0] as string);
+          return u ? ({ email: u.email } as T) : null;
         }
         if (
           normalized.startsWith("SELECT id FROM subjects WHERE user_id =") &&
@@ -667,9 +696,66 @@ export function createTestEnv(opts?: {
           const row = exportJobs.get(bound[0] as string);
           return row && row.user_id === bound[1] ? (row as T) : null;
         }
+        if (
+          normalized.includes("AS user_count") &&
+          normalized.includes("created_last_7d") &&
+          normalized.includes("FROM users")
+        ) {
+          const cutoff =
+            (bound[0] as string | undefined) ??
+            new Date(Date.now() - 7 * 864e5).toISOString();
+          const allUsers = [...users.values()];
+          const createdLast7d = allUsers.filter(
+            (u) => u.created_at >= cutoff,
+          ).length;
+          return {
+            user_count: allUsers.length,
+            created_last_7d: createdLast7d,
+          } as T;
+        }
         return null;
       },
       async all<T>(): Promise<{ results: T[] }> {
+        if (
+          normalized.includes("FROM users u") &&
+          normalized.includes("AS deck_count") &&
+          normalized.includes("AS job_count")
+        ) {
+          const [q, , limitRaw] = bound as [string, string, number];
+          let rows = [...users.values()];
+          if (q !== "") {
+            rows = rows.filter((u) => emailMatchesAdminListQuery(u.email, q));
+          }
+          rows.sort((a, b) => b.created_at.localeCompare(a.created_at));
+          const limit = Number(limitRaw);
+          rows = rows.slice(0, Number.isFinite(limit) ? limit : 50);
+          const results = rows.map((u) => {
+            const userDeckIds = new Set(
+              [...decks.values()]
+                .filter((d) => d.user_id === u.id)
+                .map((d) => d.id),
+            );
+            const deck_count = userDeckIds.size;
+            const card_count = [...cards.values()].filter((c) =>
+              userDeckIds.has(c.deck_id),
+            ).length;
+            const job_count = [...generationJobs.values()].filter((j) => {
+              const material = materials.get(j.material_id);
+              if (!material) return false;
+              return userDeckIds.has(material.deck_id);
+            }).length;
+            return {
+              id: u.id,
+              email: u.email,
+              created_at: u.created_at,
+              oauth_subject: u.oauth_subject,
+              deck_count,
+              card_count,
+              job_count,
+            };
+          });
+          return { results: results as T[] };
+        }
         if (
           normalized.includes("FROM cards c") &&
           normalized.includes("LEFT JOIN card_schedules")
@@ -2236,6 +2322,7 @@ export function createTestEnv(opts?: {
     R2_SECRET_ACCESS_KEY: "test-secret-key",
     GOOGLE_CLIENT_ID: "test-google-client-id",
     GOOGLE_CLIENT_SECRET: "test-google-client-secret",
+    ADMIN_EMAILS: opts?.adminEmails,
     seedUser(row) {
       users.set(row.id, row);
     },
