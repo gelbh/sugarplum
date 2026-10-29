@@ -197,7 +197,11 @@ function contentTypeForMaterial(
   ) {
     return "text/plain; charset=utf-8";
   }
-  if (kind === "pdf" || lowerKey.endsWith(".pdf") || lowerName.endsWith(".pdf")) {
+  if (
+    kind === "pdf" ||
+    lowerKey.endsWith(".pdf") ||
+    lowerName.endsWith(".pdf")
+  ) {
     return PDF_CONTENT_TYPE;
   }
   if (
@@ -826,11 +830,7 @@ deckRoutes.post("/:id/topic-generate", async (c) => {
 
   let materialId: string;
   if (explicitMaterialId) {
-    const material = await requireOwnedMaterial(
-      db,
-      explicitMaterialId,
-      userId,
-    );
+    const material = await requireOwnedMaterial(db, explicitMaterialId, userId);
     if (material.deck_id !== deckId) {
       throw new HTTPException(404, { message: "Material not found" });
     }
@@ -1171,6 +1171,23 @@ materialRoutes.delete("/:id", async (c) => {
     keysToGuard.add(child.r2_key);
   }
 
+  // Drop draft/rejected cards for this material's jobs before media guard so
+  // figure-keyed drafts do not 409 a delete the UI says will remove them.
+  const { results: jobRows } = await db
+    .prepare("SELECT id FROM generation_jobs WHERE material_id = ?")
+    .bind(material.id)
+    .all<{ id: string }>();
+  const jobIds = (jobRows ?? []).map((row) => row.id);
+  if (jobIds.length > 0) {
+    const placeholders = jobIds.map(() => "?").join(", ");
+    await db
+      .prepare(
+        `DELETE FROM cards WHERE job_id IN (${placeholders}) AND status IN ('draft', 'rejected')`,
+      )
+      .bind(...jobIds)
+      .run();
+  }
+
   if (keysToGuard.size > 0) {
     const { results: cardMedia } = await db
       .prepare(
@@ -1197,40 +1214,22 @@ materialRoutes.delete("/:id", async (c) => {
     }
   }
 
-  const { results: jobRows } = await db
-    .prepare("SELECT id FROM generation_jobs WHERE material_id = ?")
-    .bind(material.id)
-    .all<{ id: string }>();
-  const jobIds = (jobRows ?? []).map((row) => row.id);
-  if (jobIds.length > 0) {
-    const placeholders = jobIds.map(() => "?").join(", ");
-    await db
-      .prepare(
-        `DELETE FROM cards WHERE job_id IN (${placeholders}) AND status IN ('draft', 'rejected')`,
-      )
-      .bind(...jobIds)
-      .run();
+  for (const child of figureChildren) {
+    await db.prepare("DELETE FROM materials WHERE id = ?").bind(child.id).run();
   }
+  await db
+    .prepare("DELETE FROM materials WHERE id = ?")
+    .bind(material.id)
+    .run();
 
   const r2Keys = new Set<string>(keysToGuard);
   for (const key of r2Keys) {
     try {
       await c.env.MATERIALS.delete(key);
     } catch {
-      /* best-effort; D1 row still removed */
+      /* best-effort after D1 row removal */
     }
   }
-
-  for (const child of figureChildren) {
-    await db
-      .prepare("DELETE FROM materials WHERE id = ?")
-      .bind(child.id)
-      .run();
-  }
-  await db
-    .prepare("DELETE FROM materials WHERE id = ?")
-    .bind(material.id)
-    .run();
 
   return c.body(null, 204);
 });
@@ -1283,7 +1282,11 @@ materialRoutes.post("/:id/complete", async (c) => {
     } catch {
       throw new HTTPException(400, { message: "Invalid JSON body" });
     }
-    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    if (
+      parsed === null ||
+      typeof parsed !== "object" ||
+      Array.isArray(parsed)
+    ) {
       throw new HTTPException(400, { message: "Invalid JSON body" });
     }
     const body = parsed as {

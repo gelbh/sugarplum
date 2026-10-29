@@ -7,9 +7,7 @@ import {
 
 describe("materialActions", () => {
   it("detects figure r2 keys", () => {
-    expect(
-      isFigureMaterial("materials/d/figures/pdf-1/0.png"),
-    ).toBe(true);
+    expect(isFigureMaterial("materials/d/figures/pdf-1/0.png")).toBe(true);
     expect(isFigureMaterial("materials/d/m.txt")).toBe(false);
   });
 
@@ -17,9 +15,9 @@ describe("materialActions", () => {
     expect(
       canGenerateMoreFromMaterial({ kind: "paste", status: "ready" }),
     ).toBe(true);
-    expect(
-      canGenerateMoreFromMaterial({ kind: "pdf", status: "ready" }),
-    ).toBe(true);
+    expect(canGenerateMoreFromMaterial({ kind: "pdf", status: "ready" })).toBe(
+      true,
+    );
     expect(
       canGenerateMoreFromMaterial({ kind: "image", status: "ready" }),
     ).toBe(false);

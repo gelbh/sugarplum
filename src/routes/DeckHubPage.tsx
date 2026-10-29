@@ -1149,7 +1149,11 @@ export default function DeckHubPage({ deckId }: Props) {
                 materials={materials}
                 showDeckTitle={false}
                 onChanged={() => {
-                  void Promise.all([refreshMaterials(), refreshDraftJobs()]);
+                  void Promise.all([
+                    refreshMaterials(),
+                    refreshDraftJobs(),
+                    refreshCards(),
+                  ]);
                 }}
               />
             </Paper>

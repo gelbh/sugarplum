@@ -50,8 +50,9 @@ export default function MaterialsList({
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const [generateTarget, setGenerateTarget] =
-    useState<MaterialListItem | null>(null);
+  const [generateTarget, setGenerateTarget] = useState<MaterialListItem | null>(
+    null,
+  );
   const [topicValue, setTopicValue] = useState("");
   const [topicBusy, setTopicBusy] = useState(false);
   const [topicError, setTopicError] = useState<string | null>(null);
@@ -189,10 +190,7 @@ export default function MaterialsList({
                   Download
                 </Button>
                 {canGenerate ? (
-                  <Button
-                    size="small"
-                    onClick={() => openGenerate(material)}
-                  >
+                  <Button size="small" onClick={() => openGenerate(material)}>
                     Generate more
                   </Button>
                 ) : null}
@@ -230,10 +228,7 @@ export default function MaterialsList({
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={() => setDeleteTarget(null)}
-            disabled={deleteBusy}
-          >
+          <Button onClick={() => setDeleteTarget(null)} disabled={deleteBusy}>
             Cancel
           </Button>
           <Button
