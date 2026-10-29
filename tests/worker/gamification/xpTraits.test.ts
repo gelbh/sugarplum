@@ -102,14 +102,23 @@ function createGamificationDb(): D1Database {
           ledgerKeys.add(key);
           return { success: true, meta: { changes: 1 } } as D1Result;
         }
-        if (normalized.startsWith("UPDATE user_gamification SET xp_total =")) {
-          const [xpTotal, level, , userId] = bound as [
-            number,
-            number,
-            string,
-            string,
-          ];
-          gamification.set(userId, { xp_total: xpTotal, level });
+        if (
+          normalized.startsWith(
+            "UPDATE user_gamification SET xp_total = xp_total +",
+          )
+        ) {
+          const [amount, , userId] = bound as [number, string, string];
+          const row = gamification.get(userId) ?? { xp_total: 0, level: 1 };
+          gamification.set(userId, {
+            xp_total: row.xp_total + amount,
+            level: row.level,
+          });
+          return { success: true, meta: { changes: 1 } } as D1Result;
+        }
+        if (normalized.startsWith("UPDATE user_gamification SET level =")) {
+          const [level, , userId] = bound as [number, string, string];
+          const row = gamification.get(userId) ?? { xp_total: 0, level: 1 };
+          gamification.set(userId, { xp_total: row.xp_total, level });
           return { success: true, meta: { changes: 1 } } as D1Result;
         }
         return { success: true, meta: { changes: 0 } } as D1Result;

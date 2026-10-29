@@ -1,4 +1,4 @@
-import { XP, type Rarity, utcDay } from "./constants";
+import { XP, type Rarity } from "./constants";
 import { creditXp } from "./xp";
 
 type AchievementDefRow = {
@@ -7,6 +7,16 @@ type AchievementDefRow = {
   trigger_kind: string;
   threshold: number | null;
   params_json: string | null;
+};
+
+type StudyMetrics = {
+  reviewsTotal: number;
+  acceptsTotal: number;
+  studyDaysTotal: number;
+  streakCurrent: number;
+  streakBest: number;
+  dueAccepted: number;
+  distinctTypes: number;
 };
 
 const REVIEW_TRIGGERS = new Set([
@@ -137,39 +147,55 @@ function effectiveThreshold(def: AchievementDefRow): number {
   return def.threshold ?? 1;
 }
 
-async function metricValue(
+async function loadStudyMetrics(
   db: D1Database,
   userId: string,
-  def: AchievementDefRow,
   nowIso: string,
-): Promise<number> {
+): Promise<StudyMetrics> {
+  const [reviewsTotal, acceptsTotal, studyDaysTotal, streak, dueAccepted, distinctTypes] =
+    await Promise.all([
+      countReviewsTotal(db, userId),
+      countAcceptsTotal(db, userId),
+      countStudyDaysTotal(db, userId),
+      readStreakCurrent(db, userId),
+      countDueAcceptedCards(db, userId, nowIso),
+      countDistinctAcceptedTypes(db, userId),
+    ]);
+  return {
+    reviewsTotal,
+    acceptsTotal,
+    studyDaysTotal,
+    streakCurrent: streak.streakCurrent,
+    streakBest: streak.streakBest,
+    dueAccepted,
+    distinctTypes,
+  };
+}
+
+function metricValue(def: AchievementDefRow, metrics: StudyMetrics): number {
   switch (def.trigger_kind) {
     case "reviews_total":
-      return countReviewsTotal(db, userId);
+      return metrics.reviewsTotal;
     case "accepts_total":
-      return countAcceptsTotal(db, userId);
+      return metrics.acceptsTotal;
     case "study_days_total":
-      return countStudyDaysTotal(db, userId);
-    case "streak_current": {
-      const { streakCurrent } = await readStreakCurrent(db, userId);
-      return streakCurrent;
-    }
-    case "clear_due_once": {
-      const due = await countDueAcceptedCards(db, userId, nowIso);
-      return due === 0 ? 1 : 0;
-    }
+      return metrics.studyDaysTotal;
+    case "streak_current":
+      return metrics.streakCurrent;
+    case "clear_due_once":
+      return metrics.dueAccepted === 0 ? 1 : 0;
     case "distinct_types":
-      return countDistinctAcceptedTypes(db, userId);
+      return metrics.distinctTypes;
     case "composite": {
-      const params = JSON.parse(def.params_json ?? "{}") as {
-        streak_best_min?: number;
-        reviews_min?: number;
-      };
-      const { streakBest } = await readStreakCurrent(db, userId);
-      const reviews = await countReviewsTotal(db, userId);
+      let params: { streak_best_min?: number; reviews_min?: number } = {};
+      try {
+        params = JSON.parse(def.params_json ?? "{}") as typeof params;
+      } catch {
+        params = {};
+      }
       const ok =
-        streakBest >= (params.streak_best_min ?? 0) &&
-        reviews >= (params.reviews_min ?? 0);
+        metrics.streakBest >= (params.streak_best_min ?? 0) &&
+        metrics.reviewsTotal >= (params.reviews_min ?? 0);
       return ok ? 1 : 0;
     }
     default:
@@ -223,10 +249,11 @@ async function evaluateKinds(
   nowIso: string,
 ): Promise<string[]> {
   const defs = await loadActiveDefs(db);
+  const metrics = await loadStudyMetrics(db, userId, nowIso);
   const unlocks: string[] = [];
   for (const def of defs) {
     if (!kinds.has(def.trigger_kind)) continue;
-    const value = await metricValue(db, userId, def, nowIso);
+    const value = metricValue(def, metrics);
     const unlocked = await tryUnlock(db, userId, def, value, triggerEventId);
     if (unlocked) unlocks.push(unlocked);
   }
@@ -238,7 +265,6 @@ export async function evaluateAfterReview(
   userId: string,
   args: { reviewLogId: string; reviewedAt: Date },
 ): Promise<{ unlocks: string[] }> {
-  void utcDay(args.reviewedAt);
   const nowIso = args.reviewedAt.toISOString();
   const unlocks = await evaluateKinds(
     db,

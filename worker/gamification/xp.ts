@@ -51,20 +51,28 @@ export async function creditXp(
     };
   }
 
+  // Atomic add avoids lost updates under concurrent different keys.
+  await db
+    .prepare(
+      `UPDATE user_gamification
+       SET xp_total = xp_total + ?, updated_at = ?
+       WHERE user_id = ?`,
+    )
+    .bind(amount, createdAt, userId)
+    .run();
+
   const current = await db
     .prepare(`SELECT xp_total FROM user_gamification WHERE user_id = ?`)
     .bind(userId)
     .first<{ xp_total: number }>();
-  const xpTotal = (current?.xp_total ?? 0) + amount;
+  const xpTotal = current?.xp_total ?? amount;
   const level = levelFromXp(xpTotal);
 
   await db
     .prepare(
-      `UPDATE user_gamification
-       SET xp_total = ?, level = ?, updated_at = ?
-       WHERE user_id = ?`,
+      `UPDATE user_gamification SET level = ?, updated_at = ? WHERE user_id = ?`,
     )
-    .bind(xpTotal, level, createdAt, userId)
+    .bind(level, createdAt, userId)
     .run();
 
   return { awarded: true, xpTotal, level };

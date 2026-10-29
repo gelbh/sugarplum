@@ -19,7 +19,10 @@ import {
 import { recordRegenUsageEvent } from "../generation/usage";
 import { requireOwnedDeck } from "../materials/routes";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
-import { onCardAccepted } from "../gamification/onStudyEvent";
+import {
+  onCardAccepted,
+  onCardsAccepted,
+} from "../gamification/onStudyEvent";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -315,19 +318,13 @@ jobDraftRoutes.post("/:id/drafts/accept-all", async (c) => {
 
   let accepted = 0;
   let failed = 0;
-  const unlocks: string[] = [];
+  const acceptedCards: { cardId: string; cardType: string }[] = [];
   for (const row of results ?? []) {
     try {
       const outcome = await acceptDraftCard(db, row);
       if (outcome === "accepted") {
         accepted += 1;
-        const cardUnlocks = await onCardAccepted(db, userId, {
-          cardId: row.id,
-          cardType: row.type,
-        });
-        for (const id of cardUnlocks) {
-          if (!unlocks.includes(id)) unlocks.push(id);
-        }
+        acceptedCards.push({ cardId: row.id, cardType: row.type });
       } else failed += 1;
     } catch (err) {
       // Schedule race or D1 abort: count as failed, keep accepting the rest.
@@ -335,6 +332,7 @@ jobDraftRoutes.post("/:id/drafts/accept-all", async (c) => {
       failed += 1;
     }
   }
+  const unlocks = await onCardsAccepted(db, userId, acceptedCards);
 
   const rejectedSiblingCount =
     accepted > 0 && failed === 0

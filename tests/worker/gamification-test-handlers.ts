@@ -287,18 +287,26 @@ export function gamificationRun(
     }
     return { success: true, meta: { changes: 1 } } as D1Result;
   }
-  if (normalized.startsWith("UPDATE user_gamification SET xp_total =")) {
-    const [xpTotal, level, updatedAt, userId] = bound as [
-      number,
-      number,
-      string,
-      string,
-    ];
+  if (
+    normalized.startsWith("UPDATE user_gamification SET xp_total = xp_total +")
+  ) {
+    const [amount, updatedAt, userId] = bound as [number, string, string];
     const row = state.userGamification.get(userId);
     if (row) {
       state.userGamification.set(userId, {
         ...row,
-        xp_total: xpTotal,
+        xp_total: row.xp_total + amount,
+        updated_at: updatedAt,
+      });
+    }
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+  if (normalized.startsWith("UPDATE user_gamification SET level =")) {
+    const [level, updatedAt, userId] = bound as [number, string, string];
+    const row = state.userGamification.get(userId);
+    if (row) {
+      state.userGamification.set(userId, {
+        ...row,
         level,
         updated_at: updatedAt,
       });

@@ -86,18 +86,31 @@ export async function onCardAccepted(
   userId: string,
   args: { cardId: string; cardType: string },
 ): Promise<string[]> {
+  return onCardsAccepted(db, userId, [args]);
+}
+
+/** Credit per-card accept XP, then evaluate achievements once. */
+export async function onCardsAccepted(
+  db: D1Database,
+  userId: string,
+  cards: { cardId: string; cardType: string }[],
+): Promise<string[]> {
+  if (cards.length === 0) return [];
   try {
-    await creditXp(
-      db,
-      userId,
-      XP.acceptCard,
-      "accept",
-      `accept:${args.cardId}`,
-    );
-    const { unlocks } = await evaluateAfterAccept(db, userId, args);
+    for (const card of cards) {
+      await creditXp(
+        db,
+        userId,
+        XP.acceptCard,
+        "accept",
+        `accept:${card.cardId}`,
+      );
+    }
+    const last = cards[cards.length - 1]!;
+    const { unlocks } = await evaluateAfterAccept(db, userId, last);
     return unlocks;
   } catch (err) {
-    console.error("gamification onCardAccepted", err);
+    console.error("gamification onCardsAccepted", err);
     return [];
   }
 }
