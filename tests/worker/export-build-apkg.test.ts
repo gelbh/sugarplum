@@ -1,7 +1,14 @@
+import { readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import JSZip from "jszip";
 import initSqlJs from "sql.js";
-import { describe, expect, it } from "vitest";
-import { buildApkg } from "../../worker/export/buildApkg";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  buildApkg,
+  loadSqlWasmBinary,
+} from "../../worker/export/buildApkg";
+
+const require = createRequire(import.meta.url);
 
 async function ankiSortFieldCsum(sortField: string): Promise<number> {
   const digest = await crypto.subtle.digest(
@@ -18,7 +25,6 @@ async function ankiSortFieldCsum(sortField: string): Promise<number> {
 describe("buildApkg", () => {
   it("builds an importable collection with basic, cloze, and MCQ notes", async () => {
     const bytes = await buildApkg({
-      appUrl: "http://localhost/",
       deckName: "Sugarplum",
       entries: [
         {
@@ -65,7 +71,6 @@ describe("buildApkg", () => {
 
   it("stores media files under numeric names and writes a media map", async () => {
     const bytes = await buildApkg({
-      appUrl: "http://localhost/",
       deckName: "Sugarplum",
       entries: [
         {
@@ -99,7 +104,6 @@ describe("buildApkg", () => {
 
   it("keeps media with the same basename separate", async () => {
     const bytes = await buildApkg({
-      appUrl: "http://localhost/",
       deckName: "Sugarplum",
       entries: [
         {
@@ -130,7 +134,6 @@ describe("buildApkg", () => {
   it("stores Anki csum as decimal of first 8 SHA-1 hex digits of sort field", async () => {
     const sortField = "Question";
     const bytes = await buildApkg({
-      appUrl: "http://localhost/",
       deckName: "Sugarplum",
       entries: [
         {
@@ -155,7 +158,6 @@ describe("buildApkg", () => {
 
   it("rewrites media sources in every note field including cloze Text", async () => {
     const bytes = await buildApkg({
-      appUrl: "http://localhost/",
       deckName: "Sugarplum",
       entries: [
         {
@@ -183,7 +185,6 @@ describe("buildApkg", () => {
 
   it("appends media not already present in a basic front", async () => {
     const bytes = await buildApkg({
-      appUrl: "http://localhost/",
       deckName: "Sugarplum",
       entries: [
         {
@@ -211,7 +212,6 @@ describe("buildApkg", () => {
 
   it("preserves learning card state and cloze ordinal", async () => {
     const bytes = await buildApkg({
-      appUrl: "http://localhost/",
       deckName: "Sugarplum",
       entries: [
         {
@@ -259,7 +259,6 @@ describe("buildApkg", () => {
 
   it("maps relearning state 3 to Anki queue 1", async () => {
     const bytes = await buildApkg({
-      appUrl: "http://localhost/",
       deckName: "Sugarplum",
       entries: [
         {
@@ -296,7 +295,6 @@ describe("buildApkg", () => {
     const dueUnix = Math.floor(Date.now() / 1000) + 14 * 86_400;
     const lastReview = Math.floor(Date.now() / 1000) - 86_400;
     const bytes = await buildApkg({
-      appUrl: "http://localhost/",
       deckName: "Sugarplum",
       entries: [
         {
@@ -335,5 +333,43 @@ describe("buildApkg", () => {
       d: 6.789,
       lrt: lastReview,
     });
+  });
+});
+
+describe("loadSqlWasmBinary", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("loads via ASSETS in Cloudflare Workers and never hits public APP_URL", async () => {
+    vi.stubGlobal("navigator", { userAgent: "Cloudflare-Workers" });
+    const wasmBytes = await readFile(
+      require.resolve("sql.js/dist/sql-wasm.wasm"),
+    );
+    const fetchSpy = vi.fn(async () => {
+      throw new Error("global fetch must not be used for sql.js WASM");
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+    let assetsPath = "";
+    const assets = {
+      fetch: async (input: RequestInfo | URL) => {
+        assetsPath = String(input instanceof Request ? input.url : input);
+        return new Response(wasmBytes, {
+          status: 200,
+          headers: { "content-type": "application/wasm" },
+        });
+      },
+    };
+
+    const loaded = await loadSqlWasmBinary({ assets });
+    expect(loaded.byteLength).toBe(wasmBytes.byteLength);
+    expect(assetsPath).toContain("sql-wasm");
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when Worker runtime has no ASSETS binding", async () => {
+    vi.stubGlobal("navigator", { userAgent: "Cloudflare-Workers" });
+    await expect(loadSqlWasmBinary({})).rejects.toThrow(/ASSETS binding/);
   });
 });
