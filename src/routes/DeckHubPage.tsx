@@ -160,6 +160,8 @@ export default function DeckHubPage({ deckId }: Props) {
   const [deck, setDeck] = useState<Deck | null>(null);
   const [subject, setSubject] = useState<Subject | null>(null);
   const [cards, setCards] = useState<CardDraftView[]>([]);
+  /** Accepted (non-archived) count — independent of Show archived filter. */
+  const [acceptedCount, setAcceptedCount] = useState(0);
   const [draftJobs, setDraftJobs] = useState<JobListItem[]>([]);
   const [materials, setMaterials] = useState<MaterialListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -225,6 +227,9 @@ export default function DeckHubPage({ deckId }: Props) {
 
   const [showArchived, setShowArchived] = useState(false);
   const [archiveBusyId, setArchiveBusyId] = useState<string | null>(null);
+  /** Paste / upload / DIY stay collapsed once the deck has content. */
+  const [workshopOpen, setWorkshopOpen] = useState(false);
+  const workshopSeededRef = useRef(false);
 
   const { end: endLoad } = useTrackedOp("Loading deck…", {
     trackOnMount: true,
@@ -233,12 +238,17 @@ export default function DeckHubPage({ deckId }: Props) {
     useTrackedOp("Exporting to Anki…");
 
   const refreshCards = useCallback(async () => {
-    setCards(
-      await listDeckCards(
-        deckId,
-        showArchived ? { status: "archived" } : undefined,
-      ),
+    const next = await listDeckCards(
+      deckId,
+      showArchived ? { status: "archived" } : undefined,
     );
+    setCards(next);
+    if (!showArchived) {
+      setAcceptedCount(next.length);
+    } else {
+      const accepted = await listDeckCards(deckId);
+      setAcceptedCount(accepted.length);
+    }
   }, [deckId, showArchived]);
 
   const refreshDraftJobs = useCallback(async () => {
@@ -310,8 +320,40 @@ export default function DeckHubPage({ deckId }: Props) {
 
   useEffect(() => {
     if (!ready || !deck) return;
-    void refreshCards();
-  }, [deck, ready, refreshCards, showArchived]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const next = await listDeckCards(
+          deckId,
+          showArchived ? { status: "archived" } : undefined,
+        );
+        if (cancelled) return;
+        setCards(next);
+        if (!showArchived) {
+          setAcceptedCount(next.length);
+        } else {
+          try {
+            const accepted = await listDeckCards(deckId);
+            if (!cancelled) setAcceptedCount(accepted.length);
+          } catch {
+            if (!cancelled) setAcceptedCount(0);
+          }
+        }
+        if (!workshopSeededRef.current) {
+          workshopSeededRef.current = true;
+          // First seed runs with showArchived false (default); use accepted emptiness.
+          setWorkshopOpen(
+            !showArchived && next.length === 0 && draftJobs.length === 0,
+          );
+        }
+      } catch {
+        if (!cancelled) setCards([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [deck, deckId, draftJobs.length, ready, showArchived]);
 
   async function onArchiveCard(card: CardDraftView) {
     setArchiveBusyId(card.id);
@@ -319,12 +361,15 @@ export default function DeckHubPage({ deckId }: Props) {
     try {
       await archiveCard(card.id);
       setCards((prev) => prev.filter((c) => c.id !== card.id));
+      setAcceptedCount((n) => Math.max(0, n - 1));
       if (editCard?.id === card.id) {
         setEditCard(null);
       }
       setNotice("Card archived");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not archive card");
+      setError(
+        err instanceof ApiError ? err.message : "Could not archive card",
+      );
     } finally {
       setArchiveBusyId(null);
     }
@@ -336,12 +381,15 @@ export default function DeckHubPage({ deckId }: Props) {
     try {
       await restoreCard(card.id);
       setCards((prev) => prev.filter((c) => c.id !== card.id));
+      setAcceptedCount((n) => n + 1);
       if (editCard?.id === card.id) {
         setEditCard(null);
       }
       setNotice("Card restored");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not restore card");
+      setError(
+        err instanceof ApiError ? err.message : "Could not restore card",
+      );
     } finally {
       setArchiveBusyId(null);
     }
@@ -839,10 +887,6 @@ export default function DeckHubPage({ deckId }: Props) {
     }
   }
 
-  const subjectHref = subject
-    ? `/library/subjects/${encodeURIComponent(subject.id)}`
-    : "/library";
-
   return (
     <Container maxWidth="sm" sx={{ py: { xs: 4, md: 5 } }}>
       {!ready ? (
@@ -850,35 +894,6 @@ export default function DeckHubPage({ deckId }: Props) {
       ) : (
         <Stack spacing={3}>
           <Box>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              <Link
-                href="/library"
-                underline="hover"
-                color="primary"
-                onClick={(ev) => {
-                  ev.preventDefault();
-                  navigate("/library");
-                }}
-              >
-                Library
-              </Link>
-              {subject ? (
-                <>
-                  {" / "}
-                  <Link
-                    href={subjectHref}
-                    underline="hover"
-                    color="primary"
-                    onClick={(ev) => {
-                      ev.preventDefault();
-                      navigate(subjectHref);
-                    }}
-                  >
-                    {subject.title}
-                  </Link>
-                </>
-              ) : null}
-            </Typography>
             <Stack
               direction="row"
               alignItems="flex-start"
@@ -902,6 +917,7 @@ export default function DeckHubPage({ deckId }: Props) {
                       setRenameValue(deck.title);
                       setRenameOpen(true);
                     }}
+                    sx={{ color: "text.secondary" }}
                   >
                     <EditOutlinedIcon fontSize="small" />
                   </IconButton>
@@ -909,57 +925,96 @@ export default function DeckHubPage({ deckId }: Props) {
                     size="small"
                     aria-label="Delete deck"
                     onClick={openDelete}
+                    sx={{ color: "text.secondary" }}
                   >
                     <DeleteOutlineIcon fontSize="small" />
                   </IconButton>
                 </Stack>
               ) : null}
             </Stack>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              {cards.length === 0
+                ? "No cards yet"
+                : cards.length === 1
+                  ? "1 card"
+                  : `${cards.length} cards`}
+              {draftJobs.length > 0
+                ? ` · ${draftJobs.length} draft job${draftJobs.length === 1 ? "" : "s"}`
+                : ""}
+              {!guest && materials.length > 0
+                ? ` · ${materials.length} material${materials.length === 1 ? "" : "s"}`
+                : ""}
+            </Typography>
             <Stack
               direction="row"
               spacing={1}
+              useFlexGap
+              flexWrap="wrap"
               alignItems="center"
-              sx={{ mt: 1 }}
+              sx={{ mt: 1.5 }}
             >
-              {deck ? (
+              {deck && acceptedCount > 0 ? (
                 <Button
                   size="small"
-                  variant="outlined"
+                  variant="contained"
                   onClick={() =>
                     navigate(`/study?deckId=${encodeURIComponent(deck.id)}`)
                   }
                 >
-                  Study this deck
+                  Study
                 </Button>
               ) : null}
+              {!guest && draftJobs[0] ? (
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={() =>
+                    navigate(
+                      `/jobs/${encodeURIComponent(draftJobs[0].id)}/drafts`,
+                    )
+                  }
+                >
+                  Review drafts
+                </Button>
+              ) : null}
+              {!workshopOpen ? (
+                <Button
+                  size="small"
+                  variant={cards.length === 0 ? "contained" : "outlined"}
+                  onClick={() => setWorkshopOpen(true)}
+                >
+                  Add material
+                </Button>
+              ) : (
+                <Button size="small" onClick={() => setWorkshopOpen(false)}>
+                  Hide tools
+                </Button>
+              )}
               {!guest && deck ? (
                 <Button
                   size="small"
-                  variant="outlined"
+                  variant="text"
                   onClick={() => {
                     setTopicError(null);
                     setTopicValue("");
                     setTopicOpen(true);
                   }}
                 >
-                  Generate cards for topic…
+                  Topic…
                 </Button>
               ) : null}
               {!guest && deck ? (
                 <Button
                   size="small"
-                  variant="outlined"
-                  disabled={exportBusy || cards.length === 0}
+                  variant="text"
+                  disabled={exportBusy || acceptedCount === 0}
                   onClick={() => {
                     void onExportAnki();
                   }}
                 >
-                  {exportBusy ? "Exporting…" : "Export to Anki"}
+                  {exportBusy ? "Exporting…" : "Export"}
                 </Button>
               ) : null}
-              <Typography variant="body2" color="text.secondary">
-                Cards, materials, and drafts for this deck.
-              </Typography>
             </Stack>
           </Box>
 
@@ -975,7 +1030,7 @@ export default function DeckHubPage({ deckId }: Props) {
             </Alert>
           ) : null}
 
-          {deck ? (
+          {deck && workshopOpen ? (
             <Paper
               variant="outlined"
               sx={{
@@ -1243,7 +1298,9 @@ export default function DeckHubPage({ deckId }: Props) {
                 <Typography variant="body2" color="text.secondary">
                   {showArchived
                     ? "No archived cards."
-                    : "No accepted cards yet. Add one below or paste material."}
+                    : workshopOpen
+                      ? "Paste or add a card below."
+                      : "No accepted cards yet. Use Add material to begin."}
                 </Typography>
               ) : (
                 <Stack
@@ -1321,7 +1378,7 @@ export default function DeckHubPage({ deckId }: Props) {
             </Paper>
           ) : null}
 
-          {deck ? (
+          {deck && workshopOpen ? (
             <Paper
               variant="outlined"
               sx={{
@@ -1349,7 +1406,10 @@ export default function DeckHubPage({ deckId }: Props) {
                       <Typography variant="body2" color="text.secondary">
                         Image (deck material)
                       </Typography>
-                      <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                      <Stack
+                        direction={{ xs: "column", sm: "row" }}
+                        spacing={1}
+                      >
                         {deckImageKeys.length > 0 ? (
                           <FormControl fullWidth size="small">
                             <InputLabel id="hub-create-image-key">
@@ -1613,7 +1673,10 @@ export default function DeckHubPage({ deckId }: Props) {
             </Alert>
           ) : null}
           <Stack spacing={2} sx={{ pt: 1 }}>
-            <FormControl fullWidth disabled={moveBusy || moveSubjects.length === 0}>
+            <FormControl
+              fullWidth
+              disabled={moveBusy || moveSubjects.length === 0}
+            >
               <InputLabel id="move-subject-label">Subject</InputLabel>
               <Select
                 labelId="move-subject-label"

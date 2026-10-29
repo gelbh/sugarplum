@@ -14,7 +14,7 @@ import Typography from "@mui/material/Typography";
 import Link from "@mui/material/Link";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { navigate } from "../nav/navigate";
+import { navigateReplace } from "../nav/navigate";
 import GlobalProgressBar from "../progress/GlobalProgressBar";
 import { ProgressProvider } from "../progress/ProgressProvider";
 import { useStudyChrome } from "../study/StudyChromeContext";
@@ -168,7 +168,7 @@ export default function AppShell({ children }: AppShellProps) {
                   <ListItemButton
                     key={item.id}
                     selected={selected}
-                    onClick={() => navigate(item.href)}
+                    onClick={() => navigateReplace(item.href)}
                     sx={{
                       borderRadius: 1,
                       mb: 0.5,
@@ -248,7 +248,11 @@ export default function AppShell({ children }: AppShellProps) {
           {children}
         </Box>
         {showMobileChrome ? (
-          <BottomChrome active={active} items={NAV} onNavigate={navigate} />
+          <BottomChrome
+            active={active}
+            items={NAV}
+            onNavigate={navigateReplace}
+          />
         ) : null}
       </Box>
     </ProgressProvider>

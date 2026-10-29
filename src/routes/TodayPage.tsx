@@ -208,11 +208,7 @@ export default function TodayPage() {
             {dueCaption}
           </Typography>
           {heldIntroCount > 0 ? (
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mt: 1 }}
-            >
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
               {heldIntroCount === 1
                 ? "1 new card held for later (intro budget)."
                 : `${heldIntroCount} new cards held for later (intro budget).`}
@@ -281,7 +277,13 @@ export default function TodayPage() {
             >
               Start study
             </Button>
-          ) : null}
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              {showJourneyNext
+                ? "Next step to your first review:"
+                : "Nothing due. Enjoy the break, or add material when you are ready."}
+            </Typography>
+          )}
           {showJourneyNext ? (
             <JourneyNextButton
               view={view}

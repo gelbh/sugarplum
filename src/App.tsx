@@ -56,7 +56,8 @@ function AppInner() {
   }
   const deckMatch = path.match(DECK_PATH);
   if (deckMatch) {
-    return shell(<DeckHubPage deckId={decodeURIComponent(deckMatch[1])} />);
+    const deckId = decodeURIComponent(deckMatch[1]);
+    return shell(<DeckHubPage key={deckId} deckId={deckId} />);
   }
   if (path === "/library") return shell(<LibraryPage />);
   if (path === "/settings") return shell(<SettingsPage />);

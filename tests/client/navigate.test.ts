@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   locationKey,
   navigate,
+  navigateReplace,
+  shellBackHref,
   subscribeLocation,
   subscribePath,
 } from "../../src/nav/navigate";
@@ -45,5 +47,29 @@ describe("navigate", () => {
     navigate("/study?deckId=d1");
     expect(locs).toHaveLength(0);
     unsub();
+  });
+
+  it("navigateReplace updates location without stacking peers", () => {
+    navigate("/insights");
+    const before = window.history.length;
+    navigateReplace("/today");
+    expect(locationKey()).toBe("/today");
+    expect(window.history.length).toBe(before);
+  });
+});
+
+describe("shellBackHref", () => {
+  it("hides Back on shell roots", () => {
+    expect(shellBackHref("/today")).toBeNull();
+    expect(shellBackHref("/insights")).toBeNull();
+    expect(shellBackHref("/library")).toBeNull();
+    expect(shellBackHref("/settings")).toBeNull();
+    expect(shellBackHref("/study")).toBeNull();
+  });
+
+  it("returns Library for nested library and draft routes", () => {
+    expect(shellBackHref("/library/decks/d1")).toBe("/library");
+    expect(shellBackHref("/library/subjects/s1")).toBe("/library");
+    expect(shellBackHref("/jobs/job_1/drafts")).toBe("/library");
   });
 });
