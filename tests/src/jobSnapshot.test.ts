@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildJobProgressSnapshot } from "../../src/progress/jobSnapshot";
+import { formatProgressSubline } from "../../src/progress/copy";
 
 describe("buildJobProgressSnapshot", () => {
   it("maps queued + null progress to Waiting to start", () => {
@@ -18,7 +19,6 @@ describe("buildJobProgressSnapshot", () => {
       total: 0,
       percent: 0,
       label: "x",
-      updated_at: "2026-10-28T00:00:00.000Z",
     });
     expect(snap.stage).toBe("queued");
     expect(snap.label).toBe("Waiting to start");
@@ -28,5 +28,20 @@ describe("buildJobProgressSnapshot", () => {
     const snap = buildJobProgressSnapshot("j1", "running", null);
     expect(snap.label).not.toBe("Waiting to start");
     expect(snap.mode).toBe("indeterminate");
+  });
+
+  it("does not treat claim-heartbeat stage queued as in-line wait", () => {
+    const snap = buildJobProgressSnapshot("j1", "running", {
+      stage: "queued",
+      current: 0,
+      total: 0,
+      percent: 0,
+      label: "x",
+    });
+    expect(snap.stage).not.toBe("queued");
+    expect(snap.label).not.toBe("Waiting to start");
+    expect(
+      formatProgressSubline({ stage: snap.stage, etaMs: null }),
+    ).not.toBe("You'll start when a worker is free");
   });
 });

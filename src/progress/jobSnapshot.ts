@@ -33,14 +33,20 @@ export function buildJobProgressSnapshot(
     };
   }
   const measurable = (progress.total ?? 0) > 0;
+  // Claim heartbeat can leave progress.stage === "queued" while status is
+  // already "running"; that is not the calm in-line wait stage.
+  const stage =
+    progress.stage && progress.stage !== "queued"
+      ? progress.stage
+      : undefined;
   return {
     id: jobId,
-    label: progress.stage
-      ? friendlyStageHeadline(progress.stage)
+    label: stage
+      ? friendlyStageHeadline(stage)
       : progress.label || friendlyStageHeadline(null),
     mode: measurable ? "determinate" : "indeterminate",
     percent: progress.percent ?? 0,
     source: "job",
-    stage: progress.stage ?? undefined,
+    stage,
   };
 }

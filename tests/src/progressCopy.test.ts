@@ -3,7 +3,6 @@ import {
   friendlyStageHeadline,
   orderPresentStages,
   formatEtaSubline,
-  formatQueuedSubline,
   formatProgressSubline,
   formatRelativeAge,
   progressDetailsModel,
@@ -37,16 +36,10 @@ describe("formatEtaSubline", () => {
   });
 });
 
-describe("formatQueuedSubline", () => {
-  it("explains the wait", () => {
-    expect(formatQueuedSubline()).toBe("Another generation is finishing first");
-  });
-});
-
 describe("formatProgressSubline", () => {
-  it("uses queued copy when stage is queued", () => {
+  it("uses neutral queued copy when stage is queued", () => {
     expect(formatProgressSubline({ stage: "queued", etaMs: null })).toBe(
-      "Another generation is finishing first",
+      "You'll start when a worker is free",
     );
   });
   it("falls through to ETA otherwise", () => {
