@@ -37,6 +37,7 @@ import { warmDueMedia } from "../study/warmDueMedia";
 /** Home: giant due proof + Start study (today-dash-b). */
 export default function TodayPage() {
   const [dueCount, setDueCount] = useState(0);
+  const [heldIntroCount, setHeldIntroCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [mergeFailed, setMergeFailed] = useState(false);
   const [offlineCopy, setOfflineCopy] = useState(false);
@@ -52,10 +53,11 @@ export default function TodayPage() {
 
   const refreshDueFromNetwork = useCallback(async (uid: string) => {
     try {
-      const due = await listDueCards();
+      const { cards: due, meta } = await listDueCards();
       saveDueCache(uid, due);
       warmDueMedia(due);
       setDueCount(due.length);
+      setHeldIntroCount(meta.heldIntroCount ?? 0);
       setOfflineCopy(false);
     } catch {
       /* keep current due count */
@@ -92,11 +94,12 @@ export default function TodayPage() {
         await flushOnMount(user.id);
         if (cancelled) return;
         try {
-          const due = await listDueCards();
+          const { cards: due, meta } = await listDueCards();
           if (cancelled) return;
           saveDueCache(user.id, due);
           warmDueMedia(due);
           setDueCount(due.length);
+          setHeldIntroCount(meta.heldIntroCount ?? 0);
           setOfflineCopy(false);
         } catch (err) {
           if (cancelled) return;
@@ -204,6 +207,17 @@ export default function TodayPage() {
           >
             {dueCaption}
           </Typography>
+          {heldIntroCount > 0 ? (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 1 }}
+            >
+              {heldIntroCount === 1
+                ? "1 new card held for later (intro budget)."
+                : `${heldIntroCount} new cards held for later (intro budget).`}
+            </Typography>
+          ) : null}
         </Box>
 
         {error ? (

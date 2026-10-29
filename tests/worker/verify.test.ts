@@ -87,8 +87,8 @@ describe("spec verify: draft gate", () => {
       env,
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { id: string }[];
-    expect(body.some((c) => c.id === "card-draft")).toBe(false);
+    const body = (await res.json()) as { cards: { id: string }[] };
+    expect(body.cards.some((c) => c.id === "card-draft")).toBe(false);
   });
 });
 
