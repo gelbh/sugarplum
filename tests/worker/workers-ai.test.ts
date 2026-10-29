@@ -67,6 +67,9 @@ describe("Workers AI adapter", () => {
           max_completion_tokens?: number;
           response_format?: { type?: string };
         },
+        options?: {
+          gateway?: { id?: string; skipCache?: boolean };
+        },
       ) => {
         expect(_model).toBe(WORKERS_AI_MODEL);
         expect(inputs.max_completion_tokens).toBe(8192);
@@ -79,6 +82,9 @@ describe("Workers AI adapter", () => {
             content: expect.stringContaining("notes"),
           }),
         ]);
+        expect(options).toEqual({
+          gateway: { id: "sugarplum", skipCache: true },
+        });
         return chatCompletionResult(sampleCardsJson);
       },
     );
