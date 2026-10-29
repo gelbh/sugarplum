@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
+import { isAdminUser } from "../admin/allowlist";
 import { getDb } from "../db/client";
 import {
   buildGoogleAuthorizeUrl,
@@ -172,6 +173,7 @@ authRoutes.get("/me", async (c) => {
     id: user.id,
     email: user.email,
     google_linked: user.oauth_subject != null,
+    is_admin: isAdminUser(user, c.env.ADMIN_EMAILS),
   });
 });
 

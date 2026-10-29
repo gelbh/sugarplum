@@ -1,9 +1,11 @@
 import {
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
   type ReactNode,
 } from "react";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import InsightsIcon from "@mui/icons-material/Insights";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -19,6 +21,8 @@ import Typography from "@mui/material/Typography";
 import Link from "@mui/material/Link";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
+import { me } from "../api/client";
+import { isGuest } from "../guest/session";
 import { navigateReplace } from "../nav/navigate";
 import GlobalProgressBar from "../progress/GlobalProgressBar";
 import { ProgressProvider } from "../progress/ProgressProvider";
@@ -48,7 +52,8 @@ type NavItem = {
   match: (path: string) => boolean;
 };
 
-const NAV: NavItem[] = [
+/** Learner tabs only; never include Admin (mobile BottomChrome uses this). */
+const LEARNER_NAV: NavItem[] = [
   {
     id: "today",
     label: "Today",
@@ -82,9 +87,19 @@ const NAV: NavItem[] = [
   },
 ];
 
-function activeNavId(path: string): ShellNavId {
-  const hit = NAV.find((item) => item.match(path));
-  return hit?.id ?? "today";
+const ADMIN_NAV: NavItem = {
+  id: "admin",
+  label: "Admin",
+  href: "/admin",
+  icon: <AdminPanelSettingsIcon fontSize="small" />,
+  match: (path) => path === "/admin" || path.startsWith("/admin/"),
+};
+
+function activeNavId(path: string, drawerItems: NavItem[]): ShellNavId {
+  const hit = drawerItems.find((item) => item.match(path));
+  if (hit) return hit.id;
+  if (ADMIN_NAV.match(path)) return "admin";
+  return "today";
 }
 
 type AppShellProps = {
@@ -96,12 +111,32 @@ function AppShellChrome({ children }: AppShellProps) {
   const theme = useTheme();
   const mobile = useMediaQuery(theme.breakpoints.down("md"));
   const path = window.location.pathname;
-  const active = activeNavId(path);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const drawerNav = isAdmin ? [...LEARNER_NAV, ADMIN_NAV] : LEARNER_NAV;
+  const active = activeNavId(path, drawerNav);
   const showDrawer = !hideChrome && !mobile;
   const showMobileChrome = !hideChrome && mobile;
   const genStatus = useShellGenerationStatus(hideChrome);
   const headerRef = useRef<HTMLDivElement>(null);
   const [mobileHeaderPx, setMobileHeaderPx] = useState(TOP_BAR_HEIGHT);
+
+  useEffect(() => {
+    if (isGuest()) {
+      setIsAdmin(false);
+      return;
+    }
+    let cancelled = false;
+    void me()
+      .then((user) => {
+        if (!cancelled) setIsAdmin(user.is_admin === true);
+      })
+      .catch(() => {
+        if (!cancelled) setIsAdmin(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useLayoutEffect(() => {
     if (!showMobileChrome) return;
@@ -198,7 +233,7 @@ function AppShellChrome({ children }: AppShellProps) {
             </Typography>
           </Toolbar>
           <List dense sx={{ px: 1, pt: 1.5 }}>
-            {NAV.map((item) => {
+            {drawerNav.map((item) => {
               const selected = active === item.id;
               return (
                 <ListItemButton
@@ -293,8 +328,8 @@ function AppShellChrome({ children }: AppShellProps) {
       </Box>
       {showMobileChrome ? (
         <BottomChrome
-          active={active}
-          items={NAV}
+          active={active === "admin" ? "today" : active}
+          items={LEARNER_NAV}
           onNavigate={navigateReplace}
           libraryBadgeKind={genStatus?.kind ?? null}
         />

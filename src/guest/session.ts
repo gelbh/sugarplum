@@ -7,6 +7,7 @@ export const GUEST_USER = {
   id: GUEST_USER_ID,
   email: "guest@local",
   google_linked: false,
+  is_admin: false,
 } as const;
 
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
