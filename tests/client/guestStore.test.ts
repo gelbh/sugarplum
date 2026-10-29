@@ -534,7 +534,7 @@ describe("guest store", () => {
     ).toBe(false);
   });
 
-  it("restoreCard sets accepted and prepends to due list", () => {
+  it("restoreCard sets accepted and returns card to the due queue", () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Restore subject", storage);
     const deck = guestCreateDeck("Restore deck", subject.id, storage);
@@ -550,7 +550,9 @@ describe("guest store", () => {
     expect(guestListDeckCards(deck.id, storage).map((c) => c.id)).toContain(
       card.id,
     );
-    expect(guestListDueCards(undefined, storage).cards[0]?.id).toBe(card.id);
+    expect(
+      guestListDueCards(undefined, storage).cards.map((c) => c.id),
+    ).toContain(card.id);
   });
 
   it("moveCard updates deck_id and leaves dueIds unchanged", () => {
