@@ -6,7 +6,6 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { StrugglingRow } from "../api/client";
 
-/** Caption bits for Insights / Today struggling rows. */
 export function formatStrugglingCaption(row: {
   again_14d: number;
   hard_14d: number;
@@ -39,7 +38,6 @@ type StrugglingListProps = {
   emptyMessage?: string;
 };
 
-/** Ranked struggling rows; Study CTA only when is_due (deep-links ?card=). */
 export default function StrugglingList({
   rows,
   emptyMessage = "No struggling cards right now.",
