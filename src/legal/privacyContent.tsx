@@ -31,7 +31,7 @@ export const privacySections = [
   },
   {
     title: "Sharing and processors",
-    body: `Infrastructure runs on Cloudflare (Workers, D1, R2, KV, Queues, Workers AI). Google provides OAuth for Sign-In; we do not transfer your Google Sign-In profile fields (email and sub) to unrelated third parties for advertising or resale. If you save a BYO OpenAI, Anthropic, or Google API key, study material text and prompts are sent to that provider to generate drafts (that is study content you supply, not your Google Sign-In profile data). We do not run a third-party product analytics SDK today.`,
+    body: `Infrastructure runs on Cloudflare (Workers, D1, R2, KV, Queues, Workers AI). Cloudflare Turnstile challenges email register and login submissions. Google provides OAuth for Sign-In; we do not transfer your Google Sign-In profile fields (email and sub) to unrelated third parties for advertising or resale. If you save a BYO OpenAI, Anthropic, or Google API key, study material text and prompts are sent to that provider to generate drafts (that is study content you supply, not your Google Sign-In profile data). We do not run a third-party product analytics SDK today.`,
   },
   {
     title: "Security",

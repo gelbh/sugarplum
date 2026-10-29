@@ -1,7 +1,35 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { app } from "../../worker/index";
 import { isAllowedMutatingOrigin } from "../../worker/security/origin";
 import { createTestEnv } from "./test-env";
+
+const SITEVERIFY_URL =
+  "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+const DUMMY_TURNSTILE_TOKEN = "XXXX.DUMMY.TOKEN.XXXX";
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+function stubSiteverifyOk() {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === SITEVERIFY_URL) {
+        return new Response(
+          JSON.stringify({ success: true, action: "register" }),
+          {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          },
+        );
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    }),
+  );
+}
 
 describe("isAllowedMutatingOrigin", () => {
   it("allows missing Origin and APP_URL / localhost matches", () => {
@@ -51,6 +79,7 @@ describe("mutating /api origin middleware", () => {
   it("allows APP_URL origin", async () => {
     const env = createTestEnv();
     env.APP_URL = "https://sugarplum.gelbhart.dev";
+    stubSiteverifyOk();
     const res = await app.request(
       "/api/auth/register",
       {
@@ -62,6 +91,7 @@ describe("mutating /api origin middleware", () => {
         body: JSON.stringify({
           email: "ok@example.com",
           password: "long-enough-password",
+          turnstileToken: DUMMY_TURNSTILE_TOKEN,
         }),
       },
       env,

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -10,6 +10,9 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { ApiError, login } from "../api/client";
 import GoogleSignInButton from "../components/GoogleSignInButton";
+import TurnstileWidget, {
+  type TurnstileWidgetHandle,
+} from "../components/TurnstileWidget";
 import { continueAsGuest } from "../guest/enterGuest";
 
 function oauthErrorMessage(code: string | null): string | null {
@@ -37,16 +40,27 @@ export default function LoginPage() {
     return oauthErrorMessage(params.get("error"));
   });
   const [busy, setBusy] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!token) {
+      setError("Complete the verification challenge first");
+      return;
+    }
     setBusy(true);
     try {
-      await login(email, password);
+      await login(email, password, token);
       window.location.assign("/today");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Login failed");
+      if (err instanceof ApiError && err.status === 403) {
+        setError("Verification failed. Please try again.");
+      } else {
+        setError(err instanceof ApiError ? err.message : "Login failed");
+      }
+      turnstileRef.current?.reset();
     } finally {
       setBusy(false);
     }
@@ -83,7 +97,17 @@ export default function LoginPage() {
             required
             fullWidth
           />
-          <Button type="submit" variant="contained" disabled={busy} fullWidth>
+          <TurnstileWidget
+            action="login"
+            onToken={setToken}
+            widgetRef={turnstileRef}
+          />
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={busy || !token}
+            fullWidth
+          >
             {busy ? "Signing in…" : "Sign in"}
           </Button>
           <Divider>or</Divider>
