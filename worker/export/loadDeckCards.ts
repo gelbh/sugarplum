@@ -1,6 +1,6 @@
 import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
-import { cardToAnkiNote, type AnkiNoteSpec } from "./notes";
+import { cardToAnkiNotes, type AnkiNoteSpec } from "./notes";
 import { mapScheduleToAnki, type AnkiFsrsFields } from "./fsrsMap";
 import { ankiDeckName } from "./deckNames";
 
@@ -48,6 +48,12 @@ function parseJson(raw: string): unknown {
 
 function mediaName(key: string): string {
   return encodeURIComponent(key);
+}
+
+function occlusionImageKey(front: unknown): string | null {
+  if (typeof front !== "object" || front == null) return null;
+  const key = (front as { image_key?: unknown }).image_key;
+  return typeof key === "string" && key.trim() ? key : null;
 }
 
 function hasSchedule(row: CardRow): row is CardRow & {
@@ -109,10 +115,11 @@ export async function loadDeckCards(
   const entries: LoadedDeck["entries"] = [];
   const warnings = { missingMedia: 0, skippedCards: 0 };
   for (const row of results ?? []) {
+    const front = parseJson(row.front_json);
     const back = parseJson(row.back_json);
-    const note = cardToAnkiNote({
+    const notes = cardToAnkiNotes({
       type: row.type,
-      front: parseJson(row.front_json),
+      front,
       back:
         row.type === "mcq" && typeof back === "object" && back !== null
           ? (back as { answer?: unknown }).answer
@@ -122,18 +129,28 @@ export async function loadDeckCards(
           ? ((back as { options?: unknown }).options as string[] | undefined)
           : undefined,
     });
-    if ("skip" in note) {
+    if ("skip" in notes) {
       warnings.skippedCards += 1;
       continue;
     }
 
-    const media: Array<{ name: string; data: Uint8Array }> = [];
+    const mediaKeys = new Set<string>();
     const rawMedia = row.media_r2_keys_json
       ? parseJson(row.media_r2_keys_json)
       : [];
+    if (Array.isArray(rawMedia)) {
+      for (const key of rawMedia) {
+        if (typeof key === "string") mediaKeys.add(key);
+      }
+    }
+    if (row.type === "occlusion") {
+      const imageKey = occlusionImageKey(front);
+      if (imageKey) mediaKeys.add(imageKey);
+    }
+
+    const media: Array<{ name: string; data: Uint8Array }> = [];
     const deckMediaPrefix = `materials/${deckId}/`;
-    for (const key of Array.isArray(rawMedia) ? rawMedia : []) {
-      if (typeof key !== "string") continue;
+    for (const key of mediaKeys) {
       if (!key.startsWith(deckMediaPrefix)) {
         warnings.missingMedia += 1;
         continue;
@@ -148,23 +165,39 @@ export async function loadDeckCards(
         data: new Uint8Array(await object.arrayBuffer()),
       });
     }
-    entries.push({
-      note,
-      schedule: hasSchedule(row)
-        ? mapScheduleToAnki({
-            due: row.due,
-            stability: row.stability,
-            difficulty: row.difficulty,
-            elapsed_days: row.elapsed_days,
-            scheduled_days: row.scheduled_days,
-            reps: row.reps,
-            lapses: row.lapses,
-            state: row.state,
-            last_review: row.last_review,
-          })
-        : null,
-      media,
-    });
+
+    if (row.type === "occlusion") {
+      const imageKey = occlusionImageKey(front);
+      const imageLoaded =
+        imageKey != null &&
+        media.some((item) => item.name === mediaName(imageKey));
+      if (!imageLoaded) {
+        warnings.skippedCards += 1;
+        continue;
+      }
+    }
+
+    const schedule = hasSchedule(row)
+      ? mapScheduleToAnki({
+          due: row.due,
+          stability: row.stability,
+          difficulty: row.difficulty,
+          elapsed_days: row.elapsed_days,
+          scheduled_days: row.scheduled_days,
+          reps: row.reps,
+          lapses: row.lapses,
+          state: row.state,
+          last_review: row.last_review,
+        })
+      : null;
+
+    for (const note of notes) {
+      entries.push({
+        note,
+        schedule,
+        media,
+      });
+    }
   }
 
   return {
