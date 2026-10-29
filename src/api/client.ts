@@ -183,6 +183,31 @@ export type Material = {
   created_at: string;
 };
 
+export type MaterialListItem = Material & {
+  deck_title?: string;
+};
+
+export function listDeckMaterials(deckId: string) {
+  if (isGuest()) return Promise.resolve([] as MaterialListItem[]);
+  return api<MaterialListItem[]>(`/api/decks/${deckId}/materials`);
+}
+
+export function listMaterials() {
+  if (isGuest()) return Promise.resolve([] as MaterialListItem[]);
+  return api<MaterialListItem[]>("/api/materials");
+}
+
+export function deleteMaterial(materialId: string) {
+  if (isGuest()) guestUnsupported("delete materials");
+  return api<void>(`/api/materials/${materialId}`, { method: "DELETE" });
+}
+
+/** Session-gated download URL for an owned material. */
+export function downloadMaterialUrl(materialId: string): string {
+  if (isGuest()) guestUnsupported("download materials");
+  return `/api/materials/${materialId}/download`;
+}
+
 export function listSubjects() {
   if (isGuest()) return Promise.resolve(guestListSubjects());
   return api<Subject[]>("/api/subjects");

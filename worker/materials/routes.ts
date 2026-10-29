@@ -26,7 +26,11 @@ import {
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
 import { MAX_FILE_BYTES, MAX_IMAGE_BYTES, MAX_PASTE_BYTES } from "./limits";
 import { MAX_FIGURES_PER_PDF } from "./docling";
-import { figureR2Key } from "./figures";
+import {
+  figureR2Key,
+  figureR2KeyPrefixBounds,
+  isFigureR2KeyForPdf,
+} from "./figures";
 import { createR2PutUrl } from "./r2-presign";
 
 export { MAX_IMAGE_BYTES } from "./limits";
@@ -172,6 +176,59 @@ async function requireOwnedMaterial(
   return row;
 }
 
+function sanitizeDownloadFilename(filename: string | null): string {
+  const raw = (filename ?? "").trim();
+  const base = raw.split(/[/\\]/).pop() ?? "";
+  const cleaned = base.replace(/["\r\n]/g, "").trim();
+  return cleaned || "download.bin";
+}
+
+function contentTypeForMaterial(
+  kind: string,
+  r2Key: string,
+  filename: string | null,
+): string {
+  const lowerKey = r2Key.toLowerCase();
+  const lowerName = (filename ?? "").toLowerCase();
+  if (
+    kind === "paste" ||
+    lowerKey.endsWith(".txt") ||
+    lowerName.endsWith(".txt")
+  ) {
+    return "text/plain; charset=utf-8";
+  }
+  if (
+    kind === "pdf" ||
+    lowerKey.endsWith(".pdf") ||
+    lowerName.endsWith(".pdf")
+  ) {
+    return PDF_CONTENT_TYPE;
+  }
+  if (
+    kind === "pptx" ||
+    lowerKey.endsWith(".pptx") ||
+    lowerName.endsWith(".pptx")
+  ) {
+    return PPTX_CONTENT_TYPE;
+  }
+  if (lowerKey.endsWith(".png") || lowerName.endsWith(".png")) {
+    return "image/png";
+  }
+  if (lowerKey.endsWith(".webp") || lowerName.endsWith(".webp")) {
+    return "image/webp";
+  }
+  if (
+    lowerKey.endsWith(".jpg") ||
+    lowerKey.endsWith(".jpeg") ||
+    lowerName.endsWith(".jpg") ||
+    lowerName.endsWith(".jpeg")
+  ) {
+    return "image/jpeg";
+  }
+  if (kind === "image") return "application/octet-stream";
+  return "application/octet-stream";
+}
+
 export const deckRoutes = new Hono<AppEnv>();
 
 deckRoutes.post("/", async (c) => {
@@ -246,6 +303,21 @@ deckRoutes.get("/", async (c) => {
     .bind(userId)
     .all<DeckListRow>();
 
+  return c.json(results ?? []);
+});
+
+deckRoutes.get("/:id/materials", async (c) => {
+  const userId = await requireUser(c);
+  const deckId = c.req.param("id");
+  const db = getDb(c.env);
+  await requireOwnedDeck(db, deckId, userId);
+  const { results } = await db
+    .prepare(
+      `SELECT id, deck_id, kind, r2_key, filename, page_count, status, created_at
+       FROM materials WHERE deck_id = ? ORDER BY created_at DESC`,
+    )
+    .bind(deckId)
+    .all();
   return c.json(results ?? []);
 });
 
@@ -758,11 +830,7 @@ deckRoutes.post("/:id/topic-generate", async (c) => {
 
   let materialId: string;
   if (explicitMaterialId) {
-    const material = await requireOwnedMaterial(
-      db,
-      explicitMaterialId,
-      userId,
-    );
+    const material = await requireOwnedMaterial(db, explicitMaterialId, userId);
     if (material.deck_id !== deckId) {
       throw new HTTPException(404, { message: "Material not found" });
     }
@@ -1040,6 +1108,149 @@ materialRoutes.get("/media", async (c) => {
   });
 });
 
+materialRoutes.get("/:id/download", async (c) => {
+  const userId = await requireUser(c);
+  const materialId = c.req.param("id");
+  const db = getDb(c.env);
+  const material = await requireOwnedMaterial(db, materialId, userId);
+  const key = material.r2_key?.trim();
+  if (!key) {
+    throw new HTTPException(404, { message: "Material not found" });
+  }
+  const obj = await c.env.MATERIALS.get(key);
+  if (!obj) {
+    throw new HTTPException(404, { message: "Material not found" });
+  }
+  const filename = sanitizeDownloadFilename(material.filename);
+  const contentType = contentTypeForMaterial(
+    material.kind,
+    key,
+    material.filename,
+  );
+  return new Response(obj.body, {
+    headers: {
+      "content-type": contentType,
+      "content-disposition": `attachment; filename="${filename}"`,
+      "cache-control": "private, max-age=3600",
+    },
+  });
+});
+
+materialRoutes.delete("/:id", async (c) => {
+  const userId = await requireUser(c);
+  const materialId = c.req.param("id");
+  const db = getDb(c.env);
+  const material = await requireOwnedMaterial(db, materialId, userId);
+
+  type FigureChild = { id: string; r2_key: string };
+  let figureChildren: FigureChild[] = [];
+  if (material.kind === "pdf") {
+    const { lower, upper } = figureR2KeyPrefixBounds(
+      material.deck_id,
+      material.id,
+    );
+    const { results } = await db
+      .prepare(
+        `SELECT id, r2_key FROM materials
+         WHERE deck_id = ? AND kind = 'image'
+           AND r2_key >= ? AND r2_key < ?`,
+      )
+      .bind(material.deck_id, lower, upper)
+      .all<{ id: string; r2_key: string }>();
+    figureChildren = (results ?? []).filter(
+      (row) =>
+        typeof row.r2_key === "string" &&
+        isFigureR2KeyForPdf(row.r2_key, material.deck_id, material.id),
+    );
+  }
+
+  const keysToGuard = new Set<string>();
+  const materialKey = material.r2_key?.trim();
+  if (materialKey) keysToGuard.add(materialKey);
+  for (const child of figureChildren) {
+    keysToGuard.add(child.r2_key);
+  }
+
+  // Drop draft/rejected cards for this material's jobs before media guard so
+  // figure-keyed drafts do not 409 a delete the UI says will remove them.
+  const { results: jobRows } = await db
+    .prepare("SELECT id FROM generation_jobs WHERE material_id = ?")
+    .bind(material.id)
+    .all<{ id: string }>();
+  const jobIds = (jobRows ?? []).map((row) => row.id);
+  if (jobIds.length > 0) {
+    const placeholders = jobIds.map(() => "?").join(", ");
+    await db
+      .prepare(
+        `DELETE FROM cards WHERE job_id IN (${placeholders}) AND status IN ('draft', 'rejected')`,
+      )
+      .bind(...jobIds)
+      .run();
+  }
+
+  if (keysToGuard.size > 0) {
+    const { results: cardMedia } = await db
+      .prepare(
+        "SELECT media_r2_keys_json FROM cards WHERE deck_id = ? AND media_r2_keys_json IS NOT NULL",
+      )
+      .bind(material.deck_id)
+      .all<{ media_r2_keys_json: string }>();
+    for (const row of cardMedia ?? []) {
+      try {
+        const parsed = JSON.parse(row.media_r2_keys_json) as unknown;
+        if (!Array.isArray(parsed)) continue;
+        for (const key of parsed) {
+          if (typeof key === "string" && keysToGuard.has(key)) {
+            throw new HTTPException(409, {
+              message:
+                "Material is referenced by card media and cannot be deleted",
+            });
+          }
+        }
+      } catch (err) {
+        if (err instanceof HTTPException) throw err;
+        /* ignore bad JSON */
+      }
+    }
+  }
+
+  for (const child of figureChildren) {
+    await db.prepare("DELETE FROM materials WHERE id = ?").bind(child.id).run();
+  }
+  await db
+    .prepare("DELETE FROM materials WHERE id = ?")
+    .bind(material.id)
+    .run();
+
+  const r2Keys = new Set<string>(keysToGuard);
+  for (const key of r2Keys) {
+    try {
+      await c.env.MATERIALS.delete(key);
+    } catch {
+      /* best-effort after D1 row removal */
+    }
+  }
+
+  return c.body(null, 204);
+});
+
+materialRoutes.get("/", async (c) => {
+  const userId = await requireUser(c);
+  const db = getDb(c.env);
+  const { results } = await db
+    .prepare(
+      `SELECT m.id, m.deck_id, m.kind, m.r2_key, m.filename, m.page_count,
+              m.status, m.created_at, d.title AS deck_title
+       FROM materials m
+       INNER JOIN decks d ON d.id = m.deck_id
+       WHERE d.user_id = ?
+       ORDER BY m.created_at DESC`,
+    )
+    .bind(userId)
+    .all();
+  return c.json(results ?? []);
+});
+
 materialRoutes.post("/:id/complete", async (c) => {
   const userId = await requireUser(c);
   const materialId = c.req.param("id");
@@ -1071,7 +1282,11 @@ materialRoutes.post("/:id/complete", async (c) => {
     } catch {
       throw new HTTPException(400, { message: "Invalid JSON body" });
     }
-    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    if (
+      parsed === null ||
+      typeof parsed !== "object" ||
+      Array.isArray(parsed)
+    ) {
       throw new HTTPException(400, { message: "Invalid JSON body" });
     }
     const body = parsed as {
