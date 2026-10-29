@@ -18,11 +18,13 @@ import {
   guestDeleteDeck,
   guestDeleteSubject,
   guestJourney,
+  guestArchiveCard,
   guestListDeckCards,
   guestListDecks,
   guestListDueCards,
   guestListSubjects,
   guestMoveCard,
+  guestRestoreCard,
   guestPatchCard,
   guestPatchDeck,
   guestPatchSubject,
@@ -166,6 +168,7 @@ export type Deck = {
 export type DeckStats = {
   accepted: number;
   draft: number;
+  archived: number;
   materials: number;
 };
 
@@ -278,10 +281,12 @@ export function deckStats(id: string) {
   return api<DeckStats>(`/api/decks/${id}/stats`);
 }
 
-export function listDeckCards(deckId: string) {
+export type ListDeckCardsOpts = { status?: "archived" };
+
+export function listDeckCards(deckId: string, opts?: ListDeckCardsOpts) {
   if (isGuest()) {
     try {
-      return Promise.resolve(guestListDeckCards(deckId));
+      return Promise.resolve(guestListDeckCards(deckId, undefined, opts));
     } catch (err) {
       throw new ApiError(
         404,
@@ -289,12 +294,39 @@ export function listDeckCards(deckId: string) {
       );
     }
   }
-  return api<CardDraftView[]>(`/api/decks/${deckId}/cards`);
+  const q =
+    opts?.status === "archived"
+      ? "?status=archived"
+      : "";
+  return api<CardDraftView[]>(`/api/decks/${deckId}/cards${q}`);
 }
 
-export function createDeckCard(deckId: string, body: GuestHubCardBody) {
+export type HubCreateCardBody =
+  | GuestHubCardBody
+  | {
+      type: "image_label";
+      front: string;
+      back: string;
+      media_r2_keys: string[];
+    }
+  | {
+      type: "occlusion";
+      front: OcclusionFrontView;
+      back: { answer: string };
+    };
+
+function isGuestHubCardBody(body: HubCreateCardBody): body is GuestHubCardBody {
+  return (
+    body.type === "qa" || body.type === "cloze" || body.type === "mcq"
+  );
+}
+
+export function createDeckCard(deckId: string, body: HubCreateCardBody) {
   if (isGuest()) {
     try {
+      if (!isGuestHubCardBody(body)) {
+        throw new Error("Unsupported card type");
+      }
       return Promise.resolve(guestCreateDeckCard(deckId, body));
     } catch (err) {
       const message = err instanceof Error ? err.message : "Deck not found";
@@ -512,18 +544,24 @@ export function completeMaterial(
   opts?: {
     figureExtractMode?: FigureExtractMode;
     topicHints?: string[];
+    /** Register uploaded bytes only; do not start card generation. */
+    attachOnly?: boolean;
   },
 ) {
   if (isGuest()) guestUnsupported("complete material uploads");
   const json: {
     figureExtractMode?: FigureExtractMode;
     topicHints?: string[];
+    attachOnly?: boolean;
   } = {};
   if (opts?.figureExtractMode !== undefined) {
     json.figureExtractMode = opts.figureExtractMode;
   }
   if (opts?.topicHints !== undefined) {
     json.topicHints = opts.topicHints;
+  }
+  if (opts?.attachOnly === true) {
+    json.attachOnly = true;
   }
   return api<CompleteMaterialResponse>(
     `/api/materials/${materialId}/complete`,
@@ -685,6 +723,38 @@ export async function moveCard(cardId: string, deckId: string) {
   return card;
 }
 
+export async function archiveCard(cardId: string) {
+  if (isGuest()) {
+    try {
+      return guestArchiveCard(cardId);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Card not found";
+      throw new ApiError(message === "Card not found" ? 404 : 400, message);
+    }
+  }
+  const card = await api<CardDraftView>(`/api/cards/${cardId}/archive`, {
+    method: "POST",
+  });
+  clearDueCache();
+  return card;
+}
+
+export async function restoreCard(cardId: string) {
+  if (isGuest()) {
+    try {
+      return guestRestoreCard(cardId);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Card not found";
+      throw new ApiError(message === "Card not found" ? 404 : 400, message);
+    }
+  }
+  const card = await api<CardDraftView>(`/api/cards/${cardId}/restore`, {
+    method: "POST",
+  });
+  clearDueCache();
+  return card;
+}
+
 export type ListDueOpts = { deckId?: string; subjectId?: string };
 
 export function listDueCards(opts?: ListDueOpts) {
@@ -763,7 +833,11 @@ export async function uploadMaterialFile(
   deckId: string,
   file: File,
   onProgress?: (percent: number) => void,
-  opts?: { figureExtractMode?: FigureExtractMode; topicHints?: string[] },
+  opts?: {
+    figureExtractMode?: FigureExtractMode;
+    topicHints?: string[];
+    attachOnly?: boolean;
+  },
 ): Promise<CompleteMaterialResponse> {
   const contentType = resolveUploadContentType(file);
   const { materialId, uploadUrl } = await requestMaterialUploadUrl(deckId, {

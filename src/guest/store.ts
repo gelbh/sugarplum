@@ -356,7 +356,7 @@ export function guestDeleteDeck(id: string, storage?: Store): void {
 export function guestDeckStats(
   id: string,
   storage?: Store,
-): { accepted: number; draft: number; materials: number } {
+): { accepted: number; draft: number; archived: number; materials: number } {
   const store = readStore(storage);
   if (!store.decks.some((d) => d.id === id)) {
     throw new Error("Deck not found");
@@ -365,6 +365,7 @@ export function guestDeckStats(
   return {
     accepted: cards.filter((c) => c.status === "accepted").length,
     draft: cards.filter((c) => c.status === "draft").length,
+    archived: cards.filter((c) => c.status === "archived").length,
     materials: 0,
   };
 }
@@ -399,17 +400,21 @@ export function guestAddAcceptedCards(
   return cards;
 }
 
-/** Accepted cards for a deck, oldest first (hub list). */
+export type GuestListDeckCardsOpts = { status?: "accepted" | "archived" };
+
+/** Hub deck cards, oldest first (default accepted only). */
 export function guestListDeckCards(
   deckId: string,
   storage?: Store,
+  opts?: GuestListDeckCardsOpts,
 ): CardDraftView[] {
   const store = readStore(storage);
   if (!store.decks.some((d) => d.id === deckId)) {
     throw new Error("Deck not found");
   }
+  const listStatus = opts?.status ?? "accepted";
   return store.cards
-    .filter((c) => c.deck_id === deckId && c.status === "accepted")
+    .filter((c) => c.deck_id === deckId && c.status === listStatus)
     .slice()
     .sort((a, b) => a.created_at.localeCompare(b.created_at));
 }
@@ -555,7 +560,55 @@ export function guestPatchCard(
   return updated;
 }
 
-/** Move an accepted card to another deck; dueIds unchanged. */
+/** Archive an accepted card; removes it from dueIds. */
+export function guestArchiveCard(
+  cardId: string,
+  storage?: Store,
+): CardDraftView {
+  const store = readStore(storage);
+  const idx = store.cards.findIndex((c) => c.id === cardId);
+  if (idx < 0) throw new Error("Card not found");
+  const current = store.cards[idx]!;
+  if (current.status !== "accepted") {
+    throw new Error("Only accepted cards can be archived");
+  }
+  const updatedAt = nowIso();
+  const updated: CardDraftView = {
+    ...current,
+    status: "archived",
+    updated_at: updatedAt,
+  };
+  store.cards[idx] = updated;
+  store.dueIds = store.dueIds.filter((id) => id !== cardId);
+  writeStore(store, storage);
+  return updated;
+}
+
+/** Restore an archived card; prepends id to dueIds. */
+export function guestRestoreCard(
+  cardId: string,
+  storage?: Store,
+): CardDraftView {
+  const store = readStore(storage);
+  const idx = store.cards.findIndex((c) => c.id === cardId);
+  if (idx < 0) throw new Error("Card not found");
+  const current = store.cards[idx]!;
+  if (current.status !== "archived") {
+    throw new Error("Only archived cards can be restored");
+  }
+  const updatedAt = nowIso();
+  const updated: CardDraftView = {
+    ...current,
+    status: "accepted",
+    updated_at: updatedAt,
+  };
+  store.cards[idx] = updated;
+  store.dueIds = [cardId, ...store.dueIds.filter((id) => id !== cardId)];
+  writeStore(store, storage);
+  return updated;
+}
+
+/** Move an accepted or archived card; dueIds unchanged. */
 export function guestMoveCard(
   cardId: string,
   deckId: string,
@@ -565,8 +618,8 @@ export function guestMoveCard(
   const idx = store.cards.findIndex((c) => c.id === cardId);
   if (idx < 0) throw new Error("Card not found");
   const current = store.cards[idx]!;
-  if (current.status !== "accepted") {
-    throw new Error("Only accepted cards can be moved");
+  if (current.status !== "accepted" && current.status !== "archived") {
+    throw new Error("Only accepted or archived cards can be moved");
   }
   if (!store.decks.some((d) => d.id === deckId)) {
     throw new Error("Deck not found");

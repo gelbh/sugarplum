@@ -16,6 +16,7 @@ import {
 import {
   assertSingleCloze,
   assertValidMcqOptions,
+  OcclusionFrontSchema,
 } from "../generation/schema";
 import {
   encodeStoredBack,
@@ -266,6 +267,12 @@ deckRoutes.get("/:id/stats", async (c) => {
     )
     .bind(deckId)
     .first<{ count: number }>();
+  const archived = await db
+    .prepare(
+      "SELECT COUNT(*) AS count FROM cards WHERE deck_id = ? AND status = 'archived'",
+    )
+    .bind(deckId)
+    .first<{ count: number }>();
   const materials = await db
     .prepare("SELECT COUNT(*) AS count FROM materials WHERE deck_id = ?")
     .bind(deckId)
@@ -274,11 +281,12 @@ deckRoutes.get("/:id/stats", async (c) => {
   return c.json({
     accepted: accepted?.count ?? 0,
     draft: draft?.count ?? 0,
+    archived: archived?.count ?? 0,
     materials: materials?.count ?? 0,
   });
 });
 
-const HubCreateCardSchema = z
+const HubCreateTextCardSchema = z
   .object({
     type: z.enum(["qa", "cloze", "mcq"]),
     front: z
@@ -294,11 +302,69 @@ const HubCreateCardSchema = z
     path: ["back"],
   });
 
+const HubCreateImageLabelSchema = z.object({
+  type: z.literal("image_label"),
+  front: z
+    .string()
+    .transform((s) => s.trim())
+    .pipe(z.string().min(1)),
+  back: z
+    .string()
+    .transform((s) => s.trim())
+    .pipe(z.string().min(1)),
+  media_r2_keys: z.array(z.string().min(1)).min(1),
+});
+
+const HubCreateOcclusionSchema = z.object({
+  type: z.literal("occlusion"),
+  front: OcclusionFrontSchema,
+  back: z.object({ answer: z.string().min(1) }),
+});
+
+const HubCreateCardSchema = z.union([
+  HubCreateTextCardSchema,
+  HubCreateImageLabelSchema,
+  HubCreateOcclusionSchema,
+]);
+
+async function assertDeckMaterialKeys(
+  db: ReturnType<typeof getDb>,
+  deckId: string,
+  keys: string[],
+): Promise<void> {
+  if (keys.length === 0) return;
+  const { results } = await db
+    .prepare(
+      "SELECT r2_key FROM materials WHERE deck_id = ? AND r2_key IS NOT NULL",
+    )
+    .bind(deckId)
+    .all<{ r2_key: string }>();
+  const allowed = new Set((results ?? []).map((row) => row.r2_key));
+  for (const key of keys) {
+    if (!allowed.has(key)) {
+      throw new HTTPException(400, {
+        message: "Media key not found for deck",
+      });
+    }
+  }
+}
+
 deckRoutes.get("/:id/cards", async (c) => {
   const userId = await requireUser(c);
   const deckId = c.req.param("id");
   const db = getDb(c.env);
   await requireOwnedDeck(db, deckId, userId);
+
+  const statusParam = c.req.query("status");
+  const listStatus =
+    statusParam === "archived"
+      ? "archived"
+      : statusParam === undefined || statusParam === "accepted"
+        ? "accepted"
+        : null;
+  if (listStatus === null) {
+    throw new HTTPException(400, { message: "Invalid status filter" });
+  }
 
   const { results } = await db
     .prepare(
@@ -308,7 +374,7 @@ deckRoutes.get("/:id/cards", async (c) => {
        WHERE deck_id = ? AND status = ?
        ORDER BY created_at ASC`,
     )
-    .bind(deckId, "accepted")
+    .bind(deckId, listStatus)
     .all<CardRow>();
 
   return c.json((results ?? []).map(serializeCard));
@@ -334,37 +400,60 @@ deckRoutes.post("/:id/cards", async (c) => {
     });
   }
 
-  const { type, front } = parsed.data;
-  let back = parsed.data.back;
-  let options = parsed.data.options;
-
-  if (type === "cloze") {
-    try {
-      assertSingleCloze(front);
-    } catch (err) {
-      throw new HTTPException(400, {
-        message: err instanceof Error ? err.message : "Invalid cloze",
-      });
-    }
-  }
-
-  if (type === "mcq") {
-    try {
-      const mcq = assertValidMcqOptions(back, options);
-      back = mcq.back;
-      options = mcq.options;
-    } catch (err) {
-      throw new HTTPException(400, {
-        message: err instanceof Error ? err.message : "Invalid MCQ",
-      });
-    }
-  }
-
   const id = newId();
   const now = new Date().toISOString();
-  const frontJson = JSON.stringify(front);
-  const backJson = encodeStoredBack(type, back, options);
   const schedule = scheduleColumnsFromCard(newCard());
+
+  let type: string;
+  let frontJson: string;
+  let backJson: string;
+  let mediaR2KeysJson: string | null = null;
+
+  if (parsed.data.type === "occlusion") {
+    type = "occlusion";
+    const { front, back } = parsed.data;
+    await assertDeckMaterialKeys(db, deckId, [front.image_key]);
+    frontJson = JSON.stringify(front);
+    backJson = JSON.stringify(back);
+    mediaR2KeysJson = JSON.stringify([front.image_key]);
+  } else if (parsed.data.type === "image_label") {
+    type = "image_label";
+    const { front, back, media_r2_keys } = parsed.data;
+    await assertDeckMaterialKeys(db, deckId, media_r2_keys);
+    frontJson = JSON.stringify(front);
+    backJson = JSON.stringify(back);
+    mediaR2KeysJson = JSON.stringify(media_r2_keys);
+  } else {
+    type = parsed.data.type;
+    const { front } = parsed.data;
+    let back = parsed.data.back;
+    let options = parsed.data.options;
+
+    if (type === "cloze") {
+      try {
+        assertSingleCloze(front);
+      } catch (err) {
+        throw new HTTPException(400, {
+          message: err instanceof Error ? err.message : "Invalid cloze",
+        });
+      }
+    }
+
+    if (type === "mcq") {
+      try {
+        const mcq = assertValidMcqOptions(back, options);
+        back = mcq.back;
+        options = mcq.options;
+      } catch (err) {
+        throw new HTTPException(400, {
+          message: err instanceof Error ? err.message : "Invalid MCQ",
+        });
+      }
+    }
+
+    frontJson = JSON.stringify(front);
+    backJson = encodeStoredBack(type, back, options);
+  }
 
   await db.batch([
     db
@@ -381,7 +470,7 @@ deckRoutes.post("/:id/cards", async (c) => {
         type,
         frontJson,
         backJson,
-        null,
+        mediaR2KeysJson,
         null,
         "accepted",
         now,
@@ -417,7 +506,7 @@ deckRoutes.post("/:id/cards", async (c) => {
       type,
       front_json: frontJson,
       back_json: backJson,
-      media_r2_keys_json: null,
+      media_r2_keys_json: mediaR2KeysJson,
       provenance_json: null,
       status: "accepted",
       created_at: now,
@@ -973,6 +1062,7 @@ materialRoutes.post("/:id/complete", async (c) => {
 
   let figureExtractMode: FigureExtractMode | undefined;
   let topicHints: string[] | null = null;
+  let attachOnly = false;
   const rawBody = await c.req.text();
   if (rawBody.trim()) {
     let parsed: unknown;
@@ -987,6 +1077,7 @@ materialRoutes.post("/:id/complete", async (c) => {
     const body = parsed as {
       figureExtractMode?: unknown;
       topicHints?: unknown;
+      attachOnly?: unknown;
     };
     const rawMode = body.figureExtractMode;
     if (rawMode !== undefined) {
@@ -1003,6 +1094,12 @@ materialRoutes.post("/:id/complete", async (c) => {
       throw new HTTPException(400, {
         message: err instanceof Error ? err.message : "Invalid topicHints",
       });
+    }
+    if (body.attachOnly !== undefined && body.attachOnly !== false) {
+      if (body.attachOnly !== true) {
+        throw new HTTPException(400, { message: "Invalid attachOnly" });
+      }
+      attachOnly = true;
     }
   }
 
@@ -1082,9 +1179,10 @@ materialRoutes.post("/:id/complete", async (c) => {
     });
   }
 
-  const jobId = isFigure
-    ? null
-    : await enqueueGeneration(c.env, {
+  const jobId =
+    isFigure || attachOnly
+      ? null
+      : await enqueueGeneration(c.env, {
         materialId,
         deckId: material.deck_id,
         figureExtractMode,

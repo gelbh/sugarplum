@@ -25,6 +25,7 @@ import {
   CLOZE_EXTRA_LABEL,
   extractClozeAnswer,
 } from "../lib/clozeFormat";
+import { starterOcclusionFront } from "../lib/hubDiyCreate";
 import OcclusionRegionEditor from "./OcclusionRegionEditor";
 
 export type DraftEditorChange = Pick<
@@ -60,17 +61,24 @@ const TYPE_LABELS: Record<string, string> = {
   mcq: "Multiple choice",
   image_label: "Image label",
   diagram: "Diagram",
+  occlusion: "Occlusion",
 };
+
+function diySelectableTypes(allowedTypes?: CardType[]): CardType[] {
+  if (allowedTypes && allowedTypes.length > 0) {
+    return allowedTypes.filter(
+      (t) => TEXT_TYPES.includes(t) || t === "occlusion",
+    );
+  }
+  return TEXT_TYPES;
+}
 
 /** Resolve Select value when `allowedTypes` is set. Never coerce outside the set to qa. */
 export function resolveEditorType(
   cardType: CardType,
   allowedTypes?: CardType[],
 ): { typeValue: CardType; typeSelectLocked: boolean } {
-  const selectable =
-    allowedTypes && allowedTypes.length > 0
-      ? allowedTypes.filter((t) => TEXT_TYPES.includes(t))
-      : TEXT_TYPES;
+  const selectable = diySelectableTypes(allowedTypes);
   if (selectable.includes(cardType)) {
     return { typeValue: cardType, typeSelectLocked: false };
   }
@@ -116,8 +124,23 @@ function onTypeChange(
   type: CardType,
   onChange: (next: DraftEditorChange) => void,
 ) {
-  const frontText = typeof card.front === "string" ? card.front : "";
+  const frontText = isOcclusionFront(card.front)
+    ? (card.front.prompt ?? "")
+    : typeof card.front === "string"
+      ? card.front
+      : "";
   const backText = backAnswer(card.back);
+  if (type === "occlusion") {
+    const imageKey =
+      card.media_r2_keys?.[0] ??
+      (isOcclusionFront(card.front) ? card.front.image_key : "");
+    onChange({
+      front: starterOcclusionFront(imageKey),
+      back: { answer: "r1" },
+      type,
+    });
+    return;
+  }
   if (type === "mcq") {
     const options = defaultMcqOptions(card);
     const back =
@@ -160,10 +183,7 @@ export default function DraftCardEditor({
     );
   }
 
-  const selectableTypes =
-    allowedTypes && allowedTypes.length > 0
-      ? allowedTypes.filter((t) => TEXT_TYPES.includes(t))
-      : TEXT_TYPES;
+  const selectableTypes = diySelectableTypes(allowedTypes);
   const imageKey = card.media_r2_keys?.[0];
   const frontText = typeof card.front === "string" ? card.front : "";
   const backText = backAnswer(card.back);
