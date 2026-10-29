@@ -1029,6 +1029,7 @@ export async function processGenerateJob(
     // Leave last progress_json; only mark status failed.
     const messageText =
       err instanceof Error ? err.message : "Generation failed";
+    console.error("generation job failed", jobId, err);
     await markJobFailed(db, jobId, messageText);
     return "done";
   }
