@@ -13,13 +13,19 @@ function isCloudflareWorkerRuntime(): boolean {
   );
 }
 
+type AssetsFetcher = {
+  fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
+};
+
 /**
- * Load sql.js WASM as bytes. Vitest/Node reads the package file; Workers fetch
- * the Vite-emitted asset via absolute APP_URL (relative /assets URLs fail in
- * isolates). Do not treat `process.versions.node` alone as proof of Node fs —
- * workerd may expose it under nodejs_compat.
+ * Load sql.js WASM as bytes. Vitest/Node reads the package file; Workers must
+ * use the ASSETS binding. Public APP_URL self-fetch times out (522) in
+ * production isolates. Do not treat `process.versions.node` alone as proof of
+ * Node fs — workerd may expose it under nodejs_compat.
  */
-async function loadSqlWasmBinary(appUrl: string): Promise<Uint8Array> {
+export async function loadSqlWasmBinary(opts: {
+  assets?: AssetsFetcher;
+}): Promise<Uint8Array> {
   if (!isCloudflareWorkerRuntime()) {
     try {
       const { readFile } = await import("node:fs/promises");
@@ -29,16 +35,18 @@ async function loadSqlWasmBinary(appUrl: string): Promise<Uint8Array> {
         await readFile(require.resolve("sql.js/dist/sql-wasm.wasm")),
       );
     } catch {
-      /* fall through to APP_URL fetch */
+      /* fall through to ASSETS */
     }
   }
-  if (!appUrl.trim()) {
-    throw new Error("sql.js WASM fetch failed: APP_URL is not configured");
+  if (!opts.assets) {
+    throw new Error("sql.js WASM fetch failed: ASSETS binding is not configured");
   }
-  const origin = appUrl.endsWith("/") ? appUrl : `${appUrl}/`;
-  const response = await fetch(new URL(wasmUrl, origin));
+  // Hostname is ignored by ASSETS; pathname must match the Vite-emitted asset.
+  const response = await opts.assets.fetch(
+    new URL(wasmUrl, "https://assets.local"),
+  );
   if (!response.ok) {
-    throw new Error(`sql.js WASM fetch failed: ${response.status}`);
+    throw new Error(`sql.js WASM ASSETS fetch failed: ${response.status}`);
   }
   return new Uint8Array(await response.arrayBuffer());
 }
@@ -250,10 +258,10 @@ export function ankiFsrsCardData(schedule: AnkiFsrsFields): string {
 export async function buildApkg(args: {
   deckName: string;
   entries: ApkgEntry[];
-  /** Site origin used to fetch the Vite-emitted sql-wasm asset in Workers. */
-  appUrl: string;
+  /** Workers Static Assets binding; required in Cloudflare-Workers runtime. */
+  assets?: AssetsFetcher;
 }): Promise<Uint8Array> {
-  const wasmBinary = await loadSqlWasmBinary(args.appUrl);
+  const wasmBinary = await loadSqlWasmBinary({ assets: args.assets });
   const SQL = await initSqlJs({
     wasmBinary,
   }).catch((error: unknown) => {

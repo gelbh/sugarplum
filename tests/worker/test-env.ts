@@ -2099,6 +2099,10 @@ export function createTestEnv(opts?: {
       },
     } as unknown as Queue,
     APP_URL: "http://localhost",
+    ASSETS: {
+      fetch: async () =>
+        new Response("test assets missing", { status: 404 }),
+    } as unknown as Fetcher,
     SECRETS_WRAP_KEY: wrapKey,
     R2_ACCOUNT_ID: "test-account",
     R2_BUCKET_NAME: "sugarplum-materials",
