@@ -872,6 +872,22 @@ export function getJourney() {
   return api<JourneyStatus>("/api/journey");
 }
 
+export type JourneyGenerationStatus = Pick<
+  JourneyStatus,
+  "openReviewJobId" | "pendingGenerationJobId"
+>;
+
+export function getJourneyGeneration() {
+  if (isGuest()) {
+    const j = guestJourney();
+    return Promise.resolve({
+      openReviewJobId: j.openReviewJobId,
+      pendingGenerationJobId: j.pendingGenerationJobId,
+    });
+  }
+  return api<JourneyGenerationStatus>("/api/journey/generation");
+}
+
 export function patchCard(
   cardId: string,
   body: {
