@@ -6,11 +6,11 @@ import Paper from "@mui/material/Paper";
 import type { ShellGenerationKind } from "../../shell/resolveShellGenerationStatus";
 import {
   BOTTOM_NAV_HEIGHT,
-  PLUM_ON_DARK,
   SHELL_BG,
   SHELL_FG,
   SHELL_HAIRLINE,
   SHELL_MUTED,
+  SHELL_SELECTED,
 } from "./chromeTokens";
 import type { ShellNavId } from "./shellNav";
 
@@ -29,7 +29,7 @@ type BottomChromeProps = {
 };
 
 const BADGE_COLOR: Record<ShellGenerationKind, string> = {
-  generating: PLUM_ON_DARK,
+  generating: SHELL_SELECTED,
   drafts_ready: "#A5D6A7",
   failed: "#E57373",
 };
@@ -126,7 +126,7 @@ export default function BottomChrome({
               }
               sx={{
                 "&.Mui-selected": {
-                  borderTop: `2px solid ${PLUM_ON_DARK}`,
+                  borderTop: `2px solid ${SHELL_SELECTED}`,
                 },
               }}
             />

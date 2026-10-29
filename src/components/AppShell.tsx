@@ -1,4 +1,9 @@
-import type { ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import InsightsIcon from "@mui/icons-material/Insights";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -24,18 +29,16 @@ import GenerationStatusStrip from "./shell/GenerationStatusStrip";
 import TopChrome from "./shell/TopChrome";
 import {
   BOTTOM_NAV_HEIGHT,
-  PLUM_ON_DARK,
   SHELL_BG,
   SHELL_FG,
   SHELL_HAIRLINE,
   SHELL_MUTED,
+  SHELL_SELECTED,
   TOP_BAR_HEIGHT,
 } from "./shell/chromeTokens";
 import type { ShellNavId } from "./shell/shellNav";
 
 const DRAWER_WIDTH = 220;
-/** Approx dense strip height (title + subline + bar + padding). */
-const MOBILE_GEN_STRIP_HEIGHT = 72;
 
 type NavItem = {
   id: ShellNavId;
@@ -97,12 +100,21 @@ function AppShellChrome({ children }: AppShellProps) {
   const showDrawer = !hideChrome && !mobile;
   const showMobileChrome = !hideChrome && mobile;
   const genStatus = useShellGenerationStatus(hideChrome);
-  const showMobileStrip = showMobileChrome && genStatus != null;
-  const mobileTopPad = showMobileChrome
-    ? `calc(${TOP_BAR_HEIGHT}px + env(safe-area-inset-top, 0px)${
-        showMobileStrip ? ` + ${MOBILE_GEN_STRIP_HEIGHT}px` : ""
-      })`
-    : undefined;
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [mobileHeaderPx, setMobileHeaderPx] = useState(TOP_BAR_HEIGHT);
+
+  useEffect(() => {
+    if (!showMobileChrome) return;
+    const el = headerRef.current;
+    if (!el) return;
+    const measure = () => {
+      setMobileHeaderPx(Math.ceil(el.getBoundingClientRect().height));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [showMobileChrome, genStatus]);
 
   return (
     <Box
@@ -115,39 +127,32 @@ function AppShellChrome({ children }: AppShellProps) {
         bgcolor: "background.default",
         ...(showMobileChrome
           ? {
-              pt: mobileTopPad,
+              pt: `${mobileHeaderPx}px`,
               pb: `calc(${BOTTOM_NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px))`,
             }
           : {}),
       }}
     >
       <GlobalProgressBar
-        stickyTop={
-          showMobileChrome
-            ? `calc(${TOP_BAR_HEIGHT}px + env(safe-area-inset-top, 0px)${
-                showMobileStrip ? ` + ${MOBILE_GEN_STRIP_HEIGHT}px` : ""
-              })`
-            : 0
-        }
+        stickyTop={showMobileChrome ? `${mobileHeaderPx}px` : 0}
       />
       {showMobileChrome ? (
-        <>
+        <Box
+          ref={headerRef}
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1100,
+            bgcolor: SHELL_BG,
+          }}
+        >
           <TopChrome />
           {genStatus ? (
-            <Box
-              sx={{
-                position: "fixed",
-                top: `calc(${TOP_BAR_HEIGHT}px + env(safe-area-inset-top, 0px))`,
-                left: 0,
-                right: 0,
-                zIndex: 1100,
-                bgcolor: SHELL_BG,
-              }}
-            >
-              <GenerationStatusStrip status={genStatus} dense />
-            </Box>
+            <GenerationStatusStrip status={genStatus} dense />
           ) : null}
-        </>
+        </Box>
       ) : null}
       {showDrawer ? (
         <Drawer
@@ -205,7 +210,7 @@ function AppShellChrome({ children }: AppShellProps) {
                     mb: 0.5,
                     color: selected ? SHELL_FG : SHELL_MUTED,
                     borderLeft: selected
-                      ? `3px solid ${PLUM_ON_DARK}`
+                      ? `3px solid ${SHELL_SELECTED}`
                       : "3px solid transparent",
                     "&.Mui-selected": {
                       bgcolor: "rgba(91, 44, 111, 0.28)",
