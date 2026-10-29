@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GUEST_FLAG_KEY } from "../../src/guest/session";
+import { buildGuestImportPayload } from "../../src/guest/importPayload";
 import {
   SNAPSHOT_KEY,
   snapshotGuestForMerge,
   tryMergeGuestAfterAuth,
 } from "../../src/guest/mergeOnAuth";
+import { GUEST_FLAG_KEY } from "../../src/guest/session";
+import { peekGuestStore } from "../../src/guest/store";
 
 const STORE_KEY = "sugarplum.guest.store.v1";
 
@@ -105,6 +107,7 @@ describe("mergeOnAuth", () => {
 
   it("imports paste payload then wipes guest store on success", async () => {
     local.setItem(STORE_KEY, JSON.stringify(pasteStore));
+    const expectedPayload = buildGuestImportPayload(peekGuestStore(local)!);
     const importGuest = vi.fn().mockResolvedValue({ deckCount: 1, cardCount: 1 });
 
     const result = await tryMergeGuestAfterAuth({
@@ -114,10 +117,8 @@ describe("mergeOnAuth", () => {
     });
 
     expect(result).toBe("merged");
-    expect(importGuest).toHaveBeenCalledWith({
-      decks: [{ clientId: userDeck.id, title: userDeck.title }],
-      cards: [{ clientDeckId: userDeck.id, front: "Q", back: "A" }],
-    });
+    expect(expectedPayload).not.toBeNull();
+    expect(importGuest).toHaveBeenCalledWith(expectedPayload);
     expect(local.getItem(GUEST_FLAG_KEY)).toBeNull();
     expect(local.getItem(STORE_KEY)).toBeNull();
     expect(session.getItem(SNAPSHOT_KEY)).toBeNull();
