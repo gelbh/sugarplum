@@ -129,6 +129,24 @@ export function gamificationFirst<T>(
   }
   if (
     normalized.startsWith(
+      "SELECT streak_current, streak_best, streak_day, xp_total, level, display_name, board_opt_in FROM user_gamification WHERE user_id =",
+    )
+  ) {
+    const row = state.userGamification.get(bound[0] as string);
+    return row
+      ? ({
+          streak_current: row.streak_current,
+          streak_best: row.streak_best,
+          streak_day: row.streak_day,
+          xp_total: row.xp_total,
+          level: row.level,
+          display_name: row.display_name,
+          board_opt_in: row.board_opt_in,
+        } as T)
+      : null;
+  }
+  if (
+    normalized.startsWith(
       "SELECT xp_total FROM user_gamification WHERE user_id =",
     )
   ) {
@@ -210,6 +228,37 @@ export function gamificationAll<T>(
   bound: unknown[],
 ): { results: T[] } | null {
   if (
+    normalized.includes("LEFT JOIN achievement_progress") &&
+    normalized.includes("FROM achievement_defs d")
+  ) {
+    const userId = bound[0] as string;
+    const rows = [...state.achievementDefs.values()]
+      .filter((d) => d.active === 1)
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((d) => {
+        const progress = state.achievementProgress.get(
+          progressKey(userId, d.id),
+        );
+        const completion = state.achievementCompletions.get(
+          completionKey(userId, d.id),
+        );
+        return {
+          id: d.id,
+          category: d.category,
+          fruit_type: d.fruit_type,
+          rarity: d.rarity,
+          title: d.title,
+          description: d.description,
+          sort_order: d.sort_order,
+          def_threshold: d.threshold,
+          progress_current: progress?.current_value ?? null,
+          progress_threshold: progress?.threshold ?? null,
+          completed_at: completion?.completed_at ?? null,
+        };
+      });
+    return { results: rows as T[] };
+  }
+  if (
     normalized.includes("FROM achievement_defs WHERE active = 1")
   ) {
     const rows = [...state.achievementDefs.values()]
@@ -222,6 +271,36 @@ export function gamificationAll<T>(
         params_json: d.params_json,
       }));
     return { results: rows as T[] };
+  }
+  if (
+    normalized.includes("FROM user_gamification ug") &&
+    normalized.includes("INNER JOIN xp_ledger xl") &&
+    normalized.includes("board_opt_in = 1")
+  ) {
+    const [startIso, endIso] = bound as [string, string];
+    const byUser = new Map<
+      string,
+      { user_id: string; display_name: string | null; xp: number }
+    >();
+    for (const row of state.userGamification.values()) {
+      if (row.board_opt_in !== 1) continue;
+      byUser.set(row.user_id, {
+        user_id: row.user_id,
+        display_name: row.display_name,
+        xp: 0,
+      });
+    }
+    for (const entry of state.xpLedger) {
+      if (entry.created_at < startIso || entry.created_at >= endIso) continue;
+      const agg = byUser.get(entry.user_id);
+      if (!agg) continue;
+      agg.xp += entry.amount;
+    }
+    const results = [...byUser.values()]
+      .filter((r) => r.xp > 0)
+      .sort((a, b) => b.xp - a.xp)
+      .slice(0, 50);
+    return { results: results as T[] };
   }
   if (
     normalized.includes("SELECT DISTINCT substr(rl.reviewed_at, 1, 10) AS study_day")
@@ -311,6 +390,33 @@ export function gamificationRun(
         updated_at: updatedAt,
       });
     }
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+  if (
+    normalized.startsWith("UPDATE user_gamification SET") &&
+    (normalized.includes("board_opt_in =") ||
+      normalized.includes("display_name ="))
+  ) {
+    // Dynamic settings UPDATE: SET cols..., updated_at = ? WHERE user_id = ?
+    const userId = bound[bound.length - 1] as string;
+    const row = state.userGamification.get(userId);
+    if (!row) {
+      return { success: true, meta: { changes: 0 } } as D1Result;
+    }
+    const next = { ...row };
+    let i = 0;
+    const setClause = normalized.slice(
+      "UPDATE user_gamification SET ".length,
+      normalized.indexOf(" WHERE "),
+    );
+    for (const part of setClause.split(", ")) {
+      const col = part.split(" = ")[0]?.trim();
+      if (col === "board_opt_in") next.board_opt_in = bound[i++] as number;
+      else if (col === "display_name")
+        next.display_name = bound[i++] as string | null;
+      else if (col === "updated_at") next.updated_at = bound[i++] as string;
+    }
+    state.userGamification.set(userId, next);
     return { success: true, meta: { changes: 1 } } as D1Result;
   }
   if (normalized.startsWith("INSERT OR IGNORE INTO xp_ledger")) {
