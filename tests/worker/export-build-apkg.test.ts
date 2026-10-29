@@ -1,7 +1,10 @@
 import JSZip from "jszip";
 import initSqlJs from "sql.js";
-import { describe, expect, it } from "vitest";
-import { buildApkg } from "../../worker/export/buildApkg";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  buildApkg,
+  ensureSqlJsWorkerGlobals,
+} from "../../worker/export/buildApkg";
 
 async function ankiSortFieldCsum(sortField: string): Promise<number> {
   const digest = await crypto.subtle.digest(
@@ -326,5 +329,40 @@ describe("buildApkg", () => {
       d: 6.789,
       lrt: lastReview,
     });
+  });
+});
+
+describe("ensureSqlJsWorkerGlobals", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    Reflect.deleteProperty(globalThis, "__filename");
+  });
+
+  it("sets __filename when Worker has no location.href", () => {
+    Reflect.deleteProperty(globalThis, "__filename");
+    vi.stubGlobal("location", undefined);
+    ensureSqlJsWorkerGlobals();
+    expect(
+      (globalThis as { __filename?: string }).__filename,
+    ).toBe("https://assets.local/sql-wasm-inline.js");
+  });
+
+  it("builds an apkg when location is missing (Worker-shaped globals)", async () => {
+    Reflect.deleteProperty(globalThis, "__filename");
+    vi.stubGlobal("location", undefined);
+    const bytes = await buildApkg({
+      deckName: "Sugarplum",
+      entries: [
+        {
+          note: {
+            model: "basic",
+            fields: { Front: "Q", Back: "A" },
+          },
+          schedule: null,
+          media: [],
+        },
+      ],
+    });
+    expect(bytes.byteLength).toBeGreaterThan(100);
   });
 });

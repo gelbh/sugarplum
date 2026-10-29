@@ -7,6 +7,28 @@ import type { AnkiNoteSpec } from "./notes";
 
 const DEFAULT_ANKI_EASE_FACTOR = 2500;
 
+/**
+ * Emscripten sql.js treats Cloudflare Workers as web-workers and reads
+ * `self.location.href` (or `__filename`) for scriptDirectory. Workers have
+ * neither; polyfill both before `initSqlJs()`.
+ */
+export function ensureSqlJsWorkerGlobals(): void {
+  const g = globalThis as typeof globalThis & {
+    __filename?: string;
+    location?: { href?: string };
+  };
+  if (typeof g.__filename === "undefined") {
+    g.__filename = "https://assets.local/sql-wasm-inline.js";
+  }
+  if (typeof g.location?.href !== "string") {
+    Object.defineProperty(g, "location", {
+      value: { href: "https://assets.local/" },
+      configurable: true,
+      writable: true,
+    });
+  }
+}
+
 type ApkgEntry = {
   note: AnkiNoteSpec;
   schedule: AnkiFsrsFields | null;
@@ -215,6 +237,7 @@ export async function buildApkg(args: {
   deckName: string;
   entries: ApkgEntry[];
 }): Promise<Uint8Array> {
+  ensureSqlJsWorkerGlobals();
   const SQL = await initSqlJs().catch((error: unknown) => {
     const detail =
       error instanceof Error ? error.message : String(error ?? "unknown");
