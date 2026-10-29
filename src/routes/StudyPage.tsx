@@ -557,7 +557,9 @@ export default function StudyPage() {
     <Box
       className={stage ? "sp-stage" : undefined}
       sx={{
-        minHeight: stage ? "100vh" : undefined,
+        minHeight: stage ? "100dvh" : undefined,
+        height: stage ? "100dvh" : undefined,
+        boxSizing: "border-box",
         ...(stage
           ? {
               color: "var(--sp-ivory)",
@@ -569,15 +571,20 @@ export default function StudyPage() {
       <Container
         maxWidth="sm"
         sx={{
-          py: stage ? { xs: 2, sm: 3 } : 4,
-          minHeight: stage ? "100vh" : undefined,
+          py: stage ? { xs: 1, sm: 3 } : 4,
+          height: stage ? "100%" : undefined,
+          maxHeight: stage ? "100%" : undefined,
           display: "flex",
           flexDirection: "column",
           position: "relative",
+          overflow: stage ? "hidden" : undefined,
+          pb: stage
+            ? { xs: "max(8px, env(safe-area-inset-bottom))", sm: 3 }
+            : undefined,
         }}
       >
         <Stack
-          spacing={stage ? 1.5 : 2}
+          spacing={stage ? { xs: 0.75, sm: 1.5 } : 2}
           sx={{ flex: 1, minHeight: stage ? "100%" : undefined }}
         >
           <Stack
@@ -778,6 +785,7 @@ export default function StudyPage() {
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
                   opacity: 0.7,
+                  flexShrink: 0,
                   color: stage ? "var(--sp-ivory)" : "text.secondary",
                 }}
               >
@@ -792,10 +800,11 @@ export default function StudyPage() {
                   touchAction: "manipulation",
                   flex: 1,
                   display: "flex",
-                  alignItems: "center",
+                  alignItems: { xs: "stretch", sm: "center" },
                   justifyContent: "center",
-                  py: 2,
+                  py: { xs: 0.5, sm: 2 },
                   minHeight: 0,
+                  overflow: "hidden",
                 }}
               >
                 {mcqMode ? (
@@ -825,9 +834,9 @@ export default function StudyPage() {
               </Box>
 
               {mcqMode ? (
-                <Box sx={{ minHeight: 72 }} aria-hidden />
+                <Box sx={{ minHeight: { xs: 64, sm: 72 }, flexShrink: 0 }} aria-hidden />
               ) : revealed ? (
-                <Box sx={{ pb: 1, mt: "auto" }}>
+                <Box sx={{ pb: { xs: 0.5, sm: 1 }, mt: "auto", flexShrink: 0 }}>
                   <GradeButtons
                     disabled={busy}
                     onGrade={onGrade}
@@ -835,7 +844,7 @@ export default function StudyPage() {
                   />
                 </Box>
               ) : (
-                <Box sx={{ minHeight: 72 }} aria-hidden />
+                <Box sx={{ minHeight: { xs: 64, sm: 72 }, flexShrink: 0 }} aria-hidden />
               )}
             </>
           )}

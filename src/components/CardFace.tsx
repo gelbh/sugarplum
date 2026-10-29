@@ -247,6 +247,11 @@ export default function CardFace({
       sx={{
         ...CARD_COLUMN_SX,
         perspective: "1000px",
+        maxHeight: "100%",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
       <Box
@@ -255,6 +260,10 @@ export default function CardFace({
         sx={{
           position: "relative",
           width: "100%",
+          maxWidth: 360,
+          maxHeight: "100%",
+          height: "auto",
+          aspectRatio: "var(--sp-card-aspect)",
           borderRadius: 2,
           bgcolor: "transparent",
           transformStyle: "preserve-3d",
@@ -264,9 +273,8 @@ export default function CardFace({
           "@media (prefers-reduced-motion: reduce)": {
             transform: "none",
             transition: "none",
-            aspectRatio: "unset",
             minHeight: 280,
-            maxHeight: "70vh",
+            maxHeight: "100%",
           },
         }}
       >
