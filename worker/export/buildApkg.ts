@@ -7,16 +7,30 @@ import type { AnkiNoteSpec } from "./notes";
 
 const DEFAULT_ANKI_EASE_FACTOR = 2500;
 
+function isCloudflareWorkerRuntime(): boolean {
+  return (
+    (globalThis as { navigator?: { userAgent?: string } }).navigator
+      ?.userAgent === "Cloudflare-Workers"
+  );
+}
+
 /**
- * Emscripten sql.js treats Cloudflare Workers as web-workers and reads
- * `self.location.href` (or `__filename`) for scriptDirectory. Workers have
- * neither; polyfill both before `initSqlJs()`.
+ * sql.js environment sniffing breaks under Workers + nodejs_compat:
+ * - `process.versions.node` makes it take the Node path and `require("node:fs")`
+ * - Worker path reads `self.location.href`, which Workers lack
+ * Only adjust globals on Cloudflare Workers (leave Node/Vitest alone).
  */
 export function ensureSqlJsWorkerGlobals(): void {
+  if (!isCloudflareWorkerRuntime()) return;
   const g = globalThis as typeof globalThis & {
     __filename?: string;
     location?: { href?: string };
+    process?: { versions?: { node?: string }; type?: string };
   };
+  // Make ENVIRONMENT_IS_NODE false: `process.type != "renderer"` gate.
+  if (g.process?.versions?.node) {
+    g.process = { ...g.process, type: "renderer" };
+  }
   if (typeof g.__filename === "undefined") {
     g.__filename = "https://assets.local/sql-wasm-inline.js";
   }

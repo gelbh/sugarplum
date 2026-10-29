@@ -338,31 +338,26 @@ describe("ensureSqlJsWorkerGlobals", () => {
     Reflect.deleteProperty(globalThis, "__filename");
   });
 
-  it("sets __filename when Worker has no location.href", () => {
+  it("no-ops outside Cloudflare Workers", () => {
     Reflect.deleteProperty(globalThis, "__filename");
+    ensureSqlJsWorkerGlobals();
+    expect((globalThis as { __filename?: string }).__filename).toBeUndefined();
+  });
+
+  it("polyfills Worker globals when UA is Cloudflare-Workers", () => {
+    Reflect.deleteProperty(globalThis, "__filename");
+    vi.stubGlobal("navigator", { userAgent: "Cloudflare-Workers" });
     vi.stubGlobal("location", undefined);
+    vi.stubGlobal("process", {
+      versions: { node: "22.0.0" },
+      type: undefined,
+    });
     ensureSqlJsWorkerGlobals();
     expect(
       (globalThis as { __filename?: string }).__filename,
     ).toBe("https://assets.local/sql-wasm-inline.js");
-  });
-
-  it("builds an apkg when location is missing (Worker-shaped globals)", async () => {
-    Reflect.deleteProperty(globalThis, "__filename");
-    vi.stubGlobal("location", undefined);
-    const bytes = await buildApkg({
-      deckName: "Sugarplum",
-      entries: [
-        {
-          note: {
-            model: "basic",
-            fields: { Front: "Q", Back: "A" },
-          },
-          schedule: null,
-          media: [],
-        },
-      ],
-    });
-    expect(bytes.byteLength).toBeGreaterThan(100);
+    expect(
+      (globalThis as { process?: { type?: string } }).process?.type,
+    ).toBe("renderer");
   });
 });
