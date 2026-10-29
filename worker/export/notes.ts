@@ -87,11 +87,13 @@ function backAnswerText(back: unknown): string {
 }
 
 function occlusionRevealAnswer(
-  region: { label: string },
+  region: { id: string; label: string },
   fallback: string,
 ): string {
   const label = region.label.trim();
-  return label || fallback;
+  if (label) return label;
+  const fb = fallback.trim();
+  return fb ? `${fb} (${region.id})` : region.id;
 }
 
 function parseOcclusionFront(front: unknown): OcclusionFront | null {
@@ -172,7 +174,7 @@ function occlusionToAnkiNotes(card: CardForAnkiNote): AnkiNotesResult {
   });
 }
 
-export function cardToAnkiNote(card: CardForAnkiNote): AnkiNoteResult {
+function singleCardToAnkiNote(card: CardForAnkiNote): AnkiNoteResult {
   const front = fieldText(card.front);
   const back = fieldText(card.back);
   if (front == null || back == null) {
@@ -209,8 +211,6 @@ export function cardToAnkiNote(card: CardForAnkiNote): AnkiNoteResult {
           Answer: back,
         },
       };
-    case "occlusion":
-      return { skip: true, reason: "occlusion-use-cardToAnkiNotes" };
     default:
       return { skip: true, reason: `unsupported-type:${card.type}` };
   }
@@ -221,7 +221,7 @@ export function cardToAnkiNotes(card: CardForAnkiNote): AnkiNotesResult {
   if (card.type === "occlusion") {
     return occlusionToAnkiNotes(card);
   }
-  const one = cardToAnkiNote(card);
+  const one = singleCardToAnkiNote(card);
   if ("skip" in one) return one;
   return [one];
 }

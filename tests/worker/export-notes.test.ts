@@ -1,54 +1,63 @@
 import { describe, it, expect } from "vitest";
-import { cardToAnkiNote, cardToAnkiNotes } from "../../worker/export/notes";
+import { cardToAnkiNotes } from "../../worker/export/notes";
 
-describe("cardToAnkiNote", () => {
+describe("cardToAnkiNotes", () => {
   it("maps qa to basic Front and Back", () => {
-    const note = cardToAnkiNote({
-      type: "qa",
-      front: "What is ATP?",
-      back: "Adenosine triphosphate",
-    });
-    expect(note).toEqual({
-      model: "basic",
-      fields: { Front: "What is ATP?", Back: "Adenosine triphosphate" },
-    });
+    expect(
+      cardToAnkiNotes({
+        type: "qa",
+        front: "What is ATP?",
+        back: "Adenosine triphosphate",
+      }),
+    ).toEqual([
+      {
+        model: "basic",
+        fields: { Front: "What is ATP?", Back: "Adenosine triphosphate" },
+      },
+    ]);
   });
 
   it("maps cloze to cloze Text and Extra", () => {
-    const note = cardToAnkiNote({
-      type: "cloze",
-      front: "{{c1::mitochondria}} produce ATP",
-      back: "Powerhouse detail",
-    });
-    expect(note).toEqual({
-      model: "cloze",
-      fields: {
-        Text: "{{c1::mitochondria}} produce ATP",
-        Extra: "Powerhouse detail",
+    expect(
+      cardToAnkiNotes({
+        type: "cloze",
+        front: "{{c1::mitochondria}} produce ATP",
+        back: "Powerhouse detail",
+      }),
+    ).toEqual([
+      {
+        model: "cloze",
+        fields: {
+          Text: "{{c1::mitochondria}} produce ATP",
+          Extra: "Powerhouse detail",
+        },
       },
-    });
+    ]);
   });
 
   it("maps mcq to sugarplum_mcq with newline-joined options", () => {
-    const note = cardToAnkiNote({
-      type: "mcq",
-      front: "Pick the organelle",
-      back: "Mitochondria",
-      options: ["Nucleus", "Mitochondria", "Ribosome"],
-    });
-    expect(note).toEqual({
-      model: "sugarplum_mcq",
-      fields: {
-        Front: "Pick the organelle",
-        Options: "Nucleus\nMitochondria\nRibosome",
-        Answer: "Mitochondria",
+    expect(
+      cardToAnkiNotes({
+        type: "mcq",
+        front: "Pick the organelle",
+        back: "Mitochondria",
+        options: ["Nucleus", "Mitochondria", "Ribosome"],
+      }),
+    ).toEqual([
+      {
+        model: "sugarplum_mcq",
+        fields: {
+          Front: "Pick the organelle",
+          Options: "Nucleus\nMitochondria\nRibosome",
+          Answer: "Mitochondria",
+        },
       },
-    });
+    ]);
   });
 
   it("skips unknown card types", () => {
     expect(
-      cardToAnkiNote({
+      cardToAnkiNotes({
         type: "flashcard_v2",
         front: "Q",
         back: "A",
@@ -83,7 +92,7 @@ describe("cardToAnkiNote", () => {
     expect(result[0]?.fields.Front).toContain("rgba(0,0,0,.85)");
     expect(result[0]?.fields.Back).toContain("border:2px solid #f57c00");
     expect(result[0]?.fields.Back).toContain("Femur");
-    expect(result[1]?.fields.Back).toContain("fallback-label");
+    expect(result[1]?.fields.Back).toContain("fallback-label (r2)");
     expect(result[1]?.fields.Front).toContain("left:50%");
   });
 
@@ -104,55 +113,51 @@ describe("cardToAnkiNote", () => {
     ).toEqual({ skip: true, reason: "occlusion-invalid-front" });
   });
 
-  it("wraps single-note types from cardToAnkiNotes", () => {
-    expect(
-      cardToAnkiNotes({
-        type: "qa",
-        front: "Q",
-        back: "A",
-      }),
-    ).toEqual([{ model: "basic", fields: { Front: "Q", Back: "A" } }]);
-  });
-
   it("maps image_label and diagram to basic text fields", () => {
     expect(
-      cardToAnkiNote({
+      cardToAnkiNotes({
         type: "image_label",
         front: "Label structure A",
         back: "Aorta",
       }),
-    ).toEqual({
-      model: "basic",
-      fields: { Front: "Label structure A", Back: "Aorta" },
-    });
+    ).toEqual([
+      {
+        model: "basic",
+        fields: { Front: "Label structure A", Back: "Aorta" },
+      },
+    ]);
     expect(
-      cardToAnkiNote({
+      cardToAnkiNotes({
         type: "diagram",
         front: "Which vessel?",
         back: "Pulmonary artery",
       }),
-    ).toEqual({
-      model: "basic",
-      fields: { Front: "Which vessel?", Back: "Pulmonary artery" },
-    });
+    ).toEqual([
+      {
+        model: "basic",
+        fields: { Front: "Which vessel?", Back: "Pulmonary artery" },
+      },
+    ]);
   });
 
   it("uses prompt from object-shaped image_label fronts", () => {
     expect(
-      cardToAnkiNote({
+      cardToAnkiNotes({
         type: "image_label",
         front: { prompt: "Label the vessel", regions: [] },
         back: "Aorta",
       }),
-    ).toEqual({
-      model: "basic",
-      fields: { Front: "Label the vessel", Back: "Aorta" },
-    });
+    ).toEqual([
+      {
+        model: "basic",
+        fields: { Front: "Label the vessel", Back: "Aorta" },
+      },
+    ]);
   });
 
   it("skips object fronts without a string prompt", () => {
     expect(
-      cardToAnkiNote({
+      cardToAnkiNotes({
         type: "diagram",
         front: { regions: [] },
         back: "Aorta",
@@ -162,23 +167,25 @@ describe("cardToAnkiNote", () => {
 
   it("converts a single underscore cloze blank using the back", () => {
     expect(
-      cardToAnkiNote({
+      cardToAnkiNotes({
         type: "cloze",
         front: "The ___ produces ATP",
         back: "mitochondria",
       }),
-    ).toEqual({
-      model: "cloze",
-      fields: {
-        Text: "The {{c1::mitochondria}} produces ATP",
-        Extra: "mitochondria",
+    ).toEqual([
+      {
+        model: "cloze",
+        fields: {
+          Text: "The {{c1::mitochondria}} produces ATP",
+          Extra: "mitochondria",
+        },
       },
-    });
+    ]);
   });
 
   it("skips underscore cloze when the back is empty", () => {
     expect(
-      cardToAnkiNote({
+      cardToAnkiNotes({
         type: "cloze",
         front: "The ___ produces ATP",
         back: "",
