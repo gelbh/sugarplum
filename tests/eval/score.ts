@@ -1,7 +1,6 @@
 import type { CardDraft } from "../../worker/generation/schema";
 import type { EvalMeta, EvalScoreReport } from "./types";
 
-/** Collapse whitespace to single spaces and trim (case preserved). */
 export function normalizeWs(s: string): string {
   return s.replace(/\s+/g, " ").trim();
 }
