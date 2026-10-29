@@ -1,19 +1,12 @@
 import { createTheme } from "@mui/material/styles";
 
-/** Sugarplum brand: fruit plum for light surfaces / filled CTAs. */
 const PLUM = "#5B2C6F";
-/** Lighter plum for dark-scheme text and accents on night stage (WCAG on #1e0d1b). */
 const PLUM_ON_DARK = "#CE93D8";
-/** Muted candied amber/gold; secondary only. */
 const AMBER = "#C4A574";
-/** Evening desk stage (zen). */
 const STAGE = "#1e0d1b";
 const STAGE_DEEP = "#180816";
-/** Fruit-flesh ivory (study card face via brand.css; not global paper). */
 const IVORY = "#e8d8c7";
-/** Plum ink for light dashboard copy. */
 const PLUM_INK = "#1e0d1b";
-/** Sugar-dust dashboard ground. */
 const SUGAR_DUST = "#F5F5F5";
 
 const sans = '"Source Sans 3", "Helvetica", "Arial", sans-serif';
