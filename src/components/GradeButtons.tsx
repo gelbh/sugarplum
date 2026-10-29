@@ -8,6 +8,7 @@ import ArrowDownwardRoundedIcon from "@mui/icons-material/ArrowDownwardRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
 import type { StudyRating } from "../api/client";
+import { gradeColorVars } from "../study/gradeColors";
 import { CARD_COLUMN_SX, FACE_SANS } from "./studyFaceSx";
 
 /** Icons mirror swipe directions (← Again · ↓ Hard · → Good · ↑ Easy). */
@@ -29,7 +30,6 @@ type Props = {
   showSwipeHint?: boolean;
 };
 
-/** FSRS grade rail: swipe-direction icons, key chips, ivory on stage. */
 export default function GradeButtons({
   disabled,
   onGrade,
@@ -59,6 +59,7 @@ export default function GradeButtons({
       >
         {GRADES.map((g) => {
           const { Icon } = g;
+          const colors = gradeColorVars(g.rating);
           return (
             <Button
               key={g.rating}
@@ -75,15 +76,16 @@ export default function GradeButtons({
                 px: 0.5,
                 py: 1,
                 borderRadius: 1,
-                color: "inherit",
-                bgcolor: "transparent",
+                color: colors.fg,
+                bgcolor: colors.wash,
                 border: "1px solid",
-                borderColor: "currentColor",
-                opacity: 0.88,
+                borderColor: colors.border,
+                opacity: 0.95,
                 transition:
                   "background-color 0.18s ease, opacity 0.18s ease, transform 0.12s ease",
                 "&:hover": {
-                  bgcolor: "color-mix(in srgb, currentColor 12%, transparent)",
+                  bgcolor: colors.wash,
+                  filter: "brightness(1.12)",
                   opacity: 1,
                 },
                 "&:active": {
@@ -91,11 +93,12 @@ export default function GradeButtons({
                 },
                 "&.Mui-disabled": {
                   opacity: 0.35,
-                  borderColor: "currentColor",
+                  borderColor: colors.border,
+                  color: colors.fg,
                 },
                 "&:focus-visible": {
                   outline: "2px solid",
-                  outlineColor: "currentColor",
+                  outlineColor: colors.border,
                   outlineOffset: 2,
                 },
               }}
@@ -135,7 +138,8 @@ export default function GradeButtons({
                     px: "4px",
                     borderRadius: "3px",
                     border: "1px solid",
-                    borderColor: "currentColor",
+                    borderColor: colors.border,
+                    color: colors.fg,
                     fontFamily: FACE_SANS,
                     fontSize: "0.625rem",
                     fontWeight: 500,
