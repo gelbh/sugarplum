@@ -58,6 +58,14 @@ function mapWorkersAiRunError(err: unknown): never {
   throw err instanceof Error ? err : new Error(String(err));
 }
 
+/** Cloudflare JSON Mode unmet → retry once without response_format. */
+function isJsonModeUnmetError(err: unknown): boolean {
+  const msg = (
+    err instanceof Error ? err.message : String(err ?? "")
+  ).toLowerCase();
+  return /json mode couldn'?t be met|json mode could not be met/.test(msg);
+}
+
 function contentFromAiRun(result: unknown): AiRunContent {
   if (!result || typeof result !== "object") {
     throw new Error("Workers AI returned empty content");
@@ -151,21 +159,33 @@ export function createWorkersAiAdapter(
   }
 
   async function runChat(system: string, user: string): Promise<AiRunContent> {
-    let result: unknown;
-    try {
-      result = await env.AI!.run(WORKERS_AI_MODEL, {
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: user },
-        ],
-        max_completion_tokens: WORKERS_AI_MAX_TOKENS,
-        max_tokens: WORKERS_AI_MAX_TOKENS,
-        temperature: 0.3,
-        chat_template_kwargs: { enable_thinking: false },
-      });
-    } catch (err) {
-      mapWorkersAiRunError(err);
+    const base = {
+      messages: [
+        { role: "system" as const, content: system },
+        { role: "user" as const, content: user },
+      ],
+      max_completion_tokens: WORKERS_AI_MAX_TOKENS,
+      max_tokens: WORKERS_AI_MAX_TOKENS,
+      temperature: 0.3,
+      chat_template_kwargs: { enable_thinking: false },
+    };
+
+    async function tryRun(withJsonMode: boolean): Promise<unknown | null> {
+      try {
+        return await env.AI!.run(WORKERS_AI_MODEL, {
+          ...base,
+          ...(withJsonMode
+            ? { response_format: { type: "json_object" as const } }
+            : {}),
+        });
+      } catch (err) {
+        if (withJsonMode && isJsonModeUnmetError(err)) return null;
+        mapWorkersAiRunError(err);
+      }
     }
+
+    let result = await tryRun(true);
+    if (result === null) result = await tryRun(false);
     return contentFromAiRun(result);
   }
 
