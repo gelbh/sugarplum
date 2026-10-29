@@ -38,20 +38,20 @@ export default function GradeButtons({
 }: Props) {
   return (
     <Stack spacing={1.25} sx={{ width: "100%" }}>
-      <Typography
-        variant="caption"
-        sx={{
-          textAlign: "center",
-          fontFamily: FACE_SANS,
-          letterSpacing: "0.04em",
-          color: "inherit",
-          opacity: 0.72,
-        }}
-      >
-        {showSwipeHint
-          ? "Swipe: ← Again · → Good · ↓ Hard · ↑ Easy"
-          : "Grade (keys 1–4)"}
-      </Typography>
+      {showSwipeHint ? (
+        <Typography
+          variant="caption"
+          sx={{
+            textAlign: "center",
+            fontFamily: FACE_SANS,
+            letterSpacing: "0.04em",
+            color: "inherit",
+            opacity: 0.72,
+          }}
+        >
+          Swipe: ← Again · → Good · ↓ Hard · ↑ Easy
+        </Typography>
+      ) : null}
       <Stack
         direction="row"
         spacing={0.75}

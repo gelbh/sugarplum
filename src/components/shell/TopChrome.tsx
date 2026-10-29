@@ -1,7 +1,7 @@
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
-import { canGoBack } from "../../nav/navigate";
+import { navigate, shellBackHref } from "../../nav/navigate";
 import {
   SHELL_BG,
   SHELL_FG,
@@ -11,9 +11,9 @@ import {
 
 const BACK_SLOT = 40;
 
-/** Fixed mobile top bar: Back when history allows, centered logo mark. */
+/** Fixed mobile top bar: Back only for nested routes, centered logo mark. */
 export default function TopChrome() {
-  const showBack = canGoBack();
+  const backHref = shellBackHref(window.location.pathname);
 
   return (
     <Box
@@ -49,10 +49,10 @@ export default function TopChrome() {
             flexShrink: 0,
           }}
         >
-          {showBack ? (
+          {backHref ? (
             <IconButton
               aria-label="Back"
-              onClick={() => window.history.back()}
+              onClick={() => navigate(backHref)}
               size="small"
               sx={{ color: SHELL_FG }}
             >

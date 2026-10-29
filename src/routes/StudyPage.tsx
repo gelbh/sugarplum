@@ -7,15 +7,14 @@ import {
 } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import Chip from "@mui/material/Chip";
 import Container from "@mui/material/Container";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import CloseIcon from "@mui/icons-material/Close";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
-import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
 import TodayIcon from "@mui/icons-material/Today";
 import CardFace, { type OcclusionStudyFace } from "../components/CardFace";
 import GradeButtons from "../components/GradeButtons";
@@ -61,25 +60,6 @@ import { usePendingGradeSync } from "../study/usePendingGradeSync";
 import { useStudyZenMode } from "../study/useStudyZenMode";
 import { warmDueMedia } from "../study/warmDueMedia";
 
-function policyBannerCopy(meta: StudyQueueMeta): string | null {
-  const held = meta.heldIntroCount > 0;
-  const deferred = meta.deferredCount > 0;
-  if (!held && !deferred) return null;
-  const parts: string[] = [];
-  if (held) {
-    const totalNew = meta.introUsed + meta.heldIntroCount;
-    parts.push(
-      `Showing ${meta.introUsed} of ${totalNew} new cards today (intro budget ${meta.introBudget}).`,
-    );
-  }
-  if (deferred) {
-    parts.push(
-      `${meta.deferredCount} ${meta.deferredCount === 1 ? "review was" : "reviews were"} deferred to keep today's load manageable.`,
-    );
-  }
-  return parts.join(" ");
-}
-
 type PointerStart = {
   id: number;
   x: number;
@@ -94,15 +74,6 @@ function scrollableCardFace(target: EventTarget | null): HTMLElement | null {
   if (!(face instanceof HTMLElement)) return null;
   if (face.scrollHeight <= face.clientHeight) return null;
   return face;
-}
-
-function typeLabel(type: CardDraftView["type"]): string {
-  if (type === "cloze") return "Cloze";
-  if (type === "mcq") return "Multiple choice";
-  if (type === "image_label") return "Image label";
-  if (type === "diagram") return "Diagram";
-  if (type === "occlusion") return "Occlusion";
-  return "Q&A";
 }
 
 function isMcqCard(card: CardDraftView | null): boolean {
@@ -177,15 +148,13 @@ export default function StudyPage() {
   if (introBonusRef.current === undefined) {
     introBonusRef.current = getIntroBonus();
   }
-  const {
-    zen,
-    fullscreenUnavailable,
-    clearFullscreenUnavailable,
-    toggleZen,
-    exitZen,
-    ensureFullscreenIfNeeded,
-    isZen,
-  } = useStudyZenMode();
+  const { zen, toggleZen, exitZen, ensureFullscreenIfNeeded } =
+    useStudyZenMode();
+
+  const leaveStudy = useCallback(() => {
+    exitZen();
+    navigate("/today");
+  }, [exitZen]);
 
   const answerFocusRef = useRef<HTMLElement | null>(null);
   const showAnswerRef = useRef<HTMLButtonElement | null>(null);
@@ -193,6 +162,8 @@ export default function StudyPage() {
   const focusShowAnswerAfterGradeRef = useRef(false);
   const pointerRef = useRef<PointerStart | null>(null);
   const busyRef = useRef(false);
+  /** Suppress leave-on-Esc for one tick after FS exits (UA may clear FS before keydown). */
+  const ignoreEscLeaveUntilRef = useRef(0);
 
   const { end: endLoad } = useTrackedOp("Loading study…", {
     trackOnMount: true,
@@ -230,8 +201,11 @@ export default function StudyPage() {
         ...(bonus > 0 ? { introBonus: bonus } : {}),
       };
       try {
-        const { cards: due, meta, pendingDeferrals } =
-          await listDueCards(dueOpts);
+        const {
+          cards: due,
+          meta,
+          pendingDeferrals,
+        } = await listDueCards(dueOpts);
         if ((pendingDeferrals?.length ?? 0) > 0) {
           try {
             await commitStudyPacing(dueOpts);
@@ -371,9 +345,7 @@ export default function StudyPage() {
   const occlusionParts = current
     ? occlusionStudyParts(current)
     : { face: undefined, answer: "" };
-  const bannerCopy = queueMeta ? policyBannerCopy(queueMeta) : null;
-  const canStudyMore =
-    !offlineCopy && (queueMeta?.heldIntroCount ?? 0) > 0;
+  const canStudyMore = !offlineCopy && (queueMeta?.heldIntroCount ?? 0) > 0;
 
   const reveal = useCallback(() => {
     setRevealed(true);
@@ -467,6 +439,17 @@ export default function StudyPage() {
   );
 
   useEffect(() => {
+    function onFullscreenChange() {
+      if (!document.fullscreenElement) {
+        ignoreEscLeaveUntilRef.current = performance.now() + 500;
+      }
+    }
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }, []);
+
+  useEffect(() => {
     if (!ready) return;
 
     function onKey(e: KeyboardEvent) {
@@ -477,9 +460,16 @@ export default function StudyPage() {
         return;
       }
       if (e.key === "Escape") {
-        if (!isZen() || document.fullscreenElement) return;
         e.preventDefault();
-        exitZen();
+        if (document.fullscreenElement) {
+          ignoreEscLeaveUntilRef.current = performance.now() + 500;
+          void document.exitFullscreen?.();
+          return;
+        }
+        if (performance.now() < ignoreEscLeaveUntilRef.current) {
+          return;
+        }
+        leaveStudy();
         return;
       }
       if (e.key === "z" || e.key === "Z") {
@@ -504,7 +494,7 @@ export default function StudyPage() {
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [current, exitZen, isZen, onGrade, ready, revealed, toggleZen]);
+  }, [current, leaveStudy, onGrade, ready, revealed, toggleZen]);
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     ensureFullscreenIfNeeded();
@@ -561,12 +551,14 @@ export default function StudyPage() {
     );
   }
 
+  const stage = zen;
+
   return (
     <Box
-      className={zen ? "sp-stage" : undefined}
+      className={stage ? "sp-stage" : undefined}
       sx={{
-        minHeight: zen ? "100vh" : undefined,
-        ...(zen
+        minHeight: stage ? "100vh" : undefined,
+        ...(stage
           ? {
               color: "var(--sp-ivory)",
               "& .MuiIconButton-root": { color: "var(--sp-ivory)" },
@@ -577,90 +569,58 @@ export default function StudyPage() {
       <Container
         maxWidth="sm"
         sx={{
-          py: zen ? { xs: 2, sm: 3 } : 4,
-          minHeight: zen ? "100vh" : undefined,
+          py: stage ? { xs: 2, sm: 3 } : 4,
+          minHeight: stage ? "100vh" : undefined,
           display: "flex",
           flexDirection: "column",
           position: "relative",
         }}
       >
         <Stack
-          spacing={zen ? 1.5 : 2}
-          sx={{ flex: 1, minHeight: zen ? "100%" : undefined }}
+          spacing={stage ? 1.5 : 2}
+          sx={{ flex: 1, minHeight: stage ? "100%" : undefined }}
         >
           <Stack
             direction="row"
             justifyContent="space-between"
-            alignItems="flex-start"
+            alignItems="center"
             spacing={1}
             sx={{ position: "relative" }}
           >
-            {zen ? (
-              <Typography
-                variant="h6"
-                component="p"
-                sx={{
-                  width: "100%",
-                  textAlign: "center",
-                  fontWeight: 400,
-                  letterSpacing: "0.02em",
-                  color: "var(--sp-ivory)",
-                  opacity: 0.92,
-                  pr: 5,
-                  pl: 5,
-                }}
-              >
-                Sugarplum
-              </Typography>
-            ) : (
-              <Box sx={{ minWidth: 0, flex: 1 }}>
-                <Typography
-                  variant="h4"
-                  component="h1"
-                  color="primary"
-                  gutterBottom
-                >
-                  Study
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {mcqMode
-                    ? "Tap the best answer. Wrong counts as Again; right as Good."
-                    : "Reveal the answer, then grade. Keys 1-4 on desktop."}
-                </Typography>
-              </Box>
-            )}
             <IconButton
-              aria-label={zen ? "Exit zen mode" : "Enter zen mode"}
-              aria-pressed={zen}
+              aria-label="Leave study"
+              onClick={leaveStudy}
+              color="primary"
+              size="small"
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+            <Typography
+              variant="h6"
+              component="p"
+              sx={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                textAlign: "center",
+                fontWeight: 400,
+                letterSpacing: "0.02em",
+                color: stage ? "var(--sp-ivory)" : "text.primary",
+                opacity: 0.92,
+                pointerEvents: "none",
+              }}
+            >
+              Sugarplum
+            </Typography>
+            <IconButton
+              aria-label="Fullscreen"
               onClick={toggleZen}
               color="primary"
-              sx={zen ? { position: "absolute", right: 0, top: -4 } : undefined}
+              size="small"
             >
-              {zen ? <FullscreenExitIcon /> : <FullscreenIcon />}
+              <FullscreenIcon fontSize="small" />
             </IconButton>
           </Stack>
-
-          {!zen ? (
-            <Stack direction="row" spacing={2} alignItems="center">
-              <Link href="/today" underline="hover">
-                Today
-              </Link>
-              <Link href="/library" underline="hover">
-                Library
-              </Link>
-              {scopeLabel ? (
-                <Chip
-                  size="small"
-                  label={
-                    scopeOpts?.deckId
-                      ? `Deck: ${scopeLabel}`
-                      : `Subject: ${scopeLabel}`
-                  }
-                  variant="outlined"
-                />
-              ) : null}
-            </Stack>
-          ) : null}
 
           {error ? <Alert severity="error">{error}</Alert> : null}
           {syncSummary ? (
@@ -686,37 +646,12 @@ export default function StudyPage() {
               Card not in due queue. Studying your due cards instead.
             </Alert>
           ) : null}
-          {fullscreenUnavailable ? (
-            <Alert severity="info" onClose={clearFullscreenUnavailable}>
-              Fullscreen unavailable
-            </Alert>
-          ) : null}
-          {bannerCopy && !zen ? (
-            <Alert
-              severity="info"
-              action={
-                canStudyMore && current ? (
-                  <Button
-                    color="inherit"
-                    size="small"
-                    disabled={studyMoreBusy}
-                    onClick={() => void onStudyMore()}
-                  >
-                    {studyMoreBusy ? "Loading…" : "Study more"}
-                  </Button>
-                ) : undefined
-              }
-            >
-              {bannerCopy}
-            </Alert>
-          ) : null}
 
           {!current ? (
             scopeOpts && !hadCards ? (
               <Stack spacing={1.5}>
                 <Alert severity="info">
-                  No cards due in this{" "}
-                  {scopeOpts.deckId ? "deck" : "subject"}
+                  No cards due in this {scopeOpts.deckId ? "deck" : "subject"}
                   {scopeLabel ? ` (${scopeLabel})` : ""}.{" "}
                   <Link
                     href={
@@ -747,6 +682,44 @@ export default function StudyPage() {
                   </Button>
                 ) : null}
               </Stack>
+            ) : !hadCards && canStudyMore ? (
+              <Stack spacing={1.5} alignItems="stretch">
+                <Typography
+                  variant="body1"
+                  sx={{ textAlign: "center", opacity: stage ? 0.9 : 1 }}
+                >
+                  Nothing due yet. You can study held introductions early.
+                </Typography>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disabled={studyMoreBusy}
+                  onClick={() => void onStudyMore()}
+                >
+                  {studyMoreBusy ? "Loading…" : "Study more"}
+                </Button>
+              </Stack>
+            ) : !hadCards ? (
+              <Stack spacing={1.5} alignItems="stretch">
+                <Typography
+                  variant="body1"
+                  sx={{ textAlign: "center", opacity: stage ? 0.9 : 1 }}
+                >
+                  Nothing due yet. Add material to create your first cards.
+                </Typography>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  href="/library"
+                  onClick={(ev) => {
+                    ev.preventDefault();
+                    exitZen();
+                    navigate("/library");
+                  }}
+                >
+                  Open Library
+                </Button>
+              </Stack>
             ) : (
               <Stack spacing={1.5}>
                 <Alert severity="success">
@@ -776,6 +749,10 @@ export default function StudyPage() {
                       href="/today"
                       startIcon={<TodayIcon fontSize="small" />}
                       size="small"
+                      onClick={(ev) => {
+                        ev.preventDefault();
+                        leaveStudy();
+                      }}
                     >
                       Today
                     </Button>
@@ -795,40 +772,17 @@ export default function StudyPage() {
             )
           ) : (
             <>
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-                sx={{ opacity: zen ? 0.7 : 1 }}
+              <Typography
+                variant="caption"
+                sx={{
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  opacity: 0.7,
+                  color: stage ? "var(--sp-ivory)" : "text.secondary",
+                }}
               >
-                <Typography
-                  variant="caption"
-                  color={zen ? undefined : "text.secondary"}
-                  sx={{
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                    ...(zen ? { color: "var(--sp-ivory)" } : {}),
-                  }}
-                >
-                  {queue.length} remaining
-                </Typography>
-                {!zen ? (
-                  <Chip
-                    size="small"
-                    label={typeLabel(current.type)}
-                    variant="outlined"
-                    sx={{
-                      height: 24,
-                      fontWeight: 400,
-                      letterSpacing: "0.04em",
-                      borderColor: "divider",
-                      color: "text.secondary",
-                      bgcolor: "transparent",
-                      "& .MuiChip-label": { px: 1 },
-                    }}
-                  />
-                ) : null}
-              </Stack>
+                {queue.length} remaining
+              </Typography>
 
               <Box
                 onPointerDown={onPointerDown}
@@ -840,7 +794,7 @@ export default function StudyPage() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  py: zen ? 2 : 1,
+                  py: 2,
                   minHeight: 0,
                 }}
               >
@@ -873,7 +827,7 @@ export default function StudyPage() {
               {mcqMode ? (
                 <Box sx={{ minHeight: 72 }} aria-hidden />
               ) : revealed ? (
-                <Box sx={{ pb: zen ? 1 : 0, mt: "auto" }}>
+                <Box sx={{ pb: 1, mt: "auto" }}>
                   <GradeButtons
                     disabled={busy}
                     onGrade={onGrade}
