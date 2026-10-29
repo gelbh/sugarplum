@@ -1507,6 +1507,16 @@ export function createTestEnv(opts?: {
           }
         } else if (
           normalized.startsWith(
+            "UPDATE cards SET deck_id = ?, updated_at = ? WHERE id = ?",
+          )
+        ) {
+          const [deck_id, updated_at, id] = bound as [string, string, string];
+          const row = cards.get(id);
+          if (row) {
+            cards.set(id, { ...row, deck_id, updated_at });
+          }
+        } else if (
+          normalized.startsWith(
             "UPDATE cards SET status = ?, updated_at = ? WHERE job_id = ? AND status = ?",
           )
         ) {
