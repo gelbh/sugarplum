@@ -6,5 +6,13 @@
     "types": ["@cloudflare/workers-types", "vite/client"],
     "noUncheckedSideEffectImports": false
   },
-  "include": ["worker"]
+  "include": [
+    "worker",
+    "src/study/policyQueue.ts",
+    "src/study/policyPrefs.ts",
+    "src/study/weakness.ts",
+    "src/study/retrievability.ts",
+    "src/study/frontPreview.ts",
+    "src/study/localDay.ts"
+  ]
 }

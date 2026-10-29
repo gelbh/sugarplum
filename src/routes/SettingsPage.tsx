@@ -114,7 +114,7 @@ export default function SettingsPage() {
         const user = await me();
         const guestMode = isGuest();
         const settings = await getLlmSettings();
-        const prefs = guestMode ? DEFAULT_STUDY_FORM : await getStudyPrefs();
+        const prefs = await getStudyPrefs();
         if (cancelled) return;
         setGuest(guestMode);
         setAccountEmail(user.email);
@@ -370,68 +370,67 @@ export default function SettingsPage() {
           </ToggleButtonGroup>
         </Paper>
 
-        {guest ? null : (
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 2.5,
-              bgcolor: "background.paper",
-              borderColor: "divider",
-            }}
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 2.5,
+            bgcolor: "background.paper",
+            borderColor: "divider",
+          }}
+        >
+          <Typography
+            variant="subtitle1"
+            component="h2"
+            sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
           >
-            <Typography
-              variant="subtitle1"
-              component="h2"
-              sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
-            >
-              Study pacing
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Soft daily budgets for new cards and reviews. Held new cards stay
-              scheduled; use Study more to pull another intro slice today.
-            </Typography>
-            <Box component="form" onSubmit={onSubmitStudy} noValidate>
-              <Stack spacing={2}>
-                {studyError ? (
-                  <Alert severity="error">{studyError}</Alert>
-                ) : null}
-                {studyNotice ? (
-                  <Alert severity="success">{studyNotice}</Alert>
-                ) : null}
-                <TextField
-                  label="New cards per day"
-                  type="number"
-                  name="introBudget"
-                  value={introBudgetInput}
-                  onChange={(ev) => setIntroBudgetInput(ev.target.value)}
-                  required
-                  fullWidth
-                  inputProps={{ min: 1, max: 200, step: 1 }}
-                  helperText="Intro budget (1–200). Default 20."
-                />
-                <TextField
-                  label="Reviews per day"
-                  type="number"
-                  name="reviewBudget"
-                  value={reviewBudgetInput}
-                  onChange={(ev) => setReviewBudgetInput(ev.target.value)}
-                  required
-                  fullWidth
-                  inputProps={{ min: 1, max: 2000, step: 1 }}
-                  helperText="Soft review budget (1–2000). Default 200."
-                />
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  disabled={studyBusy}
-                >
-                  {studyBusy ? "Saving…" : "Save study budgets"}
-                </Button>
-              </Stack>
-            </Box>
-          </Paper>
-        )}
+            Study pacing
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Soft daily budgets for new cards and reviews. Held new cards stay
+            scheduled; use Study more to pull another intro slice today.
+            {guest ? " Saved on this device for guest study." : null}
+          </Typography>
+          <Box component="form" onSubmit={onSubmitStudy} noValidate>
+            <Stack spacing={2}>
+              {studyError ? (
+                <Alert severity="error">{studyError}</Alert>
+              ) : null}
+              {studyNotice ? (
+                <Alert severity="success">{studyNotice}</Alert>
+              ) : null}
+              <TextField
+                label="New cards per day"
+                type="number"
+                name="introBudget"
+                value={introBudgetInput}
+                onChange={(ev) => setIntroBudgetInput(ev.target.value)}
+                required
+                fullWidth
+                inputProps={{ min: 1, max: 200, step: 1 }}
+                helperText="Intro budget (1–200). Default 20."
+              />
+              <TextField
+                label="Reviews per day"
+                type="number"
+                name="reviewBudget"
+                value={reviewBudgetInput}
+                onChange={(ev) => setReviewBudgetInput(ev.target.value)}
+                required
+                fullWidth
+                inputProps={{ min: 1, max: 2000, step: 1 }}
+                helperText="Soft review budget (1–2000). Default 200."
+              />
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={studyBusy}
+              >
+                {studyBusy ? "Saving…" : "Save study budgets"}
+              </Button>
+            </Stack>
+          </Box>
+        </Paper>
 
         {guest ? (
           <Paper

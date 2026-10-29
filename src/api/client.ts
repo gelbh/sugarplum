@@ -21,13 +21,16 @@ import {
   guestArchiveCard,
   guestListDeckCards,
   guestListDecks,
+  guestGetStudyPrefs,
   guestListDueCards,
+  guestListStrugglingCards,
   guestListSubjects,
   guestMoveCard,
   guestRestoreCard,
   guestPatchCard,
   guestPatchDeck,
   guestPatchSubject,
+  guestPutStudyPrefs,
   guestResetCardSchedule,
   guestReviewCard,
   type GuestHubCardBody,
@@ -628,21 +631,17 @@ export type StudyPrefs = {
   rFloor: number;
 };
 
-const DEFAULT_STUDY_PREFS: StudyPrefs = {
-  introBudget: 20,
-  reviewBudget: 200,
-  rFloor: 0.8,
-};
-
 export function getStudyPrefs() {
   if (isGuest()) {
-    return Promise.resolve({ ...DEFAULT_STUDY_PREFS });
+    return Promise.resolve(guestGetStudyPrefs());
   }
   return api<StudyPrefs>("/api/settings/study");
 }
 
 export function putStudyPrefs(prefs: StudyPrefs) {
-  if (isGuest()) guestUnsupported("save study prefs");
+  if (isGuest()) {
+    return Promise.resolve(guestPutStudyPrefs(prefs));
+  }
   return api<StudyPrefs>("/api/settings/study", {
     method: "PUT",
     json: prefs,
@@ -827,15 +826,6 @@ export type ListDueResult = {
   meta: StudyQueueMeta;
 };
 
-const GUEST_DUE_META: StudyQueueMeta = {
-  introUsed: 0,
-  introBudget: 20,
-  reviewUsed: 0,
-  reviewBudget: 200,
-  heldIntroCount: 0,
-  deferredCount: 0,
-};
-
 function buildDueQuery(opts?: ListDueOpts): string {
   const params = new URLSearchParams();
   if (opts?.deckId) params.set("deckId", opts.deckId);
@@ -854,10 +844,7 @@ function buildDueQuery(opts?: ListDueOpts): string {
 
 export function listDueCards(opts?: ListDueOpts): Promise<ListDueResult> {
   if (isGuest()) {
-    return Promise.resolve({
-      cards: guestListDueCards(opts),
-      meta: { ...GUEST_DUE_META },
-    });
+    return Promise.resolve(guestListDueCards(opts));
   }
   return api<ListDueResult>(`/api/study/due${buildDueQuery(opts)}`);
 }
@@ -877,7 +864,7 @@ export type StrugglingRow = {
 };
 
 export function listStrugglingCards() {
-  if (isGuest()) return Promise.resolve([] as StrugglingRow[]);
+  if (isGuest()) return Promise.resolve(guestListStrugglingCards());
   return api<StrugglingRow[]>("/api/study/struggling");
 }
 

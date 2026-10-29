@@ -361,7 +361,7 @@ export default function StudyPage() {
     : { face: undefined, answer: "" };
   const bannerCopy = queueMeta ? policyBannerCopy(queueMeta) : null;
   const canStudyMore =
-    !offlineCopy && !isGuest() && (queueMeta?.heldIntroCount ?? 0) > 0;
+    !offlineCopy && (queueMeta?.heldIntroCount ?? 0) > 0;
 
   const reveal = useCallback(() => {
     setRevealed(true);
