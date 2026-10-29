@@ -5,6 +5,25 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { StrugglingRow } from "../api/client";
 
+/** Caption bits for Insights / Today struggling rows. */
+export function formatStrugglingCaption(row: {
+  again_14d: number;
+  hard_14d: number;
+  lapses: number;
+  retrievability?: number | null;
+}): string {
+  const parts = [
+    `Again (14d): ${row.again_14d}`,
+    `Hard (14d): ${row.hard_14d}`,
+    `Lapses: ${row.lapses}`,
+  ];
+  const r = row.retrievability;
+  if (typeof r === "number" && Number.isFinite(r)) {
+    parts.push(`R: ${Math.round(Math.min(1, Math.max(0, r)) * 100)}%`);
+  }
+  return parts.join(" · ");
+}
+
 export function formatStrugglingDue(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -65,7 +84,7 @@ export default function StrugglingList({
               />
             </Stack>
             <Typography variant="caption" color="text.secondary">
-              Again (14d): {row.again_14d} · Lapses: {row.lapses}
+              {formatStrugglingCaption(row)}
             </Typography>
             {row.is_due ? (
               <Button

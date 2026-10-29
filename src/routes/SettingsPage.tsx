@@ -19,14 +19,23 @@ import Brightness6Icon from "@mui/icons-material/Brightness6";
 import {
   ApiError,
   getLlmSettings,
+  getStudyPrefs,
   logout,
   me,
   putLlmSettings,
+  putStudyPrefs,
   type LlmSettings,
+  type StudyPrefs,
 } from "../api/client";
 import { isGuest } from "../guest/session";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { freeGenFaqBody, freeGenIntroBlurb } from "../settings/freeGenFaq";
+
+const DEFAULT_STUDY_FORM: StudyPrefs = {
+  introBudget: 20,
+  reviewBudget: 200,
+  rFloor: 0.8,
+};
 
 type ThemeMode = "system" | "light" | "dark";
 
@@ -71,15 +80,29 @@ export default function SettingsPage() {
   const [provider, setProvider] = useState<string>("openai");
   const [apiKey, setApiKey] = useState("");
   const [current, setCurrent] = useState<LlmSettings | null>(null);
+  const [studyPrefs, setStudyPrefs] = useState<StudyPrefs>(DEFAULT_STUDY_FORM);
+  const [introBudgetInput, setIntroBudgetInput] = useState(
+    String(DEFAULT_STUDY_FORM.introBudget),
+  );
+  const [reviewBudgetInput, setReviewBudgetInput] = useState(
+    String(DEFAULT_STUDY_FORM.reviewBudget),
+  );
   const [googleLinked, setGoogleLinked] = useState(false);
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [guest, setGuest] = useState(false);
   const queryMsg = settingsQueryMessage();
   const [error, setError] = useState<string | null>(queryMsg.error);
   const [notice, setNotice] = useState<string | null>(queryMsg.notice);
+  const [studyError, setStudyError] = useState<string | null>(null);
+  const [studyNotice, setStudyNotice] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const { end: endLoad } = useTrackedOp("Loading…", { trackOnMount: true });
   const { busy, begin, end } = useTrackedOp("Saving…");
+  const {
+    busy: studyBusy,
+    begin: beginStudy,
+    end: endStudy,
+  } = useTrackedOp("Saving study…");
 
   const themeMode: ThemeMode =
     mode === "light" || mode === "dark" || mode === "system" ? mode : "system";
@@ -89,13 +112,18 @@ export default function SettingsPage() {
     (async () => {
       try {
         const user = await me();
+        const guestMode = isGuest();
         const settings = await getLlmSettings();
+        const prefs = await getStudyPrefs();
         if (cancelled) return;
-        setGuest(isGuest());
+        setGuest(guestMode);
         setAccountEmail(user.email);
         setGoogleLinked(user.google_linked === true);
         setCurrent(settings);
         if (settings.configured) setProvider(settings.provider);
+        setStudyPrefs(prefs);
+        setIntroBudgetInput(String(prefs.introBudget));
+        setReviewBudgetInput(String(prefs.reviewBudget));
         setReady(true);
         endLoad();
       } catch (err) {
@@ -135,6 +163,41 @@ export default function SettingsPage() {
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not save key");
       end(false);
+    }
+  }
+
+  async function onSubmitStudy(e: FormEvent) {
+    e.preventDefault();
+    setStudyError(null);
+    setStudyNotice(null);
+    const introBudget = Number(introBudgetInput);
+    const reviewBudget = Number(reviewBudgetInput);
+    if (
+      !Number.isFinite(introBudget) ||
+      !Number.isFinite(reviewBudget) ||
+      introBudget < 1 ||
+      reviewBudget < 1
+    ) {
+      setStudyError("Enter positive numbers for intro and review budgets.");
+      return;
+    }
+    beginStudy();
+    try {
+      const saved = await putStudyPrefs({
+        introBudget,
+        reviewBudget,
+        rFloor: studyPrefs.rFloor,
+      });
+      setStudyPrefs(saved);
+      setIntroBudgetInput(String(saved.introBudget));
+      setReviewBudgetInput(String(saved.reviewBudget));
+      setStudyNotice("Study budgets saved.");
+      endStudy();
+    } catch (err) {
+      setStudyError(
+        err instanceof ApiError ? err.message : "Could not save study prefs",
+      );
+      endStudy(false);
     }
   }
 
@@ -305,6 +368,68 @@ export default function SettingsPage() {
             <ToggleButton value="light">Light</ToggleButton>
             <ToggleButton value="dark">Dark</ToggleButton>
           </ToggleButtonGroup>
+        </Paper>
+
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 2.5,
+            bgcolor: "background.paper",
+            borderColor: "divider",
+          }}
+        >
+          <Typography
+            variant="subtitle1"
+            component="h2"
+            sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+          >
+            Study pacing
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Soft daily budgets for new cards and reviews. Held new cards stay
+            scheduled; use Study more to pull another intro slice today.
+            {guest ? " Saved on this device for guest study." : null}
+          </Typography>
+          <Box component="form" onSubmit={onSubmitStudy} noValidate>
+            <Stack spacing={2}>
+              {studyError ? (
+                <Alert severity="error">{studyError}</Alert>
+              ) : null}
+              {studyNotice ? (
+                <Alert severity="success">{studyNotice}</Alert>
+              ) : null}
+              <TextField
+                label="New cards per day"
+                type="number"
+                name="introBudget"
+                value={introBudgetInput}
+                onChange={(ev) => setIntroBudgetInput(ev.target.value)}
+                required
+                fullWidth
+                inputProps={{ min: 1, max: 200, step: 1 }}
+                helperText="Intro budget (1–200). Default 20."
+              />
+              <TextField
+                label="Reviews per day"
+                type="number"
+                name="reviewBudget"
+                value={reviewBudgetInput}
+                onChange={(ev) => setReviewBudgetInput(ev.target.value)}
+                required
+                fullWidth
+                inputProps={{ min: 1, max: 2000, step: 1 }}
+                helperText="Soft review budget (1–2000). Default 200."
+              />
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={studyBusy}
+              >
+                {studyBusy ? "Saving…" : "Save study budgets"}
+              </Button>
+            </Stack>
+          </Box>
         </Paper>
 
         {guest ? (

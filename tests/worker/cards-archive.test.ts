@@ -215,8 +215,8 @@ describe("archived cards and study due", () => {
       env,
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { id: string }[];
-    expect(body.map((c) => c.id)).toEqual(["card-due"]);
+    const body = (await res.json()) as { cards: { id: string }[] };
+    expect(body.cards.map((c) => c.id)).toEqual(["card-due"]);
   });
 
   it("restore then due includes card again", async () => {
@@ -245,8 +245,8 @@ describe("archived cards and study due", () => {
       { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
       env,
     );
-    const body = (await due.json()) as { id: string }[];
-    expect(body.map((c) => c.id)).toEqual(["card-1"]);
+    const body = (await due.json()) as { cards: { id: string }[] };
+    expect(body.cards.map((c) => c.id)).toEqual(["card-1"]);
   });
 });
 

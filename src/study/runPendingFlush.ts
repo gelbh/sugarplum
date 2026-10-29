@@ -61,7 +61,8 @@ async function runPendingFlushInner(
   const snapshot = listPending(userId);
   if (snapshot.length === 0) return null;
 
-  const listDue = deps.listDue ?? listDueCards;
+  const listDue =
+    deps.listDue ?? (async () => (await listDueCards()).cards);
   const review = deps.review ?? reviewCard;
   const replacePending = deps.replacePending ?? replacePendingGrades;
   const saveDue = deps.saveDue ?? saveDueCache;
