@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
+import { hashPassword } from "../../worker/auth/password";
 import { createTestEnv } from "./test-env";
 import { parseAdminEmails } from "../../worker/admin/allowlist";
 
@@ -454,5 +455,105 @@ describe("GET /api/admin/users/:id", () => {
     });
     expect(body.recentJobs).toEqual([]);
     expect(body.recentStudyDays).toEqual([]);
+  });
+
+  it("includes disabled_at when present on detail", async () => {
+    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    seedAdminMonitorFixture(env);
+    env.seedUser({
+      id: "u-alice",
+      email: "alice@example.com",
+      password_hash: null,
+      oauth_subject: "google-alice",
+      created_at: "2026-10-28T00:00:00.000Z",
+      disabled_at: "2026-10-29T10:00:00.000Z",
+    });
+    const res = await app.request(
+      "/api/admin/users/u-alice",
+      { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { disabled_at: string | null };
+    expect(body.disabled_at).toBe("2026-10-29T10:00:00.000Z");
+  });
+});
+
+describe("disabled_at auth enforcement", () => {
+  it("401 on /api/auth/me for disabled user with valid session", async () => {
+    const env = createTestEnv();
+    env.seedUser({
+      id: "u-disabled",
+      email: "disabled@example.com",
+      password_hash: null,
+      oauth_subject: "google-disabled",
+      created_at: "2026-01-01T00:00:00.000Z",
+      disabled_at: "2026-10-29T09:00:00.000Z",
+    });
+    env.seedSession("s-disabled", "u-disabled");
+    const res = await app.request(
+      "/api/auth/me",
+      { headers: { cookie: `${SESSION_COOKIE}=s-disabled` } },
+      env,
+    );
+    expect(res.status).toBe(401);
+    const kv = await env.SESSIONS.get("s-disabled");
+    expect(kv).toBeNull();
+  });
+
+  it("login as disabled returns 401 without minting a session", async () => {
+    const env = createTestEnv();
+    const password = "long-enough-password";
+    env.seedUser({
+      id: "u-disabled-pw",
+      email: "disabled-pw@example.com",
+      password_hash: await hashPassword(password),
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+      disabled_at: "2026-10-29T09:00:00.000Z",
+    });
+    const res = await app.request(
+      "/api/auth/login",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email: "disabled-pw@example.com",
+          password,
+        }),
+      },
+      env,
+    );
+    expect(res.status).toBe(401);
+    expect(await res.text()).toMatch(/invalid email or password/i);
+    expect(res.headers.get("set-cookie") ?? "").not.toContain(
+      `${SESSION_COOKIE}=`,
+    );
+  });
+
+  it("admin list includes disabled_at when set", async () => {
+    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    seedAdminMonitorFixture(env);
+    env.seedUser({
+      id: "u-bob",
+      email: "bob@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-10-25T00:00:00.000Z",
+      disabled_at: "2026-10-29T11:00:00.000Z",
+    });
+    const res = await app.request(
+      "/api/admin/users",
+      { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      users: { email: string; disabled_at: string | null }[];
+    };
+    const bob = body.users.find((u) => u.email === "bob@example.com");
+    expect(bob?.disabled_at).toBe("2026-10-29T11:00:00.000Z");
+    const alice = body.users.find((u) => u.email === "alice@example.com");
+    expect(alice?.disabled_at).toBeNull();
   });
 });

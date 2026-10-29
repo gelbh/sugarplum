@@ -41,6 +41,7 @@ type UserRow = {
   id: string;
   email: string;
   password_hash: string | null;
+  disabled_at: string | null;
 };
 
 type OauthUserRow = {
@@ -48,6 +49,7 @@ type OauthUserRow = {
   email: string;
   oauth_subject: string | null;
   password_hash: string | null;
+  disabled_at: string | null;
 };
 
 function newUserId(): string {
@@ -129,7 +131,9 @@ authRoutes.post("/login", async (c) => {
 
   const db = getDb(c.env);
   const user = await db
-    .prepare("SELECT id, email, password_hash FROM users WHERE email = ?")
+    .prepare(
+      "SELECT id, email, password_hash, disabled_at FROM users WHERE email = ?",
+    )
     .bind(email)
     .first<UserRow>();
 
@@ -139,6 +143,10 @@ authRoutes.post("/login", async (c) => {
 
   const ok = await verifyPassword(password, user.password_hash);
   if (!ok) {
+    throw new HTTPException(401, { message: "Invalid email or password" });
+  }
+
+  if (user.disabled_at != null) {
     throw new HTTPException(401, { message: "Invalid email or password" });
   }
 
@@ -333,6 +341,15 @@ authRoutes.get("/google/callback", async (c) => {
       if (!oauthCtxMatches(c, state)) {
         return oauthLoginRedirect(appUrl, "oauth");
       }
+      const replayUser = await getDb(c.env)
+        .prepare("SELECT disabled_at FROM users WHERE id = ?")
+        .bind(done.userId)
+        .first<{ disabled_at: string | null }>();
+      if (!replayUser || replayUser.disabled_at != null) {
+        await consumeOAuthDone(c.env.SESSIONS, state);
+        clearOAuthCtxCookie(c);
+        return oauthLoginRedirect(appUrl, "oauth");
+      }
       await createSession(c, done.userId);
       await consumeOAuthDone(c.env.SESSIONS, state);
       clearOAuthCtxCookie(c);
@@ -400,7 +417,7 @@ authRoutes.get("/google/callback", async (c) => {
 
     const account = await db
       .prepare(
-        "SELECT id, email, oauth_subject, password_hash FROM users WHERE id = ?",
+        "SELECT id, email, oauth_subject, password_hash, disabled_at FROM users WHERE id = ?",
       )
       .bind(sessionUserId)
       .first<OauthUserRow>();
@@ -413,7 +430,7 @@ authRoutes.get("/google/callback", async (c) => {
 
     const bySubject = await db
       .prepare(
-        "SELECT id, email, oauth_subject, password_hash FROM users WHERE oauth_subject = ?",
+        "SELECT id, email, oauth_subject, password_hash, disabled_at FROM users WHERE oauth_subject = ?",
       )
       .bind(subject)
       .first<OauthUserRow>();
@@ -443,18 +460,20 @@ authRoutes.get("/google/callback", async (c) => {
 
   const bySubject = await db
     .prepare(
-      "SELECT id, email, oauth_subject, password_hash FROM users WHERE oauth_subject = ?",
+      "SELECT id, email, oauth_subject, password_hash, disabled_at FROM users WHERE oauth_subject = ?",
     )
     .bind(subject)
     .first<OauthUserRow>();
 
   let userId: string;
+  let disabledAt: string | null = null;
   if (bySubject) {
     userId = bySubject.id;
+    disabledAt = bySubject.disabled_at;
   } else {
     const byEmail = await db
       .prepare(
-        "SELECT id, email, oauth_subject, password_hash FROM users WHERE email = ?",
+        "SELECT id, email, oauth_subject, password_hash, disabled_at FROM users WHERE email = ?",
       )
       .bind(profile.email)
       .first<OauthUserRow>();
@@ -477,6 +496,7 @@ authRoutes.get("/google/callback", async (c) => {
           .run();
       }
       userId = byEmail.id;
+      disabledAt = byEmail.disabled_at;
     } else {
       userId = newUserId();
       const createdAt = new Date().toISOString();
@@ -496,6 +516,12 @@ authRoutes.get("/google/callback", async (c) => {
         throw insertErr;
       }
     }
+  }
+
+  if (disabledAt != null) {
+    if (kvKey) await c.env.SESSIONS.delete(kvKey);
+    clearOAuthCtxCookie(c);
+    return oauthLoginRedirect(appUrl, "oauth");
   }
 
   await createSession(c, userId);

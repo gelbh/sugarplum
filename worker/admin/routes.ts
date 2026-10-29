@@ -12,6 +12,7 @@ export type AdminUserListItem = {
   email: string;
   created_at: string;
   google_linked: boolean;
+  disabled_at: string | null;
   deckCount: number;
   cardCount: number;
   jobCount: number;
@@ -22,6 +23,7 @@ export type AdminUserDetail = {
   email: string;
   created_at: string;
   google_linked: boolean;
+  disabled_at: string | null;
   counts: { decks: number; cards: number; jobs: number; materials: number };
   recentJobs: { id: string; status: string; created_at: string }[];
   recentStudyDays: { day: string; intros_used: number }[];
@@ -30,7 +32,7 @@ export type AdminUserDetail = {
 export const adminRoutes = new Hono<AppEnv>();
 
 const LIST_USERS_SQL = `
-SELECT u.id, u.email, u.created_at, u.oauth_subject,
+SELECT u.id, u.email, u.created_at, u.oauth_subject, u.disabled_at,
   (SELECT COUNT(*) FROM decks d WHERE d.user_id = u.id) AS deck_count,
   (SELECT COUNT(*) FROM cards c
      INNER JOIN decks d ON d.id = c.deck_id WHERE d.user_id = u.id) AS card_count,
@@ -44,7 +46,7 @@ LIMIT ?
 `.replace(/\s+/g, " ");
 
 const USER_DETAIL_SQL = `
-SELECT u.id, u.email, u.created_at, u.oauth_subject,
+SELECT u.id, u.email, u.created_at, u.oauth_subject, u.disabled_at,
   (SELECT COUNT(*) FROM decks d WHERE d.user_id = u.id) AS deck_count,
   (SELECT COUNT(*) FROM cards c
      INNER JOIN decks d ON d.id = c.deck_id WHERE d.user_id = u.id) AS card_count,
@@ -117,6 +119,7 @@ adminRoutes.get("/users", async (c) => {
       email: string;
       created_at: string;
       oauth_subject: string | null;
+      disabled_at: string | null;
       deck_count: number;
       card_count: number;
       job_count: number;
@@ -127,6 +130,7 @@ adminRoutes.get("/users", async (c) => {
     email: row.email,
     created_at: row.created_at,
     google_linked: row.oauth_subject != null,
+    disabled_at: row.disabled_at ?? null,
     deckCount: row.deck_count,
     cardCount: row.card_count,
     jobCount: row.job_count,
@@ -143,6 +147,7 @@ adminRoutes.get("/users/:id", async (c) => {
     email: string;
     created_at: string;
     oauth_subject: string | null;
+    disabled_at: string | null;
     deck_count: number;
     card_count: number;
     job_count: number;
@@ -166,6 +171,7 @@ adminRoutes.get("/users/:id", async (c) => {
     email: row.email,
     created_at: row.created_at,
     google_linked: row.oauth_subject != null,
+    disabled_at: row.disabled_at ?? null,
     counts: {
       decks: row.deck_count,
       cards: row.card_count,

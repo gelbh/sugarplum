@@ -20,6 +20,7 @@ type UserRow = {
   password_hash: string | null;
   oauth_subject: string | null;
   created_at: string;
+  disabled_at?: string | null;
 };
 
 type SubjectRow = {
@@ -218,6 +219,23 @@ export function createTestEnv(opts?: {
         }
         if (
           normalized.startsWith(
+            "SELECT id, email, password_hash, disabled_at FROM users WHERE email =",
+          )
+        ) {
+          for (const u of users.values()) {
+            if (u.email === bound[0]) {
+              return {
+                id: u.id,
+                email: u.email,
+                password_hash: u.password_hash,
+                disabled_at: u.disabled_at ?? null,
+              } as T;
+            }
+          }
+          return null;
+        }
+        if (
+          normalized.startsWith(
             "SELECT id, email, password_hash FROM users WHERE email =",
           )
         ) {
@@ -227,6 +245,24 @@ export function createTestEnv(opts?: {
                 id: u.id,
                 email: u.email,
                 password_hash: u.password_hash,
+              } as T;
+            }
+          }
+          return null;
+        }
+        if (
+          normalized.startsWith(
+            "SELECT id, email, oauth_subject, password_hash, disabled_at FROM users WHERE oauth_subject =",
+          )
+        ) {
+          for (const u of users.values()) {
+            if (u.oauth_subject === bound[0]) {
+              return {
+                id: u.id,
+                email: u.email,
+                oauth_subject: u.oauth_subject,
+                password_hash: u.password_hash,
+                disabled_at: u.disabled_at ?? null,
               } as T;
             }
           }
@@ -251,6 +287,24 @@ export function createTestEnv(opts?: {
         }
         if (
           normalized.startsWith(
+            "SELECT id, email, oauth_subject, password_hash, disabled_at FROM users WHERE email =",
+          )
+        ) {
+          for (const u of users.values()) {
+            if (u.email === bound[0]) {
+              return {
+                id: u.id,
+                email: u.email,
+                oauth_subject: u.oauth_subject,
+                password_hash: u.password_hash,
+                disabled_at: u.disabled_at ?? null,
+              } as T;
+            }
+          }
+          return null;
+        }
+        if (
+          normalized.startsWith(
             "SELECT id, email, oauth_subject, password_hash FROM users WHERE email =",
           )
         ) {
@@ -265,6 +319,22 @@ export function createTestEnv(opts?: {
             }
           }
           return null;
+        }
+        if (
+          normalized.startsWith(
+            "SELECT id, email, oauth_subject, password_hash, disabled_at FROM users WHERE id =",
+          )
+        ) {
+          const u = users.get(bound[0] as string);
+          return u
+            ? ({
+                id: u.id,
+                email: u.email,
+                oauth_subject: u.oauth_subject,
+                password_hash: u.password_hash,
+                disabled_at: u.disabled_at ?? null,
+              } as T)
+            : null;
         }
         if (
           normalized.startsWith(
@@ -283,6 +353,10 @@ export function createTestEnv(opts?: {
                 password_hash: u.password_hash,
               } as T)
             : null;
+        }
+        if (normalized.startsWith("SELECT disabled_at FROM users WHERE id =")) {
+          const u = users.get(bound[0] as string);
+          return u ? ({ disabled_at: u.disabled_at ?? null } as T) : null;
         }
         if (normalized.startsWith("SELECT id, email FROM users WHERE id =")) {
           const u = users.get(bound[0] as string);
@@ -754,6 +828,7 @@ export function createTestEnv(opts?: {
             email: u.email,
             created_at: u.created_at,
             oauth_subject: u.oauth_subject,
+            disabled_at: u.disabled_at ?? null,
             deck_count,
             card_count,
             job_count,
@@ -846,6 +921,7 @@ export function createTestEnv(opts?: {
               email: u.email,
               created_at: u.created_at,
               oauth_subject: u.oauth_subject,
+              disabled_at: u.disabled_at ?? null,
               deck_count,
               card_count,
               job_count,
@@ -1510,7 +1586,12 @@ export function createTestEnv(opts?: {
             password_hash,
             oauth_subject,
             created_at,
+            disabled_at: null,
           });
+        } else if (normalized.startsWith("UPDATE users SET disabled_at =")) {
+          const [disabled_at, id] = bound as [string | null, string];
+          const u = users.get(id);
+          if (u) users.set(id, { ...u, disabled_at });
         } else if (normalized.startsWith("UPDATE users SET oauth_subject =")) {
           const [oauth_subject, id] = bound as [string, string];
           const u = users.get(id);
@@ -2556,7 +2637,10 @@ export function createTestEnv(opts?: {
     GOOGLE_CLIENT_SECRET: "test-google-client-secret",
     ADMIN_EMAILS: opts?.adminEmails,
     seedUser(row) {
-      users.set(row.id, row);
+      users.set(row.id, {
+        ...row,
+        disabled_at: row.disabled_at ?? null,
+      });
     },
     seedSubject(row) {
       subjects.set(row.id, row);
