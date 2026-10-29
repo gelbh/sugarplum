@@ -4,7 +4,12 @@ import LinearProgress from "@mui/material/LinearProgress";
 import Typography from "@mui/material/Typography";
 import type { ShellGenerationStatus } from "../../shell/resolveShellGenerationStatus";
 import { navigate } from "../../nav/navigate";
-import { PLUM_ON_DARK, SHELL_FG, SHELL_HAIRLINE, SHELL_MUTED } from "./chromeTokens";
+import {
+  SHELL_FG,
+  SHELL_HAIRLINE,
+  SHELL_MUTED,
+  SHELL_SELECTED,
+} from "./chromeTokens";
 
 type GenerationStatusStripProps = {
   status: ShellGenerationStatus;
@@ -12,7 +17,7 @@ type GenerationStatusStripProps = {
 };
 
 const DOT: Record<ShellGenerationStatus["kind"], string> = {
-  generating: PLUM_ON_DARK,
+  generating: SHELL_SELECTED,
   drafts_ready: "#A5D6A7",
   failed: "#E57373",
 };
@@ -127,7 +132,7 @@ export default function GenerationStatusStrip({
             borderRadius: 1,
             bgcolor: "rgba(245, 245, 245, 0.12)",
             "& .MuiLinearProgress-bar": {
-              bgcolor: PLUM_ON_DARK,
+              bgcolor: SHELL_SELECTED,
             },
           }}
         />
