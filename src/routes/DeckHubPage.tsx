@@ -45,6 +45,7 @@ import {
   downloadExport,
   deleteDeck,
   listDeckCards,
+  listDeckMaterials,
   listDecks,
   listJobsWithDrafts,
   listSubjects,
@@ -68,12 +69,14 @@ import {
   type Deck,
   type DeckStats,
   type JobListItem,
+  type MaterialListItem,
   type Subject,
 } from "../api/client";
 import DraftCardEditor, {
   type DraftEditorChange,
 } from "../components/DraftCardEditor";
 import { FigureSuggestPanel } from "../components/FigureSuggestPanel";
+import MaterialsList from "../components/MaterialsList";
 import { isGuest } from "../guest/session";
 import { guestPasteToCards } from "../guest/pasteToCards";
 import { guestAddAcceptedCards } from "../guest/store";
@@ -158,6 +161,7 @@ export default function DeckHubPage({ deckId }: Props) {
   const [subject, setSubject] = useState<Subject | null>(null);
   const [cards, setCards] = useState<CardDraftView[]>([]);
   const [draftJobs, setDraftJobs] = useState<JobListItem[]>([]);
+  const [materials, setMaterials] = useState<MaterialListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [exportWarning, setExportWarning] = useState<string | null>(null);
@@ -250,6 +254,18 @@ export default function DeckHubPage({ deckId }: Props) {
     }
   }, [deckId, guest]);
 
+  const refreshMaterials = useCallback(async () => {
+    if (guest) {
+      setMaterials([]);
+      return;
+    }
+    try {
+      setMaterials(await listDeckMaterials(deckId));
+    } catch {
+      setMaterials([]);
+    }
+  }, [deckId, guest]);
+
   const load = useCallback(async () => {
     const [deckList, subjects] = await Promise.all([
       listDecks(),
@@ -261,10 +277,10 @@ export default function DeckHubPage({ deckId }: Props) {
       found ? (subjects.find((s) => s.id === found.subject_id) ?? null) : null,
     );
     if (found) {
-      await refreshDraftJobs();
+      await Promise.all([refreshDraftJobs(), refreshMaterials()]);
     }
     return found;
-  }, [deckId, refreshDraftJobs]);
+  }, [deckId, refreshDraftJobs, refreshMaterials]);
 
   useEffect(() => {
     let cancelled = false;
@@ -748,7 +764,7 @@ export default function DeckHubPage({ deckId }: Props) {
         return;
       }
       setMaterialNotice(`Saved paste material (${material.status})`);
-      await refreshDraftJobs();
+      await Promise.all([refreshDraftJobs(), refreshMaterials()]);
     } catch (err) {
       setMaterialError(
         err instanceof ApiError ? err.message : "Could not save paste",
@@ -813,7 +829,7 @@ export default function DeckHubPage({ deckId }: Props) {
         return;
       }
       setMaterialNotice(`Stored file (${material.status}).`);
-      await refreshDraftJobs();
+      await Promise.all([refreshDraftJobs(), refreshMaterials()]);
     } catch (err) {
       setMaterialError(
         err instanceof ApiError ? err.message : "Could not upload file",
@@ -1110,6 +1126,36 @@ export default function DeckHubPage({ deckId }: Props) {
                   )}
                 </Box>
               )}
+            </Paper>
+          ) : null}
+
+          {!guest ? (
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 2.5,
+                bgcolor: "background.paper",
+                borderColor: "divider",
+              }}
+            >
+              <Typography
+                variant="subtitle1"
+                component="h2"
+                sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+              >
+                Materials
+              </Typography>
+              <MaterialsList
+                materials={materials}
+                showDeckTitle={false}
+                onChanged={() => {
+                  void Promise.all([
+                    refreshMaterials(),
+                    refreshDraftJobs(),
+                    refreshCards(),
+                  ]);
+                }}
+              />
             </Paper>
           ) : null}
 

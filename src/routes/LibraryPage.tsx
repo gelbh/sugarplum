@@ -30,16 +30,19 @@ import {
   deleteSubject,
   listDecks,
   listJobsWithDrafts,
+  listMaterials,
   listSubjects,
   me,
   patchSubject,
   type Deck,
   type JobListItem,
+  type MaterialListItem,
   type Subject,
   getJourney,
 } from "../api/client";
 import { deriveJourney } from "../journey/derive";
 import CreateMaterialStepper from "../components/CreateMaterialStepper";
+import MaterialsList from "../components/MaterialsList";
 import { isGuest } from "../guest/session";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
@@ -55,6 +58,7 @@ export default function LibraryPage() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [decks, setDecks] = useState<Deck[]>([]);
   const [draftJobs, setDraftJobs] = useState<JobListItem[]>([]);
+  const [materials, setMaterials] = useState<MaterialListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
@@ -87,6 +91,18 @@ export default function LibraryPage() {
     }
   }, []);
 
+  const refreshMaterials = useCallback(async () => {
+    if (guest) {
+      setMaterials([]);
+      return;
+    }
+    try {
+      setMaterials(await listMaterials());
+    } catch {
+      setMaterials([]);
+    }
+  }, [guest]);
+
   const refreshSubjects = useCallback(async () => {
     setSubjects(await listSubjects());
   }, []);
@@ -100,15 +116,19 @@ export default function LibraryPage() {
     (async () => {
       try {
         await me();
-        const [subjectList, deckList, jobs] = await Promise.all([
+        const [subjectList, deckList, jobs, materialList] = await Promise.all([
           listSubjects(),
           listDecks(),
           listJobsWithDrafts().catch(() => [] as JobListItem[]),
+          guest
+            ? Promise.resolve([] as MaterialListItem[])
+            : listMaterials().catch(() => [] as MaterialListItem[]),
         ]);
         if (cancelled) return;
         setSubjects(subjectList);
         setDecks(deckList);
         setDraftJobs(jobs);
+        setMaterials(materialList);
         setReady(true);
         endLoad();
         try {
@@ -138,7 +158,7 @@ export default function LibraryPage() {
     return () => {
       cancelled = true;
     };
-  }, [endLoad]);
+  }, [endLoad, guest]);
 
   function openCreateSubject() {
     setDialogError(null);
@@ -424,6 +444,32 @@ export default function LibraryPage() {
             </Paper>
           ) : null}
 
+          {!guest ? (
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 2.5,
+                bgcolor: "background.paper",
+                borderColor: "divider",
+              }}
+            >
+              <Typography
+                variant="subtitle1"
+                component="h2"
+                sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+              >
+                Materials
+              </Typography>
+              <MaterialsList
+                materials={materials}
+                showDeckTitle
+                onChanged={() => {
+                  void Promise.all([refreshMaterials(), refreshDraftJobs()]);
+                }}
+              />
+            </Paper>
+          ) : null}
+
           <Paper
             variant="outlined"
             sx={{
@@ -443,6 +489,7 @@ export default function LibraryPage() {
               onChanged={async () => {
                 await syncStepperFromJourney();
                 await refreshDraftJobs();
+                await refreshMaterials();
                 await refreshSubjects();
                 await refreshDecks();
               }}
