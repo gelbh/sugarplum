@@ -432,6 +432,8 @@ export type GenerationJobProgress = {
   total: number;
   percent: number;
   label: string;
+  /** ISO when pipeline work first started (durable ETA clock). */
+  started_at?: string;
   tokens_used?: number;
   tokens_prompt?: number;
   tokens_completion?: number;

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   etaMs,
+  calmDisplayEtaMs,
+  resolveJobStartedAtMs,
   projectTokensFromPercent,
   projectCardsFromPercent,
   projectTokens,
@@ -15,6 +17,133 @@ describe("etaMs", () => {
   it("extrapolates remaining time", () => {
     // 20% in 10s → 40s remaining
     expect(etaMs(10_000, 20)).toBe(40_000);
+  });
+});
+
+describe("calmDisplayEtaMs", () => {
+  it("returns null when percent < 5", () => {
+    expect(
+      calmDisplayEtaMs({
+        elapsedMs: 10_000,
+        percent: 4.9,
+        previous: null,
+        nowMs: 1_000,
+      }),
+    ).toEqual({ etaMs: null, sample: null });
+  });
+
+  it("first sample uses raw etaMs", () => {
+    const result = calmDisplayEtaMs({
+      elapsedMs: 10_000,
+      percent: 20,
+      previous: null,
+      nowMs: 10_000,
+    });
+    expect(result.etaMs).toBe(40_000);
+    expect(result.sample).toEqual({
+      percent: 20,
+      displayEtaMs: 40_000,
+      atMs: 10_000,
+    });
+  });
+
+  it("flat percent countdowns instead of growing with elapsed", () => {
+    const first = calmDisplayEtaMs({
+      elapsedMs: 10_000,
+      percent: 25,
+      previous: null,
+      nowMs: 10_000,
+    });
+    expect(first.etaMs).toBe(30_000);
+    const grownRaw = etaMs(15_000, 25);
+    expect(grownRaw).toBe(45_000);
+    const held = calmDisplayEtaMs({
+      elapsedMs: 15_000,
+      percent: 25,
+      previous: first.sample,
+      nowMs: 15_000,
+    });
+    expect(held.etaMs).toBe(25_000);
+    expect(held.etaMs!).toBeLessThan(grownRaw!);
+    expect(held.sample).toEqual(first.sample);
+  });
+
+  it("returns null when flat countdown hits zero but keeps anchor", () => {
+    const first = calmDisplayEtaMs({
+      elapsedMs: 10_000,
+      percent: 50,
+      previous: null,
+      nowMs: 10_000,
+    });
+    expect(first.etaMs).toBe(10_000);
+    const stalled = calmDisplayEtaMs({
+      elapsedMs: 25_000,
+      percent: 50,
+      previous: first.sample,
+      nowMs: 25_000,
+    });
+    expect(stalled.etaMs).toBeNull();
+    expect(stalled.sample).toEqual(first.sample);
+  });
+
+  it("recomputes raw when percent increases", () => {
+    const first = calmDisplayEtaMs({
+      elapsedMs: 10_000,
+      percent: 20,
+      previous: null,
+      nowMs: 10_000,
+    });
+    const next = calmDisplayEtaMs({
+      elapsedMs: 12_000,
+      percent: 30,
+      previous: first.sample,
+      nowMs: 12_000,
+    });
+    expect(next.etaMs).toBe(etaMs(12_000, 30));
+    expect(next.sample?.percent).toBe(30);
+  });
+
+  it("recomputes raw when percent decreases", () => {
+    const first = calmDisplayEtaMs({
+      elapsedMs: 10_000,
+      percent: 40,
+      previous: null,
+      nowMs: 10_000,
+    });
+    const next = calmDisplayEtaMs({
+      elapsedMs: 12_000,
+      percent: 20,
+      previous: first.sample,
+      nowMs: 12_000,
+    });
+    expect(next.etaMs).toBe(etaMs(12_000, 20));
+    expect(next.sample?.percent).toBe(20);
+  });
+});
+
+describe("resolveJobStartedAtMs", () => {
+  it("prefers started_at over events", () => {
+    expect(
+      resolveJobStartedAtMs({
+        startedAt: "2026-10-29T10:00:00.000Z",
+        events: [{ at: "2026-10-29T10:05:00.000Z" }],
+      }),
+    ).toBe(Date.parse("2026-10-29T10:00:00.000Z"));
+  });
+
+  it("falls back to earliest event and ignores created_at queue time", () => {
+    expect(
+      resolveJobStartedAtMs({
+        events: [
+          { at: "2026-10-29T10:05:00.000Z" },
+          { at: "2026-10-29T10:01:00.000Z" },
+        ],
+      }),
+    ).toBe(Date.parse("2026-10-29T10:01:00.000Z"));
+  });
+
+  it("returns null when nothing parses", () => {
+    expect(resolveJobStartedAtMs({})).toBeNull();
   });
 });
 
