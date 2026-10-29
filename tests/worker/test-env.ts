@@ -173,6 +173,8 @@ export type TestEnv = Env & {
 export function createTestEnv(opts?: {
   secretsWrapKey?: string | null;
   adminEmails?: string;
+  /** When false, omit EXPORT_QUEUE binding (503 path). Default true. */
+  exportQueue?: boolean;
 }): TestEnv {
   const users = new Map<string, UserRow>();
   const subjects = new Map<string, SubjectRow>();
@@ -966,6 +968,16 @@ export function createTestEnv(opts?: {
           return { results: rows as T[] };
         }
         if (
+          normalized.includes("FROM export_jobs WHERE user_id =") &&
+          normalized.includes("expires_at <=")
+        ) {
+          const [userId, cutoff] = bound as [string, string];
+          const rows = [...exportJobs.values()]
+            .filter((row) => row.user_id === userId && row.expires_at <= cutoff)
+            .map((row) => ({ id: row.id, r2_key: row.r2_key }));
+          return { results: rows as T[] };
+        }
+        if (
           normalized.includes("FROM cards") &&
           normalized.includes("WHERE deck_id =") &&
           normalized.includes("AND status =") &&
@@ -1199,39 +1211,87 @@ export function createTestEnv(opts?: {
       },
       async run(): Promise<D1Result> {
         if (normalized.startsWith("INSERT INTO export_jobs")) {
-          const [
-            id,
-            user_id,
-            status,
-            request_json,
-            r2_key,
-            warning_json,
-            created_at,
-            updated_at,
-            expires_at,
-          ] = bound as [
-            string,
-            string,
-            string,
-            string,
-            string | null,
-            string | null,
-            string,
-            string,
-            string,
-          ];
-          exportJobs.set(id, {
-            id,
-            user_id,
-            status,
-            request_json,
-            r2_key,
-            error: null,
-            warning_json,
-            created_at,
-            updated_at,
-            expires_at,
-          });
+          // Supports both legacy (error NULL in SQL) and bind-with-error shapes.
+          const hasErrorBind = !normalized.includes(", NULL,");
+          if (hasErrorBind) {
+            const [
+              id,
+              user_id,
+              status,
+              request_json,
+              r2_key,
+              error,
+              warning_json,
+              created_at,
+              updated_at,
+              expires_at,
+            ] = bound as [
+              string,
+              string,
+              string,
+              string,
+              string | null,
+              string | null,
+              string | null,
+              string,
+              string,
+              string,
+            ];
+            exportJobs.set(id, {
+              id,
+              user_id,
+              status,
+              request_json,
+              r2_key,
+              error,
+              warning_json,
+              created_at,
+              updated_at,
+              expires_at,
+            });
+          } else {
+            const [
+              id,
+              user_id,
+              status,
+              request_json,
+              r2_key,
+              warning_json,
+              created_at,
+              updated_at,
+              expires_at,
+            ] = bound as [
+              string,
+              string,
+              string,
+              string,
+              string | null,
+              string | null,
+              string,
+              string,
+              string,
+            ];
+            exportJobs.set(id, {
+              id,
+              user_id,
+              status,
+              request_json,
+              r2_key,
+              error: null,
+              warning_json,
+              created_at,
+              updated_at,
+              expires_at,
+            });
+          }
+        } else if (
+          normalized.startsWith(
+            "DELETE FROM export_jobs WHERE id = ? AND user_id = ?",
+          )
+        ) {
+          const [id, userId] = bound as [string, string];
+          const row = exportJobs.get(id);
+          if (row && row.user_id === userId) exportJobs.delete(id);
         } else if (
           normalized.startsWith(
             "UPDATE export_jobs SET status = ?, error = ?, warning_json = ?",
@@ -2345,11 +2405,15 @@ export function createTestEnv(opts?: {
         queueMessages.push(body);
       },
     } as unknown as Queue,
-    EXPORT_QUEUE: {
-      send: async (body: unknown) => {
-        exportQueueMessages.push(body);
-      },
-    } as unknown as Queue,
+    ...(opts?.exportQueue === false
+      ? {}
+      : {
+          EXPORT_QUEUE: {
+            send: async (body: unknown) => {
+              exportQueueMessages.push(body);
+            },
+          } as unknown as Queue,
+        }),
     APP_URL: "http://localhost",
     ASSETS: {
       fetch: async () =>

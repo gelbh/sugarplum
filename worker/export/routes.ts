@@ -3,13 +3,17 @@ import { HTTPException } from "hono/http-exception";
 import { getDb } from "../db/client";
 import type { Env } from "../env";
 import { requireUser, type AuthVariables } from "../auth/session";
+import { enqueueExport } from "./enqueue";
+import { runExportJob } from "./runExportJob";
+import {
+  estimateExportWorkload,
+  shouldEnqueueExport,
+} from "./threshold";
 import {
   CreateExportBodySchema,
   EMPTY_EXPORT_WARNINGS,
   parseExportWarningsJson,
 } from "./types";
-import { buildApkg } from "./buildApkg";
-import { loadExportCards } from "./loadDeckCards";
 import { resolveExportDeckIds } from "./resolveExportDecks";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
@@ -44,6 +48,7 @@ function responseForJob(row: ExportRow) {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     expiresAt: row.expires_at,
+    error: row.error,
   };
 }
 
@@ -62,6 +67,69 @@ async function ownedJob(
   return row;
 }
 
+/** Lazy TTL: drop this user's expired export_jobs rows and R2 objects. */
+export async function purgeExpiredExports(
+  env: Env,
+  userId: string,
+): Promise<void> {
+  const db = getDb(env);
+  const now = new Date().toISOString();
+  const { results } = await db
+    .prepare(
+      "SELECT id, r2_key FROM export_jobs WHERE user_id = ? AND expires_at <= ?",
+    )
+    .bind(userId, now)
+    .all<{ id: string; r2_key: string | null }>();
+  for (const row of results ?? []) {
+    if (row.r2_key) {
+      try {
+        await env.MATERIALS.delete(row.r2_key);
+      } catch {
+        /* best-effort */
+      }
+    }
+    await db
+      .prepare("DELETE FROM export_jobs WHERE id = ? AND user_id = ?")
+      .bind(row.id, userId)
+      .run();
+  }
+}
+
+async function insertJob(
+  db: D1Database,
+  args: {
+    id: string;
+    userId: string;
+    status: "queued" | "running" | "failed";
+    requestJson: string;
+    r2Key: string;
+    error?: string | null;
+    createdAt: string;
+    expiresAt: string;
+  },
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO export_jobs
+       (id, user_id, status, request_json, r2_key, error, warning_json,
+        created_at, updated_at, expires_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(
+      args.id,
+      args.userId,
+      args.status,
+      args.requestJson,
+      args.r2Key,
+      args.error ?? null,
+      JSON.stringify(EMPTY_EXPORT_WARNINGS),
+      args.createdAt,
+      args.createdAt,
+      args.expiresAt,
+    )
+    .run();
+}
+
 exportRoutes.post("/", async (c) => {
   const userId = await requireUser(c);
   let body: unknown;
@@ -77,117 +145,106 @@ exportRoutes.post("/", async (c) => {
     });
   }
 
+  await purgeExpiredExports(c.env, userId);
+
   const id = newId();
   const now = new Date();
   const createdAt = now.toISOString();
   const expiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString();
   const r2Key = `exports/${userId}/${id}.apkg`;
+  const requestJson = JSON.stringify(parsed.data);
   const db = getDb(c.env);
-  await db
-    .prepare(
-      `INSERT INTO export_jobs
-       (id, user_id, status, request_json, r2_key, error, warning_json,
-        created_at, updated_at, expires_at)
-       VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?, ?)`,
-    )
-    .bind(
+
+  const deckIds = await resolveExportDeckIds(c.env, userId, parsed.data);
+  if (deckIds.length === 0) {
+    const emptyMessage = "No decks to export";
+    await insertJob(db, {
       id,
       userId,
-      "running",
-      JSON.stringify(parsed.data),
+      status: "failed",
+      requestJson,
       r2Key,
-      JSON.stringify(EMPTY_EXPORT_WARNINGS),
-      createdAt,
+      error: emptyMessage,
       createdAt,
       expiresAt,
-    )
-    .run();
+    });
+    return c.json(
+      { message: emptyMessage, warnings: EMPTY_EXPORT_WARNINGS },
+      400,
+    );
+  }
 
-  try {
-    const deckIds = await resolveExportDeckIds(c.env, userId, parsed.data);
-    if (deckIds.length === 0) {
-      const emptyMessage = "No decks to export";
-      await db
-        .prepare(
-          "UPDATE export_jobs SET status = ?, error = ?, warning_json = ?, updated_at = ? WHERE id = ? AND user_id = ?",
-        )
-        .bind(
-          "failed",
-          emptyMessage,
-          JSON.stringify(EMPTY_EXPORT_WARNINGS),
-          new Date().toISOString(),
-          id,
-          userId,
-        )
-        .run();
-      return c.json(
-        { message: emptyMessage, warnings: EMPTY_EXPORT_WARNINGS },
-        400,
-      );
-    }
-
-    const loaded = await loadExportCards(c.env, userId, deckIds);
-    if (loaded.entries.length === 0) {
-      const emptyMessage =
-        loaded.warnings.skippedCards > 0
-          ? `No exportable cards (${loaded.warnings.skippedCards} skipped)`
-          : "No accepted cards to export";
-      await db
-        .prepare(
-          "UPDATE export_jobs SET status = ?, error = ?, warning_json = ?, updated_at = ? WHERE id = ? AND user_id = ?",
-        )
-        .bind(
-          "failed",
-          emptyMessage,
-          JSON.stringify(loaded.warnings),
-          new Date().toISOString(),
-          id,
-          userId,
-        )
-        .run();
-      return c.json({ message: emptyMessage, warnings: loaded.warnings }, 400);
-    }
-    const bytes = await buildApkg({ entries: loaded.entries });
-    await c.env.MATERIALS.put(r2Key, bytes);
-    const updatedAt = new Date().toISOString();
-    await db
-      .prepare(
-        "UPDATE export_jobs SET status = ?, r2_key = ?, warning_json = ?, updated_at = ? WHERE id = ? AND user_id = ?",
-      )
-      .bind(
-        "ready",
-        r2Key,
-        JSON.stringify(loaded.warnings),
-        updatedAt,
+  const workload = await estimateExportWorkload(c.env, userId, deckIds);
+  if (shouldEnqueueExport(workload)) {
+    if (!c.env.EXPORT_QUEUE) {
+      const message = "Export queue is not configured";
+      await insertJob(db, {
         id,
         userId,
-      )
-      .run();
+        status: "failed",
+        requestJson,
+        r2Key,
+        error: message,
+        createdAt,
+        expiresAt,
+      });
+      throw new HTTPException(503, { message });
+    }
+
+    await insertJob(db, {
+      id,
+      userId,
+      status: "queued",
+      requestJson,
+      r2Key,
+      createdAt,
+      expiresAt,
+    });
+    await enqueueExport(c.env, { exportId: id });
+    return c.json(
+      {
+        id,
+        status: "queued",
+        warnings: EMPTY_EXPORT_WARNINGS,
+        downloadPath: null,
+      },
+      202,
+    );
+  }
+
+  await insertJob(db, {
+    id,
+    userId,
+    status: "running",
+    requestJson,
+    r2Key,
+    createdAt,
+    expiresAt,
+  });
+
+  const result = await runExportJob(c.env, id);
+  if (result.ok) {
     return c.json(
       {
         id,
         status: "ready",
-        warnings: loaded.warnings,
+        warnings: result.warnings,
         downloadPath: `/api/exports/${id}/download`,
       },
       201,
     );
-  } catch (error) {
-    await db
-      .prepare(
-        "UPDATE export_jobs SET status = ?, error = ?, updated_at = ? WHERE id = ? AND user_id = ?",
-      )
-      .bind(
-        "failed",
-        error instanceof Error ? error.message : "Export failed",
-        new Date().toISOString(),
-        id,
-        userId,
-      )
-      .run();
-    if (error instanceof HTTPException) throw error;
-    throw new HTTPException(500, { message: "Export failed" });
   }
+
+  if (result.httpStatus === 400) {
+    return c.json(
+      { message: result.error, warnings: result.warnings },
+      400,
+    );
+  }
+  if (result.httpStatus === 404) {
+    throw new HTTPException(404, { message: result.error });
+  }
+  throw new HTTPException(500, { message: "Export failed" });
 });
 
 exportRoutes.get("/:id/download", async (c) => {
@@ -211,6 +268,7 @@ exportRoutes.get("/:id/download", async (c) => {
 
 exportRoutes.get("/:id", async (c) => {
   const userId = await requireUser(c);
+  await purgeExpiredExports(c.env, userId);
   const row = await ownedJob(getDb(c.env), c.req.param("id"), userId);
   return c.json(responseForJob(row));
 });
