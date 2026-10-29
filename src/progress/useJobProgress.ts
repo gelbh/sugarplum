@@ -46,6 +46,7 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
   const [estimates, setEstimates] = useState<Estimates | null>(null);
   const settledRef = useRef(false);
   const calmEtaRef = useRef<CalmEtaSample | null>(null);
+  const calmStartedAtRef = useRef<number | null>(null);
 
   useEffect(() => {
     settledRef.current = false;
@@ -55,6 +56,7 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
     setFreeQuota(null);
     setEstimates(null);
     calmEtaRef.current = null;
+    calmStartedAtRef.current = null;
 
     if (!jobId) {
       setPending(false);
@@ -96,6 +98,7 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
         // Queued: builder owns the snapshot; no progress enrichment / ETA.
         if (job.status === "queued") {
           calmEtaRef.current = null;
+          calmStartedAtRef.current = null;
           setFreeQuota(job.free_quota ?? null);
           setEstimates({
             etaMs: null,
@@ -158,6 +161,10 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
             events: job.progress?.events,
           });
           if (startedAtMs != null) ext.startedAt = startedAtMs;
+          if (startedAtMs !== calmStartedAtRef.current) {
+            calmEtaRef.current = null;
+            calmStartedAtRef.current = startedAtMs;
+          }
 
           setFreeQuota(job.free_quota ?? null);
           if (!settledRef.current) upsert(ext);
