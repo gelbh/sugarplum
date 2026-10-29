@@ -163,6 +163,7 @@ export type AdminUserListItem = {
   email: string;
   created_at: string;
   google_linked: boolean;
+  disabled_at: string | null;
   deckCount: number;
   cardCount: number;
   jobCount: number;
@@ -187,6 +188,7 @@ export type AdminUserDetail = {
   email: string;
   created_at: string;
   google_linked: boolean;
+  disabled_at: string | null;
   counts: { decks: number; cards: number; jobs: number; materials: number };
   recentJobs: { id: string; status: string; created_at: string }[];
   recentStudyDays: { day: string; intros_used: number }[];
@@ -194,6 +196,60 @@ export type AdminUserDetail = {
 
 export function adminGetUser(id: string) {
   return api<AdminUserDetail>(`/api/admin/users/${encodeURIComponent(id)}`);
+}
+
+export function adminDisableUser(id: string) {
+  return api<{ id: string; disabled_at: string }>(
+    `/api/admin/users/${encodeURIComponent(id)}/disable`,
+    { method: "POST" },
+  );
+}
+
+export function adminEnableUser(id: string) {
+  return api<{ id: string; disabled_at: null }>(
+    `/api/admin/users/${encodeURIComponent(id)}/enable`,
+    { method: "POST" },
+  );
+}
+
+export function adminWipeUser(id: string, confirmEmail: string) {
+  return api<{ ok: true }>(
+    `/api/admin/users/${encodeURIComponent(id)}/wipe`,
+    { method: "POST", json: { confirmEmail } },
+  );
+}
+
+export async function adminExportUser(id: string) {
+  const res = await fetch(
+    `/api/admin/users/${encodeURIComponent(id)}/export`,
+    { credentials: "include" },
+  );
+  if (!res.ok) {
+    let message = res.statusText || "Export failed";
+    try {
+      const data = (await res.json()) as ApiErrorBody;
+      message = data.message ?? data.error ?? message;
+    } catch {
+      /* ignore non-JSON error bodies */
+    }
+    throw new ApiError(res.status, message);
+  }
+  const blob = await res.blob();
+  const filename =
+    filenameFromContentDisposition(res.headers.get("content-disposition")) ??
+    `user-${id}-export.json`;
+  const url = URL.createObjectURL(blob);
+  try {
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.rel = "noopener";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  }
 }
 
 export type Subject = {
