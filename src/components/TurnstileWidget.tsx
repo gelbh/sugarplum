@@ -73,15 +73,18 @@ type Props = {
 export default function TurnstileWidget({ action, onToken, widgetRef }: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef<string | null>(null);
+  const onTokenRef = useRef(onToken);
+  const widgetHandleRef = useRef(widgetRef);
   const [error, setError] = useState<string | null>(null);
+  onTokenRef.current = onToken;
+  widgetHandleRef.current = widgetRef;
 
   useEffect(() => {
     let cancelled = false;
-    let api: TurnstileApi | null = null;
 
     async function mount() {
       setError(null);
-      onToken(null);
+      onTokenRef.current(null);
       try {
         const cfgRes = await fetch("/api/auth/turnstile");
         if (!cfgRes.ok) {
@@ -91,7 +94,7 @@ export default function TurnstileWidget({ action, onToken, widgetRef }: Props) {
         const siteKey = cfg.siteKey?.trim();
         if (!siteKey) throw new Error("Turnstile not available");
 
-        api = await loadTurnstileScript();
+        const api = await loadTurnstileScript();
         if (cancelled || !hostRef.current) return;
 
         if (widgetIdRef.current) {
@@ -104,31 +107,32 @@ export default function TurnstileWidget({ action, onToken, widgetRef }: Props) {
           sitekey: siteKey,
           action,
           callback: (token) => {
-            if (!cancelled) onToken(token);
+            if (!cancelled) onTokenRef.current(token);
           },
           "expired-callback": () => {
-            if (!cancelled) onToken(null);
+            if (!cancelled) onTokenRef.current(null);
           },
           "error-callback": () => {
-            if (!cancelled) onToken(null);
+            if (!cancelled) onTokenRef.current(null);
           },
         });
         widgetIdRef.current = id;
 
-        if (widgetRef) {
-          widgetRef.current = {
+        const handleRef = widgetHandleRef.current;
+        if (handleRef) {
+          handleRef.current = {
             reset: () => {
               if (widgetIdRef.current && window.turnstile) {
                 window.turnstile.reset(widgetIdRef.current);
               }
-              onToken(null);
+              onTokenRef.current(null);
             },
           };
         }
       } catch {
         if (!cancelled) {
           setError("Could not load verification. Refresh and try again.");
-          onToken(null);
+          onTokenRef.current(null);
         }
       }
     }
@@ -137,14 +141,13 @@ export default function TurnstileWidget({ action, onToken, widgetRef }: Props) {
 
     return () => {
       cancelled = true;
-      if (widgetRef) widgetRef.current = null;
+      const handleRef = widgetHandleRef.current;
+      if (handleRef) handleRef.current = null;
       if (widgetIdRef.current && window.turnstile) {
         window.turnstile.remove(widgetIdRef.current);
         widgetIdRef.current = null;
       }
     };
-    // Remount when action changes; onToken/widgetRef are stable enough for pages.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount deps
   }, [action]);
 
   return (
