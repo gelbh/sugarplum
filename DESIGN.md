@@ -103,6 +103,7 @@ components:
     rounded: "{rounded.sm}"
     padding: "8px 4px"
     height: "56px"
+    note: "Spectrum fills via --sp-grade-* (brand.css)"
   card-playing:
     backgroundColor: "{colors.ivory}"
     textColor: "{colors.stage}"
@@ -201,6 +202,8 @@ Fruit plum and evening stage ink carry the brand; sugar dust and ivory are the t
 
 Operate and Study share MUI `Container` `maxWidth="sm"` as the reading column. Today vertically centers on desktop (`minHeight: calc(100vh - 32px)` with flex center). Study zen fills the viewport with tighter vertical padding (`py` 16–24px) and stacks card then grade rail. Card column maxes at 360px. Shell: permanent drawer 220px from `md` up; mobile sticky top bar (48px + safe-top) and bottom dock (56px + safe-bottom inset inside the bar). MUI spacing unit 8px; common rhythm 8 / 16 / 24.
 
+Phone zen Study: session chrome (header, remaining, card, grade rail) fits `100dvh` without page scroll; long card copy scrolls inside the face only.
+
 ### Named Rules
 **The Chrome Strip Rule.** Zen Study hides AppShell drawer, sticky top, and bottom dock (`hideChrome`). Leaving zen restores operate chrome.
 
@@ -246,7 +249,7 @@ Gentle MUI radii: 4px on nav items and grade ticks, 6px on the large Start study
 Centered tabular count + “cards due” caption + single plum Start study when due > 0. No stage rail, no card chrome on this surface.
 
 ### Signature: Grade Rail
-Four equal columns (Again / Hard / Good / Easy) with swipe-direction icons matching gestures, keys 1–4 as chips on desktop, swipe hints when shown. Inherits stage ivory in zen; no traffic-light grade colors.
+Four equal columns (Again / Hard / Good / Easy) with swipe-direction icons matching gestures, keys 1–4 as chips on desktop, swipe hints when shown. Soft brand spectrum washes (Again rose, Hard amber, Good plum, Easy sage). Do **not** use classic Anki red/orange/green/blue traffic lights.
 
 ## Do's and Don'ts
 
@@ -263,3 +266,4 @@ Four equal columns (Again / Hard / Good / Easy) with swipe-direction icons match
 - **Don't** break playing-card aspect `5 / 7` or the 360px face cap for ordinary study prompts.
 - **Don't** add marketing kickers, eyebrow stacks, or purple gradient hero treatments on operate or zen.
 - **Don't** thicken the brand skin into a parallel design system beside MUI.
+- **Don't** use Anki-style traffic-light grade colors; use the soft brand spectrum tokens.
