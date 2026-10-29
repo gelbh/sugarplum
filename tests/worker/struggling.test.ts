@@ -305,18 +305,19 @@ describe("GET /api/study/struggling", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       updated_at: "2026-01-01T00:00:00.000Z",
     });
+    // Never-reviewed: R unavailable → weakness 0 so it stays off the list.
     env.seedSchedule({
       card_id: "easy-card",
       due: "2026-11-01T00:00:00.000Z",
-      stability: 1,
-      difficulty: 3,
+      stability: 0,
+      difficulty: 0,
       elapsed_days: 0,
-      scheduled_days: 1,
+      scheduled_days: 0,
       learning_steps: 0,
-      reps: 2,
+      reps: 0,
       lapses: 0,
-      state: 2,
-      last_review: "2026-10-20T00:00:00.000Z",
+      state: 0,
+      last_review: null,
     });
     env.seedReviewLog({
       id: "rl-1",
@@ -343,8 +344,84 @@ describe("GET /api/study/struggling", () => {
       env,
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { id: string; again_14d: number }[];
+    const body = (await res.json()) as {
+      id: string;
+      again_14d: number;
+      hard_14d: number;
+    }[];
     expect(body.map((r) => r.id)).toEqual(["again-card"]);
     expect(body[0]!.again_14d).toBe(2);
+    expect(body[0]!.hard_14d).toBe(0);
+  });
+
+  it("includes a card after a single Again (weakness > 0)", async () => {
+    const env = createTestEnv();
+    env.seedUser({
+      id: "user-a",
+      email: "a@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-a",
+      user_id: "user-a",
+      title: "Mine",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSession("sess-a", "user-a");
+    env.seedCard({
+      id: "once-again",
+      deck_id: "deck-a",
+      job_id: null,
+      type: "qa",
+      front_json: JSON.stringify("Once?"),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "ex" }),
+      status: "accepted",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSchedule({
+      card_id: "once-again",
+      due: "2026-11-01T00:00:00.000Z",
+      stability: 1,
+      difficulty: 5,
+      elapsed_days: 0,
+      scheduled_days: 1,
+      learning_steps: 0,
+      reps: 1,
+      lapses: 0,
+      state: 2,
+      last_review: "2026-10-26T00:00:00.000Z",
+    });
+    env.seedReviewLog({
+      id: "rl-once",
+      card_id: "once-again",
+      rating: 1,
+      scheduled_days: 1,
+      elapsed_days: 0,
+      reviewed_at: "2026-10-26T00:00:00.000Z",
+      state_json: "{}",
+    });
+
+    const res = await app.request(
+      "/api/study/struggling",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      id: string;
+      again_14d: number;
+      hard_14d: number;
+      retrievability: number | null;
+    }[];
+    expect(body.map((r) => r.id)).toEqual(["once-again"]);
+    expect(body[0]!.again_14d).toBe(1);
+    expect(body[0]!.hard_14d).toBe(0);
+    expect(body[0]!).toHaveProperty("retrievability");
   });
 });

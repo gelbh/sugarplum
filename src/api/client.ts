@@ -802,28 +802,78 @@ export async function restoreCard(cardId: string) {
   return card;
 }
 
-export type ListDueOpts = { deckId?: string; subjectId?: string };
+export type ListDueOpts = {
+  deckId?: string;
+  subjectId?: string;
+  /** Minutes from local to UTC (`Date#getTimezoneOffset`). */
+  tzOffsetMinutes?: number;
+  /** Client local calendar day `YYYY-MM-DD`. */
+  localDay?: string;
+  /** Extra intro slices for Study more (nonneg int). */
+  introBonus?: number;
+};
 
-export function listDueCards(opts?: ListDueOpts) {
-  if (isGuest()) return Promise.resolve(guestListDueCards(opts));
-  const q = opts?.deckId
-    ? `?deckId=${encodeURIComponent(opts.deckId)}`
-    : opts?.subjectId
-      ? `?subjectId=${encodeURIComponent(opts.subjectId)}`
-      : "";
-  return api<CardDraftView[]>(`/api/study/due${q}`);
+export type StudyQueueMeta = {
+  introUsed: number;
+  introBudget: number;
+  reviewUsed: number;
+  reviewBudget: number;
+  heldIntroCount: number;
+  deferredCount: number;
+};
+
+export type ListDueResult = {
+  cards: CardDraftView[];
+  meta: StudyQueueMeta;
+};
+
+const GUEST_DUE_META: StudyQueueMeta = {
+  introUsed: 0,
+  introBudget: 20,
+  reviewUsed: 0,
+  reviewBudget: 200,
+  heldIntroCount: 0,
+  deferredCount: 0,
+};
+
+function buildDueQuery(opts?: ListDueOpts): string {
+  const params = new URLSearchParams();
+  if (opts?.deckId) params.set("deckId", opts.deckId);
+  else if (opts?.subjectId) params.set("subjectId", opts.subjectId);
+  const tz =
+    opts?.tzOffsetMinutes ??
+    (typeof Date !== "undefined" ? new Date().getTimezoneOffset() : 0);
+  params.set("tzOffsetMinutes", String(tz));
+  if (opts?.localDay) params.set("localDay", opts.localDay);
+  if (opts?.introBonus != null && opts.introBonus > 0) {
+    params.set("introBonus", String(opts.introBonus));
+  }
+  const q = params.toString();
+  return q ? `?${q}` : "";
 }
 
-/** Accepted cards struggling by lapses or recent Again (online-only; guest gets []). */
+export function listDueCards(opts?: ListDueOpts): Promise<ListDueResult> {
+  if (isGuest()) {
+    return Promise.resolve({
+      cards: guestListDueCards(opts),
+      meta: { ...GUEST_DUE_META },
+    });
+  }
+  return api<ListDueResult>(`/api/study/due${buildDueQuery(opts)}`);
+}
+
+/** Accepted cards ranked by weakness (online-only; guest gets []). */
 export type StrugglingRow = {
   id: string;
   deck_id: string;
   front_preview: string;
   lapses: number;
   again_14d: number;
+  hard_14d: number;
   difficulty: number;
   due: string;
   is_due: boolean;
+  retrievability?: number | null;
 };
 
 export function listStrugglingCards() {

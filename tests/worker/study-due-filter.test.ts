@@ -78,6 +78,18 @@ function seedScopedFixture(env: ReturnType<typeof createTestEnv>) {
   seedAcceptedDue(env, "card-2", "deck-2");
 }
 
+type DueBody = {
+  cards: { id: string; deck_id?: string }[];
+  meta: {
+    introUsed: number;
+    introBudget: number;
+    heldIntroCount: number;
+    reviewUsed: number;
+    reviewBudget: number;
+    deferredCount: number;
+  };
+};
+
 describe("GET /api/study/due filter", () => {
   it("filters to one deck when deckId is set", async () => {
     const env = createTestEnv();
@@ -90,9 +102,9 @@ describe("GET /api/study/due filter", () => {
     );
 
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { id: string; deck_id: string }[];
-    expect(body.map((c) => c.id).sort()).toEqual(["card-1"]);
-    expect(body[0]!.deck_id).toBe("deck-1");
+    const body = (await res.json()) as DueBody;
+    expect(body.cards.map((c) => c.id).sort()).toEqual(["card-1"]);
+    expect(body.cards[0]!.deck_id).toBe("deck-1");
   });
 
   it("returns all due cards in a subject when subjectId is set", async () => {
@@ -121,8 +133,8 @@ describe("GET /api/study/due filter", () => {
     );
 
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { id: string }[];
-    expect(body.map((c) => c.id).sort()).toEqual(["card-1", "card-2"]);
+    const body = (await res.json()) as DueBody;
+    expect(body.cards.map((c) => c.id).sort()).toEqual(["card-1", "card-2"]);
   });
 
   it("returns 400 when both deckId and subjectId are set", async () => {
@@ -238,11 +250,66 @@ describe("GET /api/study/due filter", () => {
     );
 
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { id: string }[];
-    expect(body.map((c) => c.id).sort()).toEqual([
+    const body = (await res.json()) as DueBody;
+    expect(body.cards.map((c) => c.id).sort()).toEqual([
       "card-1",
       "card-2",
       "card-3",
     ]);
+  });
+
+  it("caps new cards at intro budget and reports heldIntroCount", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedDeck({
+      id: "deck-many",
+      user_id: "user-a",
+      title: "Many",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    for (let i = 0; i < 50; i++) {
+      seedAcceptedDue(env, `new-${String(i).padStart(2, "0")}`, "deck-many");
+    }
+
+    const res = await app.request(
+      "/api/study/due?localDay=2026-10-28",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as DueBody;
+    expect(body.cards).toHaveLength(20);
+    expect(body.meta.introBudget).toBe(20);
+    expect(body.meta.introUsed).toBe(20);
+    expect(body.meta.heldIntroCount).toBe(30);
+  });
+
+  it("raises intro slice with introBonus for Study more", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedDeck({
+      id: "deck-many",
+      user_id: "user-a",
+      title: "Many",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    for (let i = 0; i < 50; i++) {
+      seedAcceptedDue(env, `new-${String(i).padStart(2, "0")}`, "deck-many");
+    }
+
+    const res = await app.request(
+      "/api/study/due?localDay=2026-10-28&introBonus=1",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as DueBody;
+    expect(body.cards).toHaveLength(40);
+    expect(body.meta.introUsed).toBe(40);
+    expect(body.meta.heldIntroCount).toBe(10);
   });
 });

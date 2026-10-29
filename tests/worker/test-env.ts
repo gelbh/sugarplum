@@ -983,18 +983,40 @@ export function createTestEnv(opts?: {
               if (!schedule || schedule.due > now) return false;
               return true;
             })
-            .map((c) => ({ ...c, due: schedules.get(c.id)!.due }))
+            .map((c) => {
+              const schedule = schedules.get(c.id)!;
+              return {
+                ...c,
+                due: schedule.due,
+                stability: schedule.stability,
+                difficulty: schedule.difficulty,
+                elapsed_days: schedule.elapsed_days,
+                scheduled_days: schedule.scheduled_days,
+                learning_steps: schedule.learning_steps,
+                reps: schedule.reps,
+                lapses: schedule.lapses,
+                state: schedule.state,
+                last_review: schedule.last_review,
+              };
+            })
             .sort((a, b) => a.due.localeCompare(b.due));
           return { results: rows as T[] };
         }
-        // GET /api/study/struggling: accepted + schedule + again_14d; SQL filters survivors
+        // GET /api/study/struggling: accepted + schedule + again_14d + hard_14d
         if (
           normalized.includes("FROM cards c") &&
           normalized.includes("INNER JOIN card_schedules s") &&
           normalized.includes("FROM review_logs rl") &&
           normalized.includes("c.status =")
         ) {
-          const [since, userId, status] = bound as [string, string, string];
+          const since = bound[0] as string;
+          // New query binds since twice (again + hard), then userId, status.
+          // Legacy query bound since, userId, status once.
+          const hasHard =
+            normalized.includes("rating = 2") ||
+            normalized.includes("hard_14d");
+          const userId = (hasHard ? bound[2] : bound[1]) as string;
+          const status = (hasHard ? bound[3] : bound[2]) as string;
           const filterSurvivors =
             normalized.includes("lapses >= 2") ||
             normalized.includes("again_14d >= 2");
@@ -1013,6 +1035,12 @@ export function createTestEnv(opts?: {
                   rl.rating === 1 &&
                   rl.reviewed_at >= since,
               ).length;
+              const hard_14d = reviewLogs.filter(
+                (rl) =>
+                  rl.card_id === c.id &&
+                  rl.rating === 2 &&
+                  rl.reviewed_at >= since,
+              ).length;
               return {
                 id: c.id,
                 deck_id: c.deck_id,
@@ -1021,7 +1049,14 @@ export function createTestEnv(opts?: {
                 difficulty: schedule.difficulty,
                 due: schedule.due,
                 last_review: schedule.last_review,
+                stability: schedule.stability,
+                elapsed_days: schedule.elapsed_days,
+                scheduled_days: schedule.scheduled_days,
+                learning_steps: schedule.learning_steps,
+                reps: schedule.reps,
+                state: schedule.state,
                 again_14d,
+                hard_14d,
               };
             })
             .filter((row) =>
@@ -1871,6 +1906,19 @@ export function createTestEnv(opts?: {
             reviewed_at,
             state_json,
           });
+        } else if (
+          normalized.startsWith("UPDATE card_schedules SET") &&
+          normalized.includes("due =") &&
+          !normalized.includes("stability") &&
+          normalized.includes("WHERE card_id =")
+        ) {
+          const [due, card_id] = bound as [string, string];
+          const existing = schedules.get(card_id);
+          if (!existing) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          schedules.set(card_id, { ...existing, due });
+          return { success: true, meta: { changes: 1 } } as D1Result;
         } else if (
           normalized.startsWith("UPDATE card_schedules SET") &&
           normalized.includes("WHERE card_id =")

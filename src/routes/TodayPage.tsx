@@ -52,7 +52,7 @@ export default function TodayPage() {
 
   const refreshDueFromNetwork = useCallback(async (uid: string) => {
     try {
-      const due = await listDueCards();
+      const { cards: due } = await listDueCards();
       saveDueCache(uid, due);
       warmDueMedia(due);
       setDueCount(due.length);
@@ -92,7 +92,7 @@ export default function TodayPage() {
         await flushOnMount(user.id);
         if (cancelled) return;
         try {
-          const due = await listDueCards();
+          const { cards: due } = await listDueCards();
           if (cancelled) return;
           saveDueCache(user.id, due);
           warmDueMedia(due);

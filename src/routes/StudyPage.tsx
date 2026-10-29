@@ -191,7 +191,7 @@ export default function StudyPage() {
     async (uid: string) => {
       const wanted = cardIdFromSearch(window.location.search);
       try {
-        const due = await listDueCards(scopeOpts);
+        const { cards: due } = await listDueCards(scopeOpts);
         saveDueCache(uid, due, scopeOpts);
         warmDueMedia(due);
         applyDueQueue(due, wanted);
