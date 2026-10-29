@@ -16,6 +16,52 @@ export type JourneyStatus = {
 
 export const journeyRoutes = new Hono<AppEnv>();
 
+export type JourneyGenerationStatus = {
+  openReviewJobId: string | null;
+  pendingGenerationJobId: string | null;
+};
+
+const pendingStatuses = new Set(["queued", "running", "failed"]);
+
+/** Job ids only for shell generation polling (no deck/card counts). */
+journeyRoutes.get("/generation", async (c) => {
+  const userId = await requireUser(c);
+  const db = getDb(c.env);
+
+  const [openJob, pendingJob] = await Promise.all([
+    db
+      .prepare(
+        `SELECT j.id FROM generation_jobs j
+       INNER JOIN materials m ON m.id = j.material_id
+       INNER JOIN decks d ON d.id = m.deck_id
+       WHERE d.user_id = ? AND j.status = 'needs_review'
+         AND EXISTS (SELECT 1 FROM cards c WHERE c.job_id = j.id AND c.status = 'draft')
+       ORDER BY j.created_at DESC LIMIT 1`,
+      )
+      .bind(userId)
+      .first<{ id: string }>(),
+    db
+      .prepare(
+        `SELECT j.id, j.status FROM generation_jobs j
+       INNER JOIN materials m ON m.id = j.material_id
+       INNER JOIN decks d ON d.id = m.deck_id
+       WHERE d.user_id = ?
+       ORDER BY j.created_at DESC LIMIT 1`,
+      )
+      .bind(userId)
+      .first<{ id: string; status: string }>(),
+  ]);
+
+  const res: JourneyGenerationStatus = {
+    openReviewJobId: openJob?.id ?? null,
+    pendingGenerationJobId:
+      pendingJob && pendingStatuses.has(pendingJob.status)
+        ? pendingJob.id
+        : null,
+  };
+  return c.json(res);
+});
+
 /** Summary status for owner: decks, jobs, accepted/due cards. */
 journeyRoutes.get("/", async (c) => {
   const userId = await requireUser(c);
@@ -72,7 +118,6 @@ journeyRoutes.get("/", async (c) => {
         .first<{ count: number }>(),
     ]);
 
-  const pendingStatuses = new Set(["queued", "running", "failed"]);
   const res: JourneyStatus = {
     deckCount: deckRow?.count ?? 0,
     hasGenerationJob: !!existsJob,

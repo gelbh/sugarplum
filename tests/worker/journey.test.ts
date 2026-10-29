@@ -220,3 +220,147 @@ describe("GET /api/journey", () => {
   });
 });
 
+describe("GET /api/journey/generation", () => {
+  it("returns 401 without session", async () => {
+    const env = createTestEnv();
+    const res = await app.request("/api/journey/generation", {}, env);
+    expect(res.status).toBe(401);
+  });
+
+  it("empty user → both nulls with only job id keys", async () => {
+    const env = createTestEnv();
+    env.seedUser({
+      id: "u-gen-empty",
+      email: "empty-gen@example.com",
+      password_hash: "x",
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSession("sess-gen-empty", "u-gen-empty");
+    const res = await app.request(
+      "/api/journey/generation",
+      { headers: { Cookie: `${SESSION_COOKIE}=sess-gen-empty` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(Object.keys(body).sort()).toEqual([
+      "openReviewJobId",
+      "pendingGenerationJobId",
+    ]);
+    expect(body).toEqual({
+      openReviewJobId: null,
+      pendingGenerationJobId: null,
+    });
+  });
+
+  it("needs_review with drafts sets openReviewJobId", async () => {
+    const env = createTestEnv();
+    env.seedUser({
+      id: "u-gen-review",
+      email: "review-gen@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-gen-review",
+      user_id: "u-gen-review",
+      title: "T",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedMaterial({
+      id: "mat-gen-review",
+      deck_id: "deck-gen-review",
+      kind: "text",
+      r2_key: null,
+      filename: null,
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedGenerationJob({
+      id: "job-gen-need",
+      material_id: "mat-gen-review",
+      status: "needs_review",
+      error: null,
+      coverage_json: null,
+      created_at: "2026-01-02T00:00:00.000Z",
+      finished_at: null,
+    });
+    env.seedCard({
+      id: "card-gen-draft",
+      deck_id: "deck-gen-review",
+      job_id: "job-gen-need",
+      type: "qa",
+      front_json: JSON.stringify("Q"),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "draft",
+      created_at: "2026-01-02T00:00:00.000Z",
+      updated_at: "2026-01-02T00:00:00.000Z",
+    });
+    env.seedSession("sess-gen-review", "u-gen-review");
+
+    const res = await app.request(
+      "/api/journey/generation",
+      { headers: { Cookie: `${SESSION_COOKIE}=sess-gen-review` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.openReviewJobId).toBe("job-gen-need");
+    expect(body.pendingGenerationJobId).toBeNull();
+  });
+
+  it("queued job sets pendingGenerationJobId", async () => {
+    const env = createTestEnv();
+    env.seedUser({
+      id: "u-gen-pend",
+      email: "pend-gen@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-gen-p",
+      user_id: "u-gen-pend",
+      title: "T",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedMaterial({
+      id: "mat-gen-p",
+      deck_id: "deck-gen-p",
+      kind: "text",
+      r2_key: null,
+      filename: null,
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedGenerationJob({
+      id: "job-gen-queued",
+      material_id: "mat-gen-p",
+      status: "queued",
+      error: null,
+      coverage_json: null,
+      created_at: "2026-01-02T00:00:00.000Z",
+      finished_at: null,
+    });
+    env.seedSession("sess-gen-p", "u-gen-pend");
+
+    const res = await app.request(
+      "/api/journey/generation",
+      { headers: { Cookie: `${SESSION_COOKIE}=sess-gen-p` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.openReviewJobId).toBeNull();
+    expect(body.pendingGenerationJobId).toBe("job-gen-queued");
+  });
+});
+
