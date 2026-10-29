@@ -14,7 +14,12 @@ import {
 } from "./prompts";
 
 /** User-selectable BYO providers (Settings + Secrets). */
-export const USER_LLM_PROVIDERS = ["openai", "anthropic", "google"] as const;
+export const USER_LLM_PROVIDERS = [
+  "openai",
+  "anthropic",
+  "google",
+  "zai",
+] as const;
 export type UserLlmProvider = (typeof USER_LLM_PROVIDERS)[number];
 
 /** Z.ai Settings text-model allowlist (vision uses ZAI_VISION_MODEL). */
@@ -193,6 +198,8 @@ export function providerRequestUrl(provider: LlmProvider): string {
       const model = "gemini-2.0-flash";
       return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
     }
+    case "zai":
+      return "https://api.z.ai/api/paas/v4/chat/completions";
     case "mock":
       throw new Error("mock provider has no network URL");
     case "workers-ai":
@@ -536,17 +543,23 @@ async function readErrorDetail(res: Response): Promise<string> {
   return detail ? `: ${detail.slice(0, 200)}` : "";
 }
 
-function openAiAdapter(): LlmAdapter {
+/** OpenAI chat-completions HTTP (also Z.ai Standard API). */
+function openAiCompatibleAdapter(opts: {
+  requestUrl: string;
+  textModel: string;
+  visionModel: string;
+}): LlmAdapter {
+  const { requestUrl, textModel, visionModel } = opts;
+
   async function complete({ system, user, apiKey }: CompleteInput) {
-    const url = providerRequestUrl("openai");
-    const res = await fetch(url, {
+    const res = await fetch(requestUrl, {
       method: "POST",
       headers: {
         "content-type": "application/json",
         authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: textModel,
         temperature: 0.3,
         response_format: { type: "json_object" },
         messages: [
@@ -590,15 +603,14 @@ function openAiAdapter(): LlmAdapter {
       }
 
       const imageKey = input.imageKey ?? "material";
-      const url = providerRequestUrl("openai");
-      const res = await fetch(url, {
+      const res = await fetch(requestUrl, {
         method: "POST",
         headers: {
           "content-type": "application/json",
           authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
+          model: visionModel,
           temperature: 0.3,
           response_format: { type: "json_object" },
           messages: [
@@ -633,6 +645,22 @@ function openAiAdapter(): LlmAdapter {
       return parseCardsPayload(content);
     },
   };
+}
+
+function openAiAdapter(): LlmAdapter {
+  return openAiCompatibleAdapter({
+    requestUrl: providerRequestUrl("openai"),
+    textModel: "gpt-4o-mini",
+    visionModel: "gpt-4o-mini",
+  });
+}
+
+function zaiAdapter(textModel: ZaiTextModel): LlmAdapter {
+  return openAiCompatibleAdapter({
+    requestUrl: providerRequestUrl("zai"),
+    textModel,
+    visionModel: ZAI_VISION_MODEL,
+  });
 }
 
 function anthropicAdapter(): LlmAdapter {
@@ -839,11 +867,19 @@ function googleAdapter(): LlmAdapter {
   };
 }
 
+export type CreateLlmAdapterOptions = {
+  /** Z.ai text model; ignored for other providers. */
+  model?: string | null;
+};
+
 /**
  * Resolve BYO / mock adapter. For platform free path use
  * `createWorkersAiAdapter(env)` (needs `env.AI`).
  */
-export function createLlmAdapter(provider: string): LlmAdapter {
+export function createLlmAdapter(
+  provider: string,
+  opts?: CreateLlmAdapterOptions,
+): LlmAdapter {
   const p = parseLlmProvider(provider);
   switch (p) {
     case "mock":
@@ -854,6 +890,8 @@ export function createLlmAdapter(provider: string): LlmAdapter {
       return anthropicAdapter();
     case "google":
       return googleAdapter();
+    case "zai":
+      return zaiAdapter(resolveZaiTextModel(opts?.model));
     case "workers-ai":
       throw new Error(
         'Provider "workers-ai" requires createWorkersAiAdapter(env)',
