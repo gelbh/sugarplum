@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Container from "@mui/material/Container";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -12,10 +18,22 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { adminGetUser, ApiError, type AdminUserDetail } from "../api/client";
+import {
+  adminDisableUser,
+  adminEnableUser,
+  adminExportUser,
+  adminGetUser,
+  adminWipeUser,
+  ApiError,
+  type AdminUserDetail,
+} from "../api/client";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
+
+const RETENTION_NOTE =
+  "No automatic deletion; wipe inactive accounts manually.";
 
 function formatCreated(iso: string): string {
   const d = new Date(iso);
@@ -43,10 +61,21 @@ export default function AdminUserPage({ userId }: Props) {
   const [forbidden, setForbidden] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [actionBusy, setActionBusy] = useState(false);
+  const [wipeOpen, setWipeOpen] = useState(false);
+  const [wipeEmail, setWipeEmail] = useState("");
+  const [wipeBusy, setWipeBusy] = useState(false);
+  const [wipeError, setWipeError] = useState<string | null>(null);
   const { end: endLoad } = useTrackedOp("Loading user…", {
     trackOnMount: true,
   });
+
+  async function refreshDetail() {
+    const data = await adminGetUser(userId);
+    setDetail(data);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -55,6 +84,7 @@ export default function AdminUserPage({ userId }: Props) {
     setForbidden(false);
     setNotFound(false);
     setError(null);
+    setActionError(null);
     (async () => {
       try {
         const data = await adminGetUser(userId);
@@ -91,6 +121,85 @@ export default function AdminUserPage({ userId }: Props) {
     };
   }, [userId, endLoad]);
 
+  async function onToggleDisabled() {
+    if (!detail || actionBusy) return;
+    setActionBusy(true);
+    setActionError(null);
+    try {
+      if (detail.disabled_at == null) {
+        await adminDisableUser(detail.id);
+      } else {
+        await adminEnableUser(detail.id);
+      }
+      await refreshDetail();
+    } catch (err) {
+      const auth = handleAdminAuthError(err);
+      if (auth === "401") return;
+      if (auth === "403") {
+        setForbidden(true);
+        return;
+      }
+      setActionError(
+        err instanceof ApiError ? err.message : "Action failed",
+      );
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
+  async function onExport() {
+    if (!detail || actionBusy) return;
+    setActionBusy(true);
+    setActionError(null);
+    try {
+      await adminExportUser(detail.id);
+    } catch (err) {
+      const auth = handleAdminAuthError(err);
+      if (auth === "401") return;
+      if (auth === "403") {
+        setForbidden(true);
+        return;
+      }
+      setActionError(
+        err instanceof ApiError ? err.message : "Export failed",
+      );
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
+  function openWipe() {
+    setWipeEmail("");
+    setWipeError(null);
+    setWipeOpen(true);
+  }
+
+  async function onWipeConfirm() {
+    if (!detail || wipeBusy) return;
+    setWipeBusy(true);
+    setWipeError(null);
+    try {
+      await adminWipeUser(detail.id, wipeEmail.trim());
+      setWipeOpen(false);
+      navigate("/admin");
+    } catch (err) {
+      const auth = handleAdminAuthError(err);
+      if (auth === "401") return;
+      if (auth === "403") {
+        setWipeOpen(false);
+        setForbidden(true);
+        return;
+      }
+      setWipeError(err instanceof ApiError ? err.message : "Wipe failed");
+    } finally {
+      setWipeBusy(false);
+    }
+  }
+
+  const wipeEmailMatches =
+    detail != null &&
+    wipeEmail.trim().toLowerCase() === detail.email.toLowerCase();
+
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 4, md: 5 } }}>
       {!ready ? (
@@ -115,14 +224,53 @@ export default function AdminUserPage({ userId }: Props) {
             >
               {detail?.email ?? "User"}
             </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {RETENTION_NOTE}
+            </Typography>
           </Box>
 
           {forbidden ? <Alert severity="warning">Forbidden</Alert> : null}
           {notFound ? <Alert severity="warning">User not found</Alert> : null}
           {error ? <Alert severity="error">{error}</Alert> : null}
+          {actionError ? <Alert severity="error">{actionError}</Alert> : null}
 
           {detail ? (
             <>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {detail.disabled_at == null ? (
+                  <Button
+                    variant="outlined"
+                    disabled={actionBusy}
+                    onClick={onToggleDisabled}
+                  >
+                    Disable
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outlined"
+                    disabled={actionBusy}
+                    onClick={onToggleDisabled}
+                  >
+                    Enable
+                  </Button>
+                )}
+                <Button
+                  variant="outlined"
+                  disabled={actionBusy}
+                  onClick={onExport}
+                >
+                  Export
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  disabled={actionBusy}
+                  onClick={openWipe}
+                >
+                  Wipe
+                </Button>
+              </Stack>
+
               <Stack spacing={1}>
                 <Typography variant="h6" component="h2">
                   Profile
@@ -135,6 +283,12 @@ export default function AdminUserPage({ userId }: Props) {
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Google linked: {detail.google_linked ? "Yes" : "No"}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Disabled:{" "}
+                  {detail.disabled_at
+                    ? formatCreated(detail.disabled_at)
+                    : "No"}
                 </Typography>
               </Stack>
 
@@ -238,6 +392,50 @@ export default function AdminUserPage({ userId }: Props) {
                   </Table>
                 </TableContainer>
               </Stack>
+
+              <Dialog
+                open={wipeOpen}
+                onClose={() => !wipeBusy && setWipeOpen(false)}
+              >
+                <DialogTitle>Wipe user?</DialogTitle>
+                <DialogContent>
+                  <DialogContentText sx={{ mb: 2 }}>
+                    This permanently deletes {detail.email} and all their data.
+                    Type the email to confirm.
+                  </DialogContentText>
+                  <TextField
+                    label="Confirm email"
+                    value={wipeEmail}
+                    onChange={(e) => setWipeEmail(e.target.value)}
+                    fullWidth
+                    size="small"
+                    autoComplete="off"
+                    disabled={wipeBusy}
+                    autoFocus
+                  />
+                  {wipeError ? (
+                    <Alert severity="error" sx={{ mt: 2 }}>
+                      {wipeError}
+                    </Alert>
+                  ) : null}
+                </DialogContent>
+                <DialogActions>
+                  <Button
+                    onClick={() => setWipeOpen(false)}
+                    disabled={wipeBusy}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    color="error"
+                    variant="contained"
+                    disabled={wipeBusy || !wipeEmailMatches}
+                    onClick={onWipeConfirm}
+                  >
+                    {wipeBusy ? "Wiping…" : "Wipe"}
+                  </Button>
+                </DialogActions>
+              </Dialog>
             </>
           ) : null}
         </Stack>
