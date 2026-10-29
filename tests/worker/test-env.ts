@@ -282,6 +282,16 @@ export function createTestEnv(opts?: {
           const u = users.get(bound[0] as string);
           return u ? ({ id: u.id, email: u.email } as T) : null;
         }
+        if (
+          normalized.startsWith(
+            "SELECT email, oauth_subject FROM users WHERE id =",
+          )
+        ) {
+          const u = users.get(bound[0] as string);
+          return u
+            ? ({ email: u.email, oauth_subject: u.oauth_subject } as T)
+            : null;
+        }
         if (normalized.startsWith("SELECT email FROM users WHERE id =")) {
           const u = users.get(bound[0] as string);
           return u ? ({ email: u.email } as T) : null;

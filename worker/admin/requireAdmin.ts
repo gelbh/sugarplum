@@ -12,13 +12,14 @@ export async function requireAdmin(
 ): Promise<{ userId: string; email: string }> {
   const userId = await requireUser(c);
   const row = await getDb(c.env)
-    .prepare("SELECT email FROM users WHERE id = ?")
+    .prepare("SELECT email, oauth_subject FROM users WHERE id = ?")
     .bind(userId)
-    .first<{ email: string }>();
+    .first<{ email: string; oauth_subject: string | null }>();
   if (!row) throw new HTTPException(401, { message: "Unauthorized" });
 
   const allow = parseAdminEmails(c.env.ADMIN_EMAILS);
-  if (!isAdminEmail(row.email, allow)) {
+  // Password signup has no email verify; require Google-linked subject too.
+  if (!isAdminEmail(row.email, allow) || row.oauth_subject == null) {
     throw new HTTPException(403, { message: "Forbidden" });
   }
   return { userId, email: row.email };

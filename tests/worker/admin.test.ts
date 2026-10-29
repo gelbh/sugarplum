@@ -48,13 +48,31 @@ describe("GET /api/admin/users", () => {
       id: "u1",
       email: "ops@example.com",
       password_hash: null,
-      oauth_subject: null,
+      oauth_subject: "google-ops",
       created_at: "2026-01-01T00:00:00.000Z",
     });
     env.seedSession("s1", "u1");
     const res = await app.request(
       "/api/admin/users",
       { headers: { cookie: `${SESSION_COOKIE}=s1` } },
+      env,
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it("403 when allowlisted but password-only (no oauth_subject)", async () => {
+    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    env.seedUser({
+      id: "u-pw",
+      email: "ops@example.com",
+      password_hash: "x",
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSession("s-pw", "u-pw");
+    const res = await app.request(
+      "/api/admin/users",
+      { headers: { cookie: `${SESSION_COOKIE}=s-pw` } },
       env,
     );
     expect(res.status).toBe(403);
@@ -252,7 +270,7 @@ describe("GET /api/admin/users (allowlisted)", () => {
       id: "admin-u",
       email: "ops@example.com",
       password_hash: null,
-      oauth_subject: null,
+      oauth_subject: "google-admin",
       created_at: "2025-01-01T00:00:00.000Z",
     });
     env.seedSession("s-admin", "admin-u");
