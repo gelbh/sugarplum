@@ -5,6 +5,53 @@ export function etaMs(elapsedMs: number, percent: number): number | null {
   return (elapsedMs * (100 - percent)) / percent;
 }
 
+export type CalmEtaSample = {
+  percent: number;
+  displayEtaMs: number;
+  atMs: number;
+};
+
+/**
+ * Calm ETA: recompute average-since-start only when percent increases;
+ * while percent is flat, countdown the last display value (never grow).
+ */
+export function calmDisplayEtaMs(args: {
+  elapsedMs: number;
+  percent: number;
+  previous: CalmEtaSample | null;
+  nowMs: number;
+}): { etaMs: number | null; sample: CalmEtaSample | null } {
+  if (args.percent < 5) {
+    return { etaMs: null, sample: null };
+  }
+
+  const previous = args.previous;
+  const shouldRecompute =
+    previous == null || args.percent > previous.percent;
+
+  if (shouldRecompute) {
+    const raw = etaMs(args.elapsedMs, args.percent);
+    if (raw == null) {
+      return { etaMs: null, sample: null };
+    }
+    const sample: CalmEtaSample = {
+      percent: args.percent,
+      displayEtaMs: raw,
+      atMs: args.nowMs,
+    };
+    return { etaMs: raw, sample };
+  }
+
+  const wallDelta = Math.max(0, args.nowMs - previous.atMs);
+  const display = Math.max(0, previous.displayEtaMs - wallDelta);
+  const sample: CalmEtaSample = {
+    percent: args.percent,
+    displayEtaMs: display,
+    atMs: args.nowMs,
+  };
+  return { etaMs: display, sample };
+}
+
 /** Extrapolate job token total from usage so far and weighted percent. */
 export function projectTokensFromPercent(
   used: number | undefined,
