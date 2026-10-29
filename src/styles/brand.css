@@ -7,7 +7,6 @@
   --sp-lamp-glow: rgba(196, 165, 116, 0.28);
   /* Standard playing card ~2.5 × 3.5 (5/7). */
   --sp-card-aspect: 5 / 7;
-  /* Soft brand grade spectrum (zen rail). Not Anki traffic lights. */
   --sp-grade-again-border: #c45c6a;
   --sp-grade-again-fg: #f0b4bc;
   --sp-grade-again-wash: rgba(196, 92, 106, 0.18);
