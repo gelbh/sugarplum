@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -10,6 +10,9 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { ApiError, register } from "../api/client";
 import GoogleSignInButton from "../components/GoogleSignInButton";
+import TurnstileWidget, {
+  type TurnstileWidgetHandle,
+} from "../components/TurnstileWidget";
 
 const MIN_PASSWORD = 12;
 
@@ -18,6 +21,8 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -26,12 +31,22 @@ export default function RegisterPage() {
       setError(`Password must be at least ${MIN_PASSWORD} characters`);
       return;
     }
+    if (!token) {
+      setError("Complete the verification challenge first");
+      return;
+    }
     setBusy(true);
     try {
-      await register(email, password);
+      await register(email, password, token);
       window.location.assign("/today");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Registration failed");
+      if (err instanceof ApiError && err.status === 403) {
+        setError("Verification failed. Please try again.");
+        turnstileRef.current?.reset();
+      } else {
+        setError(err instanceof ApiError ? err.message : "Registration failed");
+        turnstileRef.current?.reset();
+      }
     } finally {
       setBusy(false);
     }
@@ -69,7 +84,17 @@ export default function RegisterPage() {
             required
             fullWidth
           />
-          <Button type="submit" variant="contained" disabled={busy} fullWidth>
+          <TurnstileWidget
+            action="register"
+            onToken={setToken}
+            widgetRef={turnstileRef}
+          />
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={busy || !token}
+            fullWidth
+          >
             {busy ? "Creating…" : "Register"}
           </Button>
           <Divider>or</Divider>
