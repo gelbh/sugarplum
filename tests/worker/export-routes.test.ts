@@ -109,15 +109,65 @@ describe("export routes", () => {
     });
   });
 
-  it("rejects an all-skipped deck with a distinct message", async () => {
+  it("exports an accepted occlusion deck with media", async () => {
     const env = setup();
+    const imageKey = "materials/deck-a/fig.png";
+    await env.MATERIALS.put(imageKey, new Uint8Array([137, 80, 78, 71]));
     seedCard(env, {
       id: "card-occlusion",
       type: "occlusion",
       front_json: JSON.stringify({
-        image_key: "materials/deck-a/fig.png",
-        regions: [{ id: "r1", x: 0, y: 0, w: 0.2, h: 0.2, label: "A" }],
+        image_key: imageKey,
+        regions: [
+          { id: "r1", x: 0, y: 0, w: 0.2, h: 0.2, label: "A" },
+          { id: "r2", x: 0.5, y: 0.5, w: 0.1, h: 0.1, label: "B" },
+        ],
         mode: "hide_one",
+      }),
+      back_json: JSON.stringify({ answer: "A" }),
+      media_r2_keys_json: JSON.stringify([imageKey]),
+    });
+    const create = await app.request(
+      "/api/exports",
+      {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ type: "deck", deckId: "deck-a" }),
+      },
+      env,
+    );
+
+    expect(create.status).toBe(201);
+    const body = (await create.json()) as {
+      id: string;
+      status: string;
+      warnings: { missingMedia: number; skippedCards: number };
+      downloadPath: string;
+    };
+    expect(body).toMatchObject({
+      status: "ready",
+      warnings: { missingMedia: 0, skippedCards: 0 },
+      downloadPath: `/api/exports/${body.id}/download`,
+    });
+
+    const download = await app.request(body.downloadPath, {
+      headers: headers(),
+    }, env);
+    expect(download.status).toBe(200);
+    expect(download.headers.get("content-type")).toContain("application/");
+    const bytes = new Uint8Array(await download.arrayBuffer());
+    expect(bytes.byteLength).toBeGreaterThan(100);
+  });
+
+  it("rejects invalid occlusion-only decks as all-skipped", async () => {
+    const env = setup();
+    seedCard(env, {
+      id: "card-occlusion-bad",
+      type: "occlusion",
+      front_json: JSON.stringify({
+        image_key: "materials/deck-a/fig.png",
+        mode: "hide_one",
+        regions: [],
       }),
       back_json: JSON.stringify({ answer: "A" }),
     });
@@ -136,6 +186,40 @@ describe("export routes", () => {
       message: "No exportable cards (1 skipped)",
       warnings: { missingMedia: 0, skippedCards: 1 },
     });
+  });
+
+  it("counts skipped invalid occlusion beside exportable qa", async () => {
+    const env = setup();
+    seedCard(env, {
+      id: "card-qa",
+      type: "qa",
+      front_json: JSON.stringify("Q"),
+      back_json: JSON.stringify("A"),
+    });
+    seedCard(env, {
+      id: "card-occlusion-bad",
+      type: "occlusion",
+      front_json: JSON.stringify({
+        image_key: "materials/deck-a/fig.png",
+        mode: "hide_one",
+        regions: [],
+      }),
+      back_json: JSON.stringify({ answer: "A" }),
+    });
+    const create = await app.request(
+      "/api/exports",
+      {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ type: "deck", deckId: "deck-a" }),
+      },
+      env,
+    );
+    expect(create.status).toBe(201);
+    const body = (await create.json()) as {
+      warnings: { missingMedia: number; skippedCards: number };
+    };
+    expect(body.warnings).toEqual({ missingMedia: 0, skippedCards: 1 });
   });
 
   it("marks a missing deck export as failed", async () => {
