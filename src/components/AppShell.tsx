@@ -21,7 +21,8 @@ import Typography from "@mui/material/Typography";
 import Link from "@mui/material/Link";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { me } from "../api/client";
+import { getGamification, me } from "../api/client";
+import StreakXpChip from "../achievements/StreakXpChip";
 import { isGuest } from "../guest/session";
 import { navigateReplace } from "../nav/navigate";
 import GlobalProgressBar from "../progress/GlobalProgressBar";
@@ -112,6 +113,8 @@ function AppShellChrome({ children }: AppShellProps) {
   const mobile = useMediaQuery(theme.breakpoints.down("md"));
   const path = window.location.pathname;
   const [isAdmin, setIsAdmin] = useState(false);
+  const [streak, setStreak] = useState<number | null>(null);
+  const [level, setLevel] = useState<number | null>(null);
   const drawerNav = isAdmin ? [...LEARNER_NAV, ADMIN_NAV] : LEARNER_NAV;
   const active = activeNavId(path, drawerNav);
   const showDrawer = !hideChrome && !mobile;
@@ -123,6 +126,8 @@ function AppShellChrome({ children }: AppShellProps) {
   useEffect(() => {
     if (isGuest()) {
       setIsAdmin(false);
+      setStreak(null);
+      setLevel(null);
       return;
     }
     let cancelled = false;
@@ -133,10 +138,28 @@ function AppShellChrome({ children }: AppShellProps) {
       .catch(() => {
         if (!cancelled) setIsAdmin(false);
       });
+    void getGamification()
+      .then((g) => {
+        if (!cancelled) {
+          setStreak(g.streakCurrent);
+          setLevel(g.level);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setStreak(null);
+          setLevel(null);
+        }
+      });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  const streakChip =
+    !isGuest() && streak != null && level != null ? (
+      <StreakXpChip streak={streak} level={level} />
+    ) : null;
 
   useLayoutEffect(() => {
     if (!showMobileChrome) return;
@@ -183,7 +206,7 @@ function AppShellChrome({ children }: AppShellProps) {
             bgcolor: SHELL_BG,
           }}
         >
-          <TopChrome />
+          <TopChrome trailing={streakChip} />
           {genStatus ? (
             <GenerationStatusStrip status={genStatus} dense />
           ) : null}
@@ -280,6 +303,9 @@ function AppShellChrome({ children }: AppShellProps) {
             </Box>
           ) : null}
           <Box sx={{ flexGrow: 1 }} />
+          {streakChip ? (
+            <Box sx={{ px: 2, pb: 1.5 }}>{streakChip}</Box>
+          ) : null}
           <Box
             sx={{
               px: 2,

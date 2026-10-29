@@ -105,3 +105,7 @@ npm run deploy
 ```
 
 After deploy, open `https://sugarplum.gelbhart.dev/study` in a logged-out browser tab and confirm HTML loads (SPA deep link).
+
+## Attribution
+
+Fruit achievement medal artwork is by [vector4stock on Magnific.com](https://www.magnific.com). License details: `docs/licenses/magnific-25333978.pdf`.

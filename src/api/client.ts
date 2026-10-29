@@ -979,9 +979,13 @@ export function patchCard(
   });
 }
 
+export type AcceptCardResult = CardDraftView & { unlocks?: string[] };
+
 export function acceptCard(cardId: string) {
   if (isGuest()) guestUnsupported("accept cards");
-  return api<CardDraftView>(`/api/cards/${cardId}/accept`, { method: "POST" });
+  return api<AcceptCardResult>(`/api/cards/${cardId}/accept`, {
+    method: "POST",
+  });
 }
 
 export function acceptAllJobDrafts(jobId: string) {
@@ -990,6 +994,7 @@ export function acceptAllJobDrafts(jobId: string) {
     accepted: number;
     failed: number;
     rejectedSiblingCount: number;
+    unlocks?: string[];
   }>(`/api/jobs/${jobId}/drafts/accept-all`, { method: "POST" });
 }
 
@@ -1136,7 +1141,7 @@ export function listStrugglingCards() {
 
 export type StudyRating = 1 | 2 | 3 | 4;
 
-export type ReviewResult = { due: string };
+export type ReviewResult = { due: string; unlocks?: string[] };
 
 export function reviewCard(
   cardId: string,
