@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-export type ExportScope = { type: "deck"; deckId: string };
+export type ExportScope =
+  | { type: "deck"; deckId: string }
+  | { type: "subject"; subjectId: string }
+  | { type: "selection"; deckIds: string[]; subjectIds: string[] };
 
 export type ExportWarnings = {
   missingMedia: number;
@@ -16,13 +19,27 @@ export const ExportJobStatusSchema = z.enum([
   "failed",
 ]);
 
-export const ExportScopeSchema = z.object({
+export const ExportScopeSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("deck"),
+    deckId: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal("subject"),
+    subjectId: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal("selection"),
+    deckIds: z.array(z.string().min(1)),
+    subjectIds: z.array(z.string().min(1)),
+  }),
+]);
+
+/** POST /api/exports body (deck-only until routes dispatch Task 3). */
+export const CreateExportBodySchema = z.object({
   type: z.literal("deck"),
   deckId: z.string().min(1),
 });
-
-/** POST /api/exports body (Phase 1: deck scope only). */
-export const CreateExportBodySchema = ExportScopeSchema;
 
 export type CreateExportBody = z.infer<typeof CreateExportBodySchema>;
 
