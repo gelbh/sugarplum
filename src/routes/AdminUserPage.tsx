@@ -309,7 +309,132 @@ export default function AdminUserPage({ userId }: Props) {
                   label={`Materials: ${detail.counts.materials}`}
                   variant="outlined"
                 />
+                {detail.usage ? (
+                  <>
+                    <Chip
+                      label={`Tokens (all): ${detail.usage.tokensAllTime}`}
+                      variant="outlined"
+                    />
+                    <Chip
+                      label={`Tokens (30d): ${detail.usage.tokens30d}`}
+                      variant="outlined"
+                    />
+                    <Chip
+                      label={`Free (30d): ${detail.usage.freeJobs30d}`}
+                      variant="outlined"
+                    />
+                    <Chip
+                      label={`BYO (30d): ${detail.usage.byoJobs30d}`}
+                      variant="outlined"
+                    />
+                  </>
+                ) : null}
+                {detail.freeGenToday ? (
+                  <Chip
+                    label={`Free gen today: ${detail.freeGenToday.used}/${detail.freeGenToday.cap}`}
+                    variant="outlined"
+                  />
+                ) : null}
               </Stack>
+
+              <Typography variant="body2" color="text.secondary">
+                Export JSON still has full card and material text.
+              </Typography>
+
+              {detail.studyPrefs ? (
+                <Stack spacing={1}>
+                  <Typography variant="h6" component="h2">
+                    Study prefs
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Intro budget: {detail.studyPrefs.intro_budget}; review:{" "}
+                    {detail.studyPrefs.review_budget}; r_floor:{" "}
+                    {detail.studyPrefs.r_floor}
+                  </Typography>
+                </Stack>
+              ) : null}
+
+              {detail.subjects && detail.subjects.length > 0 ? (
+                <Stack spacing={1}>
+                  <Typography variant="h6" component="h2">
+                    Subjects
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {detail.subjects.map((s) => s.title).join(", ")}
+                  </Typography>
+                </Stack>
+              ) : null}
+
+              {detail.decks && detail.decks.length > 0 ? (
+                <Stack spacing={1}>
+                  <Typography variant="h6" component="h2">
+                    Decks
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {detail.decks.map((d) => d.title).join(", ")}
+                  </Typography>
+                </Stack>
+              ) : null}
+
+              {detail.materials && detail.materials.length > 0 ? (
+                <Stack spacing={1}>
+                  <Typography variant="h6" component="h2">
+                    Materials
+                  </Typography>
+                  <TableContainer component={Paper} variant="outlined">
+                    <Table size="small" aria-label="User materials">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Kind</TableCell>
+                          <TableCell>Filename</TableCell>
+                          <TableCell>Status</TableCell>
+                          <TableCell>Created</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {detail.materials.map((m) => (
+                          <TableRow key={m.id}>
+                            <TableCell>{m.kind}</TableCell>
+                            <TableCell>{m.filename ?? "-"}</TableCell>
+                            <TableCell>{m.status}</TableCell>
+                            <TableCell>
+                              {formatCreated(m.created_at)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Stack>
+              ) : null}
+
+              {detail.cardSample && detail.cardSample.length > 0 ? (
+                <Stack spacing={1}>
+                  <Typography variant="h6" component="h2">
+                    Card sample
+                  </Typography>
+                  <TableContainer component={Paper} variant="outlined">
+                    <Table size="small" aria-label="Card sample">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Type</TableCell>
+                          <TableCell>Status</TableCell>
+                          <TableCell>Front</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {detail.cardSample.map((card) => (
+                          <TableRow key={card.id}>
+                            <TableCell>{card.type}</TableCell>
+                            <TableCell>{card.status}</TableCell>
+                            <TableCell>{card.frontPreview}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Stack>
+              ) : null}
 
               <Stack spacing={1}>
                 <Typography variant="h6" component="h2">
@@ -321,13 +446,15 @@ export default function AdminUserPage({ userId }: Props) {
                       <TableRow>
                         <TableCell>Id</TableCell>
                         <TableCell>Status</TableCell>
+                        <TableCell>Path</TableCell>
+                        <TableCell align="right">Tokens</TableCell>
                         <TableCell>Created</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {detail.recentJobs.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={3} align="center">
+                          <TableCell colSpan={5} align="center">
                             <Typography
                               variant="body2"
                               color="text.secondary"
@@ -342,6 +469,10 @@ export default function AdminUserPage({ userId }: Props) {
                           <TableRow key={job.id}>
                             <TableCell>{job.id}</TableCell>
                             <TableCell>{job.status}</TableCell>
+                            <TableCell>{job.path ?? "-"}</TableCell>
+                            <TableCell align="right">
+                              {job.tokens_used ?? "-"}
+                            </TableCell>
                             <TableCell>
                               {formatCreated(job.created_at)}
                             </TableCell>

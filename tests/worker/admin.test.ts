@@ -273,6 +273,10 @@ describe("GET /api/admin/overview", () => {
     await expect(res.json()).resolves.toEqual({
       userCount: 3,
       createdLast7d: 2,
+      tokensAllTime: 0,
+      tokens30d: 0,
+      freeJobs30d: 0,
+      byoJobs30d: 0,
     });
   });
 });

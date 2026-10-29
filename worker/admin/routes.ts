@@ -3,6 +3,11 @@ import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import type { AuthVariables } from "../auth/session";
 import { getDb } from "../db/client";
+import { getFreeGenUsage } from "../generation/quota";
+import {
+  backfillUsageEventsFromJobs,
+  usageFieldsFromProgress,
+} from "../generation/usage";
 import { isAdminEmail, parseAdminEmails } from "./allowlist";
 import { requireAdmin } from "./requireAdmin";
 
@@ -171,6 +176,14 @@ export type AdminUserListItem = {
   deckCount: number;
   cardCount: number;
   jobCount: number;
+  tokens30d: number;
+};
+
+export type AdminUsageSummary = {
+  tokensAllTime: number;
+  tokens30d: number;
+  freeJobs30d: number;
+  byoJobs30d: number;
 };
 
 export type AdminUserDetail = {
@@ -180,8 +193,46 @@ export type AdminUserDetail = {
   google_linked: boolean;
   disabled_at: string | null;
   counts: { decks: number; cards: number; jobs: number; materials: number };
-  recentJobs: { id: string; status: string; created_at: string }[];
+  recentJobs: {
+    id: string;
+    status: string;
+    created_at: string;
+    finished_at: string | null;
+    tokens_used?: number;
+    tokens_prompt?: number;
+    tokens_completion?: number;
+    path?: "free" | "byo";
+  }[];
   recentStudyDays: { day: string; intros_used: number }[];
+  subjects: { id: string; title: string; created_at: string }[];
+  decks: {
+    id: string;
+    title: string;
+    subject_id: string | null;
+    created_at: string;
+  }[];
+  materials: {
+    id: string;
+    deck_id: string;
+    kind: string;
+    filename: string | null;
+    status: string;
+    created_at: string;
+  }[];
+  studyPrefs: {
+    intro_budget: number;
+    review_budget: number;
+    r_floor: number;
+    updated_at: string;
+  } | null;
+  freeGenToday: { used: number; cap: number; remaining: number } | null;
+  usage: AdminUsageSummary;
+  cardSample: {
+    id: string;
+    type: string;
+    status: string;
+    frontPreview: string;
+  }[];
 };
 
 export const adminRoutes = new Hono<AppEnv>();
@@ -193,7 +244,9 @@ SELECT u.id, u.email, u.created_at, u.oauth_subject, u.disabled_at,
      INNER JOIN decks d ON d.id = c.deck_id WHERE d.user_id = u.id) AS card_count,
   (SELECT COUNT(*) FROM generation_jobs j
      INNER JOIN materials m ON m.id = j.material_id
-     INNER JOIN decks d ON d.id = m.deck_id WHERE d.user_id = u.id) AS job_count
+     INNER JOIN decks d ON d.id = m.deck_id WHERE d.user_id = u.id) AS job_count,
+  (SELECT COALESCE(SUM(COALESCE(ue.tokens_total, 0)), 0) FROM usage_events ue
+     WHERE ue.user_id = u.id AND ue.created_at >= ?) AS tokens_30d
 FROM users u
 WHERE (? = '' OR lower(u.email) LIKE '%' || lower(?) || '%')
 ORDER BY u.created_at DESC
@@ -215,7 +268,7 @@ WHERE u.id = ?
 `.replace(/\s+/g, " ");
 
 const RECENT_JOBS_SQL = `
-SELECT j.id, j.status, j.created_at
+SELECT j.id, j.status, j.created_at, j.finished_at, j.progress_json
 FROM generation_jobs j
 INNER JOIN materials m ON m.id = j.material_id
 INNER JOIN decks d ON d.id = m.deck_id
@@ -232,6 +285,46 @@ ORDER BY day DESC
 LIMIT ?
 `.replace(/\s+/g, " ");
 
+const SUBJECTS_SQL =
+  "SELECT id, title, created_at FROM subjects WHERE user_id = ? ORDER BY created_at DESC LIMIT 50";
+
+const DECKS_SQL = `
+SELECT id, title, subject_id, created_at FROM decks
+WHERE user_id = ? ORDER BY created_at DESC LIMIT 50
+`.replace(/\s+/g, " ");
+
+const MATERIALS_SQL = `
+SELECT m.id, m.deck_id, m.kind, m.filename, m.status, m.created_at
+FROM materials m
+INNER JOIN decks d ON d.id = m.deck_id
+WHERE d.user_id = ?
+ORDER BY m.created_at DESC
+LIMIT 50
+`.replace(/\s+/g, " ");
+
+const STUDY_PREFS_SQL =
+  "SELECT intro_budget, review_budget, r_floor, updated_at FROM user_study_prefs WHERE user_id = ?";
+
+const CARD_SAMPLE_SQL = `
+SELECT c.id, c.type, c.status, c.front_json
+FROM cards c
+INNER JOIN decks d ON d.id = c.deck_id
+WHERE d.user_id = ?
+ORDER BY c.created_at DESC
+LIMIT 10
+`.replace(/\s+/g, " ");
+
+const USER_USAGE_SQL = `
+SELECT
+  (SELECT COALESCE(SUM(COALESCE(tokens_total, 0)), 0) FROM usage_events WHERE user_id = ?) AS tokens_all_time,
+  (SELECT COALESCE(SUM(COALESCE(tokens_total, 0)), 0) FROM usage_events
+     WHERE user_id = ? AND created_at >= ?) AS tokens_30d,
+  (SELECT COUNT(*) FROM usage_events
+     WHERE user_id = ? AND created_at >= ? AND path = 'free') AS free_jobs_30d,
+  (SELECT COUNT(*) FROM usage_events
+     WHERE user_id = ? AND created_at >= ? AND path = 'byo') AS byo_jobs_30d
+`.replace(/\s+/g, " ");
+
 function parseUserListLimit(raw: string | undefined): number {
   if (raw === undefined || raw === "") return 50;
   const n = Number.parseInt(raw, 10);
@@ -240,25 +333,64 @@ function parseUserListLimit(raw: string | undefined): number {
 }
 
 const CREATED_LAST_7D_MS = 7 * 864e5;
+const USAGE_30D_MS = 30 * 864e5;
 
 function createdLast7dCutoffIso(): string {
   return new Date(Date.now() - CREATED_LAST_7D_MS).toISOString();
 }
 
+function usage30dCutoffIso(): string {
+  return new Date(Date.now() - USAGE_30D_MS).toISOString();
+}
+
+function frontPreviewFromJson(frontJson: string, max = 120): string {
+  try {
+    const parsed = JSON.parse(frontJson) as unknown;
+    if (typeof parsed === "string") return parsed.slice(0, max);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      const obj = parsed as { prompt?: unknown; text?: unknown };
+      if (typeof obj.prompt === "string") return obj.prompt.slice(0, max);
+      if (typeof obj.text === "string") return obj.text.slice(0, max);
+    }
+  } catch {
+    /* ignore */
+  }
+  return frontJson.slice(0, max);
+}
+
 adminRoutes.get("/overview", async (c) => {
   await requireAdmin(c);
-  const cutoff = createdLast7dCutoffIso();
+  const cutoff7 = createdLast7dCutoffIso();
+  const cutoff30 = usage30dCutoffIso();
   const row = await getDb(c.env)
     .prepare(
       `SELECT
         (SELECT COUNT(*) FROM users) AS user_count,
-        (SELECT COUNT(*) FROM users WHERE created_at >= ?) AS created_last_7d`,
+        (SELECT COUNT(*) FROM users WHERE created_at >= ?) AS created_last_7d,
+        (SELECT COALESCE(SUM(COALESCE(tokens_total, 0)), 0) FROM usage_events) AS tokens_all_time,
+        (SELECT COALESCE(SUM(COALESCE(tokens_total, 0)), 0) FROM usage_events
+           WHERE created_at >= ?) AS tokens_30d,
+        (SELECT COUNT(*) FROM usage_events
+           WHERE created_at >= ? AND path = 'free') AS free_jobs_30d,
+        (SELECT COUNT(*) FROM usage_events
+           WHERE created_at >= ? AND path = 'byo') AS byo_jobs_30d`,
     )
-    .bind(cutoff)
-    .first<{ user_count: number; created_last_7d: number }>();
+    .bind(cutoff7, cutoff30, cutoff30, cutoff30)
+    .first<{
+      user_count: number;
+      created_last_7d: number;
+      tokens_all_time: number;
+      tokens_30d: number;
+      free_jobs_30d: number;
+      byo_jobs_30d: number;
+    }>();
   return c.json({
     userCount: row?.user_count ?? 0,
     createdLast7d: row?.created_last_7d ?? 0,
+    tokensAllTime: row?.tokens_all_time ?? 0,
+    tokens30d: row?.tokens_30d ?? 0,
+    freeJobs30d: row?.free_jobs_30d ?? 0,
+    byoJobs30d: row?.byo_jobs_30d ?? 0,
   });
 });
 
@@ -266,9 +398,10 @@ adminRoutes.get("/users", async (c) => {
   await requireAdmin(c);
   const q = c.req.query("q") ?? "";
   const limit = parseUserListLimit(c.req.query("limit"));
+  const cutoff30 = usage30dCutoffIso();
   const { results } = await getDb(c.env)
     .prepare(LIST_USERS_SQL)
-    .bind(q, q, limit)
+    .bind(cutoff30, q, q, limit)
     .all<{
       id: string;
       email: string;
@@ -278,6 +411,7 @@ adminRoutes.get("/users", async (c) => {
       deck_count: number;
       card_count: number;
       job_count: number;
+      tokens_30d: number;
     }>();
 
   const users: AdminUserListItem[] = (results ?? []).map((row) => ({
@@ -289,14 +423,22 @@ adminRoutes.get("/users", async (c) => {
     deckCount: row.deck_count,
     cardCount: row.card_count,
     jobCount: row.job_count,
+    tokens30d: row.tokens_30d ?? 0,
   }));
   return c.json({ users });
+});
+
+adminRoutes.post("/usage/backfill", async (c) => {
+  await requireAdmin(c);
+  const inserted = await backfillUsageEventsFromJobs(getDb(c.env));
+  return c.json({ inserted });
 });
 
 adminRoutes.get("/users/:id", async (c) => {
   await requireAdmin(c);
   const id = c.req.param("id");
   const db = getDb(c.env);
+  const cutoff30 = usage30dCutoffIso();
   const row = await db.prepare(USER_DETAIL_SQL).bind(id).first<{
     id: string;
     email: string;
@@ -310,16 +452,104 @@ adminRoutes.get("/users/:id", async (c) => {
   }>();
   if (!row) throw new HTTPException(404, { message: "User not found" });
 
-  const [{ results: jobRows }, { results: studyRows }] = await Promise.all([
+  const [
+    { results: jobRows },
+    { results: studyRows },
+    { results: subjectRows },
+    { results: deckRows },
+    { results: materialRows },
+    prefsRow,
+    usageRow,
+    { results: cardRows },
+    freeGenToday,
+  ] = await Promise.all([
     db
       .prepare(RECENT_JOBS_SQL)
       .bind(id, 20)
-      .all<{ id: string; status: string; created_at: string }>(),
+      .all<{
+        id: string;
+        status: string;
+        created_at: string;
+        finished_at: string | null;
+        progress_json: string | null;
+      }>(),
     db
       .prepare(RECENT_STUDY_DAYS_SQL)
       .bind(id, 14)
       .all<{ day: string; intros_used: number }>(),
+    db
+      .prepare(SUBJECTS_SQL)
+      .bind(id)
+      .all<{ id: string; title: string; created_at: string }>(),
+    db
+      .prepare(DECKS_SQL)
+      .bind(id)
+      .all<{
+        id: string;
+        title: string;
+        subject_id: string | null;
+        created_at: string;
+      }>(),
+    db
+      .prepare(MATERIALS_SQL)
+      .bind(id)
+      .all<{
+        id: string;
+        deck_id: string;
+        kind: string;
+        filename: string | null;
+        status: string;
+        created_at: string;
+      }>(),
+    db
+      .prepare(STUDY_PREFS_SQL)
+      .bind(id)
+      .first<{
+        intro_budget: number;
+        review_budget: number;
+        r_floor: number;
+        updated_at: string;
+      }>(),
+    db
+      .prepare(USER_USAGE_SQL)
+      .bind(id, id, cutoff30, id, cutoff30, id, cutoff30)
+      .first<{
+        tokens_all_time: number;
+        tokens_30d: number;
+        free_jobs_30d: number;
+        byo_jobs_30d: number;
+      }>(),
+    db
+      .prepare(CARD_SAMPLE_SQL)
+      .bind(id)
+      .all<{
+        id: string;
+        type: string;
+        status: string;
+        front_json: string;
+      }>(),
+    getFreeGenUsage(c.env, id).catch(() => null),
   ]);
+
+  const recentJobs = (jobRows ?? []).map((job) => {
+    const fields = usageFieldsFromProgress(job.progress_json);
+    return {
+      id: job.id,
+      status: job.status,
+      created_at: job.created_at,
+      finished_at: job.finished_at ?? null,
+      ...(fields.tokens_total != null
+        ? { tokens_used: fields.tokens_total }
+        : {}),
+      ...(fields.tokens_prompt != null
+        ? { tokens_prompt: fields.tokens_prompt }
+        : {}),
+      ...(fields.tokens_completion != null
+        ? { tokens_completion: fields.tokens_completion }
+        : {}),
+      ...(fields.path ? { path: fields.path } : {}),
+    };
+  });
 
   const detail: AdminUserDetail = {
     id: row.id,
@@ -333,8 +563,25 @@ adminRoutes.get("/users/:id", async (c) => {
       jobs: row.job_count,
       materials: row.material_count,
     },
-    recentJobs: jobRows ?? [],
+    recentJobs,
     recentStudyDays: studyRows ?? [],
+    subjects: subjectRows ?? [],
+    decks: deckRows ?? [],
+    materials: materialRows ?? [],
+    studyPrefs: prefsRow ?? null,
+    freeGenToday,
+    usage: {
+      tokensAllTime: usageRow?.tokens_all_time ?? 0,
+      tokens30d: usageRow?.tokens_30d ?? 0,
+      freeJobs30d: usageRow?.free_jobs_30d ?? 0,
+      byoJobs30d: usageRow?.byo_jobs_30d ?? 0,
+    },
+    cardSample: (cardRows ?? []).map((card) => ({
+      id: card.id,
+      type: card.type,
+      status: card.status,
+      frontPreview: frontPreviewFromJson(card.front_json),
+    })),
   };
   return c.json(detail);
 });
