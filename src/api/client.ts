@@ -813,6 +813,74 @@ export function putStudyPrefs(prefs: StudyPrefs) {
   });
 }
 
+export type FruitTraitsView = {
+  shine: string;
+  colour: string;
+  status: string;
+};
+
+export type AchievementDefView = {
+  id: string;
+  category: string;
+  fruitType: string;
+  rarity: string;
+  title: string;
+  description: string;
+  sortOrder: number;
+};
+
+export type AchievementItemView = {
+  def: AchievementDefView;
+  progress: { currentValue: number; threshold: number } | null;
+  completedAt: string | null;
+  traits: FruitTraitsView;
+};
+
+export type AchievementsResponse = {
+  items: AchievementItemView[];
+};
+
+export type GamificationResponse = {
+  streakCurrent: number;
+  streakBest: number;
+  streakDay: string | null;
+  xpTotal: number;
+  level: number;
+  displayName: string | null;
+  boardOptIn: boolean;
+};
+
+export type LeaderboardResponse = {
+  weekKey: string;
+  entries: Array<{
+    userId: string;
+    displayName: string | null;
+    xp: number;
+  }>;
+};
+
+export function getAchievements() {
+  return api<AchievementsResponse>("/api/achievements");
+}
+
+export function getGamification() {
+  return api<GamificationResponse>("/api/gamification");
+}
+
+export function getWeeklyLeaderboard() {
+  return api<LeaderboardResponse>("/api/leaderboard/weekly");
+}
+
+export function patchGamificationSettings(body: {
+  boardOptIn?: boolean;
+  displayName?: string | null;
+}) {
+  return api<GamificationResponse>("/api/gamification/settings", {
+    method: "PATCH",
+    json: body,
+  });
+}
+
 /** Occlusion front payload stored in front_json (normalized region boxes). */
 export type OcclusionFrontView = {
   image_key: string;
