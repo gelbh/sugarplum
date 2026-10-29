@@ -1,0 +1,16 @@
+{
+  "id": "clean-glossary",
+  "description": "High-confidence :: harvest survives Layer-1",
+  "mode": "rules_only",
+  "key_facts": [
+    { "id": "atp", "match": ["Adenosine triphosphate", "ATP"] },
+    { "id": "mito", "match": ["mitochondria", "powerhouse"] },
+    { "id": "dna", "match": ["deoxyribonucleic", "DNA"] }
+  ],
+  "forbidden": [],
+  "expect": {
+    "min_survivors": 3,
+    "min_key_fact_coverage": 1,
+    "require_zero_forbidden": true
+  }
+}
