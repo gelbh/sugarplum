@@ -8,6 +8,69 @@ export function utcPreviousDay(day: string): string {
   return utcDay(dt);
 }
 
+/** Pure streak from sorted distinct UTC days (ascending). No DB I/O. */
+export function computeStreakFromSortedDays(days: string[]): {
+  streakCurrent: number;
+  streakBest: number;
+  streakDay: string | null;
+} {
+  if (days.length === 0) {
+    return { streakCurrent: 0, streakBest: 0, streakDay: null };
+  }
+
+  let streakBest = 1;
+  let run = 1;
+  for (let i = 1; i < days.length; i++) {
+    if (days[i - 1] === utcPreviousDay(days[i]!)) {
+      run += 1;
+      if (run > streakBest) streakBest = run;
+    } else {
+      run = 1;
+    }
+  }
+
+  let streakCurrent = 1;
+  for (let i = days.length - 1; i > 0; i--) {
+    if (days[i - 1] === utcPreviousDay(days[i]!)) {
+      streakCurrent += 1;
+    } else {
+      break;
+    }
+  }
+
+  return {
+    streakCurrent,
+    streakBest,
+    streakDay: days[days.length - 1]!,
+  };
+}
+
+/** Decay current streak when last study day is older than yesterday UTC. */
+export function applyStreakExpiry(
+  streak: {
+    streakCurrent: number;
+    streakBest: number;
+    streakDay: string | null;
+  },
+  today = utcDay(),
+): {
+  streakCurrent: number;
+  streakBest: number;
+  streakDay: string | null;
+} {
+  if (
+    streak.streakDay === today ||
+    streak.streakDay === utcPreviousDay(today)
+  ) {
+    return streak;
+  }
+  return {
+    streakCurrent: 0,
+    streakBest: streak.streakBest,
+    streakDay: streak.streakDay,
+  };
+}
+
 export async function applyStudyDayStreak(
   db: D1Database,
   userId: string,

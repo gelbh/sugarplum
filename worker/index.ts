@@ -13,6 +13,7 @@ import { journeyRoutes } from "./journey/routes";
 import { guestRoutes } from "./guest/import";
 import { exportRoutes } from "./export/routes";
 import { adminRoutes } from "./admin/routes";
+import { gamificationRoutes } from "./gamification/routes";
 import { handleExportQueue } from "./export/consumer";
 import type { ExportQueueMessage } from "./export/enqueue";
 import { handleGenerateQueue } from "./generation/consumer";
@@ -54,6 +55,7 @@ app.route("/api/study", studyRoutes);
 app.route("/api/guest", guestRoutes);
 app.route("/api/exports", exportRoutes);
 app.route("/api/admin", adminRoutes);
+app.route("/api", gamificationRoutes);
 
 export { app };
 

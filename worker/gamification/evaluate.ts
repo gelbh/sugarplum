@@ -1,7 +1,7 @@
 import { XP, type Rarity } from "./constants";
 import { creditXp } from "./xp";
 
-type AchievementDefRow = {
+export type AchievementDefRow = {
   id: string;
   rarity: Rarity;
   trigger_kind: string;
@@ -9,7 +9,7 @@ type AchievementDefRow = {
   params_json: string | null;
 };
 
-type StudyMetrics = {
+export type StudyMetrics = {
   reviewsTotal: number;
   acceptsTotal: number;
   studyDaysTotal: number;
@@ -33,7 +33,9 @@ const ACCEPT_TRIGGERS = new Set([
   "composite",
 ]);
 
-async function loadActiveDefs(db: D1Database): Promise<AchievementDefRow[]> {
+async function loadActiveDefs(
+  db: D1Database,
+): Promise<AchievementDefRow[]> {
   const { results } = await db
     .prepare(
       `SELECT id, rarity, trigger_kind, threshold, params_json
@@ -172,7 +174,10 @@ async function loadStudyMetrics(
   };
 }
 
-function metricValue(def: AchievementDefRow, metrics: StudyMetrics): number {
+function metricValue(
+  def: AchievementDefRow,
+  metrics: StudyMetrics,
+): number {
   switch (def.trigger_kind) {
     case "reviews_total":
       return metrics.reviewsTotal;
@@ -209,6 +214,7 @@ async function tryUnlock(
   def: AchievementDefRow,
   currentValue: number,
   triggerEventId: string | null,
+  backdated: 0 | 1 = 0,
 ): Promise<string | null> {
   const threshold = effectiveThreshold(def);
   await db
@@ -229,32 +235,52 @@ async function tryUnlock(
     .prepare(
       `INSERT OR IGNORE INTO achievement_completions (
          user_id, achievement_id, completed_at, trigger_event_id, backdated
-       ) VALUES (?, ?, ?, ?, 0)`,
+       ) VALUES (?, ?, ?, ?, ?)`,
     )
-    .bind(userId, def.id, completedAt, triggerEventId)
+    .bind(userId, def.id, completedAt, triggerEventId, backdated)
     .run();
 
   if ((insert.meta.changes ?? 0) === 0) return null;
 
-  const bonus = XP.unlock[def.rarity];
-  await creditXp(db, userId, bonus, "unlock", `unlock:${def.id}`);
+  // Backdated unlocks must not stamp unlock XP into "now" (weekly board pollution).
+  if (backdated === 0) {
+    const bonus = XP.unlock[def.rarity];
+    await creditXp(db, userId, bonus, "unlock", `unlock:${def.id}`);
+  }
   return def.id;
 }
 
-async function evaluateKinds(
+export async function evaluateAchievements(
   db: D1Database,
   userId: string,
-  kinds: Set<string>,
-  triggerEventId: string | null,
-  nowIso: string,
+  opts: {
+    kinds?: Set<string>;
+    triggerEventId: string | null;
+    nowIso: string;
+    backdated?: 0 | 1;
+  },
 ): Promise<string[]> {
   const defs = await loadActiveDefs(db);
-  const metrics = await loadStudyMetrics(db, userId, nowIso);
+  const metrics = await loadStudyMetrics(db, userId, opts.nowIso);
+  const backdated = opts.backdated ?? 0;
   const unlocks: string[] = [];
   for (const def of defs) {
-    if (!kinds.has(def.trigger_kind)) continue;
-    const value = metricValue(def, metrics);
-    const unlocked = await tryUnlock(db, userId, def, value, triggerEventId);
+    if (opts.kinds && !opts.kinds.has(def.trigger_kind)) continue;
+    // clear_due is event-shaped; empty due queues are not historical proof.
+    if (backdated === 1 && def.trigger_kind === "clear_due_once") continue;
+    let value = metricValue(def, metrics);
+    // Historical streak fruits use peak, not the (possibly expired) live current.
+    if (backdated === 1 && def.trigger_kind === "streak_current") {
+      value = metrics.streakBest;
+    }
+    const unlocked = await tryUnlock(
+      db,
+      userId,
+      def,
+      value,
+      opts.triggerEventId,
+      backdated,
+    );
     if (unlocked) unlocks.push(unlocked);
   }
   return unlocks;
@@ -266,13 +292,11 @@ export async function evaluateAfterReview(
   args: { reviewLogId: string; reviewedAt: Date },
 ): Promise<{ unlocks: string[] }> {
   const nowIso = args.reviewedAt.toISOString();
-  const unlocks = await evaluateKinds(
-    db,
-    userId,
-    REVIEW_TRIGGERS,
-    args.reviewLogId,
+  const unlocks = await evaluateAchievements(db, userId, {
+    kinds: REVIEW_TRIGGERS,
+    triggerEventId: args.reviewLogId,
     nowIso,
-  );
+  });
   return { unlocks };
 }
 
@@ -283,12 +307,10 @@ export async function evaluateAfterAccept(
 ): Promise<{ unlocks: string[] }> {
   void args.cardType;
   const nowIso = new Date().toISOString();
-  const unlocks = await evaluateKinds(
-    db,
-    userId,
-    ACCEPT_TRIGGERS,
-    args.cardId,
+  const unlocks = await evaluateAchievements(db, userId, {
+    kinds: ACCEPT_TRIGGERS,
+    triggerEventId: args.cardId,
     nowIso,
-  );
+  });
   return { unlocks };
 }
