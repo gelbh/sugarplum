@@ -148,20 +148,30 @@ describe("LLM provider allowlist", () => {
         return new Response(
           JSON.stringify({
             choices: [{ message: { content: '{"ok":true}' } }],
+            usage: {
+              prompt_tokens: 11,
+              completion_tokens: 7,
+              total_tokens: 18,
+            },
           }),
           { status: 200, headers: { "content-type": "application/json" } },
         );
       }),
     );
 
-    const raw = await createLlmAdapter("openai").complete({
+    const result = await createLlmAdapter("openai").complete({
       system: "custom-system",
       user: "custom-user",
       apiKey: "sk-openai",
       provider: "openai",
     });
 
-    expect(raw).toBe('{"ok":true}');
+    expect(result.text).toBe('{"ok":true}');
+    expect(result.usage).toEqual({
+      prompt_tokens: 11,
+      completion_tokens: 7,
+      total_tokens: 18,
+    });
     expect(body).toMatchObject({
       messages: [
         { role: "system", content: "custom-system" },
@@ -171,13 +181,13 @@ describe("LLM provider allowlist", () => {
   });
 
   it("mock complete returns fixed critique JSON", async () => {
-    const raw = await createLlmAdapter("mock").complete({
+    const result = await createLlmAdapter("mock").complete({
       system: "s",
       user: "u",
       apiKey: "",
       provider: "mock",
     });
-    const parsed = JSON.parse(raw) as { cards: unknown[] };
+    const parsed = JSON.parse(result.text) as { cards: unknown[] };
     expect(Array.isArray(parsed.cards)).toBe(true);
     expect(parsed.cards.length).toBeGreaterThan(0);
   });

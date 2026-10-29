@@ -181,6 +181,7 @@ export type TestEnv = Env & {
   getCards: () => CardRow[];
   getSchedules: () => ScheduleRow[];
   getReviewLogs: () => ReviewLogRow[];
+  getUsageEvents: () => UsageEventRow[];
   getQueueMessages: () => unknown[];
   getExportQueueMessages: () => unknown[];
   getR2Keys: () => string[];
@@ -854,8 +855,12 @@ export function createTestEnv(opts?: {
             (sum, e) => sum + (e.tokens_total ?? 0),
             0,
           );
-          const free_jobs_30d = recent.filter((e) => e.path === "free").length;
-          const byo_jobs_30d = recent.filter((e) => e.path === "byo").length;
+          const free_jobs_30d = recent.filter(
+            (e) => e.path === "free" && e.kind === "generation",
+          ).length;
+          const byo_jobs_30d = recent.filter(
+            (e) => e.path === "byo" && e.kind === "generation",
+          ).length;
           return {
             user_count: allUsers.length,
             created_last_7d: createdLast7d,
@@ -884,8 +889,12 @@ export function createTestEnv(opts?: {
               (sum, e) => sum + (e.tokens_total ?? 0),
               0,
             ),
-            free_jobs_30d: recent.filter((e) => e.path === "free").length,
-            byo_jobs_30d: recent.filter((e) => e.path === "byo").length,
+            free_jobs_30d: recent.filter(
+              (e) => e.path === "free" && e.kind === "generation",
+            ).length,
+            byo_jobs_30d: recent.filter(
+              (e) => e.path === "byo" && e.kind === "generation",
+            ).length,
           } as T;
         }
         if (
@@ -2370,28 +2379,57 @@ export function createTestEnv(opts?: {
           normalized.startsWith("INSERT OR IGNORE INTO usage_events") ||
           normalized.startsWith("INSERT INTO usage_events")
         ) {
-          // SQL embeds kind='generation'; binds: id,user,job,path,provider,tp,tc,tt,created
+          const kind = normalized.includes("'regen'") ? "regen" : "generation";
+          const isRegen = kind === "regen";
           const [
             id,
             user_id,
-            job_id,
-            path,
-            provider,
-            tokens_prompt,
-            tokens_completion,
-            tokens_total,
-            created_at,
+            jobOrPath,
+            pathOrProvider,
+            providerOrTp,
+            tpOrTc,
+            tcOrTt,
+            ttOrCreated,
+            createdOrMissing,
           ] = bound as [
             string,
             string,
             string | null,
             string | null,
             string | null,
+            number | null | string,
             number | null,
-            number | null,
-            number | null,
-            string,
+            number | null | string,
+            string | undefined,
           ];
+          let job_id: string | null;
+          let path: string | null;
+          let provider: string | null;
+          let tokens_prompt: number | null;
+          let tokens_completion: number | null;
+          let tokens_total: number | null;
+          let created_at: string;
+          if (isRegen) {
+            job_id = null;
+            path = jobOrPath;
+            provider = pathOrProvider;
+            tokens_prompt =
+              typeof providerOrTp === "number" ? providerOrTp : null;
+            tokens_completion = typeof tpOrTc === "number" ? tpOrTc : null;
+            tokens_total =
+              typeof tcOrTt === "number" ? tcOrTt : null;
+            created_at = String(ttOrCreated);
+          } else {
+            job_id = jobOrPath;
+            path = pathOrProvider;
+            provider = typeof providerOrTp === "string" ? providerOrTp : null;
+            tokens_prompt = typeof tpOrTc === "number" ? tpOrTc : null;
+            tokens_completion =
+              typeof tcOrTt === "number" ? tcOrTt : null;
+            tokens_total =
+              typeof ttOrCreated === "number" ? ttOrCreated : null;
+            created_at = String(createdOrMissing);
+          }
           if (
             job_id != null &&
             [...usageEvents.values()].some((e) => e.job_id === job_id)
@@ -2402,7 +2440,7 @@ export function createTestEnv(opts?: {
             id,
             user_id,
             job_id,
-            kind: "generation",
+            kind,
             path,
             provider,
             tokens_prompt,
@@ -3234,6 +3272,7 @@ export function createTestEnv(opts?: {
     getCards: () => [...cards.values()],
     getSchedules: () => [...schedules.values()],
     getReviewLogs: () => [...reviewLogs],
+    getUsageEvents: () => [...usageEvents.values()],
     getQueueMessages: () => [...queueMessages],
     getExportQueueMessages: () => [...exportQueueMessages],
     getR2Keys: () => [...r2.keys()],

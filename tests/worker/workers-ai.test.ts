@@ -258,17 +258,44 @@ describe("Workers AI adapter", () => {
     env.AI = { run } as unknown as Ai;
 
     const adapter = createWorkersAiAdapter(env);
-    const raw = await adapter.complete({
+    const result = await adapter.complete({
       system: "critique-system",
       user: "critique-user",
       apiKey: "should-not-matter",
       provider: "workers-ai",
     });
 
-    expect(raw).toBe('{"cards":[]}');
+    expect(result.text).toBe('{"cards":[]}');
     expect(run).toHaveBeenCalledOnce();
     const [, inputs] = run.mock.calls[0]!;
     expect(JSON.stringify(inputs)).not.toContain("should-not-matter");
+  });
+
+  it("complete returns usage from AI.run payload", async () => {
+    const run = vi.fn(async () => ({
+      ...chatCompletionResult('{"cards":[]}'),
+      usage: {
+        prompt_tokens: 40,
+        completion_tokens: 12,
+        total_tokens: 52,
+      },
+    }));
+
+    const env = createTestEnv();
+    env.AI = { run } as unknown as Ai;
+    const adapter = createWorkersAiAdapter(env);
+    const result = await adapter.complete({
+      system: "s",
+      user: "u",
+      apiKey: "",
+      provider: "workers-ai",
+    });
+
+    expect(result.usage).toEqual({
+      prompt_tokens: 40,
+      completion_tokens: 12,
+      total_tokens: 52,
+    });
   });
 
   it("complete rejects finish_reason length without salvage", async () => {

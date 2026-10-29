@@ -320,9 +320,11 @@ SELECT
   (SELECT COALESCE(SUM(COALESCE(tokens_total, 0)), 0) FROM usage_events
      WHERE user_id = ? AND created_at >= ?) AS tokens_30d,
   (SELECT COUNT(*) FROM usage_events
-     WHERE user_id = ? AND created_at >= ? AND path = 'free') AS free_jobs_30d,
+     WHERE user_id = ? AND created_at >= ? AND path = 'free'
+       AND kind = 'generation') AS free_jobs_30d,
   (SELECT COUNT(*) FROM usage_events
-     WHERE user_id = ? AND created_at >= ? AND path = 'byo') AS byo_jobs_30d
+     WHERE user_id = ? AND created_at >= ? AND path = 'byo'
+       AND kind = 'generation') AS byo_jobs_30d
 `.replace(/\s+/g, " ");
 
 function parseUserListLimit(raw: string | undefined): number {
@@ -371,9 +373,11 @@ adminRoutes.get("/overview", async (c) => {
         (SELECT COALESCE(SUM(COALESCE(tokens_total, 0)), 0) FROM usage_events
            WHERE created_at >= ?) AS tokens_30d,
         (SELECT COUNT(*) FROM usage_events
-           WHERE created_at >= ? AND path = 'free') AS free_jobs_30d,
+           WHERE created_at >= ? AND path = 'free'
+             AND kind = 'generation') AS free_jobs_30d,
         (SELECT COUNT(*) FROM usage_events
-           WHERE created_at >= ? AND path = 'byo') AS byo_jobs_30d`,
+           WHERE created_at >= ? AND path = 'byo'
+             AND kind = 'generation') AS byo_jobs_30d`,
     )
     .bind(cutoff7, cutoff30, cutoff30, cutoff30)
     .first<{
