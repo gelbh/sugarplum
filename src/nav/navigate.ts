@@ -11,6 +11,28 @@ export function navigate(path: string): void {
   window.dispatchEvent(new PopStateEvent("popstate"));
 }
 
+/** Peer shell tabs: replace so Insights↔Today does not invent a Back target. */
+export function navigateReplace(path: string): void {
+  const next = locationKey(new URL(path, window.location.origin).href);
+  if (locationKey() === next) return;
+  window.history.replaceState({}, "", next);
+  window.dispatchEvent(new PopStateEvent("popstate"));
+}
+
+/**
+ * In-app parent for the mobile Back control. Null on shell roots (Today,
+ * Insights, Library, Settings, Study) even when browser history is longer.
+ */
+export function shellBackHref(pathname: string): string | null {
+  if (/^\/library\/(decks|subjects)\/[^/]+\/?$/.test(pathname)) {
+    return "/library";
+  }
+  if (/^\/jobs\/[^/]+\/drafts\/?$/.test(pathname)) {
+    return "/library";
+  }
+  return null;
+}
+
 export function subscribePath(listener: (path: string) => void): () => void {
   const handler = () => listener(window.location.pathname);
   window.addEventListener("popstate", handler);
@@ -38,9 +60,7 @@ export function isStandaloneDisplay(): boolean {
   );
 }
 
+/** @deprecated Prefer shellBackHref for chrome; history length is not a UX signal. */
 export function canGoBack(): boolean {
-  const nav = (window as Window & { navigation?: { canGoBack?: boolean } })
-    .navigation;
-  if (typeof nav?.canGoBack === "boolean") return nav.canGoBack;
-  return window.history.length > 1;
+  return shellBackHref(window.location.pathname) != null;
 }

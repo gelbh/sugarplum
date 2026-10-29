@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
   type FormEvent,
   type MouseEvent,
@@ -22,6 +23,7 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import {
@@ -69,6 +71,9 @@ export default function LibraryPage() {
   const [deleteSubjectTarget, setDeleteSubjectTarget] =
     useState<Subject | null>(null);
   const [deleteSubjectBusy, setDeleteSubjectBusy] = useState(false);
+  /** Create wizard stays closed once a catalog exists; first-run opens it. */
+  const [showCreateFlow, setShowCreateFlow] = useState(false);
+  const createFlowSeededRef = useRef(false);
   const guest = isGuest();
   const { end: endLoad } = useTrackedOp("Loading library…", {
     trackOnMount: true,
@@ -139,8 +144,22 @@ export default function LibraryPage() {
           } else if (deckList.length > 0) {
             setActiveStep(1);
           }
+          if (!createFlowSeededRef.current) {
+            createFlowSeededRef.current = true;
+            setShowCreateFlow(
+              subjectList.length === 0 ||
+                deckList.length === 0 ||
+                derived.next.action === "create_deck" ||
+                derived.next.action === "add_material",
+            );
+          }
         } catch {
-          /* ignore */
+          if (!cancelled && !createFlowSeededRef.current) {
+            createFlowSeededRef.current = true;
+            setShowCreateFlow(
+              subjectList.length === 0 || deckList.length === 0,
+            );
+          }
         }
       } catch (err) {
         if (cancelled) return;
@@ -256,12 +275,76 @@ export default function LibraryPage() {
               Library
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Organize subjects, then decks. Paste notes or upload PDF, PPTX, or
-              image materials.
+              Pick a subject, or add material to make cards.
             </Typography>
           </Box>
 
           {error ? <Alert severity="error">{error}</Alert> : null}
+
+          {draftJobs.length > 0 ? (
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 2.5,
+                bgcolor: "background.paper",
+                borderColor: "divider",
+              }}
+            >
+              <Typography
+                variant="subtitle1"
+                component="h2"
+                sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+              >
+                Ready to review
+              </Typography>
+              <Stack
+                component="ul"
+                spacing={0}
+                divider={<Divider flexItem />}
+                sx={{ m: 0, p: 0, listStyle: "none" }}
+              >
+                {draftJobs.map((job) => {
+                  const filename = job.filename?.trim() || null;
+                  const label = filename || job.deck_title;
+                  const countLabel =
+                    job.draft_count === 1
+                      ? "1 draft"
+                      : `${job.draft_count} drafts`;
+                  const suffix = filename
+                    ? ` · ${countLabel} · ${job.deck_title}`
+                    : ` · ${countLabel}`;
+                  return (
+                    <Box
+                      component="li"
+                      key={job.id}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        py: 1,
+                      }}
+                    >
+                      <Link
+                        href={`/jobs/${encodeURIComponent(job.id)}/drafts`}
+                        underline="hover"
+                        color="primary"
+                        variant="body2"
+                        sx={{ flex: 1, minWidth: 0 }}
+                      >
+                        {label}
+                        {suffix}
+                      </Link>
+                      <ChevronRightIcon
+                        fontSize="small"
+                        sx={{ color: "text.secondary" }}
+                        aria-hidden
+                      />
+                    </Box>
+                  );
+                })}
+              </Stack>
+            </Paper>
+          ) : null}
 
           <Paper
             variant="outlined"
@@ -276,25 +359,37 @@ export default function LibraryPage() {
               alignItems="center"
               justifyContent="space-between"
               sx={{ mb: 1.5 }}
+              spacing={1}
             >
               <Typography
                 variant="subtitle1"
                 component="h2"
                 sx={{ fontWeight: 600, color: "primary.main" }}
               >
-                Your subjects
+                Subjects
               </Typography>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={openCreateSubject}
-              >
-                Create subject
-              </Button>
+              <Stack direction="row" spacing={1}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={openCreateSubject}
+                >
+                  New subject
+                </Button>
+                {!showCreateFlow ? (
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={() => setShowCreateFlow(true)}
+                  >
+                    Add material
+                  </Button>
+                ) : null}
+              </Stack>
             </Stack>
             {subjects.length === 0 ? (
               <Typography variant="body2" color="text.secondary">
-                No subjects yet. Create one to hold decks.
+                No subjects yet. Create one, then add material.
               </Typography>
             ) : (
               <Stack
@@ -338,7 +433,7 @@ export default function LibraryPage() {
                           outlineOffset: 2,
                         }}
                       >
-                        <Typography variant="body2" noWrap>
+                        <Typography variant="body2" noWrap fontWeight={500}>
                           {s.title}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
@@ -362,6 +457,7 @@ export default function LibraryPage() {
                         size="small"
                         aria-label={`Rename ${s.title}`}
                         onClick={(ev) => openRenameSubject(s, ev)}
+                        sx={{ color: "text.secondary" }}
                       >
                         <EditOutlinedIcon fontSize="small" />
                       </IconButton>
@@ -378,11 +474,17 @@ export default function LibraryPage() {
                             aria-label={`Delete ${s.title}`}
                             disabled={deleteBlocked}
                             onClick={(ev) => requestDeleteSubject(s, ev)}
+                            sx={{ color: "text.secondary" }}
                           >
                             <DeleteOutlineIcon fontSize="small" />
                           </IconButton>
                         </span>
                       </Tooltip>
+                      <ChevronRightIcon
+                        fontSize="small"
+                        sx={{ color: "text.secondary", flexShrink: 0 }}
+                        aria-hidden
+                      />
                     </Box>
                   );
                 })}
@@ -390,7 +492,7 @@ export default function LibraryPage() {
             )}
           </Paper>
 
-          {draftJobs.length > 0 ? (
+          {showCreateFlow ? (
             <Paper
               variant="outlined"
               sx={{
@@ -399,52 +501,45 @@ export default function LibraryPage() {
                 borderColor: "divider",
               }}
             >
-              <Typography
-                variant="subtitle1"
-                component="h2"
-                sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
-              >
-                Draft reviews
-              </Typography>
               <Stack
-                component="ul"
-                spacing={0}
-                divider={<Divider flexItem />}
-                sx={{ m: 0, p: 0, listStyle: "none" }}
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ mb: 1.5 }}
               >
-                {draftJobs.map((job) => {
-                  const filename = job.filename?.trim() || null;
-                  const label = filename || job.deck_title;
-                  const countLabel =
-                    job.draft_count === 1
-                      ? "1 draft"
-                      : `${job.draft_count} drafts`;
-                  const suffix = filename
-                    ? ` · ${countLabel} · ${job.deck_title}`
-                    : ` · ${countLabel}`;
-                  return (
-                    <Typography
-                      component="li"
-                      key={job.id}
-                      variant="body2"
-                      sx={{ py: 1 }}
-                    >
-                      <Link
-                        href={`/jobs/${encodeURIComponent(job.id)}/drafts`}
-                        underline="hover"
-                        color="primary"
-                      >
-                        {label}
-                      </Link>
-                      {suffix}
-                    </Typography>
-                  );
-                })}
+                <Typography
+                  variant="subtitle1"
+                  component="h2"
+                  sx={{ fontWeight: 600, color: "primary.main" }}
+                >
+                  Add material
+                </Typography>
+                {subjects.length > 0 && decks.length > 0 ? (
+                  <Button size="small" onClick={() => setShowCreateFlow(false)}>
+                    Hide
+                  </Button>
+                ) : null}
               </Stack>
+              <CreateMaterialStepper
+                decks={decks}
+                setDecks={setDecks}
+                subjects={subjects}
+                setSubjects={setSubjects}
+                activeStep={activeStep}
+                setActiveStep={setActiveStep}
+                localOnly={guest}
+                onChanged={async () => {
+                  await syncStepperFromJourney();
+                  await refreshDraftJobs();
+                  await refreshMaterials();
+                  await refreshSubjects();
+                  await refreshDecks();
+                }}
+              />
             </Paper>
           ) : null}
 
-          {!guest ? (
+          {!guest && materials.length > 0 ? (
             <Paper
               variant="outlined"
               sx={{
@@ -469,38 +564,6 @@ export default function LibraryPage() {
               />
             </Paper>
           ) : null}
-
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 2.5,
-              bgcolor: "background.paper",
-              borderColor: "divider",
-            }}
-          >
-            <CreateMaterialStepper
-              decks={decks}
-              setDecks={setDecks}
-              subjects={subjects}
-              setSubjects={setSubjects}
-              activeStep={activeStep}
-              setActiveStep={setActiveStep}
-              localOnly={guest}
-              onChanged={async () => {
-                await syncStepperFromJourney();
-                await refreshDraftJobs();
-                await refreshMaterials();
-                await refreshSubjects();
-                await refreshDecks();
-              }}
-            />
-          </Paper>
-
-          <Typography variant="body2">
-            <Link href="/today" underline="hover" color="primary">
-              Back home
-            </Link>
-          </Typography>
         </Stack>
       )}
 

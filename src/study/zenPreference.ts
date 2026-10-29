@@ -1,13 +1,12 @@
 export const ZEN_STORAGE_KEY = "sugarplum.study.zen";
 
-export function loadZenPreference(
-  storage?: Pick<Storage, "getItem">,
-): boolean {
+/** Zen-first: unset defaults on; only explicit "0" opts out for desk chrome. */
+export function loadZenPreference(storage?: Pick<Storage, "getItem">): boolean {
   try {
     const store = storage ?? localStorage;
-    return store.getItem(ZEN_STORAGE_KEY) === "1";
+    return store.getItem(ZEN_STORAGE_KEY) !== "0";
   } catch {
-    return false;
+    return true;
   }
 }
 
