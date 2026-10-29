@@ -219,7 +219,6 @@ export function adminWipeUser(id: string, confirmEmail: string) {
   );
 }
 
-/** Fetch admin user export JSON and trigger a browser download. */
 export async function adminExportUser(id: string) {
   const res = await fetch(
     `/api/admin/users/${encodeURIComponent(id)}/export`,
