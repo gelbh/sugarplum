@@ -160,6 +160,22 @@ export default function AdminPage() {
                 label={`New (7d): ${overview.createdLast7d}`}
                 variant="outlined"
               />
+              <Chip
+                label={`Tokens (all): ${overview.tokensAllTime ?? 0}`}
+                variant="outlined"
+              />
+              <Chip
+                label={`Tokens (30d): ${overview.tokens30d ?? 0}`}
+                variant="outlined"
+              />
+              <Chip
+                label={`Free jobs (30d): ${overview.freeJobs30d ?? 0}`}
+                variant="outlined"
+              />
+              <Chip
+                label={`BYO jobs (30d): ${overview.byoJobs30d ?? 0}`}
+                variant="outlined"
+              />
             </Stack>
           ) : null}
 
@@ -184,12 +200,13 @@ export default function AdminPage() {
                       <TableCell align="right">Decks</TableCell>
                       <TableCell align="right">Cards</TableCell>
                       <TableCell align="right">Jobs</TableCell>
+                      <TableCell align="right">Tokens (30d)</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {users.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} align="center">
+                        <TableCell colSpan={7} align="center">
                           <Typography
                             variant="body2"
                             color="text.secondary"
@@ -219,6 +236,9 @@ export default function AdminPage() {
                           <TableCell align="right">{user.deckCount}</TableCell>
                           <TableCell align="right">{user.cardCount}</TableCell>
                           <TableCell align="right">{user.jobCount}</TableCell>
+                          <TableCell align="right">
+                            {user.tokens30d ?? 0}
+                          </TableCell>
                         </TableRow>
                       ))
                     )}

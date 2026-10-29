@@ -47,6 +47,7 @@ import { filterDraftsByQuality } from "./quality";
 import { harvestRuleDrafts } from "./rules";
 import { assertValidMcqOptions, type CardDraft } from "./schema";
 import { parseTopicHintsJson } from "./topic-hints";
+import { recordGenerationUsageEventForJob } from "./usage";
 import { createWorkersAiAdapter } from "./workers-ai";
 
 /** ponytail: 240s ceiling for Fly wake + model load; raise if cold starts exceed client 10m poll. */
@@ -306,6 +307,7 @@ async function markJobFailed(
     )
     .bind("failed", error, finishedAt, jobId)
     .run();
+  await recordGenerationUsageEventForJob(db, jobId);
 }
 
 async function extractMaterialText(
@@ -1021,6 +1023,7 @@ export async function processGenerateJob(
       )
       .bind("needs_review", coverageJson, finishedAt, jobId)
       .run();
+    await recordGenerationUsageEventForJob(db, jobId);
     return "done";
   } catch (err) {
     // Leave last progress_json; only mark status failed.
