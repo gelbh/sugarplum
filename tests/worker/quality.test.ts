@@ -179,6 +179,7 @@ describe("filterDraftsByQuality", () => {
         "What is the significance of Trichomonas in free-range flocks?",
         "Especially in free-range flocks.",
       ),
+      qa("Free-range flocks", "Especially in free-range flocks."),
     ];
     expect(filterDraftsByQuality([...residual, mito, atp, cloze])).toEqual([
       mito,

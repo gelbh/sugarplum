@@ -149,10 +149,16 @@ function normalizeContainment(text: string): string {
  * restatements. Keeps either/or short answers that appear in the stem.
  */
 function isTautologicalQa(front: string, back: string): boolean {
-  if (!front.includes("?")) return false;
   const nf = normalizeContainment(front);
   const rawNb = normalizeContainment(back);
   if (rawNb.length < 6) return false;
+
+  // Glossary / non-question host-echo: back restates the term (no new fact).
+  if (!front.includes("?") && isGlossaryShaped(front) && nf.length >= 6) {
+    if (rawNb.includes(nf)) return true;
+  }
+
+  if (!front.includes("?")) return false;
   const hadLead = TAUTOLOGY_BACK_LEAD_RE.test(rawNb);
   const nb = rawNb.replace(TAUTOLOGY_BACK_LEAD_RE, "").trim();
   if (nb.length < 6 || !nf.includes(nb)) return false;
