@@ -18,7 +18,6 @@ import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import TodayIcon from "@mui/icons-material/Today";
 import CardFace, { type OcclusionStudyFace } from "../components/CardFace";
 import GradeButtons from "../components/GradeButtons";
-import McqFace from "../components/McqFace";
 import {
   ApiError,
   listDecks,
@@ -807,30 +806,24 @@ export default function StudyPage() {
                   overflow: "hidden",
                 }}
               >
-                {mcqMode ? (
-                  <McqFace
-                    cardId={current.id}
-                    front={studyFrontText(current)}
-                    back={occlusionParts.answer}
-                    options={current.options}
-                    disabled={busy}
-                    onGrade={(rating) => onGrade(rating, true)}
-                  />
-                ) : (
-                  <CardFace
-                    front={studyFrontText(current)}
-                    back={occlusionParts.answer}
-                    type={current.type}
-                    mediaR2Keys={current.media_r2_keys}
-                    occlusion={occlusionParts.face}
-                    revealed={revealed}
-                    onReveal={reveal}
-                    onFlipBack={flipBack}
-                    disabled={busy}
-                    answerFocusRef={answerFocusRef}
-                    showAnswerRef={showAnswerRef}
-                  />
-                )}
+                <CardFace
+                  cardId={current.id}
+                  front={studyFrontText(current)}
+                  back={occlusionParts.answer}
+                  type={current.type}
+                  mediaR2Keys={current.media_r2_keys}
+                  occlusion={occlusionParts.face}
+                  options={current.options}
+                  revealed={revealed}
+                  onReveal={reveal}
+                  onFlipBack={flipBack}
+                  disabled={busy}
+                  answerFocusRef={answerFocusRef}
+                  showAnswerRef={showAnswerRef}
+                  onGrade={
+                    mcqMode ? (rating) => onGrade(rating, true) : undefined
+                  }
+                />
               </Box>
 
               {mcqMode ? (

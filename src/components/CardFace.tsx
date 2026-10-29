@@ -3,12 +3,13 @@ import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import type { MouseEvent, Ref } from "react";
-import { mediaUrl } from "../api/client";
+import { mediaUrl, type StudyRating } from "../api/client";
 import {
   blankClozeFront,
   clozeExtraSubtitle,
   extractClozeAnswer,
 } from "../lib/clozeFormat";
+import { CardFaceMcqBody } from "./cardFaceMcq";
 import { CARD_COLUMN_SX, FACE_SANS, FACE_SX, OVERLINE_SX } from "./studyFaceSx";
 
 /** Normalized 0–1 hide_one box over the study image until reveal. */
@@ -40,6 +41,10 @@ type Props = {
   answerFocusRef?: Ref<HTMLElement | null>;
   /** Focus target for Show answer after grading / flip-back. */
   showAnswerRef?: Ref<HTMLButtonElement | null>;
+  /** Required when `type === "mcq"`. */
+  cardId?: string;
+  options?: string[];
+  onGrade?: (rating: StudyRating) => boolean | Promise<boolean>;
 };
 
 const FACE_BODY_SX = {
@@ -214,14 +219,18 @@ export default function CardFace({
   occlusion,
   answerFocusRef,
   showAnswerRef,
+  cardId,
+  options,
+  onGrade,
 }: Props) {
+  const isMcq = type === "mcq";
   const isCloze = type === "cloze";
   const questionFront = isCloze ? blankClozeFront(front) : front;
   const clozeExtra = isCloze ? clozeExtraSubtitle(back) : null;
   const answerText = isCloze ? (extractClozeAnswer(front) ?? "") : back;
   const imageKey = occlusion?.imageKey ?? mediaR2Keys[0];
-  const canReveal = !revealed && !disabled;
-  const canFlipBack = revealed && !disabled;
+  const canReveal = !isMcq && !revealed && !disabled;
+  const canFlipBack = !isMcq && revealed && !disabled;
 
   const reveal = () => {
     if (!canReveal) return;
@@ -247,7 +256,7 @@ export default function CardFace({
     <Box
       sx={{
         ...CARD_COLUMN_SX,
-        perspective: "1000px",
+        perspective: isMcq ? undefined : "1000px",
         maxHeight: "100%",
         height: "100%",
         display: "flex",
@@ -257,7 +266,15 @@ export default function CardFace({
     >
       <Box
         className="sp-playing-card"
-        onClick={canReveal ? reveal : canFlipBack ? flipBack : undefined}
+        onClick={
+          isMcq
+            ? undefined
+            : canReveal
+              ? reveal
+              : canFlipBack
+                ? flipBack
+                : undefined
+        }
         sx={{
           position: "relative",
           width: "auto",
@@ -267,18 +284,42 @@ export default function CardFace({
           aspectRatio: "var(--sp-card-aspect)",
           borderRadius: 2,
           bgcolor: "transparent",
-          transformStyle: "preserve-3d",
-          transition: "transform 0.45s ease",
-          transform: revealed ? "rotateY(180deg)" : "rotateY(0deg)",
-          cursor: canReveal || canFlipBack ? "pointer" : "default",
-          "@media (prefers-reduced-motion: reduce)": {
-            transform: "none",
-            transition: "none",
-            minHeight: 280,
-            maxHeight: "100%",
-          },
+          transformStyle: isMcq ? undefined : "preserve-3d",
+          transition: isMcq ? undefined : "transform 0.45s ease",
+          transform: isMcq
+            ? "none"
+            : revealed
+              ? "rotateY(180deg)"
+              : "rotateY(0deg)",
+          cursor: isMcq
+            ? "default"
+            : canReveal || canFlipBack
+              ? "pointer"
+              : "default",
+          ...(!isMcq
+            ? {
+                "@media (prefers-reduced-motion: reduce)": {
+                  transform: "none",
+                  transition: "none",
+                  minHeight: 280,
+                  maxHeight: "100%",
+                },
+              }
+            : {}),
         }}
       >
+        {isMcq && cardId && onGrade ? (
+          <CardFaceMcqBody
+            cardId={cardId}
+            front={front}
+            back={back}
+            options={options}
+            disabled={disabled}
+            onGrade={onGrade}
+          />
+        ) : null}
+        {!isMcq ? (
+          <>
         <Paper
           elevation={0}
           aria-hidden={revealed}
@@ -428,6 +469,8 @@ export default function CardFace({
             ) : null}
           </Box>
         </Paper>
+          </>
+        ) : null}
       </Box>
     </Box>
   );
