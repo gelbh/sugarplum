@@ -2,6 +2,7 @@ import type { Context } from "hono";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
+import { getDb } from "../db/client";
 
 export const SESSION_COOKIE = "sp_session";
 /** 30 days in seconds */
@@ -95,6 +96,15 @@ export async function requireUser(c: AuthContext): Promise<string> {
   ) {
     await c.env.SESSIONS.delete(id);
     deleteCookie(c, SESSION_COOKIE, sessionCookieAttrs(c));
+    throw new HTTPException(401, { message: "Unauthorized" });
+  }
+
+  const user = await getDb(c.env)
+    .prepare("SELECT disabled_at FROM users WHERE id = ?")
+    .bind(record.userId)
+    .first<{ disabled_at: string | null }>();
+  if (!user || user.disabled_at != null) {
+    await destroySession(c);
     throw new HTTPException(401, { message: "Unauthorized" });
   }
 

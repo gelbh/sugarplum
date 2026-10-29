@@ -142,6 +142,9 @@ export default function AdminPage() {
             >
               Admin
             </Typography>
+            <Typography variant="body2" color="text.secondary">
+              No automatic deletion; wipe inactive accounts manually.
+            </Typography>
           </Box>
 
           {forbidden ? (
