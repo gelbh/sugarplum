@@ -96,6 +96,7 @@ export default function McqFace({
           sx={{
             overflowX: "hidden",
             overflowY: "auto",
+            overscrollBehavior: "contain",
             flex: 1,
             minHeight: 0,
             display: "flex",
