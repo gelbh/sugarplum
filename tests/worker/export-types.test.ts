@@ -27,10 +27,35 @@ describe("CreateExportBodySchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("parses subject and selection on ExportScopeSchema", () => {
+    expect(
+      ExportScopeSchema.safeParse({
+        type: "subject",
+        subjectId: "sub-1",
+      }).success,
+    ).toBe(true);
+    expect(
+      ExportScopeSchema.safeParse({
+        type: "selection",
+        deckIds: ["d1"],
+        subjectIds: [],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepts subject create body", () => {
+    expect(
+      CreateExportBodySchema.safeParse({
+        type: "subject",
+        subjectId: "sub-1",
+      }).success,
+    ).toBe(true);
+  });
+
   it("rejects unknown scope type", () => {
     const result = ExportScopeSchema.safeParse({
-      type: "subject",
-      subjectId: "sub-1",
+      type: "library",
+      ids: ["x"],
     });
     expect(result.success).toBe(false);
   });

@@ -15,13 +15,23 @@ describe("sanitizeAnkiDeckComponent", () => {
 });
 
 describe("ankiDeckName", () => {
-  it("formats Sugarplum hierarchy with subject and deck titles", () => {
-    expect(ankiDeckName("Anatomy", "CN V")).toBe("Sugarplum::Anatomy::CN V");
+  it("formats Sugarplum hierarchy with a short deck id suffix", () => {
+    expect(ankiDeckName("Anatomy", "CN V", "deck-abc-123")).toBe(
+      "Sugarplum::Anatomy::CN V (deck-abc)",
+    );
   });
 
   it("sanitizes colons in subject and deck components", () => {
-    expect(ankiDeckName("Med:School", "Unit:1")).toBe(
-      "Sugarplum::Med-School::Unit-1",
+    expect(ankiDeckName("Med:School", "Unit:1", "uuid-0001")).toBe(
+      "Sugarplum::Med-School::Unit-1 (uuid-000)",
     );
+  });
+
+  it("keeps same-titled decks distinct via id suffix", () => {
+    const a = ankiDeckName("Anatomy", "Bones", "deck-aaaa-1111");
+    const b = ankiDeckName("Anatomy", "Bones", "deck-bbbb-2222");
+    expect(a).not.toBe(b);
+    expect(a).toContain("(deck-aaa)");
+    expect(b).toContain("(deck-bbb)");
   });
 });

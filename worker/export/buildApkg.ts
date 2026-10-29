@@ -6,6 +6,8 @@ import type { AnkiNoteSpec } from "./notes";
 const DEFAULT_ANKI_EASE_FACTOR = 2500;
 
 type ApkgEntry = {
+  /** Anki deck path; falls back to top-level `deckName` when omitted. */
+  deckName?: string;
   note: AnkiNoteSpec;
   schedule: AnkiFsrsFields | null;
   media: Array<{ name: string; data: Uint8Array }>;
@@ -210,17 +212,20 @@ export function ankiFsrsCardData(schedule: AnkiFsrsFields): string {
 }
 
 export async function buildApkg(args: {
-  deckName: string;
+  /** Default Anki deck name when an entry omits `deckName` (P1 single-deck). */
+  deckName?: string;
   entries: ApkgEntry[];
 }): Promise<Uint8Array> {
   const db = await openExportDb();
   const now = Math.floor(Date.now() / 1000);
-  const deckId = now * 1000;
+  const idRoot = now * 1000;
+  // Models occupy idRoot+1..3; decks start at idRoot+100 to avoid collisions.
   const modelIds = {
-    basic: deckId + 1,
-    cloze: deckId + 2,
-    sugarplum_mcq: deckId + 3,
+    basic: idRoot + 1,
+    cloze: idRoot + 2,
+    sugarplum_mcq: idRoot + 3,
   } as const;
+  const firstDeckId = idRoot + 100;
   const models = {
     basic: modelDefinition(modelIds.basic, "basic"),
     cloze: modelDefinition(modelIds.cloze, "cloze"),
@@ -265,7 +270,17 @@ export async function buildApkg(args: {
     );
   `);
 
-  const decks = {
+  const deckIdByName = new Map<string, number>();
+  for (const entry of args.entries) {
+    const name = entry.deckName ?? args.deckName;
+    if (!name) {
+      throw new Error("deckName required on buildApkg args or each entry");
+    }
+    if (!deckIdByName.has(name)) {
+      deckIdByName.set(name, firstDeckId + deckIdByName.size);
+    }
+  }
+  const decks: Record<string, Record<string, unknown>> = {
     1: {
       id: 1,
       name: "Default",
@@ -275,16 +290,18 @@ export async function buildApkg(args: {
       extendNew: 10,
       extendRev: 50,
     },
-    [deckId]: {
-      id: deckId,
-      name: args.deckName,
+  };
+  for (const [name, id] of deckIdByName) {
+    decks[String(id)] = {
+      id,
+      name,
       desc: "",
       dyn: 0,
       conf: 1,
       extendNew: 10,
       extendRev: 50,
-    },
-  };
+    };
+  }
   const dconf = {
     1: {
       id: 1,
@@ -337,6 +354,14 @@ export async function buildApkg(args: {
   for (const [index, entry] of args.entries.entries()) {
     const nid = now * 1_000_000 + index + 1;
     const cid = nid;
+    const deckName = entry.deckName ?? args.deckName;
+    if (!deckName) {
+      throw new Error("deckName required on buildApkg args or each entry");
+    }
+    const deckId = deckIdByName.get(deckName);
+    if (deckId == null) {
+      throw new Error(`Missing Anki deck id for ${deckName}`);
+    }
     const model = models[entry.note.model];
     const fields = fieldsForNote(entry.note);
     if (entry.note.model === "basic" && entry.media.length > 0) {
