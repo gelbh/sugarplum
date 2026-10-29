@@ -2,13 +2,14 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-import type { MouseEvent, Ref } from "react";
-import { mediaUrl } from "../api/client";
+import type { MouseEvent, ReactNode, Ref } from "react";
+import { mediaUrl, type StudyRating } from "../api/client";
 import {
   blankClozeFront,
   clozeExtraSubtitle,
   extractClozeAnswer,
 } from "../lib/clozeFormat";
+import { CardFaceMcqBody } from "./cardFaceMcq";
 import { CARD_COLUMN_SX, FACE_SANS, FACE_SX, OVERLINE_SX } from "./studyFaceSx";
 
 /** Normalized 0–1 hide_one box over the study image until reveal. */
@@ -40,6 +41,10 @@ type Props = {
   answerFocusRef?: Ref<HTMLElement | null>;
   /** Focus target for Show answer after grading / flip-back. */
   showAnswerRef?: Ref<HTMLButtonElement | null>;
+  /** Required when `type === "mcq"`. */
+  cardId?: string;
+  options?: string[];
+  onGrade?: (rating: StudyRating) => boolean | Promise<boolean>;
 };
 
 const FACE_BODY_SX = {
@@ -99,6 +104,51 @@ function FaceOverline({ label }: { label: string }) {
       <Typography component="div" sx={OVERLINE_SX}>
         {label}
       </Typography>
+    </Box>
+  );
+}
+
+/** Shared host + playing-card plate (MCQ and flip faces). */
+function StudyCardPlate({
+  children,
+  perspective,
+  onPlateClick,
+  plateSx,
+}: {
+  children: ReactNode;
+  perspective?: string;
+  onPlateClick?: () => void;
+  plateSx?: Record<string, unknown>;
+}) {
+  return (
+    <Box
+      sx={{
+        ...CARD_COLUMN_SX,
+        perspective,
+        maxHeight: "100%",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Box
+        className="sp-playing-card"
+        onClick={onPlateClick}
+        sx={{
+          position: "relative",
+          width: "auto",
+          maxWidth: "min(100%, 360px)",
+          maxHeight: "100%",
+          height: "min(100%, 504px)",
+          aspectRatio: "var(--sp-card-aspect)",
+          borderRadius: 2,
+          bgcolor: "transparent",
+          ...plateSx,
+        }}
+      >
+        {children}
+      </Box>
     </Box>
   );
 }
@@ -214,7 +264,26 @@ export default function CardFace({
   occlusion,
   answerFocusRef,
   showAnswerRef,
+  cardId,
+  options,
+  onGrade,
 }: Props) {
+  if (type === "mcq") {
+    if (!cardId || !onGrade) return null;
+    return (
+      <StudyCardPlate>
+        <CardFaceMcqBody
+          cardId={cardId}
+          front={front}
+          back={back}
+          options={options}
+          disabled={disabled}
+          onGrade={onGrade}
+        />
+      </StudyCardPlate>
+    );
+  }
+
   const isCloze = type === "cloze";
   const questionFront = isCloze ? blankClozeFront(front) : front;
   const clozeExtra = isCloze ? clozeExtraSubtitle(back) : null;
@@ -244,41 +313,22 @@ export default function CardFace({
   };
 
   return (
-    <Box
-      sx={{
-        ...CARD_COLUMN_SX,
-        perspective: "1000px",
-        maxHeight: "100%",
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+    <StudyCardPlate
+      perspective="1000px"
+      onPlateClick={canReveal ? reveal : canFlipBack ? flipBack : undefined}
+      plateSx={{
+        transformStyle: "preserve-3d",
+        transition: "transform 0.45s ease",
+        transform: revealed ? "rotateY(180deg)" : "rotateY(0deg)",
+        cursor: canReveal || canFlipBack ? "pointer" : "default",
+        "@media (prefers-reduced-motion: reduce)": {
+          transform: "none",
+          transition: "none",
+          minHeight: 280,
+          maxHeight: "100%",
+        },
       }}
     >
-      <Box
-        className="sp-playing-card"
-        onClick={canReveal ? reveal : canFlipBack ? flipBack : undefined}
-        sx={{
-          position: "relative",
-          width: "auto",
-          maxWidth: "min(100%, 360px)",
-          maxHeight: "100%",
-          height: "min(100%, 504px)",
-          aspectRatio: "var(--sp-card-aspect)",
-          borderRadius: 2,
-          bgcolor: "transparent",
-          transformStyle: "preserve-3d",
-          transition: "transform 0.45s ease",
-          transform: revealed ? "rotateY(180deg)" : "rotateY(0deg)",
-          cursor: canReveal || canFlipBack ? "pointer" : "default",
-          "@media (prefers-reduced-motion: reduce)": {
-            transform: "none",
-            transition: "none",
-            minHeight: 280,
-            maxHeight: "100%",
-          },
-        }}
-      >
         <Paper
           elevation={0}
           aria-hidden={revealed}
@@ -428,7 +478,6 @@ export default function CardFace({
             ) : null}
           </Box>
         </Paper>
-      </Box>
-    </Box>
+    </StudyCardPlate>
   );
 }
