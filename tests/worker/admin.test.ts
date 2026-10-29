@@ -557,3 +557,324 @@ describe("disabled_at auth enforcement", () => {
     expect(alice?.disabled_at).toBeNull();
   });
 });
+
+const adminHeaders = {
+  cookie: `${SESSION_COOKIE}=s-admin`,
+  "content-type": "application/json",
+};
+
+describe("POST /api/admin/users/:id/disable", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-29T12:00:00.000Z"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("400 when target email is allowlisted", async () => {
+    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    seedAdminMonitorFixture(env);
+    const res = await app.request(
+      "/api/admin/users/admin-u/disable",
+      { method: "POST", headers: adminHeaders },
+      env,
+    );
+    expect(res.status).toBe(400);
+    const detail = await app.request(
+      "/api/admin/users/admin-u",
+      { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
+      env,
+    );
+    const body = (await detail.json()) as { disabled_at: string | null };
+    expect(body.disabled_at).toBeNull();
+  });
+
+  it("sets disabled_at for non-allowlisted user", async () => {
+    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    seedAdminMonitorFixture(env);
+    const res = await app.request(
+      "/api/admin/users/u-alice/disable",
+      { method: "POST", headers: adminHeaders },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const detail = await app.request(
+      "/api/admin/users/u-alice",
+      { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
+      env,
+    );
+    const body = (await detail.json()) as { disabled_at: string | null };
+    expect(body.disabled_at).toBe("2026-10-29T12:00:00.000Z");
+  });
+
+  it("404 when user missing", async () => {
+    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    seedAdminMonitorFixture(env);
+    const res = await app.request(
+      "/api/admin/users/missing/disable",
+      { method: "POST", headers: adminHeaders },
+      env,
+    );
+    expect(res.status).toBe(404);
+  });
+});
+
+describe("POST /api/admin/users/:id/enable", () => {
+  it("clears disabled_at", async () => {
+    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    seedAdminMonitorFixture(env);
+    env.seedUser({
+      id: "u-alice",
+      email: "alice@example.com",
+      password_hash: null,
+      oauth_subject: "google-alice",
+      created_at: "2026-10-28T00:00:00.000Z",
+      disabled_at: "2026-10-29T10:00:00.000Z",
+    });
+    const res = await app.request(
+      "/api/admin/users/u-alice/enable",
+      { method: "POST", headers: adminHeaders },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const detail = await app.request(
+      "/api/admin/users/u-alice",
+      { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
+      env,
+    );
+    const body = (await detail.json()) as { disabled_at: string | null };
+    expect(body.disabled_at).toBeNull();
+  });
+});
+
+describe("POST /api/admin/users/:id/wipe", () => {
+  function seedWipeTarget(env: ReturnType<typeof createTestEnv>) {
+    seedAdminMonitorFixture(env);
+    env.seedMaterial({
+      id: "mat-alice",
+      deck_id: "deck-alice",
+      kind: "paste",
+      r2_key: "materials/deck-alice/mat-alice.txt",
+      filename: "notes.txt",
+      page_count: null,
+      status: "ready",
+      created_at: "2026-10-28T01:00:00.000Z",
+    });
+    env.seedCard({
+      id: "card-a1",
+      deck_id: "deck-alice",
+      job_id: "job-alice",
+      type: "qa",
+      front_json: '{"q":"front"}',
+      back_json: '{"a":"back"}',
+      media_r2_keys_json: '["materials/deck-alice/fig-1.png"]',
+      provenance_json: null,
+      status: "accepted",
+      created_at: "2026-10-28T02:10:00.000Z",
+      updated_at: "2026-10-28T02:10:00.000Z",
+    });
+    env.seedExportJob({
+      id: "export-alice",
+      user_id: "u-alice",
+      status: "ready",
+      request_json: "{}",
+      r2_key: "exports/u-alice/export-alice.apkg",
+      error: null,
+      warning_json: null,
+      created_at: "2026-10-28T03:00:00.000Z",
+      updated_at: "2026-10-28T03:00:00.000Z",
+      expires_at: "2026-10-30T03:00:00.000Z",
+    });
+    env.seedUserSecret({
+      user_id: "u-alice",
+      provider: "openai",
+      ciphertext: "secret-cipher",
+      created_at: "2026-10-28T00:00:00.000Z",
+      updated_at: "2026-10-28T00:00:00.000Z",
+    });
+    env.seedR2("materials/deck-alice/mat-alice.txt", "paste body");
+    env.seedR2("materials/deck-alice/fig-1.png", "png-bytes");
+    env.seedR2("exports/u-alice/export-alice.apkg", "apkg-bytes");
+  }
+
+  it("400 when confirmEmail mismatches; user remains", async () => {
+    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    seedWipeTarget(env);
+    const res = await app.request(
+      "/api/admin/users/u-alice/wipe",
+      {
+        method: "POST",
+        headers: adminHeaders,
+        body: JSON.stringify({ confirmEmail: "wrong@example.com" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(400);
+    const detail = await app.request(
+      "/api/admin/users/u-alice",
+      { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
+      env,
+    );
+    expect(detail.status).toBe(200);
+    expect(env.getCards().some((c) => c.deck_id === "deck-alice")).toBe(true);
+    expect(env.getR2Keys()).toContain("materials/deck-alice/mat-alice.txt");
+  });
+
+  it("400 when wipe target is allowlisted", async () => {
+    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    seedAdminMonitorFixture(env);
+    const res = await app.request(
+      "/api/admin/users/admin-u/wipe",
+      {
+        method: "POST",
+        headers: adminHeaders,
+        body: JSON.stringify({ confirmEmail: "ops@example.com" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("deletes user CASCADE and best-effort R2 keys on confirm", async () => {
+    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    seedWipeTarget(env);
+    const res = await app.request(
+      "/api/admin/users/u-alice/wipe",
+      {
+        method: "POST",
+        headers: adminHeaders,
+        body: JSON.stringify({ confirmEmail: "ALICE@example.com" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const detail = await app.request(
+      "/api/admin/users/u-alice",
+      { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
+      env,
+    );
+    expect(detail.status).toBe(404);
+    expect(env.getCards().some((c) => c.deck_id === "deck-alice")).toBe(false);
+    expect(env.getMaterials().some((m) => m.deck_id === "deck-alice")).toBe(
+      false,
+    );
+    expect(env.getUserSecrets().some((s) => s.user_id === "u-alice")).toBe(
+      false,
+    );
+    expect(env.getExportJobs().some((j) => j.user_id === "u-alice")).toBe(
+      false,
+    );
+    expect(env.getR2Keys()).not.toContain("materials/deck-alice/mat-alice.txt");
+    expect(env.getR2Keys()).not.toContain("materials/deck-alice/fig-1.png");
+    expect(env.getR2Keys()).not.toContain("exports/u-alice/export-alice.apkg");
+    expect(env.getR2Keys()).toEqual([]);
+  });
+});
+
+describe("GET /api/admin/users/:id/export", () => {
+  it("includes card fronts and material text; omits secrets and password_hash", async () => {
+    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    seedAdminMonitorFixture(env);
+    env.seedUser({
+      id: "u-alice",
+      email: "alice@example.com",
+      password_hash: "should-never-export",
+      oauth_subject: "google-alice",
+      created_at: "2026-10-28T00:00:00.000Z",
+    });
+    env.seedUserSecret({
+      user_id: "u-alice",
+      provider: "openai",
+      ciphertext: "secret-cipher",
+      created_at: "2026-10-28T00:00:00.000Z",
+      updated_at: "2026-10-28T00:00:00.000Z",
+    });
+    env.seedMaterial({
+      id: "mat-alice",
+      deck_id: "deck-alice",
+      kind: "paste",
+      r2_key: "materials/deck-alice/mat-alice.txt",
+      filename: "notes.txt",
+      page_count: null,
+      status: "ready",
+      created_at: "2026-10-28T01:00:00.000Z",
+    });
+    env.seedMaterial({
+      id: "mat-pdf",
+      deck_id: "deck-alice",
+      kind: "pdf",
+      r2_key: "materials/deck-alice/mat-pdf.pdf",
+      filename: "slides.pdf",
+      page_count: 2,
+      status: "ready",
+      created_at: "2026-10-28T01:05:00.000Z",
+    });
+    env.seedCard({
+      id: "card-a1",
+      deck_id: "deck-alice",
+      job_id: "job-alice",
+      type: "qa",
+      front_json: '{"q":"What is X?"}',
+      back_json: '{"a":"Y"}',
+      media_r2_keys_json: null,
+      provenance_json: '{"src":1}',
+      status: "accepted",
+      created_at: "2026-10-28T02:10:00.000Z",
+      updated_at: "2026-10-28T02:10:00.000Z",
+    });
+    env.seedR2("materials/deck-alice/mat-alice.txt", "hello paste body");
+    env.seedR2("materials/deck-alice/mat-pdf.pdf", "%PDF-binary");
+
+    const res = await app.request(
+      "/api/admin/users/u-alice/export",
+      { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const raw = await res.text();
+    expect(raw).not.toContain("should-never-export");
+    expect(raw).not.toContain("secret-cipher");
+    expect(raw).not.toContain("password_hash");
+    expect(raw).not.toContain("user_secrets");
+    const body = JSON.parse(raw) as {
+      user: { id: string; email: string };
+      cards: { id: string; front_json: string; back_json: string }[];
+      materials: {
+        id: string;
+        kind: string;
+        text?: string;
+        r2_key?: string;
+        filename?: string | null;
+      }[];
+    };
+    expect(body.user).toMatchObject({
+      id: "u-alice",
+      email: "alice@example.com",
+    });
+    expect(body.cards.some((c) => c.front_json === '{"q":"What is X?"}')).toBe(
+      true,
+    );
+    const paste = body.materials.find((m) => m.id === "mat-alice");
+    expect(paste?.text).toBe("hello paste body");
+    const pdf = body.materials.find((m) => m.id === "mat-pdf");
+    expect(pdf).toMatchObject({
+      kind: "pdf",
+      r2_key: "materials/deck-alice/mat-pdf.pdf",
+      filename: "slides.pdf",
+    });
+    expect(pdf).not.toHaveProperty("text");
+    expect(Object.keys(body.user)).not.toContain("password_hash");
+  });
+
+  it("404 when user missing", async () => {
+    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    seedAdminMonitorFixture(env);
+    const res = await app.request(
+      "/api/admin/users/missing/export",
+      { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
+      env,
+    );
+    expect(res.status).toBe(404);
+  });
+});
