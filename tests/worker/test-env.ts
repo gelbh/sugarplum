@@ -88,6 +88,19 @@ type UserStudyDayRow = {
   intros_used: number;
 };
 
+type UsageEventRow = {
+  id: string;
+  user_id: string;
+  job_id: string | null;
+  kind: string;
+  path: string | null;
+  provider: string | null;
+  tokens_prompt: number | null;
+  tokens_completion: number | null;
+  tokens_total: number | null;
+  created_at: string;
+};
+
 export type CardRow = {
   id: string;
   deck_id: string;
@@ -155,6 +168,7 @@ export type TestEnv = Env & {
   seedUserStudyDay: (row: UserStudyDayRow) => void;
   seedCard: (row: CardRow) => void;
   seedGenerationJob: (row: GenerationJobRow) => void;
+  seedUsageEvent: (row: UsageEventRow) => void;
   seedExportJob: (row: ExportJobRow) => void;
   seedSchedule: (row: ScheduleRow) => void;
   seedReviewLog: (row: ReviewLogRow) => void;
@@ -184,6 +198,7 @@ export function createTestEnv(opts?: {
   const decks = new Map<string, DeckRow>();
   const materials = new Map<string, MaterialRow>();
   const generationJobs = new Map<string, GenerationJobRow>();
+  const usageEvents = new Map<string, UsageEventRow>();
   const userSecrets = new Map<string, UserSecretRow>();
   const userStudyPrefs = new Map<string, UserStudyPrefsRow>();
   const userStudyDay = new Map<string, UserStudyDayRow>();
@@ -819,16 +834,83 @@ export function createTestEnv(opts?: {
           normalized.includes("created_last_7d") &&
           normalized.includes("FROM users")
         ) {
-          const cutoff =
+          const cutoff7 =
             (bound[0] as string | undefined) ??
             new Date(Date.now() - 7 * 864e5).toISOString();
+          const cutoff30 =
+            (bound[1] as string | undefined) ??
+            new Date(Date.now() - 30 * 864e5).toISOString();
           const allUsers = [...users.values()];
           const createdLast7d = allUsers.filter(
-            (u) => u.created_at >= cutoff,
+            (u) => u.created_at >= cutoff7,
           ).length;
+          const events = [...usageEvents.values()];
+          const tokens_all_time = events.reduce(
+            (sum, e) => sum + (e.tokens_total ?? 0),
+            0,
+          );
+          const recent = events.filter((e) => e.created_at >= cutoff30);
+          const tokens_30d = recent.reduce(
+            (sum, e) => sum + (e.tokens_total ?? 0),
+            0,
+          );
+          const free_jobs_30d = recent.filter((e) => e.path === "free").length;
+          const byo_jobs_30d = recent.filter((e) => e.path === "byo").length;
           return {
             user_count: allUsers.length,
             created_last_7d: createdLast7d,
+            tokens_all_time,
+            tokens_30d,
+            free_jobs_30d,
+            byo_jobs_30d,
+          } as T;
+        }
+        if (
+          normalized.includes("AS tokens_all_time") &&
+          normalized.includes("FROM usage_events WHERE user_id")
+        ) {
+          const userId = bound[0] as string;
+          const cutoff30 = bound[2] as string;
+          const events = [...usageEvents.values()].filter(
+            (e) => e.user_id === userId,
+          );
+          const recent = events.filter((e) => e.created_at >= cutoff30);
+          return {
+            tokens_all_time: events.reduce(
+              (sum, e) => sum + (e.tokens_total ?? 0),
+              0,
+            ),
+            tokens_30d: recent.reduce(
+              (sum, e) => sum + (e.tokens_total ?? 0),
+              0,
+            ),
+            free_jobs_30d: recent.filter((e) => e.path === "free").length,
+            byo_jobs_30d: recent.filter((e) => e.path === "byo").length,
+          } as T;
+        }
+        if (
+          normalized.startsWith("SELECT id FROM usage_events WHERE job_id =")
+        ) {
+          const jobId = bound[0] as string;
+          const hit = [...usageEvents.values()].find((e) => e.job_id === jobId);
+          return (hit ? { id: hit.id } : null) as T;
+        }
+        if (
+          normalized.includes("progress_json AS progress_json") &&
+          normalized.includes("d.user_id AS user_id") &&
+          normalized.includes("FROM generation_jobs j") &&
+          normalized.includes("WHERE j.id =")
+        ) {
+          const jobId = bound[0] as string;
+          const job = generationJobs.get(jobId);
+          if (!job) return null;
+          const material = materials.get(job.material_id);
+          if (!material) return null;
+          const deck = decks.get(material.deck_id);
+          if (!deck) return null;
+          return {
+            progress_json: job.progress_json,
+            user_id: deck.user_id,
           } as T;
         }
         if (
@@ -872,13 +954,13 @@ export function createTestEnv(opts?: {
       },
       async all<T>(): Promise<{ results: T[] }> {
         if (
-          normalized.includes("SELECT j.id, j.status, j.created_at") &&
           normalized.includes("FROM generation_jobs j") &&
           normalized.includes("INNER JOIN materials m") &&
           normalized.includes("INNER JOIN decks d") &&
           normalized.includes("d.user_id =") &&
           normalized.includes("ORDER BY j.created_at DESC") &&
-          normalized.includes("LIMIT ?")
+          normalized.includes("LIMIT ?") &&
+          normalized.includes("j.status")
         ) {
           const userId = bound[0] as string;
           const limitRaw = bound[1] as number | undefined;
@@ -896,6 +978,8 @@ export function createTestEnv(opts?: {
                 id: job.id,
                 status: job.status,
                 created_at: job.created_at,
+                finished_at: job.finished_at,
+                progress_json: job.progress_json,
               };
             })
             .filter((row): row is NonNullable<typeof row> => row != null)
@@ -1138,7 +1222,12 @@ export function createTestEnv(opts?: {
           normalized.includes("AS deck_count") &&
           normalized.includes("AS job_count")
         ) {
-          const [q, , limitRaw] = bound as [string, string, number];
+          const [cutoff30, q, , limitRaw] = bound as [
+            string,
+            string,
+            string,
+            number,
+          ];
           let rows = [...users.values()];
           if (q !== "") {
             rows = rows.filter((u) => emailMatchesAdminListQuery(u.email, q));
@@ -1161,6 +1250,9 @@ export function createTestEnv(opts?: {
               if (!material) return false;
               return userDeckIds.has(material.deck_id);
             }).length;
+            const tokens_30d = [...usageEvents.values()]
+              .filter((e) => e.user_id === u.id && e.created_at >= cutoff30)
+              .reduce((sum, e) => sum + (e.tokens_total ?? 0), 0);
             return {
               id: u.id,
               email: u.email,
@@ -1170,9 +1262,120 @@ export function createTestEnv(opts?: {
               deck_count,
               card_count,
               job_count,
+              tokens_30d,
             };
           });
           return { results: results as T[] };
+        }
+        if (
+          normalized.includes("FROM subjects WHERE user_id =") &&
+          normalized.includes("LIMIT 50")
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...subjects.values()]
+            .filter((s) => s.user_id === userId)
+            .sort((a, b) => b.created_at.localeCompare(a.created_at))
+            .slice(0, 50)
+            .map((s) => ({
+              id: s.id,
+              title: s.title,
+              created_at: s.created_at,
+            }));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM decks") &&
+          normalized.includes("WHERE user_id =") &&
+          normalized.includes("LIMIT 50") &&
+          normalized.includes("subject_id")
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...decks.values()]
+            .filter((d) => d.user_id === userId)
+            .sort((a, b) => b.created_at.localeCompare(a.created_at))
+            .slice(0, 50)
+            .map((d) => ({
+              id: d.id,
+              title: d.title,
+              subject_id: d.subject_id ?? null,
+              created_at: d.created_at,
+            }));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM materials m") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("d.user_id =") &&
+          normalized.includes("LIMIT 50") &&
+          normalized.includes("m.filename")
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...materials.values()]
+            .map((m) => {
+              const deck = decks.get(m.deck_id);
+              if (!deck || deck.user_id !== userId) return null;
+              return {
+                id: m.id,
+                deck_id: m.deck_id,
+                kind: m.kind,
+                filename: m.filename ?? null,
+                status: m.status,
+                created_at: m.created_at,
+              };
+            })
+            .filter((row): row is NonNullable<typeof row> => row != null)
+            .sort((a, b) => b.created_at.localeCompare(a.created_at))
+            .slice(0, 50);
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM cards c") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("d.user_id =") &&
+          normalized.includes("front_json") &&
+          normalized.includes("LIMIT 10")
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...cards.values()]
+            .map((c) => {
+              const deck = decks.get(c.deck_id);
+              if (!deck || deck.user_id !== userId) return null;
+              return {
+                id: c.id,
+                type: c.type,
+                status: c.status,
+                front_json: c.front_json,
+                created_at: c.created_at,
+              };
+            })
+            .filter((row): row is NonNullable<typeof row> => row != null)
+            .sort((a, b) => b.created_at.localeCompare(a.created_at))
+            .slice(0, 10);
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("LEFT JOIN usage_events ue ON ue.job_id") &&
+          normalized.includes("j.finished_at IS NOT NULL")
+        ) {
+          const rows = [...generationJobs.values()]
+            .map((j) => {
+              if (!j.finished_at) return null;
+              if ([...usageEvents.values()].some((e) => e.job_id === j.id)) {
+                return null;
+              }
+              const material = materials.get(j.material_id);
+              if (!material) return null;
+              const deck = decks.get(material.deck_id);
+              if (!deck) return null;
+              return {
+                id: j.id,
+                progress_json: j.progress_json,
+                user_id: deck.user_id,
+                finished_at: j.finished_at,
+              };
+            })
+            .filter((row): row is NonNullable<typeof row> => row != null);
+          return { results: rows as T[] };
         }
         if (
           normalized.includes("FROM cards c") &&
@@ -1874,6 +2077,9 @@ export function createTestEnv(opts?: {
           for (const [jid, job] of [...exportJobs.entries()]) {
             if (job.user_id === id) exportJobs.delete(jid);
           }
+          for (const [eid, event] of [...usageEvents.entries()]) {
+            if (event.user_id === id) usageEvents.delete(eid);
+          }
           users.delete(id);
           return { success: true, meta: { changes: 1 } } as D1Result;
         } else if (normalized.startsWith("UPDATE users SET oauth_subject =")) {
@@ -2159,6 +2365,51 @@ export function createTestEnv(opts?: {
             cards.set(cid, { ...card, job_id: null });
           }
           materials.delete(materialId);
+          return { success: true, meta: { changes: 1 } } as D1Result;
+        } else if (
+          normalized.startsWith("INSERT OR IGNORE INTO usage_events") ||
+          normalized.startsWith("INSERT INTO usage_events")
+        ) {
+          // SQL embeds kind='generation'; binds: id,user,job,path,provider,tp,tc,tt,created
+          const [
+            id,
+            user_id,
+            job_id,
+            path,
+            provider,
+            tokens_prompt,
+            tokens_completion,
+            tokens_total,
+            created_at,
+          ] = bound as [
+            string,
+            string,
+            string | null,
+            string | null,
+            string | null,
+            number | null,
+            number | null,
+            number | null,
+            string,
+          ];
+          if (
+            job_id != null &&
+            [...usageEvents.values()].some((e) => e.job_id === job_id)
+          ) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          usageEvents.set(id, {
+            id,
+            user_id,
+            job_id,
+            kind: "generation",
+            path,
+            provider,
+            tokens_prompt,
+            tokens_completion,
+            tokens_total,
+            created_at,
+          });
           return { success: true, meta: { changes: 1 } } as D1Result;
         } else if (normalized.startsWith("INSERT INTO generation_jobs")) {
           const [
@@ -2959,6 +3210,9 @@ export function createTestEnv(opts?: {
     },
     seedGenerationJob(row) {
       generationJobs.set(row.id, row);
+    },
+    seedUsageEvent(row) {
+      usageEvents.set(row.id, row);
     },
     seedExportJob(row) {
       exportJobs.set(row.id, row);

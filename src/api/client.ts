@@ -157,6 +157,10 @@ export function me() {
 export type AdminOverview = {
   userCount: number;
   createdLast7d: number;
+  tokensAllTime: number;
+  tokens30d: number;
+  freeJobs30d: number;
+  byoJobs30d: number;
 };
 
 export type AdminUserListItem = {
@@ -168,6 +172,7 @@ export type AdminUserListItem = {
   deckCount: number;
   cardCount: number;
   jobCount: number;
+  tokens30d: number;
 };
 
 export function adminOverview() {
@@ -191,9 +196,58 @@ export type AdminUserDetail = {
   google_linked: boolean;
   disabled_at: string | null;
   counts: { decks: number; cards: number; jobs: number; materials: number };
-  recentJobs: { id: string; status: string; created_at: string }[];
+  recentJobs: {
+    id: string;
+    status: string;
+    created_at: string;
+    finished_at: string | null;
+    tokens_used?: number;
+    tokens_prompt?: number;
+    tokens_completion?: number;
+    path?: "free" | "byo";
+  }[];
   recentStudyDays: { day: string; intros_used: number }[];
+  subjects: { id: string; title: string; created_at: string }[];
+  decks: {
+    id: string;
+    title: string;
+    subject_id: string | null;
+    created_at: string;
+  }[];
+  materials: {
+    id: string;
+    deck_id: string;
+    kind: string;
+    filename: string | null;
+    status: string;
+    created_at: string;
+  }[];
+  studyPrefs: {
+    intro_budget: number;
+    review_budget: number;
+    r_floor: number;
+    updated_at: string;
+  } | null;
+  freeGenToday: { used: number; cap: number; remaining: number } | null;
+  usage: {
+    tokensAllTime: number;
+    tokens30d: number;
+    freeJobs30d: number;
+    byoJobs30d: number;
+  };
+  cardSample: {
+    id: string;
+    type: string;
+    status: string;
+    frontPreview: string;
+  }[];
 };
+
+export function adminUsageBackfill() {
+  return api<{ inserted: number }>("/api/admin/usage/backfill", {
+    method: "POST",
+  });
+}
 
 export function adminGetUser(id: string) {
   return api<AdminUserDetail>(`/api/admin/users/${encodeURIComponent(id)}`);
