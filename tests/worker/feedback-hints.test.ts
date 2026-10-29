@@ -1,0 +1,93 @@
+import { describe, it, expect } from "vitest";
+import {
+  appendAvoidPatternsSuffix,
+  avoidPatternsPromptSuffix,
+  buildAvoidPatternsFromRejectedFronts,
+  studyStrugglePromptSuffix,
+} from "../../worker/generation/feedback-hints";
+
+describe("buildAvoidPatternsFromRejectedFronts", () => {
+  it("returns empty for empty input", () => {
+    expect(buildAvoidPatternsFromRejectedFronts([])).toEqual([]);
+  });
+
+  it("trims, skips empty and non-string, and keeps order", () => {
+    expect(
+      buildAvoidPatternsFromRejectedFronts([
+        "  alpha  ",
+        "",
+        "   ",
+        null,
+        42,
+        undefined,
+        { front: "x" },
+        "beta",
+      ]),
+    ).toEqual(["alpha", "beta"]);
+  });
+
+  it("dedupes case-insensitively keeping the first casing", () => {
+    expect(
+      buildAvoidPatternsFromRejectedFronts(["Cranial Nerves", "cranial nerves", "CRANIAL NERVES"]),
+    ).toEqual(["Cranial Nerves"]);
+  });
+
+  it("truncates each pattern to 80 characters", () => {
+    const long = "x".repeat(100);
+    const patterns = buildAvoidPatternsFromRejectedFronts([long]);
+    expect(patterns).toHaveLength(1);
+    expect(patterns[0]).toHaveLength(80);
+    expect(patterns[0]).toBe("x".repeat(80));
+  });
+
+  it("caps at 8 patterns", () => {
+    const fronts = Array.from({ length: 12 }, (_, i) => `front-${i}`);
+    expect(buildAvoidPatternsFromRejectedFronts(fronts)).toEqual(
+      fronts.slice(0, 8),
+    );
+  });
+});
+
+describe("avoidPatternsPromptSuffix", () => {
+  it("returns empty string when patterns are absent", () => {
+    expect(avoidPatternsPromptSuffix([])).toBe("");
+  });
+
+  it("mentions avoid, rejected stems, and grounded constraint", () => {
+    const suffix = avoidPatternsPromptSuffix(["bad stem"]);
+    expect(suffix.toLowerCase()).toContain("bad stem");
+    expect(suffix.toLowerCase()).toMatch(/avoid/);
+    expect(suffix.toLowerCase()).toMatch(/do not invent/);
+  });
+});
+
+describe("appendAvoidPatternsSuffix", () => {
+  it("is a no-op when patterns are empty", () => {
+    expect(appendAvoidPatternsSuffix("base prompt", [])).toBe("base prompt");
+  });
+
+  it("appends the avoid suffix after the prompt", () => {
+    const prompt = appendAvoidPatternsSuffix("base prompt", ["bad stem"]);
+    expect(prompt.startsWith("base prompt")).toBe(true);
+    expect(prompt.toLowerCase()).toContain("bad stem");
+    expect(prompt.toLowerCase()).toMatch(/avoid/);
+  });
+});
+
+describe("studyStrugglePromptSuffix", () => {
+  it("returns empty when again_14d and lapses are both zero", () => {
+    expect(studyStrugglePromptSuffix({ again_14d: 0, lapses: 0 })).toBe("");
+  });
+
+  it("returns a clarity/atomicity nudge when again_14d >= 1", () => {
+    const suffix = studyStrugglePromptSuffix({ again_14d: 1, lapses: 0 });
+    expect(suffix.length).toBeGreaterThan(0);
+    expect(suffix.toLowerCase()).toMatch(/clarit|atomic/);
+  });
+
+  it("returns a clarity/atomicity nudge when lapses >= 1", () => {
+    const suffix = studyStrugglePromptSuffix({ again_14d: 0, lapses: 2 });
+    expect(suffix.length).toBeGreaterThan(0);
+    expect(suffix.toLowerCase()).toMatch(/clarit|atomic/);
+  });
+});

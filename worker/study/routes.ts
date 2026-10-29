@@ -30,6 +30,7 @@ type AppEnv = { Bindings: Env; Variables: AuthVariables };
 type StrugglingSqlRow = {
   id: string;
   deck_id: string;
+  type: string;
   front_json: string;
   lapses: number;
   difficulty: number;
@@ -177,7 +178,7 @@ studyRoutes.get("/struggling", async (c) => {
 
   const { results } = await db
     .prepare(
-      `SELECT c.id, c.deck_id, c.front_json,
+      `SELECT c.id, c.deck_id, c.type, c.front_json,
               s.lapses, s.difficulty, s.due, s.last_review,
               s.stability, s.elapsed_days, s.scheduled_days, s.learning_steps,
               s.reps, s.state,
@@ -227,6 +228,7 @@ studyRoutes.get("/struggling", async (c) => {
     return {
       id: row.id,
       deck_id: row.deck_id,
+      type: row.type,
       front_json: row.front_json,
       lapses: row.lapses,
       again_14d,

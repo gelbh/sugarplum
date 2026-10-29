@@ -12,6 +12,7 @@ function candidate(
 ): WeaknessCandidate {
   return {
     deck_id: "deck-a",
+    type: "qa",
     front_json: JSON.stringify("Q?"),
     lapses: 0,
     again_14d: 0,
