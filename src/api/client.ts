@@ -963,6 +963,7 @@ export type ExportJobView = {
   status: string;
   warnings: ExportWarnings;
   downloadPath: string | null;
+  error?: string | null;
   createdAt?: string;
   updatedAt?: string;
   expiresAt?: string;
@@ -972,7 +973,7 @@ export type CreateDeckExportResponse = {
   id: string;
   status: string;
   warnings: ExportWarnings;
-  downloadPath: string;
+  downloadPath: string | null;
 };
 
 export type CreateExportBody =

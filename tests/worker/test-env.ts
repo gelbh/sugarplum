@@ -166,12 +166,16 @@ export type TestEnv = Env & {
   getSchedules: () => ScheduleRow[];
   getReviewLogs: () => ReviewLogRow[];
   getQueueMessages: () => unknown[];
+  getExportQueueMessages: () => unknown[];
   getR2Keys: () => string[];
+  getR2: (key: string) => string | ArrayBuffer | undefined;
 };
 
 export function createTestEnv(opts?: {
   secretsWrapKey?: string | null;
   adminEmails?: string;
+  /** When false, omit EXPORT_QUEUE binding (503 path). Default true. */
+  exportQueue?: boolean;
 }): TestEnv {
   const users = new Map<string, UserRow>();
   const subjects = new Map<string, SubjectRow>();
@@ -188,6 +192,7 @@ export function createTestEnv(opts?: {
   const exportJobs = new Map<string, ExportJobRow>();
   const r2 = new Map<string, string | ArrayBuffer>();
   const queueMessages: unknown[] = [];
+  const exportQueueMessages: unknown[] = [];
 
   // Test harness only: missing wrap key → fixed 32-byte test key.
   const wrapKey =
@@ -686,9 +691,7 @@ export function createTestEnv(opts?: {
             .filter((j) => j.material_id === materialId)
             .sort((a, b) => b.created_at.localeCompare(a.created_at));
           const job = rows[0];
-          return job
-            ? ({ id: job.id, created_at: job.created_at } as T)
-            : null;
+          return job ? ({ id: job.id, created_at: job.created_at } as T) : null;
         }
         if (
           normalized.includes("FROM export_jobs WHERE id =") &&
@@ -696,6 +699,13 @@ export function createTestEnv(opts?: {
         ) {
           const row = exportJobs.get(bound[0] as string);
           return row && row.user_id === bound[1] ? (row as T) : null;
+        }
+        if (
+          normalized.includes("FROM export_jobs WHERE id =") &&
+          !normalized.includes("user_id =")
+        ) {
+          const row = exportJobs.get(bound[0] as string);
+          return row ? (row as T) : null;
         }
         if (
           normalized.includes("AS user_count") &&
@@ -1025,7 +1035,9 @@ export function createTestEnv(opts?: {
           return { results: rows as T[] };
         }
         if (
-          normalized.startsWith("SELECT id FROM generation_jobs WHERE material_id =")
+          normalized.startsWith(
+            "SELECT id FROM generation_jobs WHERE material_id =",
+          )
         ) {
           const materialId = bound[0] as string;
           const rows = [...generationJobs.values()]
@@ -1040,6 +1052,16 @@ export function createTestEnv(opts?: {
           const rows = [...materials.values()]
             .filter((m) => m.deck_id === bound[0] && m.r2_key != null)
             .map((m) => ({ r2_key: m.r2_key }));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM export_jobs WHERE user_id =") &&
+          normalized.includes("expires_at <=")
+        ) {
+          const [userId, cutoff] = bound as [string, string];
+          const rows = [...exportJobs.values()]
+            .filter((row) => row.user_id === userId && row.expires_at <= cutoff)
+            .map((row) => ({ id: row.id, r2_key: row.r2_key }));
           return { results: rows as T[] };
         }
         if (
@@ -1067,7 +1089,9 @@ export function createTestEnv(opts?: {
         }
         if (
           normalized.includes("FROM materials") &&
-          normalized.includes("WHERE deck_id = ? AND status = ? AND content_hash = ?")
+          normalized.includes(
+            "WHERE deck_id = ? AND status = ? AND content_hash = ?",
+          )
         ) {
           const [deckId, status, contentHash] = bound as [
             string,
@@ -1276,39 +1300,87 @@ export function createTestEnv(opts?: {
       },
       async run(): Promise<D1Result> {
         if (normalized.startsWith("INSERT INTO export_jobs")) {
-          const [
-            id,
-            user_id,
-            status,
-            request_json,
-            r2_key,
-            warning_json,
-            created_at,
-            updated_at,
-            expires_at,
-          ] = bound as [
-            string,
-            string,
-            string,
-            string,
-            string | null,
-            string | null,
-            string,
-            string,
-            string,
-          ];
-          exportJobs.set(id, {
-            id,
-            user_id,
-            status,
-            request_json,
-            r2_key,
-            error: null,
-            warning_json,
-            created_at,
-            updated_at,
-            expires_at,
-          });
+          // Supports both legacy (error NULL in SQL) and bind-with-error shapes.
+          const hasErrorBind = !normalized.includes(", NULL,");
+          if (hasErrorBind) {
+            const [
+              id,
+              user_id,
+              status,
+              request_json,
+              r2_key,
+              error,
+              warning_json,
+              created_at,
+              updated_at,
+              expires_at,
+            ] = bound as [
+              string,
+              string,
+              string,
+              string,
+              string | null,
+              string | null,
+              string | null,
+              string,
+              string,
+              string,
+            ];
+            exportJobs.set(id, {
+              id,
+              user_id,
+              status,
+              request_json,
+              r2_key,
+              error,
+              warning_json,
+              created_at,
+              updated_at,
+              expires_at,
+            });
+          } else {
+            const [
+              id,
+              user_id,
+              status,
+              request_json,
+              r2_key,
+              warning_json,
+              created_at,
+              updated_at,
+              expires_at,
+            ] = bound as [
+              string,
+              string,
+              string,
+              string,
+              string | null,
+              string | null,
+              string,
+              string,
+              string,
+            ];
+            exportJobs.set(id, {
+              id,
+              user_id,
+              status,
+              request_json,
+              r2_key,
+              error: null,
+              warning_json,
+              created_at,
+              updated_at,
+              expires_at,
+            });
+          }
+        } else if (
+          normalized.startsWith(
+            "DELETE FROM export_jobs WHERE id = ? AND user_id = ?",
+          )
+        ) {
+          const [id, userId] = bound as [string, string];
+          const row = exportJobs.get(id);
+          if (row && row.user_id === userId) exportJobs.delete(id);
         } else if (
           normalized.startsWith(
             "UPDATE export_jobs SET status = ?, error = ?, warning_json = ?",
@@ -1363,6 +1435,61 @@ export function createTestEnv(opts?: {
           ];
           const row = exportJobs.get(id);
           if (row) exportJobs.set(id, { ...row, status, error, updated_at });
+        } else if (
+          normalized.startsWith(
+            "UPDATE export_jobs SET status = ?, updated_at = ? WHERE id = ? AND status = ?",
+          )
+        ) {
+          const [status, updated_at, id, expectedStatus] = bound as [
+            string,
+            string,
+            string,
+            string,
+          ];
+          const row = exportJobs.get(id);
+          if (row && row.status === expectedStatus) {
+            exportJobs.set(id, { ...row, status, updated_at });
+            return { success: true, meta: { changes: 1 } } as D1Result;
+          }
+          return { success: true, meta: { changes: 0 } } as D1Result;
+        } else if (
+          normalized.startsWith(
+            "UPDATE export_jobs SET updated_at = ? WHERE id = ? AND status = ? AND updated_at = ?",
+          )
+        ) {
+          const [updated_at, id, expectedStatus, expectedUpdatedAt] = bound as [
+            string,
+            string,
+            string,
+            string,
+          ];
+          const row = exportJobs.get(id);
+          if (
+            row &&
+            row.status === expectedStatus &&
+            row.updated_at === expectedUpdatedAt
+          ) {
+            exportJobs.set(id, { ...row, updated_at });
+            return { success: true, meta: { changes: 1 } } as D1Result;
+          }
+          return { success: true, meta: { changes: 0 } } as D1Result;
+        } else if (
+          normalized.startsWith(
+            "UPDATE export_jobs SET status = ?, error = NULL, updated_at = ?",
+          )
+        ) {
+          const [status, updated_at, id] = bound as [
+            string,
+            string,
+            string,
+            string?,
+          ];
+          const row = exportJobs.get(id);
+          if (row) {
+            exportJobs.set(id, { ...row, status, error: null, updated_at });
+            return { success: true, meta: { changes: 1 } } as D1Result;
+          }
+          return { success: true, meta: { changes: 0 } } as D1Result;
         } else if (normalized.startsWith("INSERT INTO users")) {
           const [id, email, password_hash, oauth_subject, created_at] =
             bound as [string, string, string | null, string | null, string];
@@ -2359,6 +2486,15 @@ export function createTestEnv(opts?: {
           r2.set(key, await new Response(value).arrayBuffer());
         }
       },
+      async head(key: string) {
+        const v = r2.get(key);
+        if (v === undefined) return null;
+        const size =
+          typeof v === "string"
+            ? new TextEncoder().encode(v).byteLength
+            : v.byteLength;
+        return { size, key };
+      },
       async get(key: string) {
         const v = r2.get(key);
         if (v === undefined) return null;
@@ -2367,6 +2503,7 @@ export function createTestEnv(opts?: {
             ? new TextEncoder().encode(v)
             : new Uint8Array(v);
         return {
+          size: bytes.byteLength,
           text: async () =>
             typeof v === "string" ? v : new TextDecoder().decode(v),
           arrayBuffer: async () =>
@@ -2397,10 +2534,18 @@ export function createTestEnv(opts?: {
         queueMessages.push(body);
       },
     } as unknown as Queue,
+    ...(opts?.exportQueue === false
+      ? {}
+      : {
+          EXPORT_QUEUE: {
+            send: async (body: unknown) => {
+              exportQueueMessages.push(body);
+            },
+          } as unknown as Queue,
+        }),
     APP_URL: "http://localhost",
     ASSETS: {
-      fetch: async () =>
-        new Response("test assets missing", { status: 404 }),
+      fetch: async () => new Response("test assets missing", { status: 404 }),
     } as unknown as Fetcher,
     SECRETS_WRAP_KEY: wrapKey,
     R2_ACCOUNT_ID: "test-account",
@@ -2465,7 +2610,9 @@ export function createTestEnv(opts?: {
     getSchedules: () => [...schedules.values()],
     getReviewLogs: () => [...reviewLogs],
     getQueueMessages: () => [...queueMessages],
+    getExportQueueMessages: () => [...exportQueueMessages],
     getR2Keys: () => [...r2.keys()],
+    getR2: (key: string) => r2.get(key),
   };
 
   return env;

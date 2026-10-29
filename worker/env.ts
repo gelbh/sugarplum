@@ -9,6 +9,8 @@ export interface Env {
   AI?: Ai;
   /** Optional until queue consumer ships; missing → D1 generation_jobs only. */
   GENERATE_QUEUE?: Queue;
+  /** Dedicated Anki export queue; over-threshold builds must not run in HTTP. */
+  EXPORT_QUEUE?: Queue;
   APP_URL: string;
   /** R2 S3 API account id for presigned uploads (var or secret). */
   R2_ACCOUNT_ID: string;

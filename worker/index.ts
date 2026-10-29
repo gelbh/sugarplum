@@ -13,9 +13,13 @@ import { journeyRoutes } from "./journey/routes";
 import { guestRoutes } from "./guest/import";
 import { exportRoutes } from "./export/routes";
 import { adminRoutes } from "./admin/routes";
+import { handleExportQueue } from "./export/consumer";
+import type { ExportQueueMessage } from "./export/enqueue";
 import { handleGenerateQueue } from "./generation/consumer";
 import type { GenerateQueueMessage } from "./generation/enqueue";
 import { isAllowedMutatingOrigin } from "./security/origin";
+
+const EXPORT_QUEUE_NAME = "sugarplum-export";
 
 const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 
@@ -56,10 +60,20 @@ export { app };
 const worker = {
   fetch: app.fetch,
   async queue(
-    batch: MessageBatch<GenerateQueueMessage>,
+    batch: MessageBatch<GenerateQueueMessage | ExportQueueMessage>,
     env: Env,
   ): Promise<void> {
-    await handleGenerateQueue(batch, env);
+    if (batch.queue === EXPORT_QUEUE_NAME) {
+      await handleExportQueue(
+        batch as MessageBatch<ExportQueueMessage>,
+        env,
+      );
+      return;
+    }
+    await handleGenerateQueue(
+      batch as MessageBatch<GenerateQueueMessage>,
+      env,
+    );
   },
 };
 
