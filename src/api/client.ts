@@ -153,6 +153,35 @@ export function me() {
   return api<AuthUser>("/api/auth/me");
 }
 
+export type AdminOverview = {
+  userCount: number;
+  createdLast7d: number;
+};
+
+export type AdminUserListItem = {
+  id: string;
+  email: string;
+  created_at: string;
+  google_linked: boolean;
+  deckCount: number;
+  cardCount: number;
+  jobCount: number;
+};
+
+export function adminOverview() {
+  return api<AdminOverview>("/api/admin/overview");
+}
+
+export function adminListUsers(q?: string, limit?: number) {
+  const params = new URLSearchParams();
+  if (q?.trim()) params.set("q", q.trim());
+  if (limit != null) params.set("limit", String(limit));
+  const qs = params.toString();
+  return api<{ users: AdminUserListItem[] }>(
+    `/api/admin/users${qs ? `?${qs}` : ""}`,
+  );
+}
+
 export type Subject = {
   id: string;
   title: string;
