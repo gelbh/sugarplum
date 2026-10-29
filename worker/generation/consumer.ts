@@ -31,6 +31,7 @@ import {
   isFreeGenCharged,
   isRunningJobStale,
   readStartedAt,
+  withoutStartedAt,
   withFreeGenCharged,
   withUpdatedAt,
   writeJobProgress,
@@ -575,7 +576,9 @@ export async function processGenerateJob(
     if (!isRunningJobStale(existing.progress_json, existing.created_at)) {
       return "busy";
     }
-    const reclaimedProgress = withUpdatedAt(existing.progress_json);
+    const reclaimedProgress = withUpdatedAt(
+      withoutStartedAt(existing.progress_json),
+    );
     const reclaim =
       existing.progress_json == null
         ? await db

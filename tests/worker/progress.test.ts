@@ -16,6 +16,7 @@ import {
   withUpdatedAt,
   writeJobProgress,
   readStartedAt,
+  withoutStartedAt,
 } from "../../worker/generation/progress";
 import { createTestEnv } from "./test-env";
 
@@ -396,6 +397,22 @@ describe("toProgressJson", () => {
         }),
       ),
     ).toBe("2026-10-29T10:00:00.000Z");
+  });
+
+  it("withoutStartedAt strips started_at for reclaim restart", () => {
+    const seeded = toProgressJson({
+      stage: "generate",
+      current: 1,
+      total: 2,
+      percent: 40,
+      label: "Gen",
+      started_at: "2026-10-29T10:00:00.000Z",
+    });
+    const cleared = withoutStartedAt(seeded);
+    expect(cleared).not.toBeNull();
+    expect(readStartedAt(cleared)).toBeUndefined();
+    expect(JSON.parse(cleared!).stage).toBe("generate");
+    expect(withoutStartedAt(null)).toBeNull();
   });
 });
 

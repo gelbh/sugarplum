@@ -124,12 +124,25 @@ export function isFreeGenCharged(
   return parseProgressObject(progressJson).free_gen_charged === true;
 }
 
-/** Durable ETA clock from an existing progress_json row (reclaim / resume). */
+/** Read durable ETA clock from progress_json (same pipeline run only). */
 export function readStartedAt(
   progressJson: string | null | undefined,
 ): string | undefined {
   const value = parseProgressObject(progressJson).started_at;
   return typeof value === "string" ? value : undefined;
+}
+
+/**
+ * Drop started_at so a full pipeline restart (stale reclaim) gets a fresh ETA clock.
+ * Claim/regen already replace or null progress_json; reclaim must clear explicitly.
+ */
+export function withoutStartedAt(
+  progressJson: string | null | undefined,
+): string | null {
+  if (progressJson == null) return null;
+  const base = parseProgressObject(progressJson);
+  delete base.started_at;
+  return JSON.stringify(base);
 }
 
 /** Merge/set `free_gen_charged` on progress_json (durable consume marker). */
