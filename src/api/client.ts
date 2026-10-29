@@ -97,6 +97,7 @@ export type AuthUser = {
   id: string;
   email: string;
   google_linked?: boolean;
+  is_admin?: boolean;
 };
 
 export function importGuestLocal(body: GuestImportPayload) {
