@@ -51,7 +51,6 @@ export async function creditXp(
     };
   }
 
-  // Atomic add avoids lost updates under concurrent different keys.
   await db
     .prepare(
       `UPDATE user_gamification

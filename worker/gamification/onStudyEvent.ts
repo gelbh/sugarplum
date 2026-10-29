@@ -89,7 +89,6 @@ export async function onCardAccepted(
   return onCardsAccepted(db, userId, [args]);
 }
 
-/** Credit per-card accept XP, then evaluate achievements once. */
 export async function onCardsAccepted(
   db: D1Database,
   userId: string,
