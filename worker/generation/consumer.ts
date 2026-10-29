@@ -30,6 +30,8 @@ import {
   GENERATE_QUEUE_RETRY_DELAY_SEC,
   isFreeGenCharged,
   isRunningJobStale,
+  readStartedAt,
+  withoutStartedAt,
   withFreeGenCharged,
   withUpdatedAt,
   writeJobProgress,
@@ -92,7 +94,7 @@ function makeEmit(
   db: D1Database,
   jobId: string,
   presentStages: readonly ProgressStage[],
-  opts?: { freeGenCharged?: boolean },
+  opts?: { freeGenCharged?: boolean; startedAt?: string },
 ) {
   // Mutable accumulator merged into every progress write.
   // drafts_so_far stays unset until the first batch (avoids mid-job "0 cards left").
@@ -100,6 +102,7 @@ function makeEmit(
   const acc: {
     path?: "free" | "byo";
     free_gen_charged?: boolean;
+    started_at?: string;
     tokens_used?: number;
     tokens_prompt?: number;
     tokens_completion?: number;
@@ -108,6 +111,7 @@ function makeEmit(
   } = {
     events: [],
     ...(opts?.freeGenCharged ? { free_gen_charged: true } : {}),
+    ...(opts?.startedAt ? { started_at: opts.startedAt } : {}),
   };
 
   function progressPatch(
@@ -130,6 +134,7 @@ function makeEmit(
       percent,
       label,
       updated_at: new Date().toISOString(),
+      ...(acc.started_at !== undefined ? { started_at: acc.started_at } : {}),
       ...(acc.tokens_used !== undefined
         ? { tokens_used: acc.tokens_used }
         : {}),
@@ -155,6 +160,9 @@ function makeEmit(
     label: string,
     halfStepsDone?: number,
   ) {
+    if (stage !== "queued" && acc.started_at === undefined) {
+      acc.started_at = new Date().toISOString();
+    }
     try {
       await writeJobProgress(
         db,
@@ -568,7 +576,9 @@ export async function processGenerateJob(
     if (!isRunningJobStale(existing.progress_json, existing.created_at)) {
       return "busy";
     }
-    const reclaimedProgress = withUpdatedAt(existing.progress_json);
+    const reclaimedProgress = withUpdatedAt(
+      withoutStartedAt(existing.progress_json),
+    );
     const reclaim =
       existing.progress_json == null
         ? await db
@@ -637,12 +647,16 @@ export async function processGenerateJob(
         topic_hints_json: string | null;
       }>();
     const freeGenCharged = isFreeGenCharged(progressRow?.progress_json);
+    const startedAt = readStartedAt(progressRow?.progress_json);
     const topicHints = parseTopicHintsJson(progressRow?.topic_hints_json);
 
     let drafts: Array<CardDraft & { mediaR2Keys?: string[] | null }>;
 
     if (material.kind === "image") {
-      const progress = makeEmit(db, jobId, IMAGE_STAGES, { freeGenCharged });
+      const progress = makeEmit(db, jobId, IMAGE_STAGES, {
+        freeGenCharged,
+        startedAt,
+      });
       // Vision needs a BYO provider; free Workers AI path is text-only.
       if (!secret && !opts?.llm) {
         throw new Error(
@@ -721,7 +735,10 @@ export async function processGenerateJob(
     } else if (material.kind === "pdf") {
       // Start with full PDF catalog; switch to figure-only after extract if no text.
       let presentStages: readonly ProgressStage[] = PDF_STAGES;
-      const progress = makeEmit(db, jobId, presentStages, { freeGenCharged });
+      const progress = makeEmit(db, jobId, presentStages, {
+        freeGenCharged,
+        startedAt,
+      });
       await progress.emit("queued", 0, 0, "Queued");
       await progress.emit("extract", 0, 0, "Extracting material");
       if (!material.r2_key) {
@@ -946,7 +963,10 @@ export async function processGenerateJob(
       await progress.emit("persist", 1, 1, "Saving drafts");
     } else {
       // TEXT_LLM catalog; emit before extract so failures leave progress.
-      const progress = makeEmit(db, jobId, TEXT_LLM_STAGES, { freeGenCharged });
+      const progress = makeEmit(db, jobId, TEXT_LLM_STAGES, {
+        freeGenCharged,
+        startedAt,
+      });
       await progress.emit("queued", 0, 0, "Queued");
       await progress.emit("extract", 0, 0, "Extracting material");
 

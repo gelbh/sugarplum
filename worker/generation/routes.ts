@@ -14,6 +14,7 @@ export type JobProgressPayload = {
   total: number;
   percent: number;
   label: string;
+  started_at?: string;
   tokens_used?: number;
   tokens_prompt?: number;
   tokens_completion?: number;
@@ -53,6 +54,9 @@ function parseProgressJson(raw: string | null): JobProgressPayload | null {
       percent: parsed.percent as number,
       label: parsed.label as string,
     };
+    if (typeof parsed.started_at === "string") {
+      out.started_at = parsed.started_at;
+    }
     if (typeof parsed.tokens_used === "number")
       out.tokens_used = parsed.tokens_used as number;
     if (typeof parsed.tokens_prompt === "number")

@@ -238,11 +238,13 @@ describe("processGenerateJob free path", () => {
     const jobs = env.getGenerationJobs();
     const job = jobs.find((j) => j.id === msg.jobId)!;
     const staleAt = new Date(Date.now() - RUNNING_JOB_STALE_MS - 1000).toISOString();
+    const oldStartedAt = "2020-01-01T00:00:00.000Z";
     env.seedGenerationJob({
       ...job,
       status: "running",
       progress_json: JSON.stringify({
         updated_at: staleAt,
+        started_at: oldStartedAt,
         stage: "figures",
         current: 1,
         total: 1,
@@ -256,10 +258,17 @@ describe("processGenerateJob free path", () => {
     });
 
     expect(result).toBe("done");
-    expect(env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status).toBe(
-      "needs_review",
-    );
+    const finished = env.getGenerationJobs().find((j) => j.id === msg.jobId);
+    expect(finished?.status).toBe("needs_review");
     expect(env.getCards().length).toBeGreaterThanOrEqual(1);
+    const progress = JSON.parse(finished!.progress_json ?? "{}") as {
+      started_at?: string;
+    };
+    expect(progress.started_at).toBeDefined();
+    expect(progress.started_at).not.toBe(oldStartedAt);
+    expect(Date.parse(progress.started_at!)).toBeGreaterThan(
+      Date.parse(oldStartedAt),
+    );
   });
 
   it("reclaim wipes prior drafts and does not double-charge free-gen", async () => {

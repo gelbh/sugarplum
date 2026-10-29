@@ -5,6 +5,72 @@ export function etaMs(elapsedMs: number, percent: number): number | null {
   return (elapsedMs * (100 - percent)) / percent;
 }
 
+/** Durable ETA clock: started_at, else earliest progress event (no created_at / queue). */
+export function resolveJobStartedAtMs(args: {
+  startedAt?: string | null;
+  events?: Array<{ at?: string | null }> | null;
+}): number | null {
+  if (typeof args.startedAt === "string") {
+    const t = Date.parse(args.startedAt);
+    if (Number.isFinite(t)) return t;
+  }
+  let earliest: number | null = null;
+  for (const event of args.events ?? []) {
+    if (typeof event?.at !== "string") continue;
+    const t = Date.parse(event.at);
+    if (!Number.isFinite(t)) continue;
+    earliest = earliest == null ? t : Math.min(earliest, t);
+  }
+  return earliest;
+}
+
+/** Immutable anchor: raw ETA at percent change; display = countdown from anchor. */
+export type CalmEtaSample = {
+  percent: number;
+  displayEtaMs: number;
+  atMs: number;
+};
+
+/**
+ * Calm ETA: recompute when percent changes; while flat, countdown the anchor
+ * (never grow). When countdown hits 0, return null ("Calculating…") but keep
+ * the anchor so a later percent bump still recomputes.
+ */
+export function calmDisplayEtaMs(args: {
+  elapsedMs: number;
+  percent: number;
+  previous: CalmEtaSample | null;
+  nowMs: number;
+}): { etaMs: number | null; sample: CalmEtaSample | null } {
+  if (args.percent < 5) {
+    return { etaMs: null, sample: null };
+  }
+
+  const previous = args.previous;
+  const shouldRecompute =
+    previous == null || args.percent !== previous.percent;
+
+  if (shouldRecompute) {
+    const raw = etaMs(args.elapsedMs, args.percent);
+    if (raw == null) {
+      return { etaMs: null, sample: null };
+    }
+    const sample: CalmEtaSample = {
+      percent: args.percent,
+      displayEtaMs: raw,
+      atMs: args.nowMs,
+    };
+    return { etaMs: raw, sample };
+  }
+
+  const wallDelta = Math.max(0, args.nowMs - previous.atMs);
+  const display = Math.max(0, previous.displayEtaMs - wallDelta);
+  if (display === 0) {
+    return { etaMs: null, sample: previous };
+  }
+  return { etaMs: display, sample: previous };
+}
+
 /** Extrapolate job token total from usage so far and weighted percent. */
 export function projectTokensFromPercent(
   used: number | undefined,

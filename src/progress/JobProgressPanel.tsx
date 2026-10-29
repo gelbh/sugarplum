@@ -1,16 +1,19 @@
 import { useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
 import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import type { ProgressSnapshot } from "./types";
+import type { ProgressEvent, ProgressSnapshot } from "./types";
 import {
   friendlyStageHeadline,
+  formatEtaCompact,
   formatProgressSubline,
   formatRelativeAge,
   orderPresentStages,
   progressDetailsModel,
+  shortStageChipLabel,
 } from "./copy";
 
 type JobProgressPanelProps = {
@@ -21,6 +24,19 @@ type JobProgressPanelProps = {
 
 function truncateEventText(text: string): string {
   return text.length > 120 ? text.slice(0, 117) + "…" : text;
+}
+
+function pickLiveEvent(
+  events: ProgressEvent[] | undefined,
+): ProgressEvent | null {
+  if (!events || events.length === 0) return null;
+  const newestFirst = events.slice().reverse();
+  return (
+    newestFirst.find((e) => e.kind === "draft") ??
+    newestFirst.find((e) => e.kind === "excerpt") ??
+    newestFirst[0] ??
+    null
+  );
 }
 
 export default function JobProgressPanel({
@@ -52,6 +68,15 @@ export default function JobProgressPanel({
   });
 
   const recentEvents = (snapshot?.events ?? []).slice().reverse().slice(0, 3);
+  const liveEvent = pickLiveEvent(snapshot?.events);
+  const etaCompact = formatEtaCompact(snapshot?.etaMs);
+  const stageTitle = friendlyStageHeadline(snapshot?.stage);
+
+  const metaParts = [
+    details.sectionLine,
+    etaCompact,
+    determinate ? `${Math.round(percent)}%` : null,
+  ].filter(Boolean);
 
   const barAriaLabel = determinate
     ? `${headline}, ${Math.round(percent)}%`
@@ -136,29 +161,114 @@ export default function JobProgressPanel({
       </Button>
 
       {detailsOpen ? (
-        <Stack spacing={0.75} sx={{ width: "100%" }}>
-          {details.sectionLine ? (
+        <Stack spacing={1.25} sx={{ width: "100%", textAlign: "left" }}>
+          <Stack spacing={0.25}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ letterSpacing: "0.08em", textTransform: "uppercase" }}
+            >
+              Now
+            </Typography>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              {stageTitle}
+            </Typography>
+            {liveEvent ? (
+              <Typography variant="body2" color="text.secondary">
+                "{truncateEventText(liveEvent.text)}"
+              </Typography>
+            ) : null}
+          </Stack>
+
+          {metaParts.length > 0 ? (
             <Typography variant="caption" color="text.secondary">
-              {details.sectionLine}
+              {metaParts.join(" · ")}
             </Typography>
           ) : null}
-          {details.jobLine ? (
-            <Typography variant="caption" color="text.secondary">
-              {details.jobLine}
-            </Typography>
+
+          {stages.length > 0 ? (
+            <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
+              {stages.map((s, i) => {
+                const completed = currentIndex >= 0 && i < currentIndex;
+                const isCurrent =
+                  i === currentIndex ||
+                  (currentIndex === -1 && i === stages.length - 1);
+                const label = shortStageChipLabel(s);
+                return (
+                  <Chip
+                    key={s}
+                    size="small"
+                    label={completed ? `✓ ${label}` : label}
+                    color={isCurrent ? "primary" : "default"}
+                    variant={isCurrent ? "filled" : "outlined"}
+                  />
+                );
+              })}
+            </Stack>
           ) : null}
-          {details.tokensLine ? (
+
+          {(details.jobLine || details.freeJobsLine) && (
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm:
+                    details.jobLine && details.freeJobsLine
+                      ? "1fr 1fr"
+                      : "1fr",
+                },
+                gap: 1,
+              }}
+            >
+              {details.jobLine ? (
+                <Box
+                  sx={{
+                    bgcolor: "action.hover",
+                    borderRadius: 1,
+                    p: 1.25,
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    This job
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {details.jobLine}
+                  </Typography>
+                  {details.tokensLine ? (
+                    <Typography variant="caption" color="text.secondary">
+                      {details.tokensLine}
+                    </Typography>
+                  ) : null}
+                </Box>
+              ) : null}
+              {details.freeJobsLine ? (
+                <Box
+                  sx={{
+                    bgcolor: "action.hover",
+                    borderRadius: 1,
+                    p: 1.25,
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    Free today
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {details.freeJobsLine}
+                  </Typography>
+                </Box>
+              ) : null}
+            </Box>
+          )}
+
+          {!details.jobLine && details.tokensLine ? (
             <Typography variant="caption" color="text.secondary">
               {details.tokensLine}
             </Typography>
           ) : null}
-          {details.freeJobsLine ? (
-            <Typography variant="caption" color="text.secondary">
-              {details.freeJobsLine}
-            </Typography>
-          ) : null}
+
           {recentEvents.length > 0 ? (
-            <Stack spacing={0.5} sx={{ mt: 0.5 }}>
+            <Stack spacing={0.5}>
               {recentEvents.map((e) => {
                 const age = formatRelativeAge(Date.now() - e.at);
                 const text = truncateEventText(e.text);

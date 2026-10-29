@@ -30,6 +30,30 @@ export function friendlyStageHeadline(
   return FALLBACK_HEADLINE;
 }
 
+const STAGE_CHIP_LABELS: Record<(typeof PROGRESS_STAGE_ORDER)[number], string> =
+  {
+    queued: "Wait",
+    extract: "Read",
+    figures: "Figures",
+    rules: "Rules",
+    generate: "Write",
+    critique: "Review",
+    persist: "Save",
+  };
+
+export function shortStageChipLabel(stage: string): string {
+  if (stage in STAGE_CHIP_LABELS) {
+    return STAGE_CHIP_LABELS[stage as keyof typeof STAGE_CHIP_LABELS];
+  }
+  return stage;
+}
+
+/** Compact ETA for Studio meta row (`~52s`); null when unknown. */
+export function formatEtaCompact(etaMs: number | null | undefined): string | null {
+  if (etaMs == null) return null;
+  return `~${fmtEtaCore(etaMs)}`;
+}
+
 export function orderPresentStages(present: readonly string[]): string[] {
   const set = new Set(present);
   return PROGRESS_STAGE_ORDER.filter((stage) => set.has(stage));

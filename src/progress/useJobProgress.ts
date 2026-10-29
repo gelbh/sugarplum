@@ -3,7 +3,9 @@ import { ApiError, getJob } from "../api/client";
 import { useProgressRegistry } from "./ProgressProvider";
 import type { ProgressSnapshot } from "./types";
 import {
-  etaMs,
+  calmDisplayEtaMs,
+  type CalmEtaSample,
+  resolveJobStartedAtMs,
   projectTokensFromPercent,
   projectCardsFromPercent,
 } from "./estimates";
@@ -43,7 +45,8 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
   } | null>(null);
   const [estimates, setEstimates] = useState<Estimates | null>(null);
   const settledRef = useRef(false);
-  const startedAtRef = useRef<number | undefined>(undefined);
+  const calmEtaRef = useRef<CalmEtaSample | null>(null);
+  const calmStartedAtRef = useRef<number | null>(null);
 
   useEffect(() => {
     settledRef.current = false;
@@ -52,7 +55,8 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
     setSnapshot(null);
     setFreeQuota(null);
     setEstimates(null);
-    startedAtRef.current = undefined;
+    calmEtaRef.current = null;
+    calmStartedAtRef.current = null;
 
     if (!jobId) {
       setPending(false);
@@ -93,6 +97,8 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
 
         // Queued: builder owns the snapshot; no progress enrichment / ETA.
         if (job.status === "queued") {
+          calmEtaRef.current = null;
+          calmStartedAtRef.current = null;
           setFreeQuota(job.free_quota ?? null);
           setEstimates({
             etaMs: null,
@@ -107,11 +113,7 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
             projectedCards: null,
           });
         } else {
-          if (job.progress && startedAtRef.current === undefined) {
-            startedAtRef.current = Date.now();
-          }
           const ext: any = { ...snapBase };
-          if (startedAtRef.current) ext.startedAt = startedAtRef.current;
           if (job.progress) {
             ext.tokensUsed = job.progress.tokens_used;
             ext.tokensPrompt = job.progress.tokens_prompt;
@@ -154,16 +156,34 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
             ext.presentStages = ordered;
           }
 
+          const startedAtMs = resolveJobStartedAtMs({
+            startedAt: job.progress?.started_at,
+            events: job.progress?.events,
+          });
+          if (startedAtMs != null) ext.startedAt = startedAtMs;
+          if (startedAtMs !== calmStartedAtRef.current) {
+            calmEtaRef.current = null;
+            calmStartedAtRef.current = startedAtMs;
+          }
+
           setFreeQuota(job.free_quota ?? null);
           if (!settledRef.current) upsert(ext);
 
           let eta: number | null = null;
           let projectedTokens: number | null = null;
           let projectedCards: number | null = null;
-          if (ext.startedAt && job.progress) {
-            const elapsed = Date.now() - ext.startedAt;
+          if (startedAtMs != null && job.progress) {
+            const nowMs = Date.now();
+            const elapsed = nowMs - startedAtMs;
             const percent = job.progress.percent;
-            eta = etaMs(elapsed, percent);
+            const calm = calmDisplayEtaMs({
+              elapsedMs: elapsed,
+              percent,
+              previous: calmEtaRef.current,
+              nowMs,
+            });
+            calmEtaRef.current = calm.sample;
+            eta = calm.etaMs;
             if (typeof job.progress.tokens_used === "number") {
               projectedTokens = projectTokensFromPercent(
                 job.progress.tokens_used,
