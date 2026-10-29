@@ -1,5 +1,5 @@
 import {
-  useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ReactNode,
@@ -103,7 +103,7 @@ function AppShellChrome({ children }: AppShellProps) {
   const headerRef = useRef<HTMLDivElement>(null);
   const [mobileHeaderPx, setMobileHeaderPx] = useState(TOP_BAR_HEIGHT);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!showMobileChrome) return;
     const el = headerRef.current;
     if (!el) return;
