@@ -855,8 +855,12 @@ export function createTestEnv(opts?: {
             (sum, e) => sum + (e.tokens_total ?? 0),
             0,
           );
-          const free_jobs_30d = recent.filter((e) => e.path === "free").length;
-          const byo_jobs_30d = recent.filter((e) => e.path === "byo").length;
+          const free_jobs_30d = recent.filter(
+            (e) => e.path === "free" && e.kind === "generation",
+          ).length;
+          const byo_jobs_30d = recent.filter(
+            (e) => e.path === "byo" && e.kind === "generation",
+          ).length;
           return {
             user_count: allUsers.length,
             created_last_7d: createdLast7d,
@@ -885,8 +889,12 @@ export function createTestEnv(opts?: {
               (sum, e) => sum + (e.tokens_total ?? 0),
               0,
             ),
-            free_jobs_30d: recent.filter((e) => e.path === "free").length,
-            byo_jobs_30d: recent.filter((e) => e.path === "byo").length,
+            free_jobs_30d: recent.filter(
+              (e) => e.path === "free" && e.kind === "generation",
+            ).length,
+            byo_jobs_30d: recent.filter(
+              (e) => e.path === "byo" && e.kind === "generation",
+            ).length,
           } as T;
         }
         if (
