@@ -2272,6 +2272,15 @@ export function createTestEnv(opts?: {
           r2.set(key, await new Response(value).arrayBuffer());
         }
       },
+      async head(key: string) {
+        const v = r2.get(key);
+        if (v === undefined) return null;
+        const size =
+          typeof v === "string"
+            ? new TextEncoder().encode(v).byteLength
+            : v.byteLength;
+        return { size, key };
+      },
       async get(key: string) {
         const v = r2.get(key);
         if (v === undefined) return null;
@@ -2280,6 +2289,7 @@ export function createTestEnv(opts?: {
             ? new TextEncoder().encode(v)
             : new Uint8Array(v);
         return {
+          size: bytes.byteLength,
           text: async () =>
             typeof v === "string" ? v : new TextDecoder().decode(v),
           arrayBuffer: async () =>
