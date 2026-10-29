@@ -50,6 +50,7 @@ import CreateMaterialStepper from "../components/CreateMaterialStepper";
 import MaterialsList from "../components/MaterialsList";
 import {
   formatExportWarnings,
+  ANKI_EXPORT_BUSY_LABEL,
   runAnkiExportDownload,
 } from "../export/runAnkiExport";
 import { isGuest } from "../guest/session";
@@ -91,7 +92,7 @@ export default function LibraryPage() {
     trackOnMount: true,
   });
   const { busy: exportBusy, run: runExport } =
-    useTrackedOp("Exporting to Anki…");
+    useTrackedOp(ANKI_EXPORT_BUSY_LABEL);
 
   const syncStepperFromJourney = useCallback(async () => {
     try {
