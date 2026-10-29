@@ -17,6 +17,34 @@ import {
 export const USER_LLM_PROVIDERS = ["openai", "anthropic", "google"] as const;
 export type UserLlmProvider = (typeof USER_LLM_PROVIDERS)[number];
 
+/** Z.ai Settings text-model allowlist (vision uses ZAI_VISION_MODEL). */
+export const ZAI_TEXT_MODELS = [
+  "glm-4.7-flash",
+  "glm-4.7-flashx",
+  "glm-4.7",
+] as const;
+export type ZaiTextModel = (typeof ZAI_TEXT_MODELS)[number];
+export const ZAI_DEFAULT_TEXT_MODEL: ZaiTextModel = "glm-4.7-flash";
+export const ZAI_VISION_MODEL = "glm-4.6v-flash" as const;
+
+export function isZaiTextModel(value: string): value is ZaiTextModel {
+  return (ZAI_TEXT_MODELS as readonly string[]).includes(value);
+}
+
+/** Resolve stored/optional zai text model; blank → default Flash. */
+export function resolveZaiTextModel(
+  raw: string | null | undefined,
+): ZaiTextModel {
+  const trimmed = typeof raw === "string" ? raw.trim() : "";
+  if (!trimmed) return ZAI_DEFAULT_TEXT_MODEL;
+  if (!isZaiTextModel(trimmed)) {
+    throw new Error(
+      `Unsupported Z.ai model "${trimmed}". Allowed: ${ZAI_TEXT_MODELS.join(", ")}`,
+    );
+  }
+  return trimmed;
+}
+
 /** Includes test fixture + internal platform provider. */
 export const LLM_PROVIDERS = [
   ...USER_LLM_PROVIDERS,
