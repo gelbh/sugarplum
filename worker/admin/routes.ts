@@ -39,14 +39,22 @@ function parseUserListLimit(raw: string | undefined): number {
   return Math.min(n, 100);
 }
 
+const CREATED_LAST_7D_MS = 7 * 864e5;
+
+function createdLast7dCutoffIso(): string {
+  return new Date(Date.now() - CREATED_LAST_7D_MS).toISOString();
+}
+
 adminRoutes.get("/overview", async (c) => {
   await requireAdmin(c);
+  const cutoff = createdLast7dCutoffIso();
   const row = await getDb(c.env)
     .prepare(
       `SELECT
         (SELECT COUNT(*) FROM users) AS user_count,
-        (SELECT COUNT(*) FROM users WHERE created_at >= datetime('now', '-7 days')) AS created_last_7d`,
+        (SELECT COUNT(*) FROM users WHERE created_at >= ?) AS created_last_7d`,
     )
+    .bind(cutoff)
     .first<{ user_count: number; created_last_7d: number }>();
   return c.json({
     userCount: row?.user_count ?? 0,

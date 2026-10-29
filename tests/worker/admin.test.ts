@@ -148,6 +148,12 @@ describe("GET /api/admin/overview", () => {
     vi.useRealTimers();
   });
 
+  it("401 without session", async () => {
+    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    const res = await app.request("/api/admin/overview", {}, env);
+    expect(res.status).toBe(401);
+  });
+
   it("403 when not allowlisted", async () => {
     const env = createTestEnv({ adminEmails: "ops@example.com" });
     env.seedUser({
@@ -239,5 +245,64 @@ describe("GET /api/admin/users (allowlisted)", () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as { users: { email: string }[] };
     expect(body.users.map((u) => u.email)).toEqual(["alice@example.com"]);
+  });
+
+  function seedManyListUsers(env: ReturnType<typeof createTestEnv>, count: number) {
+    env.seedUser({
+      id: "admin-u",
+      email: "ops@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2025-01-01T00:00:00.000Z",
+    });
+    env.seedSession("s-admin", "admin-u");
+    for (let i = 0; i < count; i++) {
+      env.seedUser({
+        id: `bulk-u-${i}`,
+        email: `user-${String(i).padStart(3, "0")}@example.com`,
+        password_hash: null,
+        oauth_subject: null,
+        created_at: `2026-10-${String((i % 28) + 1).padStart(2, "0")}T00:00:00.000Z`,
+      });
+    }
+  }
+
+  it("defaults limit to 50 when omitted", async () => {
+    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    seedManyListUsers(env, 55);
+    const res = await app.request(
+      "/api/admin/users",
+      { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { users: unknown[] };
+    expect(body.users).toHaveLength(50);
+  });
+
+  it("clamps limit to 100", async () => {
+    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    seedManyListUsers(env, 110);
+    const res = await app.request(
+      "/api/admin/users?limit=999",
+      { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { users: unknown[] };
+    expect(body.users).toHaveLength(100);
+  });
+
+  it("falls back to limit 50 when limit is invalid", async () => {
+    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    seedManyListUsers(env, 55);
+    const res = await app.request(
+      "/api/admin/users?limit=nope",
+      { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { users: unknown[] };
+    expect(body.users).toHaveLength(50);
   });
 });

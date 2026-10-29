@@ -1,5 +1,19 @@
 import type { Env } from "../../worker/env";
 
+/** Mirrors SQL `lower(email) LIKE '%' || lower(q) || '%'` (% and _ wildcards). */
+function emailMatchesAdminListQuery(email: string, q: string): boolean {
+  const hay = email.toLowerCase();
+  const pattern = q.toLowerCase();
+  let re = ".*";
+  for (const ch of pattern) {
+    if (ch === "%") re += ".*";
+    else if (ch === "_") re += ".";
+    else re += ch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+  re += ".*";
+  return new RegExp(re).test(hay);
+}
+
 type UserRow = {
   id: string;
   email: string;
@@ -677,9 +691,9 @@ export function createTestEnv(opts?: {
           normalized.includes("created_last_7d") &&
           normalized.includes("FROM users")
         ) {
-          const cutoff = new Date(
-            Date.now() - 7 * 24 * 60 * 60 * 1000,
-          ).toISOString();
+          const cutoff =
+            (bound[0] as string | undefined) ??
+            new Date(Date.now() - 7 * 864e5).toISOString();
           const allUsers = [...users.values()];
           const createdLast7d = allUsers.filter(
             (u) => u.created_at >= cutoff,
@@ -698,10 +712,9 @@ export function createTestEnv(opts?: {
           normalized.includes("AS job_count")
         ) {
           const [q, , limitRaw] = bound as [string, string, number];
-          const needle = q.trim().toLowerCase();
           let rows = [...users.values()];
-          if (needle !== "") {
-            rows = rows.filter((u) => u.email.toLowerCase().includes(needle));
+          if (q !== "") {
+            rows = rows.filter((u) => emailMatchesAdminListQuery(u.email, q));
           }
           rows.sort((a, b) => b.created_at.localeCompare(a.created_at));
           const limit = Number(limitRaw);
