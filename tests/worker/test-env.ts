@@ -98,6 +98,18 @@ export type ReviewLogRow = {
 };
 
 type SessionRecord = { userId: string; expiresAt: number };
+type ExportJobRow = {
+  id: string;
+  user_id: string;
+  status: string;
+  request_json: string;
+  r2_key: string | null;
+  error: string | null;
+  warning_json: string | null;
+  created_at: string;
+  updated_at: string;
+  expires_at: string;
+};
 
 /** Fixed 32-byte wrap key for Vitest when SECRETS_WRAP_KEY is unset. */
 export const TEST_SECRETS_WRAP_KEY = "0123456789abcdef0123456789abcdef";
@@ -116,6 +128,7 @@ export type TestEnv = Env & {
   seedReviewLog: (row: ReviewLogRow) => void;
   seedR2: (key: string, value: string) => void;
   getMaterials: () => MaterialRow[];
+  getExportJobs: () => ExportJobRow[];
   getGenerationJobs: () => GenerationJobRow[];
   getUserSecrets: () => UserSecretRow[];
   getCards: () => CardRow[];
@@ -138,7 +151,8 @@ export function createTestEnv(opts?: {
   const schedules = new Map<string, ScheduleRow>();
   const reviewLogs: ReviewLogRow[] = [];
   const sessions = new Map<string, string>();
-  const r2 = new Map<string, string>();
+  const exportJobs = new Map<string, ExportJobRow>();
+  const r2 = new Map<string, string | ArrayBuffer>();
   const queueMessages: unknown[] = [];
 
   // Test harness only: missing wrap key → fixed 32-byte test key.
@@ -270,6 +284,12 @@ export function createTestEnv(opts?: {
           const subject = subjects.get(bound[0] as string);
           return subject
             ? ({ id: subject.id, user_id: subject.user_id } as T)
+            : null;
+        }
+        if (normalized.startsWith("SELECT title FROM subjects WHERE id =")) {
+          const subject = subjects.get(bound[0] as string);
+          return subject && subject.user_id === bound[1]
+            ? ({ title: subject.title } as T)
             : null;
         }
         if (
@@ -600,9 +620,41 @@ export function createTestEnv(opts?: {
             ? ({ id: job.id, created_at: job.created_at } as T)
             : null;
         }
+        if (
+          normalized.includes("FROM export_jobs WHERE id =") &&
+          normalized.includes("user_id =")
+        ) {
+          const row = exportJobs.get(bound[0] as string);
+          return row && row.user_id === bound[1] ? (row as T) : null;
+        }
         return null;
       },
       async all<T>(): Promise<{ results: T[] }> {
+        if (
+          normalized.includes("FROM cards c") &&
+          normalized.includes("LEFT JOIN card_schedules")
+        ) {
+          const [deckId, status] = bound as [string, string];
+          const rows = [...cards.values()]
+            .filter((card) => card.deck_id === deckId && card.status === status)
+            .sort((a, b) => a.created_at.localeCompare(b.created_at))
+            .map((card) => {
+              const schedule = schedules.get(card.id);
+              return {
+                ...card,
+                due: schedule?.due ?? null,
+                stability: schedule?.stability ?? null,
+                difficulty: schedule?.difficulty ?? null,
+                elapsed_days: schedule?.elapsed_days ?? null,
+                scheduled_days: schedule?.scheduled_days ?? null,
+                reps: schedule?.reps ?? null,
+                lapses: schedule?.lapses ?? null,
+                state: schedule?.state ?? null,
+                last_review: schedule?.last_review ?? null,
+              };
+            });
+          return { results: rows as T[] };
+        }
         if (
           normalized.includes("FROM generation_jobs j") &&
           normalized.includes("COUNT(c.id)") &&
@@ -895,7 +947,95 @@ export function createTestEnv(opts?: {
         return { results: [] };
       },
       async run(): Promise<D1Result> {
-        if (normalized.startsWith("INSERT INTO users")) {
+        if (normalized.startsWith("INSERT INTO export_jobs")) {
+          const [
+            id,
+            user_id,
+            status,
+            request_json,
+            r2_key,
+            warning_json,
+            created_at,
+            updated_at,
+            expires_at,
+          ] = bound as [
+            string,
+            string,
+            string,
+            string,
+            string | null,
+            string | null,
+            string,
+            string,
+            string,
+          ];
+          exportJobs.set(id, {
+            id,
+            user_id,
+            status,
+            request_json,
+            r2_key,
+            error: null,
+            warning_json,
+            created_at,
+            updated_at,
+            expires_at,
+          });
+        } else if (
+          normalized.startsWith(
+            "UPDATE export_jobs SET status = ?, error = ?, warning_json = ?",
+          )
+        ) {
+          const [status, error, warning_json, updated_at, id] = bound as [
+            string,
+            string | null,
+            string | null,
+            string,
+            string,
+            string?,
+          ];
+          const row = exportJobs.get(id);
+          if (row)
+            exportJobs.set(id, {
+              ...row,
+              status,
+              error,
+              warning_json,
+              updated_at,
+            });
+        } else if (
+          normalized.startsWith("UPDATE export_jobs SET status = ?, r2_key = ?")
+        ) {
+          const [status, r2_key, warning_json, updated_at, id] = bound as [
+            string,
+            string | null,
+            string | null,
+            string,
+            string,
+            string?,
+          ];
+          const row = exportJobs.get(id);
+          if (row)
+            exportJobs.set(id, {
+              ...row,
+              status,
+              r2_key,
+              warning_json,
+              updated_at,
+            });
+        } else if (
+          normalized.startsWith("UPDATE export_jobs SET status = ?, error = ?")
+        ) {
+          const [status, error, updated_at, id] = bound as [
+            string,
+            string | null,
+            string,
+            string,
+            string?,
+          ];
+          const row = exportJobs.get(id);
+          if (row) exportJobs.set(id, { ...row, status, error, updated_at });
+        } else if (normalized.startsWith("INSERT INTO users")) {
           const [id, email, password_hash, oauth_subject, created_at] =
             bound as [string, string, string | null, string | null, string];
           for (const existing of users.values()) {
@@ -1305,12 +1445,8 @@ export function createTestEnv(opts?: {
             "UPDATE generation_jobs SET progress_json = ? WHERE id = ? AND status = ? AND progress_json = ?",
           )
         ) {
-          const [progress_json, id, requiredStatus, expectedProgress] = bound as [
-            string,
-            string,
-            string,
-            string,
-          ];
+          const [progress_json, id, requiredStatus, expectedProgress] =
+            bound as [string, string, string, string];
           const row = generationJobs.get(id);
           if (
             !row ||
@@ -1541,8 +1677,14 @@ export function createTestEnv(opts?: {
           normalized.includes("FROM generation_jobs")
         ) {
           // Accept-all sibling reject: draft cards on other owned needs_review jobs.
-          const [status, updated_at, expected, userId, jobStatus, excludeJobId] =
-            bound as [string, string, string, string, string, string];
+          const [
+            status,
+            updated_at,
+            expected,
+            userId,
+            jobStatus,
+            excludeJobId,
+          ] = bound as [string, string, string, string, string, string];
           const siblingJobIds = new Set<string>();
           for (const job of generationJobs.values()) {
             if (job.id === excludeJobId || job.status !== jobStatus) continue;
@@ -1826,20 +1968,24 @@ export function createTestEnv(opts?: {
     } as unknown as Ai,
     MATERIALS: {
       async put(key: string, value: string | ArrayBuffer | ReadableStream) {
-        const text =
-          typeof value === "string"
-            ? value
-            : value instanceof ArrayBuffer
-              ? new TextDecoder().decode(value)
-              : await new Response(value).text();
-        r2.set(key, text);
+        if (typeof value === "string") {
+          r2.set(key, value);
+        } else if (value instanceof ArrayBuffer) {
+          r2.set(key, value);
+        } else {
+          r2.set(key, await new Response(value).arrayBuffer());
+        }
       },
       async get(key: string) {
         const v = r2.get(key);
         if (v === undefined) return null;
-        const bytes = new TextEncoder().encode(v);
+        const bytes =
+          typeof v === "string"
+            ? new TextEncoder().encode(v)
+            : new Uint8Array(v);
         return {
-          text: async () => v,
+          text: async () =>
+            typeof v === "string" ? v : new TextDecoder().decode(v),
           arrayBuffer: async () =>
             bytes.buffer.slice(
               bytes.byteOffset,
@@ -1917,6 +2063,7 @@ export function createTestEnv(opts?: {
       r2.set(key, value);
     },
     getMaterials: () => [...materials.values()],
+    getExportJobs: () => [...exportJobs.values()],
     getGenerationJobs: () => [...generationJobs.values()],
     getUserSecrets: () => [...userSecrets.values()],
     getCards: () => [...cards.values()],

@@ -37,9 +37,12 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import {
   ApiError,
+  apkgFilenameForDeckTitle,
   archiveCard,
   createDeckCard,
+  createDeckExport,
   deckStats,
+  downloadExport,
   deleteDeck,
   listDeckCards,
   listDecks,
@@ -157,6 +160,7 @@ export default function DeckHubPage({ deckId }: Props) {
   const [draftJobs, setDraftJobs] = useState<JobListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [exportWarning, setExportWarning] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
   const [renameOpen, setRenameOpen] = useState(false);
@@ -221,6 +225,8 @@ export default function DeckHubPage({ deckId }: Props) {
   const { end: endLoad } = useTrackedOp("Loading deck…", {
     trackOnMount: true,
   });
+  const { busy: exportBusy, run: runExport } =
+    useTrackedOp("Exporting to Anki…");
 
   const refreshCards = useCallback(async () => {
     setCards(
@@ -252,9 +258,7 @@ export default function DeckHubPage({ deckId }: Props) {
     const found = deckList.find((d) => d.id === deckId) ?? null;
     setDeck(found);
     setSubject(
-      found
-        ? (subjects.find((s) => s.id === found.subject_id) ?? null)
-        : null,
+      found ? (subjects.find((s) => s.id === found.subject_id) ?? null) : null,
     );
     if (found) {
       await refreshDraftJobs();
@@ -337,7 +341,9 @@ export default function DeckHubPage({ deckId }: Props) {
       setDeck(updated);
       setRenameOpen(false);
     } catch (err) {
-      setRenameError(err instanceof ApiError ? err.message : "Could not rename");
+      setRenameError(
+        err instanceof ApiError ? err.message : "Could not rename",
+      );
     } finally {
       setRenameBusy(false);
     }
@@ -378,7 +384,10 @@ export default function DeckHubPage({ deckId }: Props) {
   function openEdit(card: CardDraftView) {
     if (card.status === "archived") return;
     setEditError(null);
-    setEditCard({ ...card, options: card.options ? [...card.options] : undefined });
+    setEditCard({
+      ...card,
+      options: card.options ? [...card.options] : undefined,
+    });
   }
 
   function onEditChange(next: DraftEditorChange) {
@@ -405,7 +414,9 @@ export default function DeckHubPage({ deckId }: Props) {
       setEditCard(null);
       setNotice("Card saved");
     } catch (err) {
-      setEditError(err instanceof ApiError ? err.message : "Could not save card");
+      setEditError(
+        err instanceof ApiError ? err.message : "Could not save card",
+      );
     } finally {
       setEditBusy(false);
     }
@@ -641,9 +652,7 @@ export default function DeckHubPage({ deckId }: Props) {
       const truncNote = truncated
         ? ` (kept first ${added.length}; paste was longer than the 40-card limit)`
         : "";
-      setMaterialNotice(
-        `Added ${added.length} local cards${truncNote}`,
-      );
+      setMaterialNotice(`Added ${added.length} local cards${truncNote}`);
     } catch (err) {
       if (
         err instanceof DOMException &&
@@ -657,6 +666,39 @@ export default function DeckHubPage({ deckId }: Props) {
       }
     } finally {
       setMaterialBusy(false);
+    }
+  }
+
+  async function onExportAnki() {
+    if (!deck || guest) return;
+    setError(null);
+    setExportWarning(null);
+    try {
+      await runExport(async () => {
+        const job = await createDeckExport(deck.id);
+        const { missingMedia, skippedCards } = job.warnings;
+        await downloadExport(job.id, apkgFilenameForDeckTitle(deck.title));
+        if (missingMedia > 0 || skippedCards > 0) {
+          const parts: string[] = [];
+          if (skippedCards > 0) {
+            parts.push(
+              `${skippedCards} card${skippedCards === 1 ? "" : "s"} skipped`,
+            );
+          }
+          if (missingMedia > 0) {
+            parts.push(
+              `${missingMedia} missing media file${missingMedia === 1 ? "" : "s"}`,
+            );
+          }
+          setExportWarning(
+            `Download started. Export warnings: ${parts.join("; ")}.`,
+          );
+        } else {
+          setNotice("Anki deck downloaded");
+        }
+      });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Export failed");
     }
   }
 
@@ -726,7 +768,9 @@ export default function DeckHubPage({ deckId }: Props) {
     }
     const contentType = resolveUploadContentType(uploadFile);
     if (!ALLOWED_UPLOAD_MIMES.has(contentType)) {
-      setMaterialError("Only PDF, PPTX, or image (jpeg/png/webp) files are allowed");
+      setMaterialError(
+        "Only PDF, PPTX, or image (jpeg/png/webp) files are allowed",
+      );
       return;
     }
     if (uploadFile.size > MAX_FILE_BYTES) {
@@ -885,6 +929,18 @@ export default function DeckHubPage({ deckId }: Props) {
                   Generate cards for topic…
                 </Button>
               ) : null}
+              {!guest && deck ? (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  disabled={exportBusy || cards.length === 0}
+                  onClick={() => {
+                    void onExportAnki();
+                  }}
+                >
+                  {exportBusy ? "Exporting…" : "Export to Anki"}
+                </Button>
+              ) : null}
               <Typography variant="body2" color="text.secondary">
                 Cards, materials, and drafts for this deck.
               </Typography>
@@ -895,6 +951,11 @@ export default function DeckHubPage({ deckId }: Props) {
           {notice ? (
             <Alert severity="success" onClose={() => setNotice(null)}>
               {notice}
+            </Alert>
+          ) : null}
+          {exportWarning ? (
+            <Alert severity="warning" onClose={() => setExportWarning(null)}>
+              {exportWarning}
             </Alert>
           ) : null}
 
@@ -1075,11 +1136,7 @@ export default function DeckHubPage({ deckId }: Props) {
                 sx={{ m: 0, p: 0, listStyle: "none" }}
               >
                 {draftJobs.map((job) => (
-                  <Box
-                    component="li"
-                    key={job.id}
-                    sx={{ py: 1 }}
-                  >
+                  <Box component="li" key={job.id} sx={{ py: 1 }}>
                     <Link
                       href={`/jobs/${encodeURIComponent(job.id)}/drafts`}
                       underline="hover"
@@ -1087,9 +1144,7 @@ export default function DeckHubPage({ deckId }: Props) {
                       variant="body2"
                       onClick={(ev) => {
                         ev.preventDefault();
-                        navigate(
-                          `/jobs/${encodeURIComponent(job.id)}/drafts`,
-                        );
+                        navigate(`/jobs/${encodeURIComponent(job.id)}/drafts`);
                       }}
                     >
                       {job.filename?.trim() || "Untitled material"}
@@ -1340,10 +1395,7 @@ export default function DeckHubPage({ deckId }: Props) {
             />
           </DialogContent>
           <DialogActions>
-            <Button
-              onClick={() => setRenameOpen(false)}
-              disabled={renameBusy}
-            >
+            <Button onClick={() => setRenameOpen(false)} disabled={renameBusy}>
               Cancel
             </Button>
             <Button
@@ -1416,10 +1468,7 @@ export default function DeckHubPage({ deckId }: Props) {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={() => setConfirmDelete(false)}
-            disabled={deleteBusy}
-          >
+          <Button onClick={() => setConfirmDelete(false)} disabled={deleteBusy}>
             Cancel
           </Button>
           <Button
@@ -1487,10 +1536,7 @@ export default function DeckHubPage({ deckId }: Props) {
             Reset schedule
           </Button>
           <Box sx={{ flex: 1 }} />
-          <Button
-            onClick={() => setEditCard(null)}
-            disabled={editDialogBusy}
-          >
+          <Button onClick={() => setEditCard(null)} disabled={editDialogBusy}>
             Cancel
           </Button>
           <Button
@@ -1591,15 +1637,12 @@ export default function DeckHubPage({ deckId }: Props) {
         <DialogTitle>Reset schedule?</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            This sets the card’s FSRS schedule back to a new card (due now). Your
-            card text is unchanged.
+            This sets the card’s FSRS schedule back to a new card (due now).
+            Your card text is unchanged.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={() => setConfirmReset(false)}
-            disabled={resetBusy}
-          >
+          <Button onClick={() => setConfirmReset(false)} disabled={resetBusy}>
             Cancel
           </Button>
           <Button
