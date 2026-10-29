@@ -30,6 +30,9 @@ export function shellBackHref(pathname: string): string | null {
   if (/^\/jobs\/[^/]+\/drafts\/?$/.test(pathname)) {
     return "/library";
   }
+  if (/^\/admin\/users\/[^/]+\/?$/.test(pathname)) {
+    return "/admin";
+  }
   return null;
 }
 
