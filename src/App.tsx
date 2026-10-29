@@ -14,6 +14,7 @@ import SettingsPage from "./routes/SettingsPage";
 import InsightsPage from "./routes/InsightsPage";
 import StudyPage from "./routes/StudyPage";
 import TodayPage from "./routes/TodayPage";
+import AdminPage from "./routes/AdminPage";
 import { subscribeLocation } from "./nav/navigate";
 import { StudyChromeProvider } from "./study/StudyChromeContext";
 
@@ -69,6 +70,7 @@ function AppInner() {
   if (path === "/insights") return shell(<InsightsPage />);
   if (/^\/jobs\/[^/]+\/drafts\/?$/.test(path))
     return shell(<DraftReviewPage />);
+  if (path === "/admin") return shell(<AdminPage />);
 
   return shell(<TodayPage />);
 }

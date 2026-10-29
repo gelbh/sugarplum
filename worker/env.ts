@@ -28,4 +28,6 @@ export interface Env {
   DOCLING_URL?: string;
   /** Required whenever DOCLING_URL is set; sent as X-Api-Key (docling-serve DOCLING_SERVE_API_KEY). */
   DOCLING_API_KEY?: string;
+  /** Secret: comma-separated admin emails (`wrangler secret put ADMIN_EMAILS`). */
+  ADMIN_EMAILS?: string;
 }

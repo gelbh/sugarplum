@@ -73,7 +73,10 @@ npx wrangler secret put R2_SECRET_ACCESS_KEY
 npx wrangler secret put GOOGLE_CLIENT_ID      # from Google Cloud OAuth client
 npx wrangler secret put GOOGLE_CLIENT_SECRET
 npx wrangler secret put DOCLING_API_KEY       # optional until Docling enabled; required when DOCLING_URL is set
+npx wrangler secret put ADMIN_EMAILS          # comma-separated; Google-linked accounts only; never commit values
 ```
+
+Local: put `ADMIN_EMAILS=...` in `.dev.vars` (gitignored). Open `/admin` while signed in as a Google-linked allowlisted user. Empty/unset → all `/api/admin/*` return 403.
 
 ### Google Sign-In (one-time)
 
