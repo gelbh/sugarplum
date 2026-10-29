@@ -4,19 +4,36 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
+import {
+  assertSingleCloze,
+  assertValidMcqOptions,
+} from "../generation/schema";
+import { encodeStoredBack } from "../cards/routes";
+import { foldDeckTitle } from "./titleKey";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
 const MAX_IMPORT_CARDS = 200;
 
-type ImportDeck = { clientId: string; title: string };
-type ImportCard = { clientDeckId: string; front: string; back: string };
+type ImportSubject = { clientId: string; title: string };
+type ImportDeck = { clientId: string; title: string; clientSubjectId: string };
+type ImportCardType = "qa" | "cloze" | "mcq";
+type ImportSource = "paste" | "hub";
 
-function foldDeckTitle(title: string): string {
-  return title.trim().normalize("NFC").toLowerCase();
-}
+type ImportCard = {
+  clientDeckId: string;
+  type: ImportCardType;
+  front: string;
+  back: string;
+  options?: string[];
+  source: ImportSource;
+};
+
+const CARD_TYPES = new Set<ImportCardType>(["qa", "cloze", "mcq"]);
+const SOURCES = new Set<ImportSource>(["paste", "hub"]);
 
 function parseImportBody(raw: unknown): {
+  subjects: ImportSubject[];
   decks: ImportDeck[];
   cards: ImportCard[];
 } {
@@ -26,6 +43,29 @@ function parseImportBody(raw: unknown): {
   const body = raw as Record<string, unknown>;
   if (!Array.isArray(body.decks) || !Array.isArray(body.cards)) {
     throw new HTTPException(400, { message: "Invalid body" });
+  }
+
+  const subjects: ImportSubject[] = [];
+  if (body.subjects !== undefined) {
+    if (!Array.isArray(body.subjects)) {
+      throw new HTTPException(400, { message: "Invalid subjects" });
+    }
+    for (const item of body.subjects) {
+      if (item == null || typeof item !== "object") {
+        throw new HTTPException(400, { message: "Invalid subject" });
+      }
+      const s = item as Record<string, unknown>;
+      if (typeof s.clientId !== "string" || !s.clientId) {
+        throw new HTTPException(400, { message: "Invalid subject" });
+      }
+      if (typeof s.title !== "string") {
+        throw new HTTPException(400, { message: "Invalid subject" });
+      }
+      subjects.push({
+        clientId: s.clientId,
+        title: s.title.trim() || "Untitled",
+      });
+    }
   }
 
   const decks: ImportDeck[] = [];
@@ -40,7 +80,13 @@ function parseImportBody(raw: unknown): {
     if (typeof d.title !== "string") {
       throw new HTTPException(400, { message: "Invalid deck" });
     }
-    decks.push({ clientId: d.clientId, title: d.title.trim() || "Untitled" });
+    const clientSubjectId =
+      typeof d.clientSubjectId === "string" ? d.clientSubjectId : "";
+    decks.push({
+      clientId: d.clientId,
+      title: d.title.trim() || "Untitled",
+      clientSubjectId,
+    });
   }
 
   const cards: ImportCard[] = [];
@@ -55,14 +101,64 @@ function parseImportBody(raw: unknown): {
     if (typeof c.front !== "string" || typeof c.back !== "string") {
       throw new HTTPException(400, { message: "Invalid card" });
     }
+    const rawType = c.type === undefined ? "qa" : c.type;
+    if (typeof rawType !== "string" || !CARD_TYPES.has(rawType as ImportCardType)) {
+      throw new HTTPException(400, { message: "Invalid card type" });
+    }
+    const type = rawType as ImportCardType;
+
+    let source: ImportSource;
+    if (c.source === undefined) {
+      source = "paste";
+    } else if (typeof c.source !== "string" || !SOURCES.has(c.source as ImportSource)) {
+      throw new HTTPException(400, { message: "Invalid card source" });
+    } else {
+      source = c.source as ImportSource;
+    }
+
+    let options: string[] | undefined;
+    if (c.options !== undefined) {
+      if (!Array.isArray(c.options) || c.options.some((o) => typeof o !== "string")) {
+        throw new HTTPException(400, { message: "Invalid card options" });
+      }
+      options = c.options;
+    }
+
     cards.push({
       clientDeckId: c.clientDeckId,
+      type,
       front: c.front,
       back: c.back,
+      ...(options !== undefined ? { options } : {}),
+      source,
     });
   }
 
-  return { decks, cards };
+  return { subjects, decks, cards };
+}
+
+async function findOrCreateUnfiled(
+  db: ReturnType<typeof getDb>,
+  userId: string,
+  now: string,
+  statements: D1PreparedStatement[],
+): Promise<string> {
+  const row = await db
+    .prepare(
+      "SELECT id FROM subjects WHERE user_id = ? AND title = ? ORDER BY created_at ASC, id ASC LIMIT 1",
+    )
+    .bind(userId, "Unfiled")
+    .first<{ id: string }>();
+  if (row) return row.id;
+  const unfiledId = crypto.randomUUID();
+  statements.push(
+    db
+      .prepare(
+        "INSERT INTO subjects (id, user_id, title, created_at) VALUES (?, ?, ?, ?)",
+      )
+      .bind(unfiledId, userId, "Unfiled", now),
+  );
+  return unfiledId;
 }
 
 export const guestRoutes = new Hono<AppEnv>();
@@ -77,12 +173,17 @@ guestRoutes.post("/import", async (c) => {
     throw new HTTPException(400, { message: "Invalid JSON body" });
   }
 
-  const { decks, cards } = parseImportBody(raw);
+  const { subjects, decks, cards } = parseImportBody(raw);
 
   if (cards.length > MAX_IMPORT_CARDS) {
     throw new HTTPException(400, {
       message: `At most ${MAX_IMPORT_CARDS} cards`,
     });
+  }
+
+  const subjectClientIds = new Set(subjects.map((s) => s.clientId));
+  if (subjectClientIds.size !== subjects.length) {
+    throw new HTTPException(400, { message: "Duplicate subject clientId" });
   }
 
   const clientIds = new Set(decks.map((d) => d.clientId));
@@ -93,16 +194,67 @@ guestRoutes.post("/import", async (c) => {
     if (!clientIds.has(card.clientDeckId)) {
       throw new HTTPException(400, { message: "Unknown clientDeckId" });
     }
+    if (card.type === "cloze") {
+      try {
+        assertSingleCloze(card.front);
+      } catch (err) {
+        throw new HTTPException(400, {
+          message: err instanceof Error ? err.message : "Invalid cloze",
+        });
+      }
+    }
+    if (card.type === "mcq") {
+      try {
+        assertValidMcqOptions(card.back, card.options);
+      } catch (err) {
+        throw new HTTPException(400, {
+          message: err instanceof Error ? err.message : "Invalid MCQ",
+        });
+      }
+    }
   }
 
-  if (decks.length === 0 && cards.length === 0) {
+  if (subjects.length === 0 && decks.length === 0 && cards.length === 0) {
     return c.json({ deckCount: 0, cardCount: 0 });
   }
 
   const db = getDb(c.env);
   const now = new Date().toISOString();
-  const clientToServer = new Map<string, string>();
+  const clientToServerDeck = new Map<string, string>();
+  const clientToServerSubject = new Map<string, string>();
   const statements: D1PreparedStatement[] = [];
+
+  const { results: existingSubjects } = await db
+    .prepare(
+      "SELECT id, title, created_at FROM subjects WHERE user_id = ? ORDER BY created_at ASC, id ASC",
+    )
+    .bind(userId)
+    .all<{ id: string; title: string; created_at: string }>();
+
+  const subjectByFold = new Map<string, string>();
+  for (const subject of existingSubjects ?? []) {
+    const key = foldDeckTitle(subject.title);
+    if (!subjectByFold.has(key)) subjectByFold.set(key, subject.id);
+  }
+
+  for (const subject of subjects) {
+    const key = foldDeckTitle(subject.title);
+    const hit = subjectByFold.get(key);
+    if (hit) {
+      clientToServerSubject.set(subject.clientId, hit);
+      continue;
+    }
+    const id = crypto.randomUUID();
+    subjectByFold.set(key, id);
+    clientToServerSubject.set(subject.clientId, id);
+    statements.push(
+      db
+        .prepare(
+          "INSERT INTO subjects (id, user_id, title, created_at) VALUES (?, ?, ?, ?)",
+        )
+        .bind(id, userId, subject.title, now),
+    );
+  }
 
   const { results: existingDecks } = await db
     .prepare(
@@ -111,63 +263,75 @@ guestRoutes.post("/import", async (c) => {
     .bind(userId)
     .all<{ id: string; title: string; created_at: string }>();
 
-  const byFold = new Map<string, string>();
+  const deckByFold = new Map<string, string>();
   for (const deck of existingDecks ?? []) {
     const key = foldDeckTitle(deck.title);
-    if (!byFold.has(key)) byFold.set(key, deck.id);
+    if (!deckByFold.has(key)) deckByFold.set(key, deck.id);
   }
 
-  const misses = decks.filter((d) => !byFold.has(foldDeckTitle(d.title)));
+  const deckMisses = decks.filter((d) => !deckByFold.has(foldDeckTitle(d.title)));
   let unfiledId: string | null = null;
-  if (misses.length > 0) {
-    const row = await db
-      .prepare(
-        "SELECT id FROM subjects WHERE user_id = ? AND title = ? ORDER BY created_at ASC, id ASC LIMIT 1",
-      )
-      .bind(userId, "Unfiled")
-      .first<{ id: string }>();
-    if (row) {
-      unfiledId = row.id;
-    } else {
-      unfiledId = crypto.randomUUID();
-      statements.push(
-        db
-          .prepare(
-            "INSERT INTO subjects (id, user_id, title, created_at) VALUES (?, ?, ?, ?)",
-          )
-          .bind(unfiledId, userId, "Unfiled", now),
-      );
-    }
+  const needsUnfiled = deckMisses.some(
+    (d) =>
+      !d.clientSubjectId ||
+      !clientToServerSubject.has(d.clientSubjectId),
+  );
+  if (needsUnfiled) {
+    unfiledId = await findOrCreateUnfiled(db, userId, now, statements);
   }
 
   for (const deck of decks) {
     const key = foldDeckTitle(deck.title);
-    const hit = byFold.get(key);
+    const hit = deckByFold.get(key);
     if (hit) {
-      clientToServer.set(deck.clientId, hit);
+      clientToServerDeck.set(deck.clientId, hit);
       continue;
     }
     const id = crypto.randomUUID();
-    byFold.set(key, id);
-    clientToServer.set(deck.clientId, id);
+    deckByFold.set(key, id);
+    clientToServerDeck.set(deck.clientId, id);
+
+    let subjectId: string;
+    if (
+      deck.clientSubjectId &&
+      clientToServerSubject.has(deck.clientSubjectId)
+    ) {
+      subjectId = clientToServerSubject.get(deck.clientSubjectId)!;
+    } else {
+      subjectId = unfiledId!;
+    }
+
     statements.push(
       db
         .prepare(
           "INSERT INTO decks (id, user_id, title, subject_hint, subject_id, created_at) VALUES (?, ?, ?, NULL, ?, ?)",
         )
-        .bind(id, userId, deck.title, unfiledId!, now),
+        .bind(id, userId, deck.title, subjectId, now),
     );
   }
 
-  const provenance = JSON.stringify({ guest_import: true, source: "paste" });
-
   for (const card of cards) {
-    const deckId = clientToServer.get(card.clientDeckId);
+    const deckId = clientToServerDeck.get(card.clientDeckId);
     if (!deckId) {
       throw new HTTPException(400, { message: "Unknown clientDeckId" });
     }
+
+    let back = card.back;
+    let options = card.options;
+    if (card.type === "mcq") {
+      const mcq = assertValidMcqOptions(card.back, card.options);
+      back = mcq.back;
+      options = mcq.options;
+    }
+
     const cardId = crypto.randomUUID();
     const schedule = scheduleColumnsFromCard(newCard());
+    const provenance = JSON.stringify({
+      guest_import: true,
+      source: card.source,
+    });
+    const backJson = encodeStoredBack(card.type, back, options);
+
     statements.push(
       db
         .prepare(
@@ -180,9 +344,9 @@ guestRoutes.post("/import", async (c) => {
           cardId,
           deckId,
           null,
-          "qa",
+          card.type,
           JSON.stringify(card.front),
-          JSON.stringify(card.back),
+          backJson,
           null,
           provenance,
           "accepted",
