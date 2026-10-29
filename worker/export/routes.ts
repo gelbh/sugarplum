@@ -5,10 +5,7 @@ import type { Env } from "../env";
 import { requireUser, type AuthVariables } from "../auth/session";
 import { enqueueExport } from "./enqueue";
 import { runExportJob } from "./runExportJob";
-import {
-  estimateExportWorkload,
-  shouldEnqueueExport,
-} from "./threshold";
+import { estimateExportWorkload, shouldEnqueueExport } from "./threshold";
 import {
   CreateExportBodySchema,
   EMPTY_EXPORT_WARNINGS,
@@ -200,7 +197,18 @@ exportRoutes.post("/", async (c) => {
       createdAt,
       expiresAt,
     });
-    await enqueueExport(c.env, { exportId: id });
+    try {
+      await enqueueExport(c.env, { exportId: id });
+    } catch {
+      const message = "Export queue is unavailable";
+      await db
+        .prepare(
+          "UPDATE export_jobs SET status = ?, error = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+        )
+        .bind("failed", message, new Date().toISOString(), id, userId)
+        .run();
+      throw new HTTPException(503, { message });
+    }
     return c.json(
       {
         id,
@@ -235,13 +243,10 @@ exportRoutes.post("/", async (c) => {
     );
   }
 
-  if (result.httpStatus === 400) {
-    return c.json(
-      { message: result.error, warnings: result.warnings },
-      400,
-    );
+  if (result.kind === "business" || result.httpStatus === 400) {
+    return c.json({ message: result.error, warnings: result.warnings }, 400);
   }
-  if (result.httpStatus === 404) {
+  if (result.kind === "not_found" || result.httpStatus === 404) {
     throw new HTTPException(404, { message: result.error });
   }
   throw new HTTPException(500, { message: "Export failed" });
@@ -268,7 +273,6 @@ exportRoutes.get("/:id/download", async (c) => {
 
 exportRoutes.get("/:id", async (c) => {
   const userId = await requireUser(c);
-  await purgeExpiredExports(c.env, userId);
   const row = await ownedJob(getDb(c.env), c.req.param("id"), userId);
   return c.json(responseForJob(row));
 });

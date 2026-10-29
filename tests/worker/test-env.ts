@@ -690,9 +690,7 @@ export function createTestEnv(opts?: {
             .filter((j) => j.material_id === materialId)
             .sort((a, b) => b.created_at.localeCompare(a.created_at));
           const job = rows[0];
-          return job
-            ? ({ id: job.id, created_at: job.created_at } as T)
-            : null;
+          return job ? ({ id: job.id, created_at: job.created_at } as T) : null;
         }
         if (
           normalized.includes("FROM export_jobs WHERE id =") &&
@@ -950,7 +948,9 @@ export function createTestEnv(opts?: {
           return { results: rows as T[] };
         }
         if (
-          normalized.startsWith("SELECT id FROM generation_jobs WHERE material_id =")
+          normalized.startsWith(
+            "SELECT id FROM generation_jobs WHERE material_id =",
+          )
         ) {
           const materialId = bound[0] as string;
           const rows = [...generationJobs.values()]
@@ -1002,7 +1002,9 @@ export function createTestEnv(opts?: {
         }
         if (
           normalized.includes("FROM materials") &&
-          normalized.includes("WHERE deck_id = ? AND status = ? AND content_hash = ?")
+          normalized.includes(
+            "WHERE deck_id = ? AND status = ? AND content_hash = ?",
+          )
         ) {
           const [deckId, status, contentHash] = bound as [
             string,
@@ -1360,7 +1362,47 @@ export function createTestEnv(opts?: {
           const row = exportJobs.get(id);
           if (row && row.status === expectedStatus) {
             exportJobs.set(id, { ...row, status, updated_at });
+            return { success: true, meta: { changes: 1 } } as D1Result;
           }
+          return { success: true, meta: { changes: 0 } } as D1Result;
+        } else if (
+          normalized.startsWith(
+            "UPDATE export_jobs SET updated_at = ? WHERE id = ? AND status = ? AND updated_at = ?",
+          )
+        ) {
+          const [updated_at, id, expectedStatus, expectedUpdatedAt] = bound as [
+            string,
+            string,
+            string,
+            string,
+          ];
+          const row = exportJobs.get(id);
+          if (
+            row &&
+            row.status === expectedStatus &&
+            row.updated_at === expectedUpdatedAt
+          ) {
+            exportJobs.set(id, { ...row, updated_at });
+            return { success: true, meta: { changes: 1 } } as D1Result;
+          }
+          return { success: true, meta: { changes: 0 } } as D1Result;
+        } else if (
+          normalized.startsWith(
+            "UPDATE export_jobs SET status = ?, error = NULL, updated_at = ?",
+          )
+        ) {
+          const [status, updated_at, id] = bound as [
+            string,
+            string,
+            string,
+            string?,
+          ];
+          const row = exportJobs.get(id);
+          if (row) {
+            exportJobs.set(id, { ...row, status, error: null, updated_at });
+            return { success: true, meta: { changes: 1 } } as D1Result;
+          }
+          return { success: true, meta: { changes: 0 } } as D1Result;
         } else if (normalized.startsWith("INSERT INTO users")) {
           const [id, email, password_hash, oauth_subject, created_at] =
             bound as [string, string, string | null, string | null, string];
@@ -2416,8 +2458,7 @@ export function createTestEnv(opts?: {
         }),
     APP_URL: "http://localhost",
     ASSETS: {
-      fetch: async () =>
-        new Response("test assets missing", { status: 404 }),
+      fetch: async () => new Response("test assets missing", { status: 404 }),
     } as unknown as Fetcher,
     SECRETS_WRAP_KEY: wrapKey,
     R2_ACCOUNT_ID: "test-account",

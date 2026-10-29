@@ -12,7 +12,13 @@ import {
 
 export type RunExportJobResult =
   | { ok: true; warnings: ExportWarnings; r2Key: string }
-  | { ok: false; error: string; warnings: ExportWarnings; httpStatus?: number };
+  | {
+      ok: false;
+      kind: "business" | "not_found" | "transient";
+      error: string;
+      warnings: ExportWarnings;
+      httpStatus?: number;
+    };
 
 type ExportRow = {
   id: string;
@@ -22,6 +28,15 @@ type ExportRow = {
   r2_key: string | null;
 };
 
+export type RunExportJobOptions = {
+  /**
+   * When true (queue consumer), leave the row requeued on unexpected errors
+   * so message.retry() can reclaim. Sync HTTP path leaves this false and
+   * marks failed.
+   */
+  requeueOnTransient?: boolean;
+};
+
 /**
  * Build apkg for an existing export_jobs row and mark ready/failed.
  * Caller owns queued→running transition when async.
@@ -29,6 +44,7 @@ type ExportRow = {
 export async function runExportJob(
   env: Env,
   exportId: string,
+  opts?: RunExportJobOptions,
 ): Promise<RunExportJobResult> {
   const db = getDb(env);
   const row = await db
@@ -40,8 +56,10 @@ export async function runExportJob(
   if (!row) {
     return {
       ok: false,
+      kind: "not_found",
       error: "Export not found",
       warnings: EMPTY_EXPORT_WARNINGS,
+      httpStatus: 404,
     };
   }
 
@@ -53,7 +71,13 @@ export async function runExportJob(
     if (deckIds.length === 0) {
       const error = "No decks to export";
       await markFailed(db, row.id, row.user_id, error, EMPTY_EXPORT_WARNINGS);
-      return { ok: false, error, warnings: EMPTY_EXPORT_WARNINGS, httpStatus: 400 };
+      return {
+        ok: false,
+        kind: "business",
+        error,
+        warnings: EMPTY_EXPORT_WARNINGS,
+        httpStatus: 400,
+      };
     }
 
     const loaded = await loadExportCards(env, row.user_id, deckIds);
@@ -65,6 +89,7 @@ export async function runExportJob(
       await markFailed(db, row.id, row.user_id, error, loaded.warnings);
       return {
         ok: false,
+        kind: "business",
         error,
         warnings: loaded.warnings,
         httpStatus: 400,
@@ -90,27 +115,40 @@ export async function runExportJob(
     return { ok: true, warnings: loaded.warnings, r2Key };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Export failed";
-    await db
-      .prepare(
-        "UPDATE export_jobs SET status = ?, error = ?, updated_at = ? WHERE id = ? AND user_id = ?",
-      )
-      .bind(
-        "failed",
-        message,
-        new Date().toISOString(),
-        row.id,
-        row.user_id,
-      )
-      .run();
     if (error instanceof HTTPException) {
+      const kind = error.status === 404 ? "not_found" : "business";
+      await markFailed(db, row.id, row.user_id, message, EMPTY_EXPORT_WARNINGS);
       return {
         ok: false,
+        kind,
         error: message,
         warnings: EMPTY_EXPORT_WARNINGS,
         httpStatus: error.status,
       };
     }
-    return { ok: false, error: message, warnings: EMPTY_EXPORT_WARNINGS };
+
+    if (opts?.requeueOnTransient) {
+      await db
+        .prepare(
+          "UPDATE export_jobs SET status = ?, error = NULL, updated_at = ? WHERE id = ? AND user_id = ?",
+        )
+        .bind("queued", new Date().toISOString(), row.id, row.user_id)
+        .run();
+      return {
+        ok: false,
+        kind: "transient",
+        error: message,
+        warnings: EMPTY_EXPORT_WARNINGS,
+      };
+    }
+
+    await markFailed(db, row.id, row.user_id, message, EMPTY_EXPORT_WARNINGS);
+    return {
+      ok: false,
+      kind: "transient",
+      error: message,
+      warnings: EMPTY_EXPORT_WARNINGS,
+    };
   }
 }
 

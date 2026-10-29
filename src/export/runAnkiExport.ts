@@ -17,9 +17,7 @@ export function formatExportWarnings(warnings: ExportWarnings): string | null {
   if (missingMedia === 0 && skippedCards === 0) return null;
   const parts: string[] = [];
   if (skippedCards > 0) {
-    parts.push(
-      `${skippedCards} card${skippedCards === 1 ? "" : "s"} skipped`,
-    );
+    parts.push(`${skippedCards} card${skippedCards === 1 ? "" : "s"} skipped`);
   }
   if (missingMedia > 0) {
     parts.push(

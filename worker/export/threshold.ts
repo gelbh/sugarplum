@@ -25,12 +25,21 @@ export async function estimateExportWorkload(
   userId: string,
   deckIds: string[],
 ): Promise<ExportWorkload> {
-  void userId;
+  const ownedIds: string[] = [];
+  for (const deckId of deckIds) {
+    const owned = await env.DB.prepare(
+      "SELECT id FROM decks WHERE id = ? AND user_id = ?",
+    )
+      .bind(deckId, userId)
+      .first<{ id: string }>();
+    if (owned) ownedIds.push(owned.id);
+  }
+
   let cardCount = 0;
   let mediaBytes = 0;
   const seenKeys = new Set<string>();
 
-  for (const deckId of deckIds) {
+  for (const deckId of ownedIds) {
     const countRow = await env.DB.prepare(
       "SELECT COUNT(*) AS count FROM cards WHERE deck_id = ? AND status = ?",
     )
@@ -65,7 +74,7 @@ export async function estimateExportWorkload(
   }
 
   return {
-    deckCount: deckIds.length,
+    deckCount: ownedIds.length,
     cardCount,
     mediaBytes,
   };

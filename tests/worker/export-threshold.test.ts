@@ -193,4 +193,43 @@ describe("estimateExportWorkload", () => {
     expect(w.deckCount).toBe(EXPORT_SYNC_MAX_DECKS + 1);
     expect(shouldEnqueueExport(w)).toBe(true);
   });
+
+  it("ignores foreign decks in the workload estimate", async () => {
+    const env = createTestEnv();
+    setupDeck(env);
+    env.seedUser({
+      id: "user-b",
+      email: "b@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: user.created_at,
+    });
+    env.seedDeck({
+      id: "deck-foreign",
+      user_id: "user-b",
+      title: "Foreign",
+      subject_hint: null,
+      subject_id: null,
+      created_at: user.created_at,
+    });
+    for (let i = 0; i < EXPORT_SYNC_MAX_CARDS + 1; i++) {
+      env.seedCard({
+        id: `foreign-card-${i}`,
+        deck_id: "deck-foreign",
+        job_id: null,
+        type: "qa",
+        front_json: JSON.stringify(`Q${i}`),
+        back_json: JSON.stringify(`A${i}`),
+        media_r2_keys_json: null,
+        provenance_json: null,
+        status: "accepted",
+        created_at: user.created_at,
+        updated_at: user.created_at,
+      });
+    }
+
+    const w = await estimateExportWorkload(env, user.id, ["deck-foreign"]);
+    expect(w).toEqual({ deckCount: 0, cardCount: 0, mediaBytes: 0 });
+    expect(shouldEnqueueExport(w)).toBe(false);
+  });
 });

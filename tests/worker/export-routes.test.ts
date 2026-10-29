@@ -492,5 +492,58 @@ describe("export routes", () => {
     expect(response.status).toBe(503);
     expect(env.getExportJobs()[0]?.status).toBe("failed");
   });
-});
 
+  it("marks queued job failed with 503 when EXPORT_QUEUE.send throws", async () => {
+    const env = setup();
+    const deckIds: string[] = [];
+    for (let i = 0; i < 11; i++) {
+      const id = `deck-send-fail-${i}`;
+      deckIds.push(id);
+      env.seedDeck({
+        id,
+        user_id: user.id,
+        title: `Bulk ${i}`,
+        subject_hint: null,
+        subject_id: "subject-a",
+        created_at: user.created_at,
+      });
+      env.seedCard({
+        id: `card-send-fail-${i}`,
+        deck_id: id,
+        job_id: null,
+        type: "qa",
+        front_json: JSON.stringify(`Q${i}`),
+        back_json: JSON.stringify(`A${i}`),
+        media_r2_keys_json: null,
+        provenance_json: null,
+        status: "accepted",
+        created_at: user.created_at,
+        updated_at: user.created_at,
+      });
+    }
+    env.EXPORT_QUEUE = {
+      send: async () => {
+        throw new Error("queue unavailable");
+      },
+    } as unknown as Queue;
+
+    const response = await app.request(
+      "/api/exports",
+      {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({
+          type: "selection",
+          subjectIds: [],
+          deckIds,
+        }),
+      },
+      env,
+    );
+
+    expect(response.status).toBe(503);
+    expect(env.getExportJobs()[0]?.status).toBe("failed");
+    expect(env.getExportJobs()[0]?.error).toMatch(/unavailable/i);
+    expect(env.getExportQueueMessages()).toEqual([]);
+  });
+});
