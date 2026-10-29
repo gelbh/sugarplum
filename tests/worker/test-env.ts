@@ -1384,12 +1384,23 @@ export function createTestEnv(opts?: {
           const row = materials.get(id);
           if (row) materials.set(id, { ...row, status });
         } else if (normalized.startsWith("DELETE FROM materials WHERE id =")) {
-          const id = bound[0] as string;
-          const existed = materials.delete(id);
-          return {
-            success: true,
-            meta: { changes: existed ? 1 : 0 },
-          } as D1Result;
+          // Material hard-delete: cascade jobs; SET NULL job_id on remaining cards.
+          const materialId = bound[0] as string;
+          if (!materials.has(materialId)) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          const deletedJobIds = new Set<string>();
+          for (const [jid, job] of [...generationJobs.entries()]) {
+            if (job.material_id !== materialId) continue;
+            deletedJobIds.add(jid);
+            generationJobs.delete(jid);
+          }
+          for (const [cid, card] of [...cards.entries()]) {
+            if (!card.job_id || !deletedJobIds.has(card.job_id)) continue;
+            cards.set(cid, { ...card, job_id: null });
+          }
+          materials.delete(materialId);
+          return { success: true, meta: { changes: 1 } } as D1Result;
         } else if (normalized.startsWith("INSERT INTO generation_jobs")) {
           const [
             id,
@@ -1807,24 +1818,6 @@ export function createTestEnv(opts?: {
             cards.delete(id);
             schedules.delete(id);
           }
-        } else if (normalized.startsWith("DELETE FROM materials WHERE id =")) {
-          // Material hard-delete: cascade jobs; SET NULL job_id on remaining cards.
-          const materialId = bound[0] as string;
-          if (!materials.has(materialId)) {
-            return { success: true, meta: { changes: 0 } } as D1Result;
-          }
-          const deletedJobIds = new Set<string>();
-          for (const [jid, job] of [...generationJobs.entries()]) {
-            if (job.material_id !== materialId) continue;
-            deletedJobIds.add(jid);
-            generationJobs.delete(jid);
-          }
-          for (const [cid, card] of [...cards.entries()]) {
-            if (!card.job_id || !deletedJobIds.has(card.job_id)) continue;
-            cards.set(cid, { ...card, job_id: null });
-          }
-          materials.delete(materialId);
-          return { success: true, meta: { changes: 1 } } as D1Result;
         } else if (normalized.startsWith("INSERT INTO review_logs")) {
           const [
             id,
