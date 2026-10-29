@@ -555,6 +555,36 @@ export function guestPatchCard(
   return updated;
 }
 
+/** Move an accepted card to another deck; dueIds unchanged. */
+export function guestMoveCard(
+  cardId: string,
+  deckId: string,
+  storage?: Store,
+): CardDraftView {
+  const store = readStore(storage);
+  const idx = store.cards.findIndex((c) => c.id === cardId);
+  if (idx < 0) throw new Error("Card not found");
+  const current = store.cards[idx]!;
+  if (current.status !== "accepted") {
+    throw new Error("Only accepted cards can be moved");
+  }
+  if (!store.decks.some((d) => d.id === deckId)) {
+    throw new Error("Deck not found");
+  }
+  if (deckId === current.deck_id) {
+    return current;
+  }
+  const updatedAt = nowIso();
+  const updated: CardDraftView = {
+    ...current,
+    deck_id: deckId,
+    updated_at: updatedAt,
+  };
+  store.cards[idx] = updated;
+  writeStore(store, storage);
+  return updated;
+}
+
 /** Reset one card's due: due=now and id at front of dueIds. */
 export function guestResetCardSchedule(
   cardId: string,

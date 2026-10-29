@@ -22,6 +22,7 @@ import {
   guestListDecks,
   guestListDueCards,
   guestListSubjects,
+  guestMoveCard,
   guestPatchCard,
   guestPatchDeck,
   guestPatchSubject,
@@ -662,6 +663,26 @@ export function acceptAllJobDrafts(jobId: string) {
 export function rejectCard(cardId: string) {
   if (isGuest()) guestUnsupported("reject cards");
   return api<CardDraftView>(`/api/cards/${cardId}/reject`, { method: "POST" });
+}
+
+export async function moveCard(cardId: string, deckId: string) {
+  if (isGuest()) {
+    try {
+      return guestMoveCard(cardId, deckId);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Card not found";
+      throw new ApiError(
+        message === "Card not found" || message === "Deck not found" ? 404 : 400,
+        message,
+      );
+    }
+  }
+  const card = await api<CardDraftView>(`/api/cards/${cardId}/move`, {
+    method: "POST",
+    json: { deckId },
+  });
+  clearDueCache();
+  return card;
 }
 
 export type ListDueOpts = { deckId?: string; subjectId?: string };

@@ -9,7 +9,11 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
+import FormControl from "@mui/material/FormControl";
 import IconButton from "@mui/material/IconButton";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -18,6 +22,7 @@ import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import {
   ApiError,
@@ -29,6 +34,7 @@ import {
   listJobsWithDrafts,
   listSubjects,
   me,
+  moveCard,
   pasteMaterial,
   patchCard,
   patchDeck,
@@ -151,6 +157,14 @@ export default function DeckHubPage({ deckId }: Props) {
   const [confirmReset, setConfirmReset] = useState(false);
   const [resetBusy, setResetBusy] = useState(false);
   const editDialogBusy = editBusy || resetBusy || cardRegenBusy;
+
+  const [moveTarget, setMoveTarget] = useState<CardDraftView | null>(null);
+  const [moveSubjects, setMoveSubjects] = useState<Subject[]>([]);
+  const [moveDecks, setMoveDecks] = useState<Deck[]>([]);
+  const [moveSubjectId, setMoveSubjectId] = useState("");
+  const [moveDeckId, setMoveDeckId] = useState("");
+  const [moveBusy, setMoveBusy] = useState(false);
+  const [moveError, setMoveError] = useState<string | null>(null);
 
   const [createCard, setCreateCard] = useState<CardDraftView>(() =>
     blankHubCreateCard(deckId),
@@ -336,6 +350,71 @@ export default function DeckHubPage({ deckId }: Props) {
       );
     } finally {
       setResetBusy(false);
+    }
+  }
+
+  const moveDeckChoices = moveDecks.filter(
+    (d) => d.subject_id === moveSubjectId && d.id !== deckId,
+  );
+
+  async function openMove(card: CardDraftView) {
+    setMoveError(null);
+    setMoveTarget(card);
+    setMoveBusy(true);
+    try {
+      const [subjects, decks] = await Promise.all([
+        listSubjects(),
+        listDecks(),
+      ]);
+      setMoveSubjects(subjects);
+      setMoveDecks(decks);
+      const defaultSubjectId =
+        subject?.id ??
+        decks.find((d) => d.id === deckId)?.subject_id ??
+        subjects[0]?.id ??
+        "";
+      setMoveSubjectId(defaultSubjectId);
+      const firstDeck = decks.find(
+        (d) => d.subject_id === defaultSubjectId && d.id !== deckId,
+      );
+      setMoveDeckId(firstDeck?.id ?? "");
+    } catch (err) {
+      setMoveError(
+        err instanceof ApiError ? err.message : "Could not load decks",
+      );
+    } finally {
+      setMoveBusy(false);
+    }
+  }
+
+  function onMoveSubjectChange(nextSubjectId: string) {
+    setMoveSubjectId(nextSubjectId);
+    const first = moveDecks.find(
+      (d) => d.subject_id === nextSubjectId && d.id !== deckId,
+    );
+    setMoveDeckId(first?.id ?? "");
+  }
+
+  async function confirmMoveCard() {
+    if (!moveTarget || !moveDeckId) return;
+    setMoveBusy(true);
+    setMoveError(null);
+    try {
+      await moveCard(moveTarget.id, moveDeckId);
+      setCards((prev) => prev.filter((c) => c.id !== moveTarget.id));
+      if (editCard?.id === moveTarget.id) {
+        setEditCard(null);
+      }
+      const destTitle =
+        moveDecks.find((d) => d.id === moveDeckId)?.title ?? "deck";
+      setMoveTarget(null);
+      setNotice(`Moved card to “${destTitle}”`);
+    } catch (err) {
+      setMoveError(
+        err instanceof ApiError ? err.message : "Could not move card",
+      );
+    } finally {
+      setMoveBusy(false);
     }
   }
 
@@ -955,6 +1034,15 @@ export default function DeckHubPage({ deckId }: Props) {
                       </Box>
                       <IconButton
                         size="small"
+                        aria-label="Move card"
+                        onClick={() => {
+                          void openMove(card);
+                        }}
+                      >
+                        <DriveFileMoveOutlinedIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
                         aria-label="Edit card"
                         onClick={() => openEdit(card)}
                       >
@@ -1167,6 +1255,14 @@ export default function DeckHubPage({ deckId }: Props) {
         </DialogContent>
         <DialogActions sx={{ flexWrap: "wrap", gap: 1 }}>
           <Button
+            disabled={editDialogBusy || !editCard}
+            onClick={() => {
+              if (editCard) void openMove(editCard);
+            }}
+          >
+            Move…
+          </Button>
+          <Button
             color="warning"
             disabled={editDialogBusy || !editCard}
             onClick={() => setConfirmReset(true)}
@@ -1186,6 +1282,87 @@ export default function DeckHubPage({ deckId }: Props) {
             onClick={saveEdit}
           >
             {editBusy ? "Saving…" : "Save"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={moveTarget !== null}
+        onClose={() => !moveBusy && setMoveTarget(null)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Move card</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            Choose a subject and deck. The card leaves this deck; its study
+            schedule stays the same.
+          </DialogContentText>
+          {moveError ? (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {moveError}
+            </Alert>
+          ) : null}
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <FormControl fullWidth disabled={moveBusy || moveSubjects.length === 0}>
+              <InputLabel id="move-subject-label">Subject</InputLabel>
+              <Select
+                labelId="move-subject-label"
+                label="Subject"
+                value={moveSubjectId}
+                onChange={(ev) => onMoveSubjectChange(ev.target.value)}
+              >
+                {moveSubjects.map((s) => (
+                  <MenuItem key={s.id} value={s.id}>
+                    {s.title}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl
+              fullWidth
+              disabled={moveBusy || moveDeckChoices.length === 0}
+            >
+              <InputLabel id="move-deck-label">Deck</InputLabel>
+              <Select
+                labelId="move-deck-label"
+                label="Deck"
+                value={moveDeckId}
+                onChange={(ev) => setMoveDeckId(ev.target.value)}
+                displayEmpty
+                renderValue={(value) => {
+                  if (!value) {
+                    return moveDeckChoices.length === 0
+                      ? "No other decks in this subject"
+                      : "Choose a deck";
+                  }
+                  return (
+                    moveDecks.find((d) => d.id === value)?.title ??
+                    "Choose a deck"
+                  );
+                }}
+              >
+                {moveDeckChoices.map((d) => (
+                  <MenuItem key={d.id} value={d.id}>
+                    {d.title}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setMoveTarget(null)} disabled={moveBusy}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            disabled={moveBusy || !moveDeckId}
+            onClick={() => {
+              void confirmMoveCard();
+            }}
+          >
+            {moveBusy ? "Moving…" : "Move"}
           </Button>
         </DialogActions>
       </Dialog>

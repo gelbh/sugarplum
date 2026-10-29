@@ -16,6 +16,7 @@ import {
   REGEN_CARD_TYPES,
   resolveRegenLlm,
 } from "../generation/card-regen";
+import { requireOwnedDeck } from "../materials/routes";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
@@ -546,6 +547,57 @@ cardRoutes.post("/:id/reject", async (c) => {
 
   return c.json(
     serializeCard({ ...row, status: "rejected", updated_at: updatedAt }),
+  );
+});
+
+const MoveBodySchema = z.object({
+  deckId: z.string().min(1),
+});
+
+cardRoutes.post("/:id/move", async (c) => {
+  const userId = await requireUser(c);
+  const cardId = c.req.param("id");
+  const db = getDb(c.env);
+  const row = await requireOwnedCard(db, cardId, userId);
+
+  if (row.status !== "accepted") {
+    throw new HTTPException(400, {
+      message: "Only accepted cards can be moved",
+    });
+  }
+
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+  const parsed = MoveBodySchema.safeParse(body);
+  if (!parsed.success) {
+    throw new HTTPException(400, {
+      message: parsed.error.issues[0]?.message ?? "Invalid move body",
+    });
+  }
+
+  const targetDeckId = parsed.data.deckId;
+  if (targetDeckId === row.deck_id) {
+    return c.json(serializeCard(row));
+  }
+
+  await requireOwnedDeck(db, targetDeckId, userId);
+
+  const updatedAt = new Date().toISOString();
+  await db
+    .prepare(`UPDATE cards SET deck_id = ?, updated_at = ? WHERE id = ?`)
+    .bind(targetDeckId, updatedAt, cardId)
+    .run();
+
+  return c.json(
+    serializeCard({
+      ...row,
+      deck_id: targetDeckId,
+      updated_at: updatedAt,
+    }),
   );
 });
 

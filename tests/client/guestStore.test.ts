@@ -12,6 +12,7 @@ import {
   guestListDecks,
   guestListDueCards,
   guestListSubjects,
+  guestMoveCard,
   guestPatchCard,
   guestResetCardSchedule,
   guestReviewCard,
@@ -381,6 +382,31 @@ describe("guest store", () => {
     expect(patched.back).toBe("Keep back");
     expect(patched.status).toBe("accepted");
     expect(guestListDeckCards(deck.id, storage)[0]?.front).toBe("New front");
+  });
+
+  it("moveCard updates deck_id and leaves dueIds unchanged", () => {
+    enterGuest(storage);
+    const subject = guestCreateSubject("Move subject", storage);
+    const deckA = guestCreateDeck("Deck A", subject.id, storage);
+    const deckB = guestCreateDeck("Deck B", subject.id, storage);
+    const card = guestCreateDeckCard(
+      deckA.id,
+      { type: "qa", front: "Move me?", back: "Yes" },
+      storage,
+    );
+    const dueBefore = guestListDueCards(undefined, storage).map((c) => c.id);
+
+    const moved = guestMoveCard(card.id, deckB.id, storage);
+    expect(moved.deck_id).toBe(deckB.id);
+    expect(guestListDeckCards(deckA.id, storage).map((c) => c.id)).not.toContain(
+      card.id,
+    );
+    expect(guestListDeckCards(deckB.id, storage).map((c) => c.id)).toContain(
+      card.id,
+    );
+    expect(guestListDueCards(undefined, storage).map((c) => c.id)).toEqual(
+      dueBefore,
+    );
   });
 
   it("resetCardSchedule puts id at front of due and sets due now", () => {
