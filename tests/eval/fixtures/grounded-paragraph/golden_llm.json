@@ -1,0 +1,20 @@
+[
+  {
+    "type": "qa",
+    "front": "What is ATP?",
+    "back": "Adenosine triphosphate",
+    "provenance": { "pages": [1], "excerpt": "ATP is adenosine triphosphate" }
+  },
+  {
+    "type": "qa",
+    "front": "Where do cells make ATP?",
+    "back": "Mitochondria",
+    "provenance": { "pages": [1], "excerpt": "make ATP in the mitochondria" }
+  },
+  {
+    "type": "cloze",
+    "front": "DNA stores genetic information as {{c1::deoxyribonucleic acid}}.",
+    "back": "",
+    "provenance": { "pages": [1], "excerpt": "deoxyribonucleic acid" }
+  }
+]
