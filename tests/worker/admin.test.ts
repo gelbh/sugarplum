@@ -862,6 +862,7 @@ describe("GET /api/admin/users/:id/export", () => {
       kind: "pdf",
       r2_key: "materials/deck-alice/mat-pdf.pdf",
       filename: "slides.pdf",
+      size: new TextEncoder().encode("%PDF-binary").byteLength,
     });
     expect(pdf).not.toHaveProperty("text");
     expect(Object.keys(body.user)).not.toContain("password_hash");

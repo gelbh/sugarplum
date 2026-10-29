@@ -552,11 +552,8 @@ adminRoutes.get("/users/:id/export", async (c) => {
     }
     let size: number | undefined;
     if (row.r2_key) {
-      const obj = await c.env.MATERIALS.get(row.r2_key);
-      if (obj) {
-        const buf = await obj.arrayBuffer();
-        size = buf.byteLength;
-      }
+      const meta = await c.env.MATERIALS.head(row.r2_key);
+      if (meta) size = meta.size;
     }
     materials.push({
       id: row.id,

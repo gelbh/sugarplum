@@ -2879,6 +2879,15 @@ export function createTestEnv(opts?: {
           body: bytes,
         };
       },
+      async head(key: string) {
+        const v = r2.get(key);
+        if (v === undefined) return null;
+        const bytes =
+          typeof v === "string"
+            ? new TextEncoder().encode(v)
+            : new Uint8Array(v);
+        return { size: bytes.byteLength };
+      },
       async delete(key: string) {
         r2.delete(key);
       },
