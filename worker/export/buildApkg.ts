@@ -4,22 +4,36 @@ import wasmUrl from "sql.js/dist/sql-wasm.wasm?url";
 import type { AnkiFsrsFields } from "./fsrsMap";
 import type { AnkiNoteSpec } from "./notes";
 
+const DEFAULT_ANKI_EASE_FACTOR = 2500;
+
+function isCloudflareWorkerRuntime(): boolean {
+  return (
+    (globalThis as { navigator?: { userAgent?: string } }).navigator
+      ?.userAgent === "Cloudflare-Workers"
+  );
+}
+
 /**
  * Load sql.js WASM as bytes. Vitest/Node reads the package file; Workers fetch
  * the Vite-emitted asset via absolute APP_URL (relative /assets URLs fail in
- * isolates, and `process` may exist under nodejs_compat without real fs).
+ * isolates). Do not treat `process.versions.node` alone as proof of Node fs —
+ * workerd may expose it under nodejs_compat.
  */
 async function loadSqlWasmBinary(appUrl: string): Promise<Uint8Array> {
-  const nodeVersion = (
-    globalThis as { process?: { versions?: { node?: string } } }
-  ).process?.versions?.node;
-  if (nodeVersion) {
-    const { readFile } = await import("node:fs/promises");
-    const { createRequire } = await import("node:module");
-    const require = createRequire(import.meta.url);
-    return new Uint8Array(
-      await readFile(require.resolve("sql.js/dist/sql-wasm.wasm")),
-    );
+  if (!isCloudflareWorkerRuntime()) {
+    try {
+      const { readFile } = await import("node:fs/promises");
+      const { createRequire } = await import("node:module");
+      const require = createRequire(import.meta.url);
+      return new Uint8Array(
+        await readFile(require.resolve("sql.js/dist/sql-wasm.wasm")),
+      );
+    } catch {
+      /* fall through to APP_URL fetch */
+    }
+  }
+  if (!appUrl.trim()) {
+    throw new Error("sql.js WASM fetch failed: APP_URL is not configured");
   }
   const origin = appUrl.endsWith("/") ? appUrl : `${appUrl}/`;
   const response = await fetch(new URL(wasmUrl, origin));
@@ -45,10 +59,7 @@ type Model = {
 
 const DAY_SECONDS = 86400;
 
-function modelDefinition(
-  id: number,
-  model: AnkiNoteSpec["model"],
-): Model {
+function modelDefinition(id: number, model: AnkiNoteSpec["model"]): Model {
   if (model === "cloze") {
     return {
       id,
@@ -144,10 +155,7 @@ function collectionModel(model: Model, now: number): Record<string, unknown> {
     css: ".card { font-family: arial; font-size: 20px; text-align: center; }",
     latexPre: "\\documentclass[12pt]{article}\n\\begin{document}\n",
     latexPost: "\\end{document}",
-    req:
-      model.type === 1
-        ? [[0, "any", [0]]]
-        : [[0, "any", [0]]],
+    req: model.type === 1 ? [[0, "any", [0]]] : [[0, "any", [0]]],
     tags: [],
   };
 }
@@ -172,11 +180,32 @@ function rewriteMediaSources(
 }
 
 function mediaBasename(name: string): string {
+  let decoded = name;
   try {
-    return decodeURIComponent(name).slice(name.lastIndexOf("/") + 1);
+    decoded = decodeURIComponent(name);
   } catch {
-    return name.slice(name.lastIndexOf("/") + 1);
+    /* keep raw name */
   }
+  return decoded.slice(decoded.lastIndexOf("/") + 1);
+}
+
+function uniqueAnkiMediaFilename(
+  preferred: string,
+  zipKey: string,
+  used: Set<string>,
+): string {
+  const base = preferred.trim() || `media-${zipKey}`;
+  if (!used.has(base)) return base;
+  const dot = base.lastIndexOf(".");
+  const stem = dot > 0 ? base.slice(0, dot) : base;
+  const ext = dot > 0 ? base.slice(dot) : "";
+  let candidate = `${stem}-${zipKey}${ext}`;
+  let n = 2;
+  while (used.has(candidate)) {
+    candidate = `${stem}-${zipKey}-${n}${ext}`;
+    n += 1;
+  }
+  return candidate;
 }
 
 async function checksumSortField(value: string): Promise<number> {
@@ -196,9 +225,26 @@ function cardTypeForState(state: number): number {
   throw new Error(`Unsupported FSRS state: ${state}`);
 }
 
-function unixSecondsToAnkiDue(due: number, crt: number, state: number): number {
+/** Learning/relearning: unix due. Review: days since collection crt (Anki). */
+export function unixSecondsToAnkiDue(
+  due: number,
+  crt: number,
+  state: number,
+): number {
   if (state === 1 || state === 3) return due;
-  return Math.max(0, Math.floor((due - crt) / DAY_SECONDS));
+  return Math.floor((due - crt) / DAY_SECONDS);
+}
+
+/** Anki cards.data FSRS payload (`s`/`d`/`lrt`); not SM-2 ease. */
+export function ankiFsrsCardData(schedule: AnkiFsrsFields): string {
+  const payload: Record<string, number> = {
+    s: Math.round(schedule.stability * 10_000) / 10_000,
+    d: Math.round(schedule.difficulty * 1_000) / 1_000,
+  };
+  if (schedule.lastReview != null) {
+    payload.lrt = schedule.lastReview;
+  }
+  return JSON.stringify(payload);
 }
 
 export async function buildApkg(args: {
@@ -294,38 +340,42 @@ export async function buildApkg(args: {
       lapse: { delays: [10], mult: 0, minInt: 1, leechFails: 8 },
     },
   };
-  db.run(
-    "INSERT INTO col VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [
-      1,
-      now,
-      now,
-      0,
-      11,
-      0,
-      0,
-      0,
-      JSON.stringify({ nextPos: 1 }),
-      JSON.stringify(collectionModels),
-      JSON.stringify(decks),
-      JSON.stringify(dconf),
-      JSON.stringify([]),
-    ],
-  );
+  db.run("INSERT INTO col VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+    1,
+    now,
+    now,
+    0,
+    11,
+    0,
+    0,
+    0,
+    JSON.stringify({ nextPos: 1 }),
+    JSON.stringify(collectionModels),
+    JSON.stringify(decks),
+    JSON.stringify(dconf),
+    JSON.stringify([]),
+  ]);
 
   const zip = new JSZip();
   const mediaMap: Record<string, string> = {};
   let mediaIndex = 0;
   const mediaNames = new Map<string, string>();
+  const usedAnkiFilenames = new Set<string>();
   for (const entry of args.entries) {
     for (const media of entry.media) {
       if (!mediaNames.has(media.name)) {
-        const filename = String(mediaIndex++);
-        mediaNames.set(media.name, filename);
+        const zipKey = String(mediaIndex++);
+        const ankiName = uniqueAnkiMediaFilename(
+          mediaBasename(media.name),
+          zipKey,
+          usedAnkiFilenames,
+        );
+        usedAnkiFilenames.add(ankiName);
+        mediaNames.set(media.name, ankiName);
         const basename = mediaBasename(media.name);
-        if (!mediaNames.has(basename)) mediaNames.set(basename, filename);
-        mediaMap[filename] = media.name;
-        zip.file(filename, media.data);
+        if (!mediaNames.has(basename)) mediaNames.set(basename, ankiName);
+        mediaMap[zipKey] = ankiName;
+        zip.file(zipKey, media.data);
       }
     }
   }
@@ -372,31 +422,20 @@ export async function buildApkg(args: {
       entry.note.model === "cloze"
         ? Math.max(0, Number(/\{\{c(\d+)::/i.exec(fields[0])?.[1] ?? 1) - 1)
         : 0;
-    const data = schedule
-      ? JSON.stringify({
-          stability: schedule.stability,
-          difficulty: schedule.difficulty,
-          elapsedDays: schedule.elapsedDays,
-          scheduledDays: schedule.scheduledDays,
-          lastReview: schedule.lastReview,
-        })
-      : "{}";
-    db.run(
-      "INSERT INTO notes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [
-        nid,
-        `${nid}`,
-        model.id,
-        now,
-        -1,
-        tags,
-        flds,
-        fields[0],
-        await checksumSortField(fields[0]),
-        0,
-        "{}",
-      ],
-    );
+    const data = schedule ? ankiFsrsCardData(schedule) : "{}";
+    db.run("INSERT INTO notes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+      nid,
+      `${nid}`,
+      model.id,
+      now,
+      -1,
+      tags,
+      flds,
+      fields[0],
+      await checksumSortField(fields[0]),
+      0,
+      "{}",
+    ]);
     db.run(
       "INSERT INTO cards VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
@@ -410,7 +449,7 @@ export async function buildApkg(args: {
         type === 1 || type === 3 ? 1 : type,
         due,
         schedule?.scheduledDays ?? 0,
-        schedule ? Math.round(schedule.difficulty * 10) : 0,
+        schedule ? DEFAULT_ANKI_EASE_FACTOR : 0,
         schedule?.reps ?? 0,
         schedule?.lapses ?? 0,
         0,

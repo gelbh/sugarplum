@@ -330,10 +330,7 @@ export function createDeckCard(deckId: string, body: HubCreateCardBody) {
       return Promise.resolve(guestCreateDeckCard(deckId, body));
     } catch (err) {
       const message = err instanceof Error ? err.message : "Deck not found";
-      throw new ApiError(
-        message === "Deck not found" ? 404 : 400,
-        message,
-      );
+      throw new ApiError(message === "Deck not found" ? 404 : 400, message);
     }
   }
   return api<CardDraftView>(`/api/decks/${deckId}/cards`, {
@@ -673,10 +670,7 @@ export function patchCard(
       return Promise.resolve(guestPatchCard(cardId, body));
     } catch (err) {
       const message = err instanceof Error ? err.message : "Card not found";
-      throw new ApiError(
-        message === "Card not found" ? 404 : 400,
-        message,
-      );
+      throw new ApiError(message === "Card not found" ? 404 : 400, message);
     }
   }
   return api<CardDraftView>(`/api/cards/${cardId}`, {
@@ -692,10 +686,11 @@ export function acceptCard(cardId: string) {
 
 export function acceptAllJobDrafts(jobId: string) {
   if (isGuest()) guestUnsupported("accept cards");
-  return api<{ accepted: number; failed: number; rejectedSiblingCount: number }>(
-    `/api/jobs/${jobId}/drafts/accept-all`,
-    { method: "POST" },
-  );
+  return api<{
+    accepted: number;
+    failed: number;
+    rejectedSiblingCount: number;
+  }>(`/api/jobs/${jobId}/drafts/accept-all`, { method: "POST" });
 }
 
 export function rejectCard(cardId: string) {
@@ -849,17 +844,20 @@ function filenameFromContentDisposition(header: string | null): string | null {
 
 /** Suggested `.apkg` basename from deck title (fallback when header omits name). */
 export function apkgFilenameForDeckTitle(title: string): string {
-  const base = title.trim().replace(/[^\w\s-]+/g, "").replace(/\s+/g, " ").trim();
+  const base = title
+    .trim()
+    .replace(/[^\p{L}\p{N}\s-]+/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
   return `${base || "deck"}.apkg`;
 }
 
 /** Fetch export bytes and trigger a browser download. */
 export async function downloadExport(id: string, fallbackFilename?: string) {
   if (isGuest()) guestUnsupported("download exports");
-  const res = await fetch(
-    `/api/exports/${encodeURIComponent(id)}/download`,
-    { credentials: "include" },
-  );
+  const res = await fetch(`/api/exports/${encodeURIComponent(id)}/download`, {
+    credentials: "include",
+  });
   if (!res.ok) {
     let message = res.statusText || "Download failed";
     try {
@@ -885,7 +883,8 @@ export async function downloadExport(id: string, fallbackFilename?: string) {
     anchor.click();
     anchor.remove();
   } finally {
-    URL.revokeObjectURL(url);
+    // Safari may start the download after click returns; defer revoke.
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
   }
 }
 

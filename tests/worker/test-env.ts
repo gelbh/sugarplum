@@ -982,7 +982,9 @@ export function createTestEnv(opts?: {
             expires_at,
           });
         } else if (
-          normalized.startsWith("UPDATE export_jobs SET status = ?, error = ?, warning_json = ?")
+          normalized.startsWith(
+            "UPDATE export_jobs SET status = ?, error = ?, warning_json = ?",
+          )
         ) {
           const [status, error, warning_json, updated_at, id] = bound as [
             string,
@@ -990,9 +992,17 @@ export function createTestEnv(opts?: {
             string | null,
             string,
             string,
+            string?,
           ];
           const row = exportJobs.get(id);
-          if (row) exportJobs.set(id, { ...row, status, error, warning_json, updated_at });
+          if (row)
+            exportJobs.set(id, {
+              ...row,
+              status,
+              error,
+              warning_json,
+              updated_at,
+            });
         } else if (
           normalized.startsWith("UPDATE export_jobs SET status = ?, r2_key = ?")
         ) {
@@ -1002,15 +1012,26 @@ export function createTestEnv(opts?: {
             string | null,
             string,
             string,
+            string?,
           ];
           const row = exportJobs.get(id);
-          if (row) exportJobs.set(id, { ...row, status, r2_key, warning_json, updated_at });
-        } else if (normalized.startsWith("UPDATE export_jobs SET status = ?, error = ?")) {
+          if (row)
+            exportJobs.set(id, {
+              ...row,
+              status,
+              r2_key,
+              warning_json,
+              updated_at,
+            });
+        } else if (
+          normalized.startsWith("UPDATE export_jobs SET status = ?, error = ?")
+        ) {
           const [status, error, updated_at, id] = bound as [
             string,
             string | null,
             string,
             string,
+            string?,
           ];
           const row = exportJobs.get(id);
           if (row) exportJobs.set(id, { ...row, status, error, updated_at });
@@ -1424,12 +1445,8 @@ export function createTestEnv(opts?: {
             "UPDATE generation_jobs SET progress_json = ? WHERE id = ? AND status = ? AND progress_json = ?",
           )
         ) {
-          const [progress_json, id, requiredStatus, expectedProgress] = bound as [
-            string,
-            string,
-            string,
-            string,
-          ];
+          const [progress_json, id, requiredStatus, expectedProgress] =
+            bound as [string, string, string, string];
           const row = generationJobs.get(id);
           if (
             !row ||
@@ -1660,8 +1677,14 @@ export function createTestEnv(opts?: {
           normalized.includes("FROM generation_jobs")
         ) {
           // Accept-all sibling reject: draft cards on other owned needs_review jobs.
-          const [status, updated_at, expected, userId, jobStatus, excludeJobId] =
-            bound as [string, string, string, string, string, string];
+          const [
+            status,
+            updated_at,
+            expected,
+            userId,
+            jobStatus,
+            excludeJobId,
+          ] = bound as [string, string, string, string, string, string];
           const siblingJobIds = new Set<string>();
           for (const job of generationJobs.values()) {
             if (job.id === excludeJobId || job.status !== jobStatus) continue;

@@ -88,4 +88,53 @@ describe("cardToAnkiNote", () => {
       fields: { Front: "Which vessel?", Back: "Pulmonary artery" },
     });
   });
+
+  it("uses prompt from object-shaped image_label fronts", () => {
+    expect(
+      cardToAnkiNote({
+        type: "image_label",
+        front: { prompt: "Label the vessel", regions: [] },
+        back: "Aorta",
+      }),
+    ).toEqual({
+      model: "basic",
+      fields: { Front: "Label the vessel", Back: "Aorta" },
+    });
+  });
+
+  it("skips object fronts without a string prompt", () => {
+    expect(
+      cardToAnkiNote({
+        type: "diagram",
+        front: { regions: [] },
+        back: "Aorta",
+      }),
+    ).toEqual({ skip: true, reason: "non-string-fields" });
+  });
+
+  it("converts a single underscore cloze blank using the back", () => {
+    expect(
+      cardToAnkiNote({
+        type: "cloze",
+        front: "The ___ produces ATP",
+        back: "mitochondria",
+      }),
+    ).toEqual({
+      model: "cloze",
+      fields: {
+        Text: "The {{c1::mitochondria}} produces ATP",
+        Extra: "mitochondria",
+      },
+    });
+  });
+
+  it("skips underscore cloze when the back is empty", () => {
+    expect(
+      cardToAnkiNote({
+        type: "cloze",
+        front: "The ___ produces ATP",
+        back: "",
+      }),
+    ).toEqual({ skip: true, reason: "cloze-underscore-unconvertible" });
+  });
 });

@@ -32,7 +32,8 @@ function newId(): string {
 }
 
 function responseForJob(row: ExportRow) {
-  const warnings = parseExportWarningsJson(row.warning_json) ?? EMPTY_EXPORT_WARNINGS;
+  const warnings =
+    parseExportWarningsJson(row.warning_json) ?? EMPTY_EXPORT_WARNINGS;
   return {
     id: row.id,
     status: row.status,
@@ -51,7 +52,9 @@ async function ownedJob(
   userId: string,
 ): Promise<ExportRow> {
   const row = await db
-    .prepare("SELECT id, user_id, status, request_json, r2_key, error, warning_json, created_at, updated_at, expires_at FROM export_jobs WHERE id = ? AND user_id = ?")
+    .prepare(
+      "SELECT id, user_id, status, request_json, r2_key, error, warning_json, created_at, updated_at, expires_at FROM export_jobs WHERE id = ? AND user_id = ?",
+    )
     .bind(id, userId)
     .first<ExportRow>();
   if (!row) throw new HTTPException(404, { message: "Export not found" });
@@ -103,17 +106,24 @@ exportRoutes.post("/", async (c) => {
   try {
     loaded = await loadDeckCards(c.env, userId, parsed.data.deckId);
     if (loaded.entries.length === 0) {
+      const emptyMessage =
+        loaded.warnings.skippedCards > 0
+          ? `No exportable cards (${loaded.warnings.skippedCards} skipped)`
+          : "No accepted cards to export";
       await db
-        .prepare("UPDATE export_jobs SET status = ?, error = ?, warning_json = ?, updated_at = ? WHERE id = ?")
+        .prepare(
+          "UPDATE export_jobs SET status = ?, error = ?, warning_json = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+        )
         .bind(
           "failed",
-          "No accepted cards to export",
+          emptyMessage,
           JSON.stringify(loaded.warnings),
           new Date().toISOString(),
           id,
+          userId,
         )
         .run();
-      return c.json({ message: "No accepted cards to export" }, 400);
+      return c.json({ message: emptyMessage, warnings: loaded.warnings }, 400);
     }
     const bytes = await buildApkg({
       deckName: loaded.deckName,
@@ -124,9 +134,16 @@ exportRoutes.post("/", async (c) => {
     const updatedAt = new Date().toISOString();
     await db
       .prepare(
-        "UPDATE export_jobs SET status = ?, r2_key = ?, warning_json = ?, updated_at = ? WHERE id = ?",
+        "UPDATE export_jobs SET status = ?, r2_key = ?, warning_json = ?, updated_at = ? WHERE id = ? AND user_id = ?",
       )
-      .bind("ready", r2Key, JSON.stringify(loaded.warnings), updatedAt, id)
+      .bind(
+        "ready",
+        r2Key,
+        JSON.stringify(loaded.warnings),
+        updatedAt,
+        id,
+        userId,
+      )
       .run();
     return c.json(
       {
@@ -139,12 +156,15 @@ exportRoutes.post("/", async (c) => {
     );
   } catch (error) {
     await db
-      .prepare("UPDATE export_jobs SET status = ?, error = ?, updated_at = ? WHERE id = ?")
+      .prepare(
+        "UPDATE export_jobs SET status = ?, error = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+      )
       .bind(
         "failed",
         error instanceof Error ? error.message : "Export failed",
         new Date().toISOString(),
         id,
+        userId,
       )
       .run();
     if (error instanceof HTTPException) throw error;
@@ -157,6 +177,9 @@ exportRoutes.get("/:id/download", async (c) => {
   const row = await ownedJob(getDb(c.env), c.req.param("id"), userId);
   if (row.status !== "ready" || !row.r2_key) {
     throw new HTTPException(409, { message: "Export is not ready" });
+  }
+  if (Date.parse(row.expires_at) <= Date.now()) {
+    throw new HTTPException(410, { message: "Export has expired" });
   }
   const object = await c.env.MATERIALS.get(row.r2_key);
   if (!object) throw new HTTPException(404, { message: "Export not found" });

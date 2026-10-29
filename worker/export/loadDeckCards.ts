@@ -87,7 +87,9 @@ export async function loadDeckCards(
   if (!deck) throw new HTTPException(404, { message: "Deck not found" });
 
   const subject = deck.subject_id
-    ? await env.DB.prepare("SELECT title FROM subjects WHERE id = ? AND user_id = ?")
+    ? await env.DB.prepare(
+        "SELECT title FROM subjects WHERE id = ? AND user_id = ?",
+      )
         .bind(deck.subject_id, userId)
         .first<{ title: string }>()
     : null;
@@ -117,7 +119,7 @@ export async function loadDeckCards(
           : back,
       options:
         row.type === "mcq" && typeof back === "object" && back !== null
-          ? (back as { options?: unknown }).options as string[] | undefined
+          ? ((back as { options?: unknown }).options as string[] | undefined)
           : undefined,
     });
     if ("skip" in note) {
@@ -129,8 +131,13 @@ export async function loadDeckCards(
     const rawMedia = row.media_r2_keys_json
       ? parseJson(row.media_r2_keys_json)
       : [];
+    const deckMediaPrefix = `materials/${deckId}/`;
     for (const key of Array.isArray(rawMedia) ? rawMedia : []) {
       if (typeof key !== "string") continue;
+      if (!key.startsWith(deckMediaPrefix)) {
+        warnings.missingMedia += 1;
+        continue;
+      }
       const object = await env.MATERIALS.get(key);
       if (!object) {
         warnings.missingMedia += 1;

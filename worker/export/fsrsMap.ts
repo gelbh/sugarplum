@@ -1,6 +1,6 @@
 // Anki time fields: `due` and `lastReview` are UTC unix seconds (integer).
-// buildApkg converts review-queue due to Anki day numbers using collection crtime.
-// Learning/relearning due values pass through as seconds per Anki card semantics.
+// buildApkg converts review due to days since col.crt; learning/relearning stay unix.
+// FSRS memory lives in cards.data as Anki `{s,d,lrt}`; cards.factor stays SM-2 ease.
 
 export type AnkiFsrsFields = {
   due: number;
@@ -40,8 +40,6 @@ export function mapScheduleToAnki(row: ScheduleRowForAnki): AnkiFsrsFields {
     reps: row.reps,
     lapses: row.lapses,
     state: row.state,
-    lastReview: row.last_review
-      ? isoToUnixSeconds(row.last_review)
-      : null,
+    lastReview: row.last_review ? isoToUnixSeconds(row.last_review) : null,
   };
 }

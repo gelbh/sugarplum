@@ -67,7 +67,10 @@ describe("export routes", () => {
       "/api/exports",
       {
         method: "POST",
-        headers: { origin: "http://localhost", "content-type": "application/json" },
+        headers: {
+          origin: "http://localhost",
+          "content-type": "application/json",
+        },
         body: JSON.stringify({ type: "deck", deckId: "deck-a" }),
       },
       env,
@@ -102,6 +105,36 @@ describe("export routes", () => {
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({
       message: "No accepted cards to export",
+      warnings: { missingMedia: 0, skippedCards: 0 },
+    });
+  });
+
+  it("rejects an all-skipped deck with a distinct message", async () => {
+    const env = setup();
+    seedCard(env, {
+      id: "card-occlusion",
+      type: "occlusion",
+      front_json: JSON.stringify({
+        image_key: "materials/deck-a/fig.png",
+        regions: [{ id: "r1", x: 0, y: 0, w: 0.2, h: 0.2, label: "A" }],
+        mode: "hide_one",
+      }),
+      back_json: JSON.stringify({ answer: "A" }),
+    });
+    const response = await app.request(
+      "/api/exports",
+      {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ type: "deck", deckId: "deck-a" }),
+      },
+      env,
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      message: "No exportable cards (1 skipped)",
+      warnings: { missingMedia: 0, skippedCards: 1 },
     });
   });
 
@@ -182,5 +215,31 @@ describe("export routes", () => {
     expect(new Uint8Array(await download.arrayBuffer()).slice(0, 2)).toEqual(
       new Uint8Array([0x50, 0x4b]),
     );
+  });
+
+  it("returns 410 when downloading an expired export", async () => {
+    const env = setup();
+    seedCard(env);
+    const create = await app.request(
+      "/api/exports",
+      {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ type: "deck", deckId: "deck-a" }),
+      },
+      env,
+    );
+    expect(create.status).toBe(201);
+    const body = (await create.json()) as { id: string };
+    const job = env.getExportJobs().find((row) => row.id === body.id);
+    expect(job).toBeTruthy();
+    job!.expires_at = "2020-01-01T00:00:00.000Z";
+
+    const download = await app.request(
+      `/api/exports/${body.id}/download`,
+      { headers: headers() },
+      env,
+    );
+    expect(download.status).toBe(410);
   });
 });

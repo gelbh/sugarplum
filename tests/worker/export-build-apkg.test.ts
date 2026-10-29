@@ -56,10 +56,10 @@ describe("buildApkg", () => {
       await zip.file("collection.anki2")!.async("uint8array"),
     );
     expect(
-      (db.exec("select count(*) as count from notes")[0]?.values[0]?.[0]),
+      db.exec("select count(*) as count from notes")[0]?.values[0]?.[0],
     ).toBe(3);
     expect(
-      (db.exec("select count(*) as count from cards")[0]?.values[0]?.[0]),
+      db.exec("select count(*) as count from cards")[0]?.values[0]?.[0],
     ).toBe(3);
   });
 
@@ -74,7 +74,9 @@ describe("buildApkg", () => {
             fields: { Front: '<img src="diagram.png">', Back: "Answer" },
           },
           schedule: null,
-          media: [{ name: "diagram.png", data: new Uint8Array([137, 80, 78, 71]) }],
+          media: [
+            { name: "diagram.png", data: new Uint8Array([137, 80, 78, 71]) },
+          ],
         },
       ],
     });
@@ -91,7 +93,7 @@ describe("buildApkg", () => {
       await zip.file("collection.anki2")!.async("uint8array"),
     );
     expect(db.exec("select flds from notes")[0]?.values[0]?.[0]).toContain(
-      '<img src="0">',
+      '<img src="diagram.png">',
     );
   });
 
@@ -114,11 +116,15 @@ describe("buildApkg", () => {
     });
     const zip = await JSZip.loadAsync(bytes);
     expect(JSON.parse(await zip.file("media")!.async("string"))).toEqual({
-      "0": "deck-a/figure.png",
-      "1": "deck-b/figure.png",
+      "0": "figure.png",
+      "1": "figure-1.png",
     });
-    expect(await zip.file("0")!.async("uint8array")).toEqual(new Uint8Array([1]));
-    expect(await zip.file("1")!.async("uint8array")).toEqual(new Uint8Array([2]));
+    expect(await zip.file("0")!.async("uint8array")).toEqual(
+      new Uint8Array([1]),
+    );
+    expect(await zip.file("1")!.async("uint8array")).toEqual(
+      new Uint8Array([2]),
+    );
   });
 
   it("stores Anki csum as decimal of first 8 SHA-1 hex digits of sort field", async () => {
@@ -171,7 +177,7 @@ describe("buildApkg", () => {
       await zip.file("collection.anki2")!.async("uint8array"),
     );
     expect(db.exec("select flds from notes")[0]?.values[0]?.[0]).toContain(
-      '<img src="0">',
+      '<img src="photo.png">',
     );
   });
 
@@ -199,8 +205,8 @@ describe("buildApkg", () => {
       await zip.file("collection.anki2")!.async("uint8array"),
     );
     const fields = String(db.exec("select flds from notes")[0]?.values[0]?.[0]);
-    expect(fields).toContain('<img src="0">');
-    expect(fields).toContain('<img src="1">');
+    expect(fields).toContain('<img src="first.png">');
+    expect(fields).toContain('<img src="second.png">');
   });
 
   it("preserves learning card state and cloze ordinal", async () => {
@@ -242,10 +248,12 @@ describe("buildApkg", () => {
       await zip.file("collection.anki2")!.async("uint8array"),
     );
     expect(
-      db.exec("select type, queue from cards order by nid limit 1")[0]?.values[0],
+      db.exec("select type, queue from cards order by nid limit 1")[0]
+        ?.values[0],
     ).toEqual([1, 1]);
     expect(
-      db.exec("select ord from cards order by nid limit 1 offset 1")[0]?.values[0]?.[0],
+      db.exec("select ord from cards order by nid limit 1 offset 1")[0]
+        ?.values[0]?.[0],
     ).toBe(1);
   });
 
@@ -279,6 +287,53 @@ describe("buildApkg", () => {
     const db = new SQL.Database(
       await zip.file("collection.anki2")!.async("uint8array"),
     );
-    expect(db.exec("select type, queue from cards")[0]?.values[0]).toEqual([3, 1]);
+    expect(db.exec("select type, queue from cards")[0]?.values[0]).toEqual([
+      3, 1,
+    ]);
+  });
+
+  it("maps review due to days since crt and stores FSRS in cards.data", async () => {
+    const dueUnix = Math.floor(Date.now() / 1000) + 14 * 86_400;
+    const lastReview = Math.floor(Date.now() / 1000) - 86_400;
+    const bytes = await buildApkg({
+      appUrl: "http://localhost/",
+      deckName: "Sugarplum",
+      entries: [
+        {
+          note: {
+            model: "basic",
+            fields: { Front: "Review", Back: "Answer" },
+          },
+          schedule: {
+            due: dueUnix,
+            stability: 12.34567,
+            difficulty: 6.789,
+            elapsedDays: 3,
+            scheduledDays: 14,
+            reps: 4,
+            lapses: 1,
+            state: 2,
+            lastReview,
+          },
+          media: [],
+        },
+      ],
+    });
+    const zip = await JSZip.loadAsync(bytes);
+    const SQL = await initSqlJs();
+    const db = new SQL.Database(
+      await zip.file("collection.anki2")!.async("uint8array"),
+    );
+    const crt = Number(db.exec("select crt from col")[0]?.values[0]?.[0]);
+    const row = db.exec("select due, ivl, factor, data from cards")[0]
+      ?.values[0];
+    expect(row?.[0]).toBe(Math.floor((dueUnix - crt) / 86_400));
+    expect(row?.[1]).toBe(14);
+    expect(row?.[2]).toBe(2500);
+    expect(JSON.parse(String(row?.[3]))).toEqual({
+      s: 12.3457,
+      d: 6.789,
+      lrt: lastReview,
+    });
   });
 });
