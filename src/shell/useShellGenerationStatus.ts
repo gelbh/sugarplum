@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { getJob, getJourney } from "../api/client";
+import { getJob, getJourneyGeneration } from "../api/client";
+import { shellGenerationPollMs } from "./shellGenerationPollMs";
 import { isGuest } from "../guest/session";
 import {
   resolveShellGenerationStatus,
@@ -7,8 +8,7 @@ import {
   type ShellGenerationStatus,
 } from "./resolveShellGenerationStatus";
 
-const POLL_VISIBLE_MS = 5_000;
-const POLL_HIDDEN_MS = 30_000;
+const POLL_ERROR_MS = 5_000;
 
 export function useShellGenerationStatus(
   hideChrome: boolean,
@@ -44,13 +44,16 @@ export function useShellGenerationStatus(
       const gen = ++tickGen;
 
       try {
-        const journey = await getJourney();
+        const generation = await getJourneyGeneration();
         if (cancelled || gen !== tickGen) return;
 
         let pendingJob: ShellGenerationJobInput | null = null;
-        if (journey.pendingGenerationJobId && !journey.openReviewJobId) {
+        if (
+          generation.pendingGenerationJobId &&
+          !generation.openReviewJobId
+        ) {
           try {
-            const job = await getJob(journey.pendingGenerationJobId);
+            const job = await getJob(generation.pendingGenerationJobId);
             if (cancelled || gen !== tickGen) return;
             pendingJob = {
               id: job.id,
@@ -67,21 +70,24 @@ export function useShellGenerationStatus(
         setStatus(
           resolveShellGenerationStatus(
             {
-              openReviewJobId: journey.openReviewJobId,
-              pendingGenerationJobId: journey.pendingGenerationJobId,
+              openReviewJobId: generation.openReviewJobId,
+              pendingGenerationJobId: generation.pendingGenerationJobId,
             },
             pendingJob,
           ),
         );
 
-        const delay =
-          document.visibilityState === "hidden"
-            ? POLL_HIDDEN_MS
-            : POLL_VISIBLE_MS;
+        const delay = shellGenerationPollMs({
+          visibility: document.visibilityState,
+          openReviewJobId: generation.openReviewJobId,
+          pendingGenerationJobId: generation.pendingGenerationJobId,
+        });
         if (!cancelled && gen === tickGen) schedule(delay);
       } catch {
         if (cancelled || gen !== tickGen) return;
-        schedule(POLL_VISIBLE_MS);
+        schedule(
+          document.visibilityState === "hidden" ? 30_000 : POLL_ERROR_MS,
+        );
       } finally {
         inFlight = false;
         if (!cancelled && queuedWhileInFlight) {

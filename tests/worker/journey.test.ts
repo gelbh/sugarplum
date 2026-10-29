@@ -97,6 +97,17 @@ describe("GET /api/journey", () => {
     expect(body.openReviewJobId).toBe("job-need");
     expect(body.hasGenerationJob).toBe(true);
     expect(body.pendingGenerationJobId).toBeNull();
+
+    const genRes = await app.request(
+      "/api/journey/generation",
+      { headers: { Cookie: `${SESSION_COOKIE}=sess2` } },
+      env,
+    );
+    expect(genRes.status).toBe(200);
+    expect(await genRes.json()).toEqual({
+      openReviewJobId: "job-need",
+      pendingGenerationJobId: null,
+    });
   });
 
   it("queued job sets pendingGenerationJobId", async () => {
@@ -146,6 +157,17 @@ describe("GET /api/journey", () => {
     expect(body.hasGenerationJob).toBe(true);
     expect(body.openReviewJobId).toBeNull();
     expect(body.pendingGenerationJobId).toBe("job-queued");
+
+    const genRes = await app.request(
+      "/api/journey/generation",
+      { headers: { Cookie: `${SESSION_COOKIE}=sess-p` } },
+      env,
+    );
+    expect(genRes.status).toBe(200);
+    expect(await genRes.json()).toEqual({
+      openReviewJobId: null,
+      pendingGenerationJobId: "job-queued",
+    });
   });
 
   it("accepted card increments acceptedCount; draft does not", async () => {
@@ -217,6 +239,41 @@ describe("GET /api/journey", () => {
     const body = await res.json();
     expect(body.acceptedCount).toBeGreaterThanOrEqual(1);
     expect(body.dueCount).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe("GET /api/journey/generation", () => {
+  it("returns 401 without session", async () => {
+    const env = createTestEnv();
+    const res = await app.request("/api/journey/generation", {}, env);
+    expect(res.status).toBe(401);
+  });
+
+  it("empty user → both nulls with only job id keys", async () => {
+    const env = createTestEnv();
+    env.seedUser({
+      id: "u-gen-empty",
+      email: "empty-gen@example.com",
+      password_hash: "x",
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSession("sess-gen-empty", "u-gen-empty");
+    const res = await app.request(
+      "/api/journey/generation",
+      { headers: { Cookie: `${SESSION_COOKIE}=sess-gen-empty` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(Object.keys(body).sort()).toEqual([
+      "openReviewJobId",
+      "pendingGenerationJobId",
+    ]);
+    expect(body).toEqual({
+      openReviewJobId: null,
+      pendingGenerationJobId: null,
+    });
   });
 });
 
