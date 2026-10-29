@@ -374,4 +374,87 @@ describe("buildApkg", () => {
       lrt: lastReview,
     });
   });
+
+  it("registers Sugarplum Occlusion model and rewrites image media", async () => {
+    const imageKey = "materials/deck-a/fig.png";
+    const encoded = encodeURIComponent(imageKey);
+    const bytes = await buildApkg({
+      deckName: "Sugarplum",
+      entries: [
+        {
+          note: {
+            model: "sugarplum_occlusion",
+            fields: {
+              Front: `<div><img src="${encoded}"><div style="left:10%"></div></div>`,
+              Back: `<div><img src="${encoded}"></div><br>Femur`,
+            },
+          },
+          schedule: null,
+          media: [
+            { name: encoded, data: new Uint8Array([137, 80, 78, 71]) },
+          ],
+        },
+      ],
+    });
+
+    const zip = await JSZip.loadAsync(bytes);
+    const mediaMap = JSON.parse(await zip.file("media")!.async("string")) as Record<
+      string,
+      string
+    >;
+    expect(Object.values(mediaMap)).toContain("fig.png");
+    expect(await zip.file("0")!.async("uint8array")).toEqual(
+      new Uint8Array([137, 80, 78, 71]),
+    );
+
+    const SQL = await initSqlJs();
+    const db = new SQL.Database(
+      await zip.file("collection.anki2")!.async("uint8array"),
+    );
+    const modelsJson = String(
+      db.exec("select models from col")[0]?.values[0]?.[0],
+    );
+    expect(modelsJson).toContain("Sugarplum Occlusion");
+    expect(
+      db.exec("select count(*) from notes")[0]?.values[0]?.[0],
+    ).toBe(1);
+    const flds = String(db.exec("select flds from notes")[0]?.values[0]?.[0]);
+    expect(flds).toContain('<img src="fig.png">');
+    expect(flds).not.toContain(encoded);
+  });
+
+  it("writes one note per occlusion region entry", async () => {
+    const bytes = await buildApkg({
+      deckName: "Sugarplum",
+      entries: [
+        {
+          note: {
+            model: "sugarplum_occlusion",
+            fields: { Front: "mask-a", Back: "A" },
+          },
+          schedule: null,
+          media: [],
+        },
+        {
+          note: {
+            model: "sugarplum_occlusion",
+            fields: { Front: "mask-b", Back: "B" },
+          },
+          schedule: null,
+          media: [],
+        },
+      ],
+    });
+    const zip = await JSZip.loadAsync(bytes);
+    const SQL = await initSqlJs();
+    const db = new SQL.Database(
+      await zip.file("collection.anki2")!.async("uint8array"),
+    );
+    expect(
+      db.exec("select count(*) from notes")[0]?.values[0]?.[0],
+    ).toBe(2);
+    expect(
+      db.exec("select count(*) from cards")[0]?.values[0]?.[0],
+    ).toBe(2);
+  });
 });

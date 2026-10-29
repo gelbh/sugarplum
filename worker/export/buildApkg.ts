@@ -63,6 +63,25 @@ function modelDefinition(id: number, model: AnkiNoteSpec["model"]): Model {
       ],
     };
   }
+  if (model === "sugarplum_occlusion") {
+    return {
+      id,
+      name: "Sugarplum Occlusion",
+      type: 0,
+      flds: [
+        { name: "Front", ord: 0 },
+        { name: "Back", ord: 1 },
+      ],
+      tmpls: [
+        {
+          name: "Occlusion",
+          ord: 0,
+          qfmt: "{{Front}}",
+          afmt: "{{Back}}",
+        },
+      ],
+    };
+  }
   return {
     id,
     name: "Sugarplum Basic",
@@ -224,12 +243,17 @@ export async function buildApkg(args: {
     basic: idRoot + 1,
     cloze: idRoot + 2,
     sugarplum_mcq: idRoot + 3,
+    sugarplum_occlusion: idRoot + 4,
   } as const;
   const firstDeckId = idRoot + 100;
   const models = {
     basic: modelDefinition(modelIds.basic, "basic"),
     cloze: modelDefinition(modelIds.cloze, "cloze"),
     sugarplum_mcq: modelDefinition(modelIds.sugarplum_mcq, "sugarplum_mcq"),
+    sugarplum_occlusion: modelDefinition(
+      modelIds.sugarplum_occlusion,
+      "sugarplum_occlusion",
+    ),
   } as const;
   const collectionModels = Object.fromEntries(
     Object.values(models).map((model) => [
@@ -364,7 +388,11 @@ export async function buildApkg(args: {
     }
     const model = models[entry.note.model];
     const fields = fieldsForNote(entry.note);
-    if (entry.note.model === "basic" && entry.media.length > 0) {
+    if (
+      (entry.note.model === "basic" ||
+        entry.note.model === "sugarplum_occlusion") &&
+      entry.media.length > 0
+    ) {
       const frontIndex = 0;
       const existingSources = new Set(
         Array.from(
