@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 import type { ProgressSnapshot } from "./types";
 import {
   friendlyStageHeadline,
-  formatEtaSubline,
+  formatProgressSubline,
   formatRelativeAge,
   orderPresentStages,
   progressDetailsModel,
@@ -32,7 +32,10 @@ export default function JobProgressPanel({
   const determinate = snapshot?.mode === "determinate";
   const percent = snapshot?.percent ?? 0;
   const headline = snapshot?.label ?? fallbackLabel;
-  const subline = formatEtaSubline(snapshot?.etaMs);
+  const subline = formatProgressSubline({
+    stage: snapshot?.stage,
+    etaMs: snapshot?.etaMs,
+  });
 
   const stages = orderPresentStages(snapshot?.presentStages ?? []);
   const currentStage = snapshot?.stage ?? null;

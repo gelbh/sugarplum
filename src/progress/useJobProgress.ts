@@ -7,7 +7,7 @@ import {
   projectTokensFromPercent,
   projectCardsFromPercent,
 } from "./estimates";
-import { friendlyStageHeadline } from "./copy";
+import { buildJobProgressSnapshot } from "./jobSnapshot";
 
 const POLL_MS = 500;
 const TIMEOUT_MS = 10 * 60_000;
@@ -80,122 +80,121 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
       setPending(false);
     };
 
-    const snapshotFromJob = (
-      jobId: string,
-      progress: any | null,
-    ): ProgressSnapshot => {
-      if (!progress) {
-        return {
-          id: jobId,
-          label: "Waiting for generation…",
-          mode: "indeterminate",
-          percent: 0,
-          source: "job",
-        };
-      }
-      const measurable = progress.total > 0;
-      const label = progress.stage
-        ? friendlyStageHeadline(progress.stage)
-        : progress.label || "Waiting for generation…";
-      return {
-        id: jobId,
-        label,
-        mode: measurable ? "determinate" : "indeterminate",
-        percent: progress.percent,
-        source: "job",
-      };
-    };
-
     const tick = async () => {
       try {
         const job = await getJob(jobId);
         if (cancelled) return;
 
-        const snapBase = snapshotFromJob(jobId, job.progress);
-        if (job.progress && startedAtRef.current === undefined) {
-          startedAtRef.current = Date.now();
-        }
-        const ext: any = { ...snapBase };
-        if (startedAtRef.current) ext.startedAt = startedAtRef.current;
-        if (job.progress) {
-          ext.tokensUsed = job.progress.tokens_used;
-          ext.tokensPrompt = job.progress.tokens_prompt;
-          ext.tokensCompletion = job.progress.tokens_completion;
-          ext.current = job.progress.current;
-          ext.total = job.progress.total;
-          ext.draftsSoFar = job.progress.drafts_so_far;
-          ext.path = job.progress.path ?? null;
-          ext.freeQuota = job.free_quota ?? null;
-          ext.stage = job.progress.stage;
+        const snapBase = buildJobProgressSnapshot(
+          jobId,
+          job.status,
+          job.progress,
+        );
 
-          if (job.progress.events) {
-            ext.events = job.progress.events.map((e: any) => ({
-              at: Date.parse(e.at),
-              kind: e.kind,
-              stage: e.stage,
-              text: e.text,
-            }));
-          } else {
-            ext.events = [];
+        // Queued: builder owns the snapshot; no progress enrichment / ETA.
+        if (job.status === "queued") {
+          setFreeQuota(job.free_quota ?? null);
+          setEstimates({
+            etaMs: null,
+            projectedTokens: null,
+            projectedCards: null,
+          });
+          if (!settledRef.current) upsert(snapBase);
+          setSnapshot({
+            ...snapBase,
+            etaMs: null,
+            projectedTokens: null,
+            projectedCards: null,
+          });
+        } else {
+          if (job.progress && startedAtRef.current === undefined) {
+            startedAtRef.current = Date.now();
+          }
+          const ext: any = { ...snapBase };
+          if (startedAtRef.current) ext.startedAt = startedAtRef.current;
+          if (job.progress) {
+            ext.tokensUsed = job.progress.tokens_used;
+            ext.tokensPrompt = job.progress.tokens_prompt;
+            ext.tokensCompletion = job.progress.tokens_completion;
+            ext.current = job.progress.current;
+            ext.total = job.progress.total;
+            ext.draftsSoFar = job.progress.drafts_so_far;
+            ext.path = job.progress.path ?? null;
+            ext.freeQuota = job.free_quota ?? null;
+            ext.stage = snapBase.stage;
+
+            if (job.progress.events) {
+              ext.events = job.progress.events.map((e: any) => ({
+                at: Date.parse(e.at),
+                kind: e.kind,
+                stage: e.stage,
+                text: e.text,
+              }));
+            } else {
+              ext.events = [];
+            }
+
+            // derive ordered unique presentStages from events (chronological) and current stage
+            const seen = new Set<string>();
+            const ordered: string[] = [];
+            for (const ev of ext.events || []) {
+              if (
+                ev.stage &&
+                ev.stage !== "queued" &&
+                !seen.has(ev.stage)
+              ) {
+                seen.add(ev.stage);
+                ordered.push(ev.stage);
+              }
+            }
+            if (ext.stage && !seen.has(ext.stage)) {
+              ordered.push(ext.stage);
+              seen.add(ext.stage);
+            }
+            ext.presentStages = ordered;
           }
 
-          // derive ordered unique presentStages from events (chronological) and current stage
-          const seen = new Set<string>();
-          const ordered: string[] = [];
-          for (const ev of ext.events || []) {
-            if (ev.stage && !seen.has(ev.stage)) {
-              seen.add(ev.stage);
-              ordered.push(ev.stage);
+          setFreeQuota(job.free_quota ?? null);
+          if (!settledRef.current) upsert(ext);
+
+          let eta: number | null = null;
+          let projectedTokens: number | null = null;
+          let projectedCards: number | null = null;
+          if (ext.startedAt && job.progress) {
+            const elapsed = Date.now() - ext.startedAt;
+            const percent = job.progress.percent;
+            eta = etaMs(elapsed, percent);
+            if (typeof job.progress.tokens_used === "number") {
+              projectedTokens = projectTokensFromPercent(
+                job.progress.tokens_used,
+                percent,
+              );
+            }
+            if (
+              typeof job.progress.drafts_so_far === "number" &&
+              job.progress.drafts_so_far > 0
+            ) {
+              projectedCards = projectCardsFromPercent(
+                job.progress.drafts_so_far,
+                percent,
+              );
             }
           }
-          if (ext.stage && !seen.has(ext.stage)) {
-            ordered.push(ext.stage);
-            seen.add(ext.stage);
-          }
-          ext.presentStages = ordered;
+          setEstimates({
+            etaMs: eta,
+            projectedTokens,
+            projectedCards,
+          });
+
+          const snapshotWithEstimates: ProgressSnapshot = {
+            ...ext,
+            etaMs: eta,
+            projectedTokens,
+            projectedCards,
+          };
+
+          setSnapshot(snapshotWithEstimates);
         }
-
-        setFreeQuota(job.free_quota ?? null);
-        if (!settledRef.current) upsert(ext);
-
-        let eta: number | null = null;
-        let projectedTokens: number | null = null;
-        let projectedCards: number | null = null;
-        if (ext.startedAt && job.progress) {
-          const elapsed = Date.now() - ext.startedAt;
-          const percent = job.progress.percent;
-          eta = etaMs(elapsed, percent);
-          if (typeof job.progress.tokens_used === "number") {
-            projectedTokens = projectTokensFromPercent(
-              job.progress.tokens_used,
-              percent,
-            );
-          }
-          if (
-            typeof job.progress.drafts_so_far === "number" &&
-            job.progress.drafts_so_far > 0
-          ) {
-            projectedCards = projectCardsFromPercent(
-              job.progress.drafts_so_far,
-              percent,
-            );
-          }
-        }
-        setEstimates({
-          etaMs: eta,
-          projectedTokens,
-          projectedCards,
-        });
-
-        // attach estimates onto snapshot so consumers like JobProgressPanel can prefer hook-provided values
-        const snapshotWithEstimates: ProgressSnapshot = {
-          ...ext,
-          etaMs: eta,
-          projectedTokens,
-          projectedCards,
-        };
-
-        setSnapshot(snapshotWithEstimates);
 
         if (TERMINAL_OK.has(job.status)) {
           settleOk();

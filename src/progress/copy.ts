@@ -49,6 +49,17 @@ export function formatEtaSubline(etaMs: number | null | undefined): string {
   return `About ${fmtEtaCore(etaMs)} left`;
 }
 
+/** Neutral wait copy: no queue-depth API, so do not claim another job is ahead. */
+const QUEUED_SUBLINE = "You'll start when a worker is free";
+
+export function formatProgressSubline(args: {
+  stage?: string | null;
+  etaMs?: number | null;
+}): string {
+  if (args.stage === "queued") return QUEUED_SUBLINE;
+  return formatEtaSubline(args.etaMs);
+}
+
 export function formatRelativeAge(ageMs: number): string {
   if (ageMs < 1000) return "just now";
   return `${Math.round(ageMs / 1000)}s ago`;
