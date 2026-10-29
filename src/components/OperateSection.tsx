@@ -18,7 +18,7 @@ export default function OperateSection({ children, sx }: Props) {
           bgcolor: "background.paper",
           borderColor: "divider",
         },
-        ...(sx != null ? [sx] : []),
+        ...(sx == null ? [] : Array.isArray(sx) ? sx : [sx]),
       ]}
     >
       {children}
