@@ -22,6 +22,7 @@ import { isGuest } from "../guest/session";
 import { deriveJourney } from "../journey/derive";
 import type { JourneyView } from "../journey/types";
 import JourneyNextButton from "../components/JourneyNextButton";
+import OperateSection from "../components/OperateSection";
 import StrugglingList from "../components/StrugglingList";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { useTrackedOp } from "../progress/useTrackedOp";
@@ -302,24 +303,26 @@ export default function TodayPage() {
 
         {strugglingTop !== undefined ? (
           <Box sx={{ width: "100%", maxWidth: 480, pt: 2, textAlign: "left" }}>
-            <Stack
-              direction="row"
-              alignItems="baseline"
-              justifyContent="space-between"
-              sx={{ mb: 1.5 }}
-            >
-              <Typography
-                variant="h6"
-                component="h2"
-                sx={{ fontWeight: 600, color: "text.primary" }}
+            <OperateSection>
+              <Stack
+                direction="row"
+                alignItems="baseline"
+                justifyContent="space-between"
+                sx={{ mb: 1.5 }}
               >
-                Struggling
-              </Typography>
-              <Link href="/insights" underline="hover" variant="body2">
-                View all
-              </Link>
-            </Stack>
-            <StrugglingList rows={strugglingTop} />
+                <Typography
+                  variant="subtitle1"
+                  component="h2"
+                  sx={{ fontWeight: 600, color: "primary.main" }}
+                >
+                  Struggling
+                </Typography>
+                <Link href="/insights" underline="hover" variant="body2">
+                  View all
+                </Link>
+              </Stack>
+              <StrugglingList rows={strugglingTop} />
+            </OperateSection>
           </Box>
         ) : null}
       </Stack>
