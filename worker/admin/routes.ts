@@ -79,7 +79,7 @@ adminRoutes.get("/users", async (c) => {
       job_count: number;
     }>();
 
-  const users: AdminUserListItem[] = results.map((row) => ({
+  const users: AdminUserListItem[] = (results ?? []).map((row) => ({
     id: row.id,
     email: row.email,
     created_at: row.created_at,

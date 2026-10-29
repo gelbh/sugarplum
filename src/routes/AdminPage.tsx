@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
@@ -20,7 +20,6 @@ import {
   type AdminOverview,
   type AdminUserListItem,
 } from "../api/client";
-import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -52,11 +51,9 @@ export default function AdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const { end: endLoad } = useTrackedOp("Loading admin…", { trackOnMount: true });
-
-  const loadUsers = useCallback(async (q: string) => {
-    const { users: list } = await adminListUsers(q);
-    setUsers(list);
-  }, []);
+  /** Skip the first search effect after mount load already filled the table. */
+  const skipSearchAfterMount = useRef(true);
+  const searchRequestId = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,7 +71,10 @@ export default function AdminPage() {
       } catch (err) {
         if (cancelled) return;
         const auth = handleAdminAuthError(err);
-        if (auth === "401") return;
+        if (auth === "401") {
+          endLoad(false);
+          return;
+        }
         if (auth === "403") {
           setForbidden(true);
           setReady(true);
@@ -95,22 +95,36 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!ready || forbidden) return;
+    if (skipSearchAfterMount.current) {
+      skipSearchAfterMount.current = false;
+      return;
+    }
     const q = search.trim();
+    const requestId = ++searchRequestId.current;
     const timer = window.setTimeout(() => {
-      loadUsers(q).catch((err) => {
-        const auth = handleAdminAuthError(err);
-        if (auth === "401") return;
-        if (auth === "403") {
-          setForbidden(true);
-          return;
-        }
-        setError(
-          err instanceof ApiError ? err.message : "Failed to search users",
-        );
-      });
+      adminListUsers(q)
+        .then(({ users: list }) => {
+          if (requestId !== searchRequestId.current) return;
+          setUsers(list);
+          setError(null);
+        })
+        .catch((err) => {
+          if (requestId !== searchRequestId.current) return;
+          const auth = handleAdminAuthError(err);
+          if (auth === "401") return;
+          if (auth === "403") {
+            setForbidden(true);
+            return;
+          }
+          setError(
+            err instanceof ApiError ? err.message : "Failed to search users",
+          );
+        });
     }, SEARCH_DEBOUNCE_MS);
-    return () => window.clearTimeout(timer);
-  }, [search, ready, forbidden, loadUsers]);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [search, ready, forbidden]);
 
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 4, md: 5 } }}>
@@ -183,14 +197,7 @@ export default function AdminPage() {
                       </TableRow>
                     ) : (
                       users.map((user) => (
-                        <TableRow
-                          key={user.id}
-                          hover
-                          sx={{ cursor: "pointer" }}
-                          onClick={() =>
-                            navigate(`/admin/users/${encodeURIComponent(user.id)}`)
-                          }
-                        >
+                        <TableRow key={user.id} hover>
                           <TableCell>{user.email}</TableCell>
                           <TableCell>{formatCreated(user.created_at)}</TableCell>
                           <TableCell align="center">
