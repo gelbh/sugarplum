@@ -67,6 +67,12 @@ type UserStudyPrefsRow = {
   updated_at: string;
 };
 
+type UserStudyDayRow = {
+  user_id: string;
+  day: string;
+  intros_used: number;
+};
+
 export type CardRow = {
   id: string;
   deck_id: string;
@@ -158,6 +164,7 @@ export function createTestEnv(opts?: {
   const generationJobs = new Map<string, GenerationJobRow>();
   const userSecrets = new Map<string, UserSecretRow>();
   const userStudyPrefs = new Map<string, UserStudyPrefsRow>();
+  const userStudyDay = new Map<string, UserStudyDayRow>();
   const cards = new Map<string, CardRow>();
   const schedules = new Map<string, ScheduleRow>();
   const reviewLogs: ReviewLogRow[] = [];
@@ -603,6 +610,15 @@ export function createTestEnv(opts?: {
                 r_floor: row.r_floor,
               } as T)
             : null;
+        }
+        if (
+          normalized.includes("FROM user_study_day") &&
+          normalized.includes("WHERE user_id =") &&
+          normalized.includes("AND day =")
+        ) {
+          const key = `${bound[0] as string}\0${bound[1] as string}`;
+          const row = userStudyDay.get(key);
+          return row ? ({ intros_used: row.intros_used } as T) : null;
         }
         if (
           normalized.includes("FROM cards c") &&
@@ -1720,6 +1736,15 @@ export function createTestEnv(opts?: {
             review_budget,
             r_floor,
             updated_at,
+          });
+        } else if (normalized.startsWith("INSERT INTO user_study_day")) {
+          const [user_id, day] = bound as [string, string];
+          const key = `${user_id}\0${day}`;
+          const existing = userStudyDay.get(key);
+          userStudyDay.set(key, {
+            user_id,
+            day,
+            intros_used: (existing?.intros_used ?? 0) + 1,
           });
         } else if (normalized.startsWith("INSERT INTO cards")) {
           const [

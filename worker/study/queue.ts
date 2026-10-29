@@ -3,6 +3,7 @@ export {
   DEFAULT_STUDY_PREFS,
   buildStudyQueue,
   isIntroEligible,
+  type BuildStudyQueueOpts,
   type QueueCandidate,
   type QueueResult,
   type StudyPrefs,

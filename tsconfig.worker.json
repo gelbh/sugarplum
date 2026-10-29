@@ -12,7 +12,6 @@
     "src/study/policyPrefs.ts",
     "src/study/weakness.ts",
     "src/study/retrievability.ts",
-    "src/study/frontPreview.ts",
     "src/study/localDay.ts"
   ]
 }

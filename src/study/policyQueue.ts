@@ -1,11 +1,11 @@
 import { State } from "ts-fsrs";
 import { cardFromScheduleRow, retrievability } from "./retrievability";
 
+/** Durable study pacing prefs (DB / settings). Session bonus is not stored here. */
 export type StudyPrefs = {
-  introBudget: number; // default 20
-  reviewBudget: number; // default 200
-  rFloor: number; // default 0.80
-  introBonusSlices?: number; // Study more for local day
+  introBudget: number;
+  reviewBudget: number;
+  rFloor: number;
 };
 
 export type QueueCandidate = {
@@ -30,11 +30,21 @@ export type QueueResult = {
   meta: {
     introUsed: number;
     introBudget: number;
+    introAlreadyUsedToday: number;
+    introRemaining: number;
     reviewUsed: number;
     reviewBudget: number;
     heldIntroCount: number;
     deferredCount: number;
   };
+};
+
+export type BuildStudyQueueOpts = {
+  /** Overdue boundary (prefer server UTC day start when applying mutations). */
+  overdueDayStartIso: string;
+  introBonusSlices?: number;
+  /** Intros already counted for this local day (first reviews / ledger). */
+  introAlreadyUsedToday?: number;
 };
 
 export const DEFAULT_STUDY_PREFS: StudyPrefs = {
@@ -47,9 +57,7 @@ const MS_PER_DAY = 86_400_000;
 
 /** Intro-eligible: New state, or never reviewed (reps 0 + null last_review). */
 export function isIntroEligible(c: QueueCandidate): boolean {
-  return (
-    c.state === State.New || (c.reps === 0 && c.last_review == null)
-  );
+  return c.state === State.New || (c.reps === 0 && c.last_review == null);
 }
 
 function byDueThenId(a: QueueCandidate, b: QueueCandidate): number {
@@ -62,34 +70,8 @@ function isLearningOrRelearning(c: QueueCandidate): boolean {
   return c.state === State.Learning || c.state === State.Relearning;
 }
 
-function isOverdue(c: QueueCandidate, localDayStartIso: string): boolean {
-  return c.due < localDayStartIso;
-}
-
-function currentR(c: QueueCandidate, now: Date): number | null {
-  try {
-    return retrievability(cardFromScheduleRow(c), now);
-  } catch {
-    return null;
-  }
-}
-
-/** Urgency: keep lower R, higher lapses, higher again_14d, earlier due first. */
-function byUrgencyDesc(
-  a: QueueCandidate,
-  b: QueueCandidate,
-  now: Date,
-): number {
-  const rA = currentR(a, now);
-  const rB = currentR(b, now);
-  const nA = rA == null ? -1 : rA;
-  const nB = rB == null ? -1 : rB;
-  if (nA !== nB) return nA - nB;
-  if (b.lapses !== a.lapses) return b.lapses - a.lapses;
-  const againA = a.again_14d ?? 0;
-  const againB = b.again_14d ?? 0;
-  if (againB !== againA) return againB - againA;
-  return byDueThenId(a, b);
+function isOverdue(c: QueueCandidate, overdueDayStartIso: string): boolean {
+  return c.due < overdueDayStartIso;
 }
 
 function addDaysIso(iso: string, days: number): string {
@@ -106,15 +88,14 @@ function tryDeferral(
   c: QueueCandidate,
   prefs: StudyPrefs,
   now: Date,
-  localDayStartIso: string,
+  overdueDayStartIso: string,
+  rNow: number | null,
 ): { newDue: string } | null {
   if (isLearningOrRelearning(c)) return null;
-  if (isOverdue(c, localDayStartIso)) return null;
-
-  const card = cardFromScheduleRow(c);
-  const rNow = retrievability(card, now);
+  if (isOverdue(c, overdueDayStartIso)) return null;
   if (rNow == null || rNow < prefs.rFloor) return null;
 
+  const card = cardFromScheduleRow(c);
   for (let days = 1; days <= 3; days++) {
     const at = new Date(now.getTime() + days * MS_PER_DAY);
     const rLater = retrievability(card, at);
@@ -129,28 +110,51 @@ export function buildStudyQueue(
   candidates: QueueCandidate[],
   prefs: StudyPrefs,
   now: Date,
-  localDayStartIso: string,
+  opts: BuildStudyQueueOpts,
 ): QueueResult {
-  const introEligible = candidates
-    .filter(isIntroEligible)
-    .sort(byDueThenId);
+  const overdueDayStartIso = opts.overdueDayStartIso;
+  const bonus = Math.max(0, opts.introBonusSlices ?? 0);
+  const introAlreadyUsedToday = Math.max(0, opts.introAlreadyUsedToday ?? 0);
+  const effectiveCap = prefs.introBudget * (1 + bonus);
+  const introRemaining = Math.max(0, effectiveCap - introAlreadyUsedToday);
+
+  const introEligible = candidates.filter(isIntroEligible).sort(byDueThenId);
   const reviews = candidates.filter((c) => !isIntroEligible(c));
 
-  const bonus = prefs.introBonusSlices ?? 0;
-  const effectiveIntroBudget = prefs.introBudget * (1 + bonus);
-  const selectedIntro = introEligible.slice(0, effectiveIntroBudget);
+  const selectedIntro = introEligible.slice(0, introRemaining);
   const heldIntroCount = introEligible.length - selectedIntro.length;
+
+  const rById = new Map<string, number | null>();
+  for (const c of reviews) {
+    try {
+      rById.set(c.id, retrievability(cardFromScheduleRow(c), now));
+    } catch {
+      rById.set(c.id, null);
+    }
+  }
 
   const mustInclude: QueueCandidate[] = [];
   const deferrable: { c: QueueCandidate; newDue: string }[] = [];
 
   for (const c of reviews) {
-    const defer = tryDeferral(c, prefs, now, localDayStartIso);
+    const rNow = rById.get(c.id) ?? null;
+    const defer = tryDeferral(c, prefs, now, overdueDayStartIso, rNow);
     if (defer) deferrable.push({ c, newDue: defer.newDue });
     else mustInclude.push(c);
   }
 
-  deferrable.sort((a, b) => byUrgencyDesc(a.c, b.c, now));
+  deferrable.sort((a, b) => {
+    const rA = rById.get(a.c.id);
+    const rB = rById.get(b.c.id);
+    const nA = rA == null ? -1 : rA;
+    const nB = rB == null ? -1 : rB;
+    if (nA !== nB) return nA - nB;
+    if (b.c.lapses !== a.c.lapses) return b.c.lapses - a.c.lapses;
+    const againA = a.c.again_14d ?? 0;
+    const againB = b.c.again_14d ?? 0;
+    if (againB !== againA) return againB - againA;
+    return byDueThenId(a.c, b.c);
+  });
 
   let selectedReviews: QueueCandidate[];
   let deferrals: { id: string; newDue: string }[];
@@ -189,6 +193,8 @@ export function buildStudyQueue(
     meta: {
       introUsed: selectedIntro.length,
       introBudget: prefs.introBudget,
+      introAlreadyUsedToday,
+      introRemaining,
       reviewUsed: selectedReviews.length,
       reviewBudget: prefs.reviewBudget,
       heldIntroCount,

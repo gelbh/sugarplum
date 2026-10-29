@@ -21,6 +21,7 @@ import {
   guestArchiveCard,
   guestListDeckCards,
   guestListDecks,
+  guestCommitPacing,
   guestGetStudyPrefs,
   guestListDueCards,
   guestListStrugglingCards,
@@ -815,6 +816,8 @@ export type ListDueOpts = {
 export type StudyQueueMeta = {
   introUsed: number;
   introBudget: number;
+  introAlreadyUsedToday?: number;
+  introRemaining?: number;
   reviewUsed: number;
   reviewBudget: number;
   heldIntroCount: number;
@@ -824,6 +827,7 @@ export type StudyQueueMeta = {
 export type ListDueResult = {
   cards: CardDraftView[];
   meta: StudyQueueMeta;
+  pendingDeferrals?: { id: string; newDue: string }[];
 };
 
 function buildDueQuery(opts?: ListDueOpts): string {
@@ -849,6 +853,19 @@ export function listDueCards(opts?: ListDueOpts): Promise<ListDueResult> {
   return api<ListDueResult>(`/api/study/due${buildDueQuery(opts)}`);
 }
 
+/** Persist R-aware review deferrals (GET /due is peek-only). */
+export function commitStudyPacing(opts?: ListDueOpts): Promise<{
+  deferredCount: number;
+}> {
+  if (isGuest()) {
+    return Promise.resolve(guestCommitPacing(opts));
+  }
+  return api<{ deferredCount: number }>(
+    `/api/study/commit-pacing${buildDueQuery(opts)}`,
+    { method: "POST" },
+  );
+}
+
 /** Accepted cards ranked by weakness (API or guest local review logs). */
 export type StrugglingRow = {
   id: string;
@@ -872,11 +889,22 @@ export type StudyRating = 1 | 2 | 3 | 4;
 
 export type ReviewResult = { due: string };
 
-export function reviewCard(cardId: string, rating: StudyRating) {
-  if (isGuest()) return Promise.resolve(guestReviewCard(cardId, rating));
+export function reviewCard(
+  cardId: string,
+  rating: StudyRating,
+  opts?: { localDay?: string },
+) {
+  const localDay = opts?.localDay;
+  if (isGuest()) {
+    return Promise.resolve(guestReviewCard(cardId, rating, undefined, { localDay }));
+  }
   return api<ReviewResult>("/api/study/review", {
     method: "POST",
-    json: { cardId, rating },
+    json: {
+      cardId,
+      rating,
+      ...(localDay ? { localDay } : {}),
+    },
   });
 }
 

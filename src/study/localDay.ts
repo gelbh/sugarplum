@@ -6,6 +6,22 @@ export function clientLocalDay(now: Date = new Date()): string {
   return `${y}-${m}-${d}`;
 }
 
+/** Server UTC calendar day `YYYY-MM-DD` (trusted day key / overdue boundary). */
+export function serverUtcDay(now: Date = new Date()): string {
+  const y = now.getUTCFullYear();
+  const m = String(now.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(now.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/** Start of server UTC calendar day as ISO. */
+export function serverUtcDayStartIso(now: Date = new Date()): string {
+  const y = now.getUTCFullYear();
+  const m = now.getUTCMonth();
+  const d = now.getUTCDate();
+  return new Date(Date.UTC(y, m, d)).toISOString();
+}
+
 const LOCAL_DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Start of the client's local calendar day as ISO (UTC fallback). */

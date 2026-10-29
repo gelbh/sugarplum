@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { State } from "ts-fsrs";
 import {
   buildStudyQueue,
+  type BuildStudyQueueOpts,
   type QueueCandidate,
   type StudyPrefs,
 } from "../../worker/study/queue";
@@ -13,6 +14,10 @@ const DEFAULT_PREFS: StudyPrefs = {
   introBudget: 20,
   reviewBudget: 200,
   rFloor: 0.8,
+};
+
+const DEFAULT_OPTS: BuildStudyQueueOpts = {
+  overdueDayStartIso: LOCAL_DAY_START,
 };
 
 function candidate(
@@ -68,13 +73,15 @@ describe("buildStudyQueue intro", () => {
       candidates,
       DEFAULT_PREFS,
       NOW,
-      LOCAL_DAY_START,
+      DEFAULT_OPTS,
     );
     expect(result.selected).toHaveLength(20);
     expect(result.dueIds).toHaveLength(20);
     expect(result.meta.introUsed).toBe(20);
     expect(result.meta.introBudget).toBe(20);
     expect(result.meta.heldIntroCount).toBe(30);
+    expect(result.meta.introAlreadyUsedToday).toBe(0);
+    expect(result.meta.introRemaining).toBe(20);
     expect(result.meta.reviewUsed).toBe(0);
     expect(result.deferrals).toHaveLength(0);
   });
@@ -83,15 +90,40 @@ describe("buildStudyQueue intro", () => {
     const candidates = Array.from({ length: 50 }, (_, i) =>
       newCard(`n-${String(i).padStart(2, "0")}`),
     );
-    const result = buildStudyQueue(
-      candidates,
-      { ...DEFAULT_PREFS, introBonusSlices: 1 },
-      NOW,
-      LOCAL_DAY_START,
-    );
+    const result = buildStudyQueue(candidates, DEFAULT_PREFS, NOW, {
+      ...DEFAULT_OPTS,
+      introBonusSlices: 1,
+    });
     expect(result.meta.introUsed).toBe(40);
     expect(result.meta.heldIntroCount).toBe(10);
     expect(result.selected).toHaveLength(40);
+  });
+
+  it("day-sticky: introAlreadyUsedToday reduces remaining slice", () => {
+    const candidates = Array.from({ length: 50 }, (_, i) =>
+      newCard(`n-${String(i).padStart(2, "0")}`),
+    );
+    const result = buildStudyQueue(candidates, DEFAULT_PREFS, NOW, {
+      ...DEFAULT_OPTS,
+      introAlreadyUsedToday: 15,
+    });
+    expect(result.meta.introAlreadyUsedToday).toBe(15);
+    expect(result.meta.introRemaining).toBe(5);
+    expect(result.meta.introUsed).toBe(5);
+    expect(result.meta.heldIntroCount).toBe(45);
+    expect(result.selected).toHaveLength(5);
+  });
+
+  it("day-sticky: exhausted intro admits zero new cards", () => {
+    const candidates = Array.from({ length: 10 }, (_, i) => newCard(`n-${i}`));
+    const result = buildStudyQueue(candidates, DEFAULT_PREFS, NOW, {
+      ...DEFAULT_OPTS,
+      introAlreadyUsedToday: 20,
+    });
+    expect(result.meta.introUsed).toBe(0);
+    expect(result.meta.introRemaining).toBe(0);
+    expect(result.meta.heldIntroCount).toBe(10);
+    expect(result.selected).toHaveLength(0);
   });
 
   it("treats reps===0 and null last_review as intro-eligible even if state is not New", () => {
@@ -107,7 +139,7 @@ describe("buildStudyQueue intro", () => {
       candidates,
       DEFAULT_PREFS,
       NOW,
-      LOCAL_DAY_START,
+      DEFAULT_OPTS,
     );
     expect(result.meta.introUsed).toBe(20);
     expect(result.meta.heldIntroCount).toBe(5);
@@ -126,7 +158,7 @@ describe("buildStudyQueue review deferral", () => {
       [...overdue, ...today],
       { ...DEFAULT_PREFS, reviewBudget: 200 },
       NOW,
-      LOCAL_DAY_START,
+      DEFAULT_OPTS,
     );
     for (const id of overdue.map((c) => c.id)) {
       expect(result.dueIds).toContain(id);
@@ -144,7 +176,7 @@ describe("buildStudyQueue review deferral", () => {
       reviews,
       { ...DEFAULT_PREFS, reviewBudget: 200 },
       NOW,
-      LOCAL_DAY_START,
+      DEFAULT_OPTS,
     );
     expect(result.meta.reviewBudget).toBe(200);
     expect(result.meta.reviewUsed).toBe(200);
@@ -163,7 +195,7 @@ describe("buildStudyQueue review deferral", () => {
       reviews,
       DEFAULT_PREFS,
       NOW,
-      LOCAL_DAY_START,
+      DEFAULT_OPTS,
     );
     expect(result.meta.reviewUsed).toBe(3);
     expect(result.meta.deferredCount).toBe(0);
@@ -192,7 +224,7 @@ describe("buildStudyQueue review deferral", () => {
       ],
       { ...DEFAULT_PREFS, reviewBudget: 1 },
       NOW,
-      LOCAL_DAY_START,
+      DEFAULT_OPTS,
     );
     expect(result.dueIds).toEqual(["again-heavy"]);
     expect(result.deferrals.map((d) => d.id).sort()).toEqual([

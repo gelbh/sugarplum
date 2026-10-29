@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatStrugglingCaption } from "../../src/study/strugglingCaption";
+import { formatStrugglingCaption } from "../../src/components/StrugglingList";
 
 describe("formatStrugglingCaption", () => {
   it("includes Again, Hard, and Lapses", () => {

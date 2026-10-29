@@ -312,4 +312,94 @@ describe("GET /api/study/due filter", () => {
     expect(body.meta.introUsed).toBe(40);
     expect(body.meta.heldIntroCount).toBe(10);
   });
+
+  it("GET /due does not mutate schedule dues (pendingDeferrals only)", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedDeck({
+      id: "deck-rev",
+      user_id: "user-a",
+      title: "Reviews",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedUserStudyPrefs({
+      user_id: "user-a",
+      intro_budget: 20,
+      review_budget: 2,
+      r_floor: 0.5,
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+    const dueNow = new Date().toISOString();
+    for (let i = 0; i < 5; i++) {
+      const id = `rev-${i}`;
+      env.seedCard({
+        id,
+        deck_id: "deck-rev",
+        job_id: null,
+        type: "qa",
+        front_json: JSON.stringify(`${id}?`),
+        back_json: JSON.stringify("A"),
+        media_r2_keys_json: null,
+        provenance_json: JSON.stringify({ pages: [1], excerpt: "ex" }),
+        status: "accepted",
+        created_at: "2026-01-01T00:00:00.000Z",
+        updated_at: "2026-01-01T00:00:00.000Z",
+      });
+      env.seedSchedule({
+        card_id: id,
+        due: dueNow,
+        stability: 100,
+        difficulty: 5,
+        elapsed_days: 1,
+        scheduled_days: 10,
+        learning_steps: 0,
+        reps: 5,
+        lapses: 0,
+        state: 2,
+        last_review: "2026-10-27T12:00:00.000Z",
+      });
+    }
+
+    const duesBefore = env
+      .getSchedules()
+      .filter((s) => s.card_id.startsWith("rev-"))
+      .map((s) => [s.card_id, s.due] as const)
+      .sort((a, b) => a[0].localeCompare(b[0]));
+
+    const res = await app.request(
+      "/api/study/due?localDay=2026-10-28",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as DueBody & {
+      pendingDeferrals: { id: string; newDue: string }[];
+    };
+    expect(body.pendingDeferrals.length).toBeGreaterThan(0);
+
+    const duesAfter = env
+      .getSchedules()
+      .filter((s) => s.card_id.startsWith("rev-"))
+      .map((s) => [s.card_id, s.due] as const)
+      .sort((a, b) => a[0].localeCompare(b[0]));
+    expect(duesAfter).toEqual(duesBefore);
+
+    const commit = await app.request(
+      "/api/study/commit-pacing?localDay=2026-10-28",
+      {
+        method: "POST",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+    expect(commit.status).toBe(200);
+    const committed = (await commit.json()) as { deferredCount: number };
+    expect(committed.deferredCount).toBeGreaterThan(0);
+    const duesCommitted = env
+      .getSchedules()
+      .filter((s) => s.card_id.startsWith("rev-"))
+      .map((s) => s.due);
+    expect(duesCommitted.some((d) => d !== dueNow)).toBe(true);
+  });
 });

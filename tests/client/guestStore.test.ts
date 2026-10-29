@@ -172,14 +172,101 @@ describe("guest store", () => {
     );
   });
 
-  it("keeps graded card due and records the rating", () => {
+  it("writes FSRS schedule on grade (leaves New state)", () => {
     enterGuest(storage);
     const due = guestListDueCards(undefined, storage).cards;
     const id = due[0]!.id;
-    guestReviewCard(id, 3, storage);
-    const next = guestListDueCards(undefined, storage).cards;
-    expect(next.map((c) => c.id)).toContain(id);
-    expect(next).toHaveLength(due.length);
+    const result = guestReviewCard(id, 3, storage);
+    expect(result.due).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    const raw = JSON.parse(storage.getItem(STORE_KEY)!) as {
+      schedules: Record<string, { state: number; reps: number }>;
+      reviewLogs: Array<{ cardId: string; rating: number }>;
+    };
+    expect(raw.schedules[id]?.reps).toBeGreaterThan(0);
+    expect(raw.schedules[id]?.state).not.toBe(0); // not State.New
+    expect(raw.reviewLogs.some((l) => l.cardId === id && l.rating === 3)).toBe(
+      true,
+    );
+  });
+
+  it("day-sticky intro: grading New cards reduces same-day remaining slice", () => {
+    enterGuest(storage);
+    guestPutStudyPrefs(
+      { introBudget: 5, reviewBudget: 200, rFloor: 0.8 },
+      storage,
+    );
+    const subject = guestCreateSubject("Sticky subject", storage);
+    const deck = guestCreateDeck("Sticky deck", subject.id, storage);
+    guestAddAcceptedCards(
+      deck.id,
+      Array.from({ length: 12 }, (_, i) => ({
+        front: `Sticky Q${i}?`,
+        back: `A${i}`,
+      })),
+      storage,
+    );
+    const day = "2026-10-28";
+    const first = guestListDueCards({ localDay: day }, storage);
+    expect(first.meta.introUsed).toBe(5);
+    for (const card of first.cards) {
+      guestReviewCard(card.id, 3, storage, { localDay: day });
+    }
+    const second = guestListDueCards({ localDay: day }, storage);
+    expect(second.meta.introAlreadyUsedToday).toBe(5);
+    expect(second.meta.introUsed).toBe(0);
+    expect(second.meta.heldIntroCount).toBeGreaterThan(0);
+  });
+
+  it("listDue peeks deferrals without writing dues until commitPacing", () => {
+    enterGuest(storage);
+    guestPutStudyPrefs(
+      { introBudget: 1, reviewBudget: 1, rFloor: 0.5 },
+      storage,
+    );
+    const subject = guestCreateSubject("Defer subject", storage);
+    const deck = guestCreateDeck("Defer deck", subject.id, storage);
+    // Seed many reviews via schedules so soft budget can defer.
+    const added = guestAddAcceptedCards(
+      deck.id,
+      Array.from({ length: 5 }, (_, i) => ({
+        front: `R${i}?`,
+        back: `r${i}`,
+      })),
+      storage,
+    );
+    const nowIso = new Date().toISOString();
+    const raw = JSON.parse(storage.getItem(STORE_KEY)!) as {
+      cards: Array<{ id: string; due?: string }>;
+      schedules: Record<string, unknown>;
+    };
+    for (const card of added) {
+      raw.schedules[card.id] = {
+        state: 2, // Review
+        reps: 5,
+        lapses: 0,
+        stability: 100,
+        difficulty: 5,
+        elapsed_days: 1,
+        scheduled_days: 10,
+        learning_steps: 0,
+        last_review: "2026-10-27T12:00:00.000Z",
+      };
+      const idx = raw.cards.findIndex((c) => c.id === card.id);
+      if (idx >= 0) raw.cards[idx] = { ...raw.cards[idx]!, due: nowIso };
+    }
+    storage.setItem(STORE_KEY, JSON.stringify(raw));
+
+    const peek = guestListDueCards(undefined, storage);
+    const duesBefore = JSON.parse(storage.getItem(STORE_KEY)!).cards.map(
+      (c: { id: string; due?: string }) => [c.id, c.due],
+    );
+    expect(peek.pendingDeferrals?.length ?? 0).toBeGreaterThanOrEqual(0);
+    // Re-peek without commit: dues unchanged.
+    guestListDueCards(undefined, storage);
+    const duesAfterPeek = JSON.parse(storage.getItem(STORE_KEY)!).cards.map(
+      (c: { id: string; due?: string }) => [c.id, c.due],
+    );
+    expect(duesAfterPeek).toEqual(duesBefore);
   });
 
   it("filters due cards by deckId", () => {

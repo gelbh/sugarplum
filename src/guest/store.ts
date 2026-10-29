@@ -1,4 +1,10 @@
-import { State } from "ts-fsrs";
+import {
+  createEmptyCard,
+  fsrs,
+  Rating,
+  State,
+  type Grade,
+} from "ts-fsrs";
 import type {
   CardDraftView,
   CardType,
@@ -13,21 +19,26 @@ import type {
   Subject,
 } from "../api/client";
 import { assertSingleCloze } from "../lib/clozeFormat";
-import { resolveLocalDayStartIso } from "../study/localDay";
-import {
-  buildStudyQueue,
-  type QueueCandidate,
-  type StudyPrefs,
-} from "../study/policyQueue";
+import { clientLocalDay } from "../study/localDay";
+import { type StudyPrefs } from "../study/policyQueue";
 import {
   clampStudyPrefs,
   DEFAULT_STUDY_PREFS,
 } from "../study/policyPrefs";
 import {
-  rankWeakness,
-  type WeaknessCandidate,
-} from "../study/weakness";
+  cardFromScheduleRow,
+  scheduleColumnsFromCard,
+} from "../study/retrievability";
 import { GUEST_USER_ID } from "./session";
+import {
+  buildGuestDueResult,
+  buildGuestStruggling,
+  type GuestCardSchedule,
+  type GuestPolicyInput,
+  type GuestReviewLog,
+} from "./policyDue";
+
+export type { GuestCardSchedule, GuestReviewLog };
 
 export type GuestHubCardBody = {
   type: "qa" | "cloze" | "mcq";
@@ -43,25 +54,6 @@ type GuestCardPatch = {
   type?: CardType;
 };
 
-/** Optional FSRS-ish schedule columns for guest cards (absent → New defaults). */
-export type GuestCardSchedule = {
-  state: number;
-  reps: number;
-  lapses: number;
-  stability: number;
-  difficulty: number;
-  elapsed_days: number;
-  scheduled_days: number;
-  learning_steps: number;
-  last_review: string | null;
-};
-
-export type GuestReviewLog = {
-  cardId: string;
-  rating: StudyRating;
-  at: string;
-};
-
 export const GUEST_STORE_KEY = "sugarplum.guest.store.v1";
 
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
@@ -75,6 +67,8 @@ type GuestStore = {
   studyPrefs: StudyPrefs;
   reviewLogs: GuestReviewLog[];
   schedules: Record<string, GuestCardSchedule>;
+  /** Local calendar day → intros already graded that day. */
+  introsByDay: Record<string, number>;
 };
 
 /** Legacy deck shape before subject hierarchy. */
@@ -94,6 +88,7 @@ type LegacyGuestStore = {
   studyPrefs?: Partial<StudyPrefs>;
   reviewLogs?: GuestReviewLog[];
   schedules?: Record<string, GuestCardSchedule>;
+  introsByDay?: Record<string, number>;
 };
 
 function backend(storage?: Store): Store {
@@ -169,6 +164,10 @@ function migrateStore(raw: LegacyGuestStore): GuestStore {
     reviewLogs: Array.isArray(raw.reviewLogs) ? raw.reviewLogs : [],
     schedules:
       raw.schedules && typeof raw.schedules === "object" ? raw.schedules : {},
+    introsByDay:
+      raw.introsByDay && typeof raw.introsByDay === "object"
+        ? raw.introsByDay
+        : {},
   };
 }
 
@@ -231,6 +230,7 @@ function seedStore(): GuestStore {
     studyPrefs: { ...DEFAULT_STUDY_PREFS },
     reviewLogs: [],
     schedules: {},
+    introsByDay: {},
   };
 }
 
@@ -261,7 +261,8 @@ export function peekGuestStore(storage?: Store): GuestStore | null {
       ) ||
       parsed.studyPrefs == null ||
       !Array.isArray(parsed.reviewLogs) ||
-      parsed.schedules == null;
+      parsed.schedules == null ||
+      parsed.introsByDay == null;
     if (needsWrite) writeStore(migrated, storage);
     return migrated;
   } catch {
@@ -722,69 +723,30 @@ export type GuestDueOpts = Pick<
   "deckId" | "subjectId" | "localDay" | "tzOffsetMinutes" | "introBonus"
 >;
 
-const MS_PER_DAY = 86_400_000;
-
-function cardDueIso(card: CardDraftView, fallback: string): string {
-  return typeof card.due === "string" && card.due.length > 0
-    ? card.due
-    : fallback;
-}
-
-function toQueueCandidate(
-  card: CardDraftView,
-  schedules: Record<string, GuestCardSchedule>,
-  nowIsoValue: string,
-): QueueCandidate {
-  const due = cardDueIso(card, nowIsoValue);
-  const sched = schedules[card.id];
-  if (!sched) {
-    return {
-      id: card.id,
-      due,
-      state: State.New,
-      reps: 0,
-      last_review: null,
-      lapses: 0,
-      stability: 0,
-      difficulty: 0,
-      elapsed_days: 0,
-      scheduled_days: 0,
-      learning_steps: 0,
-    };
-  }
-  return {
-    id: card.id,
-    due,
-    state: sched.state,
-    reps: sched.reps,
-    last_review: sched.last_review,
-    lapses: sched.lapses,
-    stability: sched.stability,
-    difficulty: sched.difficulty,
-    elapsed_days: sched.elapsed_days,
-    scheduled_days: sched.scheduled_days,
-    learning_steps: sched.learning_steps,
-  };
-}
-
-function frontJsonFor(card: CardDraftView): string {
-  if (typeof card.front === "string") return card.front;
-  return JSON.stringify(card.front);
-}
-
 export function guestGetStudyPrefs(storage?: Store): StudyPrefs {
   return { ...readStore(storage).studyPrefs };
 }
 
 export function guestPutStudyPrefs(
-  prefs: StudyPrefs,
+  prefs: Partial<StudyPrefs>,
   storage?: Store,
 ): StudyPrefs {
   const store = readStore(storage);
-  const clamped = clampStudyPrefs(prefs);
+  const clamped = clampStudyPrefs(prefs, store.studyPrefs);
   store.studyPrefs = clamped;
   writeStore(store, storage);
   return { ...clamped };
+}
+
+function policyInput(store: GuestStore): GuestPolicyInput {
+  return {
+    cards: store.cards,
+    decks: store.decks,
+    schedules: store.schedules,
+    studyPrefs: store.studyPrefs,
+    reviewLogs: store.reviewLogs,
+    introsByDay: store.introsByDay,
+  };
 }
 
 export function guestListDueCards(
@@ -798,139 +760,136 @@ export function guestListDueCards(
     store = readStore(storage);
   }
 
-  const now = new Date();
-  const nowIsoValue = now.toISOString();
-  const tzOffsetMinutes =
-    opts?.tzOffsetMinutes ??
-    (typeof Date !== "undefined" ? now.getTimezoneOffset() : 0);
-  const localDayStartIso = resolveLocalDayStartIso(now, {
-    localDay: opts?.localDay,
-    tzOffsetMinutes,
-  });
-
-  let accepted = store.cards.filter((c) => c.status === "accepted");
-  if (opts?.deckId) {
-    accepted = accepted.filter((c) => c.deck_id === opts.deckId);
-  } else if (opts?.subjectId) {
-    const deckIds = new Set(
-      store.decks
-        .filter((d) => d.subject_id === opts.subjectId)
-        .map((d) => d.id),
-    );
-    accepted = accepted.filter((c) => deckIds.has(c.deck_id));
-  }
-
-  const dueCards = accepted.filter(
-    (c) => cardDueIso(c, nowIsoValue) <= nowIsoValue,
+  const { result, pendingDeferrals } = buildGuestDueResult(
+    policyInput(store),
+    opts,
   );
-  const candidates = dueCards.map((c) =>
-    toQueueCandidate(c, store.schedules, nowIsoValue),
-  );
-
-  const prefs: StudyPrefs = {
-    ...store.studyPrefs,
-    introBonusSlices: opts?.introBonus ?? 0,
-  };
-  const queue = buildStudyQueue(
-    candidates,
-    prefs,
-    now,
-    localDayStartIso,
-  );
-
-  const deferById = new Map(queue.deferrals.map((d) => [d.id, d.newDue]));
-  if (deferById.size > 0) {
-    store.cards = store.cards.map((c) => {
-      const newDue = deferById.get(c.id);
-      if (!newDue) return c;
-      return { ...c, due: newDue, updated_at: nowIsoValue };
-    });
-  }
-
-  // Scoped due lists must not wipe the global dueIds queue.
+  // Peek only: do not persist deferrals (commit-pacing path does).
   if (!opts?.deckId && !opts?.subjectId) {
-    store.dueIds = queue.dueIds;
+    store.dueIds = result.cards.map((c) => c.id);
+    writeStore(store, storage);
   }
-  writeStore(store, storage);
-
-  const byId = new Map(store.cards.map((c) => [c.id, c]));
-  const cards = queue.dueIds
-    .map((id) => byId.get(id))
-    .filter((c): c is CardDraftView => c != null);
-
-  return { cards, meta: queue.meta };
+  return { ...result, pendingDeferrals };
 }
 
-export function guestListStrugglingCards(storage?: Store): StrugglingRow[] {
+/** Apply R-aware deferrals (guest analogue of POST /commit-pacing). */
+export function guestCommitPacing(
+  opts?: GuestDueOpts,
+  storage?: Store,
+): { deferredCount: number } {
   const store = readStore(storage);
   const now = new Date();
   const nowIsoValue = now.toISOString();
-  const since = new Date(now.getTime() - 14 * MS_PER_DAY).toISOString();
-  const accepted = store.cards.filter((c) => c.status === "accepted");
-  if (accepted.length === 0 || store.reviewLogs.length === 0) {
-    return [];
+  const { pendingDeferrals } = buildGuestDueResult(
+    policyInput(store),
+    opts,
+    now,
+  );
+  if (pendingDeferrals.length === 0) {
+    return { deferredCount: 0 };
   }
+  const deferById = new Map(pendingDeferrals.map((d) => [d.id, d.newDue]));
+  store.cards = store.cards.map((c) => {
+    const newDue = deferById.get(c.id);
+    if (!newDue) return c;
+    return { ...c, due: newDue, updated_at: nowIsoValue };
+  });
+  writeStore(store, storage);
+  return { deferredCount: pendingDeferrals.length };
+}
 
-  const counts = new Map<
-    string,
-    { again_14d: number; hard_14d: number; last_review: string | null }
-  >();
-  for (const log of store.reviewLogs) {
-    if (log.at < since) continue;
-    const cur = counts.get(log.cardId) ?? {
-      again_14d: 0,
-      hard_14d: 0,
-      last_review: null as string | null,
-    };
-    if (log.rating === 1) cur.again_14d += 1;
-    else if (log.rating === 2) cur.hard_14d += 1;
-    if (cur.last_review == null || log.at > cur.last_review) {
-      cur.last_review = log.at;
+export function guestListStrugglingCards(storage?: Store): StrugglingRow[] {
+  return buildGuestStruggling(policyInput(readStore(storage)));
+}
+
+function ratingToGrade(rating: StudyRating): Grade {
+  switch (rating) {
+    case 1:
+      return Rating.Again;
+    case 2:
+      return Rating.Hard;
+    case 3:
+      return Rating.Good;
+    case 4:
+      return Rating.Easy;
+    default: {
+      const _exhaustive: never = rating;
+      return _exhaustive;
     }
-    counts.set(log.cardId, cur);
   }
-
-  const candidates: WeaknessCandidate[] = [];
-  for (const card of accepted) {
-    const tallies = counts.get(card.id);
-    if (!tallies) continue;
-    const sched = store.schedules[card.id];
-    candidates.push({
-      id: card.id,
-      deck_id: card.deck_id,
-      front_json: frontJsonFor(card),
-      lapses: sched?.lapses ?? 0,
-      again_14d: tallies.again_14d,
-      hard_14d: tallies.hard_14d,
-      difficulty: sched?.difficulty ?? 0,
-      due: cardDueIso(card, nowIsoValue),
-      last_review: sched?.last_review ?? tallies.last_review,
-      retrievability: null,
-    });
-  }
-
-  return rankWeakness(candidates, nowIsoValue);
 }
 
 export function guestReviewCard(
   cardId: string,
   rating: StudyRating,
   storage?: Store,
+  opts?: { localDay?: string },
 ): ReviewResult {
   const store = readStore(storage);
-  const due = nowIso();
-  // Keep due <= now so the card stays in today's policy candidates.
-  // dueIds still cycles for in-session order; listDue reorders by due/id.
-  store.dueIds = [...store.dueIds.filter((id) => id !== cardId), cardId];
-  store.cards = store.cards.map((c) =>
-    c.id === cardId ? { ...c, due, updated_at: due } : c,
+  const now = new Date();
+  const nowIsoValue = now.toISOString();
+  const card = store.cards.find((c) => c.id === cardId);
+  if (!card || card.status !== "accepted") {
+    throw new Error("Card not found");
+  }
+
+  const existing = store.schedules[cardId];
+  const wasNew =
+    !existing ||
+    existing.state === State.New ||
+    (existing.reps === 0 && existing.last_review == null);
+
+  const fsrsCard = existing
+    ? cardFromScheduleRow({
+        due: typeof card.due === "string" ? card.due : nowIsoValue,
+        stability: existing.stability,
+        difficulty: existing.difficulty,
+        elapsed_days: existing.elapsed_days,
+        scheduled_days: existing.scheduled_days,
+        learning_steps: existing.learning_steps,
+        reps: existing.reps,
+        lapses: existing.lapses,
+        state: existing.state,
+        last_review: existing.last_review,
+      })
+    : createEmptyCard(now);
+
+  const next = scheduleColumnsFromCard(
+    fsrs().next(fsrsCard, now, ratingToGrade(rating)).card,
   );
+
+  store.schedules[cardId] = {
+    state: next.state,
+    reps: next.reps,
+    lapses: next.lapses,
+    stability: next.stability,
+    difficulty: next.difficulty,
+    elapsed_days: next.elapsed_days,
+    scheduled_days: next.scheduled_days,
+    learning_steps: next.learning_steps,
+    last_review: next.last_review,
+  };
+  store.cards = store.cards.map((c) =>
+    c.id === cardId
+      ? { ...c, due: next.due, updated_at: nowIsoValue }
+      : c,
+  );
+  // Keep dueIds cycling for in-session order when still due today.
+  if (next.due <= nowIsoValue) {
+    store.dueIds = [...store.dueIds.filter((id) => id !== cardId), cardId];
+  } else {
+    store.dueIds = store.dueIds.filter((id) => id !== cardId);
+  }
   store.reviewLogs = [
     ...store.reviewLogs,
-    { cardId, rating, at: due },
+    { cardId, rating, at: nowIsoValue },
   ];
+  if (wasNew) {
+    const day = opts?.localDay ?? clientLocalDay(now);
+    store.introsByDay[day] = (store.introsByDay[day] ?? 0) + 1;
+  }
   writeStore(store, storage);
-  return { due };
+  return { due: next.due };
 }
 
 /** Put every guest card back in the due queue (manual restudy). */

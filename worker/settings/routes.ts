@@ -133,6 +133,7 @@ settingsRoutes.get("/study", async (c) => {
 
 settingsRoutes.put("/study", async (c) => {
   const userId = await requireUser(c);
+  const db = getDb(c.env);
 
   let body: {
     introBudget?: unknown;
@@ -145,7 +146,8 @@ settingsRoutes.put("/study", async (c) => {
     throw new HTTPException(400, { message: "Invalid JSON body" });
   }
 
-  const clamped = clampStudyPrefs(body);
-  const prefs = await saveStudyPrefs(getDb(c.env), userId, clamped);
+  const existing = await loadStudyPrefs(db, userId);
+  const clamped = clampStudyPrefs(body, existing);
+  const prefs = await saveStudyPrefs(db, userId, clamped);
   return c.json(prefs satisfies StudyPrefs);
 });

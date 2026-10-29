@@ -1,10 +1,11 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
+import { State } from "ts-fsrs";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
-import { serializeCard, type CardRow } from "../cards/routes";
+import { type CardRow } from "../cards/routes";
 import { requireOwnedDeck } from "../materials/routes";
 import {
   Rating,
@@ -15,21 +16,15 @@ import {
   type ScheduleRowLike,
 } from "./fsrs";
 import { resolveLocalDayStartIso } from "../../src/study/localDay";
-import { loadStudyPrefs } from "./prefs";
+import { incrementIntrosUsedToday } from "./dayStats";
 import {
-  buildStudyQueue,
-  type QueueCandidate,
-  type StudyPrefs,
-} from "./queue";
+  applyDeferrals,
+  buildDueQueueForUser,
+  serializeDueCards,
+} from "./dueQueue";
 import { rankWeakness, type WeaknessCandidate } from "./weakness";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
-
-type DueSqlRow = CardRow &
-  ScheduleRowLike & {
-    due: string;
-    again_14d: number;
-  };
 
 type StrugglingSqlRow = {
   id: string;
@@ -57,9 +52,35 @@ const ReviewBodySchema = z.object({
     z.literal(3),
     z.literal(4),
   ]),
+  /** Client local calendar day for intro day-ledger (YYYY-MM-DD). */
+  localDay: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 export { resolveLocalDayStartIso };
+
+async function assertDueScope(
+  db: D1Database,
+  userId: string,
+  deckId: string | null,
+  subjectId: string | null,
+): Promise<void> {
+  if (deckId && subjectId) {
+    throw new HTTPException(400, {
+      message: "deckId and subjectId are mutually exclusive",
+    });
+  }
+  if (deckId) {
+    await requireOwnedDeck(db, deckId, userId);
+  } else if (subjectId) {
+    const subject = await db
+      .prepare("SELECT id FROM subjects WHERE id = ? AND user_id = ?")
+      .bind(subjectId, userId)
+      .first<{ id: string }>();
+    if (!subject) {
+      throw new HTTPException(404, { message: "Subject not found" });
+    }
+  }
+}
 
 function parseNonnegInt(raw: string | undefined): number | null {
   if (raw == null || raw.trim() === "") return null;
@@ -79,118 +100,67 @@ export const studyRoutes = new Hono<AppEnv>();
 
 /**
  * Cards ready for study: accepted + schedule due <= now, then policy queue.
- * Drafts never appear here.
- * Optional mutually exclusive deckId or subjectId scopes the queue; omit both = global.
- * Response: `{ cards, meta }` (breaking vs bare array).
+ * Does NOT mutate schedules (deferrals are preview-only until POST commit-pacing).
+ * Response: `{ cards, meta, pendingDeferrals }`.
  */
 studyRoutes.get("/due", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
   const now = new Date();
-  const nowIso = now.toISOString();
   const deckId = c.req.query("deckId")?.trim() || null;
   const subjectId = c.req.query("subjectId")?.trim() || null;
   const localDay = c.req.query("localDay")?.trim() || null;
-  const tzOffsetMinutes = parseFiniteNumber(c.req.query("tzOffsetMinutes"));
+  const introBonusRaw = parseNonnegInt(c.req.query("introBonus"));
+  // tzOffsetMinutes accepted for display compatibility; overdue uses server UTC.
+  void parseFiniteNumber(c.req.query("tzOffsetMinutes"));
+
+  await assertDueScope(db, userId, deckId, subjectId);
+
+  const { rows, queue } = await buildDueQueueForUser(
+    db,
+    userId,
+    now,
+    { deckId, subjectId },
+    introBonusRaw ?? 0,
+    localDay,
+  );
+
+  return c.json({
+    cards: serializeDueCards(
+      rows,
+      queue.selected.map((s) => s.id),
+    ),
+    meta: queue.meta,
+    pendingDeferrals: queue.deferrals,
+  });
+});
+
+/**
+ * Apply R-aware review deferrals for today's over-budget cards.
+ * Overdue boundary uses server UTC day (not client localDay).
+ */
+studyRoutes.post("/commit-pacing", async (c) => {
+  const userId = await requireUser(c);
+  const db = getDb(c.env);
+  const now = new Date();
+  const deckId = c.req.query("deckId")?.trim() || null;
+  const subjectId = c.req.query("subjectId")?.trim() || null;
+  const localDay = c.req.query("localDay")?.trim() || null;
   const introBonusRaw = parseNonnegInt(c.req.query("introBonus"));
 
-  if (deckId && subjectId) {
-    throw new HTTPException(400, {
-      message: "deckId and subjectId are mutually exclusive",
-    });
-  }
+  await assertDueScope(db, userId, deckId, subjectId);
 
-  if (deckId) {
-    await requireOwnedDeck(db, deckId, userId);
-  } else if (subjectId) {
-    const subject = await db
-      .prepare("SELECT id FROM subjects WHERE id = ? AND user_id = ?")
-      .bind(subjectId, userId)
-      .first<{ id: string }>();
-    if (!subject) {
-      throw new HTTPException(404, { message: "Subject not found" });
-    }
-  }
-
-  const since14d = new Date(
-    now.getTime() - 14 * 24 * 60 * 60 * 1000,
-  ).toISOString();
-
-  let sql = `SELECT c.id, c.deck_id, c.job_id, c.type, c.front_json, c.back_json,
-              c.media_r2_keys_json, c.provenance_json, c.status, c.created_at, c.updated_at,
-              s.due, s.stability, s.difficulty, s.elapsed_days, s.scheduled_days,
-              s.learning_steps, s.reps, s.lapses, s.state, s.last_review,
-              (
-                SELECT COUNT(*) FROM review_logs rl
-                WHERE rl.card_id = c.id
-                  AND rl.rating = 1
-                  AND rl.reviewed_at >= ?
-              ) AS again_14d
-       FROM cards c
-       INNER JOIN card_schedules s ON s.card_id = c.id
-       INNER JOIN decks d ON d.id = c.deck_id
-       WHERE d.user_id = ? AND c.status = ? AND s.due <= ?`;
-  const binds: unknown[] = [since14d, userId, "accepted", nowIso];
-
-  if (deckId) {
-    sql += " AND c.deck_id = ?";
-    binds.push(deckId);
-  } else if (subjectId) {
-    sql += " AND d.subject_id = ?";
-    binds.push(subjectId);
-  }
-
-  sql += " ORDER BY s.due ASC";
-
-  const { results } = await db.prepare(sql).bind(...binds).all<DueSqlRow>();
-  const rows = results ?? [];
-
-  const prefsBase = await loadStudyPrefs(db, userId);
-  const prefs: StudyPrefs = {
-    ...prefsBase,
-    introBonusSlices: introBonusRaw ?? 0,
-  };
-  const localDayStartIso = resolveLocalDayStartIso(now, {
+  const { queue } = await buildDueQueueForUser(
+    db,
+    userId,
+    now,
+    { deckId, subjectId },
+    introBonusRaw ?? 0,
     localDay,
-    tzOffsetMinutes,
-  });
+  );
 
-  const candidates: QueueCandidate[] = rows.map((row) => ({
-    id: row.id,
-    due: row.due,
-    state: row.state,
-    reps: row.reps,
-    last_review: row.last_review,
-    lapses: row.lapses,
-    again_14d: Number(row.again_14d) || 0,
-    stability: row.stability,
-    difficulty: row.difficulty,
-    elapsed_days: row.elapsed_days,
-    scheduled_days: row.scheduled_days,
-    learning_steps: row.learning_steps,
-  }));
-
-  const queue = buildStudyQueue(candidates, prefs, now, localDayStartIso);
-
-  if (queue.deferrals.length > 0) {
-    const stmts = queue.deferrals.map((d) =>
-      db
-        .prepare("UPDATE card_schedules SET due = ? WHERE card_id = ?")
-        .bind(d.newDue, d.id),
-    );
-    await db.batch(stmts);
-  }
-
-  const byId = new Map(rows.map((r) => [r.id, r]));
-  const cards = queue.selected.map((c) => {
-    const row = byId.get(c.id)!;
-    return {
-      ...serializeCard(row),
-      due: row.due,
-    };
-  });
-
-  return c.json({ cards, meta: queue.meta });
+  await applyDeferrals(db, queue.deferrals);
+  return c.json({ deferredCount: queue.deferrals.length });
 });
 
 /**
@@ -289,7 +259,7 @@ studyRoutes.post("/review", async (c) => {
     });
   }
 
-  const { cardId, rating } = parsed.data;
+  const { cardId, rating, localDay } = parsed.data;
   const now = new Date();
 
   const card = await db
@@ -322,6 +292,10 @@ studyRoutes.post("/review", async (c) => {
   if (!schedule) {
     throw new HTTPException(400, { message: "Card has no schedule" });
   }
+
+  const wasNew =
+    schedule.state === State.New ||
+    (schedule.reps === 0 && schedule.last_review == null);
 
   const grade = ratingToGrade(rating);
 
@@ -371,6 +345,18 @@ studyRoutes.post("/review", async (c) => {
         JSON.stringify(log),
       ),
   ]);
+
+  if (wasNew) {
+    const day =
+      localDay ??
+      (() => {
+        const y = now.getUTCFullYear();
+        const m = String(now.getUTCMonth() + 1).padStart(2, "0");
+        const d = String(now.getUTCDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+      })();
+    await incrementIntrosUsedToday(db, userId, day);
+  }
 
   return c.json({ due: cols.due });
 });

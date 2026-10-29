@@ -23,6 +23,7 @@ import McqFace from "../components/McqFace";
 import {
   ApiError,
   listDecks,
+  commitStudyPacing,
   listDueCards,
   listSubjects,
   me,
@@ -172,7 +173,10 @@ export default function StudyPage() {
   /** True once this mount showed at least one due card (scoped session-complete). */
   const [hadCards, setHadCards] = useState(false);
   const [queueMeta, setQueueMeta] = useState<StudyQueueMeta | null>(null);
-  const introBonusRef = useRef(getIntroBonus());
+  const introBonusRef = useRef<number | undefined>(undefined);
+  if (introBonusRef.current === undefined) {
+    introBonusRef.current = getIntroBonus();
+  }
   const {
     zen,
     fullscreenUnavailable,
@@ -219,14 +223,22 @@ export default function StudyPage() {
   const load = useCallback(
     async (uid: string, bonusOverride?: number) => {
       const wanted = cardIdFromSearch(window.location.search);
-      const bonus = bonusOverride ?? introBonusRef.current;
+      const bonus = bonusOverride ?? introBonusRef.current ?? 0;
       const dueOpts = {
         ...scopeOpts,
         localDay: clientLocalDay(),
         ...(bonus > 0 ? { introBonus: bonus } : {}),
       };
       try {
-        const { cards: due, meta } = await listDueCards(dueOpts);
+        const { cards: due, meta, pendingDeferrals } =
+          await listDueCards(dueOpts);
+        if ((pendingDeferrals?.length ?? 0) > 0) {
+          try {
+            await commitStudyPacing(dueOpts);
+          } catch {
+            /* peek queue still usable; dues stay until next commit */
+          }
+        }
         saveDueCache(uid, due, scopeOpts);
         warmDueMedia(due);
         applyDueQueue(due, wanted);
@@ -424,7 +436,9 @@ export default function StudyPage() {
       }
 
       try {
-        await reviewCard(current.id, rating);
+        await reviewCard(current.id, rating, {
+          localDay: clientLocalDay(),
+        });
         advanceAfterGrade(fromMcq);
         end();
         return true;
