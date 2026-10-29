@@ -20,6 +20,7 @@ type UserRow = {
   password_hash: string | null;
   oauth_subject: string | null;
   created_at: string;
+  disabled_at?: string | null;
 };
 
 type SubjectRow = {
@@ -154,6 +155,7 @@ export type TestEnv = Env & {
   seedUserStudyDay: (row: UserStudyDayRow) => void;
   seedCard: (row: CardRow) => void;
   seedGenerationJob: (row: GenerationJobRow) => void;
+  seedExportJob: (row: ExportJobRow) => void;
   seedSchedule: (row: ScheduleRow) => void;
   seedReviewLog: (row: ReviewLogRow) => void;
   seedR2: (key: string, value: string) => void;
@@ -218,6 +220,23 @@ export function createTestEnv(opts?: {
         }
         if (
           normalized.startsWith(
+            "SELECT id, email, password_hash, disabled_at FROM users WHERE email =",
+          )
+        ) {
+          for (const u of users.values()) {
+            if (u.email === bound[0]) {
+              return {
+                id: u.id,
+                email: u.email,
+                password_hash: u.password_hash,
+                disabled_at: u.disabled_at ?? null,
+              } as T;
+            }
+          }
+          return null;
+        }
+        if (
+          normalized.startsWith(
             "SELECT id, email, password_hash FROM users WHERE email =",
           )
         ) {
@@ -227,6 +246,24 @@ export function createTestEnv(opts?: {
                 id: u.id,
                 email: u.email,
                 password_hash: u.password_hash,
+              } as T;
+            }
+          }
+          return null;
+        }
+        if (
+          normalized.startsWith(
+            "SELECT id, email, oauth_subject, password_hash, disabled_at FROM users WHERE oauth_subject =",
+          )
+        ) {
+          for (const u of users.values()) {
+            if (u.oauth_subject === bound[0]) {
+              return {
+                id: u.id,
+                email: u.email,
+                oauth_subject: u.oauth_subject,
+                password_hash: u.password_hash,
+                disabled_at: u.disabled_at ?? null,
               } as T;
             }
           }
@@ -251,6 +288,24 @@ export function createTestEnv(opts?: {
         }
         if (
           normalized.startsWith(
+            "SELECT id, email, oauth_subject, password_hash, disabled_at FROM users WHERE email =",
+          )
+        ) {
+          for (const u of users.values()) {
+            if (u.email === bound[0]) {
+              return {
+                id: u.id,
+                email: u.email,
+                oauth_subject: u.oauth_subject,
+                password_hash: u.password_hash,
+                disabled_at: u.disabled_at ?? null,
+              } as T;
+            }
+          }
+          return null;
+        }
+        if (
+          normalized.startsWith(
             "SELECT id, email, oauth_subject, password_hash FROM users WHERE email =",
           )
         ) {
@@ -265,6 +320,22 @@ export function createTestEnv(opts?: {
             }
           }
           return null;
+        }
+        if (
+          normalized.startsWith(
+            "SELECT id, email, oauth_subject, password_hash, disabled_at FROM users WHERE id =",
+          )
+        ) {
+          const u = users.get(bound[0] as string);
+          return u
+            ? ({
+                id: u.id,
+                email: u.email,
+                oauth_subject: u.oauth_subject,
+                password_hash: u.password_hash,
+                disabled_at: u.disabled_at ?? null,
+              } as T)
+            : null;
         }
         if (
           normalized.startsWith(
@@ -284,9 +355,45 @@ export function createTestEnv(opts?: {
               } as T)
             : null;
         }
+        if (normalized.startsWith("SELECT disabled_at FROM users WHERE id =")) {
+          const u = users.get(bound[0] as string);
+          return u ? ({ disabled_at: u.disabled_at ?? null } as T) : null;
+        }
+        if (
+          normalized.startsWith(
+            "SELECT id, email, oauth_subject, created_at, disabled_at FROM users WHERE id =",
+          )
+        ) {
+          const u = users.get(bound[0] as string);
+          return u
+            ? ({
+                id: u.id,
+                email: u.email,
+                oauth_subject: u.oauth_subject,
+                created_at: u.created_at,
+                disabled_at: u.disabled_at ?? null,
+              } as T)
+            : null;
+        }
         if (normalized.startsWith("SELECT id, email FROM users WHERE id =")) {
           const u = users.get(bound[0] as string);
           return u ? ({ id: u.id, email: u.email } as T) : null;
+        }
+        if (
+          normalized.includes("FROM user_study_prefs") &&
+          normalized.includes("intro_budget") &&
+          normalized.includes("updated_at") &&
+          normalized.includes("WHERE user_id =")
+        ) {
+          const row = userStudyPrefs.get(bound[0] as string);
+          return row
+            ? ({
+                intro_budget: row.intro_budget,
+                review_budget: row.review_budget,
+                r_floor: row.r_floor,
+                updated_at: row.updated_at,
+              } as T)
+            : null;
         }
         if (
           normalized.startsWith(
@@ -754,6 +861,7 @@ export function createTestEnv(opts?: {
             email: u.email,
             created_at: u.created_at,
             oauth_subject: u.oauth_subject,
+            disabled_at: u.disabled_at ?? null,
             deck_count,
             card_count,
             job_count,
@@ -814,6 +922,218 @@ export function createTestEnv(opts?: {
           return { results: rows as T[] };
         }
         if (
+          normalized.includes("FROM user_study_day") &&
+          normalized.includes("WHERE user_id =") &&
+          normalized.includes("ORDER BY day ASC")
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...userStudyDay.values()]
+            .filter((row) => row.user_id === userId)
+            .sort((a, b) => a.day.localeCompare(b.day))
+            .map((row) => ({ day: row.day, intros_used: row.intros_used }));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("SELECT m.r2_key FROM materials m") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("d.user_id =") &&
+          normalized.includes("m.r2_key IS NOT NULL")
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...materials.values()]
+            .map((m) => {
+              const deck = decks.get(m.deck_id);
+              if (!deck || deck.user_id !== userId || !m.r2_key) return null;
+              return { r2_key: m.r2_key };
+            })
+            .filter((row): row is { r2_key: string } => row != null);
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("SELECT c.media_r2_keys_json FROM cards c") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("d.user_id =") &&
+          normalized.includes("c.media_r2_keys_json IS NOT NULL")
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...cards.values()]
+            .map((card) => {
+              const deck = decks.get(card.deck_id);
+              if (
+                !deck ||
+                deck.user_id !== userId ||
+                !card.media_r2_keys_json
+              ) {
+                return null;
+              }
+              return { media_r2_keys_json: card.media_r2_keys_json };
+            })
+            .filter(
+              (row): row is { media_r2_keys_json: string } => row != null,
+            );
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.startsWith(
+            "SELECT r2_key FROM export_jobs WHERE user_id =",
+          ) &&
+          normalized.includes("r2_key IS NOT NULL")
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...exportJobs.values()]
+            .filter((j) => j.user_id === userId && j.r2_key)
+            .map((j) => ({ r2_key: j.r2_key }));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("SELECT m.id, m.deck_id, m.kind, m.r2_key") &&
+          normalized.includes("FROM materials m") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("d.user_id =") &&
+          normalized.includes("ORDER BY m.created_at ASC")
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...materials.values()]
+            .map((m) => {
+              const deck = decks.get(m.deck_id);
+              if (!deck || deck.user_id !== userId) return null;
+              return {
+                id: m.id,
+                deck_id: m.deck_id,
+                kind: m.kind,
+                r2_key: m.r2_key,
+                filename: m.filename,
+                page_count: m.page_count,
+                status: m.status,
+                created_at: m.created_at,
+              };
+            })
+            .filter((row): row is NonNullable<typeof row> => row != null)
+            .sort((a, b) => a.created_at.localeCompare(b.created_at));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("SELECT j.id, j.material_id, j.status") &&
+          normalized.includes("FROM generation_jobs j") &&
+          normalized.includes("INNER JOIN materials m") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("d.user_id =") &&
+          normalized.includes("ORDER BY j.created_at ASC")
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...generationJobs.values()]
+            .map((job) => {
+              const material = materials.get(job.material_id);
+              if (!material) return null;
+              const deck = decks.get(material.deck_id);
+              if (!deck || deck.user_id !== userId) return null;
+              return {
+                id: job.id,
+                material_id: job.material_id,
+                status: job.status,
+                error: job.error,
+                coverage_json: job.coverage_json,
+                progress_json: job.progress_json,
+                created_at: job.created_at,
+                finished_at: job.finished_at,
+              };
+            })
+            .filter((row): row is NonNullable<typeof row> => row != null)
+            .sort((a, b) => a.created_at.localeCompare(b.created_at));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("SELECT c.id, c.deck_id, c.job_id, c.type") &&
+          normalized.includes("c.front_json") &&
+          normalized.includes("FROM cards c") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("d.user_id =") &&
+          normalized.includes("ORDER BY c.created_at ASC")
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...cards.values()]
+            .map((card) => {
+              const deck = decks.get(card.deck_id);
+              if (!deck || deck.user_id !== userId) return null;
+              return {
+                id: card.id,
+                deck_id: card.deck_id,
+                job_id: card.job_id,
+                type: card.type,
+                front_json: card.front_json,
+                back_json: card.back_json,
+                media_r2_keys_json: card.media_r2_keys_json,
+                provenance_json: card.provenance_json,
+                status: card.status,
+                created_at: card.created_at,
+                updated_at: card.updated_at,
+              };
+            })
+            .filter((row): row is NonNullable<typeof row> => row != null)
+            .sort((a, b) => a.created_at.localeCompare(b.created_at));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM card_schedules s") &&
+          normalized.includes("INNER JOIN cards c") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("d.user_id =")
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...schedules.values()]
+            .map((s) => {
+              const card = cards.get(s.card_id);
+              if (!card) return null;
+              const deck = decks.get(card.deck_id);
+              if (!deck || deck.user_id !== userId) return null;
+              return { ...s };
+            })
+            .filter((row): row is NonNullable<typeof row> => row != null);
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM review_logs rl") &&
+          normalized.includes("INNER JOIN cards c") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("d.user_id =") &&
+          normalized.includes("ORDER BY rl.reviewed_at ASC")
+        ) {
+          const userId = bound[0] as string;
+          const rows = reviewLogs
+            .map((rl) => {
+              const card = cards.get(rl.card_id);
+              if (!card) return null;
+              const deck = decks.get(card.deck_id);
+              if (!deck || deck.user_id !== userId) return null;
+              return { ...rl };
+            })
+            .filter((row): row is NonNullable<typeof row> => row != null)
+            .sort((a, b) => a.reviewed_at.localeCompare(b.reviewed_at));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM export_jobs WHERE user_id =") &&
+          normalized.includes("ORDER BY created_at ASC") &&
+          normalized.includes("request_json")
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...exportJobs.values()]
+            .filter((j) => j.user_id === userId)
+            .sort((a, b) => a.created_at.localeCompare(b.created_at))
+            .map((j) => ({
+              id: j.id,
+              status: j.status,
+              request_json: j.request_json,
+              r2_key: j.r2_key,
+              error: j.error,
+              warning_json: j.warning_json,
+              created_at: j.created_at,
+              updated_at: j.updated_at,
+              expires_at: j.expires_at,
+            }));
+          return { results: rows as T[] };
+        }
+        if (
           normalized.includes("FROM users u") &&
           normalized.includes("AS deck_count") &&
           normalized.includes("AS job_count")
@@ -846,6 +1166,7 @@ export function createTestEnv(opts?: {
               email: u.email,
               created_at: u.created_at,
               oauth_subject: u.oauth_subject,
+              disabled_at: u.disabled_at ?? null,
               deck_count,
               card_count,
               job_count,
@@ -1510,7 +1831,51 @@ export function createTestEnv(opts?: {
             password_hash,
             oauth_subject,
             created_at,
+            disabled_at: null,
           });
+        } else if (normalized.startsWith("UPDATE users SET disabled_at =")) {
+          const [disabled_at, id] = bound as [string | null, string];
+          const u = users.get(id);
+          if (u) users.set(id, { ...u, disabled_at });
+        } else if (normalized.startsWith("DELETE FROM users WHERE id =")) {
+          const id = bound[0] as string;
+          if (!users.has(id)) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          // FK CASCADE from users: decks (+ materials/jobs/cards/schedules/logs),
+          // subjects, secrets, study prefs/days, export_jobs.
+          for (const [deckId, deck] of [...decks.entries()]) {
+            if (deck.user_id !== id) continue;
+            for (const [mid, material] of [...materials.entries()]) {
+              if (material.deck_id !== deckId) continue;
+              for (const [jid, job] of [...generationJobs.entries()]) {
+                if (job.material_id === mid) generationJobs.delete(jid);
+              }
+              materials.delete(mid);
+            }
+            for (const [cid, card] of [...cards.entries()]) {
+              if (card.deck_id !== deckId) continue;
+              cards.delete(cid);
+              schedules.delete(cid);
+              for (let i = reviewLogs.length - 1; i >= 0; i--) {
+                if (reviewLogs[i].card_id === cid) reviewLogs.splice(i, 1);
+              }
+            }
+            decks.delete(deckId);
+          }
+          for (const [sid, subject] of [...subjects.entries()]) {
+            if (subject.user_id === id) subjects.delete(sid);
+          }
+          userSecrets.delete(id);
+          userStudyPrefs.delete(id);
+          for (const key of [...userStudyDay.keys()]) {
+            if (key.startsWith(`${id}\0`)) userStudyDay.delete(key);
+          }
+          for (const [jid, job] of [...exportJobs.entries()]) {
+            if (job.user_id === id) exportJobs.delete(jid);
+          }
+          users.delete(id);
+          return { success: true, meta: { changes: 1 } } as D1Result;
         } else if (normalized.startsWith("UPDATE users SET oauth_subject =")) {
           const [oauth_subject, id] = bound as [string, string];
           const u = users.get(id);
@@ -2556,7 +2921,10 @@ export function createTestEnv(opts?: {
     GOOGLE_CLIENT_SECRET: "test-google-client-secret",
     ADMIN_EMAILS: opts?.adminEmails,
     seedUser(row) {
-      users.set(row.id, row);
+      users.set(row.id, {
+        ...row,
+        disabled_at: row.disabled_at ?? null,
+      });
     },
     seedSubject(row) {
       subjects.set(row.id, row);
@@ -2591,6 +2959,9 @@ export function createTestEnv(opts?: {
     },
     seedGenerationJob(row) {
       generationJobs.set(row.id, row);
+    },
+    seedExportJob(row) {
+      exportJobs.set(row.id, row);
     },
     seedSchedule(row) {
       schedules.set(row.card_id, row);

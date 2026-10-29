@@ -557,8 +557,8 @@ export default function StudyPage() {
     <Box
       className={stage ? "sp-stage" : undefined}
       sx={{
-        minHeight: stage ? "100dvh" : undefined,
-        height: stage ? "100dvh" : undefined,
+        minHeight: stage ? "100%" : undefined,
+        height: stage ? "100%" : undefined,
         boxSizing: "border-box",
         ...(stage
           ? {
