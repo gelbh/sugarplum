@@ -1,4 +1,12 @@
 import type { Env } from "../../worker/env";
+import {
+  gamificationAll,
+  gamificationFirst,
+  gamificationRun,
+  initGamificationState,
+  type AchievementCompletionRow,
+  type XpLedgerRow,
+} from "./gamification-test-handlers";
 
 /** Mirrors SQL `lower(email) LIKE '%' || lower(q) || '%'` (% and _ wildcards). */
 function emailMatchesAdminListQuery(email: string, q: string): boolean {
@@ -186,6 +194,8 @@ export type TestEnv = Env & {
   getExportQueueMessages: () => unknown[];
   getR2Keys: () => string[];
   getR2: (key: string) => string | ArrayBuffer | undefined;
+  getAchievementCompletions: () => AchievementCompletionRow[];
+  getXpLedger: () => XpLedgerRow[];
 };
 
 export function createTestEnv(opts?: {
@@ -212,6 +222,13 @@ export function createTestEnv(opts?: {
   const queueMessages: unknown[] = [];
   const exportQueueMessages: unknown[] = [];
 
+  const gamificationState = initGamificationState(
+    cards,
+    decks,
+    schedules,
+    reviewLogs,
+  );
+
   // Test harness only: missing wrap key → fixed 32-byte test key.
   const wrapKey =
     opts?.secretsWrapKey === null
@@ -228,6 +245,12 @@ export function createTestEnv(opts?: {
         return stmt;
       },
       async first<T>(): Promise<T | null> {
+        const gamificationEarly = gamificationFirst<T>(
+          gamificationState,
+          normalized,
+          bound,
+        );
+        if (gamificationEarly !== null) return gamificationEarly;
         if (normalized.startsWith("SELECT id FROM users WHERE email =")) {
           for (const u of users.values()) {
             if (u.email === bound[0]) return { id: u.id } as T;
@@ -962,6 +985,12 @@ export function createTestEnv(opts?: {
         return null;
       },
       async all<T>(): Promise<{ results: T[] }> {
+        const gamificationAllHit = gamificationAll<T>(
+          gamificationState,
+          normalized,
+          bound,
+        );
+        if (gamificationAllHit !== null) return gamificationAllHit;
         if (
           normalized.includes("FROM generation_jobs j") &&
           normalized.includes("INNER JOIN materials m") &&
@@ -3109,6 +3138,12 @@ export function createTestEnv(opts?: {
             last_review,
           });
         }
+        const gamificationRunHit = gamificationRun(
+          gamificationState,
+          normalized,
+          bound,
+        );
+        if (gamificationRunHit !== null) return gamificationRunHit;
         return { success: true, meta: { changes: 1 } } as D1Result;
       },
     };
@@ -3277,6 +3312,10 @@ export function createTestEnv(opts?: {
     getExportQueueMessages: () => [...exportQueueMessages],
     getR2Keys: () => [...r2.keys()],
     getR2: (key: string) => r2.get(key),
+    getAchievementCompletions: () => [
+      ...gamificationState.achievementCompletions.values(),
+    ],
+    getXpLedger: () => [...gamificationState.xpLedger],
   };
 
   return env;
