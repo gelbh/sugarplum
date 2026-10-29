@@ -23,6 +23,7 @@ import {
   serializeDueCards,
 } from "./dueQueue";
 import { rankWeakness, type WeaknessCandidate } from "./weakness";
+import { onReviewGraded } from "../gamification/onStudyEvent";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -308,6 +309,7 @@ studyRoutes.post("/review", async (c) => {
   );
   const cols = scheduleColumnsFromCard(nextCard);
   const reviewedAt = toIsoRequired(log.review ?? now);
+  const reviewLogId = crypto.randomUUID();
 
   await db.batch([
     db
@@ -338,7 +340,7 @@ studyRoutes.post("/review", async (c) => {
          ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
-        crypto.randomUUID(),
+        reviewLogId,
         cardId,
         rating,
         log.scheduled_days,
@@ -360,7 +362,12 @@ studyRoutes.post("/review", async (c) => {
     await incrementIntrosUsedToday(db, userId, day);
   }
 
-  return c.json({ due: cols.due });
+  const unlocks = await onReviewGraded(db, userId, {
+    reviewLogId,
+    reviewedAt: new Date(reviewedAt),
+  });
+
+  return c.json({ due: cols.due, unlocks });
 });
 
 function toIsoRequired(value: Date | string): string {
