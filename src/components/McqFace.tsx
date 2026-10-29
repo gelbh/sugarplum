@@ -133,7 +133,6 @@ export default function McqFace({
                 const isPicked = picked === option;
                 const isCorrect = option.trim() === back.trim();
                 const locked = picked !== null;
-                // Dual-register on ivory: plum = correct, amber lamp = wrong pick (no traffic-light hex).
                 let borderColor = "currentColor";
                 let bgcolor = "transparent";
                 let opacity = 0.88;
