@@ -402,7 +402,12 @@ describe("draft review / accept gate", () => {
       failed: number;
       rejectedSiblingCount: number;
     };
-    expect(body).toEqual({ accepted: 2, failed: 0, rejectedSiblingCount: 0 });
+    expect(body).toEqual({
+      accepted: 2,
+      failed: 0,
+      rejectedSiblingCount: 0,
+      unlocks: ["accepts_1"],
+    });
     expect(env.getCards().every((c) => c.status === "accepted")).toBe(true);
     expect(env.getSchedules()).toHaveLength(2);
   });
@@ -437,6 +442,7 @@ describe("draft review / accept gate", () => {
       accepted: 2,
       failed: 0,
       rejectedSiblingCount: 1,
+      unlocks: ["accepts_1"],
     });
     expect(env.getCards().find((c) => c.id === "a1")?.status).toBe("accepted");
     expect(env.getCards().find((c) => c.id === "a2")?.status).toBe("accepted");
@@ -530,6 +536,7 @@ describe("draft review / accept gate", () => {
       accepted: 0,
       failed: 0,
       rejectedSiblingCount: 0,
+      unlocks: [],
     });
     expect(env.getCards().find((c) => c.id === "sib-draft")?.status).toBe(
       "draft",
@@ -577,6 +584,7 @@ describe("draft review / accept gate", () => {
       accepted: 1,
       failed: 0,
       rejectedSiblingCount: 0,
+      unlocks: ["accepts_1"],
     });
     expect(env.getCards().find((c) => c.id === "other-draft")?.status).toBe(
       "draft",
