@@ -7,6 +7,19 @@
   --sp-lamp-glow: rgba(196, 165, 116, 0.28);
   /* Standard playing card ~2.5 × 3.5 (5/7). */
   --sp-card-aspect: 5 / 7;
+  /* Soft brand grade spectrum (zen rail). Not Anki traffic lights. */
+  --sp-grade-again-border: #c45c6a;
+  --sp-grade-again-fg: #f0b4bc;
+  --sp-grade-again-wash: rgba(196, 92, 106, 0.18);
+  --sp-grade-hard-border: #c4a574;
+  --sp-grade-hard-fg: #e8d0a8;
+  --sp-grade-hard-wash: rgba(196, 165, 116, 0.18);
+  --sp-grade-good-border: #8b5a9e;
+  --sp-grade-good-fg: #d4b8e0;
+  --sp-grade-good-wash: rgba(91, 44, 111, 0.35);
+  --sp-grade-easy-border: #6a9e8b;
+  --sp-grade-easy-fg: #b8e0d0;
+  --sp-grade-easy-wash: rgba(106, 158, 139, 0.22);
 }
 
 .sp-stage {
