@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import AppShell from "./components/AppShell";
+import BareScroll from "./components/BareScroll";
 import DraftReviewPage from "./routes/DraftReviewPage";
 import HomePage from "./routes/HomePage";
 import LibraryPage from "./routes/LibraryPage";
@@ -27,6 +28,10 @@ function shell(page: ReactNode) {
   return <AppShell>{page}</AppShell>;
 }
 
+function bare(page: ReactNode) {
+  return <BareScroll>{page}</BareScroll>;
+}
+
 export default function App() {
   return (
     <StudyChromeProvider>
@@ -45,12 +50,12 @@ function AppInner() {
 
   const path = loc.pathname;
 
-  if (path === "/" || path === "") return <HomePage />;
-  if (path === "/login") return <LoginPage />;
-  if (path === "/register") return <RegisterPage />;
-  if (path === "/privacy") return <PrivacyPage />;
-  if (path === "/terms") return <TermsPage />;
-  if (path === "/data-deletion") return <DataDeletionPage />;
+  if (path === "/" || path === "") return bare(<HomePage />);
+  if (path === "/login") return bare(<LoginPage />);
+  if (path === "/register") return bare(<RegisterPage />);
+  if (path === "/privacy") return bare(<PrivacyPage />);
+  if (path === "/terms") return bare(<TermsPage />);
+  if (path === "/data-deletion") return bare(<DataDeletionPage />);
   const subjectMatch = path.match(SUBJECT_PATH);
   if (subjectMatch) {
     return shell(

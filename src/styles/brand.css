@@ -1,4 +1,12 @@
 /* Sugarplum brand skin: stage + playing-card tokens for zen Study. Thin CSS only. */
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 :root {
   --sp-stage-bg: #1e0d1b;
   --sp-card-face: #e8d8c7;

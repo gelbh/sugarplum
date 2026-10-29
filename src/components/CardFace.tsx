@@ -45,6 +45,7 @@ type Props = {
 const FACE_BODY_SX = {
   overflowX: "hidden",
   overflowY: "auto",
+  overscrollBehavior: "contain",
   flex: 1,
   minHeight: 0,
   display: "flex",
