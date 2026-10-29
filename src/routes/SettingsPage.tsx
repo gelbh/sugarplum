@@ -29,6 +29,7 @@ import {
 } from "../api/client";
 import { isGuest } from "../guest/session";
 import { useTrackedOp } from "../progress/useTrackedOp";
+import { ankiExportFsrsBlurb } from "../settings/ankiExportFsrsBlurb";
 import { freeGenFaqBody, freeGenIntroBlurb } from "../settings/freeGenFaq";
 
 const DEFAULT_STUDY_FORM: StudyPrefs = {
@@ -388,7 +389,8 @@ export default function SettingsPage() {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Soft daily budgets for new cards and reviews. Held new cards stay
             scheduled; use Study more to pull another intro slice today.
-            {guest ? " Saved on this device for guest study." : null}
+            {guest ? " Saved on this device for guest study." : null}{" "}
+            {ankiExportFsrsBlurb()}
           </Typography>
           <Box component="form" onSubmit={onSubmitStudy} noValidate>
             <Stack spacing={2}>
