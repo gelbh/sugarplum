@@ -74,7 +74,10 @@ npx wrangler secret put GOOGLE_CLIENT_ID      # from Google Cloud OAuth client
 npx wrangler secret put GOOGLE_CLIENT_SECRET
 npx wrangler secret put DOCLING_API_KEY       # optional until Docling enabled; required when DOCLING_URL is set
 npx wrangler secret put ADMIN_EMAILS          # comma-separated; Google-linked accounts only; never commit values
+npx wrangler secret put TURNSTILE_SECRET_KEY  # Turnstile Siteverify secret (pair with vars.TURNSTILE_SITE_KEY)
 ```
+
+Set `vars.TURNSTILE_SITE_KEY` (or `.dev.vars`) to the widget sitekey before email auth works. Leave empty in committed wrangler until the prod widget exists. Local dummy always-pass: sitekey `1x00000000000000000000AA`, secret `1x0000000000000000000000000000000AA` in `.dev.vars`.
 
 Local: put `ADMIN_EMAILS=...` in `.dev.vars` (gitignored). Open `/admin` while signed in as a Google-linked allowlisted user. Empty/unset → all `/api/admin/*` return 403.
 

@@ -24,6 +24,10 @@ import {
 } from "../../worker/auth/session";
 import { createTestEnv } from "./test-env";
 
+const SITEVERIFY_URL =
+  "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+const DUMMY_TURNSTILE_TOKEN = "XXXX.DUMMY.TOKEN.XXXX";
+
 function oauthCtxHeader(state: string): { cookie: string } {
   return { cookie: `${OAUTH_CTX_COOKIE}=${state}` };
 }
@@ -32,6 +36,32 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
+
+function stubSiteverify(opts?: {
+  success?: boolean;
+  action?: string;
+}) {
+  const success = opts?.success ?? true;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === SITEVERIFY_URL) {
+        return new Response(
+          JSON.stringify({
+            success,
+            ...(opts?.action != null ? { action: opts.action } : {}),
+          }),
+          {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          },
+        );
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    }),
+  );
+}
 
 function stubGoogleTokenAndProfile(profile: {
   sub: string;
@@ -97,6 +127,119 @@ describe("auth register validation", () => {
       env,
     );
     expect(res.status).toBe(400);
+  });
+});
+
+describe("auth turnstile", () => {
+  it("GET /turnstile returns siteKey", async () => {
+    const env = createTestEnv();
+    const res = await app.request("/api/auth/turnstile", { method: "GET" }, env);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      siteKey: "1x00000000000000000000AA",
+    });
+  });
+
+  it("register without token returns 403", async () => {
+    const env = createTestEnv();
+    stubSiteverify();
+    const res = await app.request(
+      "/api/auth/register",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email: "new@example.com",
+          password: "long-enough-password",
+        }),
+      },
+      env,
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it("register with failed siteverify returns 403", async () => {
+    const env = createTestEnv();
+    stubSiteverify({ success: false });
+    const res = await app.request(
+      "/api/auth/register",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email: "new@example.com",
+          password: "long-enough-password",
+          turnstileToken: DUMMY_TURNSTILE_TOKEN,
+        }),
+      },
+      env,
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it("register succeeds when siteverify passes", async () => {
+    const env = createTestEnv();
+    stubSiteverify({ success: true, action: "register" });
+    const res = await app.request(
+      "/api/auth/register",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email: "ok@example.com",
+          password: "long-enough-password",
+          turnstileToken: DUMMY_TURNSTILE_TOKEN,
+        }),
+      },
+      env,
+    );
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as { email: string };
+    expect(body.email).toBe("ok@example.com");
+  });
+
+  it("login without token returns 403", async () => {
+    const env = createTestEnv();
+    env.seedUser({
+      id: "u1",
+      email: "u@example.com",
+      password_hash: await hashPassword("long-enough-password"),
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    stubSiteverify({ action: "login" });
+    const res = await app.request(
+      "/api/auth/login",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email: "u@example.com",
+          password: "long-enough-password",
+        }),
+      },
+      env,
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it("register rejects success without matching action", async () => {
+    const env = createTestEnv();
+    stubSiteverify({ success: true });
+    const res = await app.request(
+      "/api/auth/register",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email: "act@example.com",
+          password: "long-enough-password",
+          turnstileToken: DUMMY_TURNSTILE_TOKEN,
+        }),
+      },
+      env,
+    );
+    expect(res.status).toBe(403);
   });
 });
 
@@ -463,6 +606,7 @@ describe("Google OAuth", () => {
       oauth_subject: googleOauthSubject("only-sub"),
       created_at: "2026-01-01T00:00:00.000Z",
     });
+    stubSiteverify({ success: true, action: "login" });
     const res = await app.request(
       "/api/auth/login",
       {
@@ -471,6 +615,7 @@ describe("Google OAuth", () => {
         body: JSON.stringify({
           email: "only@example.com",
           password: "anything-at-all",
+          turnstileToken: DUMMY_TURNSTILE_TOKEN,
         }),
       },
       env,

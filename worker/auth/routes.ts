@@ -35,8 +35,13 @@ import {
   sessionCookieSecure,
   type AuthVariables,
 } from "./session";
+import { verifyTurnstileToken } from "./turnstile";
 
 type AuthEnv = { Bindings: Env; Variables: AuthVariables };
+
+function connectingIp(c: { req: { header: (name: string) => string | undefined } }): string | undefined {
+  return c.req.header("CF-Connecting-IP")?.trim() || undefined;
+}
 
 type UserRow = {
   id: string;
@@ -66,8 +71,16 @@ function normalizeEmail(email: unknown): string | null {
 
 export const authRoutes = new Hono<AuthEnv>();
 
+authRoutes.get("/turnstile", (c) => {
+  const siteKey = c.env.TURNSTILE_SITE_KEY?.trim();
+  if (!siteKey) {
+    throw new HTTPException(503, { message: "Turnstile not configured" });
+  }
+  return c.json({ siteKey });
+});
+
 authRoutes.post("/register", async (c) => {
-  let body: { email?: unknown; password?: unknown };
+  let body: { email?: unknown; password?: unknown; turnstileToken?: unknown };
   try {
     body = await c.req.json();
   } catch {
@@ -83,6 +96,11 @@ authRoutes.post("/register", async (c) => {
       message: "Password must be at least 12 characters",
     });
   }
+
+  await verifyTurnstileToken(c.env, body.turnstileToken, {
+    action: "register",
+    remoteip: connectingIp(c),
+  });
 
   const db = getDb(c.env);
   const existing = await db
@@ -117,7 +135,7 @@ authRoutes.post("/register", async (c) => {
 });
 
 authRoutes.post("/login", async (c) => {
-  let body: { email?: unknown; password?: unknown };
+  let body: { email?: unknown; password?: unknown; turnstileToken?: unknown };
   try {
     body = await c.req.json();
   } catch {
@@ -129,6 +147,11 @@ authRoutes.post("/login", async (c) => {
   if (!email || !password) {
     throw new HTTPException(400, { message: "Email and password required" });
   }
+
+  await verifyTurnstileToken(c.env, body.turnstileToken, {
+    action: "login",
+    remoteip: connectingIp(c),
+  });
 
   const db = getDb(c.env);
   const user = await db
