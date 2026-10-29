@@ -259,10 +259,10 @@ export default function CardFace({
         onClick={canReveal ? reveal : canFlipBack ? flipBack : undefined}
         sx={{
           position: "relative",
-          width: "100%",
-          maxWidth: 360,
+          width: "auto",
+          maxWidth: "min(100%, 360px)",
           maxHeight: "100%",
-          height: "auto",
+          height: "min(100%, 504px)",
           aspectRatio: "var(--sp-card-aspect)",
           borderRadius: 2,
           bgcolor: "transparent",
