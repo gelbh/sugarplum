@@ -11,6 +11,7 @@ import { cardRoutes, jobDraftRoutes } from "./cards/routes";
 import { studyRoutes } from "./study/routes";
 import { journeyRoutes } from "./journey/routes";
 import { guestRoutes } from "./guest/import";
+import { exportRoutes } from "./export/routes";
 import { handleGenerateQueue } from "./generation/consumer";
 import type { GenerateQueueMessage } from "./generation/enqueue";
 import { isAllowedMutatingOrigin } from "./security/origin";
@@ -46,6 +47,7 @@ app.route("/api/cards", cardRoutes);
 app.route("/api/journey", journeyRoutes);
 app.route("/api/study", studyRoutes);
 app.route("/api/guest", guestRoutes);
+app.route("/api/exports", exportRoutes);
 
 export { app };
 
