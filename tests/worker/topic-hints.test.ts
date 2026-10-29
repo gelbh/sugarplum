@@ -400,3 +400,110 @@ describe("topicHints consumer injection", () => {
     expect(userContent.toLowerCase()).toMatch(/must attempt/);
   });
 });
+
+describe("avoidPatterns prompt wiring", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("passes job avoid patterns into generateDrafts", async () => {
+    const env = createTestEnv();
+    seedPasteOwner(env);
+    env.seedMaterial({
+      id: "mat-avoid",
+      deck_id: "deck-a",
+      kind: "paste",
+      r2_key: "materials/deck-a/mat-avoid.txt",
+      filename: null,
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedR2(
+      "materials/deck-a/mat-avoid.txt",
+      "The brainstem contains cranial nerve nuclei that innervate the head.",
+    );
+    const jobId = await enqueueGeneration(env, {
+      materialId: "mat-avoid",
+      deckId: "deck-a",
+    });
+    const job = env.getGenerationJobs().find((j) => j.id === jobId)!;
+    env.seedGenerationJob({
+      ...job,
+      avoid_patterns_json: JSON.stringify(["Rejected stem about CN III"]),
+    });
+    const base = mockLlmAdapter();
+    const llm: LlmAdapter = {
+      generateDrafts: vi.fn(base.generateDrafts.bind(base)),
+      complete: vi.fn(base.complete.bind(base)),
+    };
+
+    await processGenerateJob(
+      env,
+      { jobId, materialId: "mat-avoid", deckId: "deck-a" },
+      { llm },
+    );
+
+    expect(llm.generateDrafts).toHaveBeenCalled();
+    const calls = vi.mocked(llm.generateDrafts).mock.calls;
+    expect(
+      calls.some(
+        ([input]) =>
+          Array.isArray(input.avoidPatterns) &&
+          input.avoidPatterns.includes("Rejected stem about CN III"),
+      ),
+    ).toBe(true);
+  });
+
+  it("openai generate user message includes avoid-pattern language", async () => {
+    const sampleCardsJson = JSON.stringify({
+      cards: [
+        {
+          type: "qa",
+          front: "Q?",
+          back: "A",
+          provenance: { pages: [1], excerpt: "ex" },
+        },
+        {
+          type: "qa",
+          front: "Q2?",
+          back: "A2",
+          provenance: { pages: [1], excerpt: "ex" },
+        },
+        {
+          type: "cloze",
+          front: "The {{c1::term}} matters.",
+          back: "term",
+          provenance: { pages: [1], excerpt: "ex" },
+        },
+      ],
+    });
+    let userContent = "";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+        const body = JSON.parse(String(init?.body ?? "{}")) as {
+          messages?: { role?: string; content?: string }[];
+        };
+        userContent =
+          body.messages?.find((m) => m.role === "user")?.content ?? "";
+        return new Response(
+          JSON.stringify({
+            choices: [{ message: { content: sampleCardsJson } }],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }),
+    );
+
+    await createLlmAdapter("openai").generateDrafts({
+      text: "brainstem notes",
+      apiKey: "sk-test",
+      provider: "openai",
+      avoidPatterns: ["Rejected stem about CN III"],
+    });
+
+    expect(userContent.toLowerCase()).toContain("rejected stem about cn iii");
+    expect(userContent.toLowerCase()).toMatch(/avoid near-duplicates/);
+  });
+});

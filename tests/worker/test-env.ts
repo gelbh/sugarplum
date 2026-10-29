@@ -72,6 +72,7 @@ type GenerationJobRow = {
   finished_at: string | null;
   figure_extract_mode?: string;
   topic_hints_json?: string | null;
+  avoid_patterns_json?: string | null;
 };
 
 type UserSecretRow = {
@@ -592,6 +593,19 @@ export function createTestEnv(opts?: {
         }
         if (
           normalized.startsWith(
+            "SELECT progress_json, topic_hints_json, avoid_patterns_json FROM generation_jobs WHERE id =",
+          )
+        ) {
+          const job = generationJobs.get(bound[0] as string);
+          if (!job) return null;
+          return {
+            progress_json: job.progress_json,
+            topic_hints_json: job.topic_hints_json ?? null,
+            avoid_patterns_json: job.avoid_patterns_json ?? null,
+          } as T;
+        }
+        if (
+          normalized.startsWith(
             "SELECT progress_json, topic_hints_json FROM generation_jobs WHERE id =",
           )
         ) {
@@ -728,6 +742,30 @@ export function createTestEnv(opts?: {
           return null;
         }
         // COUNT(*) handlers
+        if (
+          normalized.startsWith(
+            "SELECT lapses FROM card_schedules WHERE card_id =",
+          )
+        ) {
+          const schedule = schedules.get(bound[0] as string);
+          return schedule ? ({ lapses: schedule.lapses } as T) : null;
+        }
+        if (
+          normalized.startsWith("SELECT COUNT(*)") &&
+          normalized.includes("FROM review_logs") &&
+          normalized.includes("card_id =") &&
+          normalized.includes("rating = 1")
+        ) {
+          const cardId = bound[0] as string;
+          const since = bound[1] as string;
+          const again_14d = reviewLogs.filter(
+            (rl) =>
+              rl.card_id === cardId &&
+              rl.rating === 1 &&
+              rl.reviewed_at >= since,
+          ).length;
+          return { again_14d, count: again_14d } as T;
+        }
         if (
           normalized.startsWith("SELECT COUNT(*)") &&
           normalized.includes("FROM decks WHERE user_id =")
@@ -1845,6 +1883,7 @@ export function createTestEnv(opts?: {
               return {
                 id: c.id,
                 deck_id: c.deck_id,
+                type: c.type,
                 front_json: c.front_json,
                 lapses: schedule.lapses,
                 difficulty: schedule.difficulty,
@@ -2518,7 +2557,25 @@ export function createTestEnv(opts?: {
             finished_at,
             figure_extract_mode: figure_extract_mode ?? "fast",
             topic_hints_json: topic_hints_json ?? null,
+            avoid_patterns_json: null,
           });
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET avoid_patterns_json = ? WHERE id =",
+          )
+        ) {
+          const [avoid_patterns_json, id] = bound as [
+            string | null,
+            string,
+          ];
+          const row = generationJobs.get(id);
+          if (row) {
+            generationJobs.set(id, {
+              ...row,
+              avoid_patterns_json,
+            });
+          }
+          return { success: true, meta: { changes: row ? 1 : 0 } } as D1Result;
         } else if (
           normalized.startsWith(
             "UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = NULL, progress_json = NULL, finished_at = NULL WHERE id = ? AND status NOT IN",

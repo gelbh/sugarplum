@@ -1118,6 +1118,7 @@ export function commitStudyPacing(opts?: ListDueOpts): Promise<{
 export type StrugglingRow = {
   id: string;
   deck_id: string;
+  type: string;
   front_preview: string;
   lapses: number;
   again_14d: number;
