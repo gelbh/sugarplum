@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   etaMs,
   calmDisplayEtaMs,
+  resolveJobStartedAtMs,
   projectTokensFromPercent,
   projectCardsFromPercent,
   projectTokens,
@@ -81,6 +82,39 @@ describe("calmDisplayEtaMs", () => {
     });
     expect(next.etaMs).toBe(etaMs(12_000, 30));
     expect(next.sample?.percent).toBe(30);
+  });
+});
+
+describe("resolveJobStartedAtMs", () => {
+  it("prefers started_at over events and created_at", () => {
+    expect(
+      resolveJobStartedAtMs({
+        startedAt: "2026-10-29T10:00:00.000Z",
+        events: [{ at: "2026-10-29T10:05:00.000Z" }],
+        createdAt: "2026-10-29T09:00:00.000Z",
+      }),
+    ).toBe(Date.parse("2026-10-29T10:00:00.000Z"));
+  });
+
+  it("falls back to earliest event then created_at", () => {
+    expect(
+      resolveJobStartedAtMs({
+        events: [
+          { at: "2026-10-29T10:05:00.000Z" },
+          { at: "2026-10-29T10:01:00.000Z" },
+        ],
+        createdAt: "2026-10-29T09:00:00.000Z",
+      }),
+    ).toBe(Date.parse("2026-10-29T10:01:00.000Z"));
+    expect(
+      resolveJobStartedAtMs({
+        createdAt: "2026-10-29T09:00:00.000Z",
+      }),
+    ).toBe(Date.parse("2026-10-29T09:00:00.000Z"));
+  });
+
+  it("returns null when nothing parses", () => {
+    expect(resolveJobStartedAtMs({})).toBeNull();
   });
 });
 

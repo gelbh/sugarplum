@@ -5,6 +5,32 @@ export function etaMs(elapsedMs: number, percent: number): number | null {
   return (elapsedMs * (100 - percent)) / percent;
 }
 
+/** Durable ETA clock: started_at → earliest event → created_at. */
+export function resolveJobStartedAtMs(args: {
+  startedAt?: string | null;
+  events?: Array<{ at?: string | number | null }> | null;
+  createdAt?: string | null;
+}): number | null {
+  if (typeof args.startedAt === "string") {
+    const t = Date.parse(args.startedAt);
+    if (Number.isFinite(t)) return t;
+  }
+  let earliest: number | null = null;
+  for (const event of args.events ?? []) {
+    if (event?.at == null) continue;
+    const t =
+      typeof event.at === "number" ? event.at : Date.parse(String(event.at));
+    if (!Number.isFinite(t)) continue;
+    earliest = earliest == null ? t : Math.min(earliest, t);
+  }
+  if (earliest != null) return earliest;
+  if (typeof args.createdAt === "string") {
+    const t = Date.parse(args.createdAt);
+    if (Number.isFinite(t)) return t;
+  }
+  return null;
+}
+
 export type CalmEtaSample = {
   percent: number;
   displayEtaMs: number;
