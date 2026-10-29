@@ -585,14 +585,14 @@ export default function StudyPage() {
       >
         <Stack
           spacing={stage ? { xs: 0.75, sm: 1.5 } : 2}
-          sx={{ flex: 1, minHeight: stage ? "100%" : undefined }}
+          sx={{ flex: 1, minHeight: 0 }}
         >
           <Stack
             direction="row"
             justifyContent="space-between"
             alignItems="center"
             spacing={1}
-            sx={{ position: "relative" }}
+            sx={{ position: "relative", flexShrink: 0 }}
           >
             <IconButton
               aria-label="Leave study"
@@ -834,7 +834,10 @@ export default function StudyPage() {
               </Box>
 
               {mcqMode ? (
-                <Box sx={{ minHeight: { xs: 64, sm: 72 }, flexShrink: 0 }} aria-hidden />
+                <Box
+                  sx={{ minHeight: { xs: 64, sm: 72 }, flexShrink: 0 }}
+                  aria-hidden
+                />
               ) : revealed ? (
                 <Box sx={{ pb: { xs: 0.5, sm: 1 }, mt: "auto", flexShrink: 0 }}>
                   <GradeButtons
@@ -844,7 +847,10 @@ export default function StudyPage() {
                   />
                 </Box>
               ) : (
-                <Box sx={{ minHeight: { xs: 64, sm: 72 }, flexShrink: 0 }} aria-hidden />
+                <Box
+                  sx={{ minHeight: { xs: 64, sm: 72 }, flexShrink: 0 }}
+                  aria-hidden
+                />
               )}
             </>
           )}

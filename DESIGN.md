@@ -143,6 +143,7 @@ The stack is Material UI plus a thin brand CSS skin (`brand.css`) that owns only
 Confirmed visual rejections: purple-on-white marketing gradients, cream-serif terracotta clusters, dashboard chrome painted onto zen stage, and inventing brand CSS beyond stage/card.
 
 **Key Characteristics:**
+
 - Dual register: zen Study = night stage + ivory card; Operate = sugar-dust + plum accent
 - Shared fruit plum `#5B2C6F` as the only chromatic CTA / selection pigment
 - Alice for brand wordmark (`h6`); Source Sans 3 everywhere else
@@ -154,12 +155,15 @@ Confirmed visual rejections: purple-on-white marketing gradients, cream-serif te
 Fruit plum and evening stage ink carry the brand; sugar dust and ivory are the two papers.
 
 ### Primary
+
 - **Fruit Plum** (`#5B2C6F`): Contained CTAs (Start study, Show answer), selected nav wash and left/top selection marks, section titles on outlined papers, non-zen Study heading. The only saturated chroma on operate surfaces.
 
 ### Secondary
+
 - **Candied Amber** (`#C4A574`): Secondary palette role and zen lamp glow (`rgba(196, 165, 116, 0.28)` radial on `.sp-stage`). Not a second CTA color on sugar dust.
 
 ### Neutral
+
 - **Sugar Dust** (`#F5F5F5`): Operate default background (light scheme `background.default`).
 - **Paper White** (`#FFFFFF`): Outlined section papers and light `background.paper`.
 - **Evening Stage** (`#1e0d1b`): Zen stage ground, shell drawer/bottom nav, light-scheme text ink (`text.primary` / plum ink).
@@ -169,6 +173,7 @@ Fruit plum and evening stage ink carry the brand; sugar dust and ivory are the t
 - **Shell Hairline** (`rgba(232, 216, 199, 0.16)`): Drawer/bottom-nav borders (ivory at low alpha).
 
 ### Named Rules
+
 **The Dual Register Rule.** Operate stays sugar-dust monochrome with plum as accent. Zen Study is night stage + ivory card. Do not put ivory card faces on sugar dust, or sugar-dust panels on the stage.
 
 **The One Plum Voice Rule.** On operate screens, chromatic plum occupies CTAs, selection, and section accents only. The field stays sugar dust, white paper, and plum ink.
@@ -183,6 +188,7 @@ Fruit plum and evening stage ink carry the brand; sugar dust and ivory are the t
 **Character:** Alice is reserved for the Sugarplum wordmark (MUI `h6` in shell and zen title). Source Sans 3 carries UI, due proof, and card face copy: clear, tabular when counting, never decorative on the card.
 
 ### Hierarchy
+
 - **Display / Due Proof** (700, clamp ~5.5–8rem, line-height 0.95, tracking −0.04em): Today’s due count only; tabular nums.
 - **Brand** (Alice, ~1.25rem / `h6`, weight 400): Shell wordmark and centered zen “Sugarplum” title.
 - **Headline** (Source Sans 600, MUI `h4` ~2.125rem): Operate page titles (Library, Settings, non-zen Study).
@@ -194,6 +200,7 @@ Fruit plum and evening stage ink carry the brand; sugar dust and ivory are the t
 - **Label** (400, ~0.8125rem): Grade rail labels; captions for remaining count (uppercase + 0.06em on Study).
 
 ### Named Rules
+
 **The Alice Wordmark Rule.** Alice appears on brand `h6` surfaces only. Card faces, due proof, and body UI stay Source Sans 3.
 
 **The Due Proof Rule.** The giant number is the Today hero. Do not demote it into a chip strip or surround it with secondary marketing blocks.
@@ -205,6 +212,7 @@ Operate and Study share MUI `Container` `maxWidth="sm"` as the reading column. T
 Phone zen Study: session chrome (header, remaining, card, grade rail) fits `100dvh` without page scroll; long card copy scrolls inside the face only.
 
 ### Named Rules
+
 **The Chrome Strip Rule.** Zen Study hides AppShell drawer, sticky top, and bottom dock (`hideChrome`). Leaving zen restores operate chrome.
 
 ## Elevation & Depth
@@ -212,10 +220,12 @@ Phone zen Study: session chrome (header, remaining, card, grade rail) fits `100d
 Operate is mostly flat: outlined papers (`variant="outlined"`, divider border), elevation 0 on shell papers. Depth lives on the study card and the zen stage lamp.
 
 ### Shadow Vocabulary
+
 - **Card Drop** (`box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35)`): Playing-card face only.
 - **Stage Lamp** (radial ellipse ~70% × 55% at 50% 42%, amber glow → transparent): `.sp-stage` atmosphere, not a card shadow.
 
 ### Named Rules
+
 **The Flat Operate Rule.** Dashboard and library surfaces do not borrow the card drop. Soft depth is for the physical card and the stage lamp.
 
 ## Shapes
@@ -223,37 +233,45 @@ Operate is mostly flat: outlined papers (`variant="outlined"`, divider border), 
 Gentle MUI radii: 4px on nav items and grade ticks, 6px on the large Start study CTA, 8px on playing-card faces. Shell bottom bar is square (`borderRadius: 0`). Card geometry locks to aspect ratio `5 / 7` (standard playing card). Selection on desktop nav uses a 3px plum left bar; mobile selected tab uses a 2px plum top bar.
 
 ### Named Rules
+
 **The Playing-Card Silhouette Rule.** Study recall lives in a `5 / 7` ivory face at ≤360px. Do not stretch it into a full-bleed content panel.
 
 ## Components
 
 ### Buttons
+
 - **Shape:** Soft rectangle (6px on hero CTA; default MUI elsewhere; 4px on grade cells).
 - **Primary:** Fruit plum fill, white (light) or ivory (dark scheme) contrast; Today Start study uses large size, weight 600, ~1.05rem, `py` 12 / `px` 24.
 - **Grade rail:** Outlined cells, inherit color (ivory on stage), min-height 56px; swipe-direction icons (← Again · ↓ Hard · → Good · ↑ Easy) above label; desktop key chip; soft ivory hover wash.
 - **Show answer:** Contained primary on the card face, Source Sans 3.
 
 ### Cards / Containers
+
 - **Playing card:** Ivory face, stage ink type, 8px radius, 24px padding, drop shadow; 3D Y-flip 0.45s ease (opacity swap under `prefers-reduced-motion`).
 - **Operate paper:** White, outlined, divider border, ~20px padding; section title in plum weight 600.
 - **Stage:** Full-bleed `#1e0d1b` + lamp radial; ivory chrome copy.
 
 ### Chips
+
 - **Study type chip (non-zen only):** Outlined, transparent fill, divider border, secondary text, height 24px. Hidden in zen.
 
 ### Navigation
+
 - **Shell:** Always stage background, sugar-dust foreground, ivory hairlines. Selected: plum wash + plum edge mark. Brand row: logo 28px + Alice `h6`.
 - **Mobile bottom nav:** Same night ground; selected label full shell-fg; 2px plum top border on selected action; label 0.7rem.
 
 ### Signature: Due Proof
+
 Centered tabular count + “cards due” caption + single plum Start study when due > 0. No stage rail, no card chrome on this surface.
 
 ### Signature: Grade Rail
+
 Four equal columns (Again / Hard / Good / Easy) with swipe-direction icons matching gestures, keys 1–4 as chips on desktop, swipe hints when shown. Soft brand spectrum washes (Again rose, Hard amber, Good plum, Easy sage). Do **not** use classic Anki red/orange/green/blue traffic lights.
 
 ## Do's and Don'ts
 
 ### Do:
+
 - **Do** keep zen Study on `.sp-stage` with `.sp-playing-card` ivory faces and shell chrome stripped.
 - **Do** keep Today / Library / Settings on sugar dust with plum as the sole accent CTA and section ink.
 - **Do** use Alice only for Sugarplum wordmarks; Source Sans 3 for UI and card copy.
@@ -261,6 +279,7 @@ Four equal columns (Again / Hard / Good / Easy) with swipe-direction icons match
 - **Do** limit custom CSS to stage/card tokens in `brand.css`; everything else through MUI theme / `sx`.
 
 ### Don't:
+
 - **Don't** paint operate pages with stage backgrounds or ivory “card” panels as generic layout cards.
 - **Don't** introduce a second saturate accent (amber stays lamp/secondary, not a peer CTA on sugar dust).
 - **Don't** break playing-card aspect `5 / 7` or the 360px face cap for ordinary study prompts.
