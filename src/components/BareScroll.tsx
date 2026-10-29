@@ -5,7 +5,6 @@ type BareScrollProps = {
   children: ReactNode;
 };
 
-/** Page scrollport for routes outside AppShell (document is overflow:hidden). */
 export default function BareScroll({ children }: BareScrollProps) {
   return (
     <Box
