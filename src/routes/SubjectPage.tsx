@@ -38,6 +38,7 @@ import {
 } from "../api/client";
 import {
   formatExportWarnings,
+  ANKI_EXPORT_BUSY_LABEL,
   runAnkiExportDownload,
 } from "../export/runAnkiExport";
 import { isGuest } from "../guest/session";
@@ -76,7 +77,7 @@ export default function SubjectPage({ subjectId }: Props) {
     trackOnMount: true,
   });
   const { busy: exportBusy, run: runExport } =
-    useTrackedOp("Exporting to Anki…");
+    useTrackedOp(ANKI_EXPORT_BUSY_LABEL);
 
   const load = useCallback(async () => {
     const [subjects, deckList] = await Promise.all([
