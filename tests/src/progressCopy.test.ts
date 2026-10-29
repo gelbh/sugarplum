@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   friendlyStageHeadline,
+  shortStageChipLabel,
   orderPresentStages,
   formatEtaSubline,
   formatProgressSubline,
@@ -14,6 +15,16 @@ describe("friendlyStageHeadline", () => {
   });
   it("falls back for unknown", () => {
     expect(friendlyStageHeadline("nope")).toBe("Preparing your cards");
+  });
+});
+
+describe("shortStageChipLabel", () => {
+  it("maps critique to Review and generate to Write", () => {
+    expect(shortStageChipLabel("critique")).toBe("Review");
+    expect(shortStageChipLabel("generate")).toBe("Write");
+  });
+  it("falls back to stage id for unknown", () => {
+    expect(shortStageChipLabel("custom")).toBe("custom");
   });
 });
 
