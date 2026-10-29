@@ -3,6 +3,7 @@ import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
+import { backfillUser } from "./backfill";
 import type { Rarity } from "./constants";
 import { traitsForAchievement, type FruitTraits } from "./traits";
 import { ensureUserGamification } from "./xp";
@@ -138,6 +139,12 @@ gamificationRoutes.get("/achievements", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
   await ensureUserGamification(db, userId);
+
+  try {
+    await backfillUser(db, userId);
+  } catch (err) {
+    console.error("gamification backfill failed", err);
+  }
 
   const { results } = await db
     .prepare(

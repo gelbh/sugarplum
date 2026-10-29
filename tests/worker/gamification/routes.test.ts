@@ -131,6 +131,121 @@ describe("gamification read APIs", () => {
     }
   });
 
+  it("GET /api/achievements silently backfills historical unlocks once", async () => {
+    const env = createTestEnv();
+    const { id: userId, session } = seedAuthedUser(env, {
+      id: "user-backfill",
+      email: "backfill@example.com",
+      session: "sess-backfill",
+    });
+
+    env.seedDeck({
+      id: "deck-bf",
+      user_id: userId,
+      title: "BF",
+      subject_hint: null,
+      created_at: NOW,
+    });
+    env.seedCard({
+      id: "card-bf",
+      deck_id: "deck-bf",
+      job_id: null,
+      type: "qa",
+      front_json: "{}",
+      back_json: "{}",
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "accepted",
+      created_at: NOW,
+      updated_at: NOW,
+    });
+    env.seedSchedule({
+      card_id: "card-bf",
+      due: "2026-02-01T00:00:00.000Z",
+      stability: 1,
+      difficulty: 5,
+      elapsed_days: 0,
+      scheduled_days: 1,
+      learning_steps: 0,
+      reps: 1,
+      lapses: 0,
+      state: 2,
+      last_review: NOW,
+    });
+
+    for (let i = 0; i < 25; i++) {
+      const day = String(1 + (i % 28)).padStart(2, "0");
+      env.seedReviewLog({
+        id: `rl-bf-${i}`,
+        card_id: "card-bf",
+        rating: 3,
+        scheduled_days: 1,
+        elapsed_days: 0,
+        reviewed_at: `2025-12-${day}T12:00:00.000Z`,
+        state_json: "{}",
+      });
+    }
+
+    const first = await app.request(
+      "/api/achievements",
+      { headers: cookie(session) },
+      env,
+    );
+    expect(first.status).toBe(200);
+    const body = (await first.json()) as { items: AchievementItem[] };
+    const reviews25 = body.items.find((i) => i.def.id === "reviews_25");
+    expect(reviews25?.completedAt).toBeTruthy();
+
+    const completions = env
+      .getAchievementCompletions()
+      .filter((c) => c.user_id === userId && c.achievement_id === "reviews_25");
+    expect(completions).toHaveLength(1);
+    expect(completions[0]!.backdated).toBe(1);
+
+    const unlockKeys = env
+      .getXpLedger()
+      .filter((e) => e.user_id === userId && e.idempotency_key === "unlock:reviews_25");
+    expect(unlockKeys).toHaveLength(1);
+
+    const markerKeys = env
+      .getXpLedger()
+      .filter(
+        (e) =>
+          e.user_id === userId && e.idempotency_key === `backfill:v1:${userId}`,
+      );
+    expect(markerKeys).toHaveLength(1);
+    expect(markerKeys[0]!.amount).toBe(0);
+
+    const ledgerBefore = env.getXpLedger().filter((e) => e.user_id === userId)
+      .length;
+    const completionCountBefore = env
+      .getAchievementCompletions()
+      .filter((c) => c.user_id === userId).length;
+
+    const second = await app.request(
+      "/api/achievements",
+      { headers: cookie(session) },
+      env,
+    );
+    expect(second.status).toBe(200);
+
+    expect(
+      env.getXpLedger().filter((e) => e.user_id === userId).length,
+    ).toBe(ledgerBefore);
+    expect(
+      env.getAchievementCompletions().filter((c) => c.user_id === userId)
+        .length,
+    ).toBe(completionCountBefore);
+    expect(
+      env
+        .getXpLedger()
+        .filter(
+          (e) =>
+            e.user_id === userId && e.idempotency_key === "unlock:reviews_25",
+        ),
+    ).toHaveLength(1);
+  });
+
   it("GET /api/gamification returns defaults after ensure", async () => {
     const env = createTestEnv();
     const { session } = seedAuthedUser(env);

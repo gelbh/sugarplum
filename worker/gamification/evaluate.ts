@@ -1,7 +1,7 @@
 import { XP, type Rarity } from "./constants";
 import { creditXp } from "./xp";
 
-type AchievementDefRow = {
+export type AchievementDefRow = {
   id: string;
   rarity: Rarity;
   trigger_kind: string;
@@ -9,7 +9,7 @@ type AchievementDefRow = {
   params_json: string | null;
 };
 
-type StudyMetrics = {
+export type StudyMetrics = {
   reviewsTotal: number;
   acceptsTotal: number;
   studyDaysTotal: number;
@@ -33,7 +33,9 @@ const ACCEPT_TRIGGERS = new Set([
   "composite",
 ]);
 
-async function loadActiveDefs(db: D1Database): Promise<AchievementDefRow[]> {
+export async function loadActiveDefs(
+  db: D1Database,
+): Promise<AchievementDefRow[]> {
   const { results } = await db
     .prepare(
       `SELECT id, rarity, trigger_kind, threshold, params_json
@@ -147,7 +149,7 @@ function effectiveThreshold(def: AchievementDefRow): number {
   return def.threshold ?? 1;
 }
 
-async function loadStudyMetrics(
+export async function loadStudyMetrics(
   db: D1Database,
   userId: string,
   nowIso: string,
@@ -172,7 +174,10 @@ async function loadStudyMetrics(
   };
 }
 
-function metricValue(def: AchievementDefRow, metrics: StudyMetrics): number {
+export function metricValue(
+  def: AchievementDefRow,
+  metrics: StudyMetrics,
+): number {
   switch (def.trigger_kind) {
     case "reviews_total":
       return metrics.reviewsTotal;
@@ -203,12 +208,13 @@ function metricValue(def: AchievementDefRow, metrics: StudyMetrics): number {
   }
 }
 
-async function tryUnlock(
+export async function tryUnlock(
   db: D1Database,
   userId: string,
   def: AchievementDefRow,
   currentValue: number,
   triggerEventId: string | null,
+  backdated: 0 | 1 = 0,
 ): Promise<string | null> {
   const threshold = effectiveThreshold(def);
   await db
@@ -229,9 +235,9 @@ async function tryUnlock(
     .prepare(
       `INSERT OR IGNORE INTO achievement_completions (
          user_id, achievement_id, completed_at, trigger_event_id, backdated
-       ) VALUES (?, ?, ?, ?, 0)`,
+       ) VALUES (?, ?, ?, ?, ?)`,
     )
-    .bind(userId, def.id, completedAt, triggerEventId)
+    .bind(userId, def.id, completedAt, triggerEventId, backdated)
     .run();
 
   if ((insert.meta.changes ?? 0) === 0) return null;

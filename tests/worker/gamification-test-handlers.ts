@@ -154,6 +154,14 @@ export function gamificationFirst<T>(
     return row ? ({ xp_total: row.xp_total } as T) : null;
   }
   if (
+    normalized.startsWith("SELECT 1 AS ok FROM xp_ledger") &&
+    normalized.includes("idempotency_key =")
+  ) {
+    const [userId, idempotencyKey] = bound as [string, string];
+    const key = ledgerKey(userId, idempotencyKey);
+    return state.xpLedgerKeys.has(key) ? ({ ok: 1 } as T) : null;
+  }
+  if (
     normalized.startsWith("SELECT COALESCE(SUM(amount), 0) AS total FROM xp_ledger")
   ) {
     const [userId, start, end] = bound as [string, string, string];
@@ -344,6 +352,24 @@ export function gamificationRun(
   }
   if (
     normalized.startsWith(
+      "UPDATE user_gamification SET streak_current = 0, streak_best = 0, streak_day = NULL",
+    )
+  ) {
+    const [updatedAt, userId] = bound as [string, string];
+    const row = state.userGamification.get(userId);
+    if (row) {
+      state.userGamification.set(userId, {
+        ...row,
+        streak_current: 0,
+        streak_best: 0,
+        streak_day: null,
+        updated_at: updatedAt,
+      });
+    }
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+  if (
+    normalized.startsWith(
       "UPDATE user_gamification SET streak_current = ?, streak_best = ?, streak_day = ?",
     )
   ) {
@@ -462,12 +488,8 @@ export function gamificationRun(
     return { success: true, meta: { changes: 1 } } as D1Result;
   }
   if (normalized.startsWith("INSERT OR IGNORE INTO achievement_completions")) {
-    const [userId, achievementId, completedAt, triggerEventId] = bound as [
-      string,
-      string,
-      string,
-      string | null,
-    ];
+    const [userId, achievementId, completedAt, triggerEventId, backdated] =
+      bound as [string, string, string, string | null, number | undefined];
     const key = completionKey(userId, achievementId);
     if (state.achievementCompletions.has(key)) {
       return { success: true, meta: { changes: 0 } } as D1Result;
@@ -477,7 +499,7 @@ export function gamificationRun(
       achievement_id: achievementId,
       completed_at: completedAt,
       trigger_event_id: triggerEventId,
-      backdated: 0,
+      backdated: backdated ?? 0,
     });
     return { success: true, meta: { changes: 1 } } as D1Result;
   }
