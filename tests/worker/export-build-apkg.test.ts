@@ -16,6 +16,53 @@ async function ankiSortFieldCsum(sortField: string): Promise<number> {
 }
 
 describe("buildApkg", () => {
+  it("creates one Anki deck per distinct entry deckName", async () => {
+    const bytes = await buildApkg({
+      entries: [
+        {
+          deckName: "Sugarplum::Anatomy::Bones",
+          note: {
+            model: "basic",
+            fields: { Front: "Femur?", Back: "Thigh bone" },
+          },
+          schedule: null,
+          media: [],
+        },
+        {
+          deckName: "Sugarplum::Anatomy::Muscles",
+          note: {
+            model: "basic",
+            fields: { Front: "Biceps?", Back: "Arm flexor" },
+          },
+          schedule: null,
+          media: [],
+        },
+      ],
+    });
+
+    const zip = await JSZip.loadAsync(bytes);
+    const SQL = await initSqlJs();
+    const db = new SQL.Database(
+      await zip.file("collection.anki2")!.async("uint8array"),
+    );
+    const decksJson = String(
+      db.exec("select decks from col")[0]?.values[0]?.[0],
+    );
+    const decks = JSON.parse(decksJson) as Record<string, { name: string }>;
+    const names = Object.values(decks)
+      .map((deck) => deck.name)
+      .filter((name) => name !== "Default")
+      .sort();
+    expect(names).toEqual([
+      "Sugarplum::Anatomy::Bones",
+      "Sugarplum::Anatomy::Muscles",
+    ]);
+    const cardDids = db
+      .exec("select did from cards order by nid")[0]
+      ?.values.map((row) => Number(row[0]));
+    expect(new Set(cardDids).size).toBe(2);
+  });
+
   it("builds an importable collection with basic, cloze, and MCQ notes", async () => {
     const bytes = await buildApkg({
       deckName: "Sugarplum",

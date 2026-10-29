@@ -173,3 +173,27 @@ export async function loadDeckCards(
     warnings,
   };
 }
+
+export type LoadedExportCards = {
+  entries: Array<LoadedDeck["entries"][number] & { deckName: string }>;
+  warnings: LoadedDeck["warnings"];
+};
+
+/** Load accepted cards for many owned deck ids; concatenate entries; sum warnings. */
+export async function loadExportCards(
+  env: Env,
+  userId: string,
+  deckIds: string[],
+): Promise<LoadedExportCards> {
+  const warnings = { missingMedia: 0, skippedCards: 0 };
+  const entries: LoadedExportCards["entries"] = [];
+  for (const deckId of deckIds) {
+    const loaded = await loadDeckCards(env, userId, deckId);
+    warnings.missingMedia += loaded.warnings.missingMedia;
+    warnings.skippedCards += loaded.warnings.skippedCards;
+    for (const entry of loaded.entries) {
+      entries.push({ ...entry, deckName: loaded.deckName });
+    }
+  }
+  return { entries, warnings };
+}
