@@ -98,9 +98,7 @@ export function UnlockToastProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(() => ({ enqueueUnlocks }), [enqueueUnlocks]);
 
-  const traits = active
-    ? traitsForAchievement(active.id, active.rarity)
-    : null;
+  const traits = active ? traitsForAchievement(active.id, active.rarity) : null;
 
   const zen = hideChrome;
 
@@ -158,7 +156,10 @@ export function UnlockToastProvider({ children }: { children: ReactNode }) {
                 >
                   Achievement unlocked
                 </Typography>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: IVORY }}>
+                <Typography
+                  variant="subtitle1"
+                  sx={{ fontWeight: 600, color: IVORY }}
+                >
                   {active.title}
                 </Typography>
               </Box>

@@ -276,17 +276,16 @@ export function adminEnableUser(id: string) {
 }
 
 export function adminWipeUser(id: string, confirmEmail: string) {
-  return api<{ ok: true }>(
-    `/api/admin/users/${encodeURIComponent(id)}/wipe`,
-    { method: "POST", json: { confirmEmail } },
-  );
+  return api<{ ok: true }>(`/api/admin/users/${encodeURIComponent(id)}/wipe`, {
+    method: "POST",
+    json: { confirmEmail },
+  });
 }
 
 export async function adminExportUser(id: string) {
-  const res = await fetch(
-    `/api/admin/users/${encodeURIComponent(id)}/export`,
-    { credentials: "include" },
-  );
+  const res = await fetch(`/api/admin/users/${encodeURIComponent(id)}/export`, {
+    credentials: "include",
+  });
   if (!res.ok) {
     let message = res.statusText || "Export failed";
     try {
@@ -485,10 +484,7 @@ export function listDeckCards(deckId: string, opts?: ListDeckCardsOpts) {
       );
     }
   }
-  const q =
-    opts?.status === "archived"
-      ? "?status=archived"
-      : "";
+  const q = opts?.status === "archived" ? "?status=archived" : "";
   return api<CardDraftView[]>(`/api/decks/${deckId}/cards${q}`);
 }
 
@@ -507,9 +503,7 @@ export type HubCreateCardBody =
     };
 
 function isGuestHubCardBody(body: HubCreateCardBody): body is GuestHubCardBody {
-  return (
-    body.type === "qa" || body.type === "cloze" || body.type === "mcq"
-  );
+  return body.type === "qa" || body.type === "cloze" || body.type === "mcq";
 }
 
 export function createDeckCard(deckId: string, body: HubCreateCardBody) {
@@ -1010,7 +1004,9 @@ export async function moveCard(cardId: string, deckId: string) {
     } catch (err) {
       const message = err instanceof Error ? err.message : "Card not found";
       throw new ApiError(
-        message === "Card not found" || message === "Deck not found" ? 404 : 400,
+        message === "Card not found" || message === "Deck not found"
+          ? 404
+          : 400,
         message,
       );
     }
@@ -1150,7 +1146,9 @@ export function reviewCard(
 ) {
   const localDay = opts?.localDay;
   if (isGuest()) {
-    return Promise.resolve(guestReviewCard(cardId, rating, undefined, { localDay }));
+    return Promise.resolve(
+      guestReviewCard(cardId, rating, undefined, { localDay }),
+    );
   }
   return api<ReviewResult>("/api/study/review", {
     method: "POST",

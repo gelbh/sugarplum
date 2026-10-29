@@ -1,13 +1,7 @@
 import type { Rarity } from "./traits";
 
 export type FruitType =
-  | "apple"
-  | "lemon"
-  | "strawberry"
-  | "pear"
-  | "cherry"
-  | "kiwi"
-  | "plum";
+  "apple" | "lemon" | "strawberry" | "pear" | "cherry" | "kiwi" | "plum";
 
 export type AchievementMeta = {
   fruitType: FruitType;

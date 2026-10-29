@@ -38,9 +38,9 @@ npm run dev
 
 GitHub Actions (no PR preview Workers in v1):
 
-| Workflow | Trigger | What it does |
-|----------|---------|--------------|
-| [CI](.github/workflows/ci.yml) | Pull requests; push to `main` | `npm test` + `npm run build` |
+| Workflow                               | Trigger                                      | What it does                                            |
+| -------------------------------------- | -------------------------------------------- | ------------------------------------------------------- |
+| [CI](.github/workflows/ci.yml)         | Pull requests; push to `main`                | `npm test` + `npm run build`                            |
 | [Deploy](.github/workflows/deploy.yml) | Push to `main`; manual **workflow_dispatch** | Test + build → remote D1 migrations → `wrangler deploy` |
 
 **Recommended:** protect `main` so PRs must pass CI before merge.

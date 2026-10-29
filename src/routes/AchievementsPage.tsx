@@ -80,7 +80,9 @@ export default function AchievementsPage() {
   const [error, setError] = useState<string | null>(null);
   const [guest, setGuest] = useState(false);
   const [ready, setReady] = useState(false);
-  const [sheenOnceIds, setSheenOnceIds] = useState<Set<string>>(() => new Set());
+  const [sheenOnceIds, setSheenOnceIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const { end: endLoad } = useTrackedOp("Loading achievements…", {
     trackOnMount: true,
   });
@@ -352,7 +354,12 @@ export default function AchievementsPage() {
             >
               Weekly board
             </Typography>
-            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1.5 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              display="block"
+              sx={{ mb: 1.5 }}
+            >
               Week {board.weekKey} (UTC)
               {gamification && !gamification.boardOptIn
                 ? " · Opt in under Settings to appear on the board"

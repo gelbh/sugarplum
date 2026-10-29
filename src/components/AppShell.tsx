@@ -303,9 +303,7 @@ function AppShellChrome({ children }: AppShellProps) {
             </Box>
           ) : null}
           <Box sx={{ flexGrow: 1 }} />
-          {streakChip ? (
-            <Box sx={{ px: 2, pb: 1.5 }}>{streakChip}</Box>
-          ) : null}
+          {streakChip ? <Box sx={{ px: 2, pb: 1.5 }}>{streakChip}</Box> : null}
           <Box
             sx={{
               px: 2,

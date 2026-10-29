@@ -1,11 +1,6 @@
 /** KEEP IN SYNC with worker/gamification/traits.ts */
 
-export type Rarity =
-  | "common"
-  | "uncommon"
-  | "rare"
-  | "epic"
-  | "legendary";
+export type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
 
 export type Shine = "low" | "mild" | "high" | "very_high" | "max";
 

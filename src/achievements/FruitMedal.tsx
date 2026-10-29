@@ -50,7 +50,8 @@ export default function FruitMedal({
           display: "block",
           filter,
           opacity: locked ? 0.45 : 1,
-          transition: "filter 600ms cubic-bezier(0.16, 1, 0.3, 1), opacity 400ms ease",
+          transition:
+            "filter 600ms cubic-bezier(0.16, 1, 0.3, 1), opacity 400ms ease",
           "@media (prefers-reduced-motion: reduce)": {
             transition: "filter 200ms ease, opacity 200ms ease",
           },

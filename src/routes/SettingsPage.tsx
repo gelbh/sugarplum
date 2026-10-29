@@ -371,7 +371,10 @@ export default function SettingsPage() {
               <Typography variant="body2" color="text.secondary">
                 Sign in to earn fruit medals, streaks, and XP.
               </Typography>
-              <Button variant="outlined" onClick={() => navigate("/achievements")}>
+              <Button
+                variant="outlined"
+                onClick={() => navigate("/achievements")}
+              >
                 View achievements
               </Button>
               <MagnificCredits />
@@ -383,7 +386,10 @@ export default function SettingsPage() {
                   ? `Streak ${gamification.streakCurrent} · Level ${gamification.level} · ${gamification.xpTotal} XP`
                   : "Track study milestones and optional weekly leaderboard."}
               </Typography>
-              <Button variant="outlined" onClick={() => navigate("/achievements")}>
+              <Button
+                variant="outlined"
+                onClick={() => navigate("/achievements")}
+              >
                 Open achievement gallery
               </Button>
               <Box component="form" onSubmit={onSubmitAchievements} noValidate>
@@ -518,9 +524,7 @@ export default function SettingsPage() {
           </Typography>
           <Box component="form" onSubmit={onSubmitStudy} noValidate>
             <Stack spacing={2}>
-              {studyError ? (
-                <Alert severity="error">{studyError}</Alert>
-              ) : null}
+              {studyError ? <Alert severity="error">{studyError}</Alert> : null}
               {studyNotice ? (
                 <Alert severity="success">{studyNotice}</Alert>
               ) : null}
