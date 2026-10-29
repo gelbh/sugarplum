@@ -1,6 +1,7 @@
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
 import { navigate, shellBackHref } from "../../nav/navigate";
 import {
   SHELL_BG,
@@ -11,7 +12,7 @@ import {
 
 const BACK_SLOT = 40;
 
-/** Fixed mobile top bar: Back only for nested routes, centered logo mark. */
+/** Mobile top bar content: Back for nested routes, centered logo + Alice wordmark. */
 export default function TopChrome() {
   const backHref = shellBackHref(window.location.pathname);
 
@@ -19,11 +20,6 @@ export default function TopChrome() {
     <Box
       component="header"
       sx={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1100,
         bgcolor: SHELL_BG,
         color: SHELL_FG,
         pt: "env(safe-area-inset-top)",
@@ -61,20 +57,35 @@ export default function TopChrome() {
           ) : null}
         </Box>
         <Box
-          component="img"
-          src="/logo.png"
-          alt="Sugarplum"
           sx={{
             position: "absolute",
             left: "50%",
             top: "50%",
             transform: "translate(-50%, -50%)",
-            height: 28,
-            width: "auto",
-            display: "block",
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
             pointerEvents: "none",
           }}
-        />
+        >
+          <Box
+            component="img"
+            src="/logo.png"
+            alt=""
+            sx={{
+              height: 28,
+              width: "auto",
+              display: "block",
+            }}
+          />
+          <Typography
+            variant="h6"
+            noWrap
+            sx={{ color: SHELL_FG, letterSpacing: 0.2 }}
+          >
+            Sugarplum
+          </Typography>
+        </Box>
       </Box>
     </Box>
   );

@@ -5,5 +5,5 @@ export const SHELL_BG = "#1e0d1b";
 export const SHELL_FG = "#F5F5F5";
 export const SHELL_MUTED = "rgba(245, 245, 245, 0.62)";
 export const SHELL_HAIRLINE = "rgba(232, 216, 199, 0.16)";
-/** Selected chrome accent on night shell (matches dark theme primary). */
-export const PLUM_ON_DARK = "#CE93D8";
+/** Selected / generating accent on night shell (fruit plum; DESIGN One Plum Voice). */
+export const SHELL_SELECTED = "#5B2C6F";
