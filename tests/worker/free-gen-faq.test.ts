@@ -29,5 +29,11 @@ describe("freeGenFaq", () => {
     expect(intro).toContain(String(FREE_GEN_DAILY_CAP_DISPLAY));
     expect(intro).toMatch(/UTC day/i);
     expect(intro).toMatch(/Optional/i);
+    expect(intro).toMatch(/Z\.ai/i);
+  });
+
+  it("FAQ mentions Z.ai free Flash BYO option", () => {
+    expect(freeGenFaqBody()).toMatch(/Z\.ai/i);
+    expect(freeGenFaqBody()).toMatch(/Flash/i);
   });
 });
