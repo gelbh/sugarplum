@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { cardToAnkiNote } from "../../worker/export/notes";
+import { cardToAnkiNote, cardToAnkiNotes } from "../../worker/export/notes";
 
 describe("cardToAnkiNote", () => {
   it("maps qa to basic Front and Back", () => {
@@ -56,14 +56,62 @@ describe("cardToAnkiNote", () => {
     ).toEqual({ skip: true, reason: "unsupported-type:flashcard_v2" });
   });
 
-  it("skips occlusion in Phase 1", () => {
+  it("maps one Anki note per occlusion region with mask geometry", () => {
+    const result = cardToAnkiNotes({
+      type: "occlusion",
+      front: {
+        image_key: "materials/deck-a/fig.png",
+        mode: "hide_one",
+        regions: [
+          { id: "r1", x: 0.1, y: 0.2, w: 0.3, h: 0.4, label: "Femur" },
+          { id: "r2", x: 0.5, y: 0.5, w: 0.2, h: 0.1, label: "  " },
+        ],
+      },
+      back: { answer: "fallback-label" },
+    });
+    expect("skip" in result).toBe(false);
+    if ("skip" in result) return;
+    expect(result).toHaveLength(2);
+    expect(result[0]?.model).toBe("sugarplum_occlusion");
+    expect(result[0]?.fields.Front).toContain(
+      `src="${encodeURIComponent("materials/deck-a/fig.png")}"`,
+    );
+    expect(result[0]?.fields.Front).toContain("left:10%");
+    expect(result[0]?.fields.Front).toContain("top:20%");
+    expect(result[0]?.fields.Front).toContain("width:30%");
+    expect(result[0]?.fields.Front).toContain("height:40%");
+    expect(result[0]?.fields.Front).toContain("rgba(0,0,0,.85)");
+    expect(result[0]?.fields.Back).toContain("border:2px solid #f57c00");
+    expect(result[0]?.fields.Back).toContain("Femur");
+    expect(result[1]?.fields.Back).toContain("fallback-label");
+    expect(result[1]?.fields.Front).toContain("left:50%");
+  });
+
+  it("skips invalid or empty occlusion fronts", () => {
     expect(
-      cardToAnkiNote({
+      cardToAnkiNotes({
         type: "occlusion",
-        front: { image_key: "fig-1", regions: [] },
+        front: { image_key: "fig-1", mode: "hide_one", regions: [] },
         back: "",
       }),
-    ).toEqual({ skip: true, reason: "occlusion-phase3" });
+    ).toEqual({ skip: true, reason: "occlusion-no-regions" });
+    expect(
+      cardToAnkiNotes({
+        type: "occlusion",
+        front: { regions: [{ id: "r1", x: 0, y: 0, w: 1, h: 1, label: "A" }] },
+        back: "A",
+      }),
+    ).toEqual({ skip: true, reason: "occlusion-invalid-front" });
+  });
+
+  it("wraps single-note types from cardToAnkiNotes", () => {
+    expect(
+      cardToAnkiNotes({
+        type: "qa",
+        front: "Q",
+        back: "A",
+      }),
+    ).toEqual([{ model: "basic", fields: { Front: "Q", Back: "A" } }]);
   });
 
   it("maps image_label and diagram to basic text fields", () => {
