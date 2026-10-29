@@ -71,6 +71,9 @@ const PROMPT_SX = {
 function faceMotionSx(revealedFace: boolean, thisFaceVisible: boolean) {
   return {
     ...FACE_SX,
+    height: "100%",
+    backfaceVisibility: "hidden" as const,
+    WebkitBackfaceVisibility: "hidden" as const,
     position: "absolute" as const,
     inset: 0,
     ...(revealedFace ? { transform: "rotateY(180deg)" } : {}),

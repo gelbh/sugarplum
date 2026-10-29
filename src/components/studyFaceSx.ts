@@ -14,17 +14,15 @@ export const OVERLINE_SX = {
   lineHeight: 1.2,
 };
 
-/** Ivory face paper chrome: padding, drop shadow, stage ink on card stock. */
+/** Ivory face paper chrome: padding, drop shadow, stage ink on card stock.
+ * Flip-only height/backface live in CardFace `faceMotionSx`, not here. */
 export const FACE_SX = {
   p: 3,
-  height: "100%",
   display: "flex",
   flexDirection: "column",
   boxSizing: "border-box",
   borderRadius: 2,
   boxShadow: "0 12px 40px rgba(0, 0, 0, 0.35)",
-  backfaceVisibility: "hidden",
-  WebkitBackfaceVisibility: "hidden",
   bgcolor: "var(--sp-card-face)",
   color: "var(--sp-stage-bg)",
   fontFamily: FACE_SANS,

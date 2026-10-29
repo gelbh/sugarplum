@@ -81,12 +81,8 @@ export default function McqFace({
         className="sp-playing-card"
         sx={{
           ...FACE_SX,
-          height: "auto",
           minHeight: 280,
           maxHeight: "70vh",
-          // Single-face MCQ: no 3D flip backface hide.
-          backfaceVisibility: "visible",
-          WebkitBackfaceVisibility: "visible",
         }}
       >
         <Typography
