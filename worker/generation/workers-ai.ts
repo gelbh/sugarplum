@@ -172,12 +172,21 @@ export function createWorkersAiAdapter(
 
     async function tryRun(withJsonMode: boolean): Promise<unknown | null> {
       try {
-        return await env.AI!.run(WORKERS_AI_MODEL, {
-          ...base,
-          ...(withJsonMode
-            ? { response_format: { type: "json_object" as const } }
-            : {}),
-        });
+        return await env.AI!.run(
+          WORKERS_AI_MODEL,
+          {
+            ...base,
+            ...(withJsonMode
+              ? { response_format: { type: "json_object" as const } }
+              : {}),
+          },
+          {
+            gateway: {
+              id: "sugarplum",
+              skipCache: true,
+            },
+          },
+        );
       } catch (err) {
         if (withJsonMode && isJsonModeUnmetError(err)) return null;
         mapWorkersAiRunError(err);
