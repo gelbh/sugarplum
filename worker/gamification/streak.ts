@@ -45,6 +45,32 @@ export function computeStreakFromSortedDays(days: string[]): {
   };
 }
 
+/** Decay current streak when last study day is older than yesterday UTC. */
+export function applyStreakExpiry(
+  streak: {
+    streakCurrent: number;
+    streakBest: number;
+    streakDay: string | null;
+  },
+  today = utcDay(),
+): {
+  streakCurrent: number;
+  streakBest: number;
+  streakDay: string | null;
+} {
+  if (
+    streak.streakDay === today ||
+    streak.streakDay === utcPreviousDay(today)
+  ) {
+    return streak;
+  }
+  return {
+    streakCurrent: 0,
+    streakBest: streak.streakBest,
+    streakDay: streak.streakDay,
+  };
+}
+
 export async function applyStudyDayStreak(
   db: D1Database,
   userId: string,

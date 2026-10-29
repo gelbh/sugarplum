@@ -1,5 +1,8 @@
 import { evaluateAchievements } from "./evaluate";
-import { computeStreakFromSortedDays } from "./streak";
+import {
+  applyStreakExpiry,
+  computeStreakFromSortedDays,
+} from "./streak";
 import { creditXp, ensureUserGamification } from "./xp";
 
 function backfillKey(userId: string): string {
@@ -49,7 +52,7 @@ export async function backfillUser(
   if (await alreadyBackfilled(db, userId)) return;
 
   const days = await listStudyDaysAscending(db, userId);
-  const streak = computeStreakFromSortedDays(days);
+  const streak = applyStreakExpiry(computeStreakFromSortedDays(days));
   const updatedAt = new Date().toISOString();
   await db
     .prepare(

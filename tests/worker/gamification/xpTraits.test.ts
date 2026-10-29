@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { levelFromXp, XP } from "../../../worker/gamification/constants";
 import {
+  applyStreakExpiry,
   computeStreakFromSortedDays,
   utcPreviousDay,
 } from "../../../worker/gamification/streak";
@@ -52,6 +53,34 @@ describe("computeStreakFromSortedDays", () => {
       streakCurrent: 1,
       streakBest: 3,
       streakDay: "2026-01-05",
+    });
+  });
+});
+
+describe("applyStreakExpiry", () => {
+  it("zeros current when last day is older than yesterday", () => {
+    expect(
+      applyStreakExpiry(
+        { streakCurrent: 7, streakBest: 7, streakDay: "2025-01-07" },
+        "2026-10-29",
+      ),
+    ).toEqual({
+      streakCurrent: 0,
+      streakBest: 7,
+      streakDay: "2025-01-07",
+    });
+  });
+
+  it("keeps current when last day is yesterday", () => {
+    expect(
+      applyStreakExpiry(
+        { streakCurrent: 3, streakBest: 5, streakDay: "2026-10-28" },
+        "2026-10-29",
+      ),
+    ).toEqual({
+      streakCurrent: 3,
+      streakBest: 5,
+      streakDay: "2026-10-28",
     });
   });
 });

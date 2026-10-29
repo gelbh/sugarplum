@@ -202,10 +202,15 @@ describe("gamification read APIs", () => {
     expect(completions).toHaveLength(1);
     expect(completions[0]!.backdated).toBe(1);
 
-    const unlockKeys = env
-      .getXpLedger()
-      .filter((e) => e.user_id === userId && e.idempotency_key === "unlock:reviews_25");
-    expect(unlockKeys).toHaveLength(1);
+    // Backdated completions must not stamp unlock XP into "now" (weekly board).
+    expect(
+      env
+        .getXpLedger()
+        .filter(
+          (e) =>
+            e.user_id === userId && e.idempotency_key === "unlock:reviews_25",
+        ),
+    ).toHaveLength(0);
 
     const markerKeys = env
       .getXpLedger()
@@ -236,14 +241,120 @@ describe("gamification read APIs", () => {
       env.getAchievementCompletions().filter((c) => c.user_id === userId)
         .length,
     ).toBe(completionCountBefore);
+  });
+
+  it("GET /api/achievements backfill does not unlock clear_due for empty users", async () => {
+    const env = createTestEnv();
+    const { id: userId, session } = seedAuthedUser(env, {
+      id: "user-empty-bf",
+      email: "empty-bf@example.com",
+      session: "sess-empty-bf",
+    });
+
+    const res = await app.request(
+      "/api/achievements",
+      { headers: cookie(session) },
+      env,
+    );
+    expect(res.status).toBe(200);
+
+    expect(
+      env
+        .getAchievementCompletions()
+        .filter(
+          (c) => c.user_id === userId && c.achievement_id === "clear_due_1",
+        ),
+    ).toHaveLength(0);
     expect(
       env
         .getXpLedger()
         .filter(
           (e) =>
-            e.user_id === userId && e.idempotency_key === "unlock:reviews_25",
+            e.user_id === userId && e.idempotency_key === "unlock:clear_due_1",
         ),
-    ).toHaveLength(1);
+    ).toHaveLength(0);
+  });
+
+  it("GET /api/achievements backfill decays expired streak but unlocks from best", async () => {
+    const env = createTestEnv();
+    const { id: userId, session } = seedAuthedUser(env, {
+      id: "user-streak-bf",
+      email: "streak-bf@example.com",
+      session: "sess-streak-bf",
+    });
+
+    env.seedDeck({
+      id: "deck-st",
+      user_id: userId,
+      title: "ST",
+      subject_hint: null,
+      created_at: NOW,
+    });
+    env.seedCard({
+      id: "card-st",
+      deck_id: "deck-st",
+      job_id: null,
+      type: "qa",
+      front_json: "{}",
+      back_json: "{}",
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "accepted",
+      created_at: NOW,
+      updated_at: NOW,
+    });
+    env.seedSchedule({
+      card_id: "card-st",
+      due: "2026-02-01T00:00:00.000Z",
+      stability: 1,
+      difficulty: 5,
+      elapsed_days: 0,
+      scheduled_days: 1,
+      learning_steps: 0,
+      reps: 1,
+      lapses: 0,
+      state: 2,
+      last_review: NOW,
+    });
+
+    for (let i = 0; i < 7; i++) {
+      const day = String(i + 1).padStart(2, "0");
+      env.seedReviewLog({
+        id: `rl-st-${i}`,
+        card_id: "card-st",
+        rating: 3,
+        scheduled_days: 1,
+        elapsed_days: 0,
+        reviewed_at: `2025-01-${day}T12:00:00.000Z`,
+        state_json: "{}",
+      });
+    }
+
+    const res = await app.request(
+      "/api/achievements",
+      { headers: cookie(session) },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { items: AchievementItem[] };
+    expect(body.items.find((i) => i.def.id === "streak_7")?.completedAt).toBeTruthy();
+    expect(
+      env
+        .getAchievementCompletions()
+        .find((c) => c.user_id === userId && c.achievement_id === "streak_7")
+        ?.backdated,
+    ).toBe(1);
+
+    const g = await app.request(
+      "/api/gamification",
+      { headers: cookie(session) },
+      env,
+    );
+    expect(g.status).toBe(200);
+    const gam = (await g.json()) as GamificationBody;
+    expect(gam.streakCurrent).toBe(0);
+    expect(gam.streakBest).toBe(7);
+    expect(gam.streakDay).toBe("2025-01-07");
   });
 
   it("GET /api/gamification returns defaults after ensure", async () => {

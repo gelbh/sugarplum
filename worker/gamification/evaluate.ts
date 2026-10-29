@@ -242,8 +242,11 @@ async function tryUnlock(
 
   if ((insert.meta.changes ?? 0) === 0) return null;
 
-  const bonus = XP.unlock[def.rarity];
-  await creditXp(db, userId, bonus, "unlock", `unlock:${def.id}`);
+  // Backdated unlocks must not stamp unlock XP into "now" (weekly board pollution).
+  if (backdated === 0) {
+    const bonus = XP.unlock[def.rarity];
+    await creditXp(db, userId, bonus, "unlock", `unlock:${def.id}`);
+  }
   return def.id;
 }
 
@@ -263,7 +266,13 @@ export async function evaluateAchievements(
   const unlocks: string[] = [];
   for (const def of defs) {
     if (opts.kinds && !opts.kinds.has(def.trigger_kind)) continue;
-    const value = metricValue(def, metrics);
+    // clear_due is event-shaped; empty due queues are not historical proof.
+    if (backdated === 1 && def.trigger_kind === "clear_due_once") continue;
+    let value = metricValue(def, metrics);
+    // Historical streak fruits use peak, not the (possibly expired) live current.
+    if (backdated === 1 && def.trigger_kind === "streak_current") {
+      value = metrics.streakBest;
+    }
     const unlocked = await tryUnlock(
       db,
       userId,
