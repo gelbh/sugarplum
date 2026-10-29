@@ -3,7 +3,7 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 import { STUDY_MEDIA_CACHE } from "./src/study/studyMediaCache";
-import { patchSqlJsForWorkers } from "./worker/export/patchSqlJsPlugin";
+import { patchSqlJsForWorkers } from "./vite/patchSqlJsPlugin";
 
 export default defineConfig({
   plugins: [
