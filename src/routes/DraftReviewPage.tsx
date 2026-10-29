@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
 import Container from "@mui/material/Container";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -64,15 +63,6 @@ function cardPatchBody(card: CardDraftView): Parameters<typeof patchCard>[1] {
     body.options = card.options;
   }
   return body;
-}
-
-function draftTypeLabel(type: CardDraftView["type"]): string {
-  if (type === "occlusion") return "Occlusion";
-  if (type === "cloze") return "Cloze";
-  if (type === "mcq") return "Multiple choice";
-  if (type === "image_label") return "Image label";
-  if (type === "diagram") return "Diagram";
-  return "Q&A";
 }
 
 /** Operate UI: review, edit, accept or reject generation drafts (code-led MUI; no Impeccable comps). */
@@ -516,8 +506,10 @@ export default function DraftReviewPage() {
                     Back to library
                   </Link>
                 )}
+              </Stack>
+              <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
                 <Button
-                  variant="outlined"
+                  variant="text"
                   color="warning"
                   onClick={() => setConfirmRejectDrafts(true)}
                   disabled={jobActionDisabled}
@@ -525,7 +517,7 @@ export default function DraftReviewPage() {
                   Reject remaining drafts
                 </Button>
                 <Button
-                  variant="outlined"
+                  variant="text"
                   color="error"
                   onClick={() => setConfirmRegen(true)}
                   disabled={jobActionDisabled}
@@ -537,22 +529,9 @@ export default function DraftReviewPage() {
           </OperateSection>
         ) : (
           <OperateSection>
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              sx={{ mb: 2 }}
-            >
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                Card {index + 1} of {drafts.length}
-              </Typography>
-              <Chip
-                size="small"
-                label={draftTypeLabel(current.type)}
-                color="primary"
-                variant="outlined"
-              />
-            </Stack>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+              Card {index + 1} of {drafts.length}
+            </Typography>
 
             <DraftCardEditor
               card={current}
