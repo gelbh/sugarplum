@@ -11,8 +11,17 @@ export function sanitizeAnkiDeckComponent(raw: string): string {
   return out;
 }
 
-export function ankiDeckName(subjectTitle: string, deckTitle: string): string {
+/**
+ * Anki deck path. Always suffixes a short deck id so same-titled decks
+ * do not merge when building a multi-deck `.apkg`.
+ */
+export function ankiDeckName(
+  subjectTitle: string,
+  deckTitle: string,
+  deckId: string,
+): string {
   const subject = sanitizeAnkiDeckComponent(subjectTitle);
   const deck = sanitizeAnkiDeckComponent(deckTitle);
-  return `${DECK_ROOT}::${subject}::${deck}`;
+  const suffix = sanitizeAnkiDeckComponent(deckId.slice(0, 8));
+  return `${DECK_ROOT}::${subject}::${deck} (${suffix})`;
 }

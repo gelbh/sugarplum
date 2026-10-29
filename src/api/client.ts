@@ -932,11 +932,35 @@ export type CreateDeckExportResponse = {
   downloadPath: string;
 };
 
-export function createDeckExport(deckId: string) {
+export type CreateExportBody =
+  | { type: "deck"; deckId: string }
+  | { type: "subject"; subjectId: string }
+  | { type: "selection"; deckIds: string[]; subjectIds: string[] };
+
+export function createExport(body: CreateExportBody) {
   if (isGuest()) guestUnsupported("export decks to Anki");
   return api<CreateDeckExportResponse>("/api/exports", {
     method: "POST",
-    json: { type: "deck", deckId },
+    json: body,
+  });
+}
+
+export function createDeckExport(deckId: string) {
+  return createExport({ type: "deck", deckId });
+}
+
+export function createSubjectExport(subjectId: string) {
+  return createExport({ type: "subject", subjectId });
+}
+
+export function createSelectionExport(args: {
+  deckIds: string[];
+  subjectIds: string[];
+}) {
+  return createExport({
+    type: "selection",
+    deckIds: args.deckIds,
+    subjectIds: args.subjectIds,
   });
 }
 
