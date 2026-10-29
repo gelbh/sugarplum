@@ -5,71 +5,81 @@
  * R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, DOCLING_API_KEY (when DOCLING_URL is set)
  */
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "sugarplum",
-	"main": "worker/index.ts",
-	"compatibility_date": "2026-10-26",
-	"rules": [
-		{ "type": "CompiledWasm", "globs": ["**/*.wasm"] }
-	],
-	"assets": {
-		"binding": "ASSETS",
-		"not_found_handling": "single-page-application",
-		"run_worker_first": ["/api/*"]
-	},
-	"upload_source_maps": true,
-	"observability": {
-		"enabled": true,
-		"logs": {
-			"invocation_logs": true,
-			"head_sampling_rate": 1
-		}
-	},
-	// DOCLING_URL: optional. Local compose or prod HTTPS host. When set, DOCLING_API_KEY secret is required (X-Api-Key).
-	"vars": {
-		"APP_URL": "https://sugarplum.gelbhart.dev",
-		"R2_ACCOUNT_ID": "578279c4ee8d8a1b0bda8ecf8ecc3f67",
-		"R2_BUCKET_NAME": "sugarplum-materials"
-	},
-	"d1_databases": [
-		{
-			"binding": "DB",
-			"database_name": "sugarplum",
-			"database_id": "737d7509-0390-4715-b52a-8ecf18e6cb45"
-		}
-	],
-	"r2_buckets": [
-		{
-			"binding": "MATERIALS",
-			"bucket_name": "sugarplum-materials"
-		}
-	],
-	"kv_namespaces": [
-		{
-			"binding": "SESSIONS",
-			"id": "4b51ba56cbdd48bd97a31ff775a9e684"
-		}
-	],
-	"ai": {
-		"binding": "AI"
-	},
-	"queues": {
-		"producers": [
-			{
-				"binding": "GENERATE_QUEUE",
-				"queue": "sugarplum-generate"
-			}
-		],
-		"consumers": [
-			{
-				"queue": "sugarplum-generate",
-				"max_batch_size": 1,
-				// 2 is the locked modest ceiling from the queue-responsiveness design
-				"max_concurrency": 2,
-				// Keep in sync with GENERATE_QUEUE_* in worker/generation/progress.ts
-				"max_retries": 21,
-				"retry_delay": 60
-			}
-		]
-	}
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sugarplum",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-26",
+  "rules": [{ "type": "CompiledWasm", "globs": ["**/*.wasm"] }],
+  "assets": {
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"],
+  },
+  "upload_source_maps": true,
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "invocation_logs": true,
+      "head_sampling_rate": 1,
+    },
+  },
+  // DOCLING_URL: optional. Local compose or prod HTTPS host. When set, DOCLING_API_KEY secret is required (X-Api-Key).
+  "vars": {
+    "APP_URL": "https://sugarplum.gelbhart.dev",
+    "R2_ACCOUNT_ID": "578279c4ee8d8a1b0bda8ecf8ecc3f67",
+    "R2_BUCKET_NAME": "sugarplum-materials",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "sugarplum",
+      "database_id": "737d7509-0390-4715-b52a-8ecf18e6cb45",
+    },
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MATERIALS",
+      "bucket_name": "sugarplum-materials",
+    },
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "SESSIONS",
+      "id": "4b51ba56cbdd48bd97a31ff775a9e684",
+    },
+  ],
+  "ai": {
+    "binding": "AI",
+  },
+  "queues": {
+    "producers": [
+      {
+        "binding": "GENERATE_QUEUE",
+        "queue": "sugarplum-generate",
+      },
+      {
+        "binding": "EXPORT_QUEUE",
+        "queue": "sugarplum-export",
+      },
+    ],
+    "consumers": [
+      {
+        "queue": "sugarplum-generate",
+        "max_batch_size": 1,
+        // 2 is the locked modest ceiling from the queue-responsiveness design
+        "max_concurrency": 2,
+        // Keep in sync with GENERATE_QUEUE_* in worker/generation/progress.ts
+        "max_retries": 21,
+        "retry_delay": 60,
+      },
+      {
+        "queue": "sugarplum-export",
+        "max_batch_size": 1,
+        "max_concurrency": 1,
+        // Keep in sync with EXPORT_QUEUE_* in worker/export/stale.ts
+        "max_retries": 11,
+        "retry_delay": 30,
+      },
+    ],
+  },
 }
