@@ -1,4 +1,6 @@
-/** Durable usage_events writes from generation job progress_json. */
+/** Durable usage_events writes from generation job progress_json / regen. */
+
+import type { LlmTokenUsage } from "./llm";
 
 export type UsageFromProgress = {
   path: "free" | "byo" | null;
@@ -91,6 +93,63 @@ export async function recordGenerationUsageEvent(
     )
     .run();
   return (result.meta.changes ?? 0) > 0;
+}
+
+function tokensFromLlmUsage(usage?: LlmTokenUsage | null): {
+  tokens_prompt: number | null;
+  tokens_completion: number | null;
+  tokens_total: number | null;
+} {
+  if (!usage) {
+    return {
+      tokens_prompt: null,
+      tokens_completion: null,
+      tokens_total: null,
+    };
+  }
+  const tokens_prompt = asFiniteInt(usage.prompt_tokens ?? null);
+  const tokens_completion = asFiniteInt(usage.completion_tokens ?? null);
+  let tokens_total = asFiniteInt(usage.total_tokens ?? null);
+  if (
+    tokens_total == null &&
+    (tokens_prompt != null || tokens_completion != null)
+  ) {
+    tokens_total = (tokens_prompt ?? 0) + (tokens_completion ?? 0);
+  }
+  return { tokens_prompt, tokens_completion, tokens_total };
+}
+
+/** One row per successful card regen (`job_id` null; always insert). */
+export async function recordRegenUsageEvent(
+  db: D1Database,
+  args: {
+    userId: string;
+    path: "free" | "byo" | null;
+    provider: string | null;
+    usage?: LlmTokenUsage | null;
+    createdAt?: string;
+  },
+): Promise<void> {
+  const tokens = tokensFromLlmUsage(args.usage);
+  const createdAt = args.createdAt ?? new Date().toISOString();
+  await db
+    .prepare(
+      `INSERT INTO usage_events (
+        id, user_id, job_id, kind, path, provider,
+        tokens_prompt, tokens_completion, tokens_total, created_at
+      ) VALUES (?, ?, NULL, 'regen', ?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(
+      crypto.randomUUID(),
+      args.userId,
+      args.path,
+      args.provider,
+      tokens.tokens_prompt,
+      tokens.tokens_completion,
+      tokens.tokens_total,
+      createdAt,
+    )
+    .run();
 }
 
 /** Resolve job → user + progress, then insert (idempotent on job_id). */

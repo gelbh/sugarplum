@@ -16,6 +16,7 @@ import {
   REGEN_CARD_TYPES,
   resolveRegenLlm,
 } from "../generation/card-regen";
+import { recordRegenUsageEvent } from "../generation/usage";
 import { requireOwnedDeck } from "../materials/routes";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
 
@@ -650,9 +651,9 @@ cardRoutes.post("/:id/regen", async (c) => {
   }
 
   const existingFront = parseJsonField<unknown>(row.front_json, null);
-  let draft: Awaited<ReturnType<typeof generateOneCard>>;
+  let generated: Awaited<ReturnType<typeof generateOneCard>>;
   try {
-    draft = await generateOneCard({
+    generated = await generateOneCard({
       text: sourceText,
       type: parsed.data.type,
       existingFront:
@@ -667,6 +668,7 @@ cardRoutes.post("/:id/regen", async (c) => {
     });
   }
 
+  const { draft, usage } = generated;
   const nextBackJson =
     draft.type === "mcq"
       ? encodeStoredBack(draft.type, draft.back, draft.options)
@@ -691,6 +693,18 @@ cardRoutes.post("/:id/regen", async (c) => {
       cardId,
     )
     .run();
+
+  try {
+    await recordRegenUsageEvent(db, {
+      userId,
+      path: llmBundle.path,
+      provider: llmBundle.provider,
+      usage,
+      createdAt: updatedAt,
+    });
+  } catch {
+    // best-effort metering; card already updated
+  }
 
   return c.json(
     serializeCard({

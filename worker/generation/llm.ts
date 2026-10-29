@@ -48,11 +48,94 @@ export type CompleteInput = {
   provider: string;
 };
 
+/** Best-effort token counts from a provider response (nulls when silent). */
+export type LlmTokenUsage = {
+  prompt_tokens?: number | null;
+  completion_tokens?: number | null;
+  total_tokens?: number | null;
+};
+
+export type CompleteResult = {
+  text: string;
+  usage?: LlmTokenUsage | null;
+};
+
 /** Flashcard generate + freeform complete (critique / custom prompts). */
 export type LlmAdapter = {
   generateDrafts(input: GenerateDraftsInput): Promise<CardDraft[]>;
-  complete(input: CompleteInput): Promise<string>;
+  complete(input: CompleteInput): Promise<CompleteResult>;
 };
+
+function asUsageInt(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  return Math.trunc(value);
+}
+
+/** OpenAI-style `usage` object. */
+export function usageFromOpenAiShape(body: unknown): LlmTokenUsage | null {
+  if (!body || typeof body !== "object") return null;
+  const usage = (body as { usage?: unknown }).usage;
+  if (!usage || typeof usage !== "object") return null;
+  const u = usage as Record<string, unknown>;
+  const prompt_tokens = asUsageInt(u.prompt_tokens);
+  const completion_tokens = asUsageInt(u.completion_tokens);
+  let total_tokens = asUsageInt(u.total_tokens);
+  if (
+    total_tokens == null &&
+    (prompt_tokens != null || completion_tokens != null)
+  ) {
+    total_tokens = (prompt_tokens ?? 0) + (completion_tokens ?? 0);
+  }
+  if (
+    prompt_tokens == null &&
+    completion_tokens == null &&
+    total_tokens == null
+  ) {
+    return null;
+  }
+  return { prompt_tokens, completion_tokens, total_tokens };
+}
+
+/** Anthropic Messages `usage` (`input_tokens` / `output_tokens`). */
+export function usageFromAnthropicShape(body: unknown): LlmTokenUsage | null {
+  if (!body || typeof body !== "object") return null;
+  const usage = (body as { usage?: unknown }).usage;
+  if (!usage || typeof usage !== "object") return null;
+  const u = usage as Record<string, unknown>;
+  const prompt_tokens = asUsageInt(u.input_tokens);
+  const completion_tokens = asUsageInt(u.output_tokens);
+  if (prompt_tokens == null && completion_tokens == null) return null;
+  return {
+    prompt_tokens,
+    completion_tokens,
+    total_tokens: (prompt_tokens ?? 0) + (completion_tokens ?? 0),
+  };
+}
+
+/** Google `usageMetadata` token counts. */
+export function usageFromGoogleShape(body: unknown): LlmTokenUsage | null {
+  if (!body || typeof body !== "object") return null;
+  const meta = (body as { usageMetadata?: unknown }).usageMetadata;
+  if (!meta || typeof meta !== "object") return null;
+  const m = meta as Record<string, unknown>;
+  const prompt_tokens = asUsageInt(m.promptTokenCount);
+  const completion_tokens = asUsageInt(m.candidatesTokenCount);
+  let total_tokens = asUsageInt(m.totalTokenCount);
+  if (
+    total_tokens == null &&
+    (prompt_tokens != null || completion_tokens != null)
+  ) {
+    total_tokens = (prompt_tokens ?? 0) + (completion_tokens ?? 0);
+  }
+  if (
+    prompt_tokens == null &&
+    completion_tokens == null &&
+    total_tokens == null
+  ) {
+    return null;
+  }
+  return { prompt_tokens, completion_tokens, total_tokens };
+}
 
 export function isUserLlmProvider(value: string): value is UserLlmProvider {
   return (USER_LLM_PROVIDERS as readonly string[]).includes(value);
@@ -118,23 +201,27 @@ export async function withCompactTruncationRetry<T>(
 /** Text generate: full prompt, then one compact retry on mid-JSON truncation. */
 async function generateTextDraftsWithCompactRetry(
   text: string,
-  completeOnce: (system: string, user: string) => Promise<string>,
+  completeOnce: (system: string, user: string) => Promise<CompleteResult>,
   topicHints: string[] = [],
 ): Promise<CardDraft[]> {
   return withCompactTruncationRetry(
     async () =>
       parseCardsPayload(
-        await completeOnce(
-          GENERATE_SYSTEM_PROMPT,
-          appendTopicHintsSuffix(userPromptForJson(text), topicHints),
-        ),
+        (
+          await completeOnce(
+            GENERATE_SYSTEM_PROMPT,
+            appendTopicHintsSuffix(userPromptForJson(text), topicHints),
+          )
+        ).text,
       ),
     async () =>
       parseCardsPayload(
-        await completeOnce(
-          GENERATE_COMPACT_SYSTEM_PROMPT,
-          appendTopicHintsSuffix(generateCompactUserPrompt(text), topicHints),
-        ),
+        (
+          await completeOnce(
+            GENERATE_COMPACT_SYSTEM_PROMPT,
+            appendTopicHintsSuffix(generateCompactUserPrompt(text), topicHints),
+          )
+        ).text,
       ),
   );
 }
@@ -397,9 +484,12 @@ export function mockLlmAdapter(): LlmAdapter {
     },
     async complete() {
       // Keep the fixed generate set so consumer + pipeline tests get 3 drafts.
-      return JSON.stringify({
-        cards: textDrafts("mock critique excerpt"),
-      });
+      return {
+        text: JSON.stringify({
+          cards: textDrafts("mock critique excerpt"),
+        }),
+        usage: null,
+      };
     },
   };
 }
@@ -440,7 +530,7 @@ function openAiAdapter(): LlmAdapter {
     };
     const content = body.choices?.[0]?.message?.content;
     if (!content) throw new Error("LLM returned empty content");
-    return content;
+    return { text: content, usage: usageFromOpenAiShape(body) };
   }
 
   return {
@@ -538,7 +628,7 @@ function anthropicAdapter(): LlmAdapter {
     const textBlock = body.content?.find((b) => b.type === "text");
     const content = textBlock?.text;
     if (!content) throw new Error("LLM returned empty content");
-    return content;
+    return { text: content, usage: usageFromAnthropicShape(body) };
   }
 
   return {
@@ -639,7 +729,7 @@ function googleAdapter(): LlmAdapter {
     };
     const content = body.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!content) throw new Error("LLM returned empty content");
-    return content;
+    return { text: content, usage: usageFromGoogleShape(body) };
   }
 
   return {

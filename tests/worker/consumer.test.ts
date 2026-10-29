@@ -100,9 +100,12 @@ function critiqueKeepFronts(keepFronts: Set<string> | string[]) {
     const end = user.indexOf("\n\nReturn only", jsonStart);
     const raw = end >= 0 ? user.slice(jsonStart, end) : user.slice(jsonStart);
     const candidates = JSON.parse(raw) as CardDraft[];
-    return JSON.stringify({
-      cards: candidates.filter((c) => allow.has(c.front)),
-    });
+    return {
+      text: JSON.stringify({
+        cards: candidates.filter((c) => allow.has(c.front)),
+      }),
+      usage: null,
+    };
   };
 }
 
@@ -115,7 +118,10 @@ function critiqueEchoCandidates() {
     const jsonStart = start + marker.length;
     const end = user.indexOf("\n\nReturn only", jsonStart);
     const raw = end >= 0 ? user.slice(jsonStart, end) : user.slice(jsonStart);
-    return JSON.stringify({ cards: JSON.parse(raw) });
+    return {
+      text: JSON.stringify({ cards: JSON.parse(raw) }),
+      usage: null,
+    };
   };
 }
 
@@ -732,7 +738,10 @@ describe("processGenerateJob free path", () => {
     };
     const llm = spyLlm({
       generateDrafts: async () => [mcqDraft],
-      complete: async () => JSON.stringify({ cards: [] }),
+      complete: async () => ({
+        text: JSON.stringify({ cards: [] }),
+        usage: null,
+      }),
     });
     const msg = await seedPasteJob(
       env,

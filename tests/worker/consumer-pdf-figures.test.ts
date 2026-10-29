@@ -74,7 +74,10 @@ function visionLlm() {
   );
   return {
     generateDrafts,
-    complete: vi.fn(async () => JSON.stringify({ cards: [] })),
+    complete: vi.fn(async () => ({
+      text: JSON.stringify({ cards: [] }),
+      usage: null,
+    })),
   } satisfies LlmAdapter;
 }
 

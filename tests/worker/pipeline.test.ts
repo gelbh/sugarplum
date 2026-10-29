@@ -43,16 +43,22 @@ function mockPipelineLlm(opts: {
       ];
     }),
     complete: vi.fn(async (args) => {
-      if (opts.complete) return opts.complete(args);
+      if (opts.complete) {
+        const out = await opts.complete(args);
+        return typeof out === "string" ? { text: out, usage: null } : out;
+      }
       // Default: keep whatever cards appear after CANDIDATES in the user prompt
-      return JSON.stringify({
-        cards: [
-          validDraft({
-            front: "What produces ATP?",
-            back: "mitochondria",
-          }),
-        ],
-      });
+      return {
+        text: JSON.stringify({
+          cards: [
+            validDraft({
+              front: "What produces ATP?",
+              back: "mitochondria",
+            }),
+          ],
+        }),
+        usage: null,
+      };
     }),
   };
 }

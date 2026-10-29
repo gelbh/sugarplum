@@ -180,7 +180,7 @@ export async function critiqueChunk(
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const raw = await llm.complete({ system, user, apiKey, provider });
-      return parseCritiqueSurvivors(raw);
+      return parseCritiqueSurvivors(raw.text);
     } catch {
       // retry once, then fall back
     }
