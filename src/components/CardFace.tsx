@@ -2,7 +2,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-import type { MouseEvent, Ref } from "react";
+import type { MouseEvent, ReactNode, Ref } from "react";
 import { mediaUrl, type StudyRating } from "../api/client";
 import {
   blankClozeFront,
@@ -104,6 +104,51 @@ function FaceOverline({ label }: { label: string }) {
       <Typography component="div" sx={OVERLINE_SX}>
         {label}
       </Typography>
+    </Box>
+  );
+}
+
+/** Shared host + playing-card plate (MCQ and flip faces). */
+function StudyCardPlate({
+  children,
+  perspective,
+  onPlateClick,
+  plateSx,
+}: {
+  children: ReactNode;
+  perspective?: string;
+  onPlateClick?: () => void;
+  plateSx?: Record<string, unknown>;
+}) {
+  return (
+    <Box
+      sx={{
+        ...CARD_COLUMN_SX,
+        perspective,
+        maxHeight: "100%",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Box
+        className="sp-playing-card"
+        onClick={onPlateClick}
+        sx={{
+          position: "relative",
+          width: "auto",
+          maxWidth: "min(100%, 360px)",
+          maxHeight: "100%",
+          height: "min(100%, 504px)",
+          aspectRatio: "var(--sp-card-aspect)",
+          borderRadius: 2,
+          bgcolor: "transparent",
+          ...plateSx,
+        }}
+      >
+        {children}
+      </Box>
     </Box>
   );
 }
@@ -223,14 +268,29 @@ export default function CardFace({
   options,
   onGrade,
 }: Props) {
-  const isMcq = type === "mcq";
+  if (type === "mcq") {
+    if (!cardId || !onGrade) return null;
+    return (
+      <StudyCardPlate>
+        <CardFaceMcqBody
+          cardId={cardId}
+          front={front}
+          back={back}
+          options={options}
+          disabled={disabled}
+          onGrade={onGrade}
+        />
+      </StudyCardPlate>
+    );
+  }
+
   const isCloze = type === "cloze";
   const questionFront = isCloze ? blankClozeFront(front) : front;
   const clozeExtra = isCloze ? clozeExtraSubtitle(back) : null;
   const answerText = isCloze ? (extractClozeAnswer(front) ?? "") : back;
   const imageKey = occlusion?.imageKey ?? mediaR2Keys[0];
-  const canReveal = !isMcq && !revealed && !disabled;
-  const canFlipBack = !isMcq && revealed && !disabled;
+  const canReveal = !revealed && !disabled;
+  const canFlipBack = revealed && !disabled;
 
   const reveal = () => {
     if (!canReveal) return;
@@ -253,73 +313,22 @@ export default function CardFace({
   };
 
   return (
-    <Box
-      sx={{
-        ...CARD_COLUMN_SX,
-        perspective: isMcq ? undefined : "1000px",
-        maxHeight: "100%",
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+    <StudyCardPlate
+      perspective="1000px"
+      onPlateClick={canReveal ? reveal : canFlipBack ? flipBack : undefined}
+      plateSx={{
+        transformStyle: "preserve-3d",
+        transition: "transform 0.45s ease",
+        transform: revealed ? "rotateY(180deg)" : "rotateY(0deg)",
+        cursor: canReveal || canFlipBack ? "pointer" : "default",
+        "@media (prefers-reduced-motion: reduce)": {
+          transform: "none",
+          transition: "none",
+          minHeight: 280,
+          maxHeight: "100%",
+        },
       }}
     >
-      <Box
-        className="sp-playing-card"
-        onClick={
-          isMcq
-            ? undefined
-            : canReveal
-              ? reveal
-              : canFlipBack
-                ? flipBack
-                : undefined
-        }
-        sx={{
-          position: "relative",
-          width: "auto",
-          maxWidth: "min(100%, 360px)",
-          maxHeight: "100%",
-          height: "min(100%, 504px)",
-          aspectRatio: "var(--sp-card-aspect)",
-          borderRadius: 2,
-          bgcolor: "transparent",
-          transformStyle: isMcq ? undefined : "preserve-3d",
-          transition: isMcq ? undefined : "transform 0.45s ease",
-          transform: isMcq
-            ? "none"
-            : revealed
-              ? "rotateY(180deg)"
-              : "rotateY(0deg)",
-          cursor: isMcq
-            ? "default"
-            : canReveal || canFlipBack
-              ? "pointer"
-              : "default",
-          ...(!isMcq
-            ? {
-                "@media (prefers-reduced-motion: reduce)": {
-                  transform: "none",
-                  transition: "none",
-                  minHeight: 280,
-                  maxHeight: "100%",
-                },
-              }
-            : {}),
-        }}
-      >
-        {isMcq && cardId && onGrade ? (
-          <CardFaceMcqBody
-            cardId={cardId}
-            front={front}
-            back={back}
-            options={options}
-            disabled={disabled}
-            onGrade={onGrade}
-          />
-        ) : null}
-        {!isMcq ? (
-          <>
         <Paper
           elevation={0}
           aria-hidden={revealed}
@@ -469,9 +478,6 @@ export default function CardFace({
             ) : null}
           </Box>
         </Paper>
-          </>
-        ) : null}
-      </Box>
-    </Box>
+    </StudyCardPlate>
   );
 }
