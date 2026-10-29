@@ -505,7 +505,9 @@ export default function LibraryPage() {
             </Stack>
             {subjects.length === 0 ? (
               <Typography variant="body2" color="text.secondary">
-                No subjects yet. Use Add material to create a subject and deck.
+                {showCreateFlow
+                  ? "No subjects yet. Continue in Add material below."
+                  : "No subjects yet. Use Add material to create a subject and deck."}
               </Typography>
             ) : (
               <Stack
