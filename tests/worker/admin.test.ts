@@ -3,7 +3,10 @@ import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { hashPassword } from "../../worker/auth/password";
 import { createTestEnv } from "./test-env";
-import { parseAdminEmails } from "../../worker/admin/allowlist";
+import {
+  isAdminUser,
+  parseAdminEmails,
+} from "../../worker/admin/allowlist";
 
 describe("parseAdminEmails", () => {
   it("lowercases and splits", () => {
@@ -15,6 +18,73 @@ describe("parseAdminEmails", () => {
   it("empty → empty set", () => {
     expect(parseAdminEmails(undefined).size).toBe(0);
     expect(parseAdminEmails("").size).toBe(0);
+  });
+});
+
+describe("isAdminUser", () => {
+  it("true when allowlisted and google-linked", () => {
+    expect(
+      isAdminUser(
+        { email: "Ops@Example.com", oauth_subject: "sub-1" },
+        "ops@example.com",
+      ),
+    ).toBe(true);
+  });
+  it("false when allowlisted but oauth_subject null", () => {
+    expect(
+      isAdminUser(
+        { email: "ops@example.com", oauth_subject: null },
+        "ops@example.com",
+      ),
+    ).toBe(false);
+  });
+  it("false when empty ADMIN_EMAILS", () => {
+    expect(
+      isAdminUser(
+        { email: "ops@example.com", oauth_subject: "sub-1" },
+        undefined,
+      ),
+    ).toBe(false);
+  });
+});
+
+describe("GET /api/auth/me is_admin", () => {
+  it("true for allowlisted google-linked session", async () => {
+    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    env.seedUser({
+      id: "u1",
+      email: "ops@example.com",
+      password_hash: null,
+      oauth_subject: "google-sub",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSession("s1", "u1");
+    const res = await app.request(
+      "/api/auth/me",
+      { headers: { cookie: `${SESSION_COOKIE}=s1` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ is_admin: true });
+  });
+
+  it("false for allowlisted password-only user", async () => {
+    const env = createTestEnv({ adminEmails: "ops@example.com" });
+    env.seedUser({
+      id: "u1",
+      email: "ops@example.com",
+      password_hash: "x",
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSession("s1", "u1");
+    const res = await app.request(
+      "/api/auth/me",
+      { headers: { cookie: `${SESSION_COOKIE}=s1` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ is_admin: false });
   });
 });
 
