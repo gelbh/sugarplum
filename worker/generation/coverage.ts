@@ -39,9 +39,9 @@ function lineIsCovered(line: string, drafts: CardDraft[]): boolean {
   if (!needle) return true;
   for (const draft of drafts) {
     for (const part of draftParts(draft)) {
-      // Line covered if it contains a draft field or a field contains the line
-      // (excerpt often omits trailing punctuation). Skip tiny parts as needles.
+      // Tiny parts as needles over-mark multi-fact lines.
       if (part.length >= GAP_LINE_MIN && needle.includes(part)) return true;
+      // Excerpt often omits trailing punctuation vs the material line.
       if (part.includes(needle)) return true;
     }
   }
