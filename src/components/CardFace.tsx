@@ -9,6 +9,7 @@ import {
   clozeExtraSubtitle,
   extractClozeAnswer,
 } from "../lib/clozeFormat";
+import { CARD_COLUMN_SX, FACE_SANS, FACE_SX, OVERLINE_SX } from "./studyFaceSx";
 
 /** Normalized 0–1 hide_one box over the study image until reveal. */
 export type OcclusionMaskBox = {
@@ -41,35 +42,6 @@ type Props = {
   showAnswerRef?: Ref<HTMLButtonElement | null>;
 };
 
-const FACE_SANS = '"Source Sans 3", "Helvetica", "Arial", sans-serif';
-
-const OVERLINE_SX = {
-  fontFamily: FACE_SANS,
-  fontSize: "0.6875rem",
-  fontWeight: 500,
-  letterSpacing: "0.22em",
-  textTransform: "uppercase" as const,
-  color: "inherit",
-  opacity: 0.55,
-  textAlign: "center" as const,
-  lineHeight: 1.2,
-};
-
-const FACE_SX = {
-  p: 3,
-  height: "100%",
-  display: "flex",
-  flexDirection: "column",
-  boxSizing: "border-box",
-  borderRadius: 2,
-  boxShadow: "0 12px 40px rgba(0, 0, 0, 0.35)",
-  backfaceVisibility: "hidden",
-  WebkitBackfaceVisibility: "hidden",
-  bgcolor: "var(--sp-card-face)",
-  color: "var(--sp-stage-bg)",
-  fontFamily: FACE_SANS,
-} as const;
-
 const FACE_BODY_SX = {
   overflowX: "hidden",
   overflowY: "auto",
@@ -99,6 +71,9 @@ const PROMPT_SX = {
 function faceMotionSx(revealedFace: boolean, thisFaceVisible: boolean) {
   return {
     ...FACE_SX,
+    height: "100%",
+    backfaceVisibility: "hidden" as const,
+    WebkitBackfaceVisibility: "hidden" as const,
     position: "absolute" as const,
     inset: 0,
     ...(revealedFace ? { transform: "rotateY(180deg)" } : {}),
@@ -270,10 +245,8 @@ export default function CardFace({
   return (
     <Box
       sx={{
+        ...CARD_COLUMN_SX,
         perspective: "1000px",
-        width: "100%",
-        maxWidth: 360,
-        mx: "auto",
       }}
     >
       <Box

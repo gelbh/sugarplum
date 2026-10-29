@@ -8,8 +8,7 @@ import ArrowDownwardRoundedIcon from "@mui/icons-material/ArrowDownwardRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
 import type { StudyRating } from "../api/client";
-
-const FACE_SANS = '"Source Sans 3", "Helvetica", "Arial", sans-serif';
+import { CARD_COLUMN_SX, FACE_SANS } from "./studyFaceSx";
 
 /** Icons mirror swipe directions (← Again · ↓ Hard · → Good · ↑ Easy). */
 const GRADES: {
@@ -37,7 +36,7 @@ export default function GradeButtons({
   showSwipeHint = false,
 }: Props) {
   return (
-    <Stack spacing={1.25} sx={{ width: "100%" }}>
+    <Stack spacing={1.25} sx={CARD_COLUMN_SX}>
       {showSwipeHint ? (
         <Typography
           variant="caption"

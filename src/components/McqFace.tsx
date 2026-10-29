@@ -10,8 +10,8 @@ import {
   mcqTapRating,
   shuffledMcqOptions,
 } from "../study/mcqStudy";
+import { CARD_COLUMN_SX, FACE_SANS, FACE_SX, OVERLINE_SX } from "./studyFaceSx";
 
-const FACE_SANS = '"Source Sans 3", "Helvetica", "Arial", sans-serif';
 const FEEDBACK_MS = 650;
 
 type Props = {
@@ -75,45 +75,21 @@ export default function McqFace({
   };
 
   return (
-    <Box
-      sx={{
-        width: "100%",
-        maxWidth: 360,
-        mx: "auto",
-      }}
-    >
+    <Box sx={CARD_COLUMN_SX}>
       <Paper
         elevation={0}
         className="sp-playing-card"
         sx={{
-          p: 3,
-          borderRadius: 2,
-          boxShadow: "0 12px 40px rgba(0, 0, 0, 0.35)",
-          bgcolor: "var(--sp-card-face)",
-          color: "var(--sp-stage-bg)",
-          fontFamily: FACE_SANS,
+          ...FACE_SX,
           minHeight: 280,
           maxHeight: "70vh",
-          display: "flex",
-          flexDirection: "column",
-          boxSizing: "border-box",
         }}
       >
         <Typography
           component="div"
-          sx={{
-            fontFamily: FACE_SANS,
-            fontSize: "0.6875rem",
-            fontWeight: 500,
-            letterSpacing: "0.22em",
-            textTransform: "uppercase",
-            opacity: 0.55,
-            textAlign: "center",
-            mb: 2,
-            flexShrink: 0,
-          }}
+          sx={{ ...OVERLINE_SX, mb: 2, flexShrink: 0 }}
         >
-          Question
+          Front
         </Typography>
         <Box
           data-card-face-content
@@ -157,18 +133,17 @@ export default function McqFace({
                 const isPicked = picked === option;
                 const isCorrect = option.trim() === back.trim();
                 const locked = picked !== null;
-                // Hex on ivory face: theme success/error.main shift under dark scheme.
                 let borderColor = "currentColor";
                 let bgcolor = "transparent";
                 let opacity = 0.88;
                 if (locked) {
                   if (isCorrect) {
-                    borderColor = "#2e7d32";
-                    bgcolor = "rgba(46, 125, 50, 0.18)";
+                    borderColor = "#5B2C6F";
+                    bgcolor = "rgba(91, 44, 111, 0.16)";
                     opacity = 1;
                   } else if (isPicked) {
-                    borderColor = "#c62828";
-                    bgcolor = "rgba(211, 47, 47, 0.14)";
+                    borderColor = "#C4A574";
+                    bgcolor = "rgba(196, 165, 116, 0.22)";
                     opacity = 1;
                   } else {
                     opacity = 0.45;
