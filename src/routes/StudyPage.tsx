@@ -23,12 +23,14 @@ import McqFace from "../components/McqFace";
 import {
   ApiError,
   listDecks,
+  commitStudyPacing,
   listDueCards,
   listSubjects,
   me,
   reviewCard,
   type CardDraftView,
   type OcclusionFrontView,
+  type StudyQueueMeta,
   type StudyRating,
 } from "../api/client";
 import { isGuest } from "../guest/session";
@@ -43,6 +45,8 @@ import {
   saveDueCache,
   type DueScopeOpts,
 } from "../study/dueCache";
+import { bumpIntroBonus, getIntroBonus } from "../study/introBonus";
+import { clientLocalDay } from "../study/localDay";
 import { enqueuePendingGrade, pendingCardIdSet } from "../study/pendingGrades";
 import {
   occlusionRevealAnswer,
@@ -56,6 +60,25 @@ import { isNetworkGradeError } from "../study/runPendingFlush";
 import { usePendingGradeSync } from "../study/usePendingGradeSync";
 import { useStudyZenMode } from "../study/useStudyZenMode";
 import { warmDueMedia } from "../study/warmDueMedia";
+
+function policyBannerCopy(meta: StudyQueueMeta): string | null {
+  const held = meta.heldIntroCount > 0;
+  const deferred = meta.deferredCount > 0;
+  if (!held && !deferred) return null;
+  const parts: string[] = [];
+  if (held) {
+    const totalNew = meta.introUsed + meta.heldIntroCount;
+    parts.push(
+      `Showing ${meta.introUsed} of ${totalNew} new cards today (intro budget ${meta.introBudget}).`,
+    );
+  }
+  if (deferred) {
+    parts.push(
+      `${meta.deferredCount} ${meta.deferredCount === 1 ? "review was" : "reviews were"} deferred to keep today's load manageable.`,
+    );
+  }
+  return parts.join(" ");
+}
 
 type PointerStart = {
   id: number;
@@ -149,6 +172,11 @@ export default function StudyPage() {
   const [scopeLabel, setScopeLabel] = useState<string | null>(null);
   /** True once this mount showed at least one due card (scoped session-complete). */
   const [hadCards, setHadCards] = useState(false);
+  const [queueMeta, setQueueMeta] = useState<StudyQueueMeta | null>(null);
+  const introBonusRef = useRef<number | undefined>(undefined);
+  if (introBonusRef.current === undefined) {
+    introBonusRef.current = getIntroBonus();
+  }
   const {
     zen,
     fullscreenUnavailable,
@@ -170,6 +198,11 @@ export default function StudyPage() {
     trackOnMount: true,
   });
   const { busy, begin, end } = useTrackedOp("Saving grade…");
+  const {
+    busy: studyMoreBusy,
+    begin: beginStudyMore,
+    end: endStudyMore,
+  } = useTrackedOp("Loading more…");
 
   useEffect(() => {
     if (!busy) busyRef.current = false;
@@ -188,13 +221,28 @@ export default function StudyPage() {
   );
 
   const load = useCallback(
-    async (uid: string) => {
+    async (uid: string, bonusOverride?: number) => {
       const wanted = cardIdFromSearch(window.location.search);
+      const bonus = bonusOverride ?? introBonusRef.current ?? 0;
+      const dueOpts = {
+        ...scopeOpts,
+        localDay: clientLocalDay(),
+        ...(bonus > 0 ? { introBonus: bonus } : {}),
+      };
       try {
-        const due = await listDueCards(scopeOpts);
+        const { cards: due, meta, pendingDeferrals } =
+          await listDueCards(dueOpts);
+        if ((pendingDeferrals?.length ?? 0) > 0) {
+          try {
+            await commitStudyPacing(dueOpts);
+          } catch {
+            /* peek queue still usable; dues stay until next commit */
+          }
+        }
         saveDueCache(uid, due, scopeOpts);
         warmDueMedia(due);
         applyDueQueue(due, wanted);
+        setQueueMeta(meta);
         setOfflineCopy(false);
       } catch (err) {
         const cached = loadDueCache(uid, scopeOpts);
@@ -234,6 +282,23 @@ export default function StudyPage() {
     },
     onDueRefreshFailed: (uid) => load(uid),
   });
+
+  const onStudyMore = useCallback(async () => {
+    if (!userId || studyMoreBusy || offlineCopy) return;
+    setError(null);
+    beginStudyMore();
+    try {
+      const next = bumpIntroBonus();
+      introBonusRef.current = next;
+      await load(userId, next);
+      endStudyMore();
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Failed to load more cards",
+      );
+      endStudyMore(false);
+    }
+  }, [beginStudyMore, endStudyMore, load, offlineCopy, studyMoreBusy, userId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -306,6 +371,9 @@ export default function StudyPage() {
   const occlusionParts = current
     ? occlusionStudyParts(current)
     : { face: undefined, answer: "" };
+  const bannerCopy = queueMeta ? policyBannerCopy(queueMeta) : null;
+  const canStudyMore =
+    !offlineCopy && (queueMeta?.heldIntroCount ?? 0) > 0;
 
   const reveal = useCallback(() => {
     setRevealed(true);
@@ -368,7 +436,9 @@ export default function StudyPage() {
       }
 
       try {
-        await reviewCard(current.id, rating);
+        await reviewCard(current.id, rating, {
+          localDay: clientLocalDay(),
+        });
         advanceAfterGrade(fromMcq);
         end();
         return true;
@@ -621,36 +691,33 @@ export default function StudyPage() {
               Fullscreen unavailable
             </Alert>
           ) : null}
+          {bannerCopy && !zen ? (
+            <Alert
+              severity="info"
+              action={
+                canStudyMore && current ? (
+                  <Button
+                    color="inherit"
+                    size="small"
+                    disabled={studyMoreBusy}
+                    onClick={() => void onStudyMore()}
+                  >
+                    {studyMoreBusy ? "Loading…" : "Study more"}
+                  </Button>
+                ) : undefined
+              }
+            >
+              {bannerCopy}
+            </Alert>
+          ) : null}
 
           {!current ? (
             scopeOpts && !hadCards ? (
-              <Alert severity="info">
-                No cards due in this{" "}
-                {scopeOpts.deckId ? "deck" : "subject"}
-                {scopeLabel ? ` (${scopeLabel})` : ""}.{" "}
-                <Link
-                  href={
-                    scopeOpts.deckId
-                      ? `/library/decks/${encodeURIComponent(scopeOpts.deckId)}`
-                      : `/library/subjects/${encodeURIComponent(scopeOpts.subjectId!)}`
-                  }
-                  underline="hover"
-                  onClick={(ev) => {
-                    ev.preventDefault();
-                    navigate(
-                      scopeOpts.deckId
-                        ? `/library/decks/${encodeURIComponent(scopeOpts.deckId)}`
-                        : `/library/subjects/${encodeURIComponent(scopeOpts.subjectId!)}`,
-                    );
-                  }}
-                >
-                  Back to {scopeOpts.deckId ? "deck" : "subject"}
-                </Link>
-              </Alert>
-            ) : (
-              <Alert severity="success">
-                Session complete.{" "}
-                {scopeOpts ? (
+              <Stack spacing={1.5}>
+                <Alert severity="info">
+                  No cards due in this{" "}
+                  {scopeOpts.deckId ? "deck" : "subject"}
+                  {scopeLabel ? ` (${scopeLabel})` : ""}.{" "}
                   <Link
                     href={
                       scopeOpts.deckId
@@ -669,17 +736,62 @@ export default function StudyPage() {
                   >
                     Back to {scopeOpts.deckId ? "deck" : "subject"}
                   </Link>
-                ) : (
+                </Alert>
+                {canStudyMore ? (
+                  <Button
+                    variant="outlined"
+                    disabled={studyMoreBusy}
+                    onClick={() => void onStudyMore()}
+                  >
+                    {studyMoreBusy ? "Loading…" : "Study more"}
+                  </Button>
+                ) : null}
+              </Stack>
+            ) : (
+              <Stack spacing={1.5}>
+                <Alert severity="success">
+                  Session complete.{" "}
+                  {scopeOpts ? (
+                    <Link
+                      href={
+                        scopeOpts.deckId
+                          ? `/library/decks/${encodeURIComponent(scopeOpts.deckId)}`
+                          : `/library/subjects/${encodeURIComponent(scopeOpts.subjectId!)}`
+                      }
+                      underline="hover"
+                      onClick={(ev) => {
+                        ev.preventDefault();
+                        navigate(
+                          scopeOpts.deckId
+                            ? `/library/decks/${encodeURIComponent(scopeOpts.deckId)}`
+                            : `/library/subjects/${encodeURIComponent(scopeOpts.subjectId!)}`,
+                        );
+                      }}
+                    >
+                      Back to {scopeOpts.deckId ? "deck" : "subject"}
+                    </Link>
+                  ) : (
+                    <Button
+                      variant="contained"
+                      href="/today"
+                      startIcon={<TodayIcon fontSize="small" />}
+                      size="small"
+                    >
+                      Today
+                    </Button>
+                  )}
+                </Alert>
+                {canStudyMore ? (
                   <Button
                     variant="contained"
-                    href="/today"
-                    startIcon={<TodayIcon fontSize="small" />}
-                    size="small"
+                    color="primary"
+                    disabled={studyMoreBusy}
+                    onClick={() => void onStudyMore()}
                   >
-                    Today
+                    {studyMoreBusy ? "Loading…" : "Study more"}
                   </Button>
-                )}
-              </Alert>
+                ) : null}
+              </Stack>
             )
           ) : (
             <>

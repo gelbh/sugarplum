@@ -1,0 +1,7 @@
+CREATE TABLE user_study_prefs (
+  user_id TEXT PRIMARY KEY NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  intro_budget INTEGER NOT NULL DEFAULT 20,
+  review_budget INTEGER NOT NULL DEFAULT 200,
+  r_floor REAL NOT NULL DEFAULT 0.80,
+  updated_at TEXT NOT NULL
+);

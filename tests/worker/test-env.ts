@@ -59,6 +59,20 @@ type UserSecretRow = {
   updated_at: string;
 };
 
+type UserStudyPrefsRow = {
+  user_id: string;
+  intro_budget: number;
+  review_budget: number;
+  r_floor: number;
+  updated_at: string;
+};
+
+type UserStudyDayRow = {
+  user_id: string;
+  day: string;
+  intros_used: number;
+};
+
 export type CardRow = {
   id: string;
   deck_id: string;
@@ -122,6 +136,7 @@ export type TestEnv = Env & {
   seedMaterial: (row: MaterialRow) => void;
   seedSession: (id: string, userId: string, ttlMs?: number) => void;
   seedUserSecret: (row: UserSecretRow) => void;
+  seedUserStudyPrefs: (row: UserStudyPrefsRow) => void;
   seedCard: (row: CardRow) => void;
   seedGenerationJob: (row: GenerationJobRow) => void;
   seedSchedule: (row: ScheduleRow) => void;
@@ -131,6 +146,7 @@ export type TestEnv = Env & {
   getExportJobs: () => ExportJobRow[];
   getGenerationJobs: () => GenerationJobRow[];
   getUserSecrets: () => UserSecretRow[];
+  getUserStudyPrefs: () => UserStudyPrefsRow[];
   getCards: () => CardRow[];
   getSchedules: () => ScheduleRow[];
   getReviewLogs: () => ReviewLogRow[];
@@ -147,6 +163,8 @@ export function createTestEnv(opts?: {
   const materials = new Map<string, MaterialRow>();
   const generationJobs = new Map<string, GenerationJobRow>();
   const userSecrets = new Map<string, UserSecretRow>();
+  const userStudyPrefs = new Map<string, UserStudyPrefsRow>();
+  const userStudyDay = new Map<string, UserStudyDayRow>();
   const cards = new Map<string, CardRow>();
   const schedules = new Map<string, ScheduleRow>();
   const reviewLogs: ReviewLogRow[] = [];
@@ -581,6 +599,28 @@ export function createTestEnv(opts?: {
             : null;
         }
         if (
+          normalized.includes("FROM user_study_prefs") &&
+          normalized.includes("WHERE user_id =")
+        ) {
+          const row = userStudyPrefs.get(bound[0] as string);
+          return row
+            ? ({
+                intro_budget: row.intro_budget,
+                review_budget: row.review_budget,
+                r_floor: row.r_floor,
+              } as T)
+            : null;
+        }
+        if (
+          normalized.includes("FROM user_study_day") &&
+          normalized.includes("WHERE user_id =") &&
+          normalized.includes("AND day =")
+        ) {
+          const key = `${bound[0] as string}\0${bound[1] as string}`;
+          const row = userStudyDay.get(key);
+          return row ? ({ intros_used: row.intros_used } as T) : null;
+        }
+        if (
           normalized.includes("FROM cards c") &&
           normalized.includes("INNER JOIN decks d") &&
           normalized.includes("c.id =") &&
@@ -937,14 +977,23 @@ export function createTestEnv(opts?: {
           normalized.includes("c.status =") &&
           normalized.includes("s.due <=")
         ) {
-          const userId = bound[0] as string;
-          const status = bound[1] as string;
-          const now = bound[2] as string;
+          // With again_14d subquery: [since, userId, status, now, ...scope]
+          // Legacy: [userId, status, now, ...scope]
+          const hasAgain14d =
+            normalized.includes("again_14d") ||
+            (normalized.includes("FROM review_logs rl") &&
+              normalized.includes("rating = 1"));
+          const bindOffset = hasAgain14d ? 1 : 0;
+          const since = hasAgain14d ? (bound[0] as string) : null;
+          const userId = bound[bindOffset] as string;
+          const status = bound[bindOffset + 1] as string;
+          const now = bound[bindOffset + 2] as string;
+          const scopeBound = bound[bindOffset + 3] as string | undefined;
           const filterDeckId = normalized.includes("c.deck_id =")
-            ? (bound[3] as string)
+            ? scopeBound
             : null;
           const filterSubjectId = normalized.includes("d.subject_id =")
-            ? (bound[3] as string)
+            ? scopeBound
             : null;
           const rows = [...cards.values()]
             .filter((c) => {
@@ -959,18 +1008,50 @@ export function createTestEnv(opts?: {
               if (!schedule || schedule.due > now) return false;
               return true;
             })
-            .map((c) => ({ ...c, due: schedules.get(c.id)!.due }))
+            .map((c) => {
+              const schedule = schedules.get(c.id)!;
+              const again_14d =
+                since == null
+                  ? 0
+                  : reviewLogs.filter(
+                      (rl) =>
+                        rl.card_id === c.id &&
+                        rl.rating === 1 &&
+                        rl.reviewed_at >= since,
+                    ).length;
+              return {
+                ...c,
+                due: schedule.due,
+                stability: schedule.stability,
+                difficulty: schedule.difficulty,
+                elapsed_days: schedule.elapsed_days,
+                scheduled_days: schedule.scheduled_days,
+                learning_steps: schedule.learning_steps,
+                reps: schedule.reps,
+                lapses: schedule.lapses,
+                state: schedule.state,
+                last_review: schedule.last_review,
+                again_14d,
+              };
+            })
             .sort((a, b) => a.due.localeCompare(b.due));
           return { results: rows as T[] };
         }
-        // GET /api/study/struggling: accepted + schedule + again_14d; SQL filters survivors
+        // GET /api/study/struggling: accepted + schedule + again_14d + hard_14d
         if (
           normalized.includes("FROM cards c") &&
           normalized.includes("INNER JOIN card_schedules s") &&
           normalized.includes("FROM review_logs rl") &&
           normalized.includes("c.status =")
         ) {
-          const [since, userId, status] = bound as [string, string, string];
+          const since = bound[0] as string;
+          // New query binds since twice (again + hard), then userId, status.
+          // Legacy query bound since, userId, status once.
+          const hasHard =
+            normalized.includes("rating = 2") ||
+            normalized.includes("hard_14d");
+          const userId = (hasHard ? bound[2] : bound[1]) as string;
+          const status = (hasHard ? bound[3] : bound[2]) as string;
           const filterSurvivors =
             normalized.includes("lapses >= 2") ||
             normalized.includes("again_14d >= 2");
@@ -989,6 +1070,12 @@ export function createTestEnv(opts?: {
                   rl.rating === 1 &&
                   rl.reviewed_at >= since,
               ).length;
+              const hard_14d = reviewLogs.filter(
+                (rl) =>
+                  rl.card_id === c.id &&
+                  rl.rating === 2 &&
+                  rl.reviewed_at >= since,
+              ).length;
               return {
                 id: c.id,
                 deck_id: c.deck_id,
@@ -997,7 +1084,14 @@ export function createTestEnv(opts?: {
                 difficulty: schedule.difficulty,
                 due: schedule.due,
                 last_review: schedule.last_review,
+                stability: schedule.stability,
+                elapsed_days: schedule.elapsed_days,
+                scheduled_days: schedule.scheduled_days,
+                learning_steps: schedule.learning_steps,
+                reps: schedule.reps,
+                state: schedule.state,
                 again_14d,
+                hard_14d,
               };
             })
             .filter((row) =>
@@ -1633,6 +1727,25 @@ export function createTestEnv(opts?: {
             created_at: existing?.created_at ?? created_at,
             updated_at,
           });
+        } else if (normalized.startsWith("INSERT INTO user_study_prefs")) {
+          const [user_id, intro_budget, review_budget, r_floor, updated_at] =
+            bound as [string, number, number, number, string];
+          userStudyPrefs.set(user_id, {
+            user_id,
+            intro_budget,
+            review_budget,
+            r_floor,
+            updated_at,
+          });
+        } else if (normalized.startsWith("INSERT INTO user_study_day")) {
+          const [user_id, day] = bound as [string, string];
+          const key = `${user_id}\0${day}`;
+          const existing = userStudyDay.get(key);
+          userStudyDay.set(key, {
+            user_id,
+            day,
+            intros_used: (existing?.intros_used ?? 0) + 1,
+          });
         } else if (normalized.startsWith("INSERT INTO cards")) {
           const [
             id,
@@ -1837,6 +1950,19 @@ export function createTestEnv(opts?: {
             reviewed_at,
             state_json,
           });
+        } else if (
+          normalized.startsWith("UPDATE card_schedules SET") &&
+          normalized.includes("due =") &&
+          !normalized.includes("stability") &&
+          normalized.includes("WHERE card_id =")
+        ) {
+          const [due, card_id] = bound as [string, string];
+          const existing = schedules.get(card_id);
+          if (!existing) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          schedules.set(card_id, { ...existing, due });
+          return { success: true, meta: { changes: 1 } } as D1Result;
         } else if (
           normalized.startsWith("UPDATE card_schedules SET") &&
           normalized.includes("WHERE card_id =")
@@ -2131,6 +2257,9 @@ export function createTestEnv(opts?: {
     seedUserSecret(row) {
       userSecrets.set(row.user_id, row);
     },
+    seedUserStudyPrefs(row) {
+      userStudyPrefs.set(row.user_id, row);
+    },
     seedCard(row) {
       cards.set(row.id, row);
     },
@@ -2150,6 +2279,7 @@ export function createTestEnv(opts?: {
     getExportJobs: () => [...exportJobs.values()],
     getGenerationJobs: () => [...generationJobs.values()],
     getUserSecrets: () => [...userSecrets.values()],
+    getUserStudyPrefs: () => [...userStudyPrefs.values()],
     getCards: () => [...cards.values()],
     getSchedules: () => [...schedules.values()],
     getReviewLogs: () => [...reviewLogs],

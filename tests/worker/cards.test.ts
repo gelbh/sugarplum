@@ -135,9 +135,9 @@ describe("draft review / accept gate", () => {
       env,
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { id: string }[];
-    expect(body).toHaveLength(1);
-    expect(body[0]!.id).toBe("card-accepted");
+    const body = (await res.json()) as { cards: { id: string }[] };
+    expect(body.cards).toHaveLength(1);
+    expect(body.cards[0]!.id).toBe("card-accepted");
   });
 
   it("accept creates schedule and leaves drafts out of due", async () => {
@@ -180,8 +180,8 @@ describe("draft review / accept gate", () => {
       env,
     );
     expect(dueRes.status).toBe(200);
-    const due = (await dueRes.json()) as { id: string }[];
-    expect(due.some((c) => c.id === "card-draft")).toBe(true);
+    const due = (await dueRes.json()) as { cards: { id: string }[] };
+    expect(due.cards.some((c) => c.id === "card-draft")).toBe(true);
   });
 
   it("patch preserves image_label type", async () => {

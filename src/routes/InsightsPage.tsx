@@ -13,7 +13,7 @@ import {
 import StrugglingList from "../components/StrugglingList";
 import { useTrackedOp } from "../progress/useTrackedOp";
 
-/** Full ranked struggling list (online-only). */
+/** Full ranked struggling list (API or guest local review logs). */
 export default function InsightsPage() {
   const [rows, setRows] = useState<StrugglingRow[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +66,8 @@ export default function InsightsPage() {
               Insights
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Cards that keep failing Again or have high lapses.
+              Cards that recently felt hard (Again/Hard) or are at risk of
+              slipping.
             </Typography>
           </Box>
 
