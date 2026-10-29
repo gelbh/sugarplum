@@ -3,7 +3,7 @@ export interface Env {
   DB: D1Database;
   MATERIALS: R2Bucket;
   SESSIONS: KVNamespace;
-  /** Static assets binding (Vite-emitted files, including sql.js WASM). */
+  /** Static assets binding (client build output). */
   ASSETS: Fetcher;
   /** Workers AI binding for free-generation path (optional at type level for tests). */
   AI?: Ai;

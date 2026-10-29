@@ -18,6 +18,10 @@ declare module "sql.js" {
   export default initSqlJs;
 }
 
+declare module "sql.js/dist/sql-wasm-inline.js" {
+  export { default } from "sql.js";
+}
+
 declare module "*.wasm?arraybuffer" {
   const wasmBinary: ArrayBuffer;
   export default wasmBinary;

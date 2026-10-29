@@ -1,55 +1,11 @@
 import JSZip from "jszip";
-import initSqlJs from "sql.js";
-import wasmUrl from "sql.js/dist/sql-wasm.wasm?url";
+// Inline build embeds the WASM binary. Separate .wasm fetch fails in Workers
+// (APP_URL self-fetch 522; ASSETS + initSqlJs still fails to instantiate).
+import initSqlJs from "sql.js/dist/sql-wasm-inline.js";
 import type { AnkiFsrsFields } from "./fsrsMap";
 import type { AnkiNoteSpec } from "./notes";
 
 const DEFAULT_ANKI_EASE_FACTOR = 2500;
-
-function isCloudflareWorkerRuntime(): boolean {
-  return (
-    (globalThis as { navigator?: { userAgent?: string } }).navigator
-      ?.userAgent === "Cloudflare-Workers"
-  );
-}
-
-type AssetsFetcher = {
-  fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
-};
-
-/**
- * Load sql.js WASM as bytes. Vitest/Node reads the package file; Workers must
- * use the ASSETS binding. Public APP_URL self-fetch times out (522) in
- * production isolates. Do not treat `process.versions.node` alone as proof of
- * Node fs — workerd may expose it under nodejs_compat.
- */
-export async function loadSqlWasmBinary(opts: {
-  assets?: AssetsFetcher;
-}): Promise<Uint8Array> {
-  if (!isCloudflareWorkerRuntime()) {
-    try {
-      const { readFile } = await import("node:fs/promises");
-      const { createRequire } = await import("node:module");
-      const require = createRequire(import.meta.url);
-      return new Uint8Array(
-        await readFile(require.resolve("sql.js/dist/sql-wasm.wasm")),
-      );
-    } catch {
-      /* fall through to ASSETS */
-    }
-  }
-  if (!opts.assets) {
-    throw new Error("sql.js WASM fetch failed: ASSETS binding is not configured");
-  }
-  // Hostname is ignored by ASSETS; pathname must match the Vite-emitted asset.
-  const response = await opts.assets.fetch(
-    new URL(wasmUrl, "https://assets.local"),
-  );
-  if (!response.ok) {
-    throw new Error(`sql.js WASM ASSETS fetch failed: ${response.status}`);
-  }
-  return new Uint8Array(await response.arrayBuffer());
-}
 
 type ApkgEntry = {
   note: AnkiNoteSpec;
@@ -258,14 +214,11 @@ export function ankiFsrsCardData(schedule: AnkiFsrsFields): string {
 export async function buildApkg(args: {
   deckName: string;
   entries: ApkgEntry[];
-  /** Workers Static Assets binding; required in Cloudflare-Workers runtime. */
-  assets?: AssetsFetcher;
 }): Promise<Uint8Array> {
-  const wasmBinary = await loadSqlWasmBinary({ assets: args.assets });
-  const SQL = await initSqlJs({
-    wasmBinary,
-  }).catch((error: unknown) => {
-    throw new Error("Unable to load sql.js WASM", { cause: error });
+  const SQL = await initSqlJs().catch((error: unknown) => {
+    const detail =
+      error instanceof Error ? error.message : String(error ?? "unknown");
+    throw new Error(`Unable to load sql.js WASM: ${detail}`, { cause: error });
   });
   const db = new SQL.Database();
   const now = Math.floor(Date.now() / 1000);
