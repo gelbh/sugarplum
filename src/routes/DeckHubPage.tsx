@@ -90,6 +90,7 @@ import {
 import { navigate } from "../nav/navigate";
 import {
   formatExportWarnings,
+  ANKI_EXPORT_BUSY_LABEL,
   runAnkiExportDownload,
 } from "../export/runAnkiExport";
 import { useTrackedOp } from "../progress/useTrackedOp";
@@ -238,7 +239,7 @@ export default function DeckHubPage({ deckId }: Props) {
     trackOnMount: true,
   });
   const { busy: exportBusy, run: runExport } =
-    useTrackedOp("Exporting to Anki…");
+    useTrackedOp(ANKI_EXPORT_BUSY_LABEL);
 
   const refreshCards = useCallback(async () => {
     const next = await listDeckCards(
