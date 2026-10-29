@@ -22,6 +22,13 @@
       "invocation_logs": true,
       "head_sampling_rate": 1,
     },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.1,
+    },
+    "issues": {
+      "enabled": true,
+    },
   },
   // DOCLING_URL: optional. Local compose or prod HTTPS host. When set, DOCLING_API_KEY secret is required (X-Api-Key).
   "vars": {
