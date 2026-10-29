@@ -15,6 +15,7 @@ import {
   withFreeGenCharged,
   withUpdatedAt,
   writeJobProgress,
+  readStartedAt,
 } from "../../worker/generation/progress";
 import { createTestEnv } from "./test-env";
 
@@ -322,6 +323,7 @@ describe("toProgressJson", () => {
       tokens_completion: 40,
       drafts_so_far: 2,
       path: "free",
+      started_at: "2026-10-29T10:00:00.000Z",
       events: [
         {
           at: "2026-10-27T00:00:00.000Z",
@@ -342,6 +344,7 @@ describe("toProgressJson", () => {
       tokens_completion: 40,
       drafts_so_far: 2,
       path: "free",
+      started_at: "2026-10-29T10:00:00.000Z",
       events: [
         {
           at: "2026-10-27T00:00:00.000Z",
@@ -370,6 +373,29 @@ describe("toProgressJson", () => {
     expect(parsed).not.toHaveProperty("tokens_used");
     expect(parsed).not.toHaveProperty("events");
     expect(parsed).not.toHaveProperty("path");
+    expect(parsed).not.toHaveProperty("started_at");
+  });
+
+  it("withUpdatedAt claim heartbeat does not invent started_at", () => {
+    const next = JSON.parse(withUpdatedAt(null, "2026-10-29T10:00:00.000Z"));
+    expect(next).not.toHaveProperty("started_at");
+    expect(next.stage).toBe("queued");
+  });
+
+  it("readStartedAt returns ISO when present", () => {
+    expect(readStartedAt(null)).toBeUndefined();
+    expect(
+      readStartedAt(
+        toProgressJson({
+          stage: "generate",
+          current: 1,
+          total: 2,
+          percent: 40,
+          label: "Gen",
+          started_at: "2026-10-29T10:00:00.000Z",
+        }),
+      ),
+    ).toBe("2026-10-29T10:00:00.000Z");
   });
 });
 

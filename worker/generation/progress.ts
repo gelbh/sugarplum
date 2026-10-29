@@ -36,6 +36,8 @@ export type ProgressPatch = {
   label: string;
   /** ISO heartbeat written on every progress emit (stale-running reclaim). */
   updated_at?: string;
+  /** ISO wall clock when pipeline work first started (ETA clock; set once). */
+  started_at?: string;
   tokens_used?: number;
   tokens_prompt?: number;
   tokens_completion?: number;
@@ -120,6 +122,14 @@ export function isFreeGenCharged(
   progressJson: string | null | undefined,
 ): boolean {
   return parseProgressObject(progressJson).free_gen_charged === true;
+}
+
+/** Durable ETA clock from an existing progress_json row (reclaim / resume). */
+export function readStartedAt(
+  progressJson: string | null | undefined,
+): string | undefined {
+  const value = parseProgressObject(progressJson).started_at;
+  return typeof value === "string" ? value : undefined;
 }
 
 /** Merge/set `free_gen_charged` on progress_json (durable consume marker). */
@@ -350,6 +360,7 @@ export function toProgressJson(patch: ProgressPatch): string {
     label: patch.label,
   };
   if (patch.updated_at !== undefined) body.updated_at = patch.updated_at;
+  if (patch.started_at !== undefined) body.started_at = patch.started_at;
   if (patch.tokens_used !== undefined) body.tokens_used = patch.tokens_used;
   if (patch.tokens_prompt !== undefined)
     body.tokens_prompt = patch.tokens_prompt;
