@@ -8,6 +8,7 @@ import {
   parseCardsPayload,
   parseLlmProvider,
   type LlmAdapter,
+  type LlmTokenUsage,
 } from "./llm";
 import { CHUNK_CHAR_LIMIT } from "./pipeline";
 import { consumeFreeGenSlot } from "./quota";
@@ -70,8 +71,8 @@ export async function generateOneCard(args: {
   llm: LlmAdapter;
   apiKey: string;
   provider: string;
-}): Promise<TextRegenDraft> {
-  const raw = await args.llm.complete({
+}): Promise<{ draft: TextRegenDraft; usage?: LlmTokenUsage | null }> {
+  const { text: raw, usage } = await args.llm.complete({
     system: REGEN_ONE_SYSTEM_PROMPT,
     user: regenerateOneUserPrompt({
       text: args.text,
@@ -97,9 +98,12 @@ export async function generateOneCard(args: {
   };
   if (match.type === "mcq") {
     const mcq = assertValidMcqOptions(match.back, match.options);
-    return { ...match, back: mcq.back, options: mcq.options };
+    return {
+      draft: { ...match, back: mcq.back, options: mcq.options },
+      usage,
+    };
   }
-  return match;
+  return { draft: match, usage };
 }
 
 type MaterialLite = {
@@ -174,7 +178,12 @@ export async function loadCardSourceText(
 export async function resolveRegenLlm(
   env: Env,
   userId: string,
-): Promise<{ llm: LlmAdapter; apiKey: string; provider: string }> {
+): Promise<{
+  llm: LlmAdapter;
+  apiKey: string;
+  provider: string;
+  path: "free" | "byo";
+}> {
   const db = getDb(env);
   const secret = await db
     .prepare(
@@ -190,7 +199,12 @@ export async function resolveRegenLlm(
     }
     const apiKey = await decryptSecret(secret.ciphertext, wrapKey);
     const provider = parseLlmProvider(secret.provider);
-    return { llm: createLlmAdapter(provider), apiKey, provider };
+    return {
+      llm: createLlmAdapter(provider),
+      apiKey,
+      provider,
+      path: "byo",
+    };
   }
 
   if (env.AI) {
@@ -200,6 +214,7 @@ export async function resolveRegenLlm(
       llm: createWorkersAiAdapter(env),
       apiKey: "",
       provider: "workers-ai",
+      path: "free",
     };
   }
 

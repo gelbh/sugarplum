@@ -169,15 +169,16 @@ export function createWorkersAiAdapter(
     return contentFromAiRun(result);
   }
 
-  async function complete(input: CompleteInput): Promise<string> {
+  async function complete(input: CompleteInput) {
     // apiKey ignored: Workers AI uses the binding, not BYO secrets.
     const run = await runChat(input.system, input.user);
+    const usage = {
+      prompt_tokens: run.promptTokens,
+      completion_tokens: run.completionTokens,
+      total_tokens: run.totalTokens,
+    };
     try {
-      opts?.onUsage?.({
-        prompt_tokens: run.promptTokens,
-        completion_tokens: run.completionTokens,
-        total_tokens: run.totalTokens,
-      });
+      opts?.onUsage?.(usage);
     } catch {
       // best-effort
     }
@@ -186,7 +187,7 @@ export function createWorkersAiAdapter(
         "Workers AI response truncated (hit token limit). Try a shorter source or fewer facts.",
       );
     }
-    return run.content;
+    return { text: run.content, usage };
   }
 
   return {

@@ -125,6 +125,11 @@ function stubWorkersAiMcq(env: ReturnType<typeof createTestEnv>) {
           logprobs: null,
         },
       ],
+      usage: {
+        prompt_tokens: 100,
+        completion_tokens: 40,
+        total_tokens: 140,
+      },
     };
   });
   env.AI = { run } as unknown as Ai;
@@ -195,6 +200,21 @@ describe("POST /api/cards/:id/regen", () => {
     expect(JSON.parse(right.front_json)).toBe("Right {{c1::blank}}.");
     expect(mid.type).toBe("mcq");
     expect(JSON.parse(mid.front_json)).toBe("Which organelle produces ATP?");
+
+    const regenEvents = env
+      .getUsageEvents()
+      .filter((e) => e.kind === "regen");
+    expect(regenEvents).toHaveLength(1);
+    expect(regenEvents[0]).toMatchObject({
+      user_id: "user-a",
+      job_id: null,
+      kind: "regen",
+      path: "free",
+      provider: "workers-ai",
+      tokens_prompt: 100,
+      tokens_completion: 40,
+      tokens_total: 140,
+    });
   });
 
   it("returns 429 when free-gen daily cap is exhausted on workers-ai", async () => {
@@ -220,6 +240,9 @@ describe("POST /api/cards/:id/regen", () => {
       env,
     );
     expect(res.status).toBe(429);
+    expect(env.getUsageEvents().filter((e) => e.kind === "regen")).toHaveLength(
+      0,
+    );
     expect(JSON.parse(env.getCards().find((c) => c.id === "c-mid")!.front_json)).toBe(
       "Middle front?",
     );
