@@ -961,14 +961,23 @@ export function createTestEnv(opts?: {
           normalized.includes("c.status =") &&
           normalized.includes("s.due <=")
         ) {
-          const userId = bound[0] as string;
-          const status = bound[1] as string;
-          const now = bound[2] as string;
+          // With again_14d subquery: [since, userId, status, now, ...scope]
+          // Legacy: [userId, status, now, ...scope]
+          const hasAgain14d =
+            normalized.includes("again_14d") ||
+            (normalized.includes("FROM review_logs rl") &&
+              normalized.includes("rating = 1"));
+          const bindOffset = hasAgain14d ? 1 : 0;
+          const since = hasAgain14d ? (bound[0] as string) : null;
+          const userId = bound[bindOffset] as string;
+          const status = bound[bindOffset + 1] as string;
+          const now = bound[bindOffset + 2] as string;
+          const scopeBound = bound[bindOffset + 3] as string | undefined;
           const filterDeckId = normalized.includes("c.deck_id =")
-            ? (bound[3] as string)
+            ? scopeBound
             : null;
           const filterSubjectId = normalized.includes("d.subject_id =")
-            ? (bound[3] as string)
+            ? scopeBound
             : null;
           const rows = [...cards.values()]
             .filter((c) => {
@@ -985,6 +994,15 @@ export function createTestEnv(opts?: {
             })
             .map((c) => {
               const schedule = schedules.get(c.id)!;
+              const again_14d =
+                since == null
+                  ? 0
+                  : reviewLogs.filter(
+                      (rl) =>
+                        rl.card_id === c.id &&
+                        rl.rating === 1 &&
+                        rl.reviewed_at >= since,
+                    ).length;
               return {
                 ...c,
                 due: schedule.due,
@@ -997,6 +1015,7 @@ export function createTestEnv(opts?: {
                 lapses: schedule.lapses,
                 state: schedule.state,
                 last_review: schedule.last_review,
+                again_14d,
               };
             })
             .sort((a, b) => a.due.localeCompare(b.due));

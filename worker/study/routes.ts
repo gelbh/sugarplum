@@ -28,6 +28,7 @@ type AppEnv = { Bindings: Env; Variables: AuthVariables };
 type DueSqlRow = CardRow &
   ScheduleRowLike & {
     due: string;
+    again_14d: number;
   };
 
 type StrugglingSqlRow = {
@@ -111,15 +112,25 @@ studyRoutes.get("/due", async (c) => {
     }
   }
 
+  const since14d = new Date(
+    now.getTime() - 14 * 24 * 60 * 60 * 1000,
+  ).toISOString();
+
   let sql = `SELECT c.id, c.deck_id, c.job_id, c.type, c.front_json, c.back_json,
               c.media_r2_keys_json, c.provenance_json, c.status, c.created_at, c.updated_at,
               s.due, s.stability, s.difficulty, s.elapsed_days, s.scheduled_days,
-              s.learning_steps, s.reps, s.lapses, s.state, s.last_review
+              s.learning_steps, s.reps, s.lapses, s.state, s.last_review,
+              (
+                SELECT COUNT(*) FROM review_logs rl
+                WHERE rl.card_id = c.id
+                  AND rl.rating = 1
+                  AND rl.reviewed_at >= ?
+              ) AS again_14d
        FROM cards c
        INNER JOIN card_schedules s ON s.card_id = c.id
        INNER JOIN decks d ON d.id = c.deck_id
        WHERE d.user_id = ? AND c.status = ? AND s.due <= ?`;
-  const binds: unknown[] = [userId, "accepted", nowIso];
+  const binds: unknown[] = [since14d, userId, "accepted", nowIso];
 
   if (deckId) {
     sql += " AND c.deck_id = ?";
@@ -151,6 +162,7 @@ studyRoutes.get("/due", async (c) => {
     reps: row.reps,
     last_review: row.last_review,
     lapses: row.lapses,
+    again_14d: Number(row.again_14d) || 0,
     stability: row.stability,
     difficulty: row.difficulty,
     elapsed_days: row.elapsed_days,

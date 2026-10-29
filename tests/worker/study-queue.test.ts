@@ -169,4 +169,35 @@ describe("buildStudyQueue review deferral", () => {
     expect(result.meta.deferredCount).toBe(0);
     expect(result.dueIds).toEqual(["r-0", "r-1", "r-2"]);
   });
+
+  it("keeps higher again_14d when R and lapses tie under soft budget", () => {
+    const due = "2026-10-28T12:00:00.000Z";
+    const base = {
+      due,
+      state: State.Review,
+      reps: 5,
+      last_review: "2026-10-27T12:00:00.000Z",
+      lapses: 0,
+      stability: 100,
+      difficulty: 5,
+      elapsed_days: 1,
+      scheduled_days: 10,
+      learning_steps: 0,
+    };
+    const result = buildStudyQueue(
+      [
+        candidate({ id: "quiet", ...base, again_14d: 0 }),
+        candidate({ id: "again-heavy", ...base, again_14d: 4 }),
+        candidate({ id: "again-once", ...base, again_14d: 1 }),
+      ],
+      { ...DEFAULT_PREFS, reviewBudget: 1 },
+      NOW,
+      LOCAL_DAY_START,
+    );
+    expect(result.dueIds).toEqual(["again-heavy"]);
+    expect(result.deferrals.map((d) => d.id).sort()).toEqual([
+      "again-once",
+      "quiet",
+    ]);
+  });
 });

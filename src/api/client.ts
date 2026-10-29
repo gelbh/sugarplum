@@ -849,7 +849,7 @@ export function listDueCards(opts?: ListDueOpts): Promise<ListDueResult> {
   return api<ListDueResult>(`/api/study/due${buildDueQuery(opts)}`);
 }
 
-/** Accepted cards ranked by weakness (online-only; guest gets []). */
+/** Accepted cards ranked by weakness (API or guest local review logs). */
 export type StrugglingRow = {
   id: string;
   deck_id: string;
