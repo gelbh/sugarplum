@@ -111,8 +111,7 @@ export function resolveShellGenerationStatus(
     };
   }
 
-  // Journey still lists this as pending, but the job already settled OK
-  // (needs_review / done). Keep chrome visible until openReview catches up.
+  // Journey lag: pending id still set after needs_review/done.
   if (status === "needs_review" || status === "done") {
     return draftsReady(pendingId);
   }

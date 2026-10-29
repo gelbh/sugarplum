@@ -25,7 +25,6 @@ type BottomChromeProps = {
   active: ShellNavId;
   items: BottomChromeItem[];
   onNavigate: (href: string) => void;
-  /** Secondary cue on Library when generation chrome is active. */
   libraryBadgeKind?: ShellGenerationKind | null;
 };
 

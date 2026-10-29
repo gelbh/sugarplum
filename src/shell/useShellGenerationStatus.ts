@@ -10,10 +10,6 @@ import {
 const POLL_VISIBLE_MS = 5_000;
 const POLL_HIDDEN_MS = 30_000;
 
-/**
- * Shell-owned generation chrome status. Survives route changes; skips guest
- * and study zen (`hideChrome`).
- */
 export function useShellGenerationStatus(
   hideChrome: boolean,
 ): ShellGenerationStatus | null {
@@ -85,7 +81,6 @@ export function useShellGenerationStatus(
         if (!cancelled && gen === tickGen) schedule(delay);
       } catch {
         if (cancelled || gen !== tickGen) return;
-        // Keep last good status; retry.
         schedule(POLL_VISIBLE_MS);
       } finally {
         inFlight = false;

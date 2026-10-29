@@ -8,7 +8,6 @@ import { PLUM_ON_DARK, SHELL_FG, SHELL_HAIRLINE, SHELL_MUTED } from "./chromeTok
 
 type GenerationStatusStripProps = {
   status: ShellGenerationStatus;
-  /** Compact single-line layout for mobile top chrome. */
   dense?: boolean;
 };
 
@@ -18,7 +17,6 @@ const DOT: Record<ShellGenerationStatus["kind"], string> = {
   failed: "#E57373",
 };
 
-/** Clickable shell control → `/jobs/:id/drafts`. */
 export default function GenerationStatusStrip({
   status,
   dense = false,
