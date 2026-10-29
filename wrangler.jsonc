@@ -36,8 +36,8 @@
     "APP_URL": "https://sugarplum.gelbhart.dev",
     "R2_ACCOUNT_ID": "578279c4ee8d8a1b0bda8ecf8ecc3f67",
     "R2_BUCKET_NAME": "sugarplum-materials",
-    // Set to real Turnstile sitekey after widget create (local: .dev.vars dummy OK)
-    "TURNSTILE_SITE_KEY": "",
+    // Turnstile managed widget "sugarplum auth" (domains: sugarplum.gelbhart.dev)
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAFrtuD0lpyFM8Tom",
   },
   "d1_databases": [
     {
