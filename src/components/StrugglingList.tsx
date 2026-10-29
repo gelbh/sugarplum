@@ -4,6 +4,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { StrugglingRow } from "../api/client";
+import { formatStrugglingCaption } from "../study/strugglingCaption";
 
 export function formatStrugglingDue(iso: string): string {
   const d = new Date(iso);
@@ -65,7 +66,7 @@ export default function StrugglingList({
               />
             </Stack>
             <Typography variant="caption" color="text.secondary">
-              Again (14d): {row.again_14d} · Lapses: {row.lapses}
+              {formatStrugglingCaption(row)}
             </Typography>
             {row.is_due ? (
               <Button

@@ -66,7 +66,8 @@ export default function InsightsPage() {
               Insights
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Cards that keep failing Again or have high lapses.
+              Cards that recently felt hard (Again/Hard) or are at risk of
+              slipping.
             </Typography>
           </Box>
 
