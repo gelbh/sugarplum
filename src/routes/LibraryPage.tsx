@@ -19,8 +19,8 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import OperateSection from "../components/OperateSection";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -371,14 +371,7 @@ export default function LibraryPage() {
           ) : null}
 
           {draftJobs.length > 0 ? (
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 2.5,
-                bgcolor: "background.paper",
-                borderColor: "divider",
-              }}
-            >
+            <OperateSection>
               <Typography
                 variant="subtitle1"
                 component="h2"
@@ -432,17 +425,10 @@ export default function LibraryPage() {
                   );
                 })}
               </Stack>
-            </Paper>
+            </OperateSection>
           ) : null}
 
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 2.5,
-              bgcolor: "background.paper",
-              borderColor: "divider",
-            }}
-          >
+          <OperateSection>
             <Stack
               direction="row"
               alignItems="center"
@@ -735,17 +721,10 @@ export default function LibraryPage() {
                 </Stack>
               </Box>
             ) : null}
-          </Paper>
+          </OperateSection>
 
           {showCreateFlow ? (
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 2.5,
-                bgcolor: "background.paper",
-                borderColor: "divider",
-              }}
-            >
+            <OperateSection>
               <Stack
                 direction="row"
                 alignItems="center"
@@ -781,18 +760,11 @@ export default function LibraryPage() {
                   await refreshDecks();
                 }}
               />
-            </Paper>
+            </OperateSection>
           ) : null}
 
           {!guest && materials.length > 0 ? (
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 2.5,
-                bgcolor: "background.paper",
-                borderColor: "divider",
-              }}
-            >
+            <OperateSection>
               <Typography
                 variant="subtitle1"
                 component="h2"
@@ -807,7 +779,7 @@ export default function LibraryPage() {
                   void Promise.all([refreshMaterials(), refreshDraftJobs()]);
                 }}
               />
-            </Paper>
+            </OperateSection>
           ) : null}
         </Stack>
       )}

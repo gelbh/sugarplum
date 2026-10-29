@@ -110,7 +110,7 @@ export default function MaterialsList({
   if (materials.length === 0) {
     return (
       <Typography variant="body2" color="text.secondary">
-        No materials yet.
+        No materials yet. Add one above to generate cards.
       </Typography>
     );
   }

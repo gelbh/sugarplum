@@ -24,8 +24,8 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Switch from "@mui/material/Switch";
 import Link from "@mui/material/Link";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import OperateSection from "../components/OperateSection";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
@@ -1024,14 +1024,7 @@ export default function DeckHubPage({ deckId }: Props) {
           ) : null}
 
           {deck && workshopOpen ? (
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 2.5,
-                bgcolor: "background.paper",
-                borderColor: "divider",
-              }}
-            >
+            <OperateSection>
               <Typography
                 variant="subtitle1"
                 component="h2"
@@ -1174,18 +1167,11 @@ export default function DeckHubPage({ deckId }: Props) {
                   )}
                 </Box>
               )}
-            </Paper>
+            </OperateSection>
           ) : null}
 
-          {!guest ? (
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 2.5,
-                bgcolor: "background.paper",
-                borderColor: "divider",
-              }}
-            >
+          {!guest && materials.length > 0 ? (
+            <OperateSection>
               <Typography
                 variant="subtitle1"
                 component="h2"
@@ -1204,18 +1190,11 @@ export default function DeckHubPage({ deckId }: Props) {
                   ]);
                 }}
               />
-            </Paper>
+            </OperateSection>
           ) : null}
 
           {!guest && draftJobs.length > 0 ? (
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 2.5,
-                bgcolor: "background.paper",
-                borderColor: "divider",
-              }}
-            >
+            <OperateSection>
               <Typography
                 variant="subtitle1"
                 component="h2"
@@ -1249,18 +1228,11 @@ export default function DeckHubPage({ deckId }: Props) {
                   </Box>
                 ))}
               </Stack>
-            </Paper>
+            </OperateSection>
           ) : null}
 
           {deck ? (
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 2.5,
-                bgcolor: "background.paper",
-                borderColor: "divider",
-              }}
-            >
+            <OperateSection>
               <Stack
                 direction="row"
                 alignItems="center"
@@ -1368,18 +1340,11 @@ export default function DeckHubPage({ deckId }: Props) {
                   ))}
                 </Stack>
               )}
-            </Paper>
+            </OperateSection>
           ) : null}
 
           {deck && workshopOpen ? (
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 2.5,
-                bgcolor: "background.paper",
-                borderColor: "divider",
-              }}
-            >
+            <OperateSection>
               <Typography
                 variant="subtitle1"
                 component="h2"
@@ -1464,7 +1429,7 @@ export default function DeckHubPage({ deckId }: Props) {
                   </Button>
                 </Stack>
               </Box>
-            </Paper>
+            </OperateSection>
           ) : null}
         </Stack>
       )}
