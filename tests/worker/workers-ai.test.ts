@@ -65,11 +65,13 @@ describe("Workers AI adapter", () => {
           messages?: unknown;
           max_tokens?: number;
           max_completion_tokens?: number;
+          response_format?: { type?: string };
         },
       ) => {
         expect(_model).toBe(WORKERS_AI_MODEL);
         expect(inputs.max_completion_tokens).toBe(8192);
         expect(inputs.max_tokens).toBe(8192);
+        expect(inputs.response_format).toEqual({ type: "json_object" });
         expect(inputs.messages).toEqual([
           expect.objectContaining({ role: "system" }),
           expect.objectContaining({
@@ -201,6 +203,32 @@ describe("Workers AI adapter", () => {
     expect(secondMessages[1]!.content).toMatch(/3–5 short/i);
   });
 
+  it("retries once without response_format when JSON Mode cannot be met", async () => {
+    const run = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("JSON Mode couldn't be met"))
+      .mockResolvedValueOnce(chatCompletionResult(sampleCardsJson));
+
+    const env = createTestEnv();
+    env.AI = { run } as unknown as Ai;
+    const adapter = createWorkersAiAdapter(env);
+
+    const drafts = await adapter.generateDrafts({
+      text: "notes",
+      apiKey: "",
+      provider: "workers-ai",
+    });
+
+    expect(drafts).toHaveLength(3);
+    expect(run).toHaveBeenCalledTimes(2);
+    expect(
+      (run.mock.calls[0]![1] as { response_format?: unknown }).response_format,
+    ).toEqual({ type: "json_object" });
+    expect(
+      (run.mock.calls[1]![1] as { response_format?: unknown }).response_format,
+    ).toBeUndefined();
+  });
+
   it("names truncation with diagnostics when retry also fails", async () => {
     const truncatedMidFirst =
       '{"cards":[{"type":"qa","front":"What defines monoxenous protozoa?","back":"Direc';
@@ -241,7 +269,14 @@ describe("Workers AI adapter", () => {
 
   it("complete returns assistant content and ignores apiKey", async () => {
     const run = vi.fn(
-      async (_model: string, inputs: { messages?: unknown[] }) => {
+      async (
+        _model: string,
+        inputs: {
+          messages?: unknown[];
+          response_format?: { type?: string };
+        },
+      ) => {
+        expect(inputs.response_format).toEqual({ type: "json_object" });
         expect(inputs.messages?.[0]).toEqual({
           role: "system",
           content: "critique-system",
