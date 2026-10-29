@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
 import Container from "@mui/material/Container";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -11,10 +10,10 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
 import Link from "@mui/material/Link";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import DraftCardEditor from "../components/DraftCardEditor";
+import OperateSection from "../components/OperateSection";
 import JourneyRail from "../components/JourneyRail";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
@@ -64,15 +63,6 @@ function cardPatchBody(card: CardDraftView): Parameters<typeof patchCard>[1] {
     body.options = card.options;
   }
   return body;
-}
-
-function draftTypeLabel(type: CardDraftView["type"]): string {
-  if (type === "occlusion") return "Occlusion";
-  if (type === "cloze") return "Cloze";
-  if (type === "mcq") return "Multiple choice";
-  if (type === "image_label") return "Image label";
-  if (type === "diagram") return "Diagram";
-  return "Q&A";
 }
 
 /** Operate UI: review, edit, accept or reject generation drafts (code-led MUI; no Impeccable comps). */
@@ -406,7 +396,8 @@ export default function DraftReviewPage() {
       setProgressGate(false);
       end();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not regenerate");      end(false);
+      setError(err instanceof ApiError ? err.message : "Could not regenerate");
+      end(false);
     }
   }
 
@@ -484,14 +475,7 @@ export default function DraftReviewPage() {
         ) : null}
 
         {!current ? (
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 2.5,
-              bgcolor: "background.paper",
-              borderColor: "divider",
-            }}
-          >
+          <OperateSection>
             <Stack spacing={2}>
               <Typography>No drafts left for this job.</Typography>
               <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
@@ -523,8 +507,10 @@ export default function DraftReviewPage() {
                     Back to library
                   </Link>
                 )}
+              </Stack>
+              <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
                 <Button
-                  variant="outlined"
+                  variant="text"
                   color="warning"
                   onClick={() => setConfirmRejectDrafts(true)}
                   disabled={jobActionDisabled}
@@ -532,7 +518,7 @@ export default function DraftReviewPage() {
                   Reject remaining drafts
                 </Button>
                 <Button
-                  variant="outlined"
+                  variant="text"
                   color="error"
                   onClick={() => setConfirmRegen(true)}
                   disabled={jobActionDisabled}
@@ -541,32 +527,12 @@ export default function DraftReviewPage() {
                 </Button>
               </Stack>
             </Stack>
-          </Paper>
+          </OperateSection>
         ) : (
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 2.5,
-              bgcolor: "background.paper",
-              borderColor: "divider",
-            }}
-          >
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              sx={{ mb: 2 }}
-            >
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                Card {index + 1} of {drafts.length}
-              </Typography>
-              <Chip
-                size="small"
-                label={draftTypeLabel(current.type)}
-                color="primary"
-                variant="outlined"
-              />
-            </Stack>
+          <OperateSection>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+              Card {index + 1} of {drafts.length}
+            </Typography>
 
             <DraftCardEditor
               card={current}
@@ -693,7 +659,7 @@ export default function DraftReviewPage() {
                 </Button>
               </Stack>
             </Stack>
-          </Paper>
+          </OperateSection>
         )}
 
         <Dialog open={confirmAll} onClose={() => !busy && setConfirmAll(false)}>
