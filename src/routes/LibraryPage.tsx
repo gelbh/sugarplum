@@ -481,13 +481,15 @@ export default function LibraryPage() {
                 ) : null}
                 {!selectMode ? (
                   <>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={openCreateSubject}
-                    >
-                      New subject
-                    </Button>
+                    {subjects.length > 0 ? (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={openCreateSubject}
+                      >
+                        New subject
+                      </Button>
+                    ) : null}
                     {!showCreateFlow ? (
                       <Button
                         size="small"
@@ -503,7 +505,7 @@ export default function LibraryPage() {
             </Stack>
             {subjects.length === 0 ? (
               <Typography variant="body2" color="text.secondary">
-                No subjects yet. Create one, then add material.
+                No subjects yet. Use Add material to create a subject and deck.
               </Typography>
             ) : (
               <Stack

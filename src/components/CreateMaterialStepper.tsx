@@ -17,6 +17,8 @@ import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import RateReviewIcon from "@mui/icons-material/RateReview";
 
 import {
   createDeck,
@@ -93,6 +95,7 @@ export default function CreateMaterialStepper({
   const [busy, setBusy] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
   const [focusCreateTitle, setFocusCreateTitle] = useState(false);
+  const [showNewDeckForm, setShowNewDeckForm] = useState(false);
 
   const titleRef = useRef<HTMLInputElement | null>(null);
 
@@ -136,6 +139,7 @@ export default function CreateMaterialStepper({
   function onDeckSelect(value: string) {
     if (value === CREATE_NEW_DECK) {
       setActiveStep(0);
+      setShowNewDeckForm(true);
       setFocusCreateTitle(true);
       return;
     }
@@ -204,6 +208,7 @@ export default function CreateMaterialStepper({
       setDecks((prev) => [...prev, deck]);
       setSelectedDeckId(deck.id);
       setTitle("");
+      setShowNewDeckForm(false);
       setNotice(`Created “${deck.title}”`);
       setActiveStep(1);
       await onChanged?.();
@@ -448,61 +453,73 @@ export default function CreateMaterialStepper({
                 >
                   Continue with this deck
                 </Button>
-                <Divider>or create new</Divider>
+                {!showNewDeckForm ? (
+                  <Button
+                    variant="text"
+                    onClick={() => {
+                      setShowNewDeckForm(true);
+                      setFocusCreateTitle(true);
+                    }}
+                  >
+                    Create new deck…
+                  </Button>
+                ) : null}
               </Stack>
             ) : null}
-            <Box component="form" onSubmit={onCreateDeck} noValidate>
-              <Stack spacing={2}>
-                <Typography variant="h6">
-                  {decks.length > 0 ? "New deck" : "Create a deck"}
-                </Typography>
-                <FormControl fullWidth>
-                  <InputLabel id="new-deck-subject-label">Subject</InputLabel>
-                  <Select
-                    labelId="new-deck-subject-label"
-                    label="Subject"
-                    value={selectedSubjectId}
-                    onChange={(ev) => setSelectedSubjectId(ev.target.value)}
-                  >
-                    {subjects.map((s) => (
-                      <MenuItem key={s.id} value={s.id}>
-                        {s.title}
+            {decks.length === 0 || showNewDeckForm ? (
+              <Box component="form" onSubmit={onCreateDeck} noValidate>
+                <Stack spacing={2}>
+                  <Typography variant="h6">
+                    {decks.length > 0 ? "New deck" : "Create a deck"}
+                  </Typography>
+                  <FormControl fullWidth>
+                    <InputLabel id="new-deck-subject-label">Subject</InputLabel>
+                    <Select
+                      labelId="new-deck-subject-label"
+                      label="Subject"
+                      value={selectedSubjectId}
+                      onChange={(ev) => setSelectedSubjectId(ev.target.value)}
+                    >
+                      {subjects.map((s) => (
+                        <MenuItem key={s.id} value={s.id}>
+                          {s.title}
+                        </MenuItem>
+                      ))}
+                      {subjects.length > 0 ? <Divider component="li" /> : null}
+                      <MenuItem value={CREATE_NEW_SUBJECT}>
+                        Create new subject…
                       </MenuItem>
-                    ))}
-                    {subjects.length > 0 ? <Divider component="li" /> : null}
-                    <MenuItem value={CREATE_NEW_SUBJECT}>
-                      Create new subject…
-                    </MenuItem>
-                  </Select>
-                </FormControl>
-                {creatingNewSubject ? (
+                    </Select>
+                  </FormControl>
+                  {creatingNewSubject ? (
+                    <TextField
+                      label="New subject title"
+                      name="subjectTitle"
+                      value={newSubjectTitle}
+                      onChange={(ev) => setNewSubjectTitle(ev.target.value)}
+                      required
+                      fullWidth
+                    />
+                  ) : null}
                   <TextField
-                    label="New subject title"
-                    name="subjectTitle"
-                    value={newSubjectTitle}
-                    onChange={(ev) => setNewSubjectTitle(ev.target.value)}
+                    label="Deck title"
+                    name="title"
+                    value={title}
+                    onChange={(ev) => setTitle(ev.target.value)}
                     required
                     fullWidth
+                    inputRef={titleRef}
                   />
-                ) : null}
-                <TextField
-                  label="Deck title"
-                  name="title"
-                  value={title}
-                  onChange={(ev) => setTitle(ev.target.value)}
-                  required
-                  fullWidth
-                  inputRef={titleRef}
-                />
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={busy || !canCreateDeck}
-                >
-                  {busy ? "Working…" : "Create deck"}
-                </Button>
-              </Stack>
-            </Box>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={busy || !canCreateDeck}
+                  >
+                    {busy ? "Working…" : "Create deck"}
+                  </Button>
+                </Stack>
+              </Box>
+            ) : null}
           </Stack>
         )}
 
@@ -667,30 +684,41 @@ export default function CreateMaterialStepper({
         )}
 
         {activeStep === 2 && (
-          <Box>
-            <Typography variant="body1" gutterBottom>
-              {jobId ? (
-                <>
-                  Generation started.{" "}
-                  <a href={`/jobs/${encodeURIComponent(jobId)}/drafts`}>
-                    View drafts
-                  </a>
-                </>
-              ) : localOnly ? (
-                <>
-                  Done. Cards are ready on <a href="/today">Today</a> or{" "}
-                  <a href="/study">Study</a>.
-                </>
-              ) : (
-                "Done. Add more material or go to drafts when ready."
-              )}
+          <Stack spacing={2}>
+            <Typography variant="body1">
+              {jobId
+                ? "Generation started. Review drafts next."
+                : localOnly
+                  ? "Done. Cards are ready to study."
+                  : "Done. Add more material or continue when ready."}
             </Typography>
-            <Stack direction="row" spacing={2}>
+            <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+              {jobId ? (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<RateReviewIcon />}
+                  href={`/jobs/${encodeURIComponent(jobId)}/drafts`}
+                  aria-label="View drafts"
+                >
+                  View drafts
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<PlayArrowIcon />}
+                  href="/study"
+                  aria-label="Study"
+                >
+                  Study
+                </Button>
+              )}
               <Button variant="outlined" onClick={() => setActiveStep(0)}>
                 Add more
               </Button>
             </Stack>
-          </Box>
+          </Stack>
         )}
       </Box>
     </Box>
