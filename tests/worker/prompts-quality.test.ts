@@ -66,6 +66,17 @@ describe("drop-biased quality prompts (5B)", () => {
     }
   });
 
+  it("generate text prompts require covering distinct grounded facts", () => {
+    for (const prompt of [
+      GENERATE_SYSTEM_PROMPT,
+      GENERATE_COMPACT_SYSTEM_PROMPT,
+    ]) {
+      expect(prompt.toLowerCase()).toMatch(
+        /cover distinct grounded facts|do not collapse multiple facts/,
+      );
+    }
+  });
+
   it("generate prompts allow mcq with grounded distractors", () => {
     for (const prompt of [
       GENERATE_SYSTEM_PROMPT,

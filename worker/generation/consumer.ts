@@ -42,6 +42,7 @@ import {
   truncateProgressText,
   pushProgressEvent,
 } from "./progress";
+import { buildCoverageLedger } from "./coverage";
 import { consumeFreeGenSlot } from "./quota";
 import { filterDraftsByQuality } from "./quality";
 import { harvestRuleDrafts } from "./rules";
@@ -653,6 +654,8 @@ export async function processGenerateJob(
     const topicHints = parseTopicHintsJson(progressRow?.topic_hints_json);
 
     let drafts: Array<CardDraft & { mediaR2Keys?: string[] | null }>;
+    /** Text used for coverage gaps; empty for image-only jobs. */
+    let coverageMaterial = "";
 
     if (material.kind === "image") {
       const progress = makeEmit(db, jobId, IMAGE_STAGES, {
@@ -759,6 +762,7 @@ export async function processGenerateJob(
         textError = err;
         console.warn("PDF text extraction failed; trying figures", err);
       }
+      coverageMaterial = text;
 
       // Emit an excerpt event after extraction when text is present.
       if (text.trim()) {
@@ -973,6 +977,7 @@ export async function processGenerateJob(
       await progress.emit("extract", 0, 0, "Extracting material");
 
       const text = await extractMaterialText(env, material);
+      coverageMaterial = text;
       // Emit an excerpt event after extraction.
       if (text.trim()) {
         const excerpt = text.split(/\r?\n/).find((l) => l.trim()) ?? text;
@@ -1004,17 +1009,9 @@ export async function processGenerateJob(
       await progress.emit("persist", 1, 1, "Saving drafts");
     }
 
-    const covered = drafts.map((d) => {
-      const excerpt = d.provenance.excerpt.slice(0, 80);
-      if (excerpt) return excerpt;
-      if (typeof d.front === "string") return d.front.slice(0, 80);
-      return (d.front.prompt ?? d.front.image_key).slice(0, 80);
-    });
-    const coverageJson = JSON.stringify({
-      covered,
-      gaps: [] as string[],
-      draft_count: drafts.length,
-    });
+    const coverageJson = JSON.stringify(
+      buildCoverageLedger(coverageMaterial, drafts),
+    );
 
     const finishedAt = new Date().toISOString();
     await db

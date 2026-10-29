@@ -1,0 +1,4 @@
+ATP is adenosine triphosphate, the cell's energy currency.
+Cells make most ATP in the mitochondria via oxidative phosphorylation.
+DNA stores genetic information as deoxyribonucleic acid.
+Ribosomes translate mRNA into proteins in the cytoplasm.
