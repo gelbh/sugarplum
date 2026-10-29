@@ -11,10 +11,10 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
 import Link from "@mui/material/Link";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import DraftCardEditor from "../components/DraftCardEditor";
+import OperateSection from "../components/OperateSection";
 import JourneyRail from "../components/JourneyRail";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
@@ -484,14 +484,7 @@ export default function DraftReviewPage() {
         ) : null}
 
         {!current ? (
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 2.5,
-              bgcolor: "background.paper",
-              borderColor: "divider",
-            }}
-          >
+          <OperateSection>
             <Stack spacing={2}>
               <Typography>No drafts left for this job.</Typography>
               <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
@@ -541,16 +534,9 @@ export default function DraftReviewPage() {
                 </Button>
               </Stack>
             </Stack>
-          </Paper>
+          </OperateSection>
         ) : (
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 2.5,
-              bgcolor: "background.paper",
-              borderColor: "divider",
-            }}
-          >
+          <OperateSection>
             <Stack
               direction="row"
               justifyContent="space-between"
@@ -693,7 +679,7 @@ export default function DraftReviewPage() {
                 </Button>
               </Stack>
             </Stack>
-          </Paper>
+          </OperateSection>
         )}
 
         <Dialog open={confirmAll} onClose={() => !busy && setConfirmAll(false)}>
