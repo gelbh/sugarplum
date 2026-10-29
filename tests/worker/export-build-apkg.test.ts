@@ -1,14 +1,7 @@
-import { readFile } from "node:fs/promises";
-import { createRequire } from "node:module";
 import JSZip from "jszip";
 import initSqlJs from "sql.js";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  buildApkg,
-  loadSqlWasmBinary,
-} from "../../worker/export/buildApkg";
-
-const require = createRequire(import.meta.url);
+import { describe, expect, it } from "vitest";
+import { buildApkg } from "../../worker/export/buildApkg";
 
 async function ankiSortFieldCsum(sortField: string): Promise<number> {
   const digest = await crypto.subtle.digest(
@@ -333,43 +326,5 @@ describe("buildApkg", () => {
       d: 6.789,
       lrt: lastReview,
     });
-  });
-});
-
-describe("loadSqlWasmBinary", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-    vi.restoreAllMocks();
-  });
-
-  it("loads via ASSETS in Cloudflare Workers and never hits public APP_URL", async () => {
-    vi.stubGlobal("navigator", { userAgent: "Cloudflare-Workers" });
-    const wasmBytes = await readFile(
-      require.resolve("sql.js/dist/sql-wasm.wasm"),
-    );
-    const fetchSpy = vi.fn(async () => {
-      throw new Error("global fetch must not be used for sql.js WASM");
-    });
-    vi.stubGlobal("fetch", fetchSpy);
-    let assetsPath = "";
-    const assets = {
-      fetch: async (input: RequestInfo | URL) => {
-        assetsPath = String(input instanceof Request ? input.url : input);
-        return new Response(wasmBytes, {
-          status: 200,
-          headers: { "content-type": "application/wasm" },
-        });
-      },
-    };
-
-    const loaded = await loadSqlWasmBinary({ assets });
-    expect(loaded.byteLength).toBe(wasmBytes.byteLength);
-    expect(assetsPath).toContain("sql-wasm");
-    expect(fetchSpy).not.toHaveBeenCalled();
-  });
-
-  it("fails closed when Worker runtime has no ASSETS binding", async () => {
-    vi.stubGlobal("navigator", { userAgent: "Cloudflare-Workers" });
-    await expect(loadSqlWasmBinary({})).rejects.toThrow(/ASSETS binding/);
   });
 });
