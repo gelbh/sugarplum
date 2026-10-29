@@ -71,5 +71,7 @@ describe("shellBackHref", () => {
     expect(shellBackHref("/library/decks/d1")).toBe("/library");
     expect(shellBackHref("/library/subjects/s1")).toBe("/library");
     expect(shellBackHref("/jobs/job_1/drafts")).toBe("/library");
+    expect(shellBackHref("/admin/users/u1")).toBe("/admin");
+    expect(shellBackHref("/admin")).toBeNull();
   });
 });

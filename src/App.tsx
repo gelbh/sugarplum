@@ -15,11 +15,13 @@ import InsightsPage from "./routes/InsightsPage";
 import StudyPage from "./routes/StudyPage";
 import TodayPage from "./routes/TodayPage";
 import AdminPage from "./routes/AdminPage";
+import AdminUserPage from "./routes/AdminUserPage";
 import { subscribeLocation } from "./nav/navigate";
 import { StudyChromeProvider } from "./study/StudyChromeContext";
 
 const SUBJECT_PATH = /^\/library\/subjects\/([^/]+)\/?$/;
 const DECK_PATH = /^\/library\/decks\/([^/]+)\/?$/;
+const ADMIN_USER_PATH = /^\/admin\/users\/([^/]+)\/?$/;
 
 function shell(page: ReactNode) {
   return <AppShell>{page}</AppShell>;
@@ -71,6 +73,15 @@ function AppInner() {
   if (/^\/jobs\/[^/]+\/drafts\/?$/.test(path))
     return shell(<DraftReviewPage />);
   if (path === "/admin") return shell(<AdminPage />);
+  const adminUserMatch = path.match(ADMIN_USER_PATH);
+  if (adminUserMatch) {
+    return shell(
+      <AdminUserPage
+        key={adminUserMatch[1]}
+        userId={decodeURIComponent(adminUserMatch[1])}
+      />,
+    );
+  }
 
   return shell(<TodayPage />);
 }
