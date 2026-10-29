@@ -156,7 +156,6 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
           const startedAtMs = resolveJobStartedAtMs({
             startedAt: job.progress?.started_at,
             events: job.progress?.events,
-            createdAt: job.created_at,
           });
           if (startedAtMs != null) ext.startedAt = startedAtMs;
 

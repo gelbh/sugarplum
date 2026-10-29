@@ -5,11 +5,10 @@ export function etaMs(elapsedMs: number, percent: number): number | null {
   return (elapsedMs * (100 - percent)) / percent;
 }
 
-/** Durable ETA clock: started_at → earliest event → created_at. */
+/** Durable ETA clock: started_at, else earliest progress event (no created_at / queue). */
 export function resolveJobStartedAtMs(args: {
   startedAt?: string | null;
-  events?: Array<{ at?: string | number | null }> | null;
-  createdAt?: string | null;
+  events?: Array<{ at?: string | null }> | null;
 }): number | null {
   if (typeof args.startedAt === "string") {
     const t = Date.parse(args.startedAt);
@@ -17,20 +16,15 @@ export function resolveJobStartedAtMs(args: {
   }
   let earliest: number | null = null;
   for (const event of args.events ?? []) {
-    if (event?.at == null) continue;
-    const t =
-      typeof event.at === "number" ? event.at : Date.parse(String(event.at));
+    if (typeof event?.at !== "string") continue;
+    const t = Date.parse(event.at);
     if (!Number.isFinite(t)) continue;
     earliest = earliest == null ? t : Math.min(earliest, t);
   }
-  if (earliest != null) return earliest;
-  if (typeof args.createdAt === "string") {
-    const t = Date.parse(args.createdAt);
-    if (Number.isFinite(t)) return t;
-  }
-  return null;
+  return earliest;
 }
 
+/** Immutable anchor: raw ETA at percent change; display = countdown from anchor. */
 export type CalmEtaSample = {
   percent: number;
   displayEtaMs: number;
@@ -38,8 +32,9 @@ export type CalmEtaSample = {
 };
 
 /**
- * Calm ETA: recompute average-since-start only when percent increases;
- * while percent is flat, countdown the last display value (never grow).
+ * Calm ETA: recompute when percent changes; while flat, countdown the anchor
+ * (never grow). When countdown hits 0, return null ("Calculating…") but keep
+ * the anchor so a later percent bump still recomputes.
  */
 export function calmDisplayEtaMs(args: {
   elapsedMs: number;
@@ -53,7 +48,7 @@ export function calmDisplayEtaMs(args: {
 
   const previous = args.previous;
   const shouldRecompute =
-    previous == null || args.percent > previous.percent;
+    previous == null || args.percent !== previous.percent;
 
   if (shouldRecompute) {
     const raw = etaMs(args.elapsedMs, args.percent);
@@ -70,12 +65,10 @@ export function calmDisplayEtaMs(args: {
 
   const wallDelta = Math.max(0, args.nowMs - previous.atMs);
   const display = Math.max(0, previous.displayEtaMs - wallDelta);
-  const sample: CalmEtaSample = {
-    percent: args.percent,
-    displayEtaMs: display,
-    atMs: args.nowMs,
-  };
-  return { etaMs: display, sample };
+  if (display === 0) {
+    return { etaMs: null, sample: previous };
+  }
+  return { etaMs: display, sample: previous };
 }
 
 /** Extrapolate job token total from usage so far and weighted percent. */

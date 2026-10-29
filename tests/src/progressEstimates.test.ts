@@ -65,6 +65,25 @@ describe("calmDisplayEtaMs", () => {
     });
     expect(held.etaMs).toBe(25_000);
     expect(held.etaMs!).toBeLessThan(grownRaw!);
+    expect(held.sample).toEqual(first.sample);
+  });
+
+  it("returns null when flat countdown hits zero but keeps anchor", () => {
+    const first = calmDisplayEtaMs({
+      elapsedMs: 10_000,
+      percent: 50,
+      previous: null,
+      nowMs: 10_000,
+    });
+    expect(first.etaMs).toBe(10_000);
+    const stalled = calmDisplayEtaMs({
+      elapsedMs: 25_000,
+      percent: 50,
+      previous: first.sample,
+      nowMs: 25_000,
+    });
+    expect(stalled.etaMs).toBeNull();
+    expect(stalled.sample).toEqual(first.sample);
   });
 
   it("recomputes raw when percent increases", () => {
@@ -83,34 +102,44 @@ describe("calmDisplayEtaMs", () => {
     expect(next.etaMs).toBe(etaMs(12_000, 30));
     expect(next.sample?.percent).toBe(30);
   });
+
+  it("recomputes raw when percent decreases", () => {
+    const first = calmDisplayEtaMs({
+      elapsedMs: 10_000,
+      percent: 40,
+      previous: null,
+      nowMs: 10_000,
+    });
+    const next = calmDisplayEtaMs({
+      elapsedMs: 12_000,
+      percent: 20,
+      previous: first.sample,
+      nowMs: 12_000,
+    });
+    expect(next.etaMs).toBe(etaMs(12_000, 20));
+    expect(next.sample?.percent).toBe(20);
+  });
 });
 
 describe("resolveJobStartedAtMs", () => {
-  it("prefers started_at over events and created_at", () => {
+  it("prefers started_at over events", () => {
     expect(
       resolveJobStartedAtMs({
         startedAt: "2026-10-29T10:00:00.000Z",
         events: [{ at: "2026-10-29T10:05:00.000Z" }],
-        createdAt: "2026-10-29T09:00:00.000Z",
       }),
     ).toBe(Date.parse("2026-10-29T10:00:00.000Z"));
   });
 
-  it("falls back to earliest event then created_at", () => {
+  it("falls back to earliest event and ignores created_at queue time", () => {
     expect(
       resolveJobStartedAtMs({
         events: [
           { at: "2026-10-29T10:05:00.000Z" },
           { at: "2026-10-29T10:01:00.000Z" },
         ],
-        createdAt: "2026-10-29T09:00:00.000Z",
       }),
     ).toBe(Date.parse("2026-10-29T10:01:00.000Z"));
-    expect(
-      resolveJobStartedAtMs({
-        createdAt: "2026-10-29T09:00:00.000Z",
-      }),
-    ).toBe(Date.parse("2026-10-29T09:00:00.000Z"));
   });
 
   it("returns null when nothing parses", () => {
