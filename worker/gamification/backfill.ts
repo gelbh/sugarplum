@@ -1,10 +1,5 @@
-import {
-  loadActiveDefs,
-  loadStudyMetrics,
-  metricValue,
-  tryUnlock,
-} from "./evaluate";
-import { applyStudyDayStreak } from "./streak";
+import { evaluateAchievements } from "./evaluate";
+import { computeStreakFromSortedDays } from "./streak";
 import { creditXp, ensureUserGamification } from "./xp";
 
 function backfillKey(userId: string): string {
@@ -45,26 +40,6 @@ async function listStudyDaysAscending(
     .sort();
 }
 
-async function rebuildStreakFromHistory(
-  db: D1Database,
-  userId: string,
-): Promise<void> {
-  const updatedAt = new Date().toISOString();
-  await db
-    .prepare(
-      `UPDATE user_gamification
-       SET streak_current = 0, streak_best = 0, streak_day = NULL, updated_at = ?
-       WHERE user_id = ?`,
-    )
-    .bind(updatedAt, userId)
-    .run();
-
-  const days = await listStudyDaysAscending(db, userId);
-  for (const day of days) {
-    await applyStudyDayStreak(db, userId, day);
-  }
-}
-
 /** Silent historical unlocks + streak_best; idempotent via ledger marker. */
 export async function backfillUser(
   db: D1Database,
@@ -73,16 +48,29 @@ export async function backfillUser(
   await ensureUserGamification(db, userId);
   if (await alreadyBackfilled(db, userId)) return;
 
-  await rebuildStreakFromHistory(db, userId);
+  const days = await listStudyDaysAscending(db, userId);
+  const streak = computeStreakFromSortedDays(days);
+  const updatedAt = new Date().toISOString();
+  await db
+    .prepare(
+      `UPDATE user_gamification
+       SET streak_current = ?, streak_best = ?, streak_day = ?, updated_at = ?
+       WHERE user_id = ?`,
+    )
+    .bind(
+      streak.streakCurrent,
+      streak.streakBest,
+      streak.streakDay,
+      updatedAt,
+      userId,
+    )
+    .run();
 
-  const nowIso = new Date().toISOString();
-  const defs = await loadActiveDefs(db);
-  const metrics = await loadStudyMetrics(db, userId, nowIso);
-
-  for (const def of defs) {
-    const value = metricValue(def, metrics);
-    await tryUnlock(db, userId, def, value, null, 1);
-  }
+  await evaluateAchievements(db, userId, {
+    triggerEventId: null,
+    nowIso: updatedAt,
+    backdated: 1,
+  });
 
   await creditXp(db, userId, 0, "backfill", backfillKey(userId));
 }

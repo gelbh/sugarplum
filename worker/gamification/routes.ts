@@ -238,45 +238,62 @@ gamificationRoutes.patch("/gamification/settings", async (c) => {
     throw new HTTPException(400, { message: "Invalid JSON body" });
   }
 
-  const updates: string[] = [];
-  const binds: unknown[] = [];
+  const hasBoard = "boardOptIn" in body;
+  const hasName = "displayName" in body;
+  if (!hasBoard && !hasName) {
+    throw new HTTPException(400, { message: "No settings to update" });
+  }
 
-  if ("boardOptIn" in body) {
+  let boardOptIn: number | undefined;
+  if (hasBoard) {
     if (typeof body.boardOptIn !== "boolean") {
       throw new HTTPException(400, { message: "boardOptIn must be boolean" });
     }
-    updates.push("board_opt_in = ?");
-    binds.push(body.boardOptIn ? 1 : 0);
+    boardOptIn = body.boardOptIn ? 1 : 0;
   }
 
-  if ("displayName" in body) {
+  let displayName: string | null | undefined;
+  if (hasName) {
     if (body.displayName !== null && typeof body.displayName !== "string") {
       throw new HTTPException(400, {
         message: "displayName must be string or null",
       });
     }
-    const name =
+    displayName =
       body.displayName === null
         ? null
         : body.displayName.trim().slice(0, 32) || null;
-    updates.push("display_name = ?");
-    binds.push(name);
-  }
-
-  if (updates.length === 0) {
-    throw new HTTPException(400, { message: "No settings to update" });
   }
 
   const now = new Date().toISOString();
-  updates.push("updated_at = ?");
-  binds.push(now, userId);
-
-  await db
-    .prepare(
-      `UPDATE user_gamification SET ${updates.join(", ")} WHERE user_id = ?`,
-    )
-    .bind(...binds)
-    .run();
+  if (hasBoard && hasName) {
+    await db
+      .prepare(
+        `UPDATE user_gamification
+         SET board_opt_in = ?, display_name = ?, updated_at = ?
+         WHERE user_id = ?`,
+      )
+      .bind(boardOptIn, displayName, now, userId)
+      .run();
+  } else if (hasBoard) {
+    await db
+      .prepare(
+        `UPDATE user_gamification
+         SET board_opt_in = ?, updated_at = ?
+         WHERE user_id = ?`,
+      )
+      .bind(boardOptIn, now, userId)
+      .run();
+  } else {
+    await db
+      .prepare(
+        `UPDATE user_gamification
+         SET display_name = ?, updated_at = ?
+         WHERE user_id = ?`,
+      )
+      .bind(displayName, now, userId)
+      .run();
+  }
 
   const row = await loadGamification(db, userId);
   return c.json(toGamificationResponse(row) satisfies GamificationResponse);

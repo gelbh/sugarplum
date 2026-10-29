@@ -352,31 +352,13 @@ export function gamificationRun(
   }
   if (
     normalized.startsWith(
-      "UPDATE user_gamification SET streak_current = 0, streak_best = 0, streak_day = NULL",
-    )
-  ) {
-    const [updatedAt, userId] = bound as [string, string];
-    const row = state.userGamification.get(userId);
-    if (row) {
-      state.userGamification.set(userId, {
-        ...row,
-        streak_current: 0,
-        streak_best: 0,
-        streak_day: null,
-        updated_at: updatedAt,
-      });
-    }
-    return { success: true, meta: { changes: 1 } } as D1Result;
-  }
-  if (
-    normalized.startsWith(
       "UPDATE user_gamification SET streak_current = ?, streak_best = ?, streak_day = ?",
     )
   ) {
     const [streakCurrent, streakBest, streakDay, updatedAt, userId] = bound as [
       number,
       number,
-      string,
+      string | null,
       string,
       string,
     ];
@@ -419,30 +401,58 @@ export function gamificationRun(
     return { success: true, meta: { changes: 1 } } as D1Result;
   }
   if (
-    normalized.startsWith("UPDATE user_gamification SET") &&
-    (normalized.includes("board_opt_in =") ||
-      normalized.includes("display_name ="))
+    normalized.startsWith(
+      "UPDATE user_gamification SET board_opt_in = ?, display_name = ?, updated_at = ?",
+    )
   ) {
-    // Dynamic settings UPDATE: SET cols..., updated_at = ? WHERE user_id = ?
-    const userId = bound[bound.length - 1] as string;
+    const [boardOptIn, displayName, updatedAt, userId] = bound as [
+      number,
+      string | null,
+      string,
+      string,
+    ];
     const row = state.userGamification.get(userId);
-    if (!row) {
-      return { success: true, meta: { changes: 0 } } as D1Result;
-    }
-    const next = { ...row };
-    let i = 0;
-    const setClause = normalized.slice(
-      "UPDATE user_gamification SET ".length,
-      normalized.indexOf(" WHERE "),
-    );
-    for (const part of setClause.split(", ")) {
-      const col = part.split(" = ")[0]?.trim();
-      if (col === "board_opt_in") next.board_opt_in = bound[i++] as number;
-      else if (col === "display_name")
-        next.display_name = bound[i++] as string | null;
-      else if (col === "updated_at") next.updated_at = bound[i++] as string;
-    }
-    state.userGamification.set(userId, next);
+    if (!row) return { success: true, meta: { changes: 0 } } as D1Result;
+    state.userGamification.set(userId, {
+      ...row,
+      board_opt_in: boardOptIn,
+      display_name: displayName,
+      updated_at: updatedAt,
+    });
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+  if (
+    normalized.startsWith(
+      "UPDATE user_gamification SET board_opt_in = ?, updated_at = ?",
+    )
+  ) {
+    const [boardOptIn, updatedAt, userId] = bound as [number, string, string];
+    const row = state.userGamification.get(userId);
+    if (!row) return { success: true, meta: { changes: 0 } } as D1Result;
+    state.userGamification.set(userId, {
+      ...row,
+      board_opt_in: boardOptIn,
+      updated_at: updatedAt,
+    });
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+  if (
+    normalized.startsWith(
+      "UPDATE user_gamification SET display_name = ?, updated_at = ?",
+    )
+  ) {
+    const [displayName, updatedAt, userId] = bound as [
+      string | null,
+      string,
+      string,
+    ];
+    const row = state.userGamification.get(userId);
+    if (!row) return { success: true, meta: { changes: 0 } } as D1Result;
+    state.userGamification.set(userId, {
+      ...row,
+      display_name: displayName,
+      updated_at: updatedAt,
+    });
     return { success: true, meta: { changes: 1 } } as D1Result;
   }
   if (normalized.startsWith("INSERT OR IGNORE INTO xp_ledger")) {

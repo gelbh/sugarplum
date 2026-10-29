@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { levelFromXp, XP } from "../../../worker/gamification/constants";
+import {
+  computeStreakFromSortedDays,
+  utcPreviousDay,
+} from "../../../worker/gamification/streak";
 import { traitsForAchievement } from "../../../worker/gamification/traits";
 import { creditXp } from "../../../worker/gamification/xp";
 
@@ -30,6 +34,26 @@ describe("traitsForAchievement", () => {
 describe("XP constants", () => {
   it("zeros generation", () => expect(XP.generation).toBe(0));
   it("caps daily review xp", () => expect(XP.reviewDailyCap).toBe(100));
+});
+
+describe("computeStreakFromSortedDays", () => {
+  it("returns zeros for empty history", () => {
+    expect(computeStreakFromSortedDays([])).toEqual({
+      streakCurrent: 0,
+      streakBest: 0,
+      streakDay: null,
+    });
+  });
+
+  it("tracks best across a gap and current at the end", () => {
+    const days = ["2026-01-01", "2026-01-02", "2026-01-03", "2026-01-05"];
+    expect(utcPreviousDay("2026-01-05")).toBe("2026-01-04");
+    expect(computeStreakFromSortedDays(days)).toEqual({
+      streakCurrent: 1,
+      streakBest: 3,
+      streakDay: "2026-01-05",
+    });
+  });
 });
 
 type GamificationRow = {

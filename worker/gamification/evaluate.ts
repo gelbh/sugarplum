@@ -33,7 +33,7 @@ const ACCEPT_TRIGGERS = new Set([
   "composite",
 ]);
 
-export async function loadActiveDefs(
+async function loadActiveDefs(
   db: D1Database,
 ): Promise<AchievementDefRow[]> {
   const { results } = await db
@@ -149,7 +149,7 @@ function effectiveThreshold(def: AchievementDefRow): number {
   return def.threshold ?? 1;
 }
 
-export async function loadStudyMetrics(
+async function loadStudyMetrics(
   db: D1Database,
   userId: string,
   nowIso: string,
@@ -174,7 +174,7 @@ export async function loadStudyMetrics(
   };
 }
 
-export function metricValue(
+function metricValue(
   def: AchievementDefRow,
   metrics: StudyMetrics,
 ): number {
@@ -208,7 +208,7 @@ export function metricValue(
   }
 }
 
-export async function tryUnlock(
+async function tryUnlock(
   db: D1Database,
   userId: string,
   def: AchievementDefRow,
@@ -247,20 +247,31 @@ export async function tryUnlock(
   return def.id;
 }
 
-async function evaluateKinds(
+export async function evaluateAchievements(
   db: D1Database,
   userId: string,
-  kinds: Set<string>,
-  triggerEventId: string | null,
-  nowIso: string,
+  opts: {
+    kinds?: Set<string>;
+    triggerEventId: string | null;
+    nowIso: string;
+    backdated?: 0 | 1;
+  },
 ): Promise<string[]> {
   const defs = await loadActiveDefs(db);
-  const metrics = await loadStudyMetrics(db, userId, nowIso);
+  const metrics = await loadStudyMetrics(db, userId, opts.nowIso);
+  const backdated = opts.backdated ?? 0;
   const unlocks: string[] = [];
   for (const def of defs) {
-    if (!kinds.has(def.trigger_kind)) continue;
+    if (opts.kinds && !opts.kinds.has(def.trigger_kind)) continue;
     const value = metricValue(def, metrics);
-    const unlocked = await tryUnlock(db, userId, def, value, triggerEventId);
+    const unlocked = await tryUnlock(
+      db,
+      userId,
+      def,
+      value,
+      opts.triggerEventId,
+      backdated,
+    );
     if (unlocked) unlocks.push(unlocked);
   }
   return unlocks;
@@ -272,13 +283,11 @@ export async function evaluateAfterReview(
   args: { reviewLogId: string; reviewedAt: Date },
 ): Promise<{ unlocks: string[] }> {
   const nowIso = args.reviewedAt.toISOString();
-  const unlocks = await evaluateKinds(
-    db,
-    userId,
-    REVIEW_TRIGGERS,
-    args.reviewLogId,
+  const unlocks = await evaluateAchievements(db, userId, {
+    kinds: REVIEW_TRIGGERS,
+    triggerEventId: args.reviewLogId,
     nowIso,
-  );
+  });
   return { unlocks };
 }
 
@@ -289,12 +298,10 @@ export async function evaluateAfterAccept(
 ): Promise<{ unlocks: string[] }> {
   void args.cardType;
   const nowIso = new Date().toISOString();
-  const unlocks = await evaluateKinds(
-    db,
-    userId,
-    ACCEPT_TRIGGERS,
-    args.cardId,
+  const unlocks = await evaluateAchievements(db, userId, {
+    kinds: ACCEPT_TRIGGERS,
+    triggerEventId: args.cardId,
     nowIso,
-  );
+  });
   return { unlocks };
 }
