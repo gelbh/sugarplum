@@ -2379,8 +2379,6 @@ export function createTestEnv(opts?: {
           normalized.startsWith("INSERT OR IGNORE INTO usage_events") ||
           normalized.startsWith("INSERT INTO usage_events")
         ) {
-          // SQL embeds kind='generation'|'regen'; binds: id,user,job,path,provider,tp,tc,tt,created
-          // Regen SQL uses NULL literal for job_id (not a bind).
           const kind = normalized.includes("'regen'") ? "regen" : "generation";
           const isRegen = kind === "regen";
           const [
