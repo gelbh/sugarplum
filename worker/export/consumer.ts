@@ -20,10 +20,6 @@ async function loadJob(
     .first<ExportClaimRow>();
 }
 
-/**
- * Claim a queued job, or reclaim a stale running job.
- * Returns true when this delivery owns the build.
- */
 async function tryClaimExportJob(
   db: D1Database,
   exportId: string,
@@ -77,7 +73,6 @@ async function reclaimRunning(
   return reclaim.meta.changes ? "run" : "busy";
 }
 
-/** Cloudflare Queues consumer entry for sugarplum-export. */
 export async function handleExportQueue(
   batch: MessageBatch<ExportQueueMessage>,
   env: Env,
@@ -113,7 +108,6 @@ export async function handleExportQueue(
       continue;
     }
 
-    // Transient: runner already reset to queued when requeueOnTransient.
     message.retry({ delaySeconds: EXPORT_QUEUE_RETRY_DELAY_SEC });
   }
 }

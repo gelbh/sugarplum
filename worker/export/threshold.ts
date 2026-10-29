@@ -19,7 +19,6 @@ function parseJson(raw: string): unknown {
   }
 }
 
-/** Cheap pre-build estimate: accepted card count + R2 head sizes. No get/buildApkg. */
 export async function estimateExportWorkload(
   env: Env,
   userId: string,

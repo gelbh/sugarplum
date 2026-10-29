@@ -4,7 +4,6 @@ export type ExportQueueMessage = {
   exportId: string;
 };
 
-/** Send an existing export job onto EXPORT_QUEUE when bound. */
 export async function enqueueExport(
   env: Env,
   message: ExportQueueMessage,

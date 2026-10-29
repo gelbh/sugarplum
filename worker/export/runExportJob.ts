@@ -29,18 +29,9 @@ type ExportRow = {
 };
 
 export type RunExportJobOptions = {
-  /**
-   * When true (queue consumer), leave the row requeued on unexpected errors
-   * so message.retry() can reclaim. Sync HTTP path leaves this false and
-   * marks failed.
-   */
   requeueOnTransient?: boolean;
 };
 
-/**
- * Build apkg for an existing export_jobs row and mark ready/failed.
- * Caller owns queued→running transition when async.
- */
 export async function runExportJob(
   env: Env,
   exportId: string,
