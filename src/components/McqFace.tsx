@@ -113,7 +113,7 @@ export default function McqFace({
             flexShrink: 0,
           }}
         >
-          Question
+          Front
         </Typography>
         <Box
           data-card-face-content
@@ -157,18 +157,18 @@ export default function McqFace({
                 const isPicked = picked === option;
                 const isCorrect = option.trim() === back.trim();
                 const locked = picked !== null;
-                // Hex on ivory face: theme success/error.main shift under dark scheme.
+                // Dual-register on ivory: plum = correct, amber lamp = wrong pick (no traffic-light hex).
                 let borderColor = "currentColor";
                 let bgcolor = "transparent";
                 let opacity = 0.88;
                 if (locked) {
                   if (isCorrect) {
-                    borderColor = "#2e7d32";
-                    bgcolor = "rgba(46, 125, 50, 0.18)";
+                    borderColor = "#5B2C6F";
+                    bgcolor = "rgba(91, 44, 111, 0.16)";
                     opacity = 1;
                   } else if (isPicked) {
-                    borderColor = "#c62828";
-                    bgcolor = "rgba(211, 47, 47, 0.14)";
+                    borderColor = "#C4A574";
+                    bgcolor = "rgba(196, 165, 116, 0.22)";
                     opacity = 1;
                   } else {
                     opacity = 0.45;
