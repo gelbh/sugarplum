@@ -1,0 +1,19 @@
+{
+  "id": "multi-fact-remainder",
+  "description": "Golden LLM remainder covers four distinct facts; no invented claims",
+  "mode": "with_golden_llm",
+  "key_facts": [
+    { "id": "atp", "match": ["adenosine triphosphate", "ATP"] },
+    { "id": "mito", "match": ["mitochondria"] },
+    { "id": "dna", "match": ["deoxyribonucleic"] },
+    { "id": "ribo", "match": ["ribosomes", "translate mRNA"] }
+  ],
+  "forbidden": [
+    { "id": "invented", "match": "unicorn enzyme" }
+  ],
+  "expect": {
+    "min_survivors": 4,
+    "min_key_fact_coverage": 1,
+    "require_zero_forbidden": true
+  }
+}
