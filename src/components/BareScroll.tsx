@@ -10,7 +10,7 @@ export default function BareScroll({ children }: BareScrollProps) {
   return (
     <Box
       sx={{
-        height: "100%",
+        height: "100dvh",
         maxHeight: "100dvh",
         overflowY: "auto",
         overscrollBehavior: "contain",
