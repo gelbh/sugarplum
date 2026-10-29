@@ -16,6 +16,7 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import {
@@ -232,19 +233,6 @@ export default function SubjectPage({ subjectId }: Props) {
       ) : (
         <Stack spacing={3}>
           <Box>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              <Link
-                href="/library"
-                underline="hover"
-                color="primary"
-                onClick={(ev) => {
-                  ev.preventDefault();
-                  navigate("/library");
-                }}
-              >
-                Library
-              </Link>
-            </Typography>
             <Stack
               direction="row"
               alignItems="flex-start"
@@ -264,6 +252,7 @@ export default function SubjectPage({ subjectId }: Props) {
                     size="small"
                     aria-label="Rename subject"
                     onClick={openRenameSubject}
+                    sx={{ color: "text.secondary" }}
                   >
                     <EditOutlinedIcon fontSize="small" />
                   </IconButton>
@@ -280,6 +269,7 @@ export default function SubjectPage({ subjectId }: Props) {
                         aria-label="Delete subject"
                         disabled={deleteSubjectBlocked}
                         onClick={requestDeleteSubject}
+                        sx={{ color: "text.secondary" }}
                       >
                         <DeleteOutlineIcon fontSize="small" />
                       </IconButton>
@@ -288,8 +278,12 @@ export default function SubjectPage({ subjectId }: Props) {
                 </Stack>
               ) : null}
             </Stack>
-            <Typography variant="body2" color="text.secondary">
-              Decks in this subject.
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              {decks.length === 0
+                ? "Create a deck to add materials."
+                : decks.length === 1
+                  ? "1 deck"
+                  : `${decks.length} decks`}
             </Typography>
           </Box>
 
@@ -304,9 +298,10 @@ export default function SubjectPage({ subjectId }: Props) {
             }}
           >
             <Stack
-              direction="row"
-              alignItems="center"
+              direction={{ xs: "column", sm: "row" }}
+              alignItems={{ xs: "stretch", sm: "center" }}
               justifyContent="space-between"
+              spacing={1}
               sx={{ mb: 1.5 }}
             >
               <Typography
@@ -317,22 +312,22 @@ export default function SubjectPage({ subjectId }: Props) {
                 Decks
               </Typography>
               <Stack direction="row" spacing={1}>
-                {subject ? (
+                {subject && decks.length > 0 ? (
                   <Button
                     size="small"
-                    variant="outlined"
+                    variant="contained"
                     onClick={() =>
                       navigate(
                         `/study?subjectId=${encodeURIComponent(subject.id)}`,
                       )
                     }
                   >
-                    Study this subject
+                    Study
                   </Button>
                 ) : null}
                 <Button
                   size="small"
-                  variant="outlined"
+                  variant={decks.length === 0 ? "contained" : "outlined"}
                   onClick={openCreateDeck}
                   disabled={!subject}
                 >
@@ -342,7 +337,7 @@ export default function SubjectPage({ subjectId }: Props) {
             </Stack>
             {decks.length === 0 ? (
               <Typography variant="body2" color="text.secondary">
-                No decks yet. Create one to add materials.
+                No decks yet.
               </Typography>
             ) : (
               <Stack
@@ -359,27 +354,45 @@ export default function SubjectPage({ subjectId }: Props) {
                       display: "flex",
                       alignItems: "center",
                       gap: 1,
-                      py: 1,
+                      py: 1.25,
+                      "&:hover": { bgcolor: "action.hover" },
                     }}
                   >
                     <Link
                       href={`/library/decks/${encodeURIComponent(d.id)}`}
                       underline="hover"
                       color="inherit"
-                      variant="body2"
-                      sx={{ flex: 1, minWidth: 0 }}
-                      noWrap
+                      aria-label={`Open deck ${d.title}`}
                       onClick={(ev) => {
+                        if (
+                          ev.defaultPrevented ||
+                          ev.button !== 0 ||
+                          ev.metaKey ||
+                          ev.ctrlKey ||
+                          ev.shiftKey ||
+                          ev.altKey
+                        ) {
+                          return;
+                        }
                         ev.preventDefault();
                         navigate(`/library/decks/${encodeURIComponent(d.id)}`);
                       }}
+                      sx={{
+                        flex: 1,
+                        minWidth: 0,
+                        borderRadius: 1,
+                        outlineOffset: 2,
+                      }}
                     >
-                      {d.title}
+                      <Typography variant="body2" noWrap fontWeight={500}>
+                        {d.title}
+                      </Typography>
                     </Link>
                     <IconButton
                       size="small"
                       aria-label={`Rename ${d.title}`}
                       onClick={() => openRenameDeck(d)}
+                      sx={{ color: "text.secondary" }}
                     >
                       <EditOutlinedIcon fontSize="small" />
                     </IconButton>
@@ -387,9 +400,15 @@ export default function SubjectPage({ subjectId }: Props) {
                       size="small"
                       aria-label={`Delete ${d.title}`}
                       onClick={() => openDeleteDeck(d)}
+                      sx={{ color: "text.secondary" }}
                     >
                       <DeleteOutlineIcon fontSize="small" />
                     </IconButton>
+                    <ChevronRightIcon
+                      fontSize="small"
+                      sx={{ color: "text.secondary", flexShrink: 0 }}
+                      aria-hidden
+                    />
                   </Box>
                 ))}
               </Stack>

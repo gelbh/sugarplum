@@ -24,8 +24,8 @@ describe("zenPreference", () => {
     storage = memoryStorage();
   });
 
-  it("defaults to false", () => {
-    expect(loadZenPreference(storage)).toBe(false);
+  it("defaults to true (zen-first)", () => {
+    expect(loadZenPreference(storage)).toBe(true);
   });
 
   it("round-trips on", () => {
