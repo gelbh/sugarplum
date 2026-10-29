@@ -7,6 +7,7 @@ import {
   type GenerateDraftsInput,
   type LlmAdapter,
 } from "./llm";
+import { appendAvoidPatternsSuffix } from "./feedback-hints";
 import {
   GENERATE_COMPACT_SYSTEM_PROMPT,
   GENERATE_SYSTEM_PROMPT,
@@ -250,12 +251,16 @@ export function createWorkersAiAdapter(
 
       // One compact retry: live monoxenous failures end mid-first-card with
       // nothing to salvage; a smaller ask often completes within budget.
-      const hints = input.topicHints ?? [];
+      const withSuffixes = (prompt: string) =>
+        appendAvoidPatternsSuffix(
+          appendTopicHintsSuffix(prompt, input.topicHints ?? []),
+          input.avoidPatterns ?? [],
+        );
       return withCompactTruncationRetry(
         async () => {
           const run = await runChat(
             GENERATE_SYSTEM_PROMPT,
-            appendTopicHintsSuffix(userPromptForJson(input.text), hints),
+            withSuffixes(userPromptForJson(input.text)),
           );
           reportUsage(run);
           return parseOrThrow(run);
@@ -263,10 +268,7 @@ export function createWorkersAiAdapter(
         async () => {
           const run = await runChat(
             GENERATE_COMPACT_SYSTEM_PROMPT,
-            appendTopicHintsSuffix(
-              generateCompactUserPrompt(input.text),
-              hints,
-            ),
+            withSuffixes(generateCompactUserPrompt(input.text)),
           );
           reportUsage(run);
           return parseOrThrow(run);

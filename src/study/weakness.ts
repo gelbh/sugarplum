@@ -22,6 +22,7 @@ function frontPreviewFromJson(frontJson: string): string {
 export type WeaknessCandidate = {
   id: string;
   deck_id: string;
+  type: string;
   front_json: string;
   lapses: number;
   again_14d: number;
@@ -35,6 +36,7 @@ export type WeaknessCandidate = {
 export type WeaknessRow = {
   id: string;
   deck_id: string;
+  type: string;
   front_preview: string;
   lapses: number;
   again_14d: number;
@@ -85,6 +87,7 @@ export function rankWeakness(
     .map(({ row }) => ({
       id: row.id,
       deck_id: row.deck_id,
+      type: row.type,
       front_preview: frontPreviewFromJson(row.front_json),
       lapses: row.lapses,
       again_14d: row.again_14d,

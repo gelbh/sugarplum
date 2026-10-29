@@ -406,6 +406,8 @@ async function runTextDraftPipeline(args: {
   emit?: JobProgressEmit;
   /** Also-cover topic hints from the job (`topic_hints_json`). */
   topicHints?: string[];
+  /** Reject avoid-patterns from the job (`avoid_patterns_json`). */
+  avoidPatterns?: string[];
   /** Emit rules stage before LLM when using TEXT_LLM_STAGES catalog. */
   emitRulesStage?: boolean;
 }): Promise<CardDraft[]> {
@@ -455,6 +457,7 @@ async function runTextDraftPipeline(args: {
       llm,
       apiKey,
       provider,
+      avoidPatterns: args.avoidPatterns,
     });
   }
   if (args.emit && critiquedRules.length > 0) {
@@ -469,6 +472,7 @@ async function runTextDraftPipeline(args: {
       apiKey,
       provider,
       topicHints: args.topicHints,
+      avoidPatterns: args.avoidPatterns,
       onProgress: args.emit
         ? (e) =>
             args.emit!.emit(
@@ -642,16 +646,20 @@ export async function processGenerateJob(
 
     const progressRow = await db
       .prepare(
-        "SELECT progress_json, topic_hints_json FROM generation_jobs WHERE id = ?",
+        "SELECT progress_json, topic_hints_json, avoid_patterns_json FROM generation_jobs WHERE id = ?",
       )
       .bind(jobId)
       .first<{
         progress_json: string | null;
         topic_hints_json: string | null;
+        avoid_patterns_json: string | null;
       }>();
     const freeGenCharged = isFreeGenCharged(progressRow?.progress_json);
     const startedAt = readStartedAt(progressRow?.progress_json);
     const topicHints = parseTopicHintsJson(progressRow?.topic_hints_json);
+    const avoidPatterns = parseTopicHintsJson(
+      progressRow?.avoid_patterns_json,
+    );
 
     let drafts: Array<CardDraft & { mediaR2Keys?: string[] | null }>;
     /** Text used for coverage gaps; empty for image-only jobs. */
@@ -949,6 +957,7 @@ export async function processGenerateJob(
           opts,
           emit: progress,
           topicHints,
+          avoidPatterns,
           emitRulesStage: true,
         });
       }
@@ -996,6 +1005,7 @@ export async function processGenerateJob(
         opts,
         emit: progress,
         topicHints,
+        avoidPatterns,
         emitRulesStage: true,
       });
       drafts = filterDraftsByQuality(drafts);

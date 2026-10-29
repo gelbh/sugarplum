@@ -13,6 +13,7 @@ import {
 import { CHUNK_CHAR_LIMIT } from "./pipeline";
 import { consumeFreeGenSlot } from "./quota";
 import { createWorkersAiAdapter } from "./workers-ai";
+import { studyStrugglePromptSuffix } from "./feedback-hints";
 import {
   assertValidMcqOptions,
   type CardDraft,
@@ -51,16 +52,21 @@ export function regenerateOneUserPrompt(args: {
   text: string;
   type: RegenCardType;
   existingFront?: string;
+  studyStruggle?: { again_14d: number; lapses: number };
 }): string {
   const prior = args.existingFront?.trim()
     ? `\nPrevious front (adapt or replace): ${args.existingFront.trim()}\n`
     : "";
-  return `Produce exactly one flashcard of type "${args.type}" from this material.${prior}
+  const base = `Produce exactly one flashcard of type "${args.type}" from this material.${prior}
 --- MATERIAL ---
 ${args.text}
 --- END ---
 
 Respond with JSON only as {"cards":[...]} containing exactly one card of type "${args.type}".`;
+  const struggle = args.studyStruggle
+    ? studyStrugglePromptSuffix(args.studyStruggle)
+    : "";
+  return struggle ? `${base}\n\n${struggle}` : base;
 }
 
 /** Narrow sync generate for one card of a requested type. */
@@ -68,6 +74,7 @@ export async function generateOneCard(args: {
   text: string;
   type: RegenCardType;
   existingFront?: string;
+  studyStruggle?: { again_14d: number; lapses: number };
   llm: LlmAdapter;
   apiKey: string;
   provider: string;
@@ -78,6 +85,7 @@ export async function generateOneCard(args: {
       text: args.text,
       type: args.type,
       existingFront: args.existingFront,
+      studyStruggle: args.studyStruggle,
     }),
     apiKey: args.apiKey,
     provider: args.provider,
