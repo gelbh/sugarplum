@@ -1,10 +1,7 @@
 import JSZip from "jszip";
 import initSqlJs from "sql.js";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  buildApkg,
-  ensureSqlJsWorkerGlobals,
-} from "../../worker/export/buildApkg";
+import { describe, expect, it } from "vitest";
+import { buildApkg } from "../../worker/export/buildApkg";
 
 async function ankiSortFieldCsum(sortField: string): Promise<number> {
   const digest = await crypto.subtle.digest(
@@ -329,35 +326,5 @@ describe("buildApkg", () => {
       d: 6.789,
       lrt: lastReview,
     });
-  });
-});
-
-describe("ensureSqlJsWorkerGlobals", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-    Reflect.deleteProperty(globalThis, "__filename");
-  });
-
-  it("no-ops outside Cloudflare Workers", () => {
-    Reflect.deleteProperty(globalThis, "__filename");
-    ensureSqlJsWorkerGlobals();
-    expect((globalThis as { __filename?: string }).__filename).toBeUndefined();
-  });
-
-  it("polyfills Worker globals when UA is Cloudflare-Workers", () => {
-    Reflect.deleteProperty(globalThis, "__filename");
-    vi.stubGlobal("navigator", { userAgent: "Cloudflare-Workers" });
-    vi.stubGlobal("location", undefined);
-    vi.stubGlobal("process", {
-      versions: { node: "22.0.0" },
-      type: undefined,
-    });
-    ensureSqlJsWorkerGlobals();
-    expect(
-      (globalThis as { __filename?: string }).__filename,
-    ).toBe("https://assets.local/sql-wasm-inline.js");
-    expect(
-      (globalThis as { process?: { type?: string } }).process?.type,
-    ).toBe("renderer");
   });
 });

@@ -1,47 +1,11 @@
+import { DatabaseSync } from "node:sqlite";
 import JSZip from "jszip";
-// Inline build embeds the WASM binary. Separate .wasm fetch fails in Workers
-// (APP_URL self-fetch 522; ASSETS + initSqlJs still fails to instantiate).
-import initSqlJs from "sql.js/dist/sql-wasm-inline.js";
 import type { AnkiFsrsFields } from "./fsrsMap";
 import type { AnkiNoteSpec } from "./notes";
 
 const DEFAULT_ANKI_EASE_FACTOR = 2500;
 
-function isCloudflareWorkerRuntime(): boolean {
-  return (
-    (globalThis as { navigator?: { userAgent?: string } }).navigator
-      ?.userAgent === "Cloudflare-Workers"
-  );
-}
-
-/**
- * sql.js environment sniffing breaks under Workers + nodejs_compat:
- * - `process.versions.node` makes it take the Node path and `require("node:fs")`
- * - Worker path reads `self.location.href`, which Workers lack
- * Only adjust globals on Cloudflare Workers (leave Node/Vitest alone).
- */
-export function ensureSqlJsWorkerGlobals(): void {
-  if (!isCloudflareWorkerRuntime()) return;
-  const g = globalThis as typeof globalThis & {
-    __filename?: string;
-    location?: { href?: string };
-    process?: { versions?: { node?: string }; type?: string };
-  };
-  // Make ENVIRONMENT_IS_NODE false: `process.type != "renderer"` gate.
-  if (g.process?.versions?.node) {
-    g.process = { ...g.process, type: "renderer" };
-  }
-  if (typeof g.__filename === "undefined") {
-    g.__filename = "https://assets.local/sql-wasm-inline.js";
-  }
-  if (typeof g.location?.href !== "string") {
-    Object.defineProperty(g, "location", {
-      value: { href: "https://assets.local/" },
-      configurable: true,
-      writable: true,
-    });
-  }
-}
+// Workers disallow dynamic WebAssembly.instantiate (sql.js). Use node:sqlite.
 
 type ApkgEntry = {
   note: AnkiNoteSpec;
@@ -251,13 +215,7 @@ export async function buildApkg(args: {
   deckName: string;
   entries: ApkgEntry[];
 }): Promise<Uint8Array> {
-  ensureSqlJsWorkerGlobals();
-  const SQL = await initSqlJs().catch((error: unknown) => {
-    const detail =
-      error instanceof Error ? error.message : String(error ?? "unknown");
-    throw new Error(`Unable to load sql.js WASM: ${detail}`, { cause: error });
-  });
-  const db = new SQL.Database();
+  const db = new DatabaseSync(":memory:");
   const now = Math.floor(Date.now() / 1000);
   const deckId = now * 1000;
   const modelIds = {
@@ -277,7 +235,7 @@ export async function buildApkg(args: {
     ]),
   );
 
-  db.run(`
+  db.exec(`
     CREATE TABLE col (
       id integer primary key, crt integer not null, mod integer not null,
       scm integer not null, ver integer not null, dty integer not null,
@@ -338,7 +296,9 @@ export async function buildApkg(args: {
       lapse: { delays: [10], mult: 0, minInt: 1, leechFails: 8 },
     },
   };
-  db.run("INSERT INTO col VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+  db.prepare(
+    "INSERT INTO col VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+  ).run(
     1,
     now,
     now,
@@ -352,7 +312,7 @@ export async function buildApkg(args: {
     JSON.stringify(decks),
     JSON.stringify(dconf),
     JSON.stringify([]),
-  ]);
+  );
 
   const zip = new JSZip();
   const mediaMap: Record<string, string> = {};
@@ -421,7 +381,9 @@ export async function buildApkg(args: {
         ? Math.max(0, Number(/\{\{c(\d+)::/i.exec(fields[0])?.[1] ?? 1) - 1)
         : 0;
     const data = schedule ? ankiFsrsCardData(schedule) : "{}";
-    db.run("INSERT INTO notes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+    db.prepare(
+      "INSERT INTO notes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    ).run(
       nid,
       `${nid}`,
       model.id,
@@ -433,33 +395,33 @@ export async function buildApkg(args: {
       await checksumSortField(fields[0]),
       0,
       "{}",
-    ]);
-    db.run(
+    );
+    db.prepare(
       "INSERT INTO cards VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [
-        cid,
-        nid,
-        deckId,
-        ord,
-        now,
-        -1,
-        type,
-        type === 1 || type === 3 ? 1 : type,
-        due,
-        schedule?.scheduledDays ?? 0,
-        schedule ? DEFAULT_ANKI_EASE_FACTOR : 0,
-        schedule?.reps ?? 0,
-        schedule?.lapses ?? 0,
-        0,
-        0,
-        0,
-        0,
-        data,
-      ],
+    ).run(
+      cid,
+      nid,
+      deckId,
+      ord,
+      now,
+      -1,
+      type,
+      type === 1 || type === 3 ? 1 : type,
+      due,
+      schedule?.scheduledDays ?? 0,
+      schedule ? DEFAULT_ANKI_EASE_FACTOR : 0,
+      schedule?.reps ?? 0,
+      schedule?.lapses ?? 0,
+      0,
+      0,
+      0,
+      0,
+      data,
     );
   }
 
-  zip.file("collection.anki2", db.export());
+  const collectionBytes = new Uint8Array(db.serialize());
+  zip.file("collection.anki2", collectionBytes);
   zip.file("media", JSON.stringify(mediaMap));
   db.close();
   return zip.generateAsync({ type: "uint8array" });
