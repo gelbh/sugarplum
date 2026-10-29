@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
 import {
   appendAvoidPatternsSuffix,
+  appendExtraUserSuffix,
   avoidPatternsPromptSuffix,
   buildAvoidPatternsFromRejectedFronts,
+  buildExtraUserSuffix,
   studyStrugglePromptSuffix,
 } from "../../worker/generation/feedback-hints";
 
@@ -89,5 +91,61 @@ describe("studyStrugglePromptSuffix", () => {
     const suffix = studyStrugglePromptSuffix({ again_14d: 0, lapses: 2 });
     expect(suffix.length).toBeGreaterThan(0);
     expect(suffix.toLowerCase()).toMatch(/clarit|atomic/);
+  });
+});
+
+describe("buildExtraUserSuffix", () => {
+  it("returns empty when no parts produce text", () => {
+    expect(buildExtraUserSuffix({})).toBe("");
+    expect(buildExtraUserSuffix({ topicHints: [], avoidPatterns: [] })).toBe(
+      "",
+    );
+    expect(
+      buildExtraUserSuffix({ studyStruggle: { again_14d: 0, lapses: 0 } }),
+    ).toBe("");
+  });
+
+  it("returns topic suffix alone", () => {
+    const suffix = buildExtraUserSuffix({ topicHints: ["cranial nerves"] });
+    expect(suffix.toLowerCase()).toContain("cranial nerves");
+    expect(suffix.toLowerCase()).toMatch(/must attempt/);
+  });
+
+  it("returns avoid suffix alone", () => {
+    const suffix = buildExtraUserSuffix({ avoidPatterns: ["bad stem"] });
+    expect(suffix.toLowerCase()).toContain("bad stem");
+    expect(suffix.toLowerCase()).toMatch(/avoid/);
+  });
+
+  it("returns struggle suffix alone", () => {
+    const suffix = buildExtraUserSuffix({
+      studyStruggle: { again_14d: 1, lapses: 0 },
+    });
+    expect(suffix.toLowerCase()).toMatch(/clarit|atomic/);
+  });
+
+  it("orders topic before avoid before struggle", () => {
+    const suffix = buildExtraUserSuffix({
+      topicHints: ["cranial nerves"],
+      avoidPatterns: ["bad stem"],
+      studyStruggle: { again_14d: 1, lapses: 0 },
+    });
+    const topicAt = suffix.toLowerCase().indexOf("cranial nerves");
+    const avoidAt = suffix.toLowerCase().indexOf("bad stem");
+    const struggleAt = suffix.toLowerCase().indexOf("struggling");
+    expect(topicAt).toBeGreaterThanOrEqual(0);
+    expect(avoidAt).toBeGreaterThan(topicAt);
+    expect(struggleAt).toBeGreaterThan(avoidAt);
+  });
+});
+
+describe("appendExtraUserSuffix", () => {
+  it("is a no-op when suffix is empty", () => {
+    expect(appendExtraUserSuffix("base prompt", "")).toBe("base prompt");
+  });
+
+  it("appends the suffix after the prompt", () => {
+    const prompt = appendExtraUserSuffix("base prompt", "extra bit");
+    expect(prompt).toBe("base prompt\n\nextra bit");
   });
 });

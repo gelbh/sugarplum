@@ -8,6 +8,7 @@ import {
   mockLlmAdapter,
   type LlmAdapter,
 } from "../../worker/generation/llm";
+import { buildExtraUserSuffix } from "../../worker/generation/feedback-hints";
 import {
   appendTopicHintsSuffix,
   generateUserPrompt,
@@ -340,10 +341,8 @@ describe("topicHints consumer injection", () => {
     expect(llm.generateDrafts).toHaveBeenCalled();
     const calls = vi.mocked(llm.generateDrafts).mock.calls;
     expect(
-      calls.some(
-        ([input]) =>
-          Array.isArray(input.topicHints) &&
-          input.topicHints.includes("cranial nerves"),
+      calls.some(([input]) =>
+        (input.extraUserSuffix ?? "").toLowerCase().includes("cranial nerves"),
       ),
     ).toBe(true);
   });
@@ -393,7 +392,9 @@ describe("topicHints consumer injection", () => {
       text: "brainstem notes",
       apiKey: "sk-test",
       provider: "openai",
-      topicHints: ["cranial nerves"],
+      extraUserSuffix: buildExtraUserSuffix({
+        topicHints: ["cranial nerves"],
+      }),
     });
 
     expect(userContent.toLowerCase()).toContain("cranial nerves");
@@ -447,10 +448,10 @@ describe("avoidPatterns prompt wiring", () => {
     expect(llm.generateDrafts).toHaveBeenCalled();
     const calls = vi.mocked(llm.generateDrafts).mock.calls;
     expect(
-      calls.some(
-        ([input]) =>
-          Array.isArray(input.avoidPatterns) &&
-          input.avoidPatterns.includes("Rejected stem about CN III"),
+      calls.some(([input]) =>
+        (input.extraUserSuffix ?? "")
+          .toLowerCase()
+          .includes("rejected stem about cn iii"),
       ),
     ).toBe(true);
   });
@@ -500,7 +501,9 @@ describe("avoidPatterns prompt wiring", () => {
       text: "brainstem notes",
       apiKey: "sk-test",
       provider: "openai",
-      avoidPatterns: ["Rejected stem about CN III"],
+      extraUserSuffix: buildExtraUserSuffix({
+        avoidPatterns: ["Rejected stem about CN III"],
+      }),
     });
 
     expect(userContent.toLowerCase()).toContain("rejected stem about cn iii");

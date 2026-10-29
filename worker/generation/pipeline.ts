@@ -1,5 +1,8 @@
 import { CRITIQUE_SYSTEM_PROMPT, critiqueUserPrompt } from "./critique-prompts";
-import { appendAvoidPatternsSuffix } from "./feedback-hints";
+import {
+  appendExtraUserSuffix,
+  buildExtraUserSuffix,
+} from "./feedback-hints";
 import {
   salvageCompleteJsonObjects,
   unwrapLlmJsonText,
@@ -167,8 +170,8 @@ export type CritiqueChunkInput = {
   llm: PipelineLlm;
   apiKey: string;
   provider: string;
-  /** Optional reject avoid-patterns snapshotted on job regen. */
-  avoidPatterns?: string[];
+  /** Precomposed avoid (and related) user-prompt suffix. */
+  extraUserSuffix?: string;
 };
 
 /**
@@ -178,11 +181,11 @@ export type CritiqueChunkInput = {
 export async function critiqueChunk(
   args: CritiqueChunkInput,
 ): Promise<CardDraft[] | null> {
-  const { chunk, candidates, llm, apiKey, provider, avoidPatterns } = args;
+  const { chunk, candidates, llm, apiKey, provider, extraUserSuffix } = args;
   const system = CRITIQUE_SYSTEM_PROMPT;
-  const user = appendAvoidPatternsSuffix(
+  const user = appendExtraUserSuffix(
     critiqueUserPrompt(chunk, candidates),
-    avoidPatterns ?? [],
+    extraUserSuffix ?? "",
   );
 
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -202,7 +205,7 @@ export type CritiqueDraftsAgainstSourceInput = {
   llm: PipelineLlm;
   apiKey: string;
   provider: string;
-  avoidPatterns?: string[];
+  extraUserSuffix?: string;
 };
 
 /**
@@ -213,7 +216,7 @@ export type CritiqueDraftsAgainstSourceInput = {
 export async function critiqueDraftsAgainstSource(
   input: CritiqueDraftsAgainstSourceInput,
 ): Promise<CardDraft[]> {
-  const { sourceText, candidates, llm, apiKey, provider, avoidPatterns } =
+  const { sourceText, candidates, llm, apiKey, provider, extraUserSuffix } =
     input;
   if (candidates.length === 0) return [];
 
@@ -227,7 +230,7 @@ export async function critiqueDraftsAgainstSource(
       llm,
       apiKey,
       provider,
-      avoidPatterns,
+      extraUserSuffix,
     });
     return result ?? candidates;
   }
@@ -257,7 +260,7 @@ export async function critiqueDraftsAgainstSource(
       llm,
       apiKey,
       provider,
-      avoidPatterns,
+      extraUserSuffix,
     });
     out.push(...(result ?? bucket));
   }
@@ -308,6 +311,9 @@ export async function runGenerationPipeline(
   } = input;
   if (!text.trim()) return [];
 
+  const generateSuffix = buildExtraUserSuffix({ topicHints, avoidPatterns });
+  const critiqueSuffix = buildExtraUserSuffix({ avoidPatterns });
+
   const chunks = chunkText(text).slice(0, MAX_PIPELINE_CHUNKS);
   const total = chunks.length;
   const out: CardDraft[] = [];
@@ -334,8 +340,7 @@ export async function runGenerationPipeline(
       text: chunk,
       apiKey,
       provider,
-      topicHints,
-      avoidPatterns,
+      extraUserSuffix: generateSuffix,
     };
     const generated = await llm.generateDrafts(generateInput);
 
@@ -356,7 +361,7 @@ export async function runGenerationPipeline(
       llm,
       apiKey,
       provider,
-      avoidPatterns,
+      extraUserSuffix: critiqueSuffix,
     });
 
     await report("critique", chunkLabel, 2 * i + 2);

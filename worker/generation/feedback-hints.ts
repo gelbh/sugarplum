@@ -1,3 +1,5 @@
+import { topicHintsPromptSuffix } from "./prompts";
+
 const MAX_PATTERN_LEN = 80;
 const MAX_PATTERNS = 8;
 
@@ -46,4 +48,27 @@ export function studyStrugglePromptSuffix(ctx: {
 }): string {
   if (ctx.again_14d < 1 && ctx.lapses < 1) return "";
   return "This card has been struggling in study. Prefer clearer wording and atomic facts; keep one idea per card.";
+}
+
+/** Compose optional user-prompt suffixes in fixed order: topic → avoid → struggle. */
+export function buildExtraUserSuffix(parts: {
+  topicHints?: string[];
+  avoidPatterns?: string[];
+  studyStruggle?: { again_14d: number; lapses: number };
+}): string {
+  const chunks: string[] = [];
+  const topic = topicHintsPromptSuffix(parts.topicHints ?? []);
+  if (topic) chunks.push(topic);
+  const avoid = avoidPatternsPromptSuffix(parts.avoidPatterns ?? []);
+  if (avoid) chunks.push(avoid);
+  if (parts.studyStruggle) {
+    const struggle = studyStrugglePromptSuffix(parts.studyStruggle);
+    if (struggle) chunks.push(struggle);
+  }
+  return chunks.join("\n\n");
+}
+
+/** Append a precomposed extra-user suffix when non-empty. */
+export function appendExtraUserSuffix(prompt: string, suffix: string): string {
+  return suffix ? `${prompt}\n\n${suffix}` : prompt;
 }
