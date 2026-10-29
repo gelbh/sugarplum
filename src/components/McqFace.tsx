@@ -10,8 +10,8 @@ import {
   mcqTapRating,
   shuffledMcqOptions,
 } from "../study/mcqStudy";
+import { CARD_COLUMN_SX, FACE_SANS, FACE_SX, OVERLINE_SX } from "./studyFaceSx";
 
-const FACE_SANS = '"Source Sans 3", "Helvetica", "Arial", sans-serif';
 const FEEDBACK_MS = 650;
 
 type Props = {
@@ -75,43 +75,23 @@ export default function McqFace({
   };
 
   return (
-    <Box
-      sx={{
-        width: "100%",
-        maxWidth: 360,
-        mx: "auto",
-      }}
-    >
+    <Box sx={CARD_COLUMN_SX}>
       <Paper
         elevation={0}
         className="sp-playing-card"
         sx={{
-          p: 3,
-          borderRadius: 2,
-          boxShadow: "0 12px 40px rgba(0, 0, 0, 0.35)",
-          bgcolor: "var(--sp-card-face)",
-          color: "var(--sp-stage-bg)",
-          fontFamily: FACE_SANS,
+          ...FACE_SX,
+          height: "auto",
           minHeight: 280,
           maxHeight: "70vh",
-          display: "flex",
-          flexDirection: "column",
-          boxSizing: "border-box",
+          // Single-face MCQ: no 3D flip backface hide.
+          backfaceVisibility: "visible",
+          WebkitBackfaceVisibility: "visible",
         }}
       >
         <Typography
           component="div"
-          sx={{
-            fontFamily: FACE_SANS,
-            fontSize: "0.6875rem",
-            fontWeight: 500,
-            letterSpacing: "0.22em",
-            textTransform: "uppercase",
-            opacity: 0.55,
-            textAlign: "center",
-            mb: 2,
-            flexShrink: 0,
-          }}
+          sx={{ ...OVERLINE_SX, mb: 2, flexShrink: 0 }}
         >
           Front
         </Typography>
