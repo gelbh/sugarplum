@@ -396,7 +396,8 @@ export default function DraftReviewPage() {
       setProgressGate(false);
       end();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not regenerate");      end(false);
+      setError(err instanceof ApiError ? err.message : "Could not regenerate");
+      end(false);
     }
   }
 

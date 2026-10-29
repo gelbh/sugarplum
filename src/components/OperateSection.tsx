@@ -7,17 +7,19 @@ type Props = {
   sx?: PaperProps["sx"];
 };
 
-/** Dashboard-register outlined section paper (sugar dust page / white paper). */
+/** Operate-register outlined section paper (sugar dust page / white paper). */
 export default function OperateSection({ children, sx }: Props) {
   return (
     <Paper
       variant="outlined"
-      sx={{
-        p: 2.5,
-        bgcolor: "background.paper",
-        borderColor: "divider",
-        ...((sx as object) ?? {}),
-      }}
+      sx={[
+        {
+          p: 2.5,
+          bgcolor: "background.paper",
+          borderColor: "divider",
+        },
+        ...(sx != null ? [sx] : []),
+      ]}
     >
       {children}
     </Paper>
