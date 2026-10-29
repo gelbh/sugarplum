@@ -107,19 +107,27 @@ export function importGuestLocal(body: GuestImportPayload) {
   });
 }
 
-export async function register(email: string, password: string) {
+export async function register(
+  email: string,
+  password: string,
+  turnstileToken: string,
+) {
   const user = await api<AuthUser>("/api/auth/register", {
     method: "POST",
-    json: { email, password },
+    json: { email, password, turnstileToken },
   });
   await tryMergeGuestAfterAuth({ importGuest: importGuestLocal });
   return user;
 }
 
-export async function login(email: string, password: string) {
+export async function login(
+  email: string,
+  password: string,
+  turnstileToken: string,
+) {
   const user = await api<AuthUser>("/api/auth/login", {
     method: "POST",
-    json: { email, password },
+    json: { email, password, turnstileToken },
   });
   await tryMergeGuestAfterAuth({ importGuest: importGuestLocal });
   return user;

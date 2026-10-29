@@ -627,6 +627,24 @@ describe("disabled_at auth enforcement", () => {
       created_at: "2026-01-01T00:00:00.000Z",
       disabled_at: "2026-10-29T09:00:00.000Z",
     });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        if (
+          String(input) ===
+          "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+        ) {
+          return new Response(
+            JSON.stringify({ success: true, action: "login" }),
+            {
+              status: 200,
+              headers: { "content-type": "application/json" },
+            },
+          );
+        }
+        throw new Error(`Unexpected fetch: ${String(input)}`);
+      }),
+    );
     const res = await app.request(
       "/api/auth/login",
       {
@@ -635,6 +653,7 @@ describe("disabled_at auth enforcement", () => {
         body: JSON.stringify({
           email: "disabled-pw@example.com",
           password,
+          turnstileToken: "XXXX.DUMMY.TOKEN.XXXX",
         }),
       },
       env,

@@ -32,4 +32,8 @@ export interface Env {
   DOCLING_API_KEY?: string;
   /** Secret: comma-separated admin emails (`wrangler secret put ADMIN_EMAILS`). */
   ADMIN_EMAILS?: string;
+  /** Public Turnstile sitekey (wrangler var). */
+  TURNSTILE_SITE_KEY?: string;
+  /** Secret: `wrangler secret put TURNSTILE_SECRET_KEY` */
+  TURNSTILE_SECRET_KEY?: string;
 }

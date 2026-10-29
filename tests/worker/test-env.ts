@@ -3250,6 +3250,8 @@ export function createTestEnv(opts?: {
     R2_SECRET_ACCESS_KEY: "test-secret-key",
     GOOGLE_CLIENT_ID: "test-google-client-id",
     GOOGLE_CLIENT_SECRET: "test-google-client-secret",
+    TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
+    TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
     ADMIN_EMAILS: opts?.adminEmails,
     seedUser(row) {
       users.set(row.id, {
