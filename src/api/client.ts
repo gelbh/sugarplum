@@ -629,9 +629,14 @@ export function getJob(jobId: string) {
 }
 
 /** Wipe all job cards (including accepted), reset to queued, and requeue generation. */
-export function regenJob(jobId: string) {
+export function regenJob(jobId: string, topicHints?: string[]) {
   if (isGuest()) guestUnsupported("regenerate cards");
-  return api<GenerationJob>(`/api/jobs/${jobId}/regen`, { method: "POST" });
+  // Gap lines never contain newlines, so the line sanitizer applies as-is.
+  const hints = topicHintsFromLines((topicHints ?? []).join("\n"));
+  return api<GenerationJob>(`/api/jobs/${jobId}/regen`, {
+    method: "POST",
+    ...(hints ? { json: { topicHints: hints } } : {}),
+  });
 }
 
 export type RegenCardType = "qa" | "cloze" | "mcq";
