@@ -3,7 +3,7 @@ import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import type { ReactNode } from "react";
-import { navigate, shellBackHref } from "../../nav/navigate";
+import { goShellBack, shellBackHref } from "../../nav/navigate";
 import {
   SHELL_BG,
   SHELL_FG,
@@ -56,7 +56,7 @@ export default function TopChrome({ trailing }: TopChromeProps) {
           {backHref ? (
             <IconButton
               aria-label="Back"
-              onClick={() => navigate(backHref)}
+              onClick={() => goShellBack(backHref)}
               size="small"
               sx={{ color: SHELL_FG }}
             >
