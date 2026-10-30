@@ -235,7 +235,7 @@ jobRoutes.post("/:id/regen", async (c) => {
     throw new HTTPException(409, { message: "Job already in progress" });
   }
 
-  // Snapshot rejected fronts (and reasons) before wipe so the consumer can avoid them.
+  // Snapshot rejected fronts before wipe so the consumer can avoid them.
   const rejected = await db
     .prepare(
       "SELECT front_json, reject_reason FROM cards WHERE job_id = ? AND status = ? ORDER BY updated_at DESC",
