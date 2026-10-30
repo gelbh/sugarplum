@@ -2,7 +2,7 @@
 import type { FruitType } from "./catalog";
 import type { FruitTraits, Rarity } from "./traits";
 
-/** Server-built unlock; toasts render it without a client catalog. */
+/** Server-built unlock; the toast renders it as-is. */
 export type UnlockView = {
   id: string;
   title: string;
