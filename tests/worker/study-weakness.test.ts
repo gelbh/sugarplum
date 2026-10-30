@@ -4,7 +4,7 @@ import {
   weaknessScore,
   type WeaknessCandidate,
 } from "../../worker/study/weakness";
-import { cardHasRegenSource } from "../../src/study/weakness";
+import { cardHasRegenSource } from "../../src/study/regenSource";
 
 const NOW = "2026-10-28T12:00:00.000Z";
 
@@ -22,7 +22,6 @@ function candidate(
     due: "2026-11-01T00:00:00.000Z",
     last_review: "2026-10-20T00:00:00.000Z",
     retrievability: null,
-    has_regen_source: true,
     ...overrides,
   };
 }
@@ -187,15 +186,13 @@ describe("rankWeakness", () => {
     expect(rows.find((r) => r.id === "future")!.is_due).toBe(false);
   });
 
-  it("passes has_regen_source through", () => {
-    const rows = rankWeakness(
-      [
-        candidate({ id: "src", again_14d: 1, has_regen_source: true }),
-        candidate({ id: "nosrc", again_14d: 1, has_regen_source: false }),
-      ],
+  it("keeps caller extra fields and drops front_json / last_review", () => {
+    const [row] = rankWeakness(
+      [{ ...candidate({ id: "x", again_14d: 1 }), extra: "kept" }],
       NOW,
     );
-    expect(rows.find((r) => r.id === "src")!.has_regen_source).toBe(true);
-    expect(rows.find((r) => r.id === "nosrc")!.has_regen_source).toBe(false);
+    expect(row).toMatchObject({ id: "x", extra: "kept" });
+    expect(row).not.toHaveProperty("front_json");
+    expect(row).not.toHaveProperty("last_review");
   });
 });

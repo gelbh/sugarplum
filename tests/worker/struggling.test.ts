@@ -401,7 +401,7 @@ describe("GET /api/study/struggling", () => {
     expect(body[0]).toMatchObject({ id: "typed-again", type: "cloze" });
   });
 
-  it("flags rows by regen source (excerpt vs none)", async () => {
+  it("flags rows by regen source (job, excerpt, none)", async () => {
     const env = createTestEnv();
     env.seedUser({
       id: "user-a",
@@ -418,14 +418,15 @@ describe("GET /api/study/struggling", () => {
       created_at: "2026-01-01T00:00:00.000Z",
     });
     env.seedSession("sess-a", "user-a");
-    for (const [id, provenance_json] of [
-      ["with-src", JSON.stringify({ pages: [1], excerpt: "ex" })],
-      ["no-src", null],
+    for (const [id, job_id, provenance_json] of [
+      ["with-src", null, JSON.stringify({ pages: [1], excerpt: "ex" })],
+      ["job-src", "job-1", null],
+      ["no-src", null, null],
     ] as const) {
       env.seedCard({
         id,
         deck_id: "deck-a",
-        job_id: null,
+        job_id,
         type: "qa",
         front_json: JSON.stringify(`${id}?`),
         back_json: JSON.stringify("A"),
@@ -470,6 +471,7 @@ describe("GET /api/study/struggling", () => {
       has_regen_source: boolean;
     }[];
     expect(body.find((r) => r.id === "with-src")?.has_regen_source).toBe(true);
+    expect(body.find((r) => r.id === "job-src")?.has_regen_source).toBe(true);
     expect(body.find((r) => r.id === "no-src")?.has_regen_source).toBe(false);
   });
 });

@@ -41,7 +41,6 @@ import {
 import { clearDueCache } from "../study/dueCache";
 import { clearPendingGrades } from "../study/pendingGrades";
 import { STUDY_MEDIA_CACHE } from "../study/studyMediaCache";
-import { cardHasRegenSource } from "../study/weakness";
 
 export type ApiErrorBody = {
   error?: string;
@@ -642,7 +641,7 @@ export function asRegenType(type: string): RegenCardType | null {
   return null;
 }
 
-export { cardHasRegenSource };
+export { cardHasRegenSource } from "../study/regenSource";
 
 /** Rebuild one card as qa/cloze/mcq; siblings and FSRS schedule stay. Account-only. */
 export function regenCard(cardId: string, body: { type: RegenCardType }) {

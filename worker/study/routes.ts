@@ -22,11 +22,11 @@ import {
   buildDueQueueForUser,
   serializeDueCards,
 } from "./dueQueue";
+import { rankWeakness } from "./weakness";
 import {
   cardHasRegenSource,
-  rankWeakness,
-  type WeaknessCandidate,
-} from "./weakness";
+  parseProvenanceJson,
+} from "../../src/study/regenSource";
 import { onReviewGraded } from "../gamification/onStudyEvent";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
@@ -208,7 +208,7 @@ studyRoutes.get("/struggling", async (c) => {
     .bind(since, since, userId, "accepted")
     .all<StrugglingSqlRow>();
 
-  const candidates: WeaknessCandidate[] = (results ?? []).map((row) => {
+  const candidates = (results ?? []).map((row) => {
     const again_14d = Number(row.again_14d) || 0;
     const hard_14d = Number(row.hard_14d) || 0;
     let r: number | null = null;
@@ -231,14 +231,6 @@ studyRoutes.get("/struggling", async (c) => {
     } catch {
       r = null;
     }
-    let provenance: unknown = null;
-    if (row.provenance_json) {
-      try {
-        provenance = JSON.parse(row.provenance_json);
-      } catch {
-        provenance = null;
-      }
-    }
     return {
       id: row.id,
       deck_id: row.deck_id,
@@ -251,7 +243,10 @@ studyRoutes.get("/struggling", async (c) => {
       due: row.due,
       last_review: row.last_review,
       retrievability: r,
-      has_regen_source: cardHasRegenSource({ job_id: row.job_id, provenance }),
+      has_regen_source: cardHasRegenSource({
+        job_id: row.job_id,
+        provenance: parseProvenanceJson(row.provenance_json),
+      }),
     };
   });
 
