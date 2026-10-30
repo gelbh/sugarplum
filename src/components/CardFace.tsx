@@ -13,7 +13,13 @@ import { CardFaceMcqBody } from "./cardFaceMcq";
 import KeyChip from "./KeyChip";
 import {
   CARD_COLUMN_SX,
+  FACE_ANSWER_TEXT_SX,
   FACE_BODY_SX,
+  FACE_FRONT_ECHO_SX,
+  FACE_HINT_TEXT_SX,
+  FACE_MEDIA_SX,
+  FACE_OUTLINE_BUTTON_SX,
+  FACE_PROMPT_TEXT_SX,
   FACE_SANS,
   OVERLINE_SX,
   PROMPT_SX,
@@ -99,6 +105,8 @@ export function StudyCardPlate({
           maxHeight: "100%",
           height: "min(100%, 504px)",
           aspectRatio: "var(--sp-card-aspect)",
+          // Flex item + aspect-ratio: auto min-width is height-derived and beats max-width.
+          minWidth: 0,
           borderRadius: 2,
           bgcolor: "transparent",
           ...plateSx,
@@ -110,15 +118,63 @@ export function StudyCardPlate({
   );
 }
 
-const MEDIA_IMG_SX = {
-  display: "block",
-  width: "100%",
-  maxHeight: "36%",
-  objectFit: "contain" as const,
-  mb: 2,
-  borderRadius: 1,
-  userSelect: "none" as const,
-};
+/** 3D Y-flip plate with Front / Back faces; instant swap when prefers-reduced-motion. */
+export function FlipCardPlate({
+  revealed,
+  front,
+  back,
+  onPlateClick,
+  plateSx,
+  faceSx,
+}: {
+  revealed: boolean;
+  front: ReactNode;
+  back: ReactNode;
+  onPlateClick?: () => void;
+  plateSx?: Record<string, unknown>;
+  faceSx?: Record<string, unknown>;
+}) {
+  return (
+    <StudyCardPlate
+      perspective="1000px"
+      onPlateClick={onPlateClick}
+      plateSx={{
+        transformStyle: "preserve-3d",
+        transition: "transform 0.45s ease",
+        transform: revealed ? "rotateY(180deg)" : "rotateY(0deg)",
+        ...plateSx,
+        "@media (prefers-reduced-motion: reduce)": {
+          transform: "none",
+          transition: "none",
+          minHeight: 280,
+          maxHeight: "100%",
+        },
+      }}
+    >
+      <Paper
+        elevation={0}
+        aria-hidden={revealed}
+        inert={revealed || undefined}
+        className="sp-playing-card"
+        sx={{ ...faceMotionSx(false, !revealed), ...faceSx }}
+      >
+        <FaceOverline label="Front" />
+        {front}
+      </Paper>
+
+      <Paper
+        elevation={0}
+        aria-hidden={!revealed}
+        inert={!revealed || undefined}
+        className="sp-playing-card"
+        sx={{ ...faceMotionSx(true, revealed), ...faceSx }}
+      >
+        <FaceOverline label="Back" />
+        {back}
+      </Paper>
+    </StudyCardPlate>
+  );
+}
 
 /** Hide_one stage: editor contract (scroll shell + natural-aspect img, no contain letterbox). */
 function StudyMedia({
@@ -203,7 +259,7 @@ function StudyMedia({
       alt="Card media"
       draggable={false}
       onDragStart={(event) => event.preventDefault()}
-      sx={MEDIA_IMG_SX}
+      sx={FACE_MEDIA_SX}
     />
   );
 }
@@ -270,175 +326,92 @@ export default function CardFace({
   };
 
   return (
-    <StudyCardPlate
-      perspective="1000px"
+    <FlipCardPlate
+      revealed={revealed}
       onPlateClick={canReveal ? reveal : canFlipBack ? flipBack : undefined}
-      plateSx={{
-        transformStyle: "preserve-3d",
-        transition: "transform 0.45s ease",
-        transform: revealed ? "rotateY(180deg)" : "rotateY(0deg)",
-        cursor: canReveal || canFlipBack ? "pointer" : "default",
-        "@media (prefers-reduced-motion: reduce)": {
-          transform: "none",
-          transition: "none",
-          minHeight: 280,
-          maxHeight: "100%",
-        },
-      }}
-    >
-        <Paper
-          elevation={0}
-          aria-hidden={revealed}
-          inert={revealed || undefined}
-          className="sp-playing-card"
-          sx={faceMotionSx(false, !revealed)}
-        >
-          <FaceOverline label="Front" />
-          <Box data-card-face-content sx={FACE_BODY_SX}>
-            <Box sx={PROMPT_SX}>
-              {imageKey ? (
-                <StudyMedia
-                  imageKey={imageKey}
-                  mask={occlusion?.mask}
-                  masked={!!occlusion}
-                />
-              ) : null}
-              {questionFront ? (
-                <Typography
-                  component="p"
-                  sx={{
-                    fontFamily: FACE_SANS,
-                    fontSize: { xs: "1.125rem", sm: "1.35rem" },
-                    fontWeight: 400,
-                    lineHeight: 1.35,
-                    whiteSpace: "pre-wrap",
-                    color: "inherit",
-                  }}
-                >
-                  {questionFront}
-                </Typography>
-              ) : null}
-            </Box>
-            {!revealed ? (
-              <Box sx={{ pt: 2, width: "100%", flexShrink: 0 }}>
-                <Button
-                  ref={showAnswerRef}
-                  variant="contained"
-                  onClick={onShowAnswerClick}
-                  disabled={!!disabled}
-                  aria-keyshortcuts="Space"
-                  sx={{ fontFamily: FACE_SANS, minHeight: 44 }}
-                >
-                  Show answer
-                  <KeyChip label="Space" ml={1} />
-                </Button>
-              </Box>
-            ) : null}
-          </Box>
-        </Paper>
-
-        <Paper
-          elevation={0}
-          aria-hidden={!revealed}
-          inert={!revealed || undefined}
-          className="sp-playing-card"
-          sx={faceMotionSx(true, revealed)}
-        >
-          <FaceOverline label="Back" />
-          <Box data-card-face-content sx={FACE_BODY_SX}>
-            {occlusion && imageKey ? (
+      plateSx={{ cursor: canReveal || canFlipBack ? "pointer" : "default" }}
+      front={
+        <Box data-card-face-content sx={FACE_BODY_SX}>
+          <Box sx={PROMPT_SX}>
+            {imageKey ? (
               <StudyMedia
                 imageKey={imageKey}
-                mask={occlusion.mask}
-                masked={false}
+                mask={occlusion?.mask}
+                masked={!!occlusion}
               />
-            ) : !isCloze && front ? (
-              <Typography
-                component="p"
-                sx={{
-                  fontFamily: FACE_SANS,
-                  fontSize: "0.8125rem",
-                  fontWeight: 500,
-                  lineHeight: 1.35,
-                  whiteSpace: "pre-wrap",
-                  color: "inherit",
-                  opacity: 0.55,
-                  textAlign: "center",
-                  mb: 1.5,
-                  flexShrink: 0,
-                }}
-              >
-                {front}
-              </Typography>
             ) : null}
-            <Box
-              ref={answerFocusRef}
-              tabIndex={revealed ? -1 : undefined}
-              sx={{
-                ...PROMPT_SX,
-                outline: "none",
-                WebkitTapHighlightColor: "transparent",
-                "&:focus": { outline: "none" },
-                "&:focus-visible": { outline: "none" },
-              }}
-            >
-              <Typography
-                component="p"
-                sx={{
-                  fontFamily: FACE_SANS,
-                  fontSize: { xs: "1.05rem", sm: "1.2rem" },
-                  fontWeight: 400,
-                  lineHeight: 1.45,
-                  whiteSpace: "pre-wrap",
-                  color: "inherit",
-                }}
-              >
-                {answerText}
+            {questionFront ? (
+              <Typography component="p" sx={FACE_PROMPT_TEXT_SX}>
+                {questionFront}
               </Typography>
-              {clozeExtra ? (
-                <Typography
-                  component="p"
-                  sx={{
-                    fontFamily: FACE_SANS,
-                    fontSize: "0.8125rem",
-                    fontWeight: 400,
-                    lineHeight: 1.4,
-                    whiteSpace: "pre-wrap",
-                    color: "inherit",
-                    opacity: 0.6,
-                    mt: 1.5,
-                  }}
-                >
-                  {clozeExtra}
-                </Typography>
-              ) : null}
-            </Box>
-            {revealed ? (
-              <Box sx={{ pt: 2, width: "100%", flexShrink: 0 }}>
-                <Button
-                  variant="outlined"
-                  onClick={onShowQuestionClick}
-                  disabled={!!disabled}
-                  aria-keyshortcuts="Space"
-                  sx={{
-                    fontFamily: FACE_SANS,
-                    minHeight: 44,
-                    borderColor: "currentColor",
-                    color: "inherit",
-                    opacity: 0.85,
-                    "&:hover": {
-                      borderColor: "currentColor",
-                      bgcolor: "rgba(30, 13, 27, 0.06)",
-                    },
-                  }}
-                >
-                  Show question
-                  <KeyChip label="Space" ml={1} />
-                </Button>
-              </Box>
             ) : null}
           </Box>
-        </Paper>
-    </StudyCardPlate>
+          {!revealed ? (
+            <Box sx={{ pt: 2, width: "100%", flexShrink: 0 }}>
+              <Button
+                ref={showAnswerRef}
+                variant="contained"
+                onClick={onShowAnswerClick}
+                disabled={!!disabled}
+                aria-keyshortcuts="Space"
+                sx={{ fontFamily: FACE_SANS, minHeight: 44 }}
+              >
+                Show answer
+                <KeyChip label="Space" ml={1} />
+              </Button>
+            </Box>
+          ) : null}
+        </Box>
+      }
+      back={
+        <Box data-card-face-content sx={FACE_BODY_SX}>
+          {occlusion && imageKey ? (
+            <StudyMedia
+              imageKey={imageKey}
+              mask={occlusion.mask}
+              masked={false}
+            />
+          ) : !isCloze && front ? (
+            <Typography component="p" sx={FACE_FRONT_ECHO_SX}>
+              {front}
+            </Typography>
+          ) : null}
+          <Box
+            ref={answerFocusRef}
+            tabIndex={revealed ? -1 : undefined}
+            sx={{
+              ...PROMPT_SX,
+              outline: "none",
+              WebkitTapHighlightColor: "transparent",
+              "&:focus": { outline: "none" },
+              "&:focus-visible": { outline: "none" },
+            }}
+          >
+            <Typography component="p" sx={FACE_ANSWER_TEXT_SX}>
+              {answerText}
+            </Typography>
+            {clozeExtra ? (
+              <Typography component="p" sx={FACE_HINT_TEXT_SX}>
+                {clozeExtra}
+              </Typography>
+            ) : null}
+          </Box>
+          {revealed ? (
+            <Box sx={{ pt: 2, width: "100%", flexShrink: 0 }}>
+              <Button
+                variant="outlined"
+                onClick={onShowQuestionClick}
+                disabled={!!disabled}
+                aria-keyshortcuts="Space"
+                sx={FACE_OUTLINE_BUTTON_SX}
+              >
+                Show question
+                <KeyChip label="Space" ml={1} />
+              </Button>
+            </Box>
+          ) : null}
+        </Box>
+      }
+    />
   );
 }
