@@ -7,7 +7,6 @@ export type StreakXpChipProps = {
   level: number;
 };
 
-/** Calm streak + level link into the achievements gallery. */
 export default function StreakXpChip({ streak, level }: StreakXpChipProps) {
   const label = `Streak ${streak} · Lv ${level}`;
 

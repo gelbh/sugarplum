@@ -9,7 +9,7 @@ export type AchievementMeta = {
   rarity: Rarity;
 };
 
-/** v1 toast lookup when only unlock ids arrive (mirrors achievement_defs seed). */
+/** Unlock responses carry ids only; must match the achievement_defs seed (catalog.test). */
 export const ACHIEVEMENT_META: Record<string, AchievementMeta> = {
   reviews_1: { fruitType: "apple", title: "First bite", rarity: "common" },
   reviews_25: { fruitType: "apple", title: "Crisp apple", rarity: "uncommon" },
