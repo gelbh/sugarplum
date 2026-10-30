@@ -19,6 +19,10 @@ import {
   buildExtraUserSuffix,
 } from "./feedback-hints";
 import {
+  parseProvenanceJson,
+  provenanceExcerptText,
+} from "../../src/study/regenSource";
+import {
   assertValidMcqOptions,
   type CardDraft,
 } from "./schema";
@@ -145,16 +149,6 @@ async function materialTextFromR2(
   return "";
 }
 
-function provenanceExcerpt(provenanceJson: string | null): string {
-  if (!provenanceJson) return "";
-  try {
-    const parsed = JSON.parse(provenanceJson) as { excerpt?: unknown };
-    return typeof parsed.excerpt === "string" ? parsed.excerpt.trim() : "";
-  } catch {
-    return "";
-  }
-}
-
 /** Material R2 text via job, else provenance.excerpt; empty both → "". */
 export async function loadCardSourceText(
   env: Env,
@@ -180,7 +174,7 @@ export async function loadCardSourceText(
       }
     }
   }
-  return provenanceExcerpt(card.provenance_json);
+  return provenanceExcerptText(parseProvenanceJson(card.provenance_json));
 }
 
 /**
