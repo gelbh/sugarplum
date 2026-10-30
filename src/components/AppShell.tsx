@@ -17,7 +17,8 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import { GAMIFICATION_CHANGED_EVENT, getGamification, me } from "../api/client";
 import StreakXpChip from "../achievements/StreakXpChip";
 import { isGuest } from "../guest/session";
-import { locationKey, navigateReplace } from "../nav/navigate";
+import { navigateReplace } from "../nav/navigate";
+import { useMainScrollRestore } from "../nav/scrollRestore";
 import GlobalProgressBar from "../progress/GlobalProgressBar";
 import { ProgressProvider } from "../progress/ProgressProvider";
 import { useShellGenerationStatus } from "../shell/useShellGenerationStatus";
@@ -115,12 +116,7 @@ function AppShellChrome({ children }: AppShellProps) {
   const headerRef = useRef<HTMLDivElement>(null);
   const [mobileHeaderPx, setMobileHeaderPx] = useState(TOP_BAR_HEIGHT);
   const mainRef = useRef<HTMLElement>(null);
-  const locKey = locationKey();
-
-  // <main> is the only scroller and persists across routes, so the browser never resets it.
-  useLayoutEffect(() => {
-    mainRef.current?.scrollTo(0, 0);
-  }, [locKey]);
+  useMainScrollRestore(mainRef);
 
   useEffect(() => {
     if (isGuest()) {
