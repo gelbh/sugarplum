@@ -4,6 +4,7 @@ import { decryptSecret } from "../crypto/secrets";
 import { extractPdfText } from "../materials/extract-pdf";
 import { extractPptxText } from "../materials/extract-pptx";
 import {
+  BYO_PROVIDERS_PHRASE,
   createLlmAdapter,
   parseCardsPayload,
   parseLlmProvider,
@@ -228,6 +229,6 @@ export async function resolveRegenLlm(
 
   throw new Error(
     "Workers AI is not available and no LLM API key is configured. " +
-      "Add an OpenAI, Anthropic, Google, or Z.ai API key under Settings, or retry later.",
+      `Add an ${BYO_PROVIDERS_PHRASE} API key under Settings, or retry later.`,
   );
 }

@@ -14,7 +14,12 @@ import type {
   FigureExtractMode,
   GenerateQueueMessage,
 } from "./enqueue";
-import { createLlmAdapter, parseLlmProvider, type LlmAdapter } from "./llm";
+import {
+  BYO_PROVIDERS_PHRASE,
+  createLlmAdapter,
+  parseLlmProvider,
+  type LlmAdapter,
+} from "./llm";
 import {
   critiqueDraftsAgainstSource,
   remainderAfterRules,
@@ -53,6 +58,8 @@ import { createWorkersAiAdapter } from "./workers-ai";
 
 /** ponytail: 240s ceiling for Fly wake + model load; raise if cold starts exceed client 10m poll. */
 const DOCLING_ACCURATE_TIMEOUT_MS = 240_000;
+
+const IMAGE_BYO_REQUIRED = `Image generation requires an ${BYO_PROVIDERS_PHRASE} API key under Settings.`;
 
 export type JobProgressEmit = {
   emit: (
@@ -390,7 +397,7 @@ async function resolveTextLlm(
   }
   throw new Error(
     "Workers AI is not available and no LLM API key is configured. " +
-      "Add an OpenAI, Anthropic, Google, or Z.ai API key under Settings, or retry later.",
+      `Add an ${BYO_PROVIDERS_PHRASE} API key under Settings, or retry later.`,
   );
 }
 
@@ -674,9 +681,7 @@ export async function processGenerateJob(
       });
       // Vision needs a BYO provider; free Workers AI path is text-only.
       if (!secret && !opts?.llm) {
-        throw new Error(
-          "Image generation requires an OpenAI, Anthropic, Google, or Z.ai API key under Settings.",
-        );
+        throw new Error(IMAGE_BYO_REQUIRED);
       }
       const wrapKey = env.SECRETS_WRAP_KEY;
       let apiKey = "";
@@ -686,9 +691,7 @@ export async function processGenerateJob(
         llm = opts.llm;
       } else {
         if (!secret) {
-          throw new Error(
-            "Image generation requires an OpenAI, Anthropic, Google, or Z.ai API key under Settings.",
-          );
+          throw new Error(IMAGE_BYO_REQUIRED);
         }
         if (!wrapKey) {
           throw new Error("SECRETS_WRAP_KEY is not configured");

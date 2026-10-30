@@ -1,4 +1,5 @@
 import type { Env } from "../env";
+import { BYO_PROVIDERS_PHRASE } from "./llm";
 
 /** Max Workers AI free-generation jobs per user per UTC day. */
 export const FREE_GEN_DAILY_CAP = 20;
@@ -7,7 +8,7 @@ const KEY_PREFIX = "free-gen:";
 
 const CAP_ERROR =
   `Daily free generation limit of ${FREE_GEN_DAILY_CAP} reached. ` +
-  "Add your own OpenAI, Anthropic, Google, or Z.ai (free Flash) API key in Settings for BYO generation, or retry after UTC midnight.";
+  `Add your own ${BYO_PROVIDERS_PHRASE} (free Flash) API key in Settings for BYO generation, or retry after UTC midnight.`;
 
 /** KV key for a user's free-gen counter on a UTC calendar day. */
 export function freeGenKvKey(userId: string, now: Date = new Date()): string {

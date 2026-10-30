@@ -6,7 +6,6 @@ import { requireUser, type AuthVariables } from "../auth/session";
 import { encryptSecret, parseSecretMeta } from "../crypto/secrets";
 import {
   isUserLlmProvider,
-  isZaiTextModel,
   resolveZaiTextModel,
   USER_LLM_PROVIDERS,
   ZAI_TEXT_MODELS,
@@ -106,12 +105,12 @@ settingsRoutes.put("/llm", async (c) => {
 
   let model: string | null = null;
   if (normalized === "zai") {
-    if (rawModel && !isZaiTextModel(rawModel)) {
+    model = resolveZaiTextModel(rawModel);
+    if (!model) {
       throw new HTTPException(400, {
         message: `Unsupported model. Allowed: ${ZAI_TEXT_MODELS.join(", ")}`,
       });
     }
-    model = resolveZaiTextModel(rawModel || undefined);
   }
 
   const wrapKey = requireWrapKey(c.env);
