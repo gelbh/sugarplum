@@ -27,3 +27,19 @@ export function resolveCardGesture(input: {
   const rating: StudyRating = input.dy > 0 ? 2 : 4;
   return { type: "grade", rating };
 }
+
+export const REVIEW_SWIPE_THRESHOLD_PX = 96;
+
+export type ReviewSwipeResult = "accept" | "reject" | "none";
+
+/** Draft review: horizontal swipe only; vertical drags stay scroll. */
+export function resolveReviewSwipe(input: {
+  dx: number;
+  dy: number;
+  threshold?: number;
+}): ReviewSwipeResult {
+  const threshold = input.threshold ?? REVIEW_SWIPE_THRESHOLD_PX;
+  const ax = Math.abs(input.dx);
+  if (ax < threshold || ax <= Math.abs(input.dy)) return "none";
+  return input.dx > 0 ? "accept" : "reject";
+}
