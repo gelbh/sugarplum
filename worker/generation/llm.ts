@@ -2,12 +2,11 @@ import {
   parseCardDrafts,
   type CardDraft,
 } from "./schema";
-import { appendAvoidPatternsSuffix } from "./feedback-hints";
+import { appendExtraUserSuffix } from "./feedback-hints";
 import {
   GENERATE_COMPACT_SYSTEM_PROMPT,
   GENERATE_SYSTEM_PROMPT,
   IMAGE_GENERATE_SYSTEM_PROMPT,
-  appendTopicHintsSuffix,
   generateCompactUserPrompt,
   generateImageUserPrompt,
   generateUserPrompt,
@@ -38,10 +37,8 @@ export type GenerateDraftsInput = {
   image?: GenerateImageInput;
   /** Material R2 key for vision; required in prompts and occlusion fronts. */
   imageKey?: string;
-  /** Optional also-cover topic hints from the generation job. */
-  topicHints?: string[];
-  /** Optional reject avoid-patterns snapshotted on job regen. */
-  avoidPatterns?: string[];
+  /** Precomposed topic/avoid/struggle user-prompt suffix. */
+  extraUserSuffix?: string;
 };
 
 export type CompleteInput = {
@@ -205,21 +202,15 @@ export async function withCompactTruncationRetry<T>(
 async function generateTextDraftsWithCompactRetry(
   text: string,
   completeOnce: (system: string, user: string) => Promise<CompleteResult>,
-  topicHints: string[] = [],
-  avoidPatterns: string[] = [],
+  extraUserSuffix = "",
 ): Promise<CardDraft[]> {
-  const withSuffixes = (prompt: string) =>
-    appendAvoidPatternsSuffix(
-      appendTopicHintsSuffix(prompt, topicHints),
-      avoidPatterns,
-    );
   return withCompactTruncationRetry(
     async () =>
       parseCardsPayload(
         (
           await completeOnce(
             GENERATE_SYSTEM_PROMPT,
-            withSuffixes(userPromptForJson(text)),
+            appendExtraUserSuffix(userPromptForJson(text), extraUserSuffix),
           )
         ).text,
       ),
@@ -228,7 +219,10 @@ async function generateTextDraftsWithCompactRetry(
         (
           await completeOnce(
             GENERATE_COMPACT_SYSTEM_PROMPT,
-            withSuffixes(generateCompactUserPrompt(text)),
+            appendExtraUserSuffix(
+              generateCompactUserPrompt(text),
+              extraUserSuffix,
+            ),
           )
         ).text,
       ),
@@ -556,8 +550,7 @@ function openAiAdapter(): LlmAdapter {
               apiKey,
               provider: input.provider,
             }),
-          input.topicHints ?? [],
-          input.avoidPatterns ?? [],
+          input.extraUserSuffix ?? "",
         );
       }
 
@@ -655,8 +648,7 @@ function anthropicAdapter(): LlmAdapter {
               apiKey,
               provider: input.provider,
             }),
-          input.topicHints ?? [],
-          input.avoidPatterns ?? [],
+          input.extraUserSuffix ?? "",
         );
       }
 
@@ -757,8 +749,7 @@ function googleAdapter(): LlmAdapter {
               apiKey,
               provider: input.provider,
             }),
-          input.topicHints ?? [],
-          input.avoidPatterns ?? [],
+          input.extraUserSuffix ?? "",
         );
       }
 

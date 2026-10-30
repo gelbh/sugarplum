@@ -78,17 +78,3 @@ export function generateImageUserPrompt(imageKey: string): string {
   return `Create flashcards for this lecture image or diagram. Prefer occlusion with 1–8 labelled regions when structures are clearly labelled. Use image_key "${imageKey}". Region x,y,w,h are normalized 0–1. Allow image_label / diagram when occlusion does not fit. Skip anything not clearly visible or grounded in the image.`;
 }
 
-/** Optional generate-prompt suffix when the job has topic hints. */
-export function topicHintsPromptSuffix(hints: string[]): string {
-  if (hints.length === 0) return "";
-  return `You must attempt cards covering each of these topics if grounded in the material; do not invent ungrounded facts: ${hints.join("; ")}.`;
-}
-
-/** Append topic-hints instruction to a generate user prompt when hints are present. */
-export function appendTopicHintsSuffix(
-  prompt: string,
-  hints: string[],
-): string {
-  const suffix = topicHintsPromptSuffix(hints);
-  return suffix ? `${prompt}\n\n${suffix}` : prompt;
-}

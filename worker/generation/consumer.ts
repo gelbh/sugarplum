@@ -15,6 +15,7 @@ import type {
   GenerateQueueMessage,
 } from "./enqueue";
 import { createLlmAdapter, parseLlmProvider, type LlmAdapter } from "./llm";
+import { buildExtraUserSuffix } from "./feedback-hints";
 import {
   critiqueDraftsAgainstSource,
   remainderAfterRules,
@@ -457,7 +458,9 @@ async function runTextDraftPipeline(args: {
       llm,
       apiKey,
       provider,
-      avoidPatterns: args.avoidPatterns,
+      extraUserSuffix: buildExtraUserSuffix({
+        avoidPatterns: args.avoidPatterns,
+      }),
     });
   }
   if (args.emit && critiquedRules.length > 0) {
