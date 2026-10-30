@@ -27,6 +27,27 @@ function isKeyboardTypingTarget(el: Element | null): boolean {
   );
 }
 
+const NON_TEXT_INPUT_TYPES = [
+  "button",
+  "checkbox",
+  "color",
+  "file",
+  "hidden",
+  "image",
+  "radio",
+  "range",
+  "reset",
+  "submit",
+];
+
+function isTextEntry(el: Element | null): boolean {
+  if (!(el instanceof HTMLElement)) return false;
+  if (el.isContentEditable || el instanceof HTMLTextAreaElement) return true;
+  return (
+    el instanceof HTMLInputElement && !NON_TEXT_INPUT_TYPES.includes(el.type)
+  );
+}
+
 type TrackedPointer = { id: number; x: number; y: number; dragging: boolean };
 
 export function useReviewSwipe({
@@ -109,7 +130,7 @@ export function useReviewSwipe({
     if (!e.currentTarget.contains(target)) return;
     if (target.closest(NO_SWIPE_SELECTOR)) return;
     const active = document.activeElement;
-    if (isKeyboardTypingTarget(active) && e.currentTarget.contains(active)) {
+    if (isTextEntry(active) && e.currentTarget.contains(active)) {
       return;
     }
     pointerRef.current = {
@@ -123,6 +144,11 @@ export function useReviewSwipe({
   const onPointerMove = (e: ReactPointerEvent<HTMLElement>) => {
     const tracked = pointerRef.current;
     if (!tracked || tracked.id !== e.pointerId) return;
+    if (e.buttons === 0) {
+      pointerRef.current = null;
+      setDx(null);
+      return;
+    }
     const moveDx = e.clientX - tracked.x;
     const moveDy = e.clientY - tracked.y;
     if (!tracked.dragging) {
@@ -160,7 +186,7 @@ export function useReviewSwipe({
     void commit(result);
   };
 
-  const onPointerCancel = (e: ReactPointerEvent<HTMLElement>) => {
+  const releasePointer = (e: ReactPointerEvent<HTMLElement>) => {
     if (pointerRef.current?.id !== e.pointerId) return;
     pointerRef.current = null;
     setDx(null);
@@ -178,7 +204,8 @@ export function useReviewSwipe({
       onPointerDown,
       onPointerMove,
       onPointerUp,
-      onPointerCancel,
+      onPointerCancel: releasePointer,
+      onLostPointerCapture: releasePointer,
       onClickCapture,
     },
     dx,
