@@ -54,7 +54,7 @@ export default function BottomChrome({
         zIndex: (theme) => theme.zIndex.appBar,
         bgcolor: SHELL_BG,
         color: SHELL_FG,
-        borderTop: `1px solid ${SHELL_HAIRLINE}`,
+        boxShadow: `inset 0 1px 0 ${SHELL_HAIRLINE}`,
         backgroundImage: "none",
         borderRadius: 0,
         pb: "env(safe-area-inset-bottom)",
