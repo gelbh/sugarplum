@@ -4,14 +4,17 @@ import { XP, type Rarity } from "./constants";
 import { traitsForAchievement } from "./traits";
 import { creditXp } from "./xp";
 
-export type TriggerKind =
-  | "reviews_total"
-  | "accepts_total"
-  | "study_days_total"
-  | "streak_current"
-  | "clear_due_once"
-  | "distinct_types"
-  | "composite";
+export const TRIGGER_KINDS = [
+  "reviews_total",
+  "accepts_total",
+  "study_days_total",
+  "streak_current",
+  "clear_due_once",
+  "distinct_types",
+  "composite",
+] as const;
+
+export type TriggerKind = (typeof TRIGGER_KINDS)[number];
 
 export type AchievementDefRow = {
   id: string;
