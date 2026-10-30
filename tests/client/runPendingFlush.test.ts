@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import type { CardDraftView, UnlockView } from "../../src/api/client";
+import type { CardDraftView } from "../../src/api/client";
+import type { UnlockView } from "../../src/achievements/wire";
 import {
   formatFlushSummary,
   isNetworkGradeError,

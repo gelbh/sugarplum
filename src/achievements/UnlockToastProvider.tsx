@@ -10,9 +10,9 @@ import {
 } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import type { UnlockView } from "../api/client";
 import FruitMedal from "./FruitMedal";
 import { useStudyChrome } from "../study/StudyChromeContext";
+import type { UnlockView } from "./wire";
 
 export const ENTER_DELAY_MS = 16;
 export const RIPEN_DELAY_MS = 80;

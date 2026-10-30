@@ -1,9 +1,6 @@
+import type { UnlockView } from "../../src/achievements/wire";
 import { utcDay, XP } from "./constants";
-import {
-  evaluateAfterAccept,
-  evaluateAfterReview,
-  type UnlockView,
-} from "./evaluate";
+import { evaluateAfterAccept, evaluateAfterReview } from "./evaluate";
 import { applyStudyDayStreak } from "./streak";
 import { creditXp } from "./xp";
 

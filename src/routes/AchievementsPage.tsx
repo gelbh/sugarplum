@@ -6,7 +6,6 @@ import Container from "@mui/material/Container";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import type { AchievementItemView } from "../api/client";
 import AchievementRow from "../achievements/AchievementRow";
 import {
   FRUIT_LABEL,
@@ -15,6 +14,7 @@ import {
 } from "../achievements/catalog";
 import MagnificCredits from "../achievements/MagnificCredits";
 import { useAchievementsData } from "../achievements/useAchievementsData";
+import type { AchievementItem } from "../achievements/wire";
 
 const SHEEN_SEEN_KEY = "sugarplum:achievement-sheen-seen";
 
@@ -40,9 +40,9 @@ function markSheenSeen(id: string) {
 }
 
 function groupByFruit(
-  items: AchievementItemView[],
-): Map<FruitType, AchievementItemView[]> {
-  const map = new Map<FruitType, AchievementItemView[]>();
+  items: AchievementItem[],
+): Map<FruitType, AchievementItem[]> {
+  const map = new Map<FruitType, AchievementItem[]>();
   for (const fruit of FRUIT_ORDER) {
     map.set(fruit, []);
   }

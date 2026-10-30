@@ -1,5 +1,4 @@
-import type { FruitType } from "../achievements/catalog";
-import type { FruitTraits, Rarity } from "../achievements/traits";
+import type { AchievementItem, UnlockView } from "../achievements/wire";
 import {
   UploadError,
   uploadWithProgress,
@@ -808,46 +807,8 @@ export function putStudyPrefs(prefs: StudyPrefs) {
   });
 }
 
-export type FruitTraitsView = FruitTraits;
-
-/** Server-built unlock; toasts render it without a client catalog. */
-export type UnlockView = {
-  id: string;
-  title: string;
-  fruitType: FruitType;
-  rarity: Rarity;
-  traits: FruitTraitsView;
-};
-
-export type AchievementDefView = {
-  id: string;
-  category: string;
-  fruitType: FruitType;
-  rarity: Rarity;
-  title: string;
-  description: string;
-  sortOrder: number;
-};
-
-export type CompositePartView = {
-  key: "streak_best" | "reviews";
-  current: number;
-  target: number;
-};
-
-export type AchievementItemView = {
-  def: AchievementDefView;
-  progress: {
-    currentValue: number;
-    threshold: number;
-    parts?: CompositePartView[];
-  } | null;
-  completedAt: string | null;
-  traits: FruitTraitsView;
-};
-
 export type AchievementsResponse = {
-  items: AchievementItemView[];
+  items: AchievementItem[];
 };
 
 export type GamificationResponse = {

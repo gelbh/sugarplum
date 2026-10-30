@@ -1,5 +1,7 @@
+import type { FruitType } from "../../src/achievements/catalog";
+import type { CompositePart, UnlockView } from "../../src/achievements/wire";
 import { XP, type Rarity } from "./constants";
-import { traitsForAchievement, type FruitTraits } from "./traits";
+import { traitsForAchievement } from "./traits";
 import { creditXp } from "./xp";
 
 export type TriggerKind =
@@ -18,16 +20,7 @@ export type AchievementDefRow = {
   threshold: number | null;
   params_json: string | null;
   title: string;
-  fruit_type: string;
-};
-
-/** Unlock payload for toasts; the client renders it without a catalog. */
-export type UnlockView = {
-  id: string;
-  title: string;
-  fruitType: string;
-  rarity: Rarity;
-  traits: FruitTraits;
+  fruit_type: FruitType;
 };
 
 export type StudyMetrics = {
@@ -194,12 +187,6 @@ async function loadStudyMetrics(
     distinctTypes,
   };
 }
-
-export type CompositePart = {
-  key: "streak_best" | "reviews";
-  current: number;
-  target: number;
-};
 
 export function compositeParts(
   paramsJson: string | null,

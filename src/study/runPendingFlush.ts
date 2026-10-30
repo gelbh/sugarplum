@@ -3,8 +3,8 @@ import {
   listDueCards,
   reviewCard,
   type CardDraftView,
-  type UnlockView,
 } from "../api/client";
+import type { UnlockView } from "../achievements/wire";
 import { isGuest } from "../guest/session";
 import { saveDueCache } from "./dueCache";
 import { flushPendingGrades } from "./flushPendingGrades";

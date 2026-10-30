@@ -1,11 +1,11 @@
 import Box from "@mui/material/Box";
 import LinearProgress from "@mui/material/LinearProgress";
 import Typography from "@mui/material/Typography";
-import type { AchievementItemView, CompositePartView } from "../api/client";
 import { RARITY_LABEL } from "./catalog";
 import FruitMedal from "./FruitMedal";
+import type { AchievementItem, CompositePart } from "./wire";
 
-const PART_LABEL: Record<CompositePartView["key"], string> = {
+const PART_LABEL: Record<CompositePart["key"], string> = {
   streak_best: "Best streak",
   reviews: "Reviews",
 };
@@ -43,7 +43,7 @@ export default function AchievementRow({
   staggerIndex,
   sheenOnce,
 }: {
-  item: AchievementItemView;
+  item: AchievementItem;
   staggerIndex: number;
   sheenOnce: boolean;
 }) {

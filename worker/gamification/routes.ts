@@ -1,5 +1,7 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import type { FruitType } from "../../src/achievements/catalog";
+import type { AchievementItem } from "../../src/achievements/wire";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
@@ -9,10 +11,9 @@ import {
   compositeParts,
   countReviewsTotal,
   readStreakCurrent,
-  type CompositePart,
   type TriggerKind,
 } from "./evaluate";
-import { traitsForAchievement, type FruitTraits } from "./traits";
+import { traitsForAchievement } from "./traits";
 import { ensureUserGamification } from "./xp";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
@@ -30,7 +31,7 @@ type UserGamificationRow = {
 type AchievementListRow = {
   id: string;
   category: string;
-  fruit_type: string;
+  fruit_type: FruitType;
   rarity: Rarity;
   title: string;
   description: string;
@@ -57,25 +58,6 @@ export type GamificationResponse = {
   level: number;
   displayName: string | null;
   boardOptIn: boolean;
-};
-
-export type AchievementItem = {
-  def: {
-    id: string;
-    category: string;
-    fruitType: string;
-    rarity: Rarity;
-    title: string;
-    description: string;
-    sortOrder: number;
-  };
-  progress: {
-    currentValue: number;
-    threshold: number;
-    parts?: CompositePart[];
-  } | null;
-  completedAt: string | null;
-  traits: FruitTraits;
 };
 
 export type LeaderboardResponse = {

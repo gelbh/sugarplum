@@ -2,7 +2,7 @@
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { UnlockView } from "../../src/api/client";
+import type { UnlockView } from "../../src/achievements/wire";
 import {
   EXIT_MS,
   RIPEN_DELAY_MS,

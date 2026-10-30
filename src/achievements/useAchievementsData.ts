@@ -5,18 +5,18 @@ import {
   getGamification,
   getWeeklyLeaderboard,
   me,
-  type AchievementItemView,
   type GamificationResponse,
   type LeaderboardResponse,
 } from "../api/client";
 import { isGuest } from "../guest/session";
 import { useTrackedOp } from "../progress/useTrackedOp";
+import type { AchievementItem } from "./wire";
 
 export type AchievementsData = {
   ready: boolean;
   guest: boolean;
   error: string | null;
-  items: AchievementItemView[];
+  items: AchievementItem[];
   gamification: GamificationResponse | null;
   board: LeaderboardResponse | null;
 };
