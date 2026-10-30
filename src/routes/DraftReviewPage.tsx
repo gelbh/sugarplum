@@ -2,24 +2,20 @@ import { useCallback, useEffect, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
 import Container from "@mui/material/Container";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import Divider from "@mui/material/Divider";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useUnlockToasts } from "../achievements/UnlockToastProvider";
 import CoverageGapsPanel from "../components/CoverageGapsPanel";
-import DraftCardEditor from "../components/DraftCardEditor";
+import ReviewCard, { type ReviewDecision } from "../components/ReviewCard";
 import OperateSection from "../components/OperateSection";
 import JourneyRail from "../components/JourneyRail";
-import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import {
   ApiError,
@@ -46,11 +42,7 @@ import {
 } from "../journey/emptyJobDraftCtas";
 import { forceOpenDraftReview } from "../journey/forceOpenDraftReview";
 import type { JourneyView } from "../journey/types";
-import {
-  REJECT_REASONS,
-  REJECT_REASON_LABELS,
-  type RejectReason,
-} from "../lib/rejectReasons";
+import type { RejectReason } from "../lib/rejectReasons";
 import JobProgressPanel from "../progress/JobProgressPanel";
 import { useJobProgress } from "../progress/useJobProgress";
 import { useTrackedOp } from "../progress/useTrackedOp";
@@ -77,8 +69,7 @@ function cardPatchBody(card: CardDraftView): Parameters<typeof patchCard>[1] {
 export default function DraftReviewPage() {
   const jobId = jobIdFromPath();
   const [drafts, setDrafts] = useState<CardDraftView[]>([]);
-  const [index, setIndex] = useState(0);
-  const [rejectReason, setRejectReason] = useState<RejectReason | null>(null);
+  const [regenNonce, setRegenNonce] = useState(0);
   const [view, setView] = useState<JourneyView | null>(null);
   const [emptyCtas, setEmptyCtas] = useState<EmptyJobDraftCtas | null>(null);
   const [journeyError, setJourneyError] = useState<string | null>(null);
@@ -114,7 +105,6 @@ export default function DraftReviewPage() {
   const load = useCallback(async (id: string) => {
     const [list, job] = await Promise.all([listJobDrafts(id), getJob(id)]);
     setDrafts(list);
-    setIndex(0);
     setDirty(false);
     let gaps: string[] = [];
     if (job.coverage_json) {
@@ -244,11 +234,7 @@ export default function DraftReviewPage() {
     refreshJourney,
   ]);
 
-  const current = drafts[index] ?? null;
-
-  useEffect(() => {
-    setRejectReason(null);
-  }, [current?.id]);
+  const current = drafts[0] ?? null;
 
   function onEditorChange(
     next: Pick<CardDraftView, "front" | "back" | "type" | "options">,
@@ -260,25 +246,22 @@ export default function DraftReviewPage() {
     setDirty(true);
   }
 
-  async function onSave() {
-    if (!current || !dirty) return;
-    setError(null);
-    setNotice(null);
-    begin();
+  async function reloadAfterDecision(id: string, decidedNotice: string) {
+    setNotice(decidedNotice);
     try {
-      const updated = await patchCard(current.id, cardPatchBody(current));
-      setDrafts((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
-      setDirty(false);
-      setNotice("Saved edits");
+      const list = await load(id);
+      await refreshJourney(id, list.length);
       end();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not save");
+      setError(
+        err instanceof ApiError ? err.message : "Could not reload drafts",
+      );
       end(false);
     }
   }
 
-  async function onAccept() {
-    if (!current || !jobId) return;
+  async function onAccept(): Promise<boolean> {
+    if (!current || !jobId) return false;
     setError(null);
     setNotice(null);
     begin();
@@ -290,31 +273,33 @@ export default function DraftReviewPage() {
       if (accepted.unlocks?.length) {
         enqueueUnlocks(accepted.unlocks);
       }
-      const list = await load(jobId);
-      await refreshJourney(jobId, list.length);
-      setNotice("Card accepted into study");
-      end();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not accept");
       end(false);
+      return false;
     }
+    await reloadAfterDecision(jobId, "Card accepted into study");
+    return true;
   }
 
-  async function onReject() {
-    if (!current || !jobId) return;
+  async function onReject(reason: RejectReason | null): Promise<boolean> {
+    if (!current || !jobId) return false;
     setError(null);
     setNotice(null);
     begin();
     try {
-      await rejectCard(current.id, rejectReason);
-      const list = await load(jobId);
-      await refreshJourney(jobId, list.length);
-      setNotice("Card rejected");
-      end();
+      await rejectCard(current.id, reason);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not reject");
       end(false);
+      return false;
     }
+    await reloadAfterDecision(jobId, "Card rejected");
+    return true;
+  }
+
+  function onDecide(decision: ReviewDecision, reason: RejectReason | null) {
+    return decision === "accept" ? onAccept() : onReject(reason);
   }
 
   async function onAcceptAll() {
@@ -393,7 +378,7 @@ export default function DraftReviewPage() {
       const updated = await regenCard(current.id, { type });
       setDrafts((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
       setDirty(false);
-      setRejectReason(null);
+      setRegenNonce((n) => n + 1);
       setNotice("Card regenerated");
       end();
     } catch (err) {
@@ -418,7 +403,6 @@ export default function DraftReviewPage() {
       setSelectedGaps([]);
       setDrafts([]);
       setCoverage(null);
-      setIndex(0);
       setDirty(false);
       setReady(false);
       setProgressGate(false);
@@ -567,170 +551,81 @@ export default function DraftReviewPage() {
             </Stack>
           </OperateSection>
         ) : (
-          <OperateSection>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-              Card {index + 1} of {drafts.length}
-            </Typography>
-
-            <DraftCardEditor
-              card={current}
-              disabled={busy || cardRegenBusy}
-              onChange={onEditorChange}
-              regenAction={{
-                busy: cardRegenBusy,
-                disabled:
-                  asRegenType(current.type) === null ||
-                  !cardHasRegenSource(current),
-                onClick: () => {
-                  void onRegenThisCard();
-                },
+          <>
+            <Box
+              className="sp-stage"
+              sx={{
+                borderRadius: 2,
+                border:
+                  "1px solid color-mix(in srgb, var(--sp-ivory) 14%, transparent)",
+                px: { xs: 1.5, sm: 2.5 },
+                py: { xs: 2, sm: 3 },
+                color: "var(--sp-ivory)",
+                overflow: "hidden",
               }}
-            />
-
-            {current.provenance &&
-            typeof current.provenance === "object" &&
-            "excerpt" in current.provenance ? (
-              <>
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="caption" color="text.secondary">
-                  Source:{" "}
-                  {String((current.provenance as { excerpt: string }).excerpt)}
-                </Typography>
-              </>
-            ) : null}
-
-            <Stack
-              spacing={1.5}
-              sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: "divider" }}
             >
-              <Stack
-                direction="row"
-                spacing={1}
-                flexWrap="wrap"
-                useFlexGap
-                alignItems="center"
-                role="group"
-                aria-labelledby="reject-reason-label"
-              >
-                <Typography
-                  id="reject-reason-label"
-                  variant="caption"
-                  color="text.secondary"
-                >
-                  Reason (optional)
-                </Typography>
-                {REJECT_REASONS.map((code) => {
-                  const selected = rejectReason === code;
-                  return (
-                    <Chip
-                      key={code}
-                      label={REJECT_REASON_LABELS[code]}
-                      size="small"
-                      clickable
-                      color={selected ? "error" : "default"}
-                      variant={selected ? "filled" : "outlined"}
-                      aria-pressed={selected}
-                      disabled={busy}
-                      onClick={() => setRejectReason(selected ? null : code)}
-                    />
-                  );
-                })}
-              </Stack>
-              <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<CheckIcon />}
-                  onClick={onAccept}
-                  disabled={busy}
-                >
-                  Accept
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  startIcon={<CloseIcon />}
-                  onClick={onReject}
-                  disabled={busy}
-                >
-                  Reject
-                </Button>
-              </Stack>
-              <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  onClick={() => setConfirmAll(true)}
-                  disabled={busy || drafts.length === 0}
-                >
-                  Approve all
-                </Button>
-              </Stack>
-              <Stack
-                direction="row"
-                spacing={1.5}
-                flexWrap="wrap"
-                useFlexGap
-                alignItems="center"
-                sx={{ pt: 1, borderTop: 1, borderColor: "divider" }}
-              >
-                <Button
-                  variant="text"
-                  onClick={onSave}
-                  disabled={busy || !dirty}
-                  startIcon={<CheckIcon />}
-                >
-                  Save
-                </Button>
-                <Button
-                  variant="text"
-                  disabled={busy || index <= 0}
-                  onClick={() => {
-                    setIndex((i) => Math.max(0, i - 1));
-                    setDirty(false);
-                    setNotice(null);
+              <Stack spacing={2}>
+                <ReviewCard
+                  key={`${current.id}:${regenNonce}`}
+                  card={current}
+                  remaining={drafts.length}
+                  disabled={busy || cardRegenBusy}
+                  onChange={onEditorChange}
+                  onDecide={onDecide}
+                  regen={{
+                    busy: cardRegenBusy,
+                    disabled:
+                      asRegenType(current.type) === null ||
+                      !cardHasRegenSource(current),
+                    onClick: () => {
+                      void onRegenThisCard();
+                    },
                   }}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="text"
-                  disabled={busy || index >= drafts.length - 1}
-                  onClick={() => {
-                    setIndex((i) => Math.min(drafts.length - 1, i + 1));
-                    setDirty(false);
-                    setNotice(null);
-                  }}
-                >
-                  Next
-                </Button>
+                />
+
+                {current.provenance &&
+                typeof current.provenance === "object" &&
+                "excerpt" in current.provenance ? (
+                  <Typography
+                    variant="caption"
+                    sx={{ opacity: 0.7, textAlign: "center" }}
+                  >
+                    Source:{" "}
+                    {String(
+                      (current.provenance as { excerpt: string }).excerpt,
+                    )}
+                  </Typography>
+                ) : null}
               </Stack>
-              <Stack
-                direction="row"
-                spacing={1.5}
-                flexWrap="wrap"
-                useFlexGap
-                sx={{ pt: 1, borderTop: 1, borderColor: "divider" }}
+            </Box>
+
+            <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => setConfirmAll(true)}
+                disabled={busy || drafts.length === 0}
               >
-                <Button
-                  variant="text"
-                  color="warning"
-                  onClick={() => setConfirmRejectDrafts(true)}
-                  disabled={jobActionDisabled || drafts.length === 0}
-                >
-                  Reject remaining drafts
-                </Button>
-                <Button
-                  variant="text"
-                  color="error"
-                  onClick={() => setRegenHints([])}
-                  disabled={jobActionDisabled}
-                >
-                  Regenerate
-                </Button>
-              </Stack>
+                Approve all
+              </Button>
+              <Button
+                variant="text"
+                color="warning"
+                onClick={() => setConfirmRejectDrafts(true)}
+                disabled={jobActionDisabled || drafts.length === 0}
+              >
+                Reject remaining drafts
+              </Button>
+              <Button
+                variant="text"
+                color="error"
+                onClick={() => setRegenHints([])}
+                disabled={jobActionDisabled}
+              >
+                Regenerate
+              </Button>
             </Stack>
-          </OperateSection>
+          </>
         )}
 
         <Dialog open={confirmAll} onClose={() => !busy && setConfirmAll(false)}>
@@ -794,7 +689,7 @@ export default function DraftReviewPage() {
             <DialogContentText>
               This deletes all cards from this job (drafts and any you already
               accepted into study) and starts generation over from the material.
-              To change only one card, use Regenerate this card instead.
+              To change only one card, use the regenerate button on that card instead.
               {regenHints && regenHints.length > 0
                 ? ` The new drafts will try to cover the ${regenHints.length} selected ${regenHints.length === 1 ? "line" : "lines"}.`
                 : ""}
