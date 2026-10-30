@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
 import Container from "@mui/material/Container";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -44,6 +45,11 @@ import {
 } from "../journey/emptyJobDraftCtas";
 import { forceOpenDraftReview } from "../journey/forceOpenDraftReview";
 import type { JourneyView } from "../journey/types";
+import {
+  REJECT_REASONS,
+  REJECT_REASON_LABELS,
+  type RejectReason,
+} from "../lib/rejectReasons";
 import JobProgressPanel from "../progress/JobProgressPanel";
 import { useJobProgress } from "../progress/useJobProgress";
 import { useTrackedOp } from "../progress/useTrackedOp";
@@ -71,6 +77,7 @@ export default function DraftReviewPage() {
   const jobId = jobIdFromPath();
   const [drafts, setDrafts] = useState<CardDraftView[]>([]);
   const [index, setIndex] = useState(0);
+  const [rejectReason, setRejectReason] = useState<RejectReason | null>(null);
   const [view, setView] = useState<JourneyView | null>(null);
   const [emptyCtas, setEmptyCtas] = useState<EmptyJobDraftCtas | null>(null);
   const [journeyError, setJourneyError] = useState<string | null>(null);
@@ -233,6 +240,10 @@ export default function DraftReviewPage() {
 
   const current = drafts[index] ?? null;
 
+  useEffect(() => {
+    setRejectReason(null);
+  }, [current?.id]);
+
   function onEditorChange(
     next: Pick<CardDraftView, "front" | "back" | "type" | "options">,
   ) {
@@ -289,7 +300,7 @@ export default function DraftReviewPage() {
     setNotice(null);
     begin();
     try {
-      await rejectCard(current.id);
+      await rejectCard(current.id, rejectReason);
       const list = await load(jobId);
       await refreshJourney(jobId, list.length);
       setNotice("Card rejected");
@@ -573,6 +584,33 @@ export default function DraftReviewPage() {
               spacing={1.5}
               sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: "divider" }}
             >
+              <Stack
+                direction="row"
+                spacing={1}
+                flexWrap="wrap"
+                useFlexGap
+                alignItems="center"
+              >
+                <Typography variant="caption" color="text.secondary">
+                  Reason (optional)
+                </Typography>
+                {REJECT_REASONS.map((code) => {
+                  const selected = rejectReason === code;
+                  return (
+                    <Chip
+                      key={code}
+                      label={REJECT_REASON_LABELS[code]}
+                      size="small"
+                      clickable
+                      color={selected ? "error" : "default"}
+                      variant={selected ? "filled" : "outlined"}
+                      aria-pressed={selected}
+                      disabled={busy}
+                      onClick={() => setRejectReason(selected ? null : code)}
+                    />
+                  );
+                })}
+              </Stack>
               <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
                 <Button
                   variant="contained"
