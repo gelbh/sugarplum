@@ -236,7 +236,7 @@ export default function ReviewCard({
             "&:has(textarea:focus, input:focus)": { userSelect: "auto" },
             transform: visual.transform,
             transition:
-              swipe.dx !== null && !swipe.leaving
+              swipe.reduceMotion || (swipe.dx !== null && !swipe.leaving)
                 ? "none"
                 : `transform ${REVIEW_FLY_MS}ms ease-out`,
             opacity: visual.dimmed ? 0.4 : 1,
