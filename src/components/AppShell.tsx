@@ -122,6 +122,12 @@ function AppShellChrome({ children }: AppShellProps) {
   const genStatus = useShellGenerationStatus(hideChrome);
   const headerRef = useRef<HTMLDivElement>(null);
   const [mobileHeaderPx, setMobileHeaderPx] = useState(TOP_BAR_HEIGHT);
+  const mainRef = useRef<HTMLElement>(null);
+  const search = window.location.search;
+
+  useLayoutEffect(() => {
+    mainRef.current?.scrollTo(0, 0);
+  }, [path, search]);
 
   useEffect(() => {
     if (isGuest()) {
@@ -345,6 +351,7 @@ function AppShellChrome({ children }: AppShellProps) {
         </Drawer>
       ) : null}
       <Box
+        ref={mainRef}
         component="main"
         sx={{
           flex: 1,
