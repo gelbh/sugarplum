@@ -24,6 +24,13 @@ export const FACE_SX = {
   fontFamily: FACE_SANS,
 } as const;
 
+/** Dark-scheme MUI disabled colors are ivory, the same as the card face. */
+export const FACE_DISABLED_SX = {
+  "&& .Mui-disabled": { color: "inherit", WebkitTextFillColor: "currentColor" },
+  "&& .MuiButtonBase-root.Mui-disabled": { opacity: 0.4, borderColor: "currentColor" },
+  "&& .MuiInputBase-root.Mui-disabled": { opacity: 0.6 },
+} as const;
+
 export const CARD_COLUMN_SX = {
   width: "100%",
   maxWidth: 360,
