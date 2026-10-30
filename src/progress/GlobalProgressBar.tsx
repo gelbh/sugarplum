@@ -3,7 +3,6 @@ import LinearProgress from "@mui/material/LinearProgress";
 import { useProgressRegistry } from "./ProgressProvider";
 
 type GlobalProgressBarProps = {
-  /** Distance from the viewport top, e.g. below the fixed mobile TopChrome. */
   top?: string | number;
 };
 
