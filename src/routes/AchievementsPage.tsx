@@ -3,30 +3,18 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
-import LinearProgress from "@mui/material/LinearProgress";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import {
-  ApiError,
-  getAchievements,
-  getGamification,
-  getWeeklyLeaderboard,
-  me,
-  type AchievementItemView,
-  type GamificationResponse,
-  type LeaderboardResponse,
-} from "../api/client";
+import type { AchievementItemView } from "../api/client";
+import AchievementRow from "../achievements/AchievementRow";
 import {
   FRUIT_LABEL,
   FRUIT_ORDER,
-  RARITY_LABEL,
   type FruitType,
 } from "../achievements/catalog";
-import FruitMedal from "../achievements/FruitMedal";
 import MagnificCredits from "../achievements/MagnificCredits";
-import { isGuest } from "../guest/session";
-import { useTrackedOp } from "../progress/useTrackedOp";
+import { useAchievementsData } from "../achievements/useAchievementsData";
 
 const SHEEN_SEEN_KEY = "sugarplum:achievement-sheen-seen";
 
@@ -67,71 +55,12 @@ function groupByFruit(
   return map;
 }
 
-function staggerDelay(unlockedIndex: number): string {
-  const ms = Math.min(unlockedIndex * 40, 240);
-  return `${ms}ms`;
-}
-
 export default function AchievementsPage() {
-  const [items, setItems] = useState<AchievementItemView[]>([]);
-  const [gamification, setGamification] = useState<GamificationResponse | null>(
-    null,
-  );
-  const [board, setBoard] = useState<LeaderboardResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [guest, setGuest] = useState(false);
-  const [ready, setReady] = useState(false);
+  const { ready, guest, error, items, gamification, board } =
+    useAchievementsData();
   const [sheenOnceIds, setSheenOnceIds] = useState<Set<string>>(
     () => new Set(),
   );
-  const { end: endLoad } = useTrackedOp("Loading achievements…", {
-    trackOnMount: true,
-  });
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        await me();
-        const guestMode = isGuest();
-        if (guestMode) {
-          if (!cancelled) {
-            setGuest(true);
-            setReady(true);
-            endLoad();
-          }
-          return;
-        }
-        // Summary + board are garnish; the medal grid must still render without them.
-        const [ach, gam, lb] = await Promise.all([
-          getAchievements(),
-          getGamification().catch(() => null),
-          getWeeklyLeaderboard().catch(() => null),
-        ]);
-        if (cancelled) return;
-        setItems(ach.items);
-        setGamification(gam);
-        setBoard(lb);
-        setGuest(false);
-        setReady(true);
-        endLoad();
-      } catch (err) {
-        if (cancelled) return;
-        if (err instanceof ApiError && err.status === 401) {
-          window.location.assign("/login");
-          return;
-        }
-        setError(
-          err instanceof ApiError ? err.message : "Failed to load achievements",
-        );
-        setReady(true);
-        endLoad(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [endLoad]);
 
   useEffect(() => {
     if (items.length === 0) return;
@@ -250,93 +179,14 @@ export default function AchievementsPage() {
                     {FRUIT_LABEL[fruit]}
                   </Typography>
                   <Stack spacing={2}>
-                    {list.map((item) => {
-                      const unlocked = item.completedAt != null;
-                      const rarity = item.def.rarity;
-                      const showSheen =
-                        unlocked &&
-                        rarity === "legendary" &&
-                        sheenOnceIds.has(item.def.id);
-                      return (
-                        <Box
-                          key={item.def.id}
-                          sx={{
-                            display: "flex",
-                            gap: 1.5,
-                            alignItems: "flex-start",
-                            opacity: unlocked ? 1 : 0.55,
-                            ...(unlocked
-                              ? {
-                                  animation: `achievementStagger 420ms cubic-bezier(0.16, 1, 0.3, 1) ${staggerDelay(staggerIndexById.get(item.def.id) ?? 0)} both`,
-                                  "@media (prefers-reduced-motion: reduce)": {
-                                    animation: "none",
-                                    opacity: 1,
-                                  },
-                                }
-                              : {}),
-                          }}
-                        >
-                          <FruitMedal
-                            fruitType={fruit}
-                            traits={item.traits}
-                            size={48}
-                            locked={!unlocked}
-                            sheenOnce={showSheen}
-                          />
-                          <Box flex={1} minWidth={0}>
-                            <Typography variant="subtitle2" fontWeight={600}>
-                              {item.def.title}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              display="block"
-                            >
-                              {RARITY_LABEL[rarity]} · {item.def.description}
-                            </Typography>
-                            {unlocked ? (
-                              <Typography
-                                variant="caption"
-                                color="success.main"
-                                display="block"
-                                sx={{ mt: 0.5 }}
-                              >
-                                Unlocked
-                              </Typography>
-                            ) : item.progress ? (
-                              <Box sx={{ mt: 1 }}>
-                                <LinearProgress
-                                  variant="determinate"
-                                  value={Math.min(
-                                    100,
-                                    (item.progress.currentValue /
-                                      item.progress.threshold) *
-                                      100,
-                                  )}
-                                  sx={{ height: 6, borderRadius: 1 }}
-                                />
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  {item.progress.currentValue} /{" "}
-                                  {item.progress.threshold}
-                                </Typography>
-                              </Box>
-                            ) : (
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                display="block"
-                                sx={{ mt: 0.5 }}
-                              >
-                                Progress tracked automatically
-                              </Typography>
-                            )}
-                          </Box>
-                        </Box>
-                      );
-                    })}
+                    {list.map((item) => (
+                      <AchievementRow
+                        key={item.def.id}
+                        item={item}
+                        staggerIndex={staggerIndexById.get(item.def.id) ?? 0}
+                        sheenOnce={sheenOnceIds.has(item.def.id)}
+                      />
+                    ))}
                   </Stack>
                 </Paper>
               );

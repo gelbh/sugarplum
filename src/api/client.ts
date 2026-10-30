@@ -829,9 +829,19 @@ export type AchievementDefView = {
   sortOrder: number;
 };
 
+export type CompositePartView = {
+  key: "streak_best" | "reviews";
+  current: number;
+  target: number;
+};
+
 export type AchievementItemView = {
   def: AchievementDefView;
-  progress: { currentValue: number; threshold: number } | null;
+  progress: {
+    currentValue: number;
+    threshold: number;
+    parts?: CompositePartView[];
+  } | null;
   completedAt: string | null;
   traits: FruitTraitsView;
 };
