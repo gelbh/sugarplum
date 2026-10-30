@@ -8,7 +8,7 @@ import type {
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
-import { backfillUser, catalogBackfill } from "./backfill";
+import { backfillUser } from "./backfill";
 import type { Rarity } from "./constants";
 import {
   compositeParts,
@@ -162,7 +162,6 @@ gamificationRoutes.get("/achievements", async (c) => {
 
   try {
     await backfillUser(db, userId);
-    await catalogBackfill(db, userId);
   } catch (err) {
     console.error("gamification backfill failed", err);
   }

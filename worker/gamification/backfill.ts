@@ -9,41 +9,6 @@ function backfillKey(userId: string): string {
   return `backfill:v1:${userId}`;
 }
 
-/** ponytail: keyed on active def count; swapping one def for another at the same count skips this. Upgrade: key on a catalog hash. */
-async function catalogKey(db: D1Database, userId: string): Promise<string> {
-  const row = await db
-    .prepare(`SELECT COUNT(*) AS n FROM achievement_defs WHERE active = 1`)
-    .first<{ n: number }>();
-  return `backfill:catalog:n${Number(row?.n ?? 0)}:${userId}`;
-}
-
-/**
- * Silently backdates medals added since an established user's last backfill.
- * Users without the v1 marker keep live unlocks; backfillUser covers them.
- */
-export async function catalogBackfill(
-  db: D1Database,
-  userId: string,
-): Promise<void> {
-  const key = await catalogKey(db, userId);
-  const { results } = await db
-    .prepare(
-      `SELECT idempotency_key FROM xp_ledger
-       WHERE user_id = ? AND idempotency_key IN (?, ?)`,
-    )
-    .bind(userId, backfillKey(userId), key)
-    .all<{ idempotency_key: string }>();
-  const held = new Set((results ?? []).map((r) => r.idempotency_key));
-  if (!held.has(backfillKey(userId)) || held.has(key)) return;
-
-  await evaluateAchievements(db, userId, {
-    triggerEventId: null,
-    nowIso: new Date().toISOString(),
-    backdated: 1,
-  });
-  await creditXp(db, userId, 0, "backfill", key);
-}
-
 async function alreadyBackfilled(
   db: D1Database,
   userId: string,
@@ -114,5 +79,4 @@ export async function backfillUser(
   });
 
   await creditXp(db, userId, 0, "backfill", backfillKey(userId));
-  await creditXp(db, userId, 0, "backfill", await catalogKey(db, userId));
 }

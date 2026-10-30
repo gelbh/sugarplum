@@ -8,7 +8,10 @@ import {
 import { onReviewGraded, onCardAccepted } from "../../../worker/gamification/onStudyEvent";
 import { traitsForAchievement } from "../../../worker/gamification/traits";
 import { XP } from "../../../worker/gamification/constants";
-import { creditXp } from "../../../worker/gamification/xp";
+import {
+  creditXp,
+  ensureUserGamification,
+} from "../../../worker/gamification/xp";
 import type { AchievementDefSeed } from "../gamification-seeds";
 
 const NOW = "2026-10-29T12:00:00.000Z";
@@ -117,7 +120,7 @@ describe("evaluateAfterReview", () => {
       state_json: "{}",
     });
 
-    const { unlocks } = await evaluateAfterReview(env.DB, "u1", {
+    const unlocks = await onReviewGraded(env.DB, "u1", {
       reviewLogId: "rl1",
       reviewedAt: new Date(NOW),
     });
@@ -264,6 +267,7 @@ function testDef(
   id: string,
   triggerKind: string,
   threshold: number,
+  catalogVersion = 1,
 ): AchievementDefSeed {
   return {
     id,
@@ -277,6 +281,7 @@ function testDef(
     description: id,
     sort_order: 9999,
     active: 1,
+    catalog_version: catalogVersion,
   };
 }
 
@@ -316,21 +321,35 @@ describe("clear-due day counter", () => {
     seedReview(env, "rl2", "c1");
     seedReview(env, "rl3", "c1", { reviewedAt: "2026-10-30T09:00:00.000Z" });
 
-    await evaluateAfterReview(env.DB, "u1", {
+    await onReviewGraded(env.DB, "u1", {
       reviewLogId: "rl1",
       reviewedAt: new Date(NOW),
     });
-    await evaluateAfterReview(env.DB, "u1", {
+    await onReviewGraded(env.DB, "u1", {
       reviewLogId: "rl2",
       reviewedAt: new Date(NOW),
     });
     expect(env.getUserGamification("u1")?.clear_due_days).toBe(1);
 
-    await evaluateAfterReview(env.DB, "u1", {
+    await onReviewGraded(env.DB, "u1", {
       reviewLogId: "rl3",
       reviewedAt: new Date("2026-10-30T09:00:00.000Z"),
     });
     expect(env.getUserGamification("u1")?.clear_due_days).toBe(2);
+  });
+
+  it("does not count a day while an accepted card is past due", async () => {
+    const env = createTestEnv();
+    seedStudyUser(env);
+    seedAcceptedCard(env, { id: "c1", due: "2026-10-28T00:00:00.000Z" });
+    seedReview(env, "rl1", "c1");
+
+    const unlocks = await onReviewGraded(env.DB, "u1", {
+      reviewLogId: "rl1",
+      reviewedAt: new Date(NOW),
+    });
+    expect(env.getUserGamification("u1")?.clear_due_days).toBe(0);
+    expect(unlocks.map((u) => u.id)).not.toContain("clear_due_1");
   });
 });
 
@@ -396,21 +415,23 @@ describe("new trigger kinds", () => {
   });
 });
 
-describe("catalogBackfill", () => {
-  it("backdates catalog additions for established users, then evaluates live", async () => {
+describe("catalog versions", () => {
+  it("backdates defs newer than the user's version, keeps shipped defs live", async () => {
     const env = createTestEnv();
     seedStudyUser(env);
     seedAcceptedCard(env, { id: "c1", due: FUTURE });
     seedReview(env, "rl1", "c1");
-    // Established before the catalog grew: v1 marker, no catalog marker.
-    await creditXp(env.DB, "u1", 0, "backfill", "backfill:v1:u1");
-    env.seedAchievementDef(testDef("t_history", "reviews_total", 1));
-    env.seedAchievementDef(testDef("t_next", "reviews_total", 2));
+    // Evaluated against catalog v1 before the catalog grew.
+    await ensureUserGamification(env.DB, "u1");
+    expect(env.getUserGamification("u1")?.catalog_version).toBe(1);
+    env.seedAchievementDef(testDef("t_history", "reviews_total", 1, 2));
+    env.seedAchievementDef(testDef("t_next", "reviews_total", 2, 2));
 
     const first = await onReviewGraded(env.DB, "u1", {
       reviewLogId: "rl1",
       reviewedAt: new Date(NOW),
     });
+    expect(first.map((u) => u.id)).toContain("reviews_1");
     expect(first.map((u) => u.id)).not.toContain("t_history");
     const history = env
       .getAchievementCompletions()
@@ -419,6 +440,7 @@ describe("catalogBackfill", () => {
     expect(
       env.getXpLedger().some((e) => e.idempotency_key === "unlock:t_history"),
     ).toBe(false);
+    expect(env.getUserGamification("u1")?.catalog_version).toBe(2);
 
     seedReview(env, "rl2", "c1");
     const second = await onReviewGraded(env.DB, "u1", {

@@ -1,5 +1,4 @@
 import type { UnlockView } from "../../src/achievements/wire";
-import { catalogBackfill } from "./backfill";
 import { utcDay, XP } from "./constants";
 import { evaluateAfterAccept, evaluateAfterReview } from "./evaluate";
 import { applyStudyDayStreak } from "./streak";
@@ -10,6 +9,36 @@ function utcDayBounds(day: string): { start: string; end: string } {
     start: `${day}T00:00:00.000Z`,
     end: `${day}T23:59:59.999Z`,
   };
+}
+
+/** At most once per UTC day, and only with no accepted card due; the guards make retries idempotent. */
+async function bumpClearDueDay(
+  db: D1Database,
+  userId: string,
+  day: string,
+  reviewedAt: Date,
+): Promise<void> {
+  await db
+    .prepare(
+      `UPDATE user_gamification
+       SET clear_due_days = clear_due_days + 1, clear_due_last_day = ?, updated_at = ?
+       WHERE user_id = ? AND clear_due_last_day IS NOT ?
+         AND NOT EXISTS (
+           SELECT 1 FROM cards c
+           INNER JOIN card_schedules s ON s.card_id = c.id
+           INNER JOIN decks d ON d.id = c.deck_id
+           WHERE d.user_id = ? AND c.status = 'accepted' AND s.due <= ?
+         )`,
+    )
+    .bind(
+      day,
+      new Date().toISOString(),
+      userId,
+      day,
+      userId,
+      reviewedAt.toISOString(),
+    )
+    .run();
 }
 
 async function awardReviewXp(
@@ -44,6 +73,7 @@ export async function onReviewGraded(
   try {
     const day = utcDay(args.reviewedAt);
     const streak = await applyStudyDayStreak(db, userId, day);
+    await bumpClearDueDay(db, userId, day, args.reviewedAt);
     await awardReviewXp(
       db,
       userId,
@@ -51,7 +81,6 @@ export async function onReviewGraded(
       args.reviewLogId,
       streak.isFirstReviewOfDay,
     );
-    await catalogBackfill(db, userId);
     const { unlocks } = await evaluateAfterReview(db, userId, args);
     return unlocks;
   } catch (err) {
@@ -84,7 +113,6 @@ export async function onCardsAccepted(
         `accept:${card.cardId}`,
       );
     }
-    await catalogBackfill(db, userId);
     const last = cards[cards.length - 1]!;
     const { unlocks } = await evaluateAfterAccept(db, userId, last);
     return unlocks;

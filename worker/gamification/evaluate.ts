@@ -1,24 +1,21 @@
 import type { FruitType } from "../../src/achievements/catalog";
 import type { CompositePart, UnlockView } from "../../src/achievements/wire";
-import { utcDay, XP, type Rarity } from "./constants";
+import { XP, type Rarity } from "./constants";
 import { traitsForAchievement } from "./traits";
-import { creditXp, ensureUserGamification } from "./xp";
+import { creditXp } from "./xp";
 
-export const TRIGGER_KINDS = [
-  "reviews_total",
-  "accepts_total",
-  "study_days_total",
-  "streak_current",
-  "distinct_types",
-  "composite",
-  "library_decks",
-  "clear_due_days",
-  "long_reviews",
-  "mature_cards",
-  "level_reached",
-] as const;
-
-export type TriggerKind = (typeof TRIGGER_KINDS)[number];
+export type TriggerKind =
+  | "reviews_total"
+  | "accepts_total"
+  | "study_days_total"
+  | "streak_current"
+  | "distinct_types"
+  | "composite"
+  | "library_decks"
+  | "clear_due_days"
+  | "long_reviews"
+  | "mature_cards"
+  | "level_reached";
 
 export type AchievementDefRow = {
   id: string;
@@ -28,6 +25,7 @@ export type AchievementDefRow = {
   params_json: string | null;
   title: string;
   fruit_type: FruitType;
+  catalog_version: number;
 };
 
 type ReviewMetrics = {
@@ -42,7 +40,7 @@ type CardMetrics = {
   libraryDecks: number;
 };
 
-export type ScheduleMetrics = { dueAccepted: number; matureCards: number };
+type ScheduleMetrics = { matureCards: number };
 
 type GamificationMetrics = {
   streakCurrent: number;
@@ -56,21 +54,80 @@ export type StudyMetrics = ReviewMetrics &
   ScheduleMetrics &
   GamificationMetrics;
 
-type MetricGroup = "review" | "card" | "schedule" | "gamification";
+/** Aggregates loaded on demand; the user_gamification read always runs. */
+type MetricGroup = "review" | "card" | "schedule";
 
-const METRIC_GROUPS: Record<TriggerKind, readonly MetricGroup[]> = {
-  reviews_total: ["review"],
-  study_days_total: ["review"],
-  long_reviews: ["review"],
-  accepts_total: ["card"],
-  distinct_types: ["card"],
-  library_decks: ["card"],
-  mature_cards: ["schedule"],
-  streak_current: ["gamification"],
-  clear_due_days: ["gamification"],
-  level_reached: ["gamification"],
-  composite: ["review", "gamification"],
+type StudyEvent = "review" | "accept";
+
+const TRIGGERS: Record<
+  TriggerKind,
+  {
+    groups: readonly MetricGroup[];
+    on: readonly StudyEvent[];
+    value: (m: StudyMetrics, def: AchievementDefRow) => number;
+  }
+> = {
+  reviews_total: {
+    groups: ["review"],
+    on: ["review"],
+    value: (m) => m.reviewsTotal,
+  },
+  study_days_total: {
+    groups: ["review"],
+    on: ["review"],
+    value: (m) => m.studyDaysTotal,
+  },
+  long_reviews: {
+    groups: ["review"],
+    on: ["review"],
+    value: (m) => m.longReviews,
+  },
+  accepts_total: {
+    groups: ["card"],
+    on: ["accept"],
+    value: (m) => m.acceptsTotal,
+  },
+  distinct_types: {
+    groups: ["card"],
+    on: ["accept"],
+    value: (m) => m.distinctTypes,
+  },
+  library_decks: {
+    groups: ["card"],
+    on: ["accept"],
+    value: (m) => m.libraryDecks,
+  },
+  mature_cards: {
+    groups: ["schedule"],
+    on: ["review"],
+    value: (m) => m.matureCards,
+  },
+  streak_current: {
+    groups: [],
+    on: ["review"],
+    value: (m) => m.streakCurrent,
+  },
+  clear_due_days: {
+    groups: [],
+    on: ["review"],
+    value: (m) => m.clearDueDays,
+  },
+  level_reached: {
+    groups: [],
+    on: ["review", "accept"],
+    value: (m) => m.level,
+  },
+  composite: {
+    groups: ["review"],
+    on: ["review", "accept"],
+    value: (m, def) =>
+      compositeParts(def.params_json, m).every((p) => p.current >= p.target)
+        ? 1
+        : 0,
+  },
 };
+
+export const TRIGGER_KINDS = Object.keys(TRIGGERS) as TriggerKind[];
 
 const ZERO_METRICS: StudyMetrics = {
   reviewsTotal: 0,
@@ -79,7 +136,6 @@ const ZERO_METRICS: StudyMetrics = {
   acceptsTotal: 0,
   distinctTypes: 0,
   libraryDecks: 0,
-  dueAccepted: 0,
   matureCards: 0,
   streakCurrent: 0,
   streakBest: 0,
@@ -87,29 +143,10 @@ const ZERO_METRICS: StudyMetrics = {
   clearDueDays: 0,
 };
 
-const REVIEW_TRIGGERS = new Set<TriggerKind>([
-  "reviews_total",
-  "study_days_total",
-  "streak_current",
-  "long_reviews",
-  "mature_cards",
-  "clear_due_days",
-  "level_reached",
-  "composite",
-]);
-
-const ACCEPT_TRIGGERS = new Set<TriggerKind>([
-  "accepts_total",
-  "distinct_types",
-  "library_decks",
-  "level_reached",
-  "composite",
-]);
-
 /** Interval (days) at which a card counts as mature. */
-const MATURE_DAYS = 21;
+export const MATURE_DAYS = 21;
 /** Gap (days) since last sight for a long-haul review. */
-const LONG_REVIEW_DAYS = 30;
+export const LONG_REVIEW_DAYS = 30;
 
 const UPSERT_PROGRESS = `INSERT INTO achievement_progress (user_id, achievement_id, current_value, threshold)
    VALUES (?, ?, ?, ?)
@@ -117,14 +154,24 @@ const UPSERT_PROGRESS = `INSERT INTO achievement_progress (user_id, achievement_
      current_value = excluded.current_value,
      threshold = excluded.threshold`;
 
+const INSERT_COMPLETION = `INSERT OR IGNORE INTO achievement_completions (
+     user_id, achievement_id, completed_at, trigger_event_id, backdated
+   ) VALUES (?, ?, ?, ?, ?)`;
+
+function isTriggerKind(kind: string): kind is TriggerKind {
+  return Object.hasOwn(TRIGGERS, kind);
+}
+
 async function loadActiveDefs(db: D1Database): Promise<AchievementDefRow[]> {
   const { results } = await db
     .prepare(
-      `SELECT id, rarity, trigger_kind, threshold, params_json, title, fruit_type
+      `SELECT id, rarity, trigger_kind, threshold, params_json, title, fruit_type, catalog_version
        FROM achievement_defs WHERE active = 1`,
     )
-    .all<AchievementDefRow>();
-  return results ?? [];
+    .all<Omit<AchievementDefRow, "trigger_kind"> & { trigger_kind: string }>();
+  return (results ?? []).filter((d): d is AchievementDefRow =>
+    isTriggerKind(d.trigger_kind),
+  );
 }
 
 async function loadCompletedIds(
@@ -214,32 +261,33 @@ async function loadCardMetrics(
 async function loadScheduleMetrics(
   db: D1Database,
   userId: string,
-  nowIso: string,
 ): Promise<ScheduleMetrics> {
   const row = await db
     .prepare(
-      `SELECT COALESCE(SUM(CASE WHEN s.due <= ? THEN 1 ELSE 0 END), 0) AS due_accepted,
-              COALESCE(SUM(CASE WHEN s.scheduled_days >= ${MATURE_DAYS} THEN 1 ELSE 0 END), 0) AS mature_cards
+      `SELECT COUNT(*) AS mature_cards
        FROM cards c
        INNER JOIN card_schedules s ON s.card_id = c.id
        INNER JOIN decks d ON d.id = c.deck_id
-       WHERE d.user_id = ? AND c.status = 'accepted'`,
+       WHERE d.user_id = ? AND c.status = 'accepted'
+         AND s.scheduled_days >= ${MATURE_DAYS}`,
     )
-    .bind(nowIso, userId)
-    .first<{ due_accepted: number; mature_cards: number }>();
-  return {
-    dueAccepted: Number(row?.due_accepted ?? 0),
-    matureCards: Number(row?.mature_cards ?? 0),
-  };
+    .bind(userId)
+    .first<{ mature_cards: number }>();
+  return { matureCards: Number(row?.mature_cards ?? 0) };
 }
 
-async function loadGamificationMetrics(
+type GamificationRead = GamificationMetrics & {
+  /** Null when the user has no row yet. */
+  catalogVersion: number | null;
+};
+
+async function loadGamification(
   db: D1Database,
   userId: string,
-): Promise<GamificationMetrics> {
+): Promise<GamificationRead> {
   const row = await db
     .prepare(
-      `SELECT streak_current, streak_best, level, clear_due_days
+      `SELECT streak_current, streak_best, level, clear_due_days, catalog_version
        FROM user_gamification WHERE user_id = ?`,
     )
     .bind(userId)
@@ -248,12 +296,14 @@ async function loadGamificationMetrics(
       streak_best: number;
       level: number;
       clear_due_days: number;
+      catalog_version: number;
     }>();
   return {
     streakCurrent: row?.streak_current ?? 0,
     streakBest: row?.streak_best ?? 0,
     level: row?.level ?? 1,
     clearDueDays: row?.clear_due_days ?? 0,
+    catalogVersion: row?.catalog_version ?? null,
   };
 }
 
@@ -261,33 +311,32 @@ async function loadGamificationMetrics(
 async function loadMetrics(
   db: D1Database,
   userId: string,
-  nowIso: string,
   groups: ReadonlySet<MetricGroup>,
-  schedule?: ScheduleMetrics,
+  gamification?: GamificationMetrics,
 ): Promise<StudyMetrics> {
-  const [review, card, sched, gamification] = await Promise.all([
+  const [review, card, schedule, g] = await Promise.all([
     groups.has("review") ? loadReviewMetrics(db, userId) : null,
     groups.has("card") ? loadCardMetrics(db, userId) : null,
-    groups.has("schedule")
-      ? (schedule ?? loadScheduleMetrics(db, userId, nowIso))
-      : null,
-    groups.has("gamification") ? loadGamificationMetrics(db, userId) : null,
-  ]);
-  return { ...ZERO_METRICS, ...review, ...card, ...sched, ...gamification };
-}
-
-export async function loadCompositeMetrics(
-  db: D1Database,
-  userId: string,
-): Promise<{ streakBest: number; reviewsTotal: number }> {
-  const [review, gamification] = await Promise.all([
-    loadReviewMetrics(db, userId),
-    loadGamificationMetrics(db, userId),
+    groups.has("schedule") ? loadScheduleMetrics(db, userId) : null,
+    gamification ?? loadGamification(db, userId),
   ]);
   return {
-    streakBest: gamification.streakBest,
-    reviewsTotal: review.reviewsTotal,
+    ...ZERO_METRICS,
+    ...review,
+    ...card,
+    ...schedule,
+    streakCurrent: g.streakCurrent,
+    streakBest: g.streakBest,
+    level: g.level,
+    clearDueDays: g.clearDueDays,
   };
+}
+
+export function loadCompositeMetrics(
+  db: D1Database,
+  userId: string,
+): Promise<StudyMetrics> {
+  return loadMetrics(db, userId, new Set(TRIGGERS.composite.groups));
 }
 
 export function compositeParts(
@@ -317,69 +366,7 @@ export function compositeParts(
   ];
 }
 
-function metricValue(def: AchievementDefRow, m: StudyMetrics): number {
-  switch (def.trigger_kind) {
-    case "reviews_total":
-      return m.reviewsTotal;
-    case "accepts_total":
-      return m.acceptsTotal;
-    case "study_days_total":
-      return m.studyDaysTotal;
-    case "streak_current":
-      return m.streakCurrent;
-    case "distinct_types":
-      return m.distinctTypes;
-    case "library_decks":
-      return m.libraryDecks;
-    case "clear_due_days":
-      return m.clearDueDays;
-    case "long_reviews":
-      return m.longReviews;
-    case "mature_cards":
-      return m.matureCards;
-    case "level_reached":
-      return m.level;
-    case "composite":
-      return compositeParts(def.params_json, m).every(
-        (p) => p.current >= p.target,
-      )
-        ? 1
-        : 0;
-    default: {
-      const unhandled: never = def.trigger_kind;
-      void unhandled;
-      return 0;
-    }
-  }
-}
-
-async function complete(
-  db: D1Database,
-  userId: string,
-  def: AchievementDefRow,
-  triggerEventId: string | null,
-  backdated: 0 | 1,
-): Promise<UnlockView | null> {
-  const insert = await db
-    .prepare(
-      `INSERT OR IGNORE INTO achievement_completions (
-         user_id, achievement_id, completed_at, trigger_event_id, backdated
-       ) VALUES (?, ?, ?, ?, ?)`,
-    )
-    .bind(userId, def.id, new Date().toISOString(), triggerEventId, backdated)
-    .run();
-  if ((insert.meta.changes ?? 0) === 0) return null;
-
-  // Backdated unlocks must not stamp unlock XP into "now" (weekly board pollution).
-  if (backdated === 0) {
-    await creditXp(
-      db,
-      userId,
-      XP.unlock[def.rarity],
-      "unlock",
-      `unlock:${def.id}`,
-    );
-  }
+function toUnlockView(def: AchievementDefRow): UnlockView {
   return {
     id: def.id,
     title: def.title,
@@ -389,42 +376,31 @@ async function complete(
   };
 }
 
-export async function evaluateAchievements(
+async function evaluatePending(
   db: D1Database,
   userId: string,
-  opts: {
-    kinds?: Set<TriggerKind>;
-    triggerEventId: string | null;
-    nowIso: string;
-    backdated?: 0 | 1;
-    schedule?: ScheduleMetrics;
-  },
+  pending: AchievementDefRow[],
+  gamification: GamificationMetrics,
+  triggerEventId: string | null,
+  isBackdated: (def: AchievementDefRow) => boolean,
 ): Promise<UnlockView[]> {
-  const backdated = opts.backdated ?? 0;
-  const [defs, completed] = await Promise.all([
-    loadActiveDefs(db),
-    loadCompletedIds(db, userId),
-  ]);
-  const pending = defs.filter(
-    (d) =>
-      !completed.has(d.id) && (!opts.kinds || opts.kinds.has(d.trigger_kind)),
+  const groups = new Set(
+    pending.flatMap((d) => TRIGGERS[d.trigger_kind].groups),
   );
-  if (pending.length === 0) return [];
-
-  const groups = new Set(pending.flatMap((d) => METRIC_GROUPS[d.trigger_kind]));
   const [metrics, progress] = await Promise.all([
-    loadMetrics(db, userId, opts.nowIso, groups, opts.schedule),
+    loadMetrics(db, userId, groups, gamification),
     loadProgress(db, userId),
   ]);
 
   const writes: D1PreparedStatement[] = [];
-  const reached: AchievementDefRow[] = [];
+  const reached: { def: AchievementDefRow; backdated: boolean }[] = [];
   for (const def of pending) {
+    const backdated = isBackdated(def);
     // Historical streak fruits use peak, not the (possibly expired) live current.
     const value =
-      backdated === 1 && def.trigger_kind === "streak_current"
+      backdated && def.trigger_kind === "streak_current"
         ? metrics.streakBest
-        : metricValue(def, metrics);
+        : TRIGGERS[def.trigger_kind].value(metrics, def);
     const threshold = def.threshold ?? 1;
     // A missing progress row reads as 0 (the gallery falls back to the def threshold).
     const prev = progress.get(def.id) ?? { current_value: 0, threshold };
@@ -433,39 +409,83 @@ export async function evaluateAchievements(
         db.prepare(UPSERT_PROGRESS).bind(userId, def.id, value, threshold),
       );
     }
-    if (value >= threshold) reached.push(def);
+    if (value >= threshold) reached.push({ def, backdated });
   }
-  if (writes.length > 0) await db.batch(writes);
+
+  const completedAt = new Date().toISOString();
+  const inserts = reached.map(({ def, backdated }) =>
+    db
+      .prepare(INSERT_COMPLETION)
+      .bind(userId, def.id, completedAt, triggerEventId, backdated ? 1 : 0),
+  );
+  if (writes.length + inserts.length === 0) return [];
+  const results = await db.batch([...writes, ...inserts]);
+  const insertResults = results.slice(writes.length);
 
   const unlocks: UnlockView[] = [];
-  for (const def of reached) {
-    const unlock = await complete(
+  for (const [i, { def, backdated }] of reached.entries()) {
+    // Backdated unlocks must not stamp unlock XP into "now" (weekly board pollution).
+    if (backdated || (insertResults[i]?.meta.changes ?? 0) === 0) continue;
+    await creditXp(
       db,
       userId,
-      def,
-      opts.triggerEventId,
-      backdated,
+      XP.unlock[def.rarity],
+      "unlock",
+      `unlock:${def.id}`,
     );
-    if (unlock) unlocks.push(unlock);
+    unlocks.push(toUnlockView(def));
   }
   return unlocks;
 }
 
-/** At most once per UTC day; the WHERE guard makes retries idempotent. */
-async function bumpClearDueDay(
+export async function evaluateAchievements(
   db: D1Database,
   userId: string,
-  day: string,
-): Promise<void> {
-  await ensureUserGamification(db, userId);
-  await db
-    .prepare(
-      `UPDATE user_gamification
-       SET clear_due_days = clear_due_days + 1, clear_due_last_day = ?, updated_at = ?
-       WHERE user_id = ? AND clear_due_last_day IS NOT ?`,
-    )
-    .bind(day, new Date().toISOString(), userId, day)
-    .run();
+  opts: {
+    event?: StudyEvent;
+    triggerEventId: string | null;
+    nowIso: string;
+    backdated?: 0 | 1;
+  },
+): Promise<UnlockView[]> {
+  const [defs, completed, gamification] = await Promise.all([
+    loadActiveDefs(db),
+    loadCompletedIds(db, userId),
+    loadGamification(db, userId),
+  ]);
+  const latest = Math.max(1, ...defs.map((d) => d.catalog_version));
+  // No row yet: it is created at the latest version, so nothing is newer.
+  const userVersion = gamification.catalogVersion ?? latest;
+  const isNewer = (d: AchievementDefRow) => d.catalog_version > userVersion;
+  const event = opts.event;
+
+  const pending = defs.filter(
+    (d) =>
+      !completed.has(d.id) &&
+      (!event || TRIGGERS[d.trigger_kind].on.includes(event) || isNewer(d)),
+  );
+  const unlocks =
+    pending.length === 0
+      ? []
+      : await evaluatePending(
+          db,
+          userId,
+          pending,
+          gamification,
+          opts.triggerEventId,
+          (d) => opts.backdated === 1 || isNewer(d),
+        );
+
+  if (latest > userVersion) {
+    await db
+      .prepare(
+        `UPDATE user_gamification SET catalog_version = ?, updated_at = ?
+         WHERE user_id = ? AND catalog_version < ?`,
+      )
+      .bind(latest, opts.nowIso, userId, latest)
+      .run();
+  }
+  return unlocks;
 }
 
 export async function evaluateAfterReview(
@@ -473,16 +493,10 @@ export async function evaluateAfterReview(
   userId: string,
   args: { reviewLogId: string; reviewedAt: Date },
 ): Promise<{ unlocks: UnlockView[] }> {
-  const nowIso = args.reviewedAt.toISOString();
-  const schedule = await loadScheduleMetrics(db, userId, nowIso);
-  if (schedule.dueAccepted === 0) {
-    await bumpClearDueDay(db, userId, utcDay(args.reviewedAt));
-  }
   const unlocks = await evaluateAchievements(db, userId, {
-    kinds: REVIEW_TRIGGERS,
+    event: "review",
     triggerEventId: args.reviewLogId,
-    nowIso,
-    schedule,
+    nowIso: args.reviewedAt.toISOString(),
   });
   return { unlocks };
 }
@@ -494,7 +508,7 @@ export async function evaluateAfterAccept(
 ): Promise<{ unlocks: UnlockView[] }> {
   void args.cardType;
   const unlocks = await evaluateAchievements(db, userId, {
-    kinds: ACCEPT_TRIGGERS,
+    event: "accept",
     triggerEventId: args.cardId,
     nowIso: new Date().toISOString(),
   });

@@ -1,4 +1,8 @@
 import {
+  LONG_REVIEW_DAYS,
+  MATURE_DAYS,
+} from "../../worker/gamification/evaluate";
+import {
   ACHIEVEMENT_DEF_SEEDS,
   type AchievementDefSeed,
 } from "./gamification-seeds";
@@ -32,6 +36,7 @@ export type UserGamificationRow = {
   updated_at: string;
   clear_due_days: number;
   clear_due_last_day: string | null;
+  catalog_version: number;
 };
 
 export type AchievementProgressRow = {
@@ -89,6 +94,25 @@ function userCardsForUser(state: GamificationTestState, userId: string) {
     const deck = state.decks.get(c.deck_id);
     return deck?.user_id === userId;
   });
+}
+
+function acceptedSchedulesForUser(
+  state: GamificationTestState,
+  userId: string,
+): ScheduleRowLike[] {
+  return userCardsForUser(state, userId)
+    .filter((c) => c.status === "accepted")
+    .map((c) => state.schedules.get(c.id))
+    .filter((s): s is ScheduleRowLike => s != null);
+}
+
+function latestCatalogVersion(state: GamificationTestState): number {
+  return Math.max(
+    1,
+    ...[...state.achievementDefs.values()]
+      .filter((d) => d.active === 1)
+      .map((d) => d.catalog_version),
+  );
 }
 
 function reviewLogsForUser(state: GamificationTestState, userId: string) {
@@ -159,23 +183,14 @@ export function gamificationFirst<T>(
     const key = ledgerKey(userId, idempotencyKey);
     return state.xpLedgerKeys.has(key) ? ({ ok: 1 } as T) : null;
   }
-  if (
-    normalized.startsWith(
-      "SELECT COUNT(*) AS n FROM achievement_defs WHERE active = 1",
-    )
-  ) {
-    const n = [...state.achievementDefs.values()].filter(
-      (d) => d.active === 1,
-    ).length;
-    return { n } as T;
-  }
   if (normalized.startsWith("SELECT COUNT(*) AS reviews_total")) {
     const logs = reviewLogsForUser(state, bound[0] as string);
     return {
       reviews_total: logs.length,
       study_days_total: new Set(logs.map((l) => l.reviewed_at.slice(0, 10)))
         .size,
-      long_reviews: logs.filter((l) => l.elapsed_days >= 30).length,
+      long_reviews: logs.filter((l) => l.elapsed_days >= LONG_REVIEW_DAYS)
+        .length,
     } as T;
   }
   if (normalized.startsWith("SELECT COUNT(*) AS accepts_total")) {
@@ -188,22 +203,16 @@ export function gamificationFirst<T>(
       library_decks: new Set(accepted.map((c) => c.deck_id)).size,
     } as T;
   }
-  if (
-    normalized.startsWith("SELECT COALESCE(SUM(CASE WHEN s.due <= ? THEN 1")
-  ) {
-    const [nowIso, userId] = bound as [string, string];
-    const schedules = userCardsForUser(state, userId)
-      .filter((c) => c.status === "accepted")
-      .map((c) => state.schedules.get(c.id))
-      .filter((s): s is ScheduleRowLike => s != null);
+  if (normalized.startsWith("SELECT COUNT(*) AS mature_cards")) {
+    const schedules = acceptedSchedulesForUser(state, bound[0] as string);
     return {
-      due_accepted: schedules.filter((s) => s.due <= nowIso).length,
-      mature_cards: schedules.filter((s) => s.scheduled_days >= 21).length,
+      mature_cards: schedules.filter((s) => s.scheduled_days >= MATURE_DAYS)
+        .length,
     } as T;
   }
   if (
     normalized.startsWith(
-      "SELECT streak_current, streak_best, level, clear_due_days FROM user_gamification",
+      "SELECT streak_current, streak_best, level, clear_due_days, catalog_version FROM user_gamification",
     )
   ) {
     const row = state.userGamification.get(bound[0] as string);
@@ -213,6 +222,7 @@ export function gamificationFirst<T>(
           streak_best: row.streak_best,
           level: row.level,
           clear_due_days: row.clear_due_days,
+          catalog_version: row.catalog_version,
         } as T)
       : null;
   }
@@ -224,17 +234,6 @@ export function gamificationAll<T>(
   normalized: string,
   bound: unknown[],
 ): { results: T[] } | null {
-  if (
-    normalized.startsWith(
-      "SELECT idempotency_key FROM xp_ledger WHERE user_id = ? AND idempotency_key IN",
-    )
-  ) {
-    const [userId, ...keys] = bound as string[];
-    const results = keys
-      .filter((k) => state.xpLedgerKeys.has(ledgerKey(userId, k)))
-      .map((idempotency_key) => ({ idempotency_key }));
-    return { results: results as T[] };
-  }
   if (
     normalized.includes("LEFT JOIN achievement_progress") &&
     normalized.includes("FROM achievement_defs d")
@@ -281,6 +280,7 @@ export function gamificationAll<T>(
         params_json: d.params_json,
         title: d.title,
         fruit_type: d.fruit_type,
+        catalog_version: d.catalog_version,
       }));
     return { results: rows as T[] };
   }
@@ -377,6 +377,7 @@ export function gamificationRun(
         updated_at: updatedAt,
         clear_due_days: 0,
         clear_due_last_day: null,
+        catalog_version: latestCatalogVersion(state),
       });
       return { success: true, meta: { changes: 1 } } as D1Result;
     }
@@ -411,20 +412,49 @@ export function gamificationRun(
       "UPDATE user_gamification SET clear_due_days = clear_due_days + 1",
     )
   ) {
-    const [day, updatedAt, userId, guardDay] = bound as [
+    const [day, updatedAt, userId, guardDay, dueUserId, nowIso] = bound as [
+      string,
+      string,
       string,
       string,
       string,
       string,
     ];
     const row = state.userGamification.get(userId);
-    if (!row || row.clear_due_last_day === guardDay) {
+    const anyDue =
+      normalized.includes(
+        "AND NOT EXISTS ( SELECT 1 FROM cards c INNER JOIN card_schedules s ON s.card_id = c.id INNER JOIN decks d ON d.id = c.deck_id WHERE d.user_id = ? AND c.status = 'accepted' AND s.due <= ? )",
+      ) &&
+      acceptedSchedulesForUser(state, dueUserId).some((s) => s.due <= nowIso);
+    if (!row || row.clear_due_last_day === guardDay || anyDue) {
       return { success: true, meta: { changes: 0 } } as D1Result;
     }
     state.userGamification.set(userId, {
       ...row,
       clear_due_days: row.clear_due_days + 1,
       clear_due_last_day: day,
+      updated_at: updatedAt,
+    });
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+  if (
+    normalized.startsWith(
+      "UPDATE user_gamification SET catalog_version = ?, updated_at = ? WHERE user_id = ? AND catalog_version < ?",
+    )
+  ) {
+    const [version, updatedAt, userId, guardVersion] = bound as [
+      number,
+      string,
+      string,
+      number,
+    ];
+    const row = state.userGamification.get(userId);
+    if (!row || row.catalog_version >= guardVersion) {
+      return { success: true, meta: { changes: 0 } } as D1Result;
+    }
+    state.userGamification.set(userId, {
+      ...row,
+      catalog_version: version,
       updated_at: updatedAt,
     });
     return { success: true, meta: { changes: 1 } } as D1Result;
