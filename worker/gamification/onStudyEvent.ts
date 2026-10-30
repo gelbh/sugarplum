@@ -2,7 +2,7 @@ import type { UnlockView } from "../../src/achievements/wire";
 import { utcDay, XP } from "./constants";
 import { evaluateAfterAccept, evaluateAfterReview } from "./evaluate";
 import { applyStudyDayStreak } from "./streak";
-import { creditXp } from "./xp";
+import { applyXpCredit, creditXp, ensureUserGamification } from "./xp";
 
 function utcDayBounds(day: string): { start: string; end: string } {
   return {
@@ -11,23 +11,46 @@ function utcDayBounds(day: string): { start: string; end: string } {
   };
 }
 
-async function reviewXpToday(
+/** One statement, so concurrent reviews cannot overshoot the daily cap. */
+async function creditCappedReviewXp(
   db: D1Database,
   userId: string,
   day: string,
-): Promise<number> {
+  reviewLogId: string,
+): Promise<void> {
+  await ensureUserGamification(db, userId);
   const { start, end } = utcDayBounds(day);
-  const row = await db
+  const createdAt = new Date().toISOString();
+  const insert = await db
     .prepare(
-      `SELECT COALESCE(SUM(amount), 0) AS total FROM xp_ledger
-       WHERE user_id = ?
-         AND idempotency_key LIKE 'review:%'
-         AND created_at >= ?
-         AND created_at <= ?`,
+      `INSERT OR IGNORE INTO xp_ledger (
+         id, user_id, amount, reason, idempotency_key, created_at
+       )
+       SELECT ?, ?, ?, ?, ?, ?
+       WHERE (
+         SELECT COALESCE(SUM(amount), 0) FROM xp_ledger
+         WHERE user_id = ?
+           AND idempotency_key LIKE 'review:%'
+           AND created_at >= ?
+           AND created_at <= ?
+       ) + ? <= ?`,
     )
-    .bind(userId, start, end)
-    .first<{ total: number }>();
-  return Number(row?.total ?? 0);
+    .bind(
+      crypto.randomUUID(),
+      userId,
+      XP.perReview,
+      "review",
+      `review:${reviewLogId}`,
+      createdAt,
+      userId,
+      start,
+      end,
+      XP.perReview,
+      XP.reviewDailyCap,
+    )
+    .run();
+  if ((insert.meta.changes ?? 0) === 0) return;
+  await applyXpCredit(db, userId, XP.perReview, createdAt);
 }
 
 async function awardReviewXp(
@@ -47,16 +70,7 @@ async function awardReviewXp(
     );
   }
 
-  const todayReviewXp = await reviewXpToday(db, userId, day);
-  if (todayReviewXp + XP.perReview <= XP.reviewDailyCap) {
-    await creditXp(
-      db,
-      userId,
-      XP.perReview,
-      "review",
-      `review:${reviewLogId}`,
-    );
-  }
+  await creditCappedReviewXp(db, userId, day, reviewLogId);
 }
 
 export async function onReviewGraded(

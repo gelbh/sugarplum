@@ -51,13 +51,29 @@ export async function creditXp(
     };
   }
 
+  const { xpTotal, level } = await applyXpCredit(
+    db,
+    userId,
+    amount,
+    createdAt,
+  );
+  return { awarded: true, xpTotal, level };
+}
+
+/** Bumps xp_total and level after a ledger row was inserted. */
+export async function applyXpCredit(
+  db: D1Database,
+  userId: string,
+  amount: number,
+  at: string,
+): Promise<{ xpTotal: number; level: number }> {
   await db
     .prepare(
       `UPDATE user_gamification
        SET xp_total = xp_total + ?, updated_at = ?
        WHERE user_id = ?`,
     )
-    .bind(amount, createdAt, userId)
+    .bind(amount, at, userId)
     .run();
 
   const current = await db
@@ -71,8 +87,8 @@ export async function creditXp(
     .prepare(
       `UPDATE user_gamification SET level = ?, updated_at = ? WHERE user_id = ?`,
     )
-    .bind(level, createdAt, userId)
+    .bind(level, at, userId)
     .run();
 
-  return { awarded: true, xpTotal, level };
+  return { xpTotal, level };
 }

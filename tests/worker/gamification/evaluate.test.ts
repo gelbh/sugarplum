@@ -7,6 +7,8 @@ import {
 } from "../../../worker/gamification/evaluate";
 import { onReviewGraded, onCardAccepted } from "../../../worker/gamification/onStudyEvent";
 import { traitsForAchievement } from "../../../worker/gamification/traits";
+import { XP } from "../../../worker/gamification/constants";
+import { creditXp } from "../../../worker/gamification/xp";
 
 const NOW = "2026-10-29T12:00:00.000Z";
 
@@ -181,6 +183,25 @@ describe("onStudyEvent facade", () => {
     const keys = new Set(env.getXpLedger().map((e) => e.idempotency_key));
     expect(keys.has("review_day:2026-10-29")).toBe(true);
     expect(keys.has("review:rl1")).toBe(true);
+  });
+
+  it("concurrent reviews never push review XP past the daily cap", async () => {
+    const env = createTestEnv();
+    seedStudyUser(env);
+    for (let i = 0; i < 19; i++) {
+      await creditXp(env.DB, "u1", XP.perReview, "review", `review:pre${i}`);
+    }
+    const at = new Date();
+    await Promise.all(
+      ["rlA", "rlB"].map((id) =>
+        onReviewGraded(env.DB, "u1", { reviewLogId: id, reviewedAt: at }),
+      ),
+    );
+    const reviewXp = env
+      .getXpLedger()
+      .filter((e) => e.idempotency_key.startsWith("review:"))
+      .reduce((sum, e) => sum + e.amount, 0);
+    expect(reviewXp).toBe(XP.reviewDailyCap);
   });
 
   it("onCardAccepted awards accept XP once", async () => {

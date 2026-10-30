@@ -162,21 +162,6 @@ export function gamificationFirst<T>(
     return state.xpLedgerKeys.has(key) ? ({ ok: 1 } as T) : null;
   }
   if (
-    normalized.startsWith("SELECT COALESCE(SUM(amount), 0) AS total FROM xp_ledger")
-  ) {
-    const [userId, start, end] = bound as [string, string, string];
-    const total = state.xpLedger
-      .filter(
-        (e) =>
-          e.user_id === userId &&
-          e.idempotency_key.startsWith("review:") &&
-          e.created_at >= start &&
-          e.created_at <= end,
-      )
-      .reduce((sum, e) => sum + e.amount, 0);
-    return { total } as T;
-  }
-  if (
     normalized.startsWith("SELECT COUNT(*) AS cnt FROM review_logs rl") &&
     normalized.includes("INNER JOIN decks d")
   ) {
@@ -456,6 +441,48 @@ export function gamificationRun(
       ...row,
       display_name: displayName,
       updated_at: updatedAt,
+    });
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+  if (
+    normalized.startsWith("INSERT OR IGNORE INTO xp_ledger") &&
+    normalized.includes("SELECT COALESCE(SUM(amount), 0) FROM xp_ledger")
+  ) {
+    const [id, userId, amount, reason, idempotencyKey, createdAt] = bound as [
+      string,
+      string,
+      number,
+      string,
+      string,
+      string,
+    ];
+    const [start, end, , cap] = bound.slice(7) as [
+      string,
+      string,
+      number,
+      number,
+    ];
+    const reviewXpToday = state.xpLedger
+      .filter(
+        (e) =>
+          e.user_id === userId &&
+          e.idempotency_key.startsWith("review:") &&
+          e.created_at >= start &&
+          e.created_at <= end,
+      )
+      .reduce((sum, e) => sum + e.amount, 0);
+    const key = ledgerKey(userId, idempotencyKey);
+    if (reviewXpToday + amount > cap || state.xpLedgerKeys.has(key)) {
+      return { success: true, meta: { changes: 0 } } as D1Result;
+    }
+    state.xpLedgerKeys.add(key);
+    state.xpLedger.push({
+      id,
+      user_id: userId,
+      amount,
+      reason,
+      idempotency_key: idempotencyKey,
+      created_at: createdAt,
     });
     return { success: true, meta: { changes: 1 } } as D1Result;
   }
