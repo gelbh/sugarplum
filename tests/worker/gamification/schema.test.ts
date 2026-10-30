@@ -18,7 +18,7 @@ describe("0015_gamification seed", () => {
     expect(sql).toContain("user_gamification");
   });
 
-  it("seed display values appear in each migration tuple", () => {
+  it("seed values match each migration tuple", () => {
     const sql = readFileSync("migrations/0015_gamification.sql", "utf8");
     for (const s of ACHIEVEMENT_DEF_SEEDS) {
       const start = sql.indexOf(`('${s.id}',`);
@@ -34,6 +34,19 @@ describe("0015_gamification seed", () => {
       ]) {
         expect(tuple, `${s.id}.${v}`).toContain(`'${v.replace(/'/g, "''")}'`);
       }
+      const str = String.raw`'(?:[^']|'')*'`;
+      const head = new RegExp(
+        String.raw`^\(${str}(?:,\s*${str}){4},\s*(NULL|\d+),\s*(NULL|${str})`,
+      );
+      const [, threshold, params] = tuple.match(head) ?? [];
+      expect(threshold, `${s.id}.threshold`).toBe(
+        s.threshold == null ? "NULL" : String(s.threshold),
+      );
+      expect(params, `${s.id}.params_json`).toBe(
+        s.params_json == null
+          ? "NULL"
+          : `'${s.params_json.replace(/'/g, "''")}'`,
+      );
     }
   });
 });
