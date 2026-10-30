@@ -12,6 +12,9 @@
     "src/study/policyPrefs.ts",
     "src/study/weakness.ts",
     "src/study/retrievability.ts",
-    "src/study/localDay.ts"
+    "src/study/localDay.ts",
+    "src/achievements/wire.ts",
+    "src/achievements/catalog.ts",
+    "src/achievements/traits.ts"
   ]
 }

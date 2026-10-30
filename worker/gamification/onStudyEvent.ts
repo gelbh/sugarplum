@@ -1,3 +1,4 @@
+import type { UnlockView } from "../../src/achievements/wire";
 import { utcDay, XP } from "./constants";
 import { evaluateAfterAccept, evaluateAfterReview } from "./evaluate";
 import { applyStudyDayStreak } from "./streak";
@@ -62,7 +63,7 @@ export async function onReviewGraded(
   db: D1Database,
   userId: string,
   args: { reviewLogId: string; reviewedAt: Date },
-): Promise<string[]> {
+): Promise<UnlockView[]> {
   try {
     const day = utcDay(args.reviewedAt);
     const streak = await applyStudyDayStreak(db, userId, day);
@@ -85,7 +86,7 @@ export async function onCardAccepted(
   db: D1Database,
   userId: string,
   args: { cardId: string; cardType: string },
-): Promise<string[]> {
+): Promise<UnlockView[]> {
   return onCardsAccepted(db, userId, [args]);
 }
 
@@ -93,7 +94,7 @@ export async function onCardsAccepted(
   db: D1Database,
   userId: string,
   cards: { cardId: string; cardType: string }[],
-): Promise<string[]> {
+): Promise<UnlockView[]> {
   if (cards.length === 0) return [];
   try {
     for (const card of cards) {

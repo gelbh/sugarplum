@@ -64,6 +64,7 @@ describe("shellBackHref", () => {
     expect(shellBackHref("/insights")).toBeNull();
     expect(shellBackHref("/library")).toBeNull();
     expect(shellBackHref("/settings")).toBeNull();
+    expect(shellBackHref("/achievements")).toBeNull();
     expect(shellBackHref("/study")).toBeNull();
   });
 

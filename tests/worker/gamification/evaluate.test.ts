@@ -1,7 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { createTestEnv } from "../test-env";
-import { evaluateAfterAccept, evaluateAfterReview } from "../../../worker/gamification/evaluate";
+import {
+  compositeParts,
+  evaluateAfterAccept,
+  evaluateAfterReview,
+} from "../../../worker/gamification/evaluate";
 import { onReviewGraded, onCardAccepted } from "../../../worker/gamification/onStudyEvent";
+import { traitsForAchievement } from "../../../worker/gamification/traits";
 
 const NOW = "2026-10-29T12:00:00.000Z";
 
@@ -73,7 +78,13 @@ describe("evaluateAfterReview", () => {
     const args = { reviewLogId: "rl1", reviewedAt: new Date(NOW) };
 
     const first = await evaluateAfterReview(db, "u1", args);
-    expect(first.unlocks).toContain("reviews_1");
+    expect(first.unlocks).toContainEqual({
+      id: "reviews_1",
+      title: "First bite",
+      fruitType: "apple",
+      rarity: "common",
+      traits: traitsForAchievement("reviews_1", "common"),
+    });
 
     const second = await evaluateAfterReview(db, "u1", args);
     expect(second.unlocks).toEqual([]);
@@ -107,7 +118,7 @@ describe("evaluateAfterReview", () => {
       reviewLogId: "rl1",
       reviewedAt: new Date(NOW),
     });
-    expect(unlocks).toContain("clear_due_1");
+    expect(unlocks.map((u) => u.id)).toContain("clear_due_1");
   });
 
   it("does not unlock plum_scholar after a single review", async () => {
@@ -128,7 +139,7 @@ describe("evaluateAfterReview", () => {
       reviewLogId: "rl1",
       reviewedAt: new Date(NOW),
     });
-    expect(unlocks).not.toContain("plum_scholar");
+    expect(unlocks.map((u) => u.id)).not.toContain("plum_scholar");
   });
 });
 
@@ -142,7 +153,7 @@ describe("evaluateAfterAccept", () => {
       cardId: "c1",
       cardType: "qa",
     });
-    expect(unlocks).toContain("accepts_1");
+    expect(unlocks.map((u) => u.id)).toContain("accepts_1");
   });
 });
 
@@ -165,7 +176,7 @@ describe("onStudyEvent facade", () => {
       reviewLogId: "rl1",
       reviewedAt: new Date(NOW),
     });
-    expect(unlocks).toContain("reviews_1");
+    expect(unlocks.map((u) => u.id)).toContain("reviews_1");
 
     const keys = new Set(env.getXpLedger().map((e) => e.idempotency_key));
     expect(keys.has("review_day:2026-10-29")).toBe(true);
@@ -184,5 +195,26 @@ describe("onStudyEvent facade", () => {
       .getXpLedger()
       .filter((e) => e.idempotency_key === "accept:c1");
     expect(acceptXp).toHaveLength(1);
+  });
+});
+
+describe("compositeParts", () => {
+  it("reports each plum condition against its target", () => {
+    expect(
+      compositeParts('{"streak_best_min":30,"reviews_min":200}', {
+        streakBest: 12,
+        reviewsTotal: 250,
+      }),
+    ).toEqual([
+      { key: "streak_best", current: 12, target: 30 },
+      { key: "reviews", current: 250, target: 200 },
+    ]);
+  });
+
+  it("falls back to zero targets when params_json is JSON null", () => {
+    expect(compositeParts("null", { streakBest: 3, reviewsTotal: 7 })).toEqual([
+      { key: "streak_best", current: 3, target: 0 },
+      { key: "reviews", current: 7, target: 0 },
+    ]);
   });
 });

@@ -21,7 +21,8 @@ export function navigateReplace(path: string): void {
 
 /**
  * In-app parent for the mobile Back control. Null on shell roots (Today,
- * Insights, Library, Settings, Study) even when browser history is longer.
+ * Insights, Library, Achievements, Settings, Study) even when browser history
+ * is longer.
  */
 export function shellBackHref(pathname: string): string | null {
   if (/^\/library\/(decks|subjects)\/[^/]+\/?$/.test(pathname)) {
@@ -32,9 +33,6 @@ export function shellBackHref(pathname: string): string | null {
   }
   if (/^\/admin\/users\/[^/]+\/?$/.test(pathname)) {
     return "/admin";
-  }
-  if (pathname === "/achievements") {
-    return "/today";
   }
   return null;
 }

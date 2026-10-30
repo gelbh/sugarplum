@@ -1,12 +1,26 @@
+import type { FruitType } from "../../src/achievements/catalog";
+import type { CompositePart, UnlockView } from "../../src/achievements/wire";
 import { XP, type Rarity } from "./constants";
+import { traitsForAchievement } from "./traits";
 import { creditXp } from "./xp";
+
+export type TriggerKind =
+  | "reviews_total"
+  | "accepts_total"
+  | "study_days_total"
+  | "streak_current"
+  | "clear_due_once"
+  | "distinct_types"
+  | "composite";
 
 export type AchievementDefRow = {
   id: string;
   rarity: Rarity;
-  trigger_kind: string;
+  trigger_kind: TriggerKind;
   threshold: number | null;
   params_json: string | null;
+  title: string;
+  fruit_type: FruitType;
 };
 
 export type StudyMetrics = {
@@ -19,7 +33,7 @@ export type StudyMetrics = {
   distinctTypes: number;
 };
 
-const REVIEW_TRIGGERS = new Set([
+const REVIEW_TRIGGERS = new Set<TriggerKind>([
   "reviews_total",
   "study_days_total",
   "streak_current",
@@ -27,7 +41,7 @@ const REVIEW_TRIGGERS = new Set([
   "composite",
 ]);
 
-const ACCEPT_TRIGGERS = new Set([
+const ACCEPT_TRIGGERS = new Set<TriggerKind>([
   "accepts_total",
   "distinct_types",
   "composite",
@@ -38,7 +52,7 @@ async function loadActiveDefs(
 ): Promise<AchievementDefRow[]> {
   const { results } = await db
     .prepare(
-      `SELECT id, rarity, trigger_kind, threshold, params_json
+      `SELECT id, rarity, trigger_kind, threshold, params_json, title, fruit_type
        FROM achievement_defs WHERE active = 1`,
     )
     .all<AchievementDefRow>();
@@ -174,6 +188,44 @@ async function loadStudyMetrics(
   };
 }
 
+export async function loadCompositeMetrics(
+  db: D1Database,
+  userId: string,
+): Promise<{ streakBest: number; reviewsTotal: number }> {
+  const [streak, reviewsTotal] = await Promise.all([
+    readStreakCurrent(db, userId),
+    countReviewsTotal(db, userId),
+  ]);
+  return { streakBest: streak.streakBest, reviewsTotal };
+}
+
+export function compositeParts(
+  paramsJson: string | null,
+  metrics: Pick<StudyMetrics, "streakBest" | "reviewsTotal">,
+): CompositePart[] {
+  let params: { streak_best_min?: number; reviews_min?: number } = {};
+  try {
+    const parsed: unknown = JSON.parse(paramsJson ?? "{}");
+    if (typeof parsed === "object" && parsed !== null) {
+      params = parsed as typeof params;
+    }
+  } catch {
+    params = {};
+  }
+  return [
+    {
+      key: "streak_best",
+      current: metrics.streakBest,
+      target: params.streak_best_min ?? 0,
+    },
+    {
+      key: "reviews",
+      current: metrics.reviewsTotal,
+      target: params.reviews_min ?? 0,
+    },
+  ];
+}
+
 function metricValue(
   def: AchievementDefRow,
   metrics: StudyMetrics,
@@ -191,20 +243,17 @@ function metricValue(
       return metrics.dueAccepted === 0 ? 1 : 0;
     case "distinct_types":
       return metrics.distinctTypes;
-    case "composite": {
-      let params: { streak_best_min?: number; reviews_min?: number } = {};
-      try {
-        params = JSON.parse(def.params_json ?? "{}") as typeof params;
-      } catch {
-        params = {};
-      }
-      const ok =
-        metrics.streakBest >= (params.streak_best_min ?? 0) &&
-        metrics.reviewsTotal >= (params.reviews_min ?? 0);
-      return ok ? 1 : 0;
-    }
-    default:
+    case "composite":
+      return compositeParts(def.params_json, metrics).every(
+        (p) => p.current >= p.target,
+      )
+        ? 1
+        : 0;
+    default: {
+      const unhandled: never = def.trigger_kind;
+      void unhandled;
       return 0;
+    }
   }
 }
 
@@ -215,7 +264,7 @@ async function tryUnlock(
   currentValue: number,
   triggerEventId: string | null,
   backdated: 0 | 1 = 0,
-): Promise<string | null> {
+): Promise<UnlockView | null> {
   const threshold = effectiveThreshold(def);
   await db
     .prepare(
@@ -247,23 +296,29 @@ async function tryUnlock(
     const bonus = XP.unlock[def.rarity];
     await creditXp(db, userId, bonus, "unlock", `unlock:${def.id}`);
   }
-  return def.id;
+  return {
+    id: def.id,
+    title: def.title,
+    fruitType: def.fruit_type,
+    rarity: def.rarity,
+    traits: traitsForAchievement(def.id, def.rarity),
+  };
 }
 
 export async function evaluateAchievements(
   db: D1Database,
   userId: string,
   opts: {
-    kinds?: Set<string>;
+    kinds?: Set<TriggerKind>;
     triggerEventId: string | null;
     nowIso: string;
     backdated?: 0 | 1;
   },
-): Promise<string[]> {
+): Promise<UnlockView[]> {
   const defs = await loadActiveDefs(db);
   const metrics = await loadStudyMetrics(db, userId, opts.nowIso);
   const backdated = opts.backdated ?? 0;
-  const unlocks: string[] = [];
+  const unlocks: UnlockView[] = [];
   for (const def of defs) {
     if (opts.kinds && !opts.kinds.has(def.trigger_kind)) continue;
     // clear_due is event-shaped; empty due queues are not historical proof.
@@ -290,7 +345,7 @@ export async function evaluateAfterReview(
   db: D1Database,
   userId: string,
   args: { reviewLogId: string; reviewedAt: Date },
-): Promise<{ unlocks: string[] }> {
+): Promise<{ unlocks: UnlockView[] }> {
   const nowIso = args.reviewedAt.toISOString();
   const unlocks = await evaluateAchievements(db, userId, {
     kinds: REVIEW_TRIGGERS,
@@ -304,7 +359,7 @@ export async function evaluateAfterAccept(
   db: D1Database,
   userId: string,
   args: { cardId: string; cardType: string },
-): Promise<{ unlocks: string[] }> {
+): Promise<{ unlocks: UnlockView[] }> {
   void args.cardType;
   const nowIso = new Date().toISOString();
   const unlocks = await evaluateAchievements(db, userId, {
