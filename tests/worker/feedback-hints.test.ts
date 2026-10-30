@@ -2,21 +2,22 @@ import { describe, it, expect } from "vitest";
 import {
   appendExtraUserSuffix,
   avoidPatternsPromptSuffix,
-  buildAvoidPatternsFromRejectedFronts,
+  buildAvoidPatternsFromRejected,
   buildExtraUserSuffix,
   studyStrugglePromptSuffix,
 } from "../../worker/generation/feedback-hints";
 
-const plain = (fronts: unknown[]) => fronts.map((front) => ({ front }));
+const plain = (fronts: unknown[]) =>
+  fronts.map((front) => ({ front, reason: null }));
 
-describe("buildAvoidPatternsFromRejectedFronts", () => {
+describe("buildAvoidPatternsFromRejected", () => {
   it("returns empty for empty input", () => {
-    expect(buildAvoidPatternsFromRejectedFronts(plain([]))).toEqual([]);
+    expect(buildAvoidPatternsFromRejected(plain([]))).toEqual([]);
   });
 
   it("trims, skips empty and non-string, and keeps order", () => {
     expect(
-      buildAvoidPatternsFromRejectedFronts(
+      buildAvoidPatternsFromRejected(
         plain([
           "  alpha  ",
           "",
@@ -33,7 +34,7 @@ describe("buildAvoidPatternsFromRejectedFronts", () => {
 
   it("dedupes case-insensitively keeping the first casing", () => {
     expect(
-      buildAvoidPatternsFromRejectedFronts(
+      buildAvoidPatternsFromRejected(
         plain(["Cranial Nerves", "cranial nerves", "CRANIAL NERVES"]),
       ),
     ).toEqual(["Cranial Nerves"]);
@@ -41,7 +42,7 @@ describe("buildAvoidPatternsFromRejectedFronts", () => {
 
   it("truncates each pattern to 80 characters", () => {
     const long = "x".repeat(100);
-    const patterns = buildAvoidPatternsFromRejectedFronts(plain([long]));
+    const patterns = buildAvoidPatternsFromRejected(plain([long]));
     expect(patterns).toHaveLength(1);
     expect(patterns[0]).toHaveLength(80);
     expect(patterns[0]).toBe("x".repeat(80));
@@ -49,7 +50,7 @@ describe("buildAvoidPatternsFromRejectedFronts", () => {
 
   it("caps at 8 patterns", () => {
     const fronts = Array.from({ length: 12 }, (_, i) => `front-${i}`);
-    expect(buildAvoidPatternsFromRejectedFronts(plain(fronts))).toEqual(
+    expect(buildAvoidPatternsFromRejected(plain(fronts))).toEqual(
       fronts.slice(0, 8),
     );
   });
@@ -57,17 +58,8 @@ describe("buildAvoidPatternsFromRejectedFronts", () => {
   it("annotates a known reason after truncating the stem", () => {
     const long = "y".repeat(100);
     expect(
-      buildAvoidPatternsFromRejectedFronts([{ front: long, reason: "vague" }]),
+      buildAvoidPatternsFromRejected([{ front: long, reason: "vague" }]),
     ).toEqual([`${"y".repeat(80)} (reason: too vague)`]);
-  });
-
-  it("ignores unknown or null reason codes", () => {
-    expect(
-      buildAvoidPatternsFromRejectedFronts([
-        { front: "a", reason: "nope" },
-        { front: "b", reason: null },
-      ]),
-    ).toEqual(["a", "b"]);
   });
 
   it("ranks reasoned rejects first so they win the cap", () => {
@@ -75,7 +67,7 @@ describe("buildAvoidPatternsFromRejectedFronts", () => {
       ...plain(Array.from({ length: 8 }, (_, i) => `plain-${i}`)),
       { front: "late", reason: "duplicate" },
     ];
-    const out = buildAvoidPatternsFromRejectedFronts(entries);
+    const out = buildAvoidPatternsFromRejected(entries);
     expect(out).toHaveLength(8);
     expect(out[0]).toBe("late (reason: duplicate)");
     expect(out).not.toContain("plain-7");
@@ -83,8 +75,8 @@ describe("buildAvoidPatternsFromRejectedFronts", () => {
 
   it("keeps the reasoned copy when a stem repeats", () => {
     expect(
-      buildAvoidPatternsFromRejectedFronts([
-        { front: "Same" },
+      buildAvoidPatternsFromRejected([
+        { front: "Same", reason: null },
         { front: "same", reason: "inaccurate" },
       ]),
     ).toEqual(["same (reason: inaccurate)"]);

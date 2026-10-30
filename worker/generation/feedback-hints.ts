@@ -1,4 +1,7 @@
-import { isRejectReason, REJECT_REASON_LABELS } from "../../src/lib/rejectReasons";
+import {
+  REJECT_REASON_LABELS,
+  type RejectReason,
+} from "../../src/lib/rejectReasons";
 
 const MAX_PATTERN_LEN = 80;
 const MAX_PATTERNS = 8;
@@ -10,12 +13,11 @@ export function topicHintsPromptSuffix(hints: string[]): string {
 }
 
 /** Build capped avoid-pattern stems from rejected cards; reasoned rejects rank first. */
-export function buildAvoidPatternsFromRejectedFronts(
-  entries: Array<{ front: unknown; reason?: string | null }>,
+export function buildAvoidPatternsFromRejected(
+  entries: Array<{ front: unknown; reason: RejectReason | null }>,
 ): string[] {
   const ordered = [...entries].sort(
-    (a, b) =>
-      Number(!isRejectReason(a.reason)) - Number(!isRejectReason(b.reason)),
+    (a, b) => Number(!a.reason) - Number(!b.reason),
   );
   const seen = new Set<string>();
   const out: string[] = [];
@@ -31,7 +33,7 @@ export function buildAvoidPatternsFromRejectedFronts(
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(
-      isRejectReason(reason)
+      reason
         ? `${truncated} (reason: ${REJECT_REASON_LABELS[reason].toLowerCase()})`
         : truncated,
     );

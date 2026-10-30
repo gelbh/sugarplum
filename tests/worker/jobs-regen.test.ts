@@ -373,6 +373,20 @@ describe("POST /api/jobs/:id/regen", () => {
       created_at: "2026-01-01T01:11:00.000Z",
       updated_at: "2026-01-01T01:11:00.000Z",
     });
+    env.seedCard({
+      id: "c-rejected-bogus",
+      deck_id: "deck-a",
+      job_id: "job-a",
+      type: "qa",
+      front_json: JSON.stringify("Bogus Q?"),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "ex" }),
+      status: "rejected",
+      reject_reason: "bogus",
+      created_at: "2026-01-01T01:12:00.000Z",
+      updated_at: "2026-01-01T01:12:00.000Z",
+    });
 
     const res = await app.request(
       "/api/jobs/job-a/regen",
@@ -394,6 +408,7 @@ describe("POST /api/jobs/:id/regen", () => {
     );
     expect(patterns.some((p) => p.includes("regions"))).toBe(false);
     expect(patterns[0]).toBe("Vague Q? (reason: too vague)");
+    expect(patterns).toContain("Bogus Q?");
   });
 
   it("sets avoid_patterns_json to null when no rejected string fronts", async () => {

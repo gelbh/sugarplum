@@ -387,6 +387,7 @@ export default function DraftReviewPage() {
       const updated = await regenCard(current.id, { type });
       setDrafts((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
       setDirty(false);
+      setRejectReason(null);
       setNotice("Card regenerated");
       end();
     } catch (err) {
@@ -590,8 +591,14 @@ export default function DraftReviewPage() {
                 flexWrap="wrap"
                 useFlexGap
                 alignItems="center"
+                role="group"
+                aria-labelledby="reject-reason-label"
               >
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  id="reject-reason-label"
+                  variant="caption"
+                  color="text.secondary"
+                >
                   Reason (optional)
                 </Typography>
                 {REJECT_REASONS.map((code) => {
