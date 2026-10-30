@@ -548,8 +548,10 @@ function openAiCompatibleAdapter(opts: {
   requestUrl: string;
   textModel: string;
   visionModel: string;
+  /** Z.ai rejects `response_format` on vision models (text models only). */
+  visionJsonMode: boolean;
 }): LlmAdapter {
-  const { requestUrl, textModel, visionModel } = opts;
+  const { requestUrl, textModel, visionModel, visionJsonMode } = opts;
 
   async function complete({ system, user, apiKey }: CompleteInput) {
     const res = await fetch(requestUrl, {
@@ -612,7 +614,9 @@ function openAiCompatibleAdapter(opts: {
         body: JSON.stringify({
           model: visionModel,
           temperature: 0.3,
-          response_format: { type: "json_object" },
+          ...(visionJsonMode
+            ? { response_format: { type: "json_object" } }
+            : {}),
           messages: [
             { role: "system", content: systemPromptFor(input) },
             {
@@ -652,6 +656,7 @@ function openAiAdapter(): LlmAdapter {
     requestUrl: providerRequestUrl("openai"),
     textModel: "gpt-4o-mini",
     visionModel: "gpt-4o-mini",
+    visionJsonMode: true,
   });
 }
 
@@ -660,6 +665,7 @@ function zaiAdapter(textModel: ZaiTextModel): LlmAdapter {
     requestUrl: providerRequestUrl("zai"),
     textModel,
     visionModel: ZAI_VISION_MODEL,
+    visionJsonMode: false,
   });
 }
 

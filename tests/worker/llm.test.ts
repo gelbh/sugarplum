@@ -241,6 +241,7 @@ describe("LLM provider allowlist", () => {
   it("zai image generateDrafts force glm-4.6v-flash with image_url", async () => {
     let body: {
       model?: string;
+      response_format?: unknown;
       messages?: { role: string; content: unknown }[];
     } = {};
     vi.stubGlobal(
@@ -265,6 +266,7 @@ describe("LLM provider allowlist", () => {
     });
 
     expect(body.model).toBe("glm-4.6v-flash");
+    expect(body).not.toHaveProperty("response_format");
     const user = body.messages?.find((m) => m.role === "user");
     expect(Array.isArray(user?.content)).toBe(true);
     const parts = user?.content as { type?: string; image_url?: unknown }[];
