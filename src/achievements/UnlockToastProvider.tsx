@@ -46,6 +46,17 @@ const SKIN = {
 
 type Phase = "enter" | "ripe" | "exit";
 
+// A rolled-back Worker still returns unlock id strings instead of objects.
+function isUnlockView(u: unknown): u is UnlockView {
+  if (typeof u !== "object" || u === null) return false;
+  const v = u as Partial<UnlockView>;
+  return (
+    typeof v.title === "string" &&
+    typeof v.fruitType === "string" &&
+    v.traits != null
+  );
+}
+
 type UnlockToastContextValue = {
   enqueueUnlocks: (unlocks: UnlockView[]) => void;
 };
@@ -65,7 +76,8 @@ export function UnlockToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const enqueueUnlocks = useCallback((unlocks: UnlockView[]) => {
-    if (unlocks.length > 0) setQueue((prev) => [...prev, ...unlocks]);
+    const valid = unlocks.filter(isUnlockView);
+    if (valid.length > 0) setQueue((prev) => [...prev, ...valid]);
   }, []);
 
   useEffect(() => {

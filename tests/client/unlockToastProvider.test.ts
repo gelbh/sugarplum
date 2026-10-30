@@ -88,4 +88,15 @@ describe("UnlockToastProvider", () => {
     advance(EXIT_MS);
     expect(toast()?.textContent).toContain("Empty basket");
   });
+
+  it("ignores malformed unlock payloads", () => {
+    act(() =>
+      enqueue([
+        "reviews_1" as unknown as UnlockView,
+        { title: "No traits", fruitType: "apple" } as unknown as UnlockView,
+      ]),
+    );
+    expect(() => advance(RIPEN_DELAY_MS)).not.toThrow();
+    expect(toast()).toBeNull();
+  });
 });
