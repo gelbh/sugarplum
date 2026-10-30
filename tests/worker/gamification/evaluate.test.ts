@@ -210,4 +210,11 @@ describe("compositeParts", () => {
       { key: "reviews", current: 250, target: 200 },
     ]);
   });
+
+  it("falls back to zero targets when params_json is JSON null", () => {
+    expect(compositeParts("null", { streakBest: 3, reviewsTotal: 7 })).toEqual([
+      { key: "streak_best", current: 3, target: 0 },
+      { key: "reviews", current: 7, target: 0 },
+    ]);
+  });
 });

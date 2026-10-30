@@ -205,7 +205,10 @@ export function compositeParts(
 ): CompositePart[] {
   let params: { streak_best_min?: number; reviews_min?: number } = {};
   try {
-    params = JSON.parse(paramsJson ?? "{}") as typeof params;
+    const parsed: unknown = JSON.parse(paramsJson ?? "{}");
+    if (typeof parsed === "object" && parsed !== null) {
+      params = parsed as typeof params;
+    }
   } catch {
     params = {};
   }
