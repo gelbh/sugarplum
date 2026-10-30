@@ -459,7 +459,7 @@ describe("catalog versions", () => {
 
   it("creates a brand-new user at the latest version, so nothing is backdated", async () => {
     const env = createTestEnv();
-    env.seedAchievementDef(testDef("t_v2", "reviews_total", 1, 2));
+    env.seedAchievementDef(testDef("t_v2", "reviews_total", 1, LATEST_VERSION));
     seedStudyUser(env);
     seedAcceptedCard(env, { id: "c1", due: FUTURE });
     seedReview(env, "rl1", "c1");
@@ -472,9 +472,49 @@ describe("catalog versions", () => {
     expect(unlocks.map((u) => u.id)).toEqual(
       expect.arrayContaining(["reviews_1", "t_v2"]),
     );
-    expect(env.getUserGamification("u1")?.catalog_version).toBe(2);
+    expect(env.getUserGamification("u1")?.catalog_version).toBe(LATEST_VERSION);
     expect(
       env.getAchievementCompletions().filter((c) => c.backdated === 1),
     ).toEqual([]);
+  });
+
+  it("backdates real v2 medals for a v1 user on their next review", async () => {
+    const env = createTestEnv();
+    seedStudyUser(env);
+    seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    seedAcceptedCard(env, { id: "c2", due: FUTURE });
+    env.seedSchedule({
+      ...env.getSchedules().find((s) => s.card_id === "c2")!,
+      scheduled_days: 21,
+    });
+    seedReview(env, "rl0", "c1", { reviewedAt: "2026-10-28T12:00:00.000Z" });
+    seedReview(env, "rl1", "c2", { elapsedDays: 30 });
+    await ensureUserGamification(env.DB, "u1");
+    env.getUserGamification("u1")!.catalog_version = 1;
+
+    const v2 = ["study_days_2", "long_reviews_1", "mature_1"];
+    for (const id of v2) {
+      expect(
+        ACHIEVEMENT_DEF_SEEDS.find((d) => d.id === id)?.catalog_version,
+      ).toBe(2);
+    }
+
+    const unlocks = await onReviewGraded(env.DB, "u1", {
+      reviewLogId: "rl1",
+      reviewedAt: new Date(NOW),
+    });
+    expect(unlocks.map((u) => u.id)).toContain("reviews_1");
+    for (const id of v2) {
+      expect(unlocks.map((u) => u.id)).not.toContain(id);
+      const completion = env
+        .getAchievementCompletions()
+        .find((c) => c.achievement_id === id);
+      expect(completion?.backdated, id).toBe(1);
+      expect(
+        env.getXpLedger().some((e) => e.idempotency_key === `unlock:${id}`),
+        id,
+      ).toBe(false);
+    }
+    expect(env.getUserGamification("u1")?.catalog_version).toBe(LATEST_VERSION);
   });
 });
