@@ -27,7 +27,6 @@ import FruitMedal from "../achievements/FruitMedal";
 import MagnificCredits from "../achievements/MagnificCredits";
 import { isGuest } from "../guest/session";
 import { useTrackedOp } from "../progress/useTrackedOp";
-import type { FruitTraits, Rarity } from "../achievements/traits";
 
 const SHEEN_SEEN_KEY = "sugarplum:achievement-sheen-seen";
 
@@ -45,7 +44,11 @@ function sheenSeenIds(): Set<string> {
 function markSheenSeen(id: string) {
   const set = sheenSeenIds();
   set.add(id);
-  sessionStorage.setItem(SHEEN_SEEN_KEY, JSON.stringify([...set]));
+  try {
+    sessionStorage.setItem(SHEEN_SEEN_KEY, JSON.stringify([...set]));
+  } catch {
+    // Storage blocked or full: the sheen may replay, which is harmless.
+  }
 }
 
 function groupByFruit(
@@ -56,9 +59,7 @@ function groupByFruit(
     map.set(fruit, []);
   }
   for (const item of items) {
-    const fruit = item.def.fruitType as FruitType;
-    const bucket = map.get(fruit);
-    if (bucket) bucket.push(item);
+    map.get(item.def.fruitType)?.push(item);
   }
   for (const [, list] of map) {
     list.sort((a, b) => a.def.sortOrder - b.def.sortOrder);
@@ -101,10 +102,11 @@ export default function AchievementsPage() {
           }
           return;
         }
+        // Summary + board are garnish; the medal grid must still render without them.
         const [ach, gam, lb] = await Promise.all([
           getAchievements(),
-          getGamification(),
-          getWeeklyLeaderboard(),
+          getGamification().catch(() => null),
+          getWeeklyLeaderboard().catch(() => null),
         ]);
         if (cancelled) return;
         setItems(ach.items);
@@ -153,6 +155,15 @@ export default function AchievementsPage() {
   }, [items]);
 
   const grouped = useMemo(() => groupByFruit(items), [items]);
+  const staggerIndexById = useMemo(() => {
+    const out = new Map<string, number>();
+    for (const fruit of FRUIT_ORDER) {
+      for (const item of grouped.get(fruit) ?? []) {
+        if (item.completedAt != null) out.set(item.def.id, out.size);
+      }
+    }
+    return out;
+  }, [grouped]);
 
   if (!ready) {
     return (
@@ -182,11 +193,17 @@ export default function AchievementsPage() {
     );
   }
 
-  let unlockedStagger = 0;
-
   return (
     <Container maxWidth="sm" sx={{ py: { xs: 4, md: 5 } }}>
-      <Stack spacing={3}>
+      <Stack
+        spacing={3}
+        sx={{
+          "@keyframes achievementStagger": {
+            from: { opacity: 0, transform: "translateY(6px)" },
+            to: { opacity: 1, transform: "translateY(0)" },
+          },
+        }}
+      >
         <Box>
           <Typography
             variant="h4"
@@ -235,12 +252,11 @@ export default function AchievementsPage() {
                   <Stack spacing={2}>
                     {list.map((item) => {
                       const unlocked = item.completedAt != null;
-                      const rarity = item.def.rarity as Rarity;
+                      const rarity = item.def.rarity;
                       const showSheen =
                         unlocked &&
                         rarity === "legendary" &&
                         sheenOnceIds.has(item.def.id);
-                      const staggerIndex = unlocked ? unlockedStagger++ : -1;
                       return (
                         <Box
                           key={item.def.id}
@@ -249,20 +265,9 @@ export default function AchievementsPage() {
                             gap: 1.5,
                             alignItems: "flex-start",
                             opacity: unlocked ? 1 : 0.55,
-                            transform: unlocked ? "translateY(0)" : "none",
                             ...(unlocked
                               ? {
-                                  animation: `achievementStagger 420ms cubic-bezier(0.16, 1, 0.3, 1) ${staggerDelay(staggerIndex)} both`,
-                                  "@keyframes achievementStagger": {
-                                    from: {
-                                      opacity: 0,
-                                      transform: "translateY(6px)",
-                                    },
-                                    to: {
-                                      opacity: 1,
-                                      transform: "translateY(0)",
-                                    },
-                                  },
+                                  animation: `achievementStagger 420ms cubic-bezier(0.16, 1, 0.3, 1) ${staggerDelay(staggerIndexById.get(item.def.id) ?? 0)} both`,
                                   "@media (prefers-reduced-motion: reduce)": {
                                     animation: "none",
                                     opacity: 1,
@@ -273,7 +278,7 @@ export default function AchievementsPage() {
                         >
                           <FruitMedal
                             fruitType={fruit}
-                            traits={item.traits as FruitTraits}
+                            traits={item.traits}
                             size={48}
                             locked={!unlocked}
                             sheenOnce={showSheen}

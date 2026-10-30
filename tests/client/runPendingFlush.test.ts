@@ -61,7 +61,7 @@ describe("runPendingFlush", () => {
       .mockResolvedValueOnce(duePost);
     const review = vi
       .fn()
-      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ due: "x", unlocks: ["reviews_1"] })
       .mockRejectedValueOnce(new TypeError("Failed to fetch"));
     const result = await runPendingFlush("u1", {
       isGuestFn: () => false,
@@ -71,7 +71,12 @@ describe("runPendingFlush", () => {
       replacePending,
       saveDue,
     });
-    expect(result).toEqual({ applied: 1, skipped: 0, due: duePost });
+    expect(result).toEqual({
+      applied: 1,
+      skipped: 0,
+      due: duePost,
+      unlocks: ["reviews_1"],
+    });
     expect(replacePending).toHaveBeenCalledWith("u1", [
       grade("c2", 2),
       grade("c3", 3),
@@ -96,7 +101,7 @@ describe("runPendingFlush", () => {
       replacePending: () => {},
       saveDue,
     });
-    expect(result).toEqual({ applied: 1, skipped: 0, due: null });
+    expect(result).toEqual({ applied: 1, skipped: 0, due: null, unlocks: [] });
     expect(saveDue).not.toHaveBeenCalled();
   });
 

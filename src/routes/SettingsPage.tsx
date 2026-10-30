@@ -135,7 +135,9 @@ export default function SettingsPage() {
         const guestMode = isGuest();
         const settings = await getLlmSettings();
         const prefs = await getStudyPrefs();
-        const gam = guestMode ? null : await getGamification();
+        const gam = guestMode
+          ? null
+          : await getGamification().catch(() => null);
         if (cancelled) return;
         setGuest(guestMode);
         setAccountEmail(user.email);
@@ -524,7 +526,9 @@ export default function SettingsPage() {
           </Typography>
           <Box component="form" onSubmit={onSubmitStudy} noValidate>
             <Stack spacing={2}>
-              {studyError ? <Alert severity="error">{studyError}</Alert> : null}
+              {studyError ? (
+                <Alert severity="error">{studyError}</Alert>
+              ) : null}
               {studyNotice ? (
                 <Alert severity="success">{studyNotice}</Alert>
               ) : null}

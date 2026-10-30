@@ -7,7 +7,7 @@ const MAGNIFIC_URL = "https://www.magnific.com";
 export default function MagnificCredits() {
   return (
     <Typography variant="caption" color="text.secondary" component="p">
-      Fruit medals designed by{" "}
+      Fruit medals{" "}
       <Link
         href={MAGNIFIC_URL}
         target="_blank"
@@ -15,9 +15,8 @@ export default function MagnificCredits() {
         underline="hover"
         color="inherit"
       >
-        vector4stock
-      </Link>{" "}
-      on Magnific.com
+        designed by vector4stock - Magnific.com
+      </Link>
     </Typography>
   );
 }

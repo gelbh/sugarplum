@@ -1,7 +1,6 @@
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import { navigate } from "../nav/navigate";
-import { useStudyChrome } from "../study/StudyChromeContext";
 
 export type StreakXpChipProps = {
   streak: number;
@@ -10,9 +9,6 @@ export type StreakXpChipProps = {
 
 /** Calm streak + level link into the achievements gallery. */
 export default function StreakXpChip({ streak, level }: StreakXpChipProps) {
-  const { hideChrome } = useStudyChrome();
-  if (hideChrome) return null;
-
   const label = `Streak ${streak} · Lv ${level}`;
 
   return (

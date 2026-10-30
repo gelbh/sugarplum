@@ -21,7 +21,7 @@ import Typography from "@mui/material/Typography";
 import Link from "@mui/material/Link";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { getGamification, me } from "../api/client";
+import { GAMIFICATION_CHANGED_EVENT, getGamification, me } from "../api/client";
 import StreakXpChip from "../achievements/StreakXpChip";
 import { isGuest } from "../guest/session";
 import { navigateReplace } from "../nav/navigate";
@@ -126,8 +126,6 @@ function AppShellChrome({ children }: AppShellProps) {
   useEffect(() => {
     if (isGuest()) {
       setIsAdmin(false);
-      setStreak(null);
-      setLevel(null);
       return;
     }
     let cancelled = false;
@@ -138,23 +136,34 @@ function AppShellChrome({ children }: AppShellProps) {
       .catch(() => {
         if (!cancelled) setIsAdmin(false);
       });
-    void getGamification()
-      .then((g) => {
-        if (!cancelled) {
-          setStreak(g.streakCurrent);
-          setLevel(g.level);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setStreak(null);
-          setLevel(null);
-        }
-      });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  // Zen hides the chip, so refetch on leaving zen instead of after every grade.
+  useEffect(() => {
+    if (hideChrome || isGuest()) return;
+    let latest = 0;
+    const load = () => {
+      const req = ++latest;
+      void getGamification()
+        .then((g) => {
+          if (req !== latest) return;
+          setStreak(g.streakCurrent);
+          setLevel(g.level);
+        })
+        .catch(() => {
+          if (req === latest) setStreak(null);
+        });
+    };
+    load();
+    window.addEventListener(GAMIFICATION_CHANGED_EVENT, load);
+    return () => {
+      latest = -1;
+      window.removeEventListener(GAMIFICATION_CHANGED_EVENT, load);
+    };
+  }, [hideChrome]);
 
   const streakChip =
     !isGuest() && streak != null && level != null ? (

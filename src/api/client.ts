@@ -1,3 +1,5 @@
+import type { FruitType } from "../achievements/catalog";
+import type { FruitTraits, Rarity } from "../achievements/traits";
 import {
   UploadError,
   uploadWithProgress,
@@ -276,16 +278,17 @@ export function adminEnableUser(id: string) {
 }
 
 export function adminWipeUser(id: string, confirmEmail: string) {
-  return api<{ ok: true }>(`/api/admin/users/${encodeURIComponent(id)}/wipe`, {
-    method: "POST",
-    json: { confirmEmail },
-  });
+  return api<{ ok: true }>(
+    `/api/admin/users/${encodeURIComponent(id)}/wipe`,
+    { method: "POST", json: { confirmEmail } },
+  );
 }
 
 export async function adminExportUser(id: string) {
-  const res = await fetch(`/api/admin/users/${encodeURIComponent(id)}/export`, {
-    credentials: "include",
-  });
+  const res = await fetch(
+    `/api/admin/users/${encodeURIComponent(id)}/export`,
+    { credentials: "include" },
+  );
   if (!res.ok) {
     let message = res.statusText || "Export failed";
     try {
@@ -484,7 +487,10 @@ export function listDeckCards(deckId: string, opts?: ListDeckCardsOpts) {
       );
     }
   }
-  const q = opts?.status === "archived" ? "?status=archived" : "";
+  const q =
+    opts?.status === "archived"
+      ? "?status=archived"
+      : "";
   return api<CardDraftView[]>(`/api/decks/${deckId}/cards${q}`);
 }
 
@@ -503,7 +509,9 @@ export type HubCreateCardBody =
     };
 
 function isGuestHubCardBody(body: HubCreateCardBody): body is GuestHubCardBody {
-  return body.type === "qa" || body.type === "cloze" || body.type === "mcq";
+  return (
+    body.type === "qa" || body.type === "cloze" || body.type === "mcq"
+  );
 }
 
 export function createDeckCard(deckId: string, body: HubCreateCardBody) {
@@ -807,17 +815,13 @@ export function putStudyPrefs(prefs: StudyPrefs) {
   });
 }
 
-export type FruitTraitsView = {
-  shine: string;
-  colour: string;
-  status: string;
-};
+export type FruitTraitsView = FruitTraits;
 
 export type AchievementDefView = {
   id: string;
   category: string;
-  fruitType: string;
-  rarity: string;
+  fruitType: FruitType;
+  rarity: Rarity;
   title: string;
   description: string;
   sortOrder: number;
@@ -853,15 +857,26 @@ export type LeaderboardResponse = {
   }>;
 };
 
+/** Fired after server writes that can move streak / XP (shell chip refetches). */
+export const GAMIFICATION_CHANGED_EVENT = "sugarplum:gamification-changed";
+
+function notifyGamificationChanged<T>(result: T): T {
+  window.dispatchEvent(new Event(GAMIFICATION_CHANGED_EVENT));
+  return result;
+}
+
 export function getAchievements() {
+  if (isGuest()) guestUnsupported("view achievements");
   return api<AchievementsResponse>("/api/achievements");
 }
 
 export function getGamification() {
+  if (isGuest()) guestUnsupported("view streaks and XP");
   return api<GamificationResponse>("/api/gamification");
 }
 
 export function getWeeklyLeaderboard() {
+  if (isGuest()) guestUnsupported("view the leaderboard");
   return api<LeaderboardResponse>("/api/leaderboard/weekly");
 }
 
@@ -979,7 +994,7 @@ export function acceptCard(cardId: string) {
   if (isGuest()) guestUnsupported("accept cards");
   return api<AcceptCardResult>(`/api/cards/${cardId}/accept`, {
     method: "POST",
-  });
+  }).then(notifyGamificationChanged);
 }
 
 export function acceptAllJobDrafts(jobId: string) {
@@ -989,7 +1004,9 @@ export function acceptAllJobDrafts(jobId: string) {
     failed: number;
     rejectedSiblingCount: number;
     unlocks?: string[];
-  }>(`/api/jobs/${jobId}/drafts/accept-all`, { method: "POST" });
+  }>(`/api/jobs/${jobId}/drafts/accept-all`, { method: "POST" }).then(
+    notifyGamificationChanged,
+  );
 }
 
 export function rejectCard(cardId: string) {
@@ -1004,9 +1021,7 @@ export async function moveCard(cardId: string, deckId: string) {
     } catch (err) {
       const message = err instanceof Error ? err.message : "Card not found";
       throw new ApiError(
-        message === "Card not found" || message === "Deck not found"
-          ? 404
-          : 400,
+        message === "Card not found" || message === "Deck not found" ? 404 : 400,
         message,
       );
     }
@@ -1146,9 +1161,7 @@ export function reviewCard(
 ) {
   const localDay = opts?.localDay;
   if (isGuest()) {
-    return Promise.resolve(
-      guestReviewCard(cardId, rating, undefined, { localDay }),
-    );
+    return Promise.resolve(guestReviewCard(cardId, rating, undefined, { localDay }));
   }
   return api<ReviewResult>("/api/study/review", {
     method: "POST",
@@ -1157,7 +1170,7 @@ export function reviewCard(
       rating,
       ...(localDay ? { localDay } : {}),
     },
-  });
+  }).then(notifyGamificationChanged);
 }
 
 export type ExportWarnings = {
