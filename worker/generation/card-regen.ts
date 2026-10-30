@@ -6,14 +6,15 @@ import { extractPptxText } from "../materials/extract-pptx";
 import {
   BYO_PROVIDERS_PHRASE,
   createLlmAdapter,
+  isTruncationParseError,
   parseCardsPayload,
   parseLlmProvider,
   type LlmAdapter,
   type LlmTokenUsage,
 } from "./llm";
 import { CHUNK_CHAR_LIMIT } from "./pipeline";
-import { consumeFreeGenSlot } from "./quota";
-import { createWorkersAiAdapter } from "./workers-ai";
+import { consumeFreeGenSlot, releaseFreeGenSlot } from "./quota";
+import { createWorkersAiAdapter, WorkersAiCapacityError } from "./workers-ai";
 import {
   appendExtraUserSuffix,
   buildExtraUserSuffix,
@@ -77,6 +78,38 @@ Respond with JSON only as {"cards":[...]} containing exactly one card of type "$
   );
 }
 
+function parseRegenDraft(raw: string, type: RegenCardType): TextRegenDraft {
+  const drafts = parseCardsPayload(raw);
+  const hit = drafts.find((d) => d.type === type && typeof d.front === "string");
+  if (!hit || typeof hit.front !== "string" || typeof hit.back !== "string") {
+    throw new Error(`LLM did not return a ${type} card`);
+  }
+  const draft: TextRegenDraft = {
+    type,
+    front: hit.front,
+    back: hit.back,
+    provenance: hit.provenance,
+  };
+  return hit.type === "mcq"
+    ? { ...draft, ...assertValidMcqOptions(hit.back, hit.options) }
+    : draft;
+}
+
+function addUsage(
+  a: LlmTokenUsage | null | undefined,
+  b: LlmTokenUsage | null | undefined,
+): LlmTokenUsage | null {
+  if (!a) return b ?? null;
+  if (!b) return a;
+  const sum = (x?: number | null, y?: number | null) =>
+    x == null && y == null ? null : (x ?? 0) + (y ?? 0);
+  return {
+    prompt_tokens: sum(a.prompt_tokens, b.prompt_tokens),
+    completion_tokens: sum(a.completion_tokens, b.completion_tokens),
+    total_tokens: sum(a.total_tokens, b.total_tokens),
+  };
+}
+
 /** Narrow sync generate for one card of a requested type. */
 export async function generateOneCard(args: {
   text: string;
@@ -87,39 +120,45 @@ export async function generateOneCard(args: {
   apiKey: string;
   provider: string;
 }): Promise<{ draft: TextRegenDraft; usage?: LlmTokenUsage | null }> {
-  const { text: raw, usage } = await args.llm.complete({
-    system: REGEN_ONE_SYSTEM_PROMPT,
-    user: regenerateOneUserPrompt({
-      text: args.text,
-      type: args.type,
-      existingFront: args.existingFront,
-      studyStruggle: args.studyStruggle,
-    }),
-    apiKey: args.apiKey,
-    provider: args.provider,
-  });
-  const drafts = parseCardsPayload(raw);
-  const hit = drafts.find(
-    (d) => d.type === args.type && typeof d.front === "string",
-  );
-  if (!hit || typeof hit.front !== "string" || typeof hit.back !== "string") {
-    throw new Error(`LLM did not return a ${args.type} card`);
-  }
-  const match: TextRegenDraft = {
+  const user = regenerateOneUserPrompt({
+    text: args.text,
     type: args.type,
-    front: hit.front,
-    back: hit.back,
-    options: hit.type === "mcq" ? hit.options : undefined,
-    provenance: hit.provenance,
-  };
-  if (match.type === "mcq") {
-    const mcq = assertValidMcqOptions(match.back, match.options);
+    existingFront: args.existingFront,
+    studyStruggle: args.studyStruggle,
+  });
+  const ask = (suffix = "") =>
+    args.llm.complete({
+      system: REGEN_ONE_SYSTEM_PROMPT,
+      user: user + suffix,
+      apiKey: args.apiKey,
+      provider: args.provider,
+    });
+
+  const first = await ask();
+  try {
     return {
-      draft: { ...match, back: mcq.back, options: mcq.options },
-      usage,
+      draft: parseRegenDraft(first.text, args.type),
+      usage: first.usage,
+    };
+  } catch (err) {
+    if (isTruncationParseError(err)) throw err;
+    const message = err instanceof Error ? err.message : String(err);
+    const reaskSuffix = `\n\nYour previous reply was rejected: ${message}. Respond with JSON only containing exactly one "${args.type}" card.`;
+    let second: Awaited<ReturnType<typeof ask>>;
+    try {
+      second = await ask(reaskSuffix);
+    } catch (reaskErr) {
+      // Tokens were spent on the first call, so the caller must not refund.
+      if (reaskErr instanceof WorkersAiCapacityError) {
+        throw new Error(reaskErr.message);
+      }
+      throw reaskErr;
+    }
+    return {
+      draft: parseRegenDraft(second.text, args.type),
+      usage: addUsage(first.usage, second.usage),
     };
   }
-  return { draft: match, usage };
 }
 
 type MaterialLite = {
@@ -189,6 +228,7 @@ export async function resolveRegenLlm(
   apiKey: string;
   provider: string;
   path: "free" | "byo";
+  releaseQuota: () => Promise<void>;
 }> {
   const db = getDb(env);
   const secret = await db
@@ -210,6 +250,7 @@ export async function resolveRegenLlm(
       apiKey,
       provider,
       path: "byo",
+      releaseQuota: async () => {},
     };
   }
 
@@ -221,6 +262,7 @@ export async function resolveRegenLlm(
       apiKey: "",
       provider: "workers-ai",
       path: "free",
+      releaseQuota: () => releaseFreeGenSlot(env, userId),
     };
   }
 

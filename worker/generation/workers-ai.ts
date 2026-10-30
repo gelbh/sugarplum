@@ -37,6 +37,8 @@ type AiRunContent = {
   totalTokens: number | null;
 };
 
+export class WorkersAiCapacityError extends Error {}
+
 function isWorkersAiCapacityError(err: unknown): boolean {
   const status =
     err && typeof err === "object" && "status" in err
@@ -54,7 +56,7 @@ function isWorkersAiCapacityError(err: unknown): boolean {
 
 function mapWorkersAiRunError(err: unknown): never {
   if (isWorkersAiCapacityError(err)) {
-    throw new Error(CAPACITY_ERROR);
+    throw new WorkersAiCapacityError(CAPACITY_ERROR);
   }
   throw err instanceof Error ? err : new Error(String(err));
 }

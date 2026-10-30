@@ -42,6 +42,14 @@ app.use("/api/*", async (c, next) => {
   await next();
 });
 
+app.onError((err, c) => {
+  if (err instanceof HTTPException) {
+    return c.json({ message: err.message }, err.status);
+  }
+  console.error(err);
+  return c.json({ message: "Internal Server Error" }, 500);
+});
+
 app.route("/api/auth", authRoutes);
 app.route("/api/subjects", subjectRoutes);
 app.route("/api/decks", deckRoutes);
