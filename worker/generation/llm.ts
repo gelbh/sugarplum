@@ -536,7 +536,53 @@ async function readErrorDetail(res: Response): Promise<string> {
   return detail ? `: ${detail.slice(0, 200)}` : "";
 }
 
+const PROVIDER_LABEL: Record<UserLlmProvider, string> = {
+  openai: "OpenAI",
+  anthropic: "Anthropic",
+  google: "Google",
+  zai: "Z.ai",
+};
+/** 529 is Anthropic "overloaded". */
+const TRANSIENT_STATUSES = new Set([429, 503, 529]);
+// ponytail: body heuristic; an unrecognised quota message costs ~7s of retries before the friendly error.
+const QUOTA_PATTERN =
+  /insufficient|balance|quota|billing|recharge|expired|subscription|resets? at|will reset/i;
+const BACKOFF_MS = [2000, 5000];
+const MAX_RETRY_AFTER_MS = 10_000;
+
+function retryAfterMs(res: Response): number | null {
+  const seconds = Number(res.headers.get("retry-after"));
+  return Number.isFinite(seconds) && seconds > 0
+    ? Math.min(seconds * 1000, MAX_RETRY_AFTER_MS)
+    : null;
+}
+
+/** POST to a BYO provider; retries transient overload, then fails with copy users can act on. */
+async function postLlm(
+  provider: UserLlmProvider,
+  url: string,
+  init: RequestInit,
+): Promise<Response> {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(url, init);
+    if (res.ok) return res;
+    const detail = await readErrorDetail(res);
+    if (!TRANSIENT_STATUSES.has(res.status) || QUOTA_PATTERN.test(detail)) {
+      throw new Error(`LLM request failed (${res.status})${detail}`);
+    }
+    if (attempt >= BACKOFF_MS.length) {
+      console.warn("LLM overloaded after retries", provider, res.status, detail);
+      throw new Error(
+        `${PROVIDER_LABEL[provider]} is overloaded right now. Wait a minute and try again, or switch provider in Settings.`,
+      );
+    }
+    const wait = retryAfterMs(res) ?? BACKOFF_MS[attempt]!;
+    await new Promise((resolve) => setTimeout(resolve, wait));
+  }
+}
+
 function openAiCompatibleAdapter(opts: {
+  provider: "openai" | "zai";
   requestUrl: string;
   textModel: string;
   visionModel: string;
@@ -544,11 +590,17 @@ function openAiCompatibleAdapter(opts: {
   visionJsonMode: boolean;
   extraBody?: Record<string, unknown>;
 }): LlmAdapter {
-  const { requestUrl, textModel, visionModel, visionJsonMode, extraBody } =
-    opts;
+  const {
+    provider,
+    requestUrl,
+    textModel,
+    visionModel,
+    visionJsonMode,
+    extraBody,
+  } = opts;
 
   async function complete({ system, user, apiKey }: CompleteInput) {
-    const res = await fetch(requestUrl, {
+    const res = await postLlm(provider, requestUrl, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -565,12 +617,6 @@ function openAiCompatibleAdapter(opts: {
         ],
       }),
     });
-
-    if (!res.ok) {
-      throw new Error(
-        `LLM request failed (${res.status})${await readErrorDetail(res)}`,
-      );
-    }
 
     const body = (await res.json()) as {
       choices?: { message?: { content?: string } }[];
@@ -599,7 +645,7 @@ function openAiCompatibleAdapter(opts: {
       }
 
       const imageKey = input.imageKey ?? "material";
-      const res = await fetch(requestUrl, {
+      const res = await postLlm(provider, requestUrl, {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -630,12 +676,6 @@ function openAiCompatibleAdapter(opts: {
         }),
       });
 
-      if (!res.ok) {
-        throw new Error(
-          `LLM request failed (${res.status})${await readErrorDetail(res)}`,
-        );
-      }
-
       const body = (await res.json()) as {
         choices?: { message?: { content?: string } }[];
       };
@@ -648,6 +688,7 @@ function openAiCompatibleAdapter(opts: {
 
 function openAiAdapter(): LlmAdapter {
   return openAiCompatibleAdapter({
+    provider: "openai",
     requestUrl: providerRequestUrl("openai"),
     textModel: "gpt-4o-mini",
     visionModel: "gpt-4o-mini",
@@ -657,6 +698,7 @@ function openAiAdapter(): LlmAdapter {
 
 function zaiAdapter(textModel: ZaiTextModel): LlmAdapter {
   return openAiCompatibleAdapter({
+    provider: "zai",
     requestUrl: providerRequestUrl("zai"),
     textModel,
     visionModel: ZAI_VISION_MODEL,
@@ -672,7 +714,7 @@ function zaiAdapter(textModel: ZaiTextModel): LlmAdapter {
 function anthropicAdapter(): LlmAdapter {
   async function complete({ system, user, apiKey }: CompleteInput) {
     const url = providerRequestUrl("anthropic");
-    const res = await fetch(url, {
+    const res = await postLlm("anthropic", url, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -687,12 +729,6 @@ function anthropicAdapter(): LlmAdapter {
         messages: [{ role: "user", content: user }],
       }),
     });
-
-    if (!res.ok) {
-      throw new Error(
-        `LLM request failed (${res.status})${await readErrorDetail(res)}`,
-      );
-    }
 
     const body = (await res.json()) as {
       content?: { type?: string; text?: string }[];
@@ -723,7 +759,7 @@ function anthropicAdapter(): LlmAdapter {
 
       const imageKey = input.imageKey ?? "material";
       const url = providerRequestUrl("anthropic");
-      const res = await fetch(url, {
+      const res = await postLlm("anthropic", url, {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -754,12 +790,6 @@ function anthropicAdapter(): LlmAdapter {
         }),
       });
 
-      if (!res.ok) {
-        throw new Error(
-          `LLM request failed (${res.status})${await readErrorDetail(res)}`,
-        );
-      }
-
       const body = (await res.json()) as {
         content?: { type?: string; text?: string }[];
       };
@@ -774,7 +804,7 @@ function anthropicAdapter(): LlmAdapter {
 function googleAdapter(): LlmAdapter {
   async function complete({ system, user, apiKey }: CompleteInput) {
     const url = providerRequestUrl("google");
-    const res = await fetch(url, {
+    const res = await postLlm("google", url, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -789,12 +819,6 @@ function googleAdapter(): LlmAdapter {
         },
       }),
     });
-
-    if (!res.ok) {
-      throw new Error(
-        `LLM request failed (${res.status})${await readErrorDetail(res)}`,
-      );
-    }
 
     const body = (await res.json()) as {
       candidates?: { content?: { parts?: { text?: string }[] } }[];
@@ -824,7 +848,7 @@ function googleAdapter(): LlmAdapter {
 
       const imageKey = input.imageKey ?? "material";
       const url = providerRequestUrl("google");
-      const res = await fetch(url, {
+      const res = await postLlm("google", url, {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -854,12 +878,6 @@ function googleAdapter(): LlmAdapter {
           },
         }),
       });
-
-      if (!res.ok) {
-        throw new Error(
-          `LLM request failed (${res.status})${await readErrorDetail(res)}`,
-        );
-      }
 
       const body = (await res.json()) as {
         candidates?: { content?: { parts?: { text?: string }[] } }[];
