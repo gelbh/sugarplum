@@ -256,13 +256,13 @@ export async function resolveRegenLlm(
 
   if (env.AI) {
     // Same free-path policy as job consumer: reserve a daily slot before AI.run.
-    await consumeFreeGenSlot(env, userId);
+    const { day } = await consumeFreeGenSlot(env, userId);
     return {
       llm: createWorkersAiAdapter(env),
       apiKey: "",
       provider: "workers-ai",
       path: "free",
-      releaseQuota: () => releaseFreeGenSlot(env, userId),
+      releaseQuota: () => releaseFreeGenSlot(env, userId, day),
     };
   }
 

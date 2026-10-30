@@ -97,12 +97,32 @@ describe("free generation quota", () => {
 
   it("releaseFreeGenSlot decrements and never goes below zero", async () => {
     const env = createTestEnv();
+    const { day } = await consumeFreeGenSlot(env, "u1");
     await consumeFreeGenSlot(env, "u1");
-    await consumeFreeGenSlot(env, "u1");
-    await releaseFreeGenSlot(env, "u1");
+    await releaseFreeGenSlot(env, "u1", day);
     expect((await getFreeGenUsage(env, "u1")).used).toBe(1);
-    await releaseFreeGenSlot(env, "u1");
-    await releaseFreeGenSlot(env, "u1");
+    await releaseFreeGenSlot(env, "u1", day);
+    await releaseFreeGenSlot(env, "u1", day);
     expect((await getFreeGenUsage(env, "u1")).used).toBe(0);
+  });
+
+  it("release after UTC midnight refunds the day the slot was reserved", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-15T23:59:59Z"));
+    const env = createTestEnv();
+    const { day } = await consumeFreeGenSlot(env, "u-midnight");
+    expect(day).toBe("2026-03-15");
+
+    vi.setSystemTime(new Date("2026-03-16T00:00:01Z"));
+    await consumeFreeGenSlot(env, "u-midnight");
+    await releaseFreeGenSlot(env, "u-midnight", day);
+
+    expect(env.getFreeGenUsageRows()).toEqual(
+      expect.arrayContaining([
+        { user_id: "u-midnight", day: "2026-03-15", used: 0 },
+        { user_id: "u-midnight", day: "2026-03-16", used: 1 },
+      ]),
+    );
+    expect((await getFreeGenUsage(env, "u-midnight")).used).toBe(1);
   });
 });

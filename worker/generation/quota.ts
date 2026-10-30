@@ -52,17 +52,19 @@ export async function consumeFreeGenSlot(
 
 /**
  * Give back a slot reserved by consumeFreeGenSlot when the attempt produced
- * nothing. Floors at zero.
+ * nothing. Pass the `day` that consume returned so a release after UTC
+ * midnight refunds the reserving day. Floors at zero.
  */
 export async function releaseFreeGenSlot(
   env: Env,
   userId: string,
+  day: string,
 ): Promise<void> {
   await getDb(env)
     .prepare(
       `UPDATE free_gen_usage SET used = used - 1
        WHERE user_id = ? AND day = ? AND used > 0`,
     )
-    .bind(userId, freeGenDay())
+    .bind(userId, day)
     .run();
 }
