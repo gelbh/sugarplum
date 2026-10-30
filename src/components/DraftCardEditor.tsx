@@ -26,6 +26,14 @@ import {
   extractClozeAnswer,
 } from "../lib/clozeFormat";
 import { starterOcclusionFront } from "../lib/hubDiyCreate";
+import {
+  MCQ_MAX,
+  MCQ_MIN,
+  withMcqCorrect,
+  withMcqOptionAdded,
+  withMcqOptionRemoved,
+  withMcqOptionText,
+} from "../lib/mcqDraftEdit";
 import OcclusionRegionEditor from "./OcclusionRegionEditor";
 
 export type DraftEditorChange = Pick<
@@ -55,7 +63,7 @@ const TEXT_TYPES: CardType[] = [
   "mcq",
 ];
 
-const TYPE_LABELS: Record<string, string> = {
+export const TYPE_LABELS: Record<string, string> = {
   qa: "Q&A",
   cloze: "Fill in the blank",
   mcq: "Multiple choice",
@@ -64,7 +72,7 @@ const TYPE_LABELS: Record<string, string> = {
   occlusion: "Occlusion",
 };
 
-function diySelectableTypes(allowedTypes?: CardType[]): CardType[] {
+export function diySelectableTypes(allowedTypes?: CardType[]): CardType[] {
   if (allowedTypes && allowedTypes.length > 0) {
     return allowedTypes.filter(
       (t) => TEXT_TYPES.includes(t) || t === "occlusion",
@@ -88,23 +96,20 @@ export function resolveEditorType(
   return { typeValue: "qa", typeSelectLocked: false };
 }
 
-const MCQ_MIN = 3;
-const MCQ_MAX = 5;
-
-function isOcclusionFront(
+export function isOcclusionFront(
   front: CardDraftView["front"],
 ): front is OcclusionFrontView {
   return typeof front === "object" && front !== null && "regions" in front;
 }
 
-function backAnswer(back: CardDraftView["back"]): string {
+export function backAnswer(back: CardDraftView["back"]): string {
   if (typeof back === "object" && back !== null && "answer" in back) {
     return back.answer;
   }
   return typeof back === "string" ? back : "";
 }
 
-function defaultMcqOptions(card: CardDraftView): string[] {
+export function defaultMcqOptions(card: CardDraftView): string[] {
   if (
     card.options &&
     card.options.length >= MCQ_MIN &&
@@ -119,7 +124,7 @@ function defaultMcqOptions(card: CardDraftView): string[] {
   return ["", "", ""];
 }
 
-function onTypeChange(
+export function applyDraftTypeChange(
   card: CardDraftView,
   type: CardType,
   onChange: (next: DraftEditorChange) => void,
@@ -211,34 +216,22 @@ export default function DraftCardEditor({
     });
   }
 
+  const mcqDraft = { options: mcqOptions, back: backText };
+
   function updateMcqOption(index: number, value: string) {
-    const options = [...mcqOptions];
-    const wasCorrect = backText === options[index];
-    options[index] = value;
-    patch({
-      options,
-      back: wasCorrect ? value : backText,
-    });
+    patch(withMcqOptionText(mcqDraft, index, value));
   }
 
   function setMcqCorrect(index: number) {
-    patch({ back: mcqOptions[index] ?? "" });
+    patch(withMcqCorrect(mcqDraft, index));
   }
 
   function addMcqOption() {
-    if (mcqOptions.length >= MCQ_MAX) return;
-    patch({ options: [...mcqOptions, ""] });
+    patch(withMcqOptionAdded(mcqDraft));
   }
 
   function removeMcqOption(index: number) {
-    if (mcqOptions.length <= MCQ_MIN) return;
-    const removed = mcqOptions[index];
-    const options = mcqOptions.filter((_, i) => i !== index);
-    let back = backText;
-    if (back === removed) {
-      back = options.find((o) => o.trim()) ?? options[0] ?? "";
-    }
-    patch({ options, back });
+    patch(withMcqOptionRemoved(mcqDraft, index));
   }
 
   return (
@@ -273,7 +266,7 @@ export default function DraftCardEditor({
             label="Type"
             value={typeValue}
             onChange={(e) =>
-              onTypeChange(card, e.target.value as CardType, onChange)
+              applyDraftTypeChange(card, e.target.value as CardType, onChange)
             }
           >
             {typeSelectLocked ? (
