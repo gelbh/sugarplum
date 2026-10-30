@@ -159,6 +159,16 @@ export function gamificationFirst<T>(
     const key = ledgerKey(userId, idempotencyKey);
     return state.xpLedgerKeys.has(key) ? ({ ok: 1 } as T) : null;
   }
+  if (
+    normalized.startsWith(
+      "SELECT COUNT(*) AS n FROM achievement_defs WHERE active = 1",
+    )
+  ) {
+    const n = [...state.achievementDefs.values()].filter(
+      (d) => d.active === 1,
+    ).length;
+    return { n } as T;
+  }
   if (normalized.startsWith("SELECT COUNT(*) AS reviews_total")) {
     const logs = reviewLogsForUser(state, bound[0] as string);
     return {
@@ -214,6 +224,17 @@ export function gamificationAll<T>(
   normalized: string,
   bound: unknown[],
 ): { results: T[] } | null {
+  if (
+    normalized.startsWith(
+      "SELECT idempotency_key FROM xp_ledger WHERE user_id = ? AND idempotency_key IN",
+    )
+  ) {
+    const [userId, ...keys] = bound as string[];
+    const results = keys
+      .filter((k) => state.xpLedgerKeys.has(ledgerKey(userId, k)))
+      .map((idempotency_key) => ({ idempotency_key }));
+    return { results: results as T[] };
+  }
   if (
     normalized.includes("LEFT JOIN achievement_progress") &&
     normalized.includes("FROM achievement_defs d")

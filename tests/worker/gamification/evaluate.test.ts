@@ -395,3 +395,36 @@ describe("new trigger kinds", () => {
     expect(unlocks.map((u) => u.id)).toContain(`t_${c.kind}`);
   });
 });
+
+describe("catalogBackfill", () => {
+  it("backdates catalog additions for established users, then evaluates live", async () => {
+    const env = createTestEnv();
+    seedStudyUser(env);
+    seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    seedReview(env, "rl1", "c1");
+    // Established before the catalog grew: v1 marker, no catalog marker.
+    await creditXp(env.DB, "u1", 0, "backfill", "backfill:v1:u1");
+    env.seedAchievementDef(testDef("t_history", "reviews_total", 1));
+    env.seedAchievementDef(testDef("t_next", "reviews_total", 2));
+
+    const first = await onReviewGraded(env.DB, "u1", {
+      reviewLogId: "rl1",
+      reviewedAt: new Date(NOW),
+    });
+    expect(first.map((u) => u.id)).not.toContain("t_history");
+    const history = env
+      .getAchievementCompletions()
+      .find((c) => c.achievement_id === "t_history");
+    expect(history?.backdated).toBe(1);
+    expect(
+      env.getXpLedger().some((e) => e.idempotency_key === "unlock:t_history"),
+    ).toBe(false);
+
+    seedReview(env, "rl2", "c1");
+    const second = await onReviewGraded(env.DB, "u1", {
+      reviewLogId: "rl2",
+      reviewedAt: new Date(NOW),
+    });
+    expect(second.map((u) => u.id)).toContain("t_next");
+  });
+});

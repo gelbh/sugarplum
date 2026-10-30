@@ -1,4 +1,5 @@
 import type { UnlockView } from "../../src/achievements/wire";
+import { catalogBackfill } from "./backfill";
 import { utcDay, XP } from "./constants";
 import { evaluateAfterAccept, evaluateAfterReview } from "./evaluate";
 import { applyStudyDayStreak } from "./streak";
@@ -50,6 +51,7 @@ export async function onReviewGraded(
       args.reviewLogId,
       streak.isFirstReviewOfDay,
     );
+    await catalogBackfill(db, userId);
     const { unlocks } = await evaluateAfterReview(db, userId, args);
     return unlocks;
   } catch (err) {
@@ -82,6 +84,7 @@ export async function onCardsAccepted(
         `accept:${card.cardId}`,
       );
     }
+    await catalogBackfill(db, userId);
     const last = cards[cards.length - 1]!;
     const { unlocks } = await evaluateAfterAccept(db, userId, last);
     return unlocks;
