@@ -59,7 +59,7 @@ async function loadActiveDefs(
   return results ?? [];
 }
 
-export async function countReviewsTotal(
+async function countReviewsTotal(
   db: D1Database,
   userId: string,
 ): Promise<number> {
@@ -143,7 +143,7 @@ async function countDueAcceptedCards(
   return countFromRow(row);
 }
 
-export async function readStreakCurrent(
+async function readStreakCurrent(
   db: D1Database,
   userId: string,
 ): Promise<{ streakCurrent: number; streakBest: number }> {
@@ -186,6 +186,17 @@ async function loadStudyMetrics(
     dueAccepted,
     distinctTypes,
   };
+}
+
+export async function loadCompositeMetrics(
+  db: D1Database,
+  userId: string,
+): Promise<{ streakBest: number; reviewsTotal: number }> {
+  const [streak, reviewsTotal] = await Promise.all([
+    readStreakCurrent(db, userId),
+    countReviewsTotal(db, userId),
+  ]);
+  return { streakBest: streak.streakBest, reviewsTotal };
 }
 
 export function compositeParts(

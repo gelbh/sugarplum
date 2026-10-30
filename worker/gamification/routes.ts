@@ -12,8 +12,7 @@ import { backfillUser } from "./backfill";
 import type { Rarity } from "./constants";
 import {
   compositeParts,
-  countReviewsTotal,
-  readStreakCurrent,
+  loadCompositeMetrics,
   type TriggerKind,
 } from "./evaluate";
 import { traitsForAchievement } from "./traits";
@@ -191,10 +190,7 @@ gamificationRoutes.get("/achievements", async (c) => {
     (r) => r.trigger_kind === "composite" && r.completed_at == null,
   );
   const partMetrics = needsParts
-    ? {
-        streakBest: (await readStreakCurrent(db, userId)).streakBest,
-        reviewsTotal: await countReviewsTotal(db, userId),
-      }
+    ? await loadCompositeMetrics(db, userId)
     : null;
 
   const items: AchievementItem[] = rows.map((row) => ({
