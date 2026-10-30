@@ -47,7 +47,6 @@ export function resolveZaiTextModel(
   return isZaiTextModel(trimmed) ? trimmed : null;
 }
 
-/** BYO providers named in user-facing "add a key" copy. */
 export const BYO_PROVIDERS_PHRASE = "OpenAI, Anthropic, Google, or Z.ai";
 
 /** Includes test fixture + internal platform provider. */
@@ -543,14 +542,12 @@ async function readErrorDetail(res: Response): Promise<string> {
   return detail ? `: ${detail.slice(0, 200)}` : "";
 }
 
-/** OpenAI chat-completions HTTP (also Z.ai Standard API). */
 function openAiCompatibleAdapter(opts: {
   requestUrl: string;
   textModel: string;
   visionModel: string;
   /** Z.ai rejects `response_format` on vision models (text models only). */
   visionJsonMode: boolean;
-  /** Provider-specific request fields merged into every call. */
   extraBody?: Record<string, unknown>;
 }): LlmAdapter {
   const { requestUrl, textModel, visionModel, visionJsonMode, extraBody } =

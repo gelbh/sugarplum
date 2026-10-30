@@ -79,7 +79,6 @@ type UserSecretRow = {
   user_id: string;
   provider: string;
   ciphertext: string;
-  /** Optional; null/omitted for non-zai secrets. */
   model?: string | null;
   created_at: string;
   updated_at: string;
