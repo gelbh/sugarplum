@@ -1,4 +1,5 @@
 import { XP, type Rarity } from "./constants";
+import { traitsForAchievement, type FruitTraits } from "./traits";
 import { creditXp } from "./xp";
 
 export type TriggerKind =
@@ -16,6 +17,17 @@ export type AchievementDefRow = {
   trigger_kind: TriggerKind;
   threshold: number | null;
   params_json: string | null;
+  title: string;
+  fruit_type: string;
+};
+
+/** Unlock payload for toasts; the client renders it without a catalog. */
+export type UnlockView = {
+  id: string;
+  title: string;
+  fruitType: string;
+  rarity: Rarity;
+  traits: FruitTraits;
 };
 
 export type StudyMetrics = {
@@ -47,7 +59,7 @@ async function loadActiveDefs(
 ): Promise<AchievementDefRow[]> {
   const { results } = await db
     .prepare(
-      `SELECT id, rarity, trigger_kind, threshold, params_json
+      `SELECT id, rarity, trigger_kind, threshold, params_json, title, fruit_type
        FROM achievement_defs WHERE active = 1`,
     )
     .all<AchievementDefRow>();
@@ -251,7 +263,7 @@ async function tryUnlock(
   currentValue: number,
   triggerEventId: string | null,
   backdated: 0 | 1 = 0,
-): Promise<string | null> {
+): Promise<UnlockView | null> {
   const threshold = effectiveThreshold(def);
   await db
     .prepare(
@@ -283,7 +295,13 @@ async function tryUnlock(
     const bonus = XP.unlock[def.rarity];
     await creditXp(db, userId, bonus, "unlock", `unlock:${def.id}`);
   }
-  return def.id;
+  return {
+    id: def.id,
+    title: def.title,
+    fruitType: def.fruit_type,
+    rarity: def.rarity,
+    traits: traitsForAchievement(def.id, def.rarity),
+  };
 }
 
 export async function evaluateAchievements(
@@ -295,11 +313,11 @@ export async function evaluateAchievements(
     nowIso: string;
     backdated?: 0 | 1;
   },
-): Promise<string[]> {
+): Promise<UnlockView[]> {
   const defs = await loadActiveDefs(db);
   const metrics = await loadStudyMetrics(db, userId, opts.nowIso);
   const backdated = opts.backdated ?? 0;
-  const unlocks: string[] = [];
+  const unlocks: UnlockView[] = [];
   for (const def of defs) {
     if (opts.kinds && !opts.kinds.has(def.trigger_kind)) continue;
     // clear_due is event-shaped; empty due queues are not historical proof.
@@ -326,7 +344,7 @@ export async function evaluateAfterReview(
   db: D1Database,
   userId: string,
   args: { reviewLogId: string; reviewedAt: Date },
-): Promise<{ unlocks: string[] }> {
+): Promise<{ unlocks: UnlockView[] }> {
   const nowIso = args.reviewedAt.toISOString();
   const unlocks = await evaluateAchievements(db, userId, {
     kinds: REVIEW_TRIGGERS,
@@ -340,7 +358,7 @@ export async function evaluateAfterAccept(
   db: D1Database,
   userId: string,
   args: { cardId: string; cardType: string },
-): Promise<{ unlocks: string[] }> {
+): Promise<{ unlocks: UnlockView[] }> {
   void args.cardType;
   const nowIso = new Date().toISOString();
   const unlocks = await evaluateAchievements(db, userId, {

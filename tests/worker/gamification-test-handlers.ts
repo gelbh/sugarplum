@@ -279,6 +279,8 @@ export function gamificationAll<T>(
         trigger_kind: d.trigger_kind,
         threshold: d.threshold,
         params_json: d.params_json,
+        title: d.title,
+        fruit_type: d.fruit_type,
       }));
     return { results: rows as T[] };
   }

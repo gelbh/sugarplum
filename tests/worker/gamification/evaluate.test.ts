@@ -6,6 +6,7 @@ import {
   evaluateAfterReview,
 } from "../../../worker/gamification/evaluate";
 import { onReviewGraded, onCardAccepted } from "../../../worker/gamification/onStudyEvent";
+import { traitsForAchievement } from "../../../worker/gamification/traits";
 
 const NOW = "2026-10-29T12:00:00.000Z";
 
@@ -77,7 +78,13 @@ describe("evaluateAfterReview", () => {
     const args = { reviewLogId: "rl1", reviewedAt: new Date(NOW) };
 
     const first = await evaluateAfterReview(db, "u1", args);
-    expect(first.unlocks).toContain("reviews_1");
+    expect(first.unlocks).toContainEqual({
+      id: "reviews_1",
+      title: "First bite",
+      fruitType: "apple",
+      rarity: "common",
+      traits: traitsForAchievement("reviews_1", "common"),
+    });
 
     const second = await evaluateAfterReview(db, "u1", args);
     expect(second.unlocks).toEqual([]);
@@ -111,7 +118,7 @@ describe("evaluateAfterReview", () => {
       reviewLogId: "rl1",
       reviewedAt: new Date(NOW),
     });
-    expect(unlocks).toContain("clear_due_1");
+    expect(unlocks.map((u) => u.id)).toContain("clear_due_1");
   });
 
   it("does not unlock plum_scholar after a single review", async () => {
@@ -132,7 +139,7 @@ describe("evaluateAfterReview", () => {
       reviewLogId: "rl1",
       reviewedAt: new Date(NOW),
     });
-    expect(unlocks).not.toContain("plum_scholar");
+    expect(unlocks.map((u) => u.id)).not.toContain("plum_scholar");
   });
 });
 
@@ -146,7 +153,7 @@ describe("evaluateAfterAccept", () => {
       cardId: "c1",
       cardType: "qa",
     });
-    expect(unlocks).toContain("accepts_1");
+    expect(unlocks.map((u) => u.id)).toContain("accepts_1");
   });
 });
 
@@ -169,7 +176,7 @@ describe("onStudyEvent facade", () => {
       reviewLogId: "rl1",
       reviewedAt: new Date(NOW),
     });
-    expect(unlocks).toContain("reviews_1");
+    expect(unlocks.map((u) => u.id)).toContain("reviews_1");
 
     const keys = new Set(env.getXpLedger().map((e) => e.idempotency_key));
     expect(keys.has("review_day:2026-10-29")).toBe(true);
