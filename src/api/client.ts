@@ -37,6 +37,7 @@ import {
   guestReviewCard,
   type GuestHubCardBody,
 } from "../guest/store";
+import type { RejectReason } from "../lib/rejectReasons";
 import { clearDueCache } from "../study/dueCache";
 import { clearPendingGrades } from "../study/pendingGrades";
 import { STUDY_MEDIA_CACHE } from "../study/studyMediaCache";
@@ -982,9 +983,12 @@ export function acceptAllJobDrafts(jobId: string) {
   );
 }
 
-export function rejectCard(cardId: string) {
+export function rejectCard(cardId: string, reason?: RejectReason | null) {
   if (isGuest()) guestUnsupported("reject cards");
-  return api<CardDraftView>(`/api/cards/${cardId}/reject`, { method: "POST" });
+  return api<CardDraftView>(`/api/cards/${cardId}/reject`, {
+    method: "POST",
+    ...(reason ? { json: { reason } } : {}),
+  });
 }
 
 export async function moveCard(cardId: string, deckId: string) {
