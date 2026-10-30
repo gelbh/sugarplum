@@ -4,6 +4,7 @@ import {
   consumeFreeGenSlot,
   freeGenKvKey,
   getFreeGenUsage,
+  releaseFreeGenSlot,
 } from "../../worker/generation/quota";
 import { createTestEnv } from "./test-env";
 
@@ -69,5 +70,16 @@ describe("free generation quota", () => {
     expect(freeGenKvKey(userId)).toBe(`free-gen:${userId}:2026-03-16`);
     expect(await env.SESSIONS.get(`free-gen:${userId}:2026-03-16`)).toBe("1");
     expect(await env.SESSIONS.get(`free-gen:${userId}:2026-03-15`)).toBeNull();
+  });
+
+  it("releaseFreeGenSlot decrements and never goes below zero", async () => {
+    const env = createTestEnv();
+    await consumeFreeGenSlot(env, "u1");
+    await consumeFreeGenSlot(env, "u1");
+    await releaseFreeGenSlot(env, "u1");
+    expect((await getFreeGenUsage(env, "u1")).used).toBe(1);
+    await releaseFreeGenSlot(env, "u1");
+    await releaseFreeGenSlot(env, "u1");
+    expect((await getFreeGenUsage(env, "u1")).used).toBe(0);
   });
 });
