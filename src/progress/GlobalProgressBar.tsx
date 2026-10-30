@@ -3,14 +3,11 @@ import LinearProgress from "@mui/material/LinearProgress";
 import { useProgressRegistry } from "./ProgressProvider";
 
 type GlobalProgressBarProps = {
-  /** Sticky offset when a fixed top chrome sits above the page (e.g. mobile TopChrome). */
-  stickyTop?: string | number;
+  top?: string | number;
 };
 
 /** Thin top bar for the primary active progress op (prefer job source). */
-export default function GlobalProgressBar({
-  stickyTop = 0,
-}: GlobalProgressBarProps) {
+export default function GlobalProgressBar({ top = 0 }: GlobalProgressBarProps) {
   const { primary } = useProgressRegistry();
 
   if (!primary) return null;
@@ -20,10 +17,12 @@ export default function GlobalProgressBar({
   return (
     <Box
       sx={{
-        position: "sticky",
-        top: stickyTop,
-        zIndex: 1200,
-        width: "100%",
+        position: "fixed",
+        top,
+        left: 0,
+        right: 0,
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+        pointerEvents: "none",
       }}
     >
       <LinearProgress
