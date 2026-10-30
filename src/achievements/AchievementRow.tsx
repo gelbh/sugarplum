@@ -18,6 +18,19 @@ function staggerDelay(unlockedIndex: number): string {
   return `${Math.min(unlockedIndex * 40, 240)}ms`;
 }
 
+/** Sugar plum "almost there": every composite part at or above this share. */
+export const NEAR_COMPLETE_RATIO = 0.8;
+
+export function isNearComplete(progress: AchievementProgress): boolean {
+  return (
+    progress?.kind === "composite" &&
+    progress.parts.length > 0 &&
+    progress.parts.every(
+      (p) => p.target > 0 && p.current / p.target >= NEAR_COMPLETE_RATIO,
+    )
+  );
+}
+
 function ProgressLine({
   label,
   current,
@@ -87,14 +100,21 @@ function RowStatus({
         />
       );
     case "composite":
-      return progress.parts.map((part) => (
-        <ProgressLine
-          key={part.key}
-          label={PART_LABEL[part.key]}
-          current={part.current}
-          target={part.target}
-        />
-      ));
+      return (
+        <>
+          {progress.parts.map((part) => (
+            <ProgressLine
+              key={part.key}
+              label={PART_LABEL[part.key]}
+              current={part.current}
+              target={part.target}
+            />
+          ))}
+          {isNearComplete(progress) ? (
+            <StatusCaption color="primary.main">Almost there</StatusCaption>
+          ) : null}
+        </>
+      );
     default: {
       const unhandled: never = progress;
       void unhandled;
@@ -113,13 +133,14 @@ export default function AchievementRow({
   sheenOnce: boolean;
 }) {
   const unlocked = item.completedAt != null;
+  const near = !unlocked && isNearComplete(item.progress);
   return (
     <Box
       sx={{
         display: "flex",
         gap: 1.5,
         alignItems: "flex-start",
-        opacity: unlocked ? 1 : 0.55,
+        opacity: unlocked ? 1 : near ? 0.8 : 0.55,
         ...(unlocked
           ? {
               animation: `achievementStagger 420ms cubic-bezier(0.16, 1, 0.3, 1) ${staggerDelay(staggerIndex)} both`,
