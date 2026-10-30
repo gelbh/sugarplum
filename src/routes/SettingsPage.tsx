@@ -16,18 +16,25 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import { useColorScheme } from "@mui/material/styles";
 import Brightness6Icon from "@mui/icons-material/Brightness6";
+import Switch from "@mui/material/Switch";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import {
   ApiError,
+  getGamification,
   getLlmSettings,
   getStudyPrefs,
   logout,
   me,
+  patchGamificationSettings,
   putLlmSettings,
   putStudyPrefs,
+  type GamificationResponse,
   type LlmSettings,
   type StudyPrefs,
 } from "../api/client";
+import MagnificCredits from "../achievements/MagnificCredits";
 import { isGuest } from "../guest/session";
+import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { ankiExportFsrsBlurb } from "../settings/ankiExportFsrsBlurb";
 import { freeGenFaqBody, freeGenIntroBlurb } from "../settings/freeGenFaq";
@@ -96,6 +103,13 @@ export default function SettingsPage() {
   const [notice, setNotice] = useState<string | null>(queryMsg.notice);
   const [studyError, setStudyError] = useState<string | null>(null);
   const [studyNotice, setStudyNotice] = useState<string | null>(null);
+  const [gamification, setGamification] = useState<GamificationResponse | null>(
+    null,
+  );
+  const [displayNameInput, setDisplayNameInput] = useState("");
+  const [boardOptIn, setBoardOptIn] = useState(false);
+  const [achieveError, setAchieveError] = useState<string | null>(null);
+  const [achieveNotice, setAchieveNotice] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const { end: endLoad } = useTrackedOp("Loading…", { trackOnMount: true });
   const { busy, begin, end } = useTrackedOp("Saving…");
@@ -104,6 +118,11 @@ export default function SettingsPage() {
     begin: beginStudy,
     end: endStudy,
   } = useTrackedOp("Saving study…");
+  const {
+    busy: achieveBusy,
+    begin: beginAchieve,
+    end: endAchieve,
+  } = useTrackedOp("Saving achievements…");
 
   const themeMode: ThemeMode =
     mode === "light" || mode === "dark" || mode === "system" ? mode : "system";
@@ -116,6 +135,9 @@ export default function SettingsPage() {
         const guestMode = isGuest();
         const settings = await getLlmSettings();
         const prefs = await getStudyPrefs();
+        const gam = guestMode
+          ? null
+          : await getGamification().catch(() => null);
         if (cancelled) return;
         setGuest(guestMode);
         setAccountEmail(user.email);
@@ -125,6 +147,11 @@ export default function SettingsPage() {
         setStudyPrefs(prefs);
         setIntroBudgetInput(String(prefs.introBudget));
         setReviewBudgetInput(String(prefs.reviewBudget));
+        if (gam) {
+          setGamification(gam);
+          setDisplayNameInput(gam.displayName ?? "");
+          setBoardOptIn(gam.boardOptIn);
+        }
         setReady(true);
         endLoad();
       } catch (err) {
@@ -164,6 +191,30 @@ export default function SettingsPage() {
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not save key");
       end(false);
+    }
+  }
+
+  async function onSubmitAchievements(e: FormEvent) {
+    e.preventDefault();
+    if (guest) return;
+    setAchieveError(null);
+    setAchieveNotice(null);
+    beginAchieve();
+    try {
+      const saved = await patchGamificationSettings({
+        boardOptIn,
+        displayName: displayNameInput.trim() || null,
+      });
+      setGamification(saved);
+      setDisplayNameInput(saved.displayName ?? "");
+      setBoardOptIn(saved.boardOptIn);
+      setAchieveNotice("Achievement settings saved.");
+      endAchieve();
+    } catch (err) {
+      setAchieveError(
+        err instanceof ApiError ? err.message : "Could not save settings",
+      );
+      endAchieve(false);
     }
   }
 
@@ -300,6 +351,87 @@ export default function SettingsPage() {
               </>
             )}
           </Stack>
+        </Paper>
+
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 2.5,
+            bgcolor: "background.paper",
+            borderColor: "divider",
+          }}
+        >
+          <Typography
+            variant="subtitle1"
+            component="h2"
+            sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+          >
+            Achievements
+          </Typography>
+          {guest ? (
+            <Stack spacing={1.5}>
+              <Typography variant="body2" color="text.secondary">
+                Sign in to earn fruit medals, streaks, and XP.
+              </Typography>
+              <Button
+                variant="outlined"
+                onClick={() => navigate("/achievements")}
+              >
+                View achievements
+              </Button>
+              <MagnificCredits />
+            </Stack>
+          ) : (
+            <Stack spacing={2}>
+              <Typography variant="body2" color="text.secondary">
+                {gamification
+                  ? `Streak ${gamification.streakCurrent} · Level ${gamification.level} · ${gamification.xpTotal} XP`
+                  : "Track study milestones and optional weekly leaderboard."}
+              </Typography>
+              <Button
+                variant="outlined"
+                onClick={() => navigate("/achievements")}
+              >
+                Open achievement gallery
+              </Button>
+              <Box component="form" onSubmit={onSubmitAchievements} noValidate>
+                <Stack spacing={2}>
+                  {achieveError ? (
+                    <Alert severity="error">{achieveError}</Alert>
+                  ) : null}
+                  {achieveNotice ? (
+                    <Alert severity="success">{achieveNotice}</Alert>
+                  ) : null}
+                  <TextField
+                    label="Leaderboard display name"
+                    value={displayNameInput}
+                    onChange={(ev) => setDisplayNameInput(ev.target.value)}
+                    fullWidth
+                    helperText="Shown on the weekly board when opted in."
+                  />
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={boardOptIn}
+                        onChange={(_e, checked) => setBoardOptIn(checked)}
+                        color="primary"
+                      />
+                    }
+                    label="Show me on the weekly XP board"
+                  />
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    disabled={achieveBusy}
+                  >
+                    {achieveBusy ? "Saving…" : "Save achievement settings"}
+                  </Button>
+                </Stack>
+              </Box>
+              <MagnificCredits />
+            </Stack>
+          )}
         </Paper>
 
         <Paper

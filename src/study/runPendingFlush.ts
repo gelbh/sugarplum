@@ -18,6 +18,8 @@ export type FlushSummary = {
   skipped: number;
   /** Post-flush due list when refreshed; null if refresh failed after applied > 0. */
   due: CardDraftView[] | null;
+  /** Achievement ids unlocked by the flushed reviews (for toasts). */
+  unlocks: string[];
 };
 
 export type RunPendingFlushDeps = {
@@ -63,7 +65,14 @@ async function runPendingFlushInner(
 
   const listDue =
     deps.listDue ?? (async () => (await listDueCards()).cards);
-  const review = deps.review ?? reviewCard;
+  const baseReview = deps.review ?? reviewCard;
+  const unlocks: string[] = [];
+  const review = async (cardId: string, rating: 1 | 2 | 3 | 4) => {
+    const res = await baseReview(cardId, rating);
+    const ids = (res as { unlocks?: unknown } | undefined)?.unlocks;
+    if (Array.isArray(ids)) unlocks.push(...ids);
+    return res;
+  };
   const replacePending = deps.replacePending ?? replacePendingGrades;
   const saveDue = deps.saveDue ?? saveDueCache;
 
@@ -88,18 +97,20 @@ async function runPendingFlushInner(
         applied: result.applied,
         skipped: result.skipped,
         due: refreshed,
+        unlocks,
       };
     } catch {
       return {
         applied: result.applied,
         skipped: result.skipped,
         due: null,
+        unlocks,
       };
     }
   }
 
   saveDue(userId, due);
-  return { applied: result.applied, skipped: result.skipped, due };
+  return { applied: result.applied, skipped: result.skipped, due, unlocks };
 }
 
 /**
