@@ -1,3 +1,5 @@
+import { isRejectReason, REJECT_REASON_LABELS } from "../../src/lib/rejectReasons";
+
 const MAX_PATTERN_LEN = 80;
 const MAX_PATTERNS = 8;
 
@@ -7,13 +9,17 @@ export function topicHintsPromptSuffix(hints: string[]): string {
   return `You must attempt cards covering each of these topics if grounded in the material; do not invent ungrounded facts: ${hints.join("; ")}.`;
 }
 
-/** Build capped avoid-pattern stems from rejected card fronts. */
+/** Build capped avoid-pattern stems from rejected cards; reasoned rejects rank first. */
 export function buildAvoidPatternsFromRejectedFronts(
-  fronts: unknown[],
+  entries: Array<{ front: unknown; reason?: string | null }>,
 ): string[] {
+  const ordered = [...entries].sort(
+    (a, b) =>
+      Number(!isRejectReason(a.reason)) - Number(!isRejectReason(b.reason)),
+  );
   const seen = new Set<string>();
   const out: string[] = [];
-  for (const front of fronts) {
+  for (const { front, reason } of ordered) {
     if (typeof front !== "string") continue;
     const trimmed = front.trim();
     if (!trimmed) continue;
@@ -24,7 +30,11 @@ export function buildAvoidPatternsFromRejectedFronts(
     const key = truncated.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push(truncated);
+    out.push(
+      isRejectReason(reason)
+        ? `${truncated} (reason: ${REJECT_REASON_LABELS[reason].toLowerCase()})`
+        : truncated,
+    );
     if (out.length >= MAX_PATTERNS) break;
   }
   return out;

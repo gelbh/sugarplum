@@ -121,6 +121,7 @@ export type CardRow = {
   media_r2_keys_json: string | null;
   provenance_json: string | null;
   status: string;
+  reject_reason?: string | null;
   created_at: string;
   updated_at: string;
 };

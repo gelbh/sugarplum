@@ -231,19 +231,24 @@ jobRoutes.post("/:id/regen", async (c) => {
     throw new HTTPException(409, { message: "Job already in progress" });
   }
 
-  // Snapshot rejected fronts before wipe so the consumer can avoid them.
+  // Snapshot rejected fronts (and reasons) before wipe so the consumer can avoid them.
   const rejected = await db
-    .prepare("SELECT front_json FROM cards WHERE job_id = ? AND status = ?")
+    .prepare(
+      "SELECT front_json, reject_reason FROM cards WHERE job_id = ? AND status = ?",
+    )
     .bind(jobId, "rejected")
-    .all<{ front_json: string }>();
-  const fronts: unknown[] = [];
+    .all<{ front_json: string; reject_reason: string | null }>();
+  const entries: { front: unknown; reason: string | null }[] = [];
   for (const row of rejected.results ?? []) {
     try {
-      fronts.push(JSON.parse(row.front_json) as unknown);
+      entries.push({
+        front: JSON.parse(row.front_json) as unknown,
+        reason: row.reject_reason ?? null,
+      });
     } catch {
     }
   }
-  const patterns = buildAvoidPatternsFromRejectedFronts(fronts);
+  const patterns = buildAvoidPatternsFromRejectedFronts(entries);
   await db
     .prepare("UPDATE generation_jobs SET avoid_patterns_json = ? WHERE id = ?")
     .bind(patterns.length > 0 ? JSON.stringify(patterns) : null, jobId)
