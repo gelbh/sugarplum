@@ -1,4 +1,8 @@
-/** v1 achievement_defs rows (mirrors migrations/0015_gamification.sql). */
+import { readdirSync, readFileSync } from "node:fs";
+import { DatabaseSync } from "node:sqlite";
+import { fileURLToPath } from "node:url";
+
+/** One achievement_defs row as the migrations leave it. */
 export type AchievementDefSeed = {
   id: string;
   category: string;
@@ -11,163 +15,35 @@ export type AchievementDefSeed = {
   description: string;
   sort_order: number;
   active: number;
+  catalog_version: number;
 };
 
-export const ACHIEVEMENT_DEF_SEEDS: AchievementDefSeed[] = [
-  {
-    id: "reviews_1",
-    category: "reviews",
-    fruit_type: "apple",
-    rarity: "common",
-    trigger_kind: "reviews_total",
-    threshold: 1,
-    params_json: null,
-    title: "First bite",
-    description: "Complete your first review.",
-    sort_order: 10,
-    active: 1,
-  },
-  {
-    id: "reviews_25",
-    category: "reviews",
-    fruit_type: "apple",
-    rarity: "uncommon",
-    trigger_kind: "reviews_total",
-    threshold: 25,
-    params_json: null,
-    title: "Crisp apple",
-    description: "Complete 25 reviews.",
-    sort_order: 20,
-    active: 1,
-  },
-  {
-    id: "reviews_100",
-    category: "reviews",
-    fruit_type: "apple",
-    rarity: "rare",
-    trigger_kind: "reviews_total",
-    threshold: 100,
-    params_json: null,
-    title: "Orchard regular",
-    description: "Complete 100 reviews.",
-    sort_order: 30,
-    active: 1,
-  },
-  {
-    id: "accepts_1",
-    category: "accepts",
-    fruit_type: "lemon",
-    rarity: "common",
-    trigger_kind: "accepts_total",
-    threshold: 1,
-    params_json: null,
-    title: "First zest",
-    description: "Accept your first card.",
-    sort_order: 40,
-    active: 1,
-  },
-  {
-    id: "accepts_25",
-    category: "accepts",
-    fruit_type: "lemon",
-    rarity: "uncommon",
-    trigger_kind: "accepts_total",
-    threshold: 25,
-    params_json: null,
-    title: "Citrus stack",
-    description: "Accept 25 cards.",
-    sort_order: 50,
-    active: 1,
-  },
-  {
-    id: "study_days_3",
-    category: "study_days",
-    fruit_type: "strawberry",
-    rarity: "uncommon",
-    trigger_kind: "study_days_total",
-    threshold: 3,
-    params_json: null,
-    title: "Three seeds",
-    description: "Study on 3 distinct days.",
-    sort_order: 60,
-    active: 1,
-  },
-  {
-    id: "study_days_14",
-    category: "study_days",
-    fruit_type: "strawberry",
-    rarity: "rare",
-    trigger_kind: "study_days_total",
-    threshold: 14,
-    params_json: null,
-    title: "Fortnight berry",
-    description: "Study on 14 distinct days.",
-    sort_order: 70,
-    active: 1,
-  },
-  {
-    id: "clear_due_1",
-    category: "clear_due",
-    fruit_type: "pear",
-    rarity: "uncommon",
-    trigger_kind: "clear_due_once",
-    threshold: 1,
-    params_json: null,
-    title: "Empty basket",
-    description: "Clear your due queue once.",
-    sort_order: 80,
-    active: 1,
-  },
-  {
-    id: "streak_7",
-    category: "streak",
-    fruit_type: "cherry",
-    rarity: "rare",
-    trigger_kind: "streak_current",
-    threshold: 7,
-    params_json: null,
-    title: "Week of cherries",
-    description: "Reach a 7-day study streak.",
-    sort_order: 90,
-    active: 1,
-  },
-  {
-    id: "streak_21",
-    category: "streak",
-    fruit_type: "cherry",
-    rarity: "epic",
-    trigger_kind: "streak_current",
-    threshold: 21,
-    params_json: null,
-    title: "Triple cherry",
-    description: "Reach a 21-day study streak.",
-    sort_order: 100,
-    active: 1,
-  },
-  {
-    id: "types_2",
-    category: "breadth",
-    fruit_type: "kiwi",
-    rarity: "rare",
-    trigger_kind: "distinct_types",
-    threshold: 2,
-    params_json: null,
-    title: "Two slices",
-    description: "Accept cards of 2 different types.",
-    sort_order: 110,
-    active: 1,
-  },
-  {
-    id: "plum_scholar",
-    category: "prestige",
-    fruit_type: "plum",
-    rarity: "legendary",
-    trigger_kind: "composite",
-    threshold: null,
-    params_json: '{"streak_best_min":30,"reviews_min":200}',
-    title: "Sugar plum",
-    description: "Best streak 30+ and 200 lifetime reviews.",
-    sort_order: 120,
-    active: 1,
-  },
-];
+const MIGRATIONS_DIR = fileURLToPath(
+  new URL("../../migrations/", import.meta.url),
+);
+
+function loadDefsFromMigrations(): AchievementDefSeed[] {
+  const db = new DatabaseSync(":memory:");
+  try {
+    const files = readdirSync(MIGRATIONS_DIR)
+      .filter((f) => f.endsWith(".sql"))
+      .sort();
+    for (const file of files) {
+      db.exec(readFileSync(`${MIGRATIONS_DIR}${file}`, "utf8"));
+    }
+    return db
+      .prepare(
+        `SELECT id, category, fruit_type, rarity, trigger_kind, threshold,
+                params_json, title, description, sort_order, active, catalog_version
+         FROM achievement_defs ORDER BY sort_order`,
+      )
+      .all()
+      .map((row) => ({ ...row }) as unknown as AchievementDefSeed);
+  } finally {
+    db.close();
+  }
+}
+
+/** Fake D1 catalog: every migration applied to in-memory SQLite, so it cannot drift. */
+export const ACHIEVEMENT_DEF_SEEDS: AchievementDefSeed[] =
+  loadDefsFromMigrations();

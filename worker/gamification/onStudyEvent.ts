@@ -11,6 +11,36 @@ function utcDayBounds(day: string): { start: string; end: string } {
   };
 }
 
+/** At most once per UTC day, and only with no accepted card due; the guards make retries idempotent. */
+async function bumpClearDueDay(
+  db: D1Database,
+  userId: string,
+  day: string,
+  reviewedAt: Date,
+): Promise<void> {
+  await db
+    .prepare(
+      `UPDATE user_gamification
+       SET clear_due_days = clear_due_days + 1, clear_due_last_day = ?, updated_at = ?
+       WHERE user_id = ? AND clear_due_last_day IS NOT ?
+         AND NOT EXISTS (
+           SELECT 1 FROM cards c
+           INNER JOIN card_schedules s ON s.card_id = c.id
+           INNER JOIN decks d ON d.id = c.deck_id
+           WHERE d.user_id = ? AND c.status = 'accepted' AND s.due <= ?
+         )`,
+    )
+    .bind(
+      day,
+      new Date().toISOString(),
+      userId,
+      day,
+      userId,
+      reviewedAt.toISOString(),
+    )
+    .run();
+}
+
 async function awardReviewXp(
   db: D1Database,
   userId: string,
@@ -43,6 +73,7 @@ export async function onReviewGraded(
   try {
     const day = utcDay(args.reviewedAt);
     const streak = await applyStudyDayStreak(db, userId, day);
+    await bumpClearDueDay(db, userId, day, args.reviewedAt);
     await awardReviewXp(
       db,
       userId,

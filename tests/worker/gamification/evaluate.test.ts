@@ -8,7 +8,11 @@ import {
 import { onReviewGraded, onCardAccepted } from "../../../worker/gamification/onStudyEvent";
 import { traitsForAchievement } from "../../../worker/gamification/traits";
 import { XP } from "../../../worker/gamification/constants";
-import { creditXp } from "../../../worker/gamification/xp";
+import {
+  creditXp,
+  ensureUserGamification,
+} from "../../../worker/gamification/xp";
+import type { AchievementDefSeed } from "../gamification-seeds";
 
 const NOW = "2026-10-29T12:00:00.000Z";
 
@@ -100,27 +104,6 @@ describe("evaluateAfterReview", () => {
       .getXpLedger()
       .filter((e) => e.idempotency_key === "unlock:reviews_1");
     expect(unlockXp).toHaveLength(1);
-  });
-
-  it("unlocks clear_due_1 when no due cards remain", async () => {
-    const env = createTestEnv();
-    seedStudyUser(env);
-    seedAcceptedCard(env, { id: "c1", due: "2026-11-01T00:00:00.000Z" });
-    env.seedReviewLog({
-      id: "rl1",
-      card_id: "c1",
-      rating: 3,
-      scheduled_days: 1,
-      elapsed_days: 0,
-      reviewed_at: NOW,
-      state_json: "{}",
-    });
-
-    const { unlocks } = await evaluateAfterReview(env.DB, "u1", {
-      reviewLogId: "rl1",
-      reviewedAt: new Date(NOW),
-    });
-    expect(unlocks.map((u) => u.id)).toContain("clear_due_1");
   });
 
   it("does not unlock plum_scholar after a single review", async () => {
@@ -237,5 +220,254 @@ describe("compositeParts", () => {
       { key: "streak_best", current: 3, target: 0 },
       { key: "reviews", current: 7, target: 0 },
     ]);
+  });
+});
+
+const FUTURE = "2026-11-01T00:00:00.000Z";
+
+function seedReview(
+  env: ReturnType<typeof createTestEnv>,
+  id: string,
+  cardId: string,
+  opts: { reviewedAt?: string; elapsedDays?: number } = {},
+) {
+  env.seedReviewLog({
+    id,
+    card_id: cardId,
+    rating: 3,
+    scheduled_days: 1,
+    elapsed_days: opts.elapsedDays ?? 0,
+    reviewed_at: opts.reviewedAt ?? NOW,
+    state_json: "{}",
+  });
+}
+
+function testDef(
+  id: string,
+  triggerKind: string,
+  threshold: number,
+  catalogVersion = 1,
+): AchievementDefSeed {
+  return {
+    id,
+    category: "test",
+    fruit_type: "apple",
+    rarity: "common",
+    trigger_kind: triggerKind,
+    threshold,
+    params_json: null,
+    title: id,
+    description: id,
+    sort_order: 9999,
+    active: 1,
+    catalog_version: catalogVersion,
+  };
+}
+
+describe("evaluateAchievements write discipline", () => {
+  it("skips completed defs and writes only changed progress", async () => {
+    const env = createTestEnv();
+    seedStudyUser(env);
+    seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    seedReview(env, "rl1", "c1");
+    const args = { reviewLogId: "rl1", reviewedAt: new Date(NOW) };
+
+    await evaluateAfterReview(env.DB, "u1", args);
+    expect(env.getProgressWrites()).toContain("reviews_1");
+
+    const afterFirst = env.getProgressWrites().length;
+    await evaluateAfterReview(env.DB, "u1", args);
+    expect(env.getProgressWrites().slice(afterFirst)).toEqual([]);
+
+    seedReview(env, "rl2", "c1");
+    const afterSecond = env.getProgressWrites().length;
+    await evaluateAfterReview(env.DB, "u1", {
+      reviewLogId: "rl2",
+      reviewedAt: new Date(NOW),
+    });
+    const writes = env.getProgressWrites().slice(afterSecond);
+    expect(writes).toContain("reviews_25");
+    expect(writes).not.toContain("reviews_1");
+  });
+});
+
+describe("clear-due day counter", () => {
+  it("unlocks clear_due_1 when no due cards remain", async () => {
+    const env = createTestEnv();
+    seedStudyUser(env);
+    seedAcceptedCard(env, { id: "c1", due: "2026-11-01T00:00:00.000Z" });
+    env.seedReviewLog({
+      id: "rl1",
+      card_id: "c1",
+      rating: 3,
+      scheduled_days: 1,
+      elapsed_days: 0,
+      reviewed_at: NOW,
+      state_json: "{}",
+    });
+
+    const unlocks = await onReviewGraded(env.DB, "u1", {
+      reviewLogId: "rl1",
+      reviewedAt: new Date(NOW),
+    });
+    expect(unlocks.map((u) => u.id)).toContain("clear_due_1");
+  });
+
+  it("counts at most one clear-due day per UTC day", async () => {
+    const env = createTestEnv();
+    seedStudyUser(env);
+    seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    seedReview(env, "rl1", "c1");
+    seedReview(env, "rl2", "c1");
+    seedReview(env, "rl3", "c1", { reviewedAt: "2026-10-30T09:00:00.000Z" });
+
+    await onReviewGraded(env.DB, "u1", {
+      reviewLogId: "rl1",
+      reviewedAt: new Date(NOW),
+    });
+    await onReviewGraded(env.DB, "u1", {
+      reviewLogId: "rl2",
+      reviewedAt: new Date(NOW),
+    });
+    expect(env.getUserGamification("u1")?.clear_due_days).toBe(1);
+
+    await onReviewGraded(env.DB, "u1", {
+      reviewLogId: "rl3",
+      reviewedAt: new Date("2026-10-30T09:00:00.000Z"),
+    });
+    expect(env.getUserGamification("u1")?.clear_due_days).toBe(2);
+  });
+
+  it("does not count a day while an accepted card is past due", async () => {
+    const env = createTestEnv();
+    seedStudyUser(env);
+    seedAcceptedCard(env, { id: "c1", due: "2026-10-28T00:00:00.000Z" });
+    seedReview(env, "rl1", "c1");
+
+    const unlocks = await onReviewGraded(env.DB, "u1", {
+      reviewLogId: "rl1",
+      reviewedAt: new Date(NOW),
+    });
+    expect(env.getUserGamification("u1")?.clear_due_days).toBe(0);
+    expect(unlocks.map((u) => u.id)).not.toContain("clear_due_1");
+  });
+});
+
+describe("new trigger kinds", () => {
+  it.each([
+    {
+      kind: "library_decks",
+      threshold: 1,
+      event: "accept" as const,
+      arrange: () => {},
+    },
+    {
+      kind: "long_reviews",
+      threshold: 1,
+      event: "review" as const,
+      arrange: (env: ReturnType<typeof createTestEnv>) =>
+        seedReview(env, "rl-long", "c1", { elapsedDays: 30 }),
+    },
+    {
+      kind: "mature_cards",
+      threshold: 1,
+      event: "review" as const,
+      arrange: (env: ReturnType<typeof createTestEnv>) =>
+        env.seedSchedule({
+          card_id: "c1",
+          due: FUTURE,
+          stability: 30,
+          difficulty: 5,
+          elapsed_days: 0,
+          scheduled_days: 21,
+          learning_steps: 0,
+          reps: 5,
+          lapses: 0,
+          state: 2,
+          last_review: NOW,
+        }),
+    },
+    {
+      kind: "level_reached",
+      threshold: 2,
+      event: "review" as const,
+      arrange: (env: ReturnType<typeof createTestEnv>) =>
+        creditXp(env.DB, "u1", 100, "test", "test:level"),
+    },
+  ])("unlocks a $kind def from a minimal fixture", async (c) => {
+    const env = createTestEnv();
+    seedStudyUser(env);
+    seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    env.seedAchievementDef(testDef(`t_${c.kind}`, c.kind, c.threshold));
+    await c.arrange(env);
+
+    const { unlocks } =
+      c.event === "accept"
+        ? await evaluateAfterAccept(env.DB, "u1", {
+            cardId: "c1",
+            cardType: "qa",
+          })
+        : await evaluateAfterReview(env.DB, "u1", {
+            reviewLogId: "rl-x",
+            reviewedAt: new Date(NOW),
+          });
+    expect(unlocks.map((u) => u.id)).toContain(`t_${c.kind}`);
+  });
+});
+
+describe("catalog versions", () => {
+  it("backdates defs newer than the user's version, keeps shipped defs live", async () => {
+    const env = createTestEnv();
+    seedStudyUser(env);
+    seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    seedReview(env, "rl1", "c1");
+    // Evaluated against catalog v1 before the catalog grew.
+    await ensureUserGamification(env.DB, "u1");
+    expect(env.getUserGamification("u1")?.catalog_version).toBe(1);
+    env.seedAchievementDef(testDef("t_history", "reviews_total", 1, 2));
+    env.seedAchievementDef(testDef("t_next", "reviews_total", 2, 2));
+
+    const first = await onReviewGraded(env.DB, "u1", {
+      reviewLogId: "rl1",
+      reviewedAt: new Date(NOW),
+    });
+    expect(first.map((u) => u.id)).toContain("reviews_1");
+    expect(first.map((u) => u.id)).not.toContain("t_history");
+    const history = env
+      .getAchievementCompletions()
+      .find((c) => c.achievement_id === "t_history");
+    expect(history?.backdated).toBe(1);
+    expect(
+      env.getXpLedger().some((e) => e.idempotency_key === "unlock:t_history"),
+    ).toBe(false);
+    expect(env.getUserGamification("u1")?.catalog_version).toBe(2);
+
+    seedReview(env, "rl2", "c1");
+    const second = await onReviewGraded(env.DB, "u1", {
+      reviewLogId: "rl2",
+      reviewedAt: new Date(NOW),
+    });
+    expect(second.map((u) => u.id)).toContain("t_next");
+  });
+
+  it("creates a brand-new user at the latest version, so nothing is backdated", async () => {
+    const env = createTestEnv();
+    env.seedAchievementDef(testDef("t_v2", "reviews_total", 1, 2));
+    seedStudyUser(env);
+    seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    seedReview(env, "rl1", "c1");
+    expect(env.getUserGamification("u1")).toBeUndefined();
+
+    const unlocks = await onReviewGraded(env.DB, "u1", {
+      reviewLogId: "rl1",
+      reviewedAt: new Date(NOW),
+    });
+    expect(unlocks.map((u) => u.id)).toEqual(
+      expect.arrayContaining(["reviews_1", "t_v2"]),
+    );
+    expect(env.getUserGamification("u1")?.catalog_version).toBe(2);
+    expect(
+      env.getAchievementCompletions().filter((c) => c.backdated === 1),
+    ).toEqual([]);
   });
 });

@@ -9,8 +9,11 @@ export async function ensureUserGamification(
     .prepare(
       `INSERT OR IGNORE INTO user_gamification (
          user_id, streak_current, streak_best, streak_day,
-         xp_total, level, display_name, board_opt_in, updated_at
-       ) VALUES (?, 0, 0, NULL, 0, 1, NULL, 0, ?)`,
+         xp_total, level, display_name, board_opt_in, updated_at, catalog_version
+       ) VALUES (
+         ?, 0, 0, NULL, 0, 1, NULL, 0, ?,
+         (SELECT COALESCE(MAX(catalog_version), 1) FROM achievement_defs WHERE active = 1)
+       )`,
     )
     .bind(userId, now)
     .run();
