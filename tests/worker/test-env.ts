@@ -2945,6 +2945,24 @@ export function createTestEnv(opts?: {
           return { success: true, meta: { changes } } as D1Result;
         } else if (
           normalized.startsWith(
+            "UPDATE cards SET status = ?, reject_reason = ?, updated_at = ? WHERE id = ? AND status = ?",
+          )
+        ) {
+          const [status, reject_reason, updated_at, id, expected] = bound as [
+            string,
+            string | null,
+            string,
+            string,
+            string,
+          ];
+          const row = cards.get(id);
+          if (row && row.status === expected) {
+            cards.set(id, { ...row, status, reject_reason, updated_at });
+            return { success: true, meta: { changes: 1 } } as D1Result;
+          }
+          return { success: true, meta: { changes: 0 } } as D1Result;
+        } else if (
+          normalized.startsWith(
             "UPDATE cards SET status = ?, updated_at = ? WHERE id = ? AND status = ?",
           )
         ) {
