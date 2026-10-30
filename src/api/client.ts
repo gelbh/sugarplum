@@ -767,6 +767,7 @@ export function completeMaterial(
 export type LlmSettingsConfigured = {
   provider: string;
   last4: string;
+  model: string | null;
   configured: true;
 };
 
@@ -784,11 +785,15 @@ export function getLlmSettings() {
   return api<LlmSettings>("/api/settings/llm");
 }
 
-export function putLlmSettings(provider: string, apiKey: string) {
+export function putLlmSettings(
+  provider: string,
+  apiKey: string,
+  model?: string,
+) {
   if (isGuest()) guestUnsupported("save LLM settings");
   return api<LlmSettingsConfigured>("/api/settings/llm", {
     method: "PUT",
-    json: { provider, apiKey },
+    json: { provider, apiKey, model },
   });
 }
 

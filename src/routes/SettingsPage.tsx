@@ -38,6 +38,10 @@ import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { ankiExportFsrsBlurb } from "../settings/ankiExportFsrsBlurb";
 import { freeGenFaqBody, freeGenIntroBlurb } from "../settings/freeGenFaq";
+import {
+  ZAI_DEFAULT_TEXT_MODEL,
+  ZAI_TEXT_MODEL_OPTIONS,
+} from "../settings/zaiModels";
 
 const DEFAULT_STUDY_FORM: StudyPrefs = {
   introBudget: 20,
@@ -51,6 +55,7 @@ const PROVIDERS = [
   { value: "openai", label: "OpenAI" },
   { value: "anthropic", label: "Anthropic" },
   { value: "google", label: "Google" },
+  { value: "zai", label: "Z.ai" },
 ] as const;
 
 function settingsQueryMessage(): {
@@ -86,6 +91,7 @@ function settingsQueryMessage(): {
 export default function SettingsPage() {
   const { mode, setMode } = useColorScheme();
   const [provider, setProvider] = useState<string>("openai");
+  const [zaiModel, setZaiModel] = useState<string>(ZAI_DEFAULT_TEXT_MODEL);
   const [apiKey, setApiKey] = useState("");
   const [current, setCurrent] = useState<LlmSettings | null>(null);
   const [studyPrefs, setStudyPrefs] = useState<StudyPrefs>(DEFAULT_STUDY_FORM);
@@ -143,7 +149,12 @@ export default function SettingsPage() {
         setAccountEmail(user.email);
         setGoogleLinked(user.google_linked === true);
         setCurrent(settings);
-        if (settings.configured) setProvider(settings.provider);
+        if (settings.configured) {
+          setProvider(settings.provider);
+          if (settings.provider === "zai" && settings.model) {
+            setZaiModel(settings.model);
+          }
+        }
         setStudyPrefs(prefs);
         setIntroBudgetInput(String(prefs.introBudget));
         setReviewBudgetInput(String(prefs.reviewBudget));
@@ -183,7 +194,11 @@ export default function SettingsPage() {
     setNotice(null);
     begin();
     try {
-      const saved = await putLlmSettings(provider, apiKey);
+      const saved = await putLlmSettings(
+        provider,
+        apiKey,
+        provider === "zai" ? zaiModel : undefined,
+      );
       setCurrent(saved);
       setApiKey("");
       setNotice("API key saved (encrypted at rest).");
@@ -634,6 +649,23 @@ export default function SettingsPage() {
                     ))}
                   </Select>
                 </FormControl>
+                {provider === "zai" ? (
+                  <FormControl fullWidth>
+                    <InputLabel id="zai-model-label">Model</InputLabel>
+                    <Select
+                      labelId="zai-model-label"
+                      label="Model"
+                      value={zaiModel}
+                      onChange={(ev) => setZaiModel(ev.target.value)}
+                    >
+                      {ZAI_TEXT_MODEL_OPTIONS.map((m) => (
+                        <MenuItem key={m.value} value={m.value}>
+                          {m.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                ) : null}
                 <TextField
                   label="API key"
                   type="password"

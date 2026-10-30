@@ -13,8 +13,40 @@ import {
 } from "./prompts";
 
 /** User-selectable BYO providers (Settings + Secrets). */
-export const USER_LLM_PROVIDERS = ["openai", "anthropic", "google"] as const;
+export const USER_LLM_PROVIDERS = [
+  "openai",
+  "anthropic",
+  "google",
+  "zai",
+] as const;
 export type UserLlmProvider = (typeof USER_LLM_PROVIDERS)[number];
+
+/** Z.ai Settings text-model allowlist (vision uses ZAI_VISION_MODEL). */
+export const ZAI_TEXT_MODELS = [
+  "glm-4.7-flash",
+  "glm-4.7-flashx",
+  "glm-4.7",
+] as const;
+export type ZaiTextModel = (typeof ZAI_TEXT_MODELS)[number];
+export const ZAI_DEFAULT_TEXT_MODEL: ZaiTextModel = "glm-4.7-flash";
+export const ZAI_VISION_MODEL = "glm-4.6v-flash" as const;
+/** Same multi-card JSON headroom as the Workers AI free path. */
+const ZAI_MAX_TOKENS = 8192;
+
+function isZaiTextModel(value: string): value is ZaiTextModel {
+  return (ZAI_TEXT_MODELS as readonly string[]).includes(value);
+}
+
+/** Resolve a zai text model id: blank → default Flash, unknown → null. */
+export function resolveZaiTextModel(
+  raw: string | null | undefined,
+): ZaiTextModel | null {
+  const trimmed = typeof raw === "string" ? raw.trim() : "";
+  if (!trimmed) return ZAI_DEFAULT_TEXT_MODEL;
+  return isZaiTextModel(trimmed) ? trimmed : null;
+}
+
+export const BYO_PROVIDERS_PHRASE = "OpenAI, Anthropic, Google, or Z.ai";
 
 /** Includes test fixture + internal platform provider. */
 export const LLM_PROVIDERS = [
@@ -162,6 +194,8 @@ export function providerRequestUrl(provider: LlmProvider): string {
       const model = "gemini-2.0-flash";
       return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
     }
+    case "zai":
+      return "https://api.z.ai/api/paas/v4/chat/completions";
     case "mock":
       throw new Error("mock provider has no network URL");
     case "workers-ai":
@@ -502,17 +536,27 @@ async function readErrorDetail(res: Response): Promise<string> {
   return detail ? `: ${detail.slice(0, 200)}` : "";
 }
 
-function openAiAdapter(): LlmAdapter {
+function openAiCompatibleAdapter(opts: {
+  requestUrl: string;
+  textModel: string;
+  visionModel: string;
+  /** Z.ai rejects `response_format` on vision models (text models only). */
+  visionJsonMode: boolean;
+  extraBody?: Record<string, unknown>;
+}): LlmAdapter {
+  const { requestUrl, textModel, visionModel, visionJsonMode, extraBody } =
+    opts;
+
   async function complete({ system, user, apiKey }: CompleteInput) {
-    const url = providerRequestUrl("openai");
-    const res = await fetch(url, {
+    const res = await fetch(requestUrl, {
       method: "POST",
       headers: {
         "content-type": "application/json",
         authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        ...extraBody,
+        model: textModel,
         temperature: 0.3,
         response_format: { type: "json_object" },
         messages: [
@@ -555,17 +599,19 @@ function openAiAdapter(): LlmAdapter {
       }
 
       const imageKey = input.imageKey ?? "material";
-      const url = providerRequestUrl("openai");
-      const res = await fetch(url, {
+      const res = await fetch(requestUrl, {
         method: "POST",
         headers: {
           "content-type": "application/json",
           authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
+          ...extraBody,
+          model: visionModel,
           temperature: 0.3,
-          response_format: { type: "json_object" },
+          ...(visionJsonMode
+            ? { response_format: { type: "json_object" } }
+            : {}),
           messages: [
             { role: "system", content: systemPromptFor(input) },
             {
@@ -598,6 +644,29 @@ function openAiAdapter(): LlmAdapter {
       return parseCardsPayload(content);
     },
   };
+}
+
+function openAiAdapter(): LlmAdapter {
+  return openAiCompatibleAdapter({
+    requestUrl: providerRequestUrl("openai"),
+    textModel: "gpt-4o-mini",
+    visionModel: "gpt-4o-mini",
+    visionJsonMode: true,
+  });
+}
+
+function zaiAdapter(textModel: ZaiTextModel): LlmAdapter {
+  return openAiCompatibleAdapter({
+    requestUrl: providerRequestUrl("zai"),
+    textModel,
+    visionModel: ZAI_VISION_MODEL,
+    visionJsonMode: false,
+    // GLM-4.7 thinks compulsorily unless disabled; default output cap is 65k.
+    extraBody: {
+      thinking: { type: "disabled" },
+      max_tokens: ZAI_MAX_TOKENS,
+    },
+  });
 }
 
 function anthropicAdapter(): LlmAdapter {
@@ -802,11 +871,19 @@ function googleAdapter(): LlmAdapter {
   };
 }
 
+export type CreateLlmAdapterOptions = {
+  /** Z.ai text model; ignored for other providers. */
+  model?: string | null;
+};
+
 /**
  * Resolve BYO / mock adapter. For platform free path use
  * `createWorkersAiAdapter(env)` (needs `env.AI`).
  */
-export function createLlmAdapter(provider: string): LlmAdapter {
+export function createLlmAdapter(
+  provider: string,
+  opts?: CreateLlmAdapterOptions,
+): LlmAdapter {
   const p = parseLlmProvider(provider);
   switch (p) {
     case "mock":
@@ -817,6 +894,12 @@ export function createLlmAdapter(provider: string): LlmAdapter {
       return anthropicAdapter();
     case "google":
       return googleAdapter();
+    case "zai":
+      // Allowlist is enforced on Settings write; a stored id later dropped
+      // from it falls back to the default instead of failing every job.
+      return zaiAdapter(
+        resolveZaiTextModel(opts?.model) ?? ZAI_DEFAULT_TEXT_MODEL,
+      );
     case "workers-ai":
       throw new Error(
         'Provider "workers-ai" requires createWorkersAiAdapter(env)',
