@@ -24,7 +24,7 @@ const unlock = (id: string, title: string): UnlockView => ({
   traits: { shine: "low", colour: "dull", status: "bruised" },
 });
 
-let enqueue: (u: UnlockView[]) => void = () => {};
+let enqueue: (u: readonly unknown[]) => void = () => {};
 function Grab() {
   enqueue = useUnlockToasts().enqueueUnlocks;
   return null;
@@ -91,10 +91,7 @@ describe("UnlockToastProvider", () => {
 
   it("ignores malformed unlock payloads", () => {
     act(() =>
-      enqueue([
-        "reviews_1" as unknown as UnlockView,
-        { title: "No traits", fruitType: "apple" } as unknown as UnlockView,
-      ]),
+      enqueue(["reviews_1", { title: "No traits", fruitType: "apple" }]),
     );
     expect(() => advance(RIPEN_DELAY_MS)).not.toThrow();
     expect(toast()).toBeNull();

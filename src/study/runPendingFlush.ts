@@ -4,7 +4,6 @@ import {
   reviewCard,
   type CardDraftView,
 } from "../api/client";
-import type { UnlockView } from "../achievements/wire";
 import { isGuest } from "../guest/session";
 import { saveDueCache } from "./dueCache";
 import { flushPendingGrades } from "./flushPendingGrades";
@@ -20,7 +19,7 @@ export type FlushSummary = {
   /** Post-flush due list when refreshed; null if refresh failed after applied > 0. */
   due: CardDraftView[] | null;
   /** Achievement unlocks from the flushed reviews (for toasts). */
-  unlocks: UnlockView[];
+  unlocks: unknown[];
 };
 
 export type RunPendingFlushDeps = {
@@ -67,10 +66,10 @@ async function runPendingFlushInner(
   const listDue =
     deps.listDue ?? (async () => (await listDueCards()).cards);
   const baseReview = deps.review ?? reviewCard;
-  const unlocks: UnlockView[] = [];
+  const unlocks: unknown[] = [];
   const review = async (cardId: string, rating: 1 | 2 | 3 | 4) => {
     const res = await baseReview(cardId, rating);
-    const got = (res as { unlocks?: UnlockView[] } | undefined)?.unlocks;
+    const got = (res as { unlocks?: unknown } | undefined)?.unlocks;
     if (Array.isArray(got)) unlocks.push(...got);
     return res;
   };

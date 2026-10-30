@@ -58,7 +58,7 @@ function isUnlockView(u: unknown): u is UnlockView {
 }
 
 type UnlockToastContextValue = {
-  enqueueUnlocks: (unlocks: UnlockView[]) => void;
+  enqueueUnlocks: (unlocks: readonly unknown[]) => void;
 };
 
 const UnlockToastContext = createContext<UnlockToastContextValue | null>(null);
@@ -75,7 +75,7 @@ export function UnlockToastProvider({ children }: { children: ReactNode }) {
     timers.current = [];
   }, []);
 
-  const enqueueUnlocks = useCallback((unlocks: UnlockView[]) => {
+  const enqueueUnlocks = useCallback((unlocks: readonly unknown[]) => {
     const valid = unlocks.filter(isUnlockView);
     if (valid.length > 0) setQueue((prev) => [...prev, ...valid]);
   }, []);
