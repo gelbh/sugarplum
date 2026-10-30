@@ -18,7 +18,6 @@ function staggerDelay(unlockedIndex: number): string {
   return `${Math.min(unlockedIndex * 40, 240)}ms`;
 }
 
-/** Sugar plum "almost there": every composite part at or above this share. */
 const NEAR_COMPLETE_RATIO = 0.8;
 
 type RowState = "unlocked" | "near" | "locked";

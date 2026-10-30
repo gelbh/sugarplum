@@ -49,7 +49,6 @@ export function mcqOptionIndexForKey(
   return index < optionCount ? index : null;
 }
 
-/** Key label for the option at `index`, or null past the digit range. */
 export function mcqOptionKey(index: number): string | null {
   return index < MCQ_KEY_LIMIT ? String(index + 1) : null;
 }
