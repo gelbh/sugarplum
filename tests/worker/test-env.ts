@@ -5,8 +5,10 @@ import {
   gamificationRun,
   initGamificationState,
   type AchievementCompletionRow,
+  type UserGamificationRow,
   type XpLedgerRow,
 } from "./gamification-test-handlers";
+import type { AchievementDefSeed } from "./gamification-seeds";
 
 /** Mirrors SQL `lower(email) LIKE '%' || lower(q) || '%'` (% and _ wildcards). */
 function emailMatchesAdminListQuery(email: string, q: string): boolean {
@@ -199,6 +201,9 @@ export type TestEnv = Env & {
   getR2: (key: string) => string | ArrayBuffer | undefined;
   getAchievementCompletions: () => AchievementCompletionRow[];
   getXpLedger: () => XpLedgerRow[];
+  seedAchievementDef: (row: AchievementDefSeed) => void;
+  getProgressWrites: () => string[];
+  getUserGamification: (userId: string) => UserGamificationRow | undefined;
 };
 
 export function createTestEnv(opts?: {
@@ -3409,6 +3414,12 @@ export function createTestEnv(opts?: {
       ...gamificationState.achievementCompletions.values(),
     ],
     getXpLedger: () => [...gamificationState.xpLedger],
+    seedAchievementDef: (row) => {
+      gamificationState.achievementDefs.set(row.id, row);
+    },
+    getProgressWrites: () => [...gamificationState.progressWrites],
+    getUserGamification: (userId) =>
+      gamificationState.userGamification.get(userId),
   };
 
   return env;

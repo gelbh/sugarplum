@@ -9,6 +9,7 @@ import { onReviewGraded, onCardAccepted } from "../../../worker/gamification/onS
 import { traitsForAchievement } from "../../../worker/gamification/traits";
 import { XP } from "../../../worker/gamification/constants";
 import { creditXp } from "../../../worker/gamification/xp";
+import type { AchievementDefSeed } from "../gamification-seeds";
 
 const NOW = "2026-10-29T12:00:00.000Z";
 
@@ -237,5 +238,160 @@ describe("compositeParts", () => {
       { key: "streak_best", current: 3, target: 0 },
       { key: "reviews", current: 7, target: 0 },
     ]);
+  });
+});
+
+const FUTURE = "2026-11-01T00:00:00.000Z";
+
+function seedReview(
+  env: ReturnType<typeof createTestEnv>,
+  id: string,
+  cardId: string,
+  opts: { reviewedAt?: string; elapsedDays?: number } = {},
+) {
+  env.seedReviewLog({
+    id,
+    card_id: cardId,
+    rating: 3,
+    scheduled_days: 1,
+    elapsed_days: opts.elapsedDays ?? 0,
+    reviewed_at: opts.reviewedAt ?? NOW,
+    state_json: "{}",
+  });
+}
+
+function testDef(
+  id: string,
+  triggerKind: string,
+  threshold: number,
+): AchievementDefSeed {
+  return {
+    id,
+    category: "test",
+    fruit_type: "apple",
+    rarity: "common",
+    trigger_kind: triggerKind,
+    threshold,
+    params_json: null,
+    title: id,
+    description: id,
+    sort_order: 9999,
+    active: 1,
+  };
+}
+
+describe("evaluateAchievements write discipline", () => {
+  it("skips completed defs and writes only changed progress", async () => {
+    const env = createTestEnv();
+    seedStudyUser(env);
+    seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    seedReview(env, "rl1", "c1");
+    const args = { reviewLogId: "rl1", reviewedAt: new Date(NOW) };
+
+    await evaluateAfterReview(env.DB, "u1", args);
+    expect(env.getProgressWrites()).toContain("reviews_1");
+
+    const afterFirst = env.getProgressWrites().length;
+    await evaluateAfterReview(env.DB, "u1", args);
+    expect(env.getProgressWrites().slice(afterFirst)).toEqual([]);
+
+    seedReview(env, "rl2", "c1");
+    const afterSecond = env.getProgressWrites().length;
+    await evaluateAfterReview(env.DB, "u1", {
+      reviewLogId: "rl2",
+      reviewedAt: new Date(NOW),
+    });
+    const writes = env.getProgressWrites().slice(afterSecond);
+    expect(writes).toContain("reviews_25");
+    expect(writes).not.toContain("reviews_1");
+  });
+});
+
+describe("clear-due day counter", () => {
+  it("counts at most one clear-due day per UTC day", async () => {
+    const env = createTestEnv();
+    seedStudyUser(env);
+    seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    seedReview(env, "rl1", "c1");
+    seedReview(env, "rl2", "c1");
+    seedReview(env, "rl3", "c1", { reviewedAt: "2026-10-30T09:00:00.000Z" });
+
+    await evaluateAfterReview(env.DB, "u1", {
+      reviewLogId: "rl1",
+      reviewedAt: new Date(NOW),
+    });
+    await evaluateAfterReview(env.DB, "u1", {
+      reviewLogId: "rl2",
+      reviewedAt: new Date(NOW),
+    });
+    expect(env.getUserGamification("u1")?.clear_due_days).toBe(1);
+
+    await evaluateAfterReview(env.DB, "u1", {
+      reviewLogId: "rl3",
+      reviewedAt: new Date("2026-10-30T09:00:00.000Z"),
+    });
+    expect(env.getUserGamification("u1")?.clear_due_days).toBe(2);
+  });
+});
+
+describe("new trigger kinds", () => {
+  it.each([
+    {
+      kind: "library_decks",
+      threshold: 1,
+      event: "accept" as const,
+      arrange: () => {},
+    },
+    {
+      kind: "long_reviews",
+      threshold: 1,
+      event: "review" as const,
+      arrange: (env: ReturnType<typeof createTestEnv>) =>
+        seedReview(env, "rl-long", "c1", { elapsedDays: 30 }),
+    },
+    {
+      kind: "mature_cards",
+      threshold: 1,
+      event: "review" as const,
+      arrange: (env: ReturnType<typeof createTestEnv>) =>
+        env.seedSchedule({
+          card_id: "c1",
+          due: FUTURE,
+          stability: 30,
+          difficulty: 5,
+          elapsed_days: 0,
+          scheduled_days: 21,
+          learning_steps: 0,
+          reps: 5,
+          lapses: 0,
+          state: 2,
+          last_review: NOW,
+        }),
+    },
+    {
+      kind: "level_reached",
+      threshold: 2,
+      event: "review" as const,
+      arrange: (env: ReturnType<typeof createTestEnv>) =>
+        creditXp(env.DB, "u1", 100, "test", "test:level"),
+    },
+  ])("unlocks a $kind def from a minimal fixture", async (c) => {
+    const env = createTestEnv();
+    seedStudyUser(env);
+    seedAcceptedCard(env, { id: "c1", due: FUTURE });
+    env.seedAchievementDef(testDef(`t_${c.kind}`, c.kind, c.threshold));
+    await c.arrange(env);
+
+    const { unlocks } =
+      c.event === "accept"
+        ? await evaluateAfterAccept(env.DB, "u1", {
+            cardId: "c1",
+            cardType: "qa",
+          })
+        : await evaluateAfterReview(env.DB, "u1", {
+            reviewLogId: "rl-x",
+            reviewedAt: new Date(NOW),
+          });
+    expect(unlocks.map((u) => u.id)).toContain(`t_${c.kind}`);
   });
 });

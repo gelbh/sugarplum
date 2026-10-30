@@ -11,12 +11,13 @@ type CardRowLike = {
   status: string;
 };
 
-type ScheduleRowLike = { card_id: string; due: string };
+type ScheduleRowLike = { card_id: string; due: string; scheduled_days: number };
 
 type ReviewLogRowLike = {
   id: string;
   card_id: string;
   reviewed_at: string;
+  elapsed_days: number;
 };
 
 export type UserGamificationRow = {
@@ -29,6 +30,8 @@ export type UserGamificationRow = {
   display_name: string | null;
   board_opt_in: number;
   updated_at: string;
+  clear_due_days: number;
+  clear_due_last_day: string | null;
 };
 
 export type AchievementProgressRow = {
@@ -66,6 +69,7 @@ export type GamificationTestState = {
   decks: Map<string, DeckRow>;
   schedules: Map<string, ScheduleRowLike>;
   reviewLogs: ReviewLogRowLike[];
+  progressWrites: string[];
 };
 
 function progressKey(userId: string, achievementId: string): string {
@@ -87,6 +91,13 @@ function userCardsForUser(state: GamificationTestState, userId: string) {
   });
 }
 
+function reviewLogsForUser(state: GamificationTestState, userId: string) {
+  return state.reviewLogs.filter((rl) => {
+    const card = state.cards.get(rl.card_id);
+    return card != null && state.decks.get(card.deck_id)?.user_id === userId;
+  });
+}
+
 export function gamificationFirst<T>(
   state: GamificationTestState,
   normalized: string,
@@ -103,19 +114,6 @@ export function gamificationFirst<T>(
           streak_current: row.streak_current,
           streak_best: row.streak_best,
           streak_day: row.streak_day,
-        } as T)
-      : null;
-  }
-  if (
-    normalized.startsWith(
-      "SELECT streak_current, streak_best FROM user_gamification",
-    )
-  ) {
-    const row = state.userGamification.get(bound[0] as string);
-    return row
-      ? ({
-          streak_current: row.streak_current,
-          streak_best: row.streak_best,
         } as T)
       : null;
   }
@@ -161,56 +159,52 @@ export function gamificationFirst<T>(
     const key = ledgerKey(userId, idempotencyKey);
     return state.xpLedgerKeys.has(key) ? ({ ok: 1 } as T) : null;
   }
-  if (
-    normalized.startsWith("SELECT COUNT(*) AS cnt FROM review_logs rl") &&
-    normalized.includes("INNER JOIN decks d")
-  ) {
-    const userId = bound[0] as string;
-    const cnt = state.reviewLogs.filter((rl) => {
-      const card = state.cards.get(rl.card_id);
-      if (!card) return false;
-      const deck = state.decks.get(card.deck_id);
-      return deck?.user_id === userId;
-    }).length;
-    return { cnt } as T;
+  if (normalized.startsWith("SELECT COUNT(*) AS reviews_total")) {
+    const logs = reviewLogsForUser(state, bound[0] as string);
+    return {
+      reviews_total: logs.length,
+      study_days_total: new Set(logs.map((l) => l.reviewed_at.slice(0, 10)))
+        .size,
+      long_reviews: logs.filter((l) => l.elapsed_days >= 30).length,
+    } as T;
   }
-  if (
-    normalized.startsWith("SELECT COUNT(*) AS cnt FROM cards c") &&
-    normalized.includes("INNER JOIN decks d") &&
-    normalized.includes("COUNT(DISTINCT c.type)")
-  ) {
-    const userId = bound[0] as string;
-    const types = new Set(
-      userCardsForUser(state, userId)
-        .filter((c) => c.status === "accepted")
-        .map((c) => c.type),
-    );
-    return { cnt: types.size } as T;
-  }
-  if (
-    normalized.startsWith("SELECT COUNT(*) AS cnt FROM cards c") &&
-    normalized.includes("INNER JOIN card_schedules s") &&
-    normalized.includes("c.status = 'accepted'")
-  ) {
-    const [userId, nowIso] = bound as [string, string];
-    const cnt = userCardsForUser(state, userId).filter((c) => {
-      if (c.status !== "accepted") return false;
-      const schedule = state.schedules.get(c.id);
-      return schedule != null && schedule.due <= nowIso;
-    }).length;
-    return { cnt } as T;
-  }
-  if (
-    normalized.startsWith("SELECT COUNT(*) AS cnt FROM cards c") &&
-    normalized.includes("INNER JOIN decks d") &&
-    normalized.includes("c.status = 'accepted'") &&
-    !normalized.includes("INNER JOIN card_schedules")
-  ) {
-    const userId = bound[0] as string;
-    const cnt = userCardsForUser(state, userId).filter(
+  if (normalized.startsWith("SELECT COUNT(*) AS accepts_total")) {
+    const accepted = userCardsForUser(state, bound[0] as string).filter(
       (c) => c.status === "accepted",
-    ).length;
-    return { cnt } as T;
+    );
+    return {
+      accepts_total: accepted.length,
+      distinct_types: new Set(accepted.map((c) => c.type)).size,
+      library_decks: new Set(accepted.map((c) => c.deck_id)).size,
+    } as T;
+  }
+  if (
+    normalized.startsWith("SELECT COALESCE(SUM(CASE WHEN s.due <= ? THEN 1")
+  ) {
+    const [nowIso, userId] = bound as [string, string];
+    const schedules = userCardsForUser(state, userId)
+      .filter((c) => c.status === "accepted")
+      .map((c) => state.schedules.get(c.id))
+      .filter((s): s is ScheduleRowLike => s != null);
+    return {
+      due_accepted: schedules.filter((s) => s.due <= nowIso).length,
+      mature_cards: schedules.filter((s) => s.scheduled_days >= 21).length,
+    } as T;
+  }
+  if (
+    normalized.startsWith(
+      "SELECT streak_current, streak_best, level, clear_due_days FROM user_gamification",
+    )
+  ) {
+    const row = state.userGamification.get(bound[0] as string);
+    return row
+      ? ({
+          streak_current: row.streak_current,
+          streak_best: row.streak_best,
+          level: row.level,
+          clear_due_days: row.clear_due_days,
+        } as T)
+      : null;
   }
   return null;
 }
@@ -300,6 +294,32 @@ export function gamificationAll<T>(
     return { results: results as T[] };
   }
   if (
+    normalized.startsWith(
+      "SELECT achievement_id FROM achievement_completions WHERE user_id =",
+    )
+  ) {
+    const userId = bound[0] as string;
+    const results = [...state.achievementCompletions.values()]
+      .filter((c) => c.user_id === userId)
+      .map((c) => ({ achievement_id: c.achievement_id }));
+    return { results: results as T[] };
+  }
+  if (
+    normalized.startsWith(
+      "SELECT achievement_id, current_value, threshold FROM achievement_progress WHERE user_id =",
+    )
+  ) {
+    const userId = bound[0] as string;
+    const results = [...state.achievementProgress.values()]
+      .filter((p) => p.user_id === userId)
+      .map(({ achievement_id, current_value, threshold }) => ({
+        achievement_id,
+        current_value,
+        threshold,
+      }));
+    return { results: results as T[] };
+  }
+  if (
     normalized.includes("SELECT DISTINCT substr(rl.reviewed_at, 1, 10) AS study_day")
   ) {
     const userId = bound[0] as string;
@@ -334,6 +354,8 @@ export function gamificationRun(
         display_name: null,
         board_opt_in: 0,
         updated_at: updatedAt,
+        clear_due_days: 0,
+        clear_due_last_day: null,
       });
       return { success: true, meta: { changes: 1 } } as D1Result;
     }
@@ -361,6 +383,29 @@ export function gamificationRun(
         updated_at: updatedAt,
       });
     }
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+  if (
+    normalized.startsWith(
+      "UPDATE user_gamification SET clear_due_days = clear_due_days + 1",
+    )
+  ) {
+    const [day, updatedAt, userId, guardDay] = bound as [
+      string,
+      string,
+      string,
+      string,
+    ];
+    const row = state.userGamification.get(userId);
+    if (!row || row.clear_due_last_day === guardDay) {
+      return { success: true, meta: { changes: 0 } } as D1Result;
+    }
+    state.userGamification.set(userId, {
+      ...row,
+      clear_due_days: row.clear_due_days + 1,
+      clear_due_last_day: day,
+      updated_at: updatedAt,
+    });
     return { success: true, meta: { changes: 1 } } as D1Result;
   }
   if (
@@ -527,6 +572,7 @@ export function gamificationRun(
       current_value: currentValue,
       threshold,
     });
+    state.progressWrites.push(achievementId);
     return { success: true, meta: { changes: 1 } } as D1Result;
   }
   if (normalized.startsWith("INSERT OR IGNORE INTO achievement_completions")) {
@@ -569,5 +615,6 @@ export function initGamificationState(
     decks,
     schedules,
     reviewLogs,
+    progressWrites: [],
   };
 }
