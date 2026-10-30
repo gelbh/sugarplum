@@ -17,7 +17,6 @@ type Props = {
   onRegenerate: () => void;
 };
 
-/** Collapsed list of uncovered material lines; picks feed a one-run regen. */
 export default function CoverageGapsPanel({
   gaps,
   selected,

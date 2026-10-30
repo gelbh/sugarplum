@@ -561,7 +561,6 @@ export function topicHintsFromLines(raw: string): string[] | undefined {
   return sanitizeTopicHints(raw.split("\n"));
 }
 
-/** Trim, drop empties, and soft-cap hint length/count. */
 export function sanitizeTopicHints(hints: string[]): string[] | undefined {
   const cleaned = hints
     .map((line) => line.trim())
