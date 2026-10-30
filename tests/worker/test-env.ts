@@ -1883,8 +1883,10 @@ export function createTestEnv(opts?: {
               return {
                 id: c.id,
                 deck_id: c.deck_id,
+                job_id: c.job_id,
                 type: c.type,
                 front_json: c.front_json,
+                provenance_json: c.provenance_json,
                 lapses: schedule.lapses,
                 difficulty: schedule.difficulty,
                 due: schedule.due,

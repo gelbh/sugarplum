@@ -1,5 +1,19 @@
 const PREVIEW_LEN = 120;
 
+/** True when the card has material/job or a non-empty provenance excerpt for regen. */
+export function cardHasRegenSource(card: {
+  job_id?: string | null;
+  provenance?: unknown;
+}): boolean {
+  if (card.job_id) return true;
+  const p = card.provenance;
+  if (p && typeof p === "object" && "excerpt" in p) {
+    const excerpt = (p as { excerpt?: unknown }).excerpt;
+    return typeof excerpt === "string" && excerpt.trim().length > 0;
+  }
+  return false;
+}
+
 /** First ~120 chars of front text/prompt from stored front_json. */
 function frontPreviewFromJson(frontJson: string): string {
   let text = frontJson;
@@ -31,6 +45,7 @@ export type WeaknessCandidate = {
   due: string;
   last_review: string | null;
   retrievability: number | null;
+  has_regen_source: boolean;
 };
 
 export type WeaknessRow = {
@@ -45,6 +60,7 @@ export type WeaknessRow = {
   due: string;
   is_due: boolean;
   retrievability: number | null;
+  has_regen_source: boolean;
 };
 
 const DEFAULT_CAP = 50;
@@ -96,5 +112,6 @@ export function rankWeakness(
       due: row.due,
       is_due: row.due <= nowIso,
       retrievability: row.retrievability,
+      has_regen_source: row.has_regen_source,
     }));
 }

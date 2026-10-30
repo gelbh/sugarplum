@@ -4,6 +4,7 @@ import {
   weaknessScore,
   type WeaknessCandidate,
 } from "../../worker/study/weakness";
+import { cardHasRegenSource } from "../../src/study/weakness";
 
 const NOW = "2026-10-28T12:00:00.000Z";
 
@@ -21,9 +22,34 @@ function candidate(
     due: "2026-11-01T00:00:00.000Z",
     last_review: "2026-10-20T00:00:00.000Z",
     retrievability: null,
+    has_regen_source: true,
     ...overrides,
   };
 }
+
+describe("cardHasRegenSource", () => {
+  it("is true with a job_id", () => {
+    expect(cardHasRegenSource({ job_id: "job-1", provenance: null })).toBe(
+      true,
+    );
+  });
+
+  it("is true with a non-empty provenance excerpt", () => {
+    expect(
+      cardHasRegenSource({ job_id: null, provenance: { excerpt: " ex " } }),
+    ).toBe(true);
+  });
+
+  it("is false with no job and a blank or missing excerpt", () => {
+    expect(cardHasRegenSource({ job_id: null, provenance: null })).toBe(false);
+    expect(
+      cardHasRegenSource({ job_id: null, provenance: { excerpt: "  " } }),
+    ).toBe(false);
+    expect(cardHasRegenSource({ job_id: null, provenance: { pages: [1] } })).toBe(
+      false,
+    );
+  });
+});
 
 describe("weaknessScore", () => {
   it("scores one Again above zero", () => {
@@ -159,5 +185,17 @@ describe("rankWeakness", () => {
       "Identify X",
     );
     expect(rows.find((r) => r.id === "future")!.is_due).toBe(false);
+  });
+
+  it("passes has_regen_source through", () => {
+    const rows = rankWeakness(
+      [
+        candidate({ id: "src", again_14d: 1, has_regen_source: true }),
+        candidate({ id: "nosrc", again_14d: 1, has_regen_source: false }),
+      ],
+      NOW,
+    );
+    expect(rows.find((r) => r.id === "src")!.has_regen_source).toBe(true);
+    expect(rows.find((r) => r.id === "nosrc")!.has_regen_source).toBe(false);
   });
 });

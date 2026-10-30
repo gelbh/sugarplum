@@ -22,7 +22,11 @@ import {
   buildDueQueueForUser,
   serializeDueCards,
 } from "./dueQueue";
-import { rankWeakness, type WeaknessCandidate } from "./weakness";
+import {
+  cardHasRegenSource,
+  rankWeakness,
+  type WeaknessCandidate,
+} from "./weakness";
 import { onReviewGraded } from "../gamification/onStudyEvent";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
@@ -30,8 +34,10 @@ type AppEnv = { Bindings: Env; Variables: AuthVariables };
 type StrugglingSqlRow = {
   id: string;
   deck_id: string;
+  job_id: string | null;
   type: string;
   front_json: string;
+  provenance_json: string | null;
   lapses: number;
   difficulty: number;
   due: string;
@@ -178,7 +184,7 @@ studyRoutes.get("/struggling", async (c) => {
 
   const { results } = await db
     .prepare(
-      `SELECT c.id, c.deck_id, c.type, c.front_json,
+      `SELECT c.id, c.deck_id, c.job_id, c.type, c.front_json, c.provenance_json,
               s.lapses, s.difficulty, s.due, s.last_review,
               s.stability, s.elapsed_days, s.scheduled_days, s.learning_steps,
               s.reps, s.state,
@@ -225,6 +231,14 @@ studyRoutes.get("/struggling", async (c) => {
     } catch {
       r = null;
     }
+    let provenance: unknown = null;
+    if (row.provenance_json) {
+      try {
+        provenance = JSON.parse(row.provenance_json);
+      } catch {
+        provenance = null;
+      }
+    }
     return {
       id: row.id,
       deck_id: row.deck_id,
@@ -237,6 +251,7 @@ studyRoutes.get("/struggling", async (c) => {
       due: row.due,
       last_review: row.last_review,
       retrievability: r,
+      has_regen_source: cardHasRegenSource({ job_id: row.job_id, provenance }),
     };
   });
 

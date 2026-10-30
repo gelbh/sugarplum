@@ -17,6 +17,7 @@ import {
   retrievability,
 } from "../study/retrievability";
 import {
+  cardHasRegenSource,
   rankWeakness,
   type WeaknessCandidate,
 } from "../study/weakness";
@@ -221,6 +222,7 @@ export function buildGuestStruggling(
       due: cardDueIso(card, nowIsoValue),
       last_review: sched?.last_review ?? tallies.last_review,
       retrievability: r,
+      has_regen_source: cardHasRegenSource(card),
     });
   }
 
