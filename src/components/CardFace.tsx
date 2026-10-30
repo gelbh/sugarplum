@@ -11,7 +11,14 @@ import {
 } from "../lib/clozeFormat";
 import { CardFaceMcqBody } from "./cardFaceMcq";
 import KeyChip from "./KeyChip";
-import { CARD_COLUMN_SX, FACE_SANS, FACE_SX, OVERLINE_SX } from "./studyFaceSx";
+import {
+  CARD_COLUMN_SX,
+  FACE_BODY_SX,
+  FACE_SANS,
+  OVERLINE_SX,
+  PROMPT_SX,
+  faceMotionSx,
+} from "./studyFaceSx";
 
 /** Normalized 0–1 hide_one box over the study image until reveal. */
 export type OcclusionMaskBox = {
@@ -48,58 +55,7 @@ type Props = {
   onGrade?: (rating: StudyRating) => boolean | Promise<boolean>;
 };
 
-const FACE_BODY_SX = {
-  overflowX: "hidden",
-  overflowY: "auto",
-  overscrollBehavior: "contain",
-  flex: 1,
-  minHeight: 0,
-  display: "flex",
-  flexDirection: "column",
-  width: "100%",
-  // Never show a focus ring on the scrollport (Study focuses the answer text instead).
-  outline: "none",
-  boxShadow: "none",
-  WebkitTapHighlightColor: "transparent",
-  "&:focus": { outline: "none" },
-  "&:focus-visible": { outline: "none" },
-} as const;
-
-const PROMPT_SX = {
-  flex: 1,
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  textAlign: "center",
-  minHeight: 0,
-} as const;
-
-function faceMotionSx(revealedFace: boolean, thisFaceVisible: boolean) {
-  return {
-    ...FACE_SX,
-    height: "100%",
-    backfaceVisibility: "hidden" as const,
-    WebkitBackfaceVisibility: "hidden" as const,
-    position: "absolute" as const,
-    inset: 0,
-    ...(revealedFace ? { transform: "rotateY(180deg)" } : {}),
-    "@media (prefers-reduced-motion: reduce)": {
-      transform: "none",
-      transition: "none",
-      opacity: thisFaceVisible ? 1 : 0,
-      visibility: thisFaceVisible ? "visible" : "hidden",
-      pointerEvents: thisFaceVisible ? "auto" : "none",
-      position: thisFaceVisible ? "relative" : "absolute",
-      inset: thisFaceVisible ? "auto" : 0,
-      width: "100%",
-      height: thisFaceVisible ? "auto" : undefined,
-      minHeight: thisFaceVisible ? 280 : undefined,
-    },
-  };
-}
-
-function FaceOverline({ label }: { label: string }) {
+export function FaceOverline({ label }: { label: string }) {
   return (
     <Box sx={{ mb: 2, flexShrink: 0 }}>
       <Typography component="div" sx={OVERLINE_SX}>
@@ -110,7 +66,7 @@ function FaceOverline({ label }: { label: string }) {
 }
 
 /** Shared host + playing-card plate (MCQ and flip faces). */
-function StudyCardPlate({
+export function StudyCardPlate({
   children,
   perspective,
   onPlateClick,
