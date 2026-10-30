@@ -77,6 +77,42 @@ Respond with JSON only as {"cards":[...]} containing exactly one card of type "$
   );
 }
 
+const REGEN_MAX_ATTEMPTS = 2;
+
+function parseRegenDraft(raw: string, type: RegenCardType): TextRegenDraft {
+  const drafts = parseCardsPayload(raw);
+  const hit = drafts.find((d) => d.type === type && typeof d.front === "string");
+  if (!hit || typeof hit.front !== "string" || typeof hit.back !== "string") {
+    throw new Error(`LLM did not return a ${type} card`);
+  }
+  if (hit.type === "mcq") {
+    const mcq = assertValidMcqOptions(hit.back, hit.options);
+    return {
+      type,
+      front: hit.front,
+      back: mcq.back,
+      options: mcq.options,
+      provenance: hit.provenance,
+    };
+  }
+  return { type, front: hit.front, back: hit.back, provenance: hit.provenance };
+}
+
+function addUsage(
+  a: LlmTokenUsage | null | undefined,
+  b: LlmTokenUsage | null | undefined,
+): LlmTokenUsage | null {
+  if (!a) return b ?? null;
+  if (!b) return a;
+  const sum = (x?: number | null, y?: number | null) =>
+    x == null && y == null ? null : (x ?? 0) + (y ?? 0);
+  return {
+    prompt_tokens: sum(a.prompt_tokens, b.prompt_tokens),
+    completion_tokens: sum(a.completion_tokens, b.completion_tokens),
+    total_tokens: sum(a.total_tokens, b.total_tokens),
+  };
+}
+
 /** Narrow sync generate for one card of a requested type. */
 export async function generateOneCard(args: {
   text: string;
@@ -87,39 +123,35 @@ export async function generateOneCard(args: {
   apiKey: string;
   provider: string;
 }): Promise<{ draft: TextRegenDraft; usage?: LlmTokenUsage | null }> {
-  const { text: raw, usage } = await args.llm.complete({
-    system: REGEN_ONE_SYSTEM_PROMPT,
-    user: regenerateOneUserPrompt({
-      text: args.text,
-      type: args.type,
-      existingFront: args.existingFront,
-      studyStruggle: args.studyStruggle,
-    }),
-    apiKey: args.apiKey,
-    provider: args.provider,
-  });
-  const drafts = parseCardsPayload(raw);
-  const hit = drafts.find(
-    (d) => d.type === args.type && typeof d.front === "string",
-  );
-  if (!hit || typeof hit.front !== "string" || typeof hit.back !== "string") {
-    throw new Error(`LLM did not return a ${args.type} card`);
-  }
-  const match: TextRegenDraft = {
+  const user = regenerateOneUserPrompt({
+    text: args.text,
     type: args.type,
-    front: hit.front,
-    back: hit.back,
-    options: hit.type === "mcq" ? hit.options : undefined,
-    provenance: hit.provenance,
-  };
-  if (match.type === "mcq") {
-    const mcq = assertValidMcqOptions(match.back, match.options);
-    return {
-      draft: { ...match, back: mcq.back, options: mcq.options },
-      usage,
-    };
+    existingFront: args.existingFront,
+    studyStruggle: args.studyStruggle,
+  });
+  let usage: LlmTokenUsage | null = null;
+  let lastError: unknown;
+  for (let attempt = 0; attempt < REGEN_MAX_ATTEMPTS; attempt++) {
+    const reask =
+      attempt === 0
+        ? ""
+        : `\n\nYour previous reply was rejected: ${
+            lastError instanceof Error ? lastError.message : String(lastError)
+          }. Respond with JSON only containing exactly one "${args.type}" card.`;
+    const res = await args.llm.complete({
+      system: REGEN_ONE_SYSTEM_PROMPT,
+      user: user + reask,
+      apiKey: args.apiKey,
+      provider: args.provider,
+    });
+    usage = addUsage(usage, res.usage);
+    try {
+      return { draft: parseRegenDraft(res.text, args.type), usage };
+    } catch (err) {
+      lastError = err;
+    }
   }
-  return { draft: match, usage };
+  throw lastError;
 }
 
 type MaterialLite = {

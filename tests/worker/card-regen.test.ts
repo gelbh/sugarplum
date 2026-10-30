@@ -138,6 +138,55 @@ function stubWorkersAiMcq(env: ReturnType<typeof createTestEnv>) {
   return run;
 }
 
+function stubWorkersAiSequence(
+  env: ReturnType<typeof createTestEnv>,
+  contents: string[],
+) {
+  let i = 0;
+  const run = vi.fn(async (_model: string, _input: unknown) => ({
+    choices: [
+      {
+        index: 0,
+        message: {
+          role: "assistant" as const,
+          content: contents[Math.min(i++, contents.length - 1)],
+        },
+        finish_reason: "stop" as const,
+      },
+    ],
+    usage: { prompt_tokens: 100, completion_tokens: 40, total_tokens: 140 },
+  }));
+  env.AI = { run } as unknown as Ai;
+  return run;
+}
+
+const VALID_MCQ = JSON.stringify({
+  cards: [
+    {
+      type: "mcq",
+      front: "Which organelle produces ATP?",
+      back: "Mitochondria",
+      options: ["Mitochondria", "Nucleus", "Ribosome", "Golgi"],
+      provenance: { pages: [1], excerpt: "Mitochondria produce ATP" },
+    },
+  ],
+});
+
+function regenRequest(env: ReturnType<typeof createTestEnv>) {
+  return app.request(
+    "/api/cards/c-mid/regen",
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `${SESSION_COOKIE}=sess-a`,
+      },
+      body: JSON.stringify({ type: "mcq" }),
+    },
+    env,
+  );
+}
+
 describe("POST /api/cards/:id/regen", () => {
   it("regenerates middle draft as mcq and leaves sibling fronts intact", async () => {
     const env = createTestEnv();
@@ -555,6 +604,44 @@ describe("POST /api/cards/:id/regen", () => {
     const expected = studyStrugglePromptSuffix({ again_14d: 1, lapses: 2 });
     expect(expected.length).toBeGreaterThan(0);
     expect(userMsg).toContain(expected);
+  });
+
+  it("retries once with the validation error when the first reply is invalid", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedThreeDrafts(env);
+    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const run = stubWorkersAiSequence(env, ["not json at all", VALID_MCQ]);
+
+    const res = await regenRequest(env);
+    expect(res.status).toBe(200);
+    expect(run).toHaveBeenCalledTimes(2);
+    const secondInput = run.mock.calls[1][1] as {
+      messages: { role: string; content: string }[];
+    };
+    const user = secondInput.messages.find((m) => m.role === "user")!.content;
+    expect(user).toMatch(/previous reply was rejected/i);
+    expect(
+      env.getUsageEvents().filter((e) => e.kind === "regen")[0],
+    ).toMatchObject({ tokens_total: 280 });
+  });
+
+  it("returns 502 JSON with the validation error after two invalid replies", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedThreeDrafts(env);
+    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const run = stubWorkersAiSequence(env, ["not json at all"]);
+
+    const res = await regenRequest(env);
+    expect(res.status).toBe(502);
+    expect(run).toHaveBeenCalledTimes(2);
+    expect(((await res.json()) as { message: string }).message).toMatch(
+      /non-JSON/,
+    );
+    expect(
+      JSON.parse(env.getCards().find((c) => c.id === "c-mid")!.front_json),
+    ).toBe("Middle front?");
   });
 });
 
