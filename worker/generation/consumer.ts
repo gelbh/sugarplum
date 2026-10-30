@@ -53,7 +53,7 @@ import { consumeFreeGenSlot } from "./quota";
 import { filterDraftsByQuality } from "./quality";
 import { harvestRuleDrafts } from "./rules";
 import { assertValidMcqOptions, type CardDraft } from "./schema";
-import { parseTopicHintsJson } from "./topic-hints";
+import { mergeTopicHints, parseTopicHintsJson } from "./topic-hints";
 import { recordGenerationUsageEventForJob } from "./usage";
 import { createWorkersAiAdapter } from "./workers-ai";
 
@@ -658,17 +658,21 @@ export async function processGenerateJob(
 
     const progressRow = await db
       .prepare(
-        "SELECT progress_json, topic_hints_json, avoid_patterns_json FROM generation_jobs WHERE id = ?",
+        "SELECT progress_json, topic_hints_json, avoid_patterns_json, run_topic_hints_json FROM generation_jobs WHERE id = ?",
       )
       .bind(jobId)
       .first<{
         progress_json: string | null;
         topic_hints_json: string | null;
         avoid_patterns_json: string | null;
+        run_topic_hints_json: string | null;
       }>();
     const freeGenCharged = isFreeGenCharged(progressRow?.progress_json);
     const startedAt = readStartedAt(progressRow?.progress_json);
-    const topicHints = parseTopicHintsJson(progressRow?.topic_hints_json);
+    const topicHints = mergeTopicHints(
+      parseTopicHintsJson(progressRow?.run_topic_hints_json),
+      parseTopicHintsJson(progressRow?.topic_hints_json),
+    );
     const avoidPatterns = parseTopicHintsJson(
       progressRow?.avoid_patterns_json,
     );

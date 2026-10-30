@@ -14,6 +14,7 @@ import {
   topicHintsPromptSuffix,
 } from "../../worker/generation/feedback-hints";
 import { generateUserPrompt } from "../../worker/generation/prompts";
+import { mergeTopicHints } from "../../worker/generation/topic-hints";
 import { createTestEnv } from "./test-env";
 
 function seedPasteOwner(env: ReturnType<typeof createTestEnv>) {
@@ -347,6 +348,57 @@ describe("topicHints consumer injection", () => {
     ).toBe(true);
   });
 
+  it("merges this run's topic hints ahead of job hints", async () => {
+    const env = createTestEnv();
+    seedPasteOwner(env);
+    env.seedMaterial({
+      id: "mat-run",
+      deck_id: "deck-a",
+      kind: "paste",
+      r2_key: "materials/deck-a/mat-run.txt",
+      filename: null,
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedR2(
+      "materials/deck-a/mat-run.txt",
+      "The brainstem contains cranial nerve nuclei that innervate the head.",
+    );
+    const jobId = await enqueueGeneration(env, {
+      materialId: "mat-run",
+      deckId: "deck-a",
+      topicHints: ["cranial nerves"],
+    });
+    const job0 = env.getGenerationJobs().find((j) => j.id === jobId)!;
+    env.seedGenerationJob({
+      ...job0,
+      run_topic_hints_json: JSON.stringify(["nuclei of the head"]),
+    });
+    const base = mockLlmAdapter();
+    const llm: LlmAdapter = {
+      generateDrafts: vi.fn(base.generateDrafts.bind(base)),
+      complete: vi.fn(base.complete.bind(base)),
+    };
+
+    await processGenerateJob(
+      env,
+      { jobId, materialId: "mat-run", deckId: "deck-a" },
+      { llm },
+    );
+
+    const suffixes = vi
+      .mocked(llm.generateDrafts)
+      .mock.calls.map(([input]) => (input.extraUserSuffix ?? "").toLowerCase());
+    expect(
+      suffixes.some((s) =>
+        s.includes("nuclei of the head; cranial nerves"),
+      ),
+    ).toBe(true);
+    const job = env.getGenerationJobs().find((j) => j.id === jobId)!;
+    expect(job.topic_hints_json).toBe(JSON.stringify(["cranial nerves"]));
+  });
+
   it("openai generate user message includes the hint phrase", async () => {
     const sampleCardsJson = JSON.stringify({
       cards: [
@@ -508,5 +560,23 @@ describe("avoidPatterns prompt wiring", () => {
 
     expect(userContent.toLowerCase()).toContain("rejected stem about cn iii");
     expect(userContent.toLowerCase()).toMatch(/avoid near-duplicates/);
+  });
+});
+
+describe("mergeTopicHints", () => {
+  it("puts selected first and keeps the selected copy on case-insensitive dupes", () => {
+    expect(
+      mergeTopicHints(["Krebs cycle", "ATP"], ["atp", "glycolysis"]),
+    ).toEqual(["Krebs cycle", "ATP", "glycolysis"]);
+  });
+
+  it("caps at 5 by dropping existing hints, never selected ones", () => {
+    expect(
+      mergeTopicHints(["s1", "s2", "s3", "s4"], ["e1", "e2"]),
+    ).toEqual(["s1", "s2", "s3", "s4", "e1"]);
+  });
+
+  it("trims and skips blank entries", () => {
+    expect(mergeTopicHints(["  ", "x "], ["", "y"])).toEqual(["x", "y"]);
   });
 });

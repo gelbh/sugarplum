@@ -14,6 +14,7 @@ import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useUnlockToasts } from "../achievements/UnlockToastProvider";
+import CoverageGapsPanel from "../components/CoverageGapsPanel";
 import DraftCardEditor from "../components/DraftCardEditor";
 import OperateSection from "../components/OperateSection";
 import JourneyRail from "../components/JourneyRail";
@@ -87,7 +88,8 @@ export default function DraftReviewPage() {
   const [dirty, setDirty] = useState(false);
   const [confirmAll, setConfirmAll] = useState(false);
   const [confirmRejectDrafts, setConfirmRejectDrafts] = useState(false);
-  const [confirmRegen, setConfirmRegen] = useState(false);
+  /** Open regen confirm with its hint payload; null when closed. */
+  const [regenHints, setRegenHints] = useState<string[] | null>(null);
   const [cardRegenBusy, setCardRegenBusy] = useState(false);
   /** When false, drop jobId from useJobProgress so the same id can remount and poll again after regen. */
   const [progressGate, setProgressGate] = useState(true);
@@ -96,6 +98,7 @@ export default function DraftReviewPage() {
     gaps: string[];
     draft_count?: number;
   } | null>(null);
+  const [selectedGaps, setSelectedGaps] = useState<string[]>([]);
   const [authReady, setAuthReady] = useState(false);
   const jobProgress = useJobProgress(authReady && progressGate ? jobId : null);
   const { begin: beginLoad, end: endLoad } = useTrackedOp("Loading drafts…");
@@ -113,6 +116,7 @@ export default function DraftReviewPage() {
     setDrafts(list);
     setIndex(0);
     setDirty(false);
+    let gaps: string[] = [];
     if (job.coverage_json) {
       try {
         const parsed = JSON.parse(job.coverage_json) as {
@@ -120,9 +124,10 @@ export default function DraftReviewPage() {
           gaps?: string[];
           draft_count?: number;
         };
+        gaps = Array.isArray(parsed.gaps) ? [...new Set(parsed.gaps)] : [];
         setCoverage({
           covered: Array.isArray(parsed.covered) ? parsed.covered : [],
-          gaps: Array.isArray(parsed.gaps) ? parsed.gaps : [],
+          gaps,
           draft_count: parsed.draft_count,
         });
       } catch {
@@ -131,6 +136,7 @@ export default function DraftReviewPage() {
     } else {
       setCoverage(null);
     }
+    setSelectedGaps((prev) => prev.filter((g) => gaps.includes(g)));
     return list;
   }, []);
 
@@ -404,10 +410,12 @@ export default function DraftReviewPage() {
     if (!jobId) return;
     setError(null);
     setNotice(null);
-    setConfirmRegen(false);
+    const hints = regenHints ?? [];
+    setRegenHints(null);
     begin();
     try {
-      await regenJob(jobId);
+      await regenJob(jobId, hints);
+      setSelectedGaps([]);
       setDrafts([]);
       setCoverage(null);
       setIndex(0);
@@ -494,6 +502,16 @@ export default function DraftReviewPage() {
           </Alert>
         ) : null}
 
+        {coverage && coverage.gaps.length > 0 ? (
+          <CoverageGapsPanel
+            gaps={coverage.gaps}
+            selected={selectedGaps}
+            onSelectedChange={setSelectedGaps}
+            disabled={jobActionDisabled}
+            onRegenerate={() => setRegenHints(selectedGaps)}
+          />
+        ) : null}
+
         {!current ? (
           <OperateSection>
             <Stack spacing={2}>
@@ -540,7 +558,7 @@ export default function DraftReviewPage() {
                 <Button
                   variant="text"
                   color="error"
-                  onClick={() => setConfirmRegen(true)}
+                  onClick={() => setRegenHints([])}
                   disabled={jobActionDisabled}
                 >
                   Regenerate
@@ -705,7 +723,7 @@ export default function DraftReviewPage() {
                 <Button
                   variant="text"
                   color="error"
-                  onClick={() => setConfirmRegen(true)}
+                  onClick={() => setRegenHints([])}
                   disabled={jobActionDisabled}
                 >
                   Regenerate
@@ -768,8 +786,8 @@ export default function DraftReviewPage() {
         </Dialog>
 
         <Dialog
-          open={confirmRegen}
-          onClose={() => !busy && setConfirmRegen(false)}
+          open={regenHints !== null}
+          onClose={() => !busy && setRegenHints(null)}
         >
           <DialogTitle>Replace all drafts for this job?</DialogTitle>
           <DialogContent>
@@ -777,10 +795,13 @@ export default function DraftReviewPage() {
               This deletes all cards from this job (drafts and any you already
               accepted into study) and starts generation over from the material.
               To change only one card, use Regenerate this card instead.
+              {regenHints && regenHints.length > 0
+                ? ` The new drafts will try to cover the ${regenHints.length} selected ${regenHints.length === 1 ? "line" : "lines"}.`
+                : ""}
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setConfirmRegen(false)} disabled={busy}>
+            <Button onClick={() => setRegenHints(null)} disabled={busy}>
               Cancel
             </Button>
             <Button
