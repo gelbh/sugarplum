@@ -186,7 +186,7 @@ export function useReviewSwipe({
     void commit(result);
   };
 
-  const releasePointer = (e: ReactPointerEvent<HTMLElement>) => {
+  const onPointerCancel = (e: ReactPointerEvent<HTMLElement>) => {
     if (pointerRef.current?.id !== e.pointerId) return;
     pointerRef.current = null;
     setDx(null);
@@ -204,8 +204,7 @@ export function useReviewSwipe({
       onPointerDown,
       onPointerMove,
       onPointerUp,
-      onPointerCancel: releasePointer,
-      onLostPointerCapture: releasePointer,
+      onPointerCancel,
       onClickCapture,
     },
     dx,
