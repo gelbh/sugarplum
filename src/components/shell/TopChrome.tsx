@@ -100,7 +100,12 @@ export default function TopChrome({ trailing }: TopChromeProps) {
           <Typography
             variant="h6"
             noWrap
-            sx={{ color: SHELL_FG, letterSpacing: 0.2 }}
+            sx={{
+              color: SHELL_FG,
+              letterSpacing: 0.2,
+              // Below 360px the wordmark collides with the trailing Streak chip.
+              "@media (max-width: 359.95px)": { display: "none" },
+            }}
           >
             Sugarplum
           </Typography>
