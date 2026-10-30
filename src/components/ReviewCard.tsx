@@ -212,7 +212,7 @@ export default function ReviewCard({
             sx={{
               position: "absolute",
               inset: 0,
-              transform: "translateY(10px) scale(0.95)",
+              transform: "translateY(18px) scale(0.95)",
               opacity: 0.55,
               pointerEvents: "none",
             }}
