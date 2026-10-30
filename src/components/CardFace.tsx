@@ -10,6 +10,7 @@ import {
   extractClozeAnswer,
 } from "../lib/clozeFormat";
 import { CardFaceMcqBody } from "./cardFaceMcq";
+import KeyChip from "./KeyChip";
 import { CARD_COLUMN_SX, FACE_SANS, FACE_SX, OVERLINE_SX } from "./studyFaceSx";
 
 /** Normalized 0–1 hide_one box over the study image until reveal. */
@@ -369,9 +370,11 @@ export default function CardFace({
                   variant="contained"
                   onClick={onShowAnswerClick}
                   disabled={!!disabled}
+                  aria-keyshortcuts="Space"
                   sx={{ fontFamily: FACE_SANS, minHeight: 44 }}
                 >
                   Show answer
+                  <KeyChip label="Space" ml={1} />
                 </Button>
               </Box>
             ) : null}
@@ -460,6 +463,7 @@ export default function CardFace({
                   variant="outlined"
                   onClick={onShowQuestionClick}
                   disabled={!!disabled}
+                  aria-keyshortcuts="Space"
                   sx={{
                     fontFamily: FACE_SANS,
                     minHeight: 44,
@@ -473,6 +477,7 @@ export default function CardFace({
                   }}
                 >
                   Show question
+                  <KeyChip label="Space" ml={1} />
                 </Button>
               </Box>
             ) : null}
