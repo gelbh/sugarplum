@@ -81,6 +81,7 @@ function EditableText({
         fullWidth
         value={value}
         placeholder={label}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onDone}
         onKeyDown={(e) => {

@@ -246,13 +246,19 @@ export default function DraftReviewPage() {
     setDirty(true);
   }
 
-  async function reloadAfterDecision(id: string, decidedNotice: string) {
+  async function reloadAfterDecision(
+    id: string,
+    decidedId: string,
+    decidedNotice: string,
+  ) {
     setNotice(decidedNotice);
     try {
       const list = await load(id);
       await refreshJourney(id, list.length);
       end();
     } catch (err) {
+      setDrafts((prev) => prev.filter((c) => c.id !== decidedId));
+      setDirty(false);
       setError(
         err instanceof ApiError ? err.message : "Could not reload drafts",
       );
@@ -278,7 +284,7 @@ export default function DraftReviewPage() {
       end(false);
       return false;
     }
-    await reloadAfterDecision(jobId, "Card accepted into study");
+    await reloadAfterDecision(jobId, current.id, "Card accepted into study");
     return true;
   }
 
@@ -294,7 +300,7 @@ export default function DraftReviewPage() {
       end(false);
       return false;
     }
-    await reloadAfterDecision(jobId, "Card rejected");
+    await reloadAfterDecision(jobId, current.id, "Card rejected");
     return true;
   }
 
