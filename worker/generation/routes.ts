@@ -4,7 +4,11 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import { requeueGeneration } from "./enqueue";
-import { buildAvoidPatternsFromRejectedFronts } from "./feedback-hints";
+import {
+  isRejectReason,
+  type RejectReason,
+} from "../../src/lib/rejectReasons";
+import { buildAvoidPatternsFromRejected } from "./feedback-hints";
 import { getFreeGenUsage } from "./quota";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
@@ -233,17 +237,22 @@ jobRoutes.post("/:id/regen", async (c) => {
 
   // Snapshot rejected fronts before wipe so the consumer can avoid them.
   const rejected = await db
-    .prepare("SELECT front_json FROM cards WHERE job_id = ? AND status = ?")
+    .prepare(
+      "SELECT front_json, reject_reason FROM cards WHERE job_id = ? AND status = ? ORDER BY updated_at DESC",
+    )
     .bind(jobId, "rejected")
-    .all<{ front_json: string }>();
-  const fronts: unknown[] = [];
+    .all<{ front_json: string; reject_reason: string | null }>();
+  const entries: { front: unknown; reason: RejectReason | null }[] = [];
   for (const row of rejected.results ?? []) {
     try {
-      fronts.push(JSON.parse(row.front_json) as unknown);
+      entries.push({
+        front: JSON.parse(row.front_json) as unknown,
+        reason: isRejectReason(row.reject_reason) ? row.reject_reason : null,
+      });
     } catch {
     }
   }
-  const patterns = buildAvoidPatternsFromRejectedFronts(fronts);
+  const patterns = buildAvoidPatternsFromRejected(entries);
   await db
     .prepare("UPDATE generation_jobs SET avoid_patterns_json = ? WHERE id = ?")
     .bind(patterns.length > 0 ? JSON.stringify(patterns) : null, jobId)

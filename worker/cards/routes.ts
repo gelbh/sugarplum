@@ -23,6 +23,7 @@ import {
   onCardAccepted,
   onCardsAccepted,
 } from "../gamification/onStudyEvent";
+import { REJECT_REASONS } from "../../src/lib/rejectReasons";
 
 const STUDY_STRUGGLE_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 
@@ -536,11 +537,32 @@ cardRoutes.post("/:id/accept", async (c) => {
   });
 });
 
+const RejectBodySchema = z.object({
+  reason: z.enum(REJECT_REASONS).nullish(),
+});
+
 cardRoutes.post("/:id/reject", async (c) => {
   const userId = await requireUser(c);
   const cardId = c.req.param("id");
   const db = getDb(c.env);
   const row = await requireOwnedCard(db, cardId, userId);
+
+  const raw = await c.req.text();
+  let body: unknown = {};
+  if (raw.trim()) {
+    try {
+      body = JSON.parse(raw);
+    } catch {
+      throw new HTTPException(400, { message: "Invalid JSON body" });
+    }
+  }
+  const parsed = RejectBodySchema.safeParse(body);
+  if (!parsed.success) {
+    throw new HTTPException(400, {
+      message: parsed.error.issues[0]?.message ?? "Invalid reject body",
+    });
+  }
+  const reason = parsed.data.reason ?? null;
 
   if (row.status !== "draft") {
     throw new HTTPException(400, {
@@ -551,9 +573,9 @@ cardRoutes.post("/:id/reject", async (c) => {
   const updatedAt = new Date().toISOString();
   const result = await db
     .prepare(
-      `UPDATE cards SET status = ?, updated_at = ? WHERE id = ? AND status = ?`,
+      `UPDATE cards SET status = ?, reject_reason = ?, updated_at = ? WHERE id = ? AND status = ?`,
     )
-    .bind("rejected", updatedAt, cardId, "draft")
+    .bind("rejected", reason, updatedAt, cardId, "draft")
     .run();
   if (!result.meta.changes) {
     throw new HTTPException(409, {
