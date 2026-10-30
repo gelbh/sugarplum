@@ -377,7 +377,11 @@ export function gamificationRun(
         updated_at: updatedAt,
         clear_due_days: 0,
         clear_due_last_day: null,
-        catalog_version: latestCatalogVersion(state),
+        catalog_version: normalized.includes(
+          "(SELECT COALESCE(MAX(catalog_version), 1) FROM achievement_defs WHERE active = 1)",
+        )
+          ? latestCatalogVersion(state)
+          : 1,
       });
       return { success: true, meta: { changes: 1 } } as D1Result;
     }
