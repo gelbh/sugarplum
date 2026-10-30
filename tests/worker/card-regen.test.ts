@@ -10,6 +10,7 @@ import { CHUNK_CHAR_LIMIT } from "../../worker/generation/pipeline";
 import {
   FREE_GEN_DAILY_CAP,
   consumeFreeGenSlot,
+  getFreeGenUsage,
 } from "../../worker/generation/quota";
 import { WORKERS_AI_MODEL } from "../../worker/generation/workers-ai";
 import { createTestEnv } from "./test-env";
@@ -624,6 +625,7 @@ describe("POST /api/cards/:id/regen", () => {
     expect(
       env.getUsageEvents().filter((e) => e.kind === "regen")[0],
     ).toMatchObject({ tokens_total: 280 });
+    expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
   });
 
   it("returns 502 JSON with the validation error after two invalid replies", async () => {
@@ -642,6 +644,7 @@ describe("POST /api/cards/:id/regen", () => {
     expect(
       JSON.parse(env.getCards().find((c) => c.id === "c-mid")!.front_json),
     ).toBe("Middle front?");
+    expect((await getFreeGenUsage(env, "user-a")).used).toBe(0);
   });
 });
 

@@ -64,3 +64,22 @@ export async function consumeFreeGenSlot(
     expirationTtl: ttlUntilNextUtcDay(now),
   });
 }
+
+/**
+ * Give back a slot reserved by consumeFreeGenSlot when the attempt produced
+ * nothing. Floors at zero.
+ *
+ * ponytail: same KV no-CAS race as consumeFreeGenSlot; a reserve before UTC
+ * midnight released after it decrements the new day's counter.
+ */
+export async function releaseFreeGenSlot(
+  env: Env,
+  userId: string,
+): Promise<void> {
+  const now = new Date();
+  const count = await readCount(env, userId, now);
+  if (count <= 0) return;
+  await env.SESSIONS.put(freeGenKvKey(userId, now), String(count - 1), {
+    expirationTtl: ttlUntilNextUtcDay(now),
+  });
+}
