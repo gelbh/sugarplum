@@ -37,6 +37,11 @@ import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { resolveCardGesture } from "../study/cardGestures";
 import {
+  hasShortcutModifier,
+  isInteractiveKeyTarget,
+  resolveStudyKey,
+} from "../study/studyKeys";
+import {
   dueScopeFromSearch,
   filterDueExcludingPending,
   loadDueCache,
@@ -128,7 +133,7 @@ function occlusionStudyParts(card: CardDraftView): OcclusionStudyParts {
   };
 }
 
-/** Study session: reveal answer, grade with FSRS (keys 1-4). Code-led MUI. */
+/** Study session: reveal answer, grade with FSRS (keys 1-4 or arrows; Space flips). Code-led MUI. */
 export default function StudyPage() {
   const [queue, setQueue] = useState<CardDraftView[]>([]);
   const [revealed, setRevealed] = useState(false);
@@ -483,23 +488,41 @@ export default function StudyPage() {
         toggleZen();
         return;
       }
-      if (isMcqCard(current) || !revealed || busyRef.current || !current)
-        return;
-      const map: Record<string, StudyRating> = {
-        "1": 1,
-        "2": 2,
-        "3": 3,
-        "4": 4,
-      };
-      const rating = map[e.key];
-      if (!rating) return;
-      e.preventDefault();
-      void onGrade(rating);
+      if (e.repeat || hasShortcutModifier(e)) return;
+      if (isMcqCard(current) || busyRef.current || !current) return;
+      const action = resolveStudyKey(e.key, revealed);
+      switch (action.type) {
+        case "flip":
+          if (isInteractiveKeyTarget(e.target)) return;
+          e.preventDefault();
+          if (revealed) flipBack();
+          else reveal();
+          return;
+        case "grade":
+          e.preventDefault();
+          void onGrade(action.rating);
+          return;
+        case "none":
+          return;
+        default: {
+          const unhandled: never = action;
+          void unhandled;
+        }
+      }
     }
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [current, leaveStudy, onGrade, ready, revealed, toggleZen]);
+  }, [
+    current,
+    flipBack,
+    leaveStudy,
+    onGrade,
+    ready,
+    reveal,
+    revealed,
+    toggleZen,
+  ]);
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     ensureFullscreenIfNeeded();
