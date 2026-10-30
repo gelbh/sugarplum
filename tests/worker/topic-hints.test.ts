@@ -348,6 +348,57 @@ describe("topicHints consumer injection", () => {
     ).toBe(true);
   });
 
+  it("merges one-run message topic hints ahead of job hints", async () => {
+    const env = createTestEnv();
+    seedPasteOwner(env);
+    env.seedMaterial({
+      id: "mat-run",
+      deck_id: "deck-a",
+      kind: "paste",
+      r2_key: "materials/deck-a/mat-run.txt",
+      filename: null,
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedR2(
+      "materials/deck-a/mat-run.txt",
+      "The brainstem contains cranial nerve nuclei that innervate the head.",
+    );
+    const jobId = await enqueueGeneration(env, {
+      materialId: "mat-run",
+      deckId: "deck-a",
+      topicHints: ["cranial nerves"],
+    });
+    const base = mockLlmAdapter();
+    const llm: LlmAdapter = {
+      generateDrafts: vi.fn(base.generateDrafts.bind(base)),
+      complete: vi.fn(base.complete.bind(base)),
+    };
+
+    await processGenerateJob(
+      env,
+      {
+        jobId,
+        materialId: "mat-run",
+        deckId: "deck-a",
+        topicHints: ["nuclei of the head"],
+      },
+      { llm },
+    );
+
+    const suffixes = vi
+      .mocked(llm.generateDrafts)
+      .mock.calls.map(([input]) => (input.extraUserSuffix ?? "").toLowerCase());
+    expect(
+      suffixes.some((s) =>
+        s.includes("nuclei of the head; cranial nerves"),
+      ),
+    ).toBe(true);
+    const job = env.getGenerationJobs().find((j) => j.id === jobId)!;
+    expect(job.topic_hints_json).toBe(JSON.stringify(["cranial nerves"]));
+  });
+
   it("openai generate user message includes the hint phrase", async () => {
     const sampleCardsJson = JSON.stringify({
       cards: [

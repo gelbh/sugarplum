@@ -558,8 +558,12 @@ export const MAX_TOPIC_HINT_CHARS = 200;
 
 /** One non-empty line per hint; strips empties and soft-caps length/count. */
 export function topicHintsFromLines(raw: string): string[] | undefined {
-  const cleaned = raw
-    .split("\n")
+  return sanitizeTopicHints(raw.split("\n"));
+}
+
+/** Trim, drop empties, and soft-cap hint length/count. */
+export function sanitizeTopicHints(hints: string[]): string[] | undefined {
+  const cleaned = hints
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => line.slice(0, MAX_TOPIC_HINT_CHARS))
@@ -629,10 +633,9 @@ export function getJob(jobId: string) {
 }
 
 /** Wipe all job cards (including accepted), reset to queued, and requeue generation. */
-export function regenJob(jobId: string, topicHints?: string[]) {
+export function regenJob(jobId: string, topicHints: string[] = []) {
   if (isGuest()) guestUnsupported("regenerate cards");
-  // Gap lines never contain newlines, so the line sanitizer applies as-is.
-  const hints = topicHintsFromLines((topicHints ?? []).join("\n"));
+  const hints = sanitizeTopicHints(topicHints);
   return api<GenerationJob>(`/api/jobs/${jobId}/regen`, {
     method: "POST",
     ...(hints ? { json: { topicHints: hints } } : {}),

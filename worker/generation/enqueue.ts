@@ -7,6 +7,8 @@ export type GenerateQueueMessage = {
   jobId: string;
   materialId: string;
   deckId: string;
+  /** One-run hints (regen gap picks), merged ahead of the job's `topic_hints_json`. */
+  topicHints?: string[];
 };
 
 function newId(): string {

@@ -53,7 +53,7 @@ import { consumeFreeGenSlot } from "./quota";
 import { filterDraftsByQuality } from "./quality";
 import { harvestRuleDrafts } from "./rules";
 import { assertValidMcqOptions, type CardDraft } from "./schema";
-import { parseTopicHintsJson } from "./topic-hints";
+import { mergeTopicHints, parseTopicHintsJson } from "./topic-hints";
 import { recordGenerationUsageEventForJob } from "./usage";
 import { createWorkersAiAdapter } from "./workers-ai";
 
@@ -668,7 +668,10 @@ export async function processGenerateJob(
       }>();
     const freeGenCharged = isFreeGenCharged(progressRow?.progress_json);
     const startedAt = readStartedAt(progressRow?.progress_json);
-    const topicHints = parseTopicHintsJson(progressRow?.topic_hints_json);
+    const topicHints = mergeTopicHints(
+      message.topicHints ?? [],
+      parseTopicHintsJson(progressRow?.topic_hints_json),
+    );
     const avoidPatterns = parseTopicHintsJson(
       progressRow?.avoid_patterns_json,
     );

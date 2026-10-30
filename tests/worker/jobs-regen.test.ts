@@ -465,32 +465,58 @@ describe("POST /api/jobs/:id/regen", () => {
     );
   }
 
-  it("merges selected topicHints ahead of existing job hints and requeues", async () => {
+  it("sends selected topicHints on the queue message for one run without persisting them", async () => {
     const env = createTestEnv();
     seedOwner(env);
     seedNeedsReviewJob(env);
     env.seedGenerationJob({
       ...env.getGenerationJobs()[0]!,
-      topic_hints_json: JSON.stringify(["B", "a"]),
+      topic_hints_json: JSON.stringify(["B"]),
     });
 
     const res = await regenWithBody(
       env,
-      JSON.stringify({ topicHints: ["A", "Gap two"] }),
+      JSON.stringify({ topicHints: [" A ", "Gap two"] }),
     );
 
     expect(res.status).toBe(200);
     const job = env.getGenerationJobs()[0]!;
     expect(job.status).toBe("queued");
-    expect(job.topic_hints_json).toBe(JSON.stringify(["A", "Gap two", "B"]));
+    expect(job.topic_hints_json).toBe(JSON.stringify(["B"]));
     expect(JSON.parse(job.avoid_patterns_json as string)).toContain("Rejected?");
-    expect(env.getQueueMessages()).toHaveLength(1);
+    expect(env.getQueueMessages()).toEqual([
+      {
+        jobId: "job-a",
+        materialId: "mat-a",
+        deckId: "deck-a",
+        topicHints: ["A", "Gap two"],
+      },
+    ]);
+  });
+
+  it.each([
+    ["empty object", "{}"],
+    ["empty hints", JSON.stringify({ topicHints: [] })],
+  ])("treats %s like a bodyless regen", async (_label, body) => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedNeedsReviewJob(env);
+
+    const res = await regenWithBody(env, body);
+
+    expect(res.status).toBe(200);
+    expect(env.getQueueMessages()).toEqual([
+      { jobId: "job-a", materialId: "mat-a", deckId: "deck-a" },
+    ]);
   });
 
   it.each([
     ["too many hints", JSON.stringify({ topicHints: ["a", "b", "c", "d", "e", "f"] })],
     ["over-length hint", JSON.stringify({ topicHints: ["x".repeat(201)] })],
     ["non-array hints", JSON.stringify({ topicHints: "a" })],
+    ["array body", "[]"],
+    ["number body", "42"],
+    ["null body", "null"],
     ["malformed JSON", "{not json"],
   ])("returns 400 for %s without touching the job", async (_label, body) => {
     const env = createTestEnv();

@@ -10,11 +10,7 @@ import {
 } from "../../src/lib/rejectReasons";
 import { buildAvoidPatternsFromRejected } from "./feedback-hints";
 import { getFreeGenUsage } from "./quota";
-import {
-  mergeTopicHints,
-  normalizeTopicHints,
-  parseTopicHintsJson,
-} from "./topic-hints";
+import { normalizeTopicHints } from "./topic-hints";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -217,14 +213,14 @@ jobRoutes.post("/:id/regen", async (c) => {
 
   const row = await db
     .prepare(
-      `SELECT j.id, j.material_id, j.status, j.error, j.coverage_json, j.progress_json, j.created_at, j.finished_at, j.topic_hints_json, m.deck_id
+      `SELECT j.id, j.material_id, j.status, j.error, j.coverage_json, j.progress_json, j.created_at, j.finished_at, m.deck_id
        FROM generation_jobs j
        INNER JOIN materials m ON m.id = j.material_id
        INNER JOIN decks d ON d.id = m.deck_id
        WHERE j.id = ? AND d.user_id = ?`,
     )
     .bind(jobId, userId)
-    .first<JobPollRow & { deck_id: string; topic_hints_json: string | null }>();
+    .first<JobPollRow & { deck_id: string }>();
 
   if (!row) throw new HTTPException(404, { message: "Job not found" });
 
@@ -238,9 +234,12 @@ jobRoutes.post("/:id/regen", async (c) => {
     } catch {
       throw new HTTPException(400, { message: "Invalid JSON body" });
     }
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      throw new HTTPException(400, { message: "Invalid regen body" });
+    }
     try {
       selectedHints = normalizeTopicHints(
-        (body as { topicHints?: unknown } | null)?.topicHints,
+        (body as { topicHints?: unknown }).topicHints,
       );
     } catch (err) {
       throw new HTTPException(400, {
@@ -279,24 +278,10 @@ jobRoutes.post("/:id/regen", async (c) => {
     }
   }
   const patterns = buildAvoidPatternsFromRejected(entries);
-  const avoidJson = patterns.length > 0 ? JSON.stringify(patterns) : null;
-  if (selectedHints) {
-    const merged = mergeTopicHints(
-      selectedHints,
-      parseTopicHintsJson(row.topic_hints_json),
-    );
-    await db
-      .prepare(
-        "UPDATE generation_jobs SET avoid_patterns_json = ?, topic_hints_json = ? WHERE id = ?",
-      )
-      .bind(avoidJson, JSON.stringify(merged), jobId)
-      .run();
-  } else {
-    await db
-      .prepare("UPDATE generation_jobs SET avoid_patterns_json = ? WHERE id = ?")
-      .bind(avoidJson, jobId)
-      .run();
-  }
+  await db
+    .prepare("UPDATE generation_jobs SET avoid_patterns_json = ? WHERE id = ?")
+    .bind(patterns.length > 0 ? JSON.stringify(patterns) : null, jobId)
+    .run();
 
   await db.prepare("DELETE FROM cards WHERE job_id = ?").bind(jobId).run();
 
@@ -305,6 +290,7 @@ jobRoutes.post("/:id/regen", async (c) => {
       jobId: row.id,
       materialId: row.material_id,
       deckId: row.deck_id,
+      ...(selectedHints ? { topicHints: selectedHints } : {}),
     });
   } catch (err) {
     const finishedAt = new Date().toISOString();

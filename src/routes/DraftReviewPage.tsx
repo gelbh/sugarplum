@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import Accordion from "@mui/material/Accordion";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import AccordionSummary from "@mui/material/AccordionSummary";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
 import Container from "@mui/material/Container";
 import Dialog from "@mui/material/Dialog";
@@ -14,17 +10,16 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useUnlockToasts } from "../achievements/UnlockToastProvider";
+import CoverageGapsPanel from "../components/CoverageGapsPanel";
 import DraftCardEditor from "../components/DraftCardEditor";
 import OperateSection from "../components/OperateSection";
 import JourneyRail from "../components/JourneyRail";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import {
   ApiError,
@@ -33,7 +28,6 @@ import {
   getJob,
   getJourney,
   listJobDrafts,
-  MAX_TOPIC_HINTS,
   me,
   patchCard,
   asRegenType,
@@ -94,7 +88,8 @@ export default function DraftReviewPage() {
   const [dirty, setDirty] = useState(false);
   const [confirmAll, setConfirmAll] = useState(false);
   const [confirmRejectDrafts, setConfirmRejectDrafts] = useState(false);
-  const [confirmRegen, setConfirmRegen] = useState(false);
+  /** Open regen confirm with its hint payload; null when closed. */
+  const [regenHints, setRegenHints] = useState<string[] | null>(null);
   const [cardRegenBusy, setCardRegenBusy] = useState(false);
   /** When false, drop jobId from useJobProgress so the same id can remount and poll again after regen. */
   const [progressGate, setProgressGate] = useState(true);
@@ -121,7 +116,7 @@ export default function DraftReviewPage() {
     setDrafts(list);
     setIndex(0);
     setDirty(false);
-    setSelectedGaps([]);
+    let gaps: string[] = [];
     if (job.coverage_json) {
       try {
         const parsed = JSON.parse(job.coverage_json) as {
@@ -129,9 +124,10 @@ export default function DraftReviewPage() {
           gaps?: string[];
           draft_count?: number;
         };
+        gaps = Array.isArray(parsed.gaps) ? [...new Set(parsed.gaps)] : [];
         setCoverage({
           covered: Array.isArray(parsed.covered) ? parsed.covered : [],
-          gaps: Array.isArray(parsed.gaps) ? [...new Set(parsed.gaps)] : [],
+          gaps,
           draft_count: parsed.draft_count,
         });
       } catch {
@@ -140,6 +136,7 @@ export default function DraftReviewPage() {
     } else {
       setCoverage(null);
     }
+    setSelectedGaps((prev) => prev.filter((g) => gaps.includes(g)));
     return list;
   }, []);
 
@@ -413,10 +410,11 @@ export default function DraftReviewPage() {
     if (!jobId) return;
     setError(null);
     setNotice(null);
-    setConfirmRegen(false);
+    const hints = regenHints ?? [];
+    setRegenHints(null);
     begin();
     try {
-      await regenJob(jobId, selectedGaps);
+      await regenJob(jobId, hints);
       setSelectedGaps([]);
       setDrafts([]);
       setCoverage(null);
@@ -505,79 +503,13 @@ export default function DraftReviewPage() {
         ) : null}
 
         {coverage && coverage.gaps.length > 0 ? (
-          <Accordion disableGutters variant="outlined">
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon />}
-              aria-controls="coverage-gaps-content"
-              id="coverage-gaps-header"
-            >
-              <Typography variant="body2">
-                Not covered ({coverage.gaps.length})
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails id="coverage-gaps-content">
-              <Typography variant="caption" color="text.secondary">
-                Lines no draft covered when this job was generated. Pick up to{" "}
-                {MAX_TOPIC_HINTS} to steer a regeneration.
-              </Typography>
-              <Stack
-                component="ul"
-                spacing={0.5}
-                sx={{ listStyle: "none", m: 0, mt: 1, p: 0 }}
-              >
-                {coverage.gaps.map((gap) => {
-                  const checked = selectedGaps.includes(gap);
-                  return (
-                    <li key={gap}>
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            size="small"
-                            checked={checked}
-                            disabled={
-                              busy ||
-                              (!checked &&
-                                selectedGaps.length >= MAX_TOPIC_HINTS)
-                            }
-                            onChange={() =>
-                              setSelectedGaps((prev) =>
-                                checked
-                                  ? prev.filter((g) => g !== gap)
-                                  : [...prev, gap],
-                              )
-                            }
-                          />
-                        }
-                        label={
-                          <Typography
-                            variant="body2"
-                            title={gap}
-                            sx={{
-                              display: "-webkit-box",
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: "vertical",
-                              overflow: "hidden",
-                            }}
-                          >
-                            {gap}
-                          </Typography>
-                        }
-                      />
-                    </li>
-                  );
-                })}
-              </Stack>
-              <Button
-                variant="outlined"
-                size="small"
-                sx={{ mt: 1 }}
-                disabled={selectedGaps.length === 0 || jobActionDisabled}
-                onClick={() => setConfirmRegen(true)}
-              >
-                Regenerate covering selected ({selectedGaps.length})
-              </Button>
-            </AccordionDetails>
-          </Accordion>
+          <CoverageGapsPanel
+            gaps={coverage.gaps}
+            selected={selectedGaps}
+            onSelectedChange={setSelectedGaps}
+            disabled={jobActionDisabled}
+            onRegenerate={() => setRegenHints(selectedGaps)}
+          />
         ) : null}
 
         {!current ? (
@@ -626,7 +558,7 @@ export default function DraftReviewPage() {
                 <Button
                   variant="text"
                   color="error"
-                  onClick={() => setConfirmRegen(true)}
+                  onClick={() => setRegenHints([])}
                   disabled={jobActionDisabled}
                 >
                   Regenerate
@@ -791,7 +723,7 @@ export default function DraftReviewPage() {
                 <Button
                   variant="text"
                   color="error"
-                  onClick={() => setConfirmRegen(true)}
+                  onClick={() => setRegenHints([])}
                   disabled={jobActionDisabled}
                 >
                   Regenerate
@@ -854,8 +786,8 @@ export default function DraftReviewPage() {
         </Dialog>
 
         <Dialog
-          open={confirmRegen}
-          onClose={() => !busy && setConfirmRegen(false)}
+          open={regenHints !== null}
+          onClose={() => !busy && setRegenHints(null)}
         >
           <DialogTitle>Replace all drafts for this job?</DialogTitle>
           <DialogContent>
@@ -863,13 +795,13 @@ export default function DraftReviewPage() {
               This deletes all cards from this job (drafts and any you already
               accepted into study) and starts generation over from the material.
               To change only one card, use Regenerate this card instead.
-              {selectedGaps.length > 0
-                ? ` The new drafts will try to cover the ${selectedGaps.length} selected ${selectedGaps.length === 1 ? "line" : "lines"}.`
+              {regenHints && regenHints.length > 0
+                ? ` The new drafts will try to cover the ${regenHints.length} selected ${regenHints.length === 1 ? "line" : "lines"}.`
                 : ""}
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setConfirmRegen(false)} disabled={busy}>
+            <Button onClick={() => setRegenHints(null)} disabled={busy}>
               Cancel
             </Button>
             <Button
