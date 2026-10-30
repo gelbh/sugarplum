@@ -174,9 +174,6 @@ export default function SettingsPage() {
       );
       setCurrent(saved);
       setApiKey("");
-      if (saved.provider === "zai" && saved.model) {
-        setZaiModel(saved.model);
-      }
       setNotice("API key saved (encrypted at rest).");
       end();
     } catch (err) {
@@ -511,13 +508,7 @@ export default function SettingsPage() {
                     labelId="provider-label"
                     label="Provider"
                     value={provider}
-                    onChange={(ev) => {
-                      const next = ev.target.value;
-                      setProvider(next);
-                      if (next === "zai") {
-                        setZaiModel(ZAI_DEFAULT_TEXT_MODEL);
-                      }
-                    }}
+                    onChange={(ev) => setProvider(ev.target.value)}
                   >
                     {PROVIDERS.map((p) => (
                       <MenuItem key={p.value} value={p.value}>

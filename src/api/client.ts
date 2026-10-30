@@ -791,11 +791,7 @@ export function putLlmSettings(
   if (isGuest()) guestUnsupported("save LLM settings");
   return api<LlmSettingsConfigured>("/api/settings/llm", {
     method: "PUT",
-    json: {
-      provider,
-      apiKey,
-      ...(model != null && model !== "" ? { model } : {}),
-    },
+    json: { provider, apiKey, model },
   });
 }
 
