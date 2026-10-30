@@ -16,6 +16,7 @@ import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import TodayIcon from "@mui/icons-material/Today";
+import { useUnlockToasts } from "../achievements/UnlockToastProvider";
 import CardFace, { type OcclusionStudyFace } from "../components/CardFace";
 import GradeButtons from "../components/GradeButtons";
 import {
@@ -149,6 +150,7 @@ export default function StudyPage() {
   }
   const { zen, toggleZen, exitZen, ensureFullscreenIfNeeded } =
     useStudyZenMode();
+  const { enqueueUnlocks } = useUnlockToasts();
 
   const leaveStudy = useCallback(() => {
     exitZen();
@@ -407,9 +409,12 @@ export default function StudyPage() {
       }
 
       try {
-        await reviewCard(current.id, rating, {
+        const result = await reviewCard(current.id, rating, {
           localDay: clientLocalDay(),
         });
+        if (result.unlocks?.length) {
+          enqueueUnlocks(result.unlocks);
+        }
         advanceAfterGrade(fromMcq);
         end();
         return true;
@@ -429,6 +434,7 @@ export default function StudyPage() {
       begin,
       current,
       end,
+      enqueueUnlocks,
       offlineCopy,
       refreshPendingCount,
       revealed,

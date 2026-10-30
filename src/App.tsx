@@ -18,6 +18,8 @@ import TodayPage from "./routes/TodayPage";
 import AdminPage from "./routes/AdminPage";
 import AdminUserPage from "./routes/AdminUserPage";
 import { subscribeLocation } from "./nav/navigate";
+import { UnlockToastProvider } from "./achievements/UnlockToastProvider";
+import AchievementsPage from "./routes/AchievementsPage";
 import { StudyChromeProvider } from "./study/StudyChromeContext";
 
 const SUBJECT_PATH = /^\/library\/subjects\/([^/]+)\/?$/;
@@ -35,7 +37,9 @@ function bare(page: ReactNode) {
 export default function App() {
   return (
     <StudyChromeProvider>
-      <AppInner />
+      <UnlockToastProvider>
+        <AppInner />
+      </UnlockToastProvider>
     </StudyChromeProvider>
   );
 }
@@ -69,6 +73,7 @@ function AppInner() {
   }
   if (path === "/library") return shell(<LibraryPage />);
   if (path === "/settings") return shell(<SettingsPage />);
+  if (path === "/achievements") return shell(<AchievementsPage />);
   // Remount when search changes so scoped study does not freeze the old filter.
   if (path === "/study") {
     return shell(<StudyPage key={loc.search || "global"} />);
