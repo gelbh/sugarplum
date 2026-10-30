@@ -1,6 +1,12 @@
 const MAX_PATTERN_LEN = 80;
 const MAX_PATTERNS = 8;
 
+/** Optional generate-prompt suffix when the job has topic hints. */
+export function topicHintsPromptSuffix(hints: string[]): string {
+  if (hints.length === 0) return "";
+  return `You must attempt cards covering each of these topics if grounded in the material; do not invent ungrounded facts: ${hints.join("; ")}.`;
+}
+
 /** Build capped avoid-pattern stems from rejected card fronts. */
 export function buildAvoidPatternsFromRejectedFronts(
   fronts: unknown[],
@@ -30,15 +36,6 @@ export function avoidPatternsPromptSuffix(patterns: string[]): string {
   return `Avoid near-duplicates of these rejected stems; do not invent ungrounded facts: ${patterns.join("; ")}.`;
 }
 
-/** Append avoid-patterns instruction when patterns are present. */
-export function appendAvoidPatternsSuffix(
-  prompt: string,
-  patterns: string[],
-): string {
-  const suffix = avoidPatternsPromptSuffix(patterns);
-  return suffix ? `${prompt}\n\n${suffix}` : prompt;
-}
-
 /** Compact clarity/atomicity nudge when the card has recent Again or lapses. */
 export function studyStrugglePromptSuffix(ctx: {
   again_14d: number;
@@ -46,4 +43,26 @@ export function studyStrugglePromptSuffix(ctx: {
 }): string {
   if (ctx.again_14d < 1 && ctx.lapses < 1) return "";
   return "This card has been struggling in study. Prefer clearer wording and atomic facts; keep one idea per card.";
+}
+
+/** Compose optional user-prompt suffixes in fixed order: topic → avoid → struggle. */
+export function buildExtraUserSuffix(parts: {
+  topicHints?: string[];
+  avoidPatterns?: string[];
+  studyStruggle?: { again_14d: number; lapses: number };
+}): string {
+  const chunks: string[] = [];
+  const topic = topicHintsPromptSuffix(parts.topicHints ?? []);
+  if (topic) chunks.push(topic);
+  const avoid = avoidPatternsPromptSuffix(parts.avoidPatterns ?? []);
+  if (avoid) chunks.push(avoid);
+  if (parts.studyStruggle) {
+    const struggle = studyStrugglePromptSuffix(parts.studyStruggle);
+    if (struggle) chunks.push(struggle);
+  }
+  return chunks.join("\n\n");
+}
+
+export function appendExtraUserSuffix(prompt: string, suffix: string): string {
+  return suffix ? `${prompt}\n\n${suffix}` : prompt;
 }
