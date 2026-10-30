@@ -51,7 +51,6 @@ type FaceProps = {
   onChange: (next: DraftEditorChange) => void;
 };
 
-/** Read mode looks like Study text; tap turns it into an in-face input. */
 function EditableText({
   label,
   value,
@@ -125,7 +124,6 @@ function EditableText({
   );
 }
 
-/** Qa / cloze / image_label / diagram: Study flip faces with tap-to-edit text. */
 export function TextReviewFace({ card, disabled, onChange }: FaceProps) {
   const [revealed, setRevealed] = useState(false);
   const [editing, setEditing] = useState<"front" | "back" | null>(null);
@@ -226,7 +224,6 @@ export function TextReviewFace({ card, disabled, onChange }: FaceProps) {
   );
 }
 
-/** Occlusion draft front: image, prompt and a dialog to edit hidden regions. */
 export function OcclusionReviewFace({ card, disabled, onChange }: FaceProps) {
   const fullScreen = useMediaQuery((theme: Theme) =>
     theme.breakpoints.down("sm"),

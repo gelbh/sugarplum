@@ -43,7 +43,6 @@ export type ReviewCardProps = {
   card: CardDraftView;
   remaining: number;
   disabled?: boolean;
-  /** Decorative stack edge behind the card when more drafts remain. */
   stackBehind: boolean;
   regen: { busy: boolean; disabled: boolean; onClick: () => void };
   onChange: (next: DraftEditorChange) => void;
@@ -142,7 +141,6 @@ function RoundAction({
   );
 }
 
-/** Draft review card on the stage: Study plate, edit in place, swipe or tap to decide. */
 export default function ReviewCard({
   card,
   remaining,
