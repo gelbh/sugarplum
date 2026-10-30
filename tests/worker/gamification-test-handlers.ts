@@ -258,6 +258,8 @@ export function gamificationAll<T>(
           title: d.title,
           description: d.description,
           sort_order: d.sort_order,
+          trigger_kind: d.trigger_kind,
+          params_json: d.params_json,
           def_threshold: d.threshold,
           progress_current: progress?.current_value ?? null,
           progress_threshold: progress?.threshold ?? null,

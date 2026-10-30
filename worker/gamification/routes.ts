@@ -5,6 +5,12 @@ import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import { backfillUser } from "./backfill";
 import type { Rarity } from "./constants";
+import {
+  compositeParts,
+  countReviewsTotal,
+  type CompositePart,
+  type TriggerKind,
+} from "./evaluate";
 import { traitsForAchievement, type FruitTraits } from "./traits";
 import { ensureUserGamification } from "./xp";
 
@@ -28,6 +34,8 @@ type AchievementListRow = {
   title: string;
   description: string;
   sort_order: number;
+  trigger_kind: TriggerKind;
+  params_json: string | null;
   progress_current: number | null;
   progress_threshold: number | null;
   def_threshold: number | null;
@@ -60,7 +68,11 @@ export type AchievementItem = {
     description: string;
     sortOrder: number;
   };
-  progress: { currentValue: number; threshold: number } | null;
+  progress: {
+    currentValue: number;
+    threshold: number;
+    parts?: CompositePart[];
+  } | null;
   completedAt: string | null;
   traits: FruitTraits;
 };
@@ -149,7 +161,8 @@ gamificationRoutes.get("/achievements", async (c) => {
   const { results } = await db
     .prepare(
       `SELECT d.id, d.category, d.fruit_type, d.rarity, d.title, d.description,
-              d.sort_order, d.threshold AS def_threshold,
+              d.sort_order, d.trigger_kind, d.params_json,
+              d.threshold AS def_threshold,
               p.current_value AS progress_current,
               p.threshold AS progress_threshold,
               c.completed_at
@@ -164,8 +177,24 @@ gamificationRoutes.get("/achievements", async (c) => {
     .bind(userId, userId)
     .all<AchievementListRow>();
 
-  const items: AchievementItem[] = (results ?? []).map((row) => {
+  const rows = results ?? [];
+  const needsParts = rows.some(
+    (r) => r.trigger_kind === "composite" && r.completed_at == null,
+  );
+  const partMetrics = needsParts
+    ? {
+        streakBest: (await loadGamification(db, userId)).streak_best,
+        reviewsTotal: await countReviewsTotal(db, userId),
+      }
+    : null;
+
+  const items: AchievementItem[] = rows.map((row) => {
     const threshold = row.progress_threshold ?? row.def_threshold;
+    const currentValue = row.progress_current ?? 0;
+    const parts =
+      row.trigger_kind === "composite" && partMetrics
+        ? compositeParts(row.params_json, partMetrics)
+        : null;
     return {
       def: {
         id: row.id,
@@ -176,12 +205,10 @@ gamificationRoutes.get("/achievements", async (c) => {
         description: row.description,
         sortOrder: row.sort_order,
       },
-      progress:
-        threshold != null
-          ? {
-              currentValue: row.progress_current ?? 0,
-              threshold,
-            }
+      progress: parts
+        ? { currentValue, threshold: threshold ?? 1, parts }
+        : threshold != null
+          ? { currentValue, threshold }
           : null,
       completedAt: row.completed_at,
       traits: traitsForAchievement(row.id, row.rarity),
