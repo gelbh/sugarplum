@@ -810,6 +810,15 @@ export function putStudyPrefs(prefs: StudyPrefs) {
 
 export type FruitTraitsView = FruitTraits;
 
+/** Server-built unlock; toasts render it without a client catalog. */
+export type UnlockView = {
+  id: string;
+  title: string;
+  fruitType: FruitType;
+  rarity: Rarity;
+  traits: FruitTraitsView;
+};
+
 export type AchievementDefView = {
   id: string;
   category: string;
@@ -981,7 +990,7 @@ export function patchCard(
   });
 }
 
-export type AcceptCardResult = CardDraftView & { unlocks?: string[] };
+export type AcceptCardResult = CardDraftView & { unlocks?: UnlockView[] };
 
 export function acceptCard(cardId: string) {
   if (isGuest()) guestUnsupported("accept cards");
@@ -996,7 +1005,7 @@ export function acceptAllJobDrafts(jobId: string) {
     accepted: number;
     failed: number;
     rejectedSiblingCount: number;
-    unlocks?: string[];
+    unlocks?: UnlockView[];
   }>(`/api/jobs/${jobId}/drafts/accept-all`, { method: "POST" }).then(
     notifyGamificationChanged,
   );
@@ -1146,7 +1155,7 @@ export function listStrugglingCards() {
 
 export type StudyRating = 1 | 2 | 3 | 4;
 
-export type ReviewResult = { due: string; unlocks?: string[] };
+export type ReviewResult = { due: string; unlocks?: UnlockView[] };
 
 export function reviewCard(
   cardId: string,

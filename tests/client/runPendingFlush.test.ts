@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { CardDraftView } from "../../src/api/client";
+import type { CardDraftView, UnlockView } from "../../src/api/client";
 import {
   formatFlushSummary,
   isNetworkGradeError,
@@ -23,6 +23,14 @@ function card(id: string): CardDraftView {
     status: "accepted",
   } as CardDraftView;
 }
+
+const firstBite: UnlockView = {
+  id: "reviews_1",
+  title: "First bite",
+  fruitType: "apple",
+  rarity: "common",
+  traits: { shine: "low", colour: "dull", status: "bruised" },
+};
 
 describe("runPendingFlush", () => {
   it("returns null for guest without calling due/review", async () => {
@@ -61,7 +69,7 @@ describe("runPendingFlush", () => {
       .mockResolvedValueOnce(duePost);
     const review = vi
       .fn()
-      .mockResolvedValueOnce({ due: "x", unlocks: ["reviews_1"] })
+      .mockResolvedValueOnce({ due: "x", unlocks: [firstBite] })
       .mockRejectedValueOnce(new TypeError("Failed to fetch"));
     const result = await runPendingFlush("u1", {
       isGuestFn: () => false,
@@ -75,7 +83,7 @@ describe("runPendingFlush", () => {
       applied: 1,
       skipped: 0,
       due: duePost,
-      unlocks: ["reviews_1"],
+      unlocks: [firstBite],
     });
     expect(replacePending).toHaveBeenCalledWith("u1", [
       grade("c2", 2),
