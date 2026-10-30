@@ -6,7 +6,9 @@ import { requireUser, type AuthVariables } from "../auth/session";
 import { encryptSecret, parseSecretMeta } from "../crypto/secrets";
 import {
   isUserLlmProvider,
+  resolveZaiTextModel,
   USER_LLM_PROVIDERS,
+  ZAI_TEXT_MODELS,
 } from "../generation/llm";
 import {
   clampStudyPrefs,
@@ -20,11 +22,13 @@ type AppEnv = { Bindings: Env; Variables: AuthVariables };
 type SecretRow = {
   provider: string;
   ciphertext: string;
+  model: string | null;
 };
 
 export type LlmSettingsConfigured = {
   provider: string;
   last4: string;
+  model: string | null;
   configured: true;
 };
 
@@ -48,7 +52,9 @@ settingsRoutes.get("/llm", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
   const row = await db
-    .prepare("SELECT provider, ciphertext FROM user_secrets WHERE user_id = ?")
+    .prepare(
+      "SELECT provider, ciphertext, model FROM user_secrets WHERE user_id = ?",
+    )
     .bind(userId)
     .first<SecretRow>();
 
@@ -64,6 +70,7 @@ settingsRoutes.get("/llm", async (c) => {
   return c.json({
     provider: row.provider,
     last4: meta.last4,
+    model: row.model ?? null,
     configured: true,
   } satisfies LlmSettingsConfigured);
 });
@@ -71,7 +78,7 @@ settingsRoutes.get("/llm", async (c) => {
 settingsRoutes.put("/llm", async (c) => {
   const userId = await requireUser(c);
 
-  let body: { provider?: unknown; apiKey?: unknown };
+  let body: { provider?: unknown; apiKey?: unknown; model?: unknown };
   try {
     body = await c.req.json();
   } catch {
@@ -81,6 +88,7 @@ settingsRoutes.put("/llm", async (c) => {
   const provider =
     typeof body.provider === "string" ? body.provider.trim() : "";
   const apiKey = typeof body.apiKey === "string" ? body.apiKey : "";
+  const rawModel = typeof body.model === "string" ? body.model.trim() : "";
 
   if (!provider) {
     throw new HTTPException(400, { message: "provider required" });
@@ -95,6 +103,16 @@ settingsRoutes.put("/llm", async (c) => {
     throw new HTTPException(400, { message: "apiKey required" });
   }
 
+  let model: string | null = null;
+  if (normalized === "zai") {
+    model = resolveZaiTextModel(rawModel);
+    if (!model) {
+      throw new HTTPException(400, {
+        message: `Unsupported model. Allowed: ${ZAI_TEXT_MODELS.join(", ")}`,
+      });
+    }
+  }
+
   const wrapKey = requireWrapKey(c.env);
   let ciphertext: string;
   try {
@@ -107,20 +125,22 @@ settingsRoutes.put("/llm", async (c) => {
   const db = getDb(c.env);
   await db
     .prepare(
-      `INSERT INTO user_secrets (user_id, provider, ciphertext, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO user_secrets (user_id, provider, ciphertext, model, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?)
        ON CONFLICT(user_id) DO UPDATE SET
          provider = excluded.provider,
          ciphertext = excluded.ciphertext,
+         model = excluded.model,
          updated_at = excluded.updated_at`,
     )
-    .bind(userId, normalized, ciphertext, now, now)
+    .bind(userId, normalized, ciphertext, model, now, now)
     .run();
 
   const meta = parseSecretMeta(ciphertext)!;
   return c.json({
     provider: normalized,
     last4: meta.last4,
+    model,
     configured: true,
   } satisfies LlmSettingsConfigured);
 });

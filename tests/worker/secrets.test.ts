@@ -88,6 +88,7 @@ describe("GET/PUT /api/settings/llm", () => {
     expect(putBody).toEqual({
       provider: "openai",
       last4,
+      model: null,
       configured: true,
     });
     expect(JSON.stringify(putBody)).not.toContain(apiKey);
@@ -111,11 +112,127 @@ describe("GET/PUT /api/settings/llm", () => {
     expect(getBody).toEqual({
       provider: "openai",
       last4,
+      model: null,
       configured: true,
     });
     expect(JSON.stringify(getBody)).not.toContain(apiKey);
     expect(getBody).not.toHaveProperty("apiKey");
     expect(getBody).not.toHaveProperty("ciphertext");
+  });
+
+  it("PUT zai defaults model to glm-4.7-flash when omitted", async () => {
+    const env = createTestEnv();
+    seedUser(env);
+    const putRes = await app.request(
+      "/api/settings/llm",
+      {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({ provider: "zai", apiKey: "zai-key-1" }),
+      },
+      env,
+    );
+    expect(putRes.status).toBe(200);
+    expect(await putRes.json()).toMatchObject({
+      provider: "zai",
+      model: "glm-4.7-flash",
+      configured: true,
+    });
+
+    const getRes = await app.request(
+      "/api/settings/llm",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(getRes.status).toBe(200);
+    expect(await getRes.json()).toMatchObject({
+      provider: "zai",
+      model: "glm-4.7-flash",
+    });
+  });
+
+  it("PUT zai persists allowlisted model glm-4.7", async () => {
+    const env = createTestEnv();
+    seedUser(env);
+    const putRes = await app.request(
+      "/api/settings/llm",
+      {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          provider: "zai",
+          apiKey: "zai-key-2",
+          model: "glm-4.7",
+        }),
+      },
+      env,
+    );
+    expect(putRes.status).toBe(200);
+    expect(await putRes.json()).toMatchObject({
+      provider: "zai",
+      model: "glm-4.7",
+    });
+
+    const getRes = await app.request(
+      "/api/settings/llm",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(await getRes.json()).toMatchObject({ model: "glm-4.7" });
+  });
+
+  it("PUT zai rejects unknown model", async () => {
+    const env = createTestEnv();
+    seedUser(env);
+    const putRes = await app.request(
+      "/api/settings/llm",
+      {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          provider: "zai",
+          apiKey: "zai-key-3",
+          model: "glm-evil",
+        }),
+      },
+      env,
+    );
+    expect(putRes.status).toBe(400);
+  });
+
+  it("PUT openai ignores model and stores null", async () => {
+    const env = createTestEnv();
+    seedUser(env);
+    const putRes = await app.request(
+      "/api/settings/llm",
+      {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          provider: "openai",
+          apiKey: "sk-openai",
+          model: "gpt-4o",
+        }),
+      },
+      env,
+    );
+    expect(putRes.status).toBe(200);
+    expect(await putRes.json()).toMatchObject({
+      provider: "openai",
+      model: null,
+    });
   });
 
   it("GET returns configured:false when no secret stored", async () => {
