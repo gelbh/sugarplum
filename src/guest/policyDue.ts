@@ -16,6 +16,7 @@ import {
   cardFromScheduleRow,
   retrievability,
 } from "../study/retrievability";
+import { cardHasRegenSource } from "../study/regenSource";
 import {
   rankWeakness,
   type WeaknessCandidate,
@@ -182,7 +183,8 @@ export function buildGuestStruggling(
     counts.set(log.cardId, cur);
   }
 
-  const candidates: WeaknessCandidate[] = [];
+  const candidates: (WeaknessCandidate & { has_regen_source: boolean })[] =
+    [];
   for (const card of accepted) {
     const tallies = counts.get(card.id);
     if (!tallies) continue;
@@ -221,6 +223,7 @@ export function buildGuestStruggling(
       due: cardDueIso(card, nowIsoValue),
       last_review: sched?.last_review ?? tallies.last_review,
       retrievability: r,
+      has_regen_source: cardHasRegenSource(card),
     });
   }
 

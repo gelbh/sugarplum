@@ -4,6 +4,7 @@ import { decryptSecret } from "../crypto/secrets";
 import { extractPdfText } from "../materials/extract-pdf";
 import { extractPptxText } from "../materials/extract-pptx";
 import {
+  BYO_PROVIDERS_PHRASE,
   createLlmAdapter,
   parseCardsPayload,
   parseLlmProvider,
@@ -17,6 +18,10 @@ import {
   appendExtraUserSuffix,
   buildExtraUserSuffix,
 } from "./feedback-hints";
+import {
+  parseProvenanceJson,
+  provenanceExcerptText,
+} from "../../src/study/regenSource";
 import {
   assertValidMcqOptions,
   type CardDraft,
@@ -144,16 +149,6 @@ async function materialTextFromR2(
   return "";
 }
 
-function provenanceExcerpt(provenanceJson: string | null): string {
-  if (!provenanceJson) return "";
-  try {
-    const parsed = JSON.parse(provenanceJson) as { excerpt?: unknown };
-    return typeof parsed.excerpt === "string" ? parsed.excerpt.trim() : "";
-  } catch {
-    return "";
-  }
-}
-
 /** Material R2 text via job, else provenance.excerpt; empty both → "". */
 export async function loadCardSourceText(
   env: Env,
@@ -179,7 +174,7 @@ export async function loadCardSourceText(
       }
     }
   }
-  return provenanceExcerpt(card.provenance_json);
+  return provenanceExcerptText(parseProvenanceJson(card.provenance_json));
 }
 
 /**
@@ -198,10 +193,10 @@ export async function resolveRegenLlm(
   const db = getDb(env);
   const secret = await db
     .prepare(
-      "SELECT provider, ciphertext FROM user_secrets WHERE user_id = ?",
+      "SELECT provider, ciphertext, model FROM user_secrets WHERE user_id = ?",
     )
     .bind(userId)
-    .first<{ provider: string; ciphertext: string }>();
+    .first<{ provider: string; ciphertext: string; model: string | null }>();
 
   if (secret) {
     const wrapKey = env.SECRETS_WRAP_KEY;
@@ -211,7 +206,7 @@ export async function resolveRegenLlm(
     const apiKey = await decryptSecret(secret.ciphertext, wrapKey);
     const provider = parseLlmProvider(secret.provider);
     return {
-      llm: createLlmAdapter(provider),
+      llm: createLlmAdapter(provider, { model: secret.model }),
       apiKey,
       provider,
       path: "byo",
@@ -231,6 +226,6 @@ export async function resolveRegenLlm(
 
   throw new Error(
     "Workers AI is not available and no LLM API key is configured. " +
-      "Add an OpenAI, Anthropic, or Google API key under Settings, or retry later.",
+      `Add an ${BYO_PROVIDERS_PHRASE} API key under Settings, or retry later.`,
   );
 }

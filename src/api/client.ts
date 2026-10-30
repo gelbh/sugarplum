@@ -641,19 +641,7 @@ export function asRegenType(type: string): RegenCardType | null {
   return null;
 }
 
-/** True when the card has material/job or a non-empty provenance excerpt for regen. */
-export function cardHasRegenSource(card: {
-  job_id?: string | null;
-  provenance?: unknown;
-}): boolean {
-  if (card.job_id) return true;
-  const p = card.provenance;
-  if (p && typeof p === "object" && "excerpt" in p) {
-    const excerpt = (p as { excerpt?: unknown }).excerpt;
-    return typeof excerpt === "string" && excerpt.trim().length > 0;
-  }
-  return false;
-}
+export { cardHasRegenSource } from "../study/regenSource";
 
 /** Rebuild one card as qa/cloze/mcq; siblings and FSRS schedule stay. Account-only. */
 export function regenCard(cardId: string, body: { type: RegenCardType }) {
@@ -767,6 +755,7 @@ export function completeMaterial(
 export type LlmSettingsConfigured = {
   provider: string;
   last4: string;
+  model: string | null;
   configured: true;
 };
 
@@ -784,11 +773,15 @@ export function getLlmSettings() {
   return api<LlmSettings>("/api/settings/llm");
 }
 
-export function putLlmSettings(provider: string, apiKey: string) {
+export function putLlmSettings(
+  provider: string,
+  apiKey: string,
+  model?: string,
+) {
   if (isGuest()) guestUnsupported("save LLM settings");
   return api<LlmSettingsConfigured>("/api/settings/llm", {
     method: "PUT",
-    json: { provider, apiKey },
+    json: { provider, apiKey, model },
   });
 }
 
@@ -1143,6 +1136,7 @@ export type StrugglingRow = {
   due: string;
   is_due: boolean;
   retrievability?: number | null;
+  has_regen_source: boolean;
 };
 
 export function listStrugglingCards() {
