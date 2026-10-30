@@ -242,7 +242,7 @@ Gentle MUI radii: 4px on nav items and grade ticks, 6px on the large Start study
 
 - **Shape:** Soft rectangle (6px on hero CTA; default MUI elsewhere; 4px on grade cells).
 - **Primary:** Fruit plum fill, white (light) or ivory (dark scheme) contrast; Today Start study uses large size, weight 600, ~1.05rem, `py` 12 / `px` 24.
-- **Grade rail:** Outlined cells, inherit color (ivory on stage), min-height 56px; swipe-direction icons (← Again · ↓ Hard · → Good · ↑ Easy) above label; desktop key chip; soft ivory hover wash.
+- **Grade rail:** Outlined cells, inherit color (ivory on stage), min-height 56px; swipe-direction icons (← Again · ↓ Hard · → Good · ↑ Easy) above label; desktop key chip; soft ivory hover wash. Keyboard: Space flips; 1-4 or arrows grade (← Again · ↓ Hard · → Good · ↑ Easy); MCQ options take 1-n. Key chips show at md and up only.
 - **Show answer:** Contained primary on the card face, Source Sans 3.
 
 ### Cards / Containers

@@ -48,6 +48,9 @@ export async function backfillUser(
   db: D1Database,
   userId: string,
 ): Promise<void> {
+  // ponytail: no single-flight; concurrent runs repeat reads, but every write
+  // is an upsert or idempotent key. An in-memory promise shared across Worker
+  // requests can hang if its request is cancelled. Upgrade: a D1 lease row.
   await ensureUserGamification(db, userId);
   if (await alreadyBackfilled(db, userId)) return;
 

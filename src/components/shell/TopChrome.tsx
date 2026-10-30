@@ -33,8 +33,12 @@ export default function TopChrome({ trailing }: TopChromeProps) {
     >
       <Box
         sx={{
-          position: "relative",
-          display: "flex",
+          display: "grid",
+          // Equal side tracks centre the brand; a wide chip grows its track and
+          // nudges the brand left instead of overlapping it.
+          gridTemplateColumns:
+            "minmax(max-content, 1fr) auto minmax(max-content, 1fr)",
+          columnGap: 1,
           alignItems: "center",
           minHeight: TOP_BAR_HEIGHT,
           px: 0.5,
@@ -47,7 +51,6 @@ export default function TopChrome({ trailing }: TopChromeProps) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            flexShrink: 0,
           }}
         >
           {backHref ? (
@@ -63,24 +66,6 @@ export default function TopChrome({ trailing }: TopChromeProps) {
         </Box>
         <Box
           sx={{
-            ml: "auto",
-            minWidth: BACK_SLOT,
-            minHeight: BACK_SLOT,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            flexShrink: 0,
-            px: 0.5,
-          }}
-        >
-          {trailing}
-        </Box>
-        <Box
-          sx={{
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            transform: "translate(-50%, -50%)",
             display: "flex",
             alignItems: "center",
             gap: 1,
@@ -100,10 +85,28 @@ export default function TopChrome({ trailing }: TopChromeProps) {
           <Typography
             variant="h6"
             noWrap
-            sx={{ color: SHELL_FG, letterSpacing: 0.2 }}
+            sx={{
+              color: SHELL_FG,
+              letterSpacing: 0.2,
+              // Below 340px the brand and a long Streak chip cannot share the row.
+              "@media (max-width: 339.95px)": { display: "none" },
+            }}
           >
             Sugarplum
           </Typography>
+        </Box>
+        <Box
+          sx={{
+            justifySelf: "end",
+            minWidth: BACK_SLOT,
+            minHeight: BACK_SLOT,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            px: 0.5,
+          }}
+        >
+          {trailing}
         </Box>
       </Box>
     </Box>

@@ -16,26 +16,54 @@ export async function ensureUserGamification(
     .run();
 }
 
+/** Ledger rows with `keyPrefix` in [start, end] may not sum past `max`. */
+export type XpCap = {
+  keyPrefix: string;
+  start: string;
+  end: string;
+  max: number;
+};
+
 export async function creditXp(
   db: D1Database,
   userId: string,
   amount: number,
   reason: string,
   idempotencyKey: string,
+  cap?: XpCap,
 ): Promise<{ awarded: boolean; xpTotal: number; level: number }> {
   await ensureUserGamification(db, userId);
 
   const ledgerId = crypto.randomUUID();
   const createdAt = new Date().toISOString();
+  const values = [ledgerId, userId, amount, reason, idempotencyKey, createdAt];
 
-  const insert = await db
-    .prepare(
-      `INSERT OR IGNORE INTO xp_ledger (
-         id, user_id, amount, reason, idempotency_key, created_at
-       ) VALUES (?, ?, ?, ?, ?, ?)`,
-    )
-    .bind(ledgerId, userId, amount, reason, idempotencyKey, createdAt)
-    .run();
+  // One statement, so concurrent credits cannot both pass the cap check.
+  const insert = cap
+    ? await db
+        .prepare(
+          `INSERT OR IGNORE INTO xp_ledger (
+             id, user_id, amount, reason, idempotency_key, created_at
+           )
+           SELECT ?1, ?2, ?3, ?4, ?5, ?6
+           WHERE (
+             SELECT COALESCE(SUM(amount), 0) FROM xp_ledger
+             WHERE user_id = ?2
+               AND idempotency_key LIKE ?7
+               AND created_at >= ?8
+               AND created_at <= ?9
+           ) + ?3 <= ?10`,
+        )
+        .bind(...values, `${cap.keyPrefix}%`, cap.start, cap.end, cap.max)
+        .run()
+    : await db
+        .prepare(
+          `INSERT OR IGNORE INTO xp_ledger (
+             id, user_id, amount, reason, idempotency_key, created_at
+           ) VALUES (?, ?, ?, ?, ?, ?)`,
+        )
+        .bind(...values)
+        .run();
 
   if ((insert.meta.changes ?? 0) === 0) {
     const row = await db
