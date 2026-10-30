@@ -82,6 +82,7 @@ export default function BottomChrome({
           "& .MuiBottomNavigationAction-root": {
             color: SHELL_MUTED,
             minWidth: 0,
+            px: 0.5,
             "&.Mui-selected": {
               color: SHELL_FG,
             },

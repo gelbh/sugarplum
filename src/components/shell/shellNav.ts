@@ -3,5 +3,6 @@ export type ShellNavId =
   | "today"
   | "insights"
   | "library"
+  | "achievements"
   | "settings"
   | "admin";
