@@ -236,6 +236,61 @@ describe("LLM provider allowlist", () => {
 
     expect(urls.every((u) => u === providerRequestUrl("zai"))).toBe(true);
     expect(bodies.every((b) => b.model === "glm-4.7")).toBe(true);
+    expect(
+      bodies.every(
+        (b) =>
+          JSON.stringify((b as { thinking?: unknown }).thinking) ===
+            JSON.stringify({ type: "disabled" }) &&
+          (b as { max_tokens?: unknown }).max_tokens === 8192,
+      ),
+    ).toBe(true);
+  });
+
+  it("zai falls back to default text model when stored model left the allowlist", async () => {
+    let body: { model?: string } = {};
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+        body = JSON.parse(String(init?.body)) as typeof body;
+        return new Response(
+          JSON.stringify({ choices: [{ message: { content: "{}" } }] }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }),
+    );
+
+    await createLlmAdapter("zai", { model: "glm-retired" }).complete({
+      system: "s",
+      user: "u",
+      apiKey: "zai-key",
+      provider: "zai",
+    });
+
+    expect(body.model).toBe("glm-4.7-flash");
+  });
+
+  it("openai requests do not carry zai-only thinking/max_tokens fields", async () => {
+    let body: Record<string, unknown> = {};
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+        body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+        return new Response(
+          JSON.stringify({ choices: [{ message: { content: "{}" } }] }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }),
+    );
+
+    await createLlmAdapter("openai").complete({
+      system: "s",
+      user: "u",
+      apiKey: "sk-test",
+      provider: "openai",
+    });
+
+    expect(body).not.toHaveProperty("thinking");
+    expect(body).not.toHaveProperty("max_tokens");
   });
 
   it("zai image generateDrafts force glm-4.6v-flash with image_url", async () => {
@@ -267,6 +322,10 @@ describe("LLM provider allowlist", () => {
 
     expect(body.model).toBe("glm-4.6v-flash");
     expect(body).not.toHaveProperty("response_format");
+    expect((body as { thinking?: unknown }).thinking).toEqual({
+      type: "disabled",
+    });
+    expect((body as { max_tokens?: unknown }).max_tokens).toBe(8192);
     const user = body.messages?.find((m) => m.role === "user");
     expect(Array.isArray(user?.content)).toBe(true);
     const parts = user?.content as { type?: string; image_url?: unknown }[];

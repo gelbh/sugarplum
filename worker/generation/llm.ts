@@ -31,24 +31,24 @@ export const ZAI_TEXT_MODELS = [
 export type ZaiTextModel = (typeof ZAI_TEXT_MODELS)[number];
 export const ZAI_DEFAULT_TEXT_MODEL: ZaiTextModel = "glm-4.7-flash";
 export const ZAI_VISION_MODEL = "glm-4.6v-flash" as const;
+/** Same multi-card JSON headroom as the Workers AI free path. */
+const ZAI_MAX_TOKENS = 8192;
 
-export function isZaiTextModel(value: string): value is ZaiTextModel {
+function isZaiTextModel(value: string): value is ZaiTextModel {
   return (ZAI_TEXT_MODELS as readonly string[]).includes(value);
 }
 
-/** Resolve stored/optional zai text model; blank → default Flash. */
+/** Resolve a zai text model id: blank → default Flash, unknown → null. */
 export function resolveZaiTextModel(
   raw: string | null | undefined,
-): ZaiTextModel {
+): ZaiTextModel | null {
   const trimmed = typeof raw === "string" ? raw.trim() : "";
   if (!trimmed) return ZAI_DEFAULT_TEXT_MODEL;
-  if (!isZaiTextModel(trimmed)) {
-    throw new Error(
-      `Unsupported Z.ai model "${trimmed}". Allowed: ${ZAI_TEXT_MODELS.join(", ")}`,
-    );
-  }
-  return trimmed;
+  return isZaiTextModel(trimmed) ? trimmed : null;
 }
+
+/** BYO providers named in user-facing "add a key" copy. */
+export const BYO_PROVIDERS_PHRASE = "OpenAI, Anthropic, Google, or Z.ai";
 
 /** Includes test fixture + internal platform provider. */
 export const LLM_PROVIDERS = [
@@ -550,8 +550,11 @@ function openAiCompatibleAdapter(opts: {
   visionModel: string;
   /** Z.ai rejects `response_format` on vision models (text models only). */
   visionJsonMode: boolean;
+  /** Provider-specific request fields merged into every call. */
+  extraBody?: Record<string, unknown>;
 }): LlmAdapter {
-  const { requestUrl, textModel, visionModel, visionJsonMode } = opts;
+  const { requestUrl, textModel, visionModel, visionJsonMode, extraBody } =
+    opts;
 
   async function complete({ system, user, apiKey }: CompleteInput) {
     const res = await fetch(requestUrl, {
@@ -561,6 +564,7 @@ function openAiCompatibleAdapter(opts: {
         authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
+        ...extraBody,
         model: textModel,
         temperature: 0.3,
         response_format: { type: "json_object" },
@@ -612,6 +616,7 @@ function openAiCompatibleAdapter(opts: {
           authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
+          ...extraBody,
           model: visionModel,
           temperature: 0.3,
           ...(visionJsonMode
@@ -666,6 +671,11 @@ function zaiAdapter(textModel: ZaiTextModel): LlmAdapter {
     textModel,
     visionModel: ZAI_VISION_MODEL,
     visionJsonMode: false,
+    // GLM-4.7 thinks compulsorily unless disabled; default output cap is 65k.
+    extraBody: {
+      thinking: { type: "disabled" },
+      max_tokens: ZAI_MAX_TOKENS,
+    },
   });
 }
 
@@ -897,7 +907,11 @@ export function createLlmAdapter(
     case "google":
       return googleAdapter();
     case "zai":
-      return zaiAdapter(resolveZaiTextModel(opts?.model));
+      // Allowlist is enforced on Settings write; a stored id later dropped
+      // from it falls back to the default instead of failing every job.
+      return zaiAdapter(
+        resolveZaiTextModel(opts?.model) ?? ZAI_DEFAULT_TEXT_MODEL,
+      );
     case "workers-ai":
       throw new Error(
         'Provider "workers-ai" requires createWorkersAiAdapter(env)',
