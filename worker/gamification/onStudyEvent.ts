@@ -11,25 +11,6 @@ function utcDayBounds(day: string): { start: string; end: string } {
   };
 }
 
-async function reviewXpToday(
-  db: D1Database,
-  userId: string,
-  day: string,
-): Promise<number> {
-  const { start, end } = utcDayBounds(day);
-  const row = await db
-    .prepare(
-      `SELECT COALESCE(SUM(amount), 0) AS total FROM xp_ledger
-       WHERE user_id = ?
-         AND idempotency_key LIKE 'review:%'
-         AND created_at >= ?
-         AND created_at <= ?`,
-    )
-    .bind(userId, start, end)
-    .first<{ total: number }>();
-  return Number(row?.total ?? 0);
-}
-
 async function awardReviewXp(
   db: D1Database,
   userId: string,
@@ -47,16 +28,11 @@ async function awardReviewXp(
     );
   }
 
-  const todayReviewXp = await reviewXpToday(db, userId, day);
-  if (todayReviewXp + XP.perReview <= XP.reviewDailyCap) {
-    await creditXp(
-      db,
-      userId,
-      XP.perReview,
-      "review",
-      `review:${reviewLogId}`,
-    );
-  }
+  await creditXp(db, userId, XP.perReview, "review", `review:${reviewLogId}`, {
+    keyPrefix: "review:",
+    ...utcDayBounds(day),
+    max: XP.reviewDailyCap,
+  });
 }
 
 export async function onReviewGraded(

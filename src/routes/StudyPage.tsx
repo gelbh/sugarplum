@@ -37,6 +37,12 @@ import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { resolveCardGesture } from "../study/cardGestures";
 import {
+  faceScrollsFor,
+  isInteractiveKeyTarget,
+  plainShortcutKey,
+  resolveStudyKey,
+} from "../study/studyKeys";
+import {
   dueScopeFromSearch,
   filterDueExcludingPending,
   loadDueCache,
@@ -128,7 +134,7 @@ function occlusionStudyParts(card: CardDraftView): OcclusionStudyParts {
   };
 }
 
-/** Study session: reveal answer, grade with FSRS (keys 1-4). Code-led MUI. */
+/** Study session: reveal answer, grade with FSRS (keys 1-4 or arrows; Space flips). Code-led MUI. */
 export default function StudyPage() {
   const [queue, setQueue] = useState<CardDraftView[]>([]);
   const [revealed, setRevealed] = useState(false);
@@ -458,13 +464,9 @@ export default function StudyPage() {
     if (!ready) return;
 
     function onKey(e: KeyboardEvent) {
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
-      ) {
-        return;
-      }
-      if (e.key === "Escape") {
+      const key = plainShortcutKey(e);
+      if (key === null) return;
+      if (key === "Escape") {
         e.preventDefault();
         if (document.fullscreenElement) {
           ignoreEscLeaveUntilRef.current = performance.now() + 500;
@@ -477,29 +479,55 @@ export default function StudyPage() {
         leaveStudy();
         return;
       }
-      if (e.key === "z" || e.key === "Z") {
-        if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (key === "z" || key === "Z") {
         e.preventDefault();
         toggleZen();
         return;
       }
-      if (isMcqCard(current) || !revealed || busyRef.current || !current)
-        return;
-      const map: Record<string, StudyRating> = {
-        "1": 1,
-        "2": 2,
-        "3": 3,
-        "4": 4,
-      };
-      const rating = map[e.key];
-      if (!rating) return;
-      e.preventDefault();
-      void onGrade(rating);
+      if (isMcqCard(current) || busyRef.current || !current) return;
+      const action = resolveStudyKey(key, revealed);
+      switch (action.type) {
+        case "reveal":
+        case "hide":
+          if (isInteractiveKeyTarget(e.target)) return;
+          e.preventDefault();
+          if (action.type === "reveal") reveal();
+          else flipBack();
+          return;
+        case "grade":
+          if (
+            faceScrollsFor(
+              key,
+              answerFocusRef.current?.closest("[data-card-face-content]") ??
+                null,
+            )
+          ) {
+            return;
+          }
+          e.preventDefault();
+          void onGrade(action.rating);
+          return;
+        case "none":
+          return;
+        default: {
+          const unhandled: never = action;
+          void unhandled;
+        }
+      }
     }
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [current, leaveStudy, onGrade, ready, revealed, toggleZen]);
+  }, [
+    current,
+    flipBack,
+    leaveStudy,
+    onGrade,
+    ready,
+    reveal,
+    revealed,
+    toggleZen,
+  ]);
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     ensureFullscreenIfNeeded();

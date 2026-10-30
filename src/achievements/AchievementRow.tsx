@@ -18,6 +18,28 @@ function staggerDelay(unlockedIndex: number): string {
   return `${Math.min(unlockedIndex * 40, 240)}ms`;
 }
 
+const NEAR_COMPLETE_RATIO = 0.8;
+
+type RowState = "unlocked" | "near" | "locked";
+
+const ROW_OPACITY: Record<RowState, number> = {
+  unlocked: 1,
+  near: 0.8,
+  locked: 0.55,
+};
+
+function rowState(item: AchievementItem): RowState {
+  if (item.completedAt != null) return "unlocked";
+  const { progress } = item;
+  const near =
+    progress?.kind === "composite" &&
+    progress.parts.length > 0 &&
+    progress.parts.every(
+      (p) => p.target > 0 && p.current / p.target >= NEAR_COMPLETE_RATIO,
+    );
+  return near ? "near" : "locked";
+}
+
 function ProgressLine({
   label,
   current,
@@ -62,13 +84,13 @@ function StatusCaption({
 }
 
 function RowStatus({
-  unlocked,
+  state,
   progress,
 }: {
-  unlocked: boolean;
+  state: RowState;
   progress: AchievementProgress;
 }) {
-  if (unlocked) {
+  if (state === "unlocked") {
     return <StatusCaption color="success.main">Unlocked</StatusCaption>;
   }
   if (!progress) {
@@ -87,14 +109,21 @@ function RowStatus({
         />
       );
     case "composite":
-      return progress.parts.map((part) => (
-        <ProgressLine
-          key={part.key}
-          label={PART_LABEL[part.key]}
-          current={part.current}
-          target={part.target}
-        />
-      ));
+      return (
+        <>
+          {progress.parts.map((part) => (
+            <ProgressLine
+              key={part.key}
+              label={PART_LABEL[part.key]}
+              current={part.current}
+              target={part.target}
+            />
+          ))}
+          {state === "near" ? (
+            <StatusCaption color="primary.main">Almost there</StatusCaption>
+          ) : null}
+        </>
+      );
     default: {
       const unhandled: never = progress;
       void unhandled;
@@ -112,14 +141,15 @@ export default function AchievementRow({
   staggerIndex: number;
   sheenOnce: boolean;
 }) {
-  const unlocked = item.completedAt != null;
+  const state = rowState(item);
+  const unlocked = state === "unlocked";
   return (
     <Box
       sx={{
         display: "flex",
         gap: 1.5,
         alignItems: "flex-start",
-        opacity: unlocked ? 1 : 0.55,
+        opacity: ROW_OPACITY[state],
         ...(unlocked
           ? {
               animation: `achievementStagger 420ms cubic-bezier(0.16, 1, 0.3, 1) ${staggerDelay(staggerIndex)} both`,
@@ -145,7 +175,7 @@ export default function AchievementRow({
         <Typography variant="caption" color="text.secondary" display="block">
           {RARITY_LABEL[item.def.rarity]} · {item.def.description}
         </Typography>
-        <RowStatus unlocked={unlocked} progress={item.progress} />
+        <RowStatus state={state} progress={item.progress} />
       </Box>
     </Box>
   );
