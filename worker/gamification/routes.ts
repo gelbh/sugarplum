@@ -8,6 +8,7 @@ import type { Rarity } from "./constants";
 import {
   compositeParts,
   countReviewsTotal,
+  readStreakCurrent,
   type CompositePart,
   type TriggerKind,
 } from "./evaluate";
@@ -183,7 +184,7 @@ gamificationRoutes.get("/achievements", async (c) => {
   );
   const partMetrics = needsParts
     ? {
-        streakBest: (await loadGamification(db, userId)).streak_best,
+        streakBest: (await readStreakCurrent(db, userId)).streakBest,
         reviewsTotal: await countReviewsTotal(db, userId),
       }
     : null;

@@ -150,7 +150,7 @@ async function countDueAcceptedCards(
   return countFromRow(row);
 }
 
-async function readStreakCurrent(
+export async function readStreakCurrent(
   db: D1Database,
   userId: string,
 ): Promise<{ streakCurrent: number; streakBest: number }> {
