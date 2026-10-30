@@ -10,6 +10,7 @@ import {
 } from "../../src/lib/rejectReasons";
 import { buildAvoidPatternsFromRejected } from "./feedback-hints";
 import { getFreeGenUsage } from "./quota";
+import { normalizeTopicHints } from "./topic-hints";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -223,6 +224,30 @@ jobRoutes.post("/:id/regen", async (c) => {
 
   if (!row) throw new HTTPException(404, { message: "Job not found" });
 
+  // Validate before the claim so a bad body never wipes or requeues.
+  const raw = await c.req.text();
+  let selectedHints: string[] | null = null;
+  if (raw.trim()) {
+    let body: unknown;
+    try {
+      body = JSON.parse(raw);
+    } catch {
+      throw new HTTPException(400, { message: "Invalid JSON body" });
+    }
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      throw new HTTPException(400, { message: "Invalid regen body" });
+    }
+    try {
+      selectedHints = normalizeTopicHints(
+        (body as { topicHints?: unknown }).topicHints,
+      );
+    } catch (err) {
+      throw new HTTPException(400, {
+        message: err instanceof Error ? err.message : "Invalid topicHints",
+      });
+    }
+  }
+
   // Claim first so concurrent regens lose the race before any wipe.
   const claim = await db
     .prepare(
@@ -254,8 +279,14 @@ jobRoutes.post("/:id/regen", async (c) => {
   }
   const patterns = buildAvoidPatternsFromRejected(entries);
   await db
-    .prepare("UPDATE generation_jobs SET avoid_patterns_json = ? WHERE id = ?")
-    .bind(patterns.length > 0 ? JSON.stringify(patterns) : null, jobId)
+    .prepare(
+      "UPDATE generation_jobs SET avoid_patterns_json = ?, run_topic_hints_json = ? WHERE id = ?",
+    )
+    .bind(
+      patterns.length > 0 ? JSON.stringify(patterns) : null,
+      selectedHints ? JSON.stringify(selectedHints) : null,
+      jobId,
+    )
     .run();
 
   await db.prepare("DELETE FROM cards WHERE job_id = ?").bind(jobId).run();
