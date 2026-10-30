@@ -4,6 +4,7 @@ import {
   weaknessScore,
   type WeaknessCandidate,
 } from "../../worker/study/weakness";
+import { cardHasRegenSource } from "../../src/study/regenSource";
 
 const NOW = "2026-10-28T12:00:00.000Z";
 
@@ -24,6 +25,30 @@ function candidate(
     ...overrides,
   };
 }
+
+describe("cardHasRegenSource", () => {
+  it("is true with a job_id", () => {
+    expect(cardHasRegenSource({ job_id: "job-1", provenance: null })).toBe(
+      true,
+    );
+  });
+
+  it("is true with a non-empty provenance excerpt", () => {
+    expect(
+      cardHasRegenSource({ job_id: null, provenance: { excerpt: " ex " } }),
+    ).toBe(true);
+  });
+
+  it("is false with no job and a blank or missing excerpt", () => {
+    expect(cardHasRegenSource({ job_id: null, provenance: null })).toBe(false);
+    expect(
+      cardHasRegenSource({ job_id: null, provenance: { excerpt: "  " } }),
+    ).toBe(false);
+    expect(cardHasRegenSource({ job_id: null, provenance: { pages: [1] } })).toBe(
+      false,
+    );
+  });
+});
 
 describe("weaknessScore", () => {
   it("scores one Again above zero", () => {
@@ -159,5 +184,15 @@ describe("rankWeakness", () => {
       "Identify X",
     );
     expect(rows.find((r) => r.id === "future")!.is_due).toBe(false);
+  });
+
+  it("keeps caller extra fields and drops front_json / last_review", () => {
+    const [row] = rankWeakness(
+      [{ ...candidate({ id: "x", again_14d: 1 }), extra: "kept" }],
+      NOW,
+    );
+    expect(row).toMatchObject({ id: "x", extra: "kept" });
+    expect(row).not.toHaveProperty("front_json");
+    expect(row).not.toHaveProperty("last_review");
   });
 });

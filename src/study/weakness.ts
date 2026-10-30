@@ -33,19 +33,11 @@ export type WeaknessCandidate = {
   retrievability: number | null;
 };
 
-export type WeaknessRow = {
-  id: string;
-  deck_id: string;
-  type: string;
-  front_preview: string;
-  lapses: number;
-  again_14d: number;
-  hard_14d: number;
-  difficulty: number;
-  due: string;
-  is_due: boolean;
-  retrievability: number | null;
-};
+export type WeaknessRow<T extends WeaknessCandidate = WeaknessCandidate> =
+  Omit<T, "front_json" | "last_review"> & {
+    front_preview: string;
+    is_due: boolean;
+  };
 
 const DEFAULT_CAP = 50;
 
@@ -64,13 +56,13 @@ export function weaknessScore(c: WeaknessCandidate): number {
 
 /**
  * Rank struggling cards by weakness score; include any score > 0; cap 50.
- * Tie-break: difficulty desc, last_review asc.
+ * Tie-break: difficulty desc, last_review asc. Extra caller fields pass through.
  */
-export function rankWeakness(
-  rows: WeaknessCandidate[],
+export function rankWeakness<T extends WeaknessCandidate>(
+  rows: T[],
   nowIso: string,
   cap: number = DEFAULT_CAP,
-): WeaknessRow[] {
+): WeaknessRow<T>[] {
   return rows
     .map((row) => ({ row, score: weaknessScore(row) }))
     .filter((x) => x.score > 0)
@@ -84,17 +76,12 @@ export function rankWeakness(
       return aReview.localeCompare(bReview);
     })
     .slice(0, cap)
-    .map(({ row }) => ({
-      id: row.id,
-      deck_id: row.deck_id,
-      type: row.type,
-      front_preview: frontPreviewFromJson(row.front_json),
-      lapses: row.lapses,
-      again_14d: row.again_14d,
-      hard_14d: row.hard_14d,
-      difficulty: row.difficulty,
-      due: row.due,
-      is_due: row.due <= nowIso,
-      retrievability: row.retrievability,
-    }));
+    .map(({ row }) => {
+      const { front_json, last_review: _lastReview, ...rest } = row;
+      return {
+        ...rest,
+        front_preview: frontPreviewFromJson(front_json),
+        is_due: row.due <= nowIso,
+      };
+    });
 }

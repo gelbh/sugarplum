@@ -99,6 +99,8 @@ export default function StrugglingList({
       {rows.map((row) => {
         const regenType = asRegenType(row.type);
         const showImprove = !guest && regenType != null;
+        const noSource = showImprove && !row.has_regen_source;
+        const noSourceId = `struggling-no-source-${row.id}`;
         const busy = busyId === row.id;
         const error = errorById[row.id];
         return (
@@ -159,7 +161,8 @@ export default function StrugglingList({
                 <Button
                   variant="outlined"
                   size="small"
-                  disabled={busy}
+                  disabled={busy || noSource}
+                  aria-describedby={noSource ? noSourceId : undefined}
                   onClick={() => void onImprove(row)}
                   sx={{ fontWeight: 600 }}
                 >
@@ -167,6 +170,15 @@ export default function StrugglingList({
                 </Button>
               ) : null}
             </Stack>
+            {noSource ? (
+              <Typography
+                id={noSourceId}
+                variant="caption"
+                color="text.secondary"
+              >
+                No source material to improve from.
+              </Typography>
+            ) : null}
             {error ? (
               <Typography variant="caption" color="error">
                 {error}

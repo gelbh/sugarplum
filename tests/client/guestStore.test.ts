@@ -714,6 +714,7 @@ describe("guest store", () => {
     expect(rows[0]?.hard_14d).toBe(0);
     expect(typeof rows[0]?.type).toBe("string");
     expect(rows[0]?.type.length).toBeGreaterThan(0);
+    expect(rows[0]?.has_regen_source).toBe(false);
   });
 
   it("two Hards in 14d surface on guest struggling", () => {
