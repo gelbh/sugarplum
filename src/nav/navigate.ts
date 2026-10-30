@@ -6,7 +6,7 @@ export function locationKey(href = window.location.href): string {
 
 type EntryState = { key?: string; from?: string } | null;
 
-function entryState(): EntryState {
+export function entryState(): EntryState {
   const state: unknown = window.history.state;
   return state && typeof state === "object" ? (state as EntryState) : null;
 }

@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, type RefObject } from "react";
-import { currentEntryKey, locationKey } from "./navigate";
+import { currentEntryKey, entryState, locationKey } from "./navigate";
 
 const STORAGE_KEY = "sugarplum.mainScroll";
 const MAX_ENTRIES = 50;
@@ -47,7 +47,22 @@ export function hydrateOffsets(storage: Pick<Storage, "getItem">): void {
   }
 }
 
-if (typeof sessionStorage !== "undefined") hydrateOffsets(sessionStorage);
+function sessionStore(): Storage | undefined {
+  try {
+    return window.sessionStorage;
+  } catch {
+    // Blocked storage throws SecurityError on access.
+    return undefined;
+  }
+}
+
+if (typeof window !== "undefined") {
+  currentEntryKey();
+  // Registered at import, before App's subscribeLocation, so entries are keyed before React reads them.
+  window.addEventListener("popstate", () => void currentEntryKey());
+  const store = sessionStore();
+  if (store) hydrateOffsets(store);
+}
 
 /**
  * `<main>` is the only scroller and persists across routes, so the browser never
@@ -58,13 +73,16 @@ export function useMainScrollRestore(
   mainRef: RefObject<HTMLElement | null>,
 ): void {
   const locKey = locationKey();
-  const rawEntryKey = (window.history.state as { key?: string } | null)?.key;
+  const rawEntryKey = entryState()?.key;
 
   useEffect(() => {
     const main = mainRef.current;
     if (!main) return;
     const onScroll = () => saveOffset(currentEntryKey(), main.scrollTop);
-    const onPageHide = () => persistOffsets(sessionStorage);
+    const onPageHide = () => {
+      const store = sessionStore();
+      if (store) persistOffsets(store);
+    };
     main.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("pagehide", onPageHide);
     return () => {
