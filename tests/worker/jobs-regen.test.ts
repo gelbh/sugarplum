@@ -449,4 +449,59 @@ describe("POST /api/jobs/:id/regen", () => {
     expect(res.status).toBe(200);
     expect(env.getGenerationJobs()[0]!.avoid_patterns_json).toBeNull();
   });
+
+  function regenWithBody(env: ReturnType<typeof createTestEnv>, body: string) {
+    return app.request(
+      "/api/jobs/job-a/regen",
+      {
+        method: "POST",
+        headers: {
+          cookie: `${SESSION_COOKIE}=sess-a`,
+          "content-type": "application/json",
+        },
+        body,
+      },
+      env,
+    );
+  }
+
+  it("merges selected topicHints ahead of existing job hints and requeues", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedNeedsReviewJob(env);
+    env.seedGenerationJob({
+      ...env.getGenerationJobs()[0]!,
+      topic_hints_json: JSON.stringify(["B", "a"]),
+    });
+
+    const res = await regenWithBody(
+      env,
+      JSON.stringify({ topicHints: ["A", "Gap two"] }),
+    );
+
+    expect(res.status).toBe(200);
+    const job = env.getGenerationJobs()[0]!;
+    expect(job.status).toBe("queued");
+    expect(job.topic_hints_json).toBe(JSON.stringify(["A", "Gap two", "B"]));
+    expect(JSON.parse(job.avoid_patterns_json as string)).toContain("Rejected?");
+    expect(env.getQueueMessages()).toHaveLength(1);
+  });
+
+  it.each([
+    ["too many hints", JSON.stringify({ topicHints: ["a", "b", "c", "d", "e", "f"] })],
+    ["over-length hint", JSON.stringify({ topicHints: ["x".repeat(201)] })],
+    ["non-array hints", JSON.stringify({ topicHints: "a" })],
+    ["malformed JSON", "{not json"],
+  ])("returns 400 for %s without touching the job", async (_label, body) => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedNeedsReviewJob(env);
+
+    const res = await regenWithBody(env, body);
+
+    expect(res.status).toBe(400);
+    expect(env.getGenerationJobs()[0]!.status).toBe("needs_review");
+    expect(env.getCards().filter((c) => c.job_id === "job-a")).toHaveLength(3);
+    expect(env.getQueueMessages()).toHaveLength(0);
+  });
 });

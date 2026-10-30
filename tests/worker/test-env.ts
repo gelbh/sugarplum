@@ -677,6 +677,7 @@ export function createTestEnv(opts?: {
             progress_json: job.progress_json,
             created_at: job.created_at,
             finished_at: job.finished_at,
+            topic_hints_json: job.topic_hints_json ?? null,
             deck_id: material.deck_id,
           } as T;
         }
@@ -2567,6 +2568,25 @@ export function createTestEnv(opts?: {
             topic_hints_json: topic_hints_json ?? null,
             avoid_patterns_json: null,
           });
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET avoid_patterns_json = ?, topic_hints_json = ? WHERE id =",
+          )
+        ) {
+          const [avoid_patterns_json, topic_hints_json, id] = bound as [
+            string | null,
+            string,
+            string,
+          ];
+          const row = generationJobs.get(id);
+          if (row) {
+            generationJobs.set(id, {
+              ...row,
+              avoid_patterns_json,
+              topic_hints_json,
+            });
+          }
+          return { success: true, meta: { changes: row ? 1 : 0 } } as D1Result;
         } else if (
           normalized.startsWith(
             "UPDATE generation_jobs SET avoid_patterns_json = ? WHERE id =",

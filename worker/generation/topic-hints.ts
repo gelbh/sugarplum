@@ -46,3 +46,21 @@ export function parseTopicHintsJson(
     return [];
   }
 }
+
+/** Regen-selected hints first, then existing job hints; case-insensitive dedupe, capped. */
+export function mergeTopicHints(
+  selected: string[],
+  existing: string[],
+): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const hint of [...selected, ...existing]) {
+    const trimmed = hint.trim();
+    const key = trimmed.toLowerCase();
+    if (!trimmed || seen.has(key)) continue;
+    seen.add(key);
+    out.push(trimmed);
+    if (out.length >= MAX_TOPIC_HINTS) break;
+  }
+  return out;
+}

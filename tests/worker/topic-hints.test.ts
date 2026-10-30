@@ -14,6 +14,7 @@ import {
   topicHintsPromptSuffix,
 } from "../../worker/generation/feedback-hints";
 import { generateUserPrompt } from "../../worker/generation/prompts";
+import { mergeTopicHints } from "../../worker/generation/topic-hints";
 import { createTestEnv } from "./test-env";
 
 function seedPasteOwner(env: ReturnType<typeof createTestEnv>) {
@@ -508,5 +509,23 @@ describe("avoidPatterns prompt wiring", () => {
 
     expect(userContent.toLowerCase()).toContain("rejected stem about cn iii");
     expect(userContent.toLowerCase()).toMatch(/avoid near-duplicates/);
+  });
+});
+
+describe("mergeTopicHints", () => {
+  it("puts selected first and keeps the selected copy on case-insensitive dupes", () => {
+    expect(
+      mergeTopicHints(["Krebs cycle", "ATP"], ["atp", "glycolysis"]),
+    ).toEqual(["Krebs cycle", "ATP", "glycolysis"]);
+  });
+
+  it("caps at 5 by dropping existing hints, never selected ones", () => {
+    expect(
+      mergeTopicHints(["s1", "s2", "s3", "s4"], ["e1", "e2"]),
+    ).toEqual(["s1", "s2", "s3", "s4", "e1"]);
+  });
+
+  it("trims and skips blank entries", () => {
+    expect(mergeTopicHints(["  ", "x "], ["", "y"])).toEqual(["x", "y"]);
   });
 });
