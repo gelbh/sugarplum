@@ -33,6 +33,9 @@ export function shellBackHref(pathname: string): string | null {
   if (/^\/admin\/users\/[^/]+\/?$/.test(pathname)) {
     return "/admin";
   }
+  if (pathname === "/achievements") {
+    return "/today";
+  }
   return null;
 }
 

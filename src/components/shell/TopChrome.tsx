@@ -2,6 +2,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
+import type { ReactNode } from "react";
 import { navigate, shellBackHref } from "../../nav/navigate";
 import {
   SHELL_BG,
@@ -12,8 +13,12 @@ import {
 
 const BACK_SLOT = 40;
 
+type TopChromeProps = {
+  trailing?: ReactNode;
+};
+
 /** Mobile top bar content: Back for nested routes, centered logo + Alice wordmark. */
-export default function TopChrome() {
+export default function TopChrome({ trailing }: TopChromeProps) {
   const backHref = shellBackHref(window.location.pathname);
 
   return (
@@ -55,6 +60,20 @@ export default function TopChrome() {
               <ArrowBackIcon fontSize="small" />
             </IconButton>
           ) : null}
+        </Box>
+        <Box
+          sx={{
+            ml: "auto",
+            minWidth: BACK_SLOT,
+            minHeight: BACK_SLOT,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            flexShrink: 0,
+            px: 0.5,
+          }}
+        >
+          {trailing}
         </Box>
         <Box
           sx={{

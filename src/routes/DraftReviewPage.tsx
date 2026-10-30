@@ -12,6 +12,7 @@ import Divider from "@mui/material/Divider";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { useUnlockToasts } from "../achievements/UnlockToastProvider";
 import DraftCardEditor from "../components/DraftCardEditor";
 import OperateSection from "../components/OperateSection";
 import JourneyRail from "../components/JourneyRail";
@@ -92,6 +93,7 @@ export default function DraftReviewPage() {
   const jobProgress = useJobProgress(authReady && progressGate ? jobId : null);
   const { begin: beginLoad, end: endLoad } = useTrackedOp("Loading drafts…");
   const { busy, begin, end } = useTrackedOp("Working…");
+  const { enqueueUnlocks } = useUnlockToasts();
 
   useEffect(() => {
     if (!progressGate && authReady && jobId) {
@@ -267,7 +269,10 @@ export default function DraftReviewPage() {
       if (dirty) {
         await patchCard(current.id, cardPatchBody(current));
       }
-      await acceptCard(current.id);
+      const accepted = await acceptCard(current.id);
+      if (accepted.unlocks?.length) {
+        enqueueUnlocks(accepted.unlocks);
+      }
       const list = await load(jobId);
       await refreshJourney(jobId, list.length);
       setNotice("Card accepted into study");
@@ -306,6 +311,9 @@ export default function DraftReviewPage() {
         await patchCard(current.id, cardPatchBody(current));
       }
       const result = await acceptAllJobDrafts(jobId);
+      if (result.unlocks?.length) {
+        enqueueUnlocks(result.unlocks);
+      }
       const list = await load(jobId);
       await refreshJourney(jobId, list.length);
       if (result.failed > 0) {

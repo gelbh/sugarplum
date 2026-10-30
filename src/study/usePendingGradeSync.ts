@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { CardDraftView } from "../api/client";
+import { useUnlockToasts } from "../achievements/UnlockToastProvider";
 import { isGuest } from "../guest/session";
 import { listPendingGrades } from "./pendingGrades";
 import {
@@ -37,11 +38,17 @@ export function usePendingGradeSync(options: {
     setPendingCount(listPendingGrades(uid).length);
   }, []);
 
-  const applyFlushSummary = useCallback((summary: FlushSummary | null) => {
-    if (!summary) return;
-    if (summary.applied <= 0 && summary.skipped <= 0) return;
-    setSyncSummary(formatFlushSummary(summary));
-  }, []);
+  const { enqueueUnlocks } = useUnlockToasts();
+
+  const applyFlushSummary = useCallback(
+    (summary: FlushSummary | null) => {
+      if (!summary) return;
+      if (summary.unlocks.length > 0) enqueueUnlocks(summary.unlocks);
+      if (summary.applied <= 0 && summary.skipped <= 0) return;
+      setSyncSummary(formatFlushSummary(summary));
+    },
+    [enqueueUnlocks],
+  );
 
   const flushOnMount = useCallback(
     async (uid: string): Promise<FlushSummary | null> => {
