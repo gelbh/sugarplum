@@ -40,7 +40,13 @@ type AchievementItem = {
     description: string;
     sortOrder: number;
   };
-  progress: { currentValue: number; threshold: number } | null;
+  progress:
+    | { kind: "count"; currentValue: number; threshold: number }
+    | {
+        kind: "composite";
+        parts: { key: string; current: number; target: number }[];
+      }
+    | null;
   completedAt: string | null;
   traits: { shine: string; colour: string; status: string };
 };
@@ -97,6 +103,25 @@ describe("gamification read APIs", () => {
     expect(res.status).toBe(401);
   });
 
+  it("GET /api/achievements reports both plum conditions", async () => {
+    const env = createTestEnv();
+    const { session } = seedAuthedUser(env);
+    const res = await app.request(
+      "/api/achievements",
+      { headers: cookie(session) },
+      env,
+    );
+    const body = (await res.json()) as { items: AchievementItem[] };
+    const plum = body.items.find((i) => i.def.id === "plum_scholar");
+    expect(plum!.progress).toEqual({
+      kind: "composite",
+      parts: [
+        { key: "streak_best", current: 0, target: 30 },
+        { key: "reviews", current: 0, target: 200 },
+      ],
+    });
+  });
+
   it("GET /api/achievements returns items with derived traits", async () => {
     const env = createTestEnv();
     const { session } = seedAuthedUser(env);
@@ -120,6 +145,11 @@ describe("gamification read APIs", () => {
       title: "First bite",
     });
     expect(first!.completedAt).toBeNull();
+    expect(first!.progress).toEqual({
+      kind: "count",
+      currentValue: 0,
+      threshold: 1,
+    });
     expect(first!.traits).toEqual(
       traitsForAchievement("reviews_1", first!.def.rarity as Rarity),
     );

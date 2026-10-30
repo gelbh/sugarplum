@@ -8,6 +8,7 @@ import {
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import InsightsIcon from "@mui/icons-material/Insights";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
+import MilitaryTechIcon from "@mui/icons-material/MilitaryTech";
 import SettingsIcon from "@mui/icons-material/Settings";
 import TodayIcon from "@mui/icons-material/Today";
 import Box from "@mui/material/Box";
@@ -78,6 +79,13 @@ const LEARNER_NAV: NavItem[] = [
       path === "/library" ||
       path.startsWith("/library/") ||
       /^\/jobs\/[^/]+\/drafts\/?$/.test(path),
+  },
+  {
+    id: "achievements",
+    label: "Medals",
+    href: "/achievements",
+    icon: <MilitaryTechIcon fontSize="small" />,
+    match: (path) => path === "/achievements",
   },
   {
     id: "settings",

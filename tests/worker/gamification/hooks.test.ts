@@ -69,9 +69,12 @@ describe("gamification route hooks", () => {
       env,
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { due: string; unlocks: string[] };
+    const body = (await res.json()) as {
+      due: string;
+      unlocks: { id: string }[];
+    };
     expect(body.due).toBeTruthy();
-    expect(body.unlocks).toContain("reviews_1");
+    expect(body.unlocks.map((u) => u.id)).toContain("reviews_1");
   });
 
   it("POST /api/cards/:id/accept unlocks accepts_1 on first accept", async () => {
@@ -100,8 +103,11 @@ describe("gamification route hooks", () => {
       env,
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { status: string; unlocks: string[] };
+    const body = (await res.json()) as {
+      status: string;
+      unlocks: { id: string }[];
+    };
     expect(body.status).toBe("accepted");
-    expect(body.unlocks).toContain("accepts_1");
+    expect(body.unlocks.map((u) => u.id)).toContain("accepts_1");
   });
 });

@@ -1,5 +1,4 @@
-import type { FruitType } from "../achievements/catalog";
-import type { FruitTraits, Rarity } from "../achievements/traits";
+import type { AchievementItem, UnlockView } from "../achievements/wire";
 import {
   UploadError,
   uploadWithProgress,
@@ -808,27 +807,8 @@ export function putStudyPrefs(prefs: StudyPrefs) {
   });
 }
 
-export type FruitTraitsView = FruitTraits;
-
-export type AchievementDefView = {
-  id: string;
-  category: string;
-  fruitType: FruitType;
-  rarity: Rarity;
-  title: string;
-  description: string;
-  sortOrder: number;
-};
-
-export type AchievementItemView = {
-  def: AchievementDefView;
-  progress: { currentValue: number; threshold: number } | null;
-  completedAt: string | null;
-  traits: FruitTraitsView;
-};
-
 export type AchievementsResponse = {
-  items: AchievementItemView[];
+  items: AchievementItem[];
 };
 
 export type GamificationResponse = {
@@ -981,7 +961,7 @@ export function patchCard(
   });
 }
 
-export type AcceptCardResult = CardDraftView & { unlocks?: string[] };
+export type AcceptCardResult = CardDraftView & { unlocks?: UnlockView[] };
 
 export function acceptCard(cardId: string) {
   if (isGuest()) guestUnsupported("accept cards");
@@ -996,7 +976,7 @@ export function acceptAllJobDrafts(jobId: string) {
     accepted: number;
     failed: number;
     rejectedSiblingCount: number;
-    unlocks?: string[];
+    unlocks?: UnlockView[];
   }>(`/api/jobs/${jobId}/drafts/accept-all`, { method: "POST" }).then(
     notifyGamificationChanged,
   );
@@ -1146,7 +1126,7 @@ export function listStrugglingCards() {
 
 export type StudyRating = 1 | 2 | 3 | 4;
 
-export type ReviewResult = { due: string; unlocks?: string[] };
+export type ReviewResult = { due: string; unlocks?: UnlockView[] };
 
 export function reviewCard(
   cardId: string,

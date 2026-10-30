@@ -35,9 +35,9 @@ const STATUS: Record<string, { b: number; s: number; c: number }> = {
 
 export function cssFilterFromTraits(
   traits: FruitTraits,
-  opts?: { locked?: boolean; ripen?: boolean },
+  opts?: { locked?: boolean },
 ): string {
-  if (opts?.locked && !opts?.ripen) {
+  if (opts?.locked) {
     return "brightness(0.55) saturate(0.35)";
   }
   const shine = SHINE[traits.shine] ?? SHINE.low;

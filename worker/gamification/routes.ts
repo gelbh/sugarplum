@@ -1,11 +1,21 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import type { FruitType } from "../../src/achievements/catalog";
+import type {
+  AchievementItem,
+  AchievementProgress,
+} from "../../src/achievements/wire";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import { backfillUser } from "./backfill";
 import type { Rarity } from "./constants";
-import { traitsForAchievement, type FruitTraits } from "./traits";
+import {
+  compositeParts,
+  loadCompositeMetrics,
+  type TriggerKind,
+} from "./evaluate";
+import { traitsForAchievement } from "./traits";
 import { ensureUserGamification } from "./xp";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
@@ -23,11 +33,13 @@ type UserGamificationRow = {
 type AchievementListRow = {
   id: string;
   category: string;
-  fruit_type: string;
+  fruit_type: FruitType;
   rarity: Rarity;
   title: string;
   description: string;
   sort_order: number;
+  trigger_kind: TriggerKind;
+  params_json: string | null;
   progress_current: number | null;
   progress_threshold: number | null;
   def_threshold: number | null;
@@ -48,21 +60,6 @@ export type GamificationResponse = {
   level: number;
   displayName: string | null;
   boardOptIn: boolean;
-};
-
-export type AchievementItem = {
-  def: {
-    id: string;
-    category: string;
-    fruitType: string;
-    rarity: Rarity;
-    title: string;
-    description: string;
-    sortOrder: number;
-  };
-  progress: { currentValue: number; threshold: number } | null;
-  completedAt: string | null;
-  traits: FruitTraits;
 };
 
 export type LeaderboardResponse = {
@@ -133,6 +130,29 @@ async function loadGamification(
   return row;
 }
 
+function progressFor(
+  row: AchievementListRow,
+  partMetrics: { streakBest: number; reviewsTotal: number } | null,
+): AchievementProgress {
+  if (
+    row.trigger_kind === "composite" &&
+    row.completed_at == null &&
+    partMetrics
+  ) {
+    return {
+      kind: "composite",
+      parts: compositeParts(row.params_json, partMetrics),
+    };
+  }
+  const threshold = row.progress_threshold ?? row.def_threshold;
+  if (threshold == null) return null;
+  return {
+    kind: "count",
+    currentValue: row.progress_current ?? 0,
+    threshold,
+  };
+}
+
 export const gamificationRoutes = new Hono<AppEnv>();
 
 gamificationRoutes.get("/achievements", async (c) => {
@@ -149,7 +169,8 @@ gamificationRoutes.get("/achievements", async (c) => {
   const { results } = await db
     .prepare(
       `SELECT d.id, d.category, d.fruit_type, d.rarity, d.title, d.description,
-              d.sort_order, d.threshold AS def_threshold,
+              d.sort_order, d.trigger_kind, d.params_json,
+              d.threshold AS def_threshold,
               p.current_value AS progress_current,
               p.threshold AS progress_threshold,
               c.completed_at
@@ -164,29 +185,28 @@ gamificationRoutes.get("/achievements", async (c) => {
     .bind(userId, userId)
     .all<AchievementListRow>();
 
-  const items: AchievementItem[] = (results ?? []).map((row) => {
-    const threshold = row.progress_threshold ?? row.def_threshold;
-    return {
-      def: {
-        id: row.id,
-        category: row.category,
-        fruitType: row.fruit_type,
-        rarity: row.rarity,
-        title: row.title,
-        description: row.description,
-        sortOrder: row.sort_order,
-      },
-      progress:
-        threshold != null
-          ? {
-              currentValue: row.progress_current ?? 0,
-              threshold,
-            }
-          : null,
-      completedAt: row.completed_at,
-      traits: traitsForAchievement(row.id, row.rarity),
-    };
-  });
+  const rows = results ?? [];
+  const needsParts = rows.some(
+    (r) => r.trigger_kind === "composite" && r.completed_at == null,
+  );
+  const partMetrics = needsParts
+    ? await loadCompositeMetrics(db, userId)
+    : null;
+
+  const items: AchievementItem[] = rows.map((row) => ({
+    def: {
+      id: row.id,
+      category: row.category,
+      fruitType: row.fruit_type,
+      rarity: row.rarity,
+      title: row.title,
+      description: row.description,
+      sortOrder: row.sort_order,
+    },
+    progress: progressFor(row, partMetrics),
+    completedAt: row.completed_at,
+    traits: traitsForAchievement(row.id, row.rarity),
+  }));
 
   return c.json({ items });
 });

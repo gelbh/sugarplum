@@ -10,15 +10,14 @@ import {
 } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { ACHIEVEMENT_META, type FruitType } from "./catalog";
-import { RipeningFruitMedal } from "./FruitMedal";
-import { traitsForAchievement, type Rarity } from "./traits";
+import FruitMedal from "./FruitMedal";
 import { useStudyChrome } from "../study/StudyChromeContext";
+import type { UnlockView } from "./wire";
 
-const ENTER_DELAY_MS = 16;
-const RIPEN_DELAY_MS = 80;
-const VISIBLE_MS = 3200;
-const EXIT_MS = 220;
+export const ENTER_DELAY_MS = 16;
+export const RIPEN_DELAY_MS = 80;
+export const VISIBLE_MS = 3200;
+export const EXIT_MS = 220;
 const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
 
 const SKIN = {
@@ -45,32 +44,29 @@ const SKIN = {
   },
 } as const;
 
-type ToastItem = {
-  id: string;
-  title: string;
-  fruitType: FruitType;
-  rarity: Rarity;
-};
-
 type Phase = "enter" | "ripe" | "exit";
 
+// A rolled-back Worker still returns unlock id strings instead of objects.
+function isUnlockView(u: unknown): u is UnlockView {
+  if (typeof u !== "object" || u === null) return false;
+  const v = u as Partial<UnlockView>;
+  return (
+    typeof v.title === "string" &&
+    typeof v.fruitType === "string" &&
+    v.traits != null
+  );
+}
+
 type UnlockToastContextValue = {
-  enqueueUnlocks: (ids: string[]) => void;
+  enqueueUnlocks: (unlocks: readonly unknown[]) => void;
 };
 
 const UnlockToastContext = createContext<UnlockToastContextValue | null>(null);
 
-function idsToToasts(ids: string[]): ToastItem[] {
-  return ids.flatMap((id) => {
-    const meta = ACHIEVEMENT_META[id];
-    return meta ? [{ id, ...meta }] : [];
-  });
-}
-
 export function UnlockToastProvider({ children }: { children: ReactNode }) {
   const { hideChrome } = useStudyChrome();
-  const [queue, setQueue] = useState<ToastItem[]>([]);
-  const [active, setActive] = useState<ToastItem | null>(null);
+  const [queue, setQueue] = useState<UnlockView[]>([]);
+  const [active, setActive] = useState<UnlockView | null>(null);
   const [phase, setPhase] = useState<Phase | null>(null);
   const timers = useRef<number[]>([]);
 
@@ -79,9 +75,9 @@ export function UnlockToastProvider({ children }: { children: ReactNode }) {
     timers.current = [];
   }, []);
 
-  const enqueueUnlocks = useCallback((ids: string[]) => {
-    const next = idsToToasts(ids);
-    if (next.length > 0) setQueue((prev) => [...prev, ...next]);
+  const enqueueUnlocks = useCallback((unlocks: readonly unknown[]) => {
+    const valid = unlocks.filter(isUnlockView);
+    if (valid.length > 0) setQueue((prev) => [...prev, ...valid]);
   }, []);
 
   useEffect(() => {
@@ -107,6 +103,7 @@ export function UnlockToastProvider({ children }: { children: ReactNode }) {
   const value = useMemo(() => ({ enqueueUnlocks }), [enqueueUnlocks]);
   const skin = hideChrome ? SKIN.zen : SKIN.shell;
   const shown = phase === "enter" || phase === "ripe";
+  const ripe = phase === "ripe" || phase === "exit";
 
   return (
     <UnlockToastContext.Provider value={value}>
@@ -115,6 +112,7 @@ export function UnlockToastProvider({ children }: { children: ReactNode }) {
         <Box
           role="status"
           aria-live="polite"
+          data-phase={phase ?? "pending"}
           sx={{
             position: "fixed",
             left: "50%",
@@ -147,11 +145,12 @@ export function UnlockToastProvider({ children }: { children: ReactNode }) {
               ...skin.surface,
             }}
           >
-            <RipeningFruitMedal
+            <FruitMedal
               fruitType={active.fruitType}
-              traits={traitsForAchievement(active.id, active.rarity)}
+              traits={active.traits}
               size={52}
-              ripe={phase === "ripe" || phase === "exit"}
+              locked={!ripe}
+              glow={ripe}
             />
             <Box minWidth={0}>
               <Typography

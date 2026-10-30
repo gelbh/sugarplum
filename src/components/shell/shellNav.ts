@@ -1,7 +1,3 @@
 /** Mobile / drawer shell tab ids. Admin is drawer-only (never BottomChrome). */
 export type ShellNavId =
-  | "today"
-  | "insights"
-  | "library"
-  | "settings"
-  | "admin";
+  "today" | "insights" | "library" | "achievements" | "settings" | "admin";
