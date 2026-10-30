@@ -27,7 +27,7 @@ function ProgressLine({
     <Box sx={{ mt: 1 }}>
       <LinearProgress
         variant="determinate"
-        value={Math.min(100, (current / target) * 100)}
+        value={target > 0 ? Math.min(100, (current / target) * 100) : 0}
         sx={{ height: 6, borderRadius: 1 }}
       />
       <Typography variant="caption" color="text.secondary">
