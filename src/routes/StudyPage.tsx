@@ -37,8 +37,9 @@ import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { resolveCardGesture } from "../study/cardGestures";
 import {
-  hasShortcutModifier,
+  faceScrollsFor,
   isInteractiveKeyTarget,
+  plainShortcutKey,
   resolveStudyKey,
 } from "../study/studyKeys";
 import {
@@ -463,13 +464,9 @@ export default function StudyPage() {
     if (!ready) return;
 
     function onKey(e: KeyboardEvent) {
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
-      ) {
-        return;
-      }
-      if (e.key === "Escape") {
+      const key = plainShortcutKey(e);
+      if (key === null) return;
+      if (key === "Escape") {
         e.preventDefault();
         if (document.fullscreenElement) {
           ignoreEscLeaveUntilRef.current = performance.now() + 500;
@@ -482,23 +479,31 @@ export default function StudyPage() {
         leaveStudy();
         return;
       }
-      if (e.key === "z" || e.key === "Z") {
-        if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (key === "z" || key === "Z") {
         e.preventDefault();
         toggleZen();
         return;
       }
-      if (e.repeat || hasShortcutModifier(e)) return;
       if (isMcqCard(current) || busyRef.current || !current) return;
-      const action = resolveStudyKey(e.key, revealed);
+      const action = resolveStudyKey(key, revealed);
       switch (action.type) {
-        case "flip":
+        case "reveal":
+        case "hide":
           if (isInteractiveKeyTarget(e.target)) return;
           e.preventDefault();
-          if (revealed) flipBack();
-          else reveal();
+          if (action.type === "reveal") reveal();
+          else flipBack();
           return;
         case "grade":
+          if (
+            faceScrollsFor(
+              key,
+              answerFocusRef.current?.closest("[data-card-face-content]") ??
+                null,
+            )
+          ) {
+            return;
+          }
           e.preventDefault();
           void onGrade(action.rating);
           return;

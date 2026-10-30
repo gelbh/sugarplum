@@ -3,14 +3,24 @@ import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { StudyRating } from "../api/client";
 import {
   mcqOptionButtonDisabled,
   mcqTapRating,
   shuffledMcqOptions,
 } from "../study/mcqStudy";
-import { hasShortcutModifier, mcqOptionIndexForKey } from "../study/studyKeys";
+import {
+  mcqOptionIndexForKey,
+  mcqOptionKey,
+  plainShortcutKey,
+} from "../study/studyKeys";
 import KeyChip from "./KeyChip";
 import { FACE_SANS, FACE_SX, OVERLINE_SX } from "./studyFaceSx";
 
@@ -77,23 +87,19 @@ export function CardFaceMcqBody({
     }, FEEDBACK_MS);
   };
 
+  const onKey = useEffectEvent((e: KeyboardEvent) => {
+    const key = plainShortcutKey(e);
+    if (key === null) return;
+    const index = mcqOptionIndexForKey(key, choices.length);
+    if (index === null) return;
+    e.preventDefault();
+    onPick(choices[index]);
+  });
+
   useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.repeat || hasShortcutModifier(e)) return;
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
-      ) {
-        return;
-      }
-      const index = mcqOptionIndexForKey(e.key, choices.length);
-      if (index === null) return;
-      e.preventDefault();
-      onPick(choices[index]);
-    }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  });
+  }, []);
 
   return (
     <Paper
@@ -150,6 +156,7 @@ export function CardFaceMcqBody({
               const isPicked = picked === option;
               const isCorrect = option.trim() === back.trim();
               const locked = picked !== null;
+              const shortcut = mcqOptionKey(index);
               let borderColor = "currentColor";
               let bgcolor = "transparent";
               let opacity = 0.88;
@@ -173,7 +180,7 @@ export function CardFaceMcqBody({
                   disabled={mcqOptionButtonDisabled(disabled, locked)}
                   aria-disabled={disabled || locked}
                   tabIndex={locked ? -1 : undefined}
-                  aria-keyshortcuts={index < 9 ? String(index + 1) : undefined}
+                  aria-keyshortcuts={shortcut ?? undefined}
                   onClick={() => onPick(option)}
                   sx={{
                     justifyContent: "flex-start",
@@ -209,9 +216,7 @@ export function CardFaceMcqBody({
                   <Box component="span" sx={{ flex: 1, minWidth: 0 }}>
                     {option}
                   </Box>
-                  {index < 9 ? (
-                    <KeyChip label={String(index + 1)} ml={1} />
-                  ) : null}
+                  {shortcut ? <KeyChip label={shortcut} ml={1} /> : null}
                 </Button>
               );
             })}

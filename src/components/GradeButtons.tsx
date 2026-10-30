@@ -9,51 +9,17 @@ import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
 import type { StudyRating } from "../api/client";
 import { gradeColorVars } from "../study/gradeColors";
+import { GRADE_BINDINGS } from "../study/studyKeys";
 import KeyChip from "./KeyChip";
 import { CARD_COLUMN_SX, FACE_SANS } from "./studyFaceSx";
 
-/** Icons mirror swipe directions (← Again · ↓ Hard · → Good · ↑ Easy). */
-const GRADES: {
-  rating: StudyRating;
-  label: string;
-  key: string;
-  arrowKey: string;
-  arrowName: string;
-  Icon: SvgIconComponent;
-}[] = [
+const GRADE_UI: Record<StudyRating, { label: string; Icon: SvgIconComponent }> =
   {
-    rating: 1,
-    label: "Again",
-    key: "1",
-    arrowKey: "ArrowLeft",
-    arrowName: "left arrow",
-    Icon: ArrowBackRoundedIcon,
-  },
-  {
-    rating: 2,
-    label: "Hard",
-    key: "2",
-    arrowKey: "ArrowDown",
-    arrowName: "down arrow",
-    Icon: ArrowDownwardRoundedIcon,
-  },
-  {
-    rating: 3,
-    label: "Good",
-    key: "3",
-    arrowKey: "ArrowRight",
-    arrowName: "right arrow",
-    Icon: ArrowForwardRoundedIcon,
-  },
-  {
-    rating: 4,
-    label: "Easy",
-    key: "4",
-    arrowKey: "ArrowUp",
-    arrowName: "up arrow",
-    Icon: ArrowUpwardRoundedIcon,
-  },
-];
+    1: { label: "Again", Icon: ArrowBackRoundedIcon },
+    2: { label: "Hard", Icon: ArrowDownwardRoundedIcon },
+    3: { label: "Good", Icon: ArrowForwardRoundedIcon },
+    4: { label: "Easy", Icon: ArrowUpwardRoundedIcon },
+  };
 
 type Props = {
   disabled?: boolean;
@@ -93,8 +59,8 @@ export default function GradeButtons({
         useFlexGap
         sx={{ width: "100%", justifyContent: "space-between" }}
       >
-        {GRADES.map((g) => {
-          const { Icon } = g;
+        {GRADE_BINDINGS.map((g) => {
+          const { label, Icon } = GRADE_UI[g.rating];
           const colors = gradeColorVars(g.rating);
           return (
             <Button
@@ -103,8 +69,8 @@ export default function GradeButtons({
               disableElevation
               disabled={disabled}
               onClick={() => onGrade(g.rating)}
-              aria-keyshortcuts={`${g.key} ${g.arrowKey}`}
-              aria-label={`${g.label} (key ${g.key} or ${g.arrowName})`}
+              aria-keyshortcuts={`${g.digit} ${g.arrow}`}
+              aria-label={`${label} (key ${g.digit} or ${g.arrowName})`}
               sx={{
                 flex: 1,
                 minHeight: 56,
@@ -160,13 +126,9 @@ export default function GradeButtons({
                     textTransform: "none",
                   }}
                 >
-                  {g.label}
+                  {label}
                 </Typography>
-                <KeyChip
-                  label={g.key}
-                  color={colors.fg}
-                  borderColor={colors.border}
-                />
+                <KeyChip label={g.digit} borderColor={colors.border} />
               </Box>
             </Button>
           );

@@ -3,7 +3,6 @@ import { FACE_SANS } from "./studyFaceSx";
 
 type Props = {
   label: string;
-  color?: string;
   borderColor?: string;
   ml?: number;
 };
@@ -11,7 +10,6 @@ type Props = {
 /** Desktop-only key hint; hidden below md where touch and swipe lead. */
 export default function KeyChip({
   label,
-  color = "inherit",
   borderColor = "currentColor",
   ml,
 }: Props) {
@@ -31,7 +29,7 @@ export default function KeyChip({
         borderRadius: "3px",
         border: "1px solid",
         borderColor,
-        color,
+        color: "inherit",
         fontFamily: FACE_SANS,
         fontSize: "0.625rem",
         fontWeight: 500,

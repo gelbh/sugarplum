@@ -1,32 +1,43 @@
 import type { StudyRating } from "../api/client";
 
+/** Arrows mirror swipe directions (← Again · ↓ Hard · → Good · ↑ Easy). */
+export const GRADE_BINDINGS: readonly {
+  rating: StudyRating;
+  digit: string;
+  arrow: string;
+  arrowName: string;
+}[] = [
+  { rating: 1, digit: "1", arrow: "ArrowLeft", arrowName: "left arrow" },
+  { rating: 2, digit: "2", arrow: "ArrowDown", arrowName: "down arrow" },
+  { rating: 3, digit: "3", arrow: "ArrowRight", arrowName: "right arrow" },
+  { rating: 4, digit: "4", arrow: "ArrowUp", arrowName: "up arrow" },
+];
+
+const GRADE_KEYS = new Map<string, StudyRating>(
+  GRADE_BINDINGS.flatMap((b) => [
+    [b.digit, b.rating],
+    [b.arrow, b.rating],
+  ]),
+);
+
 export type StudyKeyAction =
-  | { type: "flip" }
+  | { type: "reveal" }
+  | { type: "hide" }
   | { type: "grade"; rating: StudyRating }
   | { type: "none" };
-
-/** Arrows mirror swipe directions (← Again · ↓ Hard · → Good · ↑ Easy). */
-const GRADE_KEYS: Record<string, StudyRating> = {
-  "1": 1,
-  "2": 2,
-  "3": 3,
-  "4": 4,
-  ArrowLeft: 1,
-  ArrowDown: 2,
-  ArrowRight: 3,
-  ArrowUp: 4,
-};
 
 /** Flip-card keys (Q&A, cloze, occlusion). MCQ uses `mcqOptionIndexForKey`. */
 export function resolveStudyKey(
   key: string,
   revealed: boolean,
 ): StudyKeyAction {
-  if (key === " ") return { type: "flip" };
-  const rating = GRADE_KEYS[key];
+  if (key === " ") return { type: revealed ? "hide" : "reveal" };
+  const rating = GRADE_KEYS.get(key);
   if (rating && revealed) return { type: "grade", rating };
   return { type: "none" };
 }
+
+const MCQ_KEY_LIMIT = 9;
 
 /** MCQ: digit n picks the nth displayed option; null when out of range. */
 export function mcqOptionIndexForKey(
@@ -38,18 +49,42 @@ export function mcqOptionIndexForKey(
   return index < optionCount ? index : null;
 }
 
-const INTERACTIVE =
-  "button, a[href], input, textarea, select, [contenteditable='true'], [role='button']";
+/** Key label for the option at `index`, or null past the digit range. */
+export function mcqOptionKey(index: number): string | null {
+  return index < MCQ_KEY_LIMIT ? String(index + 1) : null;
+}
+
+const TYPING = "input, textarea, select, [contenteditable='true']";
+const INTERACTIVE = `button, a[href], [role='button'], ${TYPING}`;
+
+/** Study shortcut key, or null for repeats, modifier combos and typing targets. */
+export function plainShortcutKey(e: {
+  key: string;
+  repeat: boolean;
+  ctrlKey: boolean;
+  metaKey: boolean;
+  altKey: boolean;
+  target: EventTarget | null;
+}): string | null {
+  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return null;
+  if (e.target instanceof Element && e.target.closest(TYPING)) return null;
+  return e.key;
+}
 
 /** Focused native controls keep their own Space activation. */
 export function isInteractiveKeyTarget(target: EventTarget | null): boolean {
   return target instanceof Element && target.closest(INTERACTIVE) !== null;
 }
 
-export function hasShortcutModifier(e: {
-  ctrlKey: boolean;
-  metaKey: boolean;
-  altKey: boolean;
-}): boolean {
-  return e.ctrlKey || e.metaKey || e.altKey;
+/** Up/Down scroll an overflowing answer until it hits that edge, then grade. */
+export function faceScrollsFor(
+  key: string,
+  face: { scrollTop: number; clientHeight: number; scrollHeight: number } | null,
+): boolean {
+  if (!face) return false;
+  if (key === "ArrowUp") return face.scrollTop > 0;
+  if (key === "ArrowDown") {
+    return face.scrollTop + face.clientHeight < face.scrollHeight - 1;
+  }
+  return false;
 }

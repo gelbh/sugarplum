@@ -43,21 +43,11 @@ async function listStudyDaysAscending(
     .sort();
 }
 
-const inFlight = new Map<string, Promise<void>>();
-
-/** Silent historical unlocks + streak_best. Concurrent calls share one run. */
-export function backfillUser(db: D1Database, userId: string): Promise<void> {
-  // ponytail: single-flight is per isolate; cross-isolate repeats stay safe
-  // because every write is an upsert or idempotent key. Upgrade: a D1 lease row.
-  const running = inFlight.get(userId);
-  if (running) return running;
-  const run = runBackfill(db, userId).finally(() => inFlight.delete(userId));
-  inFlight.set(userId, run);
-  return run;
-}
-
-/** Idempotent via the ledger marker. */
-async function runBackfill(db: D1Database, userId: string): Promise<void> {
+/** Silent historical unlocks + streak_best; idempotent via ledger marker. */
+export async function backfillUser(
+  db: D1Database,
+  userId: string,
+): Promise<void> {
   await ensureUserGamification(db, userId);
   if (await alreadyBackfilled(db, userId)) return;
 
