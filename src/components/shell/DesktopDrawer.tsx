@@ -28,7 +28,6 @@ type DesktopDrawerProps = {
   streakChip: ReactNode;
 };
 
-/** Permanent desktop drawer: logo, nav, generation strip, streak chip, legal links. */
 export default function DesktopDrawer({
   drawerNav,
   active,

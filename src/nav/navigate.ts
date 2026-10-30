@@ -6,16 +6,23 @@ export function locationKey(href = window.location.href): string {
 
 type EntryState = { key?: string; from?: string } | null;
 
-export function entryState(): EntryState {
+function entryState(): EntryState {
   const state: unknown = window.history.state;
   return state && typeof state === "object" ? (state as EntryState) : null;
+}
+
+// randomUUID is missing on insecure origins (LAN http) and iOS < 15.4.
+function newEntryKey(): string {
+  return typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
 /** Stable id for the current history entry; stamps entries not created by navigate(). */
 export function currentEntryKey(): string {
   const state = entryState();
   if (state?.key) return state.key;
-  const key = crypto.randomUUID();
+  const key = newEntryKey();
   window.history.replaceState({ ...state, key }, "");
   return key;
 }
@@ -24,7 +31,7 @@ export function navigate(path: string): void {
   const next = locationKey(new URL(path, window.location.origin).href);
   if (locationKey() === next) return;
   window.history.pushState(
-    { key: crypto.randomUUID(), from: locationKey() },
+    { key: newEntryKey(), from: locationKey() },
     "",
     next,
   );
@@ -36,7 +43,7 @@ export function navigateReplace(path: string): void {
   const next = locationKey(new URL(path, window.location.origin).href);
   if (locationKey() === next) return;
   window.history.replaceState(
-    { key: crypto.randomUUID(), from: entryState()?.from },
+    { key: newEntryKey(), from: entryState()?.from },
     "",
     next,
   );

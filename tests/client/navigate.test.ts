@@ -10,7 +10,6 @@ import {
   subscribeLocation,
   subscribePath,
 } from "../../src/nav/navigate";
-import "../../src/nav/scrollRestore";
 
 describe("navigate", () => {
   it("pushState updates path subscribers", () => {
@@ -107,17 +106,6 @@ describe("history entry state", () => {
     const key = currentEntryKey();
     expect(locationKey()).toBe("/settings");
     expect(currentEntryKey()).toBe(key);
-  });
-
-  it("keys a keyless entry on popstate before later listeners read it", () => {
-    window.history.replaceState(null, "", "/library");
-    let seen: string | undefined;
-    const unsub = subscribeLocation(() => {
-      seen = (window.history.state as EntryState | null)?.key;
-    });
-    window.dispatchEvent(new PopStateEvent("popstate"));
-    unsub();
-    expect(seen).toBeTruthy();
   });
 });
 

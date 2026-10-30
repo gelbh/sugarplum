@@ -1,12 +1,13 @@
 import { useEffect, useLayoutEffect, type RefObject } from "react";
-import { currentEntryKey, entryState, locationKey } from "./navigate";
+import { currentEntryKey } from "./navigate";
 
 const STORAGE_KEY = "sugarplum.mainScroll";
 const MAX_ENTRIES = 50;
 const RESTORE_TIMEOUT_MS = 3000;
-const CANCEL_EVENTS = ["wheel", "touchstart", "pointerdown", "keydown"];
+const CANCEL_EVENTS = ["wheel", "touchstart", "pointerdown"];
 
 const offsets = new Map<string, number>();
+let restoringKey: string | null = null;
 
 export function savedOffset(key: string): number | undefined {
   return offsets.get(key);
@@ -16,14 +17,15 @@ export function savedOffset(key: string): number | undefined {
 export function saveOffset(key: string, top: number): void {
   offsets.delete(key);
   offsets.set(key, top);
+  for (const oldest of offsets.keys()) {
+    if (offsets.size <= MAX_ENTRIES) break;
+    offsets.delete(oldest);
+  }
 }
 
 export function persistOffsets(storage: Pick<Storage, "setItem">): void {
   try {
-    storage.setItem(
-      STORAGE_KEY,
-      JSON.stringify([...offsets].slice(-MAX_ENTRIES)),
-    );
+    storage.setItem(STORAGE_KEY, JSON.stringify([...offsets]));
   } catch {
     // Private mode or quota: losing offsets only costs a scroll-to-top.
   }
@@ -57,11 +59,47 @@ function sessionStore(): Storage | undefined {
 }
 
 if (typeof window !== "undefined") {
-  currentEntryKey();
-  // Registered at import, before App's subscribeLocation, so entries are keyed before React reads them.
-  window.addEventListener("popstate", () => void currentEntryKey());
   const store = sessionStore();
   if (store) hydrateOffsets(store);
+}
+
+/**
+ * Scrolls `el` to `target` once its content is tall enough. Gives up on user
+ * input, timeout, or the returned stop; `onDone` runs exactly once.
+ */
+export function restoreWhenReady(
+  el: HTMLElement,
+  target: number,
+  onDone: () => void,
+  timeoutMs = RESTORE_TIMEOUT_MS,
+): () => void {
+  const controller = new AbortController();
+  const { signal } = controller;
+  const stop = () => {
+    if (signal.aborted) return;
+    controller.abort();
+    observer.disconnect();
+    clearTimeout(timer);
+    onDone();
+  };
+  const tryRestore = () => {
+    if (el.scrollHeight - el.clientHeight < target) return;
+    el.scrollTo(0, target);
+    stop();
+  };
+  // ponytail: re-checks on DOM mutations and image loads only; CSS-only growth is not observed.
+  const observer = new MutationObserver(tryRestore);
+  const timer = setTimeout(stop, timeoutMs);
+
+  observer.observe(el, { childList: true, subtree: true, characterData: true });
+  el.addEventListener("load", tryRestore, { capture: true, signal });
+  for (const type of CANCEL_EVENTS) {
+    el.addEventListener(type, stop, { passive: true, signal });
+  }
+  // Focus is often outside `<main>` after Back, so keys are watched on window.
+  window.addEventListener("keydown", stop, { signal });
+  tryRestore();
+  return stop;
 }
 
 /**
@@ -72,53 +110,45 @@ if (typeof window !== "undefined") {
 export function useMainScrollRestore(
   mainRef: RefObject<HTMLElement | null>,
 ): void {
-  const locKey = locationKey();
-  const rawEntryKey = entryState()?.key;
+  const entryKey = currentEntryKey();
 
   useEffect(() => {
     const main = mainRef.current;
     if (!main) return;
-    const onScroll = () => saveOffset(currentEntryKey(), main.scrollTop);
-    const onPageHide = () => {
+    const controller = new AbortController();
+    const { signal } = controller;
+    const persist = () => {
       const store = sessionStore();
       if (store) persistOffsets(store);
     };
-    main.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("pagehide", onPageHide);
-    return () => {
-      main.removeEventListener("scroll", onScroll);
-      window.removeEventListener("pagehide", onPageHide);
-    };
+    main.addEventListener(
+      "scroll",
+      () => {
+        const key = currentEntryKey();
+        if (key !== restoringKey) saveOffset(key, main.scrollTop);
+      },
+      { passive: true, signal },
+    );
+    window.addEventListener("pagehide", persist, { signal });
+    document.addEventListener(
+      "visibilitychange",
+      () => {
+        if (document.visibilityState === "hidden") persist();
+      },
+      { signal },
+    );
+    return () => controller.abort();
   }, [mainRef]);
 
   useLayoutEffect(() => {
     const main = mainRef.current;
     if (!main) return;
-    const target = savedOffset(currentEntryKey()) ?? 0;
+    const target = savedOffset(entryKey) ?? 0;
     main.scrollTo(0, 0);
     if (target === 0) return;
-
-    const tryRestore = () => {
-      if (main.scrollHeight - main.clientHeight < target) return;
-      main.scrollTo(0, target);
-      stop();
-    };
-    // ponytail: re-checks on DOM mutations and image loads only; CSS-only growth is not observed.
-    const observer = new MutationObserver(tryRestore);
-    const timer = setTimeout(() => stop(), RESTORE_TIMEOUT_MS);
-    const stop = () => {
-      observer.disconnect();
-      clearTimeout(timer);
-      main.removeEventListener("load", tryRestore, true);
-      for (const type of CANCEL_EVENTS) main.removeEventListener(type, stop);
-    };
-
-    observer.observe(main, { childList: true, subtree: true, characterData: true });
-    main.addEventListener("load", tryRestore, true);
-    for (const type of CANCEL_EVENTS) {
-      main.addEventListener(type, stop, { passive: true });
-    }
-    tryRestore();
-    return stop;
-  }, [mainRef, locKey, rawEntryKey]);
+    restoringKey = entryKey;
+    return restoreWhenReady(main, target, () => {
+      if (restoringKey === entryKey) restoringKey = null;
+    });
+  }, [mainRef, entryKey]);
 }

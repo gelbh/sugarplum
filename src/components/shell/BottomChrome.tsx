@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import Badge from "@mui/material/Badge";
 import BottomNavigation from "@mui/material/BottomNavigation";
 import BottomNavigationAction from "@mui/material/BottomNavigationAction";
@@ -12,18 +11,11 @@ import {
   SHELL_MUTED,
   SHELL_SELECTED,
 } from "./chromeTokens";
-import type { ShellNavId } from "./shellNav";
-
-export type BottomChromeItem = {
-  id: ShellNavId;
-  label: string;
-  href: string;
-  icon: ReactNode;
-};
+import type { ShellNavId, ShellNavItem } from "./shellNav";
 
 type BottomChromeProps = {
   active: ShellNavId;
-  items: BottomChromeItem[];
+  items: ShellNavItem[];
   onNavigate: (href: string) => void;
   libraryBadgeKind?: ShellGenerationKind | null;
 };
