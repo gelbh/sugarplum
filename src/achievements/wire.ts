@@ -17,11 +17,10 @@ export type CompositePart = {
   target: number;
 };
 
-export type AchievementProgress = {
-  currentValue: number;
-  threshold: number;
-  parts?: CompositePart[];
-} | null;
+export type AchievementProgress =
+  | { kind: "count"; currentValue: number; threshold: number }
+  | { kind: "composite"; parts: CompositePart[] }
+  | null;
 
 export type AchievementDef = {
   id: string;

@@ -40,11 +40,13 @@ type AchievementItem = {
     description: string;
     sortOrder: number;
   };
-  progress: {
-    currentValue: number;
-    threshold: number;
-    parts?: { key: string; current: number; target: number }[];
-  } | null;
+  progress:
+    | { kind: "count"; currentValue: number; threshold: number }
+    | {
+        kind: "composite";
+        parts: { key: string; current: number; target: number }[];
+      }
+    | null;
   completedAt: string | null;
   traits: { shine: string; colour: string; status: string };
 };
@@ -112,8 +114,7 @@ describe("gamification read APIs", () => {
     const body = (await res.json()) as { items: AchievementItem[] };
     const plum = body.items.find((i) => i.def.id === "plum_scholar");
     expect(plum!.progress).toEqual({
-      currentValue: 0,
-      threshold: 1,
+      kind: "composite",
       parts: [
         { key: "streak_best", current: 0, target: 30 },
         { key: "reviews", current: 0, target: 200 },
@@ -144,6 +145,11 @@ describe("gamification read APIs", () => {
       title: "First bite",
     });
     expect(first!.completedAt).toBeNull();
+    expect(first!.progress).toEqual({
+      kind: "count",
+      currentValue: 0,
+      threshold: 1,
+    });
     expect(first!.traits).toEqual(
       traitsForAchievement("reviews_1", first!.def.rarity as Rarity),
     );

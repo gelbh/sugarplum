@@ -3,7 +3,11 @@ import LinearProgress from "@mui/material/LinearProgress";
 import Typography from "@mui/material/Typography";
 import { RARITY_LABEL } from "./catalog";
 import FruitMedal from "./FruitMedal";
-import type { AchievementItem, CompositePart } from "./wire";
+import type {
+  AchievementItem,
+  AchievementProgress,
+  CompositePart,
+} from "./wire";
 
 const PART_LABEL: Record<CompositePart["key"], string> = {
   streak_best: "Best streak",
@@ -38,6 +42,67 @@ function ProgressLine({
   );
 }
 
+function StatusCaption({
+  color,
+  children,
+}: {
+  color: string;
+  children: string;
+}) {
+  return (
+    <Typography
+      variant="caption"
+      color={color}
+      display="block"
+      sx={{ mt: 0.5 }}
+    >
+      {children}
+    </Typography>
+  );
+}
+
+function RowStatus({
+  unlocked,
+  progress,
+}: {
+  unlocked: boolean;
+  progress: AchievementProgress;
+}) {
+  if (unlocked) {
+    return <StatusCaption color="success.main">Unlocked</StatusCaption>;
+  }
+  if (!progress) {
+    return (
+      <StatusCaption color="text.secondary">
+        Progress tracked automatically
+      </StatusCaption>
+    );
+  }
+  switch (progress.kind) {
+    case "count":
+      return (
+        <ProgressLine
+          current={progress.currentValue}
+          target={progress.threshold}
+        />
+      );
+    case "composite":
+      return progress.parts.map((part) => (
+        <ProgressLine
+          key={part.key}
+          label={PART_LABEL[part.key]}
+          current={part.current}
+          target={part.target}
+        />
+      ));
+    default: {
+      const unhandled: never = progress;
+      void unhandled;
+      return null;
+    }
+  }
+}
+
 export default function AchievementRow({
   item,
   staggerIndex,
@@ -48,7 +113,6 @@ export default function AchievementRow({
   sheenOnce: boolean;
 }) {
   const unlocked = item.completedAt != null;
-  const { progress } = item;
   return (
     <Box
       sx={{
@@ -81,39 +145,7 @@ export default function AchievementRow({
         <Typography variant="caption" color="text.secondary" display="block">
           {RARITY_LABEL[item.def.rarity]} · {item.def.description}
         </Typography>
-        {unlocked ? (
-          <Typography
-            variant="caption"
-            color="success.main"
-            display="block"
-            sx={{ mt: 0.5 }}
-          >
-            Unlocked
-          </Typography>
-        ) : progress?.parts ? (
-          progress.parts.map((part) => (
-            <ProgressLine
-              key={part.key}
-              label={PART_LABEL[part.key]}
-              current={part.current}
-              target={part.target}
-            />
-          ))
-        ) : progress ? (
-          <ProgressLine
-            current={progress.currentValue}
-            target={progress.threshold}
-          />
-        ) : (
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            display="block"
-            sx={{ mt: 0.5 }}
-          >
-            Progress tracked automatically
-          </Typography>
-        )}
+        <RowStatus unlocked={unlocked} progress={item.progress} />
       </Box>
     </Box>
   );

@@ -1,7 +1,10 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { FruitType } from "../../src/achievements/catalog";
-import type { AchievementItem } from "../../src/achievements/wire";
+import type {
+  AchievementItem,
+  AchievementProgress,
+} from "../../src/achievements/wire";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
@@ -128,6 +131,29 @@ async function loadGamification(
   return row;
 }
 
+function progressFor(
+  row: AchievementListRow,
+  partMetrics: { streakBest: number; reviewsTotal: number } | null,
+): AchievementProgress {
+  if (
+    row.trigger_kind === "composite" &&
+    row.completed_at == null &&
+    partMetrics
+  ) {
+    return {
+      kind: "composite",
+      parts: compositeParts(row.params_json, partMetrics),
+    };
+  }
+  const threshold = row.progress_threshold ?? row.def_threshold;
+  if (threshold == null) return null;
+  return {
+    kind: "count",
+    currentValue: row.progress_current ?? 0,
+    threshold,
+  };
+}
+
 export const gamificationRoutes = new Hono<AppEnv>();
 
 gamificationRoutes.get("/achievements", async (c) => {
@@ -171,32 +197,20 @@ gamificationRoutes.get("/achievements", async (c) => {
       }
     : null;
 
-  const items: AchievementItem[] = rows.map((row) => {
-    const threshold = row.progress_threshold ?? row.def_threshold;
-    const currentValue = row.progress_current ?? 0;
-    const parts =
-      row.trigger_kind === "composite" && partMetrics
-        ? compositeParts(row.params_json, partMetrics)
-        : null;
-    return {
-      def: {
-        id: row.id,
-        category: row.category,
-        fruitType: row.fruit_type,
-        rarity: row.rarity,
-        title: row.title,
-        description: row.description,
-        sortOrder: row.sort_order,
-      },
-      progress: parts
-        ? { currentValue, threshold: threshold ?? 1, parts }
-        : threshold != null
-          ? { currentValue, threshold }
-          : null,
-      completedAt: row.completed_at,
-      traits: traitsForAchievement(row.id, row.rarity),
-    };
-  });
+  const items: AchievementItem[] = rows.map((row) => ({
+    def: {
+      id: row.id,
+      category: row.category,
+      fruitType: row.fruit_type,
+      rarity: row.rarity,
+      title: row.title,
+      description: row.description,
+      sortOrder: row.sort_order,
+    },
+    progress: progressFor(row, partMetrics),
+    completedAt: row.completed_at,
+    traits: traitsForAchievement(row.id, row.rarity),
+  }));
 
   return c.json({ items });
 });
