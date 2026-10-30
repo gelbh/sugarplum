@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { createTestEnv } from "../test-env";
-import { evaluateAfterAccept, evaluateAfterReview } from "../../../worker/gamification/evaluate";
+import {
+  compositeParts,
+  evaluateAfterAccept,
+  evaluateAfterReview,
+} from "../../../worker/gamification/evaluate";
 import { onReviewGraded, onCardAccepted } from "../../../worker/gamification/onStudyEvent";
 
 const NOW = "2026-10-29T12:00:00.000Z";
@@ -184,5 +188,19 @@ describe("onStudyEvent facade", () => {
       .getXpLedger()
       .filter((e) => e.idempotency_key === "accept:c1");
     expect(acceptXp).toHaveLength(1);
+  });
+});
+
+describe("compositeParts", () => {
+  it("reports each plum condition against its target", () => {
+    expect(
+      compositeParts('{"streak_best_min":30,"reviews_min":200}', {
+        streakBest: 12,
+        reviewsTotal: 250,
+      }),
+    ).toEqual([
+      { key: "streak_best", current: 12, target: 30 },
+      { key: "reviews", current: 250, target: 200 },
+    ]);
   });
 });

@@ -1,10 +1,19 @@
 import { XP, type Rarity } from "./constants";
 import { creditXp } from "./xp";
 
+export type TriggerKind =
+  | "reviews_total"
+  | "accepts_total"
+  | "study_days_total"
+  | "streak_current"
+  | "clear_due_once"
+  | "distinct_types"
+  | "composite";
+
 export type AchievementDefRow = {
   id: string;
   rarity: Rarity;
-  trigger_kind: string;
+  trigger_kind: TriggerKind;
   threshold: number | null;
   params_json: string | null;
 };
@@ -19,7 +28,7 @@ export type StudyMetrics = {
   distinctTypes: number;
 };
 
-const REVIEW_TRIGGERS = new Set([
+const REVIEW_TRIGGERS = new Set<TriggerKind>([
   "reviews_total",
   "study_days_total",
   "streak_current",
@@ -27,7 +36,7 @@ const REVIEW_TRIGGERS = new Set([
   "composite",
 ]);
 
-const ACCEPT_TRIGGERS = new Set([
+const ACCEPT_TRIGGERS = new Set<TriggerKind>([
   "accepts_total",
   "distinct_types",
   "composite",
@@ -45,7 +54,7 @@ async function loadActiveDefs(
   return results ?? [];
 }
 
-async function countReviewsTotal(
+export async function countReviewsTotal(
   db: D1Database,
   userId: string,
 ): Promise<number> {
@@ -174,6 +183,36 @@ async function loadStudyMetrics(
   };
 }
 
+export type CompositePart = {
+  key: "streak_best" | "reviews";
+  current: number;
+  target: number;
+};
+
+export function compositeParts(
+  paramsJson: string | null,
+  metrics: Pick<StudyMetrics, "streakBest" | "reviewsTotal">,
+): CompositePart[] {
+  let params: { streak_best_min?: number; reviews_min?: number } = {};
+  try {
+    params = JSON.parse(paramsJson ?? "{}") as typeof params;
+  } catch {
+    params = {};
+  }
+  return [
+    {
+      key: "streak_best",
+      current: metrics.streakBest,
+      target: params.streak_best_min ?? 0,
+    },
+    {
+      key: "reviews",
+      current: metrics.reviewsTotal,
+      target: params.reviews_min ?? 0,
+    },
+  ];
+}
+
 function metricValue(
   def: AchievementDefRow,
   metrics: StudyMetrics,
@@ -191,20 +230,17 @@ function metricValue(
       return metrics.dueAccepted === 0 ? 1 : 0;
     case "distinct_types":
       return metrics.distinctTypes;
-    case "composite": {
-      let params: { streak_best_min?: number; reviews_min?: number } = {};
-      try {
-        params = JSON.parse(def.params_json ?? "{}") as typeof params;
-      } catch {
-        params = {};
-      }
-      const ok =
-        metrics.streakBest >= (params.streak_best_min ?? 0) &&
-        metrics.reviewsTotal >= (params.reviews_min ?? 0);
-      return ok ? 1 : 0;
-    }
-    default:
+    case "composite":
+      return compositeParts(def.params_json, metrics).every(
+        (p) => p.current >= p.target,
+      )
+        ? 1
+        : 0;
+    default: {
+      const unhandled: never = def.trigger_kind;
+      void unhandled;
       return 0;
+    }
   }
 }
 
@@ -254,7 +290,7 @@ export async function evaluateAchievements(
   db: D1Database,
   userId: string,
   opts: {
-    kinds?: Set<string>;
+    kinds?: Set<TriggerKind>;
     triggerEventId: string | null;
     nowIso: string;
     backdated?: 0 | 1;
