@@ -63,7 +63,6 @@ export function buildExtraUserSuffix(parts: {
   return chunks.join("\n\n");
 }
 
-/** Append a precomposed extra-user suffix when non-empty. */
 export function appendExtraUserSuffix(prompt: string, suffix: string): string {
   return suffix ? `${prompt}\n\n${suffix}` : prompt;
 }

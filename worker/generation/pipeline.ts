@@ -170,7 +170,7 @@ export type CritiqueChunkInput = {
   llm: PipelineLlm;
   apiKey: string;
   provider: string;
-  /** Precomposed avoid (and related) user-prompt suffix. */
+  /** From buildExtraUserSuffix; critique passes avoid patterns only. */
   extraUserSuffix?: string;
 };
 
