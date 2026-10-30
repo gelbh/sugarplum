@@ -6,14 +6,15 @@ import { extractPptxText } from "../materials/extract-pptx";
 import {
   BYO_PROVIDERS_PHRASE,
   createLlmAdapter,
+  isTruncationParseError,
   parseCardsPayload,
   parseLlmProvider,
   type LlmAdapter,
   type LlmTokenUsage,
 } from "./llm";
 import { CHUNK_CHAR_LIMIT } from "./pipeline";
-import { consumeFreeGenSlot } from "./quota";
-import { createWorkersAiAdapter } from "./workers-ai";
+import { consumeFreeGenSlot, releaseFreeGenSlot } from "./quota";
+import { createWorkersAiAdapter, WorkersAiCapacityError } from "./workers-ai";
 import {
   appendExtraUserSuffix,
   buildExtraUserSuffix,
@@ -77,25 +78,21 @@ Respond with JSON only as {"cards":[...]} containing exactly one card of type "$
   );
 }
 
-const REGEN_MAX_ATTEMPTS = 2;
-
 function parseRegenDraft(raw: string, type: RegenCardType): TextRegenDraft {
   const drafts = parseCardsPayload(raw);
   const hit = drafts.find((d) => d.type === type && typeof d.front === "string");
   if (!hit || typeof hit.front !== "string" || typeof hit.back !== "string") {
     throw new Error(`LLM did not return a ${type} card`);
   }
-  if (hit.type === "mcq") {
-    const mcq = assertValidMcqOptions(hit.back, hit.options);
-    return {
-      type,
-      front: hit.front,
-      back: mcq.back,
-      options: mcq.options,
-      provenance: hit.provenance,
-    };
-  }
-  return { type, front: hit.front, back: hit.back, provenance: hit.provenance };
+  const draft: TextRegenDraft = {
+    type,
+    front: hit.front,
+    back: hit.back,
+    provenance: hit.provenance,
+  };
+  return hit.type === "mcq"
+    ? { ...draft, ...assertValidMcqOptions(hit.back, hit.options) }
+    : draft;
 }
 
 function addUsage(
@@ -129,29 +126,39 @@ export async function generateOneCard(args: {
     existingFront: args.existingFront,
     studyStruggle: args.studyStruggle,
   });
-  let usage: LlmTokenUsage | null = null;
-  let lastError: unknown;
-  for (let attempt = 0; attempt < REGEN_MAX_ATTEMPTS; attempt++) {
-    const reask =
-      attempt === 0
-        ? ""
-        : `\n\nYour previous reply was rejected: ${
-            lastError instanceof Error ? lastError.message : String(lastError)
-          }. Respond with JSON only containing exactly one "${args.type}" card.`;
-    const res = await args.llm.complete({
+  const ask = (suffix = "") =>
+    args.llm.complete({
       system: REGEN_ONE_SYSTEM_PROMPT,
-      user: user + reask,
+      user: user + suffix,
       apiKey: args.apiKey,
       provider: args.provider,
     });
-    usage = addUsage(usage, res.usage);
+
+  const first = await ask();
+  try {
+    return {
+      draft: parseRegenDraft(first.text, args.type),
+      usage: first.usage,
+    };
+  } catch (err) {
+    if (isTruncationParseError(err)) throw err;
+    const message = err instanceof Error ? err.message : String(err);
+    const reaskSuffix = `\n\nYour previous reply was rejected: ${message}. Respond with JSON only containing exactly one "${args.type}" card.`;
+    let second: Awaited<ReturnType<typeof ask>>;
     try {
-      return { draft: parseRegenDraft(res.text, args.type), usage };
-    } catch (err) {
-      lastError = err;
+      second = await ask(reaskSuffix);
+    } catch (reaskErr) {
+      // Tokens were spent on the first call, so the caller must not refund.
+      if (reaskErr instanceof WorkersAiCapacityError) {
+        throw new Error(reaskErr.message);
+      }
+      throw reaskErr;
     }
+    return {
+      draft: parseRegenDraft(second.text, args.type),
+      usage: addUsage(first.usage, second.usage),
+    };
   }
-  throw lastError;
 }
 
 type MaterialLite = {
@@ -221,6 +228,7 @@ export async function resolveRegenLlm(
   apiKey: string;
   provider: string;
   path: "free" | "byo";
+  releaseQuota: () => Promise<void>;
 }> {
   const db = getDb(env);
   const secret = await db
@@ -242,6 +250,7 @@ export async function resolveRegenLlm(
       apiKey,
       provider,
       path: "byo",
+      releaseQuota: async () => {},
     };
   }
 
@@ -253,6 +262,7 @@ export async function resolveRegenLlm(
       apiKey: "",
       provider: "workers-ai",
       path: "free",
+      releaseQuota: () => releaseFreeGenSlot(env, userId),
     };
   }
 

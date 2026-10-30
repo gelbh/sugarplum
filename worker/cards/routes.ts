@@ -16,8 +16,8 @@ import {
   REGEN_CARD_TYPES,
   resolveRegenLlm,
 } from "../generation/card-regen";
-import { releaseFreeGenSlot } from "../generation/quota";
 import { recordRegenUsageEvent } from "../generation/usage";
+import { WorkersAiCapacityError } from "../generation/workers-ai";
 import { requireOwnedDeck } from "../materials/routes";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
 import {
@@ -699,8 +699,8 @@ cardRoutes.post("/:id/regen", async (c) => {
       provider: llmBundle.provider,
     });
   } catch (err) {
-    if (llmBundle.path === "free") {
-      await releaseFreeGenSlot(c.env, userId).catch(() => {});
+    if (err instanceof WorkersAiCapacityError) {
+      await llmBundle.releaseQuota().catch((e) => console.error(e));
     }
     throw new HTTPException(502, {
       message: err instanceof Error ? err.message : "Card regeneration failed",

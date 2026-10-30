@@ -94,73 +94,6 @@ function seedThreeDrafts(env: ReturnType<typeof createTestEnv>) {
   });
 }
 
-function stubWorkersAiMcq(env: ReturnType<typeof createTestEnv>) {
-  const mcqJson = JSON.stringify({
-    cards: [
-      {
-        type: "mcq",
-        front: "Which organelle produces ATP?",
-        back: "Mitochondria",
-        options: ["Mitochondria", "Nucleus", "Ribosome", "Golgi"],
-        provenance: {
-          pages: [1],
-          excerpt: "Mitochondria produce ATP",
-        },
-      },
-    ],
-  });
-  const run = vi.fn(async (_model: string) => {
-    expect(_model).toBe(WORKERS_AI_MODEL);
-    return {
-      id: "chatcmpl-regen",
-      object: "chat.completion",
-      created: 0,
-      model: WORKERS_AI_MODEL,
-      choices: [
-        {
-          index: 0,
-          message: {
-            role: "assistant" as const,
-            content: mcqJson,
-            refusal: null,
-          },
-          finish_reason: "stop" as const,
-          logprobs: null,
-        },
-      ],
-      usage: {
-        prompt_tokens: 100,
-        completion_tokens: 40,
-        total_tokens: 140,
-      },
-    };
-  });
-  env.AI = { run } as unknown as Ai;
-  return run;
-}
-
-function stubWorkersAiSequence(
-  env: ReturnType<typeof createTestEnv>,
-  contents: string[],
-) {
-  let i = 0;
-  const run = vi.fn(async (_model: string, _input: unknown) => ({
-    choices: [
-      {
-        index: 0,
-        message: {
-          role: "assistant" as const,
-          content: contents[Math.min(i++, contents.length - 1)],
-        },
-        finish_reason: "stop" as const,
-      },
-    ],
-    usage: { prompt_tokens: 100, completion_tokens: 40, total_tokens: 140 },
-  }));
-  env.AI = { run } as unknown as Ai;
-  return run;
-}
-
 const VALID_MCQ = JSON.stringify({
   cards: [
     {
@@ -172,6 +105,35 @@ const VALID_MCQ = JSON.stringify({
     },
   ],
 });
+
+function stubWorkersAiSequence(
+  env: ReturnType<typeof createTestEnv>,
+  contents: string[],
+) {
+  let i = 0;
+  const run = vi.fn(async (_model: string, _input: unknown) => {
+    expect(_model).toBe(WORKERS_AI_MODEL);
+    return {
+      choices: [
+        {
+          index: 0,
+          message: {
+            role: "assistant" as const,
+            content: contents[Math.min(i++, contents.length - 1)],
+          },
+          finish_reason: "stop" as const,
+        },
+      ],
+      usage: { prompt_tokens: 100, completion_tokens: 40, total_tokens: 140 },
+    };
+  });
+  env.AI = { run } as unknown as Ai;
+  return run;
+}
+
+function stubWorkersAiMcq(env: ReturnType<typeof createTestEnv>) {
+  return stubWorkersAiSequence(env, [VALID_MCQ]);
+}
 
 function regenRequest(env: ReturnType<typeof createTestEnv>) {
   return app.request(
@@ -644,7 +606,64 @@ describe("POST /api/cards/:id/regen", () => {
     expect(
       JSON.parse(env.getCards().find((c) => c.id === "c-mid")!.front_json),
     ).toBe("Middle front?");
+    expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
+  });
+
+  it("refunds the free slot when Workers AI is at capacity", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedThreeDrafts(env);
+    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const run = vi.fn(async () => {
+      throw Object.assign(new Error("upstream busy"), { status: 429 });
+    });
+    env.AI = { run } as unknown as Ai;
+
+    const res = await regenRequest(env);
+    expect(res.status).toBe(502);
+    expect(((await res.json()) as { message: string }).message).toMatch(
+      /temporarily at capacity/,
+    );
+    expect(run).toHaveBeenCalledTimes(1);
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(0);
+  });
+
+  it("reasks once when the first MCQ answer is not among its options", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedThreeDrafts(env);
+    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const badMcq = JSON.stringify({
+      cards: [
+        {
+          type: "mcq",
+          front: "Which organelle produces ATP?",
+          back: "Chloroplast",
+          options: ["Mitochondria", "Nucleus", "Ribosome", "Golgi"],
+          provenance: { pages: [1], excerpt: "Mitochondria produce ATP" },
+        },
+      ],
+    });
+    const run = stubWorkersAiSequence(env, [badMcq, VALID_MCQ]);
+
+    const res = await regenRequest(env);
+    expect(res.status).toBe(200);
+    expect(run).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not reask when the first reply is truncated mid-JSON", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedThreeDrafts(env);
+    env.seedR2("materials/deck-a/mat-a.txt", "Mitochondria produce ATP.");
+    const run = stubWorkersAiSequence(env, [
+      '{"cards":[{"type":"mcq","front":"Which',
+      VALID_MCQ,
+    ]);
+
+    const res = await regenRequest(env);
+    expect(res.status).toBe(502);
+    expect(run).toHaveBeenCalledTimes(1);
   });
 });
 

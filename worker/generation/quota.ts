@@ -33,6 +33,17 @@ function ttlUntilNextUtcDay(now: Date): number {
   return Math.max(60, Math.ceil((next - now.getTime()) / 1000));
 }
 
+async function writeCount(
+  env: Env,
+  userId: string,
+  now: Date,
+  count: number,
+): Promise<void> {
+  await env.SESSIONS.put(freeGenKvKey(userId, now), String(count), {
+    expirationTtl: ttlUntilNextUtcDay(now),
+  });
+}
+
 /** Read today's free-gen count without consuming a slot. */
 export async function getFreeGenUsage(
   env: Env,
@@ -55,14 +66,11 @@ export async function consumeFreeGenSlot(
   userId: string,
 ): Promise<void> {
   const now = new Date();
-  const key = freeGenKvKey(userId, now);
   const count = await readCount(env, userId, now);
   if (count >= FREE_GEN_DAILY_CAP) {
     throw new Error(CAP_ERROR);
   }
-  await env.SESSIONS.put(key, String(count + 1), {
-    expirationTtl: ttlUntilNextUtcDay(now),
-  });
+  await writeCount(env, userId, now, count + 1);
 }
 
 /**
@@ -79,7 +87,5 @@ export async function releaseFreeGenSlot(
   const now = new Date();
   const count = await readCount(env, userId, now);
   if (count <= 0) return;
-  await env.SESSIONS.put(freeGenKvKey(userId, now), String(count - 1), {
-    expirationTtl: ttlUntilNextUtcDay(now),
-  });
+  await writeCount(env, userId, now, count - 1);
 }
