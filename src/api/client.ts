@@ -1,3 +1,5 @@
+import type { FruitType } from "../achievements/catalog";
+import type { FruitTraits, Rarity } from "../achievements/traits";
 import {
   UploadError,
   uploadWithProgress,
@@ -818,17 +820,13 @@ export function putStudyPrefs(prefs: StudyPrefs) {
   });
 }
 
-export type FruitTraitsView = {
-  shine: string;
-  colour: string;
-  status: string;
-};
+export type FruitTraitsView = FruitTraits;
 
 export type AchievementDefView = {
   id: string;
   category: string;
-  fruitType: string;
-  rarity: string;
+  fruitType: FruitType;
+  rarity: Rarity;
   title: string;
   description: string;
   sortOrder: number;
@@ -864,15 +862,26 @@ export type LeaderboardResponse = {
   }>;
 };
 
+/** Fired after server writes that can move streak / XP (shell chip refetches). */
+export const GAMIFICATION_CHANGED_EVENT = "sugarplum:gamification-changed";
+
+function notifyGamificationChanged<T>(result: T): T {
+  window.dispatchEvent(new Event(GAMIFICATION_CHANGED_EVENT));
+  return result;
+}
+
 export function getAchievements() {
+  if (isGuest()) guestUnsupported("view achievements");
   return api<AchievementsResponse>("/api/achievements");
 }
 
 export function getGamification() {
+  if (isGuest()) guestUnsupported("view streaks and XP");
   return api<GamificationResponse>("/api/gamification");
 }
 
 export function getWeeklyLeaderboard() {
+  if (isGuest()) guestUnsupported("view the leaderboard");
   return api<LeaderboardResponse>("/api/leaderboard/weekly");
 }
 
@@ -984,9 +993,13 @@ export function patchCard(
   });
 }
 
+export type AcceptCardResult = CardDraftView & { unlocks?: string[] };
+
 export function acceptCard(cardId: string) {
   if (isGuest()) guestUnsupported("accept cards");
-  return api<CardDraftView>(`/api/cards/${cardId}/accept`, { method: "POST" });
+  return api<AcceptCardResult>(`/api/cards/${cardId}/accept`, {
+    method: "POST",
+  }).then(notifyGamificationChanged);
 }
 
 export function acceptAllJobDrafts(jobId: string) {
@@ -995,7 +1008,10 @@ export function acceptAllJobDrafts(jobId: string) {
     accepted: number;
     failed: number;
     rejectedSiblingCount: number;
-  }>(`/api/jobs/${jobId}/drafts/accept-all`, { method: "POST" });
+    unlocks?: string[];
+  }>(`/api/jobs/${jobId}/drafts/accept-all`, { method: "POST" }).then(
+    notifyGamificationChanged,
+  );
 }
 
 export function rejectCard(cardId: string) {
@@ -1141,7 +1157,7 @@ export function listStrugglingCards() {
 
 export type StudyRating = 1 | 2 | 3 | 4;
 
-export type ReviewResult = { due: string };
+export type ReviewResult = { due: string; unlocks?: string[] };
 
 export function reviewCard(
   cardId: string,
@@ -1159,7 +1175,7 @@ export function reviewCard(
       rating,
       ...(localDay ? { localDay } : {}),
     },
-  });
+  }).then(notifyGamificationChanged);
 }
 
 export type ExportWarnings = {

@@ -14,7 +14,10 @@ import {
 import { CHUNK_CHAR_LIMIT } from "./pipeline";
 import { consumeFreeGenSlot } from "./quota";
 import { createWorkersAiAdapter } from "./workers-ai";
-import { studyStrugglePromptSuffix } from "./feedback-hints";
+import {
+  appendExtraUserSuffix,
+  buildExtraUserSuffix,
+} from "./feedback-hints";
 import {
   assertValidMcqOptions,
   type CardDraft,
@@ -64,10 +67,10 @@ ${args.text}
 --- END ---
 
 Respond with JSON only as {"cards":[...]} containing exactly one card of type "${args.type}".`;
-  const struggle = args.studyStruggle
-    ? studyStrugglePromptSuffix(args.studyStruggle)
-    : "";
-  return struggle ? `${base}\n\n${struggle}` : base;
+  return appendExtraUserSuffix(
+    base,
+    buildExtraUserSuffix({ studyStruggle: args.studyStruggle }),
+  );
 }
 
 /** Narrow sync generate for one card of a requested type. */
