@@ -59,7 +59,7 @@ export default function BottomChrome({
         bottom: 0,
         left: 0,
         right: 0,
-        zIndex: 1100,
+        zIndex: (theme) => theme.zIndex.appBar,
         bgcolor: SHELL_BG,
         color: SHELL_FG,
         borderTop: `1px solid ${SHELL_HAIRLINE}`,

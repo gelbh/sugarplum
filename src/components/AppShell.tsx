@@ -208,7 +208,7 @@ function AppShellChrome({ children }: AppShellProps) {
             top: 0,
             left: 0,
             right: 0,
-            zIndex: 1100,
+            zIndex: (theme) => theme.zIndex.appBar,
             bgcolor: SHELL_BG,
           }}
         >

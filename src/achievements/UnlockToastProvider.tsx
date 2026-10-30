@@ -120,7 +120,7 @@ export function UnlockToastProvider({ children }: { children: ReactNode }) {
               ? "calc(24px + env(safe-area-inset-bottom, 0px))"
               : "calc(88px + env(safe-area-inset-bottom, 0px))",
             transform: "translateX(-50%)",
-            zIndex: 1400,
+            zIndex: (theme) => theme.zIndex.snackbar,
             pointerEvents: "none",
             width: "min(360px, calc(100vw - 32px))",
             opacity: shown ? 1 : 0,
