@@ -456,23 +456,24 @@ export function gamificationRun(
       string,
       string,
     ];
-    const [start, end, , cap] = bound.slice(7) as [
+    const [keyLike, start, end, max] = bound.slice(6) as [
       string,
       string,
-      number,
+      string,
       number,
     ];
-    const reviewXpToday = state.xpLedger
+    const prefix = keyLike.replace(/%$/, "");
+    const capped = state.xpLedger
       .filter(
         (e) =>
           e.user_id === userId &&
-          e.idempotency_key.startsWith("review:") &&
+          e.idempotency_key.startsWith(prefix) &&
           e.created_at >= start &&
           e.created_at <= end,
       )
       .reduce((sum, e) => sum + e.amount, 0);
     const key = ledgerKey(userId, idempotencyKey);
-    if (reviewXpToday + amount > cap || state.xpLedgerKeys.has(key)) {
+    if (capped + amount > max || state.xpLedgerKeys.has(key)) {
       return { success: true, meta: { changes: 0 } } as D1Result;
     }
     state.xpLedgerKeys.add(key);

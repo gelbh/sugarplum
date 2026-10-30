@@ -16,26 +16,54 @@ export async function ensureUserGamification(
     .run();
 }
 
+/** Ledger rows with `keyPrefix` in [start, end] may not sum past `max`. */
+export type XpCap = {
+  keyPrefix: string;
+  start: string;
+  end: string;
+  max: number;
+};
+
 export async function creditXp(
   db: D1Database,
   userId: string,
   amount: number,
   reason: string,
   idempotencyKey: string,
+  cap?: XpCap,
 ): Promise<{ awarded: boolean; xpTotal: number; level: number }> {
   await ensureUserGamification(db, userId);
 
   const ledgerId = crypto.randomUUID();
   const createdAt = new Date().toISOString();
+  const values = [ledgerId, userId, amount, reason, idempotencyKey, createdAt];
 
-  const insert = await db
-    .prepare(
-      `INSERT OR IGNORE INTO xp_ledger (
-         id, user_id, amount, reason, idempotency_key, created_at
-       ) VALUES (?, ?, ?, ?, ?, ?)`,
-    )
-    .bind(ledgerId, userId, amount, reason, idempotencyKey, createdAt)
-    .run();
+  // One statement, so concurrent credits cannot both pass the cap check.
+  const insert = cap
+    ? await db
+        .prepare(
+          `INSERT OR IGNORE INTO xp_ledger (
+             id, user_id, amount, reason, idempotency_key, created_at
+           )
+           SELECT ?1, ?2, ?3, ?4, ?5, ?6
+           WHERE (
+             SELECT COALESCE(SUM(amount), 0) FROM xp_ledger
+             WHERE user_id = ?2
+               AND idempotency_key LIKE ?7
+               AND created_at >= ?8
+               AND created_at <= ?9
+           ) + ?3 <= ?10`,
+        )
+        .bind(...values, `${cap.keyPrefix}%`, cap.start, cap.end, cap.max)
+        .run()
+    : await db
+        .prepare(
+          `INSERT OR IGNORE INTO xp_ledger (
+             id, user_id, amount, reason, idempotency_key, created_at
+           ) VALUES (?, ?, ?, ?, ?, ?)`,
+        )
+        .bind(...values)
+        .run();
 
   if ((insert.meta.changes ?? 0) === 0) {
     const row = await db
@@ -51,29 +79,13 @@ export async function creditXp(
     };
   }
 
-  const { xpTotal, level } = await applyXpCredit(
-    db,
-    userId,
-    amount,
-    createdAt,
-  );
-  return { awarded: true, xpTotal, level };
-}
-
-/** Bumps xp_total and level after a ledger row was inserted. */
-export async function applyXpCredit(
-  db: D1Database,
-  userId: string,
-  amount: number,
-  at: string,
-): Promise<{ xpTotal: number; level: number }> {
   await db
     .prepare(
       `UPDATE user_gamification
        SET xp_total = xp_total + ?, updated_at = ?
        WHERE user_id = ?`,
     )
-    .bind(amount, at, userId)
+    .bind(amount, createdAt, userId)
     .run();
 
   const current = await db
@@ -87,8 +99,8 @@ export async function applyXpCredit(
     .prepare(
       `UPDATE user_gamification SET level = ?, updated_at = ? WHERE user_id = ?`,
     )
-    .bind(level, at, userId)
+    .bind(level, createdAt, userId)
     .run();
 
-  return { xpTotal, level };
+  return { awarded: true, xpTotal, level };
 }
