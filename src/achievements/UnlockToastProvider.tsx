@@ -11,7 +11,7 @@ import {
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import type { UnlockView } from "../api/client";
-import { RipeningFruitMedal } from "./FruitMedal";
+import FruitMedal from "./FruitMedal";
 import { useStudyChrome } from "../study/StudyChromeContext";
 
 export const ENTER_DELAY_MS = 16;
@@ -91,6 +91,7 @@ export function UnlockToastProvider({ children }: { children: ReactNode }) {
   const value = useMemo(() => ({ enqueueUnlocks }), [enqueueUnlocks]);
   const skin = hideChrome ? SKIN.zen : SKIN.shell;
   const shown = phase === "enter" || phase === "ripe";
+  const ripe = phase === "ripe" || phase === "exit";
 
   return (
     <UnlockToastContext.Provider value={value}>
@@ -132,11 +133,12 @@ export function UnlockToastProvider({ children }: { children: ReactNode }) {
               ...skin.surface,
             }}
           >
-            <RipeningFruitMedal
+            <FruitMedal
               fruitType={active.fruitType}
               traits={active.traits}
               size={52}
-              ripe={phase === "ripe" || phase === "exit"}
+              locked={!ripe}
+              glow={ripe}
             />
             <Box minWidth={0}>
               <Typography

@@ -10,6 +10,8 @@ export type FruitMedalProps = {
   locked?: boolean;
   /** Legendary gallery first paint only; one-shot sheen, no loop. */
   sheenOnce?: boolean;
+  /** Toast ripen: a boolean mounts the amber lamp wash; true lights it. */
+  glow?: boolean;
 };
 
 const sheenKeyframes = {
@@ -20,15 +22,16 @@ const sheenKeyframes = {
   },
 };
 
+const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
+
 export default function FruitMedal({
   fruitType,
   traits,
   size,
   locked = false,
   sheenOnce = false,
+  glow,
 }: FruitMedalProps) {
-  const filter = cssFilterFromTraits(traits, { locked });
-
   return (
     <Box
       sx={{
@@ -48,15 +51,32 @@ export default function FruitMedal({
           width: "100%",
           height: "100%",
           display: "block",
-          filter,
+          filter: cssFilterFromTraits(traits, { locked }),
           opacity: locked ? 0.45 : 1,
-          transition:
-            "filter 600ms cubic-bezier(0.16, 1, 0.3, 1), opacity 400ms ease",
+          transition: `filter 650ms ${EASE}, opacity 550ms ${EASE}`,
           "@media (prefers-reduced-motion: reduce)": {
             transition: "filter 200ms ease, opacity 200ms ease",
           },
         }}
       />
+      {glow != null ? (
+        <Box
+          aria-hidden
+          sx={{
+            pointerEvents: "none",
+            position: "absolute",
+            inset: -4,
+            borderRadius: 2,
+            bgcolor: glow
+              ? "rgba(196, 165, 116, 0.22)"
+              : "rgba(196, 165, 116, 0)",
+            transition: `background-color 650ms ${EASE}`,
+            "@media (prefers-reduced-motion: reduce)": {
+              transition: "background-color 200ms ease",
+            },
+          }}
+        />
+      ) : null}
       {sheenOnce ? (
         <Box
           aria-hidden
@@ -77,73 +97,6 @@ export default function FruitMedal({
           }}
         />
       ) : null}
-    </Box>
-  );
-}
-
-/** Ripening medal for unlock toast (starts dim, animates to full traits). */
-export function RipeningFruitMedal({
-  fruitType,
-  traits,
-  size,
-  ripe,
-}: {
-  fruitType: FruitType;
-  traits: FruitTraits;
-  size: number;
-  ripe: boolean;
-}) {
-  const filter = cssFilterFromTraits(traits, {
-    locked: !ripe,
-    ripen: ripe,
-  });
-
-  return (
-    <Box
-      sx={{
-        position: "relative",
-        width: size,
-        height: size,
-        flexShrink: 0,
-      }}
-    >
-      <Box
-        component="img"
-        src={`/achievements/fruits/${fruitType}.svg`}
-        alt=""
-        draggable={false}
-        sx={{
-          width: "100%",
-          height: "100%",
-          display: "block",
-          filter,
-          opacity: ripe ? 1 : 0.5,
-          transition:
-            "filter 650ms cubic-bezier(0.16, 1, 0.3, 1), opacity 550ms cubic-bezier(0.16, 1, 0.3, 1)",
-          "@media (prefers-reduced-motion: reduce)": {
-            transition: "filter 200ms ease, opacity 200ms ease",
-          },
-        }}
-      />
-      <Box
-        aria-hidden
-        sx={{
-          pointerEvents: "none",
-          position: "absolute",
-          inset: -4,
-          borderRadius: 2,
-          bgcolor: "rgba(196, 165, 116, 0)",
-          transition: "background-color 650ms cubic-bezier(0.16, 1, 0.3, 1)",
-          ...(ripe
-            ? {
-                bgcolor: "rgba(196, 165, 116, 0.22)",
-              }
-            : {}),
-          "@media (prefers-reduced-motion: reduce)": {
-            transition: "background-color 200ms ease",
-          },
-        }}
-      />
     </Box>
   );
 }
