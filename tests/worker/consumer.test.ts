@@ -21,7 +21,7 @@ import { CHUNK_CHAR_LIMIT } from "../../worker/generation/pipeline";
 import {
   FREE_GEN_DAILY_CAP,
   consumeFreeGenSlot,
-  freeGenKvKey,
+  getFreeGenUsage,
 } from "../../worker/generation/quota";
 import type { CardDraft } from "../../worker/generation/schema";
 import { createTestEnv, TEST_SECRETS_WRAP_KEY } from "./test-env";
@@ -318,7 +318,7 @@ describe("processGenerateJob free path", () => {
     });
     // Prior attempt already consumed the free-gen slot.
     await consumeFreeGenSlot(env, "user-a");
-    expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBe("1");
+    expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
 
     const result = await processGenerateJob(env, msg, {
       llm: mockLlmAdapter(),
@@ -331,7 +331,7 @@ describe("processGenerateJob free path", () => {
     const jobCards = env.getCards().filter((c) => c.job_id === msg.jobId);
     expect(jobCards).toHaveLength(3);
     expect(jobCards.some((c) => c.id === "c-orphan-draft")).toBe(false);
-    expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBe("1");
+    expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
     const progress = JSON.parse(
       env.getGenerationJobs().find((j) => j.id === msg.jobId)!.progress_json!,
     ) as { free_gen_charged?: boolean };
@@ -363,7 +363,7 @@ describe("processGenerateJob free path", () => {
         label: "Extracting material",
       }),
     });
-    expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBeNull();
+    expect((await getFreeGenUsage(env, "user-a")).used).toBe(0);
 
     const result = await processGenerateJob(env, msg, {
       llm: mockLlmAdapter(),
@@ -373,7 +373,7 @@ describe("processGenerateJob free path", () => {
     expect(
       env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
     ).toBe("needs_review");
-    expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBe("1");
+    expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
     const progress = JSON.parse(
       env.getGenerationJobs().find((j) => j.id === msg.jobId)!.progress_json!,
     ) as { free_gen_charged?: boolean };
@@ -542,7 +542,7 @@ describe("processGenerateJob free path", () => {
     expect(job?.status).toBe("needs_review");
     expect(job?.error).toBeNull();
     expect(env.getCards().length).toBeGreaterThanOrEqual(1);
-    expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBe("1");
+    expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
 
     const stored = JSON.parse(job!.progress_json!) as { path?: string };
     expect(stored.path).toBe("free");
@@ -590,7 +590,7 @@ describe("processGenerateJob free path", () => {
     expect(job?.status).toBe("needs_review");
     expect(env.getCards().length).toBeGreaterThanOrEqual(2);
     // Rules critique uses the free LLM path.
-    expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBe("1");
+    expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
   });
 
   it("rules critique drops Layer-1 survivors that the mock rejects", async () => {
@@ -622,7 +622,7 @@ describe("processGenerateJob free path", () => {
     const fronts = env.getCards().map((c) => JSON.parse(c.front_json) as string);
     expect(fronts).toContain("mitochondria");
     expect(fronts.some((f) => /overview/i.test(f))).toBe(false);
-    expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBe("1");
+    expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
   });
 
   it("BYO secret preferred: uses override llm without free quota", async () => {
@@ -639,7 +639,7 @@ describe("processGenerateJob free path", () => {
     expect(llm.generateDrafts).toHaveBeenCalled();
     const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("needs_review");
-    expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBeNull();
+    expect((await getFreeGenUsage(env, "user-a")).used).toBe(0);
 
     const stored = JSON.parse(job!.progress_json!) as { path?: string };
     expect(stored.path).toBe("byo");
@@ -701,7 +701,7 @@ describe("processGenerateJob free path", () => {
     const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("failed");
     expect(job?.error).toMatch(/simulated LLM failure/);
-    expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBe("1");
+    expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
     expect(env.getCards()).toHaveLength(0);
   });
 
@@ -723,7 +723,7 @@ describe("processGenerateJob free path", () => {
     expect(job?.error).toMatch(/OpenAI|Anthropic|Google/i);
     expect(job?.error).not.toMatch(/Gemini/i);
     // Slot not consumed when AI binding is missing
-    expect(await env.SESSIONS.get(freeGenKvKey("user-a"))).toBeNull();
+    expect((await getFreeGenUsage(env, "user-a")).used).toBe(0);
   });
 
   it("persists mcq drafts with answer and options in back_json", async () => {
