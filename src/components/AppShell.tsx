@@ -24,7 +24,7 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import { GAMIFICATION_CHANGED_EVENT, getGamification, me } from "../api/client";
 import StreakXpChip from "../achievements/StreakXpChip";
 import { isGuest } from "../guest/session";
-import { navigateReplace } from "../nav/navigate";
+import { locationKey, navigateReplace } from "../nav/navigate";
 import GlobalProgressBar from "../progress/GlobalProgressBar";
 import { ProgressProvider } from "../progress/ProgressProvider";
 import { useShellGenerationStatus } from "../shell/useShellGenerationStatus";
@@ -123,11 +123,12 @@ function AppShellChrome({ children }: AppShellProps) {
   const headerRef = useRef<HTMLDivElement>(null);
   const [mobileHeaderPx, setMobileHeaderPx] = useState(TOP_BAR_HEIGHT);
   const mainRef = useRef<HTMLElement>(null);
-  const search = window.location.search;
+  const locKey = locationKey();
 
+  // <main> is the only scroller and persists across routes, so the browser never resets it.
   useLayoutEffect(() => {
     mainRef.current?.scrollTo(0, 0);
-  }, [path, search]);
+  }, [locKey]);
 
   useEffect(() => {
     if (isGuest()) {
@@ -206,13 +207,7 @@ function AppShellChrome({ children }: AppShellProps) {
           : {}),
       }}
     >
-      <GlobalProgressBar
-        top={
-          showMobileChrome
-            ? `${mobileHeaderPx}px`
-            : "env(safe-area-inset-top, 0px)"
-        }
-      />
+      <GlobalProgressBar top={showMobileChrome ? mobileHeaderPx : 0} />
       {showMobileChrome ? (
         <Box
           ref={headerRef}
