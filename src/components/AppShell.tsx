@@ -201,7 +201,11 @@ function AppShellChrome({ children }: AppShellProps) {
       }}
     >
       <GlobalProgressBar
-        stickyTop={showMobileChrome ? `${mobileHeaderPx}px` : 0}
+        top={
+          showMobileChrome
+            ? `${mobileHeaderPx}px`
+            : "env(safe-area-inset-top, 0px)"
+        }
       />
       {showMobileChrome ? (
         <Box
