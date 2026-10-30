@@ -1,6 +1,8 @@
 /** @vitest-environment jsdom */
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  currentEntryKey,
+  goShellBack,
   locationKey,
   navigate,
   navigateReplace,
@@ -74,5 +76,61 @@ describe("shellBackHref", () => {
     expect(shellBackHref("/jobs/job_1/drafts")).toBe("/library");
     expect(shellBackHref("/admin/users/u1")).toBe("/admin");
     expect(shellBackHref("/admin")).toBeNull();
+  });
+});
+
+type EntryState = { key: string; from?: string };
+const entry = () => window.history.state as EntryState;
+
+describe("history entry state", () => {
+  it("navigate writes a fresh key and the location it left", () => {
+    navigate("/library");
+    const before = currentEntryKey();
+    navigate("/library/decks/d1");
+    expect(entry().from).toBe("/library");
+    expect(entry().key).not.toBe(before);
+    expect(currentEntryKey()).toBe(entry().key);
+  });
+
+  it("navigateReplace mints a new key and keeps from", () => {
+    navigate("/library");
+    navigate("/library/decks/d1");
+    const { key, from } = entry();
+    navigateReplace("/library/decks/d2");
+    expect(entry().from).toBe(from);
+    expect(entry().key).not.toBe(key);
+  });
+
+  it("currentEntryKey stamps a missing key without changing the URL", () => {
+    window.history.replaceState(null, "", "/settings");
+    const key = currentEntryKey();
+    expect(locationKey()).toBe("/settings");
+    expect(currentEntryKey()).toBe(key);
+  });
+});
+
+describe("goShellBack", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("pops when the previous entry is the back target", () => {
+    navigate("/library?sort=name");
+    navigate("/library/decks/d1");
+    const back = vi
+      .spyOn(window.history, "back")
+      .mockImplementation(() => {});
+    goShellBack("/library");
+    expect(back).toHaveBeenCalledOnce();
+    expect(locationKey()).toBe("/library/decks/d1");
+  });
+
+  it("pushes the back target when we came from elsewhere", () => {
+    navigate("/today");
+    navigate("/library/decks/d1");
+    const back = vi
+      .spyOn(window.history, "back")
+      .mockImplementation(() => {});
+    goShellBack("/library");
+    expect(back).not.toHaveBeenCalled();
+    expect(locationKey()).toBe("/library");
   });
 });

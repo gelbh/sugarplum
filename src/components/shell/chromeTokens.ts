@@ -7,3 +7,4 @@ export const SHELL_MUTED = "rgba(245, 245, 245, 0.62)";
 export const SHELL_HAIRLINE = "rgba(232, 216, 199, 0.16)";
 /** Selected / generating accent on night shell (fruit plum; DESIGN One Plum Voice). */
 export const SHELL_SELECTED = "#5B2C6F";
+export const DRAWER_WIDTH = 220;
