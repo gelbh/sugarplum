@@ -44,7 +44,7 @@ export type ProgressPatch = {
   drafts_so_far?: number;
   events?: ProgressEvent[];
   path?: "free" | "byo";
-  /** Set once free-gen KV slot was reserved for this job (reclaim must not re-charge). */
+  /** Set once free-gen slot was reserved for this job (reclaim must not re-charge). */
   free_gen_charged?: boolean;
 };
 
