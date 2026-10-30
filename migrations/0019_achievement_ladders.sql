@@ -1,0 +1,121 @@
+-- Full 5-step ladders: 11 fruits x 5 rarities (55 medals). Shipped ids and titles keep; two re-tier to common.
+
+UPDATE achievement_defs SET rarity = 'common' WHERE id IN ('clear_due_1', 'types_2');
+
+UPDATE achievement_defs SET sort_order = CASE id
+  WHEN 'reviews_1' THEN 110
+  WHEN 'reviews_25' THEN 120
+  WHEN 'reviews_100' THEN 130
+  WHEN 'accepts_1' THEN 210
+  WHEN 'accepts_25' THEN 220
+  WHEN 'study_days_3' THEN 320
+  WHEN 'study_days_14' THEN 330
+  WHEN 'clear_due_1' THEN 510
+  WHEN 'streak_7' THEN 830
+  WHEN 'streak_21' THEN 840
+  WHEN 'types_2' THEN 910
+  WHEN 'plum_scholar' THEN 1150
+  ELSE sort_order
+END;
+
+INSERT INTO achievement_defs (
+  id, category, fruit_type, rarity, trigger_kind, threshold, params_json,
+  title, description, sort_order, active
+) VALUES
+  ('reviews_500', 'reviews', 'apple', 'epic', 'reviews_total', 500, NULL,
+   'Full bushel', 'Complete 500 reviews.', 140, 1),
+  ('reviews_2000', 'reviews', 'apple', 'legendary', 'reviews_total', 2000, NULL,
+   'Golden apple', 'Complete 2,000 reviews.', 150, 1),
+  ('accepts_100', 'accepts', 'lemon', 'rare', 'accepts_total', 100, NULL,
+   'Lemon grove', 'Accept 100 cards.', 230, 1),
+  ('accepts_300', 'accepts', 'lemon', 'epic', 'accepts_total', 300, NULL,
+   'Lemonade stand', 'Accept 300 cards.', 240, 1),
+  ('accepts_1000', 'accepts', 'lemon', 'legendary', 'accepts_total', 1000, NULL,
+   'Meyer reserve', 'Accept 1,000 cards.', 250, 1),
+  ('study_days_2', 'study_days', 'strawberry', 'common', 'study_days_total', 2, NULL,
+   'Second helping', 'Study on 2 distinct days.', 310, 1),
+  ('study_days_50', 'study_days', 'strawberry', 'epic', 'study_days_total', 50, NULL,
+   'Berry season', 'Study on 50 distinct days.', 340, 1),
+  ('study_days_150', 'study_days', 'strawberry', 'legendary', 'study_days_total', 150, NULL,
+   'Everbearing', 'Study on 150 distinct days.', 350, 1),
+  ('library_2', 'library', 'coconut', 'common', 'library_decks', 2, NULL,
+   'Two shells', 'Have 2 decks with accepted cards.', 410, 1),
+  ('library_3', 'library', 'coconut', 'uncommon', 'library_decks', 3, NULL,
+   'Palm row', 'Have 3 decks with accepted cards.', 420, 1),
+  ('library_5', 'library', 'coconut', 'rare', 'library_decks', 5, NULL,
+   'Island shelf', 'Have 5 decks with accepted cards.', 430, 1),
+  ('library_10', 'library', 'coconut', 'epic', 'library_decks', 10, NULL,
+   'Copra store', 'Have 10 decks with accepted cards.', 440, 1),
+  ('library_20', 'library', 'coconut', 'legendary', 'library_decks', 20, NULL,
+   'Coconut library', 'Have 20 decks with accepted cards.', 450, 1),
+  ('clear_due_3', 'clear_due', 'pear', 'uncommon', 'clear_due_days', 3, NULL,
+   'Tidy pantry', 'Clear your due queue on 3 different days.', 520, 1),
+  ('clear_due_10', 'clear_due', 'pear', 'rare', 'clear_due_days', 10, NULL,
+   'Pear tree', 'Clear your due queue on 10 different days.', 530, 1),
+  ('clear_due_30', 'clear_due', 'pear', 'epic', 'clear_due_days', 30, NULL,
+   'Harvest home', 'Clear your due queue on 30 different days.', 540, 1),
+  ('clear_due_100', 'clear_due', 'pear', 'legendary', 'clear_due_days', 100, NULL,
+   'Perfect pear', 'Clear your due queue on 100 different days.', 550, 1),
+  ('long_reviews_1', 'long_reviews', 'orange', 'common', 'long_reviews', 1, NULL,
+   'Slow ripening', 'Review a card you last saw 30+ days ago.', 610, 1),
+  ('long_reviews_10', 'long_reviews', 'orange', 'uncommon', 'long_reviews', 10, NULL,
+   'Winter citrus', 'Review 10 cards you last saw 30+ days ago.', 620, 1),
+  ('long_reviews_50', 'long_reviews', 'orange', 'rare', 'long_reviews', 50, NULL,
+   'Long peel', 'Review 50 cards you last saw 30+ days ago.', 630, 1),
+  ('long_reviews_150', 'long_reviews', 'orange', 'epic', 'long_reviews', 150, NULL,
+   'Blood orange', 'Review 150 cards you last saw 30+ days ago.', 640, 1),
+  ('long_reviews_400', 'long_reviews', 'orange', 'legendary', 'long_reviews', 400, NULL,
+   'Seville reserve', 'Review 400 cards you last saw 30+ days ago.', 650, 1),
+  ('mature_1', 'mature', 'grape', 'common', 'mature_cards', 1, NULL,
+   'First grape', 'Grow 1 card to a 21+ day interval.', 710, 1),
+  ('mature_10', 'mature', 'grape', 'uncommon', 'mature_cards', 10, NULL,
+   'Small bunch', 'Grow 10 cards to a 21+ day interval.', 720, 1),
+  ('mature_50', 'mature', 'grape', 'rare', 'mature_cards', 50, NULL,
+   'Full cluster', 'Grow 50 cards to a 21+ day interval.', 730, 1),
+  ('mature_200', 'mature', 'grape', 'epic', 'mature_cards', 200, NULL,
+   'Vineyard', 'Grow 200 cards to a 21+ day interval.', 740, 1),
+  ('mature_500', 'mature', 'grape', 'legendary', 'mature_cards', 500, NULL,
+   'Vintage', 'Grow 500 cards to a 21+ day interval.', 750, 1),
+  ('streak_3', 'streak', 'cherry', 'common', 'streak_current', 3, NULL,
+   'Cherry pit', 'Reach a 3-day study streak.', 810, 1),
+  ('streak_5', 'streak', 'cherry', 'uncommon', 'streak_current', 5, NULL,
+   'Cherry pair', 'Reach a 5-day study streak.', 820, 1),
+  ('streak_60', 'streak', 'cherry', 'legendary', 'streak_current', 60, NULL,
+   'Cherry blossom', 'Reach a 60-day study streak.', 850, 1),
+  ('types_3', 'breadth', 'kiwi', 'uncommon', 'distinct_types', 3, NULL,
+   'Kiwi trio', 'Accept cards of 3 different types.', 920, 1),
+  ('types_4', 'breadth', 'kiwi', 'rare', 'distinct_types', 4, NULL,
+   'Fuzzy four', 'Accept cards of 4 different types.', 930, 1),
+  ('types_5', 'breadth', 'kiwi', 'epic', 'distinct_types', 5, NULL,
+   'Kiwi medley', 'Accept cards of 5 different types.', 940, 1),
+  ('types_6', 'breadth', 'kiwi', 'legendary', 'distinct_types', 6, NULL,
+   'Full spectrum', 'Accept cards of all 6 types.', 950, 1),
+  ('level_3', 'level', 'pineapple', 'common', 'level_reached', 3, NULL,
+   'Crown sprout', 'Reach level 3.', 1010, 1),
+  ('level_5', 'level', 'pineapple', 'uncommon', 'level_reached', 5, NULL,
+   'Spiky crown', 'Reach level 5.', 1020, 1),
+  ('level_10', 'level', 'pineapple', 'rare', 'level_reached', 10, NULL,
+   'Pineapple patch', 'Reach level 10.', 1030, 1),
+  ('level_15', 'level', 'pineapple', 'epic', 'level_reached', 15, NULL,
+   'Royal crown', 'Reach level 15.', 1040, 1),
+  ('level_20', 'level', 'pineapple', 'legendary', 'level_reached', 20, NULL,
+   'Sweet crown', 'Reach level 20.', 1050, 1),
+  ('plum_bud', 'prestige', 'plum', 'common', 'composite', NULL,
+   '{"streak_best_min":3,"reviews_min":25}',
+   'Plum bud', 'Best streak 3+ and 25 lifetime reviews.', 1110, 1),
+  ('plum_blossom', 'prestige', 'plum', 'uncommon', 'composite', NULL,
+   '{"streak_best_min":5,"reviews_min":50}',
+   'Plum blossom', 'Best streak 5+ and 50 lifetime reviews.', 1120, 1),
+  ('plum_ripening', 'prestige', 'plum', 'rare', 'composite', NULL,
+   '{"streak_best_min":7,"reviews_min":100}',
+   'Ripening plum', 'Best streak 7+ and 100 lifetime reviews.', 1130, 1),
+  ('plum_orchard', 'prestige', 'plum', 'epic', 'composite', NULL,
+   '{"streak_best_min":14,"reviews_min":150}',
+   'Plum orchard', 'Best streak 14+ and 150 lifetime reviews.', 1140, 1);
+
+-- Catalog version 2: established users get these backdated once, not as a live toast flood.
+UPDATE achievement_defs SET catalog_version = 2 WHERE id NOT IN (
+  'reviews_1', 'reviews_25', 'reviews_100', 'accepts_1', 'accepts_25',
+  'study_days_3', 'study_days_14', 'clear_due_1', 'streak_7', 'streak_21',
+  'types_2', 'plum_scholar'
+);

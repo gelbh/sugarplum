@@ -16,4 +16,35 @@ describe("achievement_defs after all migrations", () => {
       );
     }
   });
+
+  it("gives every fruit exactly one medal per rarity", () => {
+    const rarities = Object.keys(XP.unlock).sort();
+    for (const fruit of FRUIT_ORDER) {
+      const got = ACHIEVEMENT_DEF_SEEDS.filter((d) => d.fruit_type === fruit)
+        .map((d) => d.rarity)
+        .sort();
+      expect(got, fruit).toEqual(rarities);
+    }
+  });
+
+  it("puts only the 12 shipped medals at catalog version 1", () => {
+    const shipped = [
+      "reviews_1",
+      "reviews_25",
+      "reviews_100",
+      "accepts_1",
+      "accepts_25",
+      "study_days_3",
+      "study_days_14",
+      "clear_due_1",
+      "streak_7",
+      "streak_21",
+      "types_2",
+      "plum_scholar",
+    ];
+    expect(ACHIEVEMENT_DEF_SEEDS).toHaveLength(55);
+    for (const d of ACHIEVEMENT_DEF_SEEDS) {
+      expect(d.catalog_version, d.id).toBe(shipped.includes(d.id) ? 1 : 2);
+    }
+  });
 });

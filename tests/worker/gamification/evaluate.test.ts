@@ -12,9 +12,15 @@ import {
   creditXp,
   ensureUserGamification,
 } from "../../../worker/gamification/xp";
-import type { AchievementDefSeed } from "../gamification-seeds";
+import {
+  ACHIEVEMENT_DEF_SEEDS,
+  type AchievementDefSeed,
+} from "../gamification-seeds";
 
 const NOW = "2026-10-29T12:00:00.000Z";
+const LATEST_VERSION = Math.max(
+  ...ACHIEVEMENT_DEF_SEEDS.map((d) => d.catalog_version),
+);
 
 function seedStudyUser(env: ReturnType<typeof createTestEnv>) {
   env.seedUser({
@@ -421,11 +427,12 @@ describe("catalog versions", () => {
     seedStudyUser(env);
     seedAcceptedCard(env, { id: "c1", due: FUTURE });
     seedReview(env, "rl1", "c1");
-    // Evaluated against catalog v1 before the catalog grew.
+    // Evaluated against the shipped catalog before it grew.
     await ensureUserGamification(env.DB, "u1");
-    expect(env.getUserGamification("u1")?.catalog_version).toBe(1);
-    env.seedAchievementDef(testDef("t_history", "reviews_total", 1, 2));
-    env.seedAchievementDef(testDef("t_next", "reviews_total", 2, 2));
+    expect(env.getUserGamification("u1")?.catalog_version).toBe(LATEST_VERSION);
+    const next = LATEST_VERSION + 1;
+    env.seedAchievementDef(testDef("t_history", "reviews_total", 1, next));
+    env.seedAchievementDef(testDef("t_next", "reviews_total", 2, next));
 
     const first = await onReviewGraded(env.DB, "u1", {
       reviewLogId: "rl1",
@@ -440,7 +447,7 @@ describe("catalog versions", () => {
     expect(
       env.getXpLedger().some((e) => e.idempotency_key === "unlock:t_history"),
     ).toBe(false);
-    expect(env.getUserGamification("u1")?.catalog_version).toBe(2);
+    expect(env.getUserGamification("u1")?.catalog_version).toBe(next);
 
     seedReview(env, "rl2", "c1");
     const second = await onReviewGraded(env.DB, "u1", {
