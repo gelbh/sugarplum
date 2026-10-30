@@ -73,6 +73,7 @@ type GenerationJobRow = {
   figure_extract_mode?: string;
   topic_hints_json?: string | null;
   avoid_patterns_json?: string | null;
+  run_topic_hints_json?: string | null;
 };
 
 type UserSecretRow = {
@@ -595,7 +596,7 @@ export function createTestEnv(opts?: {
         }
         if (
           normalized.startsWith(
-            "SELECT progress_json, topic_hints_json, avoid_patterns_json FROM generation_jobs WHERE id =",
+            "SELECT progress_json, topic_hints_json, avoid_patterns_json, run_topic_hints_json FROM generation_jobs WHERE id =",
           )
         ) {
           const job = generationJobs.get(bound[0] as string);
@@ -604,6 +605,7 @@ export function createTestEnv(opts?: {
             progress_json: job.progress_json,
             topic_hints_json: job.topic_hints_json ?? null,
             avoid_patterns_json: job.avoid_patterns_json ?? null,
+            run_topic_hints_json: job.run_topic_hints_json ?? null,
           } as T;
         }
         if (
@@ -2569,10 +2571,11 @@ export function createTestEnv(opts?: {
           });
         } else if (
           normalized.startsWith(
-            "UPDATE generation_jobs SET avoid_patterns_json = ? WHERE id =",
+            "UPDATE generation_jobs SET avoid_patterns_json = ?, run_topic_hints_json = ? WHERE id =",
           )
         ) {
-          const [avoid_patterns_json, id] = bound as [
+          const [avoid_patterns_json, run_topic_hints_json, id] = bound as [
+            string | null,
             string | null,
             string,
           ];
@@ -2581,6 +2584,7 @@ export function createTestEnv(opts?: {
             generationJobs.set(id, {
               ...row,
               avoid_patterns_json,
+              run_topic_hints_json,
             });
           }
           return { success: true, meta: { changes: row ? 1 : 0 } } as D1Result;

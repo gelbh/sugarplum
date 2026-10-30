@@ -465,7 +465,7 @@ describe("POST /api/jobs/:id/regen", () => {
     );
   }
 
-  it("sends selected topicHints on the queue message for one run without persisting them", async () => {
+  it("stores selected topicHints for this run only, leaving job hints untouched", async () => {
     const env = createTestEnv();
     seedOwner(env);
     seedNeedsReviewJob(env);
@@ -483,31 +483,40 @@ describe("POST /api/jobs/:id/regen", () => {
     const job = env.getGenerationJobs()[0]!;
     expect(job.status).toBe("queued");
     expect(job.topic_hints_json).toBe(JSON.stringify(["B"]));
+    expect(job.run_topic_hints_json).toBe(JSON.stringify(["A", "Gap two"]));
     expect(JSON.parse(job.avoid_patterns_json as string)).toContain("Rejected?");
     expect(env.getQueueMessages()).toEqual([
-      {
-        jobId: "job-a",
-        materialId: "mat-a",
-        deckId: "deck-a",
-        topicHints: ["A", "Gap two"],
-      },
+      { jobId: "job-a", materialId: "mat-a", deckId: "deck-a" },
     ]);
   });
 
   it.each([
+    ["no body", undefined],
     ["empty object", "{}"],
     ["empty hints", JSON.stringify({ topicHints: [] })],
-  ])("treats %s like a bodyless regen", async (_label, body) => {
+  ])("clears the previous run's hints for %s", async (_label, body) => {
     const env = createTestEnv();
     seedOwner(env);
     seedNeedsReviewJob(env);
+    env.seedGenerationJob({
+      ...env.getGenerationJobs()[0]!,
+      run_topic_hints_json: JSON.stringify(["old gap"]),
+    });
 
-    const res = await regenWithBody(env, body);
+    const res =
+      body === undefined
+        ? await app.request(
+            "/api/jobs/job-a/regen",
+            {
+              method: "POST",
+              headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+            },
+            env,
+          )
+        : await regenWithBody(env, body);
 
     expect(res.status).toBe(200);
-    expect(env.getQueueMessages()).toEqual([
-      { jobId: "job-a", materialId: "mat-a", deckId: "deck-a" },
-    ]);
+    expect(env.getGenerationJobs()[0]!.run_topic_hints_json).toBeNull();
   });
 
   it.each([

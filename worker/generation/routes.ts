@@ -279,8 +279,14 @@ jobRoutes.post("/:id/regen", async (c) => {
   }
   const patterns = buildAvoidPatternsFromRejected(entries);
   await db
-    .prepare("UPDATE generation_jobs SET avoid_patterns_json = ? WHERE id = ?")
-    .bind(patterns.length > 0 ? JSON.stringify(patterns) : null, jobId)
+    .prepare(
+      "UPDATE generation_jobs SET avoid_patterns_json = ?, run_topic_hints_json = ? WHERE id = ?",
+    )
+    .bind(
+      patterns.length > 0 ? JSON.stringify(patterns) : null,
+      selectedHints ? JSON.stringify(selectedHints) : null,
+      jobId,
+    )
     .run();
 
   await db.prepare("DELETE FROM cards WHERE job_id = ?").bind(jobId).run();
@@ -290,7 +296,6 @@ jobRoutes.post("/:id/regen", async (c) => {
       jobId: row.id,
       materialId: row.material_id,
       deckId: row.deck_id,
-      ...(selectedHints ? { topicHints: selectedHints } : {}),
     });
   } catch (err) {
     const finishedAt = new Date().toISOString();

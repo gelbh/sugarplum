@@ -348,7 +348,7 @@ describe("topicHints consumer injection", () => {
     ).toBe(true);
   });
 
-  it("merges one-run message topic hints ahead of job hints", async () => {
+  it("merges this run's topic hints ahead of job hints", async () => {
     const env = createTestEnv();
     seedPasteOwner(env);
     env.seedMaterial({
@@ -370,6 +370,11 @@ describe("topicHints consumer injection", () => {
       deckId: "deck-a",
       topicHints: ["cranial nerves"],
     });
+    const job0 = env.getGenerationJobs().find((j) => j.id === jobId)!;
+    env.seedGenerationJob({
+      ...job0,
+      run_topic_hints_json: JSON.stringify(["nuclei of the head"]),
+    });
     const base = mockLlmAdapter();
     const llm: LlmAdapter = {
       generateDrafts: vi.fn(base.generateDrafts.bind(base)),
@@ -378,12 +383,7 @@ describe("topicHints consumer injection", () => {
 
     await processGenerateJob(
       env,
-      {
-        jobId,
-        materialId: "mat-run",
-        deckId: "deck-a",
-        topicHints: ["nuclei of the head"],
-      },
+      { jobId, materialId: "mat-run", deckId: "deck-a" },
       { llm },
     );
 
