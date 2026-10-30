@@ -12,26 +12,19 @@ import { isGuest } from "../guest/session";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import type { AchievementItem } from "./wire";
 
-export type AchievementsData = {
-  ready: boolean;
-  guest: boolean;
-  error: string | null;
-  items: AchievementItem[];
-  gamification: GamificationResponse | null;
-  board: LeaderboardResponse | null;
-};
-
-const INITIAL: AchievementsData = {
-  ready: false,
-  guest: false,
-  error: null,
-  items: [],
-  gamification: null,
-  board: null,
-};
+export type AchievementsData =
+  | { status: "loading" }
+  | { status: "guest" }
+  | { status: "error"; message: string }
+  | {
+      status: "ready";
+      items: AchievementItem[];
+      gamification: GamificationResponse | null;
+      board: LeaderboardResponse | null;
+    };
 
 export function useAchievementsData(): AchievementsData {
-  const [data, setData] = useState<AchievementsData>(INITIAL);
+  const [data, setData] = useState<AchievementsData>({ status: "loading" });
   const { end: endLoad } = useTrackedOp("Loading achievements…", {
     trackOnMount: true,
   });
@@ -43,7 +36,7 @@ export function useAchievementsData(): AchievementsData {
         await me();
         if (isGuest()) {
           if (!cancelled) {
-            setData({ ...INITIAL, ready: true, guest: true });
+            setData({ status: "guest" });
             endLoad();
           }
           return;
@@ -56,9 +49,7 @@ export function useAchievementsData(): AchievementsData {
         ]);
         if (cancelled) return;
         setData({
-          ready: true,
-          guest: false,
-          error: null,
+          status: "ready",
           items: ach.items,
           gamification: gam,
           board: lb,
@@ -71,9 +62,8 @@ export function useAchievementsData(): AchievementsData {
           return;
         }
         setData({
-          ...INITIAL,
-          ready: true,
-          error:
+          status: "error",
+          message:
             err instanceof ApiError
               ? err.message
               : "Failed to load achievements",

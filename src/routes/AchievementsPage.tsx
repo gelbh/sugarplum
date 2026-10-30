@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -14,6 +14,7 @@ import {
 } from "../achievements/catalog";
 import MagnificCredits from "../achievements/MagnificCredits";
 import { useAchievementsData } from "../achievements/useAchievementsData";
+import type { GamificationResponse } from "../api/client";
 import type { AchievementItem } from "../achievements/wire";
 
 const SHEEN_SEEN_KEY = "sugarplum:achievement-sheen-seen";
@@ -55,9 +56,59 @@ function groupByFruit(
   return map;
 }
 
+const NO_ITEMS: AchievementItem[] = [];
+
+function GalleryLayout({
+  gamification,
+  children,
+}: {
+  gamification: GamificationResponse | null;
+  children: ReactNode;
+}) {
+  return (
+    <Container maxWidth="sm" sx={{ py: { xs: 4, md: 5 } }}>
+      <Stack
+        spacing={3}
+        sx={{
+          "@keyframes achievementStagger": {
+            from: { opacity: 0, transform: "translateY(6px)" },
+            to: { opacity: 1, transform: "translateY(0)" },
+          },
+        }}
+      >
+        <Box>
+          <Typography
+            variant="h4"
+            component="h1"
+            gutterBottom
+            sx={{ color: "text.primary", fontWeight: 600 }}
+          >
+            Achievements
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Collect fruit medals as you study, accept cards, and keep your
+            streak alive.
+          </Typography>
+          {gamification ? (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Streak {gamification.streakCurrent} (best{" "}
+              {gamification.streakBest}) · Level {gamification.level} ·{" "}
+              {gamification.xpTotal} XP
+            </Typography>
+          ) : null}
+        </Box>
+
+        {children}
+
+        <MagnificCredits />
+      </Stack>
+    </Container>
+  );
+}
+
 export default function AchievementsPage() {
-  const { ready, guest, error, items, gamification, board } =
-    useAchievementsData();
+  const data = useAchievementsData();
+  const items = data.status === "ready" ? data.items : NO_ITEMS;
   const [sheenOnceIds, setSheenOnceIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -94,150 +145,124 @@ export default function AchievementsPage() {
     return out;
   }, [grouped]);
 
-  if (!ready) {
-    return (
-      <Container maxWidth="sm" sx={{ py: 6 }}>
-        <Typography color="text.secondary">Loading achievements…</Typography>
-      </Container>
-    );
-  }
-
-  if (guest) {
-    return (
-      <Container maxWidth="sm" sx={{ py: { xs: 4, md: 5 } }}>
-        <Stack spacing={2}>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
-            Achievements
-          </Typography>
-          <Alert severity="info">
-            Sign in to track streaks, XP, and fruit medals. Guest study stays on
-            this device only.
-          </Alert>
-          <Button variant="contained" href="/login">
-            Sign in
-          </Button>
-          <MagnificCredits />
-        </Stack>
-      </Container>
-    );
-  }
-
-  return (
-    <Container maxWidth="sm" sx={{ py: { xs: 4, md: 5 } }}>
-      <Stack
-        spacing={3}
-        sx={{
-          "@keyframes achievementStagger": {
-            from: { opacity: 0, transform: "translateY(6px)" },
-            to: { opacity: 1, transform: "translateY(0)" },
-          },
-        }}
-      >
-        <Box>
-          <Typography
-            variant="h4"
-            component="h1"
-            gutterBottom
-            sx={{ color: "text.primary", fontWeight: 600 }}
-          >
-            Achievements
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Collect fruit medals as you study, accept cards, and keep your
-            streak alive.
-          </Typography>
-          {gamification ? (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Streak {gamification.streakCurrent} (best{" "}
-              {gamification.streakBest}) · Level {gamification.level} ·{" "}
-              {gamification.xpTotal} XP
+  switch (data.status) {
+    case "loading":
+      return (
+        <Container maxWidth="sm" sx={{ py: 6 }}>
+          <Typography color="text.secondary">Loading achievements…</Typography>
+        </Container>
+      );
+    case "guest":
+      return (
+        <Container maxWidth="sm" sx={{ py: { xs: 4, md: 5 } }}>
+          <Stack spacing={2}>
+            <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+              Achievements
             </Typography>
-          ) : null}
-        </Box>
-
-        {error ? <Alert severity="error">{error}</Alert> : null}
-
-        {!error
-          ? FRUIT_ORDER.map((fruit) => {
-              const list = grouped.get(fruit) ?? [];
-              if (list.length === 0) return null;
-              return (
-                <Paper
-                  key={fruit}
-                  variant="outlined"
-                  sx={{
-                    p: 2.5,
-                    bgcolor: "background.paper",
-                    borderColor: "divider",
-                  }}
+            <Alert severity="info">
+              Sign in to track streaks, XP, and fruit medals. Guest study stays
+              on this device only.
+            </Alert>
+            <Button variant="contained" href="/login">
+              Sign in
+            </Button>
+            <MagnificCredits />
+          </Stack>
+        </Container>
+      );
+    case "error":
+      return (
+        <GalleryLayout gamification={null}>
+          <Alert severity="error">{data.message}</Alert>
+        </GalleryLayout>
+      );
+    case "ready": {
+      const { gamification, board } = data;
+      return (
+        <GalleryLayout gamification={gamification}>
+          {FRUIT_ORDER.map((fruit) => {
+            const list = grouped.get(fruit) ?? [];
+            if (list.length === 0) return null;
+            return (
+              <Paper
+                key={fruit}
+                variant="outlined"
+                sx={{
+                  p: 2.5,
+                  bgcolor: "background.paper",
+                  borderColor: "divider",
+                }}
+              >
+                <Typography
+                  variant="subtitle1"
+                  component="h2"
+                  sx={{ fontWeight: 600, mb: 2, color: "primary.main" }}
                 >
-                  <Typography
-                    variant="subtitle1"
-                    component="h2"
-                    sx={{ fontWeight: 600, mb: 2, color: "primary.main" }}
-                  >
-                    {FRUIT_LABEL[fruit]}
-                  </Typography>
-                  <Stack spacing={2}>
-                    {list.map((item) => (
-                      <AchievementRow
-                        key={item.def.id}
-                        item={item}
-                        staggerIndex={staggerIndexById.get(item.def.id) ?? 0}
-                        sheenOnce={sheenOnceIds.has(item.def.id)}
-                      />
-                    ))}
-                  </Stack>
-                </Paper>
-              );
-            })
-          : null}
+                  {FRUIT_LABEL[fruit]}
+                </Typography>
+                <Stack spacing={2}>
+                  {list.map((item) => (
+                    <AchievementRow
+                      key={item.def.id}
+                      item={item}
+                      staggerIndex={staggerIndexById.get(item.def.id) ?? 0}
+                      sheenOnce={sheenOnceIds.has(item.def.id)}
+                    />
+                  ))}
+                </Stack>
+              </Paper>
+            );
+          })}
 
-        {board ? (
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 2.5,
-              bgcolor: "background.paper",
-              borderColor: "divider",
-            }}
-          >
-            <Typography
-              variant="subtitle1"
-              component="h2"
-              sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+          {board ? (
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 2.5,
+                bgcolor: "background.paper",
+                borderColor: "divider",
+              }}
             >
-              Weekly board
-            </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              display="block"
-              sx={{ mb: 1.5 }}
-            >
-              Week {board.weekKey} (UTC)
-              {gamification && !gamification.boardOptIn
-                ? " · Opt in under Settings to appear on the board"
-                : null}
-            </Typography>
-            {board.entries.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">
-                No entries yet this week.
+              <Typography
+                variant="subtitle1"
+                component="h2"
+                sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+              >
+                Weekly board
               </Typography>
-            ) : (
-              <Stack spacing={0.75}>
-                {board.entries.map((entry, i) => (
-                  <Typography key={entry.userId} variant="body2">
-                    {i + 1}. {entry.displayName ?? "Learner"} · {entry.xp} XP
-                  </Typography>
-                ))}
-              </Stack>
-            )}
-          </Paper>
-        ) : null}
-
-        <MagnificCredits />
-      </Stack>
-    </Container>
-  );
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+                sx={{ mb: 1.5 }}
+              >
+                Week {board.weekKey} (UTC)
+                {gamification && !gamification.boardOptIn
+                  ? " · Opt in under Settings to appear on the board"
+                  : null}
+              </Typography>
+              {board.entries.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  No entries yet this week.
+                </Typography>
+              ) : (
+                <Stack spacing={0.75}>
+                  {board.entries.map((entry, i) => (
+                    <Typography key={entry.userId} variant="body2">
+                      {i + 1}. {entry.displayName ?? "Learner"} · {entry.xp} XP
+                    </Typography>
+                  ))}
+                </Stack>
+              )}
+            </Paper>
+          ) : null}
+        </GalleryLayout>
+      );
+    }
+    default: {
+      const unhandled: never = data;
+      void unhandled;
+      return null;
+    }
+  }
 }
