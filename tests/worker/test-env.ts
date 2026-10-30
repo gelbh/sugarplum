@@ -79,6 +79,7 @@ type UserSecretRow = {
   user_id: string;
   provider: string;
   ciphertext: string;
+  model?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -809,12 +810,16 @@ export function createTestEnv(opts?: {
         }
         if (
           normalized.startsWith(
-            "SELECT provider, ciphertext FROM user_secrets WHERE user_id =",
+            "SELECT provider, ciphertext, model FROM user_secrets WHERE user_id =",
           )
         ) {
           const row = userSecrets.get(bound[0] as string);
           return row
-            ? ({ provider: row.provider, ciphertext: row.ciphertext } as T)
+            ? ({
+                provider: row.provider,
+                ciphertext: row.ciphertext,
+                model: row.model ?? null,
+              } as T)
             : null;
         }
         if (
@@ -2766,13 +2771,14 @@ export function createTestEnv(opts?: {
             });
           }
         } else if (normalized.startsWith("INSERT INTO user_secrets")) {
-          const [user_id, provider, ciphertext, created_at, updated_at] =
-            bound as [string, string, string, string, string];
+          const [user_id, provider, ciphertext, model, created_at, updated_at] =
+            bound as [string, string, string, string | null, string, string];
           const existing = userSecrets.get(user_id);
           userSecrets.set(user_id, {
             user_id,
             provider,
             ciphertext,
+            model,
             created_at: existing?.created_at ?? created_at,
             updated_at,
           });
