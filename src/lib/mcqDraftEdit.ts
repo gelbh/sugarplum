@@ -3,6 +3,12 @@ export const MCQ_MAX = 5;
 
 export type McqDraft = { options: string[]; back: string };
 
+export function pickCorrect(options: string[], preferred: string): string {
+  const trimmed = preferred.trim();
+  if (trimmed && options.includes(trimmed)) return trimmed;
+  return options.find((o) => o.trim()) ?? options[0] ?? "";
+}
+
 export function withMcqOptionText(
   draft: McqDraft,
   index: number,
@@ -27,9 +33,6 @@ export function withMcqOptionRemoved(draft: McqDraft, index: number): McqDraft {
   if (draft.options.length <= MCQ_MIN) return draft;
   const removed = draft.options[index];
   const options = draft.options.filter((_, i) => i !== index);
-  const back =
-    draft.back === removed
-      ? (options.find((o) => o.trim()) ?? options[0] ?? "")
-      : draft.back;
+  const back = draft.back === removed ? pickCorrect(options, "") : draft.back;
   return { options, back };
 }

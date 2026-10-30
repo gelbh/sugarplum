@@ -81,10 +81,12 @@ import { guestPasteToCards } from "../guest/pasteToCards";
 import { guestAddAcceptedCards } from "../guest/store";
 import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
 import {
-  collectDeckImageKeys,
-  hubDiyTypes,
   isOcclusionFront,
   starterOcclusionFront,
+} from "../lib/draftCardModel";
+import {
+  collectDeckImageKeys,
+  hubDiyTypes,
   validateHubCreateCard,
 } from "../lib/hubDiyCreate";
 import { navigate } from "../nav/navigate";

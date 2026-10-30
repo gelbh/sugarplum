@@ -2,8 +2,8 @@ import type {
   CardDraftView,
   CardType,
   HubCreateCardBody,
-  OcclusionFrontView,
 } from "../api/client";
+import { backAnswer, isOcclusionFront } from "./draftCardModel";
 
 const GUEST_HUB_DIY_TYPES: CardType[] = ["qa", "cloze", "mcq"];
 const ACCOUNT_IMAGE_DIY_TYPES: CardType[] = ["occlusion", "image_label"];
@@ -11,29 +11,6 @@ const ACCOUNT_IMAGE_DIY_TYPES: CardType[] = ["occlusion", "image_label"];
 export function hubDiyTypes(guest: boolean): CardType[] {
   if (guest) return GUEST_HUB_DIY_TYPES;
   return [...GUEST_HUB_DIY_TYPES, ...ACCOUNT_IMAGE_DIY_TYPES];
-}
-
-export function starterOcclusionFront(imageKey: string): OcclusionFrontView {
-  return {
-    image_key: imageKey,
-    regions: [
-      { id: "r1", x: 0.35, y: 0.35, w: 0.3, h: 0.25, label: "" },
-    ],
-    mode: "hide_one",
-  };
-}
-
-export function isOcclusionFront(
-  front: CardDraftView["front"],
-): front is OcclusionFrontView {
-  return typeof front === "object" && front !== null && "regions" in front;
-}
-
-function backAnswer(back: CardDraftView["back"]): string {
-  if (typeof back === "object" && back !== null && "answer" in back) {
-    return back.answer;
-  }
-  return typeof back === "string" ? back : "";
 }
 
 /** Unique material keys already used on this deck (from cards). */

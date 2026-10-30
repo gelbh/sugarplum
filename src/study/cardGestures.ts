@@ -36,10 +36,8 @@ export type ReviewSwipeResult = "accept" | "reject" | "none";
 export function resolveReviewSwipe(input: {
   dx: number;
   dy: number;
-  threshold?: number;
 }): ReviewSwipeResult {
-  const threshold = input.threshold ?? REVIEW_SWIPE_THRESHOLD_PX;
   const ax = Math.abs(input.dx);
-  if (ax < threshold || ax <= Math.abs(input.dy)) return "none";
+  if (ax < REVIEW_SWIPE_THRESHOLD_PX || ax <= Math.abs(input.dy)) return "none";
   return input.dx > 0 ? "accept" : "reject";
 }
