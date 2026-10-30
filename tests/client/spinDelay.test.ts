@@ -64,4 +64,15 @@ describe("createSpinDelay", () => {
     vi.advanceTimersByTime(200);
     expect(seen).toEqual([true]);
   });
+
+  it("dispose hides a shown bar so a re-run effect starts hidden", () => {
+    const spin = createSpinDelay(OPTS, (v) => seen.push(v));
+    spin.set(true);
+    vi.advanceTimersByTime(200);
+    spin.dispose();
+    expect(seen).toEqual([true, false]);
+    spin.set(true);
+    vi.advanceTimersByTime(200);
+    expect(seen).toEqual([true, false, true]);
+  });
 });

@@ -50,6 +50,10 @@ export function createSpinDelay(
     dispose() {
       clear();
       active = false;
+      if (visible) {
+        visible = false;
+        onChange(false);
+      }
     },
   };
 }
