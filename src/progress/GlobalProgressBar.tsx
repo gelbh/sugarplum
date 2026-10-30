@@ -1,6 +1,10 @@
+import { useState } from "react";
 import Box from "@mui/material/Box";
 import LinearProgress from "@mui/material/LinearProgress";
 import { useProgressRegistry } from "./ProgressProvider";
+import { useSpinDelay } from "./spinDelay";
+
+const SHOW_TIMING = { delay: 200, minDuration: 300 };
 
 type GlobalProgressBarProps = {
   top?: string | number;
@@ -9,10 +13,15 @@ type GlobalProgressBarProps = {
 /** Thin top bar for the primary active progress op (prefer job source). */
 export default function GlobalProgressBar({ top = 0 }: GlobalProgressBarProps) {
   const { primary } = useProgressRegistry();
+  const visible = useSpinDelay(primary != null, SHOW_TIMING);
+  // The minimum-visible tail outlives `primary`, so keep drawing the last op.
+  const [last, setLast] = useState(primary);
+  if (primary && primary !== last) setLast(primary);
+  const shown = primary ?? last;
 
-  if (!primary) return null;
+  if (!visible || !shown) return null;
 
-  const determinate = primary.mode === "determinate";
+  const determinate = shown.mode === "determinate";
 
   return (
     <Box
@@ -27,11 +36,11 @@ export default function GlobalProgressBar({ top = 0 }: GlobalProgressBarProps) {
     >
       <LinearProgress
         variant={determinate ? "determinate" : "indeterminate"}
-        value={determinate ? primary.percent : undefined}
-        aria-label={primary.label}
+        value={determinate ? shown.percent : undefined}
+        aria-label={shown.label}
         {...(determinate
           ? {
-              "aria-valuenow": Math.round(primary.percent),
+              "aria-valuenow": Math.round(shown.percent),
               "aria-valuemin": 0,
               "aria-valuemax": 100,
             }

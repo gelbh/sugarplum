@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import Badge from "@mui/material/Badge";
 import BottomNavigation from "@mui/material/BottomNavigation";
 import BottomNavigationAction from "@mui/material/BottomNavigationAction";
@@ -12,18 +11,11 @@ import {
   SHELL_MUTED,
   SHELL_SELECTED,
 } from "./chromeTokens";
-import type { ShellNavId } from "./shellNav";
-
-export type BottomChromeItem = {
-  id: ShellNavId;
-  label: string;
-  href: string;
-  icon: ReactNode;
-};
+import type { ShellNavId, ShellNavItem } from "./shellNav";
 
 type BottomChromeProps = {
   active: ShellNavId;
-  items: BottomChromeItem[];
+  items: ShellNavItem[];
   onNavigate: (href: string) => void;
   libraryBadgeKind?: ShellGenerationKind | null;
 };
@@ -59,7 +51,7 @@ export default function BottomChrome({
         bottom: 0,
         left: 0,
         right: 0,
-        zIndex: 1100,
+        zIndex: (theme) => theme.zIndex.appBar,
         bgcolor: SHELL_BG,
         color: SHELL_FG,
         borderTop: `1px solid ${SHELL_HAIRLINE}`,
