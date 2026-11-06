@@ -28,6 +28,20 @@ function heldMedal(items: AchievementItem[]): AchievementItem {
   return held;
 }
 
+function withOpenTileOnRowStart(
+  fruits: FruitType[],
+  open: FruitType | null,
+): FruitType[] {
+  if (open == null) return fruits;
+  const index = fruits.indexOf(open);
+  if (index < 1 || index % 2 === 0) return fruits;
+  const next = fruits.slice();
+  const left = next[index - 1]!;
+  next[index - 1] = next[index]!;
+  next[index] = left;
+  return next;
+}
+
 function MedalTile({
   items,
   open,
@@ -149,11 +163,13 @@ export default function MedalCabinet({
 }) {
   const [openFruit, setOpenFruit] = useState<FruitType | null>(null);
   const grouped = groupByFruit(items);
+  const fruits = FRUIT_ORDER.filter((fruit) => (grouped.get(fruit) ?? []).length > 0);
+  // A spanning tile in column 2 leaves the cell beside it empty.
+  const ordered = withOpenTileOnRowStart(fruits, openFruit);
   return (
     <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
-      {FRUIT_ORDER.map((fruit) => {
+      {ordered.map((fruit) => {
         const list = grouped.get(fruit) ?? [];
-        if (list.length === 0) return null;
         return (
           <MedalTile
             key={fruit}

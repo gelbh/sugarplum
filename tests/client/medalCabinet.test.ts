@@ -199,6 +199,14 @@ describe("MedalCabinet", () => {
     expect(text()).not.toContain("Full bushel");
   });
 
+  it("moves an open right-column tile to the start of its row", () => {
+    render([...apple, ...lemon]);
+    clickButton(1);
+    const tiles = host.querySelectorAll(".medal-tile");
+    expect(tiles[0]?.textContent).toContain("First zest");
+    expect(tiles[1]?.textContent).toContain("Orchard regular");
+  });
+
   it("shows the first medal when none are unlocked, and the next plum's bars", () => {
     render(plum);
     expect(text()).toContain("Plum bud");
