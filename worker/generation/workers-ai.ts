@@ -8,6 +8,7 @@ import {
   type GenerateDraftsInput,
   type LlmAdapter,
 } from "./llm";
+import { workersAiJsonSchemaResponseFormat } from "./cards-json-schema";
 import { appendExtraUserSuffix } from "./feedback-hints";
 import {
   GENERATE_COMPACT_SYSTEM_PROMPT,
@@ -180,7 +181,7 @@ export function createWorkersAiAdapter(
           {
             ...base,
             ...(withJsonMode
-              ? { response_format: { type: "json_object" as const } }
+              ? { response_format: workersAiJsonSchemaResponseFormat() }
               : {}),
           },
           {
