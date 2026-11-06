@@ -79,7 +79,12 @@ describe("shellBackHref", () => {
   });
 });
 
-type EntryState = { key: string; from?: string };
+type EntryState = {
+  key: string;
+  from?: string;
+  fromKey?: string;
+  fromDoc?: string;
+};
 const entry = () => window.history.state as EntryState;
 
 describe("history entry state", () => {
@@ -90,6 +95,14 @@ describe("history entry state", () => {
     expect(entry().from).toBe("/library");
     expect(entry().key).not.toBe(before);
     expect(currentEntryKey()).toBe(entry().key);
+  });
+
+  it("navigate records the left entry's key and this document", () => {
+    navigate("/library");
+    const libraryKey = currentEntryKey();
+    navigate("/library/decks/d1");
+    expect(entry().fromKey).toBe(libraryKey);
+    expect(entry().fromDoc).toEqual(expect.any(String));
   });
 
   it("navigateReplace mints a new key and keeps from", () => {
@@ -132,5 +145,22 @@ describe("goShellBack", () => {
     goShellBack("/library");
     expect(back).not.toHaveBeenCalled();
     expect(locationKey()).toBe("/library");
+  });
+
+  it("pushes the parent with its old key when the entry came from an earlier document", () => {
+    navigate("/library");
+    navigate("/library/decks/d1");
+    const { fromKey } = entry();
+    window.history.replaceState(
+      { ...entry(), fromDoc: "previous-document" },
+      "",
+    );
+    const back = vi
+      .spyOn(window.history, "back")
+      .mockImplementation(() => {});
+    goShellBack("/library");
+    expect(back).not.toHaveBeenCalled();
+    expect(locationKey()).toBe("/library");
+    expect(entry().key).toBe(fromKey);
   });
 });

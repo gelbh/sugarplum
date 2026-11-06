@@ -27,5 +27,6 @@ export type EvalScoreReport = {
   keyFactIdsMissed: string[];
   forbiddenHits: { id: string; matchedIn: string }[];
   ungroundedFronts: string[];
+  unentailedFronts: string[];
   failures: string[];
 };

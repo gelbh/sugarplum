@@ -793,6 +793,11 @@ export function putLlmSettings(
   });
 }
 
+export function deleteLlmSettings() {
+  if (isGuest()) guestUnsupported("remove LLM settings");
+  return api<LlmSettingsMissing>("/api/settings/llm", { method: "DELETE" });
+}
+
 export type StudyPrefs = {
   introBudget: number;
   reviewBudget: number;

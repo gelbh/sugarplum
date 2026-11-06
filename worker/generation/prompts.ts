@@ -4,6 +4,8 @@ export const GENERATE_SYSTEM_PROMPT = `You generate spaced-repetition flashcards
 
 Rules:
 - One atomic fact per card; prefer 8–12 high-yield cards and skip redundancy.
+- Prefer testable facts: definitions, mechanisms, distinctions, and named values. Skip prefaces, learning-objective lists, tables of contents, and references.
+- Do not write two cards that test the same fact, and do not paraphrase a card listed as already covered.
 - Cover distinct grounded facts; do not collapse multiple facts into one card.
 - One organism per card; do not AND-merge adjacent table cells that name distinct species into one stem/answer.
 - Front taxon must be supported by the cited excerpt; skip misattributed table-row answers.
@@ -36,7 +38,7 @@ Rules:
 - Do not wrap the array in markdown fences.`;
 
 export function generateUserPrompt(sourceText: string): string {
-  return `Create 8–12 high-yield flashcards from this material. Cover the main facts without redundancy. Keep each card short. Skip anything not clearly grounded in the material.
+  return `Create 8–12 high-yield flashcards from this material. Cover the main testable facts without redundancy or paraphrase. Skip prefaces, objectives, contents, and references. Keep each card short. Skip anything not clearly grounded in the material.
 
 --- MATERIAL ---
 ${sourceText}
@@ -51,6 +53,8 @@ export const GENERATE_COMPACT_SYSTEM_PROMPT = `You generate spaced-repetition fl
 
 Rules:
 - One atomic fact per card; produce 3–5 high-yield cards only and skip redundancy.
+- Prefer testable facts: definitions, mechanisms, distinctions, and named values. Skip prefaces, learning-objective lists, tables of contents, and references.
+- Do not write two cards that test the same fact, and do not paraphrase a card listed as already covered.
 - Cover distinct grounded facts; do not collapse multiple facts into one card.
 - One organism per card; do not AND-merge adjacent table cells that name distinct species into one stem/answer.
 - Front taxon must be supported by the cited excerpt; skip misattributed table-row answers.

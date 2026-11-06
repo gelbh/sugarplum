@@ -42,6 +42,26 @@ export function buildAvoidPatternsFromRejected(
   return out;
 }
 
+const MAX_COVERED_FRONTS = 24;
+const MAX_COVERED_FRONT_CHARS = 100;
+
+/** Existing card fronts the model must not paraphrase. */
+export function coveredFrontsPromptSuffix(fronts: string[]): string {
+  const lines: string[] = [];
+  const seen = new Set<string>();
+  for (const front of fronts) {
+    const trimmed = front.replace(/\s+/g, " ").trim();
+    if (!trimmed) continue;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    lines.push(trimmed.slice(0, MAX_COVERED_FRONT_CHARS));
+    if (lines.length >= MAX_COVERED_FRONTS) break;
+  }
+  if (lines.length === 0) return "";
+  return `Already covered. Do not repeat or closely paraphrase these cards:\n- ${lines.join("\n- ")}`;
+}
+
 /** Optional generate/critique suffix when avoid patterns are present. */
 export function avoidPatternsPromptSuffix(patterns: string[]): string {
   if (patterns.length === 0) return "";

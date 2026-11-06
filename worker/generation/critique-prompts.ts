@@ -11,7 +11,8 @@ For each candidate card, decide keep, rewrite, or drop. Prefer drop over rewrite
 
 Respond with JSON only: an array of survivor cards (kept or rewritten), each shaped as
   { "type": "qa"|"cloze"|"mcq", "front": string, "back": string, "options"?: string[], "provenance": { "pages": number[], "excerpt": string } }
-Omit dropped cards. Do not wrap the array in markdown fences. Prefer drop over a speculative rewrite.`;
+Omit dropped cards. Do not wrap the array in markdown fences. Prefer drop over a speculative rewrite.
+The answer itself (the back, or the cloze blank) must follow from the cited excerpt alone. Drop the card when the answer needs the rest of the source or knowledge from outside the excerpt.`;
 
 export function critiqueUserPrompt(
   sourceText: string,
@@ -25,5 +26,6 @@ ${sourceText}
 Candidate cards (JSON):
 ${JSON.stringify(candidates)}
 
-Return only keep/rewrite survivors as a JSON array (or {"cards":[...]}). Prefer drop when grounding is weak, the answer is incomplete, the front is a fragment / table-row debris, or the answer restates the question or adds no new fact from the excerpt. Drop cards not entailed by the excerpt. One organism per card: drop AND-merge of distinct species into one stem. Drop misattributed front taxon vs the cited excerpt. For cloze, drop blanks of the topic genus; prefer a high-yield fact. Cloze Extra (back) is optional; empty Extra is fine. For mcq, drop ungrounded distractors, ambiguous stems, multi-species AND stems, stems that are not single-fact, or when the correct answer is not among the options. Rewrite only cheap fixes; do not speculate. Cloze Extra may equal the cloze answer.`;
+Return only keep/rewrite survivors as a JSON array (or {"cards":[...]}). Prefer drop when grounding is weak, the answer is incomplete, the front is a fragment / table-row debris, or the answer restates the question or adds no new fact from the excerpt. Drop cards not entailed by the excerpt. One organism per card: drop AND-merge of distinct species into one stem. Drop misattributed front taxon vs the cited excerpt. For cloze, drop blanks of the topic genus; prefer a high-yield fact. Cloze Extra (back) is optional; empty Extra is fine. For mcq, drop ungrounded distractors, ambiguous stems, multi-species AND stems, stems that are not single-fact, or when the correct answer is not among the options. Rewrite only cheap fixes; do not speculate. Cloze Extra may equal the cloze answer.
+The answer itself (the back, or the cloze blank) must follow from the cited excerpt alone. Drop the card when the answer needs the rest of the source or knowledge from outside the excerpt.`;
 }
