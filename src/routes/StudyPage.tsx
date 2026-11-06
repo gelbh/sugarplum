@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -375,6 +376,8 @@ export default function StudyPage() {
 
   const current = queue[0] ?? null;
   const queueFraction = studyQueueProgress(queueTotal, queue.length);
+  const cardHostRef = useRef<HTMLDivElement>(null);
+  const [plateWidth, setPlateWidth] = useState<number | null>(null);
   const endKind = sessionEndKind(hadCards, gradedTotal(tally));
   const mcqMode = isMcqCard(current);
   const occlusionParts = current
@@ -387,6 +390,20 @@ export default function StudyPage() {
     if (leaveZen) exitZen();
     navigate(scopeBack.href);
   };
+
+  useLayoutEffect(() => {
+    const host = cardHostRef.current;
+    const plate = host?.querySelector<HTMLElement>(".sp-playing-card");
+    if (!plate) {
+      setPlateWidth(null);
+      return;
+    }
+    const sync = () => setPlateWidth(plate.getBoundingClientRect().width);
+    sync();
+    const observer = new ResizeObserver(sync);
+    observer.observe(plate);
+    return () => observer.disconnect();
+  }, [current?.id, zen]);
 
   const reveal = useCallback(() => {
     setRevealed(true);
@@ -874,6 +891,8 @@ export default function StudyPage() {
                 aria-valuemin={0}
                 aria-valuemax={100}
                 sx={{
+                  alignSelf: "center",
+                  width: plateWidth ?? "min(100%, 360px)",
                   flexShrink: 0,
                   height: 4,
                   bgcolor: stage
@@ -886,6 +905,7 @@ export default function StudyPage() {
               />
 
               <Box
+                ref={cardHostRef}
                 onPointerDown={onPointerDown}
                 onPointerUp={onPointerUp}
                 onPointerCancel={onPointerCancel}
