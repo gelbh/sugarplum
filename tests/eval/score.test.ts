@@ -30,7 +30,7 @@ const baseMeta: EvalMeta = {
 describe("scoreEvalCase", () => {
   it("passes grounded covering survivors", () => {
     const survivors = [
-      qa("What is ATP?", "Adenosine triphosphate", "ATP is adenosine"),
+      qa("What is ATP?", "Adenosine triphosphate", "ATP is adenosine triphosphate"),
     ];
     const report = scoreEvalCase(survivors, material, baseMeta);
     expect(report.ok).toBe(true);
@@ -68,6 +68,64 @@ describe("scoreEvalCase", () => {
     const report = scoreEvalCase(survivors, material, meta);
     expect(report.ok).toBe(false);
     expect(report.keyFactIdsMissed).toContain("atp-name");
+  });
+
+  it("does not count a key fact that appears only on the front", () => {
+    const survivors = [
+      qa("adenosine triphosphate", "mitochondria", "made in mitochondria"),
+    ];
+    const report = scoreEvalCase(survivors, material, baseMeta);
+    expect(report.keyFactIdsMissed).toContain("atp");
+    expect(report.ok).toBe(false);
+  });
+
+  it("does not count a key fact that appears only in the excerpt", () => {
+    const survivors = [
+      qa("What is ATP?", "energy currency", "ATP is adenosine triphosphate"),
+    ];
+    const report = scoreEvalCase(survivors, material, baseMeta);
+    expect(report.keyFactIdsMissed).toContain("atp");
+  });
+
+  it("covers a cloze fact from the blank, not from Extra", () => {
+    const cloze: CardDraft = {
+      type: "cloze",
+      front: "ATP is {{c1::adenosine triphosphate}}.",
+      back: "energy currency",
+      provenance: { pages: [1], excerpt: "ATP is adenosine triphosphate" },
+    };
+    const report = scoreEvalCase([cloze], material, baseMeta);
+    expect(report.keyFactIdsMissed).toEqual([]);
+    expect(report.unentailedFronts).toEqual([]);
+  });
+
+  it("fails when an answer token is missing from the excerpt", () => {
+    const survivors = [
+      qa("What is ATP?", "Adenosine triphosphate", "ATP is adenosine"),
+    ];
+    const report = scoreEvalCase(survivors, material, baseMeta);
+    expect(report.ok).toBe(false);
+    expect(report.unentailedFronts).toContain("What is ATP?");
+  });
+
+  it("requires a short answer to appear in the excerpt", () => {
+    const meta: EvalMeta = {
+      ...baseMeta,
+      key_facts: [{ id: "atp", match: ["ATP"] }],
+    };
+    const missing = scoreEvalCase(
+      [qa("Name the molecule.", "ATP", "adenosine triphosphate")],
+      material,
+      meta,
+    );
+    expect(missing.unentailedFronts).toContain("Name the molecule.");
+    const present = scoreEvalCase(
+      [qa("Name the molecule.", "ATP", "ATP is adenosine triphosphate")],
+      material,
+      meta,
+    );
+    expect(present.unentailedFronts).toEqual([]);
+    expect(present.keyFactIdsMissed).toEqual([]);
   });
 
   it("treats empty key_facts as full coverage", () => {
