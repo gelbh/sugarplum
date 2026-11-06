@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { getGamification } from "../api/client";
 import FruitMedal from "../achievements/FruitMedal";
 import type { UnlockView } from "../achievements/wire";
 import { gradedTotal, type GradeTally } from "./sessionTally";
@@ -19,7 +21,6 @@ export type SessionCompleteProps = {
   zen: boolean;
   tally: GradeTally;
   unlocks: readonly UnlockView[];
-  streak: { current: number; level: number } | null;
   showAchievements: boolean;
   canStudyMore: boolean;
   studyMoreBusy: boolean;
@@ -32,6 +33,24 @@ export type SessionCompleteProps = {
 export default function SessionComplete(props: SessionCompleteProps) {
   const reviewed = gradedTotal(props.tally);
   const ink = props.zen ? "var(--sp-ivory)" : "text.primary";
+  const [streak, setStreak] = useState<{ current: number; level: number } | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!props.showAchievements) return;
+    let cancelled = false;
+    getGamification()
+      .then((g) => {
+        if (!cancelled) setStreak({ current: g.streakCurrent, level: g.level });
+      })
+      .catch(() => {
+        if (!cancelled) setStreak(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [props.showAchievements]);
   const body = (
     <Stack
       spacing={2}
@@ -118,9 +137,9 @@ export default function SessionComplete(props: SessionCompleteProps) {
           </Stack>
         </Box>
       ) : null}
-      {props.streak ? (
+      {streak ? (
         <Typography variant="body2" sx={{ color: ink }}>
-          Streak {props.streak.current} · Level {props.streak.level}
+          Streak {streak.current} · Level {streak.level}
         </Typography>
       ) : null}
       <Stack spacing={1}>
