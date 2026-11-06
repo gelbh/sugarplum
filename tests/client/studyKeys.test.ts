@@ -7,6 +7,7 @@ import {
   mcqOptionKey,
   plainShortcutKey,
   resolveStudyKey,
+  reviewArrowDecision,
 } from "../../src/study/studyKeys";
 
 describe("resolveStudyKey", () => {
@@ -103,5 +104,34 @@ describe("faceScrollsFor", () => {
   it("never scrolls for other keys or a non-scrolling face", () => {
     expect(faceScrollsFor("ArrowLeft", face(50))).toBe(false);
     expect(faceScrollsFor("ArrowDown", null)).toBe(false);
+  });
+});
+
+describe("reviewArrowDecision", () => {
+  it("decides inside the stage and ignores keys outside it", () => {
+    const stage = document.createElement("div");
+    const chip = document.createElement("button");
+    stage.append(chip);
+    const outside = document.createElement("a");
+    const event = {
+      key: "ArrowLeft",
+      repeat: false,
+      ctrlKey: false,
+      metaKey: false,
+      altKey: false,
+      shiftKey: false,
+    };
+    expect(reviewArrowDecision(event, chip, stage)).toBe("reject");
+    expect(reviewArrowDecision(event, document.body, stage)).toBe("reject");
+    expect(reviewArrowDecision(event, outside, stage)).toBeNull();
+    expect(
+      reviewArrowDecision(event, document.createElement("textarea"), stage),
+    ).toBeNull();
+    const select = document.createElement("div");
+    select.setAttribute("role", "combobox");
+    stage.append(select);
+    expect(
+      reviewArrowDecision({ ...event, key: "ArrowRight" }, select, stage),
+    ).toBeNull();
   });
 });

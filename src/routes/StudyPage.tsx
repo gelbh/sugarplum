@@ -32,13 +32,13 @@ import {
   me,
   reviewCard,
   type CardDraftView,
-  type OcclusionFrontView,
   type StudyQueueMeta,
   type StudyRating,
 } from "../api/client";
 import { isGuest } from "../guest/session";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
+import { backAnswer, isOcclusionFront } from "../lib/draftCardModel";
 import { resolveCardGesture } from "../study/cardGestures";
 import {
   faceScrollsFor,
@@ -101,25 +101,11 @@ function isMcqCard(card: CardDraftView | null): boolean {
   return card?.type === "mcq";
 }
 
-function isOcclusionFront(
-  front: CardDraftView["front"],
-): front is OcclusionFrontView {
-  return typeof front === "object" && front !== null && "regions" in front;
-}
-
 function studyFrontText(card: CardDraftView): string {
   if (isOcclusionFront(card.front)) {
     return card.front.prompt?.trim() || "Identify the hidden region";
   }
   return typeof card.front === "string" ? card.front : "";
-}
-
-function fallbackBackText(card: CardDraftView): string {
-  const { back } = card;
-  if (typeof back === "object" && back !== null && "answer" in back) {
-    return back.answer;
-  }
-  return typeof back === "string" ? back : "";
 }
 
 type OcclusionStudyParts = {
@@ -132,7 +118,7 @@ type OcclusionStudyParts = {
  * else back.answer).
  */
 function occlusionStudyParts(card: CardDraftView): OcclusionStudyParts {
-  const fallback = fallbackBackText(card);
+  const fallback = backAnswer(card.back);
   if (card.type !== "occlusion" || !isOcclusionFront(card.front)) {
     return { face: undefined, answer: fallback };
   }
