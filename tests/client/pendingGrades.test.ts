@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   clearPendingGrades,
+  dropPendingGrade,
   enqueuePendingGrade,
   listPendingGrades,
   pendingCardIdSet,
@@ -99,5 +100,14 @@ describe("pendingGrades", () => {
     expect(listPendingGrades("user-b")).toHaveLength(1);
     clearPendingGrades();
     expect(listPendingGrades("user-b")).toEqual([]);
+  });
+
+  it("dropPendingGrade removes one card and keeps the rest", () => {
+    enqueuePendingGrade("user-1", "card-a", 1);
+    enqueuePendingGrade("user-1", "card-b", 3);
+    dropPendingGrade("user-1", "card-a");
+    expect(listPendingGrades("user-1").map((item) => item.cardId)).toEqual([
+      "card-b",
+    ]);
   });
 });

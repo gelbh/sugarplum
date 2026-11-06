@@ -15,6 +15,7 @@ import {
   guestListStrugglingCards,
   guestListSubjects,
   guestArchiveCard,
+  guestDeleteCard,
   guestMoveCard,
   guestPatchCard,
   guestPutStudyPrefs,
@@ -724,5 +725,48 @@ describe("guest store", () => {
     guestReviewCard(id, 2, storage);
     const rows = guestListStrugglingCards(storage);
     expect(rows.some((r) => r.id === id && r.hard_14d === 2)).toBe(true);
+  });
+
+  it("deleteCard removes the card, schedule, review log, and due id", () => {
+    enterGuest(storage);
+    const subject = guestCreateSubject("Delete subject", storage);
+    const deck = guestCreateDeck("Delete deck", subject.id, storage);
+    const card = guestCreateDeckCard(
+      deck.id,
+      { type: "qa", front: "Gone?", back: "Yes" },
+      storage,
+    );
+    guestReviewCard(card.id, 3, storage);
+
+    guestDeleteCard(card.id, storage);
+
+    expect(guestListDeckCards(deck.id, storage).map((c) => c.id)).not.toContain(
+      card.id,
+    );
+    expect(
+      guestListDueCards(undefined, storage).cards.some((c) => c.id === card.id),
+    ).toBe(false);
+    const raw = storage.getItem("sugarplum.guest.store.v1");
+    const parsed = JSON.parse(raw ?? "{}") as {
+      schedules?: Record<string, unknown>;
+      reviewLogs?: { cardId: string }[];
+    };
+    expect(parsed.schedules?.[card.id]).toBeUndefined();
+    expect(parsed.reviewLogs?.some((l) => l.cardId === card.id)).toBe(false);
+  });
+
+  it("deleteCard rejects a non-accepted card", () => {
+    enterGuest(storage);
+    const subject = guestCreateSubject("Delete subject", storage);
+    const deck = guestCreateDeck("Delete deck", subject.id, storage);
+    const card = guestCreateDeckCard(
+      deck.id,
+      { type: "qa", front: "Keep", back: "Yes" },
+      storage,
+    );
+    guestArchiveCard(card.id, storage);
+    expect(() => guestDeleteCard(card.id, storage)).toThrow(
+      /Only accepted cards can be deleted/,
+    );
   });
 });
