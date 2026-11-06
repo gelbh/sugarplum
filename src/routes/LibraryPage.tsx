@@ -812,26 +812,32 @@ export default function LibraryPage() {
         >
           Rename
         </MenuItem>
-        <Tooltip
-          title={
-            menuDeleteBlocked
-              ? "Remove or move decks before deleting this subject"
-              : "Delete subject"
-          }
-        >
-          <span>
-            <MenuItem
-              disabled={menuDeleteBlocked}
-              onClick={(ev) => {
-                if (!menuSubject) return;
-                requestDeleteSubject(menuSubject, ev);
-                setSubjectMenu(null);
-              }}
-            >
-              Delete
-            </MenuItem>
-          </span>
-        </Tooltip>
+        {menuDeleteBlocked ? (
+          <Tooltip title="Remove or move decks before deleting this subject">
+            <span>
+              <MenuItem
+                disabled
+                onClick={(ev) => {
+                  if (!menuSubject) return;
+                  requestDeleteSubject(menuSubject, ev);
+                  setSubjectMenu(null);
+                }}
+              >
+                Delete
+              </MenuItem>
+            </span>
+          </Tooltip>
+        ) : (
+          <MenuItem
+            onClick={(ev) => {
+              if (!menuSubject) return;
+              requestDeleteSubject(menuSubject, ev);
+              setSubjectMenu(null);
+            }}
+          >
+            Delete
+          </MenuItem>
+        )}
       </Menu>
     </Container>
   );
