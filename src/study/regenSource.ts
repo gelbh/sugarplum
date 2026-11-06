@@ -20,8 +20,8 @@ export function provenanceExcerptText(provenance: unknown): string {
  * only checked server-side, so a job card may still 422 if its material is empty.
  */
 export function cardHasRegenSource(card: {
-  job_id?: string | null;
-  provenance?: unknown;
+  job_id: string | null;
+  provenance: unknown;
 }): boolean {
   return Boolean(card.job_id) || provenanceExcerptText(card.provenance) !== "";
 }
