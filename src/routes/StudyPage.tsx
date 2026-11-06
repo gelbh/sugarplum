@@ -850,6 +850,7 @@ export default function StudyPage() {
                   minHeight: 0,
                   overflow: "auto",
                   display: "flex",
+                  flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "safe center",
                 }}
