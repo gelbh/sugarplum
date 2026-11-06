@@ -1,7 +1,7 @@
 import type { CardDraft } from "./schema";
 import { CHUNK_CHAR_LIMIT, chunkText, MAX_PIPELINE_CHUNKS } from "./pipeline";
 
-/** One extra content token still counts as the same fact. Two tokens stay (different species). */
+/** One extra content token still counts as the same fact. Two tokens drop unless the swap is the last content token. */
 const NEAR_DUP_JACCARD = 0.6;
 const NEAR_DUP_MAX_DIFF = 1;
 
@@ -130,6 +130,18 @@ function contentDiffCount(a: string[], b: string[]): number {
   return diff;
 }
 
+function tokensOnlyIn(a: string[], b: string[]): string[] {
+  const bSet = new Set(b);
+  return a.filter((token) => !bSet.has(token));
+}
+
+function isLastContentTokenSwap(a: string[], b: string[]): boolean {
+  const aOnly = tokensOnlyIn(a, b);
+  const bOnly = tokensOnlyIn(b, a);
+  if (aOnly.length !== 1 || bOnly.length !== 1) return false;
+  return a[a.length - 1] === aOnly[0] && b[b.length - 1] === bOnly[0];
+}
+
 function normalizeFront(front: string): string {
   return front.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
@@ -146,12 +158,12 @@ export function isNearDuplicateFront(
     if (tokens.length < 3) continue;
     const otherTokens = contentTokens(other);
     if (otherTokens.length < 3) continue;
-    if (
-      jaccard(tokens, otherTokens) >= NEAR_DUP_JACCARD &&
-      contentDiffCount(tokens, otherTokens) <= NEAR_DUP_MAX_DIFF
-    ) {
-      return true;
-    }
+    const score = jaccard(tokens, otherTokens);
+    if (score < NEAR_DUP_JACCARD) continue;
+    const diff = contentDiffCount(tokens, otherTokens);
+    if (diff <= NEAR_DUP_MAX_DIFF) return true;
+    // ponytail: only the last content token is exempt, so a non-final epithet can still drop (Eimeria tenella in chickens vs Eimeria necatrix in chickens). Compare the substituted token wherever it sits if that pair starts colliding.
+    if (diff === 2 && !isLastContentTokenSwap(tokens, otherTokens)) return true;
   }
   return false;
 }
