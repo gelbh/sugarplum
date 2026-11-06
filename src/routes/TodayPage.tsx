@@ -3,16 +3,13 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
-import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import {
   ApiError,
   listDueCards,
-  listStrugglingCards,
   me,
   getJourney,
-  type StrugglingRow,
 } from "../api/client";
 import {
   consumeMergeFailedNotice,
@@ -22,8 +19,6 @@ import { isGuest } from "../guest/session";
 import { deriveJourney } from "../journey/derive";
 import type { JourneyView } from "../journey/types";
 import JourneyNextButton from "../components/JourneyNextButton";
-import OperateSection from "../components/OperateSection";
-import StrugglingList from "../components/StrugglingList";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import {
@@ -44,10 +39,6 @@ export default function TodayPage() {
   const [offlineCopy, setOfflineCopy] = useState(false);
   const [ready, setReady] = useState(false);
   const [view, setView] = useState<JourneyView | null>(null);
-  /** undefined = hide (loading/fail); array = show section (may be empty). */
-  const [struggling, setStruggling] = useState<StrugglingRow[] | undefined>(
-    undefined,
-  );
   const { end: endLoad } = useTrackedOp("Loading today…", {
     trackOnMount: true,
   });
@@ -127,12 +118,6 @@ export default function TodayPage() {
         } catch {
           if (!cancelled) setView(null);
         }
-        try {
-          const rows = await listStrugglingCards();
-          if (!cancelled) setStruggling(rows);
-        } catch {
-          if (!cancelled) setStruggling(undefined);
-        }
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
@@ -162,8 +147,6 @@ export default function TodayPage() {
     view != null && dueCount === 0 && view.next.href !== "/today";
 
   const dueCaption = dueCount === 1 ? "card due" : "cards due";
-  const strugglingTop =
-    struggling === undefined ? undefined : struggling.slice(0, 5);
 
   return (
     <Container
@@ -173,9 +156,7 @@ export default function TodayPage() {
         minHeight: { md: "100%" },
         display: "flex",
         flexDirection: "column",
-        justifyContent: {
-          md: strugglingTop !== undefined ? "flex-start" : "center",
-        },
+        justifyContent: { md: "center" },
       }}
     >
       <Stack spacing={3} alignItems="center" textAlign="center">
@@ -300,31 +281,6 @@ export default function TodayPage() {
             />
           ) : null}
         </Stack>
-
-        {strugglingTop !== undefined ? (
-          <Box sx={{ width: "100%", maxWidth: 480, pt: 2, textAlign: "left" }}>
-            <OperateSection>
-              <Stack
-                direction="row"
-                alignItems="baseline"
-                justifyContent="space-between"
-                sx={{ mb: 1.5 }}
-              >
-                <Typography
-                  variant="subtitle1"
-                  component="h2"
-                  sx={{ fontWeight: 600, color: "primary.main" }}
-                >
-                  Struggling
-                </Typography>
-                <Link href="/insights" underline="hover" variant="body2">
-                  View all
-                </Link>
-              </Stack>
-              <StrugglingList rows={strugglingTop} />
-            </OperateSection>
-          </Box>
-        ) : null}
       </Stack>
     </Container>
   );
