@@ -15,13 +15,14 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
-import TodayIcon from "@mui/icons-material/Today";
 import { useUnlockToasts } from "../achievements/UnlockToastProvider";
+import type { UnlockView } from "../achievements/wire";
 import CardFace, { type OcclusionStudyFace } from "../components/CardFace";
 import GradeButtons from "../components/GradeButtons";
 import {
   ApiError,
   commitStudyPacing,
+  getGamification,
   listDecks,
   listDueCards,
   listSubjects,
@@ -56,11 +57,13 @@ import {
   enqueuePendingGrade,
   pendingCardIdSet,
 } from "../study/pendingGrades";
+import SessionComplete from "../study/SessionComplete";
 import { StudyCardActions } from "../study/StudyCardActions";
 import {
   addGrade,
   emptyTally,
   gradedTotal,
+  rememberUnlocks,
   sessionEndKind,
 } from "../study/sessionTally";
 import {
@@ -161,6 +164,11 @@ export default function StudyPage() {
   const [hadCards, setHadCards] = useState(false);
   const [queueMeta, setQueueMeta] = useState<StudyQueueMeta | null>(null);
   const [tally, setTally] = useState(emptyTally);
+  const [unlocks, setUnlocks] = useState<UnlockView[]>([]);
+  const [streakLine, setStreakLine] = useState<{
+    current: number;
+    level: number;
+  } | null>(null);
   const cardDialogOpenRef = useRef(false);
   const onCardDialogOpen = useCallback((open: boolean) => {
     cardDialogOpenRef.current = open;
@@ -369,6 +377,21 @@ export default function StudyPage() {
     : { face: undefined, answer: "" };
   const canStudyMore = !offlineCopy && (queueMeta?.heldIntroCount ?? 0) > 0;
 
+  useEffect(() => {
+    if (endKind !== "complete" || isGuest()) return;
+    let cancelled = false;
+    getGamification()
+      .then((g) => {
+        if (!cancelled) setStreakLine({ current: g.streakCurrent, level: g.level });
+      })
+      .catch(() => {
+        if (!cancelled) setStreakLine(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [endKind]);
+
   const reveal = useCallback(() => {
     setRevealed(true);
     if (!swipeHintUsedRef.current) {
@@ -436,6 +459,7 @@ export default function StudyPage() {
         });
         if (result.unlocks?.length) {
           enqueueUnlocks(result.unlocks);
+          setUnlocks((prev) => rememberUnlocks(prev, result.unlocks));
         }
         setTally((prev) => addGrade(prev, rating));
         advanceAfterGrade(fromMcq);
@@ -826,54 +850,39 @@ export default function StudyPage() {
                 ) : null}
               </Stack>
             ) : (
-              <Stack spacing={1.5}>
-                <Alert severity="success">
-                  Session complete.{" "}
-                  {scopeOpts ? (
-                    <Link
-                      href={
-                        scopeOpts.deckId
+              <SessionComplete
+                zen={stage}
+                tally={tally}
+                unlocks={unlocks}
+                streak={streakLine}
+                showAchievements={!isGuest()}
+                canStudyMore={canStudyMore}
+                studyMoreBusy={studyMoreBusy}
+                onStudyMore={() => void onStudyMore()}
+                onToday={leaveStudy}
+                onAchievements={() => {
+                  exitZen();
+                  navigate("/achievements");
+                }}
+                scopeBack={
+                  scopeOpts
+                    ? {
+                        href: scopeOpts.deckId
                           ? `/library/decks/${encodeURIComponent(scopeOpts.deckId)}`
-                          : `/library/subjects/${encodeURIComponent(scopeOpts.subjectId!)}`
+                          : `/library/subjects/${encodeURIComponent(scopeOpts.subjectId!)}`,
+                        label: `Back to ${scopeOpts.deckId ? "deck" : "subject"}`,
+                        onClick: () => {
+                          exitZen();
+                          navigate(
+                            scopeOpts.deckId
+                              ? `/library/decks/${encodeURIComponent(scopeOpts.deckId)}`
+                              : `/library/subjects/${encodeURIComponent(scopeOpts.subjectId!)}`,
+                          );
+                        },
                       }
-                      underline="hover"
-                      onClick={(ev) => {
-                        ev.preventDefault();
-                        navigate(
-                          scopeOpts.deckId
-                            ? `/library/decks/${encodeURIComponent(scopeOpts.deckId)}`
-                            : `/library/subjects/${encodeURIComponent(scopeOpts.subjectId!)}`,
-                        );
-                      }}
-                    >
-                      Back to {scopeOpts.deckId ? "deck" : "subject"}
-                    </Link>
-                  ) : (
-                    <Button
-                      variant="contained"
-                      href="/today"
-                      startIcon={<TodayIcon fontSize="small" />}
-                      size="small"
-                      onClick={(ev) => {
-                        ev.preventDefault();
-                        leaveStudy();
-                      }}
-                    >
-                      Today
-                    </Button>
-                  )}
-                </Alert>
-                {canStudyMore ? (
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    disabled={studyMoreBusy}
-                    onClick={() => void onStudyMore()}
-                  >
-                    {studyMoreBusy ? "Loading…" : "Study more"}
-                  </Button>
-                ) : null}
-              </Stack>
+                    : null
+                }
+              />
             )
           ) : (
             <>
