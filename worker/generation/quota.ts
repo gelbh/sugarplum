@@ -44,11 +44,7 @@ async function releaseFreeGenSlot(
     .run();
 }
 
-/**
- * Reserve one free-gen attempt for this UTC day in a single conditional
- * upsert; throws at cap. The returned function refunds that same day, so a
- * release after UTC midnight cannot touch the new day's row.
- */
+/** Returned function refunds this reserved UTC day, including after midnight. */
 export async function consumeFreeGenSlot(
   env: Env,
   userId: string,

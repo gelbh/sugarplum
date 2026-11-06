@@ -1,4 +1,3 @@
-/** UTC calendar day as YYYY-MM-DD. */
 export function utcDay(d = new Date()): string {
   const y = d.getUTCFullYear();
   const m = String(d.getUTCMonth() + 1).padStart(2, "0");
