@@ -7,10 +7,10 @@ import {
 } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
-import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
@@ -21,8 +21,8 @@ import CardFace, { type OcclusionStudyFace } from "../components/CardFace";
 import GradeButtons from "../components/GradeButtons";
 import {
   ApiError,
-  listDecks,
   commitStudyPacing,
+  listDecks,
   listDueCards,
   listSubjects,
   me,
@@ -52,7 +52,17 @@ import {
 } from "../study/dueCache";
 import { bumpIntroBonus, getIntroBonus } from "../study/introBonus";
 import { clientLocalDay } from "../study/localDay";
-import { enqueuePendingGrade, pendingCardIdSet } from "../study/pendingGrades";
+import {
+  enqueuePendingGrade,
+  pendingCardIdSet,
+} from "../study/pendingGrades";
+import { StudyCardActions } from "../study/StudyCardActions";
+import {
+  addGrade,
+  emptyTally,
+  gradedTotal,
+  sessionEndKind,
+} from "../study/sessionTally";
 import {
   occlusionRevealAnswer,
   pickOcclusionRegion,
@@ -150,12 +160,16 @@ export default function StudyPage() {
   /** True once this mount showed at least one due card (scoped session-complete). */
   const [hadCards, setHadCards] = useState(false);
   const [queueMeta, setQueueMeta] = useState<StudyQueueMeta | null>(null);
+  const [tally, setTally] = useState(emptyTally);
+  const cardDialogOpenRef = useRef(false);
+  const onCardDialogOpen = useCallback((open: boolean) => {
+    cardDialogOpenRef.current = open;
+  }, []);
   const introBonusRef = useRef<number | undefined>(undefined);
   if (introBonusRef.current === undefined) {
     introBonusRef.current = getIntroBonus();
   }
-  const { zen, toggleZen, exitZen, ensureFullscreenIfNeeded } =
-    useStudyZenMode();
+  const { zen, toggleZen, exitZen } = useStudyZenMode();
   const { enqueueUnlocks } = useUnlockToasts();
 
   const leaveStudy = useCallback(() => {
@@ -348,6 +362,7 @@ export default function StudyPage() {
   }, [endLoad, flushOnMount, load, refreshPendingCount, setUserId]);
 
   const current = queue[0] ?? null;
+  const endKind = sessionEndKind(hadCards, gradedTotal(tally));
   const mcqMode = isMcqCard(current);
   const occlusionParts = current
     ? occlusionStudyParts(current)
@@ -403,6 +418,7 @@ export default function StudyPage() {
           end(false);
           return false;
         }
+        setTally((prev) => addGrade(prev, rating));
         pruneDueCacheCard(uid, current.id, scopeOpts);
         refreshPendingCount(uid);
         advanceAfterGrade(fromMcq);
@@ -421,6 +437,7 @@ export default function StudyPage() {
         if (result.unlocks?.length) {
           enqueueUnlocks(result.unlocks);
         }
+        setTally((prev) => addGrade(prev, rating));
         advanceAfterGrade(fromMcq);
         end();
         return true;
@@ -464,6 +481,7 @@ export default function StudyPage() {
     if (!ready) return;
 
     function onKey(e: KeyboardEvent) {
+      if (cardDialogOpenRef.current) return;
       const key = plainShortcutKey(e);
       if (key === null) return;
       if (key === "Escape") {
@@ -530,7 +548,6 @@ export default function StudyPage() {
   ]);
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    ensureFullscreenIfNeeded();
     if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
     const scrollEl = scrollableCardFace(e.target);
     pointerRef.current = {
@@ -576,6 +593,15 @@ export default function StudyPage() {
     pointerRef.current = null;
   };
 
+  const replaceQueuedCard = useCallback((updated: CardDraftView) => {
+    setQueue((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+  }, []);
+
+  const removeQueuedCard = useCallback((cardId: string) => {
+    setQueue((prev) => prev.filter((c) => c.id !== cardId));
+    setRevealed(false);
+  }, []);
+
   if (!ready) {
     return (
       <Container maxWidth="sm" sx={{ py: 6 }}>
@@ -618,7 +644,7 @@ export default function StudyPage() {
       >
         <Stack
           spacing={stage ? { xs: 0.75, sm: 1.5 } : 2}
-          sx={{ flex: 1, minHeight: 0 }}
+          sx={stage ? { flex: 1, minHeight: 0 } : undefined}
         >
           <Stack
             direction="row"
@@ -760,6 +786,45 @@ export default function StudyPage() {
                   Open Library
                 </Button>
               </Stack>
+            ) : endKind === "quiet" ? (
+              <Stack spacing={1.5} alignItems="stretch">
+                <Typography variant="body1" sx={{ textAlign: "center" }}>
+                  No cards left in this session.
+                </Typography>
+                <Button variant="contained" onClick={leaveStudy}>
+                  Today
+                </Button>
+                {canStudyMore ? (
+                  <Button
+                    variant="outlined"
+                    disabled={studyMoreBusy}
+                    onClick={() => void onStudyMore()}
+                  >
+                    {studyMoreBusy ? "Loading…" : "Study more"}
+                  </Button>
+                ) : null}
+                {scopeOpts ? (
+                  <Link
+                    href={
+                      scopeOpts.deckId
+                        ? `/library/decks/${encodeURIComponent(scopeOpts.deckId)}`
+                        : `/library/subjects/${encodeURIComponent(scopeOpts.subjectId!)}`
+                    }
+                    underline="hover"
+                    onClick={(ev) => {
+                      ev.preventDefault();
+                      exitZen();
+                      navigate(
+                        scopeOpts.deckId
+                          ? `/library/decks/${encodeURIComponent(scopeOpts.deckId)}`
+                          : `/library/subjects/${encodeURIComponent(scopeOpts.subjectId!)}`,
+                      );
+                    }}
+                  >
+                    Back to {scopeOpts.deckId ? "deck" : "subject"}
+                  </Link>
+                ) : null}
+              </Stack>
             ) : (
               <Stack spacing={1.5}>
                 <Alert severity="success">
@@ -812,6 +877,20 @@ export default function StudyPage() {
             )
           ) : (
             <>
+              <StudyCardActions
+                card={current}
+                hidden={stage}
+                gradeBusy={busy}
+                offlineCopy={offlineCopy}
+                userId={userId}
+                onDialogOpen={onCardDialogOpen}
+                onSaved={(updated) => {
+                  replaceQueuedCard(updated);
+                  setRevealed(false);
+                }}
+                onRegenerated={replaceQueuedCard}
+                onRemoved={removeQueuedCard}
+              />
               <Typography
                 variant="caption"
                 sx={{
@@ -831,13 +910,15 @@ export default function StudyPage() {
                 onPointerCancel={onPointerCancel}
                 sx={{
                   touchAction: "manipulation",
-                  flex: 1,
                   display: "flex",
                   alignItems: { xs: "stretch", sm: "center" },
                   justifyContent: "center",
                   py: { xs: 0.5, sm: 2 },
-                  minHeight: 0,
-                  overflow: "hidden",
+                  // Plate height is a percentage of this box. Outside fullscreen
+                  // there is no definite height, so flex-basis 0 clips the card.
+                  ...(stage
+                    ? { flex: 1, minHeight: 0, overflow: "hidden" }
+                    : { flex: "0 0 auto", height: "min(68dvh, 520px)" }),
                 }}
               >
                 <CardFace

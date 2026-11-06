@@ -20,6 +20,7 @@ import {
   guestDeleteSubject,
   guestJourney,
   guestArchiveCard,
+  guestDeleteCard,
   guestListDeckCards,
   guestListDecks,
   guestCommitPacing,
@@ -1037,6 +1038,20 @@ export async function archiveCard(cardId: string) {
   });
   clearDueCache();
   return card;
+}
+
+export async function deleteCard(cardId: string): Promise<void> {
+  if (isGuest()) {
+    try {
+      guestDeleteCard(cardId);
+      return;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Card not found";
+      throw new ApiError(message === "Card not found" ? 404 : 400, message);
+    }
+  }
+  await api<void>(`/api/cards/${cardId}`, { method: "DELETE" });
+  clearDueCache();
 }
 
 export async function restoreCard(cardId: string) {

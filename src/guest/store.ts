@@ -644,6 +644,21 @@ export function guestArchiveCard(
   return updated;
 }
 
+/** Delete an accepted card and its local schedule and review logs. */
+export function guestDeleteCard(cardId: string, storage?: Store): void {
+  const store = readStore(storage);
+  const current = store.cards.find((c) => c.id === cardId);
+  if (!current) throw new Error("Card not found");
+  if (current.status !== "accepted") {
+    throw new Error("Only accepted cards can be deleted");
+  }
+  store.cards = store.cards.filter((c) => c.id !== cardId);
+  store.dueIds = store.dueIds.filter((id) => id !== cardId);
+  delete store.schedules[cardId];
+  store.reviewLogs = store.reviewLogs.filter((l) => l.cardId !== cardId);
+  writeStore(store, storage);
+}
+
 /** Restore an archived card; prepends id to dueIds. */
 export function guestRestoreCard(
   cardId: string,
