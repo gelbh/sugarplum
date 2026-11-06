@@ -62,7 +62,7 @@ type TitleDialog =
   | null;
 
 type CoverTarget = {
-  ownerKind: "deck";
+  ownerKind: "subject" | "deck";
   ownerId: string;
   title: string;
 };
@@ -203,20 +203,33 @@ export default function SubjectPage({ subjectId }: Props) {
     setDialogBusy(true);
     setDialogError(null);
     try {
+      let saved: CoverTarget;
       if (titleDialog.kind === "subject") {
         const updated = await patchSubject(subjectId, titleValue.trim());
         setSubject((prev) => (prev ? { ...prev, ...updated } : updated));
+        saved = {
+          ownerKind: "subject",
+          ownerId: updated.id,
+          title: updated.title,
+        };
       } else if (titleDialog.kind === "deck-create") {
         const deck = await createDeck(titleValue.trim(), subjectId);
         setDecks((prev) => [...prev, deck]);
         await syncSubjectFromList();
+        saved = { ownerKind: "deck", ownerId: deck.id, title: deck.title };
       } else {
         const updated = await patchDeck(titleDialog.deck.id, titleValue.trim());
         setDecks((prev) =>
           prev.map((d) => (d.id === updated.id ? updated : d)),
         );
+        saved = {
+          ownerKind: "deck",
+          ownerId: updated.id,
+          title: updated.title,
+        };
       }
       setTitleDialog(null);
+      if (!guest) setCoverPicker(saved);
     } catch (err) {
       setDialogError(err instanceof ApiError ? err.message : "Could not save");
     } finally {
