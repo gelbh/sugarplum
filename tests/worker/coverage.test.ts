@@ -50,6 +50,23 @@ describe("buildCoverageLedger", () => {
     expect(ledger.gaps).toHaveLength(20);
   });
 
+  it("keeps one copy of a repeated uncovered line", () => {
+    const line = "Unicorn enzyme is fake.";
+    const ledger = buildCoverageLedger(`${line}\n${line}`, []);
+    expect(ledger.gaps).toEqual([line]);
+  });
+
+  it("does not let a duplicate consume a cap slot", () => {
+    const lines = Array.from(
+      { length: 20 },
+      (_, i) => `Fact line number ${i} about topic.`,
+    );
+    const material = [...lines.slice(0, 19), lines[0], lines[19]].join("\n");
+    const ledger = buildCoverageLedger(material, []);
+    expect(ledger.gaps).toHaveLength(20);
+    expect(ledger.gaps[19]).toBe(lines[19]);
+  });
+
   it("skips ultra-short chrome lines", () => {
     const material = "ab\nATP is adenosine triphosphate.\nxy";
     const ledger = buildCoverageLedger(material, []);
