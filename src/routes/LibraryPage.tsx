@@ -17,16 +17,17 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
-import IconButton from "@mui/material/IconButton";
+import Grid from "@mui/material/Grid";
 import Link from "@mui/material/Link";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import OperateSection from "../components/OperateSection";
+import ShelfVolume from "../components/ShelfVolume";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import {
   ApiError,
   apkgFilenameForDeckTitle,
@@ -54,6 +55,7 @@ import {
   runAnkiExportDownload,
 } from "../export/runAnkiExport";
 import { isGuest } from "../guest/session";
+import { libraryShowsCreateFlow } from "../library/libraryCreateFlow";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import {
@@ -79,10 +81,14 @@ export default function LibraryPage() {
   const [deleteSubjectTarget, setDeleteSubjectTarget] =
     useState<Subject | null>(null);
   const [deleteSubjectBusy, setDeleteSubjectBusy] = useState(false);
-  /** Create wizard stays closed once a catalog exists; first-run opens it. */
+  /** Wizard opens only when the loaded library has no subjects. */
   const [showCreateFlow, setShowCreateFlow] = useState(false);
   const createFlowSeededRef = useRef(false);
   const [selectMode, setSelectMode] = useState(false);
+  const [subjectMenu, setSubjectMenu] = useState<{
+    anchor: HTMLElement;
+    subject: Subject;
+  } | null>(null);
   /** Selection is deck ids only; subject checkbox toggles all decks in that subject. */
   const [selectedDeckIds, setSelectedDeckIds] = useState<string[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
@@ -161,23 +167,17 @@ export default function LibraryPage() {
           }
           if (!createFlowSeededRef.current) {
             createFlowSeededRef.current = true;
-            setShowCreateFlow(
-              subjectList.length === 0 ||
-                deckList.length === 0 ||
-                derived.next.action === "create_deck" ||
-                derived.next.action === "add_material",
-            );
+            setShowCreateFlow(libraryShowsCreateFlow(subjectList.length));
           }
         } catch {
           if (!cancelled && !createFlowSeededRef.current) {
             createFlowSeededRef.current = true;
-            setShowCreateFlow(
-              subjectList.length === 0 || deckList.length === 0,
-            );
+            setShowCreateFlow(libraryShowsCreateFlow(subjectList.length));
           }
         }
       } catch (err) {
         if (cancelled) return;
+        setShowCreateFlow(false);
         if (err instanceof ApiError && err.status === 401) {
           window.location.assign("/login");
           return;
@@ -270,10 +270,6 @@ export default function LibraryPage() {
     }
   }
 
-  function openSubject(subjectId: string) {
-    navigate(`/library/subjects/${encodeURIComponent(subjectId)}`);
-  }
-
   function exitSelectMode() {
     setSelectMode(false);
     setSelectedDeckIds([]);
@@ -336,8 +332,15 @@ export default function LibraryPage() {
   const selectedDeckIdSet = new Set(selectedDeckIds);
   const selectionCount = selectedDeckIds.length;
   const orphanDecks = decks.filter((d) => d.subject_id == null);
+  const menuSubject = subjectMenu?.subject ?? null;
+  const menuDeleteBlocked = menuSubject
+    ? subjectDeleteBlocked(
+        menuSubject,
+        localDeckCountForSubject(menuSubject.id),
+      )
+    : false;
   return (
-    <Container maxWidth="sm" sx={{ py: { xs: 4, md: 5 } }}>
+    <Container maxWidth="md" sx={{ py: { xs: 4, md: 5 } }}>
       {!ready ? (
         <Typography color="text.secondary">Loading library…</Typography>
       ) : (
@@ -353,9 +356,74 @@ export default function LibraryPage() {
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {selectMode
-                ? "Select decks to export (subject checkbox selects all decks in that subject)."
-                : "Pick a subject, or add material to make cards."}
+                ? "Tick the decks you want, then download them for Anki."
+                : "Choose a subject. Each one holds decks of flashcards."}
             </Typography>
+            <Stack
+              direction="row"
+              spacing={1}
+              flexWrap="wrap"
+              useFlexGap
+              sx={{ mt: 2 }}
+            >
+              {!guest && selectMode ? (
+                <>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    disabled={exportBusy || selectionCount === 0}
+                    onClick={() => {
+                      void onExportSelected();
+                    }}
+                  >
+                    {exportBusy
+                      ? "Exporting…"
+                      : selectionCount > 0
+                        ? `Download (${selectionCount})`
+                        : "Download"}
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="text"
+                    disabled={exportBusy}
+                    onClick={exitSelectMode}
+                  >
+                    Cancel
+                  </Button>
+                </>
+              ) : null}
+              {!selectMode ? (
+                <>
+                  {!guest && (subjects.length > 0 || decks.length > 0) ? (
+                    <Button
+                      size="small"
+                      variant="text"
+                      onClick={() => setSelectMode(true)}
+                    >
+                      Download for Anki
+                    </Button>
+                  ) : null}
+                  {subjects.length > 0 ? (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={openCreateSubject}
+                    >
+                      New subject
+                    </Button>
+                  ) : null}
+                  {!showCreateFlow ? (
+                    <Button
+                      size="small"
+                      variant="contained"
+                      onClick={() => setShowCreateFlow(true)}
+                    >
+                      Add material
+                    </Button>
+                  ) : null}
+                </>
+              ) : null}
+            </Stack>
           </Box>
 
           {error ? <Alert severity="error">{error}</Alert> : null}
@@ -375,9 +443,12 @@ export default function LibraryPage() {
               <Typography
                 variant="subtitle1"
                 component="h2"
-                sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+                sx={{ fontWeight: 600, mb: 0.5, color: "primary.main" }}
               >
-                Ready to review
+                Cards to check
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                These still need a look before you study them.
               </Typography>
               <Stack
                 component="ul"
@@ -390,8 +461,8 @@ export default function LibraryPage() {
                   const label = filename || job.deck_title;
                   const countLabel =
                     job.draft_count === 1
-                      ? "1 draft"
-                      : `${job.draft_count} drafts`;
+                      ? "1 card to check"
+                      : `${job.draft_count} cards to check`;
                   const suffix = filename
                     ? ` · ${countLabel} · ${job.deck_title}`
                     : ` · ${countLabel}`;
@@ -403,14 +474,14 @@ export default function LibraryPage() {
                         display: "flex",
                         alignItems: "center",
                         gap: 1,
-                        py: 1,
+                        py: 1.5,
                       }}
                     >
                       <Link
                         href={`/jobs/${encodeURIComponent(job.id)}/drafts`}
                         underline="hover"
                         color="primary"
-                        variant="body2"
+                        variant="body1"
                         sx={{ flex: 1, minWidth: 0 }}
                       >
                         {label}
@@ -428,221 +499,83 @@ export default function LibraryPage() {
             </OperateSection>
           ) : null}
 
-          <OperateSection>
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              sx={{ mb: 1.5 }}
-              spacing={1}
+          {subjects.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              {showCreateFlow
+                ? "No subjects yet. Add your notes to make the first one."
+                : "No subjects yet. Use Add material to create a subject and deck."}
+            </Typography>
+          ) : (
+            <Grid
+              container
+              component="ul"
+              spacing={2}
+              sx={{ listStyle: "none", p: 0, m: 0 }}
             >
-              <Typography
-                variant="subtitle1"
-                component="h2"
-                sx={{ fontWeight: 600, color: "primary.main" }}
-              >
-                Subjects
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                {!guest ? (
-                  selectMode ? (
-                    <>
-                      <Button
-                        size="small"
-                        variant="contained"
-                        disabled={exportBusy || selectionCount === 0}
-                        onClick={() => {
-                          void onExportSelected();
-                        }}
-                      >
-                        {exportBusy
-                          ? "Exporting…"
-                          : `Export selected${selectionCount > 0 ? ` (${selectionCount})` : ""}`}
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="text"
-                        disabled={exportBusy}
-                        onClick={exitSelectMode}
-                      >
-                        Cancel
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      disabled={subjects.length === 0 && decks.length === 0}
-                      onClick={() => setSelectMode(true)}
+              {subjects.map((s) => {
+                const localCount = localDeckCountForSubject(s.id);
+                const deckCount = effectiveSubjectDeckCount(s, localCount);
+                const subjectDecks = decks.filter((d) => d.subject_id === s.id);
+                const selectedChildCount = subjectDecks.filter((d) =>
+                  selectedDeckIdSet.has(d.id),
+                ).length;
+                const subjectFullySelected =
+                  subjectDecks.length > 0 &&
+                  selectedChildCount === subjectDecks.length;
+                const subjectPartiallySelected =
+                  selectedChildCount > 0 && !subjectFullySelected;
+                const meta =
+                  deckCount === 0
+                    ? "No decks yet"
+                    : deckCount === 1
+                      ? "1 deck"
+                      : `${deckCount} decks`;
+                const href = `/library/subjects/${encodeURIComponent(s.id)}`;
+                return (
+                  <Grid key={s.id} component="li" size={{ xs: 12, md: 6 }}>
+                    <ShelfVolume
+                      title={s.title}
+                      href={href}
+                      onNavigate={(ev) => {
+                        if (
+                          ev.defaultPrevented ||
+                          ev.button !== 0 ||
+                          ev.metaKey ||
+                          ev.ctrlKey ||
+                          ev.shiftKey ||
+                          ev.altKey
+                        ) {
+                          return;
+                        }
+                        ev.preventDefault();
+                        navigate(href);
+                      }}
+                      meta={meta}
+                      studyLabel="Study"
+                      onStudy={() => {
+                        navigate(
+                          `/study?subjectId=${encodeURIComponent(s.id)}`,
+                        );
+                      }}
+                      moreLabel={`More actions for ${s.title}`}
+                      onMore={(ev) => {
+                        setSubjectMenu({
+                          anchor: ev.currentTarget,
+                          subject: s,
+                        });
+                      }}
+                      select={
+                        selectMode
+                          ? {
+                              checked: subjectFullySelected,
+                              indeterminate: subjectPartiallySelected,
+                              disabled: subjectDecks.length === 0,
+                              onChange: () => toggleSubjectDecks(s.id),
+                              inputLabel: `Select all decks in ${s.title}`,
+                            }
+                          : undefined
+                      }
                     >
-                      Select
-                    </Button>
-                  )
-                ) : null}
-                {!selectMode ? (
-                  <>
-                    {subjects.length > 0 ? (
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={openCreateSubject}
-                      >
-                        New subject
-                      </Button>
-                    ) : null}
-                    {!showCreateFlow ? (
-                      <Button
-                        size="small"
-                        variant="contained"
-                        onClick={() => setShowCreateFlow(true)}
-                      >
-                        Add material
-                      </Button>
-                    ) : null}
-                  </>
-                ) : null}
-              </Stack>
-            </Stack>
-            {subjects.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">
-                {showCreateFlow
-                  ? "No subjects yet. Continue in Add material below."
-                  : "No subjects yet. Use Add material to create a subject and deck."}
-              </Typography>
-            ) : (
-              <Stack
-                component="ul"
-                spacing={0}
-                divider={<Divider flexItem />}
-                sx={{ m: 0, p: 0, listStyle: "none" }}
-              >
-                {subjects.map((s) => {
-                  const localCount = localDeckCountForSubject(s.id);
-                  const deckCount = effectiveSubjectDeckCount(s, localCount);
-                  const deleteBlocked = subjectDeleteBlocked(s, localCount);
-                  const subjectDecks = decks.filter((d) => d.subject_id === s.id);
-                  const selectedChildCount = subjectDecks.filter((d) =>
-                    selectedDeckIdSet.has(d.id),
-                  ).length;
-                  const subjectFullySelected =
-                    subjectDecks.length > 0 &&
-                    selectedChildCount === subjectDecks.length;
-                  const subjectPartiallySelected =
-                    selectedChildCount > 0 && !subjectFullySelected;
-                  return (
-                    <Box component="li" key={s.id} sx={{ py: 1 }}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                          "&:hover": selectMode
-                            ? undefined
-                            : { bgcolor: "action.hover" },
-                        }}
-                      >
-                        {selectMode ? (
-                          <Checkbox
-                            size="small"
-                            checked={subjectFullySelected}
-                            indeterminate={subjectPartiallySelected}
-                            disabled={subjectDecks.length === 0}
-                            onChange={() => toggleSubjectDecks(s.id)}
-                            inputProps={{
-                              "aria-label": `Select all decks in ${s.title}`,
-                            }}
-                          />
-                        ) : null}
-                        <Box
-                          role={selectMode ? "button" : "link"}
-                          tabIndex={0}
-                          aria-label={
-                            selectMode
-                              ? `Select all decks in ${s.title}`
-                              : `Open subject ${s.title}`
-                          }
-                          onClick={() => {
-                            if (selectMode) {
-                              toggleSubjectDecks(s.id);
-                              return;
-                            }
-                            openSubject(s.id);
-                          }}
-                          onKeyDown={(ev) => {
-                            if (ev.key === "Enter" || ev.key === " ") {
-                              ev.preventDefault();
-                              if (selectMode) {
-                                toggleSubjectDecks(s.id);
-                                return;
-                              }
-                              openSubject(s.id);
-                            }
-                          }}
-                          sx={{
-                            flex: 1,
-                            minWidth: 0,
-                            cursor: "pointer",
-                            borderRadius: 1,
-                            outlineOffset: 2,
-                          }}
-                        >
-                          <Typography variant="body2" noWrap fontWeight={500}>
-                            {s.title}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {deckCount === 1 ? "1 deck" : `${deckCount} decks`}
-                          </Typography>
-                        </Box>
-                        {!selectMode ? (
-                          <>
-                            <Button
-                              size="small"
-                              variant="text"
-                              aria-label={`Study this subject ${s.title}`}
-                              onClick={(ev) => {
-                                ev.stopPropagation();
-                                navigate(
-                                  `/study?subjectId=${encodeURIComponent(s.id)}`,
-                                );
-                              }}
-                            >
-                              Study
-                            </Button>
-                            <IconButton
-                              size="small"
-                              aria-label={`Rename ${s.title}`}
-                              onClick={(ev) => openRenameSubject(s, ev)}
-                              sx={{ color: "text.secondary" }}
-                            >
-                              <EditOutlinedIcon fontSize="small" />
-                            </IconButton>
-                            <Tooltip
-                              title={
-                                deleteBlocked
-                                  ? "Remove or move decks before deleting this subject"
-                                  : "Delete subject"
-                              }
-                            >
-                              <span>
-                                <IconButton
-                                  size="small"
-                                  aria-label={`Delete ${s.title}`}
-                                  disabled={deleteBlocked}
-                                  onClick={(ev) => requestDeleteSubject(s, ev)}
-                                  sx={{ color: "text.secondary" }}
-                                >
-                                  <DeleteOutlineIcon fontSize="small" />
-                                </IconButton>
-                              </span>
-                            </Tooltip>
-                            <ChevronRightIcon
-                              fontSize="small"
-                              sx={{ color: "text.secondary", flexShrink: 0 }}
-                              aria-hidden
-                            />
-                          </>
-                        ) : null}
-                      </Box>
                       {selectMode && subjectDecks.length > 0 ? (
                         <Stack
                           component="ul"
@@ -685,47 +618,51 @@ export default function LibraryPage() {
                           ))}
                         </Stack>
                       ) : null}
-                    </Box>
-                  );
-                })}
-              </Stack>
-            )}
-            {selectMode && orphanDecks.length > 0 ? (
-              <Box sx={{ mt: 2 }}>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ display: "block", mb: 0.5 }}
-                >
-                  Decks without a subject
-                </Typography>
-                <Stack component="ul" spacing={0} sx={{ m: 0, p: 0, listStyle: "none" }}>
-                  {orphanDecks.map((deck) => (
-                    <Box
-                      component="li"
-                      key={deck.id}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 0.5,
-                        py: 0.25,
+                    </ShelfVolume>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          )}
+          {selectMode && orphanDecks.length > 0 ? (
+            <Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mb: 0.5 }}
+              >
+                Decks without a subject
+              </Typography>
+              <Stack
+                component="ul"
+                spacing={0}
+                sx={{ m: 0, p: 0, listStyle: "none" }}
+              >
+                {orphanDecks.map((deck) => (
+                  <Box
+                    component="li"
+                    key={deck.id}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      py: 0.25,
+                    }}
+                  >
+                    <Checkbox
+                      size="small"
+                      checked={selectedDeckIdSet.has(deck.id)}
+                      onChange={() => toggleDeckSelected(deck.id)}
+                      inputProps={{
+                        "aria-label": `Select deck ${deck.title}`,
                       }}
-                    >
-                      <Checkbox
-                        size="small"
-                        checked={selectedDeckIdSet.has(deck.id)}
-                        onChange={() => toggleDeckSelected(deck.id)}
-                        inputProps={{
-                          "aria-label": `Select deck ${deck.title}`,
-                        }}
-                      />
-                      <Typography variant="body2">{deck.title}</Typography>
-                    </Box>
-                  ))}
-                </Stack>
-              </Box>
-            ) : null}
-          </OperateSection>
+                    />
+                    <Typography variant="body2">{deck.title}</Typography>
+                  </Box>
+                ))}
+              </Stack>
+            </Box>
+          ) : null}
 
           {showCreateFlow ? (
             <OperateSection>
@@ -774,7 +711,7 @@ export default function LibraryPage() {
                 component="h2"
                 sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
               >
-                Materials
+                Your files
               </Typography>
               <MaterialsList
                 materials={materials}
@@ -860,6 +797,42 @@ export default function LibraryPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Menu
+        anchorEl={subjectMenu?.anchor ?? null}
+        open={subjectMenu !== null}
+        onClose={() => setSubjectMenu(null)}
+      >
+        <MenuItem
+          onClick={(ev) => {
+            if (!menuSubject) return;
+            openRenameSubject(menuSubject, ev);
+            setSubjectMenu(null);
+          }}
+        >
+          Rename
+        </MenuItem>
+        <Tooltip
+          title={
+            menuDeleteBlocked
+              ? "Remove or move decks before deleting this subject"
+              : "Delete subject"
+          }
+        >
+          <span>
+            <MenuItem
+              disabled={menuDeleteBlocked}
+              onClick={(ev) => {
+                if (!menuSubject) return;
+                requestDeleteSubject(menuSubject, ev);
+                setSubjectMenu(null);
+              }}
+            >
+              Delete
+            </MenuItem>
+          </span>
+        </Tooltip>
+      </Menu>
     </Container>
   );
 }
