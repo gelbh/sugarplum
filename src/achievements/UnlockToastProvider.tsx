@@ -121,7 +121,10 @@ export function UnlockToastProvider({ children }: { children: ReactNode }) {
               : { xs: "50%", md: `calc(50% + ${DRAWER_WIDTH / 2}px)` },
             bottom: hideChrome
               ? "calc(24px + env(safe-area-inset-bottom, 0px))"
-              : "calc(88px + env(safe-area-inset-bottom, 0px))",
+              : {
+                  xs: "calc(88px + env(safe-area-inset-bottom, 0px))",
+                  md: "calc(24px + env(safe-area-inset-bottom, 0px))",
+                },
             transform: "translateX(-50%)",
             zIndex: (theme) => theme.zIndex.snackbar,
             pointerEvents: "none",
