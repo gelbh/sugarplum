@@ -5,7 +5,7 @@ import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { getGamification } from "../api/client";
+import { GAMIFICATION_CHANGED_EVENT, getGamification } from "../api/client";
 import FruitMedal from "../achievements/FruitMedal";
 import type { UnlockView } from "../achievements/wire";
 import { gradedTotal, type GradeTally } from "./sessionTally";
@@ -40,15 +40,24 @@ export default function SessionComplete(props: SessionCompleteProps) {
   useEffect(() => {
     if (!props.showAchievements) return;
     let cancelled = false;
-    getGamification()
-      .then((g) => {
-        if (!cancelled) setStreak({ current: g.streakCurrent, level: g.level });
-      })
-      .catch(() => {
-        if (!cancelled) setStreak(null);
-      });
+    let latest = 0;
+    const load = () => {
+      const req = ++latest;
+      void getGamification()
+        .then((g) => {
+          if (!cancelled && req === latest) {
+            setStreak({ current: g.streakCurrent, level: g.level });
+          }
+        })
+        .catch(() => {
+          if (!cancelled && req === latest) setStreak(null);
+        });
+    };
+    load();
+    window.addEventListener(GAMIFICATION_CHANGED_EVENT, load);
     return () => {
       cancelled = true;
+      window.removeEventListener(GAMIFICATION_CHANGED_EVENT, load);
     };
   }, [props.showAchievements]);
   const body = (

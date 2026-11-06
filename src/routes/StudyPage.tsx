@@ -16,7 +16,10 @@ import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import { useUnlockToasts } from "../achievements/UnlockToastProvider";
-import { rememberUnlocks } from "../achievements/rememberUnlocks";
+import {
+  rememberIncomingUnlocks,
+  rememberUnlocks,
+} from "../achievements/rememberUnlocks";
 import type { UnlockView } from "../achievements/wire";
 import CardFace, { type OcclusionStudyFace } from "../components/CardFace";
 import GradeButtons from "../components/GradeButtons";
@@ -271,6 +274,10 @@ export default function StudyPage() {
     [applyDueQueue, scopeOpts],
   );
 
+  const rememberFlushedUnlocks = useCallback((incoming: readonly unknown[]) => {
+    setUnlocks((prev) => rememberIncomingUnlocks(prev, incoming));
+  }, []);
+
   const {
     userId,
     setUserId,
@@ -280,6 +287,7 @@ export default function StudyPage() {
     refreshPendingCount,
     flushOnMount,
   } = usePendingGradeSync({
+    onUnlocks: rememberFlushedUnlocks,
     // Flush refreshes global due; reload with page scope so queues do not bleed.
     onDueRefreshed: () => {
       if (!userId) return;
