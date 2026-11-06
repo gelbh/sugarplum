@@ -197,7 +197,7 @@ Fruit plum and evening stage ink carry the brand; sugar dust and ivory are the t
 - **Card Prompt** (400, ~1.125–1.35rem, line-height 1.35): Front face centered recall text.
 - **Card Answer** (400, ~1.05–1.2rem, line-height 1.45): Back face.
 - **Card Overline** (500, 0.6875rem, 0.22em uppercase, ~55% opacity): Front/Back labels on the card face only.
-- **Label** (400, ~0.8125rem): Grade rail labels; captions for remaining count (uppercase + 0.06em on Study).
+- **Label** (400, ~0.8125rem): Grade rail labels. Study queue position is a 4px progress bar above the card.
 
 ### Named Rules
 
@@ -209,7 +209,7 @@ Fruit plum and evening stage ink carry the brand; sugar dust and ivory are the t
 
 Operate and Study share MUI `Container` `maxWidth="sm"` as the reading column. Today vertically centers on desktop (`minHeight: calc(100vh - 32px)` with flex center). Study zen fills the viewport with tighter vertical padding (`py` 16–24px) and stacks card then grade rail. Card column maxes at 360px. Shell: permanent drawer 220px from `md` up; mobile sticky top bar (48px + safe-top) and bottom dock (56px + safe-bottom inset inside the bar). MUI spacing unit 8px; common rhythm 8 / 16 / 24.
 
-Phone zen Study: session chrome (header, remaining, card, grade rail) fits `100dvh` without page scroll; long card copy scrolls inside the face only.
+Phone zen Study: session chrome (header, progress bar, card, grade rail) fits `100dvh` without page scroll; long card copy scrolls inside the face only.
 
 ### Named Rules
 
