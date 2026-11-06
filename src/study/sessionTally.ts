@@ -1,3 +1,5 @@
+import type { UnlockView } from "../achievements/wire";
+
 export type GradeTally = {
   again: number;
   hard: number;
@@ -23,6 +25,16 @@ export function addGrade(
 
 export function gradedTotal(tally: GradeTally): number {
   return tally.again + tally.hard + tally.good + tally.easy;
+}
+
+export function rememberUnlocks(
+  prev: readonly UnlockView[],
+  incoming: readonly UnlockView[] | undefined,
+): UnlockView[] {
+  if (!incoming?.length) return [...prev];
+  const seen = new Set(prev.map((u) => u.id));
+  const extra = incoming.filter((u) => u.id && !seen.has(u.id));
+  return extra.length ? [...prev, ...extra] : [...prev];
 }
 
 export type SessionEndKind = "fresh" | "quiet" | "complete";

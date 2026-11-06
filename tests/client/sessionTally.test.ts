@@ -3,6 +3,7 @@ import {
   addGrade,
   emptyTally,
   gradedTotal,
+  rememberUnlocks,
   sessionEndKind,
 } from "../../src/study/sessionTally";
 
@@ -23,5 +24,19 @@ describe("session tally", () => {
     expect(sessionEndKind(false, 2)).toBe("fresh");
     expect(sessionEndKind(true, 0)).toBe("quiet");
     expect(sessionEndKind(true, 1)).toBe("complete");
+  });
+
+  it("dedupes unlocks by id and keeps earlier ones", () => {
+    const first = {
+      id: "a",
+      title: "Apple",
+      fruitType: "apple" as const,
+      rarity: "common" as const,
+      traits: { shine: "mild" as const, colour: "#5B2C6F", status: "ripe" },
+    };
+    const again = { ...first, title: "Apple again" };
+    const second = { ...first, id: "b", title: "Plum", fruitType: "plum" as const };
+    expect(rememberUnlocks([first], [again, second])).toEqual([first, second]);
+    expect(rememberUnlocks([first], undefined)).toEqual([first]);
   });
 });
