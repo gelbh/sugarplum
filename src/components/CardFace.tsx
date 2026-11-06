@@ -118,7 +118,6 @@ export function StudyCardPlate({
   );
 }
 
-/** 3D Y-flip plate with Front / Back faces; instant swap when prefers-reduced-motion. */
 export function FlipCardPlate({
   revealed,
   front,
