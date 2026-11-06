@@ -1,4 +1,4 @@
-import { Hono, type Context } from "hono";
+import { Hono, type Context, type ExecutionContext } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
@@ -38,6 +38,15 @@ const UPSERT_COVER_SQL =
 
 const DELETE_COVER_SQL =
   "DELETE FROM shelf_covers WHERE user_id = ? AND owner_kind = ? AND owner_id = ?";
+
+function readExecutionCtx(c: Context<AppEnv>): ExecutionContext | undefined {
+  // Hono throws when a request has no execution context (Vitest app.request).
+  try {
+    return c.executionCtx;
+  } catch {
+    return undefined;
+  }
+}
 
 function unsplashKey(env: Env): string | null {
   const key = env.UNSPLASH_ACCESS_KEY?.trim() ?? "";
@@ -167,7 +176,10 @@ coverRoutes.put("/", async (c) => {
     .run();
 
   if (chosen.downloadLocation) {
-    void trackDownload(accessKey, chosen.downloadLocation, globalThis.fetch);
+    const ping = trackDownload(accessKey, chosen.downloadLocation, globalThis.fetch);
+    const executionCtx = readExecutionCtx(c);
+    if (executionCtx) executionCtx.waitUntil(ping);
+    else void ping;
   }
 
   const row: StoredCoverRow = {

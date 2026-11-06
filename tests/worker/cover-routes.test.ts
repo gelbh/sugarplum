@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
+import type { ExecutionContext } from "hono";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { createTestEnv } from "./test-env";
@@ -311,5 +312,83 @@ describe("cover routes", () => {
     expect(await res.json()).toEqual({
       error: "Cover search is not configured",
     });
+  });
+
+  it("keeps the download ping alive without waiting on it", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    installUnsplash(
+      [photo("chosen", 12, "https://images.unsplash.com/chosen?ixid=keep-me")],
+      [],
+    );
+    const innerFetch = globalThis.fetch;
+    let releaseDownload = () => {};
+    const gate = new Promise<void>((resolve) => {
+      releaseDownload = resolve;
+    });
+    let markDownloadStarted = () => {};
+    const downloadStarted = new Promise<void>((resolve) => {
+      markDownloadStarted = resolve;
+    });
+    globalThis.fetch = async (input, init) => {
+      const url =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.href
+            : input.url;
+      if (url.includes("/download")) {
+        markDownloadStarted();
+        await gate;
+      }
+      return innerFetch(input, init);
+    };
+
+    const waited: Promise<unknown>[] = [];
+    const executionCtx: ExecutionContext = {
+      waitUntil(promise) {
+        waited.push(promise);
+      },
+      passThroughOnException() {},
+      props: {},
+    };
+
+    let returned = false;
+    const resPromise = app
+      .request(
+        "/api/covers",
+        {
+          method: "PUT",
+          headers: authHeaders(true),
+          body: JSON.stringify({
+            ownerKind: "subject",
+            ownerId: "sub-1",
+            photoId: "chosen",
+          }),
+        },
+        env,
+        executionCtx,
+      )
+      .then((res) => {
+        returned = true;
+        return res;
+      });
+
+    try {
+      await downloadStarted;
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(returned).toBe(true);
+      expect(waited).toHaveLength(1);
+      expect((await resPromise).status).toBe(200);
+      let pingSettled = false;
+      void waited[0]?.finally(() => {
+        pingSettled = true;
+      });
+      await Promise.resolve();
+      expect(pingSettled).toBe(false);
+    } finally {
+      releaseDownload();
+      await waited[0];
+    }
   });
 });
