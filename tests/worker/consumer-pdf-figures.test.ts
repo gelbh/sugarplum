@@ -362,4 +362,32 @@ describe("PDF consumer figure stage", () => {
       globalThis.fetch = oldFetch;
     }
   });
+
+  it("writes window_resume before an empty pdf job fails", async () => {
+    const env = createTestEnv();
+    seedPdf(env);
+    env.seedR2(
+      "materials/deck-a/mat-pdf.pdf",
+      new TextDecoder().decode(minimalPdfWithText("")),
+    );
+    const jobId = await enqueueGeneration(env, {
+      materialId: "mat-pdf",
+      deckId: "deck-a",
+    });
+
+    await processGenerateJob(
+      env,
+      { jobId, materialId: "mat-pdf", deckId: "deck-a" },
+      { llm: visionLlm() },
+    );
+
+    const job = env.getGenerationJobs().find((row) => row.id === jobId);
+    expect(job?.status).toBe("failed");
+    expect(job?.error).toMatch(/Extracted material text is empty/);
+    expect(JSON.parse(job?.coverage_json ?? "{}").window_resume).toEqual({
+      used_keys: [],
+      next_page: 2,
+      total_pages: 1,
+    });
+  });
 });
