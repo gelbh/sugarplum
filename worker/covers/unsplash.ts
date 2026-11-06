@@ -41,7 +41,6 @@ async function discardBody(res: Response): Promise<void> {
   await res.arrayBuffer().catch(() => undefined);
 }
 
-/** Photo detail for one id. Null when Unsplash does not return ok. */
 export async function fetchCoverPhoto(
   accessKey: string,
   photoId: string,
