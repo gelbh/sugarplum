@@ -551,14 +551,6 @@ export default function DraftReviewPage() {
               <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
                 <Button
                   variant="text"
-                  color="warning"
-                  onClick={() => setConfirmRejectDrafts(true)}
-                  disabled={jobActionDisabled}
-                >
-                  Reject remaining drafts
-                </Button>
-                <Button
-                  variant="text"
                   color="error"
                   onClick={() => setRegenHints([])}
                   disabled={jobActionDisabled}
@@ -629,7 +621,7 @@ export default function DraftReviewPage() {
               </Button>
               <Button
                 variant="text"
-                color="warning"
+                color="error"
                 onClick={() => setConfirmRejectDrafts(true)}
                 disabled={jobActionDisabled || drafts.length === 0}
               >
