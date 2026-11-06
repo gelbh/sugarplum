@@ -16,11 +16,19 @@ export type ShelfSelect = {
   inputLabel: string;
 };
 
+export type ShelfCover = {
+  imageUrl: string;
+  photographerName: string;
+  photographerUrl: string;
+  photoHtmlUrl: string;
+};
+
 type Props = {
   title: string;
   href: string;
   onNavigate: (event: MouseEvent<HTMLAnchorElement>) => void;
   openLabel?: string;
+  cover?: ShelfCover | null;
   meta?: string;
   studyLabel: string;
   onStudy: () => void;
@@ -29,6 +37,13 @@ type Props = {
   select?: ShelfSelect;
   children?: ReactNode;
 };
+
+function withReferral(href: string): string {
+  const url = new URL(href);
+  url.searchParams.set("utm_source", "sugarplum");
+  url.searchParams.set("utm_medium", "referral");
+  return url.toString();
+}
 
 export default function ShelfVolume({
   title,
@@ -41,10 +56,21 @@ export default function ShelfVolume({
   moreLabel,
   onMore,
   select,
+  cover,
   children,
 }: Props) {
   return (
     <Paper variant="outlined" sx={{ p: 2.5, bgcolor: "background.paper", borderColor: "divider", height: "100%", "&:hover": { bgcolor: "action.hover" } }}>
+      {cover ? (
+        <Box sx={{ mx: -2.5, mt: -2.5, mb: 2 }}>
+          <Box component="img" src={cover.imageUrl} alt="" sx={{ display: "block", width: "100%", height: 160, objectFit: "cover" }} />
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", px: 2.5, pt: 0.5 }}>
+            Photo by <Link href={withReferral(cover.photographerUrl)} target="_blank" rel="noopener noreferrer">{cover.photographerName}</Link>
+            {" on "}
+            <Link href={withReferral(cover.photoHtmlUrl)} target="_blank" rel="noopener noreferrer">Unsplash</Link>
+          </Typography>
+        </Box>
+      ) : null}
       <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
         {select ? (
           <Checkbox

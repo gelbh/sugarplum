@@ -40,6 +40,17 @@ type SubjectRow = {
   created_at: string;
 };
 
+type ShelfCoverRow = {
+  user_id: string;
+  owner_kind: string;
+  owner_id: string;
+  photo_id: string;
+  image_url: string;
+  photographer_name: string;
+  photographer_url: string;
+  photo_html_url: string;
+};
+
 type DeckRow = {
   id: string;
   user_id: string;
@@ -218,6 +229,15 @@ export function createTestEnv(opts?: {
 }): TestEnv {
   const users = new Map<string, UserRow>();
   const subjects = new Map<string, SubjectRow>();
+  const shelfCovers = new Map<string, ShelfCoverRow>();
+
+  function shelfCoverKey(
+    userId: string,
+    ownerKind: string,
+    ownerId: string,
+  ): string {
+    return `${userId}\0${ownerKind}\0${ownerId}`;
+  }
   const decks = new Map<string, DeckRow>();
   const materials = new Map<string, MaterialRow>();
   const generationJobs = new Map<string, GenerationJobRow>();
@@ -1069,6 +1089,27 @@ export function createTestEnv(opts?: {
           bound,
         );
         if (gamificationAllHit !== null) return gamificationAllHit;
+        if (
+          normalized.startsWith(
+            "SELECT owner_kind, owner_id, photo_id, image_url, photographer_name, photographer_url, photo_html_url FROM shelf_covers WHERE user_id =",
+          )
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...shelfCovers.values()].filter(
+            (row) => row.user_id === userId,
+          );
+          return {
+            results: rows.map((row) => ({
+              owner_kind: row.owner_kind,
+              owner_id: row.owner_id,
+              photo_id: row.photo_id,
+              image_url: row.image_url,
+              photographer_name: row.photographer_name,
+              photographer_url: row.photographer_url,
+              photo_html_url: row.photo_html_url,
+            })) as T[],
+          };
+        }
         if (
           normalized.includes("FROM generation_jobs j") &&
           normalized.includes("INNER JOIN materials m") &&
@@ -2217,6 +2258,9 @@ export function createTestEnv(opts?: {
           for (const [sid, subject] of [...subjects.entries()]) {
             if (subject.user_id === id) subjects.delete(sid);
           }
+          for (const [key, cover] of [...shelfCovers.entries()]) {
+            if (cover.user_id === id) shelfCovers.delete(key);
+          }
           userSecrets.delete(id);
           userStudyPrefs.delete(id);
           for (const key of [...userStudyDay.keys()]) {
@@ -2254,6 +2298,47 @@ export function createTestEnv(opts?: {
             string,
           ];
           subjects.set(id, { id, user_id, title, created_at });
+        } else if (
+          normalized.startsWith(
+            "INSERT INTO shelf_covers (user_id, owner_kind, owner_id, photo_id, image_url, photographer_name, photographer_url, photo_html_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, owner_kind, owner_id) DO UPDATE SET",
+          )
+        ) {
+          const [
+            user_id,
+            owner_kind,
+            owner_id,
+            photo_id,
+            image_url,
+            photographer_name,
+            photographer_url,
+            photo_html_url,
+          ] = bound as [
+            string,
+            string,
+            string,
+            string,
+            string,
+            string,
+            string,
+            string,
+          ];
+          shelfCovers.set(shelfCoverKey(user_id, owner_kind, owner_id), {
+            user_id,
+            owner_kind,
+            owner_id,
+            photo_id,
+            image_url,
+            photographer_name,
+            photographer_url,
+            photo_html_url,
+          });
+        } else if (
+          normalized.startsWith("DELETE FROM shelf_covers WHERE user_id =")
+        ) {
+          const [userId, ownerKind, ownerId] = bound as [string, string, string];
+          const key = shelfCoverKey(userId, ownerKind, ownerId);
+          const had = shelfCovers.delete(key);
+          return { success: true, meta: { changes: had ? 1 : 0 } } as D1Result;
         } else if (normalized.startsWith("UPDATE subjects SET title =")) {
           const [title, id, userId] = bound as [string, string, string];
           const row = subjects.get(id);

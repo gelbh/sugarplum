@@ -12,7 +12,8 @@ import {
 import { buildJobProgressSnapshot } from "./jobSnapshot";
 
 const POLL_MS = 500;
-const TIMEOUT_MS = 10 * 60_000;
+/** One job can run a second pipeline. Match the server stale window. */
+const TIMEOUT_MS = 20 * 60_000;
 
 const TERMINAL_OK = new Set(["needs_review", "done"]);
 const TERMINAL_FAIL = new Set(["failed"]);
@@ -140,11 +141,7 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
             const seen = new Set<string>();
             const ordered: string[] = [];
             for (const ev of ext.events || []) {
-              if (
-                ev.stage &&
-                ev.stage !== "queued" &&
-                !seen.has(ev.stage)
-              ) {
+              if (ev.stage && ev.stage !== "queued" && !seen.has(ev.stage)) {
                 seen.add(ev.stage);
                 ordered.push(ev.stage);
               }

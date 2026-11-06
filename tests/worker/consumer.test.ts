@@ -23,7 +23,7 @@ import {
   consumeFreeGenSlot,
   getFreeGenUsage,
 } from "../../worker/generation/quota";
-import type { CardDraft } from "../../worker/generation/schema";
+import { type CardDraft } from "../../worker/generation/schema";
 import { createTestEnv, TEST_SECRETS_WRAP_KEY } from "./test-env";
 
 function seedOwner(env: ReturnType<typeof createTestEnv>, withSecret = false) {
@@ -175,7 +175,10 @@ describe("mergeAndDedupeDrafts", () => {
         type: "qa",
         front: "What is ATP?",
         back: "Adenosine triphosphate",
-        provenance: { pages: [1], excerpt: "What is ATP :: Adenosine triphosphate" },
+        provenance: {
+          pages: [1],
+          excerpt: "What is ATP :: Adenosine triphosphate",
+        },
       },
     ];
     const llm: CardDraft[] = [
@@ -229,9 +232,9 @@ describe("processGenerateJob free path", () => {
     expect(llm.generateDrafts).not.toHaveBeenCalled();
     expect(llm.complete).not.toHaveBeenCalled();
     expect(env.getCards()).toHaveLength(0);
-    expect(env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status).toBe(
-      "running",
-    );
+    expect(
+      env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
+    ).toBe("running");
   });
 
   it("reclaims a stale running job and finishes", async () => {
@@ -243,7 +246,9 @@ describe("processGenerateJob free path", () => {
     );
     const jobs = env.getGenerationJobs();
     const job = jobs.find((j) => j.id === msg.jobId)!;
-    const staleAt = new Date(Date.now() - RUNNING_JOB_STALE_MS - 1000).toISOString();
+    const staleAt = new Date(
+      Date.now() - RUNNING_JOB_STALE_MS - 1000,
+    ).toISOString();
     const oldStartedAt = "2020-01-01T00:00:00.000Z";
     env.seedGenerationJob({
       ...job,
@@ -470,16 +475,18 @@ describe("processGenerateJob free path", () => {
     const first = processGenerateJob(env, msg, { llm: firstLlm });
     await vi.waitFor(() => {
       const row = env.getGenerationJobs().find((j) => j.id === msg.jobId)!;
-      const progress = JSON.parse(row.progress_json!) as { updated_at?: string };
+      const progress = JSON.parse(row.progress_json!) as {
+        updated_at?: string;
+      };
       expect(progress.updated_at).not.toBe(staleAt);
     });
     const second = await processGenerateJob(env, msg, { llm: spyLlm() });
     expect(second).toBe("busy");
     gate.resolve();
     expect(await first).toBe("done");
-    expect(env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status).toBe(
-      "needs_review",
-    );
+    expect(
+      env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
+    ).toBe("needs_review");
   });
 
   it("queue retry budget covers RUNNING_JOB_STALE_MS", () => {
@@ -619,7 +626,9 @@ describe("processGenerateJob free path", () => {
 
     const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("needs_review");
-    const fronts = env.getCards().map((c) => JSON.parse(c.front_json) as string);
+    const fronts = env
+      .getCards()
+      .map((c) => JSON.parse(c.front_json) as string);
     expect(fronts).toContain("mitochondria");
     expect(fronts.some((f) => /overview/i.test(f))).toBe(false);
     expect((await getFreeGenUsage(env, "user-a")).used).toBe(1);
@@ -675,7 +684,9 @@ describe("processGenerateJob free path", () => {
     expect(llm.generateDrafts).not.toHaveBeenCalled();
     const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("failed");
-    expect(job?.error).toMatch(/free generation|daily|Settings|BYO|UTC midnight/i);
+    expect(job?.error).toMatch(
+      /free generation|daily|Settings|BYO|UTC midnight/i,
+    );
     expect(env.getCards()).toHaveLength(0);
   });
 
@@ -795,7 +806,10 @@ describe("processGenerateJob free path", () => {
     const job = env.getGenerationJobs().find((j) => j.id === msg.jobId);
     expect(job?.status).toBe("needs_review");
     expect(job?.progress_json).toBeTruthy();
-    const final = JSON.parse(job!.progress_json!) as { stage: string; percent: number };
+    const final = JSON.parse(job!.progress_json!) as {
+      stage: string;
+      percent: number;
+    };
     expect(final.stage).toBe("persist");
     expect(final.percent).toBe(100);
 

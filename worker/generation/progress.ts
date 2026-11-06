@@ -86,6 +86,8 @@ export type ProgressPatch = {
   path?: "free" | "byo";
   /** Set once free-gen slot was reserved for this job (reclaim must not re-charge). */
   free_gen_charged?: boolean;
+  /** How many free-gen slots this job has reserved. Pass 1 is 1, gap-fill is 2. */
+  free_gen_slots?: number;
 };
 
 /** Queue redelivery may reclaim `running` jobs with no progress newer than this. */
@@ -157,11 +159,25 @@ function parseProgressObject(
   return {};
 }
 
+/**
+ * Slots already reserved on this job. A legacy `free_gen_charged` flag counts as 1.
+ */
+export function readFreeGenSlots(
+  progressJson: string | null | undefined,
+): number {
+  const base = parseProgressObject(progressJson);
+  const slots = base.free_gen_slots;
+  if (typeof slots === "number" && Number.isFinite(slots) && slots >= 0) {
+    return Math.trunc(slots);
+  }
+  return base.free_gen_charged === true ? 1 : 0;
+}
+
 /** True when this job already reserved a free-gen daily slot. */
 export function isFreeGenCharged(
   progressJson: string | null | undefined,
 ): boolean {
-  return parseProgressObject(progressJson).free_gen_charged === true;
+  return readFreeGenSlots(progressJson) >= 1;
 }
 
 /** Read durable ETA clock from progress_json (same pipeline run only). */
@@ -185,9 +201,9 @@ export function withoutStartedAt(
   return JSON.stringify(base);
 }
 
-/** Merge/set `free_gen_charged` on progress_json (durable consume marker). */
-export function withFreeGenCharged(
+export function withFreeGenSlots(
   progressJson: string | null | undefined,
+  slots: number,
 ): string {
   const base = parseProgressObject(progressJson);
   if (typeof base.stage !== "string") {
@@ -197,8 +213,19 @@ export function withFreeGenCharged(
     base.percent = 0;
     base.label = typeof base.label === "string" ? base.label : "Claimed";
   }
-  base.free_gen_charged = true;
+  base.free_gen_slots = slots;
+  if (slots >= 1) base.free_gen_charged = true;
   return JSON.stringify(base);
+}
+
+/** Merge/set `free_gen_charged` on progress_json (durable consume marker). */
+export function withFreeGenCharged(
+  progressJson: string | null | undefined,
+): string {
+  return withFreeGenSlots(
+    progressJson,
+    Math.max(readFreeGenSlots(progressJson), 1),
+  );
 }
 
 /** Merge/set `updated_at` on progress_json (claim + reclaim CAS). */
@@ -427,7 +454,54 @@ export function toProgressJson(patch: ProgressPatch): string {
   if (patch.free_gen_charged !== undefined) {
     body.free_gen_charged = patch.free_gen_charged;
   }
+  if (patch.free_gen_slots !== undefined) {
+    body.free_gen_slots = patch.free_gen_slots;
+  }
   return JSON.stringify(body);
+}
+
+/** Refresh `updated_at` without changing stage or percent. */
+export async function touchJobHeartbeat(
+  db: D1Database,
+  jobId: string,
+): Promise<void> {
+  try {
+    const row = await db
+      .prepare("SELECT progress_json FROM generation_jobs WHERE id = ?")
+      .bind(jobId)
+      .first<{ progress_json: string | null }>();
+    await db
+      .prepare("UPDATE generation_jobs SET progress_json = ? WHERE id = ?")
+      .bind(withUpdatedAt(row?.progress_json), jobId)
+      .run();
+  } catch (err) {
+    console.error("progress heartbeat failed", jobId, err);
+  }
+}
+
+export function withAddedTokenUsage(
+  progressJson: string | null | undefined,
+  delta: TokenUsageDelta,
+): string {
+  const base = parseProgressObject(progressJson);
+  const acc: TokenUsageAcc = {
+    tokens_used:
+      typeof base.tokens_used === "number" ? base.tokens_used : undefined,
+    tokens_prompt:
+      typeof base.tokens_prompt === "number" ? base.tokens_prompt : undefined,
+    tokens_completion:
+      typeof base.tokens_completion === "number"
+        ? base.tokens_completion
+        : undefined,
+  };
+  accumulateTokenUsage(acc, delta);
+  if (acc.tokens_used !== undefined) base.tokens_used = acc.tokens_used;
+  if (acc.tokens_prompt !== undefined) base.tokens_prompt = acc.tokens_prompt;
+  if (acc.tokens_completion !== undefined) {
+    base.tokens_completion = acc.tokens_completion;
+  }
+  base.updated_at = new Date().toISOString();
+  return JSON.stringify(base);
 }
 
 /** Persist progress_json on a generation_jobs row. */
