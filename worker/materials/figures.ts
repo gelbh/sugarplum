@@ -48,6 +48,20 @@ export function mimeFromR2Key(r2Key: string): string {
   return "image/png";
 }
 
+/** Chunked so large images do not blow the call stack via spread. */
+export function bytesToBase64(bytes: ArrayBuffer): string {
+  const arr = new Uint8Array(bytes);
+  const chunkSize = 0x8000;
+  let binary = "";
+  for (let i = 0; i < arr.length; i += chunkSize) {
+    const end = Math.min(i + chunkSize, arr.length);
+    for (let j = i; j < end; j++) {
+      binary += String.fromCharCode(arr[j]!);
+    }
+  }
+  return btoa(binary);
+}
+
 type FigureChildRow = { r2_key: string; status: string };
 
 /** Child figure materials under a PDF prefix (uploading and/or ready). */

@@ -4,17 +4,10 @@ import { decryptSecret } from "../crypto/secrets";
 import { extractPdfPages } from "../materials/extract-pdf";
 import { applyOcrSidecar, readOcrSidecar, type OcrSidecar } from "../materials/ocr-sidecar";
 import { extractPptxSlides } from "../materials/extract-pptx";
-import { extractFiguresViaDocling } from "../materials/docling";
-import {
-  listFigureChildrenForPdf,
-  mimeFromR2Key,
-  persistFigureCrops,
-} from "../materials/figures";
+import { bytesToBase64, mimeFromR2Key } from "../materials/figures";
 import { MAX_IMAGE_BYTES } from "../materials/limits";
-import type {
-  FigureExtractMode,
-  GenerateQueueMessage,
-} from "./enqueue";
+import type { GenerateQueueMessage } from "./enqueue";
+import { collectPdfFigureDrafts } from "./pdf-figures";
 import {
   BYO_PROVIDERS_PHRASE,
   createLlmAdapter,
@@ -38,7 +31,6 @@ import {
 } from "./study-windows";
 import {
   IMAGE_STAGES,
-  PDF_FIGURE_ONLY_STAGES,
   PDF_STAGES,
   TEXT_LLM_STAGES,
   computePercent,
@@ -52,11 +44,13 @@ import {
   withUpdatedAt,
   writeJobProgress,
   accumulateTokenUsage,
+  type JobProgressEmit,
   type ProgressPatch,
   type ProgressStage,
   type ProgressEvent,
   truncateProgressText,
   pushProgressEvent,
+  recordDraftPreviews,
 } from "./progress";
 import { buildCoverageLedger } from "./coverage";
 import { consumeFreeGenSlot } from "./quota";
@@ -65,50 +59,9 @@ import { harvestRuleDrafts } from "./rules";
 import { assertValidMcqOptions, type CardDraft } from "./schema";
 import { mergeTopicHints, parseTopicHintsJson } from "./topic-hints";
 import { recordGenerationUsageEventForJob } from "./usage";
-import { createWorkersAiAdapter } from "./workers-ai";
-
-/** ponytail: 240s ceiling for Fly wake + model load; raise if cold starts exceed client 10m poll. */
-const DOCLING_ACCURATE_TIMEOUT_MS = 240_000;
+import { resolveTextLlm } from "./resolve-text-llm";
 
 const IMAGE_BYO_REQUIRED = `Image generation requires an ${BYO_PROVIDERS_PHRASE} API key under Settings.`;
-
-export type JobProgressEmit = {
-  emit: (
-    stage: ProgressStage,
-    current: number,
-    total: number,
-    label: string,
-    halfStepsDone?: number,
-  ) => Promise<void>;
-  addEvent: (kind: ProgressEvent["kind"], stage: string, text: string) => void;
-  addUsage: (usage: {
-    prompt_tokens?: number | null;
-    completion_tokens?: number | null;
-    total_tokens?: number | null;
-  }) => void;
-  addDrafts: (n: number) => void;
-  setPath: (p: "free" | "byo") => void;
-  setPresentStages: (stages: readonly ProgressStage[]) => void;
-  /** Keep emit accumulator aligned after durable free-gen marker write. */
-  noteFreeGenCharged: () => void;
-};
-
-function draftFrontPreview(d: CardDraft): string {
-  return typeof d.front === "string"
-    ? d.front
-    : String(d.front.prompt ?? d.front.image_key ?? JSON.stringify(d.front));
-}
-
-function recordDraftPreviews(
-  emit: JobProgressEmit,
-  stage: string,
-  drafts: CardDraft[],
-) {
-  emit.addDrafts(drafts.length);
-  for (let i = 0; i < Math.min(2, drafts.length); i++) {
-    emit.addEvent("draft", stage, draftFrontPreview(drafts[i]!));
-  }
-}
 
 function makeEmit(
   db: D1Database,
@@ -419,58 +372,6 @@ async function extractMaterialText(
     throw new Error(`Unsupported material kind for generation: ${material.kind}`);
   }
   return obj.text();
-}
-
-/** Chunked so large images do not blow the call stack via spread. */
-function bytesToBase64(bytes: ArrayBuffer): string {
-  const arr = new Uint8Array(bytes);
-  const chunkSize = 0x8000;
-  let binary = "";
-  for (let i = 0; i < arr.length; i += chunkSize) {
-    const end = Math.min(i + chunkSize, arr.length);
-    for (let j = i; j < end; j++) {
-      binary += String.fromCharCode(arr[j]!);
-    }
-  }
-  return btoa(binary);
-}
-
-async function resolveTextLlm(
-  env: Env,
-  secret: SecretRow | null,
-  opts?: ProcessGenerateOptions,
-  onUsage?: (usage: {
-    prompt_tokens?: number | null;
-    completion_tokens?: number | null;
-    total_tokens?: number | null;
-  }) => void,
-): Promise<{ llm: LlmAdapter; apiKey: string; provider: string }> {
-  if (secret) {
-    const wrapKey = env.SECRETS_WRAP_KEY;
-    if (!wrapKey) {
-      throw new Error("SECRETS_WRAP_KEY is not configured");
-    }
-    const apiKey = await decryptSecret(secret.ciphertext, wrapKey);
-    const provider = parseLlmProvider(secret.provider);
-    const llm =
-      opts?.llm ?? createLlmAdapter(provider, { model: secret.model });
-    return { llm, apiKey, provider };
-  }
-
-  if (opts?.llm) {
-    return { llm: opts.llm, apiKey: "", provider: "workers-ai" };
-  }
-  if (env.AI) {
-    return {
-      llm: createWorkersAiAdapter(env, { onUsage }),
-      apiKey: "",
-      provider: "workers-ai",
-    };
-  }
-  throw new Error(
-    "Workers AI is not available and no LLM API key is configured. " +
-      `Add an ${BYO_PROVIDERS_PHRASE} API key under Settings, or retry later.`,
-  );
 }
 
 /**
@@ -835,9 +736,8 @@ export async function processGenerateJob(
       await insertDraftCards(db, { deckId, jobId, drafts });
       await progress.emit("persist", 1, 1, "Saving drafts");
     } else if (material.kind === "pdf") {
-      // Start with full PDF catalog; switch to figure-only after extract if no text.
-      let presentStages: readonly ProgressStage[] = PDF_STAGES;
-      const progress = makeEmit(db, jobId, presentStages, {
+      // Figure helper narrows this to figure-only stages when the PDF has no text.
+      const progress = makeEmit(db, jobId, PDF_STAGES, {
         freeGenCharged,
         startedAt,
       });
@@ -891,173 +791,20 @@ export async function processGenerateJob(
         progress.addEvent("excerpt", "extract", excerpt.slice(0, 160));
       }
 
-      const figureChildren = await listFigureChildrenForPdf(db, {
+      const { drafts: figureDrafts } = await collectPdfFigureDrafts({
+        db,
+        env,
         deckId,
         pdfMaterialId: material.id,
+        jobId,
+        pdfBytes,
+        text,
+        textError,
+        secret,
+        opts,
+        progress,
       });
-      const readyFigureKeys = figureChildren
-        .filter((row) => row.status === "ready")
-        .map((row) => row.r2_key);
-      const hasUploadingFigures = figureChildren.some(
-        (row) => row.status === "uploading",
-      );
 
-      const jobModeRow = await db
-        .prepare(
-          "SELECT figure_extract_mode FROM generation_jobs WHERE id = ?",
-        )
-        .bind(jobId)
-        .first<{ figure_extract_mode: string | null }>();
-      const figureExtractMode: FigureExtractMode =
-        jobModeRow?.figure_extract_mode === "accurate" ? "accurate" : "fast";
-
-      const willAttemptDocling =
-        figureExtractMode === "accurate" &&
-        Boolean(env.DOCLING_URL) &&
-        readyFigureKeys.length === 0 &&
-        !hasUploadingFigures;
-
-      // Soft-continue only when Accurate Docling may still produce figures.
-      if (textError && !willAttemptDocling && readyFigureKeys.length === 0) {
-        throw textError;
-      }
-
-      if (!text.trim()) {
-        presentStages = PDF_FIGURE_ONLY_STAGES;
-        progress.setPresentStages(presentStages);
-      }
-
-      type FigureRef = {
-        r2Key: string;
-        page?: number;
-        caption?: string;
-      };
-      let figures: FigureRef[] = readyFigureKeys.map((r2Key) => ({ r2Key }));
-      let figureWarning: string | undefined;
-
-      // Manual/client crops (ready or still uploading) win over Docling for this PDF.
-      if (figures.length === 0 && hasUploadingFigures) {
-        figureWarning =
-          "Waiting on in-flight figure uploads; skipped Docling for this run";
-        console.warn(figureWarning);
-      } else if (willAttemptDocling) {
-        await progress.emit("figures", 0, 0, "Waking figure extractor…");
-        await progress.emit("figures", 0, 0, "Detecting figures…");
-        const figureResult = await extractFiguresViaDocling(env, pdfBytes, {
-          signal: AbortSignal.timeout(DOCLING_ACCURATE_TIMEOUT_MS),
-        });
-        if (figureResult.warning) {
-          figureWarning = figureResult.warning;
-          console.warn(figureResult.warning);
-        }
-        if (figureResult.crops.length > 0) {
-          const persisted = await persistFigureCrops(env, {
-            deckId,
-            pdfMaterialId: material.id,
-            crops: figureResult.crops,
-          });
-          figures = persisted.map(({ r2Key, crop }) => ({
-            r2Key,
-            page: crop.page,
-            caption: crop.caption,
-          }));
-        }
-      }
-
-      const figureDrafts: Array<CardDraft & { mediaR2Keys?: string[] }> = [];
-      if (figures.length > 0) {
-        await progress.emit("figures", 0, figures.length, "Processing figures");
-        let vision: {
-          llm: LlmAdapter;
-          apiKey: string;
-          provider: string;
-        } | null = null;
-        if (secret || opts?.llm) {
-          vision = secret
-            ? await resolveTextLlm(env, secret, opts, (usage) =>
-                progress.addUsage(usage),
-              )
-            : { llm: opts!.llm!, apiKey: "", provider: "mock" };
-        } else {
-          figureWarning =
-            "Skipping PDF figures: vision generation requires an LLM API key.";
-          console.warn(figureWarning);
-        }
-        if (vision) {
-          // Mark path for progress (free vs byo) when vision LLM resolved.
-          progress.setPath(
-            !secret && vision.provider === "workers-ai" ? "free" : "byo",
-          );
-          for (let i = 0; i < figures.length; i++) {
-            const figure = figures[i]!;
-            try {
-              const figureObject = await env.MATERIALS.get(figure.r2Key);
-              if (!figureObject) {
-                console.warn(`Figure R2 object missing: ${figure.r2Key}`);
-                continue;
-              }
-              const figureBytes = await figureObject.arrayBuffer();
-              if (figureBytes.byteLength > MAX_IMAGE_BYTES) {
-                figureWarning = `Skipped oversized figure(s); max ${MAX_IMAGE_BYTES / (1024 * 1024)}MB`;
-                console.warn(`Skipping oversized PDF figure: ${figure.r2Key}`);
-                continue;
-              }
-              const generated = await vision.llm.generateDrafts({
-                text: "",
-                apiKey: vision.apiKey,
-                provider: vision.provider,
-                image: {
-                  mimeType: mimeFromR2Key(figure.r2Key),
-                  base64: bytesToBase64(figureBytes),
-                },
-              });
-              recordDraftPreviews(progress, "figures", generated);
-              const excerpt =
-                figure.caption?.trim() || `Figure p.${figure.page ?? "?"}#${i}`;
-              const pages =
-                figure.page && figure.page >= 1 ? [figure.page] : [];
-              figureDrafts.push(
-                ...filterDraftsByQuality(generated).map((draft) => ({
-                  ...draft,
-                  mediaR2Keys: [figure.r2Key],
-                  provenance: {
-                    pages: pages.length > 0 ? pages : draft.provenance.pages,
-                    excerpt: draft.provenance.excerpt?.trim() || excerpt,
-                  },
-                })),
-              );
-            } catch (err) {
-              console.warn(
-                `PDF figure generation failed for ${figure.r2Key}`,
-                err,
-              );
-            } finally {
-              await progress.emit(
-                "figures",
-                i + 1,
-                figures.length,
-                figureWarning
-                  ? `Processing figures (${figureWarning})`
-                  : "Processing figures",
-              );
-            }
-          }
-        } else {
-          await progress.emit(
-            "figures",
-            figures.length,
-            figures.length,
-            figureWarning ?? "Processing figures",
-          );
-        }
-      } else {
-        await progress.emit(
-          "figures",
-          0,
-          0,
-          figureWarning ?? "No figures found",
-        );
-      }
 
       let textDrafts: CardDraft[] = [];
       if (text.trim()) {
