@@ -18,10 +18,6 @@ type ScanWorker = Awaited<ReturnType<typeof createWorker>>;
 let scanWorker: ScanWorker | null = null;
 let scanLoad: Promise<ScanWorker> | null = null;
 
-/**
- * First 120 pages, in page order. At most 8 with an empty text layer.
- * Pages that already have text are skipped.
- */
 export function selectEmptyPages(pages: readonly PageText[]): PageText[] {
   const scanned = pages
     .filter(
@@ -76,10 +72,6 @@ function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   });
 }
 
-/**
- * OCR up to 8 pages whose text layer is empty.
- * Returns undefined when the OCR worker fails to load, so the upload can continue.
- */
 export async function ocrEmptyPdfPages(
   data: ArrayBuffer,
 ): Promise<PageText[] | undefined> {
