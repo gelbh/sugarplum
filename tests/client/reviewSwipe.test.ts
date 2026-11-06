@@ -1,6 +1,8 @@
+/** @vitest-environment jsdom */
 import { describe, expect, it } from "vitest";
 import {
   REVIEW_SWIPE_THRESHOLD_PX,
+  applyReviewSwipeFrame,
   resolveReviewSwipe,
   reviewSwipeVisual,
 } from "../../src/study/cardGestures";
@@ -74,6 +76,20 @@ describe("reviewSwipeVisual", () => {
       reviewSwipeVisual({ dx: 0, leaving: "reject", reduceMotion: false })
         .transform,
     ).toBe("translateX(-150%) rotate(-18deg)");
+  });
+
+  it("writes transform and stamp opacity onto the plate", () => {
+    const plate = document.createElement("div");
+    const stamp = document.createElement("div");
+    const visual = reviewSwipeVisual({
+      dx: 48,
+      leaving: null,
+      reduceMotion: false,
+    });
+    applyReviewSwipeFrame(plate, stamp, visual);
+    expect(plate.style.transform).toBe(visual.transform);
+    expect(stamp.style.opacity).toBe(String(visual.stampOpacity));
+    expect(stamp.textContent).toBe("Accept");
   });
 
   it("drops rotation and fly-off under reduced motion and dims when leaving", () => {

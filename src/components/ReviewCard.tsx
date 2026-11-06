@@ -166,12 +166,13 @@ export default function ReviewCard({
   });
   const locked = disabled || swipe.leaving !== null;
   const again = gradeColorVars(1);
-  const visual = reviewSwipeVisual({
-    dx: swipe.dx ?? 0,
-    leaving: swipe.leaving,
-    reduceMotion: swipe.reduceMotion,
-  });
-  const stampColors = gradeColorVars(visual.stamp === "accept" ? 4 : 1);
+  const leaveVisual = swipe.leaving
+    ? reviewSwipeVisual({
+        dx: 0,
+        leaving: swipe.leaving,
+        reduceMotion: swipe.reduceMotion,
+      })
+    : null;
 
   const faceProps = { card, disabled: locked, onChange };
   let face: ReactNode;
@@ -244,6 +245,7 @@ export default function ReviewCard({
           </Box>
         ) : null}
         <Box
+          ref={swipe.plateRef}
           {...swipe.handlers}
           sx={{
             position: "absolute",
@@ -251,41 +253,36 @@ export default function ReviewCard({
             touchAction: "pan-y",
             userSelect: "none",
             "&:has(textarea:focus, input:focus)": { userSelect: "auto" },
-            transform: visual.transform,
+            transform: leaveVisual?.transform,
             transition:
-              swipe.reduceMotion || (swipe.dx !== null && !swipe.leaving)
+              swipe.reduceMotion || swipe.dragging
                 ? "none"
                 : `transform ${REVIEW_FLY_MS}ms ease-out`,
-            opacity: visual.dimmed ? 0.4 : 1,
+            opacity: leaveVisual?.dimmed ? 0.4 : 1,
           }}
         >
-          {visual.stamp ? (
-            <Box
-              aria-hidden
-              sx={{
-                position: "absolute",
-                top: 28,
-                left: "50%",
-                zIndex: 2,
-                pointerEvents: "none",
-                px: 1.5,
-                py: 0.5,
-                border: "2px solid",
-                borderColor: stampColors.border,
-                color: stampColors.border,
-                bgcolor: "var(--sp-card-face)",
-                borderRadius: 1,
-                fontFamily: FACE_SANS,
-                fontWeight: 600,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                opacity: visual.stampOpacity,
-                transform: `translateX(-50%) rotate(${visual.stamp === "accept" ? -10 : 10}deg)`,
-              }}
-            >
-              {visual.stamp === "accept" ? "Accept" : "Reject"}
-            </Box>
-          ) : null}
+          <Box
+            ref={swipe.stampRef}
+            aria-hidden
+            hidden
+            sx={{
+              position: "absolute",
+              top: 28,
+              left: "50%",
+              zIndex: 2,
+              pointerEvents: "none",
+              px: 1.5,
+              py: 0.5,
+              border: "2px solid",
+              bgcolor: "var(--sp-card-face)",
+              borderRadius: 1,
+              fontFamily: FACE_SANS,
+              fontWeight: 600,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              opacity: 0,
+            }}
+          />
           {face}
         </Box>
       </Box>
