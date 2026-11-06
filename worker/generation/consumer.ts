@@ -2,7 +2,11 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { decryptSecret } from "../crypto/secrets";
 import { extractPdfPages } from "../materials/extract-pdf";
-import { applyOcrSidecar, readOcrSidecar, type OcrSidecar } from "../materials/ocr-sidecar";
+import {
+  applyOcrSidecar,
+  readOcrSidecar,
+  type OcrSidecar,
+} from "../materials/ocr-sidecar";
 import { extractPptxSlides } from "../materials/extract-pptx";
 import { bytesToBase64, mimeFromR2Key } from "../materials/figures";
 import { MAX_IMAGE_BYTES } from "../materials/limits";
@@ -38,6 +42,7 @@ import {
   GENERATE_QUEUE_RETRY_DELAY_SEC,
   isFreeGenCharged,
   isRunningJobStale,
+  readFreeGenSlots,
   readStartedAt,
   withoutStartedAt,
   withFreeGenCharged,
@@ -54,9 +59,11 @@ import {
 } from "./progress";
 import { buildCoverageLedger } from "./coverage";
 import { consumeFreeGenSlot } from "./quota";
+import { appendGapFillDrafts, insertDraftCards } from "./gap-fill";
+export { insertDraftCards };
 import { filterDraftsByQuality } from "./quality";
 import { harvestRuleDrafts } from "./rules";
-import { assertValidMcqOptions, type CardDraft } from "./schema";
+import { type CardDraft } from "./schema";
 import { mergeTopicHints, parseTopicHintsJson } from "./topic-hints";
 import { recordGenerationUsageEventForJob } from "./usage";
 import { resolveTextLlm } from "./resolve-text-llm";
@@ -67,7 +74,11 @@ function makeEmit(
   db: D1Database,
   jobId: string,
   presentStages: readonly ProgressStage[],
-  opts?: { freeGenCharged?: boolean; startedAt?: string },
+  opts?: {
+    freeGenCharged?: boolean;
+    freeGenSlots?: number;
+    startedAt?: string;
+  },
 ) {
   // Mutable accumulator merged into every progress write.
   // drafts_so_far stays unset until the first batch (avoids mid-job "0 cards left").
@@ -75,6 +86,7 @@ function makeEmit(
   const acc: {
     path?: "free" | "byo";
     free_gen_charged?: boolean;
+    free_gen_slots?: number;
     started_at?: string;
     tokens_used?: number;
     tokens_prompt?: number;
@@ -83,6 +95,9 @@ function makeEmit(
     events?: ProgressEvent[];
   } = {
     events: [],
+    ...(opts?.freeGenSlots && opts.freeGenSlots > 0
+      ? { free_gen_slots: opts.freeGenSlots, free_gen_charged: true }
+      : {}),
     ...(opts?.freeGenCharged ? { free_gen_charged: true } : {}),
     ...(opts?.startedAt ? { started_at: opts.startedAt } : {}),
   };
@@ -123,6 +138,9 @@ function makeEmit(
       ...(acc.events && acc.events.length > 0 ? { events: acc.events } : {}),
       ...(acc.path !== undefined ? { path: acc.path } : {}),
       ...(acc.free_gen_charged ? { free_gen_charged: true } : {}),
+      ...(acc.free_gen_slots !== undefined
+        ? { free_gen_slots: acc.free_gen_slots }
+        : {}),
     };
   }
 
@@ -180,6 +198,7 @@ function makeEmit(
 
   function noteFreeGenCharged() {
     acc.free_gen_charged = true;
+    acc.free_gen_slots = Math.max(acc.free_gen_slots ?? 0, 1);
   }
 
   return {
@@ -219,10 +238,6 @@ export type ProcessGenerateOptions = {
    */
   llm?: LlmAdapter;
 };
-
-function newId(): string {
-  return crypto.randomUUID();
-}
 
 function normalizeFront(front: string): string {
   return front.trim().toLowerCase();
@@ -369,7 +384,9 @@ async function extractMaterialText(
   }
 
   if (material.kind !== "paste") {
-    throw new Error(`Unsupported material kind for generation: ${material.kind}`);
+    throw new Error(
+      `Unsupported material kind for generation: ${material.kind}`,
+    );
   }
   return obj.text();
 }
@@ -394,6 +411,14 @@ async function runTextDraftPipeline(args: {
   avoidFronts?: string[];
   /** Emit rules stage before LLM when using TEXT_LLM_STAGES catalog. */
   emitRulesStage?: boolean;
+  /** Token totals when this pass must not emit a stage. */
+  onUsage?: (usage: {
+    prompt_tokens?: number | null;
+    completion_tokens?: number | null;
+    total_tokens?: number | null;
+  }) => void;
+  /** Refresh updated_at when this pass must not emit a stage. */
+  heartbeat?: () => Promise<void>;
 }): Promise<CardDraft[]> {
   const rawRules = harvestRuleDrafts(args.text);
   const layer1Rules = filterDraftsByQuality(rawRules);
@@ -405,11 +430,12 @@ async function runTextDraftPipeline(args: {
     await args.emit.emit("rules", 0, 0, "Harvesting rules");
   }
 
+  const reportUsage = args.onUsage ?? args.emit?.addUsage;
   const { llm, apiKey, provider } = await resolveTextLlm(
     args.env,
     args.secret,
     args.opts,
-    args.emit ? (usage) => args.emit!.addUsage(usage) : undefined,
+    reportUsage,
   );
   if (args.emit) {
     const path = !args.secret && provider === "workers-ai" ? "free" : "byo";
@@ -424,9 +450,7 @@ async function runTextDraftPipeline(args: {
     if (!isFreeGenCharged(row?.progress_json)) {
       await consumeFreeGenSlot(args.env, args.userId);
       await db
-        .prepare(
-          "UPDATE generation_jobs SET progress_json = ? WHERE id = ?",
-        )
+        .prepare("UPDATE generation_jobs SET progress_json = ? WHERE id = ?")
         .bind(withFreeGenCharged(row?.progress_json), args.jobId)
         .run();
       args.emit?.noteFreeGenCharged();
@@ -469,7 +493,9 @@ async function runTextDraftPipeline(args: {
               e.label,
               e.halfStepsDone,
             )
-        : undefined,
+        : args.heartbeat
+          ? () => args.heartbeat!()
+          : undefined,
       onChunkDrafts: args.emit
         ? (drafts) => recordDraftPreviews(args.emit!, "generate", drafts)
         : undefined,
@@ -477,55 +503,6 @@ async function runTextDraftPipeline(args: {
   }
 
   return mergeAndDedupeDrafts(critiquedRules, llmDrafts);
-}
-
-export async function insertDraftCards(
-  db: D1Database,
-  args: {
-    deckId: string;
-    jobId: string;
-    drafts: Array<CardDraft & { mediaR2Keys?: string[] | null }>;
-  },
-): Promise<void> {
-  const now = new Date().toISOString();
-  for (const draft of args.drafts) {
-    const mediaJson =
-      draft.mediaR2Keys && draft.mediaR2Keys.length > 0
-        ? JSON.stringify(draft.mediaR2Keys)
-        : null;
-    const id = newId();
-    const backJson =
-      draft.type === "mcq"
-        ? (() => {
-            const mcq = assertValidMcqOptions(draft.back, draft.options);
-            return JSON.stringify({
-              answer: mcq.back,
-              options: mcq.options,
-            });
-          })()
-        : JSON.stringify(draft.back);
-    await db
-      .prepare(
-        `INSERT INTO cards (
-          id, deck_id, job_id, type, front_json, back_json,
-          media_r2_keys_json, provenance_json, status, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .bind(
-        id,
-        args.deckId,
-        args.jobId,
-        draft.type,
-        JSON.stringify(draft.front),
-        backJson,
-        mediaJson,
-        JSON.stringify(draft.provenance),
-        "draft",
-        now,
-        now,
-      )
-      .run();
-  }
 }
 
 /**
@@ -585,12 +562,7 @@ export async function processGenerateJob(
             .prepare(
               "UPDATE generation_jobs SET progress_json = ? WHERE id = ? AND status = ? AND progress_json = ?",
             )
-            .bind(
-              reclaimedProgress,
-              jobId,
-              "running",
-              existing.progress_json,
-            )
+            .bind(reclaimedProgress, jobId, "running", existing.progress_json)
             .run();
     if (!reclaim.meta.changes) {
       return "busy";
@@ -643,14 +615,13 @@ export async function processGenerateJob(
         run_topic_hints_json: string | null;
       }>();
     const freeGenCharged = isFreeGenCharged(progressRow?.progress_json);
+    const freeGenSlots = readFreeGenSlots(progressRow?.progress_json);
     const startedAt = readStartedAt(progressRow?.progress_json);
     const topicHints = mergeTopicHints(
       parseTopicHintsJson(progressRow?.run_topic_hints_json),
       parseTopicHintsJson(progressRow?.topic_hints_json),
     );
-    const avoidPatterns = parseTopicHintsJson(
-      progressRow?.avoid_patterns_json,
-    );
+    const avoidPatterns = parseTopicHintsJson(progressRow?.avoid_patterns_json);
     const prior = await loadPriorResume(db, materialId, jobId);
     const deckFronts = await loadDeckFronts(db, deckId);
     let windowResume: WindowResume | null = null;
@@ -662,6 +633,7 @@ export async function processGenerateJob(
     if (material.kind === "image") {
       const progress = makeEmit(db, jobId, IMAGE_STAGES, {
         freeGenCharged,
+        freeGenSlots,
         startedAt,
       });
       // Vision needs a BYO provider; free Workers AI path is text-only.
@@ -739,6 +711,7 @@ export async function processGenerateJob(
       // Figure helper narrows this to figure-only stages when the PDF has no text.
       const progress = makeEmit(db, jobId, PDF_STAGES, {
         freeGenCharged,
+        freeGenSlots,
         startedAt,
       });
       await progress.emit("queued", 0, 0, "Queued");
@@ -782,7 +755,12 @@ export async function processGenerateJob(
       }
       coverageMaterial = text;
       if (text.trim() && (windowResume?.total_pages ?? 0) > 1) {
-        await progress.emit("extract", 0, 0, "Using the highest-yield sections");
+        await progress.emit(
+          "extract",
+          0,
+          0,
+          "Using the highest-yield sections",
+        );
       }
 
       // Emit an excerpt event after extraction when text is present.
@@ -804,7 +782,6 @@ export async function processGenerateJob(
         opts,
         progress,
       });
-
 
       let textDrafts: CardDraft[] = [];
       if (text.trim()) {
@@ -852,6 +829,7 @@ export async function processGenerateJob(
       // TEXT_LLM catalog; emit before extract so failures leave progress.
       const progress = makeEmit(db, jobId, TEXT_LLM_STAGES, {
         freeGenCharged,
+        freeGenSlots,
         startedAt,
       });
       await progress.emit("queued", 0, 0, "Queued");
@@ -941,6 +919,34 @@ export async function processGenerateJob(
       await insertDraftCards(db, { deckId, jobId, drafts });
       await progress.emit("persist", 1, 1, "Saving drafts");
     }
+
+    drafts = await appendGapFillDrafts({
+      env,
+      db,
+      deckId,
+      jobId,
+      userId: deck.user_id,
+      secret: secret ? "byo" : null,
+      topicHints,
+      deckFronts,
+      coverageMaterial,
+      drafts,
+      autoFollowup: message.autoFollowup === true,
+      runPipeline: ({ topicHints: hints, avoidFronts, onUsage, heartbeat }) =>
+        runTextDraftPipeline({
+          text: coverageMaterial,
+          env,
+          userId: deck.user_id,
+          jobId,
+          secret,
+          opts,
+          topicHints: hints,
+          avoidPatterns,
+          avoidFronts,
+          onUsage,
+          heartbeat,
+        }),
+    });
 
     const ledger = buildCoverageLedger(coverageMaterial, drafts);
     const coverageJson = JSON.stringify(

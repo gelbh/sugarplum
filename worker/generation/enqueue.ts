@@ -7,6 +7,11 @@ export type GenerateQueueMessage = {
   jobId: string;
   materialId: string;
   deckId: string;
+  /**
+   * Initial enqueue only. Absent or false skips the automatic gap-fill pass
+   * so regen and in-flight messages do not start one.
+   */
+  autoFollowup?: boolean;
 };
 
 function newId(): string {
@@ -57,6 +62,7 @@ export async function enqueueGeneration(
     jobId,
     materialId: args.materialId,
     deckId: args.deckId,
+    autoFollowup: true,
   });
 
   return jobId;
