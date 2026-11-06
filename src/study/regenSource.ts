@@ -15,6 +15,24 @@ export function provenanceExcerptText(provenance: unknown): string {
   return typeof excerpt === "string" ? excerpt.trim() : "";
 }
 
+function pageNumbers(list: readonly unknown[]): number[] {
+  const pages: number[] = [];
+  for (const value of list) {
+    if (typeof value === "number" && Number.isFinite(value) && value >= 1) {
+      pages.push(value);
+    }
+  }
+  return pages;
+}
+
+/** Finite page numbers >= 1 from `pages`, or from a bare array. */
+export function provenancePages(provenance: unknown): number[] {
+  if (Array.isArray(provenance)) return pageNumbers(provenance);
+  if (!provenance || typeof provenance !== "object") return [];
+  const pages = (provenance as { pages?: unknown }).pages;
+  return Array.isArray(pages) ? pageNumbers(pages) : [];
+}
+
 /**
  * Regen can try material (via job) or the provenance excerpt. Material text is
  * only checked server-side, so a job card may still 422 if its material is empty.

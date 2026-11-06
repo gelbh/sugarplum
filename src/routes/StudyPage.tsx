@@ -24,6 +24,7 @@ import {
 } from "../achievements/rememberUnlocks";
 import type { UnlockView } from "../achievements/wire";
 import CardFace, { type OcclusionStudyFace } from "../components/CardFace";
+import StudyNotesDialog from "../components/StudyNotesDialog";
 import GradeButtons from "../components/GradeButtons";
 import {
   ApiError,
@@ -41,6 +42,10 @@ import { isGuest } from "../guest/session";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { backAnswer, isOcclusionFront } from "../lib/draftCardModel";
+import {
+  provenanceExcerptText,
+  provenancePages,
+} from "../study/regenSource";
 import { resolveCardGesture } from "../study/cardGestures";
 import { studyQueueProgress } from "../study/studyQueueProgress";
 import {
@@ -170,6 +175,12 @@ export default function StudyPage() {
   const cardDialogOpenRef = useRef(false);
   const onCardDialogOpen = useCallback((open: boolean) => {
     cardDialogOpenRef.current = open;
+  }, []);
+  const [notesOpen, setNotesOpenState] = useState(false);
+  const notesOpenRef = useRef(false);
+  const setNotesOpen = useCallback((open: boolean) => {
+    notesOpenRef.current = open;
+    setNotesOpenState(open);
   }, []);
   const introBonusRef = useRef<number | undefined>(undefined);
   if (introBonusRef.current === undefined) {
@@ -372,6 +383,9 @@ export default function StudyPage() {
   }, [endLoad, flushOnMount, load, refreshPendingCount, setUserId]);
 
   const current = queue[0] ?? null;
+  const notesExcerpt = current ? provenanceExcerptText(current.provenance) : "";
+  const notesPages = current ? provenancePages(current.provenance) : [];
+  const notesAvailable = notesExcerpt !== "" || notesPages.length > 0;
   const queueFraction = studyQueueProgress(queueTotal, queue.length);
   const cardHostRef = useRef<HTMLDivElement>(null);
   const [plateWidth, setPlateWidth] = useState<number | null>(null);
@@ -492,6 +506,10 @@ export default function StudyPage() {
   );
 
   useEffect(() => {
+    setNotesOpen(false);
+  }, [current?.id, setNotesOpen]);
+
+  useEffect(() => {
     function onFullscreenChange() {
       if (!document.fullscreenElement) {
         ignoreEscLeaveUntilRef.current = performance.now() + 500;
@@ -506,9 +524,14 @@ export default function StudyPage() {
     if (!ready) return;
 
     function onKey(e: KeyboardEvent) {
-      if (cardDialogOpenRef.current) return;
+      if (cardDialogOpenRef.current || notesOpenRef.current) return;
       const key = plainShortcutKey(e);
       if (key === null) return;
+      if ((key === "s" || key === "S") && revealed && notesAvailable) {
+        e.preventDefault();
+        setNotesOpen(true);
+        return;
+      }
       if (key === "Escape") {
         e.preventDefault();
         if (document.fullscreenElement) {
@@ -567,10 +590,12 @@ export default function StudyPage() {
     current,
     flipBack,
     leaveStudy,
+    notesAvailable,
     onGrade,
     ready,
     reveal,
     revealed,
+    setNotesOpen,
     toggleZen,
   ]);
 
@@ -948,9 +973,19 @@ export default function StudyPage() {
                   onFlipBack={flipBack}
                   disabled={busy}
                   answerFocusRef={answerFocusRef}
+                  notesAvailable={notesAvailable}
+                  onOpenNotes={() => setNotesOpen(true)}
                   onGrade={
                     mcqMode ? (rating) => onGrade(rating, true) : undefined
                   }
+                />
+                <StudyNotesDialog
+                  open={notesOpen}
+                  onClose={() => setNotesOpen(false)}
+                  excerpt={notesExcerpt}
+                  page={notesPages[0] ?? null}
+                  jobId={current.job_id}
+                  deckId={current.deck_id}
                 />
               </Box>
 
