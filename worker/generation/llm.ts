@@ -557,7 +557,6 @@ function retryAfterMs(res: Response): number | null {
     : null;
 }
 
-/** POST to a BYO provider; retries transient overload, then fails with copy users can act on. */
 async function postLlm(
   provider: UserLlmProvider,
   url: string,
