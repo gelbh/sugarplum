@@ -3,7 +3,11 @@ import {
   UploadError,
   uploadWithProgress,
 } from "../progress/uploadWithProgress";
-import { ocrEmptyPdfPages, type PageText } from "../lib/pdfScanOcr";
+import {
+  ocrEmptyPdfPages,
+  ocrEmptyPdfPagesInWindow,
+  type PageText,
+} from "../lib/pdfScanOcr";
 import { endGuestLocal } from "../guest/endGuestLocal";
 import {
   clearGuestMergeArtifacts,
@@ -580,6 +584,46 @@ export function pasteMaterial(
   return api<PasteMaterialResponse>(`/api/decks/${deckId}/materials/paste`, {
     method: "POST",
     json: body,
+  });
+}
+
+type OcrRefillDecision =
+  | { refill: false }
+  | {
+      refill: true;
+      downloadUrl: string;
+      expiresIn: number;
+      startPage: number;
+      windowEnd: number;
+      coveredPages: number[];
+    };
+
+export async function refillPdfOcr(
+  materialId: string,
+  recognize: typeof ocrEmptyPdfPagesInWindow = ocrEmptyPdfPagesInWindow,
+): Promise<void> {
+  if (isGuest()) return;
+
+  const decision = await api<OcrRefillDecision>(
+    `/api/materials/${materialId}/ocr-refetch`,
+    { method: "POST" },
+  );
+  if (!decision.refill) return;
+
+  const res = await fetch(decision.downloadUrl);
+  if (!res.ok) {
+    throw new Error(`PDF refill download failed (${res.status})`);
+  }
+
+  const pages = await recognize(await res.arrayBuffer(), {
+    startPage: decision.startPage,
+    covered: decision.coveredPages,
+  });
+  if (!pages?.length) return;
+
+  await api<{ stored: number }>(`/api/materials/${materialId}/ocr-pages`, {
+    method: "POST",
+    json: { pages },
   });
 }
 
