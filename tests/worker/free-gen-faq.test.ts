@@ -13,6 +13,7 @@ describe("freeGenFaq", () => {
   it("FAQ covers attempts, no refund, UTC, BYO", () => {
     const body = freeGenFaqBody();
     expect(body).toMatch(/attempts/i);
+    expect(body).toMatch(/second attempt/i);
     expect(body).toMatch(/not credits/i);
     expect(body).toContain(String(FREE_GEN_DAILY_CAP_DISPLAY));
     expect(body).toMatch(/UTC/i);

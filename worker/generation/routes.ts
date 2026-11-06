@@ -4,10 +4,7 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import { requeueGeneration } from "./enqueue";
-import {
-  isRejectReason,
-  type RejectReason,
-} from "../../src/lib/rejectReasons";
+import { isRejectReason, type RejectReason } from "../../src/lib/rejectReasons";
 import { buildAvoidPatternsFromRejected } from "./feedback-hints";
 import { getFreeGenUsage } from "./quota";
 import { normalizeTopicHints } from "./topic-hints";
@@ -270,8 +267,7 @@ jobRoutes.post("/:id/regen", async (c) => {
         front: JSON.parse(row.front_json) as unknown,
         reason: isRejectReason(row.reject_reason) ? row.reject_reason : null,
       });
-    } catch {
-    }
+    } catch {}
   }
   const patterns = buildAvoidPatternsFromRejected(entries);
   await db
@@ -292,6 +288,7 @@ jobRoutes.post("/:id/regen", async (c) => {
       jobId: row.id,
       materialId: row.material_id,
       deckId: row.deck_id,
+      autoFollowup: false,
     });
   } catch (err) {
     const finishedAt = new Date().toISOString();

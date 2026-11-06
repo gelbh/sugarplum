@@ -5,8 +5,9 @@ export function freeGenFaqBody(
   cap: number = FREE_GEN_DAILY_CAP_DISPLAY,
 ): string {
   return (
-    `Free platform AI uses attempts, not credits. Each generation job counts ` +
-    `toward ${cap} attempts per UTC day, including jobs that fail. Deleting a ` +
+    `Free platform AI uses attempts, not credits. Each free model run counts ` +
+    `toward ${cap} attempts per UTC day, including runs that fail. A job that ` +
+    `fills leftover coverage gaps uses a second attempt. Deleting a ` +
     `deck, rejecting drafts, or discarding cards does not restore attempts. ` +
     `The count resets at UTC midnight. Add your own OpenAI, Anthropic, Google, ` +
     `or Z.ai (free Flash) API key to bypass this cap.`
@@ -18,7 +19,7 @@ export function freeGenIntroBlurb(
 ): string {
   return (
     `Optional. Without a key, Sugarplum uses free platform AI (up to ${cap} ` +
-    `jobs per UTC day). Add your own OpenAI, Anthropic, Google, or Z.ai ` +
+    `attempts per UTC day). Add your own OpenAI, Anthropic, Google, or Z.ai ` +
     `(free Flash) key to skip that cap and for higher quality. Keys are ` +
     `encrypted at rest and never shown in full again.`
   );
