@@ -383,6 +383,59 @@ export function listSubjects() {
   return api<Subject[]>("/api/subjects");
 }
 
+export type CoverOwnerKind = "subject" | "deck";
+
+export type CoverFields = {
+  photoId: string;
+  imageUrl: string;
+  photographerName: string;
+  photographerUrl: string;
+  photoHtmlUrl: string;
+};
+
+export type StoredCoverRow = CoverFields & {
+  ownerKind: CoverOwnerKind;
+  ownerId: string;
+};
+
+function rejectGuestCover(): never {
+  throw new Error("Sign in to choose a cover");
+}
+
+export function searchCovers(query: string) {
+  if (isGuest()) rejectGuestCover();
+  return api<{ photos: CoverFields[] }>(
+    `/api/covers/search?q=${encodeURIComponent(query)}`,
+  ).then((body) => body.photos);
+}
+
+export function listCovers() {
+  if (isGuest()) rejectGuestCover();
+  return api<{ covers: StoredCoverRow[] }>("/api/covers").then(
+    (body) => body.covers,
+  );
+}
+
+export function setCover(
+  ownerKind: CoverOwnerKind,
+  ownerId: string,
+  photoId: string,
+) {
+  if (isGuest()) rejectGuestCover();
+  return api<StoredCoverRow>("/api/covers", {
+    method: "PUT",
+    json: { ownerKind, ownerId, photoId },
+  });
+}
+
+export function clearCover(ownerKind: CoverOwnerKind, ownerId: string) {
+  if (isGuest()) rejectGuestCover();
+  return api<void>("/api/covers", {
+    method: "DELETE",
+    json: { ownerKind, ownerId },
+  });
+}
+
 export function createSubject(title: string) {
   if (isGuest()) return Promise.resolve(guestCreateSubject(title));
   return api<Subject>("/api/subjects", {

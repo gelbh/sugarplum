@@ -22,6 +22,7 @@ import Link from "@mui/material/Link";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
+import CoverPickerDialog from "../components/CoverPickerDialog";
 import OperateSection from "../components/OperateSection";
 import ShelfVolume from "../components/ShelfVolume";
 import TextField from "@mui/material/TextField";
@@ -31,18 +32,22 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import {
   ApiError,
   apkgFilenameForDeckTitle,
+  clearCover,
   createSelectionExport,
   createSubject,
   deleteSubject,
+  listCovers,
   listDecks,
   listJobsWithDrafts,
   listMaterials,
   listSubjects,
   me,
   patchSubject,
+  setCover,
   type Deck,
   type JobListItem,
   type MaterialListItem,
+  type StoredCoverRow,
   type Subject,
   getJourney,
 } from "../api/client";
@@ -65,6 +70,12 @@ import {
 
 type TitleDialog =
   { mode: "create" } | { mode: "rename"; subject: Subject } | null;
+
+type CoverTarget = {
+  ownerKind: "subject";
+  ownerId: string;
+  title: string;
+};
 
 export default function LibraryPage() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -89,6 +100,8 @@ export default function LibraryPage() {
     anchor: HTMLElement;
     subject: Subject;
   } | null>(null);
+  const [covers, setCovers] = useState<StoredCoverRow[]>([]);
+  const [coverPicker, setCoverPicker] = useState<CoverTarget | null>(null);
   /** Selection is deck ids only; subject checkbox toggles all decks in that subject. */
   const [selectedDeckIds, setSelectedDeckIds] = useState<string[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
@@ -142,19 +155,24 @@ export default function LibraryPage() {
     (async () => {
       try {
         await me();
-        const [subjectList, deckList, jobs, materialList] = await Promise.all([
-          listSubjects(),
-          listDecks(),
-          listJobsWithDrafts().catch(() => [] as JobListItem[]),
-          guest
-            ? Promise.resolve([] as MaterialListItem[])
-            : listMaterials().catch(() => [] as MaterialListItem[]),
-        ]);
+        const [subjectList, deckList, jobs, materialList, coverList] =
+          await Promise.all([
+            listSubjects(),
+            listDecks(),
+            listJobsWithDrafts().catch(() => [] as JobListItem[]),
+            guest
+              ? Promise.resolve([] as MaterialListItem[])
+              : listMaterials().catch(() => [] as MaterialListItem[]),
+            guest
+              ? Promise.resolve([] as StoredCoverRow[])
+              : listCovers().catch(() => [] as StoredCoverRow[]),
+          ]);
         if (cancelled) return;
         setSubjects(subjectList);
         setDecks(deckList);
         setDraftJobs(jobs);
         setMaterials(materialList);
+        setCovers(coverList);
         setReady(true);
         endLoad();
         try {
@@ -213,19 +231,25 @@ export default function LibraryPage() {
     setDialogBusy(true);
     setDialogError(null);
     try {
+      const saved =
+        titleDialog.mode === "create"
+          ? await createSubject(titleValue.trim())
+          : await patchSubject(titleDialog.subject.id, titleValue.trim());
       if (titleDialog.mode === "create") {
-        const created = await createSubject(titleValue.trim());
-        setSubjects((prev) => [...prev, created]);
+        setSubjects((prev) => [...prev, saved]);
       } else {
-        const updated = await patchSubject(
-          titleDialog.subject.id,
-          titleValue.trim(),
-        );
         setSubjects((prev) =>
-          prev.map((s) => (s.id === updated.id ? { ...s, ...updated } : s)),
+          prev.map((s) => (s.id === saved.id ? { ...s, ...saved } : s)),
         );
       }
       setTitleDialog(null);
+      if (!guest) {
+        setCoverPicker({
+          ownerKind: "subject",
+          ownerId: saved.id,
+          title: saved.title,
+        });
+      }
     } catch (err) {
       setDialogError(
         err instanceof ApiError ? err.message : "Could not save subject",
@@ -233,6 +257,35 @@ export default function LibraryPage() {
     } finally {
       setDialogBusy(false);
     }
+  }
+
+  async function onPickCover(photoId: string) {
+    if (!coverPicker) return;
+    const row = await setCover(
+      coverPicker.ownerKind,
+      coverPicker.ownerId,
+      photoId,
+    );
+    setCovers((prev) => [
+      ...prev.filter(
+        (cover) =>
+          cover.ownerKind !== row.ownerKind || cover.ownerId !== row.ownerId,
+      ),
+      row,
+    ]);
+    setCoverPicker(null);
+  }
+
+  async function onClearCover() {
+    if (!coverPicker) return;
+    const { ownerKind, ownerId } = coverPicker;
+    await clearCover(ownerKind, ownerId);
+    setCovers((prev) =>
+      prev.filter(
+        (cover) => cover.ownerKind !== ownerKind || cover.ownerId !== ownerId,
+      ),
+    );
+    setCoverPicker(null);
   }
 
   function localDeckCountForSubject(subjectId: string) {
@@ -496,6 +549,13 @@ export default function LibraryPage() {
                           `/study?subjectId=${encodeURIComponent(s.id)}`,
                         );
                       }}
+                      cover={
+                        covers.find(
+                          (cover) =>
+                            cover.ownerKind === "subject" &&
+                            cover.ownerId === s.id,
+                        ) ?? null
+                      }
                       moreLabel={`More actions for ${s.title}`}
                       onMore={(ev) => {
                         setSubjectMenu({
@@ -812,6 +872,21 @@ export default function LibraryPage() {
         >
           Rename
         </MenuItem>
+        {!guest ? (
+          <MenuItem
+            onClick={() => {
+              if (!menuSubject) return;
+              setCoverPicker({
+                ownerKind: "subject",
+                ownerId: menuSubject.id,
+                title: menuSubject.title,
+              });
+              setSubjectMenu(null);
+            }}
+          >
+            Change cover
+          </MenuItem>
+        ) : null}
         {menuDeleteBlocked ? (
           <Tooltip title="Remove or move decks before deleting this subject">
             <span>
@@ -839,6 +914,16 @@ export default function LibraryPage() {
           </MenuItem>
         )}
       </Menu>
+
+      {guest ? null : (
+        <CoverPickerDialog
+          open={coverPicker !== null}
+          title={coverPicker?.title ?? ""}
+          onClose={() => setCoverPicker(null)}
+          onPick={onPickCover}
+          onClear={onClearCover}
+        />
+      )}
     </Container>
   );
 }

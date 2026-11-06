@@ -18,22 +18,27 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import CoverPickerDialog from "../components/CoverPickerDialog";
 import ShelfVolume from "../components/ShelfVolume";
 import {
   ApiError,
   apkgFilenameForDeckTitle,
+  clearCover,
   createDeck,
   createSubjectExport,
   deckStats,
   deleteDeck,
   deleteSubject,
+  listCovers,
   listDecks,
   listSubjects,
   me,
   patchDeck,
   patchSubject,
+  setCover,
   type Deck,
   type DeckStats,
+  type StoredCoverRow,
   type Subject,
 } from "../api/client";
 import {
@@ -56,6 +61,12 @@ type TitleDialog =
   | { kind: "deck-rename"; deck: Deck }
   | null;
 
+type CoverTarget = {
+  ownerKind: "deck";
+  ownerId: string;
+  title: string;
+};
+
 export default function SubjectPage({ subjectId }: Props) {
   const [subject, setSubject] = useState<Subject | null>(null);
   const [decks, setDecks] = useState<Deck[]>([]);
@@ -77,6 +88,8 @@ export default function SubjectPage({ subjectId }: Props) {
     | { kind: "deck"; anchor: HTMLElement; deck: Deck }
     | null
   >(null);
+  const [covers, setCovers] = useState<StoredCoverRow[]>([]);
+  const [coverPicker, setCoverPicker] = useState<CoverTarget | null>(null);
   const guest = isGuest();
   const { end: endLoad } = useTrackedOp("Loading subject…", {
     trackOnMount: true,
@@ -85,15 +98,19 @@ export default function SubjectPage({ subjectId }: Props) {
     useTrackedOp(ANKI_EXPORT_BUSY_LABEL);
 
   const load = useCallback(async () => {
-    const [subjects, deckList] = await Promise.all([
+    const [subjects, deckList, coverList] = await Promise.all([
       listSubjects(),
       listDecks(subjectId),
+      guest
+        ? Promise.resolve([] as StoredCoverRow[])
+        : listCovers().catch(() => [] as StoredCoverRow[]),
     ]);
     const found = subjects.find((s) => s.id === subjectId) ?? null;
     setSubject(found);
     setDecks(deckList);
+    setCovers(coverList);
     return found;
-  }, [subjectId]);
+  }, [guest, subjectId]);
 
   const syncSubjectFromList = useCallback(async () => {
     const subjects = await listSubjects();
@@ -131,6 +148,35 @@ export default function SubjectPage({ subjectId }: Props) {
       cancelled = true;
     };
   }, [endLoad, load]);
+
+  async function onPickCover(photoId: string) {
+    if (!coverPicker) return;
+    const row = await setCover(
+      coverPicker.ownerKind,
+      coverPicker.ownerId,
+      photoId,
+    );
+    setCovers((prev) => [
+      ...prev.filter(
+        (cover) =>
+          cover.ownerKind !== row.ownerKind || cover.ownerId !== row.ownerId,
+      ),
+      row,
+    ]);
+    setCoverPicker(null);
+  }
+
+  async function onClearCover() {
+    if (!coverPicker) return;
+    const { ownerKind, ownerId } = coverPicker;
+    await clearCover(ownerKind, ownerId);
+    setCovers((prev) =>
+      prev.filter(
+        (cover) => cover.ownerKind !== ownerKind || cover.ownerId !== ownerId,
+      ),
+    );
+    setCoverPicker(null);
+  }
 
   function openRenameSubject() {
     if (!subject) return;
@@ -405,6 +451,12 @@ export default function SubjectPage({ subjectId }: Props) {
                       onStudy={() =>
                         navigate(`/study?deckId=${encodeURIComponent(d.id)}`)
                       }
+                      cover={
+                        covers.find(
+                          (cover) =>
+                            cover.ownerKind === "deck" && cover.ownerId === d.id,
+                        ) ?? null
+                      }
                       moreLabel={`More actions for ${d.title}`}
                       onMore={(ev) =>
                         setPageMenu({
@@ -576,6 +628,21 @@ export default function SubjectPage({ subjectId }: Props) {
         >
           Rename
         </MenuItem>
+        {!guest ? (
+          <MenuItem
+            onClick={() => {
+              if (!menuDeck) return;
+              setCoverPicker({
+                ownerKind: "deck",
+                ownerId: menuDeck.id,
+                title: menuDeck.title,
+              });
+              setPageMenu(null);
+            }}
+          >
+            Change cover
+          </MenuItem>
+        ) : null}
         <MenuItem
           onClick={() => {
             if (!menuDeck) return;
@@ -587,6 +654,16 @@ export default function SubjectPage({ subjectId }: Props) {
           Delete
         </MenuItem>
       </Menu>
+
+      {guest ? null : (
+        <CoverPickerDialog
+          open={coverPicker !== null}
+          title={coverPicker?.title ?? ""}
+          onClose={() => setCoverPicker(null)}
+          onPick={onPickCover}
+          onClear={onClearCover}
+        />
+      )}
     </Container>
   );
 }
