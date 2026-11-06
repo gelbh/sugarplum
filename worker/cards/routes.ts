@@ -810,6 +810,36 @@ cardRoutes.post("/:id/archive", async (c) => {
   );
 });
 
+cardRoutes.delete("/:id", async (c) => {
+  const userId = await requireUser(c);
+  const cardId = c.req.param("id");
+  const db = getDb(c.env);
+  const row = await requireOwnedCard(db, cardId, userId);
+  if (row.status !== "accepted") {
+    throw new HTTPException(400, {
+      message: "Only accepted cards can be deleted",
+    });
+  }
+  const result = await db
+    .prepare("DELETE FROM cards WHERE id = ? AND status = ?")
+    .bind(cardId, "accepted")
+    .run();
+  if (!result.meta.changes) {
+    throw new HTTPException(400, {
+      message: "Only accepted cards can be deleted",
+    });
+  }
+  await db
+    .prepare("DELETE FROM review_logs WHERE card_id = ?")
+    .bind(cardId)
+    .run();
+  await db
+    .prepare("DELETE FROM card_schedules WHERE card_id = ?")
+    .bind(cardId)
+    .run();
+  return c.body(null, 204);
+});
+
 cardRoutes.post("/:id/restore", async (c) => {
   const userId = await requireUser(c);
   const cardId = c.req.param("id");

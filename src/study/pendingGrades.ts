@@ -68,6 +68,11 @@ export function replacePendingGrades(
   return writeList(userId, items);
 }
 
+export function dropPendingGrade(userId: string, cardId: string): void {
+  const next = readList(userId).filter((item) => item.cardId !== cardId);
+  writeList(userId, next);
+}
+
 /** Drop pending grades for one user, or all keys with the pending prefix. */
 export function clearPendingGrades(userId?: string): void {
   try {
