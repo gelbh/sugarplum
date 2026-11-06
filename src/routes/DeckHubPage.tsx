@@ -64,13 +64,13 @@ import {
   uploadMaterialFile,
   uploadPdfWithFigureCrops,
   type CardDraftView,
-  type CardType,
   type Deck,
   type DeckStats,
   type JobListItem,
   type MaterialListItem,
   type Subject,
 } from "../api/client";
+import { cardPatchBody } from "../cards/cardPatchBody";
 import DraftCardEditor, {
   type DraftEditorChange,
 } from "../components/DraftCardEditor";
@@ -146,19 +146,6 @@ function cardTypeLabel(type: CardDraftView["type"]): string {
   if (type === "image_label") return "Image label";
   if (type === "diagram") return "Diagram";
   return "Q&A";
-}
-
-function cardPatchBody(card: CardDraftView): Parameters<typeof patchCard>[1] {
-  const type = card.type as CardType;
-  const body: Parameters<typeof patchCard>[1] = {
-    front: card.front,
-    back: card.back,
-    type,
-  };
-  if (type === "mcq" && card.options) {
-    body.options = card.options;
-  }
-  return body;
 }
 
 export default function DeckHubPage({ deckId }: Props) {
