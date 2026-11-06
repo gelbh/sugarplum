@@ -25,6 +25,7 @@ import {
   onCardsAccepted,
 } from "../gamification/onStudyEvent";
 import { REJECT_REASONS } from "../../src/lib/rejectReasons";
+import { parseOptionalJsonBody } from "../optional-json";
 
 const STUDY_STRUGGLE_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 
@@ -549,14 +550,8 @@ cardRoutes.post("/:id/reject", async (c) => {
   const row = await requireOwnedCard(db, cardId, userId);
 
   const raw = await c.req.text();
-  let body: unknown = {};
-  if (raw.trim()) {
-    try {
-      body = JSON.parse(raw);
-    } catch {
-      throw new HTTPException(400, { message: "Invalid JSON body" });
-    }
-  }
+  const parsedBody = parseOptionalJsonBody(raw);
+  const body = parsedBody === undefined ? {} : parsedBody;
   const parsed = RejectBodySchema.safeParse(body);
   if (!parsed.success) {
     throw new HTTPException(400, {
