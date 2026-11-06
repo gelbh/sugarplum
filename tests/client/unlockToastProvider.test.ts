@@ -102,8 +102,22 @@ describe("UnlockToastProvider", () => {
     const css = [...document.querySelectorAll("style[data-emotion]")]
       .map((s) => s.textContent)
       .join("");
-    expect(css).toMatch(
-      /@media \(min-width:900px\)\{[^}]*\{[^}]*left:calc\(50% \+ 110px\)/,
+    const marker = "@media (min-width:900px)";
+    const at = css.indexOf(marker);
+    expect(at).toBeGreaterThan(-1);
+    const prefix = css.slice(0, at);
+    const opened = css.slice(at).match(
+      /^@media \(min-width:900px\)\{[^{]*\{([^}]*)\}/,
     );
+    expect(opened).not.toBeNull();
+    const block = opened![1];
+    const desktopBottom =
+      "bottom:calc(24px + env(safe-area-inset-bottom, 0px))";
+    const mobileBottom =
+      "bottom:calc(88px + env(safe-area-inset-bottom, 0px))";
+    expect(block).toContain("left:calc(50% + 110px)");
+    expect(block).toContain(desktopBottom);
+    expect(block).not.toContain(mobileBottom);
+    expect(prefix).toContain(mobileBottom);
   });
 });
