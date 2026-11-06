@@ -193,6 +193,25 @@ describe("near-duplicate fronts", () => {
     ).toBe(false);
   });
 
+  it("drops a two-token paraphrase and keeps a last-token species swap", () => {
+    expect(
+      isNearDuplicateFront("Natural host of Eimeria tenella", [
+        "Definitive host of Eimeria tenella",
+      ]),
+    ).toBe(true);
+    expect(
+      isNearDuplicateFront("Host of Eimeria tenella", [
+        "Host of Eimeria necatrix",
+      ]),
+    ).toBe(false);
+    expect(
+      isNearDuplicateFront(
+        "What is the site of infection for Eimeria acervulina?",
+        ["What is the site of infection for Eimeria tenella?"],
+      ),
+    ).toBe(false);
+  });
+
   it("filters novel drafts against the deck and the batch", () => {
     const drafts: CardDraft[] = [
       {
