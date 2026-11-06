@@ -96,15 +96,24 @@ function openAiResponseFormat():
     : JSON_OBJECT_RESPONSE_FORMAT;
 }
 
-function contentFromChatResult(result: unknown, emptyMessage: string): string {
-  const choices = (
-    result as { choices?: { message?: { content?: unknown } }[] } | null
-  )?.choices;
-  const content = choices?.[0]?.message?.content;
-  if (typeof content !== "string" || content.length === 0) {
-    throw new Error(emptyMessage);
+/** Chat Completions `choices` text, or the older Workers AI `response` string. */
+export function textFromAiResult(result: unknown): string {
+  const record = result as {
+    choices?: { message?: { content?: unknown } }[];
+    response?: unknown;
+  } | null;
+  const content = record?.choices?.[0]?.message?.content;
+  if (typeof content === "string" && content.length > 0) return content;
+  if (typeof record?.response === "string" && record.response.length > 0) {
+    return record.response;
   }
-  return content;
+  return "";
+}
+
+function contentFromChatResult(result: unknown, emptyMessage: string): string {
+  const text = textFromAiResult(result);
+  if (!text) throw new Error(emptyMessage);
+  return text;
 }
 
 function workersAiShim(accountId: string, token: string): LlmAdapter {
