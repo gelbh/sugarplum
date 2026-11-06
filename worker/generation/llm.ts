@@ -1,4 +1,8 @@
 import {
+  JSON_OBJECT_RESPONSE_FORMAT,
+  openAiJsonSchemaResponseFormat,
+} from "./cards-json-schema";
+import {
   parseCardDrafts,
   type CardDraft,
 } from "./schema";
@@ -557,15 +561,31 @@ function retryAfterMs(res: Response): number | null {
     : null;
 }
 
+const FORMAT_REJECTION = /response_format|json_schema/i;
+
 async function postLlm(
   provider: UserLlmProvider,
   url: string,
   init: RequestInit,
+  fallbackInit?: RequestInit,
 ): Promise<Response> {
+  let request = init;
+  let formatFallback = fallbackInit;
   for (let attempt = 0; ; attempt++) {
-    const res = await fetch(url, init);
+    const res = await fetch(url, request);
     if (res.ok) return res;
     const detail = await readErrorDetail(res);
+    if (
+      formatFallback &&
+      res.status === 400 &&
+      FORMAT_REJECTION.test(detail)
+    ) {
+      request = formatFallback;
+      formatFallback = undefined;
+      // A format rejection starts a fresh transient budget on the fallback body.
+      attempt = -1;
+      continue;
+    }
     if (!TRANSIENT_STATUSES.has(res.status) || QUOTA_PATTERN.test(detail)) {
       throw new Error(`LLM request failed (${res.status})${detail}`);
     }
@@ -587,6 +607,8 @@ function openAiCompatibleAdapter(opts: {
   visionModel: string;
   /** Z.ai rejects `response_format` on vision models (text models only). */
   visionJsonMode: boolean;
+  /** OpenAI text calls. Z.ai stays on json_object. */
+  jsonSchema?: boolean;
   extraBody?: Record<string, unknown>;
 }): LlmAdapter {
   const {
@@ -595,11 +617,12 @@ function openAiCompatibleAdapter(opts: {
     textModel,
     visionModel,
     visionJsonMode,
+    jsonSchema = false,
     extraBody,
   } = opts;
 
   async function complete({ system, user, apiKey }: CompleteInput) {
-    const res = await postLlm(provider, requestUrl, {
+    const textInit = (responseFormat: unknown): RequestInit => ({
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -609,13 +632,24 @@ function openAiCompatibleAdapter(opts: {
         ...extraBody,
         model: textModel,
         temperature: 0.3,
-        response_format: { type: "json_object" },
+        response_format: responseFormat,
         messages: [
           { role: "system", content: system },
           { role: "user", content: user },
         ],
       }),
     });
+
+    const res = await postLlm(
+      provider,
+      requestUrl,
+      textInit(
+        jsonSchema
+          ? openAiJsonSchemaResponseFormat()
+          : JSON_OBJECT_RESPONSE_FORMAT,
+      ),
+      jsonSchema ? textInit(JSON_OBJECT_RESPONSE_FORMAT) : undefined,
+    );
 
     const body = (await res.json()) as {
       choices?: { message?: { content?: string } }[];
@@ -692,6 +726,7 @@ function openAiAdapter(): LlmAdapter {
     textModel: "gpt-4o-mini",
     visionModel: "gpt-4o-mini",
     visionJsonMode: true,
+    jsonSchema: true,
   });
 }
 

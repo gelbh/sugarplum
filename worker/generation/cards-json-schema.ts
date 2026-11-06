@@ -57,14 +57,10 @@ export function openAiJsonSchemaResponseFormat(): {
   };
 }
 
-export function workersAiJsonSchemaResponseFormat(): {
-  type: "json_schema";
-  json_schema: typeof cardDraftsSchema;
-} {
-  return {
-    type: "json_schema",
-    json_schema: cardDraftsSchema,
-  };
+export function workersAiJsonSchemaResponseFormat(): ReturnType<
+  typeof openAiJsonSchemaResponseFormat
+> {
+  return openAiJsonSchemaResponseFormat();
 }
 
 export const JSON_OBJECT_RESPONSE_FORMAT = { type: "json_object" } as const;
