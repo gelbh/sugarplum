@@ -93,6 +93,7 @@ export default function CreateMaterialStepper({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [readingScan, setReadingScan] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
   const [focusCreateTitle, setFocusCreateTitle] = useState(false);
   const [showNewDeckForm, setShowNewDeckForm] = useState(false);
@@ -368,14 +369,12 @@ export default function CreateMaterialStepper({
               uploadFile,
               figureFiles,
               undefined,
-              pdfOpts,
+              { ...pdfOpts, onScan: () => setReadingScan(true) },
             )
-          : await uploadMaterialFile(
-              selectedDeckId,
-              uploadFile,
-              undefined,
-              pdfOpts,
-            );
+          : await uploadMaterialFile(selectedDeckId, uploadFile, undefined, {
+              ...pdfOpts,
+              onScan: () => setReadingScan(true),
+            });
       setUploadFile(null);
       setFigureFiles([]);
       setAlsoCover("");
@@ -392,6 +391,7 @@ export default function CreateMaterialStepper({
       setError(err instanceof ApiError ? err.message : "Could not upload file");
     } finally {
       setBusy(false);
+      setReadingScan(false);
     }
   }
 
@@ -675,7 +675,11 @@ export default function CreateMaterialStepper({
                     variant="contained"
                     disabled={busy || !selectedDeckId || !uploadFile}
                   >
-                    {busy ? "Uploading…" : "Upload file"}
+                    {busy
+                      ? readingScan
+                        ? "Reading scanned pages"
+                        : "Uploading…"
+                      : "Upload file"}
                   </Button>
                 </Stack>
               </Box>

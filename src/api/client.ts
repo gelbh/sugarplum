@@ -3,6 +3,7 @@ import {
   UploadError,
   uploadWithProgress,
 } from "../progress/uploadWithProgress";
+import { ocrEmptyPdfPages, type PageText } from "../lib/pdfScanOcr";
 import { endGuestLocal } from "../guest/endGuestLocal";
 import {
   clearGuestMergeArtifacts,
@@ -734,6 +735,7 @@ export function completeMaterial(
     topicHints?: string[];
     /** Register uploaded bytes only; do not start card generation. */
     attachOnly?: boolean;
+    ocrPages?: PageText[];
   },
 ) {
   if (isGuest()) guestUnsupported("complete material uploads");
@@ -741,6 +743,7 @@ export function completeMaterial(
     figureExtractMode?: FigureExtractMode;
     topicHints?: string[];
     attachOnly?: boolean;
+    ocrPages?: PageText[];
   } = {};
   if (opts?.figureExtractMode !== undefined) {
     json.figureExtractMode = opts.figureExtractMode;
@@ -750,6 +753,9 @@ export function completeMaterial(
   }
   if (opts?.attachOnly === true) {
     json.attachOnly = true;
+  }
+  if (opts?.ocrPages && opts.ocrPages.length > 0) {
+    json.ocrPages = opts.ocrPages;
   }
   return api<CompleteMaterialResponse>(
     `/api/materials/${materialId}/complete`,
@@ -1341,6 +1347,7 @@ export async function uploadMaterialFile(
     figureExtractMode?: FigureExtractMode;
     topicHints?: string[];
     attachOnly?: boolean;
+    onScan?: () => void;
   },
 ): Promise<CompleteMaterialResponse> {
   const contentType = resolveUploadContentType(file);
@@ -1364,7 +1371,16 @@ export async function uploadMaterialFile(
     throw new ApiError(502, "Failed to upload file to storage");
   }
 
-  return completeMaterial(materialId, opts);
+  const ocrPages =
+    contentType === "application/pdf"
+      ? await scanPdfOcrPages(file, opts?.onScan)
+      : undefined;
+  return completeMaterial(materialId, {
+    figureExtractMode: opts?.figureExtractMode,
+    topicHints: opts?.topicHints,
+    attachOnly: opts?.attachOnly,
+    ocrPages,
+  });
 }
 
 export async function uploadPdfWithFigureCrops(
@@ -1372,7 +1388,11 @@ export async function uploadPdfWithFigureCrops(
   pdfFile: File,
   figureFiles: File[],
   onProgress?: (percent: number) => void,
-  opts?: { figureExtractMode?: FigureExtractMode; topicHints?: string[] },
+  opts?: {
+    figureExtractMode?: FigureExtractMode;
+    topicHints?: string[];
+    onScan?: () => void;
+  },
 ): Promise<CompleteMaterialResponse> {
   const contentType = resolveUploadContentType(pdfFile);
   const { materialId, uploadUrl } = await requestMaterialUploadUrl(deckId, {
@@ -1408,5 +1428,22 @@ export async function uploadPdfWithFigureCrops(
     throw new ApiError(502, "Failed to upload file to storage");
   }
 
-  return completeMaterial(materialId, opts);
+  return completeMaterial(materialId, {
+    figureExtractMode: opts?.figureExtractMode,
+    topicHints: opts?.topicHints,
+    ocrPages: await scanPdfOcrPages(pdfFile, opts?.onScan),
+  });
+}
+
+async function scanPdfOcrPages(
+  file: Blob,
+  onScan?: () => void,
+): Promise<PageText[] | undefined> {
+  onScan?.();
+  try {
+    return await ocrEmptyPdfPages(await file.arrayBuffer());
+  } catch (err) {
+    console.warn("PDF scan OCR skipped", err);
+    return undefined;
+  }
 }
