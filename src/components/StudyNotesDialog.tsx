@@ -54,6 +54,38 @@ function matrix6(raw: unknown): Matrix6 | null {
   return [nums[0], nums[1], nums[2], nums[3], nums[4], nums[5]];
 }
 
+const IDENTITY: Matrix6 = [1, 0, 0, 1, 0, 0];
+
+function viewportTimesItem(viewport: Matrix6, item: Matrix6): Matrix6 {
+  return [
+    viewport[0] * item[0] + viewport[2] * item[1],
+    viewport[1] * item[0] + viewport[3] * item[1],
+    viewport[0] * item[2] + viewport[2] * item[3],
+    viewport[1] * item[2] + viewport[3] * item[3],
+    viewport[0] * item[4] + viewport[2] * item[5] + viewport[4],
+    viewport[1] * item[4] + viewport[3] * item[5] + viewport[5],
+  ];
+}
+
+export function studyNotesHighlightRects(
+  items: readonly TextRun[],
+  excerpt: string,
+  viewportTransform: Matrix6,
+) {
+  const runs = items.map((item) => {
+    const tx = viewportTimesItem(viewportTransform, item.transform);
+    const span = Math.hypot(tx[2], tx[3]);
+    const fontHeight = span === 0 ? item.height : span;
+    return {
+      str: item.str,
+      width: item.width,
+      height: fontHeight,
+      transform: [1, 0, 0, 1, tx[4], tx[5] - fontHeight] as Matrix6,
+    };
+  });
+  return excerptHighlightRects(runs, excerpt, IDENTITY);
+}
+
 function textRuns(items: readonly unknown[]): TextRun[] {
   const runs: TextRun[] = [];
   for (const item of items) {
@@ -185,7 +217,7 @@ export default function StudyNotesDialog({
         }
         const canvas = await renderPdfPageToCanvas(pdf, page - 1, width);
         const content = await pdfPage.getTextContent();
-        const rects = excerptHighlightRects(
+        const rects = studyNotesHighlightRects(
           textRuns(content.items),
           excerpt,
           viewportTransform,
