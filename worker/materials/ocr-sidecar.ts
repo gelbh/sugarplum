@@ -1,5 +1,5 @@
 import type { Env } from "../env";
-import { extractPdfText } from "./extract-pdf";
+import { extractPdfText, REGEN_MAX_CHARS } from "./extract-pdf";
 
 export const OCR_PAGE_LIMIT = 8;
 export const OCR_PAGE_CHAR_CAP = 8_000;
@@ -8,6 +8,19 @@ export const OCR_PAGE_NUMBER_MAX = 120;
 export type OcrPageText = { page: number; text: string };
 
 export type OcrSidecar = { pages: OcrPageText[] };
+
+export function ocrRefillWindow(
+  startPage: number,
+): { start: number; end: number } | null {
+  if (!Number.isInteger(startPage) || startPage > OCR_PAGE_NUMBER_MAX) {
+    return null;
+  }
+  const start = Math.max(1, startPage);
+  return {
+    start,
+    end: Math.min(OCR_PAGE_NUMBER_MAX, start + OCR_PAGE_NUMBER_MAX - 1),
+  };
+}
 
 export function ocrSidecarKey(deckId: string, materialId: string): string {
   return `materials/${deckId}/ocr/${materialId}.json`;
@@ -19,6 +32,7 @@ export function parseOcrPages(raw: unknown): OcrPageText[] | undefined {
     throw new Error("Invalid ocrPages");
   }
   const pages: OcrPageText[] = [];
+  const seenPages = new Set<number>();
   for (const item of raw) {
     if (!item || typeof item !== "object") throw new Error("Invalid ocrPages");
     const page = (item as { page?: unknown }).page;
@@ -31,6 +45,8 @@ export function parseOcrPages(raw: unknown): OcrPageText[] | undefined {
     ) {
       throw new Error("Invalid ocrPages");
     }
+    if (seenPages.has(page)) throw new Error("Invalid ocrPages");
+    seenPages.add(page);
     if (typeof text !== "string" || text.length > OCR_PAGE_CHAR_CAP) {
       throw new Error("Invalid ocrPages");
     }
@@ -39,6 +55,53 @@ export function parseOcrPages(raw: unknown): OcrPageText[] | undefined {
     pages.push({ page, text: trimmed });
   }
   return pages.length > 0 ? pages : undefined;
+}
+
+export function parseStoredOcrPages(raw: unknown): OcrPageText[] | undefined {
+  if (raw === undefined) return undefined;
+  if (!Array.isArray(raw) || raw.length > OCR_PAGE_NUMBER_MAX) {
+    throw new Error("Invalid ocrPages");
+  }
+  const pages: OcrPageText[] = [];
+  const seenPages = new Set<number>();
+  for (const item of raw) {
+    if (!item || typeof item !== "object") throw new Error("Invalid ocrPages");
+    const page = (item as { page?: unknown }).page;
+    const text = (item as { text?: unknown }).text;
+    if (
+      typeof page !== "number" ||
+      !Number.isInteger(page) ||
+      page < 1 ||
+      page > OCR_PAGE_NUMBER_MAX
+    ) {
+      throw new Error("Invalid ocrPages");
+    }
+    if (seenPages.has(page)) continue;
+    seenPages.add(page);
+    if (typeof text !== "string" || text.length > OCR_PAGE_CHAR_CAP) {
+      throw new Error("Invalid ocrPages");
+    }
+    const trimmed = text.trim();
+    if (!trimmed) continue;
+    pages.push({ page, text: trimmed });
+  }
+  return pages.length > 0 ? pages : undefined;
+}
+
+export function mergeOcrPages(
+  existing: readonly OcrPageText[],
+  incoming: readonly OcrPageText[],
+  window: { start: number; end: number },
+): OcrPageText[] {
+  const byPage = new Map(existing.map((page) => [page.page, page]));
+  for (const page of incoming) {
+    if (page.page < window.start || page.page > window.end) {
+      throw new Error("Invalid ocrPages");
+    }
+    if (byPage.has(page.page)) continue;
+    byPage.set(page.page, page);
+  }
+  return [...byPage.values()].sort((a, b) => a.page - b.page);
 }
 
 export function applyOcrSidecar<T extends { page: number; text: string }>(
@@ -82,7 +145,7 @@ export async function readOcrSidecar(
   if (!obj) return null;
   try {
     const parsed: unknown = JSON.parse(await obj.text());
-    const pages = parseOcrPages(
+    const pages = parseStoredOcrPages(
       parsed && typeof parsed === "object" && "pages" in parsed
         ? (parsed as { pages?: unknown }).pages
         : undefined,
@@ -122,6 +185,11 @@ export async function pdfTextOrOcrSidecar(
       throw err;
     }
     const text = sidecarPlainText(sidecar);
+    if (text.length > REGEN_MAX_CHARS) {
+      throw new Error(
+        `PDF text exceeds ${REGEN_MAX_CHARS} characters. Split the file or paste a shorter excerpt.`,
+      );
+    }
     if (!text) throw err;
     return text;
   }

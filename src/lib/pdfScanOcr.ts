@@ -35,6 +35,41 @@ export function selectEmptyPages(pages: readonly PageText[]): PageText[] {
   return empty;
 }
 
+export function ocrRefillWindow(
+  startPage: number,
+): { start: number; end: number } | null {
+  if (!Number.isInteger(startPage) || startPage > OCR_TEXT_LAYER_SCAN_LIMIT) {
+    return null;
+  }
+  const start = Math.max(1, startPage);
+  return {
+    start,
+    end: Math.min(
+      OCR_TEXT_LAYER_SCAN_LIMIT,
+      start + OCR_TEXT_LAYER_SCAN_LIMIT - 1,
+    ),
+  };
+}
+
+export function selectEmptyPagesInWindow(
+  pages: readonly PageText[],
+  args: { startPage: number; covered: readonly number[] },
+): PageText[] {
+  const window = ocrRefillWindow(args.startPage);
+  if (!window) return [];
+  const covered = new Set(args.covered);
+  const empty: PageText[] = [];
+  const ordered = pages.slice().sort((a, b) => a.page - b.page);
+  for (const page of ordered) {
+    if (page.page < window.start || page.page > window.end) continue;
+    if (covered.has(page.page)) continue;
+    if (page.text.trim()) continue;
+    empty.push(page);
+    if (empty.length >= OCR_EMPTY_PAGE_LIMIT) break;
+  }
+  return empty;
+}
+
 export function capOcrPageText(text: string): string {
   return text.trim().slice(0, OCR_PAGE_CHAR_CAP);
 }

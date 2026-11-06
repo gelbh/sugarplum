@@ -6,8 +6,10 @@ import { processGenerateJob } from "../../worker/generation/consumer";
 import { enqueueGeneration } from "../../worker/generation/enqueue";
 import {
   applyOcrSidecar,
+  mergeOcrPages,
   ocrSidecarKey,
   parseOcrPages,
+  parseStoredOcrPages,
   pdfTextOrOcrSidecar,
 } from "../../worker/materials/ocr-sidecar";
 import { createTestEnv } from "./test-env";
@@ -19,6 +21,47 @@ function asBuffer(bytes: Uint8Array): ArrayBuffer {
     bytes.byteOffset + bytes.byteLength,
   ) as ArrayBuffer;
 }
+
+describe("mergeOcrPages", () => {
+  it("keeps the stored page, appends a new one, and rejects a page outside the window", () => {
+    expect(
+      mergeOcrPages(
+        [{ page: 1, text: "first" }],
+        [{ page: 1, text: "overwrite" }, { page: 9, text: "later" }],
+        { start: 1, end: 120 },
+      ),
+    ).toEqual([
+      { page: 1, text: "first" },
+      { page: 9, text: "later" },
+    ]);
+    expect(() =>
+      mergeOcrPages([], [{ page: 121, text: "no" }], { start: 1, end: 120 }),
+    ).toThrow(/Invalid ocrPages/);
+  });
+});
+
+describe("parseStoredOcrPages", () => {
+  it("accepts a ninth stored page", () => {
+    const pages = parseStoredOcrPages(
+      Array.from({ length: 9 }, (_, index) => ({
+        page: index + 1,
+        text: "scan",
+      })),
+    );
+    expect(pages).toHaveLength(9);
+  });
+});
+
+describe("parseOcrPages duplicates", () => {
+  it("rejects the same page twice in one body", () => {
+    expect(() =>
+      parseOcrPages([
+        { page: 1, text: "a" },
+        { page: 1, text: "b" },
+      ]),
+    ).toThrow(/Invalid ocrPages/);
+  });
+});
 
 describe("parseOcrPages", () => {
   it("rejects a ninth page, page 0, and an over-long string", () => {
@@ -79,6 +122,14 @@ describe("pdfTextOrOcrSidecar", () => {
       }),
     ).rejects.toThrow(/51 pages/);
     expect(reads).toBe(0);
+  });
+
+  it("refuses a sidecar longer than the regen character cap", async () => {
+    await expect(
+      pdfTextOrOcrSidecar(asBuffer(minimalPdfWithText("")), async () => ({
+        pages: [{ page: 1, text: "a".repeat(200_001) }],
+      })),
+    ).rejects.toThrow(/PDF text exceeds 200000 characters/);
   });
 });
 
