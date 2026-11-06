@@ -114,6 +114,8 @@ type UsageEventRow = {
   created_at: string;
 };
 
+export type FreeGenUsageRow = { user_id: string; day: string; used: number };
+
 export type CardRow = {
   id: string;
   deck_id: string;
@@ -196,6 +198,7 @@ export type TestEnv = Env & {
   getSchedules: () => ScheduleRow[];
   getReviewLogs: () => ReviewLogRow[];
   getUsageEvents: () => UsageEventRow[];
+  getFreeGenUsageRows: () => FreeGenUsageRow[];
   getQueueMessages: () => unknown[];
   getExportQueueMessages: () => unknown[];
   getR2Keys: () => string[];
@@ -219,6 +222,7 @@ export function createTestEnv(opts?: {
   const materials = new Map<string, MaterialRow>();
   const generationJobs = new Map<string, GenerationJobRow>();
   const usageEvents = new Map<string, UsageEventRow>();
+  const freeGenUsage = new Map<string, FreeGenUsageRow>();
   const userSecrets = new Map<string, UserSecretRow>();
   const userStudyPrefs = new Map<string, UserStudyPrefsRow>();
   const userStudyDay = new Map<string, UserStudyDayRow>();
@@ -260,6 +264,22 @@ export function createTestEnv(opts?: {
           bound,
         );
         if (gamificationEarly !== null) return gamificationEarly;
+        if (normalized.startsWith("INSERT INTO free_gen_usage")) {
+          const [user_id, day, cap] = bound as [string, string, number];
+          const key = `${user_id}:${day}`;
+          const row = freeGenUsage.get(key);
+          if (!row) {
+            freeGenUsage.set(key, { user_id, day, used: 1 });
+            return { used: 1 } as T;
+          }
+          if (row.used >= cap) return null;
+          row.used += 1;
+          return { used: row.used } as T;
+        }
+        if (normalized.startsWith("SELECT used FROM free_gen_usage")) {
+          const row = freeGenUsage.get(`${bound[0]}:${bound[1]}`);
+          return row ? ({ used: row.used } as T) : null;
+        }
         if (normalized.startsWith("SELECT id FROM users WHERE email =")) {
           for (const u of users.values()) {
             if (u.email === bound[0]) return { id: u.id } as T;
@@ -1922,6 +1942,14 @@ export function createTestEnv(opts?: {
         return { results: [] };
       },
       async run(): Promise<D1Result> {
+        if (normalized.startsWith("UPDATE free_gen_usage SET used = used - 1")) {
+          const row = freeGenUsage.get(`${bound[0]}:${bound[1]}`);
+          if (!row || row.used <= 0) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          row.used -= 1;
+          return { success: true, meta: { changes: 1 } } as D1Result;
+        }
         if (normalized.startsWith("INSERT INTO export_jobs")) {
           // Supports both legacy (error NULL in SQL) and bind-with-error shapes.
           const hasErrorBind = !normalized.includes(", NULL,");
@@ -3452,6 +3480,7 @@ export function createTestEnv(opts?: {
     getSchedules: () => [...schedules.values()],
     getReviewLogs: () => [...reviewLogs],
     getUsageEvents: () => [...usageEvents.values()],
+    getFreeGenUsageRows: () => [...freeGenUsage.values()],
     getQueueMessages: () => [...queueMessages],
     getExportQueueMessages: () => [...exportQueueMessages],
     getR2Keys: () => [...r2.keys()],

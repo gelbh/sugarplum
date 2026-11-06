@@ -13,7 +13,7 @@ import {
   type LlmTokenUsage,
 } from "./llm";
 import { CHUNK_CHAR_LIMIT } from "./pipeline";
-import { consumeFreeGenSlot, releaseFreeGenSlot } from "./quota";
+import { consumeFreeGenSlot } from "./quota";
 import { createWorkersAiAdapter, WorkersAiCapacityError } from "./workers-ai";
 import {
   appendExtraUserSuffix,
@@ -256,13 +256,12 @@ export async function resolveRegenLlm(
 
   if (env.AI) {
     // Same free-path policy as job consumer: reserve a daily slot before AI.run.
-    await consumeFreeGenSlot(env, userId);
     return {
       llm: createWorkersAiAdapter(env),
       apiKey: "",
       provider: "workers-ai",
       path: "free",
-      releaseQuota: () => releaseFreeGenSlot(env, userId),
+      releaseQuota: await consumeFreeGenSlot(env, userId),
     };
   }
 

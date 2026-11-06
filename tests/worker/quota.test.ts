@@ -1,10 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { utcDay } from "../../worker/utc-day";
 import {
   FREE_GEN_DAILY_CAP,
   consumeFreeGenSlot,
-  freeGenKvKey,
   getFreeGenUsage,
-  releaseFreeGenSlot,
 } from "../../worker/generation/quota";
 import { createTestEnv } from "./test-env";
 
@@ -21,10 +20,9 @@ describe("free generation quota", () => {
       await consumeFreeGenSlot(env, userId);
     }
 
-    await expect(consumeFreeGenSlot(env, userId)).resolves.toBeUndefined();
-
-    const raw = await env.SESSIONS.get(freeGenKvKey(userId));
-    expect(raw).toBe(String(FREE_GEN_DAILY_CAP));
+    const release = await consumeFreeGenSlot(env, userId);
+    expect(typeof release).toBe("function");
+    expect((await getFreeGenUsage(env, userId)).used).toBe(FREE_GEN_DAILY_CAP);
   });
 
   it("denies at the daily cap with an actionable error", async () => {
@@ -38,6 +36,24 @@ describe("free generation quota", () => {
     await expect(consumeFreeGenSlot(env, userId)).rejects.toThrow(
       /free generation|daily|Settings|BYO|UTC midnight/i,
     );
+    expect((await getFreeGenUsage(env, userId)).used).toBe(FREE_GEN_DAILY_CAP);
+  });
+
+  it("concurrent reserves never overshoot the cap", async () => {
+    const env = createTestEnv();
+    const userId = "user-race";
+
+    const results = await Promise.allSettled(
+      Array.from({ length: FREE_GEN_DAILY_CAP + 5 }, () =>
+        consumeFreeGenSlot(env, userId),
+      ),
+    );
+
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(
+      FREE_GEN_DAILY_CAP,
+    );
+    expect(results.filter((r) => r.status === "rejected")).toHaveLength(5);
+    expect((await getFreeGenUsage(env, userId)).used).toBe(FREE_GEN_DAILY_CAP);
   });
 
   it("getFreeGenUsage is read-only and reflects consumeFreeGenSlot", async () => {
@@ -55,10 +71,12 @@ describe("free generation quota", () => {
 
     const second = await getFreeGenUsage(env, userId);
     expect(second).toEqual(first);
-    expect(await env.SESSIONS.get(freeGenKvKey(userId))).toBe("1");
+    expect(env.getFreeGenUsageRows()).toEqual([
+      { user_id: userId, day: utcDay(), used: 1 },
+    ]);
   });
 
-  it("day key uses UTC date, not local timezone", async () => {
+  it("day uses UTC date, not local timezone", async () => {
     // 2026-03-15 22:00 in US Pacific is still 2026-03-16 UTC
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-03-15T22:00:00-07:00"));
@@ -67,19 +85,37 @@ describe("free generation quota", () => {
     const userId = "user-utc-day";
     await consumeFreeGenSlot(env, userId);
 
-    expect(freeGenKvKey(userId)).toBe(`free-gen:${userId}:2026-03-16`);
-    expect(await env.SESSIONS.get(`free-gen:${userId}:2026-03-16`)).toBe("1");
-    expect(await env.SESSIONS.get(`free-gen:${userId}:2026-03-15`)).toBeNull();
+    expect(utcDay()).toBe("2026-03-16");
+    expect(env.getFreeGenUsageRows()).toEqual([
+      { user_id: userId, day: "2026-03-16", used: 1 },
+    ]);
   });
 
-  it("releaseFreeGenSlot decrements and never goes below zero", async () => {
+  it("release decrements and never goes below zero", async () => {
     const env = createTestEnv();
+    const release = await consumeFreeGenSlot(env, "u1");
     await consumeFreeGenSlot(env, "u1");
-    await consumeFreeGenSlot(env, "u1");
-    await releaseFreeGenSlot(env, "u1");
+    await release();
     expect((await getFreeGenUsage(env, "u1")).used).toBe(1);
-    await releaseFreeGenSlot(env, "u1");
-    await releaseFreeGenSlot(env, "u1");
+    await release();
+    await release();
     expect((await getFreeGenUsage(env, "u1")).used).toBe(0);
+  });
+
+  it("release after UTC midnight refunds the day the slot was reserved", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-15T23:59:59Z"));
+    const env = createTestEnv();
+    const release = await consumeFreeGenSlot(env, "u-midnight");
+
+    vi.setSystemTime(new Date("2026-03-16T00:00:01Z"));
+    await consumeFreeGenSlot(env, "u-midnight");
+    await release();
+
+    expect(env.getFreeGenUsageRows()).toEqual([
+      { user_id: "u-midnight", day: "2026-03-15", used: 0 },
+      { user_id: "u-midnight", day: "2026-03-16", used: 1 },
+    ]);
+    expect((await getFreeGenUsage(env, "u-midnight")).used).toBe(1);
   });
 });
