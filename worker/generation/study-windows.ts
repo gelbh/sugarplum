@@ -1,7 +1,6 @@
 import type { CardDraft } from "./schema";
 import { CHUNK_CHAR_LIMIT, chunkText, MAX_PIPELINE_CHUNKS } from "./pipeline";
 
-/** A content-token diff of at most two drops, unless it is a last-content-token swap. */
 const NEAR_DUP_JACCARD = 0.6;
 const NEAR_DUP_MAX_DIFF = 2;
 
