@@ -438,67 +438,6 @@ export default function LibraryPage() {
             </Alert>
           ) : null}
 
-          {draftJobs.length > 0 ? (
-            <OperateSection>
-              <Typography
-                variant="subtitle1"
-                component="h2"
-                sx={{ fontWeight: 600, mb: 0.5, color: "primary.main" }}
-              >
-                Cards to check
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                These still need a look before you study them.
-              </Typography>
-              <Stack
-                component="ul"
-                spacing={0}
-                divider={<Divider flexItem />}
-                sx={{ m: 0, p: 0, listStyle: "none" }}
-              >
-                {draftJobs.map((job) => {
-                  const filename = job.filename?.trim() || null;
-                  const label = filename || job.deck_title;
-                  const countLabel =
-                    job.draft_count === 1
-                      ? "1 card to check"
-                      : `${job.draft_count} cards to check`;
-                  const suffix = filename
-                    ? ` · ${countLabel} · ${job.deck_title}`
-                    : ` · ${countLabel}`;
-                  return (
-                    <Box
-                      component="li"
-                      key={job.id}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        py: 1.5,
-                      }}
-                    >
-                      <Link
-                        href={`/jobs/${encodeURIComponent(job.id)}/drafts`}
-                        underline="hover"
-                        color="primary"
-                        variant="body1"
-                        sx={{ flex: 1, minWidth: 0 }}
-                      >
-                        {label}
-                        {suffix}
-                      </Link>
-                      <ChevronRightIcon
-                        fontSize="small"
-                        sx={{ color: "text.secondary" }}
-                        aria-hidden
-                      />
-                    </Box>
-                  );
-                })}
-              </Stack>
-            </OperateSection>
-          ) : null}
-
           {subjects.length === 0 ? (
             <Typography variant="body2" color="text.secondary">
               {showCreateFlow
@@ -662,6 +601,67 @@ export default function LibraryPage() {
                 ))}
               </Stack>
             </Box>
+          ) : null}
+
+          {draftJobs.length > 0 ? (
+            <OperateSection>
+              <Typography
+                variant="subtitle1"
+                component="h2"
+                sx={{ fontWeight: 600, mb: 0.5, color: "primary.main" }}
+              >
+                Cards to check
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                These still need a look before you study them.
+              </Typography>
+              <Stack
+                component="ul"
+                spacing={0}
+                divider={<Divider flexItem />}
+                sx={{ m: 0, p: 0, listStyle: "none" }}
+              >
+                {draftJobs.map((job) => {
+                  const filename = job.filename?.trim() || null;
+                  const label = filename || job.deck_title;
+                  const countLabel =
+                    job.draft_count === 1
+                      ? "1 card to check"
+                      : `${job.draft_count} cards to check`;
+                  const suffix = filename
+                    ? ` · ${countLabel} · ${job.deck_title}`
+                    : ` · ${countLabel}`;
+                  return (
+                    <Box
+                      component="li"
+                      key={job.id}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        py: 1.5,
+                      }}
+                    >
+                      <Link
+                        href={`/jobs/${encodeURIComponent(job.id)}/drafts`}
+                        underline="hover"
+                        color="primary"
+                        variant="body1"
+                        sx={{ flex: 1, minWidth: 0 }}
+                      >
+                        {label}
+                        {suffix}
+                      </Link>
+                      <ChevronRightIcon
+                        fontSize="small"
+                        sx={{ color: "text.secondary" }}
+                        aria-hidden
+                      />
+                    </Box>
+                  );
+                })}
+              </Stack>
+            </OperateSection>
           ) : null}
 
           {showCreateFlow ? (
