@@ -561,15 +561,31 @@ function retryAfterMs(res: Response): number | null {
     : null;
 }
 
+const FORMAT_REJECTION = /response_format|json_schema/i;
+
 async function postLlm(
   provider: UserLlmProvider,
   url: string,
   init: RequestInit,
+  fallbackInit?: RequestInit,
 ): Promise<Response> {
+  let request = init;
+  let formatFallback = fallbackInit;
   for (let attempt = 0; ; attempt++) {
-    const res = await fetch(url, init);
+    const res = await fetch(url, request);
     if (res.ok) return res;
     const detail = await readErrorDetail(res);
+    if (
+      formatFallback &&
+      res.status === 400 &&
+      FORMAT_REJECTION.test(detail)
+    ) {
+      request = formatFallback;
+      formatFallback = undefined;
+      // A format rejection starts a fresh transient budget on the fallback body.
+      attempt = -1;
+      continue;
+    }
     if (!TRANSIENT_STATUSES.has(res.status) || QUOTA_PATTERN.test(detail)) {
       throw new Error(`LLM request failed (${res.status})${detail}`);
     }
@@ -624,49 +640,16 @@ function openAiCompatibleAdapter(opts: {
       }),
     });
 
-    let res: Response;
-    if (!jsonSchema) {
-      res = await postLlm(
-        provider,
-        requestUrl,
-        textInit(JSON_OBJECT_RESPONSE_FORMAT),
-      );
-    } else {
-      const first = await fetch(
-        requestUrl,
-        textInit(openAiJsonSchemaResponseFormat()),
-      );
-      if (first.ok) {
-        res = first;
-      } else if (first.status === 400) {
-        const raw = (await first.clone().text()).toLowerCase();
-        if (/response_format|json_schema/.test(raw)) {
-          res = await postLlm(
-            provider,
-            requestUrl,
-            textInit(JSON_OBJECT_RESPONSE_FORMAT),
-          );
-        } else {
-          const detail = await readErrorDetail(first);
-          throw new Error(`LLM request failed (400)${detail}`);
-        }
-      } else {
-        const detail = await readErrorDetail(first);
-        // A format 400 is the only schema miss that falls back. Overload still retries the schema body.
-        if (
-          TRANSIENT_STATUSES.has(first.status) &&
-          !QUOTA_PATTERN.test(detail)
-        ) {
-          res = await postLlm(
-            provider,
-            requestUrl,
-            textInit(openAiJsonSchemaResponseFormat()),
-          );
-        } else {
-          throw new Error(`LLM request failed (${first.status})${detail}`);
-        }
-      }
-    }
+    const res = await postLlm(
+      provider,
+      requestUrl,
+      textInit(
+        jsonSchema
+          ? openAiJsonSchemaResponseFormat()
+          : JSON_OBJECT_RESPONSE_FORMAT,
+      ),
+      jsonSchema ? textInit(JSON_OBJECT_RESPONSE_FORMAT) : undefined,
+    );
 
     const body = (await res.json()) as {
       choices?: { message?: { content?: string } }[];

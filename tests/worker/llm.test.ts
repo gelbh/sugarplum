@@ -353,6 +353,37 @@ describe("LLM provider allowlist", () => {
     expect(bodies[1]?.response_format).toEqual(JSON_OBJECT_RESPONSE_FORMAT);
   });
 
+  it("retries an overloaded OpenAI schema request on the same body", async () => {
+    const bodies: { response_format?: { type?: string } }[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+        bodies.push(JSON.parse(String(init?.body)) as (typeof bodies)[number]);
+        if (bodies.length === 1) {
+          return new Response("overloaded", {
+            status: 429,
+            headers: { "retry-after": "0.001" },
+          });
+        }
+        return new Response(
+          JSON.stringify({ choices: [{ message: { content: "{}" } }] }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }),
+    );
+
+    await createLlmAdapter("openai").complete({
+      system: "s",
+      user: "u",
+      apiKey: "sk-test",
+      provider: "openai",
+    });
+
+    expect(bodies).toHaveLength(2);
+    expect(bodies[0]?.response_format?.type).toBe("json_schema");
+    expect(bodies[1]?.response_format?.type).toBe("json_schema");
+  });
+
   it("does not retry an OpenAI 400 that is not a format rejection", async () => {
     const fetchMock = vi.fn(async () => {
       return new Response(
