@@ -36,4 +36,6 @@ export interface Env {
   TURNSTILE_SITE_KEY?: string;
   /** Secret: `wrangler secret put TURNSTILE_SECRET_KEY` */
   TURNSTILE_SECRET_KEY?: string;
+  /** Secret: `wrangler secret put UNSPLASH_ACCESS_KEY` */
+  UNSPLASH_ACCESS_KEY?: string;
 }
