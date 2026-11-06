@@ -7,7 +7,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
-import { searchCovers, type CoverFields } from "../api/client";
+import { ApiError, searchCovers, type CoverFields } from "../api/client";
 
 type Props = {
   open: boolean;
@@ -26,6 +26,7 @@ export default function CoverPickerDialog({
 }: Props) {
   const [photos, setPhotos] = useState<CoverFields[]>([]);
   const [empty, setEmpty] = useState(false);
+  const [notConfigured, setNotConfigured] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,6 +34,7 @@ export default function CoverPickerDialog({
     let cancelled = false;
     setPhotos([]);
     setEmpty(false);
+    setNotConfigured(false);
     setActionError(null);
     searchCovers(title)
       .then((found) => {
@@ -41,10 +43,11 @@ export default function CoverPickerDialog({
         setPhotos(next);
         setEmpty(next.length === 0);
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         if (cancelled) return;
         setPhotos([]);
         setEmpty(true);
+        setNotConfigured(err instanceof ApiError && err.status === 503);
       });
     return () => {
       cancelled = true;
@@ -82,7 +85,11 @@ export default function CoverPickerDialog({
           </Alert>
         ) : null}
         {empty ? (
-          <Typography color="text.secondary">No photos for this title.</Typography>
+          <Typography color="text.secondary">
+            {notConfigured
+              ? "Cover search is not configured"
+              : "No photos for this title."}
+          </Typography>
         ) : (
           <Box
             sx={{
