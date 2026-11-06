@@ -27,6 +27,20 @@ describe("parseClusters", () => {
     expect(clusters).toHaveLength(2);
   });
 
+  it("clusters hyphenated codes and keeps one chip per name", () => {
+    const clusters = parseClusters([
+      { summary: "Lecture: GEP-AB2" },
+      { summary: "Lecture: GEP-AB2" },
+      { summary: "Lecture: GEP AB2 - Lecture 2" },
+      { summary: "Practical: GEP AB2 - Parasitology Practical 1" },
+      { summary: "Practical: GEP AB2 - parasitology Practical 2" },
+      { summary: "Lecture: GEP AB2 \u2014 Graphs" },
+    ]);
+    const ab = clusters.find((c) => c.key === "gepab2");
+    expect(ab?.chips).toEqual(["Graphs", "Lecture", "Parasitology"]);
+    expect(parseClusters([{}, { summary: "Lecture: GEP AB2" }])).toEqual([]);
+  });
+
   it("links an equal code and does not link a topic title", () => {
     const [ab] = parseClusters([
       { summary: "Lecture: GEP AB2" },
@@ -38,5 +52,8 @@ describe("parseClusters", () => {
     expect(
       matchSubject(ab, [{ id: "s2", title: "Parasitology" }]),
     ).toEqual({ kind: "create" });
+    expect(
+      matchSubject(ab, [{ id: "hy", title: "GEP-AB2" }]),
+    ).toEqual({ kind: "link", subjectId: "hy" });
   });
 });

@@ -1,5 +1,5 @@
 export type CalendarEventIn = {
-  summary: string;
+  summary?: string;
   status?: string;
   eventType?: string;
 };
@@ -12,7 +12,7 @@ export type Cluster = {
 
 const KIND =
   /^(lecture|practical|tutorial|workshop|seminar|lab)\s*:\s*(.+)$/i;
-const CODE = /^([A-Za-z]{2,8}(?:\s+[A-Za-z]{1,6})?\s*\d{1,4})\b/;
+const CODE = /^([A-Za-z]{2,8}(?:[\s-]+[A-Za-z]{1,6})?[\s-]*\d{1,4})\b/;
 const DROP_TYPES = new Set([
   "birthday",
   "focusTime",
@@ -27,17 +27,23 @@ export function clusterKey(code: string): string {
 
 type Hit = { key: string; display: string; kind: string; topic: string };
 
+function kindLabel(kind: string): string {
+  return kind[0].toUpperCase() + kind.slice(1);
+}
+
 function classify(event: CalendarEventIn): Hit | null {
   if (event.status === "cancelled") return null;
   if (event.eventType && DROP_TYPES.has(event.eventType)) return null;
-  const kindMatch = KIND.exec(event.summary.trim());
+  const summary = (event.summary ?? "").trim();
+  if (!summary) return null;
+  const kindMatch = KIND.exec(summary);
   if (!kindMatch) return null;
   const kind = kindMatch[1].toLowerCase();
   const codeMatch = CODE.exec(kindMatch[2].trim());
   if (!codeMatch) return null;
   const display = codeMatch[1];
   let topic = kindMatch[2].trim().slice(display.length).trim();
-  topic = topic.replace(/^[-\u2013]\s*/, "");
+  topic = topic.replace(/^[-\u2013\u2014]\s*/, "");
   topic = topic.replace(
     /\s+(practical|lab|tutorial|lecture|seminar|workshop)\s*\d*\s*$/i,
     "",
@@ -59,14 +65,16 @@ export function parseClusters(events: CalendarEventIn[]): Cluster[] {
   for (const [key, hits] of groups) {
     if (hits.length < 2) continue;
     const titles = new Map<string, number>();
-    const topics = new Set<string>();
+    const topics = new Map<string, string>();
     const bareKinds = new Map<string, number>();
     for (const hit of hits) {
       titles.set(hit.display, (titles.get(hit.display) ?? 0) + 1);
-      if (hit.topic) topics.add(hit.topic);
-      else {
-        const label = hit.kind[0].toUpperCase() + hit.kind.slice(1);
+      if (!hit.topic || hit.topic.toLowerCase() === hit.kind) {
+        const label = kindLabel(hit.kind);
         bareKinds.set(label, (bareKinds.get(label) ?? 0) + 1);
+      } else {
+        const topicKey = hit.topic.toLowerCase();
+        if (!topics.has(topicKey)) topics.set(topicKey, hit.topic);
       }
     }
     let title = hits[0].display;
@@ -77,10 +85,18 @@ export function parseClusters(events: CalendarEventIn[]): Cluster[] {
         best = count;
       }
     }
+    const seen = new Set<string>();
     const chips = [
-      ...topics,
+      ...topics.values(),
       ...[...bareKinds.entries()].filter(([, n]) => n >= 2).map(([label]) => label),
-    ].sort((a, b) => a.localeCompare(b));
+    ]
+      .sort((a, b) => a.localeCompare(b))
+      .filter((chip) => {
+        const chipKey = chip.toLowerCase();
+        if (seen.has(chipKey)) return false;
+        seen.add(chipKey);
+        return true;
+      });
     clusters.push({ key, title, chips });
   }
   clusters.sort((a, b) => a.key.localeCompare(b.key));
