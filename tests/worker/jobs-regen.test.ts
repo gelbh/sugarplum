@@ -163,6 +163,7 @@ describe("POST /api/jobs/:id/regen", () => {
       jobId: "job-a",
       materialId: "mat-a",
       deckId: "deck-a",
+      autoFollowup: false,
     });
   });
 
@@ -403,9 +404,9 @@ describe("POST /api/jobs/:id/regen", () => {
     expect(job.topic_hints_json).toBe(JSON.stringify(["keep-me"]));
     const patterns = JSON.parse(job.avoid_patterns_json as string) as string[];
     expect(patterns).toContain("Rejected?");
-    expect(patterns.some((p) => p.startsWith("Rejected stem") && p.length === 80)).toBe(
-      true,
-    );
+    expect(
+      patterns.some((p) => p.startsWith("Rejected stem") && p.length === 80),
+    ).toBe(true);
     expect(patterns.some((p) => p.includes("regions"))).toBe(false);
     expect(patterns[0]).toBe("Vague Q? (reason: too vague)");
     expect(patterns).toContain("Bogus Q?");
@@ -484,9 +485,16 @@ describe("POST /api/jobs/:id/regen", () => {
     expect(job.status).toBe("queued");
     expect(job.topic_hints_json).toBe(JSON.stringify(["B"]));
     expect(job.run_topic_hints_json).toBe(JSON.stringify(["A", "Gap two"]));
-    expect(JSON.parse(job.avoid_patterns_json as string)).toContain("Rejected?");
+    expect(JSON.parse(job.avoid_patterns_json as string)).toContain(
+      "Rejected?",
+    );
     expect(env.getQueueMessages()).toEqual([
-      { jobId: "job-a", materialId: "mat-a", deckId: "deck-a" },
+      {
+        jobId: "job-a",
+        materialId: "mat-a",
+        deckId: "deck-a",
+        autoFollowup: false,
+      },
     ]);
   });
 
@@ -520,7 +528,10 @@ describe("POST /api/jobs/:id/regen", () => {
   });
 
   it.each([
-    ["too many hints", JSON.stringify({ topicHints: ["a", "b", "c", "d", "e", "f"] })],
+    [
+      "too many hints",
+      JSON.stringify({ topicHints: ["a", "b", "c", "d", "e", "f"] }),
+    ],
     ["over-length hint", JSON.stringify({ topicHints: ["x".repeat(201)] })],
     ["non-array hints", JSON.stringify({ topicHints: "a" })],
     ["array body", "[]"],

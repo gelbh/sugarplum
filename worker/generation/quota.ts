@@ -38,10 +38,7 @@ async function releaseFreeGenSlot(
   userId: string,
   day: string,
 ): Promise<void> {
-  await getDb(env)
-    .prepare(RELEASE_FREE_GEN_SQL)
-    .bind(userId, day)
-    .run();
+  await getDb(env).prepare(RELEASE_FREE_GEN_SQL).bind(userId, day).run();
 }
 
 /** Returned function refunds this reserved UTC day, including after midnight. */
@@ -56,4 +53,9 @@ export async function consumeFreeGenSlot(
     .first<{ used: number }>();
   if (!row) throw new Error(CAP_ERROR);
   return () => releaseFreeGenSlot(env, userId, day);
+}
+
+/** True when `consumeFreeGenSlot` refused because today's cap is spent. */
+export function isFreeGenCapError(err: unknown): boolean {
+  return err instanceof Error && err.message === CAP_ERROR;
 }

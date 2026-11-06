@@ -31,9 +31,7 @@ export function normalizeTopicHints(raw: unknown): string[] | null {
 }
 
 /** Parse persisted `topic_hints_json` from a generation job row. */
-export function parseTopicHintsJson(
-  raw: string | null | undefined,
-): string[] {
+export function parseTopicHintsJson(raw: string | null | undefined): string[] {
   if (!raw) return [];
   try {
     const parsed: unknown = JSON.parse(raw);
@@ -47,10 +45,11 @@ export function parseTopicHintsJson(
   }
 }
 
-/** Regen-selected hints first, then existing job hints; case-insensitive dedupe, capped. */
+/** Selected hints first, then existing; case-insensitive dedupe. Default cap is 5. */
 export function mergeTopicHints(
   selected: string[],
   existing: string[],
+  cap: number = MAX_TOPIC_HINTS,
 ): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
@@ -60,7 +59,7 @@ export function mergeTopicHints(
     if (!trimmed || seen.has(key)) continue;
     seen.add(key);
     out.push(trimmed);
-    if (out.length >= MAX_TOPIC_HINTS) break;
+    if (out.length >= cap) break;
   }
   return out;
 }
