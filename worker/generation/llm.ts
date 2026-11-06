@@ -1,4 +1,8 @@
 import {
+  JSON_OBJECT_RESPONSE_FORMAT,
+  openAiJsonSchemaResponseFormat,
+} from "./cards-json-schema";
+import {
   parseCardDrafts,
   type CardDraft,
 } from "./schema";
@@ -587,6 +591,8 @@ function openAiCompatibleAdapter(opts: {
   visionModel: string;
   /** Z.ai rejects `response_format` on vision models (text models only). */
   visionJsonMode: boolean;
+  /** OpenAI text calls. Z.ai stays on json_object. */
+  jsonSchema?: boolean;
   extraBody?: Record<string, unknown>;
 }): LlmAdapter {
   const {
@@ -595,11 +601,12 @@ function openAiCompatibleAdapter(opts: {
     textModel,
     visionModel,
     visionJsonMode,
+    jsonSchema = false,
     extraBody,
   } = opts;
 
   async function complete({ system, user, apiKey }: CompleteInput) {
-    const res = await postLlm(provider, requestUrl, {
+    const textInit = (responseFormat: unknown): RequestInit => ({
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -609,13 +616,57 @@ function openAiCompatibleAdapter(opts: {
         ...extraBody,
         model: textModel,
         temperature: 0.3,
-        response_format: { type: "json_object" },
+        response_format: responseFormat,
         messages: [
           { role: "system", content: system },
           { role: "user", content: user },
         ],
       }),
     });
+
+    let res: Response;
+    if (!jsonSchema) {
+      res = await postLlm(
+        provider,
+        requestUrl,
+        textInit(JSON_OBJECT_RESPONSE_FORMAT),
+      );
+    } else {
+      const first = await fetch(
+        requestUrl,
+        textInit(openAiJsonSchemaResponseFormat()),
+      );
+      if (first.ok) {
+        res = first;
+      } else if (first.status === 400) {
+        const raw = (await first.clone().text()).toLowerCase();
+        if (/response_format|json_schema/.test(raw)) {
+          res = await postLlm(
+            provider,
+            requestUrl,
+            textInit(JSON_OBJECT_RESPONSE_FORMAT),
+          );
+        } else {
+          const detail = await readErrorDetail(first);
+          throw new Error(`LLM request failed (400)${detail}`);
+        }
+      } else {
+        const detail = await readErrorDetail(first);
+        // A format 400 is the only schema miss that falls back. Overload still retries the schema body.
+        if (
+          TRANSIENT_STATUSES.has(first.status) &&
+          !QUOTA_PATTERN.test(detail)
+        ) {
+          res = await postLlm(
+            provider,
+            requestUrl,
+            textInit(openAiJsonSchemaResponseFormat()),
+          );
+        } else {
+          throw new Error(`LLM request failed (${first.status})${detail}`);
+        }
+      }
+    }
 
     const body = (await res.json()) as {
       choices?: { message?: { content?: string } }[];
@@ -692,6 +743,7 @@ function openAiAdapter(): LlmAdapter {
     textModel: "gpt-4o-mini",
     visionModel: "gpt-4o-mini",
     visionJsonMode: true,
+    jsonSchema: true,
   });
 }
 
