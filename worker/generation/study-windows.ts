@@ -1,9 +1,9 @@
 import type { CardDraft } from "./schema";
 import { CHUNK_CHAR_LIMIT, chunkText, MAX_PIPELINE_CHUNKS } from "./pipeline";
 
-/** One extra content token still counts as the same fact. Two tokens drop unless the swap is the last content token. */
+/** A content-token diff of at most two drops, unless it is a last-content-token swap. */
 const NEAR_DUP_JACCARD = 0.6;
-const NEAR_DUP_MAX_DIFF = 1;
+const NEAR_DUP_MAX_DIFF = 2;
 
 const MAX_USED_KEYS = 80;
 const MAX_FINGERPRINT_TOKENS = 40;
@@ -121,23 +121,23 @@ function skippedByUsedKeys(text: string, usedKeys: string[]): boolean {
   return usedKeys.includes(key);
 }
 
-function contentDiffCount(a: string[], b: string[]): number {
+function contentTokenDiff(
+  a: string[],
+  b: string[],
+): { count: number; aOnly: string[]; bOnly: string[] } {
   const aSet = new Set(a);
   const bSet = new Set(b);
-  let diff = 0;
-  for (const token of aSet) if (!bSet.has(token)) diff += 1;
-  for (const token of bSet) if (!aSet.has(token)) diff += 1;
-  return diff;
+  const aOnly = a.filter((token) => !bSet.has(token));
+  const bOnly = b.filter((token) => !aSet.has(token));
+  return { count: aOnly.length + bOnly.length, aOnly, bOnly };
 }
 
-function tokensOnlyIn(a: string[], b: string[]): string[] {
-  const bSet = new Set(b);
-  return a.filter((token) => !bSet.has(token));
-}
-
-function isLastContentTokenSwap(a: string[], b: string[]): boolean {
-  const aOnly = tokensOnlyIn(a, b);
-  const bOnly = tokensOnlyIn(b, a);
+function isLastContentTokenSwap(
+  a: string[],
+  b: string[],
+  aOnly: string[],
+  bOnly: string[],
+): boolean {
   if (aOnly.length !== 1 || bOnly.length !== 1) return false;
   return a[a.length - 1] === aOnly[0] && b[b.length - 1] === bOnly[0];
 }
@@ -160,10 +160,14 @@ export function isNearDuplicateFront(
     if (otherTokens.length < 3) continue;
     const score = jaccard(tokens, otherTokens);
     if (score < NEAR_DUP_JACCARD) continue;
-    const diff = contentDiffCount(tokens, otherTokens);
-    if (diff <= NEAR_DUP_MAX_DIFF) return true;
+    const diff = contentTokenDiff(tokens, otherTokens);
     // ponytail: only the last content token is exempt, so a non-final epithet can still drop (Eimeria tenella in chickens vs Eimeria necatrix in chickens). Compare the substituted token wherever it sits if that pair starts colliding.
-    if (diff === 2 && !isLastContentTokenSwap(tokens, otherTokens)) return true;
+    if (
+      diff.count <= NEAR_DUP_MAX_DIFF &&
+      !isLastContentTokenSwap(tokens, otherTokens, diff.aOnly, diff.bOnly)
+    ) {
+      return true;
+    }
   }
   return false;
 }
