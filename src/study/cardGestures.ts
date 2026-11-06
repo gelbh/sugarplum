@@ -79,23 +79,3 @@ export function reviewSwipeVisual(input: {
     dimmed: leaving !== null && reduceMotion,
   };
 }
-
-export function applyReviewSwipeFrame(
-  plate: HTMLElement,
-  stamp: HTMLElement | null,
-  visual: ReturnType<typeof reviewSwipeVisual>,
-): void {
-  plate.style.transform = visual.transform;
-  plate.style.opacity = visual.dimmed ? "0.4" : "1";
-  if (!stamp) return;
-  stamp.style.opacity = String(visual.stampOpacity);
-  stamp.textContent = visual.stamp === "accept" ? "Accept" : "Reject";
-  stamp.hidden = visual.stamp === null;
-  const tone =
-    visual.stamp === "accept"
-      ? "var(--sp-grade-easy-border)"
-      : "var(--sp-grade-again-border)";
-  stamp.style.color = tone;
-  stamp.style.borderColor = tone;
-  stamp.style.transform = `translateX(-50%) rotate(${visual.stamp === "accept" ? -10 : 10}deg)`;
-}

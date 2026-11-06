@@ -25,11 +25,7 @@ import {
   REJECT_REASON_LABELS,
   type RejectReason,
 } from "../lib/rejectReasons";
-import {
-  REVIEW_FLY_MS,
-  reviewSwipeVisual,
-  type ReviewSwipeDecision,
-} from "../study/cardGestures";
+import { type ReviewSwipeDecision } from "../study/cardGestures";
 import { gradeColorVars } from "../study/gradeColors";
 import { StudyCardPlate } from "./CardFace";
 import { OcclusionReviewFace, TextReviewFace } from "./reviewCardFaces";
@@ -169,13 +165,6 @@ export default function ReviewCard({
   });
   const locked = disabled || swipe.leaving !== null;
   const again = gradeColorVars(1);
-  const leaveVisual = swipe.leaving
-    ? reviewSwipeVisual({
-        dx: 0,
-        leaving: swipe.leaving,
-        reduceMotion: swipe.reduceMotion,
-      })
-    : null;
 
   const faceProps = { card, disabled: locked, onChange };
   let face: ReactNode;
@@ -256,18 +245,11 @@ export default function ReviewCard({
             touchAction: "pan-y",
             userSelect: "none",
             "&:has(textarea:focus, input:focus)": { userSelect: "auto" },
-            transform: leaveVisual?.transform,
-            transition:
-              swipe.reduceMotion || swipe.dragging
-                ? "none"
-                : `transform ${REVIEW_FLY_MS}ms ease-out`,
-            opacity: leaveVisual?.dimmed ? 0.4 : 1,
           }}
         >
           <Box
             ref={swipe.stampRef}
             aria-hidden
-            hidden
             sx={{
               position: "absolute",
               top: 28,
@@ -283,7 +265,6 @@ export default function ReviewCard({
               fontWeight: 600,
               letterSpacing: "0.12em",
               textTransform: "uppercase",
-              opacity: 0,
             }}
           />
           {face}

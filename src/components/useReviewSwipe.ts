@@ -1,7 +1,6 @@
 import useMediaQuery from "@mui/material/useMediaQuery";
 import {
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
@@ -11,12 +10,29 @@ import {
 import {
   REVIEW_DRAG_SLOP_PX,
   REVIEW_FLY_MS,
-  applyReviewSwipeFrame,
   resolveReviewSwipe,
   reviewSwipeVisual,
   type ReviewSwipeDecision,
 } from "../study/cardGestures";
+import { gradeColorVars } from "../study/gradeColors";
 import { reviewArrowDecision } from "../study/studyKeys";
+
+export function applyReviewSwipeFrame(
+  plate: HTMLElement,
+  stamp: HTMLElement | null,
+  visual: ReturnType<typeof reviewSwipeVisual>,
+): void {
+  plate.style.transform = visual.transform;
+  plate.style.opacity = visual.dimmed ? "0.4" : "1";
+  if (!stamp) return;
+  const tone = gradeColorVars(visual.stamp === "accept" ? 4 : 1);
+  stamp.style.opacity = String(visual.stampOpacity);
+  stamp.textContent = visual.stamp === "accept" ? "Accept" : "Reject";
+  stamp.hidden = visual.stamp === null;
+  stamp.style.color = tone.border;
+  stamp.style.borderColor = tone.border;
+  stamp.style.transform = `translateX(-50%) rotate(${visual.stamp === "accept" ? -10 : 10}deg)`;
+}
 
 const NO_SWIPE_SELECTOR =
   'input, textarea, button, select, [role="combobox"], [data-no-swipe]';
@@ -55,18 +71,15 @@ export function useReviewSwipe({
   onCommit: (decision: ReviewSwipeDecision) => Promise<boolean>;
 }) {
   const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
-  const [dragging, setDragging] = useState(false);
   const [leaving, setLeaving] = useState<ReviewSwipeDecision | null>(null);
   const plateRef = useRef<HTMLDivElement>(null);
   const stampRef = useRef<HTMLDivElement>(null);
-  const frameRef = useRef<ReturnType<typeof reviewSwipeVisual> | null>(null);
-  const draggingRef = useRef(false);
+  const releaseDxRef = useRef(0);
   const pointerRef = useRef<TrackedPointer | null>(null);
   const suppressClickRef = useRef(false);
   const committingRef = useRef(false);
   const mountedRef = useRef(false);
   const reduceMotionRef = useRef(reduceMotion);
-  reduceMotionRef.current = reduceMotion;
   const blocked = locked || leaving !== null;
 
   const paint = (dx: number, leavingNow: ReviewSwipeDecision | null) => {
@@ -77,13 +90,11 @@ export function useReviewSwipe({
       leaving: leavingNow,
       reduceMotion: reduceMotionRef.current,
     });
-    frameRef.current = visual;
     applyReviewSwipeFrame(plate, stampRef.current, visual);
   };
 
   const springBack = () => {
-    frameRef.current = null;
-    draggingRef.current = false;
+    releaseDxRef.current = 0;
     const plate = plateRef.current;
     if (plate) {
       plate.style.transition = reduceMotionRef.current
@@ -97,19 +108,19 @@ export function useReviewSwipe({
       stamp.hidden = true;
       stamp.style.opacity = "0";
     }
-    setDragging(false);
   };
 
-  useLayoutEffect(() => {
-    const plate = plateRef.current;
-    const visual = frameRef.current;
-    if (!plate || !visual) return;
-    if (!draggingRef.current && leaving === null) return;
-    applyReviewSwipeFrame(plate, stampRef.current, visual);
-  });
+  useEffect(() => {
+    reduceMotionRef.current = reduceMotion;
+  }, [reduceMotion]);
 
   useEffect(() => {
     mountedRef.current = true;
+    const stamp = stampRef.current;
+    if (stamp) {
+      stamp.hidden = true;
+      stamp.style.opacity = "0";
+    }
     return () => {
       mountedRef.current = false;
     };
@@ -119,8 +130,6 @@ export function useReviewSwipe({
     if (blocked || committingRef.current) return;
     committingRef.current = true;
     pointerRef.current = null;
-    draggingRef.current = false;
-    setDragging(false);
     setLeaving(decision);
     if (!reduceMotion) {
       await new Promise((resolve) => window.setTimeout(resolve, REVIEW_FLY_MS));
@@ -151,7 +160,7 @@ export function useReviewSwipe({
         ? "none"
         : `transform ${REVIEW_FLY_MS}ms ease-out`;
     }
-    paint(0, leaving);
+    paint(reduceMotion ? releaseDxRef.current : 0, leaving);
   }, [leaving, reduceMotion]);
 
   useEffect(() => {
@@ -207,10 +216,9 @@ export function useReviewSwipe({
       }
       if (Math.abs(moveDx) < REVIEW_DRAG_SLOP_PX) return;
       tracked.dragging = true;
-      draggingRef.current = true;
-      setDragging(true);
       e.currentTarget.setPointerCapture(e.pointerId);
     }
+    releaseDxRef.current = moveDx;
     if (plateRef.current) plateRef.current.style.transition = "none";
     paint(moveDx, null);
   };
@@ -258,9 +266,7 @@ export function useReviewSwipe({
     },
     plateRef,
     stampRef,
-    dragging,
     leaving,
-    reduceMotion,
     commit,
   };
 }
