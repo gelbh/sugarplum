@@ -17,13 +17,13 @@ describe("achievement_defs after all migrations", () => {
     }
   });
 
-  it("gives every fruit exactly one medal per rarity", () => {
-    const rarities = Object.keys(XP.unlock).sort();
+  it("gives every fruit exactly one medal per rarity, in ladder order", () => {
+    const ladder = Object.keys(XP.unlock);
     for (const fruit of FRUIT_ORDER) {
       const got = ACHIEVEMENT_DEF_SEEDS.filter((d) => d.fruit_type === fruit)
-        .map((d) => d.rarity)
-        .sort();
-      expect(got, fruit).toEqual(rarities);
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map((d) => d.rarity);
+      expect(got, fruit).toEqual(ladder);
     }
   });
 

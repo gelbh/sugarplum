@@ -2,22 +2,6 @@
 
 UPDATE achievement_defs SET rarity = 'common' WHERE id IN ('clear_due_1', 'types_2');
 
-UPDATE achievement_defs SET sort_order = CASE id
-  WHEN 'reviews_1' THEN 110
-  WHEN 'reviews_25' THEN 120
-  WHEN 'reviews_100' THEN 130
-  WHEN 'accepts_1' THEN 210
-  WHEN 'accepts_25' THEN 220
-  WHEN 'study_days_3' THEN 320
-  WHEN 'study_days_14' THEN 330
-  WHEN 'clear_due_1' THEN 510
-  WHEN 'streak_7' THEN 830
-  WHEN 'streak_21' THEN 840
-  WHEN 'types_2' THEN 910
-  WHEN 'plum_scholar' THEN 1150
-  ELSE sort_order
-END;
-
 INSERT INTO achievement_defs (
   id, category, fruit_type, rarity, trigger_kind, threshold, params_json,
   title, description, sort_order, active
@@ -33,7 +17,7 @@ INSERT INTO achievement_defs (
   ('accepts_1000', 'accepts', 'lemon', 'legendary', 'accepts_total', 1000, NULL,
    'Meyer reserve', 'Accept 1,000 cards.', 250, 1),
   ('study_days_2', 'study_days', 'strawberry', 'common', 'study_days_total', 2, NULL,
-   'Second helping', 'Study on 2 distinct days.', 310, 1),
+   'Second helping', 'Study on 2 distinct days.', 55, 1),
   ('study_days_50', 'study_days', 'strawberry', 'epic', 'study_days_total', 50, NULL,
    'Berry season', 'Study on 50 distinct days.', 340, 1),
   ('study_days_150', 'study_days', 'strawberry', 'legendary', 'study_days_total', 150, NULL,
@@ -77,9 +61,9 @@ INSERT INTO achievement_defs (
   ('mature_500', 'mature', 'grape', 'legendary', 'mature_cards', 500, NULL,
    'Vintage', 'Grow 500 cards to a 21+ day interval.', 750, 1),
   ('streak_3', 'streak', 'cherry', 'common', 'streak_current', 3, NULL,
-   'Cherry pit', 'Reach a 3-day study streak.', 810, 1),
+   'Cherry pit', 'Reach a 3-day study streak.', 82, 1),
   ('streak_5', 'streak', 'cherry', 'uncommon', 'streak_current', 5, NULL,
-   'Cherry pair', 'Reach a 5-day study streak.', 820, 1),
+   'Cherry pair', 'Reach a 5-day study streak.', 86, 1),
   ('streak_60', 'streak', 'cherry', 'legendary', 'streak_current', 60, NULL,
    'Cherry blossom', 'Reach a 60-day study streak.', 850, 1),
   ('types_3', 'breadth', 'kiwi', 'uncommon', 'distinct_types', 3, NULL,
@@ -102,16 +86,16 @@ INSERT INTO achievement_defs (
    'Sweet crown', 'Reach level 20.', 1050, 1),
   ('plum_bud', 'prestige', 'plum', 'common', 'composite', NULL,
    '{"streak_best_min":3,"reviews_min":25}',
-   'Plum bud', 'Best streak 3+ and 25 lifetime reviews.', 1110, 1),
+   'Plum bud', 'Best streak 3+ and 25 lifetime reviews.', 111, 1),
   ('plum_blossom', 'prestige', 'plum', 'uncommon', 'composite', NULL,
    '{"streak_best_min":5,"reviews_min":50}',
-   'Plum blossom', 'Best streak 5+ and 50 lifetime reviews.', 1120, 1),
+   'Plum blossom', 'Best streak 5+ and 50 lifetime reviews.', 112, 1),
   ('plum_ripening', 'prestige', 'plum', 'rare', 'composite', NULL,
    '{"streak_best_min":7,"reviews_min":100}',
-   'Ripening plum', 'Best streak 7+ and 100 lifetime reviews.', 1130, 1),
+   'Ripening plum', 'Best streak 7+ and 100 lifetime reviews.', 113, 1),
   ('plum_orchard', 'prestige', 'plum', 'epic', 'composite', NULL,
    '{"streak_best_min":14,"reviews_min":150}',
-   'Plum orchard', 'Best streak 14+ and 150 lifetime reviews.', 1140, 1);
+   'Plum orchard', 'Best streak 14+ and 150 lifetime reviews.', 114, 1);
 
 -- Catalog version 2: established users get these backdated once, not as a live toast flood.
 UPDATE achievement_defs SET catalog_version = 2 WHERE id NOT IN (
