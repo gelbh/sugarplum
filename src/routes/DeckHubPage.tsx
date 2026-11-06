@@ -210,6 +210,7 @@ export default function DeckHubPage({ deckId }: Props) {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [figureFiles, setFigureFiles] = useState<File[]>([]);
   const [materialBusy, setMaterialBusy] = useState(false);
+  const [readingScan, setReadingScan] = useState(false);
   const [materialError, setMaterialError] = useState<string | null>(null);
   const [materialNotice, setMaterialNotice] = useState<string | null>(null);
 
@@ -845,8 +846,16 @@ export default function DeckHubPage({ deckId }: Props) {
     try {
       const material =
         contentType === "application/pdf" && figureFiles.length > 0
-          ? await uploadPdfWithFigureCrops(deckId, uploadFile, figureFiles)
-          : await uploadMaterialFile(deckId, uploadFile);
+          ? await uploadPdfWithFigureCrops(
+              deckId,
+              uploadFile,
+              figureFiles,
+              undefined,
+              { onScan: () => setReadingScan(true) },
+            )
+          : await uploadMaterialFile(deckId, uploadFile, undefined, {
+              onScan: () => setReadingScan(true),
+            });
       setUploadFile(null);
       setFigureFiles([]);
       if (material.jobId) {
@@ -866,6 +875,7 @@ export default function DeckHubPage({ deckId }: Props) {
       );
     } finally {
       setMaterialBusy(false);
+      setReadingScan(false);
     }
   }
 
@@ -1149,7 +1159,11 @@ export default function DeckHubPage({ deckId }: Props) {
                           variant="contained"
                           disabled={materialBusy || !uploadFile}
                         >
-                          {materialBusy ? "Uploading…" : "Upload"}
+                          {materialBusy
+                            ? readingScan
+                              ? "Reading scanned pages"
+                              : "Uploading…"
+                            : "Upload"}
                         </Button>
                       </Stack>
                     </Box>
