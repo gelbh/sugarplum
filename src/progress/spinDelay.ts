@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type SpinDelayOptions = { delay: number; minDuration: number };
 
@@ -55,15 +55,19 @@ export function createSpinDelay(
   };
 }
 
-export function useSpinDelay(
-  active: boolean,
+/** `value` while shown; through the minimum-visible tail, the last non-null value. */
+export function useSpinDelay<T>(
+  value: T | null,
   options: SpinDelayOptions,
-): boolean {
+): T | null {
   const [visible, setVisible] = useState(false);
   const [spin] = useState(() => createSpinDelay(options, setVisible));
+  const last = useRef(value);
   useEffect(() => {
-    spin.set(active);
-  }, [spin, active]);
+    if (value != null) last.current = value;
+    spin.set(value != null);
+  }, [spin, value]);
   useEffect(() => () => spin.dispose(), [spin]);
-  return visible;
+  // Read only once `value` is null; effects write it after commit, so every render of one commit agrees.
+  return visible ? (value ?? last.current) : null;
 }
