@@ -6,6 +6,7 @@ import {
   useState,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
+  type RefObject,
 } from "react";
 import {
   REVIEW_DRAG_SLOP_PX,
@@ -15,20 +16,10 @@ import {
   reviewSwipeVisual,
   type ReviewSwipeDecision,
 } from "../study/cardGestures";
+import { reviewArrowDecision } from "../study/studyKeys";
 
 const NO_SWIPE_SELECTOR =
   'input, textarea, button, select, [role="combobox"], [data-no-swipe]';
-
-function isKeyboardTypingTarget(el: Element | null): boolean {
-  if (!(el instanceof HTMLElement)) return false;
-  if (el.isContentEditable) return true;
-  if (["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName)) return true;
-  return (
-    el.closest(
-      '[role="dialog"], [role="listbox"], [role="menu"], [role="combobox"]',
-    ) !== null
-  );
-}
 
 const NON_TEXT_INPUT_TYPES = [
   "button",
@@ -55,9 +46,11 @@ type TrackedPointer = { id: number; x: number; y: number; dragging: boolean };
 
 export function useReviewSwipe({
   locked,
+  stageRef,
   onCommit,
 }: {
   locked: boolean;
+  stageRef: RefObject<HTMLElement | null>;
   /** Resolve true once decided (the card unmounts); false springs it back. */
   onCommit: (decision: ReviewSwipeDecision) => Promise<boolean>;
 }) {
@@ -163,24 +156,16 @@ export function useReviewSwipe({
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
-      if (
-        e.repeat ||
-        e.altKey ||
-        e.metaKey ||
-        e.ctrlKey ||
-        e.shiftKey ||
-        e.defaultPrevented
-      ) {
-        return;
-      }
-      if (isKeyboardTypingTarget(document.activeElement)) return;
+      const active =
+        document.activeElement instanceof Element ? document.activeElement : null;
+      const decision = reviewArrowDecision(e, active, stageRef.current);
+      if (!decision || e.defaultPrevented) return;
       e.preventDefault();
-      void commitRef.current(e.key === "ArrowRight" ? "accept" : "reject");
+      void commitRef.current(decision);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [stageRef]);
 
   const onPointerDown = (e: ReactPointerEvent<HTMLElement>) => {
     suppressClickRef.current = false;

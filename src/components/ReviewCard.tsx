@@ -161,6 +161,7 @@ export default function ReviewCard({
   }, []);
   const swipe = useReviewSwipe({
     locked: disabled,
+    stageRef,
     onCommit: (decision) =>
       onDecide(decision, decision === "reject" ? reason : null),
   });
