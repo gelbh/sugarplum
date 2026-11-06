@@ -6,7 +6,6 @@ import {
   useState,
 } from "react";
 import { useStudyChrome } from "./StudyChromeContext";
-import { saveZenPreference } from "./zenPreference";
 
 function requestStudyFullscreen(): Promise<void> {
   const el = document.documentElement;
@@ -22,85 +21,73 @@ function exitStudyFullscreen(): void {
   }
 }
 
+function documentIsFullscreen(): boolean {
+  return document.fullscreenElement != null;
+}
+
 export type StudyZenMode = {
-  /** Always true while Study owns the session (zen-first). */
+  /** True only while the document is fullscreen. */
   zen: boolean;
-  /** Always false: FS failure is soft and silent. */
+  /** Always false: a failed fullscreen request leaves zen off. */
   fullscreenUnavailable: boolean;
   clearFullscreenUnavailable: () => void;
-  /** Tear down chrome strip before leaving Study. */
+  /** Leave zen, show shell chrome, and exit fullscreen. */
   exitZen: () => void;
-  /** Soft-request or exit browser fullscreen. */
+  /** Enter fullscreen, or leave it when already fullscreen. */
   toggleZen: () => void;
-  ensureFullscreenIfNeeded: () => void;
   isZen: () => boolean;
 };
 
 /**
- * Zen-first study session: hide shell chrome for the mount, optional soft
- * fullscreen. Leaving FS does not restore desk chrome.
+ * Zen matches browser fullscreen. Shell chrome stays visible until fullscreen
+ * starts, and returns when fullscreen ends. The card stays mounted.
  */
 export function useStudyZenMode(): StudyZenMode {
-  const [zen, setZen] = useState(true);
-  const [needsFullscreenPrompt, setNeedsFullscreenPrompt] = useState(true);
+  const [zen, setZen] = useState(documentIsFullscreen);
   const { setHideChrome } = useStudyChrome();
-  const zenRef = useRef(true);
+  const zenRef = useRef(zen);
+
+  const applyZen = useCallback(
+    (on: boolean) => {
+      zenRef.current = on;
+      setZen(on);
+      setHideChrome(on);
+    },
+    [setHideChrome],
+  );
 
   useLayoutEffect(() => {
-    setZen(true);
-    zenRef.current = true;
-    setHideChrome(true);
-    saveZenPreference(true);
+    applyZen(documentIsFullscreen());
     return () => {
+      zenRef.current = false;
       setHideChrome(false);
       exitStudyFullscreen();
     };
-  }, [setHideChrome]);
+  }, [applyZen, setHideChrome]);
 
   useEffect(() => {
     function onFullscreenChange() {
-      if (document.fullscreenElement) {
-        setNeedsFullscreenPrompt(false);
-      }
+      applyZen(documentIsFullscreen());
     }
     document.addEventListener("fullscreenchange", onFullscreenChange);
     return () =>
       document.removeEventListener("fullscreenchange", onFullscreenChange);
-  }, []);
-
-  const softRequestFullscreen = useCallback(() => {
-    void requestStudyFullscreen().catch(() => {
-      /* soft-fail: chrome strip still works without FS */
-    });
-  }, []);
+  }, [applyZen]);
 
   const exitZen = useCallback(() => {
-    setZen(false);
-    zenRef.current = false;
-    setHideChrome(false);
-    setNeedsFullscreenPrompt(false);
+    applyZen(false);
     exitStudyFullscreen();
-  }, [setHideChrome]);
+  }, [applyZen]);
 
   const toggleZen = useCallback(() => {
-    if (document.fullscreenElement) {
+    if (documentIsFullscreen()) {
       exitStudyFullscreen();
       return;
     }
-    softRequestFullscreen();
-  }, [softRequestFullscreen]);
-
-  const ensureFullscreenIfNeeded = useCallback(() => {
-    if (
-      !needsFullscreenPrompt ||
-      !zenRef.current ||
-      document.fullscreenElement
-    ) {
-      return;
-    }
-    setNeedsFullscreenPrompt(false);
-    softRequestFullscreen();
-  }, [needsFullscreenPrompt, softRequestFullscreen]);
+    void requestStudyFullscreen().catch(() => {
+      applyZen(false);
+    });
+  }, [applyZen]);
 
   return {
     zen,
@@ -108,7 +95,6 @@ export function useStudyZenMode(): StudyZenMode {
     clearFullscreenUnavailable: () => {},
     toggleZen,
     exitZen,
-    ensureFullscreenIfNeeded,
     isZen: () => zenRef.current,
   };
 }

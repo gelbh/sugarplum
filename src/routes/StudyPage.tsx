@@ -191,8 +191,7 @@ export default function StudyPage() {
   if (introBonusRef.current === undefined) {
     introBonusRef.current = getIntroBonus();
   }
-  const { zen, toggleZen, exitZen, ensureFullscreenIfNeeded } =
-    useStudyZenMode();
+  const { zen, toggleZen, exitZen } = useStudyZenMode();
   useEffect(() => {
     if (!zen) return;
     setEditCard(null);
@@ -576,7 +575,6 @@ export default function StudyPage() {
   ]);
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    ensureFullscreenIfNeeded();
     if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
     const scrollEl = scrollableCardFace(e.target);
     pointerRef.current = {
