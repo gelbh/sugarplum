@@ -9,6 +9,7 @@ import {
   type FigureExtractMode,
 } from "../generation/enqueue";
 import { normalizeTopicHints } from "../generation/topic-hints";
+import { parseOptionalJsonBody } from "../optional-json";
 import {
   findReadyMaterialByContentHash,
   sha256Hex,
@@ -1281,18 +1282,9 @@ materialRoutes.post("/:id/complete", async (c) => {
   let attachOnly = false;
   let ocrPages: OcrPageText[] | undefined;
   const rawBody = await c.req.text();
-  if (rawBody.trim()) {
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(rawBody);
-    } catch {
-      throw new HTTPException(400, { message: "Invalid JSON body" });
-    }
-    if (
-      parsed === null ||
-      typeof parsed !== "object" ||
-      Array.isArray(parsed)
-    ) {
+  const parsed = parseOptionalJsonBody(rawBody);
+  if (parsed !== undefined) {
+    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
       throw new HTTPException(400, { message: "Invalid JSON body" });
     }
     const body = parsed as {
