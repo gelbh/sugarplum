@@ -5,8 +5,10 @@ import InputBase from "@mui/material/InputBase";
 import Paper from "@mui/material/Paper";
 import Radio from "@mui/material/Radio";
 import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
+import { useRef } from "react";
 import type { CardDraftView } from "../api/client";
 import {
   mcqDraftFromCard,
@@ -48,6 +50,10 @@ export function ReviewMcqFace({
 }) {
   const front = typeof card.front === "string" ? card.front : "";
   const draft = mcqDraftFromCard(card);
+  const rowKeys = useRef<string[]>([]);
+  while (rowKeys.current.length < draft.options.length) {
+    rowKeys.current.push(`${rowKeys.current.length}:${Math.random()}`);
+  }
 
   const emit = (next: McqDraft, nextFront = front) =>
     onChange({
@@ -85,7 +91,7 @@ export function ReviewMcqFace({
           <Stack spacing={1}>
             {draft.options.map((option, index) => (
               <Stack
-                key={index}
+                key={rowKeys.current[index]}
                 direction="row"
                 alignItems="center"
                 spacing={0.5}
@@ -99,8 +105,14 @@ export function ReviewMcqFace({
                   sx={{
                     color: "inherit",
                     "&.Mui-checked": { color: "var(--sp-plum)" },
+                    "&&.Mui-disabled.Mui-checked": { color: "var(--sp-plum)" },
                   }}
                 />
+                {draft.back === option ? (
+                  <Typography component="span" variant="caption">
+                    Correct
+                  </Typography>
+                ) : null}
                 <InputBase
                   fullWidth
                   value={option}
@@ -116,7 +128,10 @@ export function ReviewMcqFace({
                   size="small"
                   aria-label={`Remove choice ${index + 1}`}
                   disabled={disabled || draft.options.length <= MCQ_MIN}
-                  onClick={() => emit(withMcqOptionRemoved(draft, index))}
+                  onClick={() => {
+                    rowKeys.current.splice(index, 1);
+                    emit(withMcqOptionRemoved(draft, index));
+                  }}
                   sx={{ color: "inherit" }}
                 >
                   <CloseIcon fontSize="small" />
