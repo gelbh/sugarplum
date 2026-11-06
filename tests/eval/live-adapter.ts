@@ -96,7 +96,6 @@ function openAiResponseFormat():
     : JSON_OBJECT_RESPONSE_FORMAT;
 }
 
-/** Chat Completions `choices` text, or the older Workers AI `response` string. */
 export function textFromAiResult(result: unknown): string {
   const record = result as {
     choices?: { message?: { content?: unknown } }[];
