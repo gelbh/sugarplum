@@ -9,39 +9,23 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import TodayIcon from "@mui/icons-material/Today";
 import { useUnlockToasts } from "../achievements/UnlockToastProvider";
-import { cardPatchBody } from "../cards/cardPatchBody";
 import CardFace, { type OcclusionStudyFace } from "../components/CardFace";
-import DraftCardEditor, {
-  type DraftEditorChange,
-} from "../components/DraftCardEditor";
 import GradeButtons from "../components/GradeButtons";
 import {
   ApiError,
-  asRegenType,
-  cardHasRegenSource,
   commitStudyPacing,
-  deleteCard,
   listDecks,
   listDueCards,
   listSubjects,
   me,
-  patchCard,
-  regenCard,
   reviewCard,
   type CardDraftView,
   type OcclusionFrontView,
@@ -49,7 +33,6 @@ import {
   type StudyRating,
 } from "../api/client";
 import { isGuest } from "../guest/session";
-import { hubDiyTypes } from "../lib/hubDiyCreate";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { resolveCardGesture } from "../study/cardGestures";
@@ -70,10 +53,10 @@ import {
 import { bumpIntroBonus, getIntroBonus } from "../study/introBonus";
 import { clientLocalDay } from "../study/localDay";
 import {
-  dropPendingGrade,
   enqueuePendingGrade,
   pendingCardIdSet,
 } from "../study/pendingGrades";
+import { StudyCardActions } from "../study/StudyCardActions";
 import {
   addGrade,
   emptyTally,
@@ -178,25 +161,15 @@ export default function StudyPage() {
   const [hadCards, setHadCards] = useState(false);
   const [queueMeta, setQueueMeta] = useState<StudyQueueMeta | null>(null);
   const [tally, setTally] = useState(emptyTally);
-  const [editCard, setEditCard] = useState<CardDraftView | null>(null);
-  const [editBusy, setEditBusy] = useState(false);
-  const [editError, setEditError] = useState<string | null>(null);
-  const [cardRegenBusy, setCardRegenBusy] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [deleteBusy, setDeleteBusy] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
   const cardDialogOpenRef = useRef(false);
-  cardDialogOpenRef.current = editCard !== null || confirmDelete;
+  const onCardDialogOpen = useCallback((open: boolean) => {
+    cardDialogOpenRef.current = open;
+  }, []);
   const introBonusRef = useRef<number | undefined>(undefined);
   if (introBonusRef.current === undefined) {
     introBonusRef.current = getIntroBonus();
   }
   const { zen, toggleZen, exitZen } = useStudyZenMode();
-  useEffect(() => {
-    if (!zen) return;
-    setEditCard(null);
-    setConfirmDelete(false);
-  }, [zen]);
   const { enqueueUnlocks } = useUnlockToasts();
 
   const leaveStudy = useCallback(() => {
@@ -620,85 +593,14 @@ export default function StudyPage() {
     pointerRef.current = null;
   };
 
-  const editDialogBusy = editBusy || cardRegenBusy;
+  const replaceQueuedCard = useCallback((updated: CardDraftView) => {
+    setQueue((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+  }, []);
 
-  function openEdit() {
-    if (!current) return;
-    setEditError(null);
-    setEditCard({
-      ...current,
-      options: current.options ? [...current.options] : undefined,
-    });
-  }
-
-  function onEditChange(next: DraftEditorChange) {
-    setEditCard((prev) =>
-      prev
-        ? {
-            ...prev,
-            front: next.front,
-            back: next.back,
-            type: next.type,
-            ...(next.options !== undefined ? { options: next.options } : {}),
-          }
-        : prev,
-    );
-  }
-
-  async function saveEdit() {
-    if (!editCard || editBusy) return;
-    setEditBusy(true);
-    setEditError(null);
-    try {
-      const updated = await patchCard(editCard.id, cardPatchBody(editCard));
-      setQueue((prev) => prev.map((c, i) => (i === 0 ? updated : c)));
-      setRevealed(false);
-      setEditCard(null);
-    } catch (err) {
-      setEditError(err instanceof ApiError ? err.message : "Could not save card");
-    } finally {
-      setEditBusy(false);
-    }
-  }
-
-  async function onRegenEditCard() {
-    if (!editCard || isGuest()) return;
-    const type = asRegenType(editCard.type);
-    if (type === null || !cardHasRegenSource(editCard)) return;
-    setCardRegenBusy(true);
-    setEditError(null);
-    try {
-      const updated = await regenCard(editCard.id, { type });
-      setQueue((prev) => prev.map((c, i) => (i === 0 ? updated : c)));
-      setEditCard(updated);
-    } catch (err) {
-      setEditError(
-        err instanceof ApiError ? err.message : "Could not regenerate card",
-      );
-    } finally {
-      setCardRegenBusy(false);
-    }
-  }
-
-  async function onConfirmDelete() {
-    if (!current || deleteBusy) return;
-    setDeleteBusy(true);
-    setDeleteError(null);
-    const cardId = current.id;
-    try {
-      await deleteCard(cardId);
-      if (userId) dropPendingGrade(userId, cardId);
-      setQueue((prev) => prev.slice(1));
-      setRevealed(false);
-      setConfirmDelete(false);
-    } catch (err) {
-      setDeleteError(
-        err instanceof ApiError ? err.message : "Could not delete card",
-      );
-    } finally {
-      setDeleteBusy(false);
-    }
-  }
+  const removeQueuedCard = useCallback((cardId: string) => {
+    setQueue((prev) => prev.filter((c) => c.id !== cardId));
+    setRevealed(false);
+  }, []);
 
   if (!ready) {
     return (
@@ -975,33 +877,20 @@ export default function StudyPage() {
             )
           ) : (
             <>
-              {stage ? null : (
-                <Stack
-                  direction="row"
-                  spacing={0.5}
-                  sx={{ alignSelf: "flex-end" }}
-                >
-                  <IconButton
-                    size="small"
-                    aria-label="Edit card"
-                    disabled={offlineCopy || editDialogBusy || deleteBusy}
-                    onClick={openEdit}
-                  >
-                    <EditOutlinedIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    aria-label="Delete card"
-                    disabled={offlineCopy || editDialogBusy || deleteBusy}
-                    onClick={() => {
-                      setDeleteError(null);
-                      setConfirmDelete(true);
-                    }}
-                  >
-                    <DeleteOutlineIcon fontSize="small" />
-                  </IconButton>
-                </Stack>
-              )}
+              <StudyCardActions
+                card={current}
+                hidden={stage}
+                gradeBusy={busy}
+                offlineCopy={offlineCopy}
+                userId={userId}
+                onDialogOpen={onCardDialogOpen}
+                onSaved={(updated) => {
+                  replaceQueuedCard(updated);
+                  setRevealed(false);
+                }}
+                onRegenerated={replaceQueuedCard}
+                onRemoved={removeQueuedCard}
+              />
               <Typography
                 variant="caption"
                 sx={{
@@ -1072,85 +961,6 @@ export default function StudyPage() {
             </>
           )}
         </Stack>
-        <Dialog
-          open={editCard !== null}
-          onClose={() => !editDialogBusy && setEditCard(null)}
-          fullWidth
-          maxWidth="sm"
-        >
-          <DialogTitle>Edit card</DialogTitle>
-          <DialogContent>
-            {editError ? (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {editError}
-              </Alert>
-            ) : null}
-            {editCard ? (
-              <Box sx={{ pt: 1 }}>
-                <DraftCardEditor
-                  card={editCard}
-                  disabled={editDialogBusy}
-                  onChange={onEditChange}
-                  allowedTypes={hubDiyTypes(isGuest())}
-                  regenAction={
-                    isGuest()
-                      ? undefined
-                      : {
-                          busy: cardRegenBusy,
-                          disabled:
-                            asRegenType(editCard.type) === null ||
-                            !cardHasRegenSource(editCard),
-                          onClick: () => {
-                            void onRegenEditCard();
-                          },
-                        }
-                  }
-                />
-              </Box>
-            ) : null}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setEditCard(null)} disabled={editDialogBusy}>
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              disabled={editDialogBusy || !editCard}
-              onClick={() => void saveEdit()}
-            >
-              {editBusy ? "Saving…" : "Save"}
-            </Button>
-          </DialogActions>
-        </Dialog>
-        <Dialog
-          open={confirmDelete}
-          onClose={() => !deleteBusy && setConfirmDelete(false)}
-        >
-          <DialogTitle>Delete this card?</DialogTitle>
-          <DialogContent>
-            {deleteError ? (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {deleteError}
-              </Alert>
-            ) : null}
-            <DialogContentText>
-              This removes it from the deck, including its review history. You
-              cannot undo this.
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setConfirmDelete(false)} disabled={deleteBusy}>
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              disabled={deleteBusy}
-              onClick={() => void onConfirmDelete()}
-            >
-              {deleteBusy ? "Deleting…" : "Delete"}
-            </Button>
-          </DialogActions>
-        </Dialog>
       </Container>
     </Box>
   );

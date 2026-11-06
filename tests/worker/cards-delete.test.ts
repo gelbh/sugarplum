@@ -98,6 +98,41 @@ describe("DELETE /api/cards/:id", () => {
     expect(env.getR2("materials/user-a/fig.png")).toBe("png-bytes");
   });
 
+  it("returns 400 for an archived card and keeps its history", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    seedCard(env, { id: "card-arch", status: "archived" });
+    env.seedSchedule({
+      card_id: "card-arch",
+      due: PAST_DUE,
+      stability: 1,
+      difficulty: 5,
+      elapsed_days: 0,
+      scheduled_days: 0,
+      learning_steps: 0,
+      reps: 0,
+      lapses: 0,
+      state: 0,
+      last_review: null,
+    });
+    env.seedReviewLog({
+      id: "log-arch",
+      card_id: "card-arch",
+      rating: 1,
+      scheduled_days: 0,
+      elapsed_days: 0,
+      reviewed_at: PAST_DUE,
+      state_json: "{}",
+    });
+    const res = await del(env, "card-arch");
+    expect(res.status).toBe(400);
+    expect(env.getCards().some((c) => c.id === "card-arch")).toBe(true);
+    expect(env.getSchedules().some((s) => s.card_id === "card-arch")).toBe(true);
+    expect(env.getReviewLogs().some((l) => l.card_id === "card-arch")).toBe(
+      true,
+    );
+  });
+
   it("returns 400 for a draft", async () => {
     const env = createTestEnv();
     seedOwner(env);

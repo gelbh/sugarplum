@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { useStudyChrome } from "./StudyChromeContext";
 
 function requestStudyFullscreen(): Promise<void> {
@@ -26,16 +20,9 @@ function documentIsFullscreen(): boolean {
 }
 
 export type StudyZenMode = {
-  /** True only while the document is fullscreen. */
   zen: boolean;
-  /** Always false: a failed fullscreen request leaves zen off. */
-  fullscreenUnavailable: boolean;
-  clearFullscreenUnavailable: () => void;
-  /** Leave zen, show shell chrome, and exit fullscreen. */
   exitZen: () => void;
-  /** Enter fullscreen, or leave it when already fullscreen. */
   toggleZen: () => void;
-  isZen: () => boolean;
 };
 
 /**
@@ -45,11 +32,9 @@ export type StudyZenMode = {
 export function useStudyZenMode(): StudyZenMode {
   const [zen, setZen] = useState(documentIsFullscreen);
   const { setHideChrome } = useStudyChrome();
-  const zenRef = useRef(zen);
 
   const applyZen = useCallback(
     (on: boolean) => {
-      zenRef.current = on;
       setZen(on);
       setHideChrome(on);
     },
@@ -59,7 +44,6 @@ export function useStudyZenMode(): StudyZenMode {
   useLayoutEffect(() => {
     applyZen(documentIsFullscreen());
     return () => {
-      zenRef.current = false;
       setHideChrome(false);
       exitStudyFullscreen();
     };
@@ -91,10 +75,7 @@ export function useStudyZenMode(): StudyZenMode {
 
   return {
     zen,
-    fullscreenUnavailable: false,
-    clearFullscreenUnavailable: () => {},
     toggleZen,
     exitZen,
-    isZen: () => zenRef.current,
   };
 }

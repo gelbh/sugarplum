@@ -820,14 +820,6 @@ cardRoutes.delete("/:id", async (c) => {
       message: "Only accepted cards can be deleted",
     });
   }
-  await db
-    .prepare("DELETE FROM review_logs WHERE card_id = ?")
-    .bind(cardId)
-    .run();
-  await db
-    .prepare("DELETE FROM card_schedules WHERE card_id = ?")
-    .bind(cardId)
-    .run();
   const result = await db
     .prepare("DELETE FROM cards WHERE id = ? AND status = ?")
     .bind(cardId, "accepted")
@@ -837,6 +829,14 @@ cardRoutes.delete("/:id", async (c) => {
       message: "Only accepted cards can be deleted",
     });
   }
+  await db
+    .prepare("DELETE FROM review_logs WHERE card_id = ?")
+    .bind(cardId)
+    .run();
+  await db
+    .prepare("DELETE FROM card_schedules WHERE card_id = ?")
+    .bind(cardId)
+    .run();
   return c.body(null, 204);
 });
 
