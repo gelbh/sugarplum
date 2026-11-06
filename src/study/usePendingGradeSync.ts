@@ -28,8 +28,9 @@ export type PendingGradeSync = {
 export function usePendingGradeSync(options: {
   onDueRefreshed?: (due: CardDraftView[]) => void;
   onDueRefreshFailed?: (userId: string) => void | Promise<void>;
+  onUnlocks?: (unlocks: readonly unknown[]) => void;
 }): PendingGradeSync {
-  const { onDueRefreshed, onDueRefreshFailed } = options;
+  const { onDueRefreshed, onDueRefreshFailed, onUnlocks } = options;
   const [userId, setUserId] = useState<string | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
   const [syncSummary, setSyncSummary] = useState<string | null>(null);
@@ -43,11 +44,14 @@ export function usePendingGradeSync(options: {
   const applyFlushSummary = useCallback(
     (summary: FlushSummary | null) => {
       if (!summary) return;
-      if (summary.unlocks.length > 0) enqueueUnlocks(summary.unlocks);
+      if (summary.unlocks.length > 0) {
+        enqueueUnlocks(summary.unlocks);
+        onUnlocks?.(summary.unlocks);
+      }
       if (summary.applied <= 0 && summary.skipped <= 0) return;
       setSyncSummary(formatFlushSummary(summary));
     },
-    [enqueueUnlocks],
+    [enqueueUnlocks, onUnlocks],
   );
 
   const flushOnMount = useCallback(

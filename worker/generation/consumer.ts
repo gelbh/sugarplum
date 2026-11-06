@@ -2,6 +2,7 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { decryptSecret } from "../crypto/secrets";
 import { extractPdfPages } from "../materials/extract-pdf";
+import { applyOcrSidecar, readOcrSidecar, type OcrSidecar } from "../materials/ocr-sidecar";
 import { extractPptxSlides } from "../materials/extract-pptx";
 import { extractFiguresViaDocling } from "../materials/docling";
 import {
@@ -852,9 +853,21 @@ export async function processGenerateJob(
       const pdfBytes = await pdfObject.arrayBuffer();
       let text = "";
       let textError: unknown;
+      let sidecar: OcrSidecar | null = null;
+      try {
+        sidecar = await readOcrSidecar(env, material.deck_id, material.id);
+      } catch (err) {
+        console.warn("OCR sidecar read failed", err);
+      }
       try {
         const focused = await focusStudyPages(
-          (start) => extractPdfPages(pdfBytes.slice(0), start),
+          async (start) => {
+            const window = await extractPdfPages(pdfBytes.slice(0), start);
+            return {
+              ...window,
+              pages: applyOcrSidecar(window.pages, sidecar),
+            };
+          },
           {
             startPage: prior.startPage,
             topicHints,

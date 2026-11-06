@@ -1,8 +1,8 @@
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { decryptSecret } from "../crypto/secrets";
-import { extractPdfText } from "../materials/extract-pdf";
 import { extractPptxText } from "../materials/extract-pptx";
+import { pdfTextOrOcrSidecar, readOcrSidecar } from "../materials/ocr-sidecar";
 import {
   BYO_PROVIDERS_PHRASE,
   createLlmAdapter,
@@ -162,6 +162,8 @@ export async function generateOneCard(args: {
 }
 
 type MaterialLite = {
+  id: string;
+  deck_id: string;
   kind: string;
   r2_key: string | null;
 };
@@ -179,7 +181,9 @@ async function materialTextFromR2(
   }
   if (material.kind === "pdf") {
     const bytes = await obj.arrayBuffer();
-    return (await extractPdfText(bytes)).trim();
+    return pdfTextOrOcrSidecar(bytes, () =>
+      readOcrSidecar(env, material.deck_id, material.id),
+    );
   }
   if (material.kind === "pptx") {
     const bytes = await obj.arrayBuffer();
@@ -197,7 +201,7 @@ export async function loadCardSourceText(
     const db = getDb(env);
     const material = await db
       .prepare(
-        `SELECT m.kind, m.r2_key
+        `SELECT m.id, m.deck_id, m.kind, m.r2_key
          FROM generation_jobs j
          INNER JOIN materials m ON m.id = j.material_id
          WHERE j.id = ?`,
