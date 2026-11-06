@@ -8,17 +8,17 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import Divider from "@mui/material/Divider";
+import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
-import Paper from "@mui/material/Paper";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import ShelfVolume from "../components/ShelfVolume";
 import {
   ApiError,
   apkgFilenameForDeckTitle,
@@ -72,6 +72,11 @@ export default function SubjectPage({ subjectId }: Props) {
   const [subjectDeleteBusy, setSubjectDeleteBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [exportWarning, setExportWarning] = useState<string | null>(null);
+  const [pageMenu, setPageMenu] = useState<
+    | { kind: "subject"; anchor: HTMLElement }
+    | { kind: "deck"; anchor: HTMLElement; deck: Deck }
+    | null
+  >(null);
   const guest = isGuest();
   const { end: endLoad } = useTrackedOp("Loading subject…", {
     trackOnMount: true,
@@ -262,13 +267,36 @@ export default function SubjectPage({ subjectId }: Props) {
           ? "Rename deck"
           : "";
 
+  const menuDeck = pageMenu?.kind === "deck" ? pageMenu.deck : null;
+
   return (
-    <Container maxWidth="sm" sx={{ py: { xs: 4, md: 5 } }}>
+    <Container maxWidth="md" sx={{ py: { xs: 4, md: 5 } }}>
       {!ready ? (
         <Typography color="text.secondary">Loading subject…</Typography>
       ) : (
         <Stack spacing={3}>
           <Box>
+            <Link
+              href="/library"
+              underline="hover"
+              onClick={(ev) => {
+                if (
+                  ev.defaultPrevented ||
+                  ev.button !== 0 ||
+                  ev.metaKey ||
+                  ev.ctrlKey ||
+                  ev.shiftKey ||
+                  ev.altKey
+                ) {
+                  return;
+                }
+                ev.preventDefault();
+                navigate("/library");
+              }}
+              sx={{ display: "inline-block", mb: 1 }}
+            >
+              Library
+            </Link>
             <Stack
               direction="row"
               alignItems="flex-start"
@@ -283,44 +311,49 @@ export default function SubjectPage({ subjectId }: Props) {
                 {subject?.title ?? "Subject"}
               </Typography>
               {subject ? (
-                <Stack direction="row" spacing={0.5}>
-                  <IconButton
-                    size="small"
-                    aria-label="Rename subject"
-                    onClick={openRenameSubject}
-                    sx={{ color: "text.secondary" }}
-                  >
-                    <EditOutlinedIcon fontSize="small" />
-                  </IconButton>
-                  <Tooltip
-                    title={
-                      deleteSubjectBlocked
-                        ? "Remove decks before deleting this subject"
-                        : "Delete subject"
-                    }
-                  >
-                    <span>
-                      <IconButton
-                        size="small"
-                        aria-label="Delete subject"
-                        disabled={deleteSubjectBlocked}
-                        onClick={requestDeleteSubject}
-                        sx={{ color: "text.secondary" }}
-                      >
-                        <DeleteOutlineIcon fontSize="small" />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                </Stack>
+                <IconButton
+                  aria-label={`More actions for ${subject.title}`}
+                  onClick={(ev) =>
+                    setPageMenu({ kind: "subject", anchor: ev.currentTarget })
+                  }
+                  sx={{ color: "text.secondary" }}
+                >
+                  <MoreVertIcon />
+                </IconButton>
               ) : null}
             </Stack>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {decks.length === 0
-                ? "Create a deck to add materials."
-                : decks.length === 1
-                  ? "1 deck"
-                  : `${decks.length} decks`}
+              Choose a deck of flashcards.
             </Typography>
+            <Stack
+              direction="row"
+              spacing={1}
+              flexWrap="wrap"
+              useFlexGap
+              sx={{ mt: 2 }}
+            >
+              {decks.length > 0 ? (
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={() =>
+                    navigate(
+                      `/study?subjectId=${encodeURIComponent(subjectId)}`,
+                    )
+                  }
+                >
+                  Study all decks
+                </Button>
+              ) : null}
+              <Button
+                size="small"
+                variant={decks.length === 0 ? "contained" : "outlined"}
+                onClick={openCreateDeck}
+                disabled={!subject}
+              >
+                New deck
+              </Button>
+            </Stack>
           </Box>
 
           {error ? <Alert severity="error">{error}</Alert> : null}
@@ -335,93 +368,26 @@ export default function SubjectPage({ subjectId }: Props) {
             </Alert>
           ) : null}
 
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 2.5,
-              bgcolor: "background.paper",
-              borderColor: "divider",
-            }}
-          >
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              alignItems={{ xs: "stretch", sm: "center" }}
-              justifyContent="space-between"
-              spacing={1}
-              sx={{ mb: 1.5 }}
+          {decks.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              No decks yet. Add one, then put your notes in it.
+            </Typography>
+          ) : (
+            <Grid
+              container
+              component="ul"
+              spacing={2}
+              sx={{ listStyle: "none", p: 0, m: 0 }}
             >
-              <Typography
-                variant="subtitle1"
-                component="h2"
-                sx={{ fontWeight: 600, color: "primary.main" }}
-              >
-                Decks
-              </Typography>
-              <Stack direction="row" spacing={1}>
-                {subject && decks.length > 0 ? (
-                  <Button
-                    size="small"
-                    variant="contained"
-                    onClick={() =>
-                      navigate(
-                        `/study?subjectId=${encodeURIComponent(subject.id)}`,
-                      )
-                    }
-                  >
-                    Study
-                  </Button>
-                ) : null}
-                {!guest && subject && decks.length > 0 ? (
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    disabled={exportBusy}
-                    onClick={() => {
-                      void onExportAnki();
-                    }}
-                  >
-                    {exportBusy ? "Exporting…" : "Export to Anki"}
-                  </Button>
-                ) : null}
-                <Button
-                  size="small"
-                  variant={decks.length === 0 ? "contained" : "outlined"}
-                  onClick={openCreateDeck}
-                  disabled={!subject}
-                >
-                  Create deck
-                </Button>
-              </Stack>
-            </Stack>
-            {decks.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">
-                No decks yet.
-              </Typography>
-            ) : (
-              <Stack
-                component="ul"
-                spacing={0}
-                divider={<Divider flexItem />}
-                sx={{ m: 0, p: 0, listStyle: "none" }}
-              >
-                {decks.map((d) => (
-                  <Box
-                    component="li"
-                    key={d.id}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      py: 1.25,
-                      "&:hover": { bgcolor: "action.hover" },
-                    }}
-                  >
-                    <Link
-                      href={`/library/decks/${encodeURIComponent(d.id)}`}
-                      underline="hover"
-                      color="inherit"
-                      aria-label={`Open deck ${d.title}`}
-                      onClick={(ev) => {
+              {decks.map((d) => {
+                const href = `/library/decks/${encodeURIComponent(d.id)}`;
+                return (
+                  <Grid key={d.id} component="li" size={{ xs: 12, md: 6 }}>
+                    <ShelfVolume
+                      title={d.title}
+                      href={href}
+                      openLabel={`Open deck ${d.title}`}
+                      onNavigate={(ev) => {
                         if (
                           ev.defaultPrevented ||
                           ev.button !== 0 ||
@@ -433,45 +399,26 @@ export default function SubjectPage({ subjectId }: Props) {
                           return;
                         }
                         ev.preventDefault();
-                        navigate(`/library/decks/${encodeURIComponent(d.id)}`);
+                        navigate(href);
                       }}
-                      sx={{
-                        flex: 1,
-                        minWidth: 0,
-                        borderRadius: 1,
-                        outlineOffset: 2,
-                      }}
-                    >
-                      <Typography variant="body2" noWrap fontWeight={500}>
-                        {d.title}
-                      </Typography>
-                    </Link>
-                    <IconButton
-                      size="small"
-                      aria-label={`Rename ${d.title}`}
-                      onClick={() => openRenameDeck(d)}
-                      sx={{ color: "text.secondary" }}
-                    >
-                      <EditOutlinedIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      aria-label={`Delete ${d.title}`}
-                      onClick={() => openDeleteDeck(d)}
-                      sx={{ color: "text.secondary" }}
-                    >
-                      <DeleteOutlineIcon fontSize="small" />
-                    </IconButton>
-                    <ChevronRightIcon
-                      fontSize="small"
-                      sx={{ color: "text.secondary", flexShrink: 0 }}
-                      aria-hidden
+                      studyLabel="Study"
+                      onStudy={() =>
+                        navigate(`/study?deckId=${encodeURIComponent(d.id)}`)
+                      }
+                      moreLabel={`More actions for ${d.title}`}
+                      onMore={(ev) =>
+                        setPageMenu({
+                          kind: "deck",
+                          anchor: ev.currentTarget,
+                          deck: d,
+                        })
+                      }
                     />
-                  </Box>
-                ))}
-              </Stack>
-            )}
-          </Paper>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          )}
         </Stack>
       )}
 
@@ -572,6 +519,74 @@ export default function SubjectPage({ subjectId }: Props) {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Menu
+        anchorEl={pageMenu?.kind === "subject" ? pageMenu.anchor : null}
+        open={pageMenu?.kind === "subject"}
+        onClose={() => setPageMenu(null)}
+      >
+        <MenuItem
+          onClick={() => {
+            setPageMenu(null);
+            openRenameSubject();
+          }}
+        >
+          Rename subject
+        </MenuItem>
+        {deleteSubjectBlocked ? (
+          <Tooltip title="Remove decks before deleting this subject">
+            <span>
+              <MenuItem disabled>Delete subject</MenuItem>
+            </span>
+          </Tooltip>
+        ) : (
+          <MenuItem
+            onClick={() => {
+              setPageMenu(null);
+              requestDeleteSubject();
+            }}
+          >
+            Delete subject
+          </MenuItem>
+        )}
+        {!guest && decks.length > 0 ? (
+          <MenuItem
+            disabled={exportBusy}
+            onClick={() => {
+              setPageMenu(null);
+              void onExportAnki();
+            }}
+          >
+            {exportBusy ? "Exporting…" : "Download for Anki"}
+          </MenuItem>
+        ) : null}
+      </Menu>
+
+      <Menu
+        anchorEl={pageMenu?.kind === "deck" ? pageMenu.anchor : null}
+        open={menuDeck !== null}
+        onClose={() => setPageMenu(null)}
+      >
+        <MenuItem
+          onClick={() => {
+            if (!menuDeck) return;
+            setPageMenu(null);
+            openRenameDeck(menuDeck);
+          }}
+        >
+          Rename
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            if (!menuDeck) return;
+            const deck = menuDeck;
+            setPageMenu(null);
+            void openDeleteDeck(deck);
+          }}
+        >
+          Delete
+        </MenuItem>
+      </Menu>
     </Container>
   );
 }
