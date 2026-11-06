@@ -643,13 +643,16 @@ export default function StudyPage() {
   }
 
   const stage = zen;
+  const centerFinish = !current && endKind === "complete";
 
   return (
     <Box
       className={stage ? "sp-stage" : undefined}
       sx={{
-        minHeight: stage ? "100%" : undefined,
-        height: stage ? "100%" : undefined,
+        minHeight: stage || centerFinish ? "100%" : undefined,
+        height: stage || centerFinish ? "100%" : undefined,
+        display: centerFinish ? "flex" : undefined,
+        flexDirection: centerFinish ? "column" : undefined,
         boxSizing: "border-box",
         ...(stage
           ? {
@@ -663,7 +666,7 @@ export default function StudyPage() {
         maxWidth="sm"
         sx={{
           py: stage ? { xs: 1, sm: 3 } : 4,
-          height: stage ? "100%" : undefined,
+          height: stage || centerFinish ? "100%" : undefined,
           maxHeight: stage ? "100%" : undefined,
           display: "flex",
           flexDirection: "column",
@@ -676,7 +679,7 @@ export default function StudyPage() {
       >
         <Stack
           spacing={stage ? { xs: 0.75, sm: 1.5 } : 2}
-          sx={stage ? { flex: 1, minHeight: 0 } : undefined}
+          sx={stage || centerFinish ? { flex: 1, minHeight: 0 } : undefined}
         >
           <Stack
             direction="row"
@@ -841,25 +844,38 @@ export default function StudyPage() {
                 ) : null}
               </Stack>
             ) : (
-              <SessionComplete
-                zen={stage}
-                tally={tally}
-                unlocks={unlocks}
-                showAchievements={!isGuest()}
-                canStudyMore={canStudyMore}
-                studyMoreBusy={studyMoreBusy}
-                onStudyMore={() => void onStudyMore()}
-                onToday={leaveStudy}
-                onAchievements={() => {
-                  exitZen();
-                  navigate("/achievements");
+              <Box
+                sx={{
+                  flex: 1,
+                  minHeight: 0,
+                  overflow: "auto",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "safe center",
                 }}
-                scopeBack={
-                  scopeBack
-                    ? { ...scopeBack, onClick: () => openScopeBack(true) }
-                    : null
-                }
-              />
+              >
+                <Box sx={{ width: "100%" }}>
+                  <SessionComplete
+                    zen={stage}
+                    tally={tally}
+                    unlocks={unlocks}
+                    showAchievements={!isGuest()}
+                    canStudyMore={canStudyMore}
+                    studyMoreBusy={studyMoreBusy}
+                    onStudyMore={() => void onStudyMore()}
+                    onToday={leaveStudy}
+                    onAchievements={() => {
+                      exitZen();
+                      navigate("/achievements");
+                    }}
+                    scopeBack={
+                      scopeBack
+                        ? { ...scopeBack, onClick: () => openScopeBack(true) }
+                        : null
+                    }
+                  />
+                </Box>
+              </Box>
             )
           ) : (
             <>
