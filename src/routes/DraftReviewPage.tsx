@@ -474,7 +474,19 @@ export default function DraftReviewPage() {
         </Stack>
 
         {error ? <Alert severity="error">{error}</Alert> : null}
-        {notice ? <Alert severity="success">{notice}</Alert> : null}
+        {notice ? (
+          <Alert
+            severity="success"
+            sx={{
+              position: "sticky",
+              top: 0,
+              zIndex: 2,
+              bgcolor: "background.default",
+            }}
+          >
+            {notice}
+          </Alert>
+        ) : null}
 
         {coverage && coverage.covered.length > 0 ? (
           <Alert severity="info">
