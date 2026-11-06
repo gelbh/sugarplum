@@ -4,7 +4,7 @@ import { decryptSecret } from "../crypto/secrets";
 import { extractPdfPages } from "../materials/extract-pdf";
 import { applyOcrSidecar, readOcrSidecar, type OcrSidecar } from "../materials/ocr-sidecar";
 import { extractPptxSlides } from "../materials/extract-pptx";
-import { mimeFromR2Key } from "../materials/figures";
+import { bytesToBase64, mimeFromR2Key } from "../materials/figures";
 import { MAX_IMAGE_BYTES } from "../materials/limits";
 import type { GenerateQueueMessage } from "./enqueue";
 import { collectPdfFigureDrafts } from "./pdf-figures";
@@ -44,11 +44,13 @@ import {
   withUpdatedAt,
   writeJobProgress,
   accumulateTokenUsage,
+  type JobProgressEmit,
   type ProgressPatch,
   type ProgressStage,
   type ProgressEvent,
   truncateProgressText,
   pushProgressEvent,
+  recordDraftPreviews,
 } from "./progress";
 import { buildCoverageLedger } from "./coverage";
 import { consumeFreeGenSlot } from "./quota";
@@ -57,47 +59,9 @@ import { harvestRuleDrafts } from "./rules";
 import { assertValidMcqOptions, type CardDraft } from "./schema";
 import { mergeTopicHints, parseTopicHintsJson } from "./topic-hints";
 import { recordGenerationUsageEventForJob } from "./usage";
-import { createWorkersAiAdapter } from "./workers-ai";
+import { resolveTextLlm } from "./resolve-text-llm";
 
 const IMAGE_BYO_REQUIRED = `Image generation requires an ${BYO_PROVIDERS_PHRASE} API key under Settings.`;
-
-export type JobProgressEmit = {
-  emit: (
-    stage: ProgressStage,
-    current: number,
-    total: number,
-    label: string,
-    halfStepsDone?: number,
-  ) => Promise<void>;
-  addEvent: (kind: ProgressEvent["kind"], stage: string, text: string) => void;
-  addUsage: (usage: {
-    prompt_tokens?: number | null;
-    completion_tokens?: number | null;
-    total_tokens?: number | null;
-  }) => void;
-  addDrafts: (n: number) => void;
-  setPath: (p: "free" | "byo") => void;
-  setPresentStages: (stages: readonly ProgressStage[]) => void;
-  /** Keep emit accumulator aligned after durable free-gen marker write. */
-  noteFreeGenCharged: () => void;
-};
-
-function draftFrontPreview(d: CardDraft): string {
-  return typeof d.front === "string"
-    ? d.front
-    : String(d.front.prompt ?? d.front.image_key ?? JSON.stringify(d.front));
-}
-
-function recordDraftPreviews(
-  emit: JobProgressEmit,
-  stage: string,
-  drafts: CardDraft[],
-) {
-  emit.addDrafts(drafts.length);
-  for (let i = 0; i < Math.min(2, drafts.length); i++) {
-    emit.addEvent("draft", stage, draftFrontPreview(drafts[i]!));
-  }
-}
 
 function makeEmit(
   db: D1Database,
@@ -408,58 +372,6 @@ async function extractMaterialText(
     throw new Error(`Unsupported material kind for generation: ${material.kind}`);
   }
   return obj.text();
-}
-
-/** Chunked so large images do not blow the call stack via spread. */
-function bytesToBase64(bytes: ArrayBuffer): string {
-  const arr = new Uint8Array(bytes);
-  const chunkSize = 0x8000;
-  let binary = "";
-  for (let i = 0; i < arr.length; i += chunkSize) {
-    const end = Math.min(i + chunkSize, arr.length);
-    for (let j = i; j < end; j++) {
-      binary += String.fromCharCode(arr[j]!);
-    }
-  }
-  return btoa(binary);
-}
-
-async function resolveTextLlm(
-  env: Env,
-  secret: SecretRow | null,
-  opts?: ProcessGenerateOptions,
-  onUsage?: (usage: {
-    prompt_tokens?: number | null;
-    completion_tokens?: number | null;
-    total_tokens?: number | null;
-  }) => void,
-): Promise<{ llm: LlmAdapter; apiKey: string; provider: string }> {
-  if (secret) {
-    const wrapKey = env.SECRETS_WRAP_KEY;
-    if (!wrapKey) {
-      throw new Error("SECRETS_WRAP_KEY is not configured");
-    }
-    const apiKey = await decryptSecret(secret.ciphertext, wrapKey);
-    const provider = parseLlmProvider(secret.provider);
-    const llm =
-      opts?.llm ?? createLlmAdapter(provider, { model: secret.model });
-    return { llm, apiKey, provider };
-  }
-
-  if (opts?.llm) {
-    return { llm: opts.llm, apiKey: "", provider: "workers-ai" };
-  }
-  if (env.AI) {
-    return {
-      llm: createWorkersAiAdapter(env, { onUsage }),
-      apiKey: "",
-      provider: "workers-ai",
-    };
-  }
-  throw new Error(
-    "Workers AI is not available and no LLM API key is configured. " +
-      `Add an ${BYO_PROVIDERS_PHRASE} API key under Settings, or retry later.`,
-  );
 }
 
 /**
@@ -891,9 +803,6 @@ export async function processGenerateJob(
         secret,
         opts,
         progress,
-        resolveTextLlm,
-        recordDraftPreviews,
-        bytesToBase64,
       });
 
 

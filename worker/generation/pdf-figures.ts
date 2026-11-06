@@ -1,6 +1,7 @@
 import type { Env } from "../env";
 import { extractFiguresViaDocling } from "../materials/docling";
 import {
+  bytesToBase64,
   listFigureChildrenForPdf,
   mimeFromR2Key,
   persistFigureCrops,
@@ -8,10 +9,14 @@ import {
 import { MAX_IMAGE_BYTES } from "../materials/limits";
 import type { FigureExtractMode } from "./enqueue";
 import type { LlmAdapter } from "./llm";
-import { PDF_FIGURE_ONLY_STAGES } from "./progress";
+import {
+  PDF_FIGURE_ONLY_STAGES,
+  recordDraftPreviews,
+  type JobProgressEmit,
+} from "./progress";
 import { filterDraftsByQuality } from "./quality";
+import { resolveTextLlm } from "./resolve-text-llm";
 import type { CardDraft } from "./schema";
-import type { JobProgressEmit, ProcessGenerateOptions } from "./consumer";
 
 /** ponytail: 240s ceiling for Fly wake + model load; raise if cold starts exceed client 10m poll. */
 const DOCLING_ACCURATE_TIMEOUT_MS = 240_000;
@@ -34,24 +39,8 @@ export async function collectPdfFigureDrafts(args: {
   text: string;
   textError: unknown;
   secret: SecretRow | null;
-  opts?: ProcessGenerateOptions;
+  opts?: { llm?: LlmAdapter };
   progress: JobProgressEmit;
-  resolveTextLlm: (
-    env: Env,
-    secret: SecretRow | null,
-    opts: ProcessGenerateOptions | undefined,
-    onUsage: (usage: {
-      prompt_tokens?: number | null;
-      completion_tokens?: number | null;
-      total_tokens?: number | null;
-    }) => void,
-  ) => Promise<{ llm: LlmAdapter; apiKey: string; provider: string }>;
-  recordDraftPreviews: (
-    emit: JobProgressEmit,
-    stage: string,
-    drafts: CardDraft[],
-  ) => void;
-  bytesToBase64: (bytes: ArrayBuffer) => string;
 }): Promise<{ drafts: FigureDraft[]; warning?: string }> {
   const {
     db,
@@ -65,9 +54,6 @@ export async function collectPdfFigureDrafts(args: {
     secret,
     opts,
     progress,
-    resolveTextLlm,
-    recordDraftPreviews,
-    bytesToBase64,
   } = args;
 
   const figureChildren = await listFigureChildrenForPdf(db, {

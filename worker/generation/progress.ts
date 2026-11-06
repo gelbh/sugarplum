@@ -1,3 +1,5 @@
+import type { CardDraft } from "./schema";
+
 /** Stage catalog weights (design §3.2). Sum to 1.0. */
 export const STAGE_WEIGHTS = {
   queued: 0.02,
@@ -27,6 +29,44 @@ export type ProgressEvent = {
   stage: string;
   text: string;
 };
+
+export type JobProgressEmit = {
+  emit: (
+    stage: ProgressStage,
+    current: number,
+    total: number,
+    label: string,
+    halfStepsDone?: number,
+  ) => Promise<void>;
+  addEvent: (kind: ProgressEvent["kind"], stage: string, text: string) => void;
+  addUsage: (usage: {
+    prompt_tokens?: number | null;
+    completion_tokens?: number | null;
+    total_tokens?: number | null;
+  }) => void;
+  addDrafts: (n: number) => void;
+  setPath: (p: "free" | "byo") => void;
+  setPresentStages: (stages: readonly ProgressStage[]) => void;
+  /** Keep emit accumulator aligned after durable free-gen marker write. */
+  noteFreeGenCharged: () => void;
+};
+
+function draftFrontPreview(d: CardDraft): string {
+  return typeof d.front === "string"
+    ? d.front
+    : String(d.front.prompt ?? d.front.image_key ?? JSON.stringify(d.front));
+}
+
+export function recordDraftPreviews(
+  emit: JobProgressEmit,
+  stage: string,
+  drafts: CardDraft[],
+) {
+  emit.addDrafts(drafts.length);
+  for (let i = 0; i < Math.min(2, drafts.length); i++) {
+    emit.addEvent("draft", stage, draftFrontPreview(drafts[i]!));
+  }
+}
 
 export type ProgressPatch = {
   stage: ProgressStage;
