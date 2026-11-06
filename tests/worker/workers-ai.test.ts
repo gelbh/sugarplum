@@ -3,6 +3,7 @@ import {
   createLlmAdapter,
   parseLlmProvider,
 } from "../../worker/generation/llm";
+import { workersAiJsonSchemaResponseFormat } from "../../worker/generation/cards-json-schema";
 import {
   WORKERS_AI_MODEL,
   createWorkersAiAdapter,
@@ -74,7 +75,7 @@ describe("Workers AI adapter", () => {
         expect(_model).toBe(WORKERS_AI_MODEL);
         expect(inputs.max_completion_tokens).toBe(8192);
         expect(inputs.max_tokens).toBe(8192);
-        expect(inputs.response_format).toEqual({ type: "json_object" });
+        expect(inputs.response_format).toEqual(workersAiJsonSchemaResponseFormat());
         expect(inputs.messages).toEqual([
           expect.objectContaining({ role: "system" }),
           expect.objectContaining({
@@ -229,7 +230,7 @@ describe("Workers AI adapter", () => {
     expect(run).toHaveBeenCalledTimes(2);
     expect(
       (run.mock.calls[0]![1] as { response_format?: unknown }).response_format,
-    ).toEqual({ type: "json_object" });
+    ).toEqual(workersAiJsonSchemaResponseFormat());
     expect(
       (run.mock.calls[1]![1] as { response_format?: unknown }).response_format,
     ).toBeUndefined();
@@ -282,7 +283,7 @@ describe("Workers AI adapter", () => {
           response_format?: { type?: string };
         },
       ) => {
-        expect(inputs.response_format).toEqual({ type: "json_object" });
+        expect(inputs.response_format).toEqual(workersAiJsonSchemaResponseFormat());
         expect(inputs.messages?.[0]).toEqual({
           role: "system",
           content: "critique-system",
