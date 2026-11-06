@@ -9,7 +9,7 @@ import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import type { Theme } from "@mui/material/styles";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   mediaUrl,
   type CardDraftView,
@@ -17,8 +17,8 @@ import {
   type OcclusionFrontView,
 } from "../api/client";
 import {
-  blankClozeFront,
   CLOZE_EXTRA_LABEL,
+  clozeBlankLabel,
   extractClozeAnswer,
 } from "../lib/clozeFormat";
 import {
@@ -27,6 +27,7 @@ import {
   type DraftEditorChange,
 } from "../lib/draftCardModel";
 import { FaceOverline, FlipCardPlate, StudyCardPlate } from "./CardFace";
+import ClozePrompt from "./ClozePrompt";
 import OcclusionRegionEditor from "./OcclusionRegionEditor";
 import {
   FACE_ANSWER_TEXT_SX,
@@ -55,6 +56,7 @@ function EditableText({
   label,
   value,
   display,
+  preview,
   editing,
   disabled,
   textSx,
@@ -65,6 +67,7 @@ function EditableText({
   label: string;
   value: string;
   display: string;
+  preview?: ReactNode;
   editing: boolean;
   disabled: boolean;
   textSx: Record<string, unknown>;
@@ -122,7 +125,7 @@ function EditableText({
         component="p"
         sx={{ ...textSx, m: 0, ...(display ? null : { opacity: 0.45 }) }}
       >
-        {display || label}
+        {preview ?? (display || label)}
       </Typography>
     </Box>
   );
@@ -176,14 +179,15 @@ export function TextReviewFace({ card, disabled, onChange }: FaceProps) {
             <EditableText
               label="Front"
               value={frontText}
-              display={isCloze ? blankClozeFront(frontText) : frontText}
+              display={isCloze ? clozeBlankLabel(frontText) : frontText}
+              preview={isCloze ? <ClozePrompt front={frontText} /> : undefined}
               textSx={FACE_PROMPT_TEXT_SX}
               onChange={(front) => onChange({ front, back: backText, type })}
               {...field("front")}
             />
             {isCloze ? (
               <Typography component="p" sx={FACE_HINT_TEXT_SX}>
-                Blanks show as […] when you study
+                Blanks show as a line when you study
               </Typography>
             ) : null}
           </Box>

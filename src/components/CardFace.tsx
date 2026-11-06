@@ -10,6 +10,7 @@ import {
   extractClozeAnswer,
 } from "../lib/clozeFormat";
 import { CardFaceMcqBody } from "./cardFaceMcq";
+import ClozePrompt from "./ClozePrompt";
 import KeyChip from "./KeyChip";
 import {
   CARD_COLUMN_SX,
@@ -341,7 +342,7 @@ export default function CardFace({
             ) : null}
             {questionFront ? (
               <Typography component="p" sx={FACE_PROMPT_TEXT_SX}>
-                {questionFront}
+                {isCloze ? <ClozePrompt front={front} /> : questionFront}
               </Typography>
             ) : null}
           </Box>

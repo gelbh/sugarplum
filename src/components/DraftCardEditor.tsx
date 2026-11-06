@@ -16,7 +16,6 @@ import Typography from "@mui/material/Typography";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { mediaUrl, type CardDraftView, type CardType } from "../api/client";
 import {
-  blankClozeFront,
   CLOZE_EXTRA_LABEL,
   extractClozeAnswer,
 } from "../lib/clozeFormat";
@@ -39,6 +38,7 @@ import {
   withMcqOptionRemoved,
   withMcqOptionText,
 } from "../lib/mcqDraftEdit";
+import ClozePrompt from "./ClozePrompt";
 import OcclusionRegionEditor from "./OcclusionRegionEditor";
 
 export { resolveEditorType, type DraftEditorChange };
@@ -210,7 +210,7 @@ export default function DraftCardEditor({
               variant="body1"
               sx={{ whiteSpace: "pre-wrap", mb: clozeAnswer ? 1.5 : 0 }}
             >
-              {blankClozeFront(frontText)}
+              <ClozePrompt front={frontText} />
             </Typography>
             {clozeAnswer ? (
               <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
@@ -221,7 +221,7 @@ export default function DraftCardEditor({
               </Stack>
             ) : null}
             <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1.5 }}>
-              Blanks show as […] when you study
+              Blanks show as a line when you study
             </Typography>
           </Box>
 
