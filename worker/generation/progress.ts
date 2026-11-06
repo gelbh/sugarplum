@@ -201,7 +201,6 @@ export function withoutStartedAt(
   return JSON.stringify(base);
 }
 
-/** Merge/set how many free-gen slots this job has reserved. */
 export function withFreeGenSlots(
   progressJson: string | null | undefined,
   slots: number,
@@ -480,7 +479,6 @@ export async function touchJobHeartbeat(
   }
 }
 
-/** Add follow-up token totals onto the totals already stored for this job. */
 export function withAddedTokenUsage(
   progressJson: string | null | undefined,
   delta: TokenUsageDelta,
