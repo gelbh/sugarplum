@@ -10,6 +10,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import IconButton from "@mui/material/IconButton";
+import LinearProgress from "@mui/material/LinearProgress";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -40,6 +41,7 @@ import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { backAnswer, isOcclusionFront } from "../lib/draftCardModel";
 import { resolveCardGesture } from "../study/cardGestures";
+import { studyQueueProgress } from "../study/studyQueueProgress";
 import {
   faceScrollsFor,
   isInteractiveKeyTarget,
@@ -149,6 +151,7 @@ function scopeLibraryBack(scope: DueScopeOpts): { href: string; label: string } 
 /** Study session: reveal answer, grade with FSRS (keys 1-4 or arrows; Space flips). Code-led MUI. */
 export default function StudyPage() {
   const [queue, setQueue] = useState<CardDraftView[]>([]);
+  const [queueTotal, setQueueTotal] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -207,6 +210,7 @@ export default function StudyPage() {
     (cards: CardDraftView[], wanted: string | null) => {
       const { queue: next, found } = prioritizeDueCard(cards, wanted);
       setQueue(next);
+      setQueueTotal(next.length);
       if (next.length > 0) setHadCards(true);
       // Only when there are other due cards to study (avoids contradicting empty session).
       setDeepLinkMiss(Boolean(wanted) && !found && next.length > 0);
@@ -370,6 +374,7 @@ export default function StudyPage() {
   }, [endLoad, flushOnMount, load, refreshPendingCount, setUserId]);
 
   const current = queue[0] ?? null;
+  const queueFraction = studyQueueProgress(queueTotal, queue.length);
   const endKind = sessionEndKind(hadCards, gradedTotal(tally));
   const mcqMode = isMcqCard(current);
   const occlusionParts = current
@@ -861,18 +866,24 @@ export default function StudyPage() {
                 onRegenerated={replaceQueuedCard}
                 onRemoved={removeQueuedCard}
               />
-              <Typography
-                variant="caption"
+              <LinearProgress
+                variant="determinate"
+                value={queueFraction}
+                aria-label={`${queue.length} of ${queueTotal} remaining`}
+                aria-valuenow={Math.round(queueFraction)}
+                aria-valuemin={0}
+                aria-valuemax={100}
                 sx={{
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  opacity: 0.7,
                   flexShrink: 0,
-                  color: stage ? "var(--sp-ivory)" : "text.secondary",
+                  height: 4,
+                  bgcolor: stage
+                    ? "color-mix(in srgb, var(--sp-ivory) 22%, transparent)"
+                    : undefined,
+                  "& .MuiLinearProgress-bar": stage
+                    ? { backgroundColor: "var(--sp-ivory)" }
+                    : undefined,
                 }}
-              >
-                {queue.length} remaining
-              </Typography>
+              />
 
               <Box
                 onPointerDown={onPointerDown}
