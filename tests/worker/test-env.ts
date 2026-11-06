@@ -1941,10 +1941,9 @@ export function createTestEnv(opts?: {
         }
         if (
           normalized.startsWith(
-            "SELECT coverage_json FROM generation_jobs WHERE material_id =",
+            "SELECT id, coverage_json FROM generation_jobs WHERE material_id =",
           ) &&
-          normalized.includes("coverage_json IS NOT NULL") &&
-          !normalized.includes("id !=")
+          normalized.includes("coverage_json IS NOT NULL")
         ) {
           const materialId = bound[0] as string;
           const rows = [...generationJobs.values()]
@@ -1955,7 +1954,10 @@ export function createTestEnv(opts?: {
             .sort((a, b) =>
               (a.finished_at ?? "").localeCompare(b.finished_at ?? ""),
             )
-            .map((job) => ({ coverage_json: job.coverage_json }));
+            .map((job) => ({
+              id: job.id,
+              coverage_json: job.coverage_json,
+            }));
           return { results: rows as T[] };
         }
         return { results: [] };

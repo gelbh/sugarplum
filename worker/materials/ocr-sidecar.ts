@@ -15,20 +15,20 @@ export function ocrRefillWindow(
   if (!Number.isInteger(startPage) || startPage > OCR_PAGE_NUMBER_MAX) {
     return null;
   }
-  const start = Math.max(1, startPage);
-  return {
-    start,
-    end: Math.min(OCR_PAGE_NUMBER_MAX, start + OCR_PAGE_NUMBER_MAX - 1),
-  };
+  return { start: Math.max(1, startPage), end: OCR_PAGE_NUMBER_MAX };
 }
 
 export function ocrSidecarKey(deckId: string, materialId: string): string {
   return `materials/${deckId}/ocr/${materialId}.json`;
 }
 
-export function parseOcrPages(raw: unknown): OcrPageText[] | undefined {
+function parseOcrPageList(
+  raw: unknown,
+  maxCount: number,
+  onDuplicate: "reject" | "drop",
+): OcrPageText[] | undefined {
   if (raw === undefined) return undefined;
-  if (!Array.isArray(raw) || raw.length > OCR_PAGE_LIMIT) {
+  if (!Array.isArray(raw) || raw.length > maxCount) {
     throw new Error("Invalid ocrPages");
   }
   const pages: OcrPageText[] = [];
@@ -45,7 +45,10 @@ export function parseOcrPages(raw: unknown): OcrPageText[] | undefined {
     ) {
       throw new Error("Invalid ocrPages");
     }
-    if (seenPages.has(page)) throw new Error("Invalid ocrPages");
+    if (seenPages.has(page)) {
+      if (onDuplicate === "reject") throw new Error("Invalid ocrPages");
+      continue;
+    }
     seenPages.add(page);
     if (typeof text !== "string" || text.length > OCR_PAGE_CHAR_CAP) {
       throw new Error("Invalid ocrPages");
@@ -57,35 +60,12 @@ export function parseOcrPages(raw: unknown): OcrPageText[] | undefined {
   return pages.length > 0 ? pages : undefined;
 }
 
+export function parseOcrPages(raw: unknown): OcrPageText[] | undefined {
+  return parseOcrPageList(raw, OCR_PAGE_LIMIT, "reject");
+}
+
 export function parseStoredOcrPages(raw: unknown): OcrPageText[] | undefined {
-  if (raw === undefined) return undefined;
-  if (!Array.isArray(raw) || raw.length > OCR_PAGE_NUMBER_MAX) {
-    throw new Error("Invalid ocrPages");
-  }
-  const pages: OcrPageText[] = [];
-  const seenPages = new Set<number>();
-  for (const item of raw) {
-    if (!item || typeof item !== "object") throw new Error("Invalid ocrPages");
-    const page = (item as { page?: unknown }).page;
-    const text = (item as { text?: unknown }).text;
-    if (
-      typeof page !== "number" ||
-      !Number.isInteger(page) ||
-      page < 1 ||
-      page > OCR_PAGE_NUMBER_MAX
-    ) {
-      throw new Error("Invalid ocrPages");
-    }
-    if (seenPages.has(page)) continue;
-    seenPages.add(page);
-    if (typeof text !== "string" || text.length > OCR_PAGE_CHAR_CAP) {
-      throw new Error("Invalid ocrPages");
-    }
-    const trimmed = text.trim();
-    if (!trimmed) continue;
-    pages.push({ page, text: trimmed });
-  }
-  return pages.length > 0 ? pages : undefined;
+  return parseOcrPageList(raw, OCR_PAGE_NUMBER_MAX, "drop");
 }
 
 export function mergeOcrPages(

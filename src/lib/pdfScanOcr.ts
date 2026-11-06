@@ -41,13 +41,9 @@ export function ocrRefillWindow(
   if (!Number.isInteger(startPage) || startPage > OCR_TEXT_LAYER_SCAN_LIMIT) {
     return null;
   }
-  const start = Math.max(1, startPage);
   return {
-    start,
-    end: Math.min(
-      OCR_TEXT_LAYER_SCAN_LIMIT,
-      start + OCR_TEXT_LAYER_SCAN_LIMIT - 1,
-    ),
+    start: Math.max(1, startPage),
+    end: OCR_TEXT_LAYER_SCAN_LIMIT,
   };
 }
 

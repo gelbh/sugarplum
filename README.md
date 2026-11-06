@@ -91,7 +91,7 @@ Local: put `ADMIN_EMAILS=...` in `.dev.vars` (gitignored). Open `/admin` while s
 
 ### 3. R2 CORS (one-time)
 
-Browser uploads use signed URLs against the R2 bucket. Configure bucket CORS so `https://sugarplum.gelbhart.dev` (and local Vite origin if needed) may `PUT` objects with the headers your client sends (`Content-Type`, `Content-Length`, etc.). Without CORS, PDF upload from the app fails in the browser even when the Worker returns a signed URL.
+Browser uploads use signed URLs against the R2 bucket. Configure bucket CORS so `https://sugarplum.gelbhart.dev` (and local Vite origin if needed) may `PUT` objects with the headers your client sends (`Content-Type`, `Content-Length`, etc.) and may `GET` objects for a later OCR refill. Without CORS, PDF upload from the app fails in the browser even when the Worker returns a signed URL, and Generate more cannot download the PDF to OCR later pages.
 
 ### 4. Ship
 

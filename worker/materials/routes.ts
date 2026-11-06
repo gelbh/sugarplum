@@ -9,7 +9,7 @@ import {
   type FigureExtractMode,
 } from "../generation/enqueue";
 import { normalizeTopicHints } from "../generation/topic-hints";
-import { mergeWindowResumes } from "../generation/study-windows";
+import { loadMaterialWindowResume } from "../generation/study-windows";
 import { parseOptionalJsonBody } from "../optional-json";
 import {
   findReadyMaterialByContentHash,
@@ -1454,15 +1454,7 @@ async function ocrResumeStartPage(
   db: D1Database,
   materialId: string,
 ): Promise<number> {
-  const { results } = await db
-    .prepare(
-      "SELECT coverage_json FROM generation_jobs WHERE material_id = ? AND coverage_json IS NOT NULL ORDER BY finished_at ASC",
-    )
-    .bind(materialId)
-    .all<{ coverage_json: string | null }>();
-  return mergeWindowResumes(
-    (results ?? []).map((row) => row.coverage_json),
-  ).startPage;
+  return (await loadMaterialWindowResume(db, materialId)).startPage;
 }
 
 materialRoutes.post("/:id/ocr-refetch", async (c) => {

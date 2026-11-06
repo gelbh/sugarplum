@@ -49,7 +49,7 @@ export async function createR2GetUrl(opts: {
   key: string;
   expiresIn?: number;
 }): Promise<string> {
-  const expiresIn = opts.expiresIn ?? 900;
+  const expiresIn = opts.expiresIn ?? DEFAULT_EXPIRES_SEC;
   const client = new AwsClient({
     accessKeyId: opts.accessKeyId,
     secretAccessKey: opts.secretAccessKey,
