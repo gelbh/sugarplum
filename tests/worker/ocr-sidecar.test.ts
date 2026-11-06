@@ -274,3 +274,142 @@ function pdfWithPages(count: number): ArrayBuffer {
   const trailer = `trailer<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF\n`;
   return asBuffer(new TextEncoder().encode(body + xref + trailer));
 }
+
+function seedReadyPdf() {
+  const env = createTestEnv();
+  env.seedUser({
+    id: "user-a",
+    email: "a@example.com",
+    password_hash: null,
+    oauth_subject: null,
+    created_at: "2026-01-01T00:00:00.000Z",
+  });
+  env.seedDeck({
+    id: "deck-a",
+    user_id: "user-a",
+    title: "Owner deck",
+    subject_hint: null,
+    created_at: "2026-01-01T00:00:00.000Z",
+  });
+  env.seedSession("sess-a", "user-a");
+  env.seedMaterial({
+    id: "mat-1",
+    deck_id: "deck-a",
+    kind: "pdf",
+    r2_key: "materials/deck-a/mat-1.pdf",
+    filename: "lecture.pdf",
+    page_count: null,
+    status: "ready",
+    created_at: "2026-01-01T00:00:00.000Z",
+  });
+  return env;
+}
+
+describe("ocr refetch", () => {
+  it("signs a GET for the owner and hides the URL past page 120", async () => {
+    const env = seedReadyPdf();
+    const res = await app.request(
+      "/api/materials/mat-1/ocr-refetch",
+      { method: "POST", headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      refill: boolean;
+      downloadUrl?: string;
+      expiresIn?: number;
+    };
+    expect(body.refill).toBe(true);
+    expect(body.expiresIn).toBe(900);
+    expect(body.downloadUrl).toContain("materials/deck-a/mat-1.pdf");
+    expect(body.downloadUrl).toContain("X-Amz-Expires=900");
+
+    env.seedGenerationJob({
+      id: "job-far",
+      material_id: "mat-1",
+      status: "failed",
+      error: null,
+      coverage_json: JSON.stringify({
+        window_resume: { used_keys: [], next_page: 121, total_pages: 200 },
+      }),
+      progress_json: null,
+      created_at: "2026-01-02T00:00:00.000Z",
+      finished_at: "2026-01-02T00:00:00.000Z",
+    });
+    const skipped = await app.request(
+      "/api/materials/mat-1/ocr-refetch",
+      { method: "POST", headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(await skipped.json()).toEqual({ refill: false });
+  });
+
+  it("rejects a paste material", async () => {
+    const env = seedReadyPdf();
+    env.seedMaterial({
+      id: "mat-paste",
+      deck_id: "deck-a",
+      kind: "paste",
+      r2_key: "materials/deck-a/mat-paste.txt",
+      filename: "notes.txt",
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    const res = await app.request(
+      "/api/materials/mat-paste/ocr-refetch",
+      { method: "POST", headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(res.status).toBe(422);
+  });
+
+  it("returns 404 for a stranger", async () => {
+    const env = seedReadyPdf();
+    env.seedUser({
+      id: "user-b",
+      email: "b@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSession("sess-b", "user-b");
+    const res = await app.request(
+      "/api/materials/mat-1/ocr-refetch",
+      { method: "POST", headers: { cookie: `${SESSION_COOKIE}=sess-b` } },
+      env,
+    );
+    expect(res.status).toBe(404);
+  });
+
+  it("appends a new page and keeps the stored text", async () => {
+    const env = seedReadyPdf();
+    env.seedR2(
+      ocrSidecarKey("deck-a", "mat-1"),
+      JSON.stringify({ pages: [{ page: 1, text: "first" }] }),
+    );
+    const res = await app.request(
+      "/api/materials/mat-1/ocr-pages",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          pages: [
+            { page: 1, text: "overwrite" },
+            { page: 9, text: "later" },
+          ],
+        }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ stored: 2 });
+    const stored = env.getR2(ocrSidecarKey("deck-a", "mat-1"));
+    expect(stored).toContain("first");
+    expect(stored).toContain("later");
+    expect(stored).not.toContain("overwrite");
+  });
+});

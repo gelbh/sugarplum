@@ -1939,6 +1939,25 @@ export function createTestEnv(opts?: {
             );
           return { results: rows as T[] };
         }
+        if (
+          normalized.startsWith(
+            "SELECT coverage_json FROM generation_jobs WHERE material_id =",
+          ) &&
+          normalized.includes("coverage_json IS NOT NULL") &&
+          !normalized.includes("id !=")
+        ) {
+          const materialId = bound[0] as string;
+          const rows = [...generationJobs.values()]
+            .filter(
+              (job) =>
+                job.material_id === materialId && job.coverage_json != null,
+            )
+            .sort((a, b) =>
+              (a.finished_at ?? "").localeCompare(b.finished_at ?? ""),
+            )
+            .map((job) => ({ coverage_json: job.coverage_json }));
+          return { results: rows as T[] };
+        }
         return { results: [] };
       },
       async run(): Promise<D1Result> {

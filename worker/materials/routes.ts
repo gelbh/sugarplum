@@ -9,6 +9,7 @@ import {
   type FigureExtractMode,
 } from "../generation/enqueue";
 import { normalizeTopicHints } from "../generation/topic-hints";
+import { mergeWindowResumes } from "../generation/study-windows";
 import { parseOptionalJsonBody } from "../optional-json";
 import {
   findReadyMaterialByContentHash,
@@ -32,9 +33,12 @@ import {
   figureR2KeyPrefixBounds,
   isFigureR2KeyForPdf,
 } from "./figures";
-import { createR2PutUrl } from "./r2-presign";
+import { createR2GetUrl, createR2PutUrl } from "./r2-presign";
 import {
+  mergeOcrPages,
+  ocrRefillWindow,
   parseOcrPages,
+  readOcrSidecar,
   writeOcrSidecar,
   type OcrPageText,
 } from "./ocr-sidecar";
@@ -73,6 +77,7 @@ const PPTX_CONTENT_TYPE =
   "application/vnd.openxmlformats-officedocument.presentationml.presentation";
 const IMAGE_CONTENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const DEFAULT_R2_BUCKET = "sugarplum-materials";
+const OCR_REFETCH_EXPIRES_SEC = 900;
 const ZIP_CONTENT_TYPES = new Set([
   "application/zip",
   "application/x-zip-compressed",
@@ -1430,4 +1435,118 @@ materialRoutes.post("/:id/complete", async (c) => {
     created_at: material.created_at,
     jobId,
   });
+});
+
+function assertReadyPdfForOcr(material: MaterialRow): string {
+  if (
+    material.kind !== "pdf" ||
+    material.status !== FILE_READY ||
+    !material.r2_key
+  ) {
+    throw new HTTPException(422, {
+      message: "OCR refill is only for a ready PDF",
+    });
+  }
+  return material.r2_key;
+}
+
+async function ocrResumeStartPage(
+  db: D1Database,
+  materialId: string,
+): Promise<number> {
+  const { results } = await db
+    .prepare(
+      "SELECT coverage_json FROM generation_jobs WHERE material_id = ? AND coverage_json IS NOT NULL ORDER BY finished_at ASC",
+    )
+    .bind(materialId)
+    .all<{ coverage_json: string | null }>();
+  return mergeWindowResumes(
+    (results ?? []).map((row) => row.coverage_json),
+  ).startPage;
+}
+
+materialRoutes.post("/:id/ocr-refetch", async (c) => {
+  const userId = await requireUser(c);
+  const materialId = c.req.param("id");
+  const db = getDb(c.env);
+  const material = await requireOwnedMaterial(db, materialId, userId);
+  const r2Key = assertReadyPdfForOcr(material);
+  const window = ocrRefillWindow(await ocrResumeStartPage(db, material.id));
+  if (!window) return c.json({ refill: false });
+
+  const accountId = c.env.R2_ACCOUNT_ID;
+  const accessKeyId = c.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = c.env.R2_SECRET_ACCESS_KEY;
+  if (!accountId || !accessKeyId || !secretAccessKey) {
+    throw new HTTPException(500, {
+      message: "R2 upload signing is not configured",
+    });
+  }
+  assertConfiguredR2AccountId(accountId);
+
+  const downloadUrl = await createR2GetUrl({
+    accountId,
+    accessKeyId,
+    secretAccessKey,
+    bucket: c.env.R2_BUCKET_NAME ?? DEFAULT_R2_BUCKET,
+    key: r2Key,
+    expiresIn: OCR_REFETCH_EXPIRES_SEC,
+  });
+  const sidecar = await readOcrSidecar(c.env, material.deck_id, material.id);
+  const coveredPages = (sidecar?.pages ?? [])
+    .filter((page) => page.page >= window.start && page.page <= window.end)
+    .map((page) => page.page);
+
+  return c.json({
+    refill: true,
+    downloadUrl,
+    expiresIn: OCR_REFETCH_EXPIRES_SEC,
+    startPage: window.start,
+    windowEnd: window.end,
+    coveredPages,
+  });
+});
+
+materialRoutes.post("/:id/ocr-pages", async (c) => {
+  const userId = await requireUser(c);
+  const materialId = c.req.param("id");
+  const db = getDb(c.env);
+  const material = await requireOwnedMaterial(db, materialId, userId);
+  assertReadyPdfForOcr(material);
+
+  let rawPages: unknown;
+  try {
+    const body = (await c.req.json()) as { pages?: unknown };
+    rawPages = body?.pages;
+  } catch {
+    throw new HTTPException(400, { message: "Invalid ocrPages" });
+  }
+
+  let incoming: OcrPageText[] | undefined;
+  try {
+    incoming = parseOcrPages(rawPages);
+  } catch {
+    throw new HTTPException(400, { message: "Invalid ocrPages" });
+  }
+  if (!incoming) {
+    throw new HTTPException(400, { message: "Invalid ocrPages" });
+  }
+
+  const window = ocrRefillWindow(await ocrResumeStartPage(db, material.id));
+  if (!window) {
+    throw new HTTPException(400, { message: "Invalid ocrPages" });
+  }
+
+  const sidecar = await readOcrSidecar(c.env, material.deck_id, material.id);
+  const previous = sidecar?.pages ?? [];
+  let merged: OcrPageText[];
+  try {
+    merged = mergeOcrPages(previous, incoming, window);
+  } catch {
+    throw new HTTPException(400, { message: "Invalid ocrPages" });
+  }
+  if (merged.length > previous.length) {
+    await writeOcrSidecar(c.env, material.deck_id, material.id, merged);
+  }
+  return c.json({ stored: merged.length });
 });
