@@ -9,7 +9,7 @@ import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import type { Theme } from "@mui/material/styles";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   mediaUrl,
   type CardDraftView,
@@ -133,6 +133,9 @@ export function TextReviewFace({ card, disabled, onChange }: FaceProps) {
   const isCloze = type === "cloze";
   const imageKey = card.media_r2_keys?.[0];
 
+  const showBackRef = useRef<HTMLButtonElement>(null);
+  const showFrontRef = useRef<HTMLButtonElement>(null);
+  const moved = useRef(false);
   const field = (name: "front" | "back") => ({
     editing: editing === name,
     disabled,
@@ -140,9 +143,15 @@ export function TextReviewFace({ card, disabled, onChange }: FaceProps) {
     onDone: () => setEditing(null),
   });
   const flip = (next: boolean) => {
+    moved.current = true;
     setEditing(null);
     setRevealed(next);
   };
+  useEffect(() => {
+    if (!moved.current) return;
+    const target = revealed ? showFrontRef.current : showBackRef.current;
+    target?.focus({ preventScroll: true });
+  }, [revealed]);
 
   return (
     <FlipCardPlate
@@ -176,6 +185,7 @@ export function TextReviewFace({ card, disabled, onChange }: FaceProps) {
           </Box>
           <Box sx={FOOTER_SX}>
             <Button
+              ref={showBackRef}
               variant="outlined"
               disabled={disabled}
               onClick={() => flip(true)}
@@ -210,6 +220,7 @@ export function TextReviewFace({ card, disabled, onChange }: FaceProps) {
           </Box>
           <Box sx={FOOTER_SX}>
             <Button
+              ref={showFrontRef}
               variant="outlined"
               disabled={disabled}
               onClick={() => flip(false)}

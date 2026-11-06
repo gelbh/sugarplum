@@ -11,7 +11,7 @@ import Typography from "@mui/material/Typography";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { CardDraftView, CardType, StudyRating } from "../api/client";
 import {
   draftFaceKind,
@@ -151,6 +151,14 @@ export default function ReviewCard({
   onDecide,
 }: ReviewCardProps) {
   const [reason, setReason] = useState<RejectReason | null>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const root = stageRef.current;
+    if (!root) return;
+    const active = document.activeElement;
+    if (active instanceof Node && root.contains(active)) return;
+    root.focus({ preventScroll: true });
+  }, []);
   const swipe = useReviewSwipe({
     locked: disabled,
     onCommit: (decision) =>
@@ -185,7 +193,18 @@ export default function ReviewCard({
   }
 
   return (
-    <Stack spacing={2}>
+    <Stack
+      ref={stageRef}
+      tabIndex={-1}
+      spacing={2}
+      sx={{
+        outline: "none",
+        "&:focus-visible": {
+          outline: "2px solid var(--sp-ivory)",
+          outlineOffset: 2,
+        },
+      }}
+    >
       <Stack
         direction="row"
         alignItems="center"
