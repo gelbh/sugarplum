@@ -29,8 +29,11 @@ export function resolveCardGesture(input: {
 }
 
 export const REVIEW_SWIPE_THRESHOLD_PX = 96;
+export const REVIEW_DRAG_SLOP_PX = 8;
+export const REVIEW_FLY_MS = 200;
 
 export type ReviewSwipeResult = "accept" | "reject" | "none";
+export type ReviewSwipeDecision = Exclude<ReviewSwipeResult, "none">;
 
 /** Draft review: horizontal swipe only; vertical drags stay scroll. */
 export function resolveReviewSwipe(input: {
@@ -40,4 +43,39 @@ export function resolveReviewSwipe(input: {
   const ax = Math.abs(input.dx);
   if (ax < REVIEW_SWIPE_THRESHOLD_PX || ax <= Math.abs(input.dy)) return "none";
   return input.dx > 0 ? "accept" : "reject";
+}
+
+export function reviewSwipeVisual(input: {
+  dx: number;
+  leaving: ReviewSwipeDecision | null;
+  reduceMotion: boolean;
+}): {
+  transform: string;
+  stamp: ReviewSwipeDecision | null;
+  stampOpacity: number;
+  dimmed: boolean;
+} {
+  const { dx, leaving, reduceMotion } = input;
+  const sign = leaving === "accept" ? 1 : -1;
+  const transform =
+    leaving && !reduceMotion
+      ? `translateX(${sign * 150}%) rotate(${sign * 18}deg)`
+      : reduceMotion
+        ? `translateX(${dx}px)`
+        : `translateX(${dx}px) rotate(${dx / 20}deg)`;
+  const stamp =
+    leaving ??
+    (dx >= REVIEW_DRAG_SLOP_PX
+      ? "accept"
+      : dx <= -REVIEW_DRAG_SLOP_PX
+        ? "reject"
+        : null);
+  return {
+    transform,
+    stamp,
+    stampOpacity: leaving
+      ? 1
+      : Math.min(1, Math.abs(dx) / REVIEW_SWIPE_THRESHOLD_PX),
+    dimmed: leaving !== null && reduceMotion,
+  };
 }
