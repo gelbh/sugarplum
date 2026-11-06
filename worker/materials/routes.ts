@@ -32,6 +32,11 @@ import {
   isFigureR2KeyForPdf,
 } from "./figures";
 import { createR2PutUrl } from "./r2-presign";
+import {
+  parseOcrPages,
+  writeOcrSidecar,
+  type OcrPageText,
+} from "./ocr-sidecar";
 
 export { MAX_IMAGE_BYTES } from "./limits";
 
@@ -1274,6 +1279,7 @@ materialRoutes.post("/:id/complete", async (c) => {
   let figureExtractMode: FigureExtractMode | undefined;
   let topicHints: string[] | null = null;
   let attachOnly = false;
+  let ocrPages: OcrPageText[] | undefined;
   const rawBody = await c.req.text();
   if (rawBody.trim()) {
     let parsed: unknown;
@@ -1293,6 +1299,7 @@ materialRoutes.post("/:id/complete", async (c) => {
       figureExtractMode?: unknown;
       topicHints?: unknown;
       attachOnly?: unknown;
+      ocrPages?: unknown;
     };
     const rawMode = body.figureExtractMode;
     if (rawMode !== undefined) {
@@ -1315,6 +1322,14 @@ materialRoutes.post("/:id/complete", async (c) => {
         throw new HTTPException(400, { message: "Invalid attachOnly" });
       }
       attachOnly = true;
+    }
+    try {
+      ocrPages = parseOcrPages(body.ocrPages);
+    } catch {
+      throw new HTTPException(400, { message: "Invalid ocrPages" });
+    }
+    if (ocrPages && material.kind !== "pdf") {
+      throw new HTTPException(400, { message: "Invalid ocrPages" });
     }
   }
 
@@ -1392,6 +1407,14 @@ materialRoutes.post("/:id/complete", async (c) => {
     throw new HTTPException(409, {
       message: "Material is not awaiting upload completion",
     });
+  }
+
+  if (ocrPages && material.kind === "pdf") {
+    try {
+      await writeOcrSidecar(c.env, material.deck_id, materialId, ocrPages);
+    } catch (err) {
+      console.warn("OCR sidecar write failed", err);
+    }
   }
 
   const jobId =
