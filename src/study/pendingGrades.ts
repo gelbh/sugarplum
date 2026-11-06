@@ -68,7 +68,6 @@ export function replacePendingGrades(
   return writeList(userId, items);
 }
 
-/** Drop queued offline grades for one card. */
 export function dropPendingGrade(userId: string, cardId: string): void {
   const next = readList(userId).filter((item) => item.cardId !== cardId);
   writeList(userId, next);
