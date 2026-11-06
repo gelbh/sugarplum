@@ -3,6 +3,7 @@ import type { CardDraft } from "../../worker/generation/schema";
 import {
   filterNovelDrafts,
   isNearDuplicateFront,
+  loadMaterialWindowResume,
   mergeWindowResumes,
   prepareStudySource,
 } from "../../worker/generation/study-windows";
@@ -169,6 +170,36 @@ describe("mergeWindowResumes", () => {
     ]);
     expect(merged.usedKeys).toEqual(newest);
     expect(merged.startPage).toBe(9);
+  });
+
+  it("drops the running job and keeps the prior next page", async () => {
+    const rows = [
+      {
+        id: "prior",
+        coverage_json: JSON.stringify({
+          window_resume: { used_keys: [], next_page: 9, total_pages: 40 },
+        }),
+      },
+      {
+        id: "current",
+        coverage_json: JSON.stringify({
+          window_resume: { used_keys: [], next_page: 41, total_pages: 40 },
+        }),
+      },
+    ];
+    const db = {
+      prepare() {
+        return {
+          bind() {
+            return { all: async () => ({ results: rows }) };
+          },
+        };
+      },
+    } as unknown as D1Database;
+    const prior = await loadMaterialWindowResume(db, "mat-1", "current");
+    expect(prior.startPage).toBe(9);
+    const all = await loadMaterialWindowResume(db, "mat-1");
+    expect(all.startPage).toBe(41);
   });
 });
 

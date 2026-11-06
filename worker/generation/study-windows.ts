@@ -232,6 +232,25 @@ export function mergeWindowResumes(
   return { startPage, usedKeys: used.slice(-MAX_USED_KEYS) };
 }
 
+const MATERIAL_COVERAGE_SQL =
+  "SELECT id, coverage_json FROM generation_jobs WHERE material_id = ? AND coverage_json IS NOT NULL ORDER BY finished_at ASC";
+
+export async function loadMaterialWindowResume(
+  db: D1Database,
+  materialId: string,
+  exceptJobId?: string,
+): Promise<{ startPage: number; usedKeys: string[] }> {
+  const { results } = await db
+    .prepare(MATERIAL_COVERAGE_SQL)
+    .bind(materialId)
+    .all<{ id: string; coverage_json: string | null }>();
+  return mergeWindowResumes(
+    (results ?? [])
+      .filter((row) => row.id !== exceptJobId)
+      .map((row) => row.coverage_json),
+  );
+}
+
 function capKeys(keys: string[]): string[] {
   return keys.slice(-MAX_USED_KEYS);
 }

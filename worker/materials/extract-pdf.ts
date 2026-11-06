@@ -92,7 +92,7 @@ export async function extractPdfPages(
 
 /** Card regen still refuses a full-file read above the pre-window caps. */
 const REGEN_MAX_PAGES = 50;
-const REGEN_MAX_CHARS = 200_000;
+export const REGEN_MAX_CHARS = 200_000;
 
 /** Throws above the old caps so regen uses the card excerpt, not the opening window. */
 export async function extractPdfText(data: ArrayBuffer): Promise<string> {
