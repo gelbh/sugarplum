@@ -644,7 +644,7 @@ export default function StudyPage() {
       >
         <Stack
           spacing={stage ? { xs: 0.75, sm: 1.5 } : 2}
-          sx={{ flex: 1, minHeight: 0 }}
+          sx={stage ? { flex: 1, minHeight: 0 } : undefined}
         >
           <Stack
             direction="row"
@@ -910,13 +910,15 @@ export default function StudyPage() {
                 onPointerCancel={onPointerCancel}
                 sx={{
                   touchAction: "manipulation",
-                  flex: 1,
                   display: "flex",
                   alignItems: { xs: "stretch", sm: "center" },
                   justifyContent: "center",
                   py: { xs: 0.5, sm: 2 },
-                  minHeight: 0,
-                  overflow: "hidden",
+                  // Plate height is a percentage of this box. Outside fullscreen
+                  // there is no definite height, so flex-basis 0 clips the card.
+                  ...(stage
+                    ? { flex: 1, minHeight: 0, overflow: "hidden" }
+                    : { flex: "0 0 auto", height: "min(68dvh, 520px)" }),
                 }}
               >
                 <CardFace
