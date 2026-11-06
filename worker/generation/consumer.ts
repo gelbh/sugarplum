@@ -1,8 +1,8 @@
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { decryptSecret } from "../crypto/secrets";
-import { extractPdfText } from "../materials/extract-pdf";
-import { extractPptxText } from "../materials/extract-pptx";
+import { extractPdfPages } from "../materials/extract-pdf";
+import { extractPptxSlides } from "../materials/extract-pptx";
 import { extractFiguresViaDocling } from "../materials/docling";
 import {
   listFigureChildrenForPdf,
@@ -23,9 +23,18 @@ import {
 import { buildExtraUserSuffix } from "./feedback-hints";
 import {
   critiqueDraftsAgainstSource,
+  MAX_PIPELINE_CHUNKS,
   remainderAfterRules,
   runGenerationPipeline,
 } from "./pipeline";
+import {
+  filterNovelDrafts,
+  focusStudyPages,
+  isNearDuplicateFront,
+  mergeWindowResumes,
+  prepareStudySource,
+  type WindowResume,
+} from "./study-windows";
 import {
   IMAGE_STAGES,
   PDF_FIGURE_ONLY_STAGES,
@@ -289,20 +298,92 @@ function bindOcclusionImageKey(
   });
 }
 
-/** Merge rules then LLM drafts; drop near-identical fronts (trim + lower). */
+/** Merge rules then LLM drafts; drop exact and close-paraphrase fronts. */
 export function mergeAndDedupeDrafts(
   rulesDrafts: CardDraft[],
   llmDrafts: CardDraft[],
 ): CardDraft[] {
   const seen = new Set<string>();
+  const stringFronts: string[] = [];
   const out: CardDraft[] = [];
   for (const draft of [...rulesDrafts, ...llmDrafts]) {
     const key = draftDedupeKey(draft);
     if (seen.has(key)) continue;
+    if (
+      typeof draft.front === "string" &&
+      isNearDuplicateFront(draft.front, stringFronts)
+    ) {
+      continue;
+    }
     seen.add(key);
+    if (typeof draft.front === "string") stringFronts.push(draft.front);
     out.push(draft);
   }
   return out;
+}
+
+const NO_NEW_SECTIONS = "No new high-yield sections left in this document.";
+
+async function loadDeckFronts(
+  db: D1Database,
+  deckId: string,
+): Promise<string[]> {
+  const { results } = await db
+    .prepare(
+      "SELECT front_json FROM cards WHERE deck_id = ? AND status IN ('draft', 'accepted') ORDER BY created_at DESC LIMIT 80",
+    )
+    .bind(deckId)
+    .all<{ front_json: string }>();
+  const fronts: string[] = [];
+  for (const row of results ?? []) {
+    try {
+      const parsed: unknown = JSON.parse(row.front_json);
+      if (typeof parsed === "string" && parsed.trim()) {
+        fronts.push(parsed.trim());
+      } else if (
+        parsed &&
+        typeof parsed === "object" &&
+        "prompt" in parsed &&
+        typeof (parsed as { prompt?: unknown }).prompt === "string"
+      ) {
+        const prompt = (parsed as { prompt: string }).prompt.trim();
+        if (prompt) fronts.push(prompt);
+      }
+    } catch {
+      // A bad front must not fail the job.
+    }
+  }
+  return fronts;
+}
+
+async function loadPriorResume(
+  db: D1Database,
+  materialId: string,
+  jobId: string,
+): Promise<{ startPage: number; usedKeys: string[] }> {
+  const { results } = await db
+    .prepare(
+      "SELECT coverage_json FROM generation_jobs WHERE material_id = ? AND id != ? AND coverage_json IS NOT NULL ORDER BY finished_at ASC",
+    )
+    .bind(materialId, jobId)
+    .all<{ coverage_json: string | null }>();
+  return mergeWindowResumes((results ?? []).map((row) => row.coverage_json));
+}
+
+async function rememberExhaustedWindow(
+  db: D1Database,
+  jobId: string,
+  resume: WindowResume | null,
+): Promise<void> {
+  if (!resume) return;
+  const coverageJson = JSON.stringify({
+    ...buildCoverageLedger("", []),
+    window_resume: resume,
+  });
+  await db
+    .prepare("UPDATE generation_jobs SET coverage_json = ? WHERE id = ?")
+    .bind(coverageJson, jobId)
+    .run();
 }
 
 async function markJobFailed(
@@ -333,21 +414,10 @@ async function extractMaterialText(
     throw new Error(`R2 object missing: ${material.r2_key}`);
   }
 
-  if (material.kind === "paste") {
-    return obj.text();
+  if (material.kind !== "paste") {
+    throw new Error(`Unsupported material kind for generation: ${material.kind}`);
   }
-
-  if (material.kind === "pdf") {
-    const bytes = await obj.arrayBuffer();
-    return extractPdfText(bytes);
-  }
-
-  if (material.kind === "pptx") {
-    const bytes = await obj.arrayBuffer();
-    return extractPptxText(bytes);
-  }
-
-  throw new Error(`Unsupported material kind for generation: ${material.kind}`);
+  return obj.text();
 }
 
 /** Chunked so large images do not blow the call stack via spread. */
@@ -418,6 +488,8 @@ async function runTextDraftPipeline(args: {
   topicHints?: string[];
   /** Reject avoid-patterns from the job (`avoid_patterns_json`). */
   avoidPatterns?: string[];
+  /** Fronts already in the deck. Later chunks also see this run's new fronts. */
+  avoidFronts?: string[];
   /** Emit rules stage before LLM when using TEXT_LLM_STAGES catalog. */
   emitRulesStage?: boolean;
 }): Promise<CardDraft[]> {
@@ -485,6 +557,7 @@ async function runTextDraftPipeline(args: {
       provider,
       topicHints: args.topicHints,
       avoidPatterns: args.avoidPatterns,
+      avoidFronts: args.avoidFronts,
       onProgress: args.emit
         ? (e) =>
             args.emit!.emit(
@@ -676,6 +749,9 @@ export async function processGenerateJob(
     const avoidPatterns = parseTopicHintsJson(
       progressRow?.avoid_patterns_json,
     );
+    const prior = await loadPriorResume(db, materialId, jobId);
+    const deckFronts = await loadDeckFronts(db, deckId);
+    let windowResume: WindowResume | null = null;
 
     let drafts: Array<CardDraft & { mediaR2Keys?: string[] | null }>;
     /** Text used for coverage gaps; empty for image-only jobs. */
@@ -777,12 +853,24 @@ export async function processGenerateJob(
       let text = "";
       let textError: unknown;
       try {
-        text = await extractPdfText(pdfBytes.slice(0));
+        const focused = await focusStudyPages(
+          (start) => extractPdfPages(pdfBytes.slice(0), start),
+          {
+            startPage: prior.startPage,
+            topicHints,
+            usedKeys: prior.usedKeys,
+          },
+        );
+        text = focused.text;
+        windowResume = focused.resume;
       } catch (err) {
         textError = err;
         console.warn("PDF text extraction failed; trying figures", err);
       }
       coverageMaterial = text;
+      if (text.trim() && (windowResume?.total_pages ?? 0) > 1) {
+        await progress.emit("extract", 0, 0, "Using the highest-yield sections");
+      }
 
       // Emit an excerpt event after extraction when text is present.
       if (text.trim()) {
@@ -970,14 +1058,26 @@ export async function processGenerateJob(
           emit: progress,
           topicHints,
           avoidPatterns,
+          avoidFronts: deckFronts,
           emitRulesStage: true,
         });
       }
 
-      drafts = filterDraftsByQuality([...textDrafts, ...figureDrafts]);
+      const pdfQuality = filterDraftsByQuality([
+        ...textDrafts,
+        ...figureDrafts,
+      ]);
+      drafts = filterNovelDrafts(pdfQuality, deckFronts);
       if (drafts.length === 0) {
         if (textError && figureDrafts.length === 0) {
           throw textError;
+        }
+        if (!text.trim()) {
+          await rememberExhaustedWindow(db, jobId, windowResume);
+          if (prior.usedKeys.length > 0) throw new Error(NO_NEW_SECTIONS);
+        }
+        if (pdfQuality.length > 0 && deckFronts.length > 0) {
+          throw new Error("New cards repeated cards already in this deck.");
         }
         throw new Error(
           text.trim()
@@ -997,15 +1097,62 @@ export async function processGenerateJob(
       await progress.emit("queued", 0, 0, "Queued");
       await progress.emit("extract", 0, 0, "Extracting material");
 
-      const text = await extractMaterialText(env, material);
+      let text = "";
+      if (material.kind === "pptx") {
+        if (!material.r2_key) {
+          throw new Error("Material has no R2 object to extract");
+        }
+        const pptxObject = await env.MATERIALS.get(material.r2_key);
+        if (!pptxObject) {
+          throw new Error(`R2 object missing: ${material.r2_key}`);
+        }
+        const pptxBytes = await pptxObject.arrayBuffer();
+        const focused = await focusStudyPages(
+          (start) => extractPptxSlides(pptxBytes, { startSlide: start }),
+          {
+            startPage: prior.startPage,
+            topicHints,
+            usedKeys: prior.usedKeys,
+          },
+        );
+        text = focused.text;
+        windowResume = focused.resume;
+      } else {
+        const raw = await extractMaterialText(env, material);
+        const prepared = prepareStudySource({
+          pages: [{ page: 1, text: raw }],
+          topicHints,
+          usedKeys: prior.usedKeys,
+          limit: MAX_PIPELINE_CHUNKS,
+          pageStart: 1,
+          pageEnd: 1,
+          totalPages: 1,
+        });
+        text = prepared.text;
+        windowResume = prepared.resume;
+      }
       coverageMaterial = text;
       // Emit an excerpt event after extraction.
       if (text.trim()) {
         const excerpt = text.split(/\r?\n/).find((l) => l.trim()) ?? text;
         progress.addEvent("excerpt", "extract", excerpt.slice(0, 160));
+        if ((windowResume?.total_pages ?? 1) > 1) {
+          await progress.emit(
+            "extract",
+            0,
+            0,
+            "Using the highest-yield sections",
+          );
+        }
       }
       if (!text.trim()) {
-        throw new Error("Extracted material text is empty");
+        await rememberExhaustedWindow(db, jobId, windowResume);
+        if (prior.usedKeys.length > 0) throw new Error(NO_NEW_SECTIONS);
+        throw new Error(
+          material.kind === "pptx"
+            ? "PPTX text extraction returned no text. Paste slide notes or OCR text instead."
+            : "Extracted material text is empty",
+        );
       }
 
       drafts = await runTextDraftPipeline({
@@ -1018,12 +1165,16 @@ export async function processGenerateJob(
         emit: progress,
         topicHints,
         avoidPatterns,
+        avoidFronts: deckFronts,
         emitRulesStage: true,
       });
-      drafts = filterDraftsByQuality(drafts);
+      const textQuality = filterDraftsByQuality(drafts);
+      drafts = filterNovelDrafts(textQuality, deckFronts);
       if (drafts.length === 0) {
         throw new Error(
-          "No flashcard drafts could be produced from this material.",
+          textQuality.length > 0 && deckFronts.length > 0
+            ? "New cards repeated cards already in this deck."
+            : "No flashcard drafts could be produced from this material.",
         );
       }
       await progress.emit("persist", 0, 1, "Saving drafts");
@@ -1031,8 +1182,9 @@ export async function processGenerateJob(
       await progress.emit("persist", 1, 1, "Saving drafts");
     }
 
+    const ledger = buildCoverageLedger(coverageMaterial, drafts);
     const coverageJson = JSON.stringify(
-      buildCoverageLedger(coverageMaterial, drafts),
+      windowResume ? { ...ledger, window_resume: windowResume } : ledger,
     );
 
     const finishedAt = new Date().toISOString();
