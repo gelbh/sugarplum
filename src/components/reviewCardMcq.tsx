@@ -34,7 +34,7 @@ const FIELD_SX = {
   color: "inherit",
   px: 1,
   borderRadius: 1,
-  border: "1px solid rgba(30, 13, 27, 0.18)",
+  border: "1px solid color-mix(in srgb, var(--sp-stage-bg) 18%, transparent)",
 } as const;
 
 export function ReviewMcqFace({

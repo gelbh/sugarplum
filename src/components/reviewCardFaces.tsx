@@ -110,7 +110,11 @@ function EditableText({
         px: 1,
         borderRadius: 1,
         cursor: disabled ? "default" : "text",
-        "&:hover": disabled ? undefined : { bgcolor: "rgba(30, 13, 27, 0.05)" },
+        "&:hover": disabled
+          ? undefined
+          : {
+              bgcolor: "color-mix(in srgb, var(--sp-stage-bg) 5%, transparent)",
+            },
         "&:focus-visible": { outline: "2px solid currentColor", outlineOffset: 2 },
       }}
     >

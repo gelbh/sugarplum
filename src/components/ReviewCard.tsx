@@ -57,21 +57,23 @@ const STAGE_SELECT_SX = {
   minWidth: 168,
   color: "var(--sp-ivory)",
   "& .MuiOutlinedInput-notchedOutline": {
-    borderColor: "rgba(232, 216, 199, 0.35)",
+    borderColor: "color-mix(in srgb, var(--sp-ivory) 35%, transparent)",
   },
   "&:hover .MuiOutlinedInput-notchedOutline": {
-    borderColor: "rgba(232, 216, 199, 0.6)",
+    borderColor: "color-mix(in srgb, var(--sp-ivory) 60%, transparent)",
   },
   "& .MuiSelect-icon": { color: "inherit" },
   "&&.Mui-focused .MuiOutlinedInput-notchedOutline": {
     borderColor: "var(--sp-ivory)",
   },
-  "&&.Mui-disabled": { color: "rgba(232, 216, 199, 0.55)" },
+  "&&.Mui-disabled": {
+    color: "color-mix(in srgb, var(--sp-ivory) 55%, transparent)",
+  },
   "&&.Mui-disabled .MuiSelect-select": {
-    WebkitTextFillColor: "rgba(232, 216, 199, 0.55)",
+    WebkitTextFillColor: "color-mix(in srgb, var(--sp-ivory) 55%, transparent)",
   },
   "&&.Mui-disabled .MuiOutlinedInput-notchedOutline": {
-    borderColor: "rgba(232, 216, 199, 0.2)",
+    borderColor: "color-mix(in srgb, var(--sp-ivory) 20%, transparent)",
   },
 } as const;
 
@@ -315,8 +317,21 @@ export default function ReviewCard({
               onClick={() => setReason(selected ? null : code)}
               sx={
                 selected
-                  ? { color: again.fg, bgcolor: again.wash, borderColor: again.border }
-                  : { color: "inherit", borderColor: "rgba(232, 216, 199, 0.35)" }
+                  ? {
+                      color: again.fg,
+                      bgcolor: again.wash,
+                      borderColor: again.border,
+                      "&:hover": { bgcolor: again.wash },
+                    }
+                  : {
+                      color: "inherit",
+                      borderColor:
+                        "color-mix(in srgb, var(--sp-ivory) 35%, transparent)",
+                      "&:hover": {
+                        bgcolor:
+                          "color-mix(in srgb, var(--sp-ivory) 12%, transparent)",
+                      },
+                    }
               }
             />
           );
