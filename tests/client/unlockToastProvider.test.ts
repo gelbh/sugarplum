@@ -96,4 +96,14 @@ describe("UnlockToastProvider", () => {
     expect(() => advance(RIPEN_DELAY_MS)).not.toThrow();
     expect(toast()).toBeNull();
   });
+
+  it("centres over <main> beside the desktop drawer", () => {
+    act(() => enqueue([unlock("a", "First")]));
+    const css = [...document.querySelectorAll("style[data-emotion]")]
+      .map((s) => s.textContent)
+      .join("");
+    expect(css).toMatch(
+      /@media \(min-width:900px\)\{[^}]*\{[^}]*left:calc\(50% \+ 110px\)/,
+    );
+  });
 });

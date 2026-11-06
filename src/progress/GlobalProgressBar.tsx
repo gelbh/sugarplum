@@ -1,4 +1,3 @@
-import { useState } from "react";
 import Box from "@mui/material/Box";
 import LinearProgress from "@mui/material/LinearProgress";
 import { useProgressRegistry } from "./ProgressProvider";
@@ -13,13 +12,8 @@ type GlobalProgressBarProps = {
 /** Thin top bar for the primary active progress op (prefer job source). */
 export default function GlobalProgressBar({ top = 0 }: GlobalProgressBarProps) {
   const { primary } = useProgressRegistry();
-  const visible = useSpinDelay(primary != null, SHOW_TIMING);
-  // The minimum-visible tail outlives `primary`, so keep drawing the last op.
-  const [last, setLast] = useState(primary);
-  if (primary && primary !== last) setLast(primary);
-  const shown = primary ?? last;
-
-  if (!visible || !shown) return null;
+  const shown = useSpinDelay(primary, SHOW_TIMING);
+  if (!shown) return null;
 
   const determinate = shown.mode === "determinate";
 
