@@ -2,6 +2,7 @@ import { CRITIQUE_SYSTEM_PROMPT, critiqueUserPrompt } from "./critique-prompts";
 import {
   appendExtraUserSuffix,
   buildExtraUserSuffix,
+  coveredFrontsPromptSuffix,
 } from "./feedback-hints";
 import {
   salvageCompleteJsonObjects,
@@ -41,6 +42,8 @@ export type RunGenerationPipelineInput = {
   topicHints?: string[];
   /** Optional reject avoid-patterns snapshotted on job regen. */
   avoidPatterns?: string[];
+  /** Card fronts already in the deck, plus fronts produced earlier in this run. */
+  avoidFronts?: string[];
   /** Best-effort; throws from the callback must not abort the pipeline. */
   onProgress?: (event: PipelineProgressEvent) => void | Promise<void>;
   /** Fired after each chunk's critique (or generate fallback). Best-effort. */
@@ -306,6 +309,7 @@ export async function runGenerationPipeline(
     provider,
     topicHints,
     avoidPatterns,
+    avoidFronts,
     onProgress,
     onChunkDrafts,
   } = input;
@@ -313,6 +317,7 @@ export async function runGenerationPipeline(
 
   const generateSuffix = buildExtraUserSuffix({ topicHints, avoidPatterns });
   const critiqueSuffix = buildExtraUserSuffix({ avoidPatterns });
+  const coveredFronts = [...(avoidFronts ?? [])];
 
   const chunks = chunkText(text).slice(0, MAX_PIPELINE_CHUNKS);
   const total = chunks.length;
@@ -336,11 +341,12 @@ export async function runGenerationPipeline(
 
     await report("generate", chunkLabel, 2 * i);
 
+    const coveredSuffix = coveredFrontsPromptSuffix(coveredFronts);
     const generateInput: GenerateDraftsInput = {
       text: chunk,
       apiKey,
       provider,
-      extraUserSuffix: generateSuffix,
+      extraUserSuffix: [generateSuffix, coveredSuffix].filter(Boolean).join("\n\n"),
     };
     const generated = await llm.generateDrafts(generateInput);
 
@@ -361,13 +367,18 @@ export async function runGenerationPipeline(
       llm,
       apiKey,
       provider,
-      extraUserSuffix: critiqueSuffix,
+      extraUserSuffix: [critiqueSuffix, coveredSuffix].filter(Boolean).join("\n\n"),
     });
 
     await report("critique", chunkLabel, 2 * i + 2);
 
     const batch = critiqued ?? generated;
     out.push(...batch);
+    for (const draft of batch) {
+      if (typeof draft.front === "string" && draft.front.trim()) {
+        coveredFronts.push(draft.front.trim());
+      }
+    }
     await safeOnChunkDrafts(onChunkDrafts, batch);
   }
 

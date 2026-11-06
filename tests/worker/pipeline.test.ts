@@ -248,6 +248,40 @@ describe("runGenerationPipeline", () => {
     expect(llm.complete).toHaveBeenCalledTimes(MAX_PIPELINE_CHUNKS);
   });
 
+  it("tells later chunks which fronts are already covered", async () => {
+    const llm = mockPipelineLlm({
+      generate: async () => [
+        validDraft({
+          front: "What produces ATP?",
+          back: "mitochondria",
+          provenance: { pages: [1], excerpt: "e" },
+        }),
+      ],
+      complete: async () =>
+        JSON.stringify({
+          cards: [
+            validDraft({
+              front: "What produces ATP?",
+              back: "mitochondria",
+              provenance: { pages: [1], excerpt: "e" },
+            }),
+          ],
+        }),
+    });
+    const block = "y".repeat(CHUNK_CHAR_LIMIT - 10);
+    const text = `${block}\n\n${block}`;
+    await runGenerationPipeline({
+      text,
+      llm,
+      apiKey: "k",
+      provider: "mock",
+      avoidFronts: ["Existing host of Eimeria tenella?"],
+    });
+    const calls = vi.mocked(llm.generateDrafts).mock.calls;
+    expect(calls[0]?.[0].extraUserSuffix).toContain("Eimeria tenella");
+    expect(calls[1]?.[0].extraUserSuffix).toContain("What produces ATP?");
+  });
+
   it("runs generate then critique and returns critique survivors", async () => {
     const generated = validDraft({
       front: "What produces ATP?",
