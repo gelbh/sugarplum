@@ -35,6 +35,37 @@ export function selectEmptyPages(pages: readonly PageText[]): PageText[] {
   return empty;
 }
 
+export function ocrRefillWindow(
+  startPage: number,
+): { start: number; end: number } | null {
+  if (!Number.isInteger(startPage) || startPage > OCR_TEXT_LAYER_SCAN_LIMIT) {
+    return null;
+  }
+  return {
+    start: Math.max(1, startPage),
+    end: OCR_TEXT_LAYER_SCAN_LIMIT,
+  };
+}
+
+export function selectEmptyPagesInWindow(
+  pages: readonly PageText[],
+  args: { startPage: number; covered: readonly number[] },
+): PageText[] {
+  const window = ocrRefillWindow(args.startPage);
+  if (!window) return [];
+  const covered = new Set(args.covered);
+  const empty: PageText[] = [];
+  const ordered = pages.slice().sort((a, b) => a.page - b.page);
+  for (const page of ordered) {
+    if (page.page < window.start || page.page > window.end) continue;
+    if (covered.has(page.page)) continue;
+    if (page.text.trim()) continue;
+    empty.push(page);
+    if (empty.length >= OCR_EMPTY_PAGE_LIMIT) break;
+  }
+  return empty;
+}
+
 export function capOcrPageText(text: string): string {
   return text.trim().slice(0, OCR_PAGE_CHAR_CAP);
 }
@@ -99,6 +130,60 @@ export async function ocrEmptyPdfPages(
     }
     const out: PageText[] = [];
     for (const row of selectEmptyPages(rows)) {
+      try {
+        const canvas = await renderPdfPageToCanvas(
+          pdf,
+          row.page - 1,
+          OCR_RENDER_CSS_WIDTH,
+        );
+        const recognized = await worker.recognize(await canvasToBlob(canvas));
+        const text = capOcrPageText(
+          typeof recognized.data.text === "string" ? recognized.data.text : "",
+        );
+        if (text) out.push({ page: row.page, text });
+      } catch (err) {
+        console.warn(`PDF scan OCR skipped page ${row.page}`, err);
+      }
+    }
+    return out.length > 0 ? out : undefined;
+  } finally {
+    await pdf.cleanup();
+  }
+}
+
+export async function ocrEmptyPdfPagesInWindow(
+  data: ArrayBuffer,
+  args: { startPage: number; covered: readonly number[] },
+): Promise<PageText[] | undefined> {
+  let worker: ScanWorker;
+  try {
+    worker = await ensureScanWorker();
+  } catch (err) {
+    console.warn("PDF scan OCR worker failed to load", err);
+    return undefined;
+  }
+
+  const pdf = await loadPdfDocument(data);
+  try {
+    const range = ocrRefillWindow(args.startPage);
+    if (!range) return undefined;
+    const limit = Math.min(range.end, pdf.numPages);
+    const rows: PageText[] = [];
+    for (let n = range.start; n <= limit; n++) {
+      const page = await pdf.getPage(n);
+      const content = await page.getTextContent();
+      const text = content.items
+        .map((item) =>
+          "str" in item && typeof item.str === "string" ? item.str : "",
+        )
+        .join(" ");
+      rows.push({ page: n, text });
+    }
+    const out: PageText[] = [];
+    for (const row of selectEmptyPagesInWindow(rows, {
+      startPage: args.startPage,
+      covered: args.covered,
+    })) {
       try {
         const canvas = await renderPdfPageToCanvas(
           pdf,

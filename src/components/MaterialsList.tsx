@@ -17,6 +17,7 @@ import {
   ApiError,
   deleteMaterial,
   downloadMaterialUrl,
+  refillPdfOcr,
   topicGenerate,
   type MaterialListItem,
 } from "../api/client";
@@ -91,6 +92,13 @@ export default function MaterialsList({
     setTopicBusy(true);
     setTopicError(null);
     try {
+      if (generateTarget.kind === "pdf") {
+        try {
+          await refillPdfOcr(generateTarget.id);
+        } catch (err) {
+          console.warn("PDF OCR refill skipped", err);
+        }
+      }
       const { jobId } = await topicGenerate(generateTarget.deck_id, {
         topic,
         materialId: generateTarget.id,

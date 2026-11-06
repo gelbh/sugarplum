@@ -29,7 +29,7 @@ import {
   filterNovelDrafts,
   focusStudyPages,
   isNearDuplicateFront,
-  mergeWindowResumes,
+  loadMaterialWindowResume,
   prepareStudySource,
   type WindowResume,
 } from "./study-windows";
@@ -330,13 +330,7 @@ async function loadPriorResume(
   materialId: string,
   jobId: string,
 ): Promise<{ startPage: number; usedKeys: string[] }> {
-  const { results } = await db
-    .prepare(
-      "SELECT coverage_json FROM generation_jobs WHERE material_id = ? AND id != ? AND coverage_json IS NOT NULL ORDER BY finished_at ASC",
-    )
-    .bind(materialId, jobId)
-    .all<{ coverage_json: string | null }>();
-  return mergeWindowResumes((results ?? []).map((row) => row.coverage_json));
+  return loadMaterialWindowResume(db, materialId, jobId);
 }
 
 async function rememberExhaustedWindow(
