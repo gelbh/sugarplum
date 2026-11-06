@@ -427,7 +427,6 @@ describe("catalog versions", () => {
     seedStudyUser(env);
     seedAcceptedCard(env, { id: "c1", due: FUTURE });
     seedReview(env, "rl1", "c1");
-    // Evaluated against the shipped catalog before it grew.
     await ensureUserGamification(env.DB, "u1");
     expect(env.getUserGamification("u1")?.catalog_version).toBe(LATEST_VERSION);
     const next = LATEST_VERSION + 1;
