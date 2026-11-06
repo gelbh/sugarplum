@@ -66,4 +66,41 @@ describe("ShelfVolume", () => {
     expect(host.querySelector('input[type="checkbox"]')).toBeTruthy();
     host.remove();
   });
+
+  it("shows the stored cover and Unsplash attribution", () => {
+    const imageUrl = "https://images.unsplash.com/photo-1?ixid=keep-me&w=400";
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root: Root = createRoot(host);
+    act(() => {
+      root.render(
+        createElement(ShelfVolume, {
+          title: "Anatomy",
+          href: "/library/subjects/sub-1",
+          onNavigate: (event: MouseEvent<HTMLAnchorElement>) => event.preventDefault(),
+          meta: "2 decks",
+          studyLabel: "Study",
+          onStudy: () => {},
+          moreLabel: "More actions for Anatomy",
+          onMore: () => {},
+          cover: {
+            imageUrl,
+            photographerName: "Ada",
+            photographerUrl: "https://unsplash.com/@ada",
+            photoHtmlUrl: "https://unsplash.com/photos/abc",
+          },
+        }),
+      );
+    });
+    expect(host.querySelector("img")?.getAttribute("src")).toBe(imageUrl);
+    const links = [...host.querySelectorAll("a")];
+    const ada = links.find((link) => link.textContent === "Ada");
+    const unsplash = links.find((link) => link.textContent === "Unsplash");
+    expect(ada?.getAttribute("href")).toContain("utm_source=sugarplum");
+    expect(ada?.getAttribute("href")).toContain("utm_medium=referral");
+    expect(unsplash?.textContent).toBe("Unsplash");
+    expect(unsplash?.getAttribute("href")).toContain("utm_source=sugarplum");
+    expect(unsplash?.getAttribute("href")).toContain("utm_medium=referral");
+    host.remove();
+  });
 });
