@@ -49,4 +49,21 @@ describe("excerptHighlightRects", () => {
       { x: 20, y: 0, w: 24, h: 8 },
     ]);
   });
+
+  it("matches across a whitespace-only run and returns both word rects", () => {
+    expect(
+      excerptHighlightRects(
+        [
+          run("Hello", 0, 0, 20, 8),
+          run(" ", 20, 0, 4, 8),
+          run("world", 24, 0, 24, 8),
+        ],
+        "Hello world",
+        IDENTITY,
+      ),
+    ).toEqual([
+      { x: 0, y: 0, w: 20, h: 8 },
+      { x: 24, y: 0, w: 24, h: 8 },
+    ]);
+  });
 });

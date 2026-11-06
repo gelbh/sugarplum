@@ -46,9 +46,11 @@ export function excerptHighlightRects(
   const spans: { item: TextRun; start: number; end: number }[] = [];
   let joined = "";
   for (const item of items) {
-    if (spans.length > 0) joined += " ";
+    const text = normalize(item.str);
+    if (!text) continue;
+    if (joined.length > 0) joined += " ";
     const start = joined.length;
-    joined += normalize(item.str);
+    joined += text;
     spans.push({ item, start, end: joined.length });
   }
 
