@@ -7,25 +7,41 @@ import {
 } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
-import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import TodayIcon from "@mui/icons-material/Today";
 import { useUnlockToasts } from "../achievements/UnlockToastProvider";
+import { cardPatchBody } from "../cards/cardPatchBody";
 import CardFace, { type OcclusionStudyFace } from "../components/CardFace";
+import DraftCardEditor, {
+  type DraftEditorChange,
+} from "../components/DraftCardEditor";
 import GradeButtons from "../components/GradeButtons";
 import {
   ApiError,
-  listDecks,
+  asRegenType,
+  cardHasRegenSource,
   commitStudyPacing,
+  deleteCard,
+  listDecks,
   listDueCards,
   listSubjects,
   me,
+  patchCard,
+  regenCard,
   reviewCard,
   type CardDraftView,
   type OcclusionFrontView,
@@ -33,6 +49,7 @@ import {
   type StudyRating,
 } from "../api/client";
 import { isGuest } from "../guest/session";
+import { hubDiyTypes } from "../lib/hubDiyCreate";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { resolveCardGesture } from "../study/cardGestures";
@@ -52,7 +69,17 @@ import {
 } from "../study/dueCache";
 import { bumpIntroBonus, getIntroBonus } from "../study/introBonus";
 import { clientLocalDay } from "../study/localDay";
-import { enqueuePendingGrade, pendingCardIdSet } from "../study/pendingGrades";
+import {
+  dropPendingGrade,
+  enqueuePendingGrade,
+  pendingCardIdSet,
+} from "../study/pendingGrades";
+import {
+  addGrade,
+  emptyTally,
+  gradedTotal,
+  sessionEndKind,
+} from "../study/sessionTally";
 import {
   occlusionRevealAnswer,
   pickOcclusionRegion,
@@ -150,12 +177,27 @@ export default function StudyPage() {
   /** True once this mount showed at least one due card (scoped session-complete). */
   const [hadCards, setHadCards] = useState(false);
   const [queueMeta, setQueueMeta] = useState<StudyQueueMeta | null>(null);
+  const [tally, setTally] = useState(emptyTally);
+  const [editCard, setEditCard] = useState<CardDraftView | null>(null);
+  const [editBusy, setEditBusy] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [cardRegenBusy, setCardRegenBusy] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const cardDialogOpenRef = useRef(false);
+  cardDialogOpenRef.current = editCard !== null || confirmDelete;
   const introBonusRef = useRef<number | undefined>(undefined);
   if (introBonusRef.current === undefined) {
     introBonusRef.current = getIntroBonus();
   }
   const { zen, toggleZen, exitZen, ensureFullscreenIfNeeded } =
     useStudyZenMode();
+  useEffect(() => {
+    if (!zen) return;
+    setEditCard(null);
+    setConfirmDelete(false);
+  }, [zen]);
   const { enqueueUnlocks } = useUnlockToasts();
 
   const leaveStudy = useCallback(() => {
@@ -348,6 +390,7 @@ export default function StudyPage() {
   }, [endLoad, flushOnMount, load, refreshPendingCount, setUserId]);
 
   const current = queue[0] ?? null;
+  const endKind = sessionEndKind(hadCards, gradedTotal(tally));
   const mcqMode = isMcqCard(current);
   const occlusionParts = current
     ? occlusionStudyParts(current)
@@ -403,6 +446,7 @@ export default function StudyPage() {
           end(false);
           return false;
         }
+        setTally((prev) => addGrade(prev, rating));
         pruneDueCacheCard(uid, current.id, scopeOpts);
         refreshPendingCount(uid);
         advanceAfterGrade(fromMcq);
@@ -421,6 +465,7 @@ export default function StudyPage() {
         if (result.unlocks?.length) {
           enqueueUnlocks(result.unlocks);
         }
+        setTally((prev) => addGrade(prev, rating));
         advanceAfterGrade(fromMcq);
         end();
         return true;
@@ -464,6 +509,7 @@ export default function StudyPage() {
     if (!ready) return;
 
     function onKey(e: KeyboardEvent) {
+      if (cardDialogOpenRef.current) return;
       const key = plainShortcutKey(e);
       if (key === null) return;
       if (key === "Escape") {
@@ -575,6 +621,86 @@ export default function StudyPage() {
   const onPointerCancel = () => {
     pointerRef.current = null;
   };
+
+  const editDialogBusy = editBusy || cardRegenBusy;
+
+  function openEdit() {
+    if (!current) return;
+    setEditError(null);
+    setEditCard({
+      ...current,
+      options: current.options ? [...current.options] : undefined,
+    });
+  }
+
+  function onEditChange(next: DraftEditorChange) {
+    setEditCard((prev) =>
+      prev
+        ? {
+            ...prev,
+            front: next.front,
+            back: next.back,
+            type: next.type,
+            ...(next.options !== undefined ? { options: next.options } : {}),
+          }
+        : prev,
+    );
+  }
+
+  async function saveEdit() {
+    if (!editCard || editBusy) return;
+    setEditBusy(true);
+    setEditError(null);
+    try {
+      const updated = await patchCard(editCard.id, cardPatchBody(editCard));
+      setQueue((prev) => prev.map((c, i) => (i === 0 ? updated : c)));
+      setRevealed(false);
+      setEditCard(null);
+    } catch (err) {
+      setEditError(err instanceof ApiError ? err.message : "Could not save card");
+    } finally {
+      setEditBusy(false);
+    }
+  }
+
+  async function onRegenEditCard() {
+    if (!editCard || isGuest()) return;
+    const type = asRegenType(editCard.type);
+    if (type === null || !cardHasRegenSource(editCard)) return;
+    setCardRegenBusy(true);
+    setEditError(null);
+    try {
+      const updated = await regenCard(editCard.id, { type });
+      setQueue((prev) => prev.map((c, i) => (i === 0 ? updated : c)));
+      setEditCard(updated);
+    } catch (err) {
+      setEditError(
+        err instanceof ApiError ? err.message : "Could not regenerate card",
+      );
+    } finally {
+      setCardRegenBusy(false);
+    }
+  }
+
+  async function onConfirmDelete() {
+    if (!current || deleteBusy) return;
+    setDeleteBusy(true);
+    setDeleteError(null);
+    const cardId = current.id;
+    try {
+      await deleteCard(cardId);
+      if (userId) dropPendingGrade(userId, cardId);
+      setQueue((prev) => prev.slice(1));
+      setRevealed(false);
+      setConfirmDelete(false);
+    } catch (err) {
+      setDeleteError(
+        err instanceof ApiError ? err.message : "Could not delete card",
+      );
+    } finally {
+      setDeleteBusy(false);
+    }
+  }
 
   if (!ready) {
     return (
@@ -760,6 +886,45 @@ export default function StudyPage() {
                   Open Library
                 </Button>
               </Stack>
+            ) : endKind === "quiet" ? (
+              <Stack spacing={1.5} alignItems="stretch">
+                <Typography variant="body1" sx={{ textAlign: "center" }}>
+                  No cards left in this session.
+                </Typography>
+                <Button variant="contained" onClick={leaveStudy}>
+                  Today
+                </Button>
+                {canStudyMore ? (
+                  <Button
+                    variant="outlined"
+                    disabled={studyMoreBusy}
+                    onClick={() => void onStudyMore()}
+                  >
+                    {studyMoreBusy ? "Loading…" : "Study more"}
+                  </Button>
+                ) : null}
+                {scopeOpts ? (
+                  <Link
+                    href={
+                      scopeOpts.deckId
+                        ? `/library/decks/${encodeURIComponent(scopeOpts.deckId)}`
+                        : `/library/subjects/${encodeURIComponent(scopeOpts.subjectId!)}`
+                    }
+                    underline="hover"
+                    onClick={(ev) => {
+                      ev.preventDefault();
+                      exitZen();
+                      navigate(
+                        scopeOpts.deckId
+                          ? `/library/decks/${encodeURIComponent(scopeOpts.deckId)}`
+                          : `/library/subjects/${encodeURIComponent(scopeOpts.subjectId!)}`,
+                      );
+                    }}
+                  >
+                    Back to {scopeOpts.deckId ? "deck" : "subject"}
+                  </Link>
+                ) : null}
+              </Stack>
             ) : (
               <Stack spacing={1.5}>
                 <Alert severity="success">
@@ -812,6 +977,33 @@ export default function StudyPage() {
             )
           ) : (
             <>
+              {stage ? null : (
+                <Stack
+                  direction="row"
+                  spacing={0.5}
+                  sx={{ alignSelf: "flex-end" }}
+                >
+                  <IconButton
+                    size="small"
+                    aria-label="Edit card"
+                    disabled={offlineCopy || editDialogBusy || deleteBusy}
+                    onClick={openEdit}
+                  >
+                    <EditOutlinedIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    aria-label="Delete card"
+                    disabled={offlineCopy || editDialogBusy || deleteBusy}
+                    onClick={() => {
+                      setDeleteError(null);
+                      setConfirmDelete(true);
+                    }}
+                  >
+                    <DeleteOutlineIcon fontSize="small" />
+                  </IconButton>
+                </Stack>
+              )}
               <Typography
                 variant="caption"
                 sx={{
@@ -882,6 +1074,85 @@ export default function StudyPage() {
             </>
           )}
         </Stack>
+        <Dialog
+          open={editCard !== null}
+          onClose={() => !editDialogBusy && setEditCard(null)}
+          fullWidth
+          maxWidth="sm"
+        >
+          <DialogTitle>Edit card</DialogTitle>
+          <DialogContent>
+            {editError ? (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {editError}
+              </Alert>
+            ) : null}
+            {editCard ? (
+              <Box sx={{ pt: 1 }}>
+                <DraftCardEditor
+                  card={editCard}
+                  disabled={editDialogBusy}
+                  onChange={onEditChange}
+                  allowedTypes={hubDiyTypes(isGuest())}
+                  regenAction={
+                    isGuest()
+                      ? undefined
+                      : {
+                          busy: cardRegenBusy,
+                          disabled:
+                            asRegenType(editCard.type) === null ||
+                            !cardHasRegenSource(editCard),
+                          onClick: () => {
+                            void onRegenEditCard();
+                          },
+                        }
+                  }
+                />
+              </Box>
+            ) : null}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEditCard(null)} disabled={editDialogBusy}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              disabled={editDialogBusy || !editCard}
+              onClick={() => void saveEdit()}
+            >
+              {editBusy ? "Saving…" : "Save"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog
+          open={confirmDelete}
+          onClose={() => !deleteBusy && setConfirmDelete(false)}
+        >
+          <DialogTitle>Delete this card?</DialogTitle>
+          <DialogContent>
+            {deleteError ? (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {deleteError}
+              </Alert>
+            ) : null}
+            <DialogContentText>
+              This removes it from the deck, including its review history. You
+              cannot undo this.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setConfirmDelete(false)} disabled={deleteBusy}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              disabled={deleteBusy}
+              onClick={() => void onConfirmDelete()}
+            >
+              {deleteBusy ? "Deleting…" : "Delete"}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     </Box>
   );
