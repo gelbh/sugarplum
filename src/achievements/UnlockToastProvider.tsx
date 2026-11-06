@@ -11,6 +11,7 @@ import {
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import FruitMedal from "./FruitMedal";
+import { isUnlockView } from "./rememberUnlocks";
 import { DRAWER_WIDTH } from "../components/shell/chromeTokens";
 import { useStudyChrome } from "../study/StudyChromeContext";
 import type { UnlockView } from "./wire";
@@ -46,17 +47,6 @@ const SKIN = {
 } as const;
 
 type Phase = "enter" | "ripe" | "exit";
-
-// A rolled-back Worker still returns unlock id strings instead of objects.
-function isUnlockView(u: unknown): u is UnlockView {
-  if (typeof u !== "object" || u === null) return false;
-  const v = u as Partial<UnlockView>;
-  return (
-    typeof v.title === "string" &&
-    typeof v.fruitType === "string" &&
-    v.traits != null
-  );
-}
 
 type UnlockToastContextValue = {
   enqueueUnlocks: (unlocks: readonly unknown[]) => void;
