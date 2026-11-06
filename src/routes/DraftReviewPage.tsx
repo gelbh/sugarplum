@@ -474,7 +474,19 @@ export default function DraftReviewPage() {
         </Stack>
 
         {error ? <Alert severity="error">{error}</Alert> : null}
-        {notice ? <Alert severity="success">{notice}</Alert> : null}
+        {notice ? (
+          <Alert
+            severity="success"
+            sx={{
+              position: "sticky",
+              top: 0,
+              zIndex: 2,
+              bgcolor: "background.default",
+            }}
+          >
+            {notice}
+          </Alert>
+        ) : null}
 
         {coverage && coverage.covered.length > 0 ? (
           <Alert severity="info">
@@ -537,14 +549,6 @@ export default function DraftReviewPage() {
                 )}
               </Stack>
               <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
-                <Button
-                  variant="text"
-                  color="warning"
-                  onClick={() => setConfirmRejectDrafts(true)}
-                  disabled={jobActionDisabled}
-                >
-                  Reject remaining drafts
-                </Button>
                 <Button
                   variant="text"
                   color="error"
@@ -617,7 +621,7 @@ export default function DraftReviewPage() {
               </Button>
               <Button
                 variant="text"
-                color="warning"
+                color="error"
                 onClick={() => setConfirmRejectDrafts(true)}
                 disabled={jobActionDisabled || drafts.length === 0}
               >

@@ -70,6 +70,34 @@ export function plainShortcutKey(e: {
   return e.key;
 }
 
+const REVIEW_PORTAL =
+  '[role="dialog"], [role="listbox"], [role="menu"], [role="combobox"]';
+
+/** Draft review arrows: body or inside the stage. Typing targets and portaled widgets do not decide. */
+export function reviewArrowDecision(
+  e: {
+    key: string;
+    repeat: boolean;
+    ctrlKey: boolean;
+    metaKey: boolean;
+    altKey: boolean;
+    shiftKey: boolean;
+  },
+  active: Element | null,
+  stage: Element | null,
+): "accept" | "reject" | null {
+  if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return null;
+  if (e.shiftKey) return null;
+  if (plainShortcutKey({ ...e, target: active }) === null) return null;
+  if (active?.closest(REVIEW_PORTAL)) return null;
+  const atRest =
+    active === null ||
+    active === document.body ||
+    active === document.documentElement;
+  if (!atRest && (stage === null || !stage.contains(active))) return null;
+  return e.key === "ArrowRight" ? "accept" : "reject";
+}
+
 /** Focused native controls keep their own Space activation. */
 export function isInteractiveKeyTarget(target: EventTarget | null): boolean {
   return target instanceof Element && target.closest(INTERACTIVE) !== null;

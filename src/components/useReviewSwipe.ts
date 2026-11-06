@@ -5,27 +5,37 @@ import {
   useState,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
+  type RefObject,
 } from "react";
 import {
   REVIEW_DRAG_SLOP_PX,
   REVIEW_FLY_MS,
   resolveReviewSwipe,
+  reviewSwipeVisual,
   type ReviewSwipeDecision,
 } from "../study/cardGestures";
+import { gradeColorVars } from "../study/gradeColors";
+import { reviewArrowDecision } from "../study/studyKeys";
+
+export function applyReviewSwipeFrame(
+  plate: HTMLElement,
+  stamp: HTMLElement | null,
+  visual: ReturnType<typeof reviewSwipeVisual>,
+): void {
+  plate.style.transform = visual.transform;
+  plate.style.opacity = visual.dimmed ? "0.4" : "1";
+  if (!stamp) return;
+  const tone = gradeColorVars(visual.stamp === "accept" ? 4 : 1);
+  stamp.style.opacity = String(visual.stampOpacity);
+  stamp.textContent = visual.stamp === "accept" ? "Accept" : "Reject";
+  stamp.hidden = visual.stamp === null;
+  stamp.style.color = tone.border;
+  stamp.style.borderColor = tone.border;
+  stamp.style.transform = `translateX(-50%) rotate(${visual.stamp === "accept" ? -10 : 10}deg)`;
+}
 
 const NO_SWIPE_SELECTOR =
   'input, textarea, button, select, [role="combobox"], [data-no-swipe]';
-
-function isKeyboardTypingTarget(el: Element | null): boolean {
-  if (!(el instanceof HTMLElement)) return false;
-  if (el.isContentEditable) return true;
-  if (["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName)) return true;
-  return (
-    el.closest(
-      '[role="dialog"], [role="listbox"], [role="menu"], [role="combobox"]',
-    ) !== null
-  );
-}
 
 const NON_TEXT_INPUT_TYPES = [
   "button",
@@ -52,23 +62,65 @@ type TrackedPointer = { id: number; x: number; y: number; dragging: boolean };
 
 export function useReviewSwipe({
   locked,
+  stageRef,
   onCommit,
 }: {
   locked: boolean;
+  stageRef: RefObject<HTMLElement | null>;
   /** Resolve true once decided (the card unmounts); false springs it back. */
   onCommit: (decision: ReviewSwipeDecision) => Promise<boolean>;
 }) {
   const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
-  const [dx, setDx] = useState<number | null>(null);
   const [leaving, setLeaving] = useState<ReviewSwipeDecision | null>(null);
+  const plateRef = useRef<HTMLDivElement>(null);
+  const stampRef = useRef<HTMLDivElement>(null);
+  const releaseDxRef = useRef(0);
   const pointerRef = useRef<TrackedPointer | null>(null);
   const suppressClickRef = useRef(false);
   const committingRef = useRef(false);
   const mountedRef = useRef(false);
+  const reduceMotionRef = useRef(reduceMotion);
   const blocked = locked || leaving !== null;
+
+  const paint = (dx: number, leavingNow: ReviewSwipeDecision | null) => {
+    const plate = plateRef.current;
+    if (!plate) return;
+    const visual = reviewSwipeVisual({
+      dx,
+      leaving: leavingNow,
+      reduceMotion: reduceMotionRef.current,
+    });
+    applyReviewSwipeFrame(plate, stampRef.current, visual);
+  };
+
+  const springBack = () => {
+    releaseDxRef.current = 0;
+    const plate = plateRef.current;
+    if (plate) {
+      plate.style.transition = reduceMotionRef.current
+        ? "none"
+        : `transform ${REVIEW_FLY_MS}ms ease-out`;
+      plate.style.transform = "";
+      plate.style.opacity = "";
+    }
+    const stamp = stampRef.current;
+    if (stamp) {
+      stamp.hidden = true;
+      stamp.style.opacity = "0";
+    }
+  };
+
+  useEffect(() => {
+    reduceMotionRef.current = reduceMotion;
+  }, [reduceMotion]);
 
   useEffect(() => {
     mountedRef.current = true;
+    const stamp = stampRef.current;
+    if (stamp) {
+      stamp.hidden = true;
+      stamp.style.opacity = "0";
+    }
     return () => {
       mountedRef.current = false;
     };
@@ -92,7 +144,7 @@ export function useReviewSwipe({
     if (ok || !mountedRef.current) return;
     committingRef.current = false;
     setLeaving(null);
-    setDx(null);
+    springBack();
   }
 
   const commitRef = useRef(commit);
@@ -101,25 +153,28 @@ export function useReviewSwipe({
   });
 
   useEffect(() => {
+    if (!leaving) return;
+    const plate = plateRef.current;
+    if (plate) {
+      plate.style.transition = reduceMotion
+        ? "none"
+        : `transform ${REVIEW_FLY_MS}ms ease-out`;
+    }
+    paint(reduceMotion ? releaseDxRef.current : 0, leaving);
+  }, [leaving, reduceMotion]);
+
+  useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
-      if (
-        e.repeat ||
-        e.altKey ||
-        e.metaKey ||
-        e.ctrlKey ||
-        e.shiftKey ||
-        e.defaultPrevented
-      ) {
-        return;
-      }
-      if (isKeyboardTypingTarget(document.activeElement)) return;
+      const active =
+        document.activeElement instanceof Element ? document.activeElement : null;
+      const decision = reviewArrowDecision(e, active, stageRef.current);
+      if (!decision || e.defaultPrevented) return;
       e.preventDefault();
-      void commitRef.current(e.key === "ArrowRight" ? "accept" : "reject");
+      void commitRef.current(decision);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [stageRef]);
 
   const onPointerDown = (e: ReactPointerEvent<HTMLElement>) => {
     suppressClickRef.current = false;
@@ -146,7 +201,7 @@ export function useReviewSwipe({
     if (!tracked || tracked.id !== e.pointerId) return;
     if (e.buttons === 0) {
       pointerRef.current = null;
-      setDx(null);
+      springBack();
       return;
     }
     const moveDx = e.clientX - tracked.x;
@@ -163,7 +218,9 @@ export function useReviewSwipe({
       tracked.dragging = true;
       e.currentTarget.setPointerCapture(e.pointerId);
     }
-    setDx(moveDx);
+    releaseDxRef.current = moveDx;
+    if (plateRef.current) plateRef.current.style.transition = "none";
+    paint(moveDx, null);
   };
 
   const onPointerUp = (e: ReactPointerEvent<HTMLElement>) => {
@@ -180,7 +237,7 @@ export function useReviewSwipe({
       dy: e.clientY - tracked.y,
     });
     if (result === "none" || blocked) {
-      setDx(null);
+      springBack();
       return;
     }
     void commit(result);
@@ -189,7 +246,7 @@ export function useReviewSwipe({
   const onPointerCancel = (e: ReactPointerEvent<HTMLElement>) => {
     if (pointerRef.current?.id !== e.pointerId) return;
     pointerRef.current = null;
-    setDx(null);
+    springBack();
   };
 
   const onClickCapture = (e: ReactMouseEvent<HTMLElement>) => {
@@ -207,9 +264,9 @@ export function useReviewSwipe({
       onPointerCancel,
       onClickCapture,
     },
-    dx,
+    plateRef,
+    stampRef,
     leaving,
-    reduceMotion,
     commit,
   };
 }

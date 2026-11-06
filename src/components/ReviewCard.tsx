@@ -11,7 +11,7 @@ import Typography from "@mui/material/Typography";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { CardDraftView, CardType, StudyRating } from "../api/client";
 import {
   draftFaceKind,
@@ -25,11 +25,7 @@ import {
   REJECT_REASON_LABELS,
   type RejectReason,
 } from "../lib/rejectReasons";
-import {
-  REVIEW_FLY_MS,
-  reviewSwipeVisual,
-  type ReviewSwipeDecision,
-} from "../study/cardGestures";
+import { type ReviewSwipeDecision } from "../study/cardGestures";
 import { gradeColorVars } from "../study/gradeColors";
 import { StudyCardPlate } from "./CardFace";
 import { OcclusionReviewFace, TextReviewFace } from "./reviewCardFaces";
@@ -57,21 +53,23 @@ const STAGE_SELECT_SX = {
   minWidth: 168,
   color: "var(--sp-ivory)",
   "& .MuiOutlinedInput-notchedOutline": {
-    borderColor: "rgba(232, 216, 199, 0.35)",
+    borderColor: "color-mix(in srgb, var(--sp-ivory) 35%, transparent)",
   },
   "&:hover .MuiOutlinedInput-notchedOutline": {
-    borderColor: "rgba(232, 216, 199, 0.6)",
+    borderColor: "color-mix(in srgb, var(--sp-ivory) 60%, transparent)",
   },
   "& .MuiSelect-icon": { color: "inherit" },
   "&&.Mui-focused .MuiOutlinedInput-notchedOutline": {
     borderColor: "var(--sp-ivory)",
   },
-  "&&.Mui-disabled": { color: "rgba(232, 216, 199, 0.55)" },
+  "&&.Mui-disabled": {
+    color: "color-mix(in srgb, var(--sp-ivory) 55%, transparent)",
+  },
   "&&.Mui-disabled .MuiSelect-select": {
-    WebkitTextFillColor: "rgba(232, 216, 199, 0.55)",
+    WebkitTextFillColor: "color-mix(in srgb, var(--sp-ivory) 55%, transparent)",
   },
   "&&.Mui-disabled .MuiOutlinedInput-notchedOutline": {
-    borderColor: "rgba(232, 216, 199, 0.2)",
+    borderColor: "color-mix(in srgb, var(--sp-ivory) 20%, transparent)",
   },
 } as const;
 
@@ -151,19 +149,22 @@ export default function ReviewCard({
   onDecide,
 }: ReviewCardProps) {
   const [reason, setReason] = useState<RejectReason | null>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const root = stageRef.current;
+    if (!root) return;
+    const active = document.activeElement;
+    if (active instanceof Node && root.contains(active)) return;
+    root.focus({ preventScroll: true });
+  }, []);
   const swipe = useReviewSwipe({
     locked: disabled,
+    stageRef,
     onCommit: (decision) =>
       onDecide(decision, decision === "reject" ? reason : null),
   });
   const locked = disabled || swipe.leaving !== null;
   const again = gradeColorVars(1);
-  const visual = reviewSwipeVisual({
-    dx: swipe.dx ?? 0,
-    leaving: swipe.leaving,
-    reduceMotion: swipe.reduceMotion,
-  });
-  const stampColors = gradeColorVars(visual.stamp === "accept" ? 4 : 1);
 
   const faceProps = { card, disabled: locked, onChange };
   let face: ReactNode;
@@ -185,7 +186,18 @@ export default function ReviewCard({
   }
 
   return (
-    <Stack spacing={2}>
+    <Stack
+      ref={stageRef}
+      tabIndex={-1}
+      spacing={2}
+      sx={{
+        outline: "none",
+        "&:focus-visible": {
+          outline: "2px solid var(--sp-ivory)",
+          outlineOffset: 2,
+        },
+      }}
+    >
       <Stack
         direction="row"
         alignItems="center"
@@ -225,6 +237,7 @@ export default function ReviewCard({
           </Box>
         ) : null}
         <Box
+          ref={swipe.plateRef}
           {...swipe.handlers}
           sx={{
             position: "absolute",
@@ -232,41 +245,28 @@ export default function ReviewCard({
             touchAction: "pan-y",
             userSelect: "none",
             "&:has(textarea:focus, input:focus)": { userSelect: "auto" },
-            transform: visual.transform,
-            transition:
-              swipe.reduceMotion || (swipe.dx !== null && !swipe.leaving)
-                ? "none"
-                : `transform ${REVIEW_FLY_MS}ms ease-out`,
-            opacity: visual.dimmed ? 0.4 : 1,
           }}
         >
-          {visual.stamp ? (
-            <Box
-              aria-hidden
-              sx={{
-                position: "absolute",
-                top: 28,
-                left: "50%",
-                zIndex: 2,
-                pointerEvents: "none",
-                px: 1.5,
-                py: 0.5,
-                border: "2px solid",
-                borderColor: stampColors.border,
-                color: stampColors.border,
-                bgcolor: "var(--sp-card-face)",
-                borderRadius: 1,
-                fontFamily: FACE_SANS,
-                fontWeight: 600,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                opacity: visual.stampOpacity,
-                transform: `translateX(-50%) rotate(${visual.stamp === "accept" ? -10 : 10}deg)`,
-              }}
-            >
-              {visual.stamp === "accept" ? "Accept" : "Reject"}
-            </Box>
-          ) : null}
+          <Box
+            ref={swipe.stampRef}
+            aria-hidden
+            sx={{
+              position: "absolute",
+              top: 28,
+              left: "50%",
+              zIndex: 2,
+              pointerEvents: "none",
+              px: 1.5,
+              py: 0.5,
+              border: "2px solid",
+              bgcolor: "var(--sp-card-face)",
+              borderRadius: 1,
+              fontFamily: FACE_SANS,
+              fontWeight: 600,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+            }}
+          />
           {face}
         </Box>
       </Box>
@@ -298,8 +298,21 @@ export default function ReviewCard({
               onClick={() => setReason(selected ? null : code)}
               sx={
                 selected
-                  ? { color: again.fg, bgcolor: again.wash, borderColor: again.border }
-                  : { color: "inherit", borderColor: "rgba(232, 216, 199, 0.35)" }
+                  ? {
+                      color: again.fg,
+                      bgcolor: again.wash,
+                      borderColor: again.border,
+                      "&:hover": { bgcolor: again.wash },
+                    }
+                  : {
+                      color: "inherit",
+                      borderColor:
+                        "color-mix(in srgb, var(--sp-ivory) 35%, transparent)",
+                      "&:hover": {
+                        bgcolor:
+                          "color-mix(in srgb, var(--sp-ivory) 12%, transparent)",
+                      },
+                    }
               }
             />
           );
