@@ -45,7 +45,6 @@ import { resolveCardGesture } from "../study/cardGestures";
 import { studyQueueProgress } from "../study/studyQueueProgress";
 import {
   faceScrollsFor,
-  isInteractiveKeyTarget,
   plainShortcutKey,
   resolveStudyKey,
 } from "../study/studyKeys";
@@ -185,9 +184,7 @@ export default function StudyPage() {
   }, [exitZen]);
 
   const answerFocusRef = useRef<HTMLElement | null>(null);
-  const showAnswerRef = useRef<HTMLButtonElement | null>(null);
   const swipeHintUsedRef = useRef(false);
-  const focusShowAnswerAfterGradeRef = useRef(false);
   const pointerRef = useRef<PointerStart | null>(null);
   const busyRef = useRef(false);
   /** Suppress leave-on-Esc for one tick after FS exits (UA may clear FS before keydown). */
@@ -418,7 +415,6 @@ export default function StudyPage() {
   const flipBack = useCallback(() => {
     setRevealed(false);
     setShowSwipeHint(false);
-    focusShowAnswerAfterGradeRef.current = true;
   }, []);
 
   useEffect(() => {
@@ -426,16 +422,7 @@ export default function StudyPage() {
     answerFocusRef.current?.focus();
   }, [revealed, current?.id]);
 
-  useEffect(() => {
-    if (revealed || !current || !focusShowAnswerAfterGradeRef.current) return;
-    focusShowAnswerAfterGradeRef.current = false;
-    showAnswerRef.current?.focus();
-  }, [revealed, current?.id]);
-
-  const advanceAfterGrade = useCallback((fromMcq: boolean) => {
-    if (!fromMcq) {
-      focusShowAnswerAfterGradeRef.current = true;
-    }
+  const advanceAfterGrade = useCallback(() => {
     setQueue((prev) => prev.slice(1));
     setRevealed(false);
   }, []);
@@ -457,7 +444,7 @@ export default function StudyPage() {
         setTally((prev) => addGrade(prev, rating));
         pruneDueCacheCard(uid, current.id, scopeOpts);
         refreshPendingCount(uid);
-        advanceAfterGrade(fromMcq);
+        advanceAfterGrade();
         end();
         return true;
       };
@@ -476,7 +463,7 @@ export default function StudyPage() {
           setUnlocks((prev) => rememberUnlocks(prev, incoming));
         }
         setTally((prev) => addGrade(prev, rating));
-        advanceAfterGrade(fromMcq);
+        advanceAfterGrade();
         end();
         return true;
       } catch (err) {
@@ -545,10 +532,6 @@ export default function StudyPage() {
       switch (action.type) {
         case "reveal":
         case "hide":
-          if (isInteractiveKeyTarget(e.target)) return;
-          e.preventDefault();
-          if (action.type === "reveal") reveal();
-          else flipBack();
           return;
         case "grade":
           if (
@@ -574,16 +557,27 @@ export default function StudyPage() {
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [
-    current,
-    flipBack,
-    leaveStudy,
-    onGrade,
-    ready,
-    reveal,
-    revealed,
-    toggleZen,
-  ]);
+  }, [current, leaveStudy, onGrade, ready, revealed, toggleZen]);
+
+  useEffect(() => {
+    if (!ready) return;
+
+    function onSpace(e: KeyboardEvent) {
+      if (cardDialogOpenRef.current) return;
+      const key = plainShortcutKey(e);
+      if (key !== " ") return;
+      if (isMcqCard(current) || busyRef.current || !current) return;
+      const action = resolveStudyKey(key, revealed);
+      if (action.type !== "reveal" && action.type !== "hide") return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (action.type === "reveal") reveal();
+      else flipBack();
+    }
+
+    window.addEventListener("keydown", onSpace, true);
+    return () => window.removeEventListener("keydown", onSpace, true);
+  }, [current, flipBack, ready, reveal, revealed]);
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
@@ -935,7 +929,6 @@ export default function StudyPage() {
                   onFlipBack={flipBack}
                   disabled={busy}
                   answerFocusRef={answerFocusRef}
-                  showAnswerRef={showAnswerRef}
                   onGrade={
                     mcqMode ? (rating) => onGrade(rating, true) : undefined
                   }
