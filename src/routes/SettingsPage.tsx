@@ -20,6 +20,7 @@ import Switch from "@mui/material/Switch";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import {
   ApiError,
+  deleteLlmSettings,
   getGamification,
   getLlmSettings,
   getStudyPrefs,
@@ -206,6 +207,26 @@ export default function SettingsPage() {
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not save key");
       end(false);
+    }
+  }
+
+  async function onRemoveKey() {
+    if (
+      !window.confirm(
+        "Remove the saved API key? New generation will use free platform AI.",
+      )
+    ) {
+      return;
+    }
+    setError(null);
+    setNotice(null);
+    try {
+      await deleteLlmSettings();
+      setCurrent({ configured: false });
+      setApiKey("");
+      setNotice("API key removed. Generation will use free platform AI.");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not remove key");
     }
   }
 
@@ -685,6 +706,15 @@ export default function SettingsPage() {
                 >
                   {busy ? "Saving…" : "Save API key"}
                 </Button>
+                {current?.configured ? (
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    onClick={() => void onRemoveKey()}
+                  >
+                    Remove API key
+                  </Button>
+                ) : null}
               </Stack>
             </Box>
           </Paper>

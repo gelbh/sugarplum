@@ -145,6 +145,15 @@ settingsRoutes.put("/llm", async (c) => {
   } satisfies LlmSettingsConfigured);
 });
 
+settingsRoutes.delete("/llm", async (c) => {
+  const userId = await requireUser(c);
+  await getDb(c.env)
+    .prepare("DELETE FROM user_secrets WHERE user_id = ?")
+    .bind(userId)
+    .run();
+  return c.json({ configured: false } satisfies LlmSettingsMissing);
+});
+
 settingsRoutes.get("/study", async (c) => {
   const userId = await requireUser(c);
   const prefs = await loadStudyPrefs(getDb(c.env), userId);
