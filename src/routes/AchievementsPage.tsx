@@ -60,9 +60,11 @@ const NO_ITEMS: AchievementItem[] = [];
 
 function GalleryLayout({
   gamification,
+  tally,
   children,
 }: {
   gamification: GamificationResponse | null;
+  tally?: { collected: number; total: number };
   children: ReactNode;
 }) {
   return (
@@ -94,6 +96,11 @@ function GalleryLayout({
               Streak {gamification.streakCurrent} (best{" "}
               {gamification.streakBest}) · Level {gamification.level} ·{" "}
               {gamification.xpTotal} XP
+            </Typography>
+          ) : null}
+          {tally ? (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              {tally.collected} / {tally.total} collected
             </Typography>
           ) : null}
         </Box>
@@ -178,8 +185,12 @@ export default function AchievementsPage() {
       );
     case "ready": {
       const { gamification, board } = data;
+      const collected = items.filter((i) => i.completedAt != null).length;
       return (
-        <GalleryLayout gamification={gamification}>
+        <GalleryLayout
+          gamification={gamification}
+          tally={{ collected, total: items.length }}
+        >
           {FRUIT_ORDER.map((fruit) => {
             const list = grouped.get(fruit) ?? [];
             if (list.length === 0) return null;
@@ -199,6 +210,15 @@ export default function AchievementsPage() {
                   sx={{ fontWeight: 600, mb: 2, color: "primary.main" }}
                 >
                   {FRUIT_LABEL[fruit]}
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ ml: 1 }}
+                  >
+                    {list.filter((i) => i.completedAt != null).length} /{" "}
+                    {list.length}
+                  </Typography>
                 </Typography>
                 <Stack spacing={2}>
                   {list.map((item) => (

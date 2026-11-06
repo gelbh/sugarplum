@@ -122,6 +122,22 @@ describe("gamification read APIs", () => {
     });
   });
 
+  it("GET /api/achievements lists the full 55-medal catalog", async () => {
+    const env = createTestEnv();
+    const { session } = seedAuthedUser(env);
+    const res = await app.request(
+      "/api/achievements",
+      { headers: cookie(session) },
+      env,
+    );
+    const body = (await res.json()) as { items: AchievementItem[] };
+    expect(body.items).toHaveLength(55);
+    const rarity = (id: string) =>
+      body.items.find((i) => i.def.id === id)?.def.rarity;
+    expect(rarity("types_2")).toBe("common");
+    expect(rarity("clear_due_1")).toBe("common");
+  });
+
   it("GET /api/achievements returns items with derived traits", async () => {
     const env = createTestEnv();
     const { session } = seedAuthedUser(env);
