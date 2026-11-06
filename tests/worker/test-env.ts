@@ -2792,6 +2792,10 @@ export function createTestEnv(opts?: {
             created_at: existing?.created_at ?? created_at,
             updated_at,
           });
+        } else if (normalized.startsWith("DELETE FROM user_secrets WHERE user_id =")) {
+          const id = bound[0] as string;
+          const had = userSecrets.delete(id);
+          return { success: true, meta: { changes: had ? 1 : 0 } } as D1Result;
         } else if (normalized.startsWith("INSERT INTO user_study_prefs")) {
           const [user_id, intro_budget, review_budget, r_floor, updated_at] =
             bound as [string, number, number, number, string];

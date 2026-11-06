@@ -33,7 +33,7 @@ describe("secrets crypto", () => {
   });
 });
 
-describe("GET/PUT /api/settings/llm", () => {
+describe("GET/PUT/DELETE /api/settings/llm", () => {
   function seedUser(env: ReturnType<typeof createTestEnv>) {
     env.seedUser({
       id: "user-a",
@@ -254,5 +254,61 @@ describe("GET/PUT /api/settings/llm", () => {
     const env = createTestEnv();
     expect(env.SECRETS_WRAP_KEY).toBe(TEST_SECRETS_WRAP_KEY);
     expect(env.SECRETS_WRAP_KEY.length).toBe(32);
+  });
+
+  it("DELETE removes the stored key and returns configured false", async () => {
+    const env = createTestEnv();
+    seedUser(env);
+    const apiKey = "sk-delete-me-please";
+    const putRes = await app.request(
+      "/api/settings/llm",
+      {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({ provider: "openai", apiKey }),
+      },
+      env,
+    );
+    expect(putRes.status).toBe(200);
+
+    const delRes = await app.request(
+      "/api/settings/llm",
+      {
+        method: "DELETE",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+    expect(delRes.status).toBe(200);
+    const body = (await delRes.json()) as Record<string, unknown>;
+    expect(body).toEqual({ configured: false });
+    expect(JSON.stringify(body)).not.toContain(apiKey);
+    expect(body).not.toHaveProperty("ciphertext");
+    expect(env.getUserSecrets()).toEqual([]);
+
+    const getRes = await app.request(
+      "/api/settings/llm",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(await getRes.json()).toEqual({ configured: false });
+  });
+
+  it("DELETE with no stored key still returns configured false", async () => {
+    const env = createTestEnv();
+    seedUser(env);
+    const delRes = await app.request(
+      "/api/settings/llm",
+      {
+        method: "DELETE",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+    expect(delRes.status).toBe(200);
+    expect(await delRes.json()).toEqual({ configured: false });
   });
 });
