@@ -50,7 +50,7 @@ export function openAiJsonSchemaResponseFormat(): {
     type: "json_schema",
     json_schema: {
       name: "card_drafts",
-      // OpenAI strict mode requires every property, which would force optional options.
+      // strict: false because OpenAI strict mode would require the optional options field.
       strict: false,
       schema: cardDraftsSchema,
     },
