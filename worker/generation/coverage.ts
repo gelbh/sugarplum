@@ -59,9 +59,12 @@ export function buildCoverageLedger(
   const covered = drafts.map(coveredLabel);
 
   const gaps: string[] = [];
+  const seen = new Set<string>();
   for (const raw of material.split(/\r?\n/)) {
     const line = raw.trim();
     if (line.length < GAP_LINE_MIN) continue;
+    if (seen.has(line)) continue;
+    seen.add(line);
     if (!lineIsCovered(line, drafts)) {
       gaps.push(line);
       if (gaps.length >= GAP_CAP) break;
