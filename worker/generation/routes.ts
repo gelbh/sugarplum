@@ -11,6 +11,7 @@ import {
 import { buildAvoidPatternsFromRejected } from "./feedback-hints";
 import { getFreeGenUsage } from "./quota";
 import { normalizeTopicHints } from "./topic-hints";
+import { parseOptionalJsonBody } from "../optional-json";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -227,14 +228,9 @@ jobRoutes.post("/:id/regen", async (c) => {
   // Validate before the claim so a bad body never wipes or requeues.
   const raw = await c.req.text();
   let selectedHints: string[] | null = null;
-  if (raw.trim()) {
-    let body: unknown;
-    try {
-      body = JSON.parse(raw);
-    } catch {
-      throw new HTTPException(400, { message: "Invalid JSON body" });
-    }
-    if (!body || typeof body !== "object" || Array.isArray(body)) {
+  const body = parseOptionalJsonBody(raw);
+  if (body !== undefined) {
+    if (body === null || typeof body !== "object" || Array.isArray(body)) {
       throw new HTTPException(400, { message: "Invalid regen body" });
     }
     try {
