@@ -113,6 +113,12 @@ describe("topicHints prompt suffix", () => {
     expect(suffix.toLowerCase()).toMatch(/do not invent/);
   });
 
+  it("puts each hint on its own bullet line", () => {
+    const suffix = topicHintsPromptSuffix(["cranial nerves", "spinal cord"]);
+    expect(suffix).toContain("- cranial nerves\n- spinal cord");
+    expect(suffix).not.toContain("cranial nerves; spinal cord");
+  });
+
   it("returns empty string when hints are absent", () => {
     expect(topicHintsPromptSuffix([])).toBe("");
   });
@@ -392,7 +398,7 @@ describe("topicHints consumer injection", () => {
       .mock.calls.map(([input]) => (input.extraUserSuffix ?? "").toLowerCase());
     expect(
       suffixes.some((s) =>
-        s.includes("nuclei of the head; cranial nerves"),
+        s.includes("- nuclei of the head\n- cranial nerves"),
       ),
     ).toBe(true);
     const job = env.getGenerationJobs().find((j) => j.id === jobId)!;
