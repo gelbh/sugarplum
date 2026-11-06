@@ -2255,6 +2255,34 @@ export function createTestEnv(opts?: {
           }
           decks.delete(id);
           return { success: true, meta: { changes: 1 } } as D1Result;
+        } else if (normalized.startsWith("DELETE FROM review_logs WHERE card_id =")) {
+          const cardId = bound[0] as string;
+          let changes = 0;
+          for (let i = reviewLogs.length - 1; i >= 0; i--) {
+            if (reviewLogs[i].card_id === cardId) {
+              reviewLogs.splice(i, 1);
+              changes += 1;
+            }
+          }
+          return { success: true, meta: { changes } } as D1Result;
+        } else if (
+          normalized.startsWith("DELETE FROM card_schedules WHERE card_id =")
+        ) {
+          const cardId = bound[0] as string;
+          const had = schedules.delete(cardId);
+          return { success: true, meta: { changes: had ? 1 : 0 } } as D1Result;
+        } else if (
+          normalized.startsWith("DELETE FROM cards WHERE id =") &&
+          normalized.includes("status =")
+        ) {
+          const cardId = bound[0] as string;
+          const status = bound[1] as string;
+          const row = cards.get(cardId);
+          if (!row || row.status !== status) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          cards.delete(cardId);
+          return { success: true, meta: { changes: 1 } } as D1Result;
         } else if (normalized.startsWith("INSERT INTO decks")) {
           // Legacy: (id, user_id, title, subject_hint, created_at) — subject_id null.
           // Current worker SQL uses NULL for subject_hint → 4 binds.
