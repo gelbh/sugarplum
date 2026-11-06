@@ -52,13 +52,17 @@ afterEach(() => {
   host.remove();
 });
 
-function render(row: AchievementItem): string {
+function render(
+  row: AchievementItem,
+  descriptionMode?: "always" | "hover",
+): string {
   act(() => {
     root.render(
       createElement(AchievementRow, {
         item: row,
         staggerIndex: 0,
         sheenOnce: false,
+        descriptionMode,
       }),
     );
   });
@@ -94,5 +98,15 @@ describe("AchievementRow", () => {
     expect(text).toContain("Unlocked");
     expect(text).not.toContain("Almost there");
     expect(bars()).toBe(0);
+  });
+
+  it("keeps the hover caption in the DOM", () => {
+    const text = render(
+      item({ kind: "count", currentValue: 3, threshold: 10 }),
+      "hover",
+    );
+    expect(text).toContain("Best streak 30+ and 200 lifetime reviews.");
+    expect(host.querySelector(".medal-desc")).not.toBeNull();
+    expect(host.querySelector("[tabindex='0']")).not.toBeNull();
   });
 });

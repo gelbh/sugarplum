@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -6,13 +6,8 @@ import Container from "@mui/material/Container";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import AchievementRow from "../achievements/AchievementRow";
-import {
-  FRUIT_LABEL,
-  FRUIT_ORDER,
-  type FruitType,
-} from "../achievements/catalog";
 import MagnificCredits from "../achievements/MagnificCredits";
+import MedalCabinet from "../achievements/MedalCabinet";
 import { useAchievementsData } from "../achievements/useAchievementsData";
 import type { GamificationResponse } from "../api/client";
 import type { AchievementItem } from "../achievements/wire";
@@ -38,22 +33,6 @@ function markSheenSeen(id: string) {
   } catch {
     // Storage blocked or full: the sheen may replay, which is harmless.
   }
-}
-
-function groupByFruit(
-  items: AchievementItem[],
-): Map<FruitType, AchievementItem[]> {
-  const map = new Map<FruitType, AchievementItem[]>();
-  for (const fruit of FRUIT_ORDER) {
-    map.set(fruit, []);
-  }
-  for (const item of items) {
-    map.get(item.def.fruitType)?.push(item);
-  }
-  for (const [, list] of map) {
-    list.sort((a, b) => a.def.sortOrder - b.def.sortOrder);
-  }
-  return map;
 }
 
 const NO_ITEMS: AchievementItem[] = [];
@@ -141,17 +120,6 @@ export default function AchievementsPage() {
     return () => window.clearTimeout(t);
   }, [items]);
 
-  const grouped = useMemo(() => groupByFruit(items), [items]);
-  const staggerIndexById = useMemo(() => {
-    const out = new Map<string, number>();
-    for (const fruit of FRUIT_ORDER) {
-      for (const item of grouped.get(fruit) ?? []) {
-        if (item.completedAt != null) out.set(item.def.id, out.size);
-      }
-    }
-    return out;
-  }, [grouped]);
-
   switch (data.status) {
     case "loading":
       return (
@@ -191,48 +159,7 @@ export default function AchievementsPage() {
           gamification={gamification}
           tally={{ collected, total: items.length }}
         >
-          {FRUIT_ORDER.map((fruit) => {
-            const list = grouped.get(fruit) ?? [];
-            if (list.length === 0) return null;
-            return (
-              <Paper
-                key={fruit}
-                variant="outlined"
-                sx={{
-                  p: 2.5,
-                  bgcolor: "background.paper",
-                  borderColor: "divider",
-                }}
-              >
-                <Typography
-                  variant="subtitle1"
-                  component="h2"
-                  sx={{ fontWeight: 600, mb: 2, color: "primary.main" }}
-                >
-                  {FRUIT_LABEL[fruit]}
-                  <Typography
-                    component="span"
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ ml: 1 }}
-                  >
-                    {list.filter((i) => i.completedAt != null).length} /{" "}
-                    {list.length}
-                  </Typography>
-                </Typography>
-                <Stack spacing={2}>
-                  {list.map((item) => (
-                    <AchievementRow
-                      key={item.def.id}
-                      item={item}
-                      staggerIndex={staggerIndexById.get(item.def.id) ?? 0}
-                      sheenOnce={sheenOnceIds.has(item.def.id)}
-                    />
-                  ))}
-                </Stack>
-              </Paper>
-            );
-          })}
+          <MedalCabinet items={items} sheenIds={sheenOnceIds} />
 
           {board ? (
             <Paper

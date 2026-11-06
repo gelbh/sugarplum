@@ -64,6 +64,39 @@ function ProgressLine({
   );
 }
 
+const hoverCaptionSx = {
+  position: "relative",
+  "&:focus-visible": {
+    outline: "2px solid",
+    outlineColor: "primary.main",
+    outlineOffset: "3px",
+  },
+  "& .medal-desc": {
+    "@media (hover: hover) and (pointer: fine)": {
+      position: "absolute",
+      width: "1px",
+      height: "1px",
+      padding: 0,
+      margin: "-1px",
+      overflow: "hidden",
+      clip: "rect(0 0 0 0)",
+      whiteSpace: "nowrap",
+      border: 0,
+    },
+  },
+  "&:hover .medal-desc, &:focus-within .medal-desc": {
+    "@media (hover: hover) and (pointer: fine)": {
+      position: "static",
+      width: "auto",
+      height: "auto",
+      margin: 0,
+      overflow: "visible",
+      clip: "auto",
+      whiteSpace: "normal",
+    },
+  },
+} as const;
+
 function StatusCaption({
   color,
   children,
@@ -136,15 +169,18 @@ export default function AchievementRow({
   item,
   staggerIndex,
   sheenOnce,
+  descriptionMode = "always",
 }: {
   item: AchievementItem;
   staggerIndex: number;
   sheenOnce: boolean;
+  descriptionMode?: "always" | "hover";
 }) {
   const state = rowState(item);
   const unlocked = state === "unlocked";
   return (
     <Box
+      tabIndex={descriptionMode === "hover" ? 0 : undefined}
       sx={{
         display: "flex",
         gap: 1.5,
@@ -159,6 +195,7 @@ export default function AchievementRow({
               },
             }
           : {}),
+        ...(descriptionMode === "hover" ? hoverCaptionSx : {}),
       }}
     >
       <FruitMedal
@@ -172,7 +209,12 @@ export default function AchievementRow({
         <Typography variant="subtitle2" fontWeight={600}>
           {item.def.title}
         </Typography>
-        <Typography variant="caption" color="text.secondary" display="block">
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          display="block"
+          className={descriptionMode === "hover" ? "medal-desc" : undefined}
+        >
           {RARITY_LABEL[item.def.rarity]} · {item.def.description}
         </Typography>
         <RowStatus state={state} progress={item.progress} />
