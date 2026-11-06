@@ -54,10 +54,7 @@ function pageText(items: PdfTextItem[]): string {
     .trim();
 }
 
-/**
- * Extract one page window, sequentially, starting at `startPage` (1-based).
- * Does not throw when the document is longer than the window.
- */
+/** Does not throw when the document is longer than this window. */
 export async function extractPdfPages(
   data: ArrayBuffer,
   startPage: number = 1,
@@ -97,10 +94,7 @@ export async function extractPdfPages(
 const REGEN_MAX_PAGES = 50;
 const REGEN_MAX_CHARS = 200_000;
 
-/**
- * Plain text for single-card regen.
- * Longer files throw so regen uses the card excerpt instead of the opening window.
- */
+/** Throws above the old caps so regen uses the card excerpt, not the opening window. */
 export async function extractPdfText(data: ArrayBuffer): Promise<string> {
   const pdf = (await getDocumentProxy(new Uint8Array(data.slice(0)), {
     maxImageSize: PDF_MAX_IMAGE_PIXELS,

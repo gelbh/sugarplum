@@ -1,11 +1,7 @@
 import type { CardDraft } from "./schema";
 import { CHUNK_CHAR_LIMIT, chunkText, MAX_PIPELINE_CHUNKS } from "./pipeline";
 
-/**
- * Token-overlap bar for "same fact, different wording".
- * A single differing content token still counts (added adjective).
- * Two differing tokens stay (site-of-infection questions for two species).
- */
+/** One extra content token still counts as the same fact. Two tokens stay (different species). */
 const NEAR_DUP_JACCARD = 0.6;
 const NEAR_DUP_MAX_DIFF = 1;
 
@@ -138,7 +134,6 @@ function normalizeFront(front: string): string {
   return front.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
 
-/** True when `front` restates one of `existing` (exact, or token overlap). */
 export function isNearDuplicateFront(
   front: string,
   existing: readonly string[],
@@ -202,7 +197,7 @@ export function readWindowResume(raw: string | null | undefined): WindowResume |
   }
 }
 
-/** Union prior job resumes. `startPage` is the furthest next page any job recorded. */
+/** `startPage` is the furthest `next_page` any prior job recorded. */
 export function mergeWindowResumes(
   raws: readonly (string | null | undefined)[],
 ): { startPage: number; usedKeys: string[] } {
@@ -226,10 +221,7 @@ function capKeys(keys: string[]): string[] {
   return keys.slice(-MAX_USED_KEYS);
 }
 
-/**
- * Pick up to `limit` high-yield chunks from `pages`.
- * Contents, references, and already-used windows lose when any other text exists.
- */
+/** Contents and references lose when any other text exists. */
 export function prepareStudySource(args: {
   pages: StudyPage[];
   topicHints?: string[];
@@ -303,10 +295,7 @@ export function prepareStudySource(args: {
   };
 }
 
-/**
- * Read one window, and the next window once if the first has no study text.
- * Stops there so an empty prefix cannot scan the rest of the file in one job.
- */
+/** One extra window only, so an empty prefix cannot scan the rest of the file. */
 export async function focusStudyPages(
   load: (startPage: number) => Promise<{
     pages: StudyPage[];

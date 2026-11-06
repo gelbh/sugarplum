@@ -20,10 +20,7 @@ export type PptxWindow = {
   pageEnd: number;
 };
 
-/**
- * Extract one slide window. Does not throw when the deck is longer than the window.
- * `page` is the 1-based slide index.
- */
+/** Does not throw when the deck is longer than this window. `page` is the 1-based slide index. */
 export async function extractPptxSlides(
   data: ArrayBuffer,
   opts?: { startSlide?: number; maxChars?: number; maxSlides?: number },
@@ -67,10 +64,7 @@ export async function extractPptxSlides(
 /** Card regen still refuses a full-file read above the old char cap. */
 const REGEN_MAX_CHARS = 200_000;
 
-/**
- * Plain text for single-card regen.
- * A deck that does not fit in the old char cap throws, so regen uses the card excerpt.
- */
+/** Throws above the old char cap so regen uses the card excerpt. */
 export async function extractPptxText(data: ArrayBuffer): Promise<string> {
   const extracted = await extractPptxSlides(data, {
     startSlide: 1,

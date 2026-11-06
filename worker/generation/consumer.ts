@@ -350,7 +350,7 @@ async function loadDeckFronts(
         if (prompt) fronts.push(prompt);
       }
     } catch {
-      // Skip a card whose front is not JSON.
+      // A bad front must not fail the job.
     }
   }
   return fronts;
