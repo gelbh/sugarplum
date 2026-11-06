@@ -2790,6 +2790,16 @@ export function createTestEnv(opts?: {
           }
         } else if (
           normalized.startsWith(
+            "UPDATE generation_jobs SET coverage_json = ? WHERE id = ?",
+          )
+        ) {
+          const [coverage_json, id] = bound as [string, string];
+          const row = generationJobs.get(id);
+          if (row) {
+            generationJobs.set(id, { ...row, coverage_json });
+          }
+        } else if (
+          normalized.startsWith(
             "UPDATE generation_jobs SET status = ?, error = ?, finished_at = ?",
           )
         ) {
