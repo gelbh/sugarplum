@@ -37,7 +37,6 @@ const FIELD_SX = {
   border: "1px solid rgba(30, 13, 27, 0.18)",
 } as const;
 
-/** MCQ draft front: always-editable question and choices on the ivory face. */
 export function ReviewMcqFace({
   card,
   disabled,

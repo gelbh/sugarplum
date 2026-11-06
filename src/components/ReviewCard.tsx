@@ -3,6 +3,7 @@ import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
+import Paper from "@mui/material/Paper";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
@@ -24,16 +25,25 @@ import {
   REJECT_REASON_LABELS,
   type RejectReason,
 } from "../lib/rejectReasons";
+import {
+  REVIEW_FLY_MS,
+  reviewSwipeVisual,
+  type ReviewSwipeDecision,
+} from "../study/cardGestures";
 import { gradeColorVars } from "../study/gradeColors";
+import { StudyCardPlate } from "./CardFace";
 import { OcclusionReviewFace, TextReviewFace } from "./reviewCardFaces";
 import { ReviewMcqFace } from "./reviewCardMcq";
+import { FACE_SANS, FACE_SX } from "./studyFaceSx";
+import { useReviewSwipe } from "./useReviewSwipe";
 
-export type ReviewDecision = "accept" | "reject";
+export type ReviewDecision = ReviewSwipeDecision;
 
 export type ReviewCardProps = {
   card: CardDraftView;
   remaining: number;
   disabled?: boolean;
+  stackBehind: boolean;
   regen: { busy: boolean; disabled: boolean; onClick: () => void };
   onChange: (next: DraftEditorChange) => void;
   /** Resolve true once the card was decided; false unlocks it again. */
@@ -131,29 +141,29 @@ function RoundAction({
   );
 }
 
-/** Draft review card on the stage: Study plate, edit in place, tap to decide. */
 export default function ReviewCard({
   card,
   remaining,
   disabled = false,
+  stackBehind,
   regen,
   onChange,
   onDecide,
 }: ReviewCardProps) {
-  const [pending, setPending] = useState(false);
   const [reason, setReason] = useState<RejectReason | null>(null);
-  const locked = disabled || pending;
+  const swipe = useReviewSwipe({
+    locked: disabled,
+    onCommit: (decision) =>
+      onDecide(decision, decision === "reject" ? reason : null),
+  });
+  const locked = disabled || swipe.leaving !== null;
   const again = gradeColorVars(1);
-
-  async function decide(decision: ReviewDecision) {
-    if (locked) return;
-    setPending(true);
-    const ok = await onDecide(
-      decision,
-      decision === "reject" ? reason : null,
-    ).catch(() => false);
-    if (!ok) setPending(false);
-  }
+  const visual = reviewSwipeVisual({
+    dx: swipe.dx ?? 0,
+    leaving: swipe.leaving,
+    reduceMotion: swipe.reduceMotion,
+  });
+  const stampColors = gradeColorVars(visual.stamp === "accept" ? 4 : 1);
 
   const faceProps = { card, disabled: locked, onChange };
   let face: ReactNode;
@@ -194,7 +204,71 @@ export default function ReviewCard({
       <Box
         sx={{ position: "relative", height: { xs: "min(52vh, 504px)", sm: 504 } }}
       >
-        {face}
+        {stackBehind ? (
+          <Box
+            aria-hidden
+            sx={{
+              position: "absolute",
+              inset: 0,
+              transform: "translateY(18px) scale(0.95)",
+              opacity: 0.55,
+              pointerEvents: "none",
+            }}
+          >
+            <StudyCardPlate>
+              <Paper
+                elevation={0}
+                className="sp-playing-card"
+                sx={{ ...FACE_SX, height: "100%" }}
+              />
+            </StudyCardPlate>
+          </Box>
+        ) : null}
+        <Box
+          {...swipe.handlers}
+          sx={{
+            position: "absolute",
+            inset: 0,
+            touchAction: "pan-y",
+            userSelect: "none",
+            "&:has(textarea:focus, input:focus)": { userSelect: "auto" },
+            transform: visual.transform,
+            transition:
+              swipe.reduceMotion || (swipe.dx !== null && !swipe.leaving)
+                ? "none"
+                : `transform ${REVIEW_FLY_MS}ms ease-out`,
+            opacity: visual.dimmed ? 0.4 : 1,
+          }}
+        >
+          {visual.stamp ? (
+            <Box
+              aria-hidden
+              sx={{
+                position: "absolute",
+                top: 28,
+                left: "50%",
+                zIndex: 2,
+                pointerEvents: "none",
+                px: 1.5,
+                py: 0.5,
+                border: "2px solid",
+                borderColor: stampColors.border,
+                color: stampColors.border,
+                bgcolor: "var(--sp-card-face)",
+                borderRadius: 1,
+                fontFamily: FACE_SANS,
+                fontWeight: 600,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                opacity: visual.stampOpacity,
+                transform: `translateX(-50%) rotate(${visual.stamp === "accept" ? -10 : 10}deg)`,
+              }}
+            >
+              {visual.stamp === "accept" ? "Accept" : "Reject"}
+            </Box>
+          ) : null}
+          {face}
+        </Box>
       </Box>
 
       <Stack
@@ -238,7 +312,7 @@ export default function ReviewCard({
           rating={1}
           size={56}
           disabled={locked}
-          onClick={() => void decide("reject")}
+          onClick={() => void swipe.commit("reject")}
         >
           <CloseIcon />
         </RoundAction>
@@ -264,7 +338,7 @@ export default function ReviewCard({
           rating={4}
           size={56}
           disabled={locked}
-          onClick={() => void decide("accept")}
+          onClick={() => void swipe.commit("accept")}
         >
           <CheckIcon />
         </RoundAction>

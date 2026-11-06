@@ -575,6 +575,7 @@ export default function DraftReviewPage() {
                   key={`${current.id}:${regenNonce}`}
                   card={current}
                   remaining={drafts.length}
+                  stackBehind={drafts.length > 1}
                   disabled={busy || cardRegenBusy}
                   onChange={onEditorChange}
                   onDecide={onDecide}
