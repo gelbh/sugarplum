@@ -8,6 +8,7 @@ export type Cluster = {
   key: string;
   title: string;
   chips: string[];
+  eventCount: number;
 };
 
 const KIND =
@@ -97,7 +98,7 @@ export function parseClusters(events: CalendarEventIn[]): Cluster[] {
         seen.add(chipKey);
         return true;
       });
-    clusters.push({ key, title, chips });
+    clusters.push({ key, title, chips, eventCount: hits.length });
   }
   clusters.sort((a, b) => a.key.localeCompare(b.key));
   return clusters;
