@@ -8,15 +8,21 @@ export const GOOGLE_USERINFO_URL =
 export const OAUTH_STATE_TTL_SECONDS = 600;
 export const OAUTH_KV_PREFIX = "oauth:google:";
 
-export type GoogleOAuthIntent = "login" | "link";
+export type GoogleOAuthIntent = "login" | "link" | "calendar";
 
 export type GoogleOAuthPending = {
   codeVerifier: string;
   createdAt: number;
   intent: GoogleOAuthIntent;
-  /** Set when intent is link; session user that requested linking. */
+  /** Set when intent is link or calendar; session user that requested linking. */
   userId?: string;
 };
+
+export const CALENDAR_SCOPES = [
+  "https://www.googleapis.com/auth/calendar.events.readonly",
+  "https://www.googleapis.com/auth/calendar.freebusy",
+  "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
+].join(" ");
 
 export type GoogleProfile = {
   sub: string;
@@ -69,6 +75,76 @@ export function buildGoogleAuthorizeUrl(args: {
 export function googleRedirectUri(appUrl: string): string {
   const base = appUrl.replace(/\/$/, "");
   return `${base}/api/auth/google/callback`;
+}
+
+export function calendarRedirectUri(appUrl: string): string {
+  const base = appUrl.replace(/\/$/, "");
+  return `${base}/api/calendar/callback`;
+}
+
+/** Calendar consent URL. Login URL builder stays untouched. */
+export function buildCalendarAuthorizeUrl(args: {
+  clientId: string;
+  redirectUri: string;
+  state: string;
+  codeChallenge: string;
+  loginHint?: string;
+}): string {
+  const params = new URLSearchParams({
+    client_id: args.clientId,
+    redirect_uri: args.redirectUri,
+    response_type: "code",
+    scope: CALENDAR_SCOPES,
+    state: args.state,
+    code_challenge: args.codeChallenge,
+    code_challenge_method: "S256",
+    access_type: "offline",
+    include_granted_scopes: "true",
+    prompt: "consent",
+  });
+  if (args.loginHint) params.set("login_hint", args.loginHint);
+  return `${GOOGLE_AUTH_URL}?${params.toString()}`;
+}
+
+export async function exchangeCalendarCode(
+  args: {
+    clientId: string;
+    clientSecret: string;
+    code: string;
+    redirectUri: string;
+    codeVerifier: string;
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ refresh_token?: string; scope?: string; access_token: string }> {
+  const body = new URLSearchParams({
+    client_id: args.clientId,
+    client_secret: args.clientSecret,
+    code: args.code,
+    grant_type: "authorization_code",
+    redirect_uri: args.redirectUri,
+    code_verifier: args.codeVerifier,
+  });
+  const res = await fetchImpl(GOOGLE_TOKEN_URL, {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  if (!res.ok) {
+    throw new Error(`Google token exchange failed (${res.status})`);
+  }
+  const json = (await res.json()) as {
+    access_token?: string;
+    refresh_token?: string;
+    scope?: string;
+  };
+  if (!json.access_token) {
+    throw new Error("Google token response missing access_token");
+  }
+  return {
+    access_token: json.access_token,
+    refresh_token: json.refresh_token,
+    scope: json.scope,
+  };
 }
 
 export async function exchangeGoogleCode(

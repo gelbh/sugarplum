@@ -170,6 +170,60 @@ export function me() {
   return api<AuthUser>("/api/auth/me");
 }
 
+export type CalendarStatus = {
+  suggestions: boolean;
+  gaps: boolean;
+  reconnect: boolean;
+};
+
+export type CalendarSuggestion = {
+  clusterKey: string;
+  title: string;
+  evidence: string;
+  linkSubjectId: string | null;
+};
+
+export type CalendarSuggestions = {
+  subjects: CalendarSuggestion[];
+  decksBySubjectId: Record<string, string[]>;
+};
+
+export function getCalendarStatus() {
+  if (isGuest()) guestUnsupported("use Google Calendar");
+  return api<CalendarStatus>("/api/calendar");
+}
+
+export function getCalendarSuggestions() {
+  if (isGuest()) {
+    return Promise.resolve({
+      subjects: [],
+      decksBySubjectId: {},
+    } satisfies CalendarSuggestions);
+  }
+  return api<CalendarSuggestions>("/api/calendar/suggestions");
+}
+
+export function linkCalendarCluster(clusterKey: string, subjectId: string) {
+  if (isGuest()) guestUnsupported("link calendar subjects");
+  return api<{ ok: boolean }>("/api/calendar/links", {
+    method: "POST",
+    json: { clusterKey, subjectId },
+  });
+}
+
+export function dismissCalendarCluster(clusterKey: string) {
+  if (isGuest()) guestUnsupported("dismiss calendar suggestions");
+  return api<{ ok: boolean }>("/api/calendar/dismissals", {
+    method: "POST",
+    json: { clusterKey },
+  });
+}
+
+export function disconnectCalendar() {
+  if (isGuest()) guestUnsupported("disconnect Google Calendar");
+  return api<{ ok: boolean }>("/api/calendar", { method: "DELETE" });
+}
+
 export type AdminOverview = {
   userCount: number;
   createdLast7d: number;

@@ -46,6 +46,8 @@ type Props = {
   setDecks: (updater: (prev: Deck[]) => Deck[]) => void;
   subjects?: Subject[];
   setSubjects?: (updater: (prev: Subject[]) => Subject[]) => void;
+  /** Calendar deck-title chips keyed by linked subject id. */
+  deckChipsBySubjectId?: Record<string, string[]>;
   activeStep: number;
   setActiveStep: (n: number) => void;
   onChanged?: () => void | Promise<void>;
@@ -69,6 +71,7 @@ export default function CreateMaterialStepper({
   setDecks,
   subjects: subjectsProp,
   setSubjects: setSubjectsProp,
+  deckChipsBySubjectId = {},
   activeStep,
   setActiveStep,
   onChanged,
@@ -180,6 +183,10 @@ export default function CreateMaterialStepper({
     (creatingNewSubject
       ? Boolean(newSubjectTitle.trim())
       : Boolean(selectedSubjectId));
+  const subjectDeckChips =
+    !creatingNewSubject && selectedSubjectId
+      ? (deckChipsBySubjectId[selectedSubjectId] ?? [])
+      : [];
 
   const [tab, setTab] = useState<"paste" | "file">("paste");
 
@@ -500,6 +507,24 @@ export default function CreateMaterialStepper({
                       required
                       fullWidth
                     />
+                  ) : null}
+                  {subjectDeckChips.length > 0 ? (
+                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                      {subjectDeckChips.map((chip) => (
+                        <Button
+                          key={chip}
+                          size="small"
+                          variant="outlined"
+                          onClick={() => {
+                            setTitle(chip);
+                            setShowNewDeckForm(true);
+                            setFocusCreateTitle(true);
+                          }}
+                        >
+                          {chip}
+                        </Button>
+                      ))}
+                    </Stack>
                   ) : null}
                   <TextField
                     label="Deck title"

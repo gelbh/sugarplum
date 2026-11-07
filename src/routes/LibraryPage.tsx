@@ -36,6 +36,9 @@ import {
   createSelectionExport,
   createSubject,
   deleteSubject,
+  dismissCalendarCluster,
+  getCalendarSuggestions,
+  linkCalendarCluster,
   listCovers,
   listDecks,
   listJobsWithDrafts,
@@ -44,6 +47,7 @@ import {
   me,
   patchSubject,
   setCover,
+  type CalendarSuggestion,
   type Deck,
   type JobListItem,
   type MaterialListItem,
@@ -82,6 +86,13 @@ export default function LibraryPage() {
   const [decks, setDecks] = useState<Deck[]>([]);
   const [draftJobs, setDraftJobs] = useState<JobListItem[]>([]);
   const [materials, setMaterials] = useState<MaterialListItem[]>([]);
+  const [calendarSuggestions, setCalendarSuggestions] = useState<
+    CalendarSuggestion[]
+  >([]);
+  const [deckChipsBySubjectId, setDeckChipsBySubjectId] = useState<
+    Record<string, string[]>
+  >({});
+  const [calendarBusyKey, setCalendarBusyKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
@@ -150,12 +161,28 @@ export default function LibraryPage() {
     setDecks(await listDecks());
   }, []);
 
+  const refreshCalendarSuggestions = useCallback(async () => {
+    if (guest) {
+      setCalendarSuggestions([]);
+      setDeckChipsBySubjectId({});
+      return;
+    }
+    try {
+      const payload = await getCalendarSuggestions();
+      setCalendarSuggestions(payload.subjects);
+      setDeckChipsBySubjectId(payload.decksBySubjectId);
+    } catch {
+      setCalendarSuggestions([]);
+      setDeckChipsBySubjectId({});
+    }
+  }, [guest]);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         await me();
-        const [subjectList, deckList, jobs, materialList, coverList] =
+        const [subjectList, deckList, jobs, materialList, coverList, calendar] =
           await Promise.all([
             listSubjects(),
             listDecks(),
@@ -166,6 +193,15 @@ export default function LibraryPage() {
             guest
               ? Promise.resolve([] as StoredCoverRow[])
               : listCovers().catch(() => [] as StoredCoverRow[]),
+            guest
+              ? Promise.resolve({
+                  subjects: [] as CalendarSuggestion[],
+                  decksBySubjectId: {} as Record<string, string[]>,
+                })
+              : getCalendarSuggestions().catch(() => ({
+                  subjects: [] as CalendarSuggestion[],
+                  decksBySubjectId: {} as Record<string, string[]>,
+                })),
           ]);
         if (cancelled) return;
         setSubjects(subjectList);
@@ -173,6 +209,8 @@ export default function LibraryPage() {
         setDraftJobs(jobs);
         setMaterials(materialList);
         setCovers(coverList);
+        setCalendarSuggestions(calendar.subjects);
+        setDeckChipsBySubjectId(calendar.decksBySubjectId);
         setReady(true);
         endLoad();
         try {
@@ -491,6 +529,110 @@ export default function LibraryPage() {
             </Alert>
           ) : null}
 
+          {!guest && calendarSuggestions.length > 0 ? (
+            <Stack spacing={1.5}>
+              {calendarSuggestions.map((suggestion) => {
+                const linked = suggestion.linkSubjectId
+                  ? subjects.find((s) => s.id === suggestion.linkSubjectId)
+                  : null;
+                const busy = calendarBusyKey === suggestion.clusterKey;
+                return (
+                  <Stack
+                    key={suggestion.clusterKey}
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={1}
+                    alignItems={{ sm: "center" }}
+                    sx={{
+                      p: 1.5,
+                      border: 1,
+                      borderColor: "divider",
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                        {linked
+                          ? `Link ${suggestion.title} to ${linked.title}?`
+                          : `Add ${suggestion.title}?`}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {suggestion.evidence}
+                      </Typography>
+                    </Box>
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        disabled={busy}
+                        onClick={() => {
+                          void (async () => {
+                            setCalendarBusyKey(suggestion.clusterKey);
+                            setError(null);
+                            try {
+                              if (linked) {
+                                await linkCalendarCluster(
+                                  suggestion.clusterKey,
+                                  linked.id,
+                                );
+                              } else {
+                                const created = await createSubject(
+                                  suggestion.title,
+                                );
+                                await linkCalendarCluster(
+                                  suggestion.clusterKey,
+                                  created.id,
+                                );
+                                setSubjects((prev) => [...prev, created]);
+                              }
+                              await refreshCalendarSuggestions();
+                            } catch (err) {
+                              setError(
+                                err instanceof ApiError
+                                  ? err.message
+                                  : "Could not apply calendar suggestion",
+                              );
+                            } finally {
+                              setCalendarBusyKey(null);
+                            }
+                          })();
+                        }}
+                      >
+                        {linked ? "Link" : "Add"}
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="text"
+                        disabled={busy}
+                        onClick={() => {
+                          void (async () => {
+                            setCalendarBusyKey(suggestion.clusterKey);
+                            setError(null);
+                            try {
+                              await dismissCalendarCluster(
+                                suggestion.clusterKey,
+                              );
+                              await refreshCalendarSuggestions();
+                            } catch (err) {
+                              setError(
+                                err instanceof ApiError
+                                  ? err.message
+                                  : "Could not dismiss suggestion",
+                              );
+                            } finally {
+                              setCalendarBusyKey(null);
+                            }
+                          })();
+                        }}
+                      >
+                        Dismiss
+                      </Button>
+                    </Stack>
+                  </Stack>
+                );
+              })}
+            </Stack>
+          ) : null}
+
           {subjects.length === 0 ? (
             <Typography variant="body2" color="text.secondary">
               {showCreateFlow
@@ -750,6 +892,7 @@ export default function LibraryPage() {
                 setDecks={setDecks}
                 subjects={subjects}
                 setSubjects={setSubjects}
+                deckChipsBySubjectId={deckChipsBySubjectId}
                 activeStep={activeStep}
                 setActiveStep={setActiveStep}
                 localOnly={guest}
@@ -758,6 +901,7 @@ export default function LibraryPage() {
                   await refreshDraftJobs();
                   await refreshMaterials();
                   await refreshSubjects();
+                  await refreshCalendarSuggestions();
                   await refreshDecks();
                 }}
               />
