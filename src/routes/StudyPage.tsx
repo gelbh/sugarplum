@@ -48,6 +48,7 @@ import {
   plainShortcutKey,
   resolveStudyKey,
 } from "../study/studyKeys";
+import { useStudyNotesOverlay } from "../study/useStudyNotesOverlay";
 import {
   dueScopeFromSearch,
   filterDueExcludingPending,
@@ -372,6 +373,7 @@ export default function StudyPage() {
   }, [endLoad, flushOnMount, load, refreshPendingCount, setUserId]);
 
   const current = queue[0] ?? null;
+  const notes = useStudyNotesOverlay(current);
   const queueFraction = studyQueueProgress(queueTotal, queue.length);
   const cardHostRef = useRef<HTMLDivElement>(null);
   const [plateWidth, setPlateWidth] = useState<number | null>(null);
@@ -507,8 +509,18 @@ export default function StudyPage() {
 
     function onKey(e: KeyboardEvent) {
       if (cardDialogOpenRef.current) return;
+      if (notes.notesOpenRef.current) {
+        // Keep zen: MUI closes the dialog but does not cancel Escape.
+        if (e.key === "Escape") e.preventDefault();
+        return;
+      }
       const key = plainShortcutKey(e);
       if (key === null) return;
+      if ((key === "s" || key === "S") && revealed && notes.notesAvailable) {
+        e.preventDefault();
+        notes.openNotes();
+        return;
+      }
       if (key === "Escape") {
         e.preventDefault();
         if (document.fullscreenElement) {
@@ -567,6 +579,8 @@ export default function StudyPage() {
     current,
     flipBack,
     leaveStudy,
+    notes.notesAvailable,
+    notes.openNotes,
     onGrade,
     ready,
     reveal,
@@ -948,10 +962,13 @@ export default function StudyPage() {
                   onFlipBack={flipBack}
                   disabled={busy}
                   answerFocusRef={answerFocusRef}
+                  notesAvailable={notes.notesAvailable}
+                  onOpenNotes={notes.openNotes}
                   onGrade={
                     mcqMode ? (rating) => onGrade(rating, true) : undefined
                   }
                 />
+                {notes.dialog}
               </Box>
 
               {mcqMode ? (

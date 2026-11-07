@@ -60,6 +60,8 @@ type Props = {
   cardId?: string;
   options?: string[];
   onGrade?: (rating: StudyRating) => boolean | Promise<boolean>;
+  notesAvailable?: boolean;
+  onOpenNotes?: () => void;
 };
 
 export function FaceOverline({ label }: { label: string }) {
@@ -280,6 +282,8 @@ export default function CardFace({
   cardId,
   options,
   onGrade,
+  notesAvailable,
+  onOpenNotes,
 }: Props) {
   if (type === "mcq") {
     if (!cardId || !onGrade) return null;
@@ -398,6 +402,25 @@ export default function CardFace({
           </Box>
           {revealed ? (
             <Box sx={{ pt: 2, width: "100%", flexShrink: 0 }}>
+              {notesAvailable && onOpenNotes ? (
+                <Button
+                  variant="text"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onOpenNotes();
+                  }}
+                  aria-keyshortcuts="s"
+                  sx={{
+                    fontFamily: FACE_SANS,
+                    minHeight: 44,
+                    color: "inherit",
+                    mb: 1,
+                  }}
+                >
+                  Notes
+                  <KeyChip label="S" ml={1} />
+                </Button>
+              ) : null}
               <Button
                 variant="outlined"
                 onClick={onShowQuestionClick}
