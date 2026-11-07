@@ -28,17 +28,21 @@ function heldMedal(items: AchievementItem[]): AchievementItem {
   return held;
 }
 
+const CABINET_COLUMNS = 3;
+
 function withOpenTileOnRowStart(
   fruits: FruitType[],
   open: FruitType | null,
 ): FruitType[] {
   if (open == null) return fruits;
   const index = fruits.indexOf(open);
-  if (index < 1 || index % 2 === 0) return fruits;
+  const offset = index % CABINET_COLUMNS;
+  if (index < 1 || offset === 0) return fruits;
   const next = fruits.slice();
-  const left = next[index - 1]!;
-  next[index - 1] = next[index]!;
-  next[index] = left;
+  const start = index - offset;
+  const picked = next[index]!;
+  for (let i = index; i > start; i -= 1) next[i] = next[i - 1]!;
+  next[start] = picked;
   return next;
 }
 
@@ -110,7 +114,7 @@ function MedalTile({
             locked={held.completedAt == null}
             sheenOnce={sheenIds.has(held.def.id)}
           />
-          <Typography variant="subtitle2" fontWeight={600}>
+          <Typography component="span" variant="subtitle2" fontWeight={600}>
             {held.def.title}
           </Typography>
           <Box
@@ -164,10 +168,10 @@ export default function MedalCabinet({
   const [openFruit, setOpenFruit] = useState<FruitType | null>(null);
   const grouped = groupByFruit(items);
   const fruits = FRUIT_ORDER.filter((fruit) => (grouped.get(fruit) ?? []).length > 0);
-  // A spanning tile in column 2 leaves the cell beside it empty.
+  // A spanning tile past column 1 leaves empty cells on its row.
   const ordered = withOpenTileOnRowStart(fruits, openFruit);
   return (
-    <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
+    <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1 }}>
       {ordered.map((fruit) => {
         const list = grouped.get(fruit) ?? [];
         return (

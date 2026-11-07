@@ -100,6 +100,11 @@ describe("AchievementRow", () => {
     expect(bars()).toBe(0);
   });
 
+  it("leaves the default caption without medal-desc", () => {
+    render(item({ kind: "count", currentValue: 3, threshold: 10 }));
+    expect(host.querySelector(".medal-desc")).toBeNull();
+  });
+
   it("keeps the hover caption in the DOM", () => {
     const text = render(
       item({ kind: "count", currentValue: 3, threshold: 10 }),
