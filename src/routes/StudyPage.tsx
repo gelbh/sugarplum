@@ -42,10 +42,6 @@ import { isGuest } from "../guest/session";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { backAnswer, isOcclusionFront } from "../lib/draftCardModel";
-import {
-  provenanceExcerptText,
-  provenancePages,
-} from "../study/regenSource";
 import { resolveCardGesture } from "../study/cardGestures";
 import { studyQueueProgress } from "../study/studyQueueProgress";
 import {
@@ -53,6 +49,7 @@ import {
   plainShortcutKey,
   resolveStudyKey,
 } from "../study/studyKeys";
+import { useStudyNotesOverlay } from "../study/useStudyNotesOverlay";
 import {
   dueScopeFromSearch,
   filterDueExcludingPending,
@@ -175,12 +172,6 @@ export default function StudyPage() {
   const cardDialogOpenRef = useRef(false);
   const onCardDialogOpen = useCallback((open: boolean) => {
     cardDialogOpenRef.current = open;
-  }, []);
-  const [notesOpen, setNotesOpenState] = useState(false);
-  const notesOpenRef = useRef(false);
-  const setNotesOpen = useCallback((open: boolean) => {
-    notesOpenRef.current = open;
-    setNotesOpenState(open);
   }, []);
   const introBonusRef = useRef<number | undefined>(undefined);
   if (introBonusRef.current === undefined) {
@@ -383,9 +374,15 @@ export default function StudyPage() {
   }, [endLoad, flushOnMount, load, refreshPendingCount, setUserId]);
 
   const current = queue[0] ?? null;
-  const notesExcerpt = current ? provenanceExcerptText(current.provenance) : "";
-  const notesPages = current ? provenancePages(current.provenance) : [];
-  const notesAvailable = notesExcerpt !== "" || notesPages.length > 0;
+  const {
+    notesOpen,
+    notesOpenRef,
+    notesAvailable,
+    notesExcerpt,
+    page: notesPage,
+    openNotes,
+    closeNotes,
+  } = useStudyNotesOverlay(current);
   const queueFraction = studyQueueProgress(queueTotal, queue.length);
   const cardHostRef = useRef<HTMLDivElement>(null);
   const [plateWidth, setPlateWidth] = useState<number | null>(null);
@@ -506,10 +503,6 @@ export default function StudyPage() {
   );
 
   useEffect(() => {
-    setNotesOpen(false);
-  }, [current?.id, setNotesOpen]);
-
-  useEffect(() => {
     function onFullscreenChange() {
       if (!document.fullscreenElement) {
         ignoreEscLeaveUntilRef.current = performance.now() + 500;
@@ -529,7 +522,7 @@ export default function StudyPage() {
       if (key === null) return;
       if ((key === "s" || key === "S") && revealed && notesAvailable) {
         e.preventDefault();
-        setNotesOpen(true);
+        openNotes();
         return;
       }
       if (key === "Escape") {
@@ -592,10 +585,10 @@ export default function StudyPage() {
     leaveStudy,
     notesAvailable,
     onGrade,
+    openNotes,
     ready,
     reveal,
     revealed,
-    setNotesOpen,
     toggleZen,
   ]);
 
@@ -974,16 +967,16 @@ export default function StudyPage() {
                   disabled={busy}
                   answerFocusRef={answerFocusRef}
                   notesAvailable={notesAvailable}
-                  onOpenNotes={() => setNotesOpen(true)}
+                  onOpenNotes={openNotes}
                   onGrade={
                     mcqMode ? (rating) => onGrade(rating, true) : undefined
                   }
                 />
                 <StudyNotesDialog
                   open={notesOpen}
-                  onClose={() => setNotesOpen(false)}
+                  onClose={closeNotes}
                   excerpt={notesExcerpt}
-                  page={notesPages[0] ?? null}
+                  page={notesPage}
                   jobId={current.job_id}
                   deckId={current.deck_id}
                 />
