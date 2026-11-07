@@ -508,7 +508,12 @@ export default function StudyPage() {
     if (!ready) return;
 
     function onKey(e: KeyboardEvent) {
-      if (cardDialogOpenRef.current || notes.notesOpenRef.current) return;
+      if (cardDialogOpenRef.current) return;
+      if (notes.notesOpenRef.current) {
+        // Keep zen: MUI closes the dialog but does not cancel Escape.
+        if (e.key === "Escape") e.preventDefault();
+        return;
+      }
       const key = plainShortcutKey(e);
       if (key === null) return;
       if ((key === "s" || key === "S") && revealed && notes.notesAvailable) {

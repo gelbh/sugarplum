@@ -11,7 +11,7 @@ import type { TextItem, TextMarkedContent } from "pdfjs-dist/types/src/display/a
 import {
   downloadMaterialUrl,
   getJob,
-  listDeckMaterials,
+  listMaterials,
 } from "../api/client";
 import { isGuest } from "../guest/session";
 import {
@@ -34,7 +34,6 @@ type Props = {
   excerpt: string;
   page: number | null;
   jobId: string | null;
-  deckId: string;
 };
 
 type Matrix6 = TextRun["transform"];
@@ -88,7 +87,6 @@ export default function StudyNotesDialog({
   excerpt,
   page,
   jobId,
-  deckId,
 }: Props) {
   const frameRef = useRef<HTMLDivElement>(null);
   const canvasHostRef = useRef<HTMLDivElement>(null);
@@ -131,9 +129,11 @@ export default function StudyNotesDialog({
 
     void (async () => {
       try {
-        const job = await getJob(jobId);
-        if (cancelled) return;
-        const materials = await listDeckMaterials(deckId);
+        // Material stays on the source deck after a card move; resolve by id.
+        const [job, materials] = await Promise.all([
+          getJob(jobId),
+          listMaterials(),
+        ]);
         if (cancelled) return;
         const material = materials.find((item) => item.id === job.material_id);
         if (!material) {
@@ -161,7 +161,7 @@ export default function StudyNotesDialog({
       cancelled = true;
       ac.abort();
     };
-  }, [open, jobId, deckId, page]);
+  }, [open, jobId, page]);
 
   useEffect(() => {
     if (!open || !pdfBytes || page === null) {

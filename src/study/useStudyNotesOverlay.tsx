@@ -9,7 +9,6 @@ export type StudyNotesCard = {
   id: string;
   provenance: unknown;
   job_id: string | null;
-  deck_id: string;
 };
 
 export type StudyNotesOverlay = {
@@ -51,7 +50,6 @@ export function useStudyNotesOverlay(
         excerpt={notesExcerpt}
         page={notesPages[0] ?? null}
         jobId={card.job_id}
-        deckId={card.deck_id}
       />
     ) : null,
   };
