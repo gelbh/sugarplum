@@ -1,22 +1,27 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import StudyNotesDialog from "../components/StudyNotesDialog";
 import {
   provenanceExcerptText,
   provenancePages,
 } from "./regenSource";
 
+export type StudyNotesCard = {
+  id: string;
+  provenance: unknown;
+  job_id: string | null;
+  deck_id: string;
+};
+
 export type StudyNotesOverlay = {
-  notesOpen: boolean;
   notesOpenRef: { readonly current: boolean };
   notesAvailable: boolean;
-  notesExcerpt: string;
-  page: number | null;
   openNotes: () => void;
-  closeNotes: () => void;
+  dialog: ReactNode;
 };
 
 /** Open/close Notes overlay for the current study card; resets on card change. */
 export function useStudyNotesOverlay(
-  card: { id: string; provenance: unknown } | null,
+  card: StudyNotesCard | null,
 ): StudyNotesOverlay {
   const [notesOpen, setNotesOpenState] = useState(false);
   const notesOpenRef = useRef(false);
@@ -36,12 +41,18 @@ export function useStudyNotesOverlay(
   const notesAvailable = notesExcerpt !== "" || notesPages.length > 0;
 
   return {
-    notesOpen,
     notesOpenRef,
     notesAvailable,
-    notesExcerpt,
-    page: notesPages[0] ?? null,
     openNotes,
-    closeNotes,
+    dialog: card ? (
+      <StudyNotesDialog
+        open={notesOpen}
+        onClose={closeNotes}
+        excerpt={notesExcerpt}
+        page={notesPages[0] ?? null}
+        jobId={card.job_id}
+        deckId={card.deck_id}
+      />
+    ) : null,
   };
 }

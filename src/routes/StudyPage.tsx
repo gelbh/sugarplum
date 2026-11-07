@@ -24,7 +24,6 @@ import {
 } from "../achievements/rememberUnlocks";
 import type { UnlockView } from "../achievements/wire";
 import CardFace, { type OcclusionStudyFace } from "../components/CardFace";
-import StudyNotesDialog from "../components/StudyNotesDialog";
 import GradeButtons from "../components/GradeButtons";
 import {
   ApiError,
@@ -374,15 +373,7 @@ export default function StudyPage() {
   }, [endLoad, flushOnMount, load, refreshPendingCount, setUserId]);
 
   const current = queue[0] ?? null;
-  const {
-    notesOpen,
-    notesOpenRef,
-    notesAvailable,
-    notesExcerpt,
-    page: notesPage,
-    openNotes,
-    closeNotes,
-  } = useStudyNotesOverlay(current);
+  const notes = useStudyNotesOverlay(current);
   const queueFraction = studyQueueProgress(queueTotal, queue.length);
   const cardHostRef = useRef<HTMLDivElement>(null);
   const [plateWidth, setPlateWidth] = useState<number | null>(null);
@@ -517,12 +508,12 @@ export default function StudyPage() {
     if (!ready) return;
 
     function onKey(e: KeyboardEvent) {
-      if (cardDialogOpenRef.current || notesOpenRef.current) return;
+      if (cardDialogOpenRef.current || notes.notesOpenRef.current) return;
       const key = plainShortcutKey(e);
       if (key === null) return;
-      if ((key === "s" || key === "S") && revealed && notesAvailable) {
+      if ((key === "s" || key === "S") && revealed && notes.notesAvailable) {
         e.preventDefault();
-        openNotes();
+        notes.openNotes();
         return;
       }
       if (key === "Escape") {
@@ -583,9 +574,8 @@ export default function StudyPage() {
     current,
     flipBack,
     leaveStudy,
-    notesAvailable,
+    notes,
     onGrade,
-    openNotes,
     ready,
     reveal,
     revealed,
@@ -966,20 +956,13 @@ export default function StudyPage() {
                   onFlipBack={flipBack}
                   disabled={busy}
                   answerFocusRef={answerFocusRef}
-                  notesAvailable={notesAvailable}
-                  onOpenNotes={openNotes}
+                  notesAvailable={notes.notesAvailable}
+                  onOpenNotes={notes.openNotes}
                   onGrade={
                     mcqMode ? (rating) => onGrade(rating, true) : undefined
                   }
                 />
-                <StudyNotesDialog
-                  open={notesOpen}
-                  onClose={closeNotes}
-                  excerpt={notesExcerpt}
-                  page={notesPage}
-                  jobId={current.job_id}
-                  deckId={current.deck_id}
-                />
+                {notes.dialog}
               </Box>
 
               {mcqMode ? (
