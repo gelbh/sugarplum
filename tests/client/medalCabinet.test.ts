@@ -93,6 +93,17 @@ const lemon: AchievementItem[] = [
   }),
 ];
 
+const strawberry: AchievementItem[] = [
+  medal({
+    id: "streak_1",
+    title: "First berry",
+    fruitType: "strawberry",
+    sortOrder: 50,
+    description: "Reach a 2-day streak.",
+    completedAt: "2026-01-01T00:00:00.000Z",
+  }),
+];
+
 const plum: AchievementItem[] = [
   medal({
     id: "plum_bud",
@@ -199,12 +210,40 @@ describe("MedalCabinet", () => {
     expect(text()).not.toContain("Full bushel");
   });
 
+  it("returns focus to the tile button on Escape", () => {
+    render(apple);
+    clickButton(0);
+    const button = host.querySelector("button");
+    const tile = host.querySelector(".medal-tile");
+    if (!button || !tile) throw new Error("missing tile");
+    act(() => {
+      tile.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    });
+    expect(document.activeElement).toBe(button);
+  });
+
+  it("renders the tile title as a span", () => {
+    render(apple);
+    const button = host.querySelector("button");
+    expect(button?.querySelector("h6")).toBeNull();
+    expect(button?.querySelector("span")?.textContent).toContain("Orchard regular");
+  });
+
   it("moves an open right-column tile to the start of its row", () => {
     render([...apple, ...lemon]);
     clickButton(1);
     const tiles = host.querySelectorAll(".medal-tile");
     expect(tiles[0]?.textContent).toContain("First zest");
     expect(tiles[1]?.textContent).toContain("Orchard regular");
+  });
+
+  it("moves an open third tile to the start of its row", () => {
+    render([...apple, ...lemon, ...strawberry]);
+    clickButton(2);
+    const tiles = host.querySelectorAll(".medal-tile");
+    expect(tiles[0]?.textContent).toContain("First berry");
+    expect(tiles[1]?.textContent).toContain("Orchard regular");
+    expect(tiles[2]?.textContent).toContain("First zest");
   });
 
   it("shows the first medal when none are unlocked, and the next plum's bars", () => {

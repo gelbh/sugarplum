@@ -21,6 +21,8 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import {
   ApiError,
   deleteLlmSettings,
+  disconnectCalendar,
+  getCalendarStatus,
   getGamification,
   getLlmSettings,
   getStudyPrefs,
@@ -29,6 +31,7 @@ import {
   patchGamificationSettings,
   putLlmSettings,
   putStudyPrefs,
+  type CalendarStatus,
   type GamificationResponse,
   type LlmSettings,
   type StudyPrefs,
@@ -67,6 +70,9 @@ function settingsQueryMessage(): {
   if (params.get("linked") === "1") {
     return { error: null, notice: "Google account linked." };
   }
+  if (params.get("calendar") === "1") {
+    return { error: null, notice: "Google Calendar connected." };
+  }
   const code = params.get("error");
   if (code === "oauth_conflict") {
     return {
@@ -86,6 +92,12 @@ function settingsQueryMessage(): {
   if (code === "oauth") {
     return { error: "Google linking failed. Try again.", notice: null };
   }
+  if (code === "calendar" || code === "calendar_refresh") {
+    return {
+      error: "Calendar connection failed. Try again.",
+      notice: null,
+    };
+  }
   return { error: null, notice: null };
 }
 
@@ -103,6 +115,10 @@ export default function SettingsPage() {
     String(DEFAULT_STUDY_FORM.reviewBudget),
   );
   const [googleLinked, setGoogleLinked] = useState(false);
+  const [calendarStatus, setCalendarStatus] = useState<CalendarStatus | null>(
+    null,
+  );
+  const [calendarBusy, setCalendarBusy] = useState(false);
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [guest, setGuest] = useState(false);
   const queryMsg = settingsQueryMessage();
@@ -145,10 +161,14 @@ export default function SettingsPage() {
         const gam = guestMode
           ? null
           : await getGamification().catch(() => null);
+        const calendar = guestMode
+          ? null
+          : await getCalendarStatus().catch(() => null);
         if (cancelled) return;
         setGuest(guestMode);
         setAccountEmail(user.email);
         setGoogleLinked(user.google_linked === true);
+        setCalendarStatus(calendar);
         setCurrent(settings);
         if (settings.configured) {
           setProvider(settings.provider);
@@ -382,6 +402,65 @@ export default function SettingsPage() {
                     href="/api/auth/google/start?intent=link"
                   >
                     Link Google
+                  </Button>
+                )}
+                {calendarStatus?.connected ? (
+                  <Stack spacing={1}>
+                    <Alert severity="success">
+                      Google Calendar connected
+                      {calendarStatus.suggestions || calendarStatus.gaps
+                        ? ` (${[
+                            calendarStatus.suggestions
+                              ? "suggestions"
+                              : null,
+                            calendarStatus.gaps ? "study gaps" : null,
+                          ]
+                            .filter(Boolean)
+                            .join(", ")})`
+                        : ""}
+                      .
+                    </Alert>
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      disabled={calendarBusy}
+                      onClick={() => {
+                        void (async () => {
+                          setCalendarBusy(true);
+                          setError(null);
+                          try {
+                            await disconnectCalendar();
+                            setCalendarStatus({
+                              connected: false,
+                              suggestions: false,
+                              gaps: false,
+                              reconnect: false,
+                            });
+                            setNotice("Google Calendar disconnected.");
+                          } catch (err) {
+                            setError(
+                              err instanceof ApiError
+                                ? err.message
+                                : "Could not disconnect calendar",
+                            );
+                          } finally {
+                            setCalendarBusy(false);
+                          }
+                        })();
+                      }}
+                    >
+                      Disconnect Google Calendar
+                    </Button>
+                  </Stack>
+                ) : (
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    href="/api/calendar/connect"
+                  >
+                    {calendarStatus?.reconnect
+                      ? "Reconnect Google Calendar"
+                      : "Connect Google Calendar"}
                   </Button>
                 )}
               </>

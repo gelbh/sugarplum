@@ -15,6 +15,7 @@ import { guestRoutes } from "./guest/import";
 import { exportRoutes } from "./export/routes";
 import { adminRoutes } from "./admin/routes";
 import { gamificationRoutes } from "./gamification/routes";
+import { calendarRoutes } from "./calendar/routes";
 import { handleExportQueue } from "./export/consumer";
 import type { ExportQueueMessage } from "./export/enqueue";
 import { handleGenerateQueue } from "./generation/consumer";
@@ -52,6 +53,7 @@ app.onError((err, c) => {
 });
 
 app.route("/api/auth", authRoutes);
+app.route("/api/calendar", calendarRoutes);
 app.route("/api/subjects", subjectRoutes);
 app.route("/api/covers", coverRoutes);
 app.route("/api/decks", deckRoutes);

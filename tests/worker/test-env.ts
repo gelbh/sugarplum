@@ -40,6 +40,26 @@ type SubjectRow = {
   created_at: string;
 };
 
+type CalendarConnectionRow = {
+  user_id: string;
+  refresh_ciphertext: string;
+  scopes: string;
+  updated_at: string;
+};
+
+type CalendarSubjectLinkRow = {
+  user_id: string;
+  cluster_key: string;
+  subject_id: string;
+  created_at: string;
+};
+
+type CalendarDismissalRow = {
+  user_id: string;
+  cluster_key: string;
+  created_at: string;
+};
+
 type ShelfCoverRow = {
   user_id: string;
   owner_kind: string;
@@ -230,6 +250,9 @@ export function createTestEnv(opts?: {
   const users = new Map<string, UserRow>();
   const subjects = new Map<string, SubjectRow>();
   const shelfCovers = new Map<string, ShelfCoverRow>();
+  const calendarConnections = new Map<string, CalendarConnectionRow>();
+  const calendarSubjectLinks = new Map<string, CalendarSubjectLinkRow>();
+  const calendarDismissals = new Map<string, CalendarDismissalRow>();
 
   function shelfCoverKey(
     userId: string,
@@ -237,6 +260,10 @@ export function createTestEnv(opts?: {
     ownerId: string,
   ): string {
     return `${userId}\0${ownerKind}\0${ownerId}`;
+  }
+
+  function calendarLinkKey(userId: string, clusterKey: string): string {
+    return `${userId}\0${clusterKey}`;
   }
   const decks = new Map<string, DeckRow>();
   const materials = new Map<string, MaterialRow>();
@@ -496,6 +523,19 @@ export function createTestEnv(opts?: {
         if (normalized.startsWith("SELECT email FROM users WHERE id =")) {
           const u = users.get(bound[0] as string);
           return u ? ({ email: u.email } as T) : null;
+        }
+        if (
+          normalized.startsWith(
+            "SELECT refresh_ciphertext, scopes FROM calendar_connections WHERE user_id =",
+          )
+        ) {
+          const row = calendarConnections.get(bound[0] as string);
+          return row
+            ? ({
+                refresh_ciphertext: row.refresh_ciphertext,
+                scopes: row.scopes,
+              } as T)
+            : null;
         }
         if (
           normalized.startsWith("SELECT id FROM subjects WHERE user_id =") &&
@@ -1089,6 +1129,40 @@ export function createTestEnv(opts?: {
           bound,
         );
         if (gamificationAllHit !== null) return gamificationAllHit;
+        if (
+          normalized.startsWith(
+            "SELECT cluster_key, subject_id FROM calendar_subject_links WHERE user_id =",
+          )
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...calendarSubjectLinks.values()]
+            .filter((row) => row.user_id === userId)
+            .map((row) => ({
+              cluster_key: row.cluster_key,
+              subject_id: row.subject_id,
+            }));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.startsWith(
+            "SELECT cluster_key FROM calendar_dismissals WHERE user_id =",
+          )
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...calendarDismissals.values()]
+            .filter((row) => row.user_id === userId)
+            .map((row) => ({ cluster_key: row.cluster_key }));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized === "SELECT id, title FROM subjects WHERE user_id = ?"
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...subjects.values()]
+            .filter((s) => s.user_id === userId)
+            .map((s) => ({ id: s.id, title: s.title }));
+          return { results: rows as T[] };
+        }
         if (
           normalized.startsWith(
             "SELECT owner_kind, owner_id, photo_id, image_url, photographer_name, photographer_url, photo_html_url FROM shelf_covers WHERE user_id =",
@@ -2339,6 +2413,115 @@ export function createTestEnv(opts?: {
           const key = shelfCoverKey(userId, ownerKind, ownerId);
           const had = shelfCovers.delete(key);
           return { success: true, meta: { changes: had ? 1 : 0 } } as D1Result;
+        } else if (
+          normalized.startsWith(
+            "INSERT INTO calendar_connections (user_id, refresh_ciphertext, scopes, updated_at) VALUES",
+          )
+        ) {
+          const [user_id, refresh_ciphertext, scopes, updated_at] = bound as [
+            string,
+            string,
+            string,
+            string,
+          ];
+          calendarConnections.set(user_id, {
+            user_id,
+            refresh_ciphertext,
+            scopes,
+            updated_at,
+          });
+          return { success: true, meta: { changes: 1 } } as D1Result;
+        } else if (
+          normalized.startsWith(
+            "UPDATE calendar_connections SET refresh_ciphertext =",
+          )
+        ) {
+          const [refresh_ciphertext, scopes, updated_at, user_id] = bound as [
+            string,
+            string,
+            string,
+            string,
+          ];
+          const row = calendarConnections.get(user_id);
+          if (!row) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          calendarConnections.set(user_id, {
+            ...row,
+            refresh_ciphertext,
+            scopes,
+            updated_at,
+          });
+          return { success: true, meta: { changes: 1 } } as D1Result;
+        } else if (
+          normalized.startsWith(
+            "DELETE FROM calendar_connections WHERE user_id =",
+          )
+        ) {
+          const had = calendarConnections.delete(bound[0] as string);
+          return { success: true, meta: { changes: had ? 1 : 0 } } as D1Result;
+        } else if (
+          normalized.startsWith(
+            "INSERT INTO calendar_subject_links (user_id, cluster_key, subject_id, created_at) VALUES",
+          )
+        ) {
+          const [user_id, cluster_key, subject_id, created_at] = bound as [
+            string,
+            string,
+            string,
+            string,
+          ];
+          calendarSubjectLinks.set(calendarLinkKey(user_id, cluster_key), {
+            user_id,
+            cluster_key,
+            subject_id,
+            created_at,
+          });
+          return { success: true, meta: { changes: 1 } } as D1Result;
+        } else if (
+          normalized.startsWith(
+            "DELETE FROM calendar_subject_links WHERE user_id =",
+          )
+        ) {
+          const userId = bound[0] as string;
+          let changes = 0;
+          for (const key of [...calendarSubjectLinks.keys()]) {
+            if (key.startsWith(`${userId}\0`)) {
+              calendarSubjectLinks.delete(key);
+              changes += 1;
+            }
+          }
+          return { success: true, meta: { changes } } as D1Result;
+        } else if (
+          normalized.startsWith(
+            "INSERT INTO calendar_dismissals (user_id, cluster_key, created_at) VALUES",
+          )
+        ) {
+          const [user_id, cluster_key, created_at] = bound as [
+            string,
+            string,
+            string,
+          ];
+          calendarDismissals.set(calendarLinkKey(user_id, cluster_key), {
+            user_id,
+            cluster_key,
+            created_at,
+          });
+          return { success: true, meta: { changes: 1 } } as D1Result;
+        } else if (
+          normalized.startsWith(
+            "DELETE FROM calendar_dismissals WHERE user_id =",
+          )
+        ) {
+          const userId = bound[0] as string;
+          let changes = 0;
+          for (const key of [...calendarDismissals.keys()]) {
+            if (key.startsWith(`${userId}\0`)) {
+              calendarDismissals.delete(key);
+              changes += 1;
+            }
+          }
+          return { success: true, meta: { changes } } as D1Result;
         } else if (normalized.startsWith("UPDATE subjects SET title =")) {
           const [title, id, userId] = bound as [string, string, string];
           const row = subjects.get(id);

@@ -52,6 +52,7 @@ import {
   getJourney,
 } from "../api/client";
 import { deriveJourney } from "../journey/derive";
+import CalendarSuggestionsPanel from "../components/CalendarSuggestionsPanel";
 import CreateMaterialStepper from "../components/CreateMaterialStepper";
 import MaterialsList from "../components/MaterialsList";
 import {
@@ -61,6 +62,7 @@ import {
 } from "../export/runAnkiExport";
 import { isGuest } from "../guest/session";
 import { libraryShowsCreateFlow } from "../library/libraryCreateFlow";
+import { useCalendarSuggestions } from "../library/useCalendarSuggestions";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import {
@@ -112,6 +114,7 @@ export default function LibraryPage() {
   });
   const { busy: exportBusy, run: runExport } =
     useTrackedOp(ANKI_EXPORT_BUSY_LABEL);
+  const calendar = useCalendarSuggestions(guest, setSubjects, setError);
 
   const syncStepperFromJourney = useCallback(async () => {
     try {
@@ -175,6 +178,7 @@ export default function LibraryPage() {
         setCovers(coverList);
         setReady(true);
         endLoad();
+        void calendar.refresh();
         try {
           const derived = deriveJourney(await getJourney());
           if (cancelled) return;
@@ -210,7 +214,7 @@ export default function LibraryPage() {
     return () => {
       cancelled = true;
     };
-  }, [endLoad, guest]);
+  }, [calendar.refresh, endLoad, guest]);
 
   function openCreateSubject() {
     setDialogError(null);
@@ -491,6 +495,17 @@ export default function LibraryPage() {
             </Alert>
           ) : null}
 
+          {!guest ? (
+            <CalendarSuggestionsPanel
+              suggestions={calendar.suggestions}
+              subjects={subjects}
+              busyKey={calendar.busyKey}
+              onAdd={calendar.onAdd}
+              onLink={calendar.onLink}
+              onDismiss={calendar.onDismiss}
+            />
+          ) : null}
+
           {subjects.length === 0 ? (
             <Typography variant="body2" color="text.secondary">
               {showCreateFlow
@@ -750,6 +765,7 @@ export default function LibraryPage() {
                 setDecks={setDecks}
                 subjects={subjects}
                 setSubjects={setSubjects}
+                deckChipsBySubjectId={calendar.deckChipsBySubjectId}
                 activeStep={activeStep}
                 setActiveStep={setActiveStep}
                 localOnly={guest}
@@ -758,6 +774,7 @@ export default function LibraryPage() {
                   await refreshDraftJobs();
                   await refreshMaterials();
                   await refreshSubjects();
+                  await calendar.refresh();
                   await refreshDecks();
                 }}
               />
