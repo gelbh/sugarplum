@@ -7,6 +7,10 @@ import { requeueGeneration } from "./enqueue";
 import { isRejectReason, type RejectReason } from "../../src/lib/rejectReasons";
 import { buildAvoidPatternsFromRejected } from "./feedback-hints";
 import { getFreeGenUsage } from "./quota";
+import {
+  STALE_RUNNING_FAIL_ERROR,
+  failRunningJobIfStale,
+} from "./staleFail";
 import { normalizeTopicHints } from "./topic-hints";
 import { parseOptionalJsonBody } from "../optional-json";
 
@@ -18,6 +22,8 @@ export type JobProgressPayload = {
   total: number;
   percent: number;
   label: string;
+  /** ISO heartbeat; client poll timeout uses the same stale window as the server. */
+  updated_at?: string;
   started_at?: string;
   tokens_used?: number;
   tokens_prompt?: number;
@@ -58,6 +64,9 @@ function parseProgressJson(raw: string | null): JobProgressPayload | null {
       percent: parsed.percent as number,
       label: parsed.label as string,
     };
+    if (typeof parsed.updated_at === "string") {
+      out.updated_at = parsed.updated_at;
+    }
     if (typeof parsed.started_at === "string") {
       out.started_at = parsed.started_at;
     }
@@ -136,7 +145,7 @@ jobRoutes.get("/:id", async (c) => {
   const jobId = c.req.param("id");
   const db = getDb(c.env);
 
-  const row = await db
+  let row = await db
     .prepare(
       `SELECT j.id, j.material_id, j.status, j.error, j.coverage_json, j.progress_json, j.created_at, j.finished_at
        FROM generation_jobs j
@@ -148,6 +157,27 @@ jobRoutes.get("/:id", async (c) => {
     .first<JobPollRow>();
 
   if (!row) throw new HTTPException(404, { message: "Job not found" });
+
+  if (row.status === "running") {
+    const nowMs = Date.now();
+    const failed = await failRunningJobIfStale(
+      db,
+      {
+        id: jobId,
+        progress_json: row.progress_json,
+        created_at: row.created_at,
+      },
+      nowMs,
+    );
+    if (failed) {
+      row = {
+        ...row,
+        status: "failed",
+        error: STALE_RUNNING_FAIL_ERROR,
+        finished_at: new Date(nowMs).toISOString(),
+      };
+    }
+  }
 
   const progress = parseProgressJson(row.progress_json);
   let free_quota: { used: number; cap: number; remaining: number } | null =

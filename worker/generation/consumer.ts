@@ -6,6 +6,7 @@ import { extractPptxSlides } from "../materials/extract-pptx";
 import { bytesToBase64, mimeFromR2Key } from "../materials/figures";
 import { MAX_IMAGE_BYTES } from "../materials/limits";
 import type { GenerateQueueMessage } from "./enqueue";
+import { failStaleRunningJobs } from "./staleFail";
 import { collectPdfFigureDrafts } from "./pdf-figures";
 import { studyPdfWithOcrSidecar } from "./pdf-ocr-study";
 import {
@@ -971,4 +972,6 @@ export async function handleGenerateQueue(
       msg.ack();
     }
   }
+  // After reclaim/process: fail orphans whose queue messages are gone.
+  await failStaleRunningJobs(getDb(env));
 }
