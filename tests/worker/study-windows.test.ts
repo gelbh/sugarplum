@@ -138,6 +138,69 @@ describe("prepareStudySource", () => {
     );
     expect(again.text).toContain("Amprolium");
   });
+
+  it("injects backfill without rewinding next_page when forward pages are blank", () => {
+    const prepared = prepareStudySource({
+      pages: [
+        { page: 41, text: "" },
+        { page: 42, text: "" },
+      ],
+      backfillPages: [{ page: 9, text: facts }],
+      limit: 4,
+      pageStart: 41,
+      pageEnd: 42,
+      totalPages: 100,
+    });
+    expect(prepared.text).toContain("cecum");
+    expect(prepared.resume.next_page).toBe(43);
+    expect(prepared.pickedPages).toContain(9);
+  });
+
+  it("keeps next_page at pageStart when forward chunks remain after a backfill pick", () => {
+    const forward = [
+      {
+        page: 1,
+        text: "Eimeria tenella infects chickens and causes bloody diarrhea in the cecum.",
+      },
+      {
+        page: 2,
+        text: "Amprolium treats coccidiosis and reduces oocyst shedding after infection.",
+      },
+      {
+        page: 3,
+        text: "Oocysts sporulate outside the host before chickens ingest contaminated litter.",
+      },
+      {
+        page: 4,
+        text: "Schizonts invade epithelial cells and release merozoites during asexual cycles.",
+      },
+      {
+        page: 5,
+        text: "Gametes fuse in the gut lumen and form new oocysts that exit with feces.",
+      },
+      {
+        page: 6,
+        text: "Vaccines reduce clinical disease but do not eliminate litter contamination fully.",
+      },
+    ];
+    const backfill = {
+      page: 9,
+      text: `${facts} ${facts} ${facts} Histomonas meleagridis blackhead turkey lesions liver cecum`,
+    };
+    const prepared = prepareStudySource({
+      pages: forward,
+      backfillPages: [backfill],
+      limit: 4,
+      pageStart: 1,
+      pageEnd: 6,
+      totalPages: 40,
+    });
+    expect(prepared.resume.next_page).toBe(1);
+    expect(prepared.pickedPages.length).toBeGreaterThan(0);
+    expect(prepared.pickedPages.every((page) => [1, 2, 3, 4, 5, 6, 9].includes(page))).toBe(
+      true,
+    );
+  });
 });
 
 describe("mergeWindowResumes", () => {

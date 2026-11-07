@@ -128,6 +128,59 @@ export function applyOcrSidecar<T extends { page: number; text: string }>(
   });
 }
 
+export function orphanedSidecarPages(args: {
+  pages: readonly {
+    page: number;
+    textLayer: string;
+    sidecarText?: string;
+  }[];
+  pickedPages: readonly number[];
+  nextPage: number;
+}): number[] {
+  const picked = new Set(args.pickedPages);
+  const orphaned = new Set<number>();
+  for (const page of args.pages) {
+    if (page.page >= args.nextPage) continue;
+    if (picked.has(page.page)) continue;
+    if (page.textLayer.trim()) continue;
+    if (!(page.sidecarText ?? "").trim()) continue;
+    orphaned.add(page.page);
+  }
+  return [...orphaned].sort((a, b) => a - b);
+}
+
+export function nextUnstudiedPages(args: {
+  previous: readonly number[];
+  pickedPages: readonly number[];
+  orphanPages: readonly number[];
+}): number[] {
+  const picked = new Set(args.pickedPages);
+  const pages = new Set<number>();
+  for (const page of args.previous) {
+    if (
+      !Number.isInteger(page) ||
+      page < 1 ||
+      page > OCR_PAGE_NUMBER_MAX ||
+      picked.has(page)
+    ) {
+      continue;
+    }
+    pages.add(page);
+  }
+  for (const page of args.orphanPages) {
+    if (
+      !Number.isInteger(page) ||
+      page < 1 ||
+      page > OCR_PAGE_NUMBER_MAX ||
+      picked.has(page)
+    ) {
+      continue;
+    }
+    pages.add(page);
+  }
+  return [...pages].sort((a, b) => a - b);
+}
+
 export function sidecarPlainText(sidecar: OcrSidecar | null): string {
   if (!sidecar) return "";
   return sidecar.pages

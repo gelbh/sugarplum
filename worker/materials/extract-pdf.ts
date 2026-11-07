@@ -90,6 +90,42 @@ export async function extractPdfPages(
   }
 }
 
+/** Sparse page list; does not apply the 120-page window. */
+export async function extractPdfPageNumbers(
+  data: ArrayBuffer,
+  pageNumbers: readonly number[],
+): Promise<PdfPageText[]> {
+  const wanted = [
+    ...new Set(
+      pageNumbers.filter(
+        (page) => Number.isInteger(page) && page >= 1,
+      ),
+    ),
+  ].sort((a, b) => a - b);
+  if (wanted.length === 0) return [];
+  const pdf = (await getDocumentProxy(new Uint8Array(data.slice(0)), {
+    maxImageSize: PDF_MAX_IMAGE_PIXELS,
+  })) as unknown as PdfDoc;
+  try {
+    const totalPages = pdf.numPages;
+    if (totalPages < 1) return [];
+    const pages: PdfPageText[] = [];
+    for (const n of wanted) {
+      if (n > totalPages) continue;
+      const page = await pdf.getPage(n);
+      try {
+        const content = await page.getTextContent();
+        pages.push({ page: n, text: pageText(content.items) });
+      } finally {
+        await page.cleanup?.();
+      }
+    }
+    return pages;
+  } finally {
+    await pdf.destroy?.();
+  }
+}
+
 /** Card regen still refuses a full-file read above the pre-window caps. */
 const REGEN_MAX_PAGES = 50;
 export const REGEN_MAX_CHARS = 200_000;

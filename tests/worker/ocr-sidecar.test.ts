@@ -4,10 +4,13 @@ import { SESSION_COOKIE } from "../../worker/auth/session";
 import { mockLlmAdapter } from "../../worker/generation/llm";
 import { processGenerateJob } from "../../worker/generation/consumer";
 import { enqueueGeneration } from "../../worker/generation/enqueue";
+import { extractPdfPageNumbers } from "../../worker/materials/extract-pdf";
 import {
   applyOcrSidecar,
   mergeOcrPages,
+  nextUnstudiedPages,
   ocrSidecarKey,
+  orphanedSidecarPages,
   parseOcrPages,
   parseStoredOcrPages,
   pdfTextOrOcrSidecar,
@@ -115,6 +118,47 @@ describe("applyOcrSidecar", () => {
       { page: 1, text: "native" },
       { page: 2, text: "ocr two" },
     ]);
+  });
+});
+
+describe("orphanedSidecarPages", () => {
+  it("includes blank sidecar pages behind next_page that were not picked", () => {
+    expect(
+      orphanedSidecarPages({
+        pages: [
+          { page: 9, textLayer: "", sidecarText: "later" },
+          { page: 10, textLayer: "native", sidecarText: "ignored" },
+          { page: 11, textLayer: "  ", sidecarText: "picked" },
+          { page: 12, textLayer: "", sidecarText: "ahead" },
+          { page: 8, textLayer: "", sidecarText: "  " },
+        ],
+        pickedPages: [11],
+        nextPage: 12,
+      }),
+    ).toEqual([9]);
+  });
+});
+
+describe("nextUnstudiedPages", () => {
+  it("drops picked pages and adds orphans", () => {
+    expect(
+      nextUnstudiedPages({
+        previous: [9, 10],
+        pickedPages: [9],
+        orphanPages: [15],
+      }),
+    ).toEqual([10, 15]);
+  });
+});
+
+describe("extractPdfPageNumbers", () => {
+  it("returns existing pages and skips pages past the document", async () => {
+    const bytes = asBuffer(minimalPdfWithText("Cecum"));
+    const found = await extractPdfPageNumbers(bytes, [1]);
+    expect(found).toHaveLength(1);
+    expect(found[0]?.page).toBe(1);
+    expect(found[0]?.text).toContain("Cecum");
+    expect(await extractPdfPageNumbers(bytes, [99])).toEqual([]);
   });
 });
 

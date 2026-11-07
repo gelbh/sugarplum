@@ -1,10 +1,17 @@
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { decryptSecret } from "../crypto/secrets";
-import { extractPdfPages } from "../materials/extract-pdf";
+import {
+  extractPdfPageNumbers,
+  extractPdfPages,
+  type PdfPageText,
+} from "../materials/extract-pdf";
 import {
   applyOcrSidecar,
+  nextUnstudiedPages,
+  orphanedSidecarPages,
   readOcrSidecar,
+  writeOcrSidecar,
   type OcrSidecar,
 } from "../materials/ocr-sidecar";
 import { extractPptxSlides } from "../materials/extract-pptx";
@@ -727,9 +734,52 @@ export async function processGenerateJob(
         console.warn("OCR sidecar read failed", err);
       }
       try {
+        const previousUnstudied = sidecar?.unstudiedPages ?? [];
+        const firstWindow = await extractPdfPages(
+          pdfBytes.slice(0),
+          prior.startPage,
+        );
+        let lastNativePages: PdfPageText[] = firstWindow.pages;
+        const inWindow = new Set(firstWindow.pages.map((page) => page.page));
+        const nativeByPage = new Map(
+          firstWindow.pages.map((page) => [page.page, page.text]),
+        );
+        const sparseNeeded = previousUnstudied.filter((page) => !inWindow.has(page));
+        if (sparseNeeded.length > 0) {
+          const sparse = await extractPdfPageNumbers(
+            pdfBytes.slice(0),
+            sparseNeeded,
+          );
+          for (const page of sparse) {
+            nativeByPage.set(page.page, page.text);
+          }
+        }
+        const sidecarByPage = new Map(
+          (sidecar?.pages ?? []).map((page) => [page.page, page.text]),
+        );
+        const nativeTextDrops = new Set<number>();
+        const backfillPages: { page: number; text: string }[] = [];
+        for (const page of previousUnstudied) {
+          const nativeText = nativeByPage.get(page) ?? "";
+          if (nativeText.trim()) {
+            nativeTextDrops.add(page);
+            continue;
+          }
+          const sidecarText = sidecarByPage.get(page)?.trim();
+          if (sidecarText) {
+            backfillPages.push({ page, text: sidecarText });
+          }
+        }
         const focused = await focusStudyPages(
           async (start) => {
+            if (start === prior.startPage) {
+              return {
+                ...firstWindow,
+                pages: applyOcrSidecar(firstWindow.pages, sidecar),
+              };
+            }
             const window = await extractPdfPages(pdfBytes.slice(0), start);
+            lastNativePages = window.pages;
             return {
               ...window,
               pages: applyOcrSidecar(window.pages, sidecar),
@@ -739,10 +789,40 @@ export async function processGenerateJob(
             startPage: prior.startPage,
             topicHints,
             usedKeys: prior.usedKeys,
+            backfillPages,
           },
         );
         text = focused.text;
         windowResume = focused.resume;
+        const orphanPages = orphanedSidecarPages({
+          pages: lastNativePages.map((page) => ({
+            page: page.page,
+            textLayer: page.text,
+            sidecarText: sidecarByPage.get(page.page),
+          })),
+          pickedPages: focused.pickedPages,
+          nextPage: focused.resume.next_page,
+        });
+        const pendingAfterDrops = previousUnstudied.filter(
+          (page) => !nativeTextDrops.has(page),
+        );
+        const next = nextUnstudiedPages({
+          previous: pendingAfterDrops,
+          pickedPages: focused.pickedPages,
+          orphanPages,
+        });
+        const previousKey = previousUnstudied.join(",");
+        const nextKey = next.join(",");
+        if (nextKey !== previousKey) {
+          // ponytail: last R2 put wins if an append overlaps this write; upgrade path is a conditional put.
+          await writeOcrSidecar(
+            env,
+            material.deck_id,
+            material.id,
+            sidecar?.pages ?? [],
+            next,
+          );
+        }
       } catch (err) {
         textError = err;
         console.warn("PDF text extraction failed; trying figures", err);
