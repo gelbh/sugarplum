@@ -25,7 +25,6 @@ export function assertSingleCloze(front: string): void {
   }
 }
 
-/** Split an Anki cloze front into text, hint, and blank parts. */
 export function clozeParts(front: string): ClozePart[] {
   const parts: ClozePart[] = [];
   const re = new RegExp(ANKI_CLOZE_RE.source, "g");
@@ -49,7 +48,6 @@ export function clozeParts(front: string): ClozePart[] {
   return parts;
 }
 
-/** Spoken / aria form of a cloze front (blank → "blank"). */
 export function clozeSpoken(front: string): string {
   return clozeParts(front)
     .map((part) => {
