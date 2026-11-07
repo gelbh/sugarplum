@@ -54,7 +54,6 @@ export function mcqOptionKey(index: number): string | null {
 }
 
 const TYPING = "input, textarea, select, [contenteditable='true']";
-const INTERACTIVE = `button, a[href], [role='button'], ${TYPING}`;
 
 /** Study shortcut key, or null for repeats, modifier combos and typing targets. */
 export function plainShortcutKey(e: {
@@ -96,11 +95,6 @@ export function reviewArrowDecision(
     active === document.documentElement;
   if (!atRest && (stage === null || !stage.contains(active))) return null;
   return e.key === "ArrowRight" ? "accept" : "reject";
-}
-
-/** Focused native controls keep their own Space activation. */
-export function isInteractiveKeyTarget(target: EventTarget | null): boolean {
-  return target instanceof Element && target.closest(INTERACTIVE) !== null;
 }
 
 /** Up/Down scroll an overflowing answer until it hits that edge, then grade. */
