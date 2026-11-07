@@ -3157,6 +3157,61 @@ export function createTestEnv(opts?: {
           normalized.startsWith(
             "UPDATE generation_jobs SET status = ?, error = ?, finished_at = ?",
           ) &&
+          normalized.includes(
+            "WHERE id = ? AND status = ? AND progress_json IS NULL",
+          )
+        ) {
+          const [status, error, finished_at, id, requiredStatus] = bound as [
+            string,
+            string,
+            string,
+            string,
+            string,
+          ];
+          const row = generationJobs.get(id);
+          if (
+            !row ||
+            row.status !== requiredStatus ||
+            row.progress_json != null
+          ) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          generationJobs.set(id, {
+            ...row,
+            status,
+            error,
+            finished_at,
+          });
+          return { success: true, meta: { changes: 1 } } as D1Result;
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET status = ?, error = ?, finished_at = ?",
+          ) &&
+          normalized.includes(
+            "WHERE id = ? AND status = ? AND progress_json = ?",
+          )
+        ) {
+          const [status, error, finished_at, id, requiredStatus, expectedProgress] =
+            bound as [string, string, string, string, string, string];
+          const row = generationJobs.get(id);
+          if (
+            !row ||
+            row.status !== requiredStatus ||
+            row.progress_json !== expectedProgress
+          ) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          generationJobs.set(id, {
+            ...row,
+            status,
+            error,
+            finished_at,
+          });
+          return { success: true, meta: { changes: 1 } } as D1Result;
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET status = ?, error = ?, finished_at = ?",
+          ) &&
           normalized.includes("WHERE id = ? AND status = ?")
         ) {
           const [status, error, finished_at, id, requiredStatus] = bound as [

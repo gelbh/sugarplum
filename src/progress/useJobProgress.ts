@@ -13,6 +13,7 @@ import { buildJobProgressSnapshot } from "./jobSnapshot";
 import {
   JOB_POLL_RUNNING_TIMEOUT_MS,
   advanceJobPollDeadline,
+  resolveJobPollHeartbeatMs,
 } from "./jobPollDeadline";
 
 const POLL_MS = 500;
@@ -69,7 +70,6 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
     setPending(true);
     let cancelled = false;
     let pollTimer: ReturnType<typeof setTimeout> | undefined;
-    let runningDeadlineMs: number | null = null;
 
     const settleOk = () => {
       if (settledRef.current) return;
@@ -225,11 +225,14 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
         }
         const adv = advanceJobPollDeadline({
           status: job.status,
-          runningDeadlineMs,
+          heartbeatMs: resolveJobPollHeartbeatMs({
+            updatedAt: job.progress?.updated_at,
+            events: job.progress?.events,
+            createdAt: job.created_at,
+          }),
           nowMs: Date.now(),
           timeoutMs: JOB_POLL_RUNNING_TIMEOUT_MS,
         });
-        runningDeadlineMs = adv.runningDeadlineMs;
         if (adv.timedOut) {
           settleFail("Timed out waiting for generation");
           return;

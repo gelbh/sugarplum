@@ -753,6 +753,8 @@ export type GenerationJobProgress = {
   total: number;
   percent: number;
   label: string;
+  /** ISO progress heartbeat (aligns client poll timeout with server stale). */
+  updated_at?: string;
   /** ISO when pipeline work first started (durable ETA clock). */
   started_at?: string;
   tokens_used?: number;

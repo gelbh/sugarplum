@@ -4,11 +4,61 @@ import { recordGenerationUsageEventForJob } from "./usage";
 export const STALE_RUNNING_FAIL_ERROR =
   "Generation stalled and was stopped. Try generating again.";
 
-type RunningRow = {
+export type RunningJobStaleRow = {
   id: string;
   progress_json: string | null;
   created_at: string;
 };
+
+/**
+ * Fail one running job if its heartbeat is stale.
+ * CAS matches reclaim: only succeeds if `progress_json` is still the snapshot
+ * used for the stale check (reclaim that refreshed the heartbeat wins).
+ */
+export async function failRunningJobIfStale(
+  db: D1Database,
+  row: RunningJobStaleRow,
+  nowMs: number = Date.now(),
+): Promise<boolean> {
+  if (!isRunningJobStale(row.progress_json, row.created_at, nowMs)) {
+    return false;
+  }
+  const finishedAt = new Date(nowMs).toISOString();
+  const result =
+    row.progress_json == null
+      ? await db
+          .prepare(
+            `UPDATE generation_jobs
+             SET status = ?, error = ?, finished_at = ?
+             WHERE id = ? AND status = ? AND progress_json IS NULL`,
+          )
+          .bind(
+            "failed",
+            STALE_RUNNING_FAIL_ERROR,
+            finishedAt,
+            row.id,
+            "running",
+          )
+          .run()
+      : await db
+          .prepare(
+            `UPDATE generation_jobs
+             SET status = ?, error = ?, finished_at = ?
+             WHERE id = ? AND status = ? AND progress_json = ?`,
+          )
+          .bind(
+            "failed",
+            STALE_RUNNING_FAIL_ERROR,
+            finishedAt,
+            row.id,
+            "running",
+            row.progress_json,
+          )
+          .run();
+  if ((result.meta.changes ?? 0) === 0) return false;
+  await recordGenerationUsageEventForJob(db, row.id);
+  return true;
+}
 
 /**
  * Mark abandoned `running` jobs failed when their progress heartbeat is stale.
@@ -27,7 +77,7 @@ export async function failStaleRunningJobs(
            WHERE id = ? AND status = 'running'`,
         )
         .bind(opts.jobId)
-        .all<RunningRow>()
+        .all<RunningJobStaleRow>()
     : await db
         .prepare(
           `SELECT id, progress_json, created_at FROM generation_jobs
@@ -36,26 +86,11 @@ export async function failStaleRunningJobs(
            LIMIT ?`,
         )
         .bind(limit)
-        .all<RunningRow>();
+        .all<RunningJobStaleRow>();
 
   let failed = 0;
   for (const row of rows.results ?? []) {
-    if (!isRunningJobStale(row.progress_json, row.created_at, nowMs)) {
-      continue;
-    }
-    const finishedAt = new Date(nowMs).toISOString();
-    const result = await db
-      .prepare(
-        `UPDATE generation_jobs
-         SET status = ?, error = ?, finished_at = ?
-         WHERE id = ? AND status = ?`,
-      )
-      .bind("failed", STALE_RUNNING_FAIL_ERROR, finishedAt, row.id, "running")
-      .run();
-    if ((result.meta.changes ?? 0) > 0) {
-      await recordGenerationUsageEventForJob(db, row.id);
-      failed += 1;
-    }
+    if (await failRunningJobIfStale(db, row, nowMs)) failed += 1;
   }
   return failed;
 }

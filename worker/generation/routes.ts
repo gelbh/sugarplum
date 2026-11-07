@@ -7,8 +7,10 @@ import { requeueGeneration } from "./enqueue";
 import { isRejectReason, type RejectReason } from "../../src/lib/rejectReasons";
 import { buildAvoidPatternsFromRejected } from "./feedback-hints";
 import { getFreeGenUsage } from "./quota";
-import { isRunningJobStale } from "./progress";
-import { failStaleRunningJobs } from "./staleFail";
+import {
+  STALE_RUNNING_FAIL_ERROR,
+  failRunningJobIfStale,
+} from "./staleFail";
 import { normalizeTopicHints } from "./topic-hints";
 import { parseOptionalJsonBody } from "../optional-json";
 
@@ -20,6 +22,8 @@ export type JobProgressPayload = {
   total: number;
   percent: number;
   label: string;
+  /** ISO heartbeat; client poll timeout uses the same stale window as the server. */
+  updated_at?: string;
   started_at?: string;
   tokens_used?: number;
   tokens_prompt?: number;
@@ -60,6 +64,9 @@ function parseProgressJson(raw: string | null): JobProgressPayload | null {
       percent: parsed.percent as number,
       label: parsed.label as string,
     };
+    if (typeof parsed.updated_at === "string") {
+      out.updated_at = parsed.updated_at;
+    }
     if (typeof parsed.started_at === "string") {
       out.started_at = parsed.started_at;
     }
@@ -151,22 +158,25 @@ jobRoutes.get("/:id", async (c) => {
 
   if (!row) throw new HTTPException(404, { message: "Job not found" });
 
-  if (
-    row.status === "running" &&
-    isRunningJobStale(row.progress_json, row.created_at)
-  ) {
-    await failStaleRunningJobs(db, { jobId });
-    const refreshed = await db
-      .prepare(
-        `SELECT j.id, j.material_id, j.status, j.error, j.coverage_json, j.progress_json, j.created_at, j.finished_at
-         FROM generation_jobs j
-         INNER JOIN materials m ON m.id = j.material_id
-         INNER JOIN decks d ON d.id = m.deck_id
-         WHERE j.id = ? AND d.user_id = ?`,
-      )
-      .bind(jobId, userId)
-      .first<JobPollRow>();
-    if (refreshed) row = refreshed;
+  if (row.status === "running") {
+    const nowMs = Date.now();
+    const failed = await failRunningJobIfStale(
+      db,
+      {
+        id: jobId,
+        progress_json: row.progress_json,
+        created_at: row.created_at,
+      },
+      nowMs,
+    );
+    if (failed) {
+      row = {
+        ...row,
+        status: "failed",
+        error: STALE_RUNNING_FAIL_ERROR,
+        finished_at: new Date(nowMs).toISOString(),
+      };
+    }
   }
 
   const progress = parseProgressJson(row.progress_json);

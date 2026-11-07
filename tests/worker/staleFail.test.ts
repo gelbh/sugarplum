@@ -3,6 +3,7 @@ import { getDb } from "../../worker/db/client";
 import { RUNNING_JOB_STALE_MS } from "../../worker/generation/progress";
 import {
   STALE_RUNNING_FAIL_ERROR,
+  failRunningJobIfStale,
   failStaleRunningJobs,
 } from "../../worker/generation/staleFail";
 import { createTestEnv } from "./test-env";
@@ -105,5 +106,57 @@ describe("failStaleRunningJobs", () => {
 
     const n = await failStaleRunningJobs(getDb(env), { jobId: "job-done" });
     expect(n).toBe(0);
+  });
+
+  it("CAS no-op when reclaim refreshed progress_json after the stale SELECT", async () => {
+    const env = createTestEnv();
+    seedJobGraph(env);
+    const staleAt = new Date(
+      Date.now() - RUNNING_JOB_STALE_MS - 1000,
+    ).toISOString();
+    const staleProgress = JSON.stringify({
+      updated_at: staleAt,
+      stage: "critique",
+      percent: 77.5,
+    });
+    env.seedGenerationJob({
+      id: "job-race",
+      material_id: "m1",
+      status: "running",
+      error: null,
+      coverage_json: null,
+      progress_json: staleProgress,
+      created_at: "2026-10-27T15:02:40.280Z",
+      finished_at: null,
+    });
+
+    const db = getDb(env);
+    const staleSnapshot = {
+      id: "job-race",
+      progress_json: staleProgress,
+      created_at: "2026-10-27T15:02:40.280Z",
+    };
+
+    // Reclaim wins: refresh heartbeat while still running.
+    const freshProgress = JSON.stringify({
+      updated_at: new Date().toISOString(),
+      stage: "critique",
+      percent: 77.5,
+    });
+    await db
+      .prepare(
+        `UPDATE generation_jobs SET progress_json = ? WHERE id = ? AND status = ? AND progress_json = ?`,
+      )
+      .bind(freshProgress, "job-race", "running", staleProgress)
+      .run();
+
+    const failed = await failRunningJobIfStale(db, staleSnapshot);
+    expect(failed).toBe(false);
+    expect(
+      env.getGenerationJobs().find((j) => j.id === "job-race")?.status,
+    ).toBe("running");
+    expect(
+      env.getGenerationJobs().find((j) => j.id === "job-race")?.progress_json,
+    ).toBe(freshProgress);
   });
 });
