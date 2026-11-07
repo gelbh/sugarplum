@@ -60,7 +60,6 @@ type Props = {
   cardId?: string;
   options?: string[];
   onGrade?: (rating: StudyRating) => boolean | Promise<boolean>;
-  /** Revealed face offers the source passage. */
   notesAvailable?: boolean;
   onOpenNotes?: () => void;
 };

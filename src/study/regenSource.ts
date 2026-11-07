@@ -25,7 +25,6 @@ function pageNumbers(list: readonly unknown[]): number[] {
   return pages;
 }
 
-/** Finite page numbers >= 1 from provenance.pages. */
 export function provenancePages(provenance: unknown): number[] {
   if (!provenance || typeof provenance !== "object" || Array.isArray(provenance)) {
     return [];

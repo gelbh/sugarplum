@@ -18,7 +18,6 @@ export type StudyNotesOverlay = {
   dialog: ReactNode;
 };
 
-/** Open/close Notes overlay for the current study card; resets on card change. */
 export function useStudyNotesOverlay(
   card: StudyNotesCard | null,
 ): StudyNotesOverlay {
