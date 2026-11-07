@@ -1,11 +1,16 @@
 /** Anki-style cloze: {{c1::answer}} or {{c2::answer::hint}} */
-export const ANKI_CLOZE_RE = /\{\{c\d+::([\s\S]*?)(?:::(.*?))?\}\}/g;
+const ANKI_CLOZE_RE = /\{\{c\d+::([\s\S]*?)(?:::(.*?))?\}\}/g;
 
 const ANKI_CLOZE_ONCE_RE = /\{\{c\d+::([\s\S]*?)(?:::(.*?))?\}\}/;
 
 /** Count blanks the same way as worker assertSingleCloze. */
 const ANKI_CLOZE_COUNT_RE = /\{\{c\d+::[\s\S]*?\}\}/g;
 const UNDERSCORE_BLANK_RE = /_{3,}/g;
+
+export type ClozePart =
+  | { kind: "text"; value: string }
+  | { kind: "hint"; value: string }
+  | { kind: "blank" };
 
 /**
  * Cloze fronts may have at most one blank (Anki `{{cN::…}}` or `___`).
@@ -20,22 +25,47 @@ export function assertSingleCloze(front: string): void {
   }
 }
 
-export function blankClozeFront(front: string): string {
-  return front.replace(ANKI_CLOZE_RE, (_match, _answer: string, hint?: string) => {
-    if (hint !== undefined && hint.length > 0) {
-      return hint;
+/** Split an Anki cloze front into text, hint, and blank parts. */
+export function clozeParts(front: string): ClozePart[] {
+  const parts: ClozePart[] = [];
+  const re = new RegExp(ANKI_CLOZE_RE.source, "g");
+  let cursor = 0;
+  for (const match of front.matchAll(re)) {
+    const index = match.index ?? cursor;
+    if (index > cursor) {
+      parts.push({ kind: "text", value: front.slice(cursor, index) });
     }
-    return "[…]";
-  });
+    const hint = match[2];
+    if (hint !== undefined && hint.length > 0) {
+      parts.push({ kind: "hint", value: hint });
+    } else {
+      parts.push({ kind: "blank" });
+    }
+    cursor = index + match[0].length;
+  }
+  if (cursor < front.length) {
+    parts.push({ kind: "text", value: front.slice(cursor) });
+  }
+  return parts;
 }
 
-export function clozeBlankLabel(front: string): string {
-  return front.replace(ANKI_CLOZE_RE, (_match, _answer: string, hint?: string) => {
-    if (hint !== undefined && hint.length > 0) {
-      return hint;
-    }
-    return "blank";
-  });
+/** Spoken / aria form of a cloze front (blank → "blank"). */
+export function clozeSpoken(front: string): string {
+  return clozeParts(front)
+    .map((part) => {
+      if (part.kind === "blank") return "blank";
+      return part.value;
+    })
+    .join("");
+}
+
+export function blankClozeFront(front: string): string {
+  return clozeParts(front)
+    .map((part) => {
+      if (part.kind === "blank") return "[…]";
+      return part.value;
+    })
+    .join("");
 }
 
 export function revealClozeFront(front: string): string {

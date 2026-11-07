@@ -3,7 +3,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
 import ClozePrompt from "../../src/components/ClozePrompt";
-import { clozeBlankLabel } from "../../src/lib/clozeFormat";
+import { clozeSpoken } from "../../src/lib/clozeFormat";
 
 describe("ClozePrompt", () => {
   let root: Root | null = null;
@@ -41,9 +41,9 @@ describe("ClozePrompt", () => {
   });
 });
 
-describe("clozeBlankLabel", () => {
+describe("clozeSpoken", () => {
   it("speaks the word blank", () => {
-    expect(clozeBlankLabel("phylum {{c1::Amoebozoa}} and order")).toBe(
+    expect(clozeSpoken("phylum {{c1::Amoebozoa}} and order")).toBe(
       "phylum blank and order",
     );
   });

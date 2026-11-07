@@ -531,7 +531,12 @@ export default function StudyPage() {
       const action = resolveStudyKey(key, revealed);
       switch (action.type) {
         case "reveal":
+          e.preventDefault();
+          reveal();
+          return;
         case "hide":
+          e.preventDefault();
+          flipBack();
           return;
         case "grade":
           if (
@@ -555,29 +560,19 @@ export default function StudyPage() {
       }
     }
 
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [current, leaveStudy, onGrade, ready, revealed, toggleZen]);
-
-  useEffect(() => {
-    if (!ready) return;
-
-    function onSpace(e: KeyboardEvent) {
-      if (cardDialogOpenRef.current) return;
-      const key = plainShortcutKey(e);
-      if (key !== " ") return;
-      if (isMcqCard(current) || busyRef.current || !current) return;
-      const action = resolveStudyKey(key, revealed);
-      if (action.type !== "reveal" && action.type !== "hide") return;
-      e.preventDefault();
-      e.stopPropagation();
-      if (action.type === "reveal") reveal();
-      else flipBack();
-    }
-
-    window.addEventListener("keydown", onSpace, true);
-    return () => window.removeEventListener("keydown", onSpace, true);
-  }, [current, flipBack, ready, reveal, revealed]);
+    // Capture so Space flips before a focused Show answer button activates.
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [
+    current,
+    flipBack,
+    leaveStudy,
+    onGrade,
+    ready,
+    reveal,
+    revealed,
+    toggleZen,
+  ]);
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
@@ -643,16 +638,24 @@ export default function StudyPage() {
   }
 
   const stage = zen;
-  const centerFinish = !current && endKind === "complete";
+  const finish = !current && endKind === "complete";
+  const fillColumn = finish
+    ? ({
+        minHeight: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+      } as const)
+    : null;
 
   return (
     <Box
       className={stage ? "sp-stage" : undefined}
       sx={{
-        minHeight: stage || centerFinish ? "100%" : undefined,
-        height: stage || centerFinish ? "100%" : undefined,
-        display: centerFinish ? "flex" : undefined,
-        flexDirection: centerFinish ? "column" : undefined,
+        minHeight: stage ? "100%" : fillColumn?.minHeight,
+        height: stage ? "100%" : fillColumn?.height,
+        display: fillColumn?.display,
+        flexDirection: fillColumn?.flexDirection,
         boxSizing: "border-box",
         ...(stage
           ? {
@@ -666,7 +669,7 @@ export default function StudyPage() {
         maxWidth="sm"
         sx={{
           py: stage ? { xs: 1, sm: 3 } : 4,
-          height: stage || centerFinish ? "100%" : undefined,
+          height: stage ? "100%" : fillColumn?.height,
           maxHeight: stage ? "100%" : undefined,
           display: "flex",
           flexDirection: "column",
@@ -679,7 +682,9 @@ export default function StudyPage() {
       >
         <Stack
           spacing={stage ? { xs: 0.75, sm: 1.5 } : 2}
-          sx={stage || centerFinish ? { flex: 1, minHeight: 0 } : undefined}
+          sx={
+            stage || finish ? { flex: 1, minHeight: 0 } : undefined
+          }
         >
           <Stack
             direction="row"
@@ -851,31 +856,28 @@ export default function StudyPage() {
                   overflow: "auto",
                   display: "flex",
                   flexDirection: "column",
-                  alignItems: "center",
                   justifyContent: "safe center",
                 }}
               >
-                <Box sx={{ width: "100%" }}>
-                  <SessionComplete
-                    zen={stage}
-                    tally={tally}
-                    unlocks={unlocks}
-                    showAchievements={!isGuest()}
-                    canStudyMore={canStudyMore}
-                    studyMoreBusy={studyMoreBusy}
-                    onStudyMore={() => void onStudyMore()}
-                    onToday={leaveStudy}
-                    onAchievements={() => {
-                      exitZen();
-                      navigate("/achievements");
-                    }}
-                    scopeBack={
-                      scopeBack
-                        ? { ...scopeBack, onClick: () => openScopeBack(true) }
-                        : null
-                    }
-                  />
-                </Box>
+                <SessionComplete
+                  zen={stage}
+                  tally={tally}
+                  unlocks={unlocks}
+                  showAchievements={!isGuest()}
+                  canStudyMore={canStudyMore}
+                  studyMoreBusy={studyMoreBusy}
+                  onStudyMore={() => void onStudyMore()}
+                  onToday={leaveStudy}
+                  onAchievements={() => {
+                    exitZen();
+                    navigate("/achievements");
+                  }}
+                  scopeBack={
+                    scopeBack
+                      ? { ...scopeBack, onClick: () => openScopeBack(true) }
+                      : null
+                  }
+                />
               </Box>
             )
           ) : (

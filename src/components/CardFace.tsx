@@ -5,8 +5,8 @@ import Typography from "@mui/material/Typography";
 import type { MouseEvent, ReactNode, Ref } from "react";
 import { mediaUrl, type StudyRating } from "../api/client";
 import {
-  blankClozeFront,
   clozeExtraSubtitle,
+  clozeSpoken,
   extractClozeAnswer,
 } from "../lib/clozeFormat";
 import { CardFaceMcqBody } from "./cardFaceMcq";
@@ -298,7 +298,7 @@ export default function CardFace({
   }
 
   const isCloze = type === "cloze";
-  const questionFront = isCloze ? blankClozeFront(front) : front;
+  const spokenFront = isCloze ? clozeSpoken(front) : front;
   const clozeExtra = isCloze ? clozeExtraSubtitle(back) : null;
   const answerText = isCloze ? (extractClozeAnswer(front) ?? "") : back;
   const imageKey = occlusion?.imageKey ?? mediaR2Keys[0];
@@ -340,9 +340,9 @@ export default function CardFace({
                 masked={!!occlusion}
               />
             ) : null}
-            {questionFront ? (
+            {spokenFront ? (
               <Typography component="p" sx={FACE_PROMPT_TEXT_SX}>
-                {isCloze ? <ClozePrompt front={front} /> : questionFront}
+                {isCloze ? <ClozePrompt front={front} /> : spokenFront}
               </Typography>
             ) : null}
           </Box>

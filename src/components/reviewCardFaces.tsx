@@ -18,7 +18,7 @@ import {
 } from "../api/client";
 import {
   CLOZE_EXTRA_LABEL,
-  clozeBlankLabel,
+  clozeSpoken,
   extractClozeAnswer,
 } from "../lib/clozeFormat";
 import {
@@ -55,8 +55,8 @@ type FaceProps = {
 function EditableText({
   label,
   value,
-  display,
-  preview,
+  spoken,
+  visual,
   editing,
   disabled,
   textSx,
@@ -66,8 +66,8 @@ function EditableText({
 }: {
   label: string;
   value: string;
-  display: string;
-  preview?: ReactNode;
+  spoken: string;
+  visual?: ReactNode;
   editing: boolean;
   disabled: boolean;
   textSx: Record<string, unknown>;
@@ -98,7 +98,7 @@ function EditableText({
     <Box
       role="button"
       tabIndex={disabled ? -1 : 0}
-      aria-label={`Edit ${label}: ${display || "empty"}`}
+      aria-label={`Edit ${label}: ${spoken || "empty"}`}
       aria-disabled={disabled || undefined}
       onClick={() => {
         if (!disabled) onEdit();
@@ -123,9 +123,9 @@ function EditableText({
     >
       <Typography
         component="p"
-        sx={{ ...textSx, m: 0, ...(display ? null : { opacity: 0.45 }) }}
+        sx={{ ...textSx, m: 0, ...(spoken ? null : { opacity: 0.45 }) }}
       >
-        {preview ?? (display || label)}
+        {visual ?? (spoken || label)}
       </Typography>
     </Box>
   );
@@ -179,8 +179,10 @@ export function TextReviewFace({ card, disabled, onChange }: FaceProps) {
             <EditableText
               label="Front"
               value={frontText}
-              display={isCloze ? clozeBlankLabel(frontText) : frontText}
-              preview={isCloze ? <ClozePrompt front={frontText} /> : undefined}
+              spoken={isCloze ? clozeSpoken(frontText) : frontText}
+              visual={
+                isCloze && frontText ? <ClozePrompt front={frontText} /> : undefined
+              }
               textSx={FACE_PROMPT_TEXT_SX}
               onChange={(front) => onChange({ front, back: backText, type })}
               {...field("front")}
@@ -220,7 +222,7 @@ export function TextReviewFace({ card, disabled, onChange }: FaceProps) {
             <EditableText
               label={isCloze ? CLOZE_EXTRA_LABEL : "Back"}
               value={backText}
-              display={backText}
+              spoken={backText}
               textSx={isCloze ? FACE_HINT_TEXT_SX : FACE_ANSWER_TEXT_SX}
               onChange={(back) => onChange({ front: frontText, back, type })}
               {...field("back")}
