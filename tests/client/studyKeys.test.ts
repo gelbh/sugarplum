@@ -2,7 +2,6 @@
 import { describe, expect, it } from "vitest";
 import {
   faceScrollsFor,
-  isInteractiveKeyTarget,
   mcqOptionIndexForKey,
   mcqOptionKey,
   plainShortcutKey,
@@ -77,14 +76,6 @@ describe("key guards", () => {
     ).toBe("3");
   });
 
-  it("treats native controls as interactive", () => {
-    const button = document.createElement("button");
-    const span = document.createElement("span");
-    button.append(span);
-    expect(isInteractiveKeyTarget(span)).toBe(true);
-    expect(isInteractiveKeyTarget(document.createElement("div"))).toBe(false);
-    expect(isInteractiveKeyTarget(null)).toBe(false);
-  });
 });
 
 describe("faceScrollsFor", () => {

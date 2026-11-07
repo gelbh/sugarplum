@@ -45,7 +45,6 @@ import { resolveCardGesture } from "../study/cardGestures";
 import { studyQueueProgress } from "../study/studyQueueProgress";
 import {
   faceScrollsFor,
-  isInteractiveKeyTarget,
   plainShortcutKey,
   resolveStudyKey,
 } from "../study/studyKeys";
@@ -185,9 +184,7 @@ export default function StudyPage() {
   }, [exitZen]);
 
   const answerFocusRef = useRef<HTMLElement | null>(null);
-  const showAnswerRef = useRef<HTMLButtonElement | null>(null);
   const swipeHintUsedRef = useRef(false);
-  const focusShowAnswerAfterGradeRef = useRef(false);
   const pointerRef = useRef<PointerStart | null>(null);
   const busyRef = useRef(false);
   /** Suppress leave-on-Esc for one tick after FS exits (UA may clear FS before keydown). */
@@ -418,7 +415,6 @@ export default function StudyPage() {
   const flipBack = useCallback(() => {
     setRevealed(false);
     setShowSwipeHint(false);
-    focusShowAnswerAfterGradeRef.current = true;
   }, []);
 
   useEffect(() => {
@@ -426,16 +422,7 @@ export default function StudyPage() {
     answerFocusRef.current?.focus();
   }, [revealed, current?.id]);
 
-  useEffect(() => {
-    if (revealed || !current || !focusShowAnswerAfterGradeRef.current) return;
-    focusShowAnswerAfterGradeRef.current = false;
-    showAnswerRef.current?.focus();
-  }, [revealed, current?.id]);
-
-  const advanceAfterGrade = useCallback((fromMcq: boolean) => {
-    if (!fromMcq) {
-      focusShowAnswerAfterGradeRef.current = true;
-    }
+  const advanceAfterGrade = useCallback(() => {
     setQueue((prev) => prev.slice(1));
     setRevealed(false);
   }, []);
@@ -457,7 +444,7 @@ export default function StudyPage() {
         setTally((prev) => addGrade(prev, rating));
         pruneDueCacheCard(uid, current.id, scopeOpts);
         refreshPendingCount(uid);
-        advanceAfterGrade(fromMcq);
+        advanceAfterGrade();
         end();
         return true;
       };
@@ -476,7 +463,7 @@ export default function StudyPage() {
           setUnlocks((prev) => rememberUnlocks(prev, incoming));
         }
         setTally((prev) => addGrade(prev, rating));
-        advanceAfterGrade(fromMcq);
+        advanceAfterGrade();
         end();
         return true;
       } catch (err) {
@@ -544,11 +531,12 @@ export default function StudyPage() {
       const action = resolveStudyKey(key, revealed);
       switch (action.type) {
         case "reveal":
-        case "hide":
-          if (isInteractiveKeyTarget(e.target)) return;
           e.preventDefault();
-          if (action.type === "reveal") reveal();
-          else flipBack();
+          reveal();
+          return;
+        case "hide":
+          e.preventDefault();
+          flipBack();
           return;
         case "grade":
           if (
@@ -572,8 +560,9 @@ export default function StudyPage() {
       }
     }
 
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    // Capture so Space flips before a focused Show answer button activates.
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, [
     current,
     flipBack,
@@ -649,13 +638,24 @@ export default function StudyPage() {
   }
 
   const stage = zen;
+  const finish = !current && endKind === "complete";
+  const fillColumn = finish
+    ? ({
+        minHeight: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+      } as const)
+    : null;
 
   return (
     <Box
       className={stage ? "sp-stage" : undefined}
       sx={{
-        minHeight: stage ? "100%" : undefined,
-        height: stage ? "100%" : undefined,
+        minHeight: stage ? "100%" : fillColumn?.minHeight,
+        height: stage ? "100%" : fillColumn?.height,
+        display: fillColumn?.display,
+        flexDirection: fillColumn?.flexDirection,
         boxSizing: "border-box",
         ...(stage
           ? {
@@ -669,7 +669,7 @@ export default function StudyPage() {
         maxWidth="sm"
         sx={{
           py: stage ? { xs: 1, sm: 3 } : 4,
-          height: stage ? "100%" : undefined,
+          height: stage ? "100%" : fillColumn?.height,
           maxHeight: stage ? "100%" : undefined,
           display: "flex",
           flexDirection: "column",
@@ -682,7 +682,9 @@ export default function StudyPage() {
       >
         <Stack
           spacing={stage ? { xs: 0.75, sm: 1.5 } : 2}
-          sx={stage ? { flex: 1, minHeight: 0 } : undefined}
+          sx={
+            stage || finish ? { flex: 1, minHeight: 0 } : undefined
+          }
         >
           <Stack
             direction="row"
@@ -847,25 +849,36 @@ export default function StudyPage() {
                 ) : null}
               </Stack>
             ) : (
-              <SessionComplete
-                zen={stage}
-                tally={tally}
-                unlocks={unlocks}
-                showAchievements={!isGuest()}
-                canStudyMore={canStudyMore}
-                studyMoreBusy={studyMoreBusy}
-                onStudyMore={() => void onStudyMore()}
-                onToday={leaveStudy}
-                onAchievements={() => {
-                  exitZen();
-                  navigate("/achievements");
+              <Box
+                sx={{
+                  flex: 1,
+                  minHeight: 0,
+                  overflow: "auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "safe center",
                 }}
-                scopeBack={
-                  scopeBack
-                    ? { ...scopeBack, onClick: () => openScopeBack(true) }
-                    : null
-                }
-              />
+              >
+                <SessionComplete
+                  zen={stage}
+                  tally={tally}
+                  unlocks={unlocks}
+                  showAchievements={!isGuest()}
+                  canStudyMore={canStudyMore}
+                  studyMoreBusy={studyMoreBusy}
+                  onStudyMore={() => void onStudyMore()}
+                  onToday={leaveStudy}
+                  onAchievements={() => {
+                    exitZen();
+                    navigate("/achievements");
+                  }}
+                  scopeBack={
+                    scopeBack
+                      ? { ...scopeBack, onClick: () => openScopeBack(true) }
+                      : null
+                  }
+                />
+              </Box>
             )
           ) : (
             <>
@@ -935,7 +948,6 @@ export default function StudyPage() {
                   onFlipBack={flipBack}
                   disabled={busy}
                   answerFocusRef={answerFocusRef}
-                  showAnswerRef={showAnswerRef}
                   onGrade={
                     mcqMode ? (rating) => onGrade(rating, true) : undefined
                   }
