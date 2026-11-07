@@ -7,6 +7,8 @@ import { requeueGeneration } from "./enqueue";
 import { isRejectReason, type RejectReason } from "../../src/lib/rejectReasons";
 import { buildAvoidPatternsFromRejected } from "./feedback-hints";
 import { getFreeGenUsage } from "./quota";
+import { isRunningJobStale } from "./progress";
+import { failStaleRunningJobs } from "./staleFail";
 import { normalizeTopicHints } from "./topic-hints";
 import { parseOptionalJsonBody } from "../optional-json";
 
@@ -136,7 +138,7 @@ jobRoutes.get("/:id", async (c) => {
   const jobId = c.req.param("id");
   const db = getDb(c.env);
 
-  const row = await db
+  let row = await db
     .prepare(
       `SELECT j.id, j.material_id, j.status, j.error, j.coverage_json, j.progress_json, j.created_at, j.finished_at
        FROM generation_jobs j
@@ -148,6 +150,24 @@ jobRoutes.get("/:id", async (c) => {
     .first<JobPollRow>();
 
   if (!row) throw new HTTPException(404, { message: "Job not found" });
+
+  if (
+    row.status === "running" &&
+    isRunningJobStale(row.progress_json, row.created_at)
+  ) {
+    await failStaleRunningJobs(db, { jobId });
+    const refreshed = await db
+      .prepare(
+        `SELECT j.id, j.material_id, j.status, j.error, j.coverage_json, j.progress_json, j.created_at, j.finished_at
+         FROM generation_jobs j
+         INNER JOIN materials m ON m.id = j.material_id
+         INNER JOIN decks d ON d.id = m.deck_id
+         WHERE j.id = ? AND d.user_id = ?`,
+      )
+      .bind(jobId, userId)
+      .first<JobPollRow>();
+    if (refreshed) row = refreshed;
+  }
 
   const progress = parseProgressJson(row.progress_json);
   let free_quota: { used: number; cap: number; remaining: number } | null =

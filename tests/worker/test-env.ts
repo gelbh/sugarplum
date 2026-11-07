@@ -1874,6 +1874,44 @@ export function createTestEnv(opts?: {
             .map((j) => ({ id: j.id, created_at: j.created_at }));
           return { results: rows as T[] };
         }
+        if (
+          normalized.includes(
+            "SELECT id, progress_json, created_at FROM generation_jobs",
+          ) &&
+          normalized.includes("WHERE id = ? AND status = 'running'")
+        ) {
+          const id = bound[0] as string;
+          const job = generationJobs.get(id);
+          const rows =
+            job && job.status === "running"
+              ? [
+                  {
+                    id: job.id,
+                    progress_json: job.progress_json,
+                    created_at: job.created_at,
+                  },
+                ]
+              : [];
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes(
+            "SELECT id, progress_json, created_at FROM generation_jobs",
+          ) &&
+          normalized.includes("WHERE status = 'running'")
+        ) {
+          const limit = typeof bound[0] === "number" ? bound[0] : 50;
+          const rows = [...generationJobs.values()]
+            .filter((j) => j.status === "running")
+            .sort((a, b) => a.created_at.localeCompare(b.created_at))
+            .slice(0, limit)
+            .map((j) => ({
+              id: j.id,
+              progress_json: j.progress_json,
+              created_at: j.created_at,
+            }));
+          return { results: rows as T[] };
+        }
         if (normalized.includes("FROM materials WHERE deck_id =")) {
           let rows = [...materials.values()].filter(
             (m) => m.deck_id === bound[0],
@@ -3118,6 +3156,30 @@ export function createTestEnv(opts?: {
         } else if (
           normalized.startsWith(
             "UPDATE generation_jobs SET status = ?, error = ?, finished_at = ?",
+          ) &&
+          normalized.includes("WHERE id = ? AND status = ?")
+        ) {
+          const [status, error, finished_at, id, requiredStatus] = bound as [
+            string,
+            string,
+            string,
+            string,
+            string,
+          ];
+          const row = generationJobs.get(id);
+          if (!row || row.status !== requiredStatus) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          generationJobs.set(id, {
+            ...row,
+            status,
+            error,
+            finished_at,
+          });
+          return { success: true, meta: { changes: 1 } } as D1Result;
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET status = ?, error = ?, finished_at = ?",
           )
         ) {
           const [status, error, finished_at, id] = bound as [
@@ -3135,6 +3197,10 @@ export function createTestEnv(opts?: {
               finished_at,
             });
           }
+          return {
+            success: true,
+            meta: { changes: row ? 1 : 0 },
+          } as D1Result;
         } else if (normalized.startsWith("INSERT INTO user_secrets")) {
           const [user_id, provider, ciphertext, model, created_at, updated_at] =
             bound as [string, string, string, string | null, string, string];

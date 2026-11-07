@@ -10,10 +10,12 @@ import {
   projectCardsFromPercent,
 } from "./estimates";
 import { buildJobProgressSnapshot } from "./jobSnapshot";
+import {
+  JOB_POLL_RUNNING_TIMEOUT_MS,
+  advanceJobPollDeadline,
+} from "./jobPollDeadline";
 
 const POLL_MS = 500;
-/** One job can run a second pipeline. Match the server stale window. */
-const TIMEOUT_MS = 20 * 60_000;
 
 const TERMINAL_OK = new Set(["needs_review", "done"]);
 const TERMINAL_FAIL = new Set(["failed"]);
@@ -67,7 +69,7 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
     setPending(true);
     let cancelled = false;
     let pollTimer: ReturnType<typeof setTimeout> | undefined;
-    const deadline = Date.now() + TIMEOUT_MS;
+    let runningDeadlineMs: number | null = null;
 
     const settleOk = () => {
       if (settledRef.current) return;
@@ -221,7 +223,14 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
           settleFail(job.error ?? "Generation failed");
           return;
         }
-        if (Date.now() >= deadline) {
+        const adv = advanceJobPollDeadline({
+          status: job.status,
+          runningDeadlineMs,
+          nowMs: Date.now(),
+          timeoutMs: JOB_POLL_RUNNING_TIMEOUT_MS,
+        });
+        runningDeadlineMs = adv.runningDeadlineMs;
+        if (adv.timedOut) {
           settleFail("Timed out waiting for generation");
           return;
         }
