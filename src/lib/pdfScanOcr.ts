@@ -56,7 +56,6 @@ export function ocrRefillWindow(
   };
 }
 
-/** Inclusive end page for refill lookbehind text-layer scan (1..scanEnd). */
 export function refillLookbehindScanEnd(
   startPage: number,
   numPages: number,

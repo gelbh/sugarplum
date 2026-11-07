@@ -13,7 +13,6 @@ import {
 } from "../materials/ocr-sidecar";
 import { focusStudyPages, type WindowResume } from "./study-windows";
 
-/** Study a PDF with sidecar OCR backfill; never rewinds next_page. */
 export async function studyPdfWithOcrSidecar(args: {
   env: Env;
   deckId: string;
