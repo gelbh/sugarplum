@@ -37,7 +37,9 @@ export function useStudyNotesOverlay(
 
   const notesExcerpt = card ? provenanceExcerptText(card.provenance) : "";
   const notesPages = card ? provenancePages(card.provenance) : [];
-  const notesAvailable = notesExcerpt !== "" || notesPages.length > 0;
+  // Pages alone without a job open an empty dialog; need excerpt and/or PDF.
+  const notesAvailable =
+    notesExcerpt !== "" || Boolean(card?.job_id && notesPages.length > 0);
 
   return {
     notesOpenRef,

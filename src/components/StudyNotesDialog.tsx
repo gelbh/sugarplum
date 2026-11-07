@@ -55,7 +55,7 @@ function matrix6(raw: unknown): Matrix6 | null {
 function isTextItem(
   item: TextItem | TextMarkedContent,
 ): item is TextItem {
-  return "str" in item;
+  return "str" in item && typeof (item as TextItem).str === "string";
 }
 
 function textRuns(items: readonly (TextItem | TextMarkedContent)[]): TextRun[] {
