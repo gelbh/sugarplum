@@ -90,7 +90,6 @@ export async function extractPdfPages(
   }
 }
 
-/** Sparse page list; does not apply the 120-page window. */
 export async function extractPdfPageNumbers(
   data: ArrayBuffer,
   pageNumbers: readonly number[],
