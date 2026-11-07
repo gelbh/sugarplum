@@ -70,6 +70,9 @@ function settingsQueryMessage(): {
   if (params.get("linked") === "1") {
     return { error: null, notice: "Google account linked." };
   }
+  if (params.get("calendar") === "1") {
+    return { error: null, notice: "Google Calendar connected." };
+  }
   const code = params.get("error");
   if (code === "oauth_conflict") {
     return {
@@ -88,6 +91,12 @@ function settingsQueryMessage(): {
   }
   if (code === "oauth") {
     return { error: "Google linking failed. Try again.", notice: null };
+  }
+  if (code === "calendar" || code === "calendar_refresh") {
+    return {
+      error: "Calendar connection failed. Try again.",
+      notice: null,
+    };
   }
   return { error: null, notice: null };
 }
@@ -395,16 +404,22 @@ export default function SettingsPage() {
                     Link Google
                   </Button>
                 )}
-                {calendarStatus?.suggestions || calendarStatus?.gaps ? (
+                {calendarStatus?.connected ? (
                   <Stack spacing={1}>
-                    <Typography variant="body2" color="text.secondary">
-                      {[
-                        calendarStatus.suggestions ? "suggestions" : null,
-                        calendarStatus.gaps ? "gaps" : null,
-                      ]
-                        .filter(Boolean)
-                        .join(", ")}
-                    </Typography>
+                    <Alert severity="success">
+                      Google Calendar connected
+                      {calendarStatus.suggestions || calendarStatus.gaps
+                        ? ` (${[
+                            calendarStatus.suggestions
+                              ? "suggestions"
+                              : null,
+                            calendarStatus.gaps ? "study gaps" : null,
+                          ]
+                            .filter(Boolean)
+                            .join(", ")})`
+                        : ""}
+                      .
+                    </Alert>
                     <Button
                       variant="outlined"
                       color="primary"
@@ -416,6 +431,7 @@ export default function SettingsPage() {
                           try {
                             await disconnectCalendar();
                             setCalendarStatus({
+                              connected: false,
                               suggestions: false,
                               gaps: false,
                               reconnect: false,
@@ -433,7 +449,7 @@ export default function SettingsPage() {
                         })();
                       }}
                     >
-                      Disconnect
+                      Disconnect Google Calendar
                     </Button>
                   </Stack>
                 ) : (

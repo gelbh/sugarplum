@@ -141,7 +141,7 @@ async function refreshAccessToken(
     } catch {
       /* ignore */
     }
-    if (err === "invalid_grant" || res.status === 400) {
+    if (err === "invalid_grant") {
       return { invalidGrant: true };
     }
     throw new Error(`Google refresh failed (${res.status})`);
@@ -282,12 +282,14 @@ calendarRoutes.get("/", async (c) => {
   if (!connection) {
     const reconnect = (await c.env.SESSIONS.get(reconnectKey(userId))) === "1";
     return c.json({
+      connected: false,
       suggestions: false,
       gaps: false,
       reconnect,
     });
   }
   return c.json({
+    connected: true,
     suggestions: hasScope(connection.scopes, EVENTS_SCOPE),
     gaps: hasScope(connection.scopes, FREEBUSY_SCOPE),
     reconnect: false,
@@ -361,6 +363,11 @@ calendarRoutes.get("/callback", async (c) => {
   }
   if (sessionUserId !== pending.userId) return fail();
 
+  const wrapKey = c.env.SECRETS_WRAP_KEY?.trim();
+  if (!wrapKey) {
+    return settingsRedirect(appUrl, { error: "calendar" });
+  }
+
   const { clientId, clientSecret } = requireGoogleCreds(c.env);
   const redirectUri = calendarRedirectUri(appUrl);
   let tokens: Awaited<ReturnType<typeof exchangeCalendarCode>>;
@@ -384,10 +391,6 @@ calendarRoutes.get("/callback", async (c) => {
     return settingsRedirect(appUrl, { error: "calendar_refresh" });
   }
 
-  const wrapKey = c.env.SECRETS_WRAP_KEY;
-  if (!wrapKey) {
-    return settingsRedirect(appUrl, { error: "calendar" });
-  }
   const ciphertext = await encryptSecret(tokens.refresh_token, wrapKey);
   const scopes = tokens.scope?.trim() || "";
   const updatedAt = new Date().toISOString();
@@ -463,12 +466,14 @@ calendarRoutes.get("/suggestions", async (c) => {
   }[] = [];
 
   for (const cluster of clusters) {
-    if (dismissed.has(cluster.key)) continue;
     const linkedId = links.get(cluster.key);
     if (linkedId) {
-      decksBySubjectId[linkedId] = cluster.chips;
+      decksBySubjectId[linkedId] = [
+        ...new Set([...(decksBySubjectId[linkedId] ?? []), ...cluster.chips]),
+      ];
       continue;
     }
+    if (dismissed.has(cluster.key)) continue;
     const match = matchSubject(cluster, subjects);
     pending.push({
       clusterKey: cluster.key,
@@ -508,7 +513,7 @@ calendarRoutes.post("/links", async (c) => {
   }
   await db
     .prepare(
-      "INSERT INTO calendar_subject_links (user_id, cluster_key, subject_id, created_at) VALUES (?, ?, ?, ?)",
+      "INSERT INTO calendar_subject_links (user_id, cluster_key, subject_id, created_at) VALUES (?, ?, ?, ?) ON CONFLICT(user_id, cluster_key) DO UPDATE SET subject_id = excluded.subject_id",
     )
     .bind(userId, clusterKey, subjectId, new Date().toISOString())
     .run();
@@ -533,7 +538,7 @@ calendarRoutes.post("/dismissals", async (c) => {
   }
   await getDb(c.env)
     .prepare(
-      "INSERT INTO calendar_dismissals (user_id, cluster_key, created_at) VALUES (?, ?, ?)",
+      "INSERT INTO calendar_dismissals (user_id, cluster_key, created_at) VALUES (?, ?, ?) ON CONFLICT(user_id, cluster_key) DO NOTHING",
     )
     .bind(userId, clusterKey, new Date().toISOString())
     .run();

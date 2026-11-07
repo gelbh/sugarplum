@@ -81,6 +81,7 @@ describe("calendar routes", () => {
     const res = await app.request("/api/calendar", { headers: authHeaders() }, env);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
+      connected: false,
       suggestions: false,
       gaps: false,
       reconnect: false,
@@ -220,6 +221,7 @@ describe("calendar routes", () => {
       env,
     );
     expect(await status.json()).toEqual({
+      connected: false,
       suggestions: false,
       gaps: false,
       reconnect: false,

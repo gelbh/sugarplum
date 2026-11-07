@@ -171,6 +171,7 @@ export function me() {
 }
 
 export type CalendarStatus = {
+  connected: boolean;
   suggestions: boolean;
   gaps: boolean;
   reconnect: boolean;
