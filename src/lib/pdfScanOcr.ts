@@ -1,9 +1,11 @@
 import { createWorker, OEM } from "tesseract.js";
 import { loadPdfDocument, renderPdfPageToCanvas } from "./pdfPageRender";
 
-/** Match the worker sidecar cap. Text-layer scan stays at the 120-page job window. */
+/** Match the worker sidecar cap. Upload text-layer scan stays at 120 pages. */
 export const OCR_EMPTY_PAGE_LIMIT = 8;
 export const OCR_TEXT_LAYER_SCAN_LIMIT = 120;
+/** Refill may read blanks through this page. Upload OCR does not. */
+export const OCR_REFILL_PAGE_MAX = 2000;
 export const OCR_PAGE_CHAR_CAP = 8_000;
 
 const OCR_WORKER_PATH = "/ocr/worker.min.js";
@@ -38,28 +40,51 @@ export function selectEmptyPages(pages: readonly PageText[]): PageText[] {
 export function ocrRefillWindow(
   startPage: number,
 ): { start: number; end: number } | null {
-  if (!Number.isInteger(startPage) || startPage > OCR_TEXT_LAYER_SCAN_LIMIT) {
+  if (
+    !Number.isInteger(startPage) ||
+    startPage < 1 ||
+    startPage > OCR_REFILL_PAGE_MAX
+  ) {
     return null;
   }
   return {
-    start: Math.max(1, startPage),
-    end: OCR_TEXT_LAYER_SCAN_LIMIT,
+    start: startPage,
+    end: Math.min(
+      OCR_REFILL_PAGE_MAX,
+      startPage + OCR_TEXT_LAYER_SCAN_LIMIT - 1,
+    ),
   };
+}
+
+export function refillLookbehindScanEnd(
+  startPage: number,
+  numPages: number,
+): number {
+  return startPage > OCR_REFILL_PAGE_MAX
+    ? Math.min(numPages, OCR_REFILL_PAGE_MAX)
+    : Math.min(startPage - 1, numPages, OCR_REFILL_PAGE_MAX);
 }
 
 export function selectEmptyPagesInWindow(
   pages: readonly PageText[],
   args: { startPage: number; covered: readonly number[] },
 ): PageText[] {
-  const window = ocrRefillWindow(args.startPage);
-  if (!window) return [];
   const covered = new Set(args.covered);
-  const empty: PageText[] = [];
   const ordered = pages.slice().sort((a, b) => a.page - b.page);
+  const empty: PageText[] = [];
+  const window = ocrRefillWindow(args.startPage);
+  if (window) {
+    for (const page of ordered) {
+      if (page.page < window.start || page.page > window.end) continue;
+      if (covered.has(page.page) || page.text.trim()) continue;
+      empty.push(page);
+      if (empty.length >= OCR_EMPTY_PAGE_LIMIT) return empty;
+    }
+  }
   for (const page of ordered) {
-    if (page.page < window.start || page.page > window.end) continue;
-    if (covered.has(page.page)) continue;
-    if (page.text.trim()) continue;
+    if (page.page < 1 || page.page >= args.startPage) continue;
+    if (page.page > OCR_REFILL_PAGE_MAX) continue;
+    if (covered.has(page.page) || page.text.trim()) continue;
     empty.push(page);
     if (empty.length >= OCR_EMPTY_PAGE_LIMIT) break;
   }
@@ -165,25 +190,36 @@ export async function ocrEmptyPdfPagesInWindow(
 
   const pdf = await loadPdfDocument(data);
   try {
-    const range = ocrRefillWindow(args.startPage);
-    if (!range) return undefined;
-    const limit = Math.min(range.end, pdf.numPages);
+    const startPage = args.startPage;
+    if (!Number.isInteger(startPage) || startPage < 1) return undefined;
+    const numPages = pdf.numPages;
     const rows: PageText[] = [];
-    for (let n = range.start; n <= limit; n++) {
-      const page = await pdf.getPage(n);
+    const readTextLayer = async (pageNumber: number): Promise<void> => {
+      const page = await pdf.getPage(pageNumber);
       const content = await page.getTextContent();
       const text = content.items
         .map((item) =>
           "str" in item && typeof item.str === "string" ? item.str : "",
         )
         .join(" ");
-      rows.push({ page: n, text });
+      rows.push({ page: pageNumber, text });
+    };
+    if (startPage <= OCR_REFILL_PAGE_MAX && startPage <= numPages) {
+      const end = Math.min(
+        OCR_REFILL_PAGE_MAX,
+        startPage + OCR_TEXT_LAYER_SCAN_LIMIT - 1,
+        numPages,
+      );
+      for (let n = startPage; n <= end; n++) await readTextLayer(n);
+    }
+    let selected = selectEmptyPagesInWindow(rows, args);
+    if (selected.length < OCR_EMPTY_PAGE_LIMIT) {
+      const scanEnd = refillLookbehindScanEnd(startPage, numPages);
+      for (let n = 1; n <= scanEnd; n++) await readTextLayer(n);
+      selected = selectEmptyPagesInWindow(rows, args);
     }
     const out: PageText[] = [];
-    for (const row of selectEmptyPagesInWindow(rows, {
-      startPage: args.startPage,
-      covered: args.covered,
-    })) {
+    for (const row of selected) {
       try {
         const canvas = await renderPdfPageToCanvas(
           pdf,

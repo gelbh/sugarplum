@@ -56,6 +56,7 @@ export type PreparedStudySource = {
   text: string;
   rangeExhausted: boolean;
   resume: WindowResume;
+  pickedPages: number[];
 };
 
 type Candidate = { text: string; page: number; index: number };
@@ -255,28 +256,24 @@ function capKeys(keys: string[]): string[] {
   return keys.slice(-MAX_USED_KEYS);
 }
 
-/** Contents and references lose when any other text exists. */
-export function prepareStudySource(args: {
-  pages: StudyPage[];
-  topicHints?: string[];
-  usedKeys?: string[];
-  limit: number;
-  pageStart: number;
-  pageEnd: number;
-  totalPages: number;
-}): PreparedStudySource {
-  const topicHints = args.topicHints ?? [];
-  const usedKeys = args.usedKeys ?? [];
+function buildCandidates(pages: readonly StudyPage[], startIndex: number): Candidate[] {
   const candidates: Candidate[] = [];
-  let index = 0;
-  for (const page of args.pages) {
+  let index = startIndex;
+  for (const page of pages) {
     const chunks = chunkText(page.text, CHUNK_CHAR_LIMIT - 50);
     for (const chunk of chunks) {
       candidates.push({ text: chunk, page: page.page, index });
       index += 1;
     }
   }
+  return candidates;
+}
 
+function filterStudyPool(
+  candidates: readonly Candidate[],
+  topicHints: string[],
+  usedKeys: string[],
+): Candidate[] {
   const fresh = candidates.filter((candidate) => {
     const lower = candidate.text.toLowerCase();
     const topicHit = topicHints.some((hint) => {
@@ -288,7 +285,31 @@ export function prepareStudySource(args: {
     return !skippedByUsedKeys(candidate.text, usedKeys);
   });
   const study = fresh.filter((c) => !isBoilerplate(c.text));
-  const pool = study.length > 0 ? study : fresh;
+  return study.length > 0 ? study : fresh;
+}
+
+/** Contents and references lose when any other text exists. */
+export function prepareStudySource(args: {
+  pages: StudyPage[];
+  backfillPages?: StudyPage[];
+  topicHints?: string[];
+  usedKeys?: string[];
+  limit: number;
+  pageStart: number;
+  pageEnd: number;
+  totalPages: number;
+}): PreparedStudySource {
+  const topicHints = args.topicHints ?? [];
+  const usedKeys = args.usedKeys ?? [];
+  const forwardCandidates = buildCandidates(args.pages, 0);
+  const backfillCandidates = buildCandidates(
+    args.backfillPages ?? [],
+    forwardCandidates.length,
+  );
+  const candidates = [...forwardCandidates, ...backfillCandidates];
+
+  const forwardFresh = filterStudyPool(forwardCandidates, topicHints, usedKeys);
+  const pool = filterStudyPool(candidates, topicHints, usedKeys);
 
   const baseResume = {
     used_keys: capKeys(usedKeys),
@@ -299,6 +320,7 @@ export function prepareStudySource(args: {
     return {
       text: "",
       rangeExhausted: true,
+      pickedPages: [],
       resume: {
         ...baseResume,
         next_page: args.pageEnd + 1,
@@ -316,11 +338,17 @@ export function prepareStudySource(args: {
     .sort((a, b) => a.index - b.index);
 
   const added = picked.map((c) => windowFingerprint(c.text)).filter(Boolean);
-  const rangeExhausted = ranked.length <= picked.length;
+  const pickedIndexes = new Set(picked.map((c) => c.index));
+  const forwardRemaining = forwardFresh.filter((c) => !pickedIndexes.has(c.index));
+  const rangeExhausted = forwardRemaining.length === 0;
+  const pickedPages = [
+    ...new Set(picked.map((c) => c.page)),
+  ].sort((a, b) => a - b);
 
   return {
     text: picked.map((c) => c.text).join("\n\n"),
     rangeExhausted,
+    pickedPages,
     resume: {
       used_keys: capKeys([...usedKeys, ...added]),
       next_page: rangeExhausted ? args.pageEnd + 1 : args.pageStart,
@@ -337,14 +365,20 @@ export async function focusStudyPages(
     pageEnd: number;
     totalPages: number;
   }>,
-  args: { startPage: number; topicHints: string[]; usedKeys: string[] },
-): Promise<{ text: string; resume: WindowResume }> {
+  args: {
+    startPage: number;
+    topicHints: string[];
+    usedKeys: string[];
+    backfillPages?: StudyPage[];
+  },
+): Promise<{ text: string; resume: WindowResume; pickedPages: number[] }> {
   let start = args.startPage;
   let prepared: PreparedStudySource | null = null;
   for (let attempt = 0; attempt < 2; attempt++) {
     const window = await load(start);
     prepared = prepareStudySource({
       pages: window.pages,
+      backfillPages: args.backfillPages,
       topicHints: args.topicHints,
       usedKeys: args.usedKeys,
       limit: MAX_PIPELINE_CHUNKS,
@@ -362,5 +396,6 @@ export async function focusStudyPages(
       next_page: args.startPage,
       total_pages: 0,
     },
+    pickedPages: prepared?.pickedPages ?? [],
   };
 }
