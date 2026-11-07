@@ -15,6 +15,7 @@ import {
   GENERATE_QUEUE_RETRY_DELAY_SEC,
   RUNNING_JOB_STALE_MS,
 } from "../../worker/generation/progress";
+import { STALE_RUNNING_FAIL_ERROR } from "../../worker/generation/staleFail";
 import { enqueueGeneration } from "../../worker/generation/enqueue";
 import { mockLlmAdapter, type LlmAdapter } from "../../worker/generation/llm";
 import { CHUNK_CHAR_LIMIT } from "../../worker/generation/pipeline";
@@ -815,5 +816,65 @@ describe("processGenerateJob free path", () => {
 
     // Silence unused import if CHUNK used only for doc — ensure text actually chunks
     expect(`${block}\n\n${block}`.length).toBeGreaterThan(CHUNK_CHAR_LIMIT);
+  });
+
+  it("after batch, fails leftover stale running jobs without a message", async () => {
+    const env = createTestEnv();
+    await seedOwner(env, false);
+    const msg = await seedPasteJob(
+      env,
+      "Mitochondria are the powerhouse of the cell.",
+    );
+    env.seedMaterial({
+      id: "mat-orphan",
+      deck_id: "deck-a",
+      kind: "paste",
+      r2_key: null,
+      filename: null,
+      page_count: null,
+      status: "ready",
+      created_at: "2026-10-27T15:00:00.000Z",
+    });
+    const staleAt = new Date(
+      Date.now() - RUNNING_JOB_STALE_MS - 1000,
+    ).toISOString();
+    env.seedGenerationJob({
+      id: "orphan-stale",
+      material_id: "mat-orphan",
+      status: "running",
+      error: null,
+      coverage_json: null,
+      progress_json: JSON.stringify({
+        updated_at: staleAt,
+        stage: "critique",
+        percent: 77.5,
+      }),
+      created_at: "2026-10-27T15:02:40.280Z",
+      finished_at: null,
+    });
+
+    let acked = false;
+    const batch = {
+      messages: [
+        {
+          body: msg,
+          ack() {
+            acked = true;
+          },
+          retry() {},
+        },
+      ],
+    } as unknown as MessageBatch<{
+      jobId: string;
+      materialId: string;
+      deckId: string;
+    }>;
+
+    await handleGenerateQueue(batch, env);
+
+    expect(acked).toBe(true);
+    const orphan = env.getGenerationJobs().find((j) => j.id === "orphan-stale");
+    expect(orphan?.status).toBe("failed");
+    expect(orphan?.error).toBe(STALE_RUNNING_FAIL_ERROR);
   });
 });
