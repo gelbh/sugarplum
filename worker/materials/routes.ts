@@ -1409,7 +1409,7 @@ materialRoutes.post("/:id/complete", async (c) => {
 
   if (ocrPages && material.kind === "pdf") {
     try {
-      await writeOcrSidecar(c.env, material.deck_id, materialId, ocrPages);
+      await writeOcrSidecar(c.env, material.deck_id, materialId, ocrPages, []);
     } catch (err) {
       console.warn("OCR sidecar write failed", err);
     }

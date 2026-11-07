@@ -230,10 +230,10 @@ export async function writeOcrSidecar(
   deckId: string,
   materialId: string,
   pages: readonly OcrPageText[],
-  unstudiedPages?: readonly number[],
+  unstudiedPages: readonly number[],
 ): Promise<void> {
   const body: OcrSidecar = { pages: [...pages] };
-  if (unstudiedPages && unstudiedPages.length > 0) {
+  if (unstudiedPages.length > 0) {
     body.unstudiedPages = [...unstudiedPages];
   }
   await env.MATERIALS.put(
