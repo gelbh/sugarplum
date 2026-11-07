@@ -1,4 +1,4 @@
-/** Match server `RUNNING_JOB_STALE_MS` — abandon when heartbeat is this old. */
+/** Match server `RUNNING_JOB_STALE_MS`: abandon when heartbeat is this old. */
 export const JOB_POLL_RUNNING_TIMEOUT_MS = 20 * 60_000;
 
 /**
