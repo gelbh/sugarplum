@@ -46,7 +46,6 @@ type Props = {
   setDecks: (updater: (prev: Deck[]) => Deck[]) => void;
   subjects?: Subject[];
   setSubjects?: (updater: (prev: Subject[]) => Subject[]) => void;
-  /** Calendar deck-title chips keyed by linked subject id. */
   deckChipsBySubjectId?: Record<string, string[]>;
   activeStep: number;
   setActiveStep: (n: number) => void;

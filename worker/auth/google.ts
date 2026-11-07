@@ -82,7 +82,6 @@ export function calendarRedirectUri(appUrl: string): string {
   return `${base}/api/calendar/callback`;
 }
 
-/** Calendar consent URL. Login URL builder stays untouched. */
 export function buildCalendarAuthorizeUrl(args: {
   clientId: string;
   redirectUri: string;
