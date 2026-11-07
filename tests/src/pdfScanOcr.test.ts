@@ -4,6 +4,7 @@ import {
   OCR_PAGE_CHAR_CAP,
   capOcrPageText,
   ocrRefillWindow,
+  refillLookbehindScanEnd,
   selectEmptyPages,
   selectEmptyPagesInWindow,
 } from "../../src/lib/pdfScanOcr";
@@ -35,6 +36,24 @@ describe("capOcrPageText", () => {
     expect(capOcrPageText(`  ${"a".repeat(OCR_PAGE_CHAR_CAP + 5)}  `)).toHaveLength(
       OCR_PAGE_CHAR_CAP,
     );
+  });
+});
+
+describe("refillLookbehindScanEnd", () => {
+  it("includes the last PDF page when startPage is past numPages", () => {
+    expect(refillLookbehindScanEnd(41, 40)).toBe(40);
+  });
+
+  it("stops one page before startPage when the PDF is longer", () => {
+    expect(refillLookbehindScanEnd(41, 100)).toBe(40);
+  });
+
+  it("caps lookbehind at OCR_REFILL_PAGE_MAX when startPage is past it", () => {
+    expect(refillLookbehindScanEnd(2001, 50)).toBe(50);
+  });
+
+  it("returns a non-positive end when there are no pages to scan", () => {
+    expect(refillLookbehindScanEnd(10, 0)).toBeLessThanOrEqual(0);
   });
 });
 

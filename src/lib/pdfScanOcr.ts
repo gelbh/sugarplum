@@ -56,6 +56,16 @@ export function ocrRefillWindow(
   };
 }
 
+/** Inclusive end page for refill lookbehind text-layer scan (1..scanEnd). */
+export function refillLookbehindScanEnd(
+  startPage: number,
+  numPages: number,
+): number {
+  return startPage > OCR_REFILL_PAGE_MAX
+    ? Math.min(numPages, OCR_REFILL_PAGE_MAX)
+    : Math.min(startPage - 1, numPages, OCR_REFILL_PAGE_MAX);
+}
+
 export function selectEmptyPagesInWindow(
   pages: readonly PageText[],
   args: { startPage: number; covered: readonly number[] },
@@ -205,10 +215,7 @@ export async function ocrEmptyPdfPagesInWindow(
     }
     let selected = selectEmptyPagesInWindow(rows, args);
     if (selected.length < OCR_EMPTY_PAGE_LIMIT) {
-      const scanEnd =
-        startPage > OCR_REFILL_PAGE_MAX
-          ? Math.min(numPages, OCR_REFILL_PAGE_MAX)
-          : Math.min(startPage, numPages, OCR_REFILL_PAGE_MAX) - 1;
+      const scanEnd = refillLookbehindScanEnd(startPage, numPages);
       for (let n = 1; n <= scanEnd; n++) await readTextLayer(n);
       selected = selectEmptyPagesInWindow(rows, args);
     }
