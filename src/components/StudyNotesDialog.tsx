@@ -7,6 +7,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
+import type { TextItem, TextMarkedContent } from "pdfjs-dist/types/src/display/api";
 import {
   downloadMaterialUrl,
   getJob,
@@ -45,67 +46,32 @@ type PageView = {
 
 function matrix6(raw: unknown): Matrix6 | null {
   if (!Array.isArray(raw) || raw.length < 6) return null;
-  const nums: number[] = [];
-  for (let i = 0; i < 6; i++) {
-    const n = raw[i];
-    if (typeof n !== "number" || !Number.isFinite(n)) return null;
-    nums.push(n);
+  const nums = raw.slice(0, 6);
+  if (!nums.every((n) => typeof n === "number" && Number.isFinite(n))) {
+    return null;
   }
   return [nums[0], nums[1], nums[2], nums[3], nums[4], nums[5]];
 }
 
-const IDENTITY: Matrix6 = [1, 0, 0, 1, 0, 0];
-
-function viewportTimesItem(viewport: Matrix6, item: Matrix6): Matrix6 {
-  return [
-    viewport[0] * item[0] + viewport[2] * item[1],
-    viewport[1] * item[0] + viewport[3] * item[1],
-    viewport[0] * item[2] + viewport[2] * item[3],
-    viewport[1] * item[2] + viewport[3] * item[3],
-    viewport[0] * item[4] + viewport[2] * item[5] + viewport[4],
-    viewport[1] * item[4] + viewport[3] * item[5] + viewport[5],
-  ];
+function isTextItem(
+  item: TextItem | TextMarkedContent,
+): item is TextItem {
+  return "str" in item;
 }
 
-export function studyNotesHighlightRects(
-  items: readonly TextRun[],
-  excerpt: string,
-  viewportTransform: Matrix6,
-) {
-  const runs = items.map((item) => {
-    const tx = viewportTimesItem(viewportTransform, item.transform);
-    const span = Math.hypot(tx[2], tx[3]);
-    const fontHeight = span === 0 ? item.height : span;
-    return {
-      str: item.str,
-      width: item.width,
-      height: fontHeight,
-      transform: [1, 0, 0, 1, tx[4], tx[5] - fontHeight] as Matrix6,
-    };
-  });
-  return excerptHighlightRects(runs, excerpt, IDENTITY);
-}
-
-function textRuns(items: readonly unknown[]): TextRun[] {
+function textRuns(items: readonly (TextItem | TextMarkedContent)[]): TextRun[] {
   const runs: TextRun[] = [];
   for (const item of items) {
-    if (!item || typeof item !== "object") continue;
-    const row = item as {
-      str?: unknown;
-      width?: unknown;
-      height?: unknown;
-      transform?: unknown;
-    };
-    if (typeof row.str !== "string") continue;
-    if (typeof row.width !== "number" || typeof row.height !== "number") {
+    if (!isTextItem(item)) continue;
+    if (typeof item.width !== "number" || typeof item.height !== "number") {
       continue;
     }
-    const transform = matrix6(row.transform);
+    const transform = matrix6(item.transform);
     if (!transform) continue;
     runs.push({
-      str: row.str,
-      width: row.width,
-      height: row.height,
+      str: item.str,
+      width: item.width,
+      height: item.height,
       transform,
     });
   }
@@ -217,7 +183,7 @@ export default function StudyNotesDialog({
         }
         const canvas = await renderPdfPageToCanvas(pdf, page - 1, width);
         const content = await pdfPage.getTextContent();
-        const rects = studyNotesHighlightRects(
+        const rects = excerptHighlightRects(
           textRuns(content.items),
           excerpt,
           viewportTransform,
@@ -259,14 +225,7 @@ export default function StudyNotesDialog({
   }, [pageView, open]);
 
   return (
-    <Dialog
-      open={open}
-      onClose={() => onClose()}
-      fullWidth
-      maxWidth="sm"
-      // MUI stops Escape on the dialog, so the study listener would never see it.
-      disableEscapeKeyDown
-    >
+    <Dialog open={open} onClose={() => onClose()} fullWidth maxWidth="sm">
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         {excerpt ? (

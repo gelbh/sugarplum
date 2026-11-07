@@ -25,13 +25,19 @@ function transform(viewport: Matrix6, item: Matrix6): Matrix6 {
   ];
 }
 
-function rectFor(item: TextRun, viewport: Matrix6): ExcerptRect {
+/**
+ * Glyph box in viewport space: PDF.js width stays device-space; height comes
+ * from the transformed vertical span; y is top (baseline minus that height).
+ */
+function glyphRect(item: TextRun, viewport: Matrix6): ExcerptRect {
   const m = transform(viewport, item.transform);
+  const span = Math.hypot(m[2], m[3]);
+  const h = span === 0 ? item.height : span;
   return {
     x: m[4],
-    y: m[5],
-    w: item.width * Math.hypot(m[0], m[1]),
-    h: item.height * Math.hypot(m[2], m[3]),
+    y: m[5] - h,
+    w: item.width,
+    h,
   };
 }
 
@@ -60,5 +66,5 @@ export function excerptHighlightRects(
 
   return spans
     .filter((span) => span.start < matchEnd && span.end > matchStart)
-    .map((span) => rectFor(span.item, viewportTransform));
+    .map((span) => glyphRect(span.item, viewportTransform));
 }

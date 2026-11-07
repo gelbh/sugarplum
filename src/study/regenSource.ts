@@ -25,10 +25,11 @@ function pageNumbers(list: readonly unknown[]): number[] {
   return pages;
 }
 
-/** Finite page numbers >= 1 from `pages`, or from a bare array. */
+/** Finite page numbers >= 1 from provenance.pages. */
 export function provenancePages(provenance: unknown): number[] {
-  if (Array.isArray(provenance)) return pageNumbers(provenance);
-  if (!provenance || typeof provenance !== "object") return [];
+  if (!provenance || typeof provenance !== "object" || Array.isArray(provenance)) {
+    return [];
+  }
   const pages = (provenance as { pages?: unknown }).pages;
   return Array.isArray(pages) ? pageNumbers(pages) : [];
 }
