@@ -3,19 +3,31 @@ import { extractPdfText, REGEN_MAX_CHARS } from "./extract-pdf";
 
 export const OCR_PAGE_LIMIT = 8;
 export const OCR_PAGE_CHAR_CAP = 8_000;
-export const OCR_PAGE_NUMBER_MAX = 120;
+export const OCR_PAGE_NUMBER_MAX = 2000;
+/** Same role as client OCR_TEXT_LAYER_SCAN_LIMIT: refill window length. */
+const OCR_REFILL_WINDOW_SPAN = 120;
 
 export type OcrPageText = { page: number; text: string };
 
-export type OcrSidecar = { pages: OcrPageText[] };
+export type OcrSidecar = { pages: OcrPageText[]; unstudiedPages?: number[] };
 
 export function ocrRefillWindow(
   startPage: number,
 ): { start: number; end: number } | null {
-  if (!Number.isInteger(startPage) || startPage > OCR_PAGE_NUMBER_MAX) {
+  if (
+    !Number.isInteger(startPage) ||
+    startPage < 1 ||
+    startPage > OCR_PAGE_NUMBER_MAX
+  ) {
     return null;
   }
-  return { start: Math.max(1, startPage), end: OCR_PAGE_NUMBER_MAX };
+  return {
+    start: startPage,
+    end: Math.min(
+      OCR_PAGE_NUMBER_MAX,
+      startPage + OCR_REFILL_WINDOW_SPAN - 1,
+    ),
+  };
 }
 
 export function ocrSidecarKey(deckId: string, materialId: string): string {
@@ -66,6 +78,24 @@ export function parseOcrPages(raw: unknown): OcrPageText[] | undefined {
 
 export function parseStoredOcrPages(raw: unknown): OcrPageText[] | undefined {
   return parseOcrPageList(raw, OCR_PAGE_NUMBER_MAX, "drop");
+}
+
+function parseUnstudiedPages(raw: unknown): number[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const pages = new Set<number>();
+  for (const item of raw) {
+    if (
+      typeof item !== "number" ||
+      !Number.isInteger(item) ||
+      item < 1 ||
+      item > OCR_PAGE_NUMBER_MAX
+    ) {
+      continue;
+    }
+    pages.add(item);
+  }
+  if (pages.size === 0) return undefined;
+  return [...pages].sort((a, b) => a - b);
 }
 
 export function mergeOcrPages(
@@ -130,7 +160,13 @@ export async function readOcrSidecar(
         ? (parsed as { pages?: unknown }).pages
         : undefined,
     );
-    return pages ? { pages } : null;
+    if (!pages) return null;
+    const unstudiedPages = parseUnstudiedPages(
+      parsed && typeof parsed === "object" && "unstudiedPages" in parsed
+        ? (parsed as { unstudiedPages?: unknown }).unstudiedPages
+        : undefined,
+    );
+    return unstudiedPages ? { pages, unstudiedPages } : { pages };
   } catch {
     return null;
   }
@@ -141,10 +177,15 @@ export async function writeOcrSidecar(
   deckId: string,
   materialId: string,
   pages: readonly OcrPageText[],
+  unstudiedPages?: readonly number[],
 ): Promise<void> {
+  const body: OcrSidecar = { pages: [...pages] };
+  if (unstudiedPages && unstudiedPages.length > 0) {
+    body.unstudiedPages = [...unstudiedPages];
+  }
   await env.MATERIALS.put(
     ocrSidecarKey(deckId, materialId),
-    JSON.stringify({ pages }),
+    JSON.stringify(body),
     { httpMetadata: { contentType: "application/json" } },
   );
 }

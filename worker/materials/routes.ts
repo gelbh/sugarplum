@@ -36,6 +36,7 @@ import {
 import { createR2GetUrl, createR2PutUrl } from "./r2-presign";
 import {
   mergeOcrPages,
+  OCR_PAGE_NUMBER_MAX,
   ocrRefillWindow,
   parseOcrPages,
   readOcrSidecar,
@@ -1463,8 +1464,11 @@ materialRoutes.post("/:id/ocr-refetch", async (c) => {
   const db = getDb(c.env);
   const material = await requireOwnedMaterial(db, materialId, userId);
   const r2Key = assertReadyPdfForOcr(material);
-  const window = ocrRefillWindow(await ocrResumeStartPage(db, material.id));
-  if (!window) return c.json({ refill: false });
+  const resumeStart = await ocrResumeStartPage(db, material.id);
+  const window = ocrRefillWindow(resumeStart);
+  const pastCeiling =
+    Number.isInteger(resumeStart) && resumeStart > OCR_PAGE_NUMBER_MAX;
+  if (!window && !pastCeiling) return c.json({ refill: false });
 
   const accountId = c.env.R2_ACCOUNT_ID;
   const accessKeyId = c.env.R2_ACCESS_KEY_ID;
@@ -1485,16 +1489,14 @@ materialRoutes.post("/:id/ocr-refetch", async (c) => {
     expiresIn: OCR_REFETCH_EXPIRES_SEC,
   });
   const sidecar = await readOcrSidecar(c.env, material.deck_id, material.id);
-  const coveredPages = (sidecar?.pages ?? [])
-    .filter((page) => page.page >= window.start && page.page <= window.end)
-    .map((page) => page.page);
+  const coveredPages = (sidecar?.pages ?? []).map((page) => page.page);
 
   return c.json({
     refill: true,
     downloadUrl,
     expiresIn: OCR_REFETCH_EXPIRES_SEC,
-    startPage: window.start,
-    windowEnd: window.end,
+    startPage: window ? window.start : resumeStart,
+    windowEnd: window ? window.end : OCR_PAGE_NUMBER_MAX,
     coveredPages,
   });
 });
@@ -1524,21 +1526,40 @@ materialRoutes.post("/:id/ocr-pages", async (c) => {
     throw new HTTPException(400, { message: "Invalid ocrPages" });
   }
 
-  const window = ocrRefillWindow(await ocrResumeStartPage(db, material.id));
-  if (!window) {
-    throw new HTTPException(400, { message: "Invalid ocrPages" });
-  }
-
+  const resumeStart = await ocrResumeStartPage(db, material.id);
   const sidecar = await readOcrSidecar(c.env, material.deck_id, material.id);
   const previous = sidecar?.pages ?? [];
+  const previousUnstudied = sidecar?.unstudiedPages ?? [];
   let merged: OcrPageText[];
   try {
-    merged = mergeOcrPages(previous, incoming, window);
+    merged = mergeOcrPages(previous, incoming, {
+      start: 1,
+      end: OCR_PAGE_NUMBER_MAX,
+    });
   } catch {
     throw new HTTPException(400, { message: "Invalid ocrPages" });
   }
-  if (merged.length > previous.length) {
-    await writeOcrSidecar(c.env, material.deck_id, material.id, merged);
+
+  const previousPageNums = new Set(previous.map((page) => page.page));
+  const newlyUnstudied: number[] = [];
+  for (const page of incoming) {
+    if (previousPageNums.has(page.page)) continue;
+    if (page.page >= resumeStart) continue;
+    newlyUnstudied.push(page.page);
+  }
+  const nextUnstudied = [
+    ...new Set([...previousUnstudied, ...newlyUnstudied]),
+  ].sort((a, b) => a - b);
+  const unstudiedGrew = nextUnstudied.length > previousUnstudied.length;
+
+  if (merged.length > previous.length || unstudiedGrew) {
+    await writeOcrSidecar(
+      c.env,
+      material.deck_id,
+      material.id,
+      merged,
+      nextUnstudied,
+    );
   }
   return c.json({ stored: merged.length });
 });

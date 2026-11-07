@@ -28,20 +28,29 @@ describe("mergeOcrPages", () => {
       mergeOcrPages(
         [{ page: 1, text: "first" }],
         [{ page: 1, text: "overwrite" }, { page: 9, text: "later" }],
-        { start: 1, end: 120 },
+        { start: 1, end: 2000 },
       ),
     ).toEqual([
       { page: 1, text: "first" },
       { page: 9, text: "later" },
     ]);
+    expect(
+      mergeOcrPages([], [{ page: 121, text: "past cursor" }], {
+        start: 1,
+        end: 2000,
+      }),
+    ).toEqual([{ page: 121, text: "past cursor" }]);
     expect(() =>
-      mergeOcrPages([], [{ page: 121, text: "no" }], { start: 1, end: 120 }),
+      mergeOcrPages([], [{ page: 2001, text: "no" }], {
+        start: 1,
+        end: 2000,
+      }),
     ).toThrow(/Invalid ocrPages/);
   });
 });
 
 describe("parseStoredOcrPages", () => {
-  it("accepts a ninth stored page", () => {
+  it("accepts a ninth stored page and page 150", () => {
     const pages = parseStoredOcrPages(
       Array.from({ length: 9 }, (_, index) => ({
         page: index + 1,
@@ -49,6 +58,17 @@ describe("parseStoredOcrPages", () => {
       })),
     );
     expect(pages).toHaveLength(9);
+    expect(parseStoredOcrPages([{ page: 150, text: "far" }])).toEqual([
+      { page: 150, text: "far" },
+    ]);
+  });
+});
+
+describe("parseOcrPages page ceiling", () => {
+  it("rejects page 2001", () => {
+    expect(() => parseOcrPages([{ page: 2001, text: "x" }])).toThrow(
+      /Invalid ocrPages/,
+    );
   });
 });
 
@@ -306,7 +326,7 @@ function seedReadyPdf() {
 }
 
 describe("ocr refetch", () => {
-  it("signs a GET for the owner and hides the URL past page 120", async () => {
+  it("signs a GET for the owner including resume past page 120", async () => {
     const env = seedReadyPdf();
     const res = await app.request(
       "/api/materials/mat-1/ocr-refetch",
@@ -336,12 +356,25 @@ describe("ocr refetch", () => {
       created_at: "2026-01-02T00:00:00.000Z",
       finished_at: "2026-01-02T00:00:00.000Z",
     });
-    const skipped = await app.request(
+    const resumed = await app.request(
       "/api/materials/mat-1/ocr-refetch",
       { method: "POST", headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
       env,
     );
-    expect(await skipped.json()).toEqual({ refill: false });
+    expect(resumed.status).toBe(200);
+    const resumedBody = (await resumed.json()) as {
+      refill: boolean;
+      downloadUrl?: string;
+      expiresIn?: number;
+      startPage?: number;
+      windowEnd?: number;
+    };
+    expect(resumedBody.refill).toBe(true);
+    expect(resumedBody.expiresIn).toBe(900);
+    expect(resumedBody.startPage).toBe(121);
+    expect(resumedBody.windowEnd).toBe(240);
+    expect(resumedBody.downloadUrl).toContain("materials/deck-a/mat-1.pdf");
+    expect(resumedBody.downloadUrl).toContain("X-Amz-Expires=900");
   });
 
   it("rejects a paste material", async () => {
@@ -382,12 +415,30 @@ describe("ocr refetch", () => {
     expect(res.status).toBe(404);
   });
 
-  it("appends a new page and keeps the stored text", async () => {
+  it("appends a new page, keeps stored text, and marks unstudied behind the cursor", async () => {
     const env = seedReadyPdf();
+    env.seedGenerationJob({
+      id: "job-resume-41",
+      material_id: "mat-1",
+      status: "failed",
+      error: null,
+      coverage_json: JSON.stringify({
+        window_resume: { used_keys: [], next_page: 41, total_pages: 200 },
+      }),
+      progress_json: null,
+      created_at: "2026-01-02T00:00:00.000Z",
+      finished_at: "2026-01-02T00:00:00.000Z",
+    });
     env.seedR2(
       ocrSidecarKey("deck-a", "mat-1"),
       JSON.stringify({ pages: [{ page: 1, text: "first" }] }),
     );
+    const pagesBody = {
+      pages: [
+        { page: 9, text: "later" },
+        { page: 1, text: "overwrite" },
+      ],
+    };
     const res = await app.request(
       "/api/materials/mat-1/ocr-pages",
       {
@@ -396,20 +447,39 @@ describe("ocr refetch", () => {
           "content-type": "application/json",
           cookie: `${SESSION_COOKIE}=sess-a`,
         },
-        body: JSON.stringify({
-          pages: [
-            { page: 1, text: "overwrite" },
-            { page: 9, text: "later" },
-          ],
-        }),
+        body: JSON.stringify(pagesBody),
       },
       env,
     );
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ stored: 2 });
     const stored = env.getR2(ocrSidecarKey("deck-a", "mat-1"));
-    expect(stored).toContain("first");
-    expect(stored).toContain("later");
-    expect(stored).not.toContain("overwrite");
+    expect(typeof stored).toBe("string");
+    const parsed = JSON.parse(stored as string) as {
+      pages: { page: number; text: string }[];
+      unstudiedPages?: number[];
+    };
+    expect(parsed.pages).toEqual([
+      { page: 1, text: "first" },
+      { page: 9, text: "later" },
+    ]);
+    expect(parsed.unstudiedPages).toEqual([9]);
+
+    const beforeSecond = stored as string;
+    const second = await app.request(
+      "/api/materials/mat-1/ocr-pages",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify(pagesBody),
+      },
+      env,
+    );
+    expect(second.status).toBe(200);
+    expect(await second.json()).toEqual({ stored: 2 });
+    expect(env.getR2(ocrSidecarKey("deck-a", "mat-1"))).toBe(beforeSecond);
   });
 });
