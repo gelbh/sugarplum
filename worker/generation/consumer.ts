@@ -1,17 +1,13 @@
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { decryptSecret } from "../crypto/secrets";
-import { extractPdfPages } from "../materials/extract-pdf";
-import {
-  applyOcrSidecar,
-  readOcrSidecar,
-  type OcrSidecar,
-} from "../materials/ocr-sidecar";
+import { readOcrSidecar, type OcrSidecar } from "../materials/ocr-sidecar";
 import { extractPptxSlides } from "../materials/extract-pptx";
 import { bytesToBase64, mimeFromR2Key } from "../materials/figures";
 import { MAX_IMAGE_BYTES } from "../materials/limits";
 import type { GenerateQueueMessage } from "./enqueue";
 import { collectPdfFigureDrafts } from "./pdf-figures";
+import { studyPdfWithOcrSidecar } from "./pdf-ocr-study";
 import {
   BYO_PROVIDERS_PHRASE,
   createLlmAdapter,
@@ -727,20 +723,16 @@ export async function processGenerateJob(
         console.warn("OCR sidecar read failed", err);
       }
       try {
-        const focused = await focusStudyPages(
-          async (start) => {
-            const window = await extractPdfPages(pdfBytes.slice(0), start);
-            return {
-              ...window,
-              pages: applyOcrSidecar(window.pages, sidecar),
-            };
-          },
-          {
-            startPage: prior.startPage,
-            topicHints,
-            usedKeys: prior.usedKeys,
-          },
-        );
+        const focused = await studyPdfWithOcrSidecar({
+          env,
+          deckId: material.deck_id,
+          materialId: material.id,
+          pdfBytes,
+          startPage: prior.startPage,
+          topicHints,
+          usedKeys: prior.usedKeys,
+          sidecar,
+        });
         text = focused.text;
         windowResume = focused.resume;
       } catch (err) {

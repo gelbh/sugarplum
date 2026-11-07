@@ -3,19 +3,31 @@ import { extractPdfText, REGEN_MAX_CHARS } from "./extract-pdf";
 
 export const OCR_PAGE_LIMIT = 8;
 export const OCR_PAGE_CHAR_CAP = 8_000;
-export const OCR_PAGE_NUMBER_MAX = 120;
+export const OCR_PAGE_NUMBER_MAX = 2000;
+/** Same role as client OCR_TEXT_LAYER_SCAN_LIMIT: refill window length. */
+const OCR_REFILL_WINDOW_SPAN = 120;
 
 export type OcrPageText = { page: number; text: string };
 
-export type OcrSidecar = { pages: OcrPageText[] };
+export type OcrSidecar = { pages: OcrPageText[]; unstudiedPages?: number[] };
 
 export function ocrRefillWindow(
   startPage: number,
 ): { start: number; end: number } | null {
-  if (!Number.isInteger(startPage) || startPage > OCR_PAGE_NUMBER_MAX) {
+  if (
+    !Number.isInteger(startPage) ||
+    startPage < 1 ||
+    startPage > OCR_PAGE_NUMBER_MAX
+  ) {
     return null;
   }
-  return { start: Math.max(1, startPage), end: OCR_PAGE_NUMBER_MAX };
+  return {
+    start: startPage,
+    end: Math.min(
+      OCR_PAGE_NUMBER_MAX,
+      startPage + OCR_REFILL_WINDOW_SPAN - 1,
+    ),
+  };
 }
 
 export function ocrSidecarKey(deckId: string, materialId: string): string {
@@ -68,6 +80,24 @@ export function parseStoredOcrPages(raw: unknown): OcrPageText[] | undefined {
   return parseOcrPageList(raw, OCR_PAGE_NUMBER_MAX, "drop");
 }
 
+function parseUnstudiedPages(raw: unknown): number[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const pages = new Set<number>();
+  for (const item of raw) {
+    if (
+      typeof item !== "number" ||
+      !Number.isInteger(item) ||
+      item < 1 ||
+      item > OCR_PAGE_NUMBER_MAX
+    ) {
+      continue;
+    }
+    pages.add(item);
+  }
+  if (pages.size === 0) return undefined;
+  return [...pages].sort((a, b) => a - b);
+}
+
 export function mergeOcrPages(
   existing: readonly OcrPageText[],
   incoming: readonly OcrPageText[],
@@ -96,6 +126,59 @@ export function applyOcrSidecar<T extends { page: number; text: string }>(
     if (!text) return page;
     return { ...page, text };
   });
+}
+
+export function orphanedSidecarPages(args: {
+  pages: readonly {
+    page: number;
+    textLayer: string;
+    sidecarText?: string;
+  }[];
+  pickedPages: readonly number[];
+  nextPage: number;
+}): number[] {
+  const picked = new Set(args.pickedPages);
+  const orphaned = new Set<number>();
+  for (const page of args.pages) {
+    if (page.page >= args.nextPage) continue;
+    if (picked.has(page.page)) continue;
+    if (page.textLayer.trim()) continue;
+    if (!(page.sidecarText ?? "").trim()) continue;
+    orphaned.add(page.page);
+  }
+  return [...orphaned].sort((a, b) => a - b);
+}
+
+export function nextUnstudiedPages(args: {
+  previous: readonly number[];
+  pickedPages: readonly number[];
+  orphanPages: readonly number[];
+}): number[] {
+  const picked = new Set(args.pickedPages);
+  const pages = new Set<number>();
+  for (const page of args.previous) {
+    if (
+      !Number.isInteger(page) ||
+      page < 1 ||
+      page > OCR_PAGE_NUMBER_MAX ||
+      picked.has(page)
+    ) {
+      continue;
+    }
+    pages.add(page);
+  }
+  for (const page of args.orphanPages) {
+    if (
+      !Number.isInteger(page) ||
+      page < 1 ||
+      page > OCR_PAGE_NUMBER_MAX ||
+      picked.has(page)
+    ) {
+      continue;
+    }
+    pages.add(page);
+  }
+  return [...pages].sort((a, b) => a - b);
 }
 
 export function sidecarPlainText(sidecar: OcrSidecar | null): string {
@@ -130,7 +213,13 @@ export async function readOcrSidecar(
         ? (parsed as { pages?: unknown }).pages
         : undefined,
     );
-    return pages ? { pages } : null;
+    if (!pages) return null;
+    const unstudiedPages = parseUnstudiedPages(
+      parsed && typeof parsed === "object" && "unstudiedPages" in parsed
+        ? (parsed as { unstudiedPages?: unknown }).unstudiedPages
+        : undefined,
+    );
+    return unstudiedPages ? { pages, unstudiedPages } : { pages };
   } catch {
     return null;
   }
@@ -141,10 +230,15 @@ export async function writeOcrSidecar(
   deckId: string,
   materialId: string,
   pages: readonly OcrPageText[],
+  unstudiedPages: readonly number[],
 ): Promise<void> {
+  const body: OcrSidecar = { pages: [...pages] };
+  if (unstudiedPages.length > 0) {
+    body.unstudiedPages = [...unstudiedPages];
+  }
   await env.MATERIALS.put(
     ocrSidecarKey(deckId, materialId),
-    JSON.stringify({ pages }),
+    JSON.stringify(body),
     { httpMetadata: { contentType: "application/json" } },
   );
 }
