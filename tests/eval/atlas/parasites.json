@@ -212,9 +212,17 @@
         "group": "protozoan",
         "definitiveHosts": ["felidae"],
         "intermediateHosts": ["vertebrates"],
-        "majorOrgan": "cns",
+        "majorOrgan": "small intestine",
         "zoonotic": "yes"
-      }
+      },
+      "corrections": [
+        {
+          "field": "majorOrgan",
+          "was": "cns",
+          "citation": "WCVM Learn About Parasites: Toxoplasma gondii (sexual stages develop only in the small intestine epithelium of felids)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php"
+        }
+      ]
     }
   ]
 }

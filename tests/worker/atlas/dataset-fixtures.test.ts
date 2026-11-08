@@ -22,6 +22,7 @@ import {
 type Fields = DatasetEntry["fields"];
 type Fixture = {
   canonicalName: string;
+  corrections?: { field: string; was: string; citation: string; url: string }[];
   expected: Partial<Record<keyof Fields, unknown>>;
 };
 const fixtures: Fixture[] = parasites.entries;

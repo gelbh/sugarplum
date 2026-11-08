@@ -6,6 +6,7 @@ import {
 } from "../schema";
 import cestodes from "./cestodes.json";
 import nematodesRuminant from "./nematodes-ruminant.json";
+import protozoa from "./protozoa.json";
 import trematodes from "./trematodes.json";
 
 export const PARASITE_DATASET_VERSION = 1;
@@ -14,6 +15,7 @@ const GROUP_FILES: Record<string, unknown> = {
   trematodes,
   cestodes,
   "nematodes-ruminant": nematodesRuminant,
+  protozoa,
 };
 
 export function loadGroupFiles(): (DatasetGroupFile & { file: string })[] {
