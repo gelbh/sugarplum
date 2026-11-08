@@ -1412,7 +1412,7 @@
         "onHostStages": ["meront", "sarcocyst with bradyzoites", "gamont"],
         "distribution": "Worldwide, commonest where livestock are raised",
         "zoonotic": "yes",
-        "significance": "Many host-specific species, mostly silent; some cause acute illness, abortion or carcass downgrading, and S. neurona causes equine protozoal myeloencephalitis.",
+        "significance": "Most species cause little disease; others cause illness, abortion or carcass downgrading. S. neurona can cause myeloencephalitis in horses.",
         "lifecycleType": "indirect",
         "lifecycleStages": [
           {
