@@ -12,13 +12,21 @@
         "order": "Plagiorchiida",
         "family": "Fasciolidae",
         "group": "trematode",
-        "definitiveHosts": ["sheep", "cattle", "goat", "deer", "human"],
-        "intermediateHosts": ["Galba truncatula"],
+        "definitiveHosts": [
+          "sheep",
+          "cattle",
+          "goat",
+          "deer",
+          "camelid",
+          "water buffalo",
+          "human"
+        ],
+        "intermediateHosts": ["lymnaeid snail", "Galba truncatula"],
         "majorOrgan": "bile ducts",
         "onHostStages": ["immature fluke", "adult fluke"],
-        "distribution": "Worldwide, mainly where cattle and sheep are raised",
+        "distribution": "Grazing-livestock regions on every inhabited continent",
         "zoonotic": "yes",
-        "significance": "Major liver pathogen of sheep and cattle; people catch it from contaminated aquatic plants such as watercress.",
+        "significance": "Liver disease agent of ruminants, chiefly sheep and cattle; human cases come from eating raw water plants such as watercress.",
         "lifecycleType": "indirect",
         "pppDays": {
           "min": 56,
@@ -43,7 +51,7 @@
           },
           {
             "name": "cercaria",
-            "location": "snail, then water"
+            "location": "leaves the snail"
           },
           {
             "name": "metacercaria",
@@ -63,6 +71,11 @@
           {
             "name": "fecal sedimentation",
             "sample": "feces"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum",
+            "windowStartWeek": 2
           }
         ]
       },
@@ -95,7 +108,7 @@
           "field": "pppDays",
           "citation": "WCVM Learn About Parasites: Fasciola hepatica",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/fasciola-hepatica.php",
-          "note": "Reference gives about eight weeks; the course slide gives no PPP."
+          "note": null
         },
         {
           "field": "majorOrgan",
@@ -113,6 +126,18 @@
           "field": "order",
           "citation": "NCBI Taxonomy: Fasciola hepatica",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6192/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Fascioliasis",
+          "url": "https://www.cdc.gov/dpdx/fascioliasis/index.html",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "CDC DPDx: Fascioliasis",
+          "url": "https://www.cdc.gov/dpdx/fascioliasis/index.html",
           "note": null
         }
       ],
@@ -136,14 +161,15 @@
           "goat",
           "camelid",
           "deer",
+          "pig",
           "human"
         ],
-        "intermediateHosts": ["Radix"],
+        "intermediateHosts": ["lymnaeid snail", "Radix"],
         "majorOrgan": "bile ducts",
         "onHostStages": ["immature fluke", "adult fluke"],
-        "distribution": "Warm tropical and subtropical regions",
+        "distribution": "Hot-climate zones worldwide, chiefly the tropics",
         "zoonotic": "yes",
-        "significance": "Liver fluke of cattle and buffalo in warm climates that holds back growth and output; people are occasionally infected through raw plants.",
+        "significance": "Damages the liver of cattle and buffalo in hot regions, costing weight gain and yield; human cases follow eating contaminated greens.",
         "lifecycleType": "indirect",
         "lifecycleStages": [
           {
@@ -164,7 +190,7 @@
           },
           {
             "name": "cercaria",
-            "location": "snail, then water"
+            "location": "leaves the snail"
           },
           {
             "name": "metacercaria",
@@ -184,6 +210,11 @@
           {
             "name": "fecal egg microscopy",
             "sample": "feces"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum",
+            "windowStartWeek": 2
           }
         ]
       },
@@ -223,6 +254,12 @@
           "citation": "CDC DPDx: Fascioliasis",
           "url": "https://www.cdc.gov/dpdx/fascioliasis/index.html",
           "note": "Course states liver; adults live in the bile ducts after the immature flukes cross the liver."
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Fascioliasis",
+          "url": "https://www.cdc.gov/dpdx/fascioliasis/index.html",
+          "note": null
         }
       ],
       "images": []
@@ -239,12 +276,16 @@
         "family": "Fasciolidae",
         "group": "trematode",
         "definitiveHosts": ["deer"],
-        "intermediateHosts": ["Galba truncatula", "Radix labiata"],
+        "intermediateHosts": [
+          "lymnaeid snail",
+          "Galba truncatula",
+          "Radix labiata"
+        ],
         "majorOrgan": "liver",
         "onHostStages": ["immature fluke", "adult fluke"],
-        "distribution": "North America, and parts of Europe since elk were imported",
+        "distribution": "Native to North America; introduced into central Europe",
         "zoonotic": "no",
-        "significance": "Big fluke of wild cervids; migrating young flukes can kill sheep, while cattle wall them off in liver cysts and seldom pass eggs.",
+        "significance": "Mainly infects wild deer; in sheep the wandering juveniles can be fatal, while in cattle cysts trap the flukes and their eggs.",
         "lifecycleType": "indirect",
         "pppDays": {
           "min": 210,
@@ -269,7 +310,7 @@
           },
           {
             "name": "cercaria",
-            "location": "snail, then water"
+            "location": "leaves the snail"
           },
           {
             "name": "metacercaria",
@@ -354,12 +395,12 @@
         "family": "Dicrocoeliidae",
         "group": "trematode",
         "definitiveHosts": ["cattle", "sheep", "deer", "human"],
-        "intermediateHosts": ["land snail", "ant"],
+        "intermediateHosts": ["land snail", "Formica"],
         "majorOrgan": "bile ducts",
         "onHostStages": ["immature fluke", "adult fluke"],
-        "distribution": "Europe, Asia and North Africa, with scattered foci in North America",
+        "distribution": "Widespread across Eurasia and North Africa; patchy in North America",
         "zoonotic": "yes",
-        "significance": "Small bile duct fluke of ruminants spread by ants; mostly harmless, though large long-standing burdens can scar the liver.",
+        "significance": "Ant-borne fluke of ruminant bile ducts; usually causes no disease, though very heavy chronic infections may fibrose the liver.",
         "lifecycleType": "indirect",
         "pppDays": {
           "min": 56,
@@ -368,11 +409,11 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in feces, already embryonated"
+            "location": "shed in feces with a miracidium inside"
           },
           {
             "name": "miracidium",
-            "location": "hatches in the snail gut"
+            "location": "inside the snail after the egg is eaten"
           },
           {
             "name": "sporocyst",
@@ -388,7 +429,7 @@
           },
           {
             "name": "immature fluke",
-            "location": "travels straight to the bile ducts"
+            "location": "from gut to bile ducts, no liver migration"
           },
           {
             "name": "adult fluke",
@@ -474,8 +515,8 @@
         "intermediateHosts": ["Galba truncatula"],
         "majorOrgan": "rumen",
         "onHostStages": ["immature fluke", "adult fluke"],
-        "distribution": "Europe, now including the UK and Ireland",
-        "significance": "Main rumen fluke of UK and Irish cattle and sheep; heavy juvenile loads in the duodenum can cause fatal outbreaks.",
+        "distribution": "Mainland Europe, spreading into Britain and Ireland",
+        "significance": "Often tolerated in the rumen, yet a sudden intake of many cysts injures the duodenum and can kill cattle or sheep.",
         "lifecycleType": "indirect",
         "pppDays": {
           "min": 56,
@@ -549,10 +590,16 @@
         "family": "Paramphistomidae",
         "group": "trematode",
         "definitiveHosts": ["sheep", "cattle", "water buffalo", "goat"],
-        "intermediateHosts": ["Bulinus", "Planorbis planorbis"],
+        "intermediateHosts": [
+          "Bulinus",
+          "Planorbis planorbis",
+          "Indoplanorbis exustus",
+          "Glyptanisus gilberti",
+          "lymnaeid snail"
+        ],
         "majorOrgan": "rumen",
         "onHostStages": ["immature fluke", "adult fluke"],
-        "significance": "Rumen fluke of ruminants; juveniles burrowing in the duodenum can bring foul diarrhoea, anaemia and loss of appetite.",
+        "significance": "Young flukes feeding in the duodenal wall of sheep, goats and cattle bring on scour, anaemia and poor appetite.",
         "lifecycleType": "indirect",
         "lifecycleStages": [
           {
@@ -602,9 +649,9 @@
         "intermediateHosts": ["snail"],
         "majorOrgan": "small intestine",
         "onHostStages": ["adult fluke"],
-        "distribution": "Asia, including the Indian subcontinent",
+        "distribution": "Parts of Asia, India included",
         "zoonotic": "yes",
-        "significance": "Biggest fluke of the human gut, kept going where pigs are raised; people catch it by eating raw water plants bearing cysts.",
+        "significance": "Zoonotic gut fluke shared by pigs and people; heavy human infections cause diarrhoea, pain and sometimes gut blockage.",
         "lifecycleType": "indirect",
         "pppDays": {
           "min": 90,
@@ -629,7 +676,7 @@
           },
           {
             "name": "cercaria",
-            "location": "snail, then water"
+            "location": "leaves the snail"
           },
           {
             "name": "metacercaria",
@@ -817,7 +864,7 @@
           },
           {
             "name": "cercaria",
-            "location": "snail, then water"
+            "location": "leaves the snail, then enters fish"
           },
           {
             "name": "metacercaria",
@@ -897,12 +944,17 @@
           "horse",
           "rodent"
         ],
-        "intermediateHosts": ["Bulinus", "Biomphalaria", "Oncomelania"],
+        "intermediateHosts": [
+          "Bulinus",
+          "Biomphalaria",
+          "Oncomelania",
+          "Neotricula aperta"
+        ],
         "majorOrgan": "blood vessels",
         "onHostStages": ["schistosomulum", "adult worm"],
         "distribution": "Africa, Asia, parts of South America, the Middle East and Corsica",
         "zoonotic": "yes",
-        "significance": "Blood flukes; S. bovis lowers cattle productivity, and animal reservoirs and hybrids help keep human schistosomiasis going.",
+        "significance": "S. bovis is the usual cattle species, often silent but sapping meat and milk yield; livestock and hybrid strains can infect people.",
         "lifecycleType": "indirect",
         "lifecycleStages": [
           {

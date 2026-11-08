@@ -29,7 +29,8 @@ export const HOST_TERMS: Record<string, Term> = {
   "aquatic snail": t("snail"),
   "land snail": t("snail"),
   slug: t("invertebrate"),
-  "Galba truncatula": t("aquatic snail"),
+  "lymnaeid snail": t("aquatic snail"),
+  "Galba truncatula": t("lymnaeid snail"),
   ant: t("invertebrate"),
   "oribatid mite": t("invertebrate"),
   flea: t("invertebrate"),
@@ -40,13 +41,17 @@ export const HOST_TERMS: Record<string, Term> = {
   camelid: t("mammal"),
   fish: t("vertebrate"),
   "freshwater fish": t("fish"),
-  Radix: t("aquatic snail"),
+  Radix: t("lymnaeid snail"),
   "Radix labiata": t("Radix"),
   Bulinus: t("aquatic snail"),
   "Planorbis planorbis": t("aquatic snail"),
   Biomphalaria: t("aquatic snail"),
   Oncomelania: t("aquatic snail"),
   Bithynia: t("aquatic snail"),
+  "Indoplanorbis exustus": t("aquatic snail"),
+  "Glyptanisus gilberti": t("aquatic snail"),
+  "Neotricula aperta": t("aquatic snail"),
+  Formica: t("ant"),
 };
 
 // Fixture and slide spellings mapped to HOST_TERMS keys (lower-cased lookup).
