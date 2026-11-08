@@ -1,0 +1,74 @@
+{
+  "group": "trematode",
+  "entries": [
+    {
+      "key": "fasciola-hepatica",
+      "canonicalName": "Fasciola hepatica",
+      "commonName": "Common liver fluke",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Echinostomatiformes",
+        "family": "Fasciolidae",
+        "group": "trematode",
+        "definitiveHosts": ["sheep", "cattle", "goat", "deer", "human"],
+        "intermediateHosts": ["Galba truncatula"],
+        "majorOrgan": "bile ducts",
+        "onHostStages": ["immature fluke", "adult fluke"],
+        "distribution": "Worldwide, mainly where cattle and sheep graze wet pasture",
+        "zoonotic": "yes",
+        "significance": "Major liver pathogen of sheep and cattle; people catch it from contaminated aquatic plants such as watercress.",
+        "lifecycleType": "indirect",
+        "pppDays": { "min": 56, "max": 56 },
+        "lifecycleStages": [
+          { "name": "egg", "location": "passed in feces" },
+          { "name": "miracidium", "location": "water" },
+          { "name": "sporocyst", "location": "snail" },
+          { "name": "redia", "location": "snail" },
+          { "name": "cercaria", "location": "snail, then water" },
+          { "name": "metacercaria", "location": "aquatic vegetation" },
+          { "name": "immature fluke", "location": "liver parenchyma" },
+          { "name": "adult fluke", "location": "bile ducts" }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          { "name": "fecal sedimentation", "sample": "feces" }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Fasciola hepatica",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/fasciola-hepatica.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Fasciola hepatica",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/fasciola-hepatica.php",
+          "note": "Reference names cattle, sheep, humans and 'other mammals'; goat and deer follow the course list."
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "WCVM Learn About Parasites: Fasciola hepatica",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/fasciola-hepatica.php",
+          "note": "Reference says snails of genus Lymnaea; Galba truncatula follows the course slide."
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Fasciola hepatica",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/fasciola-hepatica.php",
+          "note": "Reference gives about eight weeks; the course slide gives no PPP."
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Fasciola hepatica",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/fasciola-hepatica.php",
+          "note": "Course states liver; adults live in the bile ducts, immatures migrate through the liver."
+        }
+      ],
+      "images": []
+    }
+  ]
+}
