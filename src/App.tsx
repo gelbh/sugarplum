@@ -75,7 +75,7 @@ function AppInner() {
           setLoc(next);
           return;
         }
-        // React skips view transitions for updates made during popstate, and navigate() dispatches one.
+        // React skips view transitions for updates made during a browser Back/Forward popstate.
         setTimeout(() => startTransition(() => setLoc(currentLocation())), 0);
       }),
     [],

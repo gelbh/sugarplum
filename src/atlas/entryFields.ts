@@ -64,7 +64,11 @@ export function entryRefs(refs: Ref[]): EntryRefs {
       byGroup.set(field, { field, label: FIELD_LABELS[field], refs: [] });
     byGroup.get(field)!.refs.push({ n, ref });
     const cited = byField.get(field) ?? [];
-    if (!cited.includes(n)) byField.set(field, [...cited, n]);
+    if (!cited.includes(n))
+      byField.set(
+        field,
+        [...cited, n].sort((a, b) => a - b),
+      );
   }
   const fieldGroups = FIELD_ORDER.flatMap((f) => byGroup.get(f) ?? []);
   return {

@@ -53,11 +53,20 @@ export default function EntryFacts({ entry, refs, onCite }: Props) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.75 }}>
       <Paper variant="outlined" sx={{ px: 2.25, py: 2 }}>
-        <Box component="dl" sx={{ m: 0 }}>
+        <Box
+          component="dl"
+          sx={{
+            m: 0,
+            mb: -1.25,
+            columnWidth: { xs: "auto", sm: 240, xl: "auto" },
+            columnGap: 4,
+            "& > div": { breakInside: "avoid", pb: 1.25 },
+          }}
+        >
           {rows.map(([key, value]) => {
             const cited = refs.byField.get(key) ?? [];
             return (
-              <Box key={key} sx={{ "& + &": { mt: 1.25 } }}>
+              <div key={key}>
                 <Typography
                   component="dt"
                   color="text.secondary"
@@ -89,7 +98,7 @@ export default function EntryFacts({ entry, refs, onCite }: Props) {
                 >
                   {value}
                 </Typography>
-              </Box>
+              </div>
             );
           })}
         </Box>

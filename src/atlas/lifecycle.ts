@@ -109,7 +109,7 @@ export function axis(fields: DatasetFields): Axis | null {
     const value = i * step;
     return {
       day: value * perUnit,
-      label: i === 0 ? (unit === "weeks" ? "Week 0" : "Day 0") : String(value),
+      label: String(value),
     };
   });
   return { unit, endDay: count * step * perUnit, ticks };

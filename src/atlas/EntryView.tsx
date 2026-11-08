@@ -127,13 +127,14 @@ export default function EntryView({
         gap: { xs: 2, md: 3 },
         gridTemplateColumns: {
           xs: "minmax(0, 1fr)",
-          md: "minmax(0, 1fr) 272px",
-          lg: "240px minmax(0, 1fr) 288px",
+          lg: "240px minmax(0, 1fr)",
+          xl: "240px minmax(0, 1fr) 288px",
         },
+        // The lane board needs the width, so the facts sit below it until xl.
         gridTemplateAreas: {
           xs: '"head" "board" "side"',
-          md: '"head head" "board side"',
-          lg: '"rail head head" "rail board side"',
+          lg: '"rail head" "rail board" "rail side"',
+          xl: '"rail head head" "rail board side"',
         },
         alignItems: "start",
       }}
@@ -205,15 +206,21 @@ export default function EntryView({
         <Button
           variant="outlined"
           size="small"
-          startIcon={<FormatListBulletedIcon />}
+          aria-label="All parasites"
           onClick={() => setDrawerOpen(true)}
           sx={{
             display: { lg: "none" },
             flex: "none",
+            minWidth: 0,
+            px: { xs: 1, sm: 1.5 },
+            gap: 1,
             bgcolor: "background.paper",
           }}
         >
-          All parasites
+          <FormatListBulletedIcon fontSize="small" />
+          <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>
+            All parasites
+          </Box>
         </Button>
       </Stack>
 

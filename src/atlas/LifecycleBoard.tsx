@@ -26,9 +26,9 @@ type Props = { fields: DatasetFields };
 
 const PLAY_STEP_MS = 1200;
 const MARKER_MS = 300;
-const LABEL_COL = { xs: "112px", sm: "148px" };
-const STAGE_MIN_PX = 92;
-const LANE_PX = 68;
+const LABEL_COL = { xs: "120px", sm: "148px" };
+const STAGE_MIN_PX = 84;
+const LANE_PX = 72;
 
 const motion = (props: string) => ({
   transition: props
@@ -110,9 +110,7 @@ export default function LifecycleBoard({ fields }: Props) {
         if (!playRef.current?.contains(ev.target as Node)) setPlaying(false);
       }}
     >
-      <Box
-        sx={{ overflowX: "auto", mx: { xs: -2, sm: 0 }, px: { xs: 2, sm: 0 } }}
-      >
+      <Box sx={{ overflowX: "auto" }}>
         <Box
           sx={{
             display: "grid",
@@ -122,7 +120,15 @@ export default function LifecycleBoard({ fields }: Props) {
             },
           }}
         >
-          <Box>
+          <Box
+            sx={{
+              // Lane names stay put while a long lifecycle scrolls sideways on a phone.
+              position: "sticky",
+              left: 0,
+              zIndex: 2,
+              bgcolor: "background.paper",
+            }}
+          >
             {lanes.map((lane) => (
               <Box
                 key={lane.key}
@@ -142,8 +148,14 @@ export default function LifecycleBoard({ fields }: Props) {
                 {lane.hosts.length > 0 ? (
                   <Typography
                     color="text.secondary"
-                    sx={{ fontSize: "0.76rem", lineHeight: 1.3 }}
-                    noWrap
+                    sx={{
+                      fontSize: "0.76rem",
+                      lineHeight: 1.3,
+                      display: "-webkit-box",
+                      WebkitLineClamp: { xs: 1, sm: 2 },
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
                   >
                     <TermList terms={lane.hosts} />
                     {lane.more > 0 ? ` +${lane.more}` : null}
@@ -189,7 +201,7 @@ export default function LifecycleBoard({ fields }: Props) {
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "center",
-                  px: 1,
+                  px: 0.75,
                   minWidth: 0,
                   zIndex: 1,
                 }}
@@ -211,7 +223,8 @@ export default function LifecycleBoard({ fields }: Props) {
                     fontSize: "0.82rem",
                     fontWeight: i === index ? 700 : 600,
                     lineHeight: 1.2,
-                    overflowWrap: "anywhere",
+                    hyphens: "auto",
+                    overflowWrap: "break-word",
                   }}
                 >
                   {termLabel(s.name)}
@@ -533,7 +546,11 @@ function Timeline({
                   {w.sample ? (
                     <Box
                       component="span"
-                      sx={{ fontWeight: 400, color: "text.secondary" }}
+                      sx={{
+                        fontWeight: 400,
+                        color: "text.secondary",
+                        display: { xs: "none", sm: "inline" },
+                      }}
                     >
                       {" "}
                       ({w.sample}
