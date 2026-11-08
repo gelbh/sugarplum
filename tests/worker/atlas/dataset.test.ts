@@ -105,6 +105,93 @@ describe("dataset schema", () => {
       },
     ],
     [
+      "duration without a host role",
+      {
+        ...minimal,
+        fields: {
+          group: "trematode",
+          lifecycleStages: [
+            { name: "egg", durationDays: { min: 14, max: 14 } },
+          ],
+        },
+      },
+    ],
+    [
+      "duration ending before it starts",
+      {
+        ...minimal,
+        fields: {
+          group: "trematode",
+          lifecycleStages: [
+            {
+              name: "egg",
+              hostRole: "environment",
+              durationDays: { min: 14, max: 7 },
+            },
+          ],
+        },
+      },
+    ],
+    [
+      "unknown stage host term",
+      {
+        ...minimal,
+        fields: {
+          group: "trematode",
+          intermediateHosts: ["snail"],
+          lifecycleStages: [
+            { name: "redia", hostRole: "intermediate", host: "slime" },
+          ],
+        },
+      },
+    ],
+    [
+      "stage host without a host role",
+      {
+        ...minimal,
+        fields: {
+          group: "trematode",
+          intermediateHosts: ["snail"],
+          lifecycleStages: [{ name: "redia", host: "snail" }],
+        },
+      },
+    ],
+    [
+      "stage host in the environment",
+      {
+        ...minimal,
+        fields: {
+          group: "trematode",
+          lifecycleStages: [
+            { name: "egg", hostRole: "environment", host: "snail" },
+          ],
+        },
+      },
+    ],
+    [
+      "host role with no hosts listed",
+      {
+        ...minimal,
+        fields: {
+          group: "trematode",
+          lifecycleStages: [{ name: "redia", hostRole: "intermediate" }],
+        },
+      },
+    ],
+    [
+      "stage host outside the role list",
+      {
+        ...minimal,
+        fields: {
+          group: "trematode",
+          intermediateHosts: ["Galba truncatula"],
+          lifecycleStages: [
+            { name: "redia", hostRole: "intermediate", host: "ant" },
+          ],
+        },
+      },
+    ],
+    [
       "unknown key in a diagnostic test",
       {
         ...minimal,
@@ -170,7 +257,16 @@ describe("dataset schema", () => {
         intermediateHosts: ["Galba truncatula"],
         majorOrgan: "bile ducts",
         pppDays: { min: 56, max: 70 },
-        lifecycleStages: [{ name: "egg", location: "faeces" }],
+        lifecycleStages: [
+          {
+            name: "egg",
+            location: "faeces",
+            hostRole: "environment",
+            durationDays: { min: 14, max: 14 },
+          },
+          { name: "redia", hostRole: "intermediate", host: "Galba truncatula" },
+          { name: "adult fluke", hostRole: "definitive" },
+        ],
         diagnosticTests: [{ name: "FEC", windowStartWeek: 8 }],
       },
     });
@@ -281,6 +377,15 @@ describe("built-in parasite dataset", () => {
       expect(seen.get(f.family) ?? rank, f.family).toBe(rank);
       seen.set(f.family, rank);
     }
+  });
+
+  it("gives every lifecycle stage a host role", () => {
+    const missing = dataset.entries.flatMap((e) =>
+      e.fields.lifecycleStages
+        .filter((s) => s.hostRole === null)
+        .map((s) => `${e.key}: ${s.name}`),
+    );
+    expect(missing).toEqual([]);
   });
 
   it("ships no images before step 2", () => {

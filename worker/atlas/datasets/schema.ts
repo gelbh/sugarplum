@@ -7,7 +7,7 @@ import {
   parasiteFieldsSchema,
   pppDaysSchema,
 } from "../templates/parasite";
-import { HOST_TERM_KEYS, ORGAN_TERM_KEYS } from "./vocab";
+import { HOST_TERM_KEYS, ORGAN_TERM_KEYS, hostCovers } from "./vocab";
 
 export const IMAGE_ROLES = [
   "adult",
@@ -31,6 +31,28 @@ export function datasetKeyFor(canonicalName: string): string {
     .replace(/\s+/g, "-");
 }
 
+const datasetStageSchema = z
+  .strictObject({
+    ...lifecycleStageSchema.shape,
+    host: z.enum(HOST_TERM_KEYS).nullable().default(null),
+    durationDays: pppDaysSchema.strict().nullable().default(null),
+  })
+  .refine((s) => s.durationDays === null || s.hostRole !== null, {
+    path: ["durationDays"],
+    message: "durationDays needs a hostRole",
+  })
+  .refine(
+    (s) =>
+      s.host === null || (s.hostRole !== null && s.hostRole !== "environment"),
+    { path: ["host"], message: "host needs a host-bearing hostRole" },
+  );
+
+const ROLE_HOSTS = {
+  definitive: "definitiveHosts",
+  intermediate: "intermediateHosts",
+  paratenic: "paratenicHosts",
+} as const;
+
 // Learner edits keep the loose template schema; the dataset rejects unknown
 // keys at every level and allows only vocabulary terms for hosts and organs.
 const datasetFieldsSchema = z.strictObject({
@@ -43,7 +65,7 @@ const datasetFieldsSchema = z.strictObject({
   significance: capped(160).nullable().default(null),
   distribution: capped(80).nullable().default(null),
   pppDays: pppDaysSchema.strict().nullable().default(null),
-  lifecycleStages: z.array(lifecycleStageSchema.strict()).default([]),
+  lifecycleStages: z.array(datasetStageSchema).default([]),
   diagnosticTests: z.array(diagnosticTestSchema.strict()).default([]),
 });
 
@@ -95,6 +117,27 @@ export const datasetEntrySchema = z
         message: "key must derive from canonicalName",
       });
     }
+    e.fields.lifecycleStages.forEach((stage, i) => {
+      if (stage.hostRole === null || stage.hostRole === "environment") return;
+      const hosts = e.fields[ROLE_HOSTS[stage.hostRole]];
+      const path = ["fields", "lifecycleStages", i];
+      if (hosts.length === 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: [...path, "hostRole"],
+          message: `no ${ROLE_HOSTS[stage.hostRole]} for this role`,
+        });
+      } else if (
+        stage.host !== null &&
+        !hosts.some((h) => hostCovers(h, stage.host!))
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: [...path, "host"],
+          message: `${stage.host} is not in ${ROLE_HOSTS[stage.hostRole]}`,
+        });
+      }
+    });
     if (!e.refs.some((r) => r.field === null)) {
       ctx.addIssue({
         code: "custom",

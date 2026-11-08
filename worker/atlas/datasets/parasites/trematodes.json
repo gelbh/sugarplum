@@ -34,35 +34,47 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in faeces"
+            "location": "passed in faeces",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 14,
+              "max": 14
+            }
           },
           {
             "name": "miracidium",
-            "location": "water"
+            "location": "water",
+            "hostRole": "environment"
           },
           {
             "name": "sporocyst",
-            "location": "snail"
+            "location": "snail",
+            "hostRole": "intermediate"
           },
           {
             "name": "redia",
-            "location": "snail"
+            "location": "snail",
+            "hostRole": "intermediate"
           },
           {
             "name": "cercaria",
-            "location": "leaves the snail"
+            "location": "leaves the snail",
+            "hostRole": "environment"
           },
           {
             "name": "metacercaria",
-            "location": "aquatic vegetation"
+            "location": "aquatic vegetation",
+            "hostRole": "environment"
           },
           {
             "name": "immature fluke",
-            "location": "liver parenchyma"
+            "location": "liver parenchyma",
+            "hostRole": "definitive"
           },
           {
             "name": "adult fluke",
-            "location": "bile ducts"
+            "location": "bile ducts",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticStage": "egg",
@@ -138,6 +150,12 @@
           "citation": "CDC DPDx: Fascioliasis",
           "url": "https://www.cdc.gov/dpdx/fascioliasis/index.html",
           "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Fascioliasis",
+          "url": "https://www.cdc.gov/dpdx/fascioliasis/index.html",
+          "note": null
         }
       ],
       "images": []
@@ -173,35 +191,47 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in faeces"
+            "location": "passed in faeces",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 14,
+              "max": 14
+            }
           },
           {
             "name": "miracidium",
-            "location": "water"
+            "location": "water",
+            "hostRole": "environment"
           },
           {
             "name": "sporocyst",
-            "location": "snail"
+            "location": "snail",
+            "hostRole": "intermediate"
           },
           {
             "name": "redia",
-            "location": "snail"
+            "location": "snail",
+            "hostRole": "intermediate"
           },
           {
             "name": "cercaria",
-            "location": "leaves the snail"
+            "location": "leaves the snail",
+            "hostRole": "environment"
           },
           {
             "name": "metacercaria",
-            "location": "aquatic vegetation"
+            "location": "aquatic vegetation",
+            "hostRole": "environment"
           },
           {
             "name": "immature fluke",
-            "location": "liver parenchyma"
+            "location": "liver parenchyma",
+            "hostRole": "definitive"
           },
           {
             "name": "adult fluke",
-            "location": "bile ducts"
+            "location": "bile ducts",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticStage": "egg",
@@ -259,6 +289,12 @@
           "citation": "CDC DPDx: Fascioliasis",
           "url": "https://www.cdc.gov/dpdx/fascioliasis/index.html",
           "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Fascioliasis",
+          "url": "https://www.cdc.gov/dpdx/fascioliasis/index.html",
+          "note": null
         }
       ],
       "images": []
@@ -293,35 +329,43 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in faeces"
+            "location": "passed in faeces",
+            "hostRole": "environment"
           },
           {
             "name": "miracidium",
-            "location": "water"
+            "location": "water",
+            "hostRole": "environment"
           },
           {
             "name": "sporocyst",
-            "location": "snail"
+            "location": "snail",
+            "hostRole": "intermediate"
           },
           {
             "name": "redia",
-            "location": "snail"
+            "location": "snail",
+            "hostRole": "intermediate"
           },
           {
             "name": "cercaria",
-            "location": "leaves the snail"
+            "location": "leaves the snail",
+            "hostRole": "environment"
           },
           {
             "name": "metacercaria",
-            "location": "vegetation"
+            "location": "vegetation",
+            "hostRole": "environment"
           },
           {
             "name": "immature fluke",
-            "location": "migrating in the liver"
+            "location": "migrating in the liver",
+            "hostRole": "definitive"
           },
           {
             "name": "adult fluke",
-            "location": "cysts in the liver"
+            "location": "cysts in the liver",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticStage": "egg",
@@ -408,31 +452,41 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "shed in faeces with a miracidium inside"
+            "location": "shed in faeces with a miracidium inside",
+            "hostRole": "environment"
           },
           {
             "name": "miracidium",
-            "location": "inside the snail after the egg is eaten"
+            "location": "inside the snail after the egg is eaten",
+            "hostRole": "intermediate",
+            "host": "land snail"
           },
           {
             "name": "sporocyst",
-            "location": "snail"
+            "location": "snail",
+            "hostRole": "intermediate",
+            "host": "land snail"
           },
           {
             "name": "cercaria",
-            "location": "snail slime balls"
+            "location": "snail slime balls",
+            "hostRole": "environment"
           },
           {
             "name": "metacercaria",
-            "location": "ant"
+            "location": "ant",
+            "hostRole": "intermediate",
+            "host": "Formica"
           },
           {
             "name": "immature fluke",
-            "location": "from gut to bile ducts, no liver migration"
+            "location": "from gut to bile ducts, no liver migration",
+            "hostRole": "definitive"
           },
           {
             "name": "adult fluke",
-            "location": "bile ducts"
+            "location": "bile ducts",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticStage": "egg",
@@ -536,15 +590,18 @@
         "lifecycleStages": [
           {
             "name": "metacercaria",
-            "location": "pasture"
+            "location": "pasture",
+            "hostRole": "environment"
           },
           {
             "name": "immature fluke",
-            "location": "duodenum"
+            "location": "duodenum",
+            "hostRole": "definitive"
           },
           {
             "name": "adult fluke",
-            "location": "rumen"
+            "location": "rumen",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticStage": "egg",
@@ -615,11 +672,13 @@
         "lifecycleStages": [
           {
             "name": "immature fluke",
-            "location": "duodenum"
+            "location": "duodenum",
+            "hostRole": "definitive"
           },
           {
             "name": "adult fluke",
-            "location": "rumen"
+            "location": "rumen",
+            "hostRole": "definitive"
           }
         ]
       },
@@ -671,31 +730,38 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in faeces"
+            "location": "passed in faeces",
+            "hostRole": "environment"
           },
           {
             "name": "miracidium",
-            "location": "water"
+            "location": "water",
+            "hostRole": "environment"
           },
           {
             "name": "sporocyst",
-            "location": "snail"
+            "location": "snail",
+            "hostRole": "intermediate"
           },
           {
             "name": "redia",
-            "location": "snail"
+            "location": "snail",
+            "hostRole": "intermediate"
           },
           {
             "name": "cercaria",
-            "location": "leaves the snail"
+            "location": "leaves the snail",
+            "hostRole": "environment"
           },
           {
             "name": "metacercaria",
-            "location": "aquatic plants"
+            "location": "aquatic plants",
+            "hostRole": "environment"
           },
           {
             "name": "adult fluke",
-            "location": "small intestine wall"
+            "location": "small intestine wall",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticStage": "egg",
@@ -760,31 +826,42 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in faeces, already embryonated"
+            "location": "passed in faeces, already embryonated",
+            "hostRole": "environment"
           },
           {
             "name": "miracidium",
-            "location": "snail"
+            "location": "snail",
+            "hostRole": "intermediate",
+            "host": "snail"
           },
           {
             "name": "sporocyst",
-            "location": "snail"
+            "location": "snail",
+            "hostRole": "intermediate",
+            "host": "snail"
           },
           {
             "name": "redia",
-            "location": "snail"
+            "location": "snail",
+            "hostRole": "intermediate",
+            "host": "snail"
           },
           {
             "name": "cercaria",
-            "location": "snail, then water"
+            "location": "snail, then water",
+            "hostRole": "environment"
           },
           {
             "name": "metacercaria",
-            "location": "freshwater fish flesh"
+            "location": "freshwater fish flesh",
+            "hostRole": "intermediate",
+            "host": "freshwater fish"
           },
           {
             "name": "adult fluke",
-            "location": "bile ducts"
+            "location": "bile ducts",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticStage": "egg",
@@ -859,31 +936,42 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in faeces, already embryonated"
+            "location": "passed in faeces, already embryonated",
+            "hostRole": "environment"
           },
           {
             "name": "miracidium",
-            "location": "snail"
+            "location": "snail",
+            "hostRole": "intermediate",
+            "host": "Bithynia"
           },
           {
             "name": "sporocyst",
-            "location": "snail"
+            "location": "snail",
+            "hostRole": "intermediate",
+            "host": "Bithynia"
           },
           {
             "name": "redia",
-            "location": "snail"
+            "location": "snail",
+            "hostRole": "intermediate",
+            "host": "Bithynia"
           },
           {
             "name": "cercaria",
-            "location": "leaves the snail, then enters fish"
+            "location": "leaves the snail, then enters fish",
+            "hostRole": "environment"
           },
           {
             "name": "metacercaria",
-            "location": "fish muscle or under scales"
+            "location": "fish muscle or under scales",
+            "hostRole": "intermediate",
+            "host": "freshwater fish"
           },
           {
             "name": "adult fluke",
-            "location": "bile and pancreatic ducts"
+            "location": "bile and pancreatic ducts",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticStage": "egg",
@@ -976,27 +1064,33 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in faeces or urine"
+            "location": "passed in faeces or urine",
+            "hostRole": "environment"
           },
           {
             "name": "miracidium",
-            "location": "water"
+            "location": "water",
+            "hostRole": "environment"
           },
           {
             "name": "sporocyst",
-            "location": "snail"
+            "location": "snail",
+            "hostRole": "intermediate"
           },
           {
             "name": "cercaria",
-            "location": "water, enters through skin"
+            "location": "water, enters through skin",
+            "hostRole": "environment"
           },
           {
             "name": "schistosomulum",
-            "location": "veins, lungs and liver"
+            "location": "veins, lungs and liver",
+            "hostRole": "definitive"
           },
           {
             "name": "adult fluke",
-            "location": "mesenteric or bladder venules"
+            "location": "mesenteric or bladder venules",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticStage": "egg",

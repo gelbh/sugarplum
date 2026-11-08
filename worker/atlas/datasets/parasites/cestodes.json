@@ -27,15 +27,18 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in faeces"
+            "location": "passed in faeces",
+            "hostRole": "environment"
           },
           {
             "name": "cysticercoid",
-            "location": "free-living oribatid mite on pasture"
+            "location": "free-living oribatid mite on pasture",
+            "hostRole": "intermediate"
           },
           {
             "name": "adult tapeworm",
-            "location": "ileum and neighbouring caecum around the ileocaecal junction"
+            "location": "ileum and neighbouring caecum around the ileocaecal junction",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticStage": "egg",
@@ -154,23 +157,28 @@
         "lifecycleStages": [
           {
             "name": "gravid proglottid",
-            "location": "passed in faeces or crawling from the perianal area"
+            "location": "passed in faeces or crawling from the perianal area",
+            "hostRole": "environment"
           },
           {
             "name": "egg",
-            "location": "released in packets as segments break down"
+            "location": "released in packets as segments break down",
+            "hostRole": "environment"
           },
           {
             "name": "oncosphere",
-            "location": "gut of the larval flea"
+            "location": "gut of the larval flea",
+            "hostRole": "intermediate"
           },
           {
             "name": "cysticercoid",
-            "location": "body cavity of the flea or chewing louse"
+            "location": "body cavity of the flea or chewing louse",
+            "hostRole": "intermediate"
           },
           {
             "name": "adult tapeworm",
-            "location": "small intestine"
+            "location": "small intestine",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticStage": "gravid proglottid",
@@ -265,7 +273,8 @@
         "lifecycleStages": [
           {
             "name": "adult tapeworm",
-            "location": "duodenum"
+            "location": "duodenum",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticTests": [
@@ -329,7 +338,8 @@
         "lifecycleStages": [
           {
             "name": "adult tapeworm",
-            "location": "intestine, duodenum to lower intestine by species"
+            "location": "intestine, duodenum to lower intestine by species",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticTests": [
@@ -415,15 +425,18 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in faeces"
+            "location": "passed in faeces",
+            "hostRole": "environment"
           },
           {
             "name": "cysticercoid",
-            "location": "oribatid mite on pasture"
+            "location": "oribatid mite on pasture",
+            "hostRole": "intermediate"
           },
           {
             "name": "adult tapeworm",
-            "location": "small intestine"
+            "location": "small intestine",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticStage": "egg",
@@ -508,19 +521,23 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in dog faeces"
+            "location": "passed in dog faeces",
+            "hostRole": "environment"
           },
           {
             "name": "oncosphere",
-            "location": "migrates through the liver of the intermediate host"
+            "location": "migrates through the liver of the intermediate host",
+            "hostRole": "intermediate"
           },
           {
             "name": "cysticercus",
-            "location": "liver surface, omentum and mesentery; mature in about 8 weeks"
+            "location": "liver surface, omentum and mesentery; mature in about 8 weeks",
+            "hostRole": "intermediate"
           },
           {
             "name": "adult tapeworm",
-            "location": "small intestine of the dog"
+            "location": "small intestine of the dog",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticStage": "egg",
@@ -629,15 +646,18 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in dog faeces onto pasture"
+            "location": "passed in dog faeces onto pasture",
+            "hostRole": "environment"
           },
           {
             "name": "cysticercus",
-            "location": "heart muscle, diaphragm, masseter and other skeletal muscle"
+            "location": "heart muscle, diaphragm, masseter and other skeletal muscle",
+            "hostRole": "intermediate"
           },
           {
             "name": "adult tapeworm",
-            "location": "small intestine of the dog"
+            "location": "small intestine of the dog",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticStage": "egg",
@@ -745,19 +765,23 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in canid faeces, infective at once"
+            "location": "passed in canid faeces, infective at once",
+            "hostRole": "environment"
           },
           {
             "name": "oncosphere",
-            "location": "hatches in the ungulate gut and travels in the blood"
+            "location": "hatches in the ungulate gut and travels in the blood",
+            "hostRole": "intermediate"
           },
           {
             "name": "coenurus",
-            "location": "mostly brain or spinal cord of the ungulate; mature after some months"
+            "location": "mostly brain or spinal cord of the ungulate; mature after some months",
+            "hostRole": "intermediate"
           },
           {
             "name": "adult tapeworm",
-            "location": "small intestine of the dog or fox"
+            "location": "small intestine of the dog or fox",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticStage": "egg",
@@ -896,23 +920,28 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in human faeces"
+            "location": "passed in human faeces",
+            "hostRole": "environment"
           },
           {
             "name": "gravid proglottid",
-            "location": "passed in faeces or crawls out through the anus"
+            "location": "passed in faeces or crawls out through the anus",
+            "hostRole": "environment"
           },
           {
             "name": "oncosphere",
-            "location": "hatches in the bovine gut and spreads via blood and lymph"
+            "location": "hatches in the bovine gut and spreads via blood and lymph",
+            "hostRole": "intermediate"
           },
           {
             "name": "cysticercus",
-            "location": "skeletal and heart muscle of cattle"
+            "location": "skeletal and heart muscle of cattle",
+            "hostRole": "intermediate"
           },
           {
             "name": "adult tapeworm",
-            "location": "human small intestine"
+            "location": "human small intestine",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticStage": "gravid proglottid",
@@ -1040,23 +1069,28 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in human faeces"
+            "location": "passed in human faeces",
+            "hostRole": "environment"
           },
           {
             "name": "gravid proglottid",
-            "location": "passed in faeces or crawls out through the anus"
+            "location": "passed in faeces or crawls out through the anus",
+            "hostRole": "environment"
           },
           {
             "name": "oncosphere",
-            "location": "hatches in the gut of a pig or person and spreads via the blood"
+            "location": "hatches in the gut of a pig or person and spreads via the blood",
+            "hostRole": "intermediate"
           },
           {
             "name": "cysticercus",
-            "location": "pig muscle; in people also brain, eye, muscle and under the skin"
+            "location": "pig muscle; in people also brain, eye, muscle and under the skin",
+            "hostRole": "intermediate"
           },
           {
             "name": "adult tapeworm",
-            "location": "human small intestine"
+            "location": "human small intestine",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticStage": "gravid proglottid",
@@ -1220,19 +1254,23 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in canid faeces, infective at once"
+            "location": "passed in canid faeces, infective at once",
+            "hostRole": "environment"
           },
           {
             "name": "oncosphere",
-            "location": "crosses the gut wall of the herbivore and travels in the blood"
+            "location": "crosses the gut wall of the herbivore and travels in the blood",
+            "hostRole": "intermediate"
           },
           {
             "name": "hydatid cyst",
-            "location": "mainly liver and lungs of the herbivore or person"
+            "location": "mainly liver and lungs of the herbivore or person",
+            "hostRole": "intermediate"
           },
           {
             "name": "adult tapeworm",
-            "location": "small intestine of the dog or wild canid"
+            "location": "small intestine of the dog or wild canid",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticStage": "egg",
@@ -1371,19 +1409,23 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in fox or dog faeces, infective at once"
+            "location": "passed in fox or dog faeces, infective at once",
+            "hostRole": "environment"
           },
           {
             "name": "oncosphere",
-            "location": "crosses the gut wall of the rodent and travels in the blood"
+            "location": "crosses the gut wall of the rodent and travels in the blood",
+            "hostRole": "intermediate"
           },
           {
             "name": "hydatid cyst",
-            "location": "alveolar form, mainly liver; may spread to lungs and brain"
+            "location": "alveolar form, mainly liver; may spread to lungs and brain",
+            "hostRole": "intermediate"
           },
           {
             "name": "adult tapeworm",
-            "location": "small intestine of the fox or dog"
+            "location": "small intestine of the fox or dog",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticStage": "egg",
@@ -1529,23 +1571,30 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed unembryonated in faeces; develops in water"
+            "location": "passed unembryonated in faeces; develops in water",
+            "hostRole": "environment"
           },
           {
             "name": "coracidium",
-            "location": "free-swimming in water"
+            "location": "free-swimming in water",
+            "hostRole": "environment"
           },
           {
             "name": "procercoid",
-            "location": "inside a copepod"
+            "location": "inside a copepod",
+            "hostRole": "intermediate",
+            "host": "copepod"
           },
           {
             "name": "plerocercoid",
-            "location": "flesh of a freshwater fish, often a predatory one"
+            "location": "flesh of a freshwater fish, often a predatory one",
+            "hostRole": "intermediate",
+            "host": "freshwater fish"
           },
           {
             "name": "adult tapeworm",
-            "location": "small intestine of a fish-eating mammal"
+            "location": "small intestine of a fish-eating mammal",
+            "hostRole": "definitive"
           }
         ],
         "diagnosticStage": "egg",
