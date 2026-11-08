@@ -1,15 +1,17 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   loadGroupFiles,
   loadParasiteDataset,
 } from "../../../worker/atlas/datasets/parasites";
+import type { DatasetEntry } from "../../../worker/atlas/datasets/schema";
 import {
   HOST_TERMS,
   ORGAN_TERMS,
   hostCovers,
   organCovers,
 } from "../../../worker/atlas/datasets/vocab";
+import manifest from "../../eval/atlas/course-taxa.json";
+import parasites from "../../eval/atlas/parasites.json";
 import {
   HOST_ALIASES,
   ORGAN_ALIASES,
@@ -17,19 +19,12 @@ import {
   resolveOrgan,
 } from "./fixture-terms";
 
+type Fields = DatasetEntry["fields"];
 type Fixture = {
   canonicalName: string;
-  slideErrors: string[];
-  expected: Record<string, unknown>;
+  expected: Partial<Record<keyof Fields, unknown>>;
 };
-const read = (p: string) =>
-  JSON.parse(readFileSync(new URL(p, import.meta.url), "utf8"));
-const fixtures = (
-  read("../../eval/atlas/parasites.json") as { entries: Fixture[] }
-).entries;
-const manifest = read("../../eval/atlas/course-taxa.json") as {
-  taxa: { canonicalName: string; file: string }[];
-};
+const fixtures: Fixture[] = parasites.entries;
 
 const authoredFiles = new Set(loadGroupFiles().map((f) => f.file));
 const byName = new Map(
@@ -40,12 +35,51 @@ const due = fixtures.filter((f) =>
   authoredFiles.has(fileOf.get(f.canonicalName) ?? ""),
 );
 
-const EXACT = new Set(["group", "family", "zoonotic", "lifecycleType"]);
-const HOSTS = new Set([
-  "definitiveHosts",
-  "intermediateHosts",
-  "paratenicHosts",
-]);
+type Compare = (label: string, got: Fields, want: unknown) => void;
+
+const exact =
+  (key: "group" | "family" | "zoonotic" | "lifecycleType"): Compare =>
+  (label, got, want) =>
+    expect(got[key], label).toBe(want);
+
+const hosts =
+  (key: "definitiveHosts" | "intermediateHosts" | "paratenicHosts"): Compare =>
+  (label, got, want) => {
+    for (const term of want as string[]) {
+      const g = resolveHost(term);
+      expect(g, `${label}: unknown fixture host "${term}"`).not.toBeNull();
+      const ok = got[key].some((d) => hostCovers(g!, d));
+      expect(ok, `${label}: nothing in [${got[key]}] is a "${g}"`).toBe(true);
+    }
+  };
+
+const COMPARE: Partial<Record<keyof Fields, Compare>> = {
+  group: exact("group"),
+  family: exact("family"),
+  zoonotic: exact("zoonotic"),
+  lifecycleType: exact("lifecycleType"),
+  definitiveHosts: hosts("definitiveHosts"),
+  intermediateHosts: hosts("intermediateHosts"),
+  paratenicHosts: hosts("paratenicHosts"),
+  majorOrgan: (label, got, want) => {
+    const g = resolveOrgan(want as string);
+    expect(g, `${label}: unknown fixture organ "${want}"`).not.toBeNull();
+    expect(got.majorOrgan, `${label} missing`).not.toBeNull();
+    expect(
+      organCovers(g!, got.majorOrgan!),
+      `${label} ${got.majorOrgan} vs ${g}`,
+    ).toBe(true);
+  },
+  pppDays: (label, got, want) => {
+    const f = want as { min: number; max: number };
+    const d = got.pppDays;
+    expect(d, `${label} missing`).not.toBeNull();
+    expect(
+      d!.min <= f.max && f.min <= d!.max,
+      `${label} ${JSON.stringify(d)} vs ${JSON.stringify(f)}`,
+    ).toBe(true);
+  },
+};
 
 describe("dataset agrees with the hand-checked fixtures", () => {
   it("checks at least one fixture once a dataset file is authored", () => {
@@ -62,41 +96,11 @@ describe("dataset agrees with the hand-checked fixtures", () => {
     (name, fixture) => {
       const entry = byName.get(name);
       expect(entry, `${name} missing from dataset`).toBeDefined();
-      const fields = entry!.fields as Record<string, unknown>;
       for (const [key, want] of Object.entries(fixture.expected)) {
-        const got = fields[key];
-        if (EXACT.has(key)) {
-          expect(got, `${name}.${key}`).toBe(want);
-        } else if (HOSTS.has(key)) {
-          for (const term of want as string[]) {
-            const g = resolveHost(term);
-            expect(
-              g,
-              `${name}.${key}: unknown fixture host "${term}"`,
-            ).not.toBeNull();
-            const ok = (got as string[]).some((d) => hostCovers(g!, d));
-            expect(ok, `${name}.${key}: nothing in [${got}] is a "${g}"`).toBe(
-              true,
-            );
-          }
-        } else if (key === "majorOrgan") {
-          const g = resolveOrgan(want as string);
-          expect(g, `${name}: unknown fixture organ "${want}"`).not.toBeNull();
-          expect(
-            organCovers(g!, got as string),
-            `${name}.majorOrgan ${got} vs ${g}`,
-          ).toBe(true);
-        } else if (key === "pppDays") {
-          const f = want as { min: number; max: number };
-          const d = got as { min: number; max: number } | null;
-          expect(d, `${name}.pppDays missing`).not.toBeNull();
-          expect(
-            d!.min <= f.max && f.min <= d!.max,
-            `${name}.pppDays ${JSON.stringify(d)} vs ${JSON.stringify(f)}`,
-          ).toBe(true);
-        } else {
+        const compare = COMPARE[key as keyof Fields];
+        if (!compare)
           throw new Error(`no comparison rule for fixture field ${key}`);
-        }
+        compare(`${name}.${key}`, entry!.fields, want);
       }
     },
   );
