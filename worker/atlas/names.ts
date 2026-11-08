@@ -10,6 +10,7 @@ const GENUS_FIXES: Record<string, string> = {
   Raillientina: "Raillietina",
   Spirocera: "Spirocerca",
   Stongylus: "Strongylus",
+  Stronyloides: "Strongyloides",
   Syngymus: "Syngamus",
   Telodorsagia: "Teladorsagia",
   Thelezia: "Thelazia",
@@ -19,6 +20,7 @@ const GENUS_FIXES: Record<string, string> = {
 // Applied after genus fixes, so keys use the corrected genus.
 const BINOMIAL_FIXES: Record<string, string> = {
   "Dicrocoelium dentriticum": "Dicrocoelium dendriticum",
+  "Dictyocaulus filariae": "Dictyocaulus filaria",
   "Dictyocaulus viviparous": "Dictyocaulus viviparus",
   "Strongylus edentates": "Strongylus edentatus",
   "Teladorsagia circumcinta": "Teladorsagia circumcincta",

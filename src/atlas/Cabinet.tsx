@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  ViewTransition,
+} from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -36,6 +43,7 @@ type Props = {
   entryHref: (id: string) => string;
   onOpenEntry: (id: string) => void;
   onCompare: (a: string, b: string) => void;
+  stagger: boolean;
 };
 
 const plural = (n: number) => `${n} ${n === 1 ? "parasite" : "parasites"}`;
@@ -46,12 +54,18 @@ export default function Cabinet({
   entryHref,
   onOpenEntry,
   onCompare,
+  stagger,
 }: Props) {
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [view, setView] = useState<AtlasViewMode>(() => readViewPref(userKey));
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [comparing, setComparing] = useState(false);
+  const shownFilters = useDeferredValue(filters);
+  const staggering = useRef(stagger);
+  useEffect(() => {
+    staggering.current = false;
+  }, []);
 
   const options = useMemo(
     () => ({
@@ -62,10 +76,17 @@ export default function Cabinet({
     [entries],
   );
   const visible = useMemo(
-    () => applyFilters(entries, filters).filter((e) => matchesSearch(e, query)),
-    [entries, filters, query],
+    () =>
+      applyFilters(entries, shownFilters).filter((e) =>
+        matchesSearch(e, query),
+      ),
+    [entries, shownFilters, query],
   );
   const rows = useMemo(() => groupRows(visible), [visible]);
+  const tileIndex = useMemo(
+    () => new Map(rows.flatMap((r) => r.entries).map((e, i) => [e.id, i])),
+    [rows],
+  );
   const expanded =
     expandedId !== null && visible.some((e) => e.id === expandedId)
       ? expandedId
@@ -244,16 +265,24 @@ export default function Cabinet({
                 }}
               >
                 {row.entries.map((e) => (
-                  <SpecimenTile
+                  <ViewTransition
                     key={e.id}
-                    entry={e}
-                    expanded={expanded === e.id}
-                    dimmed={expanded !== null && expanded !== e.id}
-                    onToggle={() =>
-                      setExpandedId((cur) => (cur === e.id ? null : e.id))
-                    }
-                    onOpen={() => onOpenEntry(e.id)}
-                  />
+                    name={`atlas-tile-${e.id}`}
+                    update="atlas-reflow"
+                  >
+                    <SpecimenTile
+                      entry={e}
+                      expanded={expanded === e.id}
+                      dimmed={expanded !== null && expanded !== e.id}
+                      staggerIndex={
+                        staggering.current ? tileIndex.get(e.id) : undefined
+                      }
+                      onToggle={() =>
+                        setExpandedId((cur) => (cur === e.id ? null : e.id))
+                      }
+                      onOpen={() => onOpenEntry(e.id)}
+                    />
+                  </ViewTransition>
                 ))}
               </Box>
             </Box>

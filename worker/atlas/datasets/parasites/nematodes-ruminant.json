@@ -1,0 +1,3018 @@
+{
+  "group": "nematode",
+  "entries": [
+    {
+      "key": "teladorsagia-circumcincta",
+      "canonicalName": "Teladorsagia circumcincta",
+      "commonName": "Medium stomach worm",
+      "aliases": ["Ostertagia circumcincta"],
+      "misspellings": ["Telodorsagia circumcinta"],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Trichostrongylidae",
+        "group": "nematode",
+        "definitiveHosts": ["sheep", "goat"],
+        "intermediateHosts": [],
+        "majorOrgan": "abomasum",
+        "onHostStages": ["L4", "adult"],
+        "distribution": "Cooler temperate regions with wet winters",
+        "zoonotic": "no",
+        "significance": "Key abomasal worm of sheep and goats in cool climates; larvae damage gastric glands, causing diarrhoea and poor growth, and boost the periparturient egg rise.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 15,
+          "max": 21
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L1",
+            "location": "hatches on pasture and feeds on bacteria",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L2",
+            "location": "free on pasture",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "ensheathed infective larva on herbage",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L4",
+            "location": "develops in the abomasal gastric glands, forming nodules; may arrest development (hypobiosis)",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "abomasum",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal egg count",
+            "sample": "faeces"
+          },
+          {
+            "name": "larval culture",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Teladorsagia circumcincta",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/45464/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": "Course lists the superfamily Trichostrongyloidea as the family; reference gives Trichostrongylidae."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Teladorsagia circumcincta",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/45464/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": "Course also lists camelids; cited references do not."
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153/tables/1",
+          "note": "Course states PPP 3 weeks; reference gives 15-21 days."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Overview of gastrointestinal parasites of ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/overview-of-gastrointestinal-parasites-of-ruminants",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "haemonchus-contortus",
+      "canonicalName": "Haemonchus contortus",
+      "commonName": "Barber's pole worm",
+      "aliases": ["Large stomach worm"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Trichostrongylidae",
+        "group": "nematode",
+        "definitiveHosts": ["sheep", "goat", "cattle"],
+        "intermediateHosts": [],
+        "majorOrgan": "abomasum",
+        "onHostStages": ["L4", "adult"],
+        "distribution": "Worldwide, especially warm regions with summer rainfall",
+        "zoonotic": "no",
+        "significance": "Blood-feeding abomasal worm and the leading trichostrongyle of sheep; heavy burdens cause anaemia, oedema and deaths, and drug resistance is widespread.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 18,
+          "max": 21
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L1",
+            "location": "hatches on pasture and feeds on bacteria",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L2",
+            "location": "free on pasture",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "ensheathed infective larva on herbage",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L4",
+            "location": "attaches to the abomasal mucosa and sucks blood; may arrest development (hypobiosis)",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "abomasum, attached to the mucosa and feeding on blood",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal egg count",
+            "sample": "faeces"
+          },
+          {
+            "name": "larval culture",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Haemonchus contortus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6289/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": "Course lists the superfamily Trichostrongyloidea as the family; reference gives Trichostrongylidae."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Haemonchus contortus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6289/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153/tables/1",
+          "note": "Course states PPP 2-3 weeks; reference gives 18-21 days."
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Overview of gastrointestinal parasites of ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/overview-of-gastrointestinal-parasites-of-ruminants",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "trichostrongylus-spp",
+      "canonicalName": "Trichostrongylus spp.",
+      "commonName": "Bankrupt worm",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Trichostrongylidae",
+        "group": "nematode",
+        "definitiveHosts": ["sheep", "goat", "cattle"],
+        "intermediateHosts": [],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["L4", "adult"],
+        "distribution": "Worldwide in grazing ruminants",
+        "zoonotic": "potential",
+        "significance": "Small-intestinal genus causing persistent watery diarrhoea, weight loss and poor wool growth in lambs and weaners; light burdens resemble malnutrition.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 18,
+          "max": 21
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L1",
+            "location": "hatches on pasture and feeds on bacteria",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L2",
+            "location": "free on pasture",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "ensheathed infective larva on herbage",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L4",
+            "location": "in the intestinal mucosa after the L3 penetrates it",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "small intestine; T. axei lives in the abomasum",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal egg count",
+            "sample": "faeces"
+          },
+          {
+            "name": "larval culture",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "FAO: The epidemiology of helminth parasites, nematodes of the digestive tract",
+          "url": "https://www.fao.org/4/x5492e/x5492e04.htm",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Trichostrongylus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6318/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": "Course lists the superfamily Trichostrongyloidea as the family; reference gives Trichostrongylidae."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Trichostrongylus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6318/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": "Course also lists camelids; cited references do not."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": "Course states PPP 2-3 weeks; reference gives 18-21 days."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "FAO: The epidemiology of helminth parasites, nematodes of the digestive tract",
+          "url": "https://www.fao.org/4/x5492e/x5492e04.htm",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Overview of gastrointestinal parasites of ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/overview-of-gastrointestinal-parasites-of-ruminants",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "strongyloides-papillosus",
+      "canonicalName": "Strongyloides papillosus",
+      "commonName": "Intestinal threadworm",
+      "aliases": [],
+      "misspellings": ["Stronyloides papillosus"],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Rhabditida",
+        "family": "Strongyloididae",
+        "group": "nematode",
+        "definitiveHosts": ["sheep", "goat", "cattle"],
+        "intermediateHosts": [],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["parasitic adult female"],
+        "distribution": "Worldwide in cattle and small ruminants",
+        "significance": "Usually minor, but heavy burdens in young animals cause diarrhoea and ill-thrift; hyperinfection has killed weaned calves suddenly, and larvae can pass in milk.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 9,
+          "max": 10
+        },
+        "lifecycleStages": [
+          {
+            "name": "larvated egg",
+            "location": "passed in faeces; contains the L1",
+            "hostRole": "environment"
+          },
+          {
+            "name": "free-living adult",
+            "location": "male and female worms on soil or bedding that reproduce sexually",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "infective larva in soil or bedding; enters via skin or mouth, or is swallowed",
+            "hostRole": "environment"
+          },
+          {
+            "name": "parasitic adult female",
+            "location": "buried in the lining of the proximal small intestine; reproduces without a male",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "larvated egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "small intestine"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Cornell AHDC: Strongyloides papillosus",
+          "url": "https://www.vet.cornell.edu/animal-health-diagnostic-center/veterinary-resources/testing-guidelines/strongyloides-papillosus",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Strongyloides papillosus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/174720/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Strongyloides papillosus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/174720/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Strongyloides papillosus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/174720/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Thamsborg et al. 2017, Parasitology 144:274: Strongyloides infections of veterinary importance",
+          "url": "https://www.cambridge.org/core/journals/parasitology/article/strongyloides-spp-infections-of-veterinary-importance/0E052A0C75B34441289883C1A4DDBC51",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Thamsborg et al. 2017, Parasitology 144:274: Strongyloides infections of veterinary importance",
+          "url": "https://www.cambridge.org/core/journals/parasitology/article/strongyloides-spp-infections-of-veterinary-importance/0E052A0C75B34441289883C1A4DDBC51",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Cornell AHDC: Strongyloides papillosus",
+          "url": "https://www.vet.cornell.edu/animal-health-diagnostic-center/veterinary-resources/testing-guidelines/strongyloides-papillosus",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "Cornell AHDC: Strongyloides papillosus",
+          "url": "https://www.vet.cornell.edu/animal-health-diagnostic-center/veterinary-resources/testing-guidelines/strongyloides-papillosus",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "Cornell AHDC: Strongyloides papillosus",
+          "url": "https://www.vet.cornell.edu/animal-health-diagnostic-center/veterinary-resources/testing-guidelines/strongyloides-papillosus",
+          "note": "Course states PPP 2-3 weeks; reference gives 9-10 days."
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Cornell AHDC: Strongyloides papillosus",
+          "url": "https://www.vet.cornell.edu/animal-health-diagnostic-center/veterinary-resources/testing-guidelines/strongyloides-papillosus",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "Cornell AHDC: Strongyloides papillosus",
+          "url": "https://www.vet.cornell.edu/animal-health-diagnostic-center/veterinary-resources/testing-guidelines/strongyloides-papillosus",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Cornell AHDC: Strongyloides papillosus",
+          "url": "https://www.vet.cornell.edu/animal-health-diagnostic-center/veterinary-resources/testing-guidelines/strongyloides-papillosus",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "bunostomum-trigonocephalum",
+      "canonicalName": "Bunostomum trigonocephalum",
+      "commonName": "Sheep and goat hookworm",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Ancylostomatidae",
+        "group": "nematode",
+        "definitiveHosts": ["sheep", "goat"],
+        "intermediateHosts": [],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["migrating larva", "adult"],
+        "distribution": "Sheep and goats in warm, moist climates",
+        "zoonotic": "no",
+        "significance": "Blood-feeding hookworm of the small intestine; a burden of around 100 worms is enough to cause disease. Uncommon in Canada.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 40,
+          "max": 70
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces; hatches, then grows into the infective L3 on pasture",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "infective larva that penetrates skin or is swallowed",
+            "hostRole": "environment"
+          },
+          {
+            "name": "migrating larva",
+            "location": "carried in blood to the lungs, coughed up and swallowed (skin route)",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "small intestine (jejunum), feeding on blood",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "NemaPlex: Bunostomum trigonocephalum",
+          "url": "https://nemaplex.ucdavis.edu/Taxadata/G9611S2.aspx",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Bunostomum trigonocephalum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/66065/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Bunostomum trigonocephalum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/66065/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "NemaPlex: Bunostomum trigonocephalum",
+          "url": "https://nemaplex.ucdavis.edu/Taxadata/G9611S2.aspx",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "NemaPlex: Bunostomum trigonocephalum",
+          "url": "https://nemaplex.ucdavis.edu/Taxadata/G9611S2.aspx",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "NemaPlex: Bunostomum trigonocephalum",
+          "url": "https://nemaplex.ucdavis.edu/Taxadata/G9611S2.aspx",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "NemaPlex: Bunostomum trigonocephalum",
+          "url": "https://nemaplex.ucdavis.edu/Taxadata/G9611S2.aspx",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153/tables/1",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "NemaPlex: Bunostomum trigonocephalum",
+          "url": "https://nemaplex.ucdavis.edu/Taxadata/G9611S2.aspx",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "FAO: The epidemiology of helminth parasites, nematodes of the digestive tract",
+          "url": "https://www.fao.org/4/x5492e/x5492e04.htm",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Uncinaria stenocephala (Ancylostomatidae)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/uncinaria-stenocephala.php",
+          "note": "Course spells the order Strongylidia; references spell it Strongylida."
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "capillaria-longipes",
+      "canonicalName": "Capillaria longipes",
+      "commonName": null,
+      "aliases": ["Aonchotheca longipes"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Trichinellida",
+        "family": "Capillariidae",
+        "group": "nematode",
+        "definitiveHosts": ["sheep", "goat"],
+        "intermediateHosts": [],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["adult"],
+        "distribution": "Reported in sheep in Scotland and goats in Denmark",
+        "significance": "Not known to cause disease in small ruminants; usually an incidental finding whose eggs can be mistaken for Trichuris eggs.",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces",
+            "hostRole": "environment"
+          },
+          {
+            "name": "adult",
+            "location": "small intestine",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal egg count",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Capillaria (genus)",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/119095/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Capillaria (genus)",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/119095/",
+          "note": "Course lists the superfamily Trichinelloidea as the order; NCBI gives the order Trichinellida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Capillaria (genus)",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/119095/",
+          "note": "Course lists the family as Trichuridae; NCBI places Capillaria in Capillariidae."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Hayward et al. 2022, Parasitology 149:1749: GI parasite trends in wild Soay sheep",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10090761/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Holm et al. 2014, Parasite 21:37: GI nematodes and anthelmintic resistance in Danish goat herds",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4115478/",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "onHostStages",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Hayward et al. 2022, Parasitology 149:1749: GI parasite trends in wild Soay sheep",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10090761/",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Holm et al. 2014, Parasite 21:37: GI nematodes and anthelmintic resistance in Danish goat herds",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4115478/",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Hayward et al. 2022, Parasitology 149:1749: GI parasite trends in wild Soay sheep",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10090761/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Holm et al. 2014, Parasite 21:37: GI nematodes and anthelmintic resistance in Danish goat herds",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4115478/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "chabertia-ovina",
+      "canonicalName": "Chabertia ovina",
+      "commonName": "Large-mouth bowel worm",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Strongylidae",
+        "group": "nematode",
+        "definitiveHosts": ["sheep", "goat"],
+        "intermediateHosts": [],
+        "majorOrgan": "large intestine",
+        "onHostStages": ["L4", "adult"],
+        "distribution": "Small ruminants; reported in Canada and Australia",
+        "zoonotic": "no",
+        "significance": "Heavy burdens damage the colon, giving soft, mucus-streaked or bloody faeces and ill-thrift in young or stressed animals; immunity builds quickly.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 42,
+          "max": 50
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L1",
+            "location": "hatches on pasture and feeds on bacteria",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L2",
+            "location": "free on pasture",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "ensheathed infective larva on herbage",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L4",
+            "location": "penetrates the small intestinal mucosa, later moving to the colon",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "colon",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal egg count",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Chabertia ovina",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/63233/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Chabertia ovina",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/63233/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153/tables/1",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Strongylus vulgaris (Strongylidae)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-vulgaris.php",
+          "note": "Course spells the order Strongylidia; references spell it Strongylida."
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "oesophagostomum-venulosum",
+      "canonicalName": "Oesophagostomum venulosum",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Strongylidae",
+        "group": "nematode",
+        "definitiveHosts": ["sheep", "goat", "deer", "cattle"],
+        "intermediateHosts": [],
+        "majorOrgan": "large intestine",
+        "onHostStages": ["L4", "adult"],
+        "distribution": "Reported in Europe, Canada and Australia",
+        "zoonotic": "no",
+        "significance": "Eggs look like trichostrongyle eggs on flotation, so counts cannot separate it; larvae sit briefly in the large-gut wall before settling in the lumen.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 42,
+          "max": 42
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "infective larva on pasture herbage",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L4",
+            "location": "embedded for several days in the caecal and colonic wall, then back in the lumen",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "caecum and colon",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal egg count",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Oesophagostomum venulosum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/63234/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Strongylus vulgaris (Strongylidae)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-vulgaris.php",
+          "note": "Course spells the order Strongylidia; references spell it Strongylida."
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Oesophagostomum venulosum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/63234/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Ali et al. 2026, Curr Res Parasitol Vector Borne Dis 9:100390: GI nematodes in Australian dairy goats",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13273476/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Rezanezhad-Dizaji et al. 2025, Pathogens 14:984: ruminant farms in Quebec, GI nematodes and ivermectin",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12567335/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Gonzalez et al. 2023, Animals 13:3117: GI nematodes of roe deer in Leon, Spain",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10571729/",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "onHostStages",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Ali et al. 2026, Curr Res Parasitol Vector Borne Dis 9:100390: GI nematodes in Australian dairy goats",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13273476/",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Rezanezhad-Dizaji et al. 2025, Pathogens 14:984: ruminant farms in Quebec, GI nematodes and ivermectin",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12567335/",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Gonzalez et al. 2023, Animals 13:3117: GI nematodes of roe deer in Leon, Spain",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10571729/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "trichuris-ovis",
+      "canonicalName": "Trichuris ovis",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Trichinellida",
+        "family": "Trichuridae",
+        "group": "nematode",
+        "definitiveHosts": ["sheep", "goat"],
+        "intermediateHosts": [],
+        "majorOrgan": "large intestine",
+        "onHostStages": ["larva", "adult"],
+        "distribution": "Reported in sheep and goats in Europe and Central Asia",
+        "zoonotic": "no",
+        "significance": "Heavy burdens are uncommon but can affect lambs and kids, with caecal inflammation, diarrhoea and low plasma protein; the eggs persist on farms.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 49,
+          "max": 63
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces; lemon-shaped with a plug at each pole",
+            "hostRole": "environment"
+          },
+          {
+            "name": "larva",
+            "location": "burrowed into the mucosa of the first part of the small intestine",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "caecum and colon, anterior end threaded into the mucosa",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal egg count",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Trichuris ovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/93034/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Trichuris ovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/93034/",
+          "note": "Course lists the superfamily Trichinelloidea as the order; NCBI gives the order Trichinellida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Trichuris ovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/93034/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Abekeshev et al. 2026, Pathogens 15:550: helminths of sheep and saiga in West Kazakhstan",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13209991/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Holm et al. 2014, Parasite 21:37: GI nematodes and anthelmintic resistance in Danish goat herds",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4115478/",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "onHostStages",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Abekeshev et al. 2026, Pathogens 15:550: helminths of sheep and saiga in West Kazakhstan",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13209991/",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Holm et al. 2014, Parasite 21:37: GI nematodes and anthelmintic resistance in Danish goat herds",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4115478/",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Hayward et al. 2022, Parasitology 149:1749: GI parasite trends in wild Soay sheep",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10090761/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "nematodirus-battus",
+      "canonicalName": "Nematodirus battus",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Molineidae",
+        "group": "nematode",
+        "definitiveHosts": ["sheep", "cattle"],
+        "intermediateHosts": [],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["L4", "adult"],
+        "distribution": "Temperate Europe, mainly the British Isles; patchy in North America",
+        "zoonotic": "no",
+        "significance": "Mass spring hatching can cause severe diarrhoea, dehydration and deaths in young lambs, with disease starting before adults shed eggs.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 15,
+          "max": 15
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces; larva develops to L3 inside the shell and overwinters",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "hatches after chill then warmth (about 10 C for 10 days), then free on herbage",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L4",
+            "location": "in the small intestinal mucosa after the L3 penetrates it",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "lumen of the small intestine",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal egg count",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Melville et al. 2020, Parasites & Vectors 13:494: hatching responses of Nematodirus battus eggs",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-020-04368-9",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Nematodirus battus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/28839/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Nematodirus battus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/28839/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": "Course also lists camelids; cited references do not."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Melville et al. 2020, Parasites & Vectors 13:494: hatching responses of Nematodirus battus eggs",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-020-04368-9",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "Melville et al. 2020, Parasites & Vectors 13:494: hatching responses of Nematodirus battus eggs",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-020-04368-9",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": "Course states PPP 2-3 weeks; reference gives 15 days."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Melville et al. 2020, Parasites & Vectors 13:494: hatching responses of Nematodirus battus eggs",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-020-04368-9",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "muellerius-capillaris",
+      "canonicalName": "Muellerius capillaris",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Protostrongylidae",
+        "group": "nematode",
+        "definitiveHosts": ["sheep", "goat"],
+        "intermediateHosts": ["land snail", "slug"],
+        "majorOrgan": "lungs",
+        "onHostStages": ["adult"],
+        "distribution": "Mainly warmer, damper regions worldwide; reported in Canada",
+        "zoonotic": "no",
+        "significance": "Small lungworm of sheep and goats, commoner in goats; often silent, but heavy burdens can cause interstitial pneumonia and poor growth.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 30,
+          "max": 90
+        },
+        "lifecycleStages": [
+          {
+            "name": "L1",
+            "location": "passed in faeces",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "develops from L1 inside a snail or slug; can also leave the mollusc",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "adult",
+            "location": "lung parenchyma",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "L1",
+        "diagnosticTests": [
+          {
+            "name": "Baermann technique",
+            "sample": "faeces"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "lungs"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Zafari et al. 2022, Pathogens 11:1392: lungworms of pastoral ruminants in Iran",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9787811/",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Muellerius capillaris",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/242453/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "Engdawork et al. 2025, Vet Med Int 2025:4001491: lungworms of sheep and cattle, North Shewa, Ethiopia",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12605887/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "Engdawork et al. 2025, Vet Med Int 2025:4001491: lungworms of sheep and cattle, North Shewa, Ethiopia",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12605887/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Zafari et al. 2022, Pathogens 11:1392: lungworms of pastoral ruminants in Iran",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9787811/",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "Engdawork et al. 2025, Vet Med Int 2025:4001491: lungworms of sheep and cattle, North Shewa, Ethiopia",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12605887/",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "Bentounsi et al. 2025, Vet Sci 12:471: small-lungworm (Protostrongylidae) infections in Algerian meat sheep",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12115696/",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": "onHostStages",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Zafari et al. 2022, Pathogens 11:1392: lungworms of pastoral ruminants in Iran",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9787811/",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "Engdawork et al. 2025, Vet Med Int 2025:4001491: lungworms of sheep and cattle, North Shewa, Ethiopia",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12605887/",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "Zafari et al. 2022, Pathogens 11:1392: lungworms of pastoral ruminants in Iran",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9787811/",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "Zafari et al. 2022, Pathogens 11:1392: lungworms of pastoral ruminants in Iran",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9787811/",
+          "note": "Course states PPP 6-10 weeks; reference gives 1-3 months."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Zafari et al. 2022, Pathogens 11:1392: lungworms of pastoral ruminants in Iran",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9787811/",
+          "note": "Course states 2-3 weeks for L1 to L3 in the mollusc; reference gives a few weeks to several months."
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "Engdawork et al. 2025, Vet Med Int 2025:4001491: lungworms of sheep and cattle, North Shewa, Ethiopia",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12605887/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Engdawork et al. 2025, Vet Med Int 2025:4001491: lungworms of sheep and cattle, North Shewa, Ethiopia",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12605887/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "protostrongylus-rufescens",
+      "canonicalName": "Protostrongylus rufescens",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Protostrongylidae",
+        "group": "nematode",
+        "definitiveHosts": ["sheep", "goat"],
+        "intermediateHosts": ["land snail", "slug"],
+        "majorOrgan": "lungs",
+        "onHostStages": ["adult"],
+        "distribution": "Mainly warmer, damper regions worldwide",
+        "zoonotic": "no",
+        "significance": "The commonest small lungworm of domestic sheep and goats; usually only mildly pathogenic, but lung lesions often get lungs condemned at meat inspection.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 30,
+          "max": 90
+        },
+        "lifecycleStages": [
+          {
+            "name": "L1",
+            "location": "passed in faeces",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "develops from L1 inside a snail or slug; can also leave the mollusc",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "adult",
+            "location": "smaller bronchi and bronchioles",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "L1",
+        "diagnosticTests": [
+          {
+            "name": "Baermann technique",
+            "sample": "faeces"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "lungs"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Zafari et al. 2022, Pathogens 11:1392: lungworms of pastoral ruminants in Iran",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9787811/",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Protostrongylus rufescens",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/321386/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "Engdawork et al. 2025, Vet Med Int 2025:4001491: lungworms of sheep and cattle, North Shewa, Ethiopia",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12605887/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "Engdawork et al. 2025, Vet Med Int 2025:4001491: lungworms of sheep and cattle, North Shewa, Ethiopia",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12605887/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Zafari et al. 2022, Pathogens 11:1392: lungworms of pastoral ruminants in Iran",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9787811/",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "Engdawork et al. 2025, Vet Med Int 2025:4001491: lungworms of sheep and cattle, North Shewa, Ethiopia",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12605887/",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "Bentounsi et al. 2025, Vet Sci 12:471: small-lungworm (Protostrongylidae) infections in Algerian meat sheep",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12115696/",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": "onHostStages",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Zafari et al. 2022, Pathogens 11:1392: lungworms of pastoral ruminants in Iran",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9787811/",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "Engdawork et al. 2025, Vet Med Int 2025:4001491: lungworms of sheep and cattle, North Shewa, Ethiopia",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12605887/",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "Zafari et al. 2022, Pathogens 11:1392: lungworms of pastoral ruminants in Iran",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9787811/",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "Zafari et al. 2022, Pathogens 11:1392: lungworms of pastoral ruminants in Iran",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9787811/",
+          "note": "Course states PPP 6-10 weeks; reference gives 1-3 months."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Zafari et al. 2022, Pathogens 11:1392: lungworms of pastoral ruminants in Iran",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9787811/",
+          "note": "Course states 2-3 weeks for L1 to L3 in the mollusc; reference gives a few weeks to several months."
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "Engdawork et al. 2025, Vet Med Int 2025:4001491: lungworms of sheep and cattle, North Shewa, Ethiopia",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12605887/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Engdawork et al. 2025, Vet Med Int 2025:4001491: lungworms of sheep and cattle, North Shewa, Ethiopia",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12605887/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "dictyocaulus-filaria",
+      "canonicalName": "Dictyocaulus filaria",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": ["Dictyocaulus filariae"],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Dictyocaulidae",
+        "group": "nematode",
+        "definitiveHosts": ["sheep", "goat"],
+        "intermediateHosts": [],
+        "majorOrgan": "lungs",
+        "onHostStages": ["adult"],
+        "distribution": "Sheep worldwide, with cases reported in Canada",
+        "zoonotic": "no",
+        "significance": "Common lungworm of sheep and goats in many regions, though a rare cause of disease in Canada; infection brings bronchitis, cough and laboured breathing.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "L1",
+            "location": "passed in faeces after hatching in the gut",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "infective larva on pasture",
+            "hostRole": "environment"
+          },
+          {
+            "name": "adult",
+            "location": "bronchi",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "L1",
+        "diagnosticTests": [
+          {
+            "name": "Baermann technique",
+            "sample": "faeces"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "lungs"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Dictyocaulus filaria",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/44603/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus viviparus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-viviparus.php",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "Engdawork et al. 2025, Vet Med Int 2025:4001491: lungworms of sheep and cattle, North Shewa, Ethiopia",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12605887/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus viviparus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-viviparus.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Zafari et al. 2022, Pathogens 11:1392: lungworms of pastoral ruminants in Iran",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9787811/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "Engdawork et al. 2025, Vet Med Int 2025:4001491: lungworms of sheep and cattle, North Shewa, Ethiopia",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12605887/",
+          "note": null
+        },
+        {
+          "field": "onHostStages",
+          "citation": "Engdawork et al. 2025, Vet Med Int 2025:4001491: lungworms of sheep and cattle, North Shewa, Ethiopia",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12605887/",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Zafari et al. 2022, Pathogens 11:1392: lungworms of pastoral ruminants in Iran",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9787811/",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria and other lungworms",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "Engdawork et al. 2025, Vet Med Int 2025:4001491: lungworms of sheep and cattle, North Shewa, Ethiopia",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12605887/",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Engdawork et al. 2025, Vet Med Int 2025:4001491: lungworms of sheep and cattle, North Shewa, Ethiopia",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12605887/",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "Engdawork et al. 2025, Vet Med Int 2025:4001491: lungworms of sheep and cattle, North Shewa, Ethiopia",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12605887/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Engdawork et al. 2025, Vet Med Int 2025:4001491: lungworms of sheep and cattle, North Shewa, Ethiopia",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12605887/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "ostertagia-ostertagi",
+      "canonicalName": "Ostertagia ostertagi",
+      "commonName": "Brown stomach worm",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Trichostrongylidae",
+        "group": "nematode",
+        "definitiveHosts": ["cattle"],
+        "intermediateHosts": [],
+        "majorOrgan": "abomasum",
+        "onHostStages": ["L4", "adult"],
+        "distribution": "Cattle worldwide; probably the most important cattle trichostrongyle",
+        "zoonotic": "no",
+        "significance": "Larvae in abomasal glands cause nodules and raised pH; type I hits first-season calves, type II follows mass emergence of arrested larvae and can be fatal.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 21,
+          "max": 21
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L1",
+            "location": "hatches from the egg on pasture",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L2",
+            "location": "free on pasture",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "ensheathed infective larva on herbage",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L4",
+            "location": "develops in the abomasal glands; may arrest at early L4 for months (inhibited development)",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "abomasal mucosa",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal egg count",
+            "sample": "faeces"
+          },
+          {
+            "name": "serum pepsinogen",
+            "sample": "serum"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "milk"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Overview of gastrointestinal parasites of ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/overview-of-gastrointestinal-parasites-of-ruminants",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Ostertagia ostertagi",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6317/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": "Course lists the superfamily Trichostrongyloidea as the family; reference gives Trichostrongylidae."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Ostertagia ostertagi",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6317/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Overview of gastrointestinal parasites of ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/overview-of-gastrointestinal-parasites-of-ruminants",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "dictyocaulus-viviparus",
+      "canonicalName": "Dictyocaulus viviparus",
+      "commonName": "Bovine lungworm",
+      "aliases": [],
+      "misspellings": ["Dictyocaulus viviparous"],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Dictyocaulidae",
+        "group": "nematode",
+        "definitiveHosts": ["cattle"],
+        "intermediateHosts": [],
+        "majorOrgan": "lungs",
+        "onHostStages": ["migrating L3", "adult"],
+        "distribution": "Cattle across much of the globe, Canada included",
+        "zoonotic": "no",
+        "significance": "Causes lung disease, mainly in calves in their first grazing season, with coughing and laboured breathing; deaths occur in some outbreaks.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 21,
+          "max": 28
+        },
+        "lifecycleStages": [
+          {
+            "name": "L1",
+            "location": "passed in faeces; hatches in the airways first",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "infective larva on pasture; spread onto Pilobolus sporangia that fling it up to 3 m",
+            "hostRole": "environment"
+          },
+          {
+            "name": "migrating L3",
+            "location": "travels in the blood vessels to the lungs, then through lung tissue to the airways",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "trachea and bronchi",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "L1",
+        "diagnosticTests": [
+          {
+            "name": "Baermann technique",
+            "sample": "faeces"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "lungs"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "bulk milk"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Dictyocaulus viviparus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-viviparus.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Dictyocaulus viviparus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/29172/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus viviparus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-viviparus.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus viviparus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-viviparus.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus viviparus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-viviparus.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus viviparus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-viviparus.php",
+          "note": null
+        },
+        {
+          "field": "onHostStages",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus viviparus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-viviparus.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus viviparus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-viviparus.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus viviparus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-viviparus.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus viviparus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-viviparus.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus viviparus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-viviparus.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus viviparus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-viviparus.php",
+          "note": "Course states PPP 25-60 days; reference gives 3-4 weeks."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus viviparus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-viviparus.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus viviparus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-viviparus.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus viviparus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-viviparus.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "NCBI Taxonomy: Dictyocaulus viviparus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/29172/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "onchocerca-ochengi",
+      "canonicalName": "Onchocerca ochengi",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Spirurida",
+        "family": "Onchocercidae",
+        "group": "nematode",
+        "definitiveHosts": ["cattle"],
+        "intermediateHosts": ["Simulium"],
+        "majorOrgan": "skin",
+        "onHostStages": ["adult", "microfilaria"],
+        "distribution": "African cattle areas with Simulium damnosum, e.g. northern Cameroon",
+        "significance": "Forms skin nodules in cattle; the nearest bovine relative of the human river blindness worm, so it serves as that parasite's cattle model.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "adult",
+            "location": "coiled in skin nodules, especially between the udder and umbilicus",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "microfilaria",
+            "location": "skin of the underbelly",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "L3",
+            "location": "infective larva that develops in the blackfly",
+            "hostRole": "intermediate"
+          }
+        ],
+        "diagnosticStage": "microfilaria",
+        "diagnosticTests": [
+          {
+            "name": "skin biopsy",
+            "sample": "skin"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "Zhan et al. 2022, Front Cell Infect Microbiol 12:869039: Onchocerca ochengi cattle model for an onchocerciasis vaccine",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9015098/",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Boussinesq et al. 2020, Parasite 27:36: long-acting ivermectin against Onchocerca ochengi in zebu cattle",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7233116/",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Onchocerca ochengi",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/42157/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Onchocerca ochengi",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/42157/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Zhan et al. 2022, Front Cell Infect Microbiol 12:869039: Onchocerca ochengi cattle model for an onchocerciasis vaccine",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9015098/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Boussinesq et al. 2020, Parasite 27:36: long-acting ivermectin against Onchocerca ochengi in zebu cattle",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7233116/",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "Zhan et al. 2022, Front Cell Infect Microbiol 12:869039: Onchocerca ochengi cattle model for an onchocerciasis vaccine",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9015098/",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "Boussinesq et al. 2020, Parasite 27:36: long-acting ivermectin against Onchocerca ochengi in zebu cattle",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7233116/",
+          "note": null
+        },
+        {
+          "field": "onHostStages",
+          "citation": "Boussinesq et al. 2020, Parasite 27:36: long-acting ivermectin against Onchocerca ochengi in zebu cattle",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7233116/",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Zhan et al. 2022, Front Cell Infect Microbiol 12:869039: Onchocerca ochengi cattle model for an onchocerciasis vaccine",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9015098/",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Boussinesq et al. 2020, Parasite 27:36: long-acting ivermectin against Onchocerca ochengi in zebu cattle",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7233116/",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Zhan et al. 2022, Front Cell Infect Microbiol 12:869039: Onchocerca ochengi cattle model for an onchocerciasis vaccine",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9015098/",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Boussinesq et al. 2020, Parasite 27:36: long-acting ivermectin against Onchocerca ochengi in zebu cattle",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7233116/",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "Zhan et al. 2022, Front Cell Infect Microbiol 12:869039: Onchocerca ochengi cattle model for an onchocerciasis vaccine",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9015098/",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "Boussinesq et al. 2020, Parasite 27:36: long-acting ivermectin against Onchocerca ochengi in zebu cattle",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7233116/",
+          "note": "Course states PPP up to 1 year; cited references do not."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Boussinesq et al. 2020, Parasite 27:36: long-acting ivermectin against Onchocerca ochengi in zebu cattle",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7233116/",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Bah et al. 2021, PLoS Pathog 17:e1009601: emodepside in a bovine model of onchocerciasis",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8202924/",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Zhan et al. 2022, Front Cell Infect Microbiol 12:869039: Onchocerca ochengi cattle model for an onchocerciasis vaccine",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9015098/",
+          "note": "Course also lists 3-4 weeks of development in the fly; cited references do not."
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "Boussinesq et al. 2020, Parasite 27:36: long-acting ivermectin against Onchocerca ochengi in zebu cattle",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7233116/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Boussinesq et al. 2020, Parasite 27:36: long-acting ivermectin against Onchocerca ochengi in zebu cattle",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7233116/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Dirofilaria immitis (Onchocercidae)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dirofilaria-immitis.php",
+          "note": "Course lists the suborder Spirurina as the order; reference gives Spirurida."
+        }
+      ],
+      "images": []
+    }
+  ]
+}

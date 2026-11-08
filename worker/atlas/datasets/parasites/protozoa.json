@@ -1,0 +1,2770 @@
+{
+  "group": "protozoan",
+  "entries": [
+    {
+      "key": "entamoeba-histolytica",
+      "canonicalName": "Entamoeba histolytica",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Evosea",
+        "order": "Mastigamoebida",
+        "family": "Endamoebidae",
+        "group": "protozoan",
+        "definitiveHosts": ["human", "dog", "non-human primate"],
+        "majorOrgan": "large intestine",
+        "onHostStages": ["trophozoite"],
+        "distribution": "Worldwide; most human cases arise in developing countries",
+        "zoonotic": "potential",
+        "significance": "Agent of amoebic dysentery in people; invasive trophozoites can reach the liver and form abscesses. Also found in dogs and non-human primates.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "cyst",
+            "location": "passed in faeces; stays infective for days to weeks and is swallowed with contaminated food or water",
+            "hostRole": "environment"
+          },
+          {
+            "name": "trophozoite",
+            "location": "large intestine lumen after excystation in the small intestine; may invade the mucosa and spread to the liver",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "cyst",
+        "diagnosticTests": [
+          {
+            "name": "faecal smear",
+            "sample": "faeces"
+          },
+          {
+            "name": "antigen detection",
+            "sample": "faeces"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          },
+          {
+            "name": "PCR",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "CDC DPDx: Amebiasis",
+          "url": "https://www.cdc.gov/dpdx/amebiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Koç et al. 2026, Veterinary Sciences 13:1072: zoonotic protozoa in stray and owned dogs with diarrhoea in Trabzon, Türkiye",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13709635/",
+          "note": "Course also lists cats; cited references do not."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Liu et al. 2022, Front Vet Sci 9:906822: Entamoeba spp. in non-human primates in a Nanjing zoo",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9189403/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "Liu et al. 2022, Front Vet Sci 9:906822: Entamoeba spp. in non-human primates in a Nanjing zoo",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9189403/",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CDC DPDx: Amebiasis",
+          "url": "https://www.cdc.gov/dpdx/amebiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Amebiasis",
+          "url": "https://www.cdc.gov/dpdx/amebiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Amebiasis",
+          "url": "https://www.cdc.gov/dpdx/amebiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Entamoeba histolytica",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5759/",
+          "note": "Course states Amoebozoa; reference gives Evosea."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Entamoeba histolytica",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5759/",
+          "note": "Course states Amoebida; reference gives Mastigamoebida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Entamoeba histolytica",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5759/",
+          "note": "Course states Entamoebidae; reference gives Endamoebidae."
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "giardia-duodenalis",
+      "canonicalName": "Giardia duodenalis",
+      "commonName": null,
+      "aliases": ["Giardia intestinalis", "Giardia lamblia"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Metamonada",
+        "order": "Diplomonadida",
+        "family": "Hexamitidae",
+        "group": "protozoan",
+        "definitiveHosts": [
+          "human",
+          "dog",
+          "cat",
+          "cattle",
+          "sheep",
+          "goat",
+          "pig",
+          "horse",
+          "rodent",
+          "rabbit"
+        ],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["trophozoite"],
+        "distribution": "Worldwide in humans and in domestic and wild mammals",
+        "zoonotic": "yes",
+        "significance": "Common gut flagellate of young dogs, cats, ruminants and people; often silent but can cause diarrhoea and malabsorption. Assemblages A and B cross species.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 3,
+          "max": 10
+        },
+        "lifecycleStages": [
+          {
+            "name": "cyst",
+            "location": "passed in faeces, infective at once and long-lived in cool damp places",
+            "hostRole": "environment"
+          },
+          {
+            "name": "trophozoite",
+            "location": "proximal small intestine, held to the brush border by the ventral disc",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "cyst",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "antigen detection",
+            "sample": "faeces"
+          },
+          {
+            "name": "faecal smear",
+            "sample": "faeces"
+          },
+          {
+            "name": "PCR",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Giardia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/giardia-species.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Giardiasis in Animals",
+          "url": "https://www.msdvetmanual.com/digestive-system/giardiasis-giardia/giardiasis-in-animals",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Giardiasis",
+          "url": "https://www.cdc.gov/dpdx/giardiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Giardiasis in Animals",
+          "url": "https://www.msdvetmanual.com/digestive-system/giardiasis-giardia/giardiasis-in-animals",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Giardiasis in Animals",
+          "url": "https://www.msdvetmanual.com/digestive-system/giardiasis-giardia/giardiasis-in-animals",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Giardiasis in Animals",
+          "url": "https://www.msdvetmanual.com/digestive-system/giardiasis-giardia/giardiasis-in-animals",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Giardiasis in Animals",
+          "url": "https://www.msdvetmanual.com/digestive-system/giardiasis-giardia/giardiasis-in-animals",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Giardia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/giardia-species.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "WCVM Learn About Parasites: Giardia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/giardia-species.php",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Giardia duodenalis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5741/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Giardia duodenalis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5741/",
+          "note": "Course states Heamitidae; reference gives Hexamitidae."
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "balantidium-coli",
+      "canonicalName": "Balantidium coli",
+      "commonName": null,
+      "aliases": ["Balantioides coli", "Neobalantidium coli"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Ciliophora",
+        "order": "Vestibuliferida",
+        "family": "Balantidiidae",
+        "group": "protozoan",
+        "definitiveHosts": ["pig", "human", "rodent", "non-human primate"],
+        "majorOrgan": "large intestine",
+        "onHostStages": ["trophozoite"],
+        "distribution": "Worldwide, mainly where pigs are kept; commoner in warm humid regions",
+        "zoonotic": "yes",
+        "significance": "Large ciliate with the pig as main reservoir; usually harmless there but linked to diarrhoea and poor growth in pigs, and to ulcerative colitis in people.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "cyst",
+            "location": "passed in faeces and swallowed with contaminated food or water",
+            "hostRole": "environment"
+          },
+          {
+            "name": "trophozoite",
+            "location": "lumen of the large intestine, dividing by binary fission; some invade the colon wall",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "trophozoite",
+        "diagnosticTests": [
+          {
+            "name": "faecal smear",
+            "sample": "faeces"
+          },
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "histopathology",
+            "sample": "tissue"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "CDC DPDx: Balantidiasis",
+          "url": "https://www.cdc.gov/dpdx/balantidiasis/index.html",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Giarratana et al. 2021, Vet World 14:1044-1049: Balantidium coli in swine reared in South Italy",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8167529/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Balantidiasis",
+          "url": "https://www.cdc.gov/dpdx/balantidiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "Giarratana et al. 2021, Vet World 14:1044-1049: Balantidium coli in swine reared in South Italy",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8167529/",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Giarratana et al. 2021, Vet World 14:1044-1049: Balantidium coli in swine reared in South Italy",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8167529/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "Giarratana et al. 2021, Vet World 14:1044-1049: Balantidium coli in swine reared in South Italy",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8167529/",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "Giarratana et al. 2021, Vet World 14:1044-1049: Balantidium coli in swine reared in South Italy",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8167529/",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Balantidiasis",
+          "url": "https://www.cdc.gov/dpdx/balantidiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Balantidiasis",
+          "url": "https://www.cdc.gov/dpdx/balantidiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Balantioides coli",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/71585/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Balantioides coli",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/71585/",
+          "note": "Course states Heterotrichida; reference gives Vestibuliferida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Balantioides coli",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/71585/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "eimeria-spp",
+      "canonicalName": "Eimeria spp.",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": ["Eimieria species"],
+      "fields": {
+        "phylum": "Apicomplexa",
+        "order": "Eucoccidiorida",
+        "family": "Eimeriidae",
+        "group": "protozoan",
+        "definitiveHosts": ["chicken", "turkey", "cattle", "sheep"],
+        "majorOrgan": "gastrointestinal tract",
+        "onHostStages": ["meront", "gamont"],
+        "distribution": "Worldwide in poultry, cattle and sheep",
+        "significance": "Host-specific coccidia; a major disease of commercial chickens (E. tenella, E. necatrix) and a cause of bloody diarrhoea in young calves (E. bovis, E. zuernii).",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "oocyst",
+            "location": "passed unsporulated in faeces; sporulates in the environment within a few days and is then infective",
+            "hostRole": "environment"
+          },
+          {
+            "name": "meront",
+            "location": "intestinal epithelial cells; one or more rounds of asexual multiplication",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "gamont",
+            "location": "intestinal epithelial cells; male and female gametes fuse and form the oocyst",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "oocyst",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "intestine"
+          },
+          {
+            "name": "histopathology",
+            "sample": "intestine"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Eimeria species (cattle)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/eimeria-species-cattle.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Coccidiosis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/coccidiosis/coccidiosis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Eimeria species (sheep)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/eimeria-species-sheep.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Coccidiosis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/coccidiosis/coccidiosis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Coccidiosis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/coccidiosis/coccidiosis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Eimeria species (cattle)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/eimeria-species-cattle.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Coccidiosis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/coccidiosis/coccidiosis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "WCVM Learn About Parasites: Eimeria species (cattle)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/eimeria-species-cattle.php",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Eimeria species (cattle)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/eimeria-species-cattle.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Eimeria",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5800/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "cryptosporidium-spp",
+      "canonicalName": "Cryptosporidium spp.",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Apicomplexa",
+        "order": "Eucoccidiorida",
+        "family": "Cryptosporidiidae",
+        "group": "protozoan",
+        "definitiveHosts": [
+          "cattle",
+          "sheep",
+          "goat",
+          "pig",
+          "horse",
+          "deer",
+          "dog",
+          "cat",
+          "human",
+          "bird"
+        ],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["meront", "gamont"],
+        "distribution": "Worldwide",
+        "zoonotic": "yes",
+        "significance": "Major cause of diarrhoea in newborn calves, lambs and kids. Oocysts resist chlorine; zoonotic C. parvum is a leading cause of human infection.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 2,
+          "max": 14
+        },
+        "lifecycleStages": [
+          {
+            "name": "oocyst",
+            "location": "passed already sporulated and infective in faeces; thick-walled and survives for months in cool damp conditions",
+            "hostRole": "environment"
+          },
+          {
+            "name": "meront",
+            "location": "brush border of intestinal epithelial cells; asexual multiplication",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "gamont",
+            "location": "brush border of intestinal epithelial cells; fertilisation yields thick-walled oocysts and thin-walled ones that cause autoinfection",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "oocyst",
+        "diagnosticTests": [
+          {
+            "name": "faecal smear",
+            "sample": "faeces"
+          },
+          {
+            "name": "antigen detection",
+            "sample": "faeces"
+          },
+          {
+            "name": "PCR",
+            "sample": "faeces"
+          },
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Cryptosporidium species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cryptosporidium-species.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Cryptosporidiosis",
+          "url": "https://www.cdc.gov/dpdx/cryptosporidiosis/index.html",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Cryptosporidiosis in Animals",
+          "url": "https://www.msdvetmanual.com/digestive-system/cryptosporidiosis/cryptosporidiosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Cryptosporidiosis in Animals",
+          "url": "https://www.msdvetmanual.com/digestive-system/cryptosporidiosis/cryptosporidiosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CDC DPDx: Cryptosporidiosis",
+          "url": "https://www.cdc.gov/dpdx/cryptosporidiosis/index.html",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "CDC DPDx: Cryptosporidiosis",
+          "url": "https://www.cdc.gov/dpdx/cryptosporidiosis/index.html",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Cryptosporidium species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cryptosporidium-species.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Cryptosporidiosis",
+          "url": "https://www.cdc.gov/dpdx/cryptosporidiosis/index.html",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Cryptosporidiosis",
+          "url": "https://www.cdc.gov/dpdx/cryptosporidiosis/index.html",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "WCVM Learn About Parasites: Cryptosporidium species (cattle)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cryptosporidium-species-cattle.php",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Cryptosporidium species (cattle)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cryptosporidium-species-cattle.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Cryptosporidium",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5806/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Cryptosporidiosis in Animals",
+          "url": "https://www.msdvetmanual.com/digestive-system/cryptosporidiosis/cryptosporidiosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Cryptosporidium species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cryptosporidium-species.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Cryptosporidiosis",
+          "url": "https://www.cdc.gov/dpdx/cryptosporidiosis/index.html",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "tritrichomonas-foetus",
+      "canonicalName": "Tritrichomonas foetus",
+      "commonName": null,
+      "aliases": ["Trichomonas foetus"],
+      "misspellings": ["Trichomonas fetus"],
+      "fields": {
+        "phylum": "Parabasalia",
+        "order": "Tritrichomonadida",
+        "family": "Tritrichomonadidae",
+        "group": "protozoan",
+        "definitiveHosts": ["cattle", "cat", "pig"],
+        "majorOrgan": "reproductive tract",
+        "onHostStages": ["trophozoite"],
+        "distribution": "Cattle, cats and pigs in several regions worldwide",
+        "zoonotic": "no",
+        "significance": "Venereal flagellate of cattle causing early embryonic loss and abortion, with bulls as lifelong carriers; a cat genotype causes chronic large-bowel diarrhoea.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "trophozoite",
+            "location": "preputial crypts of bulls and reproductive tract of cows, spread at mating; ileum, caecum and colon of cats",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "trophozoite",
+        "diagnosticTests": [
+          {
+            "name": "culture",
+            "sample": "preputial scraping"
+          },
+          {
+            "name": "PCR",
+            "sample": "preputial scraping"
+          },
+          {
+            "name": "faecal smear",
+            "sample": "faeces"
+          },
+          {
+            "name": "culture",
+            "sample": "faeces"
+          },
+          {
+            "name": "PCR",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Tritrichomonas foetus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trictrichomonas-foetus.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Tritrichomonas foetus (cats)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trictrichomonas-foetus-cats.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Tritrichomonas foetus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trictrichomonas-foetus.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Tritrichomonas foetus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trictrichomonas-foetus.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Tritrichomonas foetus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trictrichomonas-foetus.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Tritrichomonas foetus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trictrichomonas-foetus.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Tritrichomonas foetus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trictrichomonas-foetus.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "WCVM Learn About Parasites: Tritrichomonas foetus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trictrichomonas-foetus.php",
+          "note": "Course states Parabasala; reference gives Parabasalia."
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Tritrichomonas foetus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/1144522/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Tritrichomonas foetus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/1144522/",
+          "note": "Course states Trichomonadea; reference gives Tritrichomonadida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Tritrichomonas foetus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/1144522/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "histomonas-meleagridis",
+      "canonicalName": "Histomonas meleagridis",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Parabasalia",
+        "order": "Tritrichomonadida",
+        "family": "Dientamoebidae",
+        "group": "protozoan",
+        "definitiveHosts": ["turkey", "chicken"],
+        "paratenicHosts": ["earthworm"],
+        "vectorRole": "Eggs of the caecal worm Heterakis gallinarum carry histomonads and keep them viable in litter and soil for years; earthworms that swallow these eggs pass them on to birds.",
+        "majorOrgan": "caecum",
+        "onHostStages": ["flagellate form", "amoeboid form"],
+        "significance": "Blackhead disease: caecal ulcers and target-shaped liver necrosis. Turkey flocks can lose most birds, while chickens mostly survive as carriers.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "histomonad in Heterakis egg",
+            "location": "inside Heterakis gallinarum eggs shed in faeces onto litter and soil",
+            "hostRole": "environment"
+          },
+          {
+            "name": "histomonad in Heterakis larva",
+            "location": "earthworm that has eaten infected Heterakis eggs",
+            "hostRole": "paratenic"
+          },
+          {
+            "name": "flagellate form",
+            "location": "caecal lumen, then the caecal wall; also spread bird to bird by cloacal uptake",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "amoeboid form",
+            "location": "liver, reached through the hepatic portal blood",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticTests": [
+          {
+            "name": "post-mortem examination",
+            "sample": "caecum"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "liver"
+          },
+          {
+            "name": "histopathology",
+            "sample": "tissue"
+          },
+          {
+            "name": "PCR"
+          },
+          {
+            "name": "caecal content microscopy",
+            "sample": "caecal contents"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Histomoniasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/histomoniasis/histomoniasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Beer et al. 2022, Front Vet Sci 9:880738: Histomonosis in poultry, a comprehensive review",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9120919/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Histomoniasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/histomoniasis/histomoniasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "Beer et al. 2022, Front Vet Sci 9:880738: Histomonosis in poultry, a comprehensive review",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9120919/",
+          "note": "Course also lists beetles as paratenic hosts; cited references do not."
+        },
+        {
+          "field": "vectorRole",
+          "citation": "Beer et al. 2022, Front Vet Sci 9:880738: Histomonosis in poultry, a comprehensive review",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9120919/",
+          "note": "Course states Heterakis gallinarum as a paratenic host; reference gives it as a vector."
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "MSD Veterinary Manual: Histomoniasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/histomoniasis/histomoniasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "MSD Veterinary Manual: Histomoniasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/histomoniasis/histomoniasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Histomoniasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/histomoniasis/histomoniasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "Beer et al. 2022, Front Vet Sci 9:880738: Histomonosis in poultry, a comprehensive review",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9120919/",
+          "note": "Course states direct or indirect; reference gives direct."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Beer et al. 2022, Front Vet Sci 9:880738: Histomonosis in poultry, a comprehensive review",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9120919/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Histomoniasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/histomoniasis/histomoniasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "Beer et al. 2022, Front Vet Sci 9:880738: Histomonosis in poultry, a comprehensive review",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9120919/",
+          "note": "Course states Parabasala; reference gives Parabasalia."
+        },
+        {
+          "field": "order",
+          "citation": "Beer et al. 2022, Front Vet Sci 9:880738: Histomonosis in poultry, a comprehensive review",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9120919/",
+          "note": "Course states Trichomonadea; reference gives Tritrichomonadida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Histomonas meleagridis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/135588/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "encephalitozoon-cuniculi",
+      "canonicalName": "Encephalitozoon cuniculi",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Microsporidia",
+        "family": "Unikaryonidae",
+        "group": "protozoan",
+        "definitiveHosts": ["rabbit", "rodent", "dog", "cat", "fox", "human"],
+        "majorOrgan": "central nervous system",
+        "onHostStages": ["meront", "sporont"],
+        "zoonotic": "yes",
+        "significance": "Spore-forming microsporidian common in pet rabbits; often silent, but causes head tilt and other vestibular signs, kidney disease and lens-induced uveitis.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "spore",
+            "location": "shed on and off in urine and faeces; swallowed with contaminated food or water, rarely inhaled",
+            "hostRole": "environment"
+          },
+          {
+            "name": "meront",
+            "location": "intestinal epithelium first, then carried in macrophages to the brain, kidneys, liver, lungs and heart",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "sporont",
+            "location": "parasitophorous vacuole in host cells, where new spores mature until the cell bursts",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "spore",
+        "diagnosticTests": [
+          {
+            "name": "histopathology",
+            "sample": "tissue"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          },
+          {
+            "name": "PCR",
+            "sample": "urine"
+          },
+          {
+            "name": "PCR",
+            "sample": "tissue"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "Doboși et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9785705/",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Microsporidiosis",
+          "url": "https://www.cdc.gov/dpdx/microsporidiosis/index.html",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Microsporidiosis",
+          "url": "https://www.cdc.gov/dpdx/microsporidiosis/index.html",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Doboși et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9785705/",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "Doboși et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9785705/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "Doboși et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9785705/",
+          "note": "Course states potential; reference gives yes."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Doboși et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9785705/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Doboși et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9785705/",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Encephalitozoon cuniculi",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6035/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Encephalitozoon cuniculi",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6035/",
+          "note": "Course states Nosematidae; reference gives Unikaryonidae."
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "toxoplasma-gondii",
+      "canonicalName": "Toxoplasma gondii",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Apicomplexa",
+        "order": "Eucoccidiorida",
+        "family": "Sarcocystidae",
+        "group": "protozoan",
+        "definitiveHosts": ["cat", "felid"],
+        "intermediateHosts": [
+          "warm-blooded vertebrate",
+          "sheep",
+          "goat",
+          "pig",
+          "rodent",
+          "human"
+        ],
+        "majorOrgan": "small intestine",
+        "onHostStages": [
+          "tachyzoite",
+          "tissue cyst with bradyzoites",
+          "meront",
+          "gamont"
+        ],
+        "distribution": "Worldwide",
+        "zoonotic": "yes",
+        "significance": "Common zoonosis; ewes and does first infected in pregnancy can abort, and it endangers unborn children and immunocompromised people.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 3,
+          "max": 21
+        },
+        "lifecycleStages": [
+          {
+            "name": "unsporulated oocyst",
+            "location": "shed in the faeces of the cat or wild felid",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 1,
+              "max": 5
+            }
+          },
+          {
+            "name": "sporulated oocyst",
+            "location": "matures in soil, water or feed and becomes infective",
+            "hostRole": "environment"
+          },
+          {
+            "name": "tachyzoite",
+            "location": "multiplies fast and spreads through the body of the intermediate host",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "tissue cyst with bradyzoites",
+            "location": "mainly brain, eye and skeletal or heart muscle of the intermediate host",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "meront",
+            "location": "epithelial cells of the felid small intestine",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "gamont",
+            "location": "epithelial cells of the felid small intestine",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "unsporulated oocyst",
+        "diagnosticTests": [
+          {
+            "name": "faecal microscopy",
+            "sample": "faeces"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          },
+          {
+            "name": "PCR",
+            "sample": "tissue"
+          },
+          {
+            "name": "histopathology",
+            "sample": "tissue"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Toxoplasma gondii",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Toxoplasmosis",
+          "url": "https://www.cdc.gov/dpdx/toxoplasmosis/index.html",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Toxoplasmosis",
+          "url": "https://www.cdc.gov/dpdx/toxoplasmosis/index.html",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Toxoplasma gondii",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "WCVM Learn About Parasites: Toxoplasma gondii",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "CDC DPDx: Toxoplasmosis",
+          "url": "https://www.cdc.gov/dpdx/toxoplasmosis/index.html",
+          "note": "Course states all vertebrates; reference gives most warm-blooded animals."
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Toxoplasma gondii",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Toxoplasma gondii",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Toxoplasmosis",
+          "url": "https://www.cdc.gov/dpdx/toxoplasmosis/index.html",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "CDC DPDx: Toxoplasmosis",
+          "url": "https://www.cdc.gov/dpdx/toxoplasmosis/index.html",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Toxoplasma gondii",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Toxoplasmosis",
+          "url": "https://www.cdc.gov/dpdx/toxoplasmosis/index.html",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Toxoplasma gondii",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5811/",
+          "note": "Course states Protozoa; reference gives Apicomplexa."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Toxoplasma gondii",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5811/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Toxoplasma gondii",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5811/",
+          "note": "Course states Toxoplasma, a genus; reference gives Sarcocystidae."
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Toxoplasma gondii",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "neospora-caninum",
+      "canonicalName": "Neospora caninum",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Apicomplexa",
+        "order": "Eucoccidiorida",
+        "family": "Sarcocystidae",
+        "group": "protozoan",
+        "definitiveHosts": ["dog", "canid"],
+        "intermediateHosts": ["cattle", "deer", "sheep", "goat"],
+        "majorOrgan": "small intestine",
+        "onHostStages": [
+          "tachyzoite",
+          "tissue cyst with bradyzoites",
+          "meront",
+          "gamont"
+        ],
+        "distribution": "Worldwide",
+        "zoonotic": "no",
+        "significance": "A leading cause of abortion in cattle worldwide; in young dogs it also causes nerve and muscle disease with hind-limb paralysis.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 5,
+          "max": 7
+        },
+        "lifecycleStages": [
+          {
+            "name": "unsporulated oocyst",
+            "location": "passed in dog or wild canid faeces",
+            "hostRole": "environment"
+          },
+          {
+            "name": "sporulated oocyst",
+            "location": "becomes infective in the environment within a few days",
+            "hostRole": "environment"
+          },
+          {
+            "name": "tachyzoite",
+            "location": "divides and spreads through many tissues; crosses the placenta",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "tissue cyst with bradyzoites",
+            "location": "nervous tissue and skeletal muscle of the intermediate host",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "meront",
+            "location": "thought to develop in the gut lining of the canid",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "gamont",
+            "location": "thought to develop in the gut lining of the canid",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticTests": [
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          },
+          {
+            "name": "PCR",
+            "sample": "blood"
+          },
+          {
+            "name": "histopathology",
+            "sample": "tissue"
+          },
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Neospora caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Neospora caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "WCVM Learn About Parasites: Neospora caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Neospora caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Neospora caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Neospora caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Neospora caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Neospora caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Neospora caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Neospora caninum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/29176/",
+          "note": "Course states Protozoa; reference gives Apicomplexa."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Neospora caninum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/29176/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Neospora caninum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/29176/",
+          "note": "Course states Neospora, a genus; reference gives Sarcocystidae."
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Neospora caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "sarcocystis-spp",
+      "canonicalName": "Sarcocystis spp.",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Apicomplexa",
+        "order": "Eucoccidiorida",
+        "family": "Sarcocystidae",
+        "group": "protozoan",
+        "definitiveHosts": ["dog", "cat", "fox", "human"],
+        "intermediateHosts": [
+          "cattle",
+          "sheep",
+          "pig",
+          "horse",
+          "dog",
+          "human"
+        ],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["meront", "sarcocyst with bradyzoites", "gamont"],
+        "distribution": "Worldwide, commonest where livestock are raised",
+        "zoonotic": "yes",
+        "significance": "Most species cause little disease; others cause illness, abortion or carcass downgrading. S. neurona can cause myeloencephalitis in horses.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "sporocyst",
+            "location": "passed infective in the faeces of the carnivore",
+            "hostRole": "environment"
+          },
+          {
+            "name": "meront",
+            "location": "endothelium of blood vessels in the intermediate host",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "sarcocyst with bradyzoites",
+            "location": "skeletal and heart muscle of the intermediate host",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "gamont",
+            "location": "lamina propria of the small intestine of the carnivore",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "sporocyst",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "histopathology",
+            "sample": "tissue"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          },
+          {
+            "name": "PCR",
+            "sample": "tissue"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Sarcocystis species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Sarcocystosis",
+          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Sarcocystis species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Sarcocystosis",
+          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "WCVM Learn About Parasites: Sarcocystis species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "CDC DPDx: Sarcocystosis",
+          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Sarcocystis species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CDC DPDx: Sarcocystosis",
+          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "CDC DPDx: Sarcocystosis",
+          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Sarcocystis species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "CDC DPDx: Sarcocystosis",
+          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Sarcocystosis",
+          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Sarcocystis species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Sarcocystosis",
+          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Sarcocystis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5812/",
+          "note": "Course states Protozoa; reference gives Apicomplexa."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Sarcocystis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5812/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Sarcocystis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5812/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Sarcocystis species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "besnoitia-besnoiti",
+      "canonicalName": "Besnoitia besnoiti",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Apicomplexa",
+        "order": "Eucoccidiorida",
+        "family": "Sarcocystidae",
+        "group": "protozoan",
+        "intermediateHosts": ["cattle", "deer"],
+        "vectorRole": "Tabanids and stable flies have carried it mechanically in experiments; direct contact and natural mating also spread it within herds.",
+        "majorOrgan": "skin",
+        "onHostStages": ["tachyzoite", "tissue cyst with bradyzoites"],
+        "distribution": "Africa, Asia and Europe, spreading in southern and western Europe",
+        "significance": "Chronic cattle disease: fever and oedema, then thick folded skin; causes weight loss, bull infertility and hide damage, with no treatment.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "tachyzoite",
+            "location": "multiplies in blood vessel endothelium during the acute febrile stage",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "tissue cyst with bradyzoites",
+            "location": "skin, subcutis, mucous membranes, sclera and testes of the bovine",
+            "hostRole": "intermediate"
+          }
+        ],
+        "diagnosticStage": "tissue cyst with bradyzoites",
+        "diagnosticTests": [
+          {
+            "name": "histopathology",
+            "sample": "skin biopsy"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          },
+          {
+            "name": "PCR",
+            "sample": "skin biopsy"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Besnoitiosis in Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Besnoitia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/besnoitia-species.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Besnoitiosis in Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals",
+          "note": "Course states cats; reference gives the definitive host as unknown."
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "MSD Veterinary Manual: Besnoitiosis in Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals",
+          "note": "Course also lists rodents; cited references do not."
+        },
+        {
+          "field": "vectorRole",
+          "citation": "MSD Veterinary Manual: Besnoitiosis in Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Besnoitiosis in Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "MSD Veterinary Manual: Besnoitiosis in Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Besnoitiosis in Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Besnoitiosis in Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Besnoitia besnoiti",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/94643/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Besnoitia besnoiti",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/94643/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Besnoitia besnoiti",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/94643/",
+          "note": "Course states Coccidea (Coccidia); reference gives Sarcocystidae."
+        },
+        {
+          "field": "family",
+          "citation": "MSD Veterinary Manual: Besnoitiosis in Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "babesia-spp",
+      "canonicalName": "Babesia spp.",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Apicomplexa",
+        "order": "Piroplasmida",
+        "family": "Babesiidae",
+        "group": "protozoan",
+        "definitiveHosts": ["tick"],
+        "intermediateHosts": [
+          "cattle",
+          "horse",
+          "sheep",
+          "goat",
+          "pig",
+          "dog",
+          "cat",
+          "rodent",
+          "human"
+        ],
+        "vectorRole": "Ixodid ticks are the definitive hosts and pass sporozoites in saliva as they feed; many species also pass through tick eggs.",
+        "majorOrgan": "red blood cells",
+        "onHostStages": ["trophozoite and merozoite", "gametocyte"],
+        "distribution": "Worldwide, wherever competent tick vectors occur",
+        "zoonotic": "yes",
+        "significance": "Red cell destruction causes fever, anaemia, jaundice and red urine; severe in cattle and horses, also dogs, cats and people.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "sporozoite",
+            "location": "injected in tick saliva; enters red blood cells at once",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "trophozoite and merozoite",
+            "location": "divide inside red blood cells and burst them to infect more",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "gametocyte",
+            "location": "red blood cells, taken up by a feeding tick",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "gamete and zygote",
+            "location": "tick gut lumen and gut wall",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "salivary gland sporozoite",
+            "location": "formed in the tick salivary glands",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "trophozoite and merozoite",
+        "diagnosticTests": [
+          {
+            "name": "blood smear",
+            "sample": "blood"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          },
+          {
+            "name": "PCR",
+            "sample": "blood"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Piroplasms (Babesia caballi and Theileria equi)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Babesiosis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/babesiosis-in-animals",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Babesiosis",
+          "url": "https://www.cdc.gov/dpdx/babesiosis/index.html",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Piroplasms (Babesia caballi and Theileria equi)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php",
+          "note": "Course states mammals as definitive hosts; reference gives ticks."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Babesiosis",
+          "url": "https://www.cdc.gov/dpdx/babesiosis/index.html",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Babesiosis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/babesiosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "MSD Veterinary Manual: Babesiosis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/babesiosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "CDC DPDx: Babesiosis",
+          "url": "https://www.cdc.gov/dpdx/babesiosis/index.html",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "WCVM Learn About Parasites: Piroplasms (Babesia caballi and Theileria equi)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "CDC DPDx: Babesiosis",
+          "url": "https://www.cdc.gov/dpdx/babesiosis/index.html",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Babesiosis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/babesiosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Piroplasms (Babesia caballi and Theileria equi)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "CDC DPDx: Babesiosis",
+          "url": "https://www.cdc.gov/dpdx/babesiosis/index.html",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Babesiosis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/babesiosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Piroplasms (Babesia caballi and Theileria equi)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Babesiosis",
+          "url": "https://www.cdc.gov/dpdx/babesiosis/index.html",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Piroplasms (Babesia caballi and Theileria equi)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Babesia",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5864/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Babesia",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5864/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Babesia",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5864/",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "MSD Veterinary Manual: Babesiosis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/babesiosis-in-animals",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "theileria-spp",
+      "canonicalName": "Theileria spp.",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Apicomplexa",
+        "order": "Piroplasmida",
+        "family": "Theileriidae",
+        "group": "protozoan",
+        "definitiveHosts": ["tick"],
+        "intermediateHosts": [
+          "cattle",
+          "African buffalo",
+          "sheep",
+          "goat",
+          "horse"
+        ],
+        "vectorRole": "Ixodid ticks are the definitive hosts; they pick up piroplasms and pass sporozoites in saliva at the next life stage, not via eggs.",
+        "majorOrgan": "lymph nodes",
+        "onHostStages": ["schizont", "merozoite and piroplasm"],
+        "distribution": "Tropical and subtropical regions, limited by the tick vectors",
+        "significance": "Tick-borne diseases of ruminants; East Coast fever and tropical theileriosis kill many cattle, and some species are lethal to sheep.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "sporozoite",
+            "location": "injected in tick saliva; enters white blood cells",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "schizont",
+            "location": "inside leucocytes, which it drives to divide through the lymphoid system",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "merozoite and piroplasm",
+            "location": "red blood cells, taken up by a feeding tick",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "gamete and zygote",
+            "location": "tick gut",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "salivary gland sporozoite",
+            "location": "formed in the tick salivary glands",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "schizont",
+        "diagnosticTests": [
+          {
+            "name": "cytology",
+            "sample": "lymph node aspirate"
+          },
+          {
+            "name": "blood smear",
+            "sample": "blood"
+          },
+          {
+            "name": "antigen detection",
+            "sample": "lymph node aspirate"
+          },
+          {
+            "name": "PCR",
+            "sample": "lymph node aspirate"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Theileriosis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Piroplasms (Babesia caballi and Theileria equi)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Piroplasms (Babesia caballi and Theileria equi)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php",
+          "note": "Course states cattle, buffalo and sheep as definitive hosts; reference gives ticks."
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "MSD Veterinary Manual: Theileriosis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "MSD Veterinary Manual: Theileriosis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "WCVM Learn About Parasites: Piroplasms (Babesia caballi and Theileria equi)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Theileriosis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "MSD Veterinary Manual: Theileriosis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Theileriosis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Piroplasms (Babesia caballi and Theileria equi)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Theileriosis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Theileria",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5873/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Theileria",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5873/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Theileria",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5873/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "leishmania-infantum",
+      "canonicalName": "Leishmania infantum",
+      "commonName": null,
+      "aliases": ["Leishmania chagasi"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Euglenozoa",
+        "order": "Trypanosomatida",
+        "family": "Trypanosomatidae",
+        "group": "protozoan",
+        "definitiveHosts": ["dog", "canid", "human"],
+        "intermediateHosts": ["sand fly"],
+        "vectorRole": "Female phlebotomine sand flies take up infected macrophages, the parasite develops in the fly gut, and promastigotes enter the skin at the next bite.",
+        "majorOrgan": "haemolymphatic organs",
+        "onHostStages": ["amastigote"],
+        "distribution": "Southern Europe, Africa, Asia, the Middle East, Latin America; US foxhounds",
+        "zoonotic": "yes",
+        "significance": "Main cause of canine leishmaniosis, with skin, eye and systemic disease; kidney failure is the main cause of death. Dogs are the reservoir for people.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "promastigote",
+            "location": "deposited in the skin by a feeding sand fly",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "amastigote",
+            "location": "multiplies in macrophages of spleen, lymph nodes, bone marrow, liver and skin",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "midgut promastigote",
+            "location": "develops and multiplies in the sand fly midgut, then moves to the proboscis",
+            "hostRole": "intermediate"
+          }
+        ],
+        "diagnosticStage": "amastigote",
+        "diagnosticTests": [
+          {
+            "name": "cytology",
+            "sample": "lymph node aspirate"
+          },
+          {
+            "name": "cytology",
+            "sample": "bone marrow aspirate"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          },
+          {
+            "name": "histopathology",
+            "sample": "tissue"
+          },
+          {
+            "name": "PCR",
+            "sample": "bone marrow aspirate"
+          },
+          {
+            "name": "PCR",
+            "sample": "lymph node aspirate"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Leishmaniosis in Dogs",
+          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Leishmania species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/leishmania-species.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Leishmaniasis",
+          "url": "https://www.cdc.gov/dpdx/leishmaniasis/index.html",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Leishmaniosis in Dogs",
+          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Leishmania species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/leishmania-species.php",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "WCVM Learn About Parasites: Leishmania species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/leishmania-species.php",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "CDC DPDx: Leishmaniasis",
+          "url": "https://www.cdc.gov/dpdx/leishmaniasis/index.html",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "CDC DPDx: Leishmaniasis",
+          "url": "https://www.cdc.gov/dpdx/leishmaniasis/index.html",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "MSD Veterinary Manual: Leishmaniosis in Dogs",
+          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Leishmaniosis in Dogs",
+          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "MSD Veterinary Manual: Leishmaniosis in Dogs",
+          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "CDC DPDx: Leishmaniasis",
+          "url": "https://www.cdc.gov/dpdx/leishmaniasis/index.html",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Leishmaniosis in Dogs",
+          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Leishmania species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/leishmania-species.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Leishmaniasis",
+          "url": "https://www.cdc.gov/dpdx/leishmaniasis/index.html",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Leishmaniosis in Dogs",
+          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Leishmaniosis in Dogs",
+          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Leishmania infantum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5671/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Leishmania infantum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5671/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Leishmania infantum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5671/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "MSD Veterinary Manual: Leishmaniosis in Dogs",
+          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Leishmania species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/leishmania-species.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "trypanosoma-spp",
+      "canonicalName": "Trypanosoma spp.",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Euglenozoa",
+        "order": "Trypanosomatida",
+        "family": "Trypanosomatidae",
+        "group": "protozoan",
+        "definitiveHosts": [
+          "cattle",
+          "sheep",
+          "goat",
+          "pig",
+          "horse",
+          "dog",
+          "cat",
+          "camelid",
+          "human"
+        ],
+        "intermediateHosts": ["tsetse fly"],
+        "vectorRole": "Tsetse flies carry most species cyclically, the parasite multiplying in the fly; tabanids and other biting flies spread some mechanically, and T. equiperdum is venereal.",
+        "majorOrgan": "blood",
+        "onHostStages": ["bloodstream trypomastigote"],
+        "distribution": "Mainly sub-Saharan Africa; some species in Latin America and Asia",
+        "zoonotic": "yes",
+        "significance": "Nagana: chronic anaemia, fever and wasting in cattle and other livestock across tsetse areas of Africa; T. brucei subspecies cause sleeping sickness.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "metacyclic trypomastigote",
+            "location": "inoculated into the skin by a feeding tsetse fly",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "bloodstream trypomastigote",
+            "location": "divides by binary fission in blood and lymph, outside cells",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "developmental forms",
+            "location": "multiply in the tsetse fly; the site in the fly varies by species",
+            "hostRole": "intermediate"
+          }
+        ],
+        "diagnosticStage": "bloodstream trypomastigote",
+        "diagnosticTests": [
+          {
+            "name": "blood smear",
+            "sample": "blood"
+          },
+          {
+            "name": "buffy coat examination",
+            "sample": "blood"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          },
+          {
+            "name": "antigen detection",
+            "sample": "blood"
+          },
+          {
+            "name": "PCR",
+            "sample": "blood"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Trypanosomiasis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: African Trypanosomiasis",
+          "url": "https://www.cdc.gov/dpdx/trypanosomiasisafrican/index.html",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Trypanosomiasis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: African Trypanosomiasis",
+          "url": "https://www.cdc.gov/dpdx/trypanosomiasisafrican/index.html",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "MSD Veterinary Manual: Trypanosomiasis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "CDC DPDx: African Trypanosomiasis",
+          "url": "https://www.cdc.gov/dpdx/trypanosomiasisafrican/index.html",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "MSD Veterinary Manual: Trypanosomiasis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Trypanosomiasis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CDC DPDx: African Trypanosomiasis",
+          "url": "https://www.cdc.gov/dpdx/trypanosomiasisafrican/index.html",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "MSD Veterinary Manual: Trypanosomiasis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Trypanosomiasis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Trypanosomiasis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: African Trypanosomiasis",
+          "url": "https://www.cdc.gov/dpdx/trypanosomiasisafrican/index.html",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Trypanosomiasis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: African Trypanosomiasis",
+          "url": "https://www.cdc.gov/dpdx/trypanosomiasisafrican/index.html",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Trypanosoma",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5690/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Trypanosoma",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5690/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Trypanosoma",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5690/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "plasmodium-spp",
+      "canonicalName": "Plasmodium spp.",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Apicomplexa",
+        "order": "Haemosporida",
+        "family": "Plasmodiidae",
+        "group": "protozoan",
+        "definitiveHosts": ["mosquito"],
+        "intermediateHosts": ["bird", "chicken", "turkey"],
+        "vectorRole": "Mosquitoes (Culex, Culiseta or Aedes for bird species) take up gametocytes, host the sexual and sporogonic cycle, and inject sporozoites when feeding.",
+        "majorOrgan": "red blood cells",
+        "onHostStages": [
+          "exoerythrocytic meront",
+          "erythrocytic meront",
+          "gametocyte"
+        ],
+        "distribution": "Worldwide in birds; poultry outbreaks mostly in Africa, Asia and South America",
+        "significance": "Avian malaria: usually silent, but P. gallinaceum and P. durae can kill many commercial chickens or turkeys, and P. relictum threatens wild birds.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "sporozoite",
+            "location": "injected by a feeding mosquito",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "exoerythrocytic meront",
+            "location": "endothelial cells of capillaries in brain, lung, liver and spleen of birds",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "erythrocytic meront",
+            "location": "multiplies asexually inside red blood cells",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "gametocyte",
+            "location": "red blood cells, taken up by a feeding mosquito",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "zygote and ookinete",
+            "location": "mosquito midgut",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "oocyst",
+            "location": "mosquito midgut wall; releases sporozoites that reach the salivary glands",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "gametocyte",
+        "diagnosticTests": [
+          {
+            "name": "blood smear",
+            "sample": "blood"
+          },
+          {
+            "name": "cytology",
+            "sample": "tissue"
+          },
+          {
+            "name": "histopathology",
+            "sample": "tissue"
+          },
+          {
+            "name": "PCR",
+            "sample": "blood"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Plasmodium Infection in Poultry and Other Birds",
+          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Malaria",
+          "url": "https://www.cdc.gov/dpdx/malaria/index.html",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Malaria",
+          "url": "https://www.cdc.gov/dpdx/malaria/index.html",
+          "note": "Course states birds as definitive hosts; reference gives mosquitoes."
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "MSD Veterinary Manual: Plasmodium Infection in Poultry and Other Birds",
+          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "MSD Veterinary Manual: Plasmodium Infection in Poultry and Other Birds",
+          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "CDC DPDx: Malaria",
+          "url": "https://www.cdc.gov/dpdx/malaria/index.html",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Plasmodium Infection in Poultry and Other Birds",
+          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CDC DPDx: Malaria",
+          "url": "https://www.cdc.gov/dpdx/malaria/index.html",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "MSD Veterinary Manual: Plasmodium Infection in Poultry and Other Birds",
+          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Malaria",
+          "url": "https://www.cdc.gov/dpdx/malaria/index.html",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Plasmodium Infection in Poultry and Other Birds",
+          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Plasmodium Infection in Poultry and Other Birds",
+          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Plasmodium",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5820/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Plasmodium",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5820/",
+          "note": "Course states Haemosprida; reference gives Haemosporida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Plasmodium",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5820/",
+          "note": "Course states Plasmodidae; reference gives Plasmodiidae."
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "hepatozoon-canis",
+      "canonicalName": "Hepatozoon canis",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Apicomplexa",
+        "family": "Hepatozoidae",
+        "group": "protozoan",
+        "definitiveHosts": ["Rhipicephalus sanguineus", "tick"],
+        "intermediateHosts": ["dog", "canid"],
+        "vectorRole": "The brown dog tick is the definitive host; dogs are infected by swallowing an infected tick, not by its bite.",
+        "majorOrgan": "bone marrow",
+        "onHostStages": ["meront", "gamont"],
+        "distribution": "Asia, Africa, Europe and the Americas",
+        "significance": "Tick-borne infection of dogs and wild canids, usually mild or subclinical but sometimes causing fever, lethargy and anaemia.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "oocyst",
+            "location": "haemocoel of the tick",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "sporozoite",
+            "location": "released in the dog gut after the tick is swallowed",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "meront",
+            "location": "canine spleen, lymph nodes and bone marrow",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "gamont",
+            "location": "inside circulating leucocytes, taken up by a feeding tick",
+            "hostRole": "intermediate"
+          }
+        ],
+        "diagnosticStage": "gamont",
+        "diagnosticTests": [
+          {
+            "name": "blood smear",
+            "sample": "blood"
+          },
+          {
+            "name": "PCR",
+            "sample": "blood"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Old World Hepatozoonosis and American Canine Hepatozoonosis",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Thomas et al. 2024, Parasites & Vectors 17:108: Hepatozoon in wild mammals of the Americas, a systematic review",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10916324/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Old World Hepatozoonosis and American Canine Hepatozoonosis",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis",
+          "note": "Course states ticks as intermediate hosts; reference gives ticks as definitive hosts."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Thomas et al. 2024, Parasites & Vectors 17:108: Hepatozoon in wild mammals of the Americas, a systematic review",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10916324/",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "MSD Veterinary Manual: Old World Hepatozoonosis and American Canine Hepatozoonosis",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis",
+          "note": "Course also lists cats; cited references do not."
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "Thomas et al. 2024, Parasites & Vectors 17:108: Hepatozoon in wild mammals of the Americas, a systematic review",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10916324/",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "MSD Veterinary Manual: Old World Hepatozoonosis and American Canine Hepatozoonosis",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "Thomas et al. 2024, Parasites & Vectors 17:108: Hepatozoon in wild mammals of the Americas, a systematic review",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10916324/",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Old World Hepatozoonosis and American Canine Hepatozoonosis",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "MSD Veterinary Manual: Old World Hepatozoonosis and American Canine Hepatozoonosis",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Old World Hepatozoonosis and American Canine Hepatozoonosis",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Thomas et al. 2024, Parasites & Vectors 17:108: Hepatozoon in wild mammals of the Americas, a systematic review",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10916324/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Old World Hepatozoonosis and American Canine Hepatozoonosis",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Hepatozoon canis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/110120/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Hepatozoon canis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/110120/",
+          "note": "Course states Coccidea (Coccidia); reference gives Hepatozoidae."
+        }
+      ],
+      "images": []
+    }
+  ]
+}

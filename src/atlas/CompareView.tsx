@@ -11,7 +11,7 @@ import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import AtlasImage, { heroImage } from "./AtlasImage";
 import { compareRows, type CompareValue } from "./compare";
 import { byName, matchesSearch, pppLabel, termLabel } from "./filter";
-import { termList } from "./TermList";
+import TermList from "./TermList";
 import { isPlainClick } from "../nav/navigate";
 import type { AtlasEntryView } from "./types";
 
@@ -51,7 +51,11 @@ function formatValue(v: CompareValue): ReactNode {
     case "range":
       return pppLabel(v.value) ?? NOT_RECORDED;
     case "list":
-      return termList(v.values, { taxa: v.taxa }) ?? "None";
+      return v.values.length === 0 ? (
+        "None"
+      ) : (
+        <TermList terms={v.values} taxa={v.taxa} capitalizeFirst={false} />
+      );
   }
 }
 

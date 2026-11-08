@@ -1,4 +1,10 @@
-import { useEffect, useState, type MouseEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Link from "@mui/material/Link";
@@ -6,8 +12,10 @@ import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import { ApiError, listSubjects, me } from "../api/client";
 import { bundledAtlasSource } from "../atlas/bundledSource";
+import "../atlas/atlasMotion.css";
 import Cabinet from "../atlas/Cabinet";
 import CompareView from "../atlas/CompareView";
+import EntryView from "../atlas/EntryView";
 import {
   atlasCompareHref,
   atlasEntryHref,
@@ -52,10 +60,12 @@ function Notice({
   title,
   message = STILL_BUILDING,
   italic,
+  children,
 }: {
   title: string;
   message?: string;
   italic?: boolean;
+  children?: ReactNode;
 }) {
   return (
     <Paper variant="outlined" sx={{ p: 2.5, maxWidth: 560 }}>
@@ -69,6 +79,7 @@ function Notice({
       <Typography color="text.secondary" sx={{ mt: 1 }}>
         {message}
       </Typography>
+      {children}
     </Paper>
   );
 }
@@ -80,6 +91,11 @@ export default function AtlasPage({
 }: Props) {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // The first-load stagger runs once per page mount, not again on Back from an entry.
+  const staggered = useRef(false);
+  useEffect(() => {
+    if (loaded && route.kind === "cabinet") staggered.current = true;
+  }, [loaded, route.kind]);
 
   useEffect(() => {
     let cancelled = false;
@@ -135,17 +151,28 @@ export default function AtlasPage({
         entryHref={(id) => atlasEntryHref(subjectId, id)}
         onOpenEntry={(id) => navigate(atlasEntryHref(subjectId, id))}
         onCompare={(a, b) => navigate(atlasCompareHref(subjectId, a, b))}
+        stagger={!staggered.current}
       />
     );
   } else if (route.kind === "entry") {
     const entry = loaded.entries.find((e) => e.id === route.key);
     body = entry ? (
-      <Notice title={entry.canonicalName} italic />
+      <EntryView
+        entry={entry}
+        entries={loaded.entries}
+        entryHref={(id) => atlasEntryHref(subjectId, id)}
+        onOpen={(id) => navigate(atlasEntryHref(subjectId, id))}
+        onStep={(id) => navigateReplace(atlasEntryHref(subjectId, id))}
+      />
     ) : (
       <Notice
         title="This parasite is not in the Atlas"
         message="Check the link, or pick a parasite from the cabinet."
-      />
+      >
+        <Box sx={{ mt: 1.5 }}>
+          <NavLink href={home}>Back to the Parasitology Atlas</NavLink>
+        </Box>
+      </Notice>
     );
   } else {
     body = (
@@ -163,7 +190,7 @@ export default function AtlasPage({
   return (
     <Box
       sx={{
-        maxWidth: 1240,
+        maxWidth: route.kind === "entry" ? 1480 : 1240,
         mx: "auto",
         px: { xs: 2, md: 4 },
         py: { xs: 3, md: 4 },

@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, ViewTransition, type ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
@@ -8,18 +8,21 @@ import { alpha } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import AtlasImage, { heroImage } from "./AtlasImage";
 import { hostSummary, pppLabel, termLabel } from "./filter";
-import { termList } from "./TermList";
+import { atlasHeroName } from "./paths";
+import TermList from "./TermList";
 import type { AtlasEntryView } from "./types";
 
 type Props = {
   entry: AtlasEntryView;
   expanded: boolean;
   dimmed: boolean;
+  staggerIndex?: number;
   onToggle: () => void;
   onOpen: () => void;
 };
 
 const IMAGE_RATIO = "6 / 5";
+const STAGGER_CAP = 12;
 
 function findItAs(entry: AtlasEntryView): string | null {
   const { diagnosticStage, diagnosticTests } = entry.fields;
@@ -33,6 +36,7 @@ export default function SpecimenTile({
   entry,
   expanded,
   dimmed,
+  staggerIndex,
   onToggle,
   onOpen,
 }: Props) {
@@ -73,19 +77,31 @@ export default function SpecimenTile({
           overflow: "hidden",
           minWidth: 0,
           transition: "border-color 180ms ease",
+          ...(staggerIndex !== undefined && {
+            "@keyframes atlasTileUp": {
+              from: { opacity: 0, transform: "translateY(8px)" },
+              to: { opacity: 1, transform: "none" },
+            },
+            animation: `atlasTileUp 360ms cubic-bezier(0.2, 0, 0, 1) ${
+              Math.min(staggerIndex, STAGGER_CAP) * 35
+            }ms both`,
+            "@media (prefers-reduced-motion: reduce)": { animation: "none" },
+          }),
           "&:hover": {
             borderColor: (t) => alpha(t.palette.primary.main, 0.45),
           },
         }}
       >
-        <AtlasImage
-          image={hero}
-          ratio={IMAGE_RATIO}
-          sx={{
-            opacity: dimmed ? 0.45 : 1,
-            transition: "opacity 220ms ease",
-          }}
-        />
+        <ViewTransition name={atlasHeroName(entry.id)} share="atlas-morph">
+          <AtlasImage
+            image={hero}
+            ratio={IMAGE_RATIO}
+            sx={{
+              opacity: dimmed ? 0.45 : 1,
+              transition: "opacity 220ms ease",
+            }}
+          />
+        </ViewTransition>
         <Box sx={{ px: 1.25, pt: 1, pb: 1.25, minWidth: 0 }}>
           <Typography
             sx={{
@@ -113,8 +129,8 @@ export default function SpecimenTile({
   }
 
   const rows: [string, ReactNode][] = [
-    ["Hosts", termList(fields.definitiveHosts, { max: 4 })],
-    ["Intermediate", termList(fields.intermediateHosts, { max: 3 })],
+    ["Hosts", <TermList terms={fields.definitiveHosts} max={4} />],
+    ["Intermediate", <TermList terms={fields.intermediateHosts} max={3} />],
     ["Site", fields.majorOrgan && termLabel(fields.majorOrgan)],
     ["PPP", pppLabel(fields.pppDays)],
     ["Find it as", findItAs(entry)],
@@ -141,14 +157,16 @@ export default function SpecimenTile({
         "@media (prefers-reduced-motion: reduce)": { animation: "none" },
       }}
     >
-      <AtlasImage
-        image={hero}
-        ratio={IMAGE_RATIO}
-        sx={{
-          height: { md: "100%" },
-          aspectRatio: { xs: "16 / 9", md: "auto" },
-        }}
-      />
+      <ViewTransition name={atlasHeroName(entry.id)} share="atlas-morph">
+        <AtlasImage
+          image={hero}
+          ratio={IMAGE_RATIO}
+          sx={{
+            height: { md: "100%" },
+            aspectRatio: { xs: "16 / 9", md: "auto" },
+          }}
+        />
+      </ViewTransition>
       <Box sx={{ p: 2, minWidth: 0, position: "relative" }}>
         <IconButton
           ref={closeRef}
