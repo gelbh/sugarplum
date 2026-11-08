@@ -34,7 +34,7 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in feces"
+            "location": "passed in faeces"
           },
           {
             "name": "miracidium",
@@ -68,8 +68,8 @@
         "diagnosticStage": "egg",
         "diagnosticTests": [
           {
-            "name": "fecal sedimentation",
-            "sample": "feces"
+            "name": "faecal sedimentation",
+            "sample": "faeces"
           },
           {
             "name": "antibody detection",
@@ -173,7 +173,7 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in feces"
+            "location": "passed in faeces"
           },
           {
             "name": "miracidium",
@@ -207,8 +207,8 @@
         "diagnosticStage": "egg",
         "diagnosticTests": [
           {
-            "name": "fecal egg microscopy",
-            "sample": "feces"
+            "name": "faecal egg microscopy",
+            "sample": "faeces"
           },
           {
             "name": "antibody detection",
@@ -293,7 +293,7 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in feces"
+            "location": "passed in faeces"
           },
           {
             "name": "miracidium",
@@ -327,8 +327,8 @@
         "diagnosticStage": "egg",
         "diagnosticTests": [
           {
-            "name": "fecal sedimentation",
-            "sample": "feces"
+            "name": "faecal sedimentation",
+            "sample": "faeces"
           },
           {
             "name": "post-mortem examination",
@@ -408,7 +408,7 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "shed in feces with a miracidium inside"
+            "location": "shed in faeces with a miracidium inside"
           },
           {
             "name": "miracidium",
@@ -438,8 +438,8 @@
         "diagnosticStage": "egg",
         "diagnosticTests": [
           {
-            "name": "fecal flotation",
-            "sample": "feces"
+            "name": "faecal flotation",
+            "sample": "faeces"
           },
           {
             "name": "post-mortem examination",
@@ -483,6 +483,18 @@
           "citation": "CDC DPDx: Dicrocoeliasis",
           "url": "https://www.cdc.gov/dpdx/dicrocoeliasis/index.html",
           "note": "Course states liver; adults live in the bile ducts."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Dicrocoelium dendriticum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dicrocoelium-dendriticum.php",
+          "note": "Course also lists goats, horses and camelids; cited references do not."
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Dicrocoelium dendriticum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dicrocoelium-dendriticum.php",
+          "note": "Course states worldwide; references give Eurasia, North Africa and parts of North America."
         },
         {
           "field": "pppDays",
@@ -538,8 +550,8 @@
         "diagnosticStage": "egg",
         "diagnosticTests": [
           {
-            "name": "fecal egg microscopy",
-            "sample": "feces"
+            "name": "faecal egg microscopy",
+            "sample": "faeces"
           }
         ]
       },
@@ -637,7 +649,7 @@
       "key": "fasciolopsis-buski",
       "canonicalName": "Fasciolopsis buski",
       "commonName": "Large intestinal fluke",
-      "aliases": [],
+      "aliases": ["Fasciolopsis buskii"],
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
@@ -659,7 +671,7 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in feces"
+            "location": "passed in faeces"
           },
           {
             "name": "miracidium",
@@ -689,8 +701,8 @@
         "diagnosticStage": "egg",
         "diagnosticTests": [
           {
-            "name": "fecal egg microscopy",
-            "sample": "feces"
+            "name": "faecal egg microscopy",
+            "sample": "faeces"
           }
         ]
       },
@@ -748,7 +760,7 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in feces, already embryonated"
+            "location": "passed in faeces, already embryonated"
           },
           {
             "name": "miracidium",
@@ -778,8 +790,8 @@
         "diagnosticStage": "egg",
         "diagnosticTests": [
           {
-            "name": "fecal egg microscopy",
-            "sample": "feces"
+            "name": "faecal egg microscopy",
+            "sample": "faeces"
           },
           {
             "name": "antibody detection",
@@ -847,7 +859,7 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in feces, already embryonated"
+            "location": "passed in faeces, already embryonated"
           },
           {
             "name": "miracidium",
@@ -877,8 +889,8 @@
         "diagnosticStage": "egg",
         "diagnosticTests": [
           {
-            "name": "fecal egg microscopy",
-            "sample": "feces"
+            "name": "faecal egg microscopy",
+            "sample": "faeces"
           }
         ]
       },
@@ -900,6 +912,12 @@
           "citation": "CDC DPDx: Opisthorchiasis",
           "url": "https://www.cdc.gov/dpdx/opisthorchiasis/index.html",
           "note": "Course states small intestine; reference places adults in the bile and pancreatic ducts."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Opisthorchiasis",
+          "url": "https://www.cdc.gov/dpdx/opisthorchiasis/index.html",
+          "note": "Course also lists pigs; cited references do not."
         },
         {
           "field": "pppDays",
@@ -950,7 +968,7 @@
           "Neotricula aperta"
         ],
         "majorOrgan": "blood vessels",
-        "onHostStages": ["schistosomulum", "adult worm"],
+        "onHostStages": ["schistosomulum", "adult fluke"],
         "distribution": "Africa, Asia, parts of South America, the Middle East and Corsica",
         "zoonotic": "yes",
         "significance": "S. bovis is the usual cattle species, often silent but sapping meat and milk yield; livestock and hybrid strains can infect people.",
@@ -958,7 +976,7 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in feces or urine"
+            "location": "passed in faeces or urine"
           },
           {
             "name": "miracidium",
@@ -977,15 +995,15 @@
             "location": "veins, lungs and liver"
           },
           {
-            "name": "adult worm",
+            "name": "adult fluke",
             "location": "mesenteric or bladder venules"
           }
         ],
         "diagnosticStage": "egg",
         "diagnosticTests": [
           {
-            "name": "fecal egg microscopy",
-            "sample": "feces"
+            "name": "faecal egg microscopy",
+            "sample": "faeces"
           },
           {
             "name": "urine sediment microscopy",
