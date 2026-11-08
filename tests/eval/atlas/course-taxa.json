@@ -1,0 +1,773 @@
+{
+  "source": "AB2 Parasitology lecture pack (R(D)SVS / Moredun), 2026 cohort. Lecture PDFs are not committed; one entry per course taxon with the lecture code and 1-based page of its species table. T01 is tutorial 1; EXT marks arthropods added from standard UK veterinary references (page 0).",
+  "taxa": [
+    {
+      "canonicalName": "Entamoeba histolytica",
+      "lecture": "PA03",
+      "page": 5,
+      "file": "protozoa"
+    },
+    {
+      "canonicalName": "Giardia duodenalis",
+      "lecture": "PA03",
+      "page": 8,
+      "file": "protozoa"
+    },
+    {
+      "canonicalName": "Balantidium coli",
+      "lecture": "PA03",
+      "page": 11,
+      "file": "protozoa"
+    },
+    {
+      "canonicalName": "Eimeria spp.",
+      "lecture": "PA03",
+      "page": 15,
+      "file": "protozoa"
+    },
+    {
+      "canonicalName": "Cryptosporidium spp.",
+      "lecture": "PA03",
+      "page": 21,
+      "file": "protozoa"
+    },
+    {
+      "canonicalName": "Tritrichomonas foetus",
+      "lecture": "PA03",
+      "page": 26,
+      "file": "protozoa"
+    },
+    {
+      "canonicalName": "Histomonas meleagridis",
+      "lecture": "PA03",
+      "page": 28,
+      "file": "protozoa"
+    },
+    {
+      "canonicalName": "Encephalitozoon cuniculi",
+      "lecture": "PA03",
+      "page": 31,
+      "file": "protozoa"
+    },
+    {
+      "canonicalName": "Toxoplasma gondii",
+      "lecture": "PA04",
+      "page": 4,
+      "file": "protozoa"
+    },
+    {
+      "canonicalName": "Neospora caninum",
+      "lecture": "PA04",
+      "page": 15,
+      "file": "protozoa"
+    },
+    {
+      "canonicalName": "Sarcocystis spp.",
+      "lecture": "PA04",
+      "page": 23,
+      "file": "protozoa"
+    },
+    {
+      "canonicalName": "Besnoitia besnoiti",
+      "lecture": "PA04",
+      "page": 29,
+      "file": "protozoa"
+    },
+    {
+      "canonicalName": "Babesia spp.",
+      "lecture": "PA05",
+      "page": 5,
+      "file": "protozoa"
+    },
+    {
+      "canonicalName": "Theileria spp.",
+      "lecture": "PA05",
+      "page": 10,
+      "file": "protozoa"
+    },
+    {
+      "canonicalName": "Leishmania infantum",
+      "lecture": "PA05",
+      "page": 16,
+      "file": "protozoa"
+    },
+    {
+      "canonicalName": "Trypanosoma spp.",
+      "lecture": "PA05",
+      "page": 21,
+      "file": "protozoa"
+    },
+    {
+      "canonicalName": "Plasmodium spp.",
+      "lecture": "PA05",
+      "page": 27,
+      "file": "protozoa"
+    },
+    {
+      "canonicalName": "Hepatozoon canis",
+      "lecture": "PA05",
+      "page": 29,
+      "file": "protozoa"
+    },
+    {
+      "canonicalName": "Teladorsagia circumcincta",
+      "lecture": "PA07",
+      "page": 15,
+      "file": "nematodes-ruminant"
+    },
+    {
+      "canonicalName": "Haemonchus contortus",
+      "lecture": "PA07",
+      "page": 17,
+      "file": "nematodes-ruminant"
+    },
+    {
+      "canonicalName": "Trichostrongylus spp.",
+      "lecture": "PA07",
+      "page": 19,
+      "file": "nematodes-ruminant"
+    },
+    {
+      "canonicalName": "Strongyloides papillosus",
+      "lecture": "PA07",
+      "page": 22,
+      "file": "nematodes-ruminant"
+    },
+    {
+      "canonicalName": "Bunostomum trigonocephalum",
+      "lecture": "PA07",
+      "page": 23,
+      "file": "nematodes-ruminant"
+    },
+    {
+      "canonicalName": "Capillaria longipes",
+      "lecture": "PA07",
+      "page": 23,
+      "file": "nematodes-ruminant"
+    },
+    {
+      "canonicalName": "Chabertia ovina",
+      "lecture": "PA07",
+      "page": 23,
+      "file": "nematodes-ruminant"
+    },
+    {
+      "canonicalName": "Oesophagostomum venulosum",
+      "lecture": "PA07",
+      "page": 23,
+      "file": "nematodes-ruminant"
+    },
+    {
+      "canonicalName": "Trichuris ovis",
+      "lecture": "PA07",
+      "page": 23,
+      "file": "nematodes-ruminant"
+    },
+    {
+      "canonicalName": "Nematodirus battus",
+      "lecture": "PA07",
+      "page": 24,
+      "file": "nematodes-ruminant"
+    },
+    {
+      "canonicalName": "Muellerius capillaris",
+      "lecture": "PA07",
+      "page": 26,
+      "file": "nematodes-ruminant"
+    },
+    {
+      "canonicalName": "Protostrongylus rufescens",
+      "lecture": "PA07",
+      "page": 26,
+      "file": "nematodes-ruminant"
+    },
+    {
+      "canonicalName": "Dictyocaulus filaria",
+      "lecture": "PA07",
+      "page": 27,
+      "file": "nematodes-ruminant"
+    },
+    {
+      "canonicalName": "Ostertagia ostertagi",
+      "lecture": "PA07",
+      "page": 32,
+      "file": "nematodes-ruminant"
+    },
+    {
+      "canonicalName": "Dictyocaulus viviparus",
+      "lecture": "PA07",
+      "page": 38,
+      "file": "nematodes-ruminant"
+    },
+    {
+      "canonicalName": "Onchocerca ochengi",
+      "lecture": "PA07",
+      "page": 43,
+      "file": "nematodes-ruminant"
+    },
+    {
+      "canonicalName": "Parascaris equorum",
+      "lecture": "PA08",
+      "page": 8,
+      "file": "nematodes-equine-pig"
+    },
+    {
+      "canonicalName": "Strongyloides westeri",
+      "lecture": "PA08",
+      "page": 10,
+      "file": "nematodes-equine-pig"
+    },
+    {
+      "canonicalName": "Cylicostephanus longibursatus",
+      "lecture": "PA08",
+      "page": 13,
+      "file": "nematodes-equine-pig"
+    },
+    {
+      "canonicalName": "Strongylus equinus",
+      "lecture": "PA08",
+      "page": 14,
+      "file": "nematodes-equine-pig"
+    },
+    {
+      "canonicalName": "Strongylus edentatus",
+      "lecture": "PA08",
+      "page": 15,
+      "file": "nematodes-equine-pig"
+    },
+    {
+      "canonicalName": "Strongylus vulgaris",
+      "lecture": "PA08",
+      "page": 16,
+      "file": "nematodes-equine-pig"
+    },
+    {
+      "canonicalName": "Oxyuris equi",
+      "lecture": "PA08",
+      "page": 21,
+      "file": "nematodes-equine-pig"
+    },
+    {
+      "canonicalName": "Habronema spp.",
+      "lecture": "PA08",
+      "page": 22,
+      "file": "nematodes-equine-pig"
+    },
+    {
+      "canonicalName": "Draschia megastoma",
+      "lecture": "PA08",
+      "page": 22,
+      "file": "nematodes-equine-pig"
+    },
+    {
+      "canonicalName": "Parafilaria multipapillosa",
+      "lecture": "PA08",
+      "page": 23,
+      "file": "nematodes-equine-pig"
+    },
+    {
+      "canonicalName": "Onchocerca cervicalis",
+      "lecture": "PA08",
+      "page": 23,
+      "file": "nematodes-equine-pig"
+    },
+    {
+      "canonicalName": "Thelazia lacrymalis",
+      "lecture": "PA08",
+      "page": 25,
+      "file": "nematodes-equine-pig"
+    },
+    {
+      "canonicalName": "Dictyocaulus arnfieldi",
+      "lecture": "PA08",
+      "page": 26,
+      "file": "nematodes-equine-pig"
+    },
+    {
+      "canonicalName": "Metastrongylus apri",
+      "lecture": "PA08",
+      "page": 29,
+      "file": "nematodes-equine-pig"
+    },
+    {
+      "canonicalName": "Hyostrongylus rubidus",
+      "lecture": "PA08",
+      "page": 30,
+      "file": "nematodes-equine-pig"
+    },
+    {
+      "canonicalName": "Ascaris suum",
+      "lecture": "PA08",
+      "page": 31,
+      "file": "nematodes-equine-pig"
+    },
+    {
+      "canonicalName": "Strongyloides ransomi",
+      "lecture": "PA08",
+      "page": 34,
+      "file": "nematodes-equine-pig"
+    },
+    {
+      "canonicalName": "Trichuris suis",
+      "lecture": "PA08",
+      "page": 36,
+      "file": "nematodes-equine-pig"
+    },
+    {
+      "canonicalName": "Trichinella spiralis",
+      "lecture": "PA08",
+      "page": 37,
+      "file": "nematodes-equine-pig"
+    },
+    {
+      "canonicalName": "Toxocara canis",
+      "lecture": "PA09",
+      "page": 8,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Toxocara cati",
+      "lecture": "PA09",
+      "page": 14,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Toxascaris leonina",
+      "lecture": "PA09",
+      "page": 14,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Ancylostoma caninum",
+      "lecture": "PA09",
+      "page": 16,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Uncinaria stenocephala",
+      "lecture": "PA09",
+      "page": 17,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Strongyloides stercoralis",
+      "lecture": "PA09",
+      "page": 21,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Trichuris vulpis",
+      "lecture": "PA09",
+      "page": 21,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Crenosoma vulpis",
+      "lecture": "PA09",
+      "page": 24,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Oslerus osleri",
+      "lecture": "PA09",
+      "page": 25,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Filaroides hirthi",
+      "lecture": "PA09",
+      "page": 25,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Aelurostrongylus abstrusus",
+      "lecture": "PA09",
+      "page": 26,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Angiostrongylus vasorum",
+      "lecture": "PA09",
+      "page": 27,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Dirofilaria immitis",
+      "lecture": "PA09",
+      "page": 30,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Dirofilaria repens",
+      "lecture": "PA09",
+      "page": 30,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Capillaria aerophila",
+      "lecture": "PA09",
+      "page": 36,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Capillaria plica",
+      "lecture": "PA09",
+      "page": 36,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Spirocerca lupi",
+      "lecture": "PA09",
+      "page": 37,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Linguatula serrata",
+      "lecture": "PA09",
+      "page": 38,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Ascaridia galli",
+      "lecture": "PA09",
+      "page": 40,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Heterakis gallinarum",
+      "lecture": "PA09",
+      "page": 40,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Syngamus trachea",
+      "lecture": "PA09",
+      "page": 41,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Anisakis simplex",
+      "lecture": "PA09",
+      "page": 43,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Contracaecum osculatum",
+      "lecture": "PA09",
+      "page": 43,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Pseudoterranova decipiens",
+      "lecture": "PA09",
+      "page": 43,
+      "file": "nematodes-companion-poultry"
+    },
+    {
+      "canonicalName": "Anoplocephala perfoliata",
+      "lecture": "PA11",
+      "page": 7,
+      "file": "cestodes"
+    },
+    {
+      "canonicalName": "Dipylidium caninum",
+      "lecture": "PA11",
+      "page": 9,
+      "file": "cestodes"
+    },
+    {
+      "canonicalName": "Davainea proglottina",
+      "lecture": "PA11",
+      "page": 10,
+      "file": "cestodes"
+    },
+    {
+      "canonicalName": "Raillietina spp.",
+      "lecture": "PA11",
+      "page": 10,
+      "file": "cestodes"
+    },
+    {
+      "canonicalName": "Moniezia expansa",
+      "lecture": "PA11",
+      "page": 11,
+      "file": "cestodes"
+    },
+    {
+      "canonicalName": "Taenia hydatigena",
+      "lecture": "PA11",
+      "page": 19,
+      "file": "cestodes"
+    },
+    {
+      "canonicalName": "Taenia ovis",
+      "lecture": "PA11",
+      "page": 19,
+      "file": "cestodes"
+    },
+    {
+      "canonicalName": "Taenia multiceps",
+      "lecture": "PA11",
+      "page": 23,
+      "file": "cestodes"
+    },
+    {
+      "canonicalName": "Taenia saginata",
+      "lecture": "PA11",
+      "page": 26,
+      "file": "cestodes"
+    },
+    {
+      "canonicalName": "Taenia solium",
+      "lecture": "PA11",
+      "page": 28,
+      "file": "cestodes"
+    },
+    {
+      "canonicalName": "Echinococcus granulosus",
+      "lecture": "PA11",
+      "page": 30,
+      "file": "cestodes"
+    },
+    {
+      "canonicalName": "Echinococcus multilocularis",
+      "lecture": "PA11",
+      "page": 31,
+      "file": "cestodes"
+    },
+    {
+      "canonicalName": "Diphyllobothrium latum",
+      "lecture": "PA11",
+      "page": 35,
+      "file": "cestodes"
+    },
+    {
+      "canonicalName": "Fasciola hepatica",
+      "lecture": "PA12",
+      "page": 6,
+      "file": "trematodes"
+    },
+    {
+      "canonicalName": "Fasciola gigantica",
+      "lecture": "PA12",
+      "page": 27,
+      "file": "trematodes"
+    },
+    {
+      "canonicalName": "Fascioloides magna",
+      "lecture": "PA12",
+      "page": 28,
+      "file": "trematodes"
+    },
+    {
+      "canonicalName": "Dicrocoelium dendriticum",
+      "lecture": "PA12",
+      "page": 30,
+      "file": "trematodes"
+    },
+    {
+      "canonicalName": "Calicophoron daubneyi",
+      "lecture": "PA12",
+      "page": 31,
+      "file": "trematodes"
+    },
+    {
+      "canonicalName": "Paramphistomum cervi",
+      "lecture": "PA12",
+      "page": 31,
+      "file": "trematodes"
+    },
+    {
+      "canonicalName": "Fasciolopsis buski",
+      "lecture": "PA12",
+      "page": 48,
+      "file": "trematodes"
+    },
+    {
+      "canonicalName": "Clonorchis sinensis",
+      "lecture": "PA12",
+      "page": 49,
+      "file": "trematodes"
+    },
+    {
+      "canonicalName": "Opisthorchis felineus",
+      "lecture": "PA12",
+      "page": 49,
+      "file": "trematodes"
+    },
+    {
+      "canonicalName": "Schistosoma spp.",
+      "lecture": "PA12",
+      "page": 50,
+      "file": "trematodes"
+    },
+    {
+      "canonicalName": "Ctenocephalides felis",
+      "lecture": "T01",
+      "page": 7,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Ctenocephalides canis",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Pulex irritans",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Ixodes ricinus",
+      "lecture": "PA05",
+      "page": 7,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Ixodes hexagonus",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Dermacentor reticulatus",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Rhipicephalus sanguineus",
+      "lecture": "PA05",
+      "page": 29,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Haemaphysalis punctata",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Sarcoptes scabiei",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Psoroptes ovis",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Otodectes cynotis",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Demodex canis",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Cheyletiella spp.",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Chorioptes bovis",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Dermanyssus gallinae",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Trichodectes canis",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Felicola subrostratus",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Bovicola ovis",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Bovicola bovis",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Linognathus vituli",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Lucilia sericata",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Hypoderma bovis",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Oestrus ovis",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Gasterophilus intestinalis",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Culicoides spp.",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Stomoxys calcitrans",
+      "lecture": "T01",
+      "page": 13,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Haematobia irritans",
+      "lecture": "T01",
+      "page": 13,
+      "file": "arthropods"
+    },
+    {
+      "canonicalName": "Musca autumnalis",
+      "lecture": "EXT",
+      "page": 0,
+      "file": "arthropods"
+    }
+  ]
+}
