@@ -154,7 +154,6 @@ export default function LifecycleBoard({ fields }: Props) {
         >
           <Box
             sx={{
-              // Lane names stay put while a long lifecycle scrolls sideways on a phone.
               flex: "none",
               width: LABEL_COL,
               position: "sticky",

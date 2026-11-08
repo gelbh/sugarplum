@@ -60,7 +60,6 @@ export function buildLanes(fields: DatasetFields): Lane[] {
   return [...lanes.values()];
 }
 
-/** Lane index for each stage, in stage order. */
 export function stageLanes(fields: DatasetFields, lanes: Lane[]): number[] {
   return fields.lifecycleStages.map((s) =>
     lanes.findIndex((l) => l.key === laneKey(s)),
