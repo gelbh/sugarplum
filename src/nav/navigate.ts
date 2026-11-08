@@ -1,3 +1,5 @@
+import { atlasHref, matchAtlasPath, subjectHref } from "../atlas/paths";
+
 /** Pathname + search for SPA location equality (query-only study scopes). */
 export function locationKey(href = window.location.href): string {
   const url = new URL(href, window.location.origin);
@@ -69,6 +71,12 @@ export function navigateReplace(path: string): void {
  * is longer.
  */
 export function shellBackHref(pathname: string): string | null {
+  const atlas = matchAtlasPath(pathname);
+  if (atlas) {
+    return atlas.route.kind === "cabinet"
+      ? subjectHref(atlas.subjectId)
+      : atlasHref(atlas.subjectId);
+  }
   if (/^\/library\/(decks|subjects)\/[^/]+\/?$/.test(pathname)) {
     return "/library";
   }

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import AppShell from "./components/AppShell";
 import BareScroll from "./components/BareScroll";
 import DraftReviewPage from "./routes/DraftReviewPage";
@@ -21,6 +21,11 @@ import { subscribeLocation } from "./nav/navigate";
 import { UnlockToastProvider } from "./achievements/UnlockToastProvider";
 import AchievementsPage from "./routes/AchievementsPage";
 import { StudyChromeProvider } from "./study/StudyChromeContext";
+import AtlasLoading from "./atlas/AtlasLoading";
+import { matchAtlasPath } from "./atlas/paths";
+
+// Keeps the dataset and its schemas out of the main chunk.
+const AtlasPage = lazy(() => import("./routes/AtlasPage"));
 
 const SUBJECT_PATH = /^\/library\/subjects\/([^/]+)\/?$/;
 const DECK_PATH = /^\/library\/decks\/([^/]+)\/?$/;
@@ -60,6 +65,18 @@ function AppInner() {
   if (path === "/privacy") return bare(<PrivacyPage />);
   if (path === "/terms") return bare(<TermsPage />);
   if (path === "/data-deletion") return bare(<DataDeletionPage />);
+  const atlasMatch = matchAtlasPath(path);
+  if (atlasMatch) {
+    return shell(
+      <Suspense fallback={<AtlasLoading />}>
+        <AtlasPage
+          key={atlasMatch.subjectId}
+          subjectId={atlasMatch.subjectId}
+          route={atlasMatch.route}
+        />
+      </Suspense>,
+    );
+  }
   const subjectMatch = path.match(SUBJECT_PATH);
   if (subjectMatch) {
     return shell(
