@@ -11,7 +11,9 @@ import {
   RAW_FILES_FOR_TESTS,
 } from "../../../worker/atlas/datasets/parasites";
 import {
+  HOST_ALIASES,
   HOST_TERMS,
+  ORGAN_ALIASES,
   ORGAN_TERMS,
   hostCovers,
   organCovers,
@@ -109,6 +111,50 @@ describe("vocabulary", () => {
     expect(hostCovers("small ruminant", "sheep")).toBe(true);
     expect(hostCovers("sheep", "small ruminant")).toBe(false);
     expect(organCovers("liver", "bile ducts")).toBe(true);
+  });
+
+  it("does not resolve inherited object properties", () => {
+    expect(resolveHost("constructor")).toBeNull();
+    expect(resolveOrgan("toString")).toBeNull();
+  });
+
+  it("points every alias at an existing term", () => {
+    for (const [aliases, terms] of [
+      [HOST_ALIASES, HOST_TERMS],
+      [ORGAN_ALIASES, ORGAN_TERMS],
+    ] as const) {
+      for (const [alias, target] of Object.entries(aliases)) {
+        expect(Object.keys(terms), `${alias} -> ${target}`).toContain(target);
+      }
+    }
+  });
+
+  it("never shadows a term with an alias", () => {
+    for (const [aliases, terms] of [
+      [HOST_ALIASES, HOST_TERMS],
+      [ORGAN_ALIASES, ORGAN_TERMS],
+    ] as const) {
+      const lowered = new Set(Object.keys(terms).map((k) => k.toLowerCase()));
+      for (const alias of Object.keys(aliases)) {
+        expect(lowered.has(alias), alias).toBe(false);
+      }
+    }
+  });
+
+  it("has no cycles in the broader graph", () => {
+    for (const terms of [HOST_TERMS, ORGAN_TERMS]) {
+      const state = new Map<string, "open" | "done">();
+      const visit = (k: string, path: string[]) => {
+        expect(state.get(k), `cycle: ${[...path, k].join(" -> ")}`).not.toBe(
+          "open",
+        );
+        if (state.get(k) === "done") return;
+        state.set(k, "open");
+        for (const b of terms[k]?.broader ?? []) visit(b, [...path, k]);
+        state.set(k, "done");
+      };
+      for (const k of Object.keys(terms)) visit(k, []);
+    }
   });
 
   it("only references terms that exist", () => {

@@ -42,6 +42,10 @@ const HOSTS = new Set([
 ]);
 
 describe("dataset agrees with the hand-checked fixtures", () => {
+  it("checks at least one fixture once a dataset file is authored", () => {
+    if (authoredFiles.size > 0) expect(due.length).toBeGreaterThan(0);
+  });
+
   it("every fixture taxon is in the course manifest", () => {
     for (const f of fixtures)
       expect(fileOf.has(f.canonicalName), f.canonicalName).toBe(true);

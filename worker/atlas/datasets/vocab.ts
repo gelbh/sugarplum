@@ -112,18 +112,21 @@ function lookup(
 ) {
   const lower = raw.trim().toLowerCase();
   const direct = Object.keys(terms).find((k) => k.toLowerCase() === lower);
-  return direct ?? aliases[lower] ?? null;
+  if (direct) return direct;
+  return Object.hasOwn(aliases, lower) ? aliases[lower] : null;
 }
 
 function covers(
   terms: Record<string, Term>,
   general: string,
   specific: string,
+  visited: Set<string> = new Set(),
 ): boolean {
   if (general === specific) return true;
-  return (terms[specific]?.broader ?? []).some((b) =>
-    covers(terms, general, b),
-  );
+  if (visited.has(specific)) return false;
+  visited.add(specific);
+  const term = Object.hasOwn(terms, specific) ? terms[specific] : undefined;
+  return (term?.broader ?? []).some((b) => covers(terms, general, b, visited));
 }
 
 export const resolveHost = (raw: string) =>
