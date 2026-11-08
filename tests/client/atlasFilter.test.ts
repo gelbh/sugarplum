@@ -14,6 +14,7 @@ import {
   ORGAN_TERM_KEYS,
   organCovers,
 } from "../../worker/atlas/datasets/vocab";
+import { PARASITE_GROUPS } from "../../worker/atlas/templates/parasite";
 
 const entries = await bundledAtlasSource.list("subj_1");
 const byId = (id: string) => entries.find((e) => e.id === id)!;
@@ -92,11 +93,11 @@ describe("sortTable", () => {
 describe("groupRows", () => {
   it("orders groups and omits empty ones", () => {
     const rows = groupRows(entries.filter((e) => e.fields.group !== "cestode"));
-    const groups = rows.map((r) => r.group);
-    expect(groups).not.toContain("cestode");
-    expect(groups.indexOf("nematode")).toBeLessThan(
-      groups.indexOf("trematode"),
+    const present = PARASITE_GROUPS.filter(
+      (g) => g !== "cestode" && entries.some((e) => e.fields.group === g),
     );
+    expect(present.length).toBeGreaterThan(1);
+    expect(rows.map((r) => r.group)).toEqual(present);
   });
 });
 
