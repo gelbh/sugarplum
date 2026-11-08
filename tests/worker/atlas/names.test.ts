@@ -7,6 +7,8 @@ describe("normalizeParasiteName", () => {
     ["Telodorsagia circumcinta", "Teladorsagia circumcincta"],
     ["Dictyocaulus viviparous", "Dictyocaulus viviparus"],
     ["Dictylocaulus viviparous", "Dictyocaulus viviparus"],
+    ["Dictyocaulus filariae", "Dictyocaulus filaria"],
+    ["Stronyloides papillosus", "Strongyloides papillosus"],
     ["Stongylus edentates", "Strongylus edentatus"],
     ["Stongylus vulgaris", "Strongylus vulgaris"],
     ["Syngymus trachea", "Syngamus trachea"],

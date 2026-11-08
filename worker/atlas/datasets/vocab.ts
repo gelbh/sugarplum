@@ -57,6 +57,8 @@ export const HOST_TERMS = {
   "Glyptanisus gilberti": { broader: ["aquatic snail"] },
   "Neotricula aperta": { broader: ["aquatic snail"] },
   Formica: { broader: ["ant"] },
+  fly: { broader: ["invertebrate"] },
+  Simulium: { broader: ["fly"] },
 } as const satisfies Vocabulary;
 
 export const ORGAN_TERMS = {
