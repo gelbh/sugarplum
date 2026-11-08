@@ -5,11 +5,17 @@ import {
   loadParasiteDataset,
 } from "../../../worker/atlas/datasets/parasites";
 import {
+  HOST_TERMS,
+  ORGAN_TERMS,
   hostCovers,
   organCovers,
+} from "../../../worker/atlas/datasets/vocab";
+import {
+  HOST_ALIASES,
+  ORGAN_ALIASES,
   resolveHost,
   resolveOrgan,
-} from "../../../worker/atlas/datasets/vocab";
+} from "./fixture-terms";
 
 type Fixture = {
   canonicalName: string;
@@ -103,4 +109,49 @@ describe("dataset agrees with the hand-checked fixtures", () => {
       );
     },
   );
+});
+
+describe("fixture spellings", () => {
+  it("resolves aliases and scientific names", () => {
+    expect(resolveHost("Canids")).toBe("canid");
+    expect(resolveHost("galba truncatula")).toBe("Galba truncatula");
+    expect(resolveOrgan("Pulmonary")).toBe("lungs");
+  });
+
+  it("does not resolve inherited object properties", () => {
+    expect(resolveHost("constructor")).toBeNull();
+    expect(resolveOrgan("toString")).toBeNull();
+  });
+
+  const pairs = [
+    [HOST_ALIASES, HOST_TERMS],
+    [ORGAN_ALIASES, ORGAN_TERMS],
+  ] as const;
+
+  it("points every alias at an existing term", () => {
+    for (const [aliases, terms] of pairs) {
+      for (const [alias, target] of Object.entries(aliases)) {
+        expect(Object.hasOwn(terms, target), `${alias} -> ${target}`).toBe(
+          true,
+        );
+      }
+    }
+  });
+
+  it("writes every alias in lower case", () => {
+    for (const [aliases] of pairs) {
+      for (const alias of Object.keys(aliases)) {
+        expect(alias, alias).toBe(alias.toLowerCase());
+      }
+    }
+  });
+
+  it("never shadows a term with an alias", () => {
+    for (const [aliases, terms] of pairs) {
+      const lowered = new Set(Object.keys(terms).map((k) => k.toLowerCase()));
+      for (const alias of Object.keys(aliases)) {
+        expect(lowered.has(alias), alias).toBe(false);
+      }
+    }
+  });
 });
