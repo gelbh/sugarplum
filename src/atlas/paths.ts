@@ -41,3 +41,9 @@ export const atlasHref = (subjectId: string) =>
 
 export const atlasEntryHref = (subjectId: string, key: string) =>
   `${atlasHref(subjectId)}/entry/${encodeURIComponent(key)}`;
+
+/** Atlas-to-atlas moves run in a transition so `<ViewTransition>` can animate them. */
+export const isAtlasToAtlas = (prev: string, next: string) =>
+  matchAtlasPath(prev) !== null && matchAtlasPath(next) !== null;
+
+export const atlasHeroName = (id: string) => `atlas-hero-${id}`;
