@@ -1,4 +1,12 @@
-import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
+import {
+  lazy,
+  startTransition,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import AppShell from "./components/AppShell";
 import BareScroll from "./components/BareScroll";
 import DraftReviewPage from "./routes/DraftReviewPage";
@@ -22,7 +30,7 @@ import { UnlockToastProvider } from "./achievements/UnlockToastProvider";
 import AchievementsPage from "./routes/AchievementsPage";
 import { StudyChromeProvider } from "./study/StudyChromeContext";
 import AtlasLoading from "./atlas/AtlasLoading";
-import { matchAtlasPath } from "./atlas/paths";
+import { isAtlasToAtlas, matchAtlasPath } from "./atlas/paths";
 
 // Keeps the dataset and its schemas out of the main chunk.
 const AtlasPage = lazy(() => import("./routes/AtlasPage"));
@@ -49,13 +57,29 @@ export default function App() {
   );
 }
 
-function AppInner() {
-  const [loc, setLoc] = useState(() => ({
-    pathname: window.location.pathname,
-    search: window.location.search,
-  }));
+const currentLocation = () => ({
+  pathname: window.location.pathname,
+  search: window.location.search,
+});
 
-  useEffect(() => subscribeLocation(setLoc), []);
+function AppInner() {
+  const [loc, setLoc] = useState(currentLocation);
+  const pathRef = useRef(loc.pathname);
+
+  useEffect(
+    () =>
+      subscribeLocation((next) => {
+        const prev = pathRef.current;
+        pathRef.current = next.pathname;
+        if (!isAtlasToAtlas(prev, next.pathname)) {
+          setLoc(next);
+          return;
+        }
+        // React skips view transitions for updates made during a browser Back/Forward popstate.
+        setTimeout(() => startTransition(() => setLoc(currentLocation())), 0);
+      }),
+    [],
+  );
 
   const path = loc.pathname;
 

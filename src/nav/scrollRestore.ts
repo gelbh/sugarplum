@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 import { currentEntryKey } from "./navigate";
 
 const STORAGE_KEY = "sugarplum.mainScroll";
@@ -111,6 +111,7 @@ export function useMainScrollRestore(
   mainRef: RefObject<HTMLElement | null>,
 ): void {
   const entryKey = currentEntryKey();
+  const shownKey = useRef(entryKey);
 
   useEffect(() => {
     const main = mainRef.current;
@@ -125,6 +126,8 @@ export function useMainScrollRestore(
       "scroll",
       () => {
         const key = currentEntryKey();
+        // A deferred (transition) navigation updates history before the page renders; skip until it does.
+        if (key !== shownKey.current) return;
         if (key !== restoringKey) saveOffset(key, main.scrollTop);
       },
       { passive: true, signal },
@@ -143,6 +146,7 @@ export function useMainScrollRestore(
   useLayoutEffect(() => {
     const main = mainRef.current;
     if (!main) return;
+    shownKey.current = entryKey;
     const target = savedOffset(entryKey) ?? 0;
     main.scrollTo(0, 0);
     if (target === 0) return;
