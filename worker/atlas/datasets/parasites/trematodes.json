@@ -16,7 +16,7 @@
         "intermediateHosts": ["Galba truncatula"],
         "majorOrgan": "bile ducts",
         "onHostStages": ["immature fluke", "adult fluke"],
-        "distribution": "Worldwide, mainly where cattle and sheep graze wet pasture",
+        "distribution": "Worldwide, mainly where cattle and sheep are raised",
         "zoonotic": "yes",
         "significance": "Major liver pathogen of sheep and cattle; people catch it from contaminated aquatic plants such as watercress.",
         "lifecycleType": "indirect",
@@ -83,13 +83,13 @@
           "field": "definitiveHosts",
           "citation": "CDC DPDx: Fascioliasis",
           "url": "https://www.cdc.gov/dpdx/fascioliasis/index.html",
-          "note": "Course adds horses and camelids; CDC lists equids only as occasional aberrant hosts."
+          "note": "Course also lists horses; CDC treats equids as aberrant hosts."
         },
         {
           "field": "intermediateHosts",
           "citation": "Caron et al. 2014, Parasites & Vectors 7:66: lymnaeid snails as intermediate hosts of Fasciola hepatica in Belgium and Luxembourg",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3926267/",
-          "note": "Course names Galba truncatula; WCVM and CDC give the wider snail genus list."
+          "note": null
         },
         {
           "field": "pppDays",
