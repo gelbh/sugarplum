@@ -43,7 +43,7 @@ function NavLink({ href, children }: { href: string; children: string }) {
   );
 }
 
-// PR C replaces this with the lifecycle entry view, PR D with Compare.
+// TODO(tomer): replace with the entry view and Compare when they ship.
 const STILL_BUILDING =
   "This view is still being built. The cabinet has the hosts, site and PPP for now.";
 

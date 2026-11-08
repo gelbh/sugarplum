@@ -28,7 +28,6 @@ function findItAs(entry: AtlasEntryView): string | null {
   return diagnosticStage ? termLabel(diagnosticStage) : test && termLabel(test);
 }
 
-/** Host list with vocabulary taxa ("Trichodectes canis") in italics. */
 function hostList(hosts: string[], max: number): ReactNode {
   if (hosts.length === 0) return null;
   const shown = hosts.slice(0, max);

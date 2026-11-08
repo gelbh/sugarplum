@@ -9,13 +9,11 @@ export function heroImage(entry: AtlasEntryView): AtlasImageView | null {
 
 type Props = {
   image: AtlasImageView | null;
-  /** CSS aspect-ratio for the fixed box; omit to fill the parent. */
   ratio?: string;
   compact?: boolean;
   sx?: SxProps<Theme>;
 };
 
-/** Fixed-ratio image box; shows "No image yet" until step 2 adds dataset images. */
 export default function AtlasImage({ image, ratio, compact, sx }: Props) {
   return (
     <Box
