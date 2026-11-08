@@ -1,21 +1,9 @@
 import type { AtlasEntryView, DatasetFields } from "./types";
 
-export type CompareRowKey =
-  | "group"
-  | "family"
-  | "definitiveHosts"
-  | "intermediateHosts"
-  | "site"
-  | "zoonotic"
-  | "ppp"
-  | "lifecycleType"
-  | "diagnosticStage"
-  | "tests";
-
 /** A list row holds terms; an empty list is a recorded "none". A null scalar is "not recorded". */
 export type CompareValue =
   | { kind: "text"; value: string | null }
-  | { kind: "list"; values: string[] }
+  | { kind: "list"; values: string[]; taxa: boolean }
   | { kind: "range"; value: { min: number; max: number } | null };
 
 export type CompareRow = {
@@ -27,16 +15,19 @@ export type CompareRow = {
 };
 
 const text = (value: string | null): CompareValue => ({ kind: "text", value });
-const list = (values: string[]): CompareValue => ({
+const list = (values: string[], taxa = true): CompareValue => ({
   kind: "list",
   values: [...new Set(values)],
+  taxa,
 });
 
-const ROWS: {
-  key: CompareRowKey;
+type RowDef = {
+  key: string;
   label: string;
   get: (f: DatasetFields) => CompareValue;
-}[] = [
+};
+
+const ROWS = [
   { key: "group", label: "Group", get: (f) => text(f.group) },
   { key: "family", label: "Family", get: (f) => text(f.family) },
   {
@@ -69,9 +60,16 @@ const ROWS: {
   {
     key: "tests",
     label: "Tests",
-    get: (f) => list(f.diagnosticTests.map((t) => t.name)),
+    // Test names include acronyms ("PCR"), not taxa.
+    get: (f) =>
+      list(
+        f.diagnosticTests.map((t) => t.name),
+        false,
+      ),
   },
-];
+] as const satisfies readonly RowDef[];
+
+export type CompareRowKey = (typeof ROWS)[number]["key"];
 
 function sameValue(a: CompareValue, b: CompareValue): boolean {
   if (a.kind === "list" && b.kind === "list") {

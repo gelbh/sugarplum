@@ -1,4 +1,4 @@
-import { Fragment, useMemo, type MouseEvent, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -10,7 +10,9 @@ import Typography from "@mui/material/Typography";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import AtlasImage, { heroImage } from "./AtlasImage";
 import { compareRows, type CompareValue } from "./compare";
-import { isTaxonTerm, matchesSearch, pppLabel, termLabel } from "./filter";
+import { byName, matchesSearch, pppLabel, termLabel } from "./filter";
+import { termList } from "./TermList";
+import { isPlainClick } from "../nav/navigate";
 import type { AtlasEntryView } from "./types";
 
 type Props = {
@@ -23,7 +25,15 @@ type Props = {
 };
 
 const NOT_RECORDED = "Not recorded";
-const LABEL_COL = "200px";
+// Header and rows share one grid so the values line up under each hero.
+const COLUMNS = {
+  display: "grid",
+  gridTemplateColumns: {
+    xs: "repeat(2, minmax(0, 1fr))",
+    md: "200px repeat(2, minmax(0, 1fr))",
+  },
+  columnGap: { xs: 1.25, sm: 2 },
+} as const;
 // Theme callbacks see the light palette under CSS variables; the var follows the scheme.
 const PLUM = "var(--mui-palette-primary-main)";
 
@@ -43,13 +53,7 @@ function formatValue(v: CompareValue): ReactNode {
     case "range":
       return pppLabel(v.value) ?? NOT_RECORDED;
     case "list":
-      if (v.values.length === 0) return "None";
-      return v.values.map((term, i) => (
-        <Fragment key={term}>
-          {i > 0 ? ", " : null}
-          {isTaxonTerm(term) ? <i>{term}</i> : i === 0 ? termLabel(term) : term}
-        </Fragment>
-      ));
+      return termList(v.values, { taxa: v.taxa }) ?? "None";
   }
 }
 
@@ -72,9 +76,10 @@ function SidePicker({
   const options = useMemo(
     () =>
       entries
-        .filter((e) => e.id !== exclude)
-        .sort((x, y) => x.canonicalName.localeCompare(y.canonicalName)),
-    [entries, exclude],
+        // A hand-typed /compare/x/x keeps x listed so the picker value stays valid.
+        .filter((e) => e.id !== exclude || e.id === value?.id)
+        .sort(byName),
+    [entries, exclude, value],
   );
   return (
     <Autocomplete
@@ -124,13 +129,13 @@ function SidePicker({
 function Hero({
   entry,
   missingId,
-  href,
+  entryHref,
   onOpen,
 }: {
   entry: AtlasEntryView | null;
   missingId: string;
-  href: string | null;
-  onOpen: () => void;
+  entryHref: (id: string) => string;
+  onOpen: (id: string) => void;
 }) {
   if (!entry) {
     return (
@@ -142,12 +147,6 @@ function Hero({
       </Paper>
     );
   }
-  const onClick = (ev: MouseEvent<HTMLAnchorElement>) => {
-    if (ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey)
-      return;
-    ev.preventDefault();
-    onOpen();
-  };
   return (
     <Paper variant="outlined" sx={{ overflow: "hidden" }}>
       <AtlasImage
@@ -171,17 +170,19 @@ function Hero({
             {entry.commonName}
           </Typography>
         ) : null}
-        {href ? (
-          <Link
-            href={href}
-            onClick={onClick}
-            underline="hover"
-            variant="body2"
-            sx={{ display: "inline-block", mt: 0.75, fontWeight: 600 }}
-          >
-            Open lifecycle
-          </Link>
-        ) : null}
+        <Link
+          href={entryHref(entry.id)}
+          onClick={(ev) => {
+            if (!isPlainClick(ev)) return;
+            ev.preventDefault();
+            onOpen(entry.id);
+          }}
+          underline="hover"
+          variant="body2"
+          sx={{ display: "inline-block", mt: 0.75, fontWeight: 600 }}
+        >
+          Open lifecycle
+        </Link>
       </Box>
     </Paper>
   );
@@ -205,17 +206,7 @@ export default function CompareView({
 
   return (
     <Stack spacing={2.5}>
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: {
-            xs: "repeat(2, minmax(0, 1fr))",
-            md: `${LABEL_COL} repeat(2, minmax(0, 1fr))`,
-          },
-          columnGap: { xs: 1.25, sm: 2 },
-          rowGap: 1.5,
-        }}
-      >
+      <Box sx={{ ...COLUMNS, rowGap: 1.5 }}>
         <Stack
           direction={{ xs: "row", md: "column" }}
           alignItems={{ xs: "flex-end", md: "flex-start" }}
@@ -270,14 +261,14 @@ export default function CompareView({
         <Hero
           entry={left}
           missingId={a}
-          href={left ? entryHref(left.id) : null}
-          onOpen={() => onOpenEntry(a)}
+          entryHref={entryHref}
+          onOpen={onOpenEntry}
         />
         <Hero
           entry={right}
           missingId={b}
-          href={right ? entryHref(right.id) : null}
-          onOpen={() => onOpenEntry(b)}
+          entryHref={entryHref}
+          onOpen={onOpenEntry}
         />
       </Box>
 
@@ -310,13 +301,8 @@ export default function CompareView({
               key={row.key}
               role="row"
               sx={{
+                ...COLUMNS,
                 position: "relative",
-                display: "grid",
-                gridTemplateColumns: {
-                  xs: "repeat(2, minmax(0, 1fr))",
-                  md: `${LABEL_COL} repeat(2, minmax(0, 1fr))`,
-                },
-                columnGap: { xs: 1.25, sm: 2 },
                 rowGap: 0.25,
                 alignItems: "baseline",
                 px: { xs: 1.5, sm: 2 },

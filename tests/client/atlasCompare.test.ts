@@ -37,6 +37,14 @@ describe("compareRows", () => {
     expect(diff).not.toContain("diagnosticStage");
   });
 
+  it("styles host lists as taxa but never test names", () => {
+    const taxa = Object.fromEntries(
+      rows.map((r) => [r.key, r.a.kind === "list" ? r.a.taxa : null]),
+    );
+    expect(taxa.intermediateHosts).toBe(true);
+    expect(taxa.tests).toBe(false);
+  });
+
   it("finds nothing different when an entry meets itself", () => {
     expect(differing(compareRows(fasciola, fasciola))).toEqual([]);
   });

@@ -37,8 +37,9 @@ export default function ComparePicker({
   const [picked, setPicked] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
-  const a = fixedA ?? picked;
-  const first = a === null ? null : entries.find((e) => e.id === a);
+  // Step comes from a resolved entry, so an unknown fixedA falls back to step 1.
+  const first = entries.find((e) => e.id === (fixedA ?? picked)) ?? null;
+  const a = first?.id ?? null;
 
   const rows = useMemo(
     () =>
@@ -50,10 +51,6 @@ export default function ComparePicker({
     setPicked(null);
     setQuery("");
   };
-  const close = () => {
-    onClose();
-    reset();
-  };
   const choose = (id: string) => {
     if (a === null) {
       setPicked(id);
@@ -62,17 +59,18 @@ export default function ComparePicker({
       return;
     }
     onPick(a, id);
-    reset();
   };
 
   return (
     <Dialog
       open={open}
-      onClose={close}
+      onClose={onClose}
       fullScreen={fullScreen}
       fullWidth
       maxWidth="xs"
       aria-labelledby="atlas-compare-picker-title"
+      // Reset after the fade-out so the list does not jump back to step 1 while visible.
+      slotProps={{ transition: { onExited: reset } }}
     >
       <DialogTitle id="atlas-compare-picker-title" sx={{ pb: 0.5 }}>
         Compare parasites
@@ -169,7 +167,7 @@ export default function ComparePicker({
             Back
           </Button>
         ) : null}
-        <Button onClick={close}>Cancel</Button>
+        <Button onClick={onClose}>Cancel</Button>
       </DialogActions>
     </Dialog>
   );

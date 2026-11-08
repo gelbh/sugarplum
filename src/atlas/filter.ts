@@ -81,7 +81,7 @@ export function applyFilters(
 export const filtersActive = (f: AtlasFilters) =>
   f.groups.length > 0 || f.host !== null || f.organ !== null || f.zoonoticOnly;
 
-const byName = (a: AtlasEntryView, b: AtlasEntryView) =>
+export const byName = (a: AtlasEntryView, b: AtlasEntryView) =>
   a.canonicalName.localeCompare(b.canonicalName);
 
 export function groupRows(

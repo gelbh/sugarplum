@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
@@ -7,7 +7,8 @@ import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import AtlasImage, { heroImage } from "./AtlasImage";
-import { hostSummary, isTaxonTerm, pppLabel, termLabel } from "./filter";
+import { hostSummary, pppLabel, termLabel } from "./filter";
+import { termList } from "./TermList";
 import type { AtlasEntryView } from "./types";
 
 type Props = {
@@ -26,22 +27,6 @@ function findItAs(entry: AtlasEntryView): string | null {
   if (diagnosticStage && test)
     return `${termLabel(diagnosticStage)}, by ${test}`;
   return diagnosticStage ? termLabel(diagnosticStage) : test && termLabel(test);
-}
-
-function hostList(hosts: string[], max: number): ReactNode {
-  if (hosts.length === 0) return null;
-  const shown = hosts.slice(0, max);
-  return (
-    <>
-      {shown.map((h, i) => (
-        <Fragment key={h}>
-          {i > 0 ? ", " : null}
-          {isTaxonTerm(h) ? <i>{h}</i> : i === 0 ? termLabel(h) : h}
-        </Fragment>
-      ))}
-      {hosts.length > max ? ` +${hosts.length - max}` : null}
-    </>
-  );
 }
 
 export default function SpecimenTile({
@@ -128,8 +113,8 @@ export default function SpecimenTile({
   }
 
   const rows: [string, ReactNode][] = [
-    ["Hosts", hostList(fields.definitiveHosts, 4)],
-    ["Intermediate", hostList(fields.intermediateHosts, 3)],
+    ["Hosts", termList(fields.definitiveHosts, { max: 4 })],
+    ["Intermediate", termList(fields.intermediateHosts, { max: 3 })],
     ["Site", fields.majorOrgan && termLabel(fields.majorOrgan)],
     ["PPP", pppLabel(fields.pppDays)],
     ["Find it as", findItAs(entry)],

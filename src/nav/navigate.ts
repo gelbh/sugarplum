@@ -46,6 +46,16 @@ export function currentEntryKey(): string {
   return key;
 }
 
+/** A primary click with no modifier: the SPA handles it; anything else keeps browser link behaviour. */
+export const isPlainClick = (ev: {
+  button: number;
+  metaKey: boolean;
+  ctrlKey: boolean;
+  shiftKey: boolean;
+  altKey: boolean;
+}) =>
+  ev.button === 0 && !ev.metaKey && !ev.ctrlKey && !ev.shiftKey && !ev.altKey;
+
 export function navigate(path: string): void {
   const next = locationKey(new URL(path, window.location.origin).href);
   if (locationKey() === next) return;

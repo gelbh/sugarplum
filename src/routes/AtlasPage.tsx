@@ -17,7 +17,7 @@ import {
 } from "../atlas/paths";
 import type { AtlasEntryView, AtlasSource } from "../atlas/types";
 import { isGuest } from "../guest/session";
-import { navigate, navigateReplace } from "../nav/navigate";
+import { isPlainClick, navigate, navigateReplace } from "../nav/navigate";
 
 type Props = {
   subjectId: string;
@@ -33,8 +33,7 @@ type Loaded = {
 
 function NavLink({ href, children }: { href: string; children: string }) {
   const onClick = (ev: MouseEvent<HTMLAnchorElement>) => {
-    if (ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey)
-      return;
+    if (!isPlainClick(ev)) return;
     ev.preventDefault();
     navigate(href);
   };
@@ -45,7 +44,7 @@ function NavLink({ href, children }: { href: string; children: string }) {
   );
 }
 
-// TODO(tomer): replace with the entry view and Compare when they ship.
+// TODO(tomer): replace with the entry view when it ships.
 const STILL_BUILDING =
   "This view is still being built. The cabinet has the hosts, site and PPP for now.";
 
