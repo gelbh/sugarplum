@@ -167,7 +167,7 @@
         },
         {
           "field": "pppDays",
-          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153, Table 1: GI nematodes of small ruminants",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153/tables/1",
           "note": "Course states PPP 3 weeks; reference gives 15-21 days."
         },
@@ -382,7 +382,7 @@
         },
         {
           "field": "pppDays",
-          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153, Table 1: GI nematodes of small ruminants",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153/tables/1",
           "note": "Course states PPP 2-3 weeks; reference gives 18-21 days."
         },
@@ -638,7 +638,6 @@
         "majorOrgan": "small intestine",
         "onHostStages": ["parasitic adult female"],
         "distribution": "Worldwide in cattle and small ruminants",
-        "zoonotic": null,
         "significance": "Usually minor, but heavy burdens in young animals cause diarrhoea and ill-thrift; hyperinfection has killed weaned calves suddenly, and larvae can pass in milk.",
         "lifecycleType": "direct",
         "pppDays": {
@@ -674,8 +673,8 @@
             "sample": "faeces"
           },
           {
-            "name": "necropsy",
-            "sample": "tissue"
+            "name": "post-mortem examination",
+            "sample": "small intestine"
           }
         ]
       },
@@ -736,13 +735,13 @@
         },
         {
           "field": "distribution",
-          "citation": "Parasitology review: Strongyloides spp. infections of veterinary importance",
+          "citation": "Thamsborg et al. 2017, Parasitology 144:274: Strongyloides infections of veterinary importance",
           "url": "https://www.cambridge.org/core/journals/parasitology/article/strongyloides-spp-infections-of-veterinary-importance/0E052A0C75B34441289883C1A4DDBC51",
           "note": null
         },
         {
           "field": "significance",
-          "citation": "Parasitology review: Strongyloides spp. infections of veterinary importance",
+          "citation": "Thamsborg et al. 2017, Parasitology 144:274: Strongyloides infections of veterinary importance",
           "url": "https://www.cambridge.org/core/journals/parasitology/article/strongyloides-spp-infections-of-veterinary-importance/0E052A0C75B34441289883C1A4DDBC51",
           "note": null
         },
@@ -768,7 +767,7 @@
           "field": "pppDays",
           "citation": "Cornell AHDC: Strongyloides papillosus",
           "url": "https://www.vet.cornell.edu/animal-health-diagnostic-center/veterinary-resources/testing-guidelines/strongyloides-papillosus",
-          "note": "Course states PPP 2-3 weeks; references give 9-10 days."
+          "note": "Course states PPP 2-3 weeks; reference gives 9-10 days."
         },
         {
           "field": "pppDays",
@@ -967,7 +966,7 @@
         },
         {
           "field": "pppDays",
-          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153, Table 1: GI nematodes of small ruminants",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153/tables/1",
           "note": null
         },
@@ -1026,10 +1025,7 @@
         "majorOrgan": "small intestine",
         "onHostStages": ["adult"],
         "distribution": "Reported in sheep in Scotland and goats in Denmark",
-        "zoonotic": null,
         "significance": "Not known to cause disease in small ruminants; usually an incidental finding whose eggs can be mistaken for Trichuris eggs.",
-        "lifecycleType": null,
-        "pppDays": null,
         "lifecycleStages": [
           {
             "name": "egg",
@@ -1053,7 +1049,7 @@
       "refs": [
         {
           "field": null,
-          "citation": "MSD Veterinary Manual: Common GI parasites of small ruminants",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
           "note": null
         },
@@ -1077,7 +1073,7 @@
         },
         {
           "field": "definitiveHosts",
-          "citation": "MSD Veterinary Manual: Common GI parasites of small ruminants",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
           "note": null
         },
@@ -1095,13 +1091,13 @@
         },
         {
           "field": "majorOrgan",
-          "citation": "MSD Veterinary Manual: Common GI parasites of small ruminants",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
           "note": null
         },
         {
           "field": "onHostStages",
-          "citation": "MSD Veterinary Manual: Common GI parasites of small ruminants",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
           "note": null
         },
@@ -1119,19 +1115,19 @@
         },
         {
           "field": "significance",
-          "citation": "MSD Veterinary Manual: Common GI parasites of small ruminants",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
           "note": null
         },
         {
           "field": "lifecycleStages",
-          "citation": "MSD Veterinary Manual: Common GI parasites of small ruminants",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
           "note": null
         },
         {
           "field": "diagnosticStage",
-          "citation": "MSD Veterinary Manual: Common GI parasites of small ruminants",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
           "note": null
         },
@@ -1306,7 +1302,7 @@
         },
         {
           "field": "pppDays",
-          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153, Table 1: GI nematodes of small ruminants",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153/tables/1",
           "note": null
         },
@@ -1357,7 +1353,7 @@
         "definitiveHosts": ["sheep", "goat", "deer", "cattle"],
         "intermediateHosts": [],
         "majorOrgan": "large intestine",
-        "onHostStages": ["adult", "L4"],
+        "onHostStages": ["L4", "adult"],
         "distribution": "Reported in Europe, Canada and Australia",
         "zoonotic": "no",
         "significance": "Eggs look like trichostrongyle eggs on flotation, so counts cannot separate it; larvae sit briefly in the large-gut wall before settling in the lumen.",
@@ -1393,17 +1389,13 @@
           {
             "name": "faecal egg count",
             "sample": "faeces"
-          },
-          {
-            "name": "faecal flotation",
-            "sample": "faeces"
           }
         ]
       },
       "refs": [
         {
           "field": null,
-          "citation": "MSD Veterinary Manual: Common GI parasites of cattle",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
           "note": null
         },
@@ -1439,7 +1431,7 @@
         },
         {
           "field": "definitiveHosts",
-          "citation": "MSD Veterinary Manual: Common GI parasites of cattle",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
           "note": null
         },
@@ -1463,13 +1455,13 @@
         },
         {
           "field": "majorOrgan",
-          "citation": "MSD Veterinary Manual: Common GI parasites of cattle",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
           "note": null
         },
         {
           "field": "onHostStages",
-          "citation": "MSD Veterinary Manual: Common GI parasites of cattle",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
           "note": null
         },
@@ -1505,7 +1497,7 @@
         },
         {
           "field": "significance",
-          "citation": "MSD Veterinary Manual: Common GI parasites of cattle",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
           "note": null
         },
@@ -1517,7 +1509,7 @@
         },
         {
           "field": "pppDays",
-          "citation": "MSD Veterinary Manual: Common GI parasites of cattle",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
           "note": null
         },
@@ -1529,13 +1521,13 @@
         },
         {
           "field": "lifecycleStages",
-          "citation": "MSD Veterinary Manual: Common GI parasites of cattle",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
           "note": null
         },
         {
           "field": "diagnosticStage",
-          "citation": "MSD Veterinary Manual: Common GI parasites of cattle",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
           "note": null
         },
@@ -1547,7 +1539,7 @@
         },
         {
           "field": "diagnosticTests",
-          "citation": "MSD Veterinary Manual: Common GI parasites of cattle",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
           "note": null
         }
@@ -1568,7 +1560,7 @@
         "definitiveHosts": ["sheep", "goat"],
         "intermediateHosts": [],
         "majorOrgan": "large intestine",
-        "onHostStages": ["adult"],
+        "onHostStages": ["larva", "adult"],
         "distribution": "Reported in sheep and goats in Europe and Central Asia",
         "zoonotic": "no",
         "significance": "Heavy burdens are uncommon but can affect lambs and kids, with caecal inflammation, diarrhoea and low plasma protein; the eggs persist on farms.",
@@ -1597,10 +1589,6 @@
         "diagnosticStage": "egg",
         "diagnosticTests": [
           {
-            "name": "faecal flotation",
-            "sample": "faeces"
-          },
-          {
             "name": "faecal egg count",
             "sample": "faeces"
           }
@@ -1609,13 +1597,13 @@
       "refs": [
         {
           "field": null,
-          "citation": "MSD Veterinary Manual: Common GI parasites of cattle",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
           "note": null
         },
         {
           "field": null,
-          "citation": "MSD Veterinary Manual: Common GI parasites of small ruminants",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
           "note": null
         },
@@ -1639,7 +1627,7 @@
         },
         {
           "field": "definitiveHosts",
-          "citation": "MSD Veterinary Manual: Common GI parasites of cattle",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
           "note": null
         },
@@ -1657,19 +1645,19 @@
         },
         {
           "field": "majorOrgan",
-          "citation": "MSD Veterinary Manual: Common GI parasites of small ruminants",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
           "note": null
         },
         {
           "field": "majorOrgan",
-          "citation": "MSD Veterinary Manual: Common GI parasites of cattle",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
           "note": null
         },
         {
           "field": "onHostStages",
-          "citation": "MSD Veterinary Manual: Common GI parasites of cattle",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
           "note": null
         },
@@ -1699,25 +1687,25 @@
         },
         {
           "field": "significance",
-          "citation": "MSD Veterinary Manual: Common GI parasites of small ruminants",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
           "note": null
         },
         {
           "field": "lifecycleType",
-          "citation": "MSD Veterinary Manual: Common GI parasites of cattle",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
           "note": null
         },
         {
           "field": "pppDays",
-          "citation": "MSD Veterinary Manual: Common GI parasites of cattle",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
           "note": null
         },
         {
           "field": "lifecycleStages",
-          "citation": "MSD Veterinary Manual: Common GI parasites of cattle",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
           "note": null
         },
@@ -1729,13 +1717,13 @@
         },
         {
           "field": "diagnosticStage",
-          "citation": "MSD Veterinary Manual: Common GI parasites of cattle",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
           "note": null
         },
         {
           "field": "diagnosticTests",
-          "citation": "MSD Veterinary Manual: Common GI parasites of cattle",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
           "note": null
         },
@@ -1984,8 +1972,8 @@
             "sample": "faeces"
           },
           {
-            "name": "necropsy",
-            "sample": "tissue"
+            "name": "post-mortem examination",
+            "sample": "lungs"
           }
         ]
       },
@@ -2096,7 +2084,7 @@
           "field": "pppDays",
           "citation": "Zafari et al. 2022, Pathogens 11:1392: lungworms of pastoral ruminants in Iran",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9787811/",
-          "note": "Course states 6-10 weeks; reference gives 1-3 months."
+          "note": "Course states PPP 6-10 weeks; reference gives 1-3 months."
         },
         {
           "field": "lifecycleStages",
@@ -2172,8 +2160,8 @@
             "sample": "faeces"
           },
           {
-            "name": "necropsy",
-            "sample": "tissue"
+            "name": "post-mortem examination",
+            "sample": "lungs"
           }
         ]
       },
@@ -2284,7 +2272,7 @@
           "field": "pppDays",
           "citation": "Zafari et al. 2022, Pathogens 11:1392: lungworms of pastoral ruminants in Iran",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9787811/",
-          "note": "Course states 6-10 weeks; reference gives 1-3 months."
+          "note": "Course states PPP 6-10 weeks; reference gives 1-3 months."
         },
         {
           "field": "lifecycleStages",
@@ -2332,7 +2320,6 @@
         "zoonotic": "no",
         "significance": "Common lungworm of sheep and goats in many regions, though a rare cause of disease in Canada; infection brings bronchitis, cough and laboured breathing.",
         "lifecycleType": "direct",
-        "pppDays": null,
         "lifecycleStages": [
           {
             "name": "L1",
@@ -2357,8 +2344,8 @@
             "sample": "faeces"
           },
           {
-            "name": "necropsy",
-            "sample": "tissue"
+            "name": "post-mortem examination",
+            "sample": "lungs"
           }
         ]
       },
@@ -2701,7 +2688,7 @@
         "definitiveHosts": ["cattle"],
         "intermediateHosts": [],
         "majorOrgan": "lungs",
-        "onHostStages": ["adult", "migrating L3"],
+        "onHostStages": ["migrating L3", "adult"],
         "distribution": "Cattle across much of the globe, Canada included",
         "zoonotic": "no",
         "significance": "Causes lung disease, mainly in calves in their first grazing season, with coughing and laboured breathing; deaths occur in some outbreaks.",
@@ -2739,8 +2726,8 @@
             "sample": "faeces"
           },
           {
-            "name": "necropsy",
-            "sample": "tissue"
+            "name": "post-mortem examination",
+            "sample": "lungs"
           },
           {
             "name": "antibody detection",
@@ -2819,7 +2806,7 @@
           "field": "pppDays",
           "citation": "WCVM Learn About Parasites: Dictyocaulus viviparus",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-viviparus.php",
-          "note": "Course states 25-60 days; reference gives 3 to 4 weeks."
+          "note": "Course states PPP 25-60 days; reference gives 3-4 weeks."
         },
         {
           "field": "lifecycleStages",
@@ -2870,10 +2857,8 @@
         "majorOrgan": "skin",
         "onHostStages": ["adult", "microfilaria"],
         "distribution": "African cattle areas with Simulium damnosum, e.g. northern Cameroon",
-        "zoonotic": null,
         "significance": "Forms skin nodules in cattle; the nearest bovine relative of the human river blindness worm, so it serves as that parasite's cattle model.",
         "lifecycleType": "indirect",
-        "pppDays": null,
         "lifecycleStages": [
           {
             "name": "adult",
@@ -2988,7 +2973,7 @@
           "field": "pppDays",
           "citation": "Boussinesq et al. 2020, Parasite 27:36: long-acting ivermectin against Onchocerca ochengi in zebu cattle",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7233116/",
-          "note": "Course also lists a prepatent period of up to a year; cited references do not."
+          "note": "Course states PPP up to 1 year; cited references do not."
         },
         {
           "field": "lifecycleStages",
