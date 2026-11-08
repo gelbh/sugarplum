@@ -3,6 +3,7 @@ const GENUS_FIXES: Record<string, string> = {
   Ancyclostoma: "Ancylostoma",
   Ascarida: "Ascaridia",
   Davainae: "Davainea",
+  Dicrocelium: "Dicrocoelium",
   Dictylocaulus: "Dictyocaulus",
   Eimieria: "Eimeria",
   Fasciolides: "Fascioloides",
