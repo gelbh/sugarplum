@@ -20,7 +20,6 @@ import type { AtlasEntryView } from "./types";
 type Props = {
   open: boolean;
   entries: AtlasEntryView[];
-  /** Skips step 1, for "Compare with…" on an entry. */
   fixedA?: string;
   onClose: () => void;
   onPick: (a: string, b: string) => void;
@@ -37,7 +36,6 @@ export default function ComparePicker({
   const [picked, setPicked] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
-  // Step comes from a resolved entry, so an unknown fixedA falls back to step 1.
   const first = entries.find((e) => e.id === (fixedA ?? picked)) ?? null;
   const a = first?.id ?? null;
 
@@ -69,7 +67,6 @@ export default function ComparePicker({
       fullWidth
       maxWidth="xs"
       aria-labelledby="atlas-compare-picker-title"
-      // Reset after the fade-out so the list does not jump back to step 1 while visible.
       slotProps={{ transition: { onExited: reset } }}
     >
       <DialogTitle id="atlas-compare-picker-title" sx={{ pb: 0.5 }}>

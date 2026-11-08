@@ -1,7 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 import { isTaxonTerm, termLabel } from "./filter";
 
-/** Comma list of vocab terms: taxa in italics (when `taxa`), first word capitalised, `+N` past `max`. */
 export function termList(
   terms: string[],
   { max = Infinity, taxa = true }: { max?: number; taxa?: boolean } = {},

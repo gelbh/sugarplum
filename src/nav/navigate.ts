@@ -46,7 +46,6 @@ export function currentEntryKey(): string {
   return key;
 }
 
-/** A primary click with no modifier: the SPA handles it; anything else keeps browser link behaviour. */
 export const isPlainClick = (ev: {
   button: number;
   metaKey: boolean;

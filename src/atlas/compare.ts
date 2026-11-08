@@ -1,6 +1,5 @@
 import type { AtlasEntryView, DatasetFields } from "./types";
 
-/** A list row holds terms; an empty list is a recorded "none". A null scalar is "not recorded". */
 export type CompareValue =
   | { kind: "text"; value: string | null }
   | { kind: "list"; values: string[]; taxa: boolean }
@@ -60,7 +59,6 @@ const ROWS = [
   {
     key: "tests",
     label: "Tests",
-    // Test names include acronyms ("PCR"), not taxa.
     get: (f) =>
       list(
         f.diagnosticTests.map((t) => t.name),
@@ -86,7 +84,6 @@ function sameValue(a: CompareValue, b: CompareValue): boolean {
   return false;
 }
 
-/** Rows in display order. Lists compare as sets: order and repeats do not count. */
 export function compareRows(
   a: AtlasEntryView,
   b: AtlasEntryView,

@@ -25,7 +25,6 @@ type Props = {
 };
 
 const NOT_RECORDED = "Not recorded";
-// Header and rows share one grid so the values line up under each hero.
 const COLUMNS = {
   display: "grid",
   gridTemplateColumns: {
@@ -34,7 +33,6 @@ const COLUMNS = {
   },
   columnGap: { xs: 1.25, sm: 2 },
 } as const;
-// Theme callbacks see the light palette under CSS variables; the var follows the scheme.
 const PLUM = "var(--mui-palette-primary-main)";
 
 const srOnly = {
@@ -276,7 +274,6 @@ export default function CompareView({
         <Box
           role="table"
           aria-label={`${left.canonicalName} compared with ${right.canonicalName}`}
-          // Remount on a new pair so the differing rows pulse again.
           key={`${a}|${b}`}
           sx={{
             bgcolor: "background.paper",
