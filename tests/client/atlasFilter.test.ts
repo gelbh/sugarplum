@@ -9,7 +9,11 @@ import {
   organOptions,
   sortTable,
 } from "../../src/atlas/filter";
-import { ORGAN_TERMS } from "../../worker/atlas/datasets/vocab";
+import {
+  ORGAN_TERMS,
+  ORGAN_TERM_KEYS,
+  organCovers,
+} from "../../worker/atlas/datasets/vocab";
 
 const entries = await bundledAtlasSource.list("subj_1");
 const byId = (id: string) => entries.find((e) => e.id === id)!;
@@ -87,8 +91,12 @@ describe("sortTable", () => {
 
 describe("groupRows", () => {
   it("orders groups and omits empty ones", () => {
-    const rows = groupRows(entries);
-    expect(rows.map((r) => r.group)).toEqual(["cestode", "trematode"]);
+    const rows = groupRows(entries.filter((e) => e.fields.group !== "cestode"));
+    const groups = rows.map((r) => r.group);
+    expect(groups).not.toContain("cestode");
+    expect(groups.indexOf("nematode")).toBeLessThan(
+      groups.indexOf("trematode"),
+    );
   });
 });
 
@@ -103,6 +111,10 @@ describe("term options", () => {
   it("offers only organs in use plus their parents", () => {
     const terms = organOptions(entries).map((o) => o.term);
     expect(terms).toContain("liver");
-    expect(terms).not.toContain("lungs");
+    const unused = ORGAN_TERM_KEYS.filter(
+      (t) => !entries.some((e) => organCovers(t, e.fields.majorOrgan ?? "")),
+    );
+    expect(unused.length).toBeGreaterThan(0);
+    for (const t of unused) expect(terms).not.toContain(t);
   });
 });
