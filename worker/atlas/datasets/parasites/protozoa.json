@@ -513,7 +513,7 @@
         "onHostStages": ["meront", "gamont"],
         "distribution": "Worldwide",
         "zoonotic": "yes",
-        "significance": "Major cause of diarrhoea in newborn calves, lambs and kids (C. parvum). Oocysts resist chlorine, and zoonotic C. parvum drives waterborne outbreaks in people.",
+        "significance": "Major cause of diarrhoea in newborn calves, lambs and kids. Oocysts resist chlorine; zoonotic C. parvum is a leading cause of human infection.",
         "lifecycleType": "direct",
         "pppDays": {
           "min": 2,
@@ -627,6 +627,24 @@
           "field": "family",
           "citation": "NCBI Taxonomy: Cryptosporidium",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5806/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Cryptosporidiosis in Animals",
+          "url": "https://www.msdvetmanual.com/digestive-system/cryptosporidiosis/cryptosporidiosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Cryptosporidium species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cryptosporidium-species.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Cryptosporidiosis",
+          "url": "https://www.cdc.gov/dpdx/cryptosporidiosis/index.html",
           "note": null
         }
       ],
@@ -1032,11 +1050,11 @@
         "onHostStages": [
           "tachyzoite",
           "tissue cyst with bradyzoites",
-          "intestinal sexual stages"
+          "meront and gamont"
         ],
         "distribution": "Worldwide",
         "zoonotic": "yes",
-        "significance": "Common zoonosis; ewes and does infected in pregnancy often abort, and it endangers unborn children and immunocompromised people.",
+        "significance": "Common zoonosis; ewes and does first infected in pregnancy can abort, and it endangers unborn children and immunocompromised people.",
         "lifecycleType": "indirect",
         "pppDays": {
           "min": 3,
@@ -1046,16 +1064,16 @@
           {
             "name": "unsporulated oocyst",
             "location": "shed in the faeces of the cat or wild felid",
-            "hostRole": "environment"
-          },
-          {
-            "name": "sporulated oocyst",
-            "location": "matures in soil, water or feed and becomes infective",
             "hostRole": "environment",
             "durationDays": {
               "min": 1,
               "max": 5
             }
+          },
+          {
+            "name": "sporulated oocyst",
+            "location": "matures in soil, water or feed and becomes infective",
+            "hostRole": "environment"
           },
           {
             "name": "tachyzoite",
@@ -1080,7 +1098,7 @@
             "sample": "serum"
           },
           {
-            "name": "faecal flotation",
+            "name": "faecal examination for oocysts",
             "sample": "faeces"
           },
           {
@@ -1123,7 +1141,7 @@
           "field": "intermediateHosts",
           "citation": "CDC DPDx: Toxoplasmosis",
           "url": "https://www.cdc.gov/dpdx/toxoplasmosis/index.html",
-          "note": "Course states all vertebrates; reference gives warm-blooded animals (mammals and birds)."
+          "note": "Course states all vertebrates; reference gives most warm-blooded animals."
         },
         {
           "field": "majorOrgan",
@@ -1178,7 +1196,8 @@
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php"
         }
       ],
-      "images": []
+      "images": [],
+      "commonName": null
     },
     {
       "key": "neospora-caninum",
@@ -1321,7 +1340,8 @@
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php"
         }
       ],
-      "images": []
+      "images": [],
+      "commonName": null
     },
     {
       "key": "sarcocystis-spp",
@@ -1483,7 +1503,8 @@
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php"
         }
       ],
-      "images": []
+      "images": [],
+      "commonName": null
     },
     {
       "key": "besnoitia-besnoiti",
@@ -1600,7 +1621,8 @@
           "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals"
         }
       ],
-      "images": []
+      "images": [],
+      "commonName": null
     },
     {
       "key": "babesia-spp",
@@ -1612,7 +1634,7 @@
         "order": "Piroplasmida",
         "family": "Babesiidae",
         "group": "protozoan",
-        "definitiveHosts": ["tick", "Ixodes ricinus"],
+        "definitiveHosts": ["tick"],
         "intermediateHosts": [
           "cattle",
           "horse",
@@ -1624,12 +1646,12 @@
           "rodent",
           "human"
         ],
-        "vectorRole": "Ixodid ticks are the definitive hosts and pass sporozoites in saliva as they feed; large species also pass through tick eggs.",
+        "vectorRole": "Ixodid ticks are the definitive hosts and pass sporozoites in saliva as they feed; many species also pass through tick eggs.",
         "majorOrgan": "red blood cells",
         "onHostStages": ["trophozoite", "merozoite", "gametocyte"],
         "distribution": "Worldwide, wherever competent tick vectors occur",
         "zoonotic": "yes",
-        "significance": "Tick fever: red cell destruction causes fever, anaemia, jaundice and red urine; severe in cattle and horses, also dogs, cats and people.",
+        "significance": "Red cell destruction causes fever, anaemia, jaundice and red urine; severe in cattle and horses, also dogs, cats and people.",
         "lifecycleType": "indirect",
         "lifecycleStages": [
           {
@@ -1775,9 +1797,16 @@
           "field": "family",
           "citation": "NCBI Taxonomy: Babesia",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5864/"
+        },
+        {
+          "field": "distribution",
+          "citation": "MSD Veterinary Manual: Babesiosis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/babesiosis-in-animals",
+          "note": null
         }
       ],
-      "images": []
+      "images": [],
+      "commonName": null
     },
     {
       "key": "theileria-spp",
@@ -1927,7 +1956,8 @@
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5873/"
         }
       ],
-      "images": []
+      "images": [],
+      "commonName": null
     },
     {
       "key": "leishmania-infantum",
@@ -1942,17 +1972,17 @@
         "definitiveHosts": ["dog", "canid", "human"],
         "intermediateHosts": ["sand fly"],
         "vectorRole": "Female phlebotomine sand flies take up infected macrophages, the parasite develops in the fly gut, and promastigotes enter the skin at the next bite.",
-        "majorOrgan": "spleen",
+        "majorOrgan": "haemolymphatic organs",
         "onHostStages": ["amastigote"],
-        "distribution": "Southern Europe, Africa, Asia, the Middle East and Latin America",
+        "distribution": "Southern Europe, Africa, Asia, the Middle East, Latin America; US foxhounds",
         "zoonotic": "yes",
-        "significance": "Main cause of canine leishmaniosis, with skin, eye and systemic disease often ending in kidney failure; dogs are the reservoir for people.",
+        "significance": "Main cause of canine leishmaniosis, with skin, eye and systemic disease; kidney failure is the main cause of death. Dogs are the reservoir for people.",
         "lifecycleType": "indirect",
         "lifecycleStages": [
           {
             "name": "promastigote",
             "location": "deposited in the skin by a feeding sand fly",
-            "hostRole": "intermediate"
+            "hostRole": "definitive"
           },
           {
             "name": "amastigote",
@@ -1981,7 +2011,7 @@
           },
           {
             "name": "PCR",
-            "sample": "bone marrow, lymph node or spleen"
+            "sample": "spleen, marrow or lymph node aspirate"
           }
         ]
       },
@@ -2090,9 +2120,16 @@
           "field": "family",
           "citation": "MSD Veterinary Manual: Leishmaniosis in Dogs",
           "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs"
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Leishmania species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/leishmania-species.php",
+          "note": null
         }
       ],
-      "images": []
+      "images": [],
+      "commonName": null
     },
     {
       "key": "trypanosoma-spp",
@@ -2256,7 +2293,8 @@
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5690/"
         }
       ],
-      "images": []
+      "images": [],
+      "commonName": null
     },
     {
       "key": "plasmodium-spp",
@@ -2421,7 +2459,8 @@
           "note": "Course spells the family Plasmodidae; NCBI gives Plasmodiidae."
         }
       ],
-      "images": []
+      "images": [],
+      "commonName": null
     },
     {
       "key": "hepatozoon-canis",
@@ -2554,7 +2593,8 @@
           "note": "Course lists Coccidea (Coccidia) as the family; NCBI gives Hepatozoidae."
         }
       ],
-      "images": []
+      "images": [],
+      "commonName": null
     }
   ]
 }

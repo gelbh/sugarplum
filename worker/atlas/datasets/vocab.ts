@@ -91,9 +91,10 @@ export const ORGAN_TERMS = {
   "blood vessels": { broader: ["blood"] },
   "red blood cells": { broader: ["blood"] },
   "reproductive tract": { broader: [] },
-  "lymph nodes": { broader: [] },
-  spleen: { broader: [] },
-  "bone marrow": { broader: [] },
+  "haemolymphatic organs": { broader: [] },
+  "lymph nodes": { broader: ["haemolymphatic organs"] },
+  spleen: { broader: ["haemolymphatic organs"] },
+  "bone marrow": { broader: ["haemolymphatic organs"] },
 } as const satisfies Vocabulary;
 
 export type HostTerm = keyof typeof HOST_TERMS;
