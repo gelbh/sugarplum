@@ -128,16 +128,14 @@ export default function EntryView({
         gridTemplateColumns: {
           xs: "minmax(0, 1fr)",
           lg: "240px minmax(0, 1fr)",
-          xl: "240px minmax(0, 1fr) 288px",
         },
-        // The lane board needs the width, so the facts sit below it until xl.
+        // The lane board needs the width, so the facts sit below it at every size.
         gridTemplateAreas: {
           xs: '"head" "board" "side"',
           lg: '"rail head" "rail board" "rail side"',
-          xl: '"rail head head" "rail board side"',
         },
         // The tall sticky rail spans every row; leftover height goes to the last row, not between sections.
-        gridTemplateRows: { lg: "auto auto 1fr", xl: "auto 1fr" },
+        gridTemplateRows: { lg: "auto auto 1fr" },
         alignItems: "start",
       }}
     >

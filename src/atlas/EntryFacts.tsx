@@ -58,7 +58,7 @@ export default function EntryFacts({ entry, refs, onCite }: Props) {
           sx={{
             m: 0,
             mb: -1.25,
-            columnWidth: { xs: "auto", sm: 240, xl: "auto" },
+            columnWidth: { xs: "auto", sm: 240 },
             columnGap: 4,
             "& > div": { breakInside: "avoid", pb: 1.25 },
           }}

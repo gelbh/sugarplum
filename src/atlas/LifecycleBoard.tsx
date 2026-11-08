@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
-import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
 import PauseIcon from "@mui/icons-material/Pause";
@@ -27,7 +26,8 @@ type Props = { fields: DatasetFields };
 const PLAY_STEP_MS = 1200;
 const MARKER_MS = 300;
 const LABEL_COL = { xs: "120px", sm: "148px" };
-const STAGE_MIN_PX = 84;
+// Phones scroll the board, so their columns can fit the longest stage name ("Metacercaria").
+const STAGE_MIN_PX = { xs: 100, sm: 84 };
 const LANE_PX = 72;
 
 const motion = (props: string) => ({
@@ -46,6 +46,8 @@ export default function LifecycleBoard({ fields }: Props) {
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const playRef = useRef<HTMLButtonElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
   const last = stages.length - 1;
 
   useEffect(() => {
@@ -80,7 +82,12 @@ export default function LifecycleBoard({ fields }: Props) {
       if (ev.key === "ArrowRight") stepRef.current(1);
       else if (ev.key === "ArrowLeft") stepRef.current(-1);
       else if (ev.key === " ") {
-        // A focused button turns Space into a click of its own.
+        // Space keeps its page-scroll meaning outside the board; a focused button clicks itself.
+        if (
+          !(ev.target instanceof Node) ||
+          !rootRef.current?.contains(ev.target)
+        )
+          return;
         if (ev.target instanceof Element && ev.target.closest("button,a"))
           return;
         toggleRef.current();
@@ -90,6 +97,30 @@ export default function LifecycleBoard({ fields }: Props) {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
+
+  // On a phone the board scrolls sideways; keep the marker's column in view.
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    const track = scroller?.querySelector<HTMLElement>("[data-track]");
+    if (!scroller || !track || scroller.scrollWidth <= scroller.clientWidth)
+      return;
+    const col = track.clientWidth / Math.max(1, stages.length);
+    const label = track.offsetLeft - scroller.offsetLeft;
+    const left = index * col;
+    const visible = scroller.clientWidth - label;
+    if (
+      left >= scroller.scrollLeft &&
+      left + col <= scroller.scrollLeft + visible
+    )
+      return;
+    const reduce = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    scroller.scrollTo({
+      left: Math.max(0, left - col),
+      behavior: reduce ? "auto" : "smooth",
+    });
+  }, [index, stages.length]);
 
   if (stages.length === 0) {
     return (
@@ -102,27 +133,34 @@ export default function LifecycleBoard({ fields }: Props) {
   const current = stages[index];
   const { lanes, stageLane, axis: ax } = model;
   const span = ax ? stageSpan(fields, index, ax) : null;
-  const trackMin = stages.length * STAGE_MIN_PX;
 
   return (
     <Box
+      ref={rootRef}
+      // Clicking the board focuses it, so Space plays here and still scrolls elsewhere.
+      tabIndex={-1}
+      sx={{ outline: "none" }}
       onPointerDownCapture={(ev) => {
         if (!playRef.current?.contains(ev.target as Node)) setPlaying(false);
       }}
     >
-      <Box sx={{ overflowX: "auto" }}>
+      <Box ref={scrollerRef} sx={{ overflowX: "auto" }}>
+        {/* Flex, not grid: a sticky grid item cannot leave its own column. */}
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: `${LABEL_COL.xs} minmax(${trackMin}px, 1fr)`,
-              sm: `${LABEL_COL.sm} minmax(${trackMin}px, 1fr)`,
+            display: "flex",
+            // As wide as the board needs, so the sticky labels can travel the whole scroll.
+            width: {
+              xs: `max(100%, ${LABEL_COL.xs} + ${stages.length * STAGE_MIN_PX.xs}px)`,
+              sm: `max(100%, ${LABEL_COL.sm} + ${stages.length * STAGE_MIN_PX.sm}px)`,
             },
           }}
         >
           <Box
             sx={{
               // Lane names stay put while a long lifecycle scrolls sideways on a phone.
+              flex: "none",
+              width: LABEL_COL,
               position: "sticky",
               left: 0,
               zIndex: 2,
@@ -165,7 +203,10 @@ export default function LifecycleBoard({ fields }: Props) {
             ))}
           </Box>
           <Box
+            data-track
             sx={{
+              flex: 1,
+              minWidth: 0,
               position: "relative",
               display: "grid",
               gridTemplateColumns: `repeat(${stages.length}, minmax(0, 1fr))`,
@@ -211,7 +252,7 @@ export default function LifecycleBoard({ fields }: Props) {
                   sx={{
                     fontSize: "0.72rem",
                     fontWeight: 700,
-                    color: "primary.main",
+                    color: i === index ? "primary.main" : "text.secondary",
                     fontVariantNumeric: "tabular-nums",
                   }}
                 >
@@ -221,7 +262,7 @@ export default function LifecycleBoard({ fields }: Props) {
                   component="span"
                   sx={{
                     fontSize: "0.82rem",
-                    fontWeight: i === index ? 700 : 600,
+                    fontWeight: 600,
                     lineHeight: 1.2,
                     hyphens: "auto",
                     overflowWrap: "break-word",
@@ -275,7 +316,17 @@ export default function LifecycleBoard({ fields }: Props) {
             ? ` (${durationLabel(current.durationDays)})`
             : null}
         </Typography>
-        <Stack direction="row" gap={1} flexWrap="wrap">
+        <Box
+          sx={{
+            display: { xs: "grid", sm: "flex" },
+            gridTemplateColumns: "1fr 1fr",
+            gridTemplateAreas: '"play play" "prev next"',
+            gap: 1,
+            "& > :nth-of-type(1)": { gridArea: "prev" },
+            "& > :nth-of-type(2)": { gridArea: "play" },
+            "& > :nth-of-type(3)": { gridArea: "next" },
+          }}
+        >
           <Button
             variant="outlined"
             onClick={() => step(-1)}
@@ -299,7 +350,7 @@ export default function LifecycleBoard({ fields }: Props) {
           >
             Next stage
           </Button>
-        </Stack>
+        </Box>
       </Box>
 
       <Box
@@ -311,7 +362,13 @@ export default function LifecycleBoard({ fields }: Props) {
           m: 0,
           mt: 2,
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+          // Balanced rows: 8 stages read as 4 + 4, not 5 + 3.
+          gridTemplateColumns: {
+            xs: "repeat(2, minmax(0, 1fr))",
+            sm: `repeat(${Math.ceil(
+              stages.length / Math.ceil(stages.length / 5),
+            )}, minmax(0, 1fr))`,
+          },
           gap: 1,
         }}
       >
@@ -327,46 +384,75 @@ export default function LifecycleBoard({ fields }: Props) {
                 width: "100%",
                 height: "100%",
                 display: "block",
+                position: "relative",
                 textAlign: "left",
                 px: 1.5,
                 py: 1.25,
                 borderRadius: 1.5,
                 border: 1,
-                borderColor: i === index ? "primary.main" : "divider",
-                bgcolor: (t) =>
-                  i === index
-                    ? alpha(t.palette.primary.main, 0.08)
-                    : "transparent",
-                color: i === index ? "text.primary" : "text.secondary",
+                borderColor: "divider",
+                color: "text.secondary",
                 fontSize: "0.84rem",
                 lineHeight: 1.35,
-                transition:
-                  "border-color 180ms ease, background-color 180ms ease",
               }}
             >
+              <Box
+                aria-hidden
+                sx={{
+                  position: "absolute",
+                  inset: -1,
+                  borderRadius: 1.5,
+                  border: 1,
+                  borderColor: "primary.main",
+                  bgcolor: (t) => alpha(t.palette.primary.main, 0.08),
+                  opacity: i === index ? 1 : 0,
+                  transition: "opacity 180ms ease",
+                  pointerEvents: "none",
+                  "@media (prefers-reduced-motion: reduce)": {
+                    transition: "none",
+                  },
+                }}
+              />
               <Box
                 component="b"
                 sx={{
                   display: "block",
+                  position: "relative",
                   fontSize: "0.74rem",
-                  color: "primary.main",
+                  color: i === index ? "primary.main" : "text.secondary",
                 }}
               >
                 {i + 1}
               </Box>
               <Box
                 component="span"
-                sx={{ fontWeight: 600, color: "text.primary" }}
+                sx={{
+                  position: "relative",
+                  fontWeight: 600,
+                  color: "text.primary",
+                }}
               >
                 {termLabel(s.name)}
               </Box>
-              {s.location ? `, ${s.location}` : null}
+              {s.location ? (
+                <Box component="span" sx={{ position: "relative" }}>
+                  , {s.location}
+                </Box>
+              ) : null}
             </ButtonBase>
           </li>
         ))}
       </Box>
     </Box>
   );
+}
+
+function spanLabel(span: DaySpan, ax: Axis): string {
+  const at = (day: number) =>
+    ax.unit === "weeks" ? Math.round(day / 7) : Math.round(day);
+  const word = ax.unit === "weeks" ? "Week" : "Day";
+  if (span.endDay >= ax.endDay) return `${word} ${at(span.startDay)} onwards`;
+  return `${word}s ${at(span.startDay)} to ${at(span.endDay)}`;
 }
 
 function Timeline({
@@ -381,11 +467,14 @@ function Timeline({
   span: DaySpan | null;
 }) {
   const unit = ax.unit === "weeks" ? "Weeks" : "Days";
+  const rows = ["18px", "22px", ...(ppp ? ["30px"] : []), "auto"];
   return (
     <Box
       sx={{
-        mt: 2.5,
+        mt: 1.5,
+        position: "relative",
         display: "grid",
+        gridTemplateRows: rows.join(" "),
         gridTemplateColumns: {
           xs: `${LABEL_COL.xs} minmax(0, 1fr)`,
           sm: `${LABEL_COL.sm} minmax(0, 1fr)`,
@@ -394,6 +483,47 @@ function Timeline({
         alignItems: "center",
       }}
     >
+      <Box />
+      <Typography
+        aria-hidden
+        sx={{
+          justifySelf: "end",
+          mr: 1.5,
+          fontSize: "0.74rem",
+          fontWeight: 700,
+          color: "primary.main",
+          fontVariantNumeric: "tabular-nums",
+          opacity: span ? 1 : 0,
+          ...motion("opacity"),
+        }}
+      >
+        {span ? spanLabel(span, ax) : "\u00a0"}
+      </Typography>
+      {/* Absolutely placed in the grid area, so it spans the rows without taking a cell. */}
+      <Box
+        aria-hidden
+        sx={{
+          position: "absolute",
+          gridColumn: 2,
+          gridRow: "2 / -1",
+          top: -4,
+          bottom: -4,
+          left: 0,
+          right: 12,
+          transformOrigin: "left",
+          transform: span
+            ? `translateX(${(span.startDay / ax.endDay) * 100}%) scaleX(${
+                (span.endDay - span.startDay) / ax.endDay || 0.01
+              })`
+            : "none",
+          opacity: span ? 1 : 0,
+          bgcolor: (t) => alpha(t.palette.primary.main, 0.12),
+          boxShadow: (t) =>
+            `inset 1.5px 0 0 ${t.palette.primary.main}, inset -1.5px 0 0 ${t.palette.primary.main}`,
+          pointerEvents: "none",
+          ...motion("transform, opacity"),
+        }}
+      />
       <Typography
         color="text.secondary"
         sx={{ fontSize: "0.76rem", lineHeight: 1.25, pr: 1.5 }}
@@ -446,7 +576,7 @@ function Timeline({
                 height: 10,
                 border: "1.5px solid",
                 borderTop: 0,
-                borderColor: "primary.main",
+                borderColor: "text.primary",
                 borderRadius: "0 0 3px 3px",
               }}
             />
@@ -461,7 +591,7 @@ function Timeline({
                 textAlign: "center",
                 fontSize: "0.74rem",
                 fontWeight: 700,
-                color: "primary.main",
+                color: "text.primary",
               }}
             >
               {ppp.label}
@@ -482,22 +612,6 @@ function Timeline({
           gap: 0.5,
         }}
       >
-        <Box
-          aria-hidden
-          sx={{
-            position: "absolute",
-            inset: "-4px 0",
-            transformOrigin: "left",
-            transform: span
-              ? `translateX(${(span.startDay / ax.endDay) * 100}%) scaleX(${
-                  (span.endDay - span.startDay) / ax.endDay || 0.01
-                })`
-              : "none",
-            opacity: span ? 1 : 0,
-            bgcolor: (t) => alpha(t.palette.primary.main, 0.06),
-            ...motion("transform, opacity"),
-          }}
-        />
         {windows.length === 0 ? (
           <Typography color="text.secondary" sx={{ fontSize: "0.8rem" }}>
             No test windows recorded
@@ -517,17 +631,31 @@ function Timeline({
                     top: 0,
                     bottom: 0,
                     borderRadius: 1,
-                    background: (t) =>
-                      `repeating-linear-gradient(135deg, ${alpha(
-                        t.palette.primary.main,
-                        0.24,
-                      )} 0 6px, ${alpha(t.palette.primary.main, 0.08)} 6px 12px)`,
-                    boxShadow: (t) =>
-                      `inset 0 0 0 1.5px ${t.palette.primary.main}`,
-                    opacity: lit ? 1 : 0.45,
-                    ...motion("opacity"),
+                    overflow: "hidden",
+                    // currentColor follows the active scheme; theme callbacks resolve to the light palette.
+                    color: "text.primary",
+                    background:
+                      "repeating-linear-gradient(135deg, color-mix(in srgb, currentColor 14%, transparent) 0 6px, color-mix(in srgb, currentColor 5%, transparent) 6px 12px)",
                   }}
-                />
+                >
+                  <Box
+                    aria-hidden
+                    sx={{
+                      position: "absolute",
+                      inset: 0,
+                      background: (t) =>
+                        `repeating-linear-gradient(135deg, ${alpha(
+                          t.palette.primary.main,
+                          0.28,
+                        )} 0 6px, ${alpha(t.palette.primary.main, 0.1)} 6px 12px)`,
+                      boxShadow: (t) =>
+                        `inset 0 0 0 1.5px ${t.palette.primary.main}`,
+                      borderRadius: 1,
+                      opacity: lit ? 1 : 0,
+                      ...motion("opacity"),
+                    }}
+                  />
+                </Box>
                 <Typography
                   component="span"
                   sx={{
@@ -538,7 +666,7 @@ function Timeline({
                       : { left: pct(w.startDay, ax), pl: 1 }),
                     fontSize: "0.78rem",
                     fontWeight: 700,
-                    color: "primary.main",
+                    color: "text.primary",
                     whiteSpace: "nowrap",
                   }}
                 >
