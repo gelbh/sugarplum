@@ -36,6 +36,17 @@ export const HOST_TERMS: Record<string, Term> = {
   louse: t("invertebrate"),
   "Ctenocephalides felis": t("flea"),
   "Trichodectes canis": t("louse"),
+  "water buffalo": t("ruminant"),
+  camelid: t("mammal"),
+  fish: t("vertebrate"),
+  "freshwater fish": t("fish"),
+  Radix: t("aquatic snail"),
+  "Radix labiata": t("Radix"),
+  Bulinus: t("aquatic snail"),
+  "Planorbis planorbis": t("aquatic snail"),
+  Biomphalaria: t("aquatic snail"),
+  Oncomelania: t("aquatic snail"),
+  Bithynia: t("aquatic snail"),
 };
 
 // Fixture and slide spellings mapped to HOST_TERMS keys (lower-cased lookup).
@@ -80,6 +91,7 @@ export const ORGAN_TERMS: Record<string, Term> = {
   muscle: t(),
   skin: t(),
   blood: t(),
+  "blood vessels": t("blood"),
 };
 
 export const ORGAN_ALIASES: Record<string, string> = {
