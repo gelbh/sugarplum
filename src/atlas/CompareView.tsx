@@ -7,7 +7,6 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { alpha } from "@mui/material/styles";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import AtlasImage, { heroImage } from "./AtlasImage";
 import { compareRows, type CompareValue } from "./compare";
@@ -24,6 +23,9 @@ type Props = {
 };
 
 const NOT_RECORDED = "Not recorded";
+const LABEL_COL = "200px";
+// Theme callbacks see the light palette under CSS variables; the var follows the scheme.
+const PLUM = "var(--mui-palette-primary-main)";
 
 const srOnly = {
   position: "absolute",
@@ -148,7 +150,10 @@ function Hero({
   };
   return (
     <Paper variant="outlined" sx={{ overflow: "hidden" }}>
-      <AtlasImage image={heroImage(entry)} ratio="16 / 10" />
+      <AtlasImage
+        image={heroImage(entry)}
+        sx={{ aspectRatio: { xs: "4 / 3", md: "5 / 2" } }}
+      />
       <Box sx={{ px: { xs: 1.25, sm: 2 }, py: { xs: 1, sm: 1.5 } }}>
         <Typography
           component="h2"
@@ -200,52 +205,54 @@ export default function CompareView({
 
   return (
     <Stack spacing={2.5}>
-      <Stack
-        direction="row"
-        alignItems="flex-end"
-        justifyContent="space-between"
-        gap={2}
-      >
-        <Box sx={{ minWidth: 0 }}>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
-            Compare
-          </Typography>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            aria-live="polite"
-            sx={{ mt: 0.5, fontVariantNumeric: "tabular-nums" }}
-          >
-            {rows
-              ? differCount === 0
-                ? "No rows differ"
-                : `${differCount} of ${rows.length} rows differ`
-              : "Pick two parasites"}
-          </Typography>
-        </Box>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<SwapHorizIcon />}
-          onClick={() => onChange(b, a)}
-          sx={{ bgcolor: "background.paper", flex: "none" }}
-        >
-          Swap
-        </Button>
-      </Stack>
-
       <Box
         sx={{
           display: "grid",
           gridTemplateColumns: {
             xs: "repeat(2, minmax(0, 1fr))",
-            md: "200px repeat(2, minmax(0, 1fr))",
+            md: `${LABEL_COL} repeat(2, minmax(0, 1fr))`,
           },
           columnGap: { xs: 1.25, sm: 2 },
           rowGap: 1.5,
         }}
       >
-        <Box sx={{ display: { xs: "none", md: "block" } }} />
+        <Stack
+          direction={{ xs: "row", md: "column" }}
+          alignItems={{ xs: "flex-end", md: "flex-start" }}
+          justifyContent={{ xs: "space-between", md: "flex-start" }}
+          gap={1.5}
+          sx={{
+            gridColumn: { xs: "1 / -1", md: "auto" },
+            gridRow: { md: "span 2" },
+          }}
+        >
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+              Compare
+            </Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              aria-live="polite"
+              sx={{ mt: 0.5, fontVariantNumeric: "tabular-nums" }}
+            >
+              {rows
+                ? differCount === 0
+                  ? "No rows differ"
+                  : `${differCount} of ${rows.length} rows differ`
+                : "Pick two parasites"}
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<SwapHorizIcon />}
+            onClick={() => onChange(b, a)}
+            sx={{ bgcolor: "background.paper", flex: "none" }}
+          >
+            Swap sides
+          </Button>
+        </Stack>
         <SidePicker
           label="First parasite"
           entries={entries}
@@ -260,7 +267,6 @@ export default function CompareView({
           exclude={a}
           onChange={(id) => onChange(a, id)}
         />
-        <Box sx={{ display: { xs: "none", md: "block" } }} />
         <Hero
           entry={left}
           missingId={a}
@@ -308,10 +314,11 @@ export default function CompareView({
                 display: "grid",
                 gridTemplateColumns: {
                   xs: "repeat(2, minmax(0, 1fr))",
-                  md: "200px repeat(2, minmax(0, 1fr))",
+                  md: `${LABEL_COL} repeat(2, minmax(0, 1fr))`,
                 },
                 columnGap: { xs: 1.25, sm: 2 },
                 rowGap: 0.25,
+                alignItems: "baseline",
                 px: { xs: 1.5, sm: 2 },
                 py: 1.25,
                 borderTop: i === 0 ? 0 : 1,
@@ -322,8 +329,8 @@ export default function CompareView({
                     position: "absolute",
                     inset: 0,
                     pointerEvents: "none",
-                    bgcolor: (t) => alpha(t.palette.primary.main, 0.1),
-                    boxShadow: (t) => `inset 3px 0 0 ${t.palette.primary.main}`,
+                    backgroundColor: `color-mix(in srgb, ${PLUM} 16%, transparent)`,
+                    boxShadow: `inset 3px 0 0 ${PLUM}`,
                     opacity: 0.6,
                     animation: "atlasComparePulse 450ms ease-out both",
                     "@media (prefers-reduced-motion: reduce)": {

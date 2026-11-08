@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -36,6 +36,7 @@ export default function ComparePicker({
   const fullScreen = useMediaQuery((t: Theme) => t.breakpoints.down("sm"));
   const [picked, setPicked] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
   const a = fixedA ?? picked;
   const first = a === null ? null : entries.find((e) => e.id === a);
 
@@ -57,6 +58,7 @@ export default function ComparePicker({
     if (a === null) {
       setPicked(id);
       setQuery("");
+      searchRef.current?.focus();
       return;
     }
     onPick(a, id);
@@ -90,6 +92,7 @@ export default function ComparePicker({
           size="small"
           fullWidth
           autoFocus
+          inputRef={searchRef}
           placeholder="Search parasites"
           value={query}
           onChange={(ev) => setQuery(ev.target.value)}
@@ -119,7 +122,9 @@ export default function ComparePicker({
             {rows.map((row) => (
               <li key={row.group}>
                 <Box component="ul" sx={{ p: 0 }}>
-                  <ListSubheader sx={{ lineHeight: "36px", fontWeight: 700 }}>
+                  <ListSubheader
+                    sx={{ px: 3, lineHeight: "36px", fontWeight: 700 }}
+                  >
                     {GROUP_LABELS[row.group].plural}
                   </ListSubheader>
                   {row.entries.map((e) => (
@@ -154,7 +159,13 @@ export default function ComparePicker({
       </DialogContent>
       <DialogActions sx={{ px: 3 }}>
         {first && fixedA === undefined ? (
-          <Button onClick={reset} sx={{ mr: "auto" }}>
+          <Button
+            onClick={() => {
+              reset();
+              searchRef.current?.focus();
+            }}
+            sx={{ mr: "auto" }}
+          >
             Back
           </Button>
         ) : null}
