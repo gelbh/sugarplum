@@ -43,6 +43,7 @@ export const HOST_TERMS = {
   "Ctenocephalides felis": { broader: ["flea"] },
   "Trichodectes canis": { broader: ["louse"] },
   "water buffalo": { broader: ["ruminant"] },
+  "African buffalo": { broader: ["ruminant"] },
   camelid: { broader: ["mammal"] },
   fish: { broader: ["vertebrate"] },
   "freshwater fish": { broader: ["fish"] },
@@ -59,6 +60,16 @@ export const HOST_TERMS = {
   Formica: { broader: ["ant"] },
   fly: { broader: ["invertebrate"] },
   Simulium: { broader: ["fly"] },
+  turkey: { broader: ["bird"] },
+  rabbit: { broader: ["mammal"] },
+  "non-human primate": { broader: ["mammal"] },
+  earthworm: { broader: ["invertebrate"] },
+  tick: { broader: ["invertebrate"] },
+  "Ixodes ricinus": { broader: ["tick"] },
+  "Rhipicephalus sanguineus": { broader: ["tick"] },
+  mosquito: { broader: ["invertebrate"] },
+  "sand fly": { broader: ["invertebrate"] },
+  "tsetse fly": { broader: ["invertebrate"] },
 } as const satisfies Vocabulary;
 
 export const ORGAN_TERMS = {
@@ -78,6 +89,11 @@ export const ORGAN_TERMS = {
   skin: { broader: [] },
   blood: { broader: [] },
   "blood vessels": { broader: ["blood"] },
+  "red blood cells": { broader: ["blood"] },
+  "reproductive tract": { broader: [] },
+  "lymph nodes": { broader: [] },
+  spleen: { broader: [] },
+  "bone marrow": { broader: [] },
 } as const satisfies Vocabulary;
 
 export type HostTerm = keyof typeof HOST_TERMS;
