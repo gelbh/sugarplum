@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
@@ -70,30 +70,26 @@ export default function LifecycleBoard({ fields }: Props) {
     setPlaying(true);
   };
 
-  const stepRef = useRef(step);
-  const toggleRef = useRef(togglePlay);
-  stepRef.current = step;
-  toggleRef.current = togglePlay;
-  useEffect(() => {
-    const onKey = (ev: KeyboardEvent) => {
-      if (!isShortcutTarget(ev)) return;
-      if (ev.target instanceof Element && ev.target.closest('[role="tablist"]'))
+  const onKey = useEffectEvent((ev: KeyboardEvent) => {
+    if (!isShortcutTarget(ev)) return;
+    // Not from the tab strip, and not from a modal (the rail drawer) covering the board.
+    if (
+      ev.target instanceof Element &&
+      ev.target.closest('[role="tablist"], .MuiModal-root')
+    )
+      return;
+    if (ev.key === "ArrowRight") step(1);
+    else if (ev.key === "ArrowLeft") step(-1);
+    else if (ev.key === " ") {
+      // Space keeps its page-scroll meaning outside the board; a focused button clicks itself.
+      if (!(ev.target instanceof Node) || !rootRef.current?.contains(ev.target))
         return;
-      if (ev.key === "ArrowRight") stepRef.current(1);
-      else if (ev.key === "ArrowLeft") stepRef.current(-1);
-      else if (ev.key === " ") {
-        // Space keeps its page-scroll meaning outside the board; a focused button clicks itself.
-        if (
-          !(ev.target instanceof Node) ||
-          !rootRef.current?.contains(ev.target)
-        )
-          return;
-        if (ev.target instanceof Element && ev.target.closest("button,a"))
-          return;
-        toggleRef.current();
-      } else return;
-      ev.preventDefault();
-    };
+      if (ev.target instanceof Element && ev.target.closest("button,a")) return;
+      togglePlay();
+    } else return;
+    ev.preventDefault();
+  });
+  useEffect(() => {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
@@ -353,96 +349,114 @@ export default function LifecycleBoard({ fields }: Props) {
         </Box>
       </Box>
 
-      <Box
-        component="ol"
-        aria-label="Lifecycle stages"
-        sx={{
-          listStyle: "none",
-          p: 0,
-          m: 0,
-          mt: 2,
-          display: "grid",
-          // Balanced rows: 8 stages read as 4 + 4, not 5 + 3.
-          gridTemplateColumns: {
-            xs: "repeat(2, minmax(0, 1fr))",
-            sm: `repeat(${Math.ceil(
-              stages.length / Math.ceil(stages.length / 5),
-            )}, minmax(0, 1fr))`,
-          },
-          gap: 1,
+      <StepList
+        stages={stages}
+        index={index}
+        onPick={(i) => {
+          setPlaying(false);
+          setIndex(i);
         }}
-      >
-        {stages.map((s, i) => (
-          <li key={`${s.name}-${i}`}>
-            <ButtonBase
-              onClick={() => {
-                setPlaying(false);
-                setIndex(i);
-              }}
-              aria-current={i === index ? "step" : undefined}
+      />
+    </Box>
+  );
+}
+
+function StepList({
+  stages,
+  index,
+  onPick,
+}: {
+  stages: DatasetFields["lifecycleStages"];
+  index: number;
+  onPick: (i: number) => void;
+}) {
+  return (
+    <Box
+      component="ol"
+      aria-label="Lifecycle stages"
+      sx={{
+        listStyle: "none",
+        p: 0,
+        m: 0,
+        mt: 2,
+        display: "grid",
+        // Balanced rows: 8 stages read as 4 + 4, not 5 + 3.
+        gridTemplateColumns: {
+          xs: "repeat(2, minmax(0, 1fr))",
+          sm: `repeat(${Math.ceil(
+            stages.length / Math.ceil(stages.length / 5),
+          )}, minmax(0, 1fr))`,
+        },
+        gap: 1,
+      }}
+    >
+      {stages.map((s, i) => (
+        <li key={`${s.name}-${i}`}>
+          <ButtonBase
+            onClick={() => onPick(i)}
+            aria-current={i === index ? "step" : undefined}
+            sx={{
+              width: "100%",
+              height: "100%",
+              display: "block",
+              position: "relative",
+              textAlign: "left",
+              px: 1.5,
+              py: 1.25,
+              borderRadius: 1.5,
+              border: 1,
+              borderColor: "divider",
+              color: "text.secondary",
+              fontSize: "0.84rem",
+              lineHeight: 1.35,
+            }}
+          >
+            <Box
+              aria-hidden
               sx={{
-                width: "100%",
-                height: "100%",
-                display: "block",
-                position: "relative",
-                textAlign: "left",
-                px: 1.5,
-                py: 1.25,
+                position: "absolute",
+                inset: -1,
                 borderRadius: 1.5,
                 border: 1,
-                borderColor: "divider",
-                color: "text.secondary",
-                fontSize: "0.84rem",
-                lineHeight: 1.35,
+                borderColor: "primary.main",
+                bgcolor: (t) => alpha(t.palette.primary.main, 0.08),
+                opacity: i === index ? 1 : 0,
+                transition: "opacity 180ms ease",
+                pointerEvents: "none",
+                "@media (prefers-reduced-motion: reduce)": {
+                  transition: "none",
+                },
+              }}
+            />
+            <Box
+              component="b"
+              sx={{
+                display: "block",
+                position: "relative",
+                fontSize: "0.74rem",
+                color: i === index ? "primary.main" : "text.secondary",
               }}
             >
-              <Box
-                aria-hidden
-                sx={{
-                  position: "absolute",
-                  inset: -1,
-                  borderRadius: 1.5,
-                  border: 1,
-                  borderColor: "primary.main",
-                  bgcolor: (t) => alpha(t.palette.primary.main, 0.08),
-                  opacity: i === index ? 1 : 0,
-                  transition: "opacity 180ms ease",
-                  pointerEvents: "none",
-                  "@media (prefers-reduced-motion: reduce)": {
-                    transition: "none",
-                  },
-                }}
-              />
-              <Box
-                component="b"
-                sx={{
-                  display: "block",
-                  position: "relative",
-                  fontSize: "0.74rem",
-                  color: i === index ? "primary.main" : "text.secondary",
-                }}
-              >
-                {i + 1}
+              {i + 1}
+            </Box>
+            <Box
+              component="span"
+              sx={{
+                position: "relative",
+                fontWeight: 600,
+                color: "text.primary",
+              }}
+            >
+              {termLabel(s.name)}
+            </Box>
+            {s.location ? (
+              <Box component="span" sx={{ position: "relative" }}>
+                , {s.location}
               </Box>
-              <Box
-                component="span"
-                sx={{
-                  position: "relative",
-                  fontWeight: 600,
-                  color: "text.primary",
-                }}
-              >
-                {termLabel(s.name)}
-              </Box>
-              {s.location ? (
-                <Box component="span" sx={{ position: "relative" }}>
-                  , {s.location}
-                </Box>
-              ) : null}
-            </ButtonBase>
-          </li>
-        ))}
-      </Box>
+            ) : null}
+          </ButtonBase>
+        </li>
+      ))}
     </Box>
   );
 }
@@ -617,12 +631,15 @@ function Timeline({
             No test windows recorded
           </Typography>
         ) : (
-          windows.map((w) => {
+          windows.map((w, wi) => {
             const lit = windowLit(w, span);
             // Late windows label from their right edge so the text stays on the axis.
             const late = w.startDay / ax.endDay > 0.55;
             return (
-              <Box key={w.name} sx={{ position: "relative", height: 28 }}>
+              <Box
+                key={`${w.name}-${wi}`}
+                sx={{ position: "relative", height: 28 }}
+              >
                 <Box
                   sx={{
                     position: "absolute",

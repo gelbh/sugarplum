@@ -81,10 +81,13 @@ export default function EntryFacts({ entry, refs, onCite }: Props) {
                       underline="hover"
                       aria-label={`Sources for ${FIELD_LABELS[key]}: ${cited.join(", ")}`}
                       sx={{
-                        ml: 0.5,
+                        ml: 0.25,
+                        px: 0.25,
                         fontSize: "0.68rem",
                         verticalAlign: "super",
-                        lineHeight: 0,
+                        // A real line box keeps the superscript hittable; negative margin holds the row height.
+                        lineHeight: 1,
+                        my: "-0.5em",
                         fontWeight: 700,
                       }}
                     >

@@ -84,6 +84,15 @@ describe("axis", () => {
     expect(model.ppp).toBeNull();
   });
 
+  it("gives an open-ended window room when there is no PPP", () => {
+    const f = fields("fasciola-gigantica");
+    expect(f.pppDays).toBeNull();
+    const ax = axis(f)!;
+    const [w] = detectableWindows(f, ax);
+    expect(w.openEnded).toBe(true);
+    expect(w.endDay - w.startDay).toBeGreaterThanOrEqual(28);
+  });
+
   it("marks entries with no PPP and no windows as untimed", () => {
     const model = lifecycleModel(fields("davainea-proglottina"));
     expect(model.timed).toBe(false);
@@ -105,6 +114,7 @@ describe("pppBracket and durationLabel", () => {
     expect(durationLabel({ min: 14, max: 14 })).toBe("about 2 weeks");
     expect(durationLabel({ min: 1, max: 1 })).toBe("about 1 day");
     expect(durationLabel({ min: 10, max: 21 })).toBe("about 1 to 3 weeks");
+    expect(durationLabel({ min: 1, max: 21 })).toBe("about 1 to 3 weeks");
   });
 });
 

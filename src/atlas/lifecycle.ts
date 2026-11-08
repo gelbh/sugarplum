@@ -91,12 +91,18 @@ function pickStep(span: number, steps: number[]): number {
 }
 
 const weekDays = (week: number) => Math.round(week * 7);
+const OPEN_WINDOW_DAYS = 28;
 
 /** Day 0 is definitive-host infection; null when there is no PPP and no test window to draw. */
 export function axis(fields: DatasetFields): Axis | null {
   const ends = fields.diagnosticTests
     .filter((t) => t.windowStartWeek !== null)
-    .map((t) => weekDays(t.windowEndWeek ?? t.windowStartWeek!));
+    // An open-ended window gets four weeks of room so it reads as ongoing, not a sliver.
+    .map((t) =>
+      t.windowEndWeek === null
+        ? weekDays(t.windowStartWeek!) + OPEN_WINDOW_DAYS
+        : weekDays(t.windowEndWeek),
+    );
   if (fields.pppDays) ends.push(fields.pppDays.max);
   if (ends.length === 0) return null;
   const span = Math.max(1, ...ends);
@@ -134,7 +140,12 @@ export function durationLabel(d: Days): string {
   const [unit, a, b] =
     d.max < DAYS_LABEL_BELOW
       ? (["day", d.min, d.max] as const)
-      : (["week", Math.round(d.min / 7), Math.round(d.max / 7)] as const);
+      : ([
+          "week",
+          // A short minimum still reads as at least a week ("about 1 to 3 weeks").
+          Math.max(d.min > 0 ? 1 : 0, Math.round(d.min / 7)),
+          Math.round(d.max / 7),
+        ] as const);
   const n = a === b ? `${a}` : `${a} to ${b}`;
   return `about ${n} ${unit}${b === 1 ? "" : "s"}`;
 }

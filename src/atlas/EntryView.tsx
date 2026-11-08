@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useRef, useState, ViewTransition } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useState,
+  ViewTransition,
+} from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -52,7 +58,8 @@ export default function EntryView({
   onStep,
 }: Props) {
   const [tab, setTab] = useState<TabKey>("lifecycle");
-  const [cite, setCite] = useState<FieldKey | null>(null);
+  // An object per click, so citing the same field twice still scrolls.
+  const [cite, setCite] = useState<{ field: FieldKey } | null>(null);
   const [query, setQuery] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -66,25 +73,21 @@ export default function EntryView({
   );
   const refs = useMemo(() => entryRefs(entry.refs), [entry.refs]);
 
-  const stepRef = useRef<(delta: number) => void>(() => {});
-  stepRef.current = (delta) => {
+  const onKey = useEffectEvent((ev: KeyboardEvent) => {
+    if (!isShortcutTarget(ev) || (ev.key !== "j" && ev.key !== "k")) return;
     const i = order.indexOf(entry.id);
-    const next = order[i === -1 ? 0 : i + delta];
+    const next = order[i === -1 ? 0 : i + (ev.key === "j" ? 1 : -1)];
     if (next && next !== entry.id) onStep(next);
-  };
+  });
   useEffect(() => {
-    const onKey = (ev: KeyboardEvent) => {
-      if (!isShortcutTarget(ev)) return;
-      if (ev.key === "j") stepRef.current(1);
-      else if (ev.key === "k") stepRef.current(-1);
-    };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
   useEffect(() => {
     if (tab !== "references" || cite === null) return;
-    const target = document.getElementById(refAnchor(cite));
+    const target = document.getElementById(refAnchor(cite.field));
+    setCite(null);
     if (!target) return;
     const reduce = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
@@ -245,7 +248,8 @@ export default function EntryView({
               value={t.key}
               label={t.label}
               id={`atlas-tab-${t.key}`}
-              aria-controls={`atlas-panel-${t.key}`}
+              // Only the selected panel is rendered, so only its tab points at one.
+              aria-controls={t.key === tab ? `atlas-panel-${t.key}` : undefined}
               sx={{
                 textTransform: "none",
                 fontWeight: 600,
@@ -275,7 +279,7 @@ export default function EntryView({
           entry={entry}
           refs={refs}
           onCite={(field) => {
-            setCite(field);
+            setCite({ field });
             setTab("references");
           }}
         />
@@ -333,12 +337,12 @@ function Diagnosis({ fields }: { fields: DatasetFields }) {
             component="ul"
             sx={{ listStyle: "none", p: 0, m: 0, display: "grid", gap: 1 }}
           >
-            {tests.map((t) => {
+            {tests.map((t, i) => {
               const when = windowLabel(t.windowStartWeek, t.windowEndWeek);
               return (
                 <Box
                   component="li"
-                  key={t.name}
+                  key={`${t.name}-${i}`}
                   sx={{
                     border: 1,
                     borderColor: "divider",
