@@ -9,7 +9,7 @@ import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import type { Theme } from "@mui/material/styles";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   mediaUrl,
   type CardDraftView,
@@ -17,8 +17,8 @@ import {
   type OcclusionFrontView,
 } from "../api/client";
 import {
-  blankClozeFront,
   CLOZE_EXTRA_LABEL,
+  clozeSpoken,
   extractClozeAnswer,
 } from "../lib/clozeFormat";
 import {
@@ -27,6 +27,7 @@ import {
   type DraftEditorChange,
 } from "../lib/draftCardModel";
 import { FaceOverline, FlipCardPlate, StudyCardPlate } from "./CardFace";
+import ClozePrompt from "./ClozePrompt";
 import OcclusionRegionEditor from "./OcclusionRegionEditor";
 import {
   FACE_ANSWER_TEXT_SX,
@@ -54,7 +55,8 @@ type FaceProps = {
 function EditableText({
   label,
   value,
-  display,
+  spoken,
+  visual,
   editing,
   disabled,
   textSx,
@@ -64,7 +66,8 @@ function EditableText({
 }: {
   label: string;
   value: string;
-  display: string;
+  spoken: string;
+  visual?: ReactNode;
   editing: boolean;
   disabled: boolean;
   textSx: Record<string, unknown>;
@@ -95,7 +98,7 @@ function EditableText({
     <Box
       role="button"
       tabIndex={disabled ? -1 : 0}
-      aria-label={`Edit ${label}: ${display || "empty"}`}
+      aria-label={`Edit ${label}: ${spoken || "empty"}`}
       aria-disabled={disabled || undefined}
       onClick={() => {
         if (!disabled) onEdit();
@@ -120,9 +123,9 @@ function EditableText({
     >
       <Typography
         component="p"
-        sx={{ ...textSx, m: 0, ...(display ? null : { opacity: 0.45 }) }}
+        sx={{ ...textSx, m: 0, ...(spoken ? null : { opacity: 0.45 }) }}
       >
-        {display || label}
+        {visual ?? (spoken || label)}
       </Typography>
     </Box>
   );
@@ -176,14 +179,17 @@ export function TextReviewFace({ card, disabled, onChange }: FaceProps) {
             <EditableText
               label="Front"
               value={frontText}
-              display={isCloze ? blankClozeFront(frontText) : frontText}
+              spoken={isCloze ? clozeSpoken(frontText) : frontText}
+              visual={
+                isCloze && frontText ? <ClozePrompt front={frontText} /> : undefined
+              }
               textSx={FACE_PROMPT_TEXT_SX}
               onChange={(front) => onChange({ front, back: backText, type })}
               {...field("front")}
             />
             {isCloze ? (
               <Typography component="p" sx={FACE_HINT_TEXT_SX}>
-                Blanks show as […] when you study
+                Blanks show as a line when you study
               </Typography>
             ) : null}
           </Box>
@@ -216,7 +222,7 @@ export function TextReviewFace({ card, disabled, onChange }: FaceProps) {
             <EditableText
               label={isCloze ? CLOZE_EXTRA_LABEL : "Back"}
               value={backText}
-              display={backText}
+              spoken={backText}
               textSx={isCloze ? FACE_HINT_TEXT_SX : FACE_ANSWER_TEXT_SX}
               onChange={(back) => onChange({ front: frontText, back, type })}
               {...field("back")}
