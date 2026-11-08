@@ -46,8 +46,8 @@ describe("0023_atlas migration", () => {
        VALUES ('e1', 'a1', 'Dipylidium caninum', 'Double pored dog tapeworm', '{}', 'draft', ?, ?)`,
     ).run(NOW, NOW);
     db.prepare(
-      `INSERT INTO atlas_field_sources (id, entry_id, field_key, material_id, page, excerpt, created_at)
-       VALUES ('f1', 'e1', 'family', 'm1', 9, 'Diphyllobothriidae', ?)`,
+      `INSERT INTO atlas_field_sources (id, entry_id, field_key, material_id, page, value_json, excerpt, created_at)
+       VALUES ('f1', 'e1', 'family', 'm1', 9, '"Diphyllobothriidae"', 'Diphyllobothriidae', ?)`,
     ).run(NOW);
   });
 
@@ -94,6 +94,17 @@ describe("0023_atlas migration", () => {
         )
         .run(NOW, NOW),
     ).toThrow(/CHECK/);
+  });
+
+  it("rejects a duplicate source for the same field and page", () => {
+    expect(() =>
+      db
+        .prepare(
+          `INSERT INTO atlas_field_sources (id, entry_id, field_key, material_id, page, value_json, excerpt, created_at)
+           VALUES ('f2', 'e1', 'family', 'm1', 9, '"Diphyllobothriidae"', 'x', ?)`,
+        )
+        .run(NOW),
+    ).toThrow(/UNIQUE/);
   });
 
   it("cascades a subject delete through atlas, entries and sources", () => {

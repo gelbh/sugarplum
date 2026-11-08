@@ -1,6 +1,6 @@
 -- Subject Atlas (spec 2026-11-08-subject-atlas-design.md §1).
--- One atlas per subject; entries are per-user because they derive from the
--- learner's own uploaded materials.
+-- One atlas per subject; entries belong to the subject's owner (ownership is
+-- subjects.user_id) and derive from that learner's own uploaded materials.
 
 CREATE TABLE atlases (
   id TEXT PRIMARY KEY NOT NULL,
@@ -29,9 +29,10 @@ CREATE TABLE atlas_field_sources (
   field_key TEXT NOT NULL,
   material_id TEXT NOT NULL REFERENCES materials (id) ON DELETE CASCADE,
   page INTEGER NOT NULL,
+  value_json TEXT NOT NULL,
   excerpt TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
 
-CREATE INDEX idx_atlas_field_sources_entry ON atlas_field_sources (entry_id);
+CREATE UNIQUE INDEX idx_atlas_field_sources_unique ON atlas_field_sources (entry_id, field_key, material_id, page);
 CREATE INDEX idx_atlas_field_sources_material ON atlas_field_sources (material_id);

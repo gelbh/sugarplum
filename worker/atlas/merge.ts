@@ -15,7 +15,7 @@ export type CandidateEntry = {
   source: FieldSource;
 };
 
-export type EntrySource = FieldSource & { fieldKey: ParasiteFieldKey };
+export type EntrySource = FieldSource & { fieldKey: ParasiteFieldKey; value: unknown };
 
 export type FieldConflict = { fieldKey: ParasiteFieldKey; values: unknown[] };
 
@@ -117,7 +117,7 @@ export function mergeCandidates(candidates: CandidateEntry[]): {
     for (const key of PARASITE_FIELD_KEYS) {
       const incoming = candidate.fields[key];
       if (isEmpty(incoming)) continue;
-      addSource(entry, { ...candidate.source, fieldKey: key });
+      addSource(entry, { ...candidate.source, fieldKey: key, value: incoming });
 
       const current = fields[key];
       if (isEmpty(current)) {

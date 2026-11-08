@@ -50,6 +50,7 @@ describe("mergeCandidates", () => {
     expect(entries[0].conflicts).toEqual([
       { fieldKey: "family", values: ["Diphyllobothriidae", "Dipylidiidae"] },
     ]);
+    expect(entries[0].sources.map((s) => s.value)).toEqual(["Diphyllobothriidae", "Dipylidiidae", "dipylidiidae"]);
   });
 
   it("does not record a conflict when values differ only in case or spacing", () => {
