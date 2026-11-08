@@ -425,7 +425,7 @@
       "canonicalName": "Linguatula serrata",
       "lecture": "PA09",
       "page": 38,
-      "file": "nematodes-companion-poultry"
+      "file": "arthropods"
     },
     {
       "canonicalName": "Ascaridia galli",
@@ -603,8 +603,8 @@
     },
     {
       "canonicalName": "Ctenocephalides felis",
-      "lecture": "T01",
-      "page": 7,
+      "lecture": "PA01",
+      "page": 4,
       "file": "arthropods"
     },
     {
@@ -621,8 +621,8 @@
     },
     {
       "canonicalName": "Ixodes ricinus",
-      "lecture": "PA05",
-      "page": 7,
+      "lecture": "PA01",
+      "page": 5,
       "file": "arthropods"
     },
     {
@@ -651,8 +651,8 @@
     },
     {
       "canonicalName": "Sarcoptes scabiei",
-      "lecture": "EXT",
-      "page": 0,
+      "lecture": "PA01",
+      "page": 2,
       "file": "arthropods"
     },
     {
@@ -693,8 +693,8 @@
     },
     {
       "canonicalName": "Trichodectes canis",
-      "lecture": "EXT",
-      "page": 0,
+      "lecture": "PA11",
+      "page": 9,
       "file": "arthropods"
     },
     {
@@ -705,14 +705,14 @@
     },
     {
       "canonicalName": "Bovicola ovis",
-      "lecture": "EXT",
-      "page": 0,
+      "lecture": "PA01",
+      "page": 4,
       "file": "arthropods"
     },
     {
       "canonicalName": "Bovicola bovis",
-      "lecture": "EXT",
-      "page": 0,
+      "lecture": "PA01",
+      "page": 4,
       "file": "arthropods"
     },
     {
@@ -729,8 +729,8 @@
     },
     {
       "canonicalName": "Hypoderma bovis",
-      "lecture": "EXT",
-      "page": 0,
+      "lecture": "PA01",
+      "page": 1,
       "file": "arthropods"
     },
     {
@@ -747,14 +747,14 @@
     },
     {
       "canonicalName": "Culicoides spp.",
-      "lecture": "EXT",
-      "page": 0,
+      "lecture": "PA07",
+      "page": 43,
       "file": "arthropods"
     },
     {
       "canonicalName": "Stomoxys calcitrans",
-      "lecture": "T01",
-      "page": 13,
+      "lecture": "PA01",
+      "page": 3,
       "file": "arthropods"
     },
     {
