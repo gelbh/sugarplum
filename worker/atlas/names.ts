@@ -1,4 +1,4 @@
-// Slide spellings seen in the AB2 Parasitology pack (spec Evidence 5).
+// Misspellings seen in vet-school parasitology lecture slides.
 const GENUS_FIXES: Record<string, string> = {
   Ancyclostoma: "Ancylostoma",
   Ascarida: "Ascaridia",
@@ -46,7 +46,8 @@ export function normalizeParasiteName(raw: string): NormalizedName | null {
   // Slides abbreviate genera ("F. hepatica"); that is not a separate species.
   if (words[0].length === 1) return null;
 
-  const genusCased = words[0][0].toUpperCase() + words[0].slice(1).toLowerCase();
+  const genusCased =
+    words[0][0].toUpperCase() + words[0].slice(1).toLowerCase();
   const genus = GENUS_FIXES[genusCased] ?? genusCased;
 
   const second = words[1]?.toLowerCase();

@@ -1,6 +1,6 @@
--- Subject Atlas (spec 2026-11-08-subject-atlas-design.md §1).
--- One atlas per subject; entries belong to the subject's owner (ownership is
--- subjects.user_id) and derive from that learner's own uploaded materials.
+-- Subject Atlas: one structured, browsable set of entries per subject.
+-- Ownership is subjects.user_id; entries derive from that learner's own
+-- uploaded materials, and each field value cites its material page.
 
 CREATE TABLE atlases (
   id TEXT PRIMARY KEY NOT NULL,

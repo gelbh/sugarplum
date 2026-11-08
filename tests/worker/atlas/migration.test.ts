@@ -112,7 +112,8 @@ describe("0023_atlas migration", () => {
     db.prepare("DELETE FROM decks WHERE id = 'd1'").run();
     db.prepare("DELETE FROM subjects WHERE id = 's1'").run();
     const count = (table: string) =>
-      (db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n;
+      (db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number })
+        .n;
     expect(count("atlases")).toBe(0);
     expect(count("atlas_entries")).toBe(0);
     expect(count("atlas_field_sources")).toBe(0);
@@ -121,7 +122,9 @@ describe("0023_atlas migration", () => {
   it("drops sources when their material is deleted", () => {
     db.prepare("DELETE FROM materials WHERE id = 'm1'").run();
     const n = (
-      db.prepare("SELECT COUNT(*) AS n FROM atlas_field_sources").get() as { n: number }
+      db.prepare("SELECT COUNT(*) AS n FROM atlas_field_sources").get() as {
+        n: number;
+      }
     ).n;
     expect(n).toBe(0);
   });

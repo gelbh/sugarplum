@@ -29,7 +29,9 @@ describe("atlas-parasites eval fixture", () => {
   it.each(fixture.entries.map((e) => [e.rawName, e] as const))(
     "%s normalises to its canonical name and its expected fields parse",
     (_raw, entry) => {
-      expect(normalizeParasiteName(entry.rawName)?.canonical).toBe(entry.canonicalName);
+      expect(normalizeParasiteName(entry.rawName)?.canonical).toBe(
+        entry.canonicalName,
+      );
       expect(() => parasiteFieldsSchema.parse(entry.expected)).not.toThrow();
       expect(entry.page).toBeGreaterThan(0);
       expect(entry.lecture).toMatch(/^PA\d{2}$/);

@@ -35,7 +35,9 @@
       "canonicalName": "Dipylidium caninum",
       "lecture": "PA11",
       "page": 9,
-      "slideErrors": ["Family column says Diphyllobothriidae; Dipylidium belongs to Dipylidiidae."],
+      "slideErrors": [
+        "Family column says Diphyllobothriidae; Dipylidium belongs to Dipylidiidae."
+      ],
       "expected": {
         "group": "cestode",
         "definitiveHosts": ["canids", "felids"],
@@ -111,7 +113,9 @@
       "canonicalName": "Toxascaris leonina",
       "lecture": "PA09",
       "page": 14,
-      "slideErrors": ["Genus misspelt as Toxocaris; slide combines it with Toxocara cati in one table."],
+      "slideErrors": [
+        "Genus misspelt as Toxocaris; slide combines it with Toxocara cati in one table."
+      ],
       "expected": {
         "group": "nematode",
         "family": "Ascarididae",
@@ -156,7 +160,9 @@
       "canonicalName": "Haemonchus contortus",
       "lecture": "PA07",
       "page": 17,
-      "slideErrors": ["Family column holds the superfamily Trichostrongyloidea."],
+      "slideErrors": [
+        "Family column holds the superfamily Trichostrongyloidea."
+      ],
       "expected": {
         "group": "nematode",
         "definitiveHosts": ["small ruminants"],
@@ -170,7 +176,10 @@
       "canonicalName": "Teladorsagia circumcincta",
       "lecture": "PA07",
       "page": 15,
-      "slideErrors": ["Genus and species misspelt (Telodorsagia circumcinta).", "Family column holds the superfamily Trichostrongyloidea."],
+      "slideErrors": [
+        "Genus and species misspelt (Telodorsagia circumcinta).",
+        "Family column holds the superfamily Trichostrongyloidea."
+      ],
       "expected": {
         "group": "nematode",
         "definitiveHosts": ["small ruminants"],

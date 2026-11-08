@@ -15,7 +15,10 @@ export type CandidateEntry = {
   source: FieldSource;
 };
 
-export type EntrySource = FieldSource & { fieldKey: ParasiteFieldKey; value: unknown };
+export type EntrySource = FieldSource & {
+  fieldKey: ParasiteFieldKey;
+  value: unknown;
+};
 
 export type FieldConflict = { fieldKey: ParasiteFieldKey; values: unknown[] };
 
@@ -131,7 +134,11 @@ export function mergeCandidates(candidates: CandidateEntry[]): {
   }
 
   const entries = [...byName.values()].sort((a, b) =>
-    a.canonicalName.localeCompare(b.canonicalName),
+    a.canonicalName < b.canonicalName
+      ? -1
+      : a.canonicalName > b.canonicalName
+        ? 1
+        : 0,
   );
   return { entries, unnamed };
 }

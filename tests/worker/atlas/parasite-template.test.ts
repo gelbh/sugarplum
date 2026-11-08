@@ -54,17 +54,28 @@ describe("parasite template", () => {
         { name: "metacercaria", location: "herbage" },
       ],
       diagnosticTests: [
-        { name: "Faecal sedimentation", sample: "faeces", windowStartWeek: 10, windowEndWeek: null },
+        {
+          name: "Faecal sedimentation",
+          sample: "faeces",
+          windowStartWeek: 10,
+          windowEndWeek: null,
+        },
       ],
     });
     expect(parsed.phylum).toBe("Platyhelminthes");
-    expect(parsed.lifecycleStages[1]).toEqual({ name: "metacercaria", location: "herbage" });
+    expect(parsed.lifecycleStages[1]).toEqual({
+      name: "metacercaria",
+      location: "herbage",
+    });
     expect(parsed.diagnosticTests[0].windowStartWeek).toBe(10);
     expect(parsed.diagnosticStage).toBeNull();
   });
 
   it("drops unknown keys", () => {
-    const parsed = parasiteFieldsSchema.parse({ family: "Taeniidae", colour: "white" });
+    const parsed = parasiteFieldsSchema.parse({
+      family: "Taeniidae",
+      colour: "white",
+    });
     expect(parsed).not.toHaveProperty("colour");
   });
 
@@ -74,13 +85,17 @@ describe("parasite template", () => {
   });
 
   it("rejects a PPP range whose max is below its min", () => {
-    expect(() => parasiteFieldsSchema.parse({ pppDays: { min: 60, max: 25 } })).toThrow();
+    expect(() =>
+      parasiteFieldsSchema.parse({ pppDays: { min: 60, max: 25 } }),
+    ).toThrow();
   });
 
   it("rejects a test window that ends before it starts", () => {
     expect(() =>
       parasiteFieldsSchema.parse({
-        diagnosticTests: [{ name: "Serum ELISA", windowStartWeek: 8, windowEndWeek: 6 }],
+        diagnosticTests: [
+          { name: "Serum ELISA", windowStartWeek: 8, windowEndWeek: 6 },
+        ],
       }),
     ).toThrow();
   });

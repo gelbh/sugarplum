@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { mergeCandidates, type CandidateEntry } from "../../../worker/atlas/merge";
+import {
+  mergeCandidates,
+  type CandidateEntry,
+} from "../../../worker/atlas/merge";
 import { parasiteFieldsSchema } from "../../../worker/atlas/templates/parasite";
 
 function candidate(
@@ -20,8 +23,19 @@ function candidate(
 describe("mergeCandidates", () => {
   it("merges slide spellings of one species into one corrected entry", () => {
     const { entries } = mergeCandidates([
-      candidate("Ancyclostoma caninum", { family: "Ancylostomatidae" }, 16, "m-pa09", "Canine hookworm"),
-      candidate("Ancylostoma caninum", { majorOrgan: "Small intestine" }, 17, "m-pa09"),
+      candidate(
+        "Ancyclostoma caninum",
+        { family: "Ancylostomatidae" },
+        16,
+        "m-pa09",
+        "Canine hookworm",
+      ),
+      candidate(
+        "Ancylostoma caninum",
+        { majorOrgan: "Small intestine" },
+        17,
+        "m-pa09",
+      ),
     ]);
     expect(entries).toHaveLength(1);
     expect(entries[0].canonicalName).toBe("Ancylostoma caninum");
@@ -33,10 +47,22 @@ describe("mergeCandidates", () => {
 
   it("unions host lists case-insensitively, keeping the first spelling", () => {
     const { entries } = mergeCandidates([
-      candidate("Toxocara canis", { definitiveHosts: ["Dog", "wild canids"] }, 8),
-      candidate("Toxocara canis", { definitiveHosts: ["dog", "human"], paratenicHosts: ["rodents"] }, 9),
+      candidate(
+        "Toxocara canis",
+        { definitiveHosts: ["Dog", "wild canids"] },
+        8,
+      ),
+      candidate(
+        "Toxocara canis",
+        { definitiveHosts: ["dog", "human"], paratenicHosts: ["rodents"] },
+        9,
+      ),
     ]);
-    expect(entries[0].fields.definitiveHosts).toEqual(["Dog", "wild canids", "human"]);
+    expect(entries[0].fields.definitiveHosts).toEqual([
+      "Dog",
+      "wild canids",
+      "human",
+    ]);
     expect(entries[0].fields.paratenicHosts).toEqual(["rodents"]);
   });
 
@@ -50,7 +76,11 @@ describe("mergeCandidates", () => {
     expect(entries[0].conflicts).toEqual([
       { fieldKey: "family", values: ["Diphyllobothriidae", "Dipylidiidae"] },
     ]);
-    expect(entries[0].sources.map((s) => s.value)).toEqual(["Diphyllobothriidae", "Dipylidiidae", "dipylidiidae"]);
+    expect(entries[0].sources.map((s) => s.value)).toEqual([
+      "Diphyllobothriidae",
+      "Dipylidiidae",
+      "dipylidiidae",
+    ]);
   });
 
   it("does not record a conflict when values differ only in case or spacing", () => {
@@ -63,18 +93,38 @@ describe("mergeCandidates", () => {
 
   it("records a conflict for differing structured values", () => {
     const { entries } = mergeCandidates([
-      candidate("Haemonchus contortus", { pppDays: { min: 14, max: 21 } }, 17, "m-pa07"),
-      candidate("Haemonchus contortus", { pppDays: { min: 18, max: 21 } }, 18, "m-pa07"),
+      candidate(
+        "Haemonchus contortus",
+        { pppDays: { min: 14, max: 21 } },
+        17,
+        "m-pa07",
+      ),
+      candidate(
+        "Haemonchus contortus",
+        { pppDays: { min: 18, max: 21 } },
+        18,
+        "m-pa07",
+      ),
     ]);
     expect(entries[0].fields.pppDays).toEqual({ min: 14, max: 21 });
     expect(entries[0].conflicts).toEqual([
-      { fieldKey: "pppDays", values: [{ min: 14, max: 21 }, { min: 18, max: 21 }] },
+      {
+        fieldKey: "pppDays",
+        values: [
+          { min: 14, max: 21 },
+          { min: 18, max: 21 },
+        ],
+      },
     ]);
   });
 
   it("adds one source per filled field and drops repeated identical sources", () => {
     const { entries } = mergeCandidates([
-      candidate("Moniezia expansa", { family: "Anoplocephalidae", definitiveHosts: ["sheep"] }, 11),
+      candidate(
+        "Moniezia expansa",
+        { family: "Anoplocephalidae", definitiveHosts: ["sheep"] },
+        11,
+      ),
       candidate("Moniezia expansa", { family: "Anoplocephalidae" }, 11),
       candidate("Moniezia expansa", { family: "Anoplocephalidae" }, 12),
     ]);
