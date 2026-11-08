@@ -46,6 +46,15 @@ export function currentEntryKey(): string {
   return key;
 }
 
+export const isPlainClick = (ev: {
+  button: number;
+  metaKey: boolean;
+  ctrlKey: boolean;
+  shiftKey: boolean;
+  altKey: boolean;
+}) =>
+  ev.button === 0 && !ev.metaKey && !ev.ctrlKey && !ev.shiftKey && !ev.altKey;
+
 export function navigate(path: string): void {
   const next = locationKey(new URL(path, window.location.origin).href);
   if (locationKey() === next) return;

@@ -42,7 +42,9 @@ export const atlasHref = (subjectId: string) =>
 export const atlasEntryHref = (subjectId: string, key: string) =>
   `${atlasHref(subjectId)}/entry/${encodeURIComponent(key)}`;
 
-/** Atlas-to-atlas moves run in a transition so `<ViewTransition>` can animate them. */
+export const atlasCompareHref = (subjectId: string, a: string, b: string) =>
+  `${atlasHref(subjectId)}/compare/${encodeURIComponent(a)}/${encodeURIComponent(b)}`;
+
 export const isAtlasToAtlas = (prev: string, next: string) =>
   matchAtlasPath(prev) !== null && matchAtlasPath(next) !== null;
 

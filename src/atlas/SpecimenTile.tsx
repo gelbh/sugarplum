@@ -129,18 +129,8 @@ export default function SpecimenTile({
   }
 
   const rows: [string, ReactNode][] = [
-    [
-      "Hosts",
-      fields.definitiveHosts.length > 0 ? (
-        <TermList terms={fields.definitiveHosts} max={4} />
-      ) : null,
-    ],
-    [
-      "Intermediate",
-      fields.intermediateHosts.length > 0 ? (
-        <TermList terms={fields.intermediateHosts} max={3} />
-      ) : null,
-    ],
+    ["Hosts", <TermList terms={fields.definitiveHosts} max={4} />],
+    ["Intermediate", <TermList terms={fields.intermediateHosts} max={3} />],
     ["Site", fields.majorOrgan && termLabel(fields.majorOrgan)],
     ["PPP", pppLabel(fields.pppDays)],
     ["Find it as", findItAs(entry)],
