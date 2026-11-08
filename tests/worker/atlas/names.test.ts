@@ -19,6 +19,7 @@ describe("normalizeParasiteName", () => {
     ["Ascarida galli", "Ascaridia galli"],
     ["Eimieria species", "Eimeria spp."],
     ["Dicrocoelium dentriticum", "Dicrocoelium dendriticum"],
+    ["Dicrocelium dendriticum", "Dicrocoelium dendriticum"],
     ["Trichomonas fetus", "Tritrichomonas foetus"],
   ])("fixes %s to %s and flags the correction", (raw, canonical) => {
     expect(normalizeParasiteName(raw)).toEqual({ canonical, corrected: true });
