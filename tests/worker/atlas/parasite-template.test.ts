@@ -66,6 +66,9 @@ describe("parasite template", () => {
     expect(parsed.lifecycleStages[1]).toEqual({
       name: "metacercaria",
       location: "herbage",
+      hostRole: null,
+      host: null,
+      durationDays: null,
     });
     expect(parsed.diagnosticTests[0].windowStartWeek).toBe(10);
     expect(parsed.diagnosticStage).toBeNull();

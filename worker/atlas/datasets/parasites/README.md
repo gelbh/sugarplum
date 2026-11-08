@@ -35,6 +35,8 @@ Phylum, order and family follow the course when a cited reference supports the c
 - Leave a field `null` or `[]` when no cited reference supports it.
 - Use a ref `note` only for a difference between the course and the references, for example "Course states 21 days; reference gives 14 to 21 days."
 - Host lists and `majorOrgan` must use terms from `../vocab.ts`. Add a new term with its broader terms when none fits.
+- Give every lifecycle stage a `hostRole`: `definitive`, `intermediate` or `paratenic` when the stage lives in a host from that list, `environment` when it is free in soil, water, pasture or faeces. Set `host` only when a role holds several hosts in sequence (snail, then fish), and use a term from that role's list or a narrower one.
+- Set a stage's `durationDays` only when a cited reference states how long that one stage lasts, and add a `lifecycleStages` ref for it. Leave it empty for spans that cover several stages ("4 to 7 weeks from egg to metacercaria") and for time to adulthood, which `pppDays` already covers.
 - Record a slide misspelling in `misspellings` only if `normalizeParasiteName` maps it to the canonical name. Otherwise add the fix to `worker/atlas/names.ts` first, with a test.
 
 ## Adding an Entry
