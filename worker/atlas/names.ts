@@ -43,6 +43,8 @@ export function normalizeParasiteName(raw: string): NormalizedName | null {
     words.pop();
   }
   if (words.length === 0 || !/^[A-Za-z]+$/.test(words[0])) return null;
+  // Slides abbreviate genera ("F. hepatica"); that is not a separate species.
+  if (words[0].length === 1) return null;
 
   const genusCased = words[0][0].toUpperCase() + words[0].slice(1).toLowerCase();
   const genus = GENUS_FIXES[genusCased] ?? genusCased;

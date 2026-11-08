@@ -50,6 +50,8 @@ describe("normalizeParasiteName", () => {
     "Fasciola 2",
     "Fasciola and Dicrocoelium",
     "Taenia or Echinococcus",
+    "F. hepatica",
+    "T. canis",
   ])("returns null for %j", (raw) => {
     expect(normalizeParasiteName(raw)).toBeNull();
   });
