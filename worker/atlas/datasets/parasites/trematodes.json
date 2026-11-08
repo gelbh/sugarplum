@@ -18,7 +18,6 @@
           "goat",
           "deer",
           "camelid",
-          "water buffalo",
           "human"
         ],
         "intermediateHosts": ["lymnaeid snail", "Galba truncatula"],
@@ -26,7 +25,7 @@
         "onHostStages": ["immature fluke", "adult fluke"],
         "distribution": "Grazing-livestock regions on every inhabited continent",
         "zoonotic": "yes",
-        "significance": "Liver disease agent of ruminants, chiefly sheep and cattle; human cases come from eating raw water plants such as watercress.",
+        "significance": "Liver disease agent of ruminants, chiefly sheep and cattle; human cases come from eating contaminated water plants such as watercress.",
         "lifecycleType": "indirect",
         "pppDays": {
           "min": 56,
