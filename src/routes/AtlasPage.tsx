@@ -14,8 +14,10 @@ import { ApiError, listSubjects, me } from "../api/client";
 import { bundledAtlasSource } from "../atlas/bundledSource";
 import "../atlas/atlasMotion.css";
 import Cabinet from "../atlas/Cabinet";
+import CompareView from "../atlas/CompareView";
 import EntryView from "../atlas/EntryView";
 import {
+  atlasCompareHref,
   atlasEntryHref,
   atlasHref,
   subjectHref,
@@ -23,7 +25,7 @@ import {
 } from "../atlas/paths";
 import type { AtlasEntryView, AtlasSource } from "../atlas/types";
 import { isGuest } from "../guest/session";
-import { navigate, navigateReplace } from "../nav/navigate";
+import { isPlainClick, navigate, navigateReplace } from "../nav/navigate";
 
 type Props = {
   subjectId: string;
@@ -39,8 +41,7 @@ type Loaded = {
 
 function NavLink({ href, children }: { href: string; children: string }) {
   const onClick = (ev: MouseEvent<HTMLAnchorElement>) => {
-    if (ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey)
-      return;
+    if (!isPlainClick(ev)) return;
     ev.preventDefault();
     navigate(href);
   };
@@ -51,7 +52,7 @@ function NavLink({ href, children }: { href: string; children: string }) {
   );
 }
 
-// TODO(tomer): replace with the entry view and Compare when they ship.
+// TODO(tomer): replace with the entry view when it ships.
 const STILL_BUILDING =
   "This view is still being built. The cabinet has the hosts, site and PPP for now.";
 
@@ -149,6 +150,7 @@ export default function AtlasPage({
         userKey={loaded.userKey}
         entryHref={(id) => atlasEntryHref(subjectId, id)}
         onOpenEntry={(id) => navigate(atlasEntryHref(subjectId, id))}
+        onCompare={(a, b) => navigate(atlasCompareHref(subjectId, a, b))}
         stagger={!staggered.current}
       />
     );
@@ -173,7 +175,16 @@ export default function AtlasPage({
       </Notice>
     );
   } else {
-    body = <Notice title="Compare" />;
+    body = (
+      <CompareView
+        entries={loaded.entries}
+        a={route.a}
+        b={route.b}
+        entryHref={(id) => atlasEntryHref(subjectId, id)}
+        onOpenEntry={(id) => navigate(atlasEntryHref(subjectId, id))}
+        onChange={(a, b) => navigateReplace(atlasCompareHref(subjectId, a, b))}
+      />
+    );
   }
 
   return (
