@@ -15,12 +15,12 @@ const optionalText = text.nullable().default(null);
 const textList = z.array(text).default([]);
 const week = z.number().min(0).nullable().default(null);
 
-const lifecycleStageSchema = z.object({
+export const lifecycleStageSchema = z.object({
   name: text,
   location: optionalText,
 });
 
-const diagnosticTestSchema = z
+export const diagnosticTestSchema = z
   .object({
     name: text,
     sample: optionalText,
@@ -35,7 +35,7 @@ const diagnosticTestSchema = z
     { message: "windowEndWeek must not be before windowStartWeek" },
   );
 
-const pppDaysSchema = z
+export const pppDaysSchema = z
   .object({
     min: z.number().int().min(0),
     max: z.number().int().min(0),

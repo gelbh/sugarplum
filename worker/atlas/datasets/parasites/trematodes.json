@@ -1,0 +1,1059 @@
+{
+  "group": "trematode",
+  "entries": [
+    {
+      "key": "fasciola-hepatica",
+      "canonicalName": "Fasciola hepatica",
+      "commonName": "Common liver fluke",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Plagiorchiida",
+        "family": "Fasciolidae",
+        "group": "trematode",
+        "definitiveHosts": [
+          "sheep",
+          "cattle",
+          "goat",
+          "deer",
+          "camelid",
+          "human"
+        ],
+        "intermediateHosts": ["lymnaeid snail", "Galba truncatula"],
+        "majorOrgan": "bile ducts",
+        "onHostStages": ["immature fluke", "adult fluke"],
+        "distribution": "Grazing-livestock regions on every inhabited continent",
+        "zoonotic": "yes",
+        "significance": "Liver disease agent of ruminants, chiefly sheep and cattle; human cases come from eating contaminated water plants such as watercress.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 56,
+          "max": 56
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces"
+          },
+          {
+            "name": "miracidium",
+            "location": "water"
+          },
+          {
+            "name": "sporocyst",
+            "location": "snail"
+          },
+          {
+            "name": "redia",
+            "location": "snail"
+          },
+          {
+            "name": "cercaria",
+            "location": "leaves the snail"
+          },
+          {
+            "name": "metacercaria",
+            "location": "aquatic vegetation"
+          },
+          {
+            "name": "immature fluke",
+            "location": "liver parenchyma"
+          },
+          {
+            "name": "adult fluke",
+            "location": "bile ducts"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal sedimentation",
+            "sample": "faeces"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum",
+            "windowStartWeek": 2
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Fasciola hepatica",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/fasciola-hepatica.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Fascioliasis",
+          "url": "https://www.cdc.gov/dpdx/fascioliasis/index.html",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Fascioliasis",
+          "url": "https://www.cdc.gov/dpdx/fascioliasis/index.html",
+          "note": "Course also lists horses; CDC treats equids as aberrant hosts."
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "Caron et al. 2014, Parasites & Vectors 7:66: lymnaeid snails as intermediate hosts of Fasciola hepatica in Belgium and Luxembourg",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3926267/",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Fasciola hepatica",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/fasciola-hepatica.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CDC DPDx: Fascioliasis",
+          "url": "https://www.cdc.gov/dpdx/fascioliasis/index.html",
+          "note": "Course states liver; adults live in the bile ducts, immatures migrate through the liver."
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Fasciola hepatica",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6192/",
+          "note": "Course lists Trematoda as the phylum; NCBI ranks Trematoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Fasciola hepatica",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6192/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Fascioliasis",
+          "url": "https://www.cdc.gov/dpdx/fascioliasis/index.html",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "CDC DPDx: Fascioliasis",
+          "url": "https://www.cdc.gov/dpdx/fascioliasis/index.html",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "fasciola-gigantica",
+      "canonicalName": "Fasciola gigantica",
+      "commonName": "Giant liver fluke",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Plagiorchiida",
+        "family": "Fasciolidae",
+        "group": "trematode",
+        "definitiveHosts": [
+          "cattle",
+          "water buffalo",
+          "sheep",
+          "goat",
+          "camelid",
+          "deer",
+          "pig",
+          "human"
+        ],
+        "intermediateHosts": ["lymnaeid snail", "Radix"],
+        "majorOrgan": "bile ducts",
+        "onHostStages": ["immature fluke", "adult fluke"],
+        "distribution": "Hot-climate zones worldwide, chiefly the tropics",
+        "zoonotic": "yes",
+        "significance": "Damages the liver of cattle and buffalo in hot regions, costing weight gain and yield; human cases follow eating contaminated greens.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces"
+          },
+          {
+            "name": "miracidium",
+            "location": "water"
+          },
+          {
+            "name": "sporocyst",
+            "location": "snail"
+          },
+          {
+            "name": "redia",
+            "location": "snail"
+          },
+          {
+            "name": "cercaria",
+            "location": "leaves the snail"
+          },
+          {
+            "name": "metacercaria",
+            "location": "aquatic vegetation"
+          },
+          {
+            "name": "immature fluke",
+            "location": "liver parenchyma"
+          },
+          {
+            "name": "adult fluke",
+            "location": "bile ducts"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal egg microscopy",
+            "sample": "faeces"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum",
+            "windowStartWeek": 2
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "CDC DPDx: Fascioliasis",
+          "url": "https://www.cdc.gov/dpdx/fascioliasis/index.html",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Phalee et al. 2015, Korean J Parasitol 53:59: experimental life history of Fasciola gigantica",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4384800/",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "Investigation of Fasciola gigantica in Radix (Lymnaea) snails in Nakhon Ratchasima, Thailand; Int J Vet Sci Med 2024",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11389629/",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Fasciola gigantica",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/46835/",
+          "note": "Course lists Trematoda as the phylum; NCBI ranks Trematoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Fasciola gigantica",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/46835/",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CDC DPDx: Fascioliasis",
+          "url": "https://www.cdc.gov/dpdx/fascioliasis/index.html",
+          "note": "Course states liver; adults live in the bile ducts after the immature flukes cross the liver."
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Fascioliasis",
+          "url": "https://www.cdc.gov/dpdx/fascioliasis/index.html",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "fascioloides-magna",
+      "canonicalName": "Fascioloides magna",
+      "commonName": "Large liver fluke",
+      "aliases": [],
+      "misspellings": ["Fasciolides magna"],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Plagiorchiida",
+        "family": "Fasciolidae",
+        "group": "trematode",
+        "definitiveHosts": ["deer"],
+        "intermediateHosts": [
+          "lymnaeid snail",
+          "Galba truncatula",
+          "Radix labiata"
+        ],
+        "majorOrgan": "liver",
+        "onHostStages": ["immature fluke", "adult fluke"],
+        "distribution": "Native to North America; introduced into central Europe",
+        "zoonotic": "no",
+        "significance": "Mainly infects wild deer; in sheep the wandering juveniles can be fatal, while in cattle cysts trap the flukes and their eggs.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 210,
+          "max": 210
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces"
+          },
+          {
+            "name": "miracidium",
+            "location": "water"
+          },
+          {
+            "name": "sporocyst",
+            "location": "snail"
+          },
+          {
+            "name": "redia",
+            "location": "snail"
+          },
+          {
+            "name": "cercaria",
+            "location": "leaves the snail"
+          },
+          {
+            "name": "metacercaria",
+            "location": "vegetation"
+          },
+          {
+            "name": "immature fluke",
+            "location": "migrating in the liver"
+          },
+          {
+            "name": "adult fluke",
+            "location": "cysts in the liver"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal sedimentation",
+            "sample": "faeces"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "liver"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Fascioloides magna",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/fascioloides-magna.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Fascioloides magna",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/fascioloides-magna.php",
+          "note": "Course also lists cattle, sheep, goats and pigs; reference treats cattle and pigs as dead-end hosts and sheep as aberrant hosts."
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "Leontovyc et al. 2014, BMC Vet Res 10:41: Highland cattle and Radix labiata, the hosts of Fascioloides magna",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3928908/",
+          "note": "Course names Fossaria spp.; reference reports Galba truncatula and Radix labiata as natural snail hosts in Europe."
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Fascioloides magna",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/fascioloides-magna.php",
+          "note": "Course states zoonotic; reference says it is not recognised as a zoonosis."
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Fascioloides magna",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/fascioloides-magna.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Fascioloides magna",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/394415/",
+          "note": "Course lists Trematoda as the phylum; NCBI ranks Trematoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Fascioloides magna",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/394415/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "dicrocoelium-dendriticum",
+      "canonicalName": "Dicrocoelium dendriticum",
+      "commonName": "Lancet fluke",
+      "aliases": [],
+      "misspellings": ["Dicrocoelium dentriticum", "Dicrocelium dendriticum"],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Plagiorchiida",
+        "family": "Dicrocoeliidae",
+        "group": "trematode",
+        "definitiveHosts": ["cattle", "sheep", "deer", "human"],
+        "intermediateHosts": ["land snail", "Formica"],
+        "majorOrgan": "bile ducts",
+        "onHostStages": ["immature fluke", "adult fluke"],
+        "distribution": "Widespread across Eurasia and North Africa; patchy in North America",
+        "zoonotic": "yes",
+        "significance": "Ant-borne fluke of ruminant bile ducts; usually causes no disease, though very heavy chronic infections may fibrose the liver.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 56,
+          "max": 56
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "shed in faeces with a miracidium inside"
+          },
+          {
+            "name": "miracidium",
+            "location": "inside the snail after the egg is eaten"
+          },
+          {
+            "name": "sporocyst",
+            "location": "snail"
+          },
+          {
+            "name": "cercaria",
+            "location": "snail slime balls"
+          },
+          {
+            "name": "metacercaria",
+            "location": "ant"
+          },
+          {
+            "name": "immature fluke",
+            "location": "from gut to bile ducts, no liver migration"
+          },
+          {
+            "name": "adult fluke",
+            "location": "bile ducts"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "liver"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Dicrocoelium dendriticum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dicrocoelium-dendriticum.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Dicrocoeliasis",
+          "url": "https://www.cdc.gov/dpdx/dicrocoeliasis/index.html",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Dicrocoelium dendriticum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/57078/",
+          "note": "Course places it in Fasciolidae; references place it in Dicrocoeliidae."
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Dicrocoelium dendriticum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/57078/",
+          "note": "Course lists Trematoda as the phylum; NCBI ranks Trematoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Dicrocoelium dendriticum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/57078/",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CDC DPDx: Dicrocoeliasis",
+          "url": "https://www.cdc.gov/dpdx/dicrocoeliasis/index.html",
+          "note": "Course states liver; adults live in the bile ducts."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Dicrocoelium dendriticum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dicrocoelium-dendriticum.php",
+          "note": "Course also lists goats, horses and camelids; cited references do not."
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Dicrocoelium dendriticum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dicrocoelium-dendriticum.php",
+          "note": "Course states worldwide; references give Eurasia, North Africa and parts of North America."
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Dicrocoelium dendriticum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dicrocoelium-dendriticum.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Dicrocoelium dendriticum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dicrocoelium-dendriticum.php",
+          "note": "Course gives sedimentation for all liver and rumen flukes; reference prefers dense-solution flotation, as sedimentation finds few eggs."
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "calicophoron-daubneyi",
+      "canonicalName": "Calicophoron daubneyi",
+      "commonName": "Rumen fluke",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Plagiorchiida",
+        "family": "Paramphistomidae",
+        "group": "trematode",
+        "definitiveHosts": ["cattle", "sheep"],
+        "intermediateHosts": ["Galba truncatula"],
+        "majorOrgan": "rumen",
+        "onHostStages": ["immature fluke", "adult fluke"],
+        "distribution": "Mainland Europe, spreading into Britain and Ireland",
+        "significance": "Often tolerated in the rumen, yet a sudden intake of many cysts injures the duodenum and can kill cattle or sheep.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 56,
+          "max": 70
+        },
+        "lifecycleStages": [
+          {
+            "name": "metacercaria",
+            "location": "pasture"
+          },
+          {
+            "name": "immature fluke",
+            "location": "duodenum"
+          },
+          {
+            "name": "adult fluke",
+            "location": "rumen"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal egg microscopy",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "Calicophoron daubneyi: the path toward understanding its pathogenicity and host interactions; Front Vet Sci 2020",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7500092/",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "Calicophoron daubneyi: the path toward understanding its pathogenicity and host interactions; Front Vet Sci 2020",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7500092/",
+          "note": "Course names Planorbis and Bulinus snails; reference confirms Galba truncatula as the snail host."
+        },
+        {
+          "field": "distribution",
+          "citation": "Calicophoron daubneyi: the path toward understanding its pathogenicity and host interactions; Front Vet Sci 2020",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7500092/",
+          "note": "Course states worldwide; reference describes its spread from mainland Europe to the UK and Ireland."
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Calicophoron daubneyi",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/300641/",
+          "note": "Course lists Trematoda as the phylum; NCBI ranks Trematoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Calicophoron daubneyi",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/300641/",
+          "note": "Course lists Digenea as the order; NCBI ranks Digenea as a subclass and gives the order as Plagiorchiida."
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "paramphistomum-cervi",
+      "canonicalName": "Paramphistomum cervi",
+      "commonName": "Common rumen fluke",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Plagiorchiida",
+        "family": "Paramphistomidae",
+        "group": "trematode",
+        "definitiveHosts": ["sheep", "cattle", "water buffalo", "goat"],
+        "intermediateHosts": [
+          "Bulinus",
+          "Planorbis planorbis",
+          "Indoplanorbis exustus",
+          "Glyptanisus gilberti",
+          "lymnaeid snail"
+        ],
+        "majorOrgan": "rumen",
+        "onHostStages": ["immature fluke", "adult fluke"],
+        "significance": "Young flukes feeding in the duodenal wall of sheep, goats and cattle bring on scour, anaemia and poor appetite.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "immature fluke",
+            "location": "duodenum"
+          },
+          {
+            "name": "adult fluke",
+            "location": "rumen"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "Chaoudhary et al. 2015, Vet World 8:125: identification of Paramphistomum cervi in the rumen of sheep",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4777801/",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Paramphistomum cervi",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/762801/",
+          "note": "Course lists Trematoda as the phylum; NCBI ranks Trematoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Paramphistomum cervi",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/762801/",
+          "note": "Course lists Digenea as the order; NCBI ranks Digenea as a subclass and gives the order as Plagiorchiida."
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "fasciolopsis-buski",
+      "canonicalName": "Fasciolopsis buski",
+      "commonName": "Large intestinal fluke",
+      "aliases": ["Fasciolopsis buskii"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Plagiorchiida",
+        "family": "Fasciolidae",
+        "group": "trematode",
+        "definitiveHosts": ["human", "pig"],
+        "intermediateHosts": ["snail"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["adult fluke"],
+        "distribution": "Parts of Asia, India included",
+        "zoonotic": "yes",
+        "significance": "Zoonotic gut fluke shared by pigs and people; heavy human infections cause diarrhoea, pain and sometimes gut blockage.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 90,
+          "max": 90
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces"
+          },
+          {
+            "name": "miracidium",
+            "location": "water"
+          },
+          {
+            "name": "sporocyst",
+            "location": "snail"
+          },
+          {
+            "name": "redia",
+            "location": "snail"
+          },
+          {
+            "name": "cercaria",
+            "location": "leaves the snail"
+          },
+          {
+            "name": "metacercaria",
+            "location": "aquatic plants"
+          },
+          {
+            "name": "adult fluke",
+            "location": "small intestine wall"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal egg microscopy",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "CDC DPDx: Fasciolopsiasis",
+          "url": "https://www.cdc.gov/dpdx/fasciolopsiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Fasciolopsiasis",
+          "url": "https://www.cdc.gov/dpdx/fasciolopsiasis/index.html",
+          "note": "Course also lists dogs; cited references do not."
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Fasciolopsis buskii",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/27845/",
+          "note": "Course lists Trematoda as the phylum; NCBI ranks Trematoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Fasciolopsis buskii",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/27845/",
+          "note": "Course lists Digenea as the order; NCBI ranks Digenea as a subclass and gives the order as Plagiorchiida."
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "clonorchis-sinensis",
+      "canonicalName": "Clonorchis sinensis",
+      "commonName": "Chinese liver fluke",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Opisthorchiida",
+        "family": "Opisthorchiidae",
+        "group": "trematode",
+        "definitiveHosts": ["human", "dog", "cat", "pig"],
+        "intermediateHosts": ["snail", "freshwater fish"],
+        "majorOrgan": "bile ducts",
+        "onHostStages": ["adult fluke"],
+        "distribution": "East Asia and the Russian Far East",
+        "zoonotic": "yes",
+        "significance": "Fish-borne liver fluke of people and fish-eating animals in East Asia; long infections can rarely end in bile duct cancer.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 30,
+          "max": 30
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces, already embryonated"
+          },
+          {
+            "name": "miracidium",
+            "location": "snail"
+          },
+          {
+            "name": "sporocyst",
+            "location": "snail"
+          },
+          {
+            "name": "redia",
+            "location": "snail"
+          },
+          {
+            "name": "cercaria",
+            "location": "snail, then water"
+          },
+          {
+            "name": "metacercaria",
+            "location": "freshwater fish flesh"
+          },
+          {
+            "name": "adult fluke",
+            "location": "bile ducts"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal egg microscopy",
+            "sample": "faeces"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "CDC DPDx: Clonorchiasis",
+          "url": "https://www.cdc.gov/dpdx/clonorchiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CDC DPDx: Clonorchiasis",
+          "url": "https://www.cdc.gov/dpdx/clonorchiasis/index.html",
+          "note": "Course states small intestine; reference places adults in the bile ducts."
+        },
+        {
+          "field": "pppDays",
+          "citation": "CDC DPDx: Clonorchiasis",
+          "url": "https://www.cdc.gov/dpdx/clonorchiasis/index.html",
+          "note": "Course states PPP 2-3 weeks; reference gives about one month to maturity."
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Clonorchis sinensis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/79923/",
+          "note": "Course lists Trematoda as the phylum; NCBI ranks Trematoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Clonorchis sinensis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/79923/",
+          "note": "Course lists Digenea as the order; NCBI ranks Digenea as a subclass and gives the order as Opisthorchiida."
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "opisthorchis-felineus",
+      "canonicalName": "Opisthorchis felineus",
+      "commonName": "Cat liver fluke",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Opisthorchiida",
+        "family": "Opisthorchiidae",
+        "group": "trematode",
+        "definitiveHosts": ["cat", "dog", "human"],
+        "intermediateHosts": ["Bithynia", "freshwater fish"],
+        "majorOrgan": "bile ducts",
+        "onHostStages": ["adult fluke"],
+        "distribution": "Parts of Europe and northern Asia, east into Siberia",
+        "zoonotic": "yes",
+        "significance": "Liver fluke caught from raw carp-family fish; infects cats, dogs and people and can block the bile and pancreatic ducts.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 21,
+          "max": 28
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces, already embryonated"
+          },
+          {
+            "name": "miracidium",
+            "location": "snail"
+          },
+          {
+            "name": "sporocyst",
+            "location": "snail"
+          },
+          {
+            "name": "redia",
+            "location": "snail"
+          },
+          {
+            "name": "cercaria",
+            "location": "leaves the snail, then enters fish"
+          },
+          {
+            "name": "metacercaria",
+            "location": "fish muscle or under scales"
+          },
+          {
+            "name": "adult fluke",
+            "location": "bile and pancreatic ducts"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal egg microscopy",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "CDC DPDx: Opisthorchiasis",
+          "url": "https://www.cdc.gov/dpdx/opisthorchiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "Opisthorchis felineus infection, risks and morbidity in rural Western Siberia; PLoS Negl Trop Dis 2020",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7351239/",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CDC DPDx: Opisthorchiasis",
+          "url": "https://www.cdc.gov/dpdx/opisthorchiasis/index.html",
+          "note": "Course states small intestine; reference places adults in the bile and pancreatic ducts."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Opisthorchiasis",
+          "url": "https://www.cdc.gov/dpdx/opisthorchiasis/index.html",
+          "note": "Course also lists pigs; cited references do not."
+        },
+        {
+          "field": "pppDays",
+          "citation": "CDC DPDx: Opisthorchiasis",
+          "url": "https://www.cdc.gov/dpdx/opisthorchiasis/index.html",
+          "note": "Course states PPP 2-3 weeks; reference gives egg laying from 3 to 4 weeks."
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Opisthorchis felineus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/147828/",
+          "note": "Course lists Trematoda as the phylum; NCBI ranks Trematoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Opisthorchis felineus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/147828/",
+          "note": "Course lists Digenea as the order; NCBI ranks Digenea as a subclass and gives the order as Opisthorchiida."
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "schistosoma-spp",
+      "canonicalName": "Schistosoma spp.",
+      "commonName": "Blood fluke",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Strigeidida",
+        "family": "Schistosomatidae",
+        "group": "trematode",
+        "definitiveHosts": [
+          "human",
+          "cattle",
+          "goat",
+          "dog",
+          "cat",
+          "pig",
+          "horse",
+          "rodent"
+        ],
+        "intermediateHosts": [
+          "Bulinus",
+          "Biomphalaria",
+          "Oncomelania",
+          "Neotricula aperta"
+        ],
+        "majorOrgan": "blood vessels",
+        "onHostStages": ["schistosomulum", "adult fluke"],
+        "distribution": "Africa, Asia, parts of South America, the Middle East and Corsica",
+        "zoonotic": "yes",
+        "significance": "S. bovis is the usual cattle species, often silent but sapping meat and milk yield; livestock and hybrid strains can infect people.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces or urine"
+          },
+          {
+            "name": "miracidium",
+            "location": "water"
+          },
+          {
+            "name": "sporocyst",
+            "location": "snail"
+          },
+          {
+            "name": "cercaria",
+            "location": "water, enters through skin"
+          },
+          {
+            "name": "schistosomulum",
+            "location": "veins, lungs and liver"
+          },
+          {
+            "name": "adult fluke",
+            "location": "mesenteric or bladder venules"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal egg microscopy",
+            "sample": "faeces"
+          },
+          {
+            "name": "urine sediment microscopy",
+            "sample": "urine"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "CDC DPDx: Schistosomiasis",
+          "url": "https://www.cdc.gov/dpdx/schistosomiasis/index.html",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Zoonotic schistosomiasis: animal and human schistosomiasis in Africa, narrative review; Health Sci Rep 2025",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12634475/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Schistosomiasis",
+          "url": "https://www.cdc.gov/dpdx/schistosomiasis/index.html",
+          "note": "Course also lists rabbits; cited references do not."
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CDC DPDx: Schistosomiasis",
+          "url": "https://www.cdc.gov/dpdx/schistosomiasis/index.html",
+          "note": "Course adds lymphatics; reference places adults in mesenteric or bladder venules."
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Schistosoma",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6181/",
+          "note": "Course lists Trematoda as the phylum; NCBI ranks Trematoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Schistosoma",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6181/",
+          "note": "Course lists Digenea as the order; NCBI ranks Digenea as a subclass and gives the order as Strigeidida."
+        }
+      ],
+      "images": []
+    }
+  ]
+}
