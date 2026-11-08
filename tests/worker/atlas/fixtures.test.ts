@@ -9,6 +9,7 @@ type FixtureEntry = {
   lecture: string;
   page: number;
   slideErrors: string[];
+  corrections?: { field: string; was: string; citation: string; url: string }[];
   expected: Record<string, unknown>;
 };
 

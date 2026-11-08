@@ -388,6 +388,17 @@ describe("built-in parasite dataset", () => {
     expect(missing).toEqual([]);
   });
 
+  it("names a lifecycle stage in every onHostStages value", () => {
+    const stray = dataset.entries.flatMap((e) => {
+      const names = new Set(e.fields.lifecycleStages.map((s) => s.name));
+      if (names.size === 0) return [];
+      return e.fields.onHostStages
+        .filter((s) => !names.has(s))
+        .map((s) => `${e.key}: ${s}`);
+    });
+    expect(stray).toEqual([]);
+  });
+
   it("ships no images before step 2", () => {
     expect(dataset.entries.flatMap((e) => e.images)).toEqual([]);
   });
