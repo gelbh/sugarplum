@@ -1,5 +1,5 @@
 {
-  "source": "AB2 Parasitology lecture pack (R(D)SVS / Moredun), 2026 cohort. Lecture PDFs are not committed; one entry per course taxon with the lecture code and 1-based page of its species table. T01 is tutorial 1; EXT marks arthropods added from standard UK veterinary references (page 0).",
+  "source": "AB2 Parasitology lecture pack (R(D)SVS / Moredun), 2026 cohort. Lecture PDFs are not committed. One entry per course taxon with the lecture code and 1-based page of its species table. Arthropods instead cite their first species-level mention in the pack; PA01 there means the PA1 Introduction notes PDF, not PA01a or PA01b. T01 is tutorial 1. EXT with page 0 marks arthropods the pack never names at species level, added from standard UK veterinary references.",
   "taxa": [
     {
       "canonicalName": "Entamoeba histolytica",
