@@ -41,3 +41,6 @@ export const atlasHref = (subjectId: string) =>
 
 export const atlasEntryHref = (subjectId: string, key: string) =>
   `${atlasHref(subjectId)}/entry/${encodeURIComponent(key)}`;
+
+export const atlasCompareHref = (subjectId: string, a: string, b: string) =>
+  `${atlasHref(subjectId)}/compare/${encodeURIComponent(a)}/${encodeURIComponent(b)}`;

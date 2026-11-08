@@ -7,7 +7,9 @@ import Typography from "@mui/material/Typography";
 import { ApiError, listSubjects, me } from "../api/client";
 import { bundledAtlasSource } from "../atlas/bundledSource";
 import Cabinet from "../atlas/Cabinet";
+import CompareView from "../atlas/CompareView";
 import {
+  atlasCompareHref,
   atlasEntryHref,
   atlasHref,
   subjectHref,
@@ -15,7 +17,7 @@ import {
 } from "../atlas/paths";
 import type { AtlasEntryView, AtlasSource } from "../atlas/types";
 import { isGuest } from "../guest/session";
-import { navigate } from "../nav/navigate";
+import { navigate, navigateReplace } from "../nav/navigate";
 
 type Props = {
   subjectId: string;
@@ -133,6 +135,7 @@ export default function AtlasPage({
         userKey={loaded.userKey}
         entryHref={(id) => atlasEntryHref(subjectId, id)}
         onOpenEntry={(id) => navigate(atlasEntryHref(subjectId, id))}
+        onCompare={(a, b) => navigate(atlasCompareHref(subjectId, a, b))}
       />
     );
   } else if (route.kind === "entry") {
@@ -146,7 +149,16 @@ export default function AtlasPage({
       />
     );
   } else {
-    body = <Notice title="Compare" />;
+    body = (
+      <CompareView
+        entries={loaded.entries}
+        a={route.a}
+        b={route.b}
+        entryHref={(id) => atlasEntryHref(subjectId, id)}
+        onOpenEntry={(id) => navigate(atlasEntryHref(subjectId, id))}
+        onChange={(a, b) => navigateReplace(atlasCompareHref(subjectId, a, b))}
+      />
+    );
   }
 
   return (

@@ -10,8 +10,10 @@ import Typography from "@mui/material/Typography";
 import GridViewOutlinedIcon from "@mui/icons-material/GridViewOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import TableRowsOutlinedIcon from "@mui/icons-material/TableRowsOutlined";
+import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 import AtlasFilters from "./AtlasFilters";
 import AtlasTable from "./AtlasTable";
+import ComparePicker from "./ComparePicker";
 import SpecimenTile from "./SpecimenTile";
 import {
   GROUP_LABELS,
@@ -33,6 +35,7 @@ type Props = {
   userKey: string;
   entryHref: (id: string) => string;
   onOpenEntry: (id: string) => void;
+  onCompare: (a: string, b: string) => void;
 };
 
 const plural = (n: number) => `${n} ${n === 1 ? "parasite" : "parasites"}`;
@@ -42,11 +45,13 @@ export default function Cabinet({
   userKey,
   entryHref,
   onOpenEntry,
+  onCompare,
 }: Props) {
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [view, setView] = useState<AtlasViewMode>(() => readViewPref(userKey));
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [comparing, setComparing] = useState(false);
 
   const options = useMemo(
     () => ({
@@ -130,6 +135,27 @@ export default function Cabinet({
               "& .MuiInputBase-root": { bgcolor: "background.paper" },
             }}
           />
+          <Button
+            variant="outlined"
+            onClick={() => setComparing(true)}
+            disabled={entries.length < 2}
+            aria-label="Compare"
+            sx={{
+              bgcolor: "background.paper",
+              flex: "none",
+              height: 40,
+              minWidth: { xs: 40, sm: 64 },
+              px: { xs: 1, sm: 1.75 },
+            }}
+          >
+            <CompareArrowsIcon fontSize="small" sx={{ mr: { sm: 0.75 } }} />
+            <Box
+              component="span"
+              sx={{ display: { xs: "none", sm: "inline" } }}
+            >
+              Compare
+            </Box>
+          </Button>
           <ToggleButtonGroup
             size="small"
             exclusive
@@ -234,6 +260,15 @@ export default function Cabinet({
           ))}
         </Stack>
       )}
+      <ComparePicker
+        open={comparing}
+        entries={entries}
+        onClose={() => setComparing(false)}
+        onPick={(a, b) => {
+          setComparing(false);
+          onCompare(a, b);
+        }}
+      />
     </Stack>
   );
 }
