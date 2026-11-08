@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, ViewTransition } from "react";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
@@ -9,6 +9,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
 import AtlasImage, { heroImage } from "./AtlasImage";
+import { atlasHeroName } from "./paths";
 import {
   GROUP_LABELS,
   hostSummary,
@@ -88,12 +89,14 @@ export default function AtlasTable({ entries, entryHref, onOpen }: Props) {
               sx={{ cursor: "pointer" }}
             >
               <TableCell sx={{ py: 0.75 }}>
-                <AtlasImage
-                  image={heroImage(e)}
-                  ratio="1 / 1"
-                  compact
-                  sx={{ width: { xs: 32, sm: 40 }, borderRadius: 1 }}
-                />
+                <ViewTransition name={atlasHeroName(e.id)} share="atlas-morph">
+                  <AtlasImage
+                    image={heroImage(e)}
+                    ratio="1 / 1"
+                    compact
+                    sx={{ width: { xs: 32, sm: 40 }, borderRadius: 1 }}
+                  />
+                </ViewTransition>
               </TableCell>
               <TableCell>
                 <Link
