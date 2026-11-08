@@ -4,6 +4,7 @@
     {
       "key": "entamoeba-histolytica",
       "canonicalName": "Entamoeba histolytica",
+      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -13,7 +14,7 @@
         "group": "protozoan",
         "definitiveHosts": ["human", "dog", "non-human primate"],
         "majorOrgan": "large intestine",
-        "onHostStages": ["trophozoite", "cyst"],
+        "onHostStages": ["trophozoite"],
         "distribution": "Worldwide; most human cases arise in developing countries",
         "zoonotic": "potential",
         "significance": "Agent of amoebic dysentery in people; invasive trophozoites can reach the liver and form abscesses. Also found in dogs and non-human primates.",
@@ -59,7 +60,7 @@
         },
         {
           "field": "definitiveHosts",
-          "citation": "Koç et al. 2026, Vet Sci 13:1072: zoonotic protozoa in stray and owned dogs with diarrhoea in Trabzon, Türkiye",
+          "citation": "Koç et al. 2026, Veterinary Sciences 13:1072: zoonotic protozoa in stray and owned dogs with diarrhoea in Trabzon, Türkiye",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13709635/",
           "note": "Course also lists cats; cited references do not."
         },
@@ -117,6 +118,7 @@
     {
       "key": "giardia-duodenalis",
       "canonicalName": "Giardia duodenalis",
+      "commonName": null,
       "aliases": ["Giardia intestinalis", "Giardia lamblia"],
       "misspellings": [],
       "fields": {
@@ -137,7 +139,7 @@
           "rabbit"
         ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["trophozoite", "cyst"],
+        "onHostStages": ["trophozoite"],
         "distribution": "Worldwide in humans and in domestic and wild mammals",
         "zoonotic": "yes",
         "significance": "Common gut flagellate of young dogs, cats, ruminants and people; often silent but can cause diarrhoea and malabsorption. Assemblages A and B cross species.",
@@ -251,6 +253,7 @@
     {
       "key": "balantidium-coli",
       "canonicalName": "Balantidium coli",
+      "commonName": null,
       "aliases": ["Balantioides coli", "Neobalantidium coli"],
       "misspellings": [],
       "fields": {
@@ -260,7 +263,7 @@
         "group": "protozoan",
         "definitiveHosts": ["pig", "human", "rodent", "non-human primate"],
         "majorOrgan": "large intestine",
-        "onHostStages": ["trophozoite", "cyst"],
+        "onHostStages": ["trophozoite"],
         "distribution": "Worldwide, mainly where pigs are kept; commoner in warm humid regions",
         "zoonotic": "yes",
         "significance": "Large ciliate with the pig as main reservoir; usually harmless there but linked to diarrhoea and poor growth in pigs, and to ulcerative colitis in people.",
@@ -372,6 +375,7 @@
     {
       "key": "eimeria-spp",
       "canonicalName": "Eimeria spp.",
+      "commonName": null,
       "aliases": [],
       "misspellings": ["Eimieria species"],
       "fields": {
@@ -485,6 +489,7 @@
     {
       "key": "cryptosporidium-spp",
       "canonicalName": "Cryptosporidium spp.",
+      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -648,6 +653,7 @@
     {
       "key": "tritrichomonas-foetus",
       "canonicalName": "Tritrichomonas foetus",
+      "commonName": null,
       "aliases": ["Trichomonas foetus"],
       "misspellings": ["Trichomonas fetus"],
       "fields": {
@@ -766,6 +772,7 @@
     {
       "key": "histomonas-meleagridis",
       "canonicalName": "Histomonas meleagridis",
+      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -805,7 +812,11 @@
         "diagnosticTests": [
           {
             "name": "post-mortem examination",
-            "sample": "caecum and liver"
+            "sample": "caecum"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "liver"
           },
           {
             "name": "histopathology",
@@ -815,7 +826,7 @@
             "name": "PCR"
           },
           {
-            "name": "microscopy",
+            "name": "caecal content microscopy",
             "sample": "caecal contents"
           }
         ]
@@ -843,7 +854,13 @@
           "field": "paratenicHosts",
           "citation": "Beer et al. 2022, Front Vet Sci 9:880738: Histomonosis in poultry, a comprehensive review",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9120919/",
-          "note": "Course also lists Heterakis gallinarum and beetles as paratenic hosts; cited references do not."
+          "note": "Course also lists beetles as paratenic hosts; cited references do not."
+        },
+        {
+          "field": "vectorRole",
+          "citation": "Beer et al. 2022, Front Vet Sci 9:880738: Histomonosis in poultry, a comprehensive review",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9120919/",
+          "note": "Course states Heterakis gallinarum as a paratenic host; reference gives it as a vector."
         },
         {
           "field": "paratenicHosts",
@@ -905,6 +922,7 @@
     {
       "key": "encephalitozoon-cuniculi",
       "canonicalName": "Encephalitozoon cuniculi",
+      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -913,7 +931,7 @@
         "group": "protozoan",
         "definitiveHosts": ["rabbit", "rodent", "dog", "cat", "fox", "human"],
         "majorOrgan": "central nervous system",
-        "onHostStages": ["meront", "sporont", "spore"],
+        "onHostStages": ["meront", "sporont"],
         "zoonotic": "yes",
         "significance": "Spore-forming microsporidian common in pet rabbits; often silent, but causes head tilt and other vestibular signs, kidney disease and lens-induced uveitis.",
         "lifecycleType": "direct",
@@ -937,12 +955,12 @@
         "diagnosticStage": "spore",
         "diagnosticTests": [
           {
-            "name": "antibody detection",
-            "sample": "serum"
-          },
-          {
             "name": "histopathology",
             "sample": "tissue"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
           },
           {
             "name": "PCR",
@@ -1021,6 +1039,7 @@
     {
       "key": "toxoplasma-gondii",
       "canonicalName": "Toxoplasma gondii",
+      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1041,7 +1060,8 @@
         "onHostStages": [
           "tachyzoite",
           "tissue cyst with bradyzoites",
-          "meront and gamont"
+          "meront",
+          "gamont"
         ],
         "distribution": "Worldwide",
         "zoonotic": "yes",
@@ -1077,20 +1097,25 @@
             "hostRole": "intermediate"
           },
           {
-            "name": "meront and gamont",
+            "name": "meront",
+            "location": "epithelial cells of the felid small intestine",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "gamont",
             "location": "epithelial cells of the felid small intestine",
             "hostRole": "definitive"
           }
         ],
-        "diagnosticStage": "oocyst",
+        "diagnosticStage": "unsporulated oocyst",
         "diagnosticTests": [
+          {
+            "name": "faecal microscopy",
+            "sample": "faeces"
+          },
           {
             "name": "antibody detection",
             "sample": "serum"
-          },
-          {
-            "name": "faecal examination for oocysts",
-            "sample": "faeces"
           },
           {
             "name": "PCR",
@@ -1179,7 +1204,7 @@
           "field": "phylum",
           "citation": "NCBI Taxonomy: Toxoplasma gondii",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5811/",
-          "note": "Course lists Protozoa as the phylum; NCBI gives Apicomplexa."
+          "note": "Course states Protozoa; reference gives Apicomplexa."
         },
         {
           "field": "order",
@@ -1191,7 +1216,7 @@
           "field": "family",
           "citation": "NCBI Taxonomy: Toxoplasma gondii",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5811/",
-          "note": "Course lists Toxoplasma as the family; NCBI gives Toxoplasma as a genus in Sarcocystidae."
+          "note": "Course states Toxoplasma, a genus; reference gives Sarcocystidae."
         },
         {
           "field": "family",
@@ -1205,6 +1230,7 @@
     {
       "key": "neospora-caninum",
       "canonicalName": "Neospora caninum",
+      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1218,11 +1244,12 @@
         "onHostStages": [
           "tachyzoite",
           "tissue cyst with bradyzoites",
-          "intestinal sexual stages"
+          "meront",
+          "gamont"
         ],
         "distribution": "Worldwide",
         "zoonotic": "no",
-        "significance": "Leading reason cattle abort worldwide; in young dogs it also causes nerve and muscle disease with hind-limb paralysis.",
+        "significance": "A leading cause of abortion in cattle worldwide; in young dogs it also causes nerve and muscle disease with hind-limb paralysis.",
         "lifecycleType": "indirect",
         "pppDays": {
           "min": 5,
@@ -1250,7 +1277,12 @@
             "hostRole": "intermediate"
           },
           {
-            "name": "meront and gamont",
+            "name": "meront",
+            "location": "thought to develop in the gut lining of the canid",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "gamont",
             "location": "thought to develop in the gut lining of the canid",
             "hostRole": "definitive"
           }
@@ -1333,7 +1365,7 @@
           "field": "phylum",
           "citation": "NCBI Taxonomy: Neospora caninum",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/29176/",
-          "note": "Course lists Protozoa as the phylum; NCBI gives Apicomplexa."
+          "note": "Course states Protozoa; reference gives Apicomplexa."
         },
         {
           "field": "order",
@@ -1345,7 +1377,7 @@
           "field": "family",
           "citation": "NCBI Taxonomy: Neospora caninum",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/29176/",
-          "note": "Course lists Neospora as the family; NCBI gives Neospora as a genus in Sarcocystidae."
+          "note": "Course states Neospora, a genus; reference gives Sarcocystidae."
         },
         {
           "field": "family",
@@ -1359,6 +1391,7 @@
     {
       "key": "sarcocystis-spp",
       "canonicalName": "Sarcocystis spp.",
+      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1376,10 +1409,10 @@
           "human"
         ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["sarcocyst", "meront", "intestinal sexual stages"],
+        "onHostStages": ["meront", "sarcocyst with bradyzoites", "gamont"],
         "distribution": "Worldwide, commonest where livestock are raised",
         "zoonotic": "yes",
-        "significance": "Many host-specific species; most cause no signs, but some cause acute illness, abortion or carcass downgrading, and S. neurona causes EPM.",
+        "significance": "Many host-specific species, mostly silent; some cause acute illness, abortion or carcass downgrading, and S. neurona causes equine protozoal myeloencephalitis.",
         "lifecycleType": "indirect",
         "lifecycleStages": [
           {
@@ -1398,7 +1431,7 @@
             "hostRole": "intermediate"
           },
           {
-            "name": "gamont and oocyst",
+            "name": "gamont",
             "location": "lamina propria of the small intestine of the carnivore",
             "hostRole": "definitive"
           }
@@ -1512,7 +1545,7 @@
           "field": "phylum",
           "citation": "NCBI Taxonomy: Sarcocystis",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5812/",
-          "note": "Course lists Protozoa as the phylum; NCBI gives Apicomplexa."
+          "note": "Course states Protozoa; reference gives Apicomplexa."
         },
         {
           "field": "order",
@@ -1538,6 +1571,7 @@
     {
       "key": "besnoitia-besnoiti",
       "canonicalName": "Besnoitia besnoiti",
+      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1564,15 +1598,15 @@
             "hostRole": "intermediate"
           }
         ],
-        "diagnosticStage": "tissue cyst",
+        "diagnosticStage": "tissue cyst with bradyzoites",
         "diagnosticTests": [
-          {
-            "name": "antibody detection",
-            "sample": "serum"
-          },
           {
             "name": "histopathology",
             "sample": "skin biopsy"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
           },
           {
             "name": "PCR",
@@ -1597,7 +1631,7 @@
           "field": "definitiveHosts",
           "citation": "MSD Veterinary Manual: Besnoitiosis in Animals",
           "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals",
-          "note": "Course states cats (queried) as the definitive host; reference gives the definitive host as unknown."
+          "note": "Course states cats; reference gives the definitive host as unknown."
         },
         {
           "field": "intermediateHosts",
@@ -1651,7 +1685,7 @@
           "field": "family",
           "citation": "NCBI Taxonomy: Besnoitia besnoiti",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/94643/",
-          "note": "Course lists Coccidea (Coccidia) as the family; NCBI gives Sarcocystidae."
+          "note": "Course states Coccidea (Coccidia); reference gives Sarcocystidae."
         },
         {
           "field": "family",
@@ -1665,6 +1699,7 @@
     {
       "key": "babesia-spp",
       "canonicalName": "Babesia spp.",
+      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1686,7 +1721,7 @@
         ],
         "vectorRole": "Ixodid ticks are the definitive hosts and pass sporozoites in saliva as they feed; many species also pass through tick eggs.",
         "majorOrgan": "red blood cells",
-        "onHostStages": ["trophozoite", "merozoite", "gametocyte"],
+        "onHostStages": ["trophozoite and merozoite", "gametocyte"],
         "distribution": "Worldwide, wherever competent tick vectors occur",
         "zoonotic": "yes",
         "significance": "Red cell destruction causes fever, anaemia, jaundice and red urine; severe in cattle and horses, also dogs, cats and people.",
@@ -1713,12 +1748,12 @@
             "hostRole": "definitive"
           },
           {
-            "name": "sporozoite",
+            "name": "salivary gland sporozoite",
             "location": "formed in the tick salivary glands",
             "hostRole": "definitive"
           }
         ],
-        "diagnosticStage": "intra-erythrocytic stage",
+        "diagnosticStage": "trophozoite and merozoite",
         "diagnosticTests": [
           {
             "name": "blood smear",
@@ -1757,7 +1792,7 @@
           "field": "definitiveHosts",
           "citation": "WCVM Learn About Parasites: Piroplasms (Babesia caballi and Theileria equi)",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php",
-          "note": "Course states mammals as definitive hosts; reference places sexual reproduction in the tick."
+          "note": "Course states mammals as definitive hosts; reference gives ticks."
         },
         {
           "field": "definitiveHosts",
@@ -1867,6 +1902,7 @@
     {
       "key": "theileria-spp",
       "canonicalName": "Theileria spp.",
+      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1884,7 +1920,7 @@
         ],
         "vectorRole": "Ixodid ticks are the definitive hosts; they pick up piroplasms and pass sporozoites in saliva at the next life stage, not via eggs.",
         "majorOrgan": "lymph nodes",
-        "onHostStages": ["schizont", "piroplasm"],
+        "onHostStages": ["schizont", "merozoite and piroplasm"],
         "distribution": "Tropical and subtropical regions, limited by the tick vectors",
         "significance": "Tick-borne diseases of ruminants; East Coast fever and tropical theileriosis kill many cattle, and some species are lethal to sheep.",
         "lifecycleType": "indirect",
@@ -1910,7 +1946,7 @@
             "hostRole": "definitive"
           },
           {
-            "name": "sporozoite",
+            "name": "salivary gland sporozoite",
             "location": "formed in the tick salivary glands",
             "hostRole": "definitive"
           }
@@ -1918,7 +1954,7 @@
         "diagnosticStage": "schizont",
         "diagnosticTests": [
           {
-            "name": "lymph node aspirate smear",
+            "name": "cytology",
             "sample": "lymph node aspirate"
           },
           {
@@ -1956,7 +1992,7 @@
           "field": "definitiveHosts",
           "citation": "WCVM Learn About Parasites: Piroplasms (Babesia caballi and Theileria equi)",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php",
-          "note": "Course states cattle, buffalo and sheep as definitive hosts; reference places sexual reproduction in the tick."
+          "note": "Course states cattle, buffalo and sheep as definitive hosts; reference gives ticks."
         },
         {
           "field": "intermediateHosts",
@@ -2030,6 +2066,7 @@
     {
       "key": "leishmania-infantum",
       "canonicalName": "Leishmania infantum",
+      "commonName": null,
       "aliases": ["Leishmania chagasi"],
       "misspellings": [],
       "fields": {
@@ -2058,7 +2095,7 @@
             "hostRole": "definitive"
           },
           {
-            "name": "promastigote",
+            "name": "midgut promastigote",
             "location": "develops and multiplies in the sand fly midgut, then moves to the proboscis",
             "hostRole": "intermediate"
           }
@@ -2066,12 +2103,16 @@
         "diagnosticStage": "amastigote",
         "diagnosticTests": [
           {
-            "name": "antibody detection",
-            "sample": "serum"
+            "name": "cytology",
+            "sample": "lymph node aspirate"
           },
           {
             "name": "cytology",
-            "sample": "lymph node, spleen or bone marrow aspirate"
+            "sample": "bone marrow aspirate"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
           },
           {
             "name": "histopathology",
@@ -2079,7 +2120,11 @@
           },
           {
             "name": "PCR",
-            "sample": "spleen, marrow or lymph node aspirate"
+            "sample": "bone marrow aspirate"
+          },
+          {
+            "name": "PCR",
+            "sample": "lymph node aspirate"
           }
         ]
       },
@@ -2222,6 +2267,7 @@
     {
       "key": "trypanosoma-spp",
       "canonicalName": "Trypanosoma spp.",
+      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -2265,7 +2311,7 @@
             "hostRole": "intermediate"
           }
         ],
-        "diagnosticStage": "trypomastigote",
+        "diagnosticStage": "bloodstream trypomastigote",
         "diagnosticTests": [
           {
             "name": "blood smear",
@@ -2404,6 +2450,7 @@
     {
       "key": "plasmodium-spp",
       "canonicalName": "Plasmodium spp.",
+      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -2412,7 +2459,7 @@
         "family": "Plasmodiidae",
         "group": "protozoan",
         "definitiveHosts": ["mosquito"],
-        "intermediateHosts": ["bird", "chicken", "turkey", "human"],
+        "intermediateHosts": ["bird", "chicken", "turkey"],
         "vectorRole": "Mosquitoes (Culex, Culiseta or Aedes for bird species) take up gametocytes, host the sexual and sporogonic cycle, and inject sporozoites when feeding.",
         "majorOrgan": "red blood cells",
         "onHostStages": [
@@ -2496,18 +2543,12 @@
           "field": "definitiveHosts",
           "citation": "CDC DPDx: Malaria",
           "url": "https://www.cdc.gov/dpdx/malaria/index.html",
-          "note": "Course states birds as definitive hosts; reference places gamete fusion and sporogony in the mosquito."
+          "note": "Course states birds as definitive hosts; reference gives mosquitoes."
         },
         {
           "field": "intermediateHosts",
           "citation": "MSD Veterinary Manual: Plasmodium Infection in Poultry and Other Birds",
           "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds",
-          "note": null
-        },
-        {
-          "field": "intermediateHosts",
-          "citation": "CDC DPDx: Malaria",
-          "url": "https://www.cdc.gov/dpdx/malaria/index.html",
           "note": null
         },
         {
@@ -2568,13 +2609,13 @@
           "field": "order",
           "citation": "NCBI Taxonomy: Plasmodium",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5820/",
-          "note": "Course spells the order Haemosprida; NCBI gives Haemosporida."
+          "note": "Course states Haemosprida; reference gives Haemosporida."
         },
         {
           "field": "family",
           "citation": "NCBI Taxonomy: Plasmodium",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5820/",
-          "note": "Course spells the family Plasmodidae; NCBI gives Plasmodiidae."
+          "note": "Course states Plasmodidae; reference gives Plasmodiidae."
         }
       ],
       "images": []
@@ -2582,6 +2623,7 @@
     {
       "key": "hepatozoon-canis",
       "canonicalName": "Hepatozoon canis",
+      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -2593,7 +2635,7 @@
         "vectorRole": "The brown dog tick is the definitive host; dogs are infected by swallowing an infected tick, not by its bite.",
         "majorOrgan": "bone marrow",
         "onHostStages": ["meront", "gamont"],
-        "distribution": "Asia, Africa, Europe, South America and the Caribbean; also North America",
+        "distribution": "Asia, Africa, Europe and the Americas",
         "significance": "Tick-borne infection of dogs and wild canids, usually mild or subclinical but sometimes causing fever, lethargy and anaemia.",
         "lifecycleType": "indirect",
         "lifecycleStages": [
@@ -2639,7 +2681,7 @@
         },
         {
           "field": null,
-          "citation": "Thomas et al. 2024, Parasit Vectors 17:108: Hepatozoon in wild mammals of the Americas, a systematic review",
+          "citation": "Thomas et al. 2024, Parasites & Vectors 17:108: Hepatozoon in wild mammals of the Americas, a systematic review",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10916324/",
           "note": null
         },
@@ -2647,11 +2689,11 @@
           "field": "definitiveHosts",
           "citation": "MSD Veterinary Manual: Old World Hepatozoonosis and American Canine Hepatozoonosis",
           "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis",
-          "note": "Course states R. sanguineus ticks as intermediate host; reference gives the tick as definitive host."
+          "note": "Course states ticks as intermediate hosts; reference gives ticks as definitive hosts."
         },
         {
           "field": "definitiveHosts",
-          "citation": "Thomas et al. 2024, Parasit Vectors 17:108: Hepatozoon in wild mammals of the Americas, a systematic review",
+          "citation": "Thomas et al. 2024, Parasites & Vectors 17:108: Hepatozoon in wild mammals of the Americas, a systematic review",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10916324/",
           "note": null
         },
@@ -2663,7 +2705,7 @@
         },
         {
           "field": "intermediateHosts",
-          "citation": "Thomas et al. 2024, Parasit Vectors 17:108: Hepatozoon in wild mammals of the Americas, a systematic review",
+          "citation": "Thomas et al. 2024, Parasites & Vectors 17:108: Hepatozoon in wild mammals of the Americas, a systematic review",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10916324/",
           "note": null
         },
@@ -2675,7 +2717,7 @@
         },
         {
           "field": "vectorRole",
-          "citation": "Thomas et al. 2024, Parasit Vectors 17:108: Hepatozoon in wild mammals of the Americas, a systematic review",
+          "citation": "Thomas et al. 2024, Parasites & Vectors 17:108: Hepatozoon in wild mammals of the Americas, a systematic review",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10916324/",
           "note": null
         },
@@ -2699,7 +2741,7 @@
         },
         {
           "field": "lifecycleStages",
-          "citation": "Thomas et al. 2024, Parasit Vectors 17:108: Hepatozoon in wild mammals of the Americas, a systematic review",
+          "citation": "Thomas et al. 2024, Parasites & Vectors 17:108: Hepatozoon in wild mammals of the Americas, a systematic review",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10916324/",
           "note": null
         },
@@ -2719,7 +2761,7 @@
           "field": "family",
           "citation": "NCBI Taxonomy: Hepatozoon canis",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/110120/",
-          "note": "Course lists Coccidea (Coccidia) as the family; NCBI gives Hepatozoidae."
+          "note": "Course states Coccidea (Coccidia); reference gives Hepatozoidae."
         }
       ],
       "images": []

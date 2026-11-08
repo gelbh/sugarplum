@@ -44,10 +44,7 @@
         "intermediateHosts": ["fleas", "lice"],
         "majorOrgan": "small intestine",
         "lifecycleType": "indirect",
-        "pppDays": {
-          "min": 21,
-          "max": 21
-        }
+        "pppDays": { "min": 21, "max": 21 }
       }
     },
     {
@@ -63,10 +60,7 @@
         "intermediateHosts": ["forage mites"],
         "majorOrgan": "ileum",
         "lifecycleType": "indirect",
-        "pppDays": {
-          "min": 30,
-          "max": 60
-        }
+        "pppDays": { "min": 30, "max": 60 }
       }
     },
     {
@@ -81,10 +75,7 @@
         "definitiveHosts": ["sheep", "goats", "cattle"],
         "intermediateHosts": ["forage mites"],
         "majorOrgan": "small intestine",
-        "pppDays": {
-          "min": 42,
-          "max": 42
-        }
+        "pppDays": { "min": 42, "max": 42 }
       }
     },
     {
@@ -177,10 +168,7 @@
         "definitiveHosts": ["small ruminants"],
         "majorOrgan": "abomasum",
         "lifecycleType": "direct",
-        "pppDays": {
-          "min": 14,
-          "max": 21
-        }
+        "pppDays": { "min": 14, "max": 21 }
       }
     },
     {
@@ -197,10 +185,7 @@
         "definitiveHosts": ["small ruminants"],
         "majorOrgan": "abomasum",
         "lifecycleType": "direct",
-        "pppDays": {
-          "min": 21,
-          "max": 21
-        }
+        "pppDays": { "min": 21, "max": 21 }
       }
     },
     {
@@ -214,10 +199,7 @@
         "family": "Dictyocaulidae",
         "definitiveHosts": ["cattle"],
         "majorOrgan": "lungs",
-        "pppDays": {
-          "min": 25,
-          "max": 60
-        }
+        "pppDays": { "min": 25, "max": 60 }
       }
     },
     {
