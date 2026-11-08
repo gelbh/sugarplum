@@ -136,6 +136,8 @@ export default function EntryView({
           lg: '"rail head" "rail board" "rail side"',
           xl: '"rail head head" "rail board side"',
         },
+        // The tall sticky rail spans every row; leftover height goes to the last row, not between sections.
+        gridTemplateRows: { lg: "auto auto 1fr", xl: "auto 1fr" },
         alignItems: "start",
       }}
     >
