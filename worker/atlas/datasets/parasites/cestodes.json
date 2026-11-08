@@ -9,7 +9,7 @@
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
-        "order": "Cyclophyllidea",
+        "order": "Cyclophyllida",
         "family": "Anoplocephalidae",
         "group": "cestode",
         "definitiveHosts": ["horse", "donkey"],
@@ -75,7 +75,7 @@
           "field": "pppDays",
           "citation": "Jürgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-020-04318-5",
-          "note": "Course states 1-2 months; reference gives 1.5-4 months."
+          "note": "Course states PPP 1-2 months; reference gives 1.5-4 months."
         },
         {
           "field": "majorOrgan",
@@ -111,12 +111,18 @@
           "field": "order",
           "citation": "NCBI Taxonomy: Anoplocephala perfoliata",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/218192/",
-          "note": "Course lists the order as Cyclophyllida; NCBI spells it Cyclophyllidea."
+          "note": null
         },
         {
           "field": "family",
           "citation": "NCBI Taxonomy: Anoplocephala perfoliata",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/218192/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Taenia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
           "note": null
         }
       ],
@@ -148,7 +154,7 @@
         "lifecycleStages": [
           {
             "name": "gravid proglottid",
-            "location": "shed in faeces or crawling from the perianal area"
+            "location": "passed in faeces or crawling from the perianal area"
           },
           {
             "name": "egg",
@@ -204,7 +210,7 @@
           "field": "pppDays",
           "citation": "WCVM Learn About Parasites: Dipylidium caninum",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dipylidium-caninum.php",
-          "note": "Course states 3 weeks; reference gives 2-3 weeks."
+          "note": "Course states PPP 3 weeks; reference gives 2-3 weeks."
         },
         {
           "field": "zoonotic",
@@ -247,29 +253,25 @@
       "misspellings": ["Davainae proglottina"],
       "fields": {
         "phylum": "Platyhelminthes",
-        "order": "Cyclophyllidea",
+        "order": "Cyclophyllida",
         "family": "Davaineidae",
         "group": "cestode",
         "definitiveHosts": ["chicken"],
         "intermediateHosts": ["slug", "snail"],
         "majorOrgan": "small intestine",
         "onHostStages": ["adult tapeworm"],
-        "distribution": null,
-        "zoonotic": null,
         "significance": "Very small tapeworm of the chicken duodenum; a single bird can carry thousands, and infection is associated with weight loss.",
         "lifecycleType": "indirect",
-        "pppDays": null,
         "lifecycleStages": [
           {
             "name": "adult tapeworm",
             "location": "duodenum"
           }
         ],
-        "diagnosticStage": null,
         "diagnosticTests": [
           {
-            "name": "necropsy",
-            "sample": "tissue"
+            "name": "post-mortem examination",
+            "sample": "intestine"
           }
         ]
       },
@@ -290,12 +292,18 @@
           "field": "order",
           "citation": "NCBI Taxonomy: Davainea proglottina",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/3334969/",
-          "note": "Course lists the order as Cyclophyllida; NCBI spells it Cyclophyllidea."
+          "note": null
         },
         {
           "field": "family",
           "citation": "NCBI Taxonomy: Davainea proglottina",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/3334969/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Taenia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
           "note": null
         }
       ],
@@ -309,29 +317,25 @@
       "misspellings": ["Raillientina spp."],
       "fields": {
         "phylum": "Platyhelminthes",
-        "order": "Cyclophyllidea",
+        "order": "Cyclophyllida",
         "family": "Davaineidae",
         "group": "cestode",
         "definitiveHosts": ["chicken"],
         "intermediateHosts": ["beetle", "ant"],
         "majorOrgan": "gastrointestinal tract",
         "onHostStages": ["adult tapeworm"],
-        "distribution": null,
-        "zoonotic": null,
         "significance": "Poultry tapeworms ranging from mild (R. cesticillus) to harmful: R. tetragona cuts weight and egg output, R. echinobothrida forms nodules in the gut wall.",
         "lifecycleType": "indirect",
-        "pppDays": null,
         "lifecycleStages": [
           {
             "name": "adult tapeworm",
             "location": "intestine, duodenum to lower intestine by species"
           }
         ],
-        "diagnosticStage": null,
         "diagnosticTests": [
           {
-            "name": "necropsy",
-            "sample": "tissue"
+            "name": "post-mortem examination",
+            "sample": "intestine"
           },
           {
             "name": "PCR",
@@ -348,13 +352,13 @@
         },
         {
           "field": null,
-          "citation": "Velusamy et al., J Parasit Dis 38:128-131: ground beetle Opatroides frater as intermediate host of Raillietina cesticillus",
+          "citation": "Velusamy et al. 2014, J Parasit Dis 38:128-131: ground beetle Opatroides frater as intermediate host of Raillietina cesticillus",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3909604/",
           "note": null
         },
         {
           "field": "intermediateHosts",
-          "citation": "Velusamy et al., J Parasit Dis 38:128-131: ground beetle Opatroides frater as intermediate host of Raillietina cesticillus",
+          "citation": "Velusamy et al. 2014, J Parasit Dis 38:128-131: ground beetle Opatroides frater as intermediate host of Raillietina cesticillus",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3909604/",
           "note": null
         },
@@ -368,12 +372,18 @@
           "field": "order",
           "citation": "NCBI Taxonomy: Raillietina",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/70662/",
-          "note": "Course lists the order as Cyclophyllida; NCBI spells it Cyclophyllidea."
+          "note": null
         },
         {
           "field": "family",
           "citation": "NCBI Taxonomy: Raillietina",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/70662/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Taenia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
           "note": null
         }
       ],
@@ -387,7 +397,7 @@
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
-        "order": "Cyclophyllidea",
+        "order": "Cyclophyllida",
         "family": "Anoplocephalidae",
         "group": "cestode",
         "definitiveHosts": ["sheep", "goat", "cattle"],
@@ -447,13 +457,7 @@
           "field": "pppDays",
           "citation": "MSD Veterinary Manual: Gastrointestinal Parasites of Sheep and Goats",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/gastrointestinal-parasites-of-sheep-and-goats",
-          "note": "Course states 6 weeks; reference gives 6-7 weeks."
-        },
-        {
-          "field": null,
-          "citation": "NCBI Taxonomy: Moniezia expansa",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/28841/",
-          "note": null
+          "note": "Course states PPP 6 weeks; reference gives 6-7 weeks."
         },
         {
           "field": "phylum",
@@ -465,12 +469,18 @@
           "field": "order",
           "citation": "NCBI Taxonomy: Moniezia expansa",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/28841/",
-          "note": "Course lists the order as Cyclophyllida; NCBI spells it Cyclophyllidea."
+          "note": null
         },
         {
           "field": "family",
           "citation": "NCBI Taxonomy: Moniezia expansa",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/28841/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Taenia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
           "note": null
         }
       ],
@@ -490,12 +500,11 @@
         "definitiveHosts": ["dog"],
         "intermediateHosts": ["sheep", "goat", "cattle", "pig"],
         "majorOrgan": "small intestine",
-        "onHostStages": ["adult tapeworm"],
+        "onHostStages": ["adult tapeworm", "cysticercus"],
         "distribution": "Worldwide",
         "zoonotic": "no",
-        "significance": "Adults in dogs do little harm; heavy egg intakes can kill lambs through haemorrhagic liver migration, and cysts in offal are condemned at slaughter.",
+        "significance": "Adults in dogs do little harm; heavy infections can kill lambs through haemorrhagic liver migration, and cysts in offal are condemned at slaughter.",
         "lifecycleType": "indirect",
-        "pppDays": null,
         "lifecycleStages": [
           {
             "name": "egg",
@@ -529,8 +538,8 @@
             "sample": "faeces"
           },
           {
-            "name": "necropsy",
-            "sample": "tissue"
+            "name": "post-mortem examination",
+            "sample": "liver"
           }
         ]
       },
@@ -601,8 +610,8 @@
     {
       "key": "taenia-ovis",
       "canonicalName": "Taenia ovis",
-      "commonName": "Sheep measles",
-      "aliases": ["Cysticercus ovis"],
+      "commonName": null,
+      "aliases": ["Cysticercus ovis", "Sheep measles"],
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
@@ -612,16 +621,15 @@
         "definitiveHosts": ["dog"],
         "intermediateHosts": ["sheep", "goat"],
         "majorOrgan": "small intestine",
-        "onHostStages": ["adult tapeworm"],
-        "distribution": "Widespread, incl. New Zealand, Australia, Canada and parts of Africa",
+        "onHostStages": ["adult tapeworm", "cysticercus"],
+        "distribution": "Widespread, including New Zealand, Australia, Canada and parts of Africa",
         "zoonotic": "no",
         "significance": "Harmless to sheep and dogs clinically, but cysts in heart and skeletal muscle of sheep and goats lead to trimmed or condemned carcasses.",
         "lifecycleType": "indirect",
-        "pppDays": null,
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "shed in dog faeces onto pasture"
+            "location": "passed in dog faeces onto pasture"
           },
           {
             "name": "cysticercus",
@@ -647,8 +655,8 @@
             "sample": "faeces"
           },
           {
-            "name": "necropsy",
-            "sample": "tissue"
+            "name": "post-mortem examination",
+            "sample": "muscle"
           }
         ]
       },
@@ -737,7 +745,7 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "shed in canid faeces, infective at once"
+            "location": "passed in canid faeces, infective at once"
           },
           {
             "name": "oncosphere",
@@ -767,8 +775,8 @@
             "sample": "faeces"
           },
           {
-            "name": "necropsy",
-            "sample": "tissue"
+            "name": "post-mortem examination",
+            "sample": "brain"
           }
         ]
       },
@@ -874,7 +882,7 @@
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
-        "order": "Cyclophyllidea",
+        "order": "Cyclophyllida",
         "family": "Taeniidae",
         "group": "cestode",
         "definitiveHosts": ["human"],
@@ -910,7 +918,7 @@
         "diagnosticStage": "gravid proglottid",
         "diagnosticTests": [
           {
-            "name": "faecal microscopy",
+            "name": "faecal egg microscopy",
             "sample": "faeces",
             "windowStartWeek": 13
           },
@@ -919,8 +927,8 @@
             "sample": null
           },
           {
-            "name": "necropsy",
-            "sample": "tissue"
+            "name": "post-mortem examination",
+            "sample": "muscle"
           },
           {
             "name": "antibody detection",
@@ -993,12 +1001,18 @@
           "field": "order",
           "citation": "NCBI Taxonomy: Taenia saginata",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6206/",
-          "note": "Course lists the order as Cyclophyllida; NCBI spells it Cyclophyllidea."
+          "note": null
         },
         {
           "field": "family",
           "citation": "NCBI Taxonomy: Taenia saginata",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6206/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Taenia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
           "note": null
         }
       ],
@@ -1012,7 +1026,7 @@
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
-        "order": "Cyclophyllidea",
+        "order": "Cyclophyllida",
         "family": "Taeniidae",
         "group": "cestode",
         "definitiveHosts": ["human"],
@@ -1048,7 +1062,7 @@
         "diagnosticStage": "gravid proglottid",
         "diagnosticTests": [
           {
-            "name": "faecal microscopy",
+            "name": "faecal egg microscopy",
             "sample": "faeces",
             "windowStartWeek": 13
           },
@@ -1124,7 +1138,7 @@
         },
         {
           "field": "diagnosticTests",
-          "citation": "Bustos et al. 2012, Clin Vaccine Immunol: Taenia solium taeniasis coproantigen as an early indicator of treatment failure",
+          "citation": "Bustos et al. 2012, Clin Vaccine Immunol 19:570-573: Taenia solium taeniasis coproantigen as an early indicator of treatment failure",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3318286/",
           "note": null
         },
@@ -1150,7 +1164,7 @@
           "field": "order",
           "citation": "NCBI Taxonomy: Taenia solium",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6204/",
-          "note": "Course lists the order as Cyclophyllida; NCBI spells it Cyclophyllidea."
+          "note": null
         },
         {
           "field": "family",
@@ -1160,8 +1174,14 @@
         },
         {
           "field": "zoonotic",
-          "citation": "Bustos et al. 2012, Clin Vaccine Immunol: Taenia solium taeniasis coproantigen as an early indicator of treatment failure",
+          "citation": "Bustos et al. 2012, Clin Vaccine Immunol 19:570-573: Taenia solium taeniasis coproantigen as an early indicator of treatment failure",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3318286/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Taenia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
           "note": null
         }
       ],
@@ -1200,7 +1220,7 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "shed in canid faeces, infective at once"
+            "location": "passed in canid faeces, infective at once"
           },
           {
             "name": "oncosphere",
@@ -1234,7 +1254,7 @@
             "sample": "faeces"
           },
           {
-            "name": "necropsy",
+            "name": "post-mortem examination",
             "sample": "tissue"
           },
           {
@@ -1342,7 +1362,7 @@
         "onHostStages": ["adult tapeworm", "hydatid cyst"],
         "distribution": "Northern hemisphere: Europe, Asia, Japan and northern North America",
         "zoonotic": "yes",
-        "significance": "Its alveolar cyst grows like a tumour in the liver of rodents, dogs and people; human alveolar echinococcosis is often fatal untreated.",
+        "significance": "Its alveolar cyst grows like a tumour in the liver of rodents and people; human alveolar echinococcosis is often fatal untreated.",
         "lifecycleType": "indirect",
         "pppDays": {
           "min": 30,
@@ -1351,7 +1371,7 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "shed in fox or dog faeces, infective at once"
+            "location": "passed in fox or dog faeces, infective at once"
           },
           {
             "name": "oncosphere",
@@ -1385,7 +1405,7 @@
             "sample": "faeces"
           },
           {
-            "name": "necropsy",
+            "name": "post-mortem examination",
             "sample": "tissue"
           },
           {
@@ -1536,7 +1556,7 @@
           },
           {
             "name": "PCR",
-            "sample": "eggs or proglottids"
+            "sample": "proglottid"
           }
         ]
       },
@@ -1581,7 +1601,7 @@
           "field": "pppDays",
           "citation": "WCVM Learn About Parasites: Diphyllobothrium (Dibothriocephalus) species",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/diphyllobothrium-species.php",
-          "note": "Course states PPP 4 months; reference gives 2 to 4 weeks."
+          "note": "Course states PPP 4 months; reference gives 2-4 weeks."
         },
         {
           "field": "distribution",

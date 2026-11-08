@@ -273,6 +273,16 @@ describe("built-in parasite dataset", () => {
     },
   );
 
+  it("places each family in one order and phylum", () => {
+    const seen = new Map<string, string>();
+    for (const { fields: f } of dataset.entries) {
+      if (!f.family) continue;
+      const rank = `${f.phylum} > ${f.order}`;
+      expect(seen.get(f.family) ?? rank, f.family).toBe(rank);
+      seen.set(f.family, rank);
+    }
+  });
+
   it("ships no images before step 2", () => {
     expect(dataset.entries.flatMap((e) => e.images)).toEqual([]);
   });

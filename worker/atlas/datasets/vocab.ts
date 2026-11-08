@@ -35,6 +35,8 @@ export const HOST_TERMS = {
   "lymnaeid snail": { broader: ["aquatic snail"] },
   "Galba truncatula": { broader: ["lymnaeid snail"] },
   ant: { broader: ["invertebrate"] },
+  beetle: { broader: ["invertebrate"] },
+  copepod: { broader: ["invertebrate"] },
   "oribatid mite": { broader: ["invertebrate"] },
   flea: { broader: ["invertebrate"] },
   louse: { broader: ["invertebrate"] },
@@ -55,8 +57,6 @@ export const HOST_TERMS = {
   "Glyptanisus gilberti": { broader: ["aquatic snail"] },
   "Neotricula aperta": { broader: ["aquatic snail"] },
   Formica: { broader: ["ant"] },
-  beetle: { broader: ["invertebrate"] },
-  copepod: { broader: ["invertebrate"] },
 } as const satisfies Vocabulary;
 
 export const ORGAN_TERMS = {
