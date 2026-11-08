@@ -1,11 +1,13 @@
 import { z } from "zod";
 import { normalizeParasiteName } from "../names";
 import {
-  PARASITE_FIELD_KEYS,
+  diagnosticTestSchema,
+  lifecycleStageSchema,
   PARASITE_GROUPS,
   parasiteFieldsSchema,
-  type ParasiteFieldKey,
+  pppDaysSchema,
 } from "../templates/parasite";
+import { HOST_TERM_KEYS, ORGAN_TERM_KEYS } from "./vocab";
 
 export const IMAGE_ROLES = [
   "adult",
@@ -19,9 +21,7 @@ export const IMAGE_ROLES = [
 
 const capped = (max: number) => z.string().trim().min(1).max(max);
 const name = capped(80);
-const fieldKey = z.enum(
-  PARASITE_FIELD_KEYS as [ParasiteFieldKey, ...ParasiteFieldKey[]],
-);
+const hostList = z.array(z.enum(HOST_TERM_KEYS)).default([]);
 
 export function datasetKeyFor(canonicalName: string): string {
   return canonicalName
@@ -31,8 +31,24 @@ export function datasetKeyFor(canonicalName: string): string {
     .replace(/\s+/g, "-");
 }
 
+// Learner edits keep the loose template schema; the dataset rejects unknown
+// keys at every level and allows only vocabulary terms for hosts and organs.
+const datasetFieldsSchema = z.strictObject({
+  ...parasiteFieldsSchema.shape,
+  group: z.enum(PARASITE_GROUPS),
+  definitiveHosts: hostList,
+  intermediateHosts: hostList,
+  paratenicHosts: hostList,
+  majorOrgan: z.enum(ORGAN_TERM_KEYS).nullable().default(null),
+  significance: capped(160).nullable().default(null),
+  distribution: capped(80).nullable().default(null),
+  pppDays: pppDaysSchema.strict().nullable().default(null),
+  lifecycleStages: z.array(lifecycleStageSchema.strict()).default([]),
+  diagnosticTests: z.array(diagnosticTestSchema.strict()).default([]),
+});
+
 const datasetRefSchema = z.strictObject({
-  field: fieldKey.nullable().default(null),
+  field: datasetFieldsSchema.keyof().nullable().default(null),
   citation: capped(200),
   url: z
     .url()
@@ -47,14 +63,10 @@ const datasetImageSchema = z.strictObject({
   caption: capped(120).nullable().default(null),
   credit: capped(120),
   license: capped(60),
-  sourceUrl: z.url(),
+  sourceUrl: z
+    .url()
+    .refine((u) => u.startsWith("https://"), "image URLs must be https"),
   isHero: z.boolean().default(false),
-});
-
-const datasetFieldsSchema = z.strictObject({
-  ...parasiteFieldsSchema.shape,
-  significance: capped(160).nullable().default(null),
-  distribution: capped(80).nullable().default(null),
 });
 
 export const datasetEntrySchema = z
@@ -90,13 +102,6 @@ export const datasetEntrySchema = z
         message: "needs an entry-level ref",
       });
     }
-    if (e.fields.group === null) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["fields", "group"],
-        message: "group is required",
-      });
-    }
     e.misspellings.forEach((m, i) => {
       if (normalizeParasiteName(m)?.canonical !== e.canonicalName) {
         ctx.addIssue({
@@ -125,10 +130,51 @@ export const datasetGroupFileSchema = z
     });
   });
 
-export const parasiteDatasetSchema = z.strictObject({
-  version: z.number().int().min(1),
-  entries: z.array(datasetEntrySchema),
-});
+const entryNames = (e: DatasetEntry) =>
+  new Set(
+    [e.canonicalName, e.commonName, ...e.aliases, ...e.misspellings]
+      .filter((n): n is string => n !== null)
+      .map((n) => n.toLowerCase()),
+  );
+
+// Takes the group files so each entry is validated once, then flattens them.
+export const parasiteDatasetSchema = z
+  .strictObject({
+    version: z.number().int().min(1),
+    groups: z.array(datasetGroupFileSchema),
+  })
+  .superRefine((d, ctx) => {
+    const keyOwner = new Set<string>();
+    const nameOwner = new Map<string, string>();
+    d.groups.forEach((g, gi) =>
+      g.entries.forEach((e, ei) => {
+        const path = ["groups", gi, "entries", ei];
+        if (keyOwner.has(e.key)) {
+          ctx.addIssue({
+            code: "custom",
+            path: [...path, "key"],
+            message: `duplicate key ${e.key}`,
+          });
+        }
+        keyOwner.add(e.key);
+        for (const n of entryNames(e)) {
+          const owner = nameOwner.get(n);
+          if (owner !== undefined && owner !== e.key) {
+            ctx.addIssue({
+              code: "custom",
+              path,
+              message: `${n} is used by ${owner} and ${e.key}`,
+            });
+          }
+          nameOwner.set(n, e.key);
+        }
+      }),
+    );
+  })
+  .transform(({ version, groups }) => ({
+    version,
+    entries: groups.flatMap((g) => g.entries),
+  }));
 
 export type DatasetEntry = z.output<typeof datasetEntrySchema>;
 export type DatasetGroupFile = z.output<typeof datasetGroupFileSchema>;
