@@ -15,11 +15,6 @@ const optionalText = text.nullable().default(null);
 const textList = z.array(text).default([]);
 const week = z.number().min(0).nullable().default(null);
 
-export const lifecycleStageSchema = z.object({
-  name: text,
-  location: optionalText,
-});
-
 export const diagnosticTestSchema = z
   .object({
     name: text,
@@ -40,7 +35,22 @@ export const pppDaysSchema = z
     min: z.number().int().min(0),
     max: z.number().int().min(0),
   })
-  .refine((p) => p.max >= p.min, { message: "pppDays.max must be >= min" });
+  .refine((p) => p.max >= p.min, { message: "max must be >= min" });
+
+export const STAGE_HOST_ROLES = [
+  "definitive",
+  "intermediate",
+  "paratenic",
+  "environment",
+] as const;
+
+export const lifecycleStageSchema = z.object({
+  name: text,
+  location: optionalText,
+  hostRole: z.enum(STAGE_HOST_ROLES).nullable().default(null),
+  host: optionalText,
+  durationDays: pppDaysSchema.nullable().default(null),
+});
 
 export const parasiteFieldsSchema = z.object({
   phylum: optionalText,
