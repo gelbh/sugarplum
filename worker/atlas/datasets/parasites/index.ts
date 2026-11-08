@@ -4,11 +4,12 @@ import {
   type DatasetGroupFile,
   type ParasiteDataset,
 } from "../schema";
+import cestodes from "./cestodes.json";
 import trematodes from "./trematodes.json";
 
 export const PARASITE_DATASET_VERSION = 1;
 
-const GROUP_FILES: Record<string, unknown> = { trematodes };
+const GROUP_FILES: Record<string, unknown> = { trematodes, cestodes };
 
 export function loadGroupFiles(): (DatasetGroupFile & { file: string })[] {
   return Object.entries(GROUP_FILES).map(([file, raw]) => ({
