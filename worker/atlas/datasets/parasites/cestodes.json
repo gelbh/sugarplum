@@ -1,0 +1,1632 @@
+{
+  "group": "cestode",
+  "entries": [
+    {
+      "key": "anoplocephala-perfoliata",
+      "canonicalName": "Anoplocephala perfoliata",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Cyclophyllidea",
+        "family": "Anoplocephalidae",
+        "group": "cestode",
+        "definitiveHosts": ["horse", "donkey"],
+        "intermediateHosts": ["oribatid mite"],
+        "majorOrgan": "ileum",
+        "onHostStages": ["adult tapeworm"],
+        "distribution": "Horses and donkeys worldwide",
+        "zoonotic": "no",
+        "significance": "The commonest equine tapeworm; often silent, but infection is a risk factor for ileal impaction and spasmodic colic, with mucosal damage at the attachment site.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 45,
+          "max": 120
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces"
+          },
+          {
+            "name": "cysticercoid",
+            "location": "free-living oribatid mite on pasture"
+          },
+          {
+            "name": "adult tapeworm",
+            "location": "ileum and neighbouring caecum around the ileocaecal junction"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "saliva"
+          },
+          {
+            "name": "antigen detection",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Anoplocephala and Paranoplocephala",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/anoplocephala-and-paranoplocephala.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Jürgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-020-04318-5",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "Jürgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-020-04318-5",
+          "note": "Course states 1-2 months; reference gives 1.5-4 months."
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Anoplocephala and Paranoplocephala",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/anoplocephala-and-paranoplocephala.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Jürgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-020-04318-5",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Jürgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-020-04318-5",
+          "note": "Course states a saliva antigen ELISA; reference gives a saliva antibody ELISA."
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Anoplocephala and Paranoplocephala",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/anoplocephala-and-paranoplocephala.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Anoplocephala perfoliata",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/218192/",
+          "note": "Course lists Cestoda as the phylum; NCBI ranks Cestoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Anoplocephala perfoliata",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/218192/",
+          "note": "Course lists the order as Cyclophyllida; NCBI spells it Cyclophyllidea."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Anoplocephala perfoliata",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/218192/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "dipylidium-caninum",
+      "canonicalName": "Dipylidium caninum",
+      "commonName": "Double-pored tapeworm",
+      "aliases": ["Flea tapeworm", "Cucumber tapeworm"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Cyclophyllida",
+        "family": "Dipylidiidae",
+        "group": "cestode",
+        "definitiveHosts": ["dog", "cat", "fox", "human"],
+        "intermediateHosts": ["flea", "Trichodectes canis"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["adult tapeworm", "gravid proglottid"],
+        "distribution": "Worldwide wherever pet dogs and cats carry fleas",
+        "zoonotic": "yes",
+        "significance": "Rarely causes disease in dogs or cats; mobile segments in faeces worry owners, and children are occasionally infected by swallowing a flea.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 14,
+          "max": 21
+        },
+        "lifecycleStages": [
+          {
+            "name": "gravid proglottid",
+            "location": "shed in faeces or crawling from the perianal area"
+          },
+          {
+            "name": "egg",
+            "location": "released in packets as segments break down"
+          },
+          {
+            "name": "oncosphere",
+            "location": "gut of the larval flea"
+          },
+          {
+            "name": "cysticercoid",
+            "location": "body cavity of the flea or chewing louse"
+          },
+          {
+            "name": "adult tapeworm",
+            "location": "small intestine"
+          }
+        ],
+        "diagnosticStage": "gravid proglottid",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Dipylidium caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dipylidium-caninum.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Dipylidium caninum",
+          "url": "https://www.cdc.gov/dpdx/dipylidium/index.html",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "CDC DPDx: Dipylidium caninum",
+          "url": "https://www.cdc.gov/dpdx/dipylidium/index.html",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Dipylidium caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dipylidium-caninum.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Dipylidium caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dipylidium-caninum.php",
+          "note": "Course states 3 weeks; reference gives 2-3 weeks."
+        },
+        {
+          "field": "zoonotic",
+          "citation": "CDC DPDx: Dipylidium caninum",
+          "url": "https://www.cdc.gov/dpdx/dipylidium/index.html",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Dipylidium caninum",
+          "url": "https://www.cdc.gov/dpdx/dipylidium/index.html",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Dipylidium caninum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/66787/",
+          "note": "Course lists Cestoda as the phylum; NCBI ranks Cestoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Dipylidium caninum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/66787/",
+          "note": "Course states Diphyllobothriidae; reference gives Dipylidiidae."
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Dipylidium caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dipylidium-caninum.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "davainea-proglottina",
+      "canonicalName": "Davainea proglottina",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": ["Davainae proglottina"],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Cyclophyllidea",
+        "family": "Davaineidae",
+        "group": "cestode",
+        "definitiveHosts": ["chicken"],
+        "intermediateHosts": ["slug", "snail"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["adult tapeworm"],
+        "distribution": null,
+        "zoonotic": null,
+        "significance": "Very small tapeworm of the chicken duodenum; a single bird can carry thousands, and infection is associated with weight loss.",
+        "lifecycleType": "indirect",
+        "pppDays": null,
+        "lifecycleStages": [
+          {
+            "name": "adult tapeworm",
+            "location": "duodenum"
+          }
+        ],
+        "diagnosticStage": null,
+        "diagnosticTests": [
+          {
+            "name": "necropsy",
+            "sample": "tissue"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Helminthiasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/helminthiasis/helminthiasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Davainea proglottina",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/3334969/",
+          "note": "Course lists Cestoda as the phylum; NCBI ranks Cestoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Davainea proglottina",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/3334969/",
+          "note": "Course lists the order as Cyclophyllida; NCBI spells it Cyclophyllidea."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Davainea proglottina",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/3334969/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "raillietina-spp",
+      "canonicalName": "Raillietina spp.",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": ["Raillientina spp."],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Cyclophyllidea",
+        "family": "Davaineidae",
+        "group": "cestode",
+        "definitiveHosts": ["chicken"],
+        "intermediateHosts": ["beetle", "ant"],
+        "majorOrgan": "gastrointestinal tract",
+        "onHostStages": ["adult tapeworm"],
+        "distribution": null,
+        "zoonotic": null,
+        "significance": "Poultry tapeworms ranging from mild (R. cesticillus) to harmful: R. tetragona cuts weight and egg output, R. echinobothrida forms nodules in the gut wall.",
+        "lifecycleType": "indirect",
+        "pppDays": null,
+        "lifecycleStages": [
+          {
+            "name": "adult tapeworm",
+            "location": "intestine, duodenum to lower intestine by species"
+          }
+        ],
+        "diagnosticStage": null,
+        "diagnosticTests": [
+          {
+            "name": "necropsy",
+            "sample": "tissue"
+          },
+          {
+            "name": "PCR",
+            "sample": null
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Helminthiasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/helminthiasis/helminthiasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Velusamy et al., J Parasit Dis 38:128-131: ground beetle Opatroides frater as intermediate host of Raillietina cesticillus",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3909604/",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "Velusamy et al., J Parasit Dis 38:128-131: ground beetle Opatroides frater as intermediate host of Raillietina cesticillus",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3909604/",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Raillietina",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/70662/",
+          "note": "Course lists Cestoda as the phylum; NCBI ranks Cestoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Raillietina",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/70662/",
+          "note": "Course lists the order as Cyclophyllida; NCBI spells it Cyclophyllidea."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Raillietina",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/70662/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "moniezia-expansa",
+      "canonicalName": "Moniezia expansa",
+      "commonName": "Sheep tapeworm",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Cyclophyllidea",
+        "family": "Anoplocephalidae",
+        "group": "cestode",
+        "definitiveHosts": ["sheep", "goat", "cattle"],
+        "intermediateHosts": ["oribatid mite"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["adult tapeworm"],
+        "distribution": "Ruminant-rearing regions in most of the world",
+        "zoonotic": "no",
+        "significance": "Mostly harmless; very heavy burdens in young lambs and kids may bring mild ill thrift, and segments seen in faeces often worry farmers.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 42,
+          "max": 49
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces"
+          },
+          {
+            "name": "cysticercoid",
+            "location": "oribatid mite on pasture"
+          },
+          {
+            "name": "adult tapeworm",
+            "location": "small intestine"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Moniezia and Thysanosoma",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/moniezia-and-thysanosoma.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Gastrointestinal Parasites of Sheep and Goats",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/gastrointestinal-parasites-of-sheep-and-goats",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Gastrointestinal Parasites of Sheep and Goats",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/gastrointestinal-parasites-of-sheep-and-goats",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Gastrointestinal Parasites of Sheep and Goats",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/gastrointestinal-parasites-of-sheep-and-goats",
+          "note": "Course states 6 weeks; reference gives 6-7 weeks."
+        },
+        {
+          "field": null,
+          "citation": "NCBI Taxonomy: Moniezia expansa",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/28841/",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Moniezia expansa",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/28841/",
+          "note": "Course lists Cestoda as the phylum; NCBI ranks Cestoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Moniezia expansa",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/28841/",
+          "note": "Course lists the order as Cyclophyllida; NCBI spells it Cyclophyllidea."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Moniezia expansa",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/28841/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "taenia-hydatigena",
+      "canonicalName": "Taenia hydatigena",
+      "commonName": null,
+      "aliases": ["Cysticercus tenuicollis"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Cyclophyllida",
+        "family": "Taeniidae",
+        "group": "cestode",
+        "definitiveHosts": ["dog"],
+        "intermediateHosts": ["sheep", "goat", "cattle", "pig"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["adult tapeworm"],
+        "distribution": "Worldwide",
+        "zoonotic": "no",
+        "significance": "Adults in dogs do little harm; heavy egg intakes can kill lambs through haemorrhagic liver migration, and cysts in offal are condemned at slaughter.",
+        "lifecycleType": "indirect",
+        "pppDays": null,
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in dog faeces"
+          },
+          {
+            "name": "oncosphere",
+            "location": "migrates through the liver of the intermediate host"
+          },
+          {
+            "name": "cysticercus",
+            "location": "liver surface, omentum and mesentery; mature in about 8 weeks"
+          },
+          {
+            "name": "adult tapeworm",
+            "location": "small intestine of the dog"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "faecal sedimentation",
+            "sample": "faeces"
+          },
+          {
+            "name": "PCR",
+            "sample": "faeces"
+          },
+          {
+            "name": "necropsy",
+            "sample": "tissue"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Taenia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Abbas et al. 2021, Parasitology 148: Cysticercus tenuicollis in Nile Delta sheep and a worldwide review of Taenia hydatigena",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11010137/",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "Abbas et al. 2021, Parasitology 148: Cysticercus tenuicollis in Nile Delta sheep and a worldwide review of Taenia hydatigena",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11010137/",
+          "note": "Course also lists horses; cited references do not."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Abbas et al. 2021, Parasitology 148: Cysticercus tenuicollis in Nile Delta sheep and a worldwide review of Taenia hydatigena",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11010137/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Taenia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Taenia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "NCBI Taxonomy: Taenia hydatigena",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/85431/",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Taenia hydatigena",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/85431/",
+          "note": "Course lists Cestoda as the phylum; NCBI ranks Cestoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Taenia hydatigena",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/85431/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Taenia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "taenia-ovis",
+      "canonicalName": "Taenia ovis",
+      "commonName": "Sheep measles",
+      "aliases": ["Cysticercus ovis"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Cyclophyllida",
+        "family": "Taeniidae",
+        "group": "cestode",
+        "definitiveHosts": ["dog"],
+        "intermediateHosts": ["sheep", "goat"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["adult tapeworm"],
+        "distribution": "Widespread, incl. New Zealand, Australia, Canada and parts of Africa",
+        "zoonotic": "no",
+        "significance": "Harmless to sheep and dogs clinically, but cysts in heart and skeletal muscle of sheep and goats lead to trimmed or condemned carcasses.",
+        "lifecycleType": "indirect",
+        "pppDays": null,
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "shed in dog faeces onto pasture"
+          },
+          {
+            "name": "cysticercus",
+            "location": "heart muscle, diaphragm, masseter and other skeletal muscle"
+          },
+          {
+            "name": "adult tapeworm",
+            "location": "small intestine of the dog"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "faecal sedimentation",
+            "sample": "faeces"
+          },
+          {
+            "name": "PCR",
+            "sample": "faeces"
+          },
+          {
+            "name": "necropsy",
+            "sample": "tissue"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Taenia ovis and Cysticercus ovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-ovis-and-cysticercus-ovis.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Hajipour et al. 2020, Veterinary Sciences 7:34: Taenia ovis in small ruminants in Iran",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7158677/",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Taenia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Hajipour et al. 2020, Veterinary Sciences 7:34: Taenia ovis in small ruminants in Iran",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7158677/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Taenia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Taenia ovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6203/",
+          "note": "Course lists Cestoda as the phylum; NCBI ranks Cestoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Taenia ovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6203/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Taenia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "taenia-multiceps",
+      "canonicalName": "Taenia multiceps",
+      "commonName": null,
+      "aliases": ["Coenurus cerebralis", "Multiceps multiceps"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Cyclophyllida",
+        "family": "Taeniidae",
+        "group": "cestode",
+        "definitiveHosts": ["dog", "fox"],
+        "intermediateHosts": [
+          "sheep",
+          "goat",
+          "cattle",
+          "horse",
+          "pig",
+          "human"
+        ],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["adult tapeworm", "coenurus"],
+        "distribution": "Widespread; sheep areas of Europe, Asia, the Middle East and Africa",
+        "zoonotic": "yes",
+        "significance": "Coenuri in the brain or spinal cord of young sheep and goats cause gid, a neurological and often fatal disease; people are rarely infected.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 40,
+          "max": 60
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "shed in canid faeces, infective at once"
+          },
+          {
+            "name": "oncosphere",
+            "location": "hatches in the ungulate gut and travels in the blood"
+          },
+          {
+            "name": "coenurus",
+            "location": "mostly brain or spinal cord of the ungulate; mature after some months"
+          },
+          {
+            "name": "adult tapeworm",
+            "location": "small intestine of the dog or fox"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "faecal sedimentation",
+            "sample": "faeces"
+          },
+          {
+            "name": "PCR",
+            "sample": "faeces"
+          },
+          {
+            "name": "necropsy",
+            "sample": "tissue"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "Varcasia et al. 2022, Parasites & Vectors 15:84: Taenia multiceps coenurosis: a review",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8917661/",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Coenurosis",
+          "url": "https://www.cdc.gov/dpdx/coenurosis/index.html",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Varcasia et al. 2022, Parasites & Vectors 15:84: Taenia multiceps coenurosis: a review",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8917661/",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "Varcasia et al. 2022, Parasites & Vectors 15:84: Taenia multiceps coenurosis: a review",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8917661/",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "CDC DPDx: Coenurosis",
+          "url": "https://www.cdc.gov/dpdx/coenurosis/index.html",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "Varcasia et al. 2022, Parasites & Vectors 15:84: Taenia multiceps coenurosis: a review",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8917661/",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "Varcasia et al. 2022, Parasites & Vectors 15:84: Taenia multiceps coenurosis: a review",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8917661/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "Varcasia et al. 2022, Parasites & Vectors 15:84: Taenia multiceps coenurosis: a review",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8917661/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Taenia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Coenurosis",
+          "url": "https://www.cdc.gov/dpdx/coenurosis/index.html",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Taenia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Taenia multiceps",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/94034/",
+          "note": "Course lists Cestoda as the phylum; NCBI ranks Cestoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Taenia multiceps",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/94034/",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "NCBI Taxonomy: Taenia multiceps",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/94034/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Taenia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "taenia-saginata",
+      "canonicalName": "Taenia saginata",
+      "commonName": "Beef tapeworm",
+      "aliases": ["Cysticercus bovis"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Cyclophyllidea",
+        "family": "Taeniidae",
+        "group": "cestode",
+        "definitiveHosts": ["human"],
+        "intermediateHosts": ["cattle"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["adult tapeworm", "cysticercus"],
+        "distribution": "Worldwide where beef is eaten raw or undercooked",
+        "zoonotic": "yes",
+        "significance": "Mild gut upset in people and no signs in cattle, but cysts found at slaughter mean carcass condemnation, farm trace-back and trade costs.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in human faeces"
+          },
+          {
+            "name": "gravid proglottid",
+            "location": "passed in faeces or crawls out through the anus"
+          },
+          {
+            "name": "oncosphere",
+            "location": "hatches in the bovine gut and spreads via blood and lymph"
+          },
+          {
+            "name": "cysticercus",
+            "location": "skeletal and heart muscle of cattle"
+          },
+          {
+            "name": "adult tapeworm",
+            "location": "human small intestine"
+          }
+        ],
+        "diagnosticStage": "gravid proglottid",
+        "diagnosticTests": [
+          {
+            "name": "faecal microscopy",
+            "sample": "faeces",
+            "windowStartWeek": 13
+          },
+          {
+            "name": "PCR",
+            "sample": null
+          },
+          {
+            "name": "necropsy",
+            "sample": "tissue"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Taenia saginata and Cysticercus bovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-saginata-and-cysticercus-bovis-beef-tapeworm-of-people.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Taeniasis",
+          "url": "https://www.cdc.gov/dpdx/taeniasis/index.html",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Taenia saginata and Cysticercus bovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-saginata-and-cysticercus-bovis-beef-tapeworm-of-people.php",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "WCVM Learn About Parasites: Taenia saginata and Cysticercus bovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-saginata-and-cysticercus-bovis-beef-tapeworm-of-people.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CDC DPDx: Taeniasis",
+          "url": "https://www.cdc.gov/dpdx/taeniasis/index.html",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Taenia saginata and Cysticercus bovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-saginata-and-cysticercus-bovis-beef-tapeworm-of-people.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Taeniasis",
+          "url": "https://www.cdc.gov/dpdx/taeniasis/index.html",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Taenia saginata and Cysticercus bovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-saginata-and-cysticercus-bovis-beef-tapeworm-of-people.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "CDC DPDx: Taeniasis",
+          "url": "https://www.cdc.gov/dpdx/taeniasis/index.html",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Taenia saginata",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6206/",
+          "note": "Course lists Cestoda as the phylum; NCBI ranks Cestoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Taenia saginata",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6206/",
+          "note": "Course lists the order as Cyclophyllida; NCBI spells it Cyclophyllidea."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Taenia saginata",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6206/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "taenia-solium",
+      "canonicalName": "Taenia solium",
+      "commonName": "Pork tapeworm",
+      "aliases": ["Cysticercus cellulosae"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Cyclophyllidea",
+        "family": "Taeniidae",
+        "group": "cestode",
+        "definitiveHosts": ["human"],
+        "intermediateHosts": ["pig", "human"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["adult tapeworm", "cysticercus"],
+        "distribution": "Nearly worldwide; most cases in low- and middle-income countries",
+        "zoonotic": "yes",
+        "significance": "Adults in people and cysts in pigs are mostly silent; eggs swallowed by people cause cysticercosis, and brain cysts bring seizures.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in human faeces"
+          },
+          {
+            "name": "gravid proglottid",
+            "location": "passed in faeces or crawls out through the anus"
+          },
+          {
+            "name": "oncosphere",
+            "location": "hatches in the gut of a pig or person and spreads via the blood"
+          },
+          {
+            "name": "cysticercus",
+            "location": "pig muscle; in people also brain, eye, muscle and under the skin"
+          },
+          {
+            "name": "adult tapeworm",
+            "location": "human small intestine"
+          }
+        ],
+        "diagnosticStage": "gravid proglottid",
+        "diagnosticTests": [
+          {
+            "name": "faecal microscopy",
+            "sample": "faeces",
+            "windowStartWeek": 13
+          },
+          {
+            "name": "antigen detection",
+            "sample": "faeces",
+            "windowStartWeek": 1
+          },
+          {
+            "name": "PCR",
+            "sample": "proglottid"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Taenia solium and Cysticercus cellulosae",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-solium-and-cysticercus-cellulosae.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Taeniasis",
+          "url": "https://www.cdc.gov/dpdx/taeniasis/index.html",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Cysticercosis",
+          "url": "https://www.cdc.gov/dpdx/cysticercosis/index.html",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Taenia solium and Cysticercus cellulosae",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-solium-and-cysticercus-cellulosae.php",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "CDC DPDx: Cysticercosis",
+          "url": "https://www.cdc.gov/dpdx/cysticercosis/index.html",
+          "note": "Course also lists dogs; cited references do not."
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CDC DPDx: Taeniasis",
+          "url": "https://www.cdc.gov/dpdx/taeniasis/index.html",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "CDC DPDx: Cysticercosis",
+          "url": "https://www.cdc.gov/dpdx/cysticercosis/index.html",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "CDC DPDx: Cysticercosis",
+          "url": "https://www.cdc.gov/dpdx/cysticercosis/index.html",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Taeniasis",
+          "url": "https://www.cdc.gov/dpdx/taeniasis/index.html",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Bustos et al. 2012, Clin Vaccine Immunol: Taenia solium taeniasis coproantigen as an early indicator of treatment failure",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3318286/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Cysticercosis",
+          "url": "https://www.cdc.gov/dpdx/cysticercosis/index.html",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "CDC DPDx: Taeniasis",
+          "url": "https://www.cdc.gov/dpdx/taeniasis/index.html",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Taenia solium",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6204/",
+          "note": "Course lists Cestoda as the phylum; NCBI ranks Cestoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Taenia solium",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6204/",
+          "note": "Course lists the order as Cyclophyllida; NCBI spells it Cyclophyllidea."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Taenia solium",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6204/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "Bustos et al. 2012, Clin Vaccine Immunol: Taenia solium taeniasis coproantigen as an early indicator of treatment failure",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3318286/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "echinococcus-granulosus",
+      "canonicalName": "Echinococcus granulosus",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Cyclophyllida",
+        "family": "Taeniidae",
+        "group": "cestode",
+        "definitiveHosts": ["dog", "canid"],
+        "intermediateHosts": [
+          "sheep",
+          "goat",
+          "cattle",
+          "camelid",
+          "deer",
+          "human"
+        ],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["adult tapeworm", "hydatid cyst"],
+        "distribution": "Almost worldwide, mainly rural grazing areas where dogs eat offal",
+        "zoonotic": "yes",
+        "significance": "Harmless to dogs, but its hydatid cysts in the liver and lungs of livestock and people cause cystic echinococcosis.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 32,
+          "max": 80
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "shed in canid faeces, infective at once"
+          },
+          {
+            "name": "oncosphere",
+            "location": "crosses the gut wall of the herbivore and travels in the blood"
+          },
+          {
+            "name": "hydatid cyst",
+            "location": "mainly liver and lungs of the herbivore or person"
+          },
+          {
+            "name": "adult tapeworm",
+            "location": "small intestine of the dog or wild canid"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "faecal sedimentation",
+            "sample": "faeces"
+          },
+          {
+            "name": "antigen detection",
+            "sample": "faeces"
+          },
+          {
+            "name": "PCR",
+            "sample": "faeces"
+          },
+          {
+            "name": "necropsy",
+            "sample": "tissue"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "CDC DPDx: Echinococcosis",
+          "url": "https://www.cdc.gov/dpdx/echinococcosis/index.html",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Echinococcus granulosus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/echinococcus-granulosus.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Echinococcosis",
+          "url": "https://www.cdc.gov/dpdx/echinococcosis/index.html",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "CDC DPDx: Echinococcosis",
+          "url": "https://www.cdc.gov/dpdx/echinococcosis/index.html",
+          "note": "Course also lists rabbits; cited references do not."
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CDC DPDx: Echinococcosis",
+          "url": "https://www.cdc.gov/dpdx/echinococcosis/index.html",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "CDC DPDx: Echinococcosis",
+          "url": "https://www.cdc.gov/dpdx/echinococcosis/index.html",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "CDC DPDx: Echinococcosis",
+          "url": "https://www.cdc.gov/dpdx/echinococcosis/index.html",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "CDC DPDx: Echinococcosis",
+          "url": "https://www.cdc.gov/dpdx/echinococcosis/index.html",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Echinococcus granulosus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/echinococcus-granulosus.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Echinococcosis",
+          "url": "https://www.cdc.gov/dpdx/echinococcosis/index.html",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Echinococcus granulosus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6210/",
+          "note": "Course lists Cestoda as the phylum; NCBI ranks Cestoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Echinococcus granulosus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6210/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Echinococcus granulosus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/echinococcus-granulosus.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "echinococcus-multilocularis",
+      "canonicalName": "Echinococcus multilocularis",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Cyclophyllida",
+        "family": "Taeniidae",
+        "group": "cestode",
+        "definitiveHosts": ["fox", "dog"],
+        "intermediateHosts": ["rodent", "human"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["adult tapeworm", "hydatid cyst"],
+        "distribution": "Northern hemisphere: Europe, Asia, Japan and northern North America",
+        "zoonotic": "yes",
+        "significance": "Its alveolar cyst grows like a tumour in the liver of rodents, dogs and people; human alveolar echinococcosis is often fatal untreated.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 30,
+          "max": 30
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "shed in fox or dog faeces, infective at once"
+          },
+          {
+            "name": "oncosphere",
+            "location": "crosses the gut wall of the rodent and travels in the blood"
+          },
+          {
+            "name": "hydatid cyst",
+            "location": "alveolar form, mainly liver; may spread to lungs and brain"
+          },
+          {
+            "name": "adult tapeworm",
+            "location": "small intestine of the fox or dog"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "faecal sedimentation",
+            "sample": "faeces"
+          },
+          {
+            "name": "antigen detection",
+            "sample": "faeces"
+          },
+          {
+            "name": "PCR",
+            "sample": "faeces"
+          },
+          {
+            "name": "necropsy",
+            "sample": "tissue"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Echinococcus multilocularis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/echinococcus-multilocularis.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Echinococcosis",
+          "url": "https://www.cdc.gov/dpdx/echinococcosis/index.html",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Echinococcosis",
+          "url": "https://www.cdc.gov/dpdx/echinococcosis/index.html",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "CDC DPDx: Echinococcosis",
+          "url": "https://www.cdc.gov/dpdx/echinococcosis/index.html",
+          "note": "Course also lists ruminants and rabbits; cited references do not."
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "WCVM Learn About Parasites: Echinococcus multilocularis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/echinococcus-multilocularis.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Echinococcus multilocularis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/echinococcus-multilocularis.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Echinococcus multilocularis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/echinococcus-multilocularis.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "CDC DPDx: Echinococcosis",
+          "url": "https://www.cdc.gov/dpdx/echinococcosis/index.html",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Echinococcus multilocularis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/echinococcus-multilocularis.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Echinococcus multilocularis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/echinococcus-multilocularis.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Echinococcosis",
+          "url": "https://www.cdc.gov/dpdx/echinococcosis/index.html",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Echinococcus multilocularis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6211/",
+          "note": "Course lists Cestoda as the phylum; NCBI ranks Cestoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Echinococcus multilocularis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6211/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Echinococcus multilocularis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/echinococcus-multilocularis.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "diphyllobothrium-latum",
+      "canonicalName": "Diphyllobothrium latum",
+      "commonName": "Broad fish tapeworm",
+      "aliases": ["Dibothriocephalus latus"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Platyhelminthes",
+        "order": "Diphyllobothriidea",
+        "family": "Diphyllobothriidae",
+        "group": "cestode",
+        "definitiveHosts": ["human", "dog", "felid"],
+        "intermediateHosts": ["copepod", "freshwater fish"],
+        "paratenicHosts": ["freshwater fish"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["adult tapeworm"],
+        "distribution": "Mostly circumpolar northern regions; very rare in South America",
+        "zoonotic": "yes",
+        "significance": "Fish-borne tapeworm of people and dogs; usually mild gut upset, once tied to vitamin B12-deficiency anaemia in people.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 14,
+          "max": 28
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed unembryonated in faeces; develops in water"
+          },
+          {
+            "name": "coracidium",
+            "location": "free-swimming in water"
+          },
+          {
+            "name": "procercoid",
+            "location": "inside a copepod"
+          },
+          {
+            "name": "plerocercoid",
+            "location": "flesh of a freshwater fish, often a predatory one"
+          },
+          {
+            "name": "adult tapeworm",
+            "location": "small intestine of a fish-eating mammal"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "PCR",
+            "sample": "eggs or proglottids"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Diphyllobothrium (Dibothriocephalus) species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/diphyllobothrium-species.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Diphyllobothriasis",
+          "url": "https://www.cdc.gov/dpdx/diphyllobothriasis/index.html",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "NCBI Taxonomy: Dibothriocephalus latus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/60516/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Diphyllobothriasis",
+          "url": "https://www.cdc.gov/dpdx/diphyllobothriasis/index.html",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "WCVM Learn About Parasites: Diphyllobothrium (Dibothriocephalus) species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/diphyllobothrium-species.php",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "CDC DPDx: Diphyllobothriasis",
+          "url": "https://www.cdc.gov/dpdx/diphyllobothriasis/index.html",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Diphyllobothrium (Dibothriocephalus) species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/diphyllobothrium-species.php",
+          "note": "Course states PPP 4 months; reference gives 2 to 4 weeks."
+        },
+        {
+          "field": "distribution",
+          "citation": "CDC DPDx: Diphyllobothriasis",
+          "url": "https://www.cdc.gov/dpdx/diphyllobothriasis/index.html",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Diphyllobothrium (Dibothriocephalus) species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/diphyllobothrium-species.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Diphyllobothrium (Dibothriocephalus) species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/diphyllobothrium-species.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Diphyllobothriasis",
+          "url": "https://www.cdc.gov/dpdx/diphyllobothriasis/index.html",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Dibothriocephalus latus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/60516/",
+          "note": "Course lists Cestoda as the phylum; NCBI ranks Cestoda as a class within Platyhelminthes."
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Dibothriocephalus latus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/60516/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Dibothriocephalus latus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/60516/",
+          "note": null
+        }
+      ],
+      "images": []
+    }
+  ]
+}

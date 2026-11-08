@@ -9,7 +9,7 @@ The list of taxa is fixed in `tests/eval/atlas/course-taxa.json`: every taxon in
 | File                               | Taxa | Status   |
 | ---------------------------------- | ---- | -------- |
 | `trematodes.json`                  | 10   | authored |
-| `cestodes.json`                    | 13   | planned  |
+| `cestodes.json`                    | 13   | authored |
 | `protozoa.json`                    | 18   | planned  |
 | `nematodes-ruminant.json`          | 16   | planned  |
 | `nematodes-equine-pig.json`        | 19   | planned  |

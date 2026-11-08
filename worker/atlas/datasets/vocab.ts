@@ -8,6 +8,7 @@ export const HOST_TERMS = {
   "warm-blooded vertebrate": { broader: ["vertebrate"] },
   mammal: { broader: ["warm-blooded vertebrate"] },
   bird: { broader: ["warm-blooded vertebrate"] },
+  chicken: { broader: ["bird"] },
   ruminant: { broader: ["mammal"] },
   "small ruminant": { broader: ["ruminant"] },
   cattle: { broader: ["ruminant"] },
@@ -54,6 +55,8 @@ export const HOST_TERMS = {
   "Glyptanisus gilberti": { broader: ["aquatic snail"] },
   "Neotricula aperta": { broader: ["aquatic snail"] },
   Formica: { broader: ["ant"] },
+  beetle: { broader: ["invertebrate"] },
+  copepod: { broader: ["invertebrate"] },
 } as const satisfies Vocabulary;
 
 export const ORGAN_TERMS = {
