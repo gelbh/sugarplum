@@ -1,0 +1,220 @@
+{
+  "source": "AB2 Parasitology lecture pack (R(D)SVS / Moredun), 2026 cohort. Lecture PDFs are not committed; values are short field values with lecture code and 1-based page.",
+  "entries": [
+    {
+      "rawName": "Fasciola hepatica",
+      "canonicalName": "Fasciola hepatica",
+      "lecture": "PA12",
+      "page": 6,
+      "slideErrors": [],
+      "expected": {
+        "group": "trematode",
+        "family": "Fasciolidae",
+        "definitiveHosts": ["sheep", "cattle", "goats", "deer"],
+        "intermediateHosts": ["galba truncatula"],
+        "majorOrgan": "liver",
+        "zoonotic": "yes"
+      }
+    },
+    {
+      "rawName": "Calicophoron daubneyi",
+      "canonicalName": "Calicophoron daubneyi",
+      "lecture": "PA12",
+      "page": 31,
+      "slideErrors": [],
+      "expected": {
+        "group": "trematode",
+        "family": "Paramphistomidae",
+        "definitiveHosts": ["ruminants"],
+        "intermediateHosts": ["water snail"],
+        "majorOrgan": "rumen"
+      }
+    },
+    {
+      "rawName": "Dipylidium caninum",
+      "canonicalName": "Dipylidium caninum",
+      "lecture": "PA11",
+      "page": 9,
+      "slideErrors": [
+        "Family column says Diphyllobothriidae; Dipylidium belongs to Dipylidiidae."
+      ],
+      "expected": {
+        "group": "cestode",
+        "definitiveHosts": ["canids", "felids"],
+        "intermediateHosts": ["fleas", "lice"],
+        "majorOrgan": "small intestine",
+        "lifecycleType": "indirect",
+        "pppDays": { "min": 21, "max": 21 }
+      }
+    },
+    {
+      "rawName": "Anoplocephala perfoliata",
+      "canonicalName": "Anoplocephala perfoliata",
+      "lecture": "PA11",
+      "page": 7,
+      "slideErrors": [],
+      "expected": {
+        "group": "cestode",
+        "family": "Anoplocephalidae",
+        "definitiveHosts": ["equids"],
+        "intermediateHosts": ["forage mites"],
+        "majorOrgan": "ileum",
+        "lifecycleType": "indirect",
+        "pppDays": { "min": 30, "max": 60 }
+      }
+    },
+    {
+      "rawName": "Moniezia expansa",
+      "canonicalName": "Moniezia expansa",
+      "lecture": "PA11",
+      "page": 11,
+      "slideErrors": [],
+      "expected": {
+        "group": "cestode",
+        "family": "Anoplocephalidae",
+        "definitiveHosts": ["sheep", "goats", "cattle"],
+        "intermediateHosts": ["forage mites"],
+        "majorOrgan": "small intestine",
+        "pppDays": { "min": 42, "max": 42 }
+      }
+    },
+    {
+      "rawName": "Echinococcus granulosus",
+      "canonicalName": "Echinococcus granulosus",
+      "lecture": "PA11",
+      "page": 30,
+      "slideErrors": [],
+      "expected": {
+        "group": "cestode",
+        "family": "Taeniidae",
+        "definitiveHosts": ["dogs"],
+        "intermediateHosts": ["ruminants", "humans"],
+        "majorOrgan": "small intestine",
+        "zoonotic": "yes"
+      }
+    },
+    {
+      "rawName": "Toxocara canis",
+      "canonicalName": "Toxocara canis",
+      "lecture": "PA09",
+      "page": 8,
+      "slideErrors": [],
+      "expected": {
+        "group": "nematode",
+        "family": "Ascarididae",
+        "definitiveHosts": ["dog"],
+        "paratenicHosts": ["rodents"],
+        "majorOrgan": "small intestine",
+        "zoonotic": "yes"
+      }
+    },
+    {
+      "rawName": "Toxocaris leonina",
+      "canonicalName": "Toxascaris leonina",
+      "lecture": "PA09",
+      "page": 14,
+      "slideErrors": [
+        "Genus misspelt as Toxocaris; slide combines it with Toxocara cati in one table."
+      ],
+      "expected": {
+        "group": "nematode",
+        "family": "Ascarididae",
+        "definitiveHosts": ["dogs", "cats", "foxes"],
+        "paratenicHosts": ["rodents"],
+        "majorOrgan": "small intestine"
+      }
+    },
+    {
+      "rawName": "Ancyclostoma caninum",
+      "canonicalName": "Ancylostoma caninum",
+      "lecture": "PA09",
+      "page": 16,
+      "slideErrors": ["Genus misspelt as Ancyclostoma."],
+      "expected": {
+        "group": "nematode",
+        "family": "Ancylostomatidae",
+        "definitiveHosts": ["dog", "fox"],
+        "paratenicHosts": ["rodents"],
+        "majorOrgan": "small intestine",
+        "zoonotic": "potential"
+      }
+    },
+    {
+      "rawName": "Angiostrongylus vasorum",
+      "canonicalName": "Angiostrongylus vasorum",
+      "lecture": "PA09",
+      "page": 27,
+      "slideErrors": [],
+      "expected": {
+        "group": "nematode",
+        "family": "Angiostrongylidae",
+        "definitiveHosts": ["dog", "fox"],
+        "intermediateHosts": ["slugs", "snails"],
+        "paratenicHosts": ["frogs", "birds"],
+        "majorOrgan": "pulmonary",
+        "lifecycleType": "indirect"
+      }
+    },
+    {
+      "rawName": "Haemonchus contortus",
+      "canonicalName": "Haemonchus contortus",
+      "lecture": "PA07",
+      "page": 17,
+      "slideErrors": [
+        "Family column holds the superfamily Trichostrongyloidea."
+      ],
+      "expected": {
+        "group": "nematode",
+        "definitiveHosts": ["small ruminants"],
+        "majorOrgan": "abomasum",
+        "lifecycleType": "direct",
+        "pppDays": { "min": 14, "max": 21 }
+      }
+    },
+    {
+      "rawName": "Telodorsagia circumcinta",
+      "canonicalName": "Teladorsagia circumcincta",
+      "lecture": "PA07",
+      "page": 15,
+      "slideErrors": [
+        "Genus and species misspelt (Telodorsagia circumcinta).",
+        "Family column holds the superfamily Trichostrongyloidea."
+      ],
+      "expected": {
+        "group": "nematode",
+        "definitiveHosts": ["small ruminants"],
+        "majorOrgan": "abomasum",
+        "lifecycleType": "direct",
+        "pppDays": { "min": 21, "max": 21 }
+      }
+    },
+    {
+      "rawName": "Dictyocaulus viviparous",
+      "canonicalName": "Dictyocaulus viviparus",
+      "lecture": "PA07",
+      "page": 38,
+      "slideErrors": ["Species misspelt as viviparous."],
+      "expected": {
+        "group": "nematode",
+        "family": "Dictyocaulidae",
+        "definitiveHosts": ["cattle"],
+        "majorOrgan": "lungs",
+        "pppDays": { "min": 25, "max": 60 }
+      }
+    },
+    {
+      "rawName": "Toxoplasma gondii",
+      "canonicalName": "Toxoplasma gondii",
+      "lecture": "PA04",
+      "page": 4,
+      "slideErrors": ["Family column holds the genus name Toxoplasma."],
+      "expected": {
+        "group": "protozoan",
+        "definitiveHosts": ["felidae"],
+        "intermediateHosts": ["vertebrates"],
+        "majorOrgan": "cns",
+        "zoonotic": "yes"
+      }
+    }
+  ]
+}
