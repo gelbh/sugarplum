@@ -35,14 +35,22 @@ describe("normalizeParasiteName", () => {
     ["Taenia", "Taenia spp."],
     ["(Ctenocephalides felis)", "Ctenocephalides felis"],
     ["Echinococcus granulosus equinus", "Echinococcus granulosus"],
+    ["Fasciola hepatica.", "Fasciola hepatica"],
+    ["Toxocara canis,", "Toxocara canis"],
+    ["Taenia spp.,", "Taenia spp."],
   ])("normalises %s to %s without flagging", (raw, canonical) => {
     expect(normalizeParasiteName(raw)).toEqual({ canonical, corrected: false });
   });
 
-  it.each(["", "   ", "and", "123 abc", "Fasciola 2"])(
-    "returns null for %j",
-    (raw) => {
-      expect(normalizeParasiteName(raw)).toBeNull();
-    },
-  );
+  it.each([
+    "",
+    "   ",
+    "and",
+    "123 abc",
+    "Fasciola 2",
+    "Fasciola and Dicrocoelium",
+    "Taenia or Echinococcus",
+  ])("returns null for %j", (raw) => {
+    expect(normalizeParasiteName(raw)).toBeNull();
+  });
 });

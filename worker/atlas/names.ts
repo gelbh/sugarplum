@@ -25,15 +25,20 @@ const BINOMIAL_FIXES: Record<string, string> = {
 };
 
 const SPP_WORDS = new Set(["spp", "spp.", "sp", "sp.", "species"]);
-const TRAILING_JOINERS = new Set(["and", "&", "or"]);
+const JOINERS = new Set(["and", "&", "or"]);
 
 export type NormalizedName = { canonical: string; corrected: boolean };
 
 export function normalizeParasiteName(raw: string): NormalizedName | null {
-  const words = raw.replace(/[()]/g, " ").trim().split(/\s+/).filter(Boolean);
+  const words = raw
+    .replace(/[()]/g, " ")
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.replace(/[.,;:]+$/, ""))
+    .filter(Boolean);
   while (
     words.length > 0 &&
-    TRAILING_JOINERS.has(words[words.length - 1].toLowerCase())
+    JOINERS.has(words[words.length - 1].toLowerCase())
   ) {
     words.pop();
   }
@@ -44,7 +49,9 @@ export function normalizeParasiteName(raw: string): NormalizedName | null {
 
   const second = words[1]?.toLowerCase();
   let name: string;
-  if (second === undefined || SPP_WORDS.has(second)) {
+  if (second !== undefined && JOINERS.has(second)) {
+    return null;
+  } else if (second === undefined || SPP_WORDS.has(second)) {
     name = `${genus} spp.`;
   } else if (/^[a-z]+$/.test(second)) {
     name = `${genus} ${second}`;
