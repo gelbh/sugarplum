@@ -4,7 +4,6 @@
     {
       "key": "entamoeba-histolytica",
       "canonicalName": "Entamoeba histolytica",
-      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -118,7 +117,6 @@
     {
       "key": "giardia-duodenalis",
       "canonicalName": "Giardia duodenalis",
-      "commonName": null,
       "aliases": ["Giardia intestinalis", "Giardia lamblia"],
       "misspellings": [],
       "fields": {
@@ -253,7 +251,6 @@
     {
       "key": "balantidium-coli",
       "canonicalName": "Balantidium coli",
-      "commonName": null,
       "aliases": ["Balantioides coli", "Neobalantidium coli"],
       "misspellings": [],
       "fields": {
@@ -375,7 +372,6 @@
     {
       "key": "eimeria-spp",
       "canonicalName": "Eimeria spp.",
-      "commonName": null,
       "aliases": [],
       "misspellings": ["Eimieria species"],
       "fields": {
@@ -413,7 +409,7 @@
             "sample": "faeces"
           },
           {
-            "name": "necropsy",
+            "name": "post-mortem examination",
             "sample": "intestine"
           },
           {
@@ -489,7 +485,6 @@
     {
       "key": "cryptosporidium-spp",
       "canonicalName": "Cryptosporidium spp.",
-      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -653,7 +648,6 @@
     {
       "key": "tritrichomonas-foetus",
       "canonicalName": "Tritrichomonas foetus",
-      "commonName": null,
       "aliases": ["Trichomonas foetus"],
       "misspellings": ["Trichomonas fetus"],
       "fields": {
@@ -772,7 +766,6 @@
     {
       "key": "histomonas-meleagridis",
       "canonicalName": "Histomonas meleagridis",
-      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -811,7 +804,7 @@
         ],
         "diagnosticTests": [
           {
-            "name": "necropsy",
+            "name": "post-mortem examination",
             "sample": "caecum and liver"
           },
           {
@@ -819,8 +812,7 @@
             "sample": "tissue"
           },
           {
-            "name": "PCR",
-            "sample": null
+            "name": "PCR"
           },
           {
             "name": "microscopy",
@@ -913,7 +905,6 @@
     {
       "key": "encephalitozoon-cuniculi",
       "canonicalName": "Encephalitozoon cuniculi",
-      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1115,27 +1106,32 @@
         {
           "field": null,
           "citation": "WCVM Learn About Parasites: Toxoplasma gondii",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php",
+          "note": null
         },
         {
           "field": null,
           "citation": "CDC DPDx: Toxoplasmosis",
-          "url": "https://www.cdc.gov/dpdx/toxoplasmosis/index.html"
+          "url": "https://www.cdc.gov/dpdx/toxoplasmosis/index.html",
+          "note": null
         },
         {
           "field": "definitiveHosts",
           "citation": "CDC DPDx: Toxoplasmosis",
-          "url": "https://www.cdc.gov/dpdx/toxoplasmosis/index.html"
+          "url": "https://www.cdc.gov/dpdx/toxoplasmosis/index.html",
+          "note": null
         },
         {
           "field": "definitiveHosts",
           "citation": "WCVM Learn About Parasites: Toxoplasma gondii",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php",
+          "note": null
         },
         {
           "field": "intermediateHosts",
           "citation": "WCVM Learn About Parasites: Toxoplasma gondii",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php",
+          "note": null
         },
         {
           "field": "intermediateHosts",
@@ -1146,32 +1142,38 @@
         {
           "field": "majorOrgan",
           "citation": "WCVM Learn About Parasites: Toxoplasma gondii",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php",
+          "note": null
         },
         {
           "field": "pppDays",
           "citation": "WCVM Learn About Parasites: Toxoplasma gondii",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php",
+          "note": null
         },
         {
           "field": "lifecycleStages",
           "citation": "CDC DPDx: Toxoplasmosis",
-          "url": "https://www.cdc.gov/dpdx/toxoplasmosis/index.html"
+          "url": "https://www.cdc.gov/dpdx/toxoplasmosis/index.html",
+          "note": null
         },
         {
           "field": "zoonotic",
           "citation": "CDC DPDx: Toxoplasmosis",
-          "url": "https://www.cdc.gov/dpdx/toxoplasmosis/index.html"
+          "url": "https://www.cdc.gov/dpdx/toxoplasmosis/index.html",
+          "note": null
         },
         {
           "field": "diagnosticTests",
           "citation": "WCVM Learn About Parasites: Toxoplasma gondii",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php",
+          "note": null
         },
         {
           "field": "diagnosticTests",
           "citation": "CDC DPDx: Toxoplasmosis",
-          "url": "https://www.cdc.gov/dpdx/toxoplasmosis/index.html"
+          "url": "https://www.cdc.gov/dpdx/toxoplasmosis/index.html",
+          "note": null
         },
         {
           "field": "phylum",
@@ -1182,7 +1184,8 @@
         {
           "field": "order",
           "citation": "NCBI Taxonomy: Toxoplasma gondii",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5811/"
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5811/",
+          "note": null
         },
         {
           "field": "family",
@@ -1193,11 +1196,11 @@
         {
           "field": "family",
           "citation": "WCVM Learn About Parasites: Toxoplasma gondii",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxoplasma-gondii.php",
+          "note": null
         }
       ],
-      "images": [],
-      "commonName": null
+      "images": []
     },
     {
       "key": "neospora-caninum",
@@ -1275,47 +1278,56 @@
         {
           "field": null,
           "citation": "WCVM Learn About Parasites: Neospora caninum",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
         },
         {
           "field": "definitiveHosts",
           "citation": "WCVM Learn About Parasites: Neospora caninum",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
         },
         {
           "field": "intermediateHosts",
           "citation": "WCVM Learn About Parasites: Neospora caninum",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
         },
         {
           "field": "majorOrgan",
           "citation": "WCVM Learn About Parasites: Neospora caninum",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
         },
         {
           "field": "pppDays",
           "citation": "WCVM Learn About Parasites: Neospora caninum",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
         },
         {
           "field": "zoonotic",
           "citation": "WCVM Learn About Parasites: Neospora caninum",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
         },
         {
           "field": "distribution",
           "citation": "WCVM Learn About Parasites: Neospora caninum",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
         },
         {
           "field": "lifecycleStages",
           "citation": "WCVM Learn About Parasites: Neospora caninum",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
         },
         {
           "field": "diagnosticTests",
           "citation": "WCVM Learn About Parasites: Neospora caninum",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
         },
         {
           "field": "phylum",
@@ -1326,7 +1338,8 @@
         {
           "field": "order",
           "citation": "NCBI Taxonomy: Neospora caninum",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/29176/"
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/29176/",
+          "note": null
         },
         {
           "field": "family",
@@ -1337,11 +1350,11 @@
         {
           "field": "family",
           "citation": "WCVM Learn About Parasites: Neospora caninum",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
         }
       ],
-      "images": [],
-      "commonName": null
+      "images": []
     },
     {
       "key": "sarcocystis-spp",
@@ -1414,72 +1427,86 @@
         {
           "field": null,
           "citation": "WCVM Learn About Parasites: Sarcocystis species",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php",
+          "note": null
         },
         {
           "field": null,
           "citation": "CDC DPDx: Sarcocystosis",
-          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html"
+          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html",
+          "note": null
         },
         {
           "field": "definitiveHosts",
           "citation": "WCVM Learn About Parasites: Sarcocystis species",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php",
+          "note": null
         },
         {
           "field": "definitiveHosts",
           "citation": "CDC DPDx: Sarcocystosis",
-          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html"
+          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html",
+          "note": null
         },
         {
           "field": "intermediateHosts",
           "citation": "WCVM Learn About Parasites: Sarcocystis species",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php",
+          "note": null
         },
         {
           "field": "intermediateHosts",
           "citation": "CDC DPDx: Sarcocystosis",
-          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html"
+          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html",
+          "note": null
         },
         {
           "field": "majorOrgan",
           "citation": "WCVM Learn About Parasites: Sarcocystis species",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php",
+          "note": null
         },
         {
           "field": "majorOrgan",
           "citation": "CDC DPDx: Sarcocystosis",
-          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html"
+          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html",
+          "note": null
         },
         {
           "field": "distribution",
           "citation": "CDC DPDx: Sarcocystosis",
-          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html"
+          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html",
+          "note": null
         },
         {
           "field": "zoonotic",
           "citation": "WCVM Learn About Parasites: Sarcocystis species",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php",
+          "note": null
         },
         {
           "field": "zoonotic",
           "citation": "CDC DPDx: Sarcocystosis",
-          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html"
+          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html",
+          "note": null
         },
         {
           "field": "lifecycleStages",
           "citation": "CDC DPDx: Sarcocystosis",
-          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html"
+          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html",
+          "note": null
         },
         {
           "field": "diagnosticTests",
           "citation": "WCVM Learn About Parasites: Sarcocystis species",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php",
+          "note": null
         },
         {
           "field": "diagnosticTests",
           "citation": "CDC DPDx: Sarcocystosis",
-          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html"
+          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html",
+          "note": null
         },
         {
           "field": "phylum",
@@ -1490,21 +1517,23 @@
         {
           "field": "order",
           "citation": "NCBI Taxonomy: Sarcocystis",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5812/"
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5812/",
+          "note": null
         },
         {
           "field": "family",
           "citation": "NCBI Taxonomy: Sarcocystis",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5812/"
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5812/",
+          "note": null
         },
         {
           "field": "family",
           "citation": "WCVM Learn About Parasites: Sarcocystis species",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php",
+          "note": null
         }
       ],
-      "images": [],
-      "commonName": null
+      "images": []
     },
     {
       "key": "besnoitia-besnoiti",
@@ -1555,12 +1584,14 @@
         {
           "field": null,
           "citation": "MSD Veterinary Manual: Besnoitiosis in Animals",
-          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals"
+          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals",
+          "note": null
         },
         {
           "field": null,
           "citation": "WCVM Learn About Parasites: Besnoitia species",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/besnoitia-species.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/besnoitia-species.php",
+          "note": null
         },
         {
           "field": "definitiveHosts",
@@ -1577,37 +1608,44 @@
         {
           "field": "vectorRole",
           "citation": "MSD Veterinary Manual: Besnoitiosis in Animals",
-          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals"
+          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals",
+          "note": null
         },
         {
           "field": "majorOrgan",
           "citation": "MSD Veterinary Manual: Besnoitiosis in Animals",
-          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals"
+          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals",
+          "note": null
         },
         {
           "field": "distribution",
           "citation": "MSD Veterinary Manual: Besnoitiosis in Animals",
-          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals"
+          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals",
+          "note": null
         },
         {
           "field": "lifecycleStages",
           "citation": "MSD Veterinary Manual: Besnoitiosis in Animals",
-          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals"
+          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals",
+          "note": null
         },
         {
           "field": "diagnosticTests",
           "citation": "MSD Veterinary Manual: Besnoitiosis in Animals",
-          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals"
+          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals",
+          "note": null
         },
         {
           "field": "phylum",
           "citation": "NCBI Taxonomy: Besnoitia besnoiti",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/94643/"
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/94643/",
+          "note": null
         },
         {
           "field": "order",
           "citation": "NCBI Taxonomy: Besnoitia besnoiti",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/94643/"
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/94643/",
+          "note": null
         },
         {
           "field": "family",
@@ -1618,11 +1656,11 @@
         {
           "field": "family",
           "citation": "MSD Veterinary Manual: Besnoitiosis in Animals",
-          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals"
+          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals",
+          "note": null
         }
       ],
-      "images": [],
-      "commonName": null
+      "images": []
     },
     {
       "key": "babesia-spp",
@@ -1700,17 +1738,20 @@
         {
           "field": null,
           "citation": "WCVM Learn About Parasites: Piroplasms (Babesia caballi and Theileria equi)",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php",
+          "note": null
         },
         {
           "field": null,
           "citation": "MSD Veterinary Manual: Babesiosis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/babesiosis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/babesiosis-in-animals",
+          "note": null
         },
         {
           "field": null,
           "citation": "CDC DPDx: Babesiosis",
-          "url": "https://www.cdc.gov/dpdx/babesiosis/index.html"
+          "url": "https://www.cdc.gov/dpdx/babesiosis/index.html",
+          "note": null
         },
         {
           "field": "definitiveHosts",
@@ -1721,82 +1762,98 @@
         {
           "field": "definitiveHosts",
           "citation": "CDC DPDx: Babesiosis",
-          "url": "https://www.cdc.gov/dpdx/babesiosis/index.html"
+          "url": "https://www.cdc.gov/dpdx/babesiosis/index.html",
+          "note": null
         },
         {
           "field": "definitiveHosts",
           "citation": "MSD Veterinary Manual: Babesiosis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/babesiosis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/babesiosis-in-animals",
+          "note": null
         },
         {
           "field": "intermediateHosts",
           "citation": "MSD Veterinary Manual: Babesiosis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/babesiosis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/babesiosis-in-animals",
+          "note": null
         },
         {
           "field": "intermediateHosts",
           "citation": "CDC DPDx: Babesiosis",
-          "url": "https://www.cdc.gov/dpdx/babesiosis/index.html"
+          "url": "https://www.cdc.gov/dpdx/babesiosis/index.html",
+          "note": null
         },
         {
           "field": "vectorRole",
           "citation": "WCVM Learn About Parasites: Piroplasms (Babesia caballi and Theileria equi)",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php",
+          "note": null
         },
         {
           "field": "vectorRole",
           "citation": "CDC DPDx: Babesiosis",
-          "url": "https://www.cdc.gov/dpdx/babesiosis/index.html"
+          "url": "https://www.cdc.gov/dpdx/babesiosis/index.html",
+          "note": null
         },
         {
           "field": "majorOrgan",
           "citation": "MSD Veterinary Manual: Babesiosis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/babesiosis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/babesiosis-in-animals",
+          "note": null
         },
         {
           "field": "majorOrgan",
           "citation": "WCVM Learn About Parasites: Piroplasms (Babesia caballi and Theileria equi)",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php",
+          "note": null
         },
         {
           "field": "distribution",
           "citation": "CDC DPDx: Babesiosis",
-          "url": "https://www.cdc.gov/dpdx/babesiosis/index.html"
+          "url": "https://www.cdc.gov/dpdx/babesiosis/index.html",
+          "note": null
         },
         {
           "field": "zoonotic",
           "citation": "MSD Veterinary Manual: Babesiosis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/babesiosis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/babesiosis-in-animals",
+          "note": null
         },
         {
           "field": "lifecycleStages",
           "citation": "WCVM Learn About Parasites: Piroplasms (Babesia caballi and Theileria equi)",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php",
+          "note": null
         },
         {
           "field": "diagnosticTests",
           "citation": "CDC DPDx: Babesiosis",
-          "url": "https://www.cdc.gov/dpdx/babesiosis/index.html"
+          "url": "https://www.cdc.gov/dpdx/babesiosis/index.html",
+          "note": null
         },
         {
           "field": "diagnosticTests",
           "citation": "WCVM Learn About Parasites: Piroplasms (Babesia caballi and Theileria equi)",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php",
+          "note": null
         },
         {
           "field": "phylum",
           "citation": "NCBI Taxonomy: Babesia",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5864/"
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5864/",
+          "note": null
         },
         {
           "field": "order",
           "citation": "NCBI Taxonomy: Babesia",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5864/"
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5864/",
+          "note": null
         },
         {
           "field": "family",
           "citation": "NCBI Taxonomy: Babesia",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5864/"
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5864/",
+          "note": null
         },
         {
           "field": "distribution",
@@ -1805,8 +1862,7 @@
           "note": null
         }
       ],
-      "images": [],
-      "commonName": null
+      "images": []
     },
     {
       "key": "theileria-spp",
@@ -1887,12 +1943,14 @@
         {
           "field": null,
           "citation": "MSD Veterinary Manual: Theileriosis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals",
+          "note": null
         },
         {
           "field": null,
           "citation": "WCVM Learn About Parasites: Piroplasms (Babesia caballi and Theileria equi)",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php",
+          "note": null
         },
         {
           "field": "definitiveHosts",
@@ -1903,61 +1961,71 @@
         {
           "field": "intermediateHosts",
           "citation": "MSD Veterinary Manual: Theileriosis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals",
+          "note": null
         },
         {
           "field": "vectorRole",
           "citation": "MSD Veterinary Manual: Theileriosis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals",
+          "note": null
         },
         {
           "field": "vectorRole",
           "citation": "WCVM Learn About Parasites: Piroplasms (Babesia caballi and Theileria equi)",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php",
+          "note": null
         },
         {
           "field": "majorOrgan",
           "citation": "MSD Veterinary Manual: Theileriosis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals",
+          "note": null
         },
         {
           "field": "distribution",
           "citation": "MSD Veterinary Manual: Theileriosis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals",
+          "note": null
         },
         {
           "field": "lifecycleStages",
           "citation": "MSD Veterinary Manual: Theileriosis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals",
+          "note": null
         },
         {
           "field": "lifecycleStages",
           "citation": "WCVM Learn About Parasites: Piroplasms (Babesia caballi and Theileria equi)",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/piroplasms-babesia-caballi-and-theileria-babesia-equi.php",
+          "note": null
         },
         {
           "field": "diagnosticTests",
           "citation": "MSD Veterinary Manual: Theileriosis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals",
+          "note": null
         },
         {
           "field": "phylum",
           "citation": "NCBI Taxonomy: Theileria",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5873/"
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5873/",
+          "note": null
         },
         {
           "field": "order",
           "citation": "NCBI Taxonomy: Theileria",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5873/"
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5873/",
+          "note": null
         },
         {
           "field": "family",
           "citation": "NCBI Taxonomy: Theileria",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5873/"
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5873/",
+          "note": null
         }
       ],
-      "images": [],
-      "commonName": null
+      "images": []
     },
     {
       "key": "leishmania-infantum",
@@ -2019,107 +2087,128 @@
         {
           "field": null,
           "citation": "MSD Veterinary Manual: Leishmaniosis in Dogs",
-          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs"
+          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs",
+          "note": null
         },
         {
           "field": null,
           "citation": "WCVM Learn About Parasites: Leishmania species",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/leishmania-species.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/leishmania-species.php",
+          "note": null
         },
         {
           "field": null,
           "citation": "CDC DPDx: Leishmaniasis",
-          "url": "https://www.cdc.gov/dpdx/leishmaniasis/index.html"
+          "url": "https://www.cdc.gov/dpdx/leishmaniasis/index.html",
+          "note": null
         },
         {
           "field": "definitiveHosts",
           "citation": "MSD Veterinary Manual: Leishmaniosis in Dogs",
-          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs"
+          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs",
+          "note": null
         },
         {
           "field": "definitiveHosts",
           "citation": "WCVM Learn About Parasites: Leishmania species",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/leishmania-species.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/leishmania-species.php",
+          "note": null
         },
         {
           "field": "intermediateHosts",
           "citation": "WCVM Learn About Parasites: Leishmania species",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/leishmania-species.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/leishmania-species.php",
+          "note": null
         },
         {
           "field": "intermediateHosts",
           "citation": "CDC DPDx: Leishmaniasis",
-          "url": "https://www.cdc.gov/dpdx/leishmaniasis/index.html"
+          "url": "https://www.cdc.gov/dpdx/leishmaniasis/index.html",
+          "note": null
         },
         {
           "field": "vectorRole",
           "citation": "CDC DPDx: Leishmaniasis",
-          "url": "https://www.cdc.gov/dpdx/leishmaniasis/index.html"
+          "url": "https://www.cdc.gov/dpdx/leishmaniasis/index.html",
+          "note": null
         },
         {
           "field": "vectorRole",
           "citation": "MSD Veterinary Manual: Leishmaniosis in Dogs",
-          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs"
+          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs",
+          "note": null
         },
         {
           "field": "majorOrgan",
           "citation": "MSD Veterinary Manual: Leishmaniosis in Dogs",
-          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs"
+          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs",
+          "note": null
         },
         {
           "field": "distribution",
           "citation": "MSD Veterinary Manual: Leishmaniosis in Dogs",
-          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs"
+          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs",
+          "note": null
         },
         {
           "field": "distribution",
           "citation": "CDC DPDx: Leishmaniasis",
-          "url": "https://www.cdc.gov/dpdx/leishmaniasis/index.html"
+          "url": "https://www.cdc.gov/dpdx/leishmaniasis/index.html",
+          "note": null
         },
         {
           "field": "zoonotic",
           "citation": "MSD Veterinary Manual: Leishmaniosis in Dogs",
-          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs"
+          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs",
+          "note": null
         },
         {
           "field": "zoonotic",
           "citation": "WCVM Learn About Parasites: Leishmania species",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/leishmania-species.php"
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/leishmania-species.php",
+          "note": null
         },
         {
           "field": "lifecycleStages",
           "citation": "CDC DPDx: Leishmaniasis",
-          "url": "https://www.cdc.gov/dpdx/leishmaniasis/index.html"
+          "url": "https://www.cdc.gov/dpdx/leishmaniasis/index.html",
+          "note": null
         },
         {
           "field": "lifecycleStages",
           "citation": "MSD Veterinary Manual: Leishmaniosis in Dogs",
-          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs"
+          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs",
+          "note": null
         },
         {
           "field": "diagnosticTests",
           "citation": "MSD Veterinary Manual: Leishmaniosis in Dogs",
-          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs"
+          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs",
+          "note": null
         },
         {
           "field": "phylum",
           "citation": "NCBI Taxonomy: Leishmania infantum",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5671/"
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5671/",
+          "note": null
         },
         {
           "field": "order",
           "citation": "NCBI Taxonomy: Leishmania infantum",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5671/"
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5671/",
+          "note": null
         },
         {
           "field": "family",
           "citation": "NCBI Taxonomy: Leishmania infantum",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5671/"
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5671/",
+          "note": null
         },
         {
           "field": "family",
           "citation": "MSD Veterinary Manual: Leishmaniosis in Dogs",
-          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs"
+          "url": "https://www.msdvetmanual.com/infectious-diseases/leishmaniosis/leishmaniosis-in-dogs",
+          "note": null
         },
         {
           "field": "distribution",
@@ -2128,8 +2217,7 @@
           "note": null
         }
       ],
-      "images": [],
-      "commonName": null
+      "images": []
     },
     {
       "key": "trypanosoma-spp",
@@ -2205,96 +2293,113 @@
         {
           "field": null,
           "citation": "MSD Veterinary Manual: Trypanosomiasis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals",
+          "note": null
         },
         {
           "field": null,
           "citation": "CDC DPDx: African Trypanosomiasis",
-          "url": "https://www.cdc.gov/dpdx/trypanosomiasisafrican/index.html"
+          "url": "https://www.cdc.gov/dpdx/trypanosomiasisafrican/index.html",
+          "note": null
         },
         {
           "field": "definitiveHosts",
           "citation": "MSD Veterinary Manual: Trypanosomiasis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals",
+          "note": null
         },
         {
           "field": "definitiveHosts",
           "citation": "CDC DPDx: African Trypanosomiasis",
-          "url": "https://www.cdc.gov/dpdx/trypanosomiasisafrican/index.html"
+          "url": "https://www.cdc.gov/dpdx/trypanosomiasisafrican/index.html",
+          "note": null
         },
         {
           "field": "intermediateHosts",
           "citation": "MSD Veterinary Manual: Trypanosomiasis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals",
+          "note": null
         },
         {
           "field": "intermediateHosts",
           "citation": "CDC DPDx: African Trypanosomiasis",
-          "url": "https://www.cdc.gov/dpdx/trypanosomiasisafrican/index.html"
+          "url": "https://www.cdc.gov/dpdx/trypanosomiasisafrican/index.html",
+          "note": null
         },
         {
           "field": "vectorRole",
           "citation": "MSD Veterinary Manual: Trypanosomiasis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals",
+          "note": null
         },
         {
           "field": "majorOrgan",
           "citation": "MSD Veterinary Manual: Trypanosomiasis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals",
+          "note": null
         },
         {
           "field": "majorOrgan",
           "citation": "CDC DPDx: African Trypanosomiasis",
-          "url": "https://www.cdc.gov/dpdx/trypanosomiasisafrican/index.html"
+          "url": "https://www.cdc.gov/dpdx/trypanosomiasisafrican/index.html",
+          "note": null
         },
         {
           "field": "distribution",
           "citation": "MSD Veterinary Manual: Trypanosomiasis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals",
+          "note": null
         },
         {
           "field": "zoonotic",
           "citation": "MSD Veterinary Manual: Trypanosomiasis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals",
+          "note": null
         },
         {
           "field": "lifecycleStages",
           "citation": "MSD Veterinary Manual: Trypanosomiasis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals",
+          "note": null
         },
         {
           "field": "lifecycleStages",
           "citation": "CDC DPDx: African Trypanosomiasis",
-          "url": "https://www.cdc.gov/dpdx/trypanosomiasisafrican/index.html"
+          "url": "https://www.cdc.gov/dpdx/trypanosomiasisafrican/index.html",
+          "note": null
         },
         {
           "field": "diagnosticTests",
           "citation": "MSD Veterinary Manual: Trypanosomiasis in Animals",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/trypanosomiasis-in-animals",
+          "note": null
         },
         {
           "field": "diagnosticTests",
           "citation": "CDC DPDx: African Trypanosomiasis",
-          "url": "https://www.cdc.gov/dpdx/trypanosomiasisafrican/index.html"
+          "url": "https://www.cdc.gov/dpdx/trypanosomiasisafrican/index.html",
+          "note": null
         },
         {
           "field": "phylum",
           "citation": "NCBI Taxonomy: Trypanosoma",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5690/"
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5690/",
+          "note": null
         },
         {
           "field": "order",
           "citation": "NCBI Taxonomy: Trypanosoma",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5690/"
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5690/",
+          "note": null
         },
         {
           "field": "family",
           "citation": "NCBI Taxonomy: Trypanosoma",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5690/"
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5690/",
+          "note": null
         }
       ],
-      "images": [],
-      "commonName": null
+      "images": []
     },
     {
       "key": "plasmodium-spp",
@@ -2378,12 +2483,14 @@
         {
           "field": null,
           "citation": "MSD Veterinary Manual: Plasmodium Infection in Poultry and Other Birds",
-          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds"
+          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds",
+          "note": null
         },
         {
           "field": null,
           "citation": "CDC DPDx: Malaria",
-          "url": "https://www.cdc.gov/dpdx/malaria/index.html"
+          "url": "https://www.cdc.gov/dpdx/malaria/index.html",
+          "note": null
         },
         {
           "field": "definitiveHosts",
@@ -2394,57 +2501,68 @@
         {
           "field": "intermediateHosts",
           "citation": "MSD Veterinary Manual: Plasmodium Infection in Poultry and Other Birds",
-          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds"
+          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds",
+          "note": null
         },
         {
           "field": "intermediateHosts",
           "citation": "CDC DPDx: Malaria",
-          "url": "https://www.cdc.gov/dpdx/malaria/index.html"
+          "url": "https://www.cdc.gov/dpdx/malaria/index.html",
+          "note": null
         },
         {
           "field": "vectorRole",
           "citation": "MSD Veterinary Manual: Plasmodium Infection in Poultry and Other Birds",
-          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds"
+          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds",
+          "note": null
         },
         {
           "field": "vectorRole",
           "citation": "CDC DPDx: Malaria",
-          "url": "https://www.cdc.gov/dpdx/malaria/index.html"
+          "url": "https://www.cdc.gov/dpdx/malaria/index.html",
+          "note": null
         },
         {
           "field": "majorOrgan",
           "citation": "MSD Veterinary Manual: Plasmodium Infection in Poultry and Other Birds",
-          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds"
+          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds",
+          "note": null
         },
         {
           "field": "majorOrgan",
           "citation": "CDC DPDx: Malaria",
-          "url": "https://www.cdc.gov/dpdx/malaria/index.html"
+          "url": "https://www.cdc.gov/dpdx/malaria/index.html",
+          "note": null
         },
         {
           "field": "distribution",
           "citation": "MSD Veterinary Manual: Plasmodium Infection in Poultry and Other Birds",
-          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds"
+          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds",
+          "note": null
         },
         {
           "field": "lifecycleStages",
           "citation": "CDC DPDx: Malaria",
-          "url": "https://www.cdc.gov/dpdx/malaria/index.html"
+          "url": "https://www.cdc.gov/dpdx/malaria/index.html",
+          "note": null
         },
         {
           "field": "lifecycleStages",
           "citation": "MSD Veterinary Manual: Plasmodium Infection in Poultry and Other Birds",
-          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds"
+          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds",
+          "note": null
         },
         {
           "field": "diagnosticTests",
           "citation": "MSD Veterinary Manual: Plasmodium Infection in Poultry and Other Birds",
-          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds"
+          "url": "https://www.msdvetmanual.com/poultry/bloodborne-organisms-in-poultry/plasmodium-infection-in-poultry-and-other-birds",
+          "note": null
         },
         {
           "field": "phylum",
           "citation": "NCBI Taxonomy: Plasmodium",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5820/"
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5820/",
+          "note": null
         },
         {
           "field": "order",
@@ -2459,8 +2577,7 @@
           "note": "Course spells the family Plasmodidae; NCBI gives Plasmodiidae."
         }
       ],
-      "images": [],
-      "commonName": null
+      "images": []
     },
     {
       "key": "hepatozoon-canis",
@@ -2517,12 +2634,14 @@
         {
           "field": null,
           "citation": "MSD Veterinary Manual: Old World Hepatozoonosis and American Canine Hepatozoonosis",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis",
+          "note": null
         },
         {
           "field": null,
           "citation": "Thomas et al. 2024, Parasit Vectors 17:108: Hepatozoon in wild mammals of the Americas, a systematic review",
-          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10916324/"
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10916324/",
+          "note": null
         },
         {
           "field": "definitiveHosts",
@@ -2533,7 +2652,8 @@
         {
           "field": "definitiveHosts",
           "citation": "Thomas et al. 2024, Parasit Vectors 17:108: Hepatozoon in wild mammals of the Americas, a systematic review",
-          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10916324/"
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10916324/",
+          "note": null
         },
         {
           "field": "intermediateHosts",
@@ -2544,47 +2664,56 @@
         {
           "field": "intermediateHosts",
           "citation": "Thomas et al. 2024, Parasit Vectors 17:108: Hepatozoon in wild mammals of the Americas, a systematic review",
-          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10916324/"
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10916324/",
+          "note": null
         },
         {
           "field": "vectorRole",
           "citation": "MSD Veterinary Manual: Old World Hepatozoonosis and American Canine Hepatozoonosis",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis",
+          "note": null
         },
         {
           "field": "vectorRole",
           "citation": "Thomas et al. 2024, Parasit Vectors 17:108: Hepatozoon in wild mammals of the Americas, a systematic review",
-          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10916324/"
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10916324/",
+          "note": null
         },
         {
           "field": "majorOrgan",
           "citation": "MSD Veterinary Manual: Old World Hepatozoonosis and American Canine Hepatozoonosis",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis",
+          "note": null
         },
         {
           "field": "distribution",
           "citation": "MSD Veterinary Manual: Old World Hepatozoonosis and American Canine Hepatozoonosis",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis",
+          "note": null
         },
         {
           "field": "lifecycleStages",
           "citation": "MSD Veterinary Manual: Old World Hepatozoonosis and American Canine Hepatozoonosis",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis",
+          "note": null
         },
         {
           "field": "lifecycleStages",
           "citation": "Thomas et al. 2024, Parasit Vectors 17:108: Hepatozoon in wild mammals of the Americas, a systematic review",
-          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10916324/"
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10916324/",
+          "note": null
         },
         {
           "field": "diagnosticTests",
           "citation": "MSD Veterinary Manual: Old World Hepatozoonosis and American Canine Hepatozoonosis",
-          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis"
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/old-world-hepatozoonosis-and-american-canine-hepatozoonosis",
+          "note": null
         },
         {
           "field": "phylum",
           "citation": "NCBI Taxonomy: Hepatozoon canis",
-          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/110120/"
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/110120/",
+          "note": null
         },
         {
           "field": "family",
@@ -2593,8 +2722,7 @@
           "note": "Course lists Coccidea (Coccidia) as the family; NCBI gives Hepatozoidae."
         }
       ],
-      "images": [],
-      "commonName": null
+      "images": []
     }
   ]
 }
