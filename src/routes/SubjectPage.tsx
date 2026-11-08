@@ -46,6 +46,8 @@ import {
   ANKI_EXPORT_BUSY_LABEL,
   runAnkiExportDownload,
 } from "../export/runAnkiExport";
+import { atlasHref } from "../atlas/paths";
+import { atlasPreviewEnabled } from "../atlas/preview";
 import { isGuest } from "../guest/session";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
@@ -94,8 +96,9 @@ export default function SubjectPage({ subjectId }: Props) {
   const { end: endLoad } = useTrackedOp("Loading subject…", {
     trackOnMount: true,
   });
-  const { busy: exportBusy, run: runExport } =
-    useTrackedOp(ANKI_EXPORT_BUSY_LABEL);
+  const { busy: exportBusy, run: runExport } = useTrackedOp(
+    ANKI_EXPORT_BUSY_LABEL,
+  );
 
   const load = useCallback(async () => {
     const [subjects, deckList, coverList] = await Promise.all([
@@ -412,6 +415,15 @@ export default function SubjectPage({ subjectId }: Props) {
               >
                 New deck
               </Button>
+              {atlasPreviewEnabled() ? (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => navigate(atlasHref(subjectId))}
+                >
+                  Parasitology Atlas
+                </Button>
+              ) : null}
             </Stack>
           </Box>
 
@@ -467,7 +479,8 @@ export default function SubjectPage({ subjectId }: Props) {
                       cover={
                         covers.find(
                           (cover) =>
-                            cover.ownerKind === "deck" && cover.ownerId === d.id,
+                            cover.ownerKind === "deck" &&
+                            cover.ownerId === d.id,
                         ) ?? null
                       }
                       moreLabel={`More actions for ${d.title}`}

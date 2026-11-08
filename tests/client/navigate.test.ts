@@ -77,6 +77,18 @@ describe("shellBackHref", () => {
     expect(shellBackHref("/admin/users/u1")).toBe("/admin");
     expect(shellBackHref("/admin")).toBeNull();
   });
+
+  it("maps Atlas paths to their parent", () => {
+    expect(shellBackHref("/library/subjects/s1/atlas")).toBe(
+      "/library/subjects/s1",
+    );
+    expect(shellBackHref("/library/subjects/s1/atlas/entry/x")).toBe(
+      "/library/subjects/s1/atlas",
+    );
+    expect(shellBackHref("/library/subjects/s1/atlas/compare/x/y")).toBe(
+      "/library/subjects/s1/atlas",
+    );
+  });
 });
 
 type EntryState = {
@@ -128,9 +140,7 @@ describe("goShellBack", () => {
   it("pops when the previous entry is the back target", () => {
     navigate("/library?sort=name");
     navigate("/library/decks/d1");
-    const back = vi
-      .spyOn(window.history, "back")
-      .mockImplementation(() => {});
+    const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
     goShellBack("/library");
     expect(back).toHaveBeenCalledOnce();
     expect(locationKey()).toBe("/library/decks/d1");
@@ -139,9 +149,7 @@ describe("goShellBack", () => {
   it("pushes the back target when we came from elsewhere", () => {
     navigate("/today");
     navigate("/library/decks/d1");
-    const back = vi
-      .spyOn(window.history, "back")
-      .mockImplementation(() => {});
+    const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
     goShellBack("/library");
     expect(back).not.toHaveBeenCalled();
     expect(locationKey()).toBe("/library");
@@ -155,9 +163,7 @@ describe("goShellBack", () => {
       { ...entry(), fromDoc: "previous-document" },
       "",
     );
-    const back = vi
-      .spyOn(window.history, "back")
-      .mockImplementation(() => {});
+    const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
     goShellBack("/library");
     expect(back).not.toHaveBeenCalled();
     expect(locationKey()).toBe("/library");
