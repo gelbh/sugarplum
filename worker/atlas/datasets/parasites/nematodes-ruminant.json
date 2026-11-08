@@ -167,8 +167,8 @@
         },
         {
           "field": "pppDays",
-          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
-          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153, Table 1: GI nematodes of small ruminants",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153/tables/1",
           "note": "Course states PPP 3 weeks; reference gives 15-21 days."
         },
         {
@@ -382,8 +382,8 @@
         },
         {
           "field": "pppDays",
-          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
-          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153, Table 1: GI nematodes of small ruminants",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153/tables/1",
           "note": "Course states PPP 2-3 weeks; reference gives 18-21 days."
         },
         {
@@ -521,12 +521,6 @@
           "field": "order",
           "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
-          "note": null
-        },
-        {
-          "field": "order",
-          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
-          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
           "note": null
         },
         {
@@ -838,7 +832,7 @@
         "onHostStages": ["migrating larva", "adult"],
         "distribution": "Sheep and goats in warm, moist climates",
         "zoonotic": "no",
-        "significance": "Blood-feeding small-intestinal hookworm; as few as 100 worms can cause clinical signs. Skin-penetrating larvae irritate. Uncommon in Canada and Australia.",
+        "significance": "Blood-feeding hookworm of the small intestine; a burden of around 100 worms is enough to cause disease. Uncommon in Canada.",
         "lifecycleType": "direct",
         "pppDays": {
           "min": 40,
@@ -847,7 +841,7 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in faeces; hatches and develops to the infective L3 on pasture",
+            "location": "passed in faeces; hatches, then grows into the infective L3 on pasture",
             "hostRole": "environment"
           },
           {
@@ -898,12 +892,6 @@
           "citation": "NCBI Taxonomy: Bunostomum trigonocephalum",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/66065/",
           "note": null
-        },
-        {
-          "field": "order",
-          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
-          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
-          "note": "Course spells the order Strongylidia; references spell it Strongylida."
         },
         {
           "field": "family",
@@ -979,8 +967,8 @@
         },
         {
           "field": "pppDays",
-          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
-          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153, Table 1: GI nematodes of small ruminants",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153/tables/1",
           "note": null
         },
         {
@@ -1012,6 +1000,12 @@
           "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
           "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Uncinaria stenocephala (Ancylostomatidae)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/uncinaria-stenocephala.php",
+          "note": "Course spells the order Strongylidia; references spell it Strongylida."
         }
       ],
       "images": []
@@ -1245,12 +1239,6 @@
           "note": null
         },
         {
-          "field": "order",
-          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
-          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
-          "note": "Course spells the order Strongylidia; references spell it Strongylida."
-        },
-        {
           "field": "family",
           "citation": "NCBI Taxonomy: Chabertia ovina",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/63233/",
@@ -1318,8 +1306,8 @@
         },
         {
           "field": "pppDays",
-          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
-          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
+          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153, Table 1: GI nematodes of small ruminants",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153/tables/1",
           "note": null
         },
         {
@@ -1345,6 +1333,12 @@
           "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
           "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Strongylus vulgaris (Strongylidae)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-vulgaris.php",
+          "note": "Course spells the order Strongylidia; references spell it Strongylida."
         }
       ],
       "images": []
@@ -1427,8 +1421,8 @@
         },
         {
           "field": "order",
-          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "citation": "WCVM Learn About Parasites: Strongylus vulgaris (Strongylidae)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-vulgaris.php",
           "note": "Course spells the order Strongylidia; references spell it Strongylida."
         },
         {
@@ -1833,12 +1827,6 @@
           "note": null
         },
         {
-          "field": "order",
-          "citation": "Roeber et al. 2013, Parasites & Vectors 6:153: GI nematodes of sheep, Australian perspective",
-          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-6-153",
-          "note": null
-        },
-        {
           "field": "family",
           "citation": "NCBI Taxonomy: Nematodirus battus",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/28839/",
@@ -1938,6 +1926,12 @@
           "field": "diagnosticTests",
           "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of cattle",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-cattle",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
           "note": null
         }
       ],
@@ -2146,7 +2140,7 @@
         "intermediateHosts": ["land snail", "slug"],
         "majorOrgan": "lungs",
         "onHostStages": ["adult"],
-        "distribution": "Mainly warmer, damper regions worldwide; reported in Canada",
+        "distribution": "Mainly warmer, damper regions worldwide",
         "zoonotic": "no",
         "significance": "The commonest small lungworm of domestic sheep and goats; usually only mildly pathogenic, but lung lesions often get lungs condemned at meat inspection.",
         "lifecycleType": "indirect",
@@ -2495,7 +2489,7 @@
         "intermediateHosts": [],
         "majorOrgan": "abomasum",
         "onHostStages": ["L4", "adult"],
-        "distribution": "Cattle worldwide; the leading trichostrongyle of cattle",
+        "distribution": "Cattle worldwide; probably the most important cattle trichostrongyle",
         "zoonotic": "no",
         "significance": "Larvae in abomasal glands cause nodules and raised pH; type I hits first-season calves, type II follows mass emergence of arrested larvae and can be fatal.",
         "lifecycleType": "direct",
@@ -2511,7 +2505,7 @@
           },
           {
             "name": "L1",
-            "location": "hatches on pasture and feeds on bacteria",
+            "location": "hatches from the egg on pasture",
             "hostRole": "environment"
           },
           {
@@ -2542,7 +2536,7 @@
             "sample": "faeces"
           },
           {
-            "name": "plasma pepsinogen",
+            "name": "serum pepsinogen",
             "sample": "serum"
           },
           {
@@ -2696,7 +2690,7 @@
     {
       "key": "dictyocaulus-viviparus",
       "canonicalName": "Dictyocaulus viviparus",
-      "commonName": "Cattle lungworm",
+      "commonName": "Bovine lungworm",
       "aliases": [],
       "misspellings": ["Dictyocaulus viviparous"],
       "fields": {
@@ -2707,10 +2701,10 @@
         "definitiveHosts": ["cattle"],
         "intermediateHosts": [],
         "majorOrgan": "lungs",
-        "onHostStages": ["adult", "L4"],
-        "distribution": "Cattle worldwide, including Canadian herds",
+        "onHostStages": ["adult", "migrating L3"],
+        "distribution": "Cattle across much of the globe, Canada included",
         "zoonotic": "no",
-        "significance": "Causes verminous pneumonia, mainly in calves in their first grazing season, with coughing and laboured breathing; deaths occur in some outbreaks.",
+        "significance": "Causes lung disease, mainly in calves in their first grazing season, with coughing and laboured breathing; deaths occur in some outbreaks.",
         "lifecycleType": "direct",
         "pppDays": {
           "min": 21,
@@ -2728,7 +2722,7 @@
             "hostRole": "environment"
           },
           {
-            "name": "L4",
+            "name": "migrating L3",
             "location": "travels in the blood vessels to the lungs, then through lung tissue to the airways",
             "hostRole": "definitive"
           },
@@ -2849,6 +2843,12 @@
           "field": "diagnosticTests",
           "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "NCBI Taxonomy: Dictyocaulus viviparus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/29172/",
           "note": null
         }
       ],
