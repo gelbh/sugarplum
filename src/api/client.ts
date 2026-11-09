@@ -546,10 +546,11 @@ export async function uploadCoverFile(
   file: File,
 ) {
   if (isGuest()) rejectGuestCover();
-  const contentType =
-    file.type === "image/png" || file.type === "image/webp"
-      ? file.type
-      : "image/jpeg";
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"] as const;
+  if (!allowedTypes.includes(file.type as (typeof allowedTypes)[number])) {
+    throw new Error("Cover must be a JPEG, PNG, or WebP image");
+  }
+  const contentType = file.type;
   const { imageId, uploadUrl, r2Key } = await requestCoverUploadUrl(
     ownerKind,
     ownerId,

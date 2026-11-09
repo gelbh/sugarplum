@@ -410,6 +410,71 @@ describe("cover routes", () => {
     expect(env.getR2(upload.r2Key)).toBeUndefined();
   });
 
+  it("rejects foreign cover keys and keeps same-key custom PUT idempotent", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const r2Key = "covers/user-a/subject/sub-1/img-1.jpg";
+    env.seedR2(r2Key, "bytes");
+
+    const bad = await app.request(
+      "/api/covers",
+      {
+        method: "PUT",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          ownerKind: "subject",
+          ownerId: "sub-1",
+          source: "custom",
+          r2Key: "covers/user-b/subject/sub-1/evil.jpg",
+        }),
+      },
+      env,
+    );
+    expect(bad.status).toBe(400);
+
+    const put = await app.request(
+      "/api/covers",
+      {
+        method: "PUT",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          ownerKind: "subject",
+          ownerId: "sub-1",
+          source: "custom",
+          r2Key,
+          photoId: "img-1",
+        }),
+      },
+      env,
+    );
+    expect(put.status).toBe(200);
+
+    const again = await app.request(
+      "/api/covers",
+      {
+        method: "PUT",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          ownerKind: "subject",
+          ownerId: "sub-1",
+          source: "custom",
+          r2Key,
+          photoId: "img-1",
+        }),
+      },
+      env,
+    );
+    expect(again.status).toBe(200);
+    expect(env.getR2(r2Key)).toBe("bytes");
+
+    const media = await app.request(
+      `/api/covers/media?key=${encodeURIComponent(r2Key)}`,
+      {},
+      env,
+    );
+    expect(media.status).toBe(401);
+  });
+
   it("keeps the download ping alive without waiting on it", async () => {
     const env = createTestEnv();
     seedOwner(env);

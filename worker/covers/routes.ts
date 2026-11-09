@@ -136,17 +136,20 @@ async function requireOwnedTarget(
   if (!row) throw new HTTPException(404, { message: "Deck not found" });
 }
 
-async function deletePriorR2(
-  env: Env,
+async function readPriorR2Key(
   db: D1Database,
   userId: string,
   owner: OwnerRef,
-): Promise<void> {
+): Promise<string | null> {
   const prev = await db
     .prepare(SELECT_COVER_R2_SQL)
     .bind(userId, owner.ownerKind, owner.ownerId)
     .first<{ r2_key: string | null }>();
   const key = prev?.r2_key?.trim();
+  return key || null;
+}
+
+async function deleteR2Key(env: Env, key: string | null): Promise<void> {
   if (!key) return;
   try {
     await env.MATERIALS.delete(key);
@@ -307,12 +310,11 @@ coverRoutes.put("/", async (c) => {
     const head = await c.env.MATERIALS.head(r2Key);
     if (!head) throw new HTTPException(400, { message: "Upload missing" });
 
-    await deletePriorR2(c.env, db, userId, owner);
-
+    const priorKey = await readPriorR2Key(db, userId, owner);
     const photoId =
       typeof record.photoId === "string" && record.photoId.trim()
         ? record.photoId.trim()
-        : r2Key.split("/").pop()?.replace(/\.[^.]+$/, "") || newId();
+        : newId();
     const stored: StoredCover = {
       photoId,
       imageUrl: coverMediaPath(r2Key),
@@ -323,6 +325,9 @@ coverRoutes.put("/", async (c) => {
       r2Key,
     };
     await upsertCoverRow(db, userId, owner, stored);
+    if (priorKey && priorKey !== r2Key) {
+      await deleteR2Key(c.env, priorKey);
+    }
     return c.json({
       ...stored,
       ownerKind: owner.ownerKind,
@@ -347,10 +352,10 @@ coverRoutes.put("/", async (c) => {
     throw err;
   }
 
-  await deletePriorR2(c.env, db, userId, owner);
-
+  const priorKey = await readPriorR2Key(db, userId, owner);
   const stored = coverFieldsFromPhoto(chosen, "unsplash");
   await upsertCoverRow(db, userId, owner, stored);
+  await deleteR2Key(c.env, priorKey);
 
   if (chosen.downloadLocation) {
     const ping = trackDownload(accessKey, chosen.downloadLocation, globalThis.fetch);
@@ -371,10 +376,11 @@ coverRoutes.delete("/", async (c) => {
   const userId = await requireUser(c);
   const owner = readOwner(await readJson(c));
   const db = getDb(c.env);
-  await deletePriorR2(c.env, db, userId, owner);
+  const priorKey = await readPriorR2Key(db, userId, owner);
   await db
     .prepare(DELETE_COVER_SQL)
     .bind(userId, owner.ownerKind, owner.ownerId)
     .run();
+  await deleteR2Key(c.env, priorKey);
   return c.body(null, 204);
 });
