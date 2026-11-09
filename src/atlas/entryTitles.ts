@@ -4,8 +4,10 @@ export function entryTitles(entry: {
   canonicalName: string;
 }): { primary: string; scientific: string | null } {
   const common = entry.commonName?.trim() || null;
+  const scientific =
+    common && common !== entry.canonicalName ? entry.canonicalName : null;
   return {
     primary: common || entry.canonicalName,
-    scientific: common ? entry.canonicalName : null,
+    scientific,
   };
 }

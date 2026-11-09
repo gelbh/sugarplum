@@ -122,6 +122,29 @@ describe("overlayAtlas", () => {
     );
   });
 
+  it("inherits dataset commonName when overlay common_name is null", () => {
+    const views = overlayAtlas(
+      [fasciola],
+      [
+        overlayRow({
+          id: "row-stale",
+          origin_key: "fasciola-hepatica",
+          origin_version: 1,
+          canonical_name: "Fasciola hepatica",
+          common_name: null,
+          fields_json: JSON.stringify({
+            ...emptyParasiteFields(),
+            group: "trematode",
+            family: "Editedidae",
+          }),
+        }),
+      ],
+    );
+    const edited = views.find((v) => v.originKey === "fasciola-hepatica")!;
+    expect(edited.commonName).toBe("Liver fluke");
+    expect(edited.fields.family).toBe("Editedidae");
+  });
+
   it("concats learner refs/images after dataset refs/images", () => {
     const withImage = datasetEntry({
       key: "fasciola-hepatica",

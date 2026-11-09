@@ -37,4 +37,16 @@ describe("entryTitles", () => {
       scientific: null,
     });
   });
+
+  it("omits scientific when common equals canonical", () => {
+    expect(
+      entryTitles({
+        commonName: "Fasciola hepatica",
+        canonicalName: "Fasciola hepatica",
+      }),
+    ).toEqual({
+      primary: "Fasciola hepatica",
+      scientific: null,
+    });
+  });
 });
