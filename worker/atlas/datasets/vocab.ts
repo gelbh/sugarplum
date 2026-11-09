@@ -69,12 +69,18 @@ export const HOST_TERMS = {
   Formica: { broader: ["ant"] },
   fly: { broader: ["invertebrate"] },
   Simulium: { broader: ["fly"] },
+  Culicoides: { broader: ["fly"] },
+  "Musca domestica": { broader: ["fly"] },
+  "Musca autumnalis": { broader: ["fly"] },
+  "Stomoxys calcitrans": { broader: ["fly"] },
+  Haematobia: { broader: ["fly"] },
 } as const satisfies Vocabulary;
 
 export const ORGAN_TERMS = {
   "gastrointestinal tract": { broader: [] },
-  abomasum: { broader: ["gastrointestinal tract"] },
-  rumen: { broader: ["gastrointestinal tract"] },
+  stomach: { broader: ["gastrointestinal tract"] },
+  abomasum: { broader: ["stomach"] },
+  rumen: { broader: ["stomach"] },
   "small intestine": { broader: ["gastrointestinal tract"] },
   ileum: { broader: ["small intestine"] },
   "large intestine": { broader: ["gastrointestinal tract"] },
@@ -93,6 +99,9 @@ export const ORGAN_TERMS = {
   "haemolymphatic organs": { broader: [] },
   "lymph nodes": { broader: ["haemolymphatic organs"] },
   "bone marrow": { broader: ["haemolymphatic organs"] },
+  eye: { broader: [] },
+  "connective tissue": { broader: [] },
+  "nuchal ligament": { broader: ["connective tissue"] },
 } as const satisfies Vocabulary;
 
 export type HostTerm = keyof typeof HOST_TERMS;
