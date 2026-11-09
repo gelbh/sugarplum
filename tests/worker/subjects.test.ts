@@ -1,7 +1,32 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
+import {
+  cardFromScheduleRow,
+  retrievability,
+} from "../../src/study/retrievability";
+import { aggregateSubjectRecall } from "../../src/study/subjectRecall";
 import { createTestEnv } from "./test-env";
+
+const COMPOSITION_NOW = new Date("2026-11-01T12:00:00.000Z");
+
+function compositionSchedule(
+  state: number,
+  scheduled_days: number,
+): Parameters<typeof cardFromScheduleRow>[0] {
+  return {
+    due: "2026-01-02T00:00:00.000Z",
+    stability: Math.max(scheduled_days, 0.1),
+    difficulty: 5,
+    elapsed_days: 0,
+    scheduled_days,
+    learning_steps: 0,
+    reps: 1,
+    lapses: 0,
+    state,
+    last_review: "2026-01-01T12:00:00.000Z",
+  };
+}
 
 type SubjectBody = {
   id: string;
@@ -199,6 +224,14 @@ describe("subject CRUD", () => {
 });
 
 describe("GET /api/subjects/:id/composition", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(COMPOSITION_NOW);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   function seedAccepted(
     env: ReturnType<typeof createTestEnv>,
     id: string,
@@ -220,16 +253,7 @@ describe("GET /api/subjects/:id/composition", () => {
     if (schedule) {
       env.seedSchedule({
         card_id: id,
-        due: "2026-01-02T00:00:00.000Z",
-        stability: Math.max(schedule.scheduled_days, 0.1),
-        difficulty: 5,
-        elapsed_days: 0,
-        scheduled_days: schedule.scheduled_days,
-        learning_steps: 0,
-        reps: 1,
-        lapses: 0,
-        state: schedule.state,
-        last_review: "2026-01-01T12:00:00.000Z",
+        ...compositionSchedule(schedule.state, schedule.scheduled_days),
       });
     }
   }
@@ -324,6 +348,21 @@ describe("GET /api/subjects/:id/composition", () => {
       env,
     );
     expect(res.status).toBe(200);
+    const recall = aggregateSubjectRecall([
+      null,
+      retrievability(
+        cardFromScheduleRow(compositionSchedule(1, 0)),
+        COMPOSITION_NOW,
+      ),
+      retrievability(
+        cardFromScheduleRow(compositionSchedule(2, 20)),
+        COMPOSITION_NOW,
+      ),
+      retrievability(
+        cardFromScheduleRow(compositionSchedule(2, 21)),
+        COMPOSITION_NOW,
+      ),
+    ]);
     expect(await res.json()).toEqual({
       new: 1,
       learning: 1,
@@ -332,6 +371,47 @@ describe("GET /api/subjects/:id/composition", () => {
       total: 4,
       graduated: 2,
       graduatedPct: 50,
+      avgRetrievability: recall.avgRetrievability,
+      etk: recall.etk,
+    });
+  });
+
+  it("all New / no last_review → null avg and 0 etk", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedSubject({
+      id: "sub-1",
+      user_id: "user-a",
+      title: "Anatomy",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-1",
+      user_id: "user-a",
+      title: "Bones",
+      subject_id: "sub-1",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    seedAccepted(env, "c-new-a");
+    seedAccepted(env, "c-new-b");
+
+    const res = await app.request(
+      "/api/subjects/sub-1/composition",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      new: 2,
+      learning: 0,
+      young: 0,
+      mature: 0,
+      total: 2,
+      graduated: 0,
+      graduatedPct: 0,
+      avgRetrievability: null,
+      etk: 0,
     });
   });
 });
