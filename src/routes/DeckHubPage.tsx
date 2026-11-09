@@ -161,6 +161,10 @@ export default function DeckHubPage({ deckId }: Props) {
   const editDialogBusy = editBusy || resetBusy || cardRegenBusy;
 
   const [moveTarget, setMoveTarget] = useState<CardDraftView | null>(null);
+  const [moveAsBatch, setMoveAsBatch] = useState(false);
+  const [studySummaryError, setStudySummaryError] = useState<string | null>(
+    null,
+  );
   const [moveSubjects, setMoveSubjects] = useState<Subject[]>([]);
   const [moveDecks, setMoveDecks] = useState<Deck[]>([]);
   const [moveSubjectId, setMoveSubjectId] = useState("");
@@ -349,16 +353,22 @@ export default function DeckHubPage({ deckId }: Props) {
     if (id === "study" && deck) {
       setStudySummaryLoading(true);
       setStudySummary(null);
+      setStudySummaryError(null);
       void listDueCards({ deckId: deck.id })
         .then((result) => {
           setStudySummary({
             due: result.cards.length,
             accepted: acceptedCount,
-            newCards: result.meta.introRemaining,
+            introRemaining: result.meta.introRemaining,
           });
         })
-        .catch(() => {
-          setStudySummary({ due: 0, accepted: acceptedCount });
+        .catch((err) => {
+          setStudySummary(null);
+          setStudySummaryError(
+            err instanceof ApiError
+              ? err.message
+              : "Could not load study counts",
+          );
         })
         .finally(() => setStudySummaryLoading(false));
     }
@@ -529,8 +539,9 @@ export default function DeckHubPage({ deckId }: Props) {
     (d) => d.subject_id === moveSubjectId && d.id !== deckId,
   );
 
-  async function openMove(card: CardDraftView) {
+  async function openMove(card: CardDraftView, opts?: { batch?: boolean }) {
     setMoveError(null);
+    setMoveAsBatch(Boolean(opts?.batch));
     setMoveTarget(card);
     setMoveBusy(true);
     try {
@@ -573,7 +584,7 @@ export default function DeckHubPage({ deckId }: Props) {
     setMoveError(null);
     try {
       const batchIds =
-        selectedCardIds.size > 1 && selectedCardIds.has(moveTarget.id)
+        moveAsBatch && selectedCardIds.size > 0
           ? [...selectedCardIds]
           : [moveTarget.id];
       for (const id of batchIds) {
@@ -581,6 +592,9 @@ export default function DeckHubPage({ deckId }: Props) {
       }
       const moved = new Set(batchIds);
       setCards((prev) => prev.filter((c) => !moved.has(c.id)));
+      if (!showArchived) {
+        setAcceptedCount((n) => Math.max(0, n - batchIds.length));
+      }
       if (editCard && moved.has(editCard.id)) {
         setEditCard(null);
       }
@@ -588,6 +602,7 @@ export default function DeckHubPage({ deckId }: Props) {
       const destTitle =
         moveDecks.find((d) => d.id === moveDeckId)?.title ?? "deck";
       setMoveTarget(null);
+      setMoveAsBatch(false);
       setNotice(
         batchIds.length === 1
           ? `Moved card to "${destTitle}"`
@@ -758,7 +773,7 @@ export default function DeckHubPage({ deckId }: Props) {
     if (selectedCardIds.size === 0) return;
     const first = cards.find((c) => selectedCardIds.has(c.id));
     if (!first) return;
-    await openMove(first);
+    await openMove(first, { batch: true });
   }
 
   async function onGuestPaste(e?: FormEvent) {
@@ -1062,7 +1077,7 @@ export default function DeckHubPage({ deckId }: Props) {
           {deck ? (
             <MissionBoard
               draftCount={draftJobs.length}
-              cardCount={cards.length}
+              cardCount={acceptedCount}
               acceptedCount={acceptedCount}
               emptyDeck={acceptedCount === 0 && draftJobs.length === 0}
               onOpen={openWorkshop}
@@ -1150,6 +1165,7 @@ export default function DeckHubPage({ deckId }: Props) {
             acceptedCount={acceptedCount}
             summary={studySummary}
             loading={studySummaryLoading}
+            error={studySummaryError}
           />
         ) : null}
 
@@ -1361,11 +1377,16 @@ export default function DeckHubPage({ deckId }: Props) {
         fullWidth
         maxWidth="xs"
       >
-        <DialogTitle>Move card</DialogTitle>
+        <DialogTitle>
+          {moveAsBatch && selectedCardIds.size > 1
+            ? `Move ${selectedCardIds.size} cards`
+            : "Move card"}
+        </DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ mb: 2 }}>
-            Choose a subject and deck. The card leaves this deck; its study
-            schedule stays the same.
+            {moveAsBatch && selectedCardIds.size > 1
+              ? "Choose a subject and deck. Selected cards leave this deck; study schedules stay the same."
+              : "Choose a subject and deck. The card leaves this deck; its study schedule stays the same."}
           </DialogContentText>
           {moveError ? (
             <Alert severity="error" sx={{ mb: 2 }}>
@@ -1424,7 +1445,13 @@ export default function DeckHubPage({ deckId }: Props) {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setMoveTarget(null)} disabled={moveBusy}>
+          <Button
+            onClick={() => {
+              setMoveTarget(null);
+              setMoveAsBatch(false);
+            }}
+            disabled={moveBusy}
+          >
             Cancel
           </Button>
           <Button

@@ -8,7 +8,7 @@ import { navigate } from "../nav/navigate";
 export type StudyReadySummary = {
   due: number;
   accepted: number;
-  newCards?: number;
+  introRemaining?: number;
 };
 
 type Props = {
@@ -16,6 +16,7 @@ type Props = {
   acceptedCount: number;
   summary: StudyReadySummary | null;
   loading?: boolean;
+  error?: string | null;
 };
 
 export default function StudyReadySheet({
@@ -23,6 +24,7 @@ export default function StudyReadySheet({
   acceptedCount,
   summary,
   loading = false,
+  error = null,
 }: Props) {
   if (acceptedCount === 0) {
     return (
@@ -34,7 +36,7 @@ export default function StudyReadySheet({
 
   const due = summary?.due ?? null;
   const accepted = summary?.accepted ?? acceptedCount;
-  const newCards = summary?.newCards ?? null;
+  const introRemaining = summary?.introRemaining ?? null;
 
   return (
     <Stack spacing={2}>
@@ -42,15 +44,19 @@ export default function StudyReadySheet({
         Ready when you are. Start study opens the existing session for this
         deck.
       </Typography>
+      {error ? <Alert severity="error">{error}</Alert> : null}
       <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
         {due !== null ? (
           <Chip label={`${due} due`} color={due > 0 ? "primary" : "default"} />
         ) : null}
-        {newCards !== null ? (
-          <Chip label={`${newCards} new`} variant="outlined" />
+        {introRemaining !== null ? (
+          <Chip
+            label={`${introRemaining} intro left`}
+            variant="outlined"
+          />
         ) : null}
         <Chip label={`${accepted} accepted`} variant="outlined" />
-        {loading || summary === null ? (
+        {loading || (summary === null && !error) ? (
           <Chip label="Loading counts…" variant="outlined" />
         ) : null}
       </Stack>
