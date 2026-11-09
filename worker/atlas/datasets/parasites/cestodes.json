@@ -556,7 +556,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "raillietina-spp-hero.webp",
+          "role": "adult",
+          "caption": "Raillietina echinobothrida",
+          "credit": "K. Lalchhandama / Chhandama",
+          "license": "CC BY 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Raillietina_echinobothrida.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "moniezia-expansa",
@@ -962,7 +973,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "taenia-ovis-hero.webp",
+          "role": "adult",
+          "caption": "Taenia ovis (sheep tapeworm)",
+          "credit": "Tony Rebelo",
+          "license": "CC BY-SA 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Taenia_ovis_15965802.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "taenia-multiceps",
