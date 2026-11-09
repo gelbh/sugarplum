@@ -21,8 +21,9 @@ import {
   mcqOptionKey,
   plainShortcutKey,
 } from "../study/studyKeys";
+import { FaceOverline } from "./faceOverline";
 import KeyChip from "./KeyChip";
-import { FACE_SANS, FACE_SX, OVERLINE_SX } from "./studyFaceSx";
+import { FACE_SANS, FACE_SX } from "./studyFaceSx";
 
 const FEEDBACK_MS = 650;
 
@@ -34,6 +35,8 @@ type Props = {
   disabled?: boolean;
   /** Return false (or reject) so the face unlocks for another tap. */
   onGrade: (rating: StudyRating) => boolean | Promise<boolean>;
+  notesAvailable?: boolean;
+  onOpenNotes?: () => void;
 };
 
 /** MCQ interior for the shared CardFace plate (no own column / aspect shell). */
@@ -44,6 +47,8 @@ export function CardFaceMcqBody({
   options,
   disabled,
   onGrade,
+  notesAvailable,
+  onOpenNotes,
 }: Props) {
   const choices = useMemo(
     () => (options?.length ? shuffledMcqOptions(cardId, options) : []),
@@ -110,9 +115,11 @@ export function CardFaceMcqBody({
         height: "100%",
       }}
     >
-      <Typography component="div" sx={{ ...OVERLINE_SX, mb: 2, flexShrink: 0 }}>
-        Front
-      </Typography>
+      <FaceOverline
+        label="Front"
+        notesAvailable={notesAvailable}
+        onOpenNotes={onOpenNotes}
+      />
       <Box
         data-card-face-content
         sx={{
