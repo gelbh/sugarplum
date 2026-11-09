@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createLlmAdapter,
   parseLlmProvider,
@@ -397,5 +397,118 @@ describe("Workers AI adapter", () => {
         provider: "workers-ai",
       }),
     ).rejects.toThrow(/Settings|BYO|UTC midnight|capacity/i);
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Workers AI 3046 request-timeout retry", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  function timeoutErr() {
+    return new Error("3046: Request timeout");
+  }
+
+  const complete = (adapter: ReturnType<typeof createWorkersAiAdapter>) =>
+    adapter.complete({
+      system: "s",
+      user: "u",
+      apiKey: "",
+      provider: "workers-ai",
+    });
+
+  it("retries once after 3046 then succeeds", async () => {
+    const at: number[] = [];
+    const run = vi.fn(async () => {
+      at.push(Date.now());
+      if (run.mock.calls.length === 1) throw timeoutErr();
+      return chatCompletionResult('{"ok":true}');
+    });
+
+    const env = createTestEnv();
+    env.AI = { run } as unknown as Ai;
+    const adapter = createWorkersAiAdapter(env);
+
+    const result = complete(adapter);
+    await vi.runAllTimersAsync();
+    await expect(result).resolves.toMatchObject({ text: '{"ok":true}' });
+    expect(run).toHaveBeenCalledTimes(2);
+    expect(at.map((t) => t - at[0]!)).toEqual([0, 2000]);
+  });
+
+  it("exhausts two retries then throws a friendly timeout error", async () => {
+    const run = vi.fn(async () => {
+      throw timeoutErr();
+    });
+
+    const env = createTestEnv();
+    env.AI = { run } as unknown as Ai;
+    const adapter = createWorkersAiAdapter(env);
+
+    const result = complete(adapter);
+    const assertion = expect(result).rejects.toThrow(
+      /Workers AI timed out.*BYO API key in Settings/i,
+    );
+    await vi.runAllTimersAsync();
+    await assertion;
+    expect(run).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not treat capacity 429 as a request timeout", async () => {
+    const run = vi.fn(async () => {
+      const err = new Error("Workers AI rate limit: neurons exhausted");
+      (err as Error & { status: number }).status = 429;
+      throw err;
+    });
+
+    const env = createTestEnv();
+    env.AI = { run } as unknown as Ai;
+    const adapter = createWorkersAiAdapter(env);
+
+    const result = complete(adapter);
+    const assertion = expect(result).rejects.toThrow(
+      /Settings|BYO|UTC midnight|capacity/i,
+    );
+    await vi.runAllTimersAsync();
+    await assertion;
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it("fails immediately on non-timeout errors", async () => {
+    const run = vi.fn(async () => {
+      throw new Error("model unavailable");
+    });
+
+    const env = createTestEnv();
+    env.AI = { run } as unknown as Ai;
+    const adapter = createWorkersAiAdapter(env);
+
+    const result = complete(adapter);
+    const assertion = expect(result).rejects.toThrow(/model unavailable/i);
+    await vi.runAllTimersAsync();
+    await assertion;
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it("backs off 2s then 5s between timeout retries", async () => {
+    const at: number[] = [];
+    const run = vi.fn(async () => {
+      at.push(Date.now());
+      throw timeoutErr();
+    });
+
+    const env = createTestEnv();
+    env.AI = { run } as unknown as Ai;
+    const adapter = createWorkersAiAdapter(env);
+
+    const result = complete(adapter);
+    const assertion = expect(result).rejects.toThrow(/Workers AI timed out/i);
+    await vi.runAllTimersAsync();
+    await assertion;
+    expect(run).toHaveBeenCalledTimes(3);
+    expect(at.map((t) => t - at[0]!)).toEqual([0, 2000, 7000]);
   });
 });
