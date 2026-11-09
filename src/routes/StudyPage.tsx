@@ -59,10 +59,7 @@ import {
 } from "../study/dueCache";
 import { bumpIntroBonus, getIntroBonus } from "../study/introBonus";
 import { clientLocalDay } from "../study/localDay";
-import {
-  enqueuePendingGrade,
-  pendingCardIdSet,
-} from "../study/pendingGrades";
+import { enqueuePendingGrade, pendingCardIdSet } from "../study/pendingGrades";
 import SessionComplete from "../study/SessionComplete";
 import { StudyCardActions } from "../study/StudyCardActions";
 import {
@@ -145,7 +142,10 @@ function occlusionStudyParts(card: CardDraftView): OcclusionStudyParts {
   };
 }
 
-function scopeLibraryBack(scope: DueScopeOpts): { href: string; label: string } {
+function scopeLibraryBack(scope: DueScopeOpts): {
+  href: string;
+  label: string;
+} {
   const deck = Boolean(scope.deckId);
   const id = (deck ? scope.deckId : scope.subjectId) ?? "";
   return {
@@ -804,9 +804,7 @@ export default function StudyPage() {
       >
         <Stack
           spacing={stage ? { xs: 0.75, sm: 1.5 } : 2}
-          sx={
-            stage || finish ? { flex: 1, minHeight: 0 } : undefined
-          }
+          sx={stage || finish ? { flex: 1, minHeight: 0 } : undefined}
         >
           <Stack
             direction="row"
@@ -954,8 +952,7 @@ export default function StudyPage() {
                   sx={{ textAlign: "center", opacity: 0.8 }}
                 >
                   {pendingLearning.length} learning{" "}
-                  {pendingLearning.length === 1 ? "card" : "cards"} coming
-                  back.
+                  {pendingLearning.length === 1 ? "card" : "cards"} coming back.
                 </Typography>
                 <Button variant="contained" onClick={leaveStudy}>
                   Today

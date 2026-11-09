@@ -67,9 +67,7 @@ describe("upsert + merge + wake", () => {
 
   it("does not duplicate id already in queue", () => {
     const card = { id: "a" };
-    const pending = [
-      { cardId: "a", dueAt: "2026-11-09T12:00:00.000Z", card },
-    ];
+    const pending = [{ cardId: "a", dueAt: "2026-11-09T12:00:00.000Z", card }];
     const merged = mergeDueLearning(
       [card],
       pending,

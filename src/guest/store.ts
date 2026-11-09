@@ -1,10 +1,4 @@
-import {
-  createEmptyCard,
-  fsrs,
-  Rating,
-  State,
-  type Grade,
-} from "ts-fsrs";
+import { createEmptyCard, fsrs, Rating, State, type Grade } from "ts-fsrs";
 import type {
   CardDraftView,
   CardType,
@@ -21,10 +15,7 @@ import type {
 import { assertSingleCloze } from "../lib/clozeFormat";
 import { clientLocalDay } from "../study/localDay";
 import { type StudyPrefs } from "../study/policyQueue";
-import {
-  clampStudyPrefs,
-  DEFAULT_STUDY_PREFS,
-} from "../study/policyPrefs";
+import { clampStudyPrefs, DEFAULT_STUDY_PREFS } from "../study/policyPrefs";
 import {
   cardFromScheduleRow,
   scheduleColumnsFromCard,
@@ -583,8 +574,7 @@ export function guestPatchCard(
   const nextType = body.type ?? current.type;
   const nextFront = body.front !== undefined ? body.front : current.front;
   let nextBack = body.back !== undefined ? body.back : current.back;
-  let nextOptions =
-    body.options !== undefined ? body.options : current.options;
+  let nextOptions = body.options !== undefined ? body.options : current.options;
 
   if (nextType === "cloze" && typeof nextFront === "string") {
     assertSingleCloze(nextFront);
@@ -593,9 +583,7 @@ export function guestPatchCard(
     const answer =
       typeof nextBack === "string"
         ? nextBack
-        : nextBack &&
-            typeof nextBack === "object" &&
-            "answer" in nextBack
+        : nextBack && typeof nextBack === "object" && "answer" in nextBack
           ? nextBack.answer
           : "";
     const mcq = guestAssertValidMcq(answer, nextOptions);
@@ -885,9 +873,7 @@ export function guestReviewCard(
     last_review: next.last_review,
   };
   store.cards = store.cards.map((c) =>
-    c.id === cardId
-      ? { ...c, due: next.due, updated_at: nowIsoValue }
-      : c,
+    c.id === cardId ? { ...c, due: next.due, updated_at: nowIsoValue } : c,
   );
   // Keep dueIds cycling for in-session order when still due today.
   if (next.due <= nowIsoValue) {
@@ -895,10 +881,7 @@ export function guestReviewCard(
   } else {
     store.dueIds = store.dueIds.filter((id) => id !== cardId);
   }
-  store.reviewLogs = [
-    ...store.reviewLogs,
-    { cardId, rating, at: nowIsoValue },
-  ];
+  store.reviewLogs = [...store.reviewLogs, { cardId, rating, at: nowIsoValue }];
   if (wasNew) {
     const day = opts?.localDay ?? clientLocalDay(now);
     store.introsByDay[day] = (store.introsByDay[day] ?? 0) + 1;
