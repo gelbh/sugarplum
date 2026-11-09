@@ -6,37 +6,70 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { ApiError, searchCovers, type CoverFields } from "../api/client";
+import {
+  ApiError,
+  searchCovers,
+  uploadCoverFile,
+  type CoverFields,
+  type CoverOwnerKind,
+  type StoredCoverRow,
+} from "../api/client";
 
 type Props = {
   open: boolean;
   title: string;
+  ownerKind: CoverOwnerKind;
+  ownerId: string;
   onClose: () => void;
   onPick: (photoId: string) => void;
+  onUploaded: (row: StoredCoverRow) => void;
   onClear: () => void;
 };
 
 export default function CoverPickerDialog({
   open,
   title,
+  ownerKind,
+  ownerId,
   onClose,
   onPick,
+  onUploaded,
   onClear,
 }: Props) {
+  const [query, setQuery] = useState(title);
+  const [searchTerm, setSearchTerm] = useState(title);
   const [photos, setPhotos] = useState<CoverFields[]>([]);
   const [empty, setEmpty] = useState(false);
   const [notConfigured, setNotConfigured] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (!open) return;
+    setQuery(title);
+    setSearchTerm(title);
+  }, [open, title]);
+
+  useEffect(() => {
+    if (!open) return;
+    const q = searchTerm.trim();
+    if (!q) {
+      setPhotos([]);
+      setEmpty(false);
+      setNotConfigured(false);
+      setActionError("Enter a search term");
+      return;
+    }
     let cancelled = false;
+    setSearching(true);
     setPhotos([]);
     setEmpty(false);
     setNotConfigured(false);
     setActionError(null);
-    searchCovers(title)
+    searchCovers(q)
       .then((found) => {
         if (cancelled) return;
         const next = found.slice(0, 6);
@@ -48,11 +81,14 @@ export default function CoverPickerDialog({
         setPhotos([]);
         setEmpty(true);
         setNotConfigured(err instanceof ApiError && err.status === 503);
+      })
+      .finally(() => {
+        if (!cancelled) setSearching(false);
       });
     return () => {
       cancelled = true;
     };
-  }, [open, title]);
+  }, [open, searchTerm]);
 
   function run(action: () => void | Promise<void>) {
     setActionError(null);
@@ -61,6 +97,32 @@ export default function CoverPickerDialog({
         err instanceof Error ? err.message : "Could not save cover",
       );
     });
+  }
+
+  function onSearchSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    const next = query.trim();
+    if (!next) {
+      setActionError("Enter a search term");
+      return;
+    }
+    setSearchTerm(next);
+  }
+
+  function onFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setUploading(true);
+    setActionError(null);
+    void uploadCoverFile(ownerKind, ownerId, file)
+      .then((row) => onUploaded(row))
+      .catch((err: unknown) => {
+        setActionError(
+          err instanceof Error ? err.message : "Could not upload cover",
+        );
+      })
+      .finally(() => setUploading(false));
   }
 
   return (
@@ -84,6 +146,34 @@ export default function CoverPickerDialog({
             {actionError}
           </Alert>
         ) : null}
+        <Box
+          component="form"
+          onSubmit={onSearchSubmit}
+          sx={{ display: "flex", gap: 1, mb: 2, mt: 0.5 }}
+        >
+          <TextField
+            size="small"
+            fullWidth
+            label="Search Unsplash"
+            value={query}
+            onChange={(ev) => setQuery(ev.target.value)}
+            disabled={searching || uploading}
+          />
+          <Button type="submit" variant="outlined" disabled={searching || uploading}>
+            Search
+          </Button>
+        </Box>
+        <Box sx={{ mb: 2 }}>
+          <Button component="label" variant="outlined" disabled={uploading}>
+            {uploading ? "Uploading…" : "Upload image"}
+            <input
+              hidden
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={onFileChange}
+            />
+          </Button>
+        </Box>
         {empty ? (
           <Typography color="text.secondary">
             {notConfigured
@@ -133,8 +223,12 @@ export default function CoverPickerDialog({
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={() => run(onClear)}>No cover</Button>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={() => run(onClear)} disabled={uploading}>
+          No cover
+        </Button>
+        <Button onClick={onClose} disabled={uploading}>
+          Cancel
+        </Button>
       </DialogActions>
     </Dialog>
   );
