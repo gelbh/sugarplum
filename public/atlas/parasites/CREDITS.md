@@ -51,6 +51,7 @@ Rejected: all-rights-reserved, unclear, and NC/ND licences.
 | Haemonchus contortus | `haemonchus-contortus-hero.webp` | division, CSIRO | CC BY 3.0 | [https://commons.wikimedia.org/wiki/File:CSIRO_ScienceImage_10819_The_tail_ends_of_11_Haemonchus_contortus_barbers_pole_worm_adult_females_The_worms_are_all_taken_from_one_sheep_infected_with_a_single_strain_of_this_worm_species.jpg](https://commons.wikimedia.org/wiki/File:CSIRO_ScienceImage_10819_The_tail_ends_of_11_Haemonchus_contortus_barbers_pole_worm_adult_females_The_worms_are_all_taken_from_one_sheep_infected_with_a_single_strain_of_this_worm_species.jpg) |
 | Hepatozoon canis | `hepatozoon-canis-hero.webp` | K.regaskova | CC BY-SA 4.0 | [https://commons.wikimedia.org/wiki/File:Hepatozoon.jpg](https://commons.wikimedia.org/wiki/File:Hepatozoon.jpg) |
 | Heterakis gallinarum | `heterakis-gallinarum-hero.webp` | Daniel J. Drew | CC0 | [https://commons.wikimedia.org/wiki/File:Heterakis_gallinarum_(YPM_IZ_097869).jpeg](https://commons.wikimedia.org/wiki/File:Heterakis_gallinarum_(YPM_IZ_097869).jpeg) |
+| Histomonas meleagridis | `histomonas-meleagridis-hero.webp` | USGS | Public domain | [https://commons.wikimedia.org/wiki/File:Histomoniasis.jpg](https://commons.wikimedia.org/wiki/File:Histomoniasis.jpg) |
 | Hypoderma bovis | `hypoderma-bovis-hero.webp` | Wikimedia Commons | Public domain | [https://commons.wikimedia.org/wiki/File:Hypoderma_-_Print_-_Iconographia_Zoologica_-_Special_Collections_University_of_Amsterdam_-_UBAINV0274_039_04_0002.tif](https://commons.wikimedia.org/wiki/File:Hypoderma_-_Print_-_Iconographia_Zoologica_-_Special_Collections_University_of_Amsterdam_-_UBAINV0274_039_04_0002.tif) |
 | Ixodes hexagonus | `ixodes-hexagonus-hero.webp` | AJC1 | CC BY-SA 2.0 | [https://commons.wikimedia.org/wiki/File:Hedgehog_Tick,_Ixodes_hexagonus_(50064527123).jpg](https://commons.wikimedia.org/wiki/File:Hedgehog_Tick,_Ixodes_hexagonus_(50064527123).jpg) |
 | Ixodes ricinus | `ixodes-ricinus-hero.webp` | Zerrin Uzum, Dmitry Ershov, Michael J. Pavia, Adeline Mallet, Olivier Gorgette, Olivier Plantard, Davide Sassera, Fabriz | CC BY 4.0 | [https://commons.wikimedia.org/wiki/File:41467_2023_39758_Fig1b.jpg](https://commons.wikimedia.org/wiki/File:41467_2023_39758_Fig1b.jpg) |
@@ -66,8 +67,10 @@ Rejected: all-rights-reserved, unclear, and NC/ND licences.
 | Otodectes cynotis | `otodectes-cynotis-hero.webp` | Wikimedia Commons | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Ear_mite.JPG](https://commons.wikimedia.org/wiki/File:Ear_mite.JPG) |
 | Oxyuris equi | `oxyuris-equi-hero.webp` | Imes, Marion.; Schwartz, Benjamin; Wright, Willard H. | Public domain | [https://commons.wikimedia.org/wiki/File:Parasites_and_parasitic_diseases_of_horses_(Page_27)_BHL41697913.jpg](https://commons.wikimedia.org/wiki/File:Parasites_and_parasitic_diseases_of_horses_(Page_27)_BHL41697913.jpg) |
 | Parascaris equorum | `parascaris-equorum-hero.webp` | eXtensionHorses | CC BY-SA 2.0 | [https://commons.wikimedia.org/wiki/File:Ascarid1_(5842674095).jpg](https://commons.wikimedia.org/wiki/File:Ascarid1_(5842674095).jpg) |
+| Plasmodium spp. | `plasmodium-spp-hero.webp` | CDC / Dr. Mae Melvin | Public domain | [https://commons.wikimedia.org/wiki/File:Plasmodium_falciparum_01.png](https://commons.wikimedia.org/wiki/File:Plasmodium_falciparum_01.png) |
 | Psoroptes ovis | `psoroptes-ovis-hero.webp` | Alan R Walker | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Psoroptes-communis-ovis.JPG](https://commons.wikimedia.org/wiki/File:Psoroptes-communis-ovis.JPG) |
 | Pulex irritans | `pulex-irritans-hero.webp` | Anagoria | CC BY 3.0 | [https://commons.wikimedia.org/wiki/File:2013_Naturkundemuseum_Berlin_pulex_irritans_anagoria.JPG](https://commons.wikimedia.org/wiki/File:2013_Naturkundemuseum_Berlin_pulex_irritans_anagoria.JPG) |
+| Raillietina spp. | `raillietina-spp-hero.webp` | K. Lalchhandama / Chhandama | CC BY 3.0 | [https://commons.wikimedia.org/wiki/File:Raillietina_echinobothrida.jpg](https://commons.wikimedia.org/wiki/File:Raillietina_echinobothrida.jpg) |
 | Rhipicephalus sanguineus | `rhipicephalus-sanguineus-hero.webp` | (Latreille) | Public domain | [https://commons.wikimedia.org/wiki/File:Naturalis_Biodiversity_Center_-_RMNH.ART.1206_-_Rhipicephalus_sanguineus_(Latreille)_-_Mites_-_Collection_Anthonie_Cornelis_Oudemans.jpeg](https://commons.wikimedia.org/wiki/File:Naturalis_Biodiversity_Center_-_RMNH.ART.1206_-_Rhipicephalus_sanguineus_(Latreille)_-_Mites_-_Collection_Anthonie_Cornelis_Oudemans.jpeg) |
 | Sarcocystis spp. | `sarcocystis-spp-hero.webp` | Tameem Baker | CC BY 4.0 | [https://commons.wikimedia.org/wiki/File:Sarcocystis.jpg](https://commons.wikimedia.org/wiki/File:Sarcocystis.jpg) |
 | Sarcoptes scabiei | `sarcoptes-scabiei-hero.webp` | Joel Mills | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Canine_scabies_mite.JPG](https://commons.wikimedia.org/wiki/File:Canine_scabies_mite.JPG) |
@@ -79,6 +82,7 @@ Rejected: all-rights-reserved, unclear, and NC/ND licences.
 | Syngamus trachea | `syngamus-trachea-hero.webp` | Milton Friend at the Geological Survey National Wildlife Health Center | Public domain | [https://commons.wikimedia.org/wiki/File:Gapeworms.jpg](https://commons.wikimedia.org/wiki/File:Gapeworms.jpg) |
 | Taenia hydatigena | `taenia-hydatigena-hero.webp` | Wikimedia Commons | Public domain | [https://commons.wikimedia.org/wiki/File:Taenia_hydatigena_-_-_Print_-_Iconographia_Zoologica_-_Special_Collections_University_of_Amsterdam_-_UBAINV0274_105_19_0037.tif](https://commons.wikimedia.org/wiki/File:Taenia_hydatigena_-_-_Print_-_Iconographia_Zoologica_-_Special_Collections_University_of_Amsterdam_-_UBAINV0274_105_19_0037.tif) |
 | Taenia multiceps | `taenia-multiceps-hero.webp` | Wikimedia Commons | Public domain | [https://commons.wikimedia.org/wiki/File:Coenurus.jpg](https://commons.wikimedia.org/wiki/File:Coenurus.jpg) |
+| Taenia ovis | `taenia-ovis-hero.webp` | Tony Rebelo | CC BY-SA 4.0 | [https://commons.wikimedia.org/wiki/File:Taenia_ovis_15965802.jpg](https://commons.wikimedia.org/wiki/File:Taenia_ovis_15965802.jpg) |
 | Taenia saginata | `taenia-saginata-hero.webp` | Wikimedia Commons | Public domain | [https://commons.wikimedia.org/wiki/File:Gravid_proglottid_from_the_cestode_Taenia_saginata_5259_lores.jpg](https://commons.wikimedia.org/wiki/File:Gravid_proglottid_from_the_cestode_Taenia_saginata_5259_lores.jpg) |
 | Taenia solium | `taenia-solium-hero.webp` | CDC / PHIL or DPDx (via Wikimedia Commons) | Public domain | [https://commons.wikimedia.org/wiki/File:Taenia_solium_tapeworm_scolex_with_its_four_suckers_and_two_rows_of_hooks_5262_lores.jpg](https://commons.wikimedia.org/wiki/File:Taenia_solium_tapeworm_scolex_with_its_four_suckers_and_two_rows_of_hooks_5262_lores.jpg) |
 | Teladorsagia circumcincta | `teladorsagia-circumcincta-hero.webp` | Dr Enterocasso | CC BY-SA 2.0 | [https://commons.wikimedia.org/wiki/File:A_scanning_electron_micrograph_of_the_nematode_Teladorsagia_circumcincta.tif](https://commons.wikimedia.org/wiki/File:A_scanning_electron_micrograph_of_the_nematode_Teladorsagia_circumcincta.tif) |
@@ -89,6 +93,7 @@ Rejected: all-rights-reserved, unclear, and NC/ND licences.
 | Toxoplasma gondii | `toxoplasma-gondii-hero.webp` | Jacques Rigoulet, Alain Hennache, Pierre Lagourette, Catherine George, Loïc Longeart, Jean-Loïc Le Net and Jitender P. D | CC BY 4.0 | [https://commons.wikimedia.org/wiki/File:Parasite140105-fig3_Toxoplasmosis_in_a_bar-shouldered_dove_-_TEM_of_2_tachyzoites.tif](https://commons.wikimedia.org/wiki/File:Parasite140105-fig3_Toxoplasmosis_in_a_bar-shouldered_dove_-_TEM_of_2_tachyzoites.tif) |
 | Trichinella spiralis | `trichinella-spiralis-hero.webp` | Izvora | CC BY-SA 4.0 | [https://commons.wikimedia.org/wiki/File:Tr._spiralis_2.JPG](https://commons.wikimedia.org/wiki/File:Tr._spiralis_2.JPG) |
 | Trichodectes canis | `trichodectes-canis-hero.webp` | Adam Cuerden | Public domain | [https://commons.wikimedia.org/wiki/File:Trichodectes_canis.jpg](https://commons.wikimedia.org/wiki/File:Trichodectes_canis.jpg) |
+| Trichostrongylus spp. | `trichostrongylus-spp-hero.webp` | CDC-DPD | Public domain | [https://commons.wikimedia.org/wiki/File:Trichostrongylus_male_posterior_200x.jpg](https://commons.wikimedia.org/wiki/File:Trichostrongylus_male_posterior_200x.jpg) |
 | Trichuris suis | `trichuris-suis-hero.webp` | Universidad de Córdoba | Public domain | [https://commons.wikimedia.org/wiki/File:Trichuris_Suis.jpg](https://commons.wikimedia.org/wiki/File:Trichuris_Suis.jpg) |
 | Trichuris vulpis | `trichuris-vulpis-hero.webp` | CDC / PHIL or DPDx (via Wikimedia Commons) | Public domain | [https://commons.wikimedia.org/wiki/File:Eggs_of_Trichuris_trichiura_and_Trichuris_vulpis_06G0018_jpg_lores.jpg](https://commons.wikimedia.org/wiki/File:Eggs_of_Trichuris_trichiura_and_Trichuris_vulpis_06G0018_jpg_lores.jpg) |
 | Tritrichomonas foetus | `tritrichomonas-foetus-hero.webp` | Chaoqun Yaor and Liza S Köster | CC BY 4.0 | [https://commons.wikimedia.org/wiki/File:Tritrichomonas_foetus.jpg](https://commons.wikimedia.org/wiki/File:Tritrichomonas_foetus.jpg) |
@@ -133,7 +138,6 @@ No catalog hero until a taxon-correct, study-useful, licence-ok asset exists (sp
 | Encephalitozoon cuniculi | Removed: pet photo, not organism |
 | Filaroides hirthi | No hero yet |
 | Habronema spp. | No hero yet |
-| Histomonas meleagridis | No hero yet |
 | Hyostrongylus rubidus | No hero yet |
 | Metastrongylus apri | No hero yet |
 | Muellerius capillaris | No hero yet |
@@ -145,17 +149,13 @@ No catalog hero until a taxon-correct, study-useful, licence-ok asset exists (sp
 | Ostertagia ostertagi | No hero yet |
 | Parafilaria multipapillosa | No hero yet |
 | Paramphistomum cervi | No hero yet |
-| Plasmodium spp. | Removed: graphical abstract, not morphology |
 | Protostrongylus rufescens | No hero yet |
 | Pseudoterranova decipiens | Removed: generic anasakid stand-in |
-| Raillietina spp. | No hero yet |
 | Strongyloides papillosus | No hero yet |
 | Strongyloides ransomi | No hero yet |
 | Strongyloides westeri | Lifecycle diagram retained; catalog hero cleared |
 | Strongylus edentatus | No hero yet |
 | Strongylus equinus | No hero yet |
-| Taenia ovis | Removed: unspecified Taenia photo |
 | Thelazia lacrymalis | No hero yet |
-| Trichostrongylus spp. | Removed: drug product packaging |
 | Trichuris ovis | No hero yet |
 | Uncinaria stenocephala | No hero yet |
