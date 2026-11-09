@@ -1018,6 +1018,8 @@ export function presignPdfFigure(
 export type CompleteMaterialResponse = Material & {
   jobId: string | null;
   reused?: boolean;
+  /** Free path: no BYO vision; open DIY occlusion + Suggest regions. */
+  manual_occlusion?: boolean;
 };
 
 export type FigureExtractMode = "fast" | "accurate";

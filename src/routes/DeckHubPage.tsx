@@ -235,6 +235,7 @@ export default function DeckHubPage({ deckId }: Props) {
     refreshDraftJobs,
     refreshMaterials,
     setWorkshopStack,
+    onManualOcclusion: create.prepareOcclusionFromImageKey,
   });
 
   const study = useStudyReadySheet();
@@ -770,6 +771,15 @@ export default function DeckHubPage({ deckId }: Props) {
                 refreshDraftJobs(),
                 refreshCards(),
               ]);
+            }}
+            onCreateOcclusion={(mat) => {
+              const key = mat.r2_key?.trim();
+              if (!key) return;
+              create.prepareOcclusionFromImageKey(key);
+              material.onTabChange("diy");
+              setNotice(
+                "Occlusion card ready. Use Suggest regions, edit masks, then Add card.",
+              );
             }}
             draftCount={draftJobs.length}
             onReviewDrafts={() => jumpWorkshop({ id: "drafts" })}

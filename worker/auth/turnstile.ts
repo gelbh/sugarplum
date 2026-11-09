@@ -60,7 +60,14 @@ export async function verifyTurnstileToken(
 
     if (result == null || typeof result !== "object") failVerify();
     if (result.success !== true) failVerify();
-    if (result.action !== opts.action) failVerify();
+    // Dummy always-pass keys omit `action`; enforce only when Cloudflare returns one.
+    if (
+      typeof result.action === "string" &&
+      result.action.length > 0 &&
+      result.action !== opts.action
+    ) {
+      failVerify();
+    }
   } catch (err) {
     if (err instanceof HTTPException) throw err;
     console.error("turnstile siteverify error", err);
