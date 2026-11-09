@@ -153,9 +153,7 @@ async function deleteR2Key(env: Env, key: string | null): Promise<void> {
   if (!key) return;
   try {
     await env.MATERIALS.delete(key);
-  } catch {
-    // best-effort
-  }
+  } catch {}
 }
 
 async function upsertCoverRow(
