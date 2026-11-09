@@ -8,13 +8,18 @@ import {
 } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
+import AddIcon from "@mui/icons-material/Add";
 import GridViewOutlinedIcon from "@mui/icons-material/GridViewOutlined";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import SearchIcon from "@mui/icons-material/Search";
 import TableRowsOutlinedIcon from "@mui/icons-material/TableRowsOutlined";
 import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
@@ -44,6 +49,9 @@ type Props = {
   onOpenEntry: (id: string) => void;
   onCompare: (a: string, b: string) => void;
   stagger: boolean;
+  onAddEntry?: () => void;
+  onRecentlyDeleted?: () => void;
+  onEditEntry?: (entry: AtlasEntryView) => void;
 };
 
 const plural = (n: number) => `${n} ${n === 1 ? "parasite" : "parasites"}`;
@@ -55,12 +63,16 @@ export default function Cabinet({
   onOpenEntry,
   onCompare,
   stagger,
+  onAddEntry,
+  onRecentlyDeleted,
+  onEditEntry,
 }: Props) {
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [view, setView] = useState<AtlasViewMode>(() => readViewPref(userKey));
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [comparing, setComparing] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const shownFilters = useDeferredValue(filters);
   const staggering = useRef(stagger);
   useEffect(() => {
@@ -133,7 +145,7 @@ export default function Cabinet({
               : plural(entries.length)}
           </Typography>
         </Box>
-        <Stack direction="row" gap={1} alignItems="center">
+        <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
           <TextField
             type="search"
             size="small"
@@ -156,6 +168,28 @@ export default function Cabinet({
               "& .MuiInputBase-root": { bgcolor: "background.paper" },
             }}
           />
+          {onAddEntry ? (
+            <Button
+              variant="outlined"
+              onClick={onAddEntry}
+              aria-label="Add entry"
+              sx={{
+                bgcolor: "background.paper",
+                flex: "none",
+                height: 40,
+                minWidth: { xs: 40, sm: 64 },
+                px: { xs: 1, sm: 1.75 },
+              }}
+            >
+              <AddIcon fontSize="small" sx={{ mr: { sm: 0.75 } }} />
+              <Box
+                component="span"
+                sx={{ display: { xs: "none", sm: "inline" } }}
+              >
+                Add entry
+              </Box>
+            </Button>
+          ) : null}
           <Button
             variant="outlined"
             onClick={() => setComparing(true)}
@@ -196,6 +230,31 @@ export default function Cabinet({
               <TableRowsOutlinedIcon fontSize="small" />
             </ToggleButton>
           </ToggleButtonGroup>
+          {onRecentlyDeleted ? (
+            <>
+              <IconButton
+                aria-label="Atlas menu"
+                onClick={(ev) => setMenuAnchor(ev.currentTarget)}
+                sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider" }}
+              >
+                <MoreVertIcon fontSize="small" />
+              </IconButton>
+              <Menu
+                anchorEl={menuAnchor}
+                open={Boolean(menuAnchor)}
+                onClose={() => setMenuAnchor(null)}
+              >
+                <MenuItem
+                  onClick={() => {
+                    setMenuAnchor(null);
+                    onRecentlyDeleted();
+                  }}
+                >
+                  Recently deleted
+                </MenuItem>
+              </Menu>
+            </>
+          ) : null}
         </Stack>
       </Stack>
 
@@ -281,6 +340,9 @@ export default function Cabinet({
                         setExpandedId((cur) => (cur === e.id ? null : e.id))
                       }
                       onOpen={() => onOpenEntry(e.id)}
+                      onEdit={
+                        onEditEntry ? () => onEditEntry(e) : undefined
+                      }
                     />
                   </ViewTransition>
                 ))}

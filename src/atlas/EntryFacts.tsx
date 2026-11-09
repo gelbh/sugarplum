@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import AtlasImage from "./AtlasImage";
 import { termLabel } from "./filter";
@@ -15,6 +18,8 @@ type Props = {
   entry: AtlasEntryView;
   refs: EntryRefs;
   onCite: (field: FieldKey) => void;
+  onEdit?: () => void;
+  onReset?: () => void;
 };
 
 const IMAGE_ROLE_LABELS: Record<
@@ -48,10 +53,34 @@ function factRows(f: DatasetFields): [FieldKey, ReactNode][] {
   ];
 }
 
-export default function EntryFacts({ entry, refs, onCite }: Props) {
+export default function EntryFacts({
+  entry,
+  refs,
+  onCite,
+  onEdit,
+  onReset,
+}: Props) {
   const rows = factRows(entry.fields).filter(([, v]) => v !== null && v !== "");
+  const showActions = Boolean(onEdit || onReset);
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.75 }}>
+      {showActions || entry.editedAt ? (
+        <Stack direction="row" gap={1} flexWrap="wrap" alignItems="center">
+          {entry.editedAt ? (
+            <Chip label="Edited" size="small" variant="outlined" />
+          ) : null}
+          {onEdit ? (
+            <Button variant="outlined" size="small" onClick={onEdit}>
+              Edit
+            </Button>
+          ) : null}
+          {onReset ? (
+            <Button variant="outlined" size="small" onClick={onReset}>
+              Reset to original
+            </Button>
+          ) : null}
+        </Stack>
+      ) : null}
       <Paper variant="outlined" sx={{ px: 2.25, py: 2 }}>
         <Box
           component="dl"
