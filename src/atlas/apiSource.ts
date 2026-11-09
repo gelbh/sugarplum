@@ -111,3 +111,19 @@ export function resetEntry(atlasId: string, entryId: string) {
 export function purgeDeletedEntry(atlasId: string, entryId: string) {
   return api<void>(entryPath(atlasId, entryId), { method: "DELETE" });
 }
+
+export type AtlasMakeCardsResult = {
+  deckId: string;
+  jobId: string | null;
+  jobs: Array<{ entryKey: string; materialId: string; jobId: string }>;
+};
+
+export function makeAtlasCards(
+  atlasId: string,
+  body: { deckId: string; entryKeys: string[] },
+) {
+  return api<AtlasMakeCardsResult>(atlasPath(atlasId, "/make-cards"), {
+    method: "POST",
+    json: body,
+  });
+}

@@ -11,12 +11,29 @@ import {
   type TokenUsageDelta,
 } from "./progress";
 import { consumeFreeGenSlot, isFreeGenCapError } from "./quota";
+import type { AtlasJobProvenance } from "../atlas/makeCardsSource";
 import { assertValidMcqOptions, type CardDraft } from "./schema";
 import { filterNovelDrafts } from "./study-windows";
 import { mergeTopicHints, MAX_TOPIC_HINT_CHARS } from "./topic-hints";
 
 function newId(): string {
   return crypto.randomUUID();
+}
+
+export function withAtlasProvenance(
+  drafts: Array<CardDraft & { mediaR2Keys?: string[] | null }>,
+  atlas: AtlasJobProvenance | null,
+): Array<CardDraft & { mediaR2Keys?: string[] | null }> {
+  if (!atlas) return drafts;
+  return drafts.map((draft) => ({
+    ...draft,
+    provenance: {
+      pages: draft.provenance.pages,
+      excerpt: draft.provenance.excerpt,
+      atlasEntryId: atlas.atlasEntryId,
+      citations: atlas.citations,
+    },
+  }));
 }
 
 /** Insert draft rows. Shared by the first pass and the gap-fill pass. */
@@ -26,10 +43,12 @@ export async function insertDraftCards(
     deckId: string;
     jobId: string;
     drafts: Array<CardDraft & { mediaR2Keys?: string[] | null }>;
+    atlasProvenance?: AtlasJobProvenance | null;
   },
 ): Promise<void> {
   const now = new Date().toISOString();
-  for (const draft of args.drafts) {
+  const drafts = withAtlasProvenance(args.drafts, args.atlasProvenance ?? null);
+  for (const draft of drafts) {
     const mediaJson =
       draft.mediaR2Keys && draft.mediaR2Keys.length > 0
         ? JSON.stringify(draft.mediaR2Keys)
@@ -114,6 +133,7 @@ export async function appendGapFillDrafts(args: {
   drafts: CardDraft[];
   autoFollowup: boolean;
   runPipeline: GapFillPipeline;
+  atlasProvenance?: AtlasJobProvenance | null;
 }): Promise<CardDraft[]> {
   if (
     !args.autoFollowup ||
@@ -143,6 +163,7 @@ export async function appendGapFillDrafts(args: {
         deckId: args.deckId,
         jobId: args.jobId,
         drafts: novel,
+        atlasProvenance: args.atlasProvenance ?? null,
       });
     }
   } catch (err) {
