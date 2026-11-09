@@ -9,6 +9,9 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ["@open-spaced-repetition/binding-wasm32-wasip1"],
   },
+  worker: {
+    format: "es",
+  },
   plugins: [
     patchSqlJsForWorkers(),
     react(),

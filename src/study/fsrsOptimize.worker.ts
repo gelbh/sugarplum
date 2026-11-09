@@ -10,6 +10,7 @@ export type FsrsOptimizeWorkerResponse =
 /**
  * Threadless wasip1 build (no COOP/COEP). Runs inside this dedicated Worker so
  * the main thread stays responsive while computeParameters is sync-under-Promise.
+ * Dynamic import needs worker.format "es" (IIFE cannot code-split).
  */
 self.onmessage = async (ev: MessageEvent<FsrsOptimizeWorkerRequest>) => {
   try {
