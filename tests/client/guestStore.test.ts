@@ -452,7 +452,6 @@ describe("guest store", () => {
     expect(raw.schedules[id]?.state).not.toBe(0); // not State.New
     const graded = raw.reviewLogs.find((l) => l.cardId === id && l.rating === 3);
     expect(graded).toBeDefined();
-    // Pre-transition state for a first New grade is State.New (0).
     expect(graded?.state).toBe(0);
   });
 
