@@ -30,7 +30,6 @@ type Props = {
   openLabel?: string;
   cover?: ShelfCover | null;
   meta?: string;
-  /** Secondary graduated-% (or similar) under deck-count meta. */
   chip?: string | null;
   studyLabel: string;
   onStudy: () => void;
