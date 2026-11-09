@@ -48,6 +48,9 @@ import type { RejectReason } from "../lib/rejectReasons";
 import { clearDueCache } from "../study/dueCache";
 import { clearPendingGrades } from "../study/pendingGrades";
 import { STUDY_MEDIA_CACHE } from "../study/studyMediaCache";
+import type { SubjectKnowledge } from "../study/subjectKnowledge";
+
+export type { SubjectKnowledge } from "../study/subjectKnowledge";
 
 export type ApiErrorBody = {
   error?: string;
@@ -399,16 +402,6 @@ export type DeckStats = {
   draft: number;
   archived: number;
   materials: number;
-};
-
-export type SubjectKnowledge = {
-  new: number;
-  learning: number;
-  young: number;
-  mature: number;
-  total: number;
-  graduated: number;
-  graduatedPct: number | null;
 };
 
 export type Material = {

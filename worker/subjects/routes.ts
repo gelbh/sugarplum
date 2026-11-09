@@ -140,7 +140,8 @@ subjectRoutes.get("/:id/knowledge", async (c) => {
 
   const { results } = await db
     .prepare(
-      `SELECT s.state AS state, s.scheduled_days AS scheduled_days
+      `-- sugarplum:subject-knowledge
+       SELECT s.state AS state, s.scheduled_days AS scheduled_days
        FROM cards c
        INNER JOIN decks d ON d.id = c.deck_id
        LEFT JOIN card_schedules s ON s.card_id = c.id

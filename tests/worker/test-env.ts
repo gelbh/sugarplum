@@ -1619,11 +1619,7 @@ export function createTestEnv(opts?: {
             .filter((row): row is NonNullable<typeof row> => row != null);
           return { results: rows as T[] };
         }
-        if (
-          normalized.includes("FROM cards c") &&
-          normalized.includes("LEFT JOIN card_schedules") &&
-          normalized.includes("d.subject_id")
-        ) {
+        if (normalized.includes("sugarplum:subject-knowledge")) {
           const subjectId = bound[0] as string;
           const userId = bound[1] as string | undefined;
           const rows = [...cards.values()]
