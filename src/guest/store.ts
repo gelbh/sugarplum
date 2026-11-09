@@ -19,16 +19,19 @@ import { type StudyPrefs } from "../study/policyQueue";
 import { clampStudyPrefs, DEFAULT_STUDY_PREFS } from "../study/policyPrefs";
 import {
   cardFromScheduleRow,
+  retrievability,
   scheduleColumnsFromCard,
 } from "../study/retrievability";
 import {
   aggregateSubjectKnowledge,
   type SubjectKnowledge,
 } from "../study/subjectKnowledge";
+import { aggregateSubjectRecall } from "../study/subjectRecall";
 import { GUEST_USER_ID } from "./session";
 import {
   buildGuestDueResult,
   buildGuestStruggling,
+  cardDueIso,
   type GuestCardSchedule,
   type GuestPolicyInput,
   type GuestReviewLog,
@@ -434,17 +437,54 @@ export function guestSubjectComposition(
   if (!store.subjects.some((s) => s.id === subjectId)) {
     throw new Error("Subject not found");
   }
+  const now = new Date();
+  const nowIsoValue = now.toISOString();
   const deckIds = new Set(
     store.decks.filter((d) => d.subject_id === subjectId).map((d) => d.id),
   );
-  const rows = store.cards
-    .filter((c) => deckIds.has(c.deck_id) && c.status === "accepted")
-    .map((c) => {
-      const sched = store.schedules[c.id];
-      if (!sched) return { state: null, scheduled_days: null };
-      return { state: sched.state, scheduled_days: sched.scheduled_days };
+  const bucketRows: Array<{
+    state: number | null;
+    scheduled_days: number | null;
+  }> = [];
+  const rValues: Array<number | null> = [];
+  for (const card of store.cards) {
+    if (!deckIds.has(card.deck_id) || card.status !== "accepted") continue;
+    const sched = store.schedules[card.id];
+    if (!sched) {
+      bucketRows.push({ state: null, scheduled_days: null });
+      rValues.push(null);
+      continue;
+    }
+    bucketRows.push({
+      state: sched.state,
+      scheduled_days: sched.scheduled_days,
     });
-  return aggregateSubjectKnowledge(rows);
+    try {
+      rValues.push(
+        retrievability(
+          cardFromScheduleRow({
+            due: cardDueIso(card, nowIsoValue),
+            stability: sched.stability,
+            difficulty: sched.difficulty,
+            elapsed_days: sched.elapsed_days,
+            scheduled_days: sched.scheduled_days,
+            learning_steps: sched.learning_steps,
+            reps: sched.reps,
+            lapses: sched.lapses,
+            state: sched.state,
+            last_review: sched.last_review,
+          }),
+          now,
+        ),
+      );
+    } catch {
+      rValues.push(null);
+    }
+  }
+  return {
+    ...aggregateSubjectKnowledge(bucketRows),
+    ...aggregateSubjectRecall(rValues),
+  };
 }
 
 /** Persist paste pairs as accepted cards; prepend ids to the due queue. */

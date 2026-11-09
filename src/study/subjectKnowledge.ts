@@ -20,6 +20,8 @@ export type SubjectKnowledge = SubjectKnowledgeBuckets & {
   total: number;
   graduated: number;
   graduatedPct: number | null;
+  avgRetrievability: number | null;
+  etk: number;
 };
 
 export type KnowledgeBucket = keyof SubjectKnowledgeBuckets;
@@ -41,7 +43,7 @@ export function classifyKnowledgeBucket(
 
 export function aggregateSubjectKnowledge(
   rows: KnowledgeScheduleInput[],
-): SubjectKnowledge {
+): Omit<SubjectKnowledge, "avgRetrievability" | "etk"> {
   const buckets: SubjectKnowledgeBuckets = {
     new: 0,
     learning: 0,

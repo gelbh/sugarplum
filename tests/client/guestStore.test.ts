@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { endGuestLocal } from "../../src/guest/endGuestLocal";
 import { enterGuest, GUEST_FLAG_KEY, isGuest } from "../../src/guest/session";
 import {
@@ -24,6 +24,14 @@ import {
   guestReviewCard,
   guestSubjectComposition,
 } from "../../src/guest/store";
+import { cardDueIso } from "../../src/guest/policyDue";
+import {
+  cardFromScheduleRow,
+  retrievability,
+} from "../../src/study/retrievability";
+import { aggregateSubjectRecall } from "../../src/study/subjectRecall";
+
+const COMPOSITION_NOW = new Date("2026-11-01T12:00:00.000Z");
 
 const STORE_KEY = "sugarplum.guest.store.v1";
 
@@ -71,70 +79,138 @@ describe("guest store", () => {
   });
 
   it("guestSubjectComposition aggregates accepted buckets and ignores drafts", () => {
-    const subject = guestCreateSubject("Knowledge subject", storage);
-    const deck = guestCreateDeck("Knowledge deck", subject.id, storage);
-    const [cNew, cLearn, cYoung, cMature, cDraft] = guestAddAcceptedCards(
-      deck.id,
-      [
-        { front: "New?", back: "n" },
-        { front: "Learn?", back: "l" },
-        { front: "Young?", back: "y" },
-        { front: "Mature?", back: "m" },
-        { front: "Draft?", back: "d" },
-      ],
-      storage,
-    );
-    const raw = JSON.parse(storage.getItem(STORE_KEY)!) as {
-      cards: Array<{ id: string; status: string }>;
-      schedules: Record<string, unknown>;
-    };
-    const draftIdx = raw.cards.findIndex((c) => c.id === cDraft!.id);
-    raw.cards[draftIdx] = { ...raw.cards[draftIdx]!, status: "draft" };
-    // Leave cNew without a schedule → New.
-    raw.schedules[cLearn!.id] = {
-      state: 1,
-      reps: 1,
-      lapses: 0,
-      stability: 0.1,
-      difficulty: 5,
-      elapsed_days: 0,
-      scheduled_days: 0,
-      learning_steps: 0,
-      last_review: "2026-01-01T12:00:00.000Z",
-    };
-    raw.schedules[cYoung!.id] = {
-      state: 2,
-      reps: 3,
-      lapses: 0,
-      stability: 20,
-      difficulty: 5,
-      elapsed_days: 1,
-      scheduled_days: 20,
-      learning_steps: 0,
-      last_review: "2026-01-01T12:00:00.000Z",
-    };
-    raw.schedules[cMature!.id] = {
-      state: 2,
-      reps: 5,
-      lapses: 0,
-      stability: 30,
-      difficulty: 5,
-      elapsed_days: 1,
-      scheduled_days: 21,
-      learning_steps: 0,
-      last_review: "2026-01-01T12:00:00.000Z",
-    };
-    storage.setItem(STORE_KEY, JSON.stringify(raw));
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(COMPOSITION_NOW);
+    try {
+      const subject = guestCreateSubject("Knowledge subject", storage);
+      const deck = guestCreateDeck("Knowledge deck", subject.id, storage);
+      const [, cLearn, cYoung, cMature, cDraft] = guestAddAcceptedCards(
+        deck.id,
+        [
+          { front: "New?", back: "n" },
+          { front: "Learn?", back: "l" },
+          { front: "Young?", back: "y" },
+          { front: "Mature?", back: "m" },
+          { front: "Draft?", back: "d" },
+        ],
+        storage,
+      );
+      const raw = JSON.parse(storage.getItem(STORE_KEY)!) as {
+        cards: Array<{ id: string; status: string; due?: string }>;
+        schedules: Record<string, unknown>;
+      };
+      const draftIdx = raw.cards.findIndex((c) => c.id === cDraft!.id);
+      raw.cards[draftIdx] = { ...raw.cards[draftIdx]!, status: "draft" };
+      // Leave cNew without a schedule → New.
+      raw.schedules[cLearn!.id] = {
+        state: 1,
+        reps: 1,
+        lapses: 0,
+        stability: 0.1,
+        difficulty: 5,
+        elapsed_days: 0,
+        scheduled_days: 0,
+        learning_steps: 0,
+        last_review: "2026-01-01T12:00:00.000Z",
+      };
+      raw.schedules[cYoung!.id] = {
+        state: 2,
+        reps: 3,
+        lapses: 0,
+        stability: 20,
+        difficulty: 5,
+        elapsed_days: 1,
+        scheduled_days: 20,
+        learning_steps: 0,
+        last_review: "2026-01-01T12:00:00.000Z",
+      };
+      raw.schedules[cMature!.id] = {
+        state: 2,
+        reps: 5,
+        lapses: 0,
+        stability: 30,
+        difficulty: 5,
+        elapsed_days: 1,
+        scheduled_days: 21,
+        learning_steps: 0,
+        last_review: "2026-01-01T12:00:00.000Z",
+      };
+      storage.setItem(STORE_KEY, JSON.stringify(raw));
 
-    expect(guestSubjectComposition(subject.id, storage)).toEqual({
-      new: 1,
-      learning: 1,
-      young: 1,
-      mature: 1,
-      total: 4,
-      graduated: 2,
-      graduatedPct: 50,
-    });
+      const nowIsoValue = COMPOSITION_NOW.toISOString();
+      const cardById = new Map(raw.cards.map((c) => [c.id, c]));
+      const rFor = (id: string, sched: Record<string, unknown>) => {
+        const card = cardById.get(id)!;
+        return retrievability(
+          cardFromScheduleRow({
+            due: cardDueIso(card as { due?: string }, nowIsoValue),
+            stability: sched.stability as number,
+            difficulty: sched.difficulty as number,
+            elapsed_days: sched.elapsed_days as number,
+            scheduled_days: sched.scheduled_days as number,
+            learning_steps: sched.learning_steps as number,
+            reps: sched.reps as number,
+            lapses: sched.lapses as number,
+            state: sched.state as number,
+            last_review: sched.last_review as string,
+          }),
+          COMPOSITION_NOW,
+        );
+      };
+      const recall = aggregateSubjectRecall([
+        null,
+        rFor(cLearn!.id, raw.schedules[cLearn!.id] as Record<string, unknown>),
+        rFor(cYoung!.id, raw.schedules[cYoung!.id] as Record<string, unknown>),
+        rFor(
+          cMature!.id,
+          raw.schedules[cMature!.id] as Record<string, unknown>,
+        ),
+      ]);
+
+      expect(guestSubjectComposition(subject.id, storage)).toEqual({
+        new: 1,
+        learning: 1,
+        young: 1,
+        mature: 1,
+        total: 4,
+        graduated: 2,
+        graduatedPct: 50,
+        avgRetrievability: recall.avgRetrievability,
+        etk: recall.etk,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("guestSubjectComposition all-new → null avg and 0 etk", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(COMPOSITION_NOW);
+    try {
+      const subject = guestCreateSubject("New only", storage);
+      const deck = guestCreateDeck("New deck", subject.id, storage);
+      guestAddAcceptedCards(
+        deck.id,
+        [
+          { front: "A?", back: "a" },
+          { front: "B?", back: "b" },
+        ],
+        storage,
+      );
+      expect(guestSubjectComposition(subject.id, storage)).toEqual({
+        new: 2,
+        learning: 0,
+        young: 0,
+        mature: 0,
+        total: 2,
+        graduated: 0,
+        graduatedPct: 0,
+        avgRetrievability: null,
+        etk: 0,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("guestSubjectComposition throws for missing subject", () => {
