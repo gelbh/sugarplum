@@ -5,9 +5,13 @@ import {
 } from "../../src/study/fsrsOptimizeConstants";
 import type { FsrsOptimizeStatus } from "../../src/study/fsrsOptimizeTypes";
 import { validateFsrsW } from "../../src/study/fsrsWeights";
+import {
+  rescheduleUserSchedules,
+  type RescheduleSummary,
+} from "./fsrsReschedule";
 import { DEFAULT_STUDY_PREFS, loadStudyPrefs } from "./prefs";
 
-export type { FsrsOptimizeStatus };
+export type { FsrsOptimizeStatus, RescheduleSummary };
 
 const MS_PER_DAY = 86_400_000;
 
@@ -106,7 +110,7 @@ export async function saveFsrsWeights(
   userId: string,
   w: unknown,
   now: Date = new Date(),
-): Promise<number[]> {
+): Promise<{ w: number[]; rescheduled: RescheduleSummary }> {
   const validated = validateFsrsW(w);
   if (!validated) {
     throw new Error("Invalid FSRS weights");
@@ -124,14 +128,20 @@ export async function saveFsrsWeights(
     )
     .bind(JSON.stringify(validated), nowIso, nowIso, userId)
     .run();
-  return validated;
+  const prefs = await loadStudyPrefs(db, userId);
+  const rescheduled = await rescheduleUserSchedules(db, userId, {
+    desiredRetention: prefs.desiredRetention,
+    enableFuzz: false,
+    w: validated,
+  });
+  return { w: validated, rescheduled };
 }
 
 export async function resetFsrsWeights(
   db: D1Database,
   userId: string,
   now: Date = new Date(),
-): Promise<void> {
+): Promise<{ rescheduled: RescheduleSummary }> {
   const nowIso = now.toISOString();
   await ensurePrefsRow(db, userId, nowIso);
   await db
@@ -145,6 +155,12 @@ export async function resetFsrsWeights(
     )
     .bind(nowIso, nowIso, userId)
     .run();
+  const prefs = await loadStudyPrefs(db, userId);
+  const rescheduled = await rescheduleUserSchedules(db, userId, {
+    desiredRetention: prefs.desiredRetention,
+    enableFuzz: false,
+  });
+  return { rescheduled };
 }
 
 export async function exportRevlogCsv(
