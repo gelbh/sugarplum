@@ -991,7 +991,7 @@
         "family": "Ixodidae",
         "group": "arthropod",
         "definitiveHosts": ["dog", "human"],
-        "vectorRole": "The brown dog tick is the main vector and host of Hepatozoon canis; dogs are infected by swallowing the tick, not through its bite.",
+        "vectorRole": "Definitive host of Hepatozoon canis; dogs are infected by swallowing the tick, not through its bite.",
         "majorOrgan": "skin",
         "onHostStages": ["larva", "nymph", "adult"],
         "distribution": "Tropical and subtropical regions worldwide; indoors in cooler climates",
@@ -1460,7 +1460,8 @@
             "name": "skin scraping",
             "sample": "skin"
           }
-        ]
+        ],
+        "zoonotic": "no"
       },
       "refs": [
         {
@@ -1527,6 +1528,12 @@
           "field": "family",
           "citation": "NCBI Taxonomy: Psoroptes ovis",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/83912/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Psoroptes ovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/images/psoroptes-ovis.php",
           "note": null
         }
       ],
@@ -1913,19 +1920,19 @@
         },
         {
           "field": "phylum",
-          "citation": "NCBI Taxonomy: Cheyletiella (family Cheyletidae)",
+          "citation": "NCBI Taxonomy: Cheyletidae",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/296201/",
           "note": null
         },
         {
           "field": "order",
-          "citation": "NCBI Taxonomy: Cheyletiella (family Cheyletidae)",
+          "citation": "NCBI Taxonomy: Cheyletidae",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/296201/",
           "note": null
         },
         {
           "field": "family",
-          "citation": "NCBI Taxonomy: Cheyletiella (family Cheyletidae)",
+          "citation": "NCBI Taxonomy: Cheyletidae",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/296201/",
           "note": null
         }
@@ -1972,7 +1979,8 @@
             "name": "skin scraping",
             "sample": "skin"
           }
-        ]
+        ],
+        "zoonotic": "no"
       },
       "refs": [
         {
@@ -2039,6 +2047,12 @@
           "field": "family",
           "citation": "NCBI Taxonomy: Chorioptes bovis",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/420257/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Chorioptes bovis, chorioptic mange",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/chorioptes-bovis-chorioptic-mange.php",
           "note": null
         }
       ],
@@ -2415,7 +2429,7 @@
         "definitiveHosts": ["sheep"],
         "majorOrgan": "skin",
         "onHostStages": ["egg", "nymph", "adult"],
-        "distribution": "Sheep in the UK, New Zealand and the US",
+        "distribution": "Sheep-farming countries including Australia, New Zealand and the UK",
         "significance": "Chewing louse causing itch, rubbing and fleece damage in sheep; signs are easily mistaken for early sheep scab.",
         "lifecycleType": "direct",
         "lifecycleStages": [
@@ -2814,7 +2828,7 @@
         "group": "arthropod",
         "definitiveHosts": ["sheep", "dog", "cat", "human"],
         "majorOrgan": "skin",
-        "onHostStages": ["larva"],
+        "onHostStages": ["egg", "larva"],
         "distribution": "Primary strike fly in Europe and North America",
         "zoonotic": "yes",
         "significance": "Maggots cause strike in sheep and wound myiasis in dogs and cats; severe cases can be fatal if untreated.",
@@ -2822,8 +2836,8 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "laid by the female on carrion, wounds or fleece fouled with urine or faeces; hatch within about a day in moist conditions",
-            "hostRole": "environment"
+            "location": "laid on fouled fleece or wounds of the live animal; hatch within about a day in moist conditions",
+            "hostRole": "definitive"
           },
           {
             "name": "larva",
@@ -3013,7 +3027,8 @@
         "diagnosticStage": "L3",
         "diagnosticTests": [
           {
-            "name": "visual inspection"
+            "name": "visual inspection",
+            "sample": "skin"
           },
           {
             "name": "antibody detection",
@@ -3256,12 +3271,8 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "attached to hairs, mainly of the forelimbs and shoulders; hatches when warmed by the horse's breath",
-            "hostRole": "definitive",
-            "durationDays": {
-              "min": 10,
-              "max": 10
-            }
+            "location": "attached to hairs, mainly of the forelimbs and shoulders; the larva develops in the egg in about ten days and hatches when the horse licks or bites",
+            "hostRole": "definitive"
           },
           {
             "name": "L1",
@@ -3296,7 +3307,8 @@
             "sample": "hair"
           },
           {
-            "name": "post-mortem examination"
+            "name": "post-mortem examination",
+            "sample": "stomach"
           }
         ]
       },
@@ -3399,8 +3411,8 @@
         "order": "Diptera",
         "family": "Ceratopogonidae",
         "group": "arthropod",
-        "definitiveHosts": ["horse", "bird", "human"],
-        "vectorRole": "Carry Onchocerca cervicalis between horses and several arboviruses, notably bluetongue, African horse sickness (C. imicola) and Schmallenberg viruses.",
+        "definitiveHosts": ["horse", "bird", "human", "cattle", "sheep"],
+        "vectorRole": "Intermediate host of Onchocerca cervicalis; also transmits bluetongue, African horse sickness (C. imicola) and Schmallenberg viruses.",
         "majorOrgan": "skin",
         "onHostStages": ["adult"],
         "distribution": "Worldwide, from the tropics to cooler regions",
@@ -3511,20 +3523,26 @@
         },
         {
           "field": "phylum",
-          "citation": "NCBI Taxonomy: Culicoides spp.",
+          "citation": "NCBI Taxonomy: Culicoides",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/58271/",
           "note": null
         },
         {
           "field": "order",
-          "citation": "NCBI Taxonomy: Culicoides spp.",
+          "citation": "NCBI Taxonomy: Culicoides",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/58271/",
           "note": null
         },
         {
           "field": "family",
-          "citation": "NCBI Taxonomy: Culicoides spp.",
+          "citation": "NCBI Taxonomy: Culicoides",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/58271/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Wilson et al. 2008, Vet Res 40:16: adaptive strategies of African horse sickness virus for vector transmission",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2695022/",
           "note": null
         }
       ],
@@ -3819,7 +3837,7 @@
         "family": "Muscidae",
         "group": "arthropod",
         "definitiveHosts": ["cattle", "horse"],
-        "vectorRole": "Hosts the larvae of Thelazia eye worms, and mechanically spreads the bacterium Moraxella bovis (infectious bovine keratoconjunctivitis) among cattle.",
+        "vectorRole": "Intermediate host of Thelazia eye worms; also mechanically spreads Moraxella bovis (infectious bovine keratoconjunctivitis) among cattle.",
         "majorOrgan": "eye",
         "onHostStages": ["adult"],
         "distribution": "Europe, Asia, North America and some African regions",
