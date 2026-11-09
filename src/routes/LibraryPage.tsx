@@ -73,6 +73,12 @@ import {
   subjectDeleteBlocked,
 } from "../subjects/subjectDeleteGuard";
 
+function formatEtkTooltip(etk: number): string {
+  const rounded = Math.round(etk * 10) / 10;
+  const n = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+  return `~${n} card-equivalents`;
+}
+
 type TitleDialog =
   { mode: "create" } | { mode: "rename"; subject: Subject } | null;
 
@@ -589,6 +595,20 @@ export default function LibraryPage() {
                       chip={
                         composition?.graduatedPct != null
                           ? `${composition.graduatedPct}% graduated`
+                          : null
+                      }
+                      recallChip={
+                        composition != null &&
+                        composition.total > 0 &&
+                        composition.avgRetrievability != null
+                          ? `${Math.round(100 * composition.avgRetrievability)}% recall`
+                          : null
+                      }
+                      recallTooltip={
+                        composition != null &&
+                        composition.total > 0 &&
+                        composition.avgRetrievability != null
+                          ? formatEtkTooltip(composition.etk)
                           : null
                       }
                       spark={
