@@ -22,6 +22,7 @@ export type ShelfCover = {
   photographerName: string;
   photographerUrl: string;
   photoHtmlUrl: string;
+  source?: "unsplash" | "custom";
 };
 
 type Props = {
@@ -73,11 +74,16 @@ export default function ShelfVolume({
       {cover ? (
         <Box sx={{ mx: -2.5, mt: -2.5, mb: 2 }}>
           <Box component="img" src={cover.imageUrl} alt="" sx={{ display: "block", width: "100%", height: 160, objectFit: "cover" }} />
-          <Typography variant="caption" color="text.secondary" sx={{ display: "block", px: 2.5, pt: 0.5 }}>
-            Photo by <Link href={withReferral(cover.photographerUrl)} target="_blank" rel="noopener noreferrer">{cover.photographerName}</Link>
-            {" on "}
-            <Link href={withReferral(cover.photoHtmlUrl)} target="_blank" rel="noopener noreferrer">Unsplash</Link>
-          </Typography>
+          {cover.source !== "custom" &&
+          cover.photographerName &&
+          cover.photographerUrl &&
+          cover.photoHtmlUrl ? (
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", px: 2.5, pt: 0.5 }}>
+              Photo by <Link href={withReferral(cover.photographerUrl)} target="_blank" rel="noopener noreferrer">{cover.photographerName}</Link>
+              {" on "}
+              <Link href={withReferral(cover.photoHtmlUrl)} target="_blank" rel="noopener noreferrer">Unsplash</Link>
+            </Typography>
+          ) : null}
         </Box>
       ) : null}
       <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>

@@ -104,6 +104,39 @@ describe("ShelfVolume", () => {
     host.remove();
   });
 
+  it("hides Unsplash attribution for custom covers", () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root: Root = createRoot(host);
+    act(() => {
+      root.render(
+        createElement(ShelfVolume, {
+          title: "Anatomy",
+          href: "/library/subjects/sub-1",
+          onNavigate: (event: MouseEvent<HTMLAnchorElement>) =>
+            event.preventDefault(),
+          meta: "2 decks",
+          studyLabel: "Study",
+          onStudy: () => {},
+          moreLabel: "More actions for Anatomy",
+          onMore: () => {},
+          cover: {
+            imageUrl: "/api/covers/media?key=covers%2Fx.jpg",
+            photographerName: "",
+            photographerUrl: "",
+            photoHtmlUrl: "",
+            source: "custom",
+          },
+        }),
+      );
+    });
+    expect(host.querySelector("img")?.getAttribute("src")).toContain(
+      "/api/covers/media",
+    );
+    expect(host.textContent).not.toContain("Unsplash");
+    host.remove();
+  });
+
   it("renders spark under chip when provided", () => {
     const host = document.createElement("div");
     document.body.append(host);

@@ -112,7 +112,7 @@ function photo(id: string, downloads: number | undefined, imageUrl: string): Stu
 }
 
 describe("cover routes", () => {
-  it("returns the higher-download photo first and hides auth", async () => {
+  it("keeps Unsplash search order and hides auth", async () => {
     const env = createTestEnv();
     seedOwner(env);
     const photos = [
@@ -135,24 +135,30 @@ describe("cover routes", () => {
     );
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
-      photos: Array<{ photoId: string; imageUrl: string; downloadLocation?: string }>;
+      photos: Array<{
+        photoId: string;
+        imageUrl: string;
+        downloadLocation?: string;
+        source?: string;
+      }>;
     };
     expect(calls[0]?.url).toBe(
       "https://api.unsplash.com/search/photos?query=heart&order_by=relevant&content_filter=high&orientation=landscape&per_page=10",
     );
     expect(calls[0]?.url).not.toContain("stats");
     expect(body.photos.map((item) => item.photoId)).toEqual([
-      "p5",
-      "p4",
-      "p3",
-      "p2",
       "p1",
+      "p2",
+      "p3",
+      "p4",
+      "p5",
       "p0",
     ]);
-    expect(body.photos[0]?.imageUrl).toBe("https://images.unsplash.com/p5?ixid=1");
+    expect(body.photos[0]?.imageUrl).toBe("https://images.unsplash.com/p1?ixid=1");
     expect(body.photos.every((item) => item.downloadLocation === undefined)).toBe(
       true,
     );
+    expect(body.photos.every((item) => item.source === "unsplash")).toBe(true);
     const raw = JSON.stringify(body);
     expect(raw).not.toContain("test-key");
     expect(raw).not.toContain("Client-ID");
@@ -218,6 +224,7 @@ describe("cover routes", () => {
         photoId: "chosen",
         imageUrl: "https://images.unsplash.com/chosen?ixid=keep-me",
         photographerName: "Ada",
+        source: "unsplash",
       }),
     ]);
   });
@@ -312,6 +319,95 @@ describe("cover routes", () => {
     expect(await res.json()).toEqual({
       error: "Cover search is not configured",
     });
+  });
+
+  it("uploads a custom cover and serves it only to the owner", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const uploadRes = await app.request(
+      "/api/covers/upload-url",
+      {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          ownerKind: "subject",
+          ownerId: "sub-1",
+          contentType: "image/jpeg",
+          size: 12,
+        }),
+      },
+      env,
+    );
+    expect(uploadRes.status).toBe(200);
+    const upload = (await uploadRes.json()) as {
+      imageId: string;
+      uploadUrl: string;
+      r2Key: string;
+    };
+    expect(upload.r2Key).toContain("covers/user-a/subject/sub-1/");
+    expect(upload.uploadUrl).toContain(upload.r2Key);
+
+    env.seedR2(upload.r2Key, "fake-bytes");
+
+    const put = await app.request(
+      "/api/covers",
+      {
+        method: "PUT",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          ownerKind: "subject",
+          ownerId: "sub-1",
+          source: "custom",
+          r2Key: upload.r2Key,
+          photoId: upload.imageId,
+        }),
+      },
+      env,
+    );
+    expect(put.status).toBe(200);
+    const saved = (await put.json()) as {
+      source: string;
+      imageUrl: string;
+      photographerName: string;
+      r2Key: string;
+    };
+    expect(saved.source).toBe("custom");
+    expect(saved.photographerName).toBe("");
+    expect(saved.imageUrl).toBe(
+      `/api/covers/media?key=${encodeURIComponent(upload.r2Key)}`,
+    );
+    expect(saved.r2Key).toBe(upload.r2Key);
+
+    const media = await app.request(saved.imageUrl, { headers: authHeaders() }, env);
+    expect(media.status).toBe(200);
+    expect(media.headers.get("content-type")).toBe("image/jpeg");
+
+    env.seedUser({
+      id: "user-b",
+      email: "b@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSession("sess-b", "user-b");
+    const foreign = await app.request(
+      saved.imageUrl,
+      { headers: { cookie: `${SESSION_COOKIE}=sess-b` } },
+      env,
+    );
+    expect(foreign.status).toBe(404);
+
+    const del = await app.request(
+      "/api/covers",
+      {
+        method: "DELETE",
+        headers: authHeaders(true),
+        body: JSON.stringify({ ownerKind: "subject", ownerId: "sub-1" }),
+      },
+      env,
+    );
+    expect(del.status).toBe(204);
+    expect(env.getR2(upload.r2Key)).toBeUndefined();
   });
 
   it("keeps the download ping alive without waiting on it", async () => {

@@ -16,16 +16,27 @@ const photo = (id: string, downloads: number, imageUrl: string): CoverPhoto => (
 });
 
 describe("cover ranking", () => {
-  it("sorts by downloads and keeps six", () => {
+  it("keeps Unsplash search order and caps at six", () => {
     const ranked = rankCoverPhotos(
-      [1, 9, 3, 8, 2, 7, 4].map((n) => photo(`p${n}`, n, `https://images.unsplash.com/${n}?ixid=1`)),
+      [1, 9, 3, 8, 2, 7, 4].map((n) =>
+        photo(`p${n}`, n, `https://images.unsplash.com/${n}?ixid=1`),
+      ),
     );
-    expect(ranked.map((p) => p.downloads)).toEqual([9, 8, 7, 4, 3, 2]);
+    expect(ranked.map((p) => p.id)).toEqual([
+      "p1",
+      "p9",
+      "p3",
+      "p8",
+      "p2",
+      "p7",
+    ]);
   });
 
   it("rejects a photo id the worker did not fetch", () => {
     const known = [photo("p1", 3, "https://images.unsplash.com/a?ixid=1")];
-    expect(resolveChosenPhoto("p1", known).imageUrl).toBe("https://images.unsplash.com/a?ixid=1");
+    expect(resolveChosenPhoto("p1", known).imageUrl).toBe(
+      "https://images.unsplash.com/a?ixid=1",
+    );
     expect(() => resolveChosenPhoto("other", known)).toThrow(/unknown photo/);
   });
 });

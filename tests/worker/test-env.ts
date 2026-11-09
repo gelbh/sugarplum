@@ -75,6 +75,8 @@ type ShelfCoverRow = {
   photographer_name: string;
   photographer_url: string;
   photo_html_url: string;
+  source: string;
+  r2_key: string | null;
 };
 
 type DeckRow = {
@@ -585,6 +587,28 @@ export function createTestEnv(opts?: {
           const subject = subjects.get(bound[0] as string);
           if (!subject || subject.user_id !== bound[1]) return null;
           return subject as T;
+        }
+        if (
+          normalized ===
+          "SELECT r2_key FROM shelf_covers WHERE user_id = ? AND owner_kind = ? AND owner_id = ?"
+        ) {
+          const [userId, ownerKind, ownerId] = bound as [string, string, string];
+          const row = shelfCovers.get(
+            shelfCoverKey(userId, ownerKind, ownerId),
+          );
+          return row ? ({ r2_key: row.r2_key } as T) : null;
+        }
+        if (
+          normalized ===
+          "SELECT r2_key FROM shelf_covers WHERE user_id = ? AND r2_key = ?"
+        ) {
+          const [userId, r2Key] = bound as [string, string];
+          for (const row of shelfCovers.values()) {
+            if (row.user_id === userId && row.r2_key === r2Key) {
+              return { r2_key: row.r2_key } as T;
+            }
+          }
+          return null;
         }
         if (
           normalized.startsWith("SELECT id, user_id FROM subjects WHERE id =")
@@ -1335,7 +1359,7 @@ export function createTestEnv(opts?: {
         }
         if (
           normalized.startsWith(
-            "SELECT owner_kind, owner_id, photo_id, image_url, photographer_name, photographer_url, photo_html_url FROM shelf_covers WHERE user_id =",
+            "SELECT owner_kind, owner_id, photo_id, image_url, photographer_name, photographer_url, photo_html_url, source, r2_key FROM shelf_covers WHERE user_id =",
           )
         ) {
           const userId = bound[0] as string;
@@ -1351,6 +1375,8 @@ export function createTestEnv(opts?: {
               photographer_name: row.photographer_name,
               photographer_url: row.photographer_url,
               photo_html_url: row.photo_html_url,
+              source: row.source,
+              r2_key: row.r2_key,
             })) as T[],
           };
         }
@@ -2675,7 +2701,7 @@ export function createTestEnv(opts?: {
           subjects.set(id, { id, user_id, title, created_at });
         } else if (
           normalized.startsWith(
-            "INSERT INTO shelf_covers (user_id, owner_kind, owner_id, photo_id, image_url, photographer_name, photographer_url, photo_html_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, owner_kind, owner_id) DO UPDATE SET",
+            "INSERT INTO shelf_covers (user_id, owner_kind, owner_id, photo_id, image_url, photographer_name, photographer_url, photo_html_url, source, r2_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, owner_kind, owner_id) DO UPDATE SET",
           )
         ) {
           const [
@@ -2687,6 +2713,8 @@ export function createTestEnv(opts?: {
             photographer_name,
             photographer_url,
             photo_html_url,
+            source,
+            r2_key,
           ] = bound as [
             string,
             string,
@@ -2696,6 +2724,8 @@ export function createTestEnv(opts?: {
             string,
             string,
             string,
+            string,
+            string | null,
           ];
           shelfCovers.set(shelfCoverKey(user_id, owner_kind, owner_id), {
             user_id,
@@ -2706,6 +2736,8 @@ export function createTestEnv(opts?: {
             photographer_name,
             photographer_url,
             photo_html_url,
+            source,
+            r2_key,
           });
         } else if (
           normalized.startsWith("DELETE FROM shelf_covers WHERE user_id =")
