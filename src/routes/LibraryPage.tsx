@@ -40,6 +40,7 @@ import {
   listDecks,
   listJobsWithDrafts,
   listMaterials,
+  listSubjectCompositionSummaries,
   listSubjects,
   me,
   patchSubject,
@@ -103,6 +104,9 @@ export default function LibraryPage() {
     subject: Subject;
   } | null>(null);
   const [covers, setCovers] = useState<StoredCoverRow[]>([]);
+  const [graduatedBySubject, setGraduatedBySubject] = useState<
+    Record<string, number | null>
+  >({});
   const [coverPicker, setCoverPicker] = useState<CoverTarget | null>(null);
   /** Selection is deck ids only; subject checkbox toggles all decks in that subject. */
   const [selectedDeckIds, setSelectedDeckIds] = useState<string[]>([]);
@@ -158,7 +162,7 @@ export default function LibraryPage() {
     (async () => {
       try {
         await me();
-        const [subjectList, deckList, jobs, materialList, coverList] =
+        const [subjectList, deckList, jobs, materialList, coverList, summaries] =
           await Promise.all([
             listSubjects(),
             listDecks(),
@@ -169,6 +173,7 @@ export default function LibraryPage() {
             guest
               ? Promise.resolve([] as StoredCoverRow[])
               : listCovers().catch(() => [] as StoredCoverRow[]),
+            listSubjectCompositionSummaries().catch(() => []),
           ]);
         if (cancelled) return;
         setSubjects(subjectList);
@@ -176,6 +181,11 @@ export default function LibraryPage() {
         setDraftJobs(jobs);
         setMaterials(materialList);
         setCovers(coverList);
+        setGraduatedBySubject(
+          Object.fromEntries(
+            summaries.map((row) => [row.subjectId, row.graduatedPct]),
+          ),
+        );
         setReady(true);
         endLoad();
         void calendar.refresh();
@@ -558,6 +568,11 @@ export default function LibraryPage() {
                         navigate(href);
                       }}
                       meta={meta}
+                      chip={
+                        graduatedBySubject[s.id] != null
+                          ? `${graduatedBySubject[s.id]}% graduated`
+                          : null
+                      }
                       studyLabel="Study"
                       onStudy={() => {
                         navigate(
