@@ -33,9 +33,10 @@ export type SessionCompleteProps = {
 export default function SessionComplete(props: SessionCompleteProps) {
   const reviewed = gradedTotal(props.tally);
   const ink = props.zen ? "var(--sp-ivory)" : "text.primary";
-  const [streak, setStreak] = useState<{ current: number; level: number } | null>(
-    null,
-  );
+  const [streak, setStreak] = useState<{
+    current: number;
+    level: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!props.showAchievements) return;
@@ -85,7 +86,7 @@ export default function SessionComplete(props: SessionCompleteProps) {
           animation: "sessionCompleteIn 400ms cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
-        Session complete
+        Caught up for now
       </Typography>
       <Typography variant="body1" sx={{ color: ink }}>
         {reviewed} reviewed

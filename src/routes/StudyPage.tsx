@@ -57,20 +57,21 @@ import {
   saveDueCache,
   type DueScopeOpts,
 } from "../study/dueCache";
+import { scopeLibraryBack } from "../study/scopeLibraryBack";
 import { bumpIntroBonus, getIntroBonus } from "../study/introBonus";
 import { clientLocalDay } from "../study/localDay";
-import {
-  enqueuePendingGrade,
-  pendingCardIdSet,
-} from "../study/pendingGrades";
+import { enqueuePendingGrade, pendingCardIdSet } from "../study/pendingGrades";
+import LearningSoftWait from "../study/LearningSoftWait";
 import SessionComplete from "../study/SessionComplete";
+import SessionQuietEnd from "../study/SessionQuietEnd";
 import { StudyCardActions } from "../study/StudyCardActions";
 import {
   addGrade,
   emptyTally,
   gradedTotal,
-  sessionEndKind,
+  sessionSurface,
 } from "../study/sessionTally";
+import { useLearningRequeue } from "../study/useLearningRequeue";
 import {
   occlusionRevealAnswer,
   pickOcclusionRegion,
@@ -138,17 +139,6 @@ function occlusionStudyParts(card: CardDraftView): OcclusionStudyParts {
   };
 }
 
-function scopeLibraryBack(scope: DueScopeOpts): { href: string; label: string } {
-  const deck = Boolean(scope.deckId);
-  const id = (deck ? scope.deckId : scope.subjectId) ?? "";
-  return {
-    href: deck
-      ? `/library/decks/${encodeURIComponent(id)}`
-      : `/library/subjects/${encodeURIComponent(id)}`,
-    label: `Back to ${deck ? "deck" : "subject"}`,
-  };
-}
-
 /** Study session: reveal answer, grade with FSRS (keys 1-4 or arrows; Space flips). Code-led MUI. */
 export default function StudyPage() {
   const [queue, setQueue] = useState<CardDraftView[]>([]);
@@ -168,6 +158,19 @@ export default function StudyPage() {
   const [queueMeta, setQueueMeta] = useState<StudyQueueMeta | null>(null);
   const [tally, setTally] = useState(emptyTally);
   const [unlocks, setUnlocks] = useState<readonly UnlockView[]>([]);
+  const queueRef = useRef<CardDraftView[]>([]);
+  const {
+    pendingLearning,
+    nextLearningDue,
+    parkShortTermFollowUp,
+    advanceAfterGrade,
+  } = useLearningRequeue({
+    queueRef,
+    setQueue,
+    setQueueTotal,
+    setHadCards,
+    setRevealed,
+  });
   const cardDialogOpenRef = useRef(false);
   const onCardDialogOpen = useCallback((open: boolean) => {
     cardDialogOpenRef.current = open;
@@ -208,6 +211,7 @@ export default function StudyPage() {
   const applyDueQueue = useCallback(
     (cards: CardDraftView[], wanted: string | null) => {
       const { queue: next, found } = prioritizeDueCard(cards, wanted);
+      queueRef.current = next;
       setQueue(next);
       setQueueTotal(next.length);
       if (next.length > 0) setHadCards(true);
@@ -377,7 +381,11 @@ export default function StudyPage() {
   const queueFraction = studyQueueProgress(queueTotal, queue.length);
   const cardHostRef = useRef<HTMLDivElement>(null);
   const [plateWidth, setPlateWidth] = useState<number | null>(null);
-  const endKind = sessionEndKind(hadCards, gradedTotal(tally));
+  const surface = sessionSurface(
+    hadCards,
+    gradedTotal(tally),
+    pendingLearning.length,
+  );
   const mcqMode = isMcqCard(current);
   const occlusionParts = current
     ? occlusionStudyParts(current)
@@ -424,11 +432,6 @@ export default function StudyPage() {
     answerFocusRef.current?.focus();
   }, [revealed, current?.id]);
 
-  const advanceAfterGrade = useCallback(() => {
-    setQueue((prev) => prev.slice(1));
-    setRevealed(false);
-  }, []);
-
   const onGrade = useCallback(
     async (rating: StudyRating, fromMcq = false): Promise<boolean> => {
       if (!current || busyRef.current) return false;
@@ -465,6 +468,7 @@ export default function StudyPage() {
           setUnlocks((prev) => rememberUnlocks(prev, incoming));
         }
         setTally((prev) => addGrade(prev, rating));
+        parkShortTermFollowUp(current, result.due, result.state);
         advanceAfterGrade();
         end();
         return true;
@@ -486,6 +490,7 @@ export default function StudyPage() {
       end,
       enqueueUnlocks,
       offlineCopy,
+      parkShortTermFollowUp,
       refreshPendingCount,
       revealed,
       scopeOpts,
@@ -635,11 +640,17 @@ export default function StudyPage() {
   };
 
   const replaceQueuedCard = useCallback((updated: CardDraftView) => {
-    setQueue((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+    const next = queueRef.current.map((c) =>
+      c.id === updated.id ? updated : c,
+    );
+    queueRef.current = next;
+    setQueue(next);
   }, []);
 
   const removeQueuedCard = useCallback((cardId: string) => {
-    setQueue((prev) => prev.filter((c) => c.id !== cardId));
+    const next = queueRef.current.filter((c) => c.id !== cardId);
+    queueRef.current = next;
+    setQueue(next);
     setRevealed(false);
   }, []);
 
@@ -652,7 +663,7 @@ export default function StudyPage() {
   }
 
   const stage = zen;
-  const finish = !current && endKind === "complete";
+  const finish = !current && surface === "complete";
   const fillColumn = finish
     ? ({
         minHeight: "100%",
@@ -696,9 +707,7 @@ export default function StudyPage() {
       >
         <Stack
           spacing={stage ? { xs: 0.75, sm: 1.5 } : 2}
-          sx={
-            stage || finish ? { flex: 1, minHeight: 0 } : undefined
-          }
+          sx={stage || finish ? { flex: 1, minHeight: 0 } : undefined}
         >
           <Stack
             direction="row"
@@ -832,36 +841,24 @@ export default function StudyPage() {
                   Open Library
                 </Button>
               </Stack>
-            ) : endKind === "quiet" ? (
-              <Stack spacing={1.5} alignItems="stretch">
-                <Typography variant="body1" sx={{ textAlign: "center" }}>
-                  No cards left in this session.
-                </Typography>
-                <Button variant="contained" onClick={leaveStudy}>
-                  Today
-                </Button>
-                {canStudyMore ? (
-                  <Button
-                    variant="outlined"
-                    disabled={studyMoreBusy}
-                    onClick={() => void onStudyMore()}
-                  >
-                    {studyMoreBusy ? "Loading…" : "Study more"}
-                  </Button>
-                ) : null}
-                {scopeBack ? (
-                  <Link
-                    href={scopeBack.href}
-                    underline="hover"
-                    onClick={(ev) => {
-                      ev.preventDefault();
-                      openScopeBack(true);
-                    }}
-                  >
-                    {scopeBack.label}
-                  </Link>
-                ) : null}
-              </Stack>
+            ) : surface === "soft_wait" ? (
+              <LearningSoftWait
+                pendingCount={pendingLearning.length}
+                nextDueAt={nextLearningDue}
+                onToday={leaveStudy}
+              />
+            ) : surface === "quiet" ? (
+              <SessionQuietEnd
+                canStudyMore={canStudyMore}
+                studyMoreBusy={studyMoreBusy}
+                onStudyMore={() => void onStudyMore()}
+                onToday={leaveStudy}
+                scopeBack={
+                  scopeBack
+                    ? { ...scopeBack, onClick: () => openScopeBack(true) }
+                    : null
+                }
+              />
             ) : (
               <Box
                 sx={{
