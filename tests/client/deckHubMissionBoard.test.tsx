@@ -215,6 +215,10 @@ describe("deck hub mission board smoke", () => {
     );
 
     expect(document.body.textContent).toContain("Also review drafts (2)");
+    expect(document.body.textContent).toContain(
+      "Drop PDF, PPTX, or image here",
+    );
+    expect(document.body.textContent).toContain("Choose file");
     const jump = Array.from(document.body.querySelectorAll("button")).find(
       (b) => b.textContent?.includes("Also review drafts"),
     );
