@@ -55,6 +55,8 @@ function entry(overrides: Partial<AtlasEntryView> = {}): AtlasEntryView {
     images: [],
     editedAt: null,
     tier: null,
+    reason: null,
+    focusMaterialIds: [],
     ...overrides,
   };
 }

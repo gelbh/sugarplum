@@ -4,6 +4,7 @@ import {
   toEntryView,
   type OverlayRow,
 } from "../../../worker/atlas/merge";
+import { enrichEntriesWithFocus } from "../../../worker/atlas/focus";
 import type { DatasetEntry } from "../../../worker/atlas/datasets/schema";
 import { emptyParasiteFields } from "../../../worker/atlas/templates/parasite";
 
@@ -248,5 +249,52 @@ describe("overlayAtlas", () => {
         aliases: [],
       }),
     ]);
+  });
+
+  it("enriches merged views with focus tier and reason by entry_key", () => {
+    const views = overlayAtlas([fasciola, toxocara], []);
+    const focus = new Map([
+      [
+        "fasciola-hepatica",
+        {
+          tier: "key" as const,
+          reason: 'Named in tutorial "Week2.pdf"',
+          override: null,
+          materialIds: ["mat-week2"],
+        },
+      ],
+    ]);
+    const enriched = enrichEntriesWithFocus(views, focus);
+    expect(enriched.find((e) => e.id === "fasciola-hepatica")).toMatchObject({
+      tier: "key",
+      reason: 'Named in tutorial "Week2.pdf"',
+      focusMaterialIds: ["mat-week2"],
+    });
+    expect(enriched.find((e) => e.id === "toxocara-canis")).toMatchObject({
+      tier: null,
+      reason: null,
+      focusMaterialIds: [],
+    });
+  });
+
+  it("applies stored override over cached scan tier on read", () => {
+    const views = overlayAtlas([fasciola], []);
+    const focus = new Map([
+      [
+        "fasciola-hepatica",
+        {
+          tier: "key" as const,
+          reason: 'Named in tutorial "Week2.pdf"',
+          override: "standard" as const,
+          materialIds: ["mat-week2"],
+        },
+      ],
+    ]);
+    const enriched = enrichEntriesWithFocus(views, focus);
+    expect(enriched[0]).toMatchObject({
+      tier: "standard",
+      reason: "Manual demote",
+      focusMaterialIds: [],
+    });
   });
 });

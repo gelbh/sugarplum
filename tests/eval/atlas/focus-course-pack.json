@@ -1,0 +1,251 @@
+{
+  "source": "Checked AB2 Parasitology course-pack excerpts for Focus Key lock. PDFs are not committed; filenames and page 1–2 snippets stand in for uploaded materials. Decisions lock Key = tutorial/practical/past_paper name in filename or pages 1–2.",
+  "expectedKey": [
+    "Fasciola hepatica",
+    "Toxoplasma gondii",
+    "Ctenocephalides felis",
+    "Dipylidium caninum"
+  ],
+  "entries": [
+    {
+      "canonicalName": "Fasciola hepatica",
+      "commonName": "Common liver fluke",
+      "aliases": []
+    },
+    {
+      "canonicalName": "Toxoplasma gondii",
+      "commonName": null,
+      "aliases": []
+    },
+    {
+      "canonicalName": "Ctenocephalides felis",
+      "commonName": "Cat flea",
+      "aliases": []
+    },
+    {
+      "canonicalName": "Dipylidium caninum",
+      "commonName": "Double-pored tapeworm",
+      "aliases": ["Flea tapeworm"]
+    },
+    {
+      "canonicalName": "Calicophoron daubneyi",
+      "commonName": "Rumen fluke",
+      "aliases": []
+    },
+    {
+      "canonicalName": "Anoplocephala perfoliata",
+      "commonName": null,
+      "aliases": []
+    },
+    {
+      "canonicalName": "Echinococcus granulosus",
+      "commonName": null,
+      "aliases": []
+    },
+    {
+      "canonicalName": "Neospora caninum",
+      "commonName": null,
+      "aliases": []
+    },
+    {
+      "canonicalName": "Haematobia irritans",
+      "commonName": "Horn fly",
+      "aliases": []
+    },
+    {
+      "canonicalName": "Toxocara canis",
+      "commonName": null,
+      "aliases": []
+    }
+  ],
+  "materials": [
+    {
+      "id": "tut-fasciola",
+      "filename": "T02_Fasciola_hepatica_TUTORIAL.pdf",
+      "sourceRole": "tutorial",
+      "pages": [
+        {
+          "page": 1,
+          "text": "Tutorial 2: Trematodes. Worked example species Fasciola hepatica (common liver fluke)."
+        },
+        {
+          "page": 2,
+          "text": "Sketch miracidium → redia → cercaria → metacercaria on pasture."
+        }
+      ]
+    },
+    {
+      "id": "prac-toxoplasma",
+      "filename": "PA04_Coccidia_PRACTICAL.pdf",
+      "sourceRole": "practical",
+      "pages": [
+        {
+          "page": 1,
+          "text": "Practical: identify Toxoplasma gondii oocysts from cat faecal float."
+        },
+        {
+          "page": 2,
+          "text": "Measure oocyst size and record host history. Tissue-cyst differentials are later."
+        },
+        {
+          "page": 4,
+          "text": "Appendix: compare tissue cysts with Neospora caninum (not a Key station)."
+        }
+      ]
+    },
+    {
+      "id": "prac-fleas",
+      "filename": "PA07_Ctenocephalides_felis_PRACTICAL.pdf",
+      "sourceRole": "practical",
+      "pages": [
+        {
+          "page": 1,
+          "text": "Station A: Ctenocephalides felis (cat flea) morphology under the dissecting scope."
+        },
+        {
+          "page": 2,
+          "text": "Note comb spines and genal ctenidium. Record host species."
+        }
+      ]
+    },
+    {
+      "id": "tut-dipylidium",
+      "filename": "PA11_Cestodes_TUTORIAL.pdf",
+      "sourceRole": "tutorial",
+      "pages": [
+        {
+          "page": 1,
+          "text": "Tutorial: flea tapeworm Dipylidium caninum egg packets and proglottids."
+        },
+        {
+          "page": 2,
+          "text": "Sketch egg packet hexacanths and note flea intermediate host."
+        },
+        {
+          "page": 5,
+          "text": "Appendix table: Anoplocephala perfoliata (equine), not a Key station today."
+        }
+      ]
+    },
+    {
+      "id": "past-fasciola",
+      "filename": "AB2_2025_PAST_PAPER.pdf",
+      "sourceRole": "past_paper",
+      "pages": [
+        {
+          "page": 1,
+          "text": "Q1. Outline the lifecycle of Fasciola hepatica and name the intermediate host."
+        },
+        {
+          "page": 2,
+          "text": "Q2. Short notes on zoonotic risk of Toxoplasma gondii in pregnant ewes."
+        }
+      ]
+    },
+    {
+      "id": "lec-pa12",
+      "filename": "PA12_Trematodes.pdf",
+      "sourceRole": "lecture",
+      "pages": [
+        {
+          "page": 1,
+          "text": "PA12 Trematodes overview. Species tables start page 6."
+        },
+        {
+          "page": 6,
+          "text": "Fasciola hepatica. Page 31: Calicophoron daubneyi rumen fluke."
+        }
+      ]
+    },
+    {
+      "id": "lec-pa11",
+      "filename": "PA11_Cestodes.pdf",
+      "sourceRole": "lecture",
+      "pages": [
+        {
+          "page": 1,
+          "text": "PA11 Cestodes. Dipylidium caninum page 9; Anoplocephala perfoliata page 7."
+        },
+        {
+          "page": 30,
+          "text": "Echinococcus granulosus hydatid cysts in ruminants."
+        }
+      ]
+    },
+    {
+      "id": "lec-pa04",
+      "filename": "PA04_Tissue_coccidia.pdf",
+      "sourceRole": "lecture",
+      "pages": [
+        {
+          "page": 1,
+          "text": "PA04 Tissue-cyst forming coccidia. Toxoplasma gondii page 4; Neospora caninum page 15."
+        },
+        {
+          "page": 4,
+          "text": "Toxoplasma gondii sexual stages only in felids."
+        }
+      ]
+    },
+    {
+      "id": "lec-pa09",
+      "filename": "PA09_Ascarids.pdf",
+      "sourceRole": "lecture",
+      "pages": [
+        {
+          "page": 1,
+          "text": "PA09 Ascarids. Toxocara canis page 8."
+        },
+        {
+          "page": 8,
+          "text": "Toxocara canis larval migration in puppies."
+        }
+      ]
+    },
+    {
+      "id": "lec-pa07",
+      "filename": "PA07_Fleas_and_flies.pdf",
+      "sourceRole": "lecture",
+      "pages": [
+        {
+          "page": 1,
+          "text": "PA07 Ectoparasites. Ctenocephalides felis and horn fly notes."
+        },
+        {
+          "page": 12,
+          "text": "Haematobia irritans on cattle. Toxocara canis mentioned as a GI differential only."
+        }
+      ]
+    },
+    {
+      "id": "notes-ascarids",
+      "filename": "revision_notes_ascarids.txt",
+      "sourceRole": "notes",
+      "pages": [
+        {
+          "page": 1,
+          "text": "Revision: Toxocara canis PPP and zoonosis. Echinococcus granulosus control."
+        }
+      ]
+    },
+    {
+      "id": "tut-t01-flies",
+      "filename": "T01_Diptera_TUTORIAL.pdf",
+      "sourceRole": "tutorial",
+      "pages": [
+        {
+          "page": 1,
+          "text": "Tutorial 1: biting flies of cattle. Stations cover Stomoxys and Musca first."
+        },
+        {
+          "page": 2,
+          "text": "Draw mouthparts. Species keys are on later handout pages."
+        },
+        {
+          "page": 13,
+          "text": "Appendix: Haematobia irritans abundance on pasture (not a Key station)."
+        }
+      ]
+    }
+  ]
+}

@@ -38,6 +38,12 @@ import {
 import { guestPasteToCards } from "../guest/pasteToCards";
 import { guestAddAcceptedCards } from "../guest/store";
 import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
+import {
+  SOURCE_ROLES,
+  SOURCE_ROLE_LABELS,
+  suggestSourceRole,
+  type SourceRole,
+} from "../lib/sourceRole";
 import { FigureSuggestPanel } from "./FigureSuggestPanel";
 import { stepperSx } from "./stepperSx";
 
@@ -86,6 +92,7 @@ export default function CreateMaterialStepper({
   const [newSubjectTitle, setNewSubjectTitle] = useState("");
   const [pasteText, setPasteText] = useState("");
   const [filename, setFilename] = useState("");
+  const [sourceRole, setSourceRole] = useState<SourceRole>("lecture");
   const [alsoCover, setAlsoCover] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [figureFiles, setFigureFiles] = useState<File[]>([]);
@@ -296,10 +303,12 @@ export default function CreateMaterialStepper({
       const material = await pasteMaterial(selectedDeckId, {
         text: pasteText,
         ...(filename.trim() ? { filename: filename.trim() } : {}),
+        source_role: sourceRole,
         ...(topicHints ? { topicHints } : {}),
       });
       setPasteText("");
       setFilename("");
+      setSourceRole("lecture");
       setAlsoCover("");
       if (material.jobId) {
         window.location.assign(
@@ -363,11 +372,13 @@ export default function CreateMaterialStepper({
         contentType === "application/pdf"
           ? {
               figureExtractMode,
+              source_role: sourceRole,
               ...(topicHints ? { topicHints } : {}),
             }
-          : topicHints
-            ? { topicHints }
-            : undefined;
+          : {
+              source_role: sourceRole,
+              ...(topicHints ? { topicHints } : {}),
+            };
       const material =
         contentType === "application/pdf" && figureFiles.length > 0
           ? await uploadPdfWithFigureCrops(
@@ -383,6 +394,7 @@ export default function CreateMaterialStepper({
             });
       setUploadFile(null);
       setFigureFiles([]);
+      setSourceRole("lecture");
       setAlsoCover("");
       if (material.jobId) {
         setJobId(material.jobId);
@@ -414,6 +426,24 @@ export default function CreateMaterialStepper({
       minRows={2}
       helperText="One topic per line, up to 5"
     />
+  );
+
+  const sourceRoleField = (
+    <FormControl fullWidth>
+      <InputLabel id="material-source-role-label">Source role</InputLabel>
+      <Select
+        labelId="material-source-role-label"
+        label="Source role"
+        value={sourceRole}
+        onChange={(ev) => setSourceRole(ev.target.value as SourceRole)}
+      >
+        {SOURCE_ROLES.map((role) => (
+          <MenuItem key={role} value={role}>
+            {SOURCE_ROLE_LABELS[role]}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
   );
 
   return (
@@ -601,9 +631,14 @@ export default function CreateMaterialStepper({
                     label="Filename (optional)"
                     name="filename"
                     value={filename}
-                    onChange={(ev) => setFilename(ev.target.value)}
+                    onChange={(ev) => {
+                      const next = ev.target.value;
+                      setFilename(next);
+                      setSourceRole(suggestSourceRole(next));
+                    }}
                     fullWidth
                   />
+                  {sourceRoleField}
                   <TextField
                     label="Paste text"
                     name="text"
@@ -645,6 +680,7 @@ export default function CreateMaterialStepper({
                       onChange={(ev) => {
                         const file = ev.target.files?.[0] ?? null;
                         setUploadFile(file);
+                        setSourceRole(suggestSourceRole(file?.name ?? null));
                         if (
                           !file ||
                           resolveUploadContentType(file) !== "application/pdf"
@@ -654,6 +690,7 @@ export default function CreateMaterialStepper({
                       }}
                     />
                   </Button>
+                  {sourceRoleField}
                   {uploadFile &&
                   resolveUploadContentType(uploadFile) === "application/pdf" ? (
                     <Stack spacing={1.5}>

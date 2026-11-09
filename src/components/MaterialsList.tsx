@@ -9,7 +9,11 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
 import Link from "@mui/material/Link";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -17,6 +21,7 @@ import {
   ApiError,
   deleteMaterial,
   downloadMaterialUrl,
+  patchMaterialSourceRole,
   refillPdfOcr,
   topicGenerate,
   type MaterialListItem,
@@ -26,6 +31,11 @@ import {
   isFigureMaterial,
   materialDisplayName,
 } from "../materials/materialActions";
+import {
+  SOURCE_ROLES,
+  SOURCE_ROLE_LABELS,
+  type SourceRole,
+} from "../lib/sourceRole";
 import { navigate } from "../nav/navigate";
 
 export type MaterialsListProps = {
@@ -57,6 +67,8 @@ export default function MaterialsList({
   const [topicValue, setTopicValue] = useState("");
   const [topicBusy, setTopicBusy] = useState(false);
   const [topicError, setTopicError] = useState<string | null>(null);
+  const [roleBusyId, setRoleBusyId] = useState<string | null>(null);
+  const [roleError, setRoleError] = useState<string | null>(null);
 
   async function confirmDelete() {
     if (!deleteTarget) return;
@@ -79,6 +91,25 @@ export default function MaterialsList({
     setTopicError(null);
     setTopicValue("");
     setGenerateTarget(material);
+  }
+
+  async function onSourceRoleChange(
+    material: MaterialListItem,
+    next: SourceRole,
+  ) {
+    if (next === (material.source_role ?? "lecture")) return;
+    setRoleBusyId(material.id);
+    setRoleError(null);
+    try {
+      await patchMaterialSourceRole(material.id, next);
+      onChanged();
+    } catch (err) {
+      setRoleError(
+        err instanceof ApiError ? err.message : "Could not update source role",
+      );
+    } finally {
+      setRoleBusyId(null);
+    }
   }
 
   async function onGenerateSubmit(e?: FormEvent) {
@@ -125,6 +156,11 @@ export default function MaterialsList({
 
   return (
     <>
+      {roleError ? (
+        <Alert severity="error" sx={{ mb: 1 }} onClose={() => setRoleError(null)}>
+          {roleError}
+        </Alert>
+      ) : null}
       <Stack
         component="ul"
         spacing={0}
@@ -135,6 +171,8 @@ export default function MaterialsList({
           const name = materialDisplayName(material.filename);
           const deckHref = `/library/decks/${encodeURIComponent(material.deck_id)}`;
           const canGenerate = canGenerateMoreFromMaterial(material);
+          const roleValue = material.source_role ?? "lecture";
+          const roleBusy = roleBusyId === material.id;
           return (
             <Box
               component="li"
@@ -190,6 +228,27 @@ export default function MaterialsList({
                 ) : null}
               </Box>
               <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+                <FormControl size="small" sx={{ minWidth: 132 }}>
+                  <InputLabel id={`source-role-${material.id}`}>Role</InputLabel>
+                  <Select
+                    labelId={`source-role-${material.id}`}
+                    label="Role"
+                    value={roleValue}
+                    disabled={roleBusy}
+                    onChange={(ev) => {
+                      void onSourceRoleChange(
+                        material,
+                        ev.target.value as SourceRole,
+                      );
+                    }}
+                  >
+                    {SOURCE_ROLES.map((role) => (
+                      <MenuItem key={role} value={role}>
+                        {SOURCE_ROLE_LABELS[role]}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
                 <Button
                   size="small"
                   component="a"
