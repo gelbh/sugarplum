@@ -43,8 +43,22 @@ import {
   writeOcrSidecar,
   type OcrPageText,
 } from "./ocr-sidecar";
+import {
+  isSourceRole,
+  suggestSourceRole,
+  type SourceRole,
+} from "../../src/lib/sourceRole";
+import { refreshAtlasFocusForDeck } from "../atlas/focus";
 
 export { MAX_IMAGE_BYTES } from "./limits";
+
+function resolveSourceRole(
+  bodyRole: unknown,
+  filename: string | null,
+): SourceRole {
+  if (isSourceRole(bodyRole)) return bodyRole;
+  return suggestSourceRole(filename);
+}
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -67,6 +81,7 @@ export type MaterialRow = {
   status: string;
   created_at: string;
   content_hash?: string | null;
+  source_role?: SourceRole;
 };
 
 /** Pastes ≤100KB use the same R2 path; schema has no body_text column for D1 inline. */
@@ -177,7 +192,7 @@ async function requireOwnedMaterial(
 ): Promise<MaterialRow> {
   const row = await db
     .prepare(
-      `SELECT m.id, m.deck_id, m.kind, m.r2_key, m.filename, m.page_count, m.status, m.created_at
+      `SELECT m.id, m.deck_id, m.kind, m.r2_key, m.filename, m.page_count, m.status, m.created_at, m.source_role
        FROM materials m
        INNER JOIN decks d ON d.id = m.deck_id
        WHERE m.id = ? AND d.user_id = ?`,
@@ -325,7 +340,7 @@ deckRoutes.get("/:id/materials", async (c) => {
   await requireOwnedDeck(db, deckId, userId);
   const { results } = await db
     .prepare(
-      `SELECT id, deck_id, kind, r2_key, filename, page_count, status, created_at
+      `SELECT id, deck_id, kind, r2_key, filename, page_count, status, created_at, source_role
        FROM materials WHERE deck_id = ? ORDER BY created_at DESC`,
     )
     .bind(deckId)
@@ -689,7 +704,12 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
   const db = getDb(c.env);
   await requireOwnedDeck(db, deckId, userId);
 
-  let body: { text?: unknown; filename?: unknown; topicHints?: unknown };
+  let body: {
+    text?: unknown;
+    filename?: unknown;
+    topicHints?: unknown;
+    source_role?: unknown;
+  };
   try {
     body = await c.req.json();
   } catch {
@@ -718,6 +738,7 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
     typeof body.filename === "string" && body.filename.trim()
       ? body.filename.trim()
       : null;
+  const sourceRole = resolveSourceRole(body.source_role, filename);
 
   const contentHash = await sha256Hex(text);
   const hit = await findReadyMaterialByContentHash(db, deckId, contentHash);
@@ -733,6 +754,7 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
         page_count: hit.page_count,
         status: hit.status,
         created_at: hit.created_at,
+        source_role: hit.source_role ?? "lecture",
         jobId: hit.jobId,
         reused: true,
       },
@@ -756,6 +778,7 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
         page_count: hit.page_count,
         status: hit.status,
         created_at: hit.created_at,
+        source_role: hit.source_role ?? "lecture",
         jobId,
         reused: false,
       },
@@ -773,7 +796,7 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
 
   await db
     .prepare(
-      "INSERT INTO materials (id, deck_id, kind, r2_key, filename, page_count, status, created_at, content_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO materials (id, deck_id, kind, r2_key, filename, page_count, status, created_at, content_hash, source_role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(
       id,
@@ -785,6 +808,7 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
       PASTE_READY,
       createdAt,
       contentHash,
+      sourceRole,
     )
     .run();
 
@@ -804,7 +828,10 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
     status: PASTE_READY,
     created_at: createdAt,
     content_hash: contentHash,
+    source_role: sourceRole,
   };
+
+  await refreshAtlasFocusForDeck(db, c.env, deckId);
 
   return c.json({ ...material, jobId }, 201);
 });
@@ -896,7 +923,12 @@ deckRoutes.post("/:id/materials/upload-url", async (c) => {
   const db = getDb(c.env);
   await requireOwnedDeck(db, deckId, userId);
 
-  let body: { filename?: unknown; contentType?: unknown; size?: unknown };
+  let body: {
+    filename?: unknown;
+    contentType?: unknown;
+    size?: unknown;
+    source_role?: unknown;
+  };
   try {
     body = await c.req.json();
   } catch {
@@ -931,6 +963,7 @@ deckRoutes.post("/:id/materials/upload-url", async (c) => {
 
   const defaultName = `upload.${resolved.ext}`;
   const filename = filenameHint || defaultName;
+  const sourceRole = resolveSourceRole(body.source_role, filename);
   const putContentType =
     resolved.kind === "pptx" ? PPTX_CONTENT_TYPE : contentType;
 
@@ -960,7 +993,7 @@ deckRoutes.post("/:id/materials/upload-url", async (c) => {
 
   await db
     .prepare(
-      "INSERT INTO materials (id, deck_id, kind, r2_key, filename, page_count, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO materials (id, deck_id, kind, r2_key, filename, page_count, status, created_at, source_role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(
       materialId,
@@ -971,6 +1004,7 @@ deckRoutes.post("/:id/materials/upload-url", async (c) => {
       null,
       FILE_UPLOADING,
       createdAt,
+      sourceRole,
     )
     .run();
 
@@ -1062,9 +1096,11 @@ materialRoutes.post("/:id/figures/presign", async (c) => {
     contentLength: size,
   });
 
+  const sourceRole = resolveSourceRole(undefined, filename);
+
   await db
     .prepare(
-      "INSERT INTO materials (id, deck_id, kind, r2_key, filename, page_count, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO materials (id, deck_id, kind, r2_key, filename, page_count, status, created_at, source_role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(
       materialId,
@@ -1075,6 +1111,7 @@ materialRoutes.post("/:id/figures/presign", async (c) => {
       null,
       FILE_UPLOADING,
       createdAt,
+      sourceRole,
     )
     .run();
 
@@ -1243,6 +1280,8 @@ materialRoutes.delete("/:id", async (c) => {
     }
   }
 
+  await refreshAtlasFocusForDeck(db, c.env, material.deck_id);
+
   return c.body(null, 204);
 });
 
@@ -1252,7 +1291,7 @@ materialRoutes.get("/", async (c) => {
   const { results } = await db
     .prepare(
       `SELECT m.id, m.deck_id, m.kind, m.r2_key, m.filename, m.page_count,
-              m.status, m.created_at, d.title AS deck_title
+              m.status, m.created_at, m.source_role, d.title AS deck_title
        FROM materials m
        INNER JOIN decks d ON d.id = m.deck_id
        WHERE d.user_id = ?
@@ -1261,6 +1300,47 @@ materialRoutes.get("/", async (c) => {
     .bind(userId)
     .all();
   return c.json(results ?? []);
+});
+
+materialRoutes.patch("/:id", async (c) => {
+  const userId = await requireUser(c);
+  const materialId = c.req.param("id");
+  const db = getDb(c.env);
+  const material = await requireOwnedMaterial(db, materialId, userId);
+
+  let body: { source_role?: unknown };
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+  if (body === null || typeof body !== "object" || Array.isArray(body)) {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+
+  if (!isSourceRole(body.source_role)) {
+    throw new HTTPException(400, { message: "Valid source_role required" });
+  }
+  const sourceRole = body.source_role;
+
+  await db
+    .prepare("UPDATE materials SET source_role = ? WHERE id = ?")
+    .bind(sourceRole, materialId)
+    .run();
+
+  await refreshAtlasFocusForDeck(db, c.env, material.deck_id);
+
+  return c.json({
+    id: material.id,
+    deck_id: material.deck_id,
+    kind: material.kind,
+    r2_key: material.r2_key,
+    filename: material.filename,
+    page_count: material.page_count,
+    status: material.status,
+    created_at: material.created_at,
+    source_role: sourceRole,
+  });
 });
 
 materialRoutes.post("/:id/complete", async (c) => {
@@ -1279,6 +1359,7 @@ materialRoutes.post("/:id/complete", async (c) => {
       page_count: material.page_count,
       status: material.status,
       created_at: material.created_at,
+      source_role: material.source_role ?? "lecture",
       jobId: null,
     });
   }
@@ -1361,6 +1442,7 @@ materialRoutes.post("/:id/complete", async (c) => {
           page_count: hit.page_count,
           status: hit.status,
           created_at: hit.created_at,
+          source_role: hit.source_role ?? "lecture",
           jobId: hit.jobId,
           reused: true,
         });
@@ -1388,6 +1470,7 @@ materialRoutes.post("/:id/complete", async (c) => {
           page_count: hit.page_count,
           status: hit.status,
           created_at: hit.created_at,
+          source_role: hit.source_role ?? "lecture",
           jobId,
           reused: false,
         });
@@ -1425,6 +1508,8 @@ materialRoutes.post("/:id/complete", async (c) => {
         topicHints,
       });
 
+  await refreshAtlasFocusForDeck(db, c.env, material.deck_id);
+
   return c.json({
     id: material.id,
     deck_id: material.deck_id,
@@ -1434,6 +1519,7 @@ materialRoutes.post("/:id/complete", async (c) => {
     page_count: material.page_count,
     status: FILE_READY,
     created_at: material.created_at,
+    source_role: material.source_role ?? "lecture",
     jobId,
   });
 });
@@ -1560,6 +1646,7 @@ materialRoutes.post("/:id/ocr-pages", async (c) => {
       merged,
       nextUnstudied,
     );
+    await refreshAtlasFocusForDeck(db, c.env, material.deck_id);
   }
   return c.json({ stored: merged.length });
 });

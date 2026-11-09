@@ -29,6 +29,7 @@ export type ReadyHashHit = {
   status: string;
   created_at: string;
   deck_id: string;
+  source_role?: string | null;
 };
 
 type MaterialCandidate = {
@@ -40,6 +41,7 @@ type MaterialCandidate = {
   page_count: number | null;
   status: string;
   created_at: string;
+  source_role?: string | null;
 };
 
 type JobLite = { id: string; created_at: string };
@@ -56,7 +58,7 @@ export async function findReadyMaterialByContentHash(
 ): Promise<ReadyHashHit | null> {
   const { results } = await db
     .prepare(
-      `SELECT id, deck_id, kind, r2_key, filename, page_count, status, created_at
+      `SELECT id, deck_id, kind, r2_key, filename, page_count, status, created_at, source_role
        FROM materials
        WHERE deck_id = ? AND status = ? AND content_hash = ?`,
     )
@@ -103,6 +105,7 @@ export async function findReadyMaterialByContentHash(
         status: m.status,
         created_at: m.created_at,
         deck_id: m.deck_id,
+        source_role: m.source_role ?? "lecture",
       };
     }
   }

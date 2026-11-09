@@ -37,6 +37,8 @@ export type AtlasEntryView = {
   images: AtlasImageView[];
   editedAt: string | null;
   tier: AtlasTier | null;
+  reason: string | null;
+  focusMaterialIds: string[];
 };
 
 export type AtlasSource = {

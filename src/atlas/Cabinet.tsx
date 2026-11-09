@@ -31,7 +31,9 @@ import {
   GROUP_LABELS,
   NO_FILTERS,
   applyFilters,
+  byName,
   filtersActive,
+  focusActive as isFocusActive,
   groupRows,
   hostOptions,
   matchesSearch,
@@ -79,6 +81,12 @@ export default function Cabinet({
     staggering.current = false;
   }, []);
 
+  const focusActive = isFocusActive(entries);
+  useEffect(() => {
+    if (!focusActive && filters.tier !== null) {
+      setFilters((f) => ({ ...f, tier: null }));
+    }
+  }, [focusActive, filters.tier]);
   const options = useMemo(
     () => ({
       groups: presentGroups(entries),
@@ -94,10 +102,52 @@ export default function Cabinet({
       ),
     [entries, shownFilters, query],
   );
-  const rows = useMemo(() => groupRows(visible), [visible]);
+  const keyEntries = useMemo(
+    () =>
+      focusActive
+        ? visible.filter((e) => e.tier === "key").sort(byName)
+        : [],
+    [focusActive, visible],
+  );
+  const showKeyRow = keyEntries.length > 0;
+  const rows = useMemo(
+    () =>
+      groupRows(
+        showKeyRow ? visible.filter((e) => e.tier !== "key") : visible,
+      ),
+    [showKeyRow, visible],
+  );
+  const gridSections = useMemo(
+    () => [
+      ...(showKeyRow
+        ? [
+            {
+              id: "key",
+              title: "Key",
+              subtitle: `Course focus, ${keyEntries.length} ${
+                keyEntries.length === 1 ? "entry" : "entries"
+              }`,
+              entries: keyEntries,
+            },
+          ]
+        : []),
+      ...rows.map((row) => ({
+        id: row.group,
+        title: GROUP_LABELS[row.group].plural,
+        subtitle: `${GROUP_LABELS[row.group].common}, ${row.entries.length} ${
+          row.entries.length === 1 ? "entry" : "entries"
+        }`,
+        entries: row.entries,
+      })),
+    ],
+    [showKeyRow, keyEntries, rows],
+  );
   const tileIndex = useMemo(
-    () => new Map(rows.flatMap((r) => r.entries).map((e, i) => [e.id, i])),
-    [rows],
+    () =>
+      new Map(
+        gridSections.flatMap((s) => s.entries).map((e, i) => [e.id, i]),
+      ),
+    [gridSections],
   );
   const expanded =
     expandedId !== null && visible.some((e) => e.id === expandedId)
@@ -264,6 +314,7 @@ export default function Cabinet({
           groups={options.groups}
           hostOptions={options.hosts}
           organOptions={options.organs}
+          focusActive={focusActive}
           onChange={setFilters}
         />
       </Box>
@@ -284,14 +335,15 @@ export default function Cabinet({
           entries={visible}
           entryHref={entryHref}
           onOpen={onOpenEntry}
+          focusActive={focusActive}
         />
       ) : (
         <Stack spacing={3}>
-          {rows.map((row) => (
+          {gridSections.map((section) => (
             <Box
               component="section"
-              key={row.group}
-              aria-labelledby={`atlas-row-${row.group}`}
+              key={section.id}
+              aria-labelledby={`atlas-row-${section.id}`}
             >
               <Stack
                 direction="row"
@@ -300,15 +352,14 @@ export default function Cabinet({
                 sx={{ mb: 1.25 }}
               >
                 <Typography
-                  id={`atlas-row-${row.group}`}
+                  id={`atlas-row-${section.id}`}
                   component="h2"
                   sx={{ fontWeight: 700, fontSize: "1.06rem" }}
                 >
-                  {GROUP_LABELS[row.group].plural}
+                  {section.title}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {GROUP_LABELS[row.group].common}, {row.entries.length}{" "}
-                  {row.entries.length === 1 ? "entry" : "entries"}
+                  {section.subtitle}
                 </Typography>
               </Stack>
               <Box
@@ -323,7 +374,7 @@ export default function Cabinet({
                   alignItems: "stretch",
                 }}
               >
-                {row.entries.map((e) => (
+                {section.entries.map((e) => (
                   <ViewTransition
                     key={e.id}
                     name={`atlas-tile-${e.id}`}

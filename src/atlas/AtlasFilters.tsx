@@ -6,18 +6,20 @@ import MenuItem from "@mui/material/MenuItem";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   GROUP_LABELS,
+  TIER_ORDER,
   isTaxonTerm,
   termLabel,
   type AtlasFilters as Filters,
   type TermOption,
 } from "./filter";
-import type { ParasiteGroup } from "./types";
+import type { AtlasTier, ParasiteGroup } from "./types";
 
 type Props = {
   filters: Filters;
   groups: ParasiteGroup[];
   hostOptions: TermOption[];
   organOptions: TermOption[];
+  focusActive: boolean;
   onChange: (next: Filters) => void;
 };
 
@@ -128,6 +130,7 @@ export default function AtlasFilters({
   groups,
   hostOptions,
   organOptions,
+  focusActive,
   onChange,
 }: Props) {
   const toggleGroup = (g: ParasiteGroup) =>
@@ -183,6 +186,23 @@ export default function AtlasFilters({
         options={organOptions}
         onSelect={(organ) => onChange({ ...filters, organ })}
       />
+      {focusActive ? (
+        <>
+          <Separator />
+          <TermMenuChip
+            name="Focus"
+            anyLabel="Any focus"
+            value={filters.tier}
+            options={TIER_ORDER.map((tier) => ({ term: tier, depth: 0 }))}
+            onSelect={(tier) =>
+              onChange({
+                ...filters,
+                tier: (tier as AtlasTier | null) ?? null,
+              })
+            }
+          />
+        </>
+      ) : null}
       <Separator />
       <ToggleChip
         label="Zoonotic only"

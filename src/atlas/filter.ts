@@ -5,13 +5,15 @@ import {
   organCovers,
 } from "../../worker/atlas/datasets/vocab";
 import { PARASITE_GROUPS } from "../../worker/atlas/templates/parasite";
-import type { AtlasEntryView, ParasiteGroup } from "./types";
+import { entryNameForms, searchable } from "./nameMatch";
+import type { AtlasEntryView, AtlasTier, ParasiteGroup } from "./types";
 
 export type AtlasFilters = {
   groups: ParasiteGroup[];
   host: string | null;
   organ: string | null;
   zoonoticOnly: boolean;
+  tier: AtlasTier | null;
 };
 
 export const NO_FILTERS: AtlasFilters = {
@@ -19,7 +21,19 @@ export const NO_FILTERS: AtlasFilters = {
   host: null,
   organ: null,
   zoonoticOnly: false,
+  tier: null,
 };
+
+export const TIER_LABELS: Record<AtlasTier, string> = {
+  key: "Key",
+  frequent: "Frequent",
+  standard: "Standard",
+};
+
+export const TIER_ORDER: AtlasTier[] = ["key", "frequent", "standard"];
+
+export const focusActive = (entries: AtlasEntryView[]) =>
+  entries.some((e) => e.tier !== null);
 
 export const GROUP_LABELS: Record<
   ParasiteGroup,
@@ -32,25 +46,10 @@ export const GROUP_LABELS: Record<
   arthropod: { plural: "Arthropods", common: "Mites, ticks and insects" },
 };
 
-const searchable = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
-
-/** Slides abbreviate the genus ("F. hepatica"), so that form matches too. */
-function genusInitialForms(canonicalName: string): string[] {
-  const [genus, species] = canonicalName.split(" ");
-  if (!species || species === "spp.") return [];
-  const initial = genus[0].toLowerCase();
-  return [`${initial}. ${species}`, `${initial} ${species}`];
-}
-
 export function matchesSearch(entry: AtlasEntryView, q: string): boolean {
   const needle = searchable(q);
   if (needle === "") return true;
-  const names = [entry.canonicalName, entry.commonName, ...entry.aliases]
-    .filter((n): n is string => n !== null)
-    .map(searchable);
-  return [...names, ...genusInitialForms(entry.canonicalName)].some((n) =>
-    n.includes(needle),
-  );
+  return entryNameForms(entry).some((n) => n.includes(needle));
 }
 
 export const entryHosts = (e: AtlasEntryView) => [
@@ -73,13 +72,18 @@ export function applyFilters(
       const organ = e.fields.majorOrgan;
       if (organ === null || !organCovers(f.organ, organ)) return false;
     }
+    if (f.tier !== null && e.tier !== f.tier) return false;
     // "potential" zoonoses count: a vet student needs them flagged too.
     return !f.zoonoticOnly || (e.fields.zoonotic ?? "no") !== "no";
   });
 }
 
 export const filtersActive = (f: AtlasFilters) =>
-  f.groups.length > 0 || f.host !== null || f.organ !== null || f.zoonoticOnly;
+  f.groups.length > 0 ||
+  f.host !== null ||
+  f.organ !== null ||
+  f.zoonoticOnly ||
+  f.tier !== null;
 
 export const byName = (a: AtlasEntryView, b: AtlasEntryView) =>
   a.canonicalName.localeCompare(b.canonicalName);
@@ -93,11 +97,39 @@ export function groupRows(
   })).filter((row) => row.entries.length > 0);
 }
 
+export type RailSection = {
+  heading: string;
+  entries: AtlasEntryView[];
+};
+
+export function focusGroupRows(entries: AtlasEntryView[]): RailSection[] {
+  const tiers = TIER_ORDER.map((tier) => ({
+    heading: TIER_LABELS[tier],
+    entries: entries.filter((e) => e.tier === tier).sort(byName),
+  }));
+  const unscanned = {
+    heading: "Unscanned",
+    entries: entries.filter((e) => e.tier === null).sort(byName),
+  };
+  return [...tiers, unscanned].filter((row) => row.entries.length > 0);
+}
+
+export function railSections(
+  entries: AtlasEntryView[],
+  useFocus: boolean,
+): RailSection[] {
+  if (useFocus) return focusGroupRows(entries);
+  return groupRows(entries).map((row) => ({
+    heading: GROUP_LABELS[row.group].plural,
+    entries: row.entries,
+  }));
+}
+
 export function presentGroups(entries: AtlasEntryView[]): ParasiteGroup[] {
   return groupRows(entries).map((row) => row.group);
 }
 
-export type TableColumn = "name" | "group" | "host" | "site" | "ppp";
+export type TableColumn = "name" | "group" | "host" | "site" | "ppp" | "focus";
 export type SortDir = "asc" | "desc";
 
 function sortValue(
@@ -117,6 +149,8 @@ function sortValue(
       return e.fields.majorOrgan;
     case "ppp":
       return e.fields.pppDays?.min ?? null;
+    case "focus":
+      return e.tier === null ? null : TIER_ORDER.indexOf(e.tier);
   }
 }
 

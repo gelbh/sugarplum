@@ -10,6 +10,20 @@ import {
   type OverlayRow,
 } from "./merge";
 import {
+  enrichEntriesWithFocus,
+  focusEntryKey,
+  listEntriesWithFocus,
+  loadFocusMap,
+  refreshFocusBestEffort,
+  setFocusOverride,
+} from "./focus";
+import {
+  hasLearnerRefsOrImages,
+  loadEntryRows,
+  toOverlayRows,
+  type EntryRow,
+} from "./entryOverlays";
+import {
   loadParasiteDataset,
   PARASITE_DATASET_VERSION,
 } from "./datasets/parasites";
@@ -22,7 +36,7 @@ import {
   type ParasiteFields,
 } from "./templates/parasite";
 import { createR2PutUrl } from "../materials/r2-presign";
-import type { AtlasEntryView, AtlasImageView } from "../../src/atlas/types";
+import type { AtlasEntryView, AtlasTier } from "../../src/atlas/types";
 import type { Context } from "hono";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
@@ -35,49 +49,6 @@ type AtlasRow = {
   id: string;
   subject_id: string;
   template_key: string;
-  created_at: string;
-};
-
-type EntryRow = {
-  id: string;
-  atlas_id: string;
-  canonical_name: string;
-  common_name: string | null;
-  fields_json: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  origin_key: string | null;
-  origin_version: number | null;
-  edited_at: string | null;
-  deleted_at: string | null;
-};
-
-type RefRow = {
-  id: string;
-  entry_id: string;
-  field_key: string | null;
-  citation: string;
-  url: string | null;
-  material_id: string | null;
-  page: number | null;
-  note: string | null;
-  user_added: number;
-  created_at: string;
-};
-
-type ImageRow = {
-  id: string;
-  entry_id: string;
-  src: string;
-  role: string | null;
-  caption: string | null;
-  credit: string | null;
-  license: string | null;
-  source_url: string | null;
-  is_hero: number;
-  user_added: number;
-  deleted_at: string | null;
   created_at: string;
 };
 
@@ -128,117 +99,6 @@ async function requireAtlas(
   return atlas;
 }
 
-async function loadEntryRows(
-  db: D1Database,
-  atlasId: string,
-): Promise<EntryRow[]> {
-  const { results } = await db
-    .prepare(
-      `SELECT id, atlas_id, canonical_name, common_name, fields_json, status,
-              created_at, updated_at, origin_key, origin_version, edited_at, deleted_at
-       FROM atlas_entries WHERE atlas_id = ?`,
-    )
-    .bind(atlasId)
-    .all<EntryRow>();
-  return results ?? [];
-}
-
-async function loadRefsForAtlas(
-  db: D1Database,
-  atlasId: string,
-): Promise<Map<string, RefRow[]>> {
-  const byEntry = new Map<string, RefRow[]>();
-  const { results } = await db
-    .prepare(
-      `SELECT r.id, r.entry_id, r.field_key, r.citation, r.url, r.material_id,
-              r.page, r.note, r.user_added, r.created_at
-       FROM atlas_entry_refs r
-       JOIN atlas_entries e ON e.id = r.entry_id
-       WHERE e.atlas_id = ?`,
-    )
-    .bind(atlasId)
-    .all<RefRow>();
-  for (const row of results ?? []) {
-    const list = byEntry.get(row.entry_id) ?? [];
-    list.push(row);
-    byEntry.set(row.entry_id, list);
-  }
-  return byEntry;
-}
-
-async function loadImagesForAtlas(
-  db: D1Database,
-  atlasId: string,
-): Promise<Map<string, ImageRow[]>> {
-  const byEntry = new Map<string, ImageRow[]>();
-  const { results } = await db
-    .prepare(
-      `SELECT i.id, i.entry_id, i.src, i.role, i.caption, i.credit, i.license,
-              i.source_url, i.is_hero, i.user_added, i.deleted_at, i.created_at
-       FROM atlas_entry_images i
-       JOIN atlas_entries e ON e.id = i.entry_id
-       WHERE e.atlas_id = ? AND i.deleted_at IS NULL`,
-    )
-    .bind(atlasId)
-    .all<ImageRow>();
-  for (const row of results ?? []) {
-    const list = byEntry.get(row.entry_id) ?? [];
-    list.push(row);
-    byEntry.set(row.entry_id, list);
-  }
-  return byEntry;
-}
-
-function refViews(rows: RefRow[]): AtlasEntryView["refs"] {
-  return rows.map((r) => ({
-    field: r.field_key,
-    citation: r.citation,
-    url: r.url,
-    note: r.note,
-  }));
-}
-
-function imageViews(rows: ImageRow[]): AtlasImageView[] {
-  return rows.map((r) => ({
-    id: r.id,
-    src: r.src,
-    role: (r.role ?? "other") as AtlasImageView["role"],
-    caption: r.caption,
-    credit: r.credit ?? "",
-    license: r.license ?? "",
-    sourceUrl: r.source_url ?? "",
-    isHero: r.is_hero === 1,
-  }));
-}
-
-async function toOverlayRows(
-  db: D1Database,
-  atlasId: string,
-  entries: EntryRow[],
-): Promise<OverlayRow[]> {
-  const refs = await loadRefsForAtlas(db, atlasId);
-  const images = await loadImagesForAtlas(db, atlasId);
-  return entries.map((e) => {
-    const entryRefs = refs.get(e.id);
-    const entryImages = images.get(e.id);
-    const row: OverlayRow = {
-      id: e.id,
-      origin_key: e.origin_key,
-      origin_version: e.origin_version,
-      canonical_name: e.canonical_name,
-      common_name: e.common_name,
-      fields_json: e.fields_json,
-      edited_at: e.edited_at,
-      deleted_at: e.deleted_at,
-    };
-    if (entryRefs && entryRefs.length > 0) row.refs = refViews(entryRefs);
-    if (entryImages && entryImages.length > 0) {
-      row.images = imageViews(entryImages);
-    }
-    return row;
-  });
-}
-
 function deletedEntryViews(
   entries: EntryRow[],
   overlays: OverlayRow[],
@@ -254,21 +114,6 @@ function deletedEntryViews(
     out.push(viewFromOverlay(overlay, base));
   }
   return out;
-}
-
-async function hasLearnerRefsOrImages(
-  db: D1Database,
-  atlasId: string,
-  entryId: string,
-): Promise<boolean> {
-  const refs = await loadRefsForAtlas(db, atlasId);
-  const images = await loadImagesForAtlas(db, atlasId);
-  const entryRefs = refs.get(entryId) ?? [];
-  const entryImages = images.get(entryId) ?? [];
-  return (
-    entryRefs.some((r) => r.user_added === 1) ||
-    entryImages.some((i) => i.user_added === 1)
-  );
 }
 
 async function findEntryById(
@@ -375,6 +220,14 @@ function parseFieldsPatch(
   return parsed.data;
 }
 
+function parseFocusOverride(raw: unknown): AtlasTier | null {
+  if (raw === null) return null;
+  if (raw === "key" || raw === "frequent" || raw === "standard") return raw;
+  throw new HTTPException(400, {
+    message: "override must be key, frequent, standard, or null",
+  });
+}
+
 function mergeFields(
   base: ParasiteFields,
   patch: Partial<ParasiteFields> | undefined,
@@ -422,6 +275,8 @@ atlasRoutes.post("/", async (c) => {
     .bind(id, subjectId, TEMPLATE_KEY, createdAt)
     .run();
 
+  await refreshFocusBestEffort(db, c.env, { atlasId: id });
+
   return c.json(
     atlasMeta({
       id,
@@ -446,7 +301,12 @@ atlasRoutes.get("/entries", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "subjectId"));
   const rows = await loadEntryRows(db, atlas.id);
   const overlays = await toOverlayRows(db, atlas.id, rows);
-  const entries = overlayAtlas(loadParasiteDataset().entries, overlays);
+  const merged = overlayAtlas(loadParasiteDataset().entries, overlays);
+  const entries = await listEntriesWithFocus(db, c.env, {
+    atlasId: atlas.id,
+    subjectId: atlas.subject_id,
+    entries: merged,
+  });
   return c.json({ entries });
 });
 
@@ -528,10 +388,13 @@ atlasRoutes.post("/entries", async (c) => {
 
   const row = await findEntryById(db, atlas.id, id);
   if (!row) throw new HTTPException(500, { message: "Failed to create entry" });
+  await refreshFocusBestEffort(db, c.env, { atlasId: atlas.id });
   const overlays = await toOverlayRows(db, atlas.id, [row]);
-  const view = overlayAtlas(loadParasiteDataset().entries, overlays).find(
-    (e) => e.id === row.id,
-  );
+  const focus = await loadFocusMap(db, atlas.id);
+  const view = enrichEntriesWithFocus(
+    overlayAtlas(loadParasiteDataset().entries, overlays),
+    focus,
+  ).find((e) => e.id === row.id);
   if (!view) throw new HTTPException(500, { message: "Failed to create entry" });
   return c.json(view, 201);
 });
@@ -602,9 +465,58 @@ atlasRoutes.patch("/entries/:entryId", async (c) => {
     row = updated;
   }
 
+  if (commonNameProvided) {
+    await refreshFocusBestEffort(db, c.env, { atlasId: atlas.id });
+  }
   const overlays = await toOverlayRows(db, atlas.id, [row]);
-  const views = overlayAtlas(loadParasiteDataset().entries, overlays);
+  const focus = await loadFocusMap(db, atlas.id);
+  const views = enrichEntriesWithFocus(
+    overlayAtlas(loadParasiteDataset().entries, overlays),
+    focus,
+  );
   const view = views.find((v) => v.id === row.id) ?? views[0];
+  return c.json(view);
+});
+
+atlasRoutes.patch("/entries/:entryId/focus", async (c) => {
+  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "subjectId"));
+  const entryId = requireParam(c, "entryId");
+  let body: { override?: unknown };
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+  if (body === null || typeof body !== "object" || Array.isArray(body)) {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+  if (!("override" in body)) {
+    throw new HTTPException(400, { message: "override required" });
+  }
+  const override = parseFocusOverride(body.override);
+
+  const resolved = await resolveEntry(db, atlas.id, entryId);
+  if (!resolved) throw new HTTPException(404, { message: "Entry not found" });
+  if (resolved.kind === "row" && resolved.row.deleted_at) {
+    throw new HTTPException(409, { message: "Entry is deleted" });
+  }
+
+  const entryKey =
+    resolved.kind === "dataset"
+      ? resolved.entry.key
+      : (resolved.row.origin_key ?? resolved.row.id);
+  await setFocusOverride(db, atlas.id, entryKey, override);
+  await refreshFocusBestEffort(db, c.env, { atlasId: atlas.id });
+
+  const rows = await loadEntryRows(db, atlas.id);
+  const overlays = await toOverlayRows(db, atlas.id, rows);
+  const focus = await loadFocusMap(db, atlas.id);
+  const entries = enrichEntriesWithFocus(
+    overlayAtlas(loadParasiteDataset().entries, overlays),
+    focus,
+  );
+  const view = entries.find((e) => focusEntryKey(e) === entryKey);
+  if (!view) throw new HTTPException(404, { message: "Entry not found" });
   return c.json(view);
 });
 
@@ -619,6 +531,7 @@ atlasRoutes.post("/entries/:entryId/soft-delete", async (c) => {
     await insertOverlayFromDataset(db, atlas.id, resolved.entry, {
       deletedAt: ts,
     });
+    await refreshFocusBestEffort(db, c.env, { atlasId: atlas.id });
     return c.body(null, 204);
   }
   if (resolved.row.deleted_at) {
@@ -630,6 +543,7 @@ atlasRoutes.post("/entries/:entryId/soft-delete", async (c) => {
     )
     .bind(ts, ts, resolved.row.id, atlas.id)
     .run();
+  await refreshFocusBestEffort(db, c.env, { atlasId: atlas.id });
   return c.body(null, 204);
 });
 
@@ -654,6 +568,7 @@ atlasRoutes.post("/entries/:entryId/restore", async (c) => {
       .prepare(`DELETE FROM atlas_entries WHERE id = ? AND atlas_id = ?`)
       .bind(row.id, atlas.id)
       .run();
+    await refreshFocusBestEffort(db, c.env, { atlasId: atlas.id });
     return c.body(null, 204);
   }
 
@@ -664,6 +579,7 @@ atlasRoutes.post("/entries/:entryId/restore", async (c) => {
     )
     .bind(ts, row.id, atlas.id)
     .run();
+  await refreshFocusBestEffort(db, c.env, { atlasId: atlas.id });
   return c.body(null, 204);
 });
 
@@ -683,6 +599,7 @@ atlasRoutes.post("/entries/:entryId/reset", async (c) => {
     .prepare(`DELETE FROM atlas_entries WHERE id = ? AND atlas_id = ?`)
     .bind(row.id, atlas.id)
     .run();
+  await refreshFocusBestEffort(db, c.env, { atlasId: atlas.id });
   return c.body(null, 204);
 });
 
@@ -705,6 +622,7 @@ atlasRoutes.delete("/entries/:entryId", async (c) => {
     .prepare(`DELETE FROM atlas_entries WHERE id = ? AND atlas_id = ?`)
     .bind(row.id, atlas.id)
     .run();
+  await refreshFocusBestEffort(db, c.env, { atlasId: atlas.id });
   return c.body(null, 204);
 });
 

@@ -98,6 +98,7 @@ type MaterialRow = {
   created_at: string;
   body_text?: string | null;
   content_hash?: string | null;
+  source_role?: string | null;
 };
 
 type GenerationJobRow = {
@@ -653,6 +654,12 @@ export function createTestEnv(opts?: {
           const deck = decks.get(bound[0] as string);
           return deck ? ({ id: deck.id, user_id: deck.user_id } as T) : null;
         }
+        if (normalized.startsWith("SELECT subject_id FROM decks WHERE id =")) {
+          const deck = decks.get(bound[0] as string);
+          return deck
+            ? ({ subject_id: deck.subject_id ?? null } as T)
+            : null;
+        }
         if (
           normalized.startsWith(
             "SELECT id, deck_id, kind, r2_key, status FROM materials WHERE id =",
@@ -1147,6 +1154,31 @@ export function createTestEnv(opts?: {
         const atlasAllHit = atlasAll<T>(atlasState, normalized, bound);
         if (atlasAllHit !== null) return atlasAllHit;
         if (
+          normalized.includes("FROM materials m") &&
+          normalized.includes("INNER JOIN decks d ON d.id = m.deck_id") &&
+          normalized.includes("WHERE d.subject_id =") &&
+          normalized.includes("m.source_role")
+        ) {
+          const subjectId = bound[0] as string;
+          const includeStatus = normalized.includes("m.status");
+          const rows = [...materials.values()]
+            .map((m) => {
+              const deck = decks.get(m.deck_id);
+              if (!deck || deck.subject_id !== subjectId) return null;
+              return {
+                id: m.id,
+                deck_id: m.deck_id,
+                kind: m.kind,
+                r2_key: m.r2_key,
+                filename: m.filename,
+                source_role: m.source_role ?? "lecture",
+                ...(includeStatus ? { status: m.status } : {}),
+              };
+            })
+            .filter((row): row is NonNullable<typeof row> => row != null);
+          return { results: rows as T[] };
+        }
+        if (
           normalized.startsWith(
             "SELECT cluster_key, subject_id FROM calendar_subject_links WHERE user_id =",
           )
@@ -1338,6 +1370,7 @@ export function createTestEnv(opts?: {
                 page_count: m.page_count,
                 status: m.status,
                 created_at: m.created_at,
+                source_role: m.source_role ?? "lecture",
               };
             })
             .filter((row): row is NonNullable<typeof row> => row != null)
@@ -1980,6 +2013,7 @@ export function createTestEnv(opts?: {
                 page_count: m.page_count,
                 status: m.status,
                 created_at: m.created_at,
+                source_role: m.source_role ?? "lecture",
                 deck_title: deck.title,
               };
             })
@@ -2770,7 +2804,46 @@ export function createTestEnv(opts?: {
             });
           }
         } else if (normalized.startsWith("INSERT INTO materials")) {
-          if (normalized.includes("content_hash")) {
+          if (
+            normalized.includes("content_hash") &&
+            normalized.includes("source_role")
+          ) {
+            const [
+              id,
+              deck_id,
+              kind,
+              r2_key,
+              filename,
+              page_count,
+              status,
+              created_at,
+              content_hash,
+              source_role,
+            ] = bound as [
+              string,
+              string,
+              string,
+              string | null,
+              string | null,
+              number | null,
+              string,
+              string,
+              string | null,
+              string,
+            ];
+            materials.set(id, {
+              id,
+              deck_id,
+              kind,
+              r2_key,
+              filename,
+              page_count,
+              status,
+              created_at,
+              content_hash,
+              source_role,
+            });
+          } else if (normalized.includes("content_hash")) {
             const [
               id,
               deck_id,
@@ -2802,6 +2875,40 @@ export function createTestEnv(opts?: {
               status,
               created_at,
               content_hash,
+              source_role: "lecture",
+            });
+          } else if (normalized.includes("source_role")) {
+            const [
+              id,
+              deck_id,
+              kind,
+              r2_key,
+              filename,
+              page_count,
+              status,
+              created_at,
+              source_role,
+            ] = bound as [
+              string,
+              string,
+              string,
+              string | null,
+              string | null,
+              number | null,
+              string,
+              string,
+              string,
+            ];
+            materials.set(id, {
+              id,
+              deck_id,
+              kind,
+              r2_key,
+              filename,
+              page_count,
+              status,
+              created_at,
+              source_role,
             });
           } else {
             const [
@@ -2832,8 +2939,15 @@ export function createTestEnv(opts?: {
               page_count,
               status,
               created_at,
+              source_role: "lecture",
             });
           }
+        } else if (
+          normalized.startsWith("UPDATE materials SET source_role = ? WHERE id = ?")
+        ) {
+          const [source_role, id] = bound as [string, string];
+          const row = materials.get(id);
+          if (row) materials.set(id, { ...row, source_role });
         } else if (
           normalized.startsWith(
             "UPDATE materials SET status = ?, content_hash = ? WHERE id = ? AND status = ?",

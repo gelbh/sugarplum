@@ -48,11 +48,22 @@ export type AtlasImageRow = {
   created_at: string;
 };
 
+export type AtlasFocusRow = {
+  atlas_id: string;
+  entry_key: string;
+  tier: string;
+  reason: string;
+  material_ids_json: string;
+  override: string | null;
+  updated_at: string;
+};
+
 export type AtlasTestState = {
   atlases: Map<string, AtlasRow>;
   entries: Map<string, AtlasEntryRow>;
   refs: Map<string, AtlasRefRow>;
   images: Map<string, AtlasImageRow>;
+  focus: Map<string, AtlasFocusRow>;
 };
 
 export function initAtlasState(): AtlasTestState {
@@ -61,7 +72,12 @@ export function initAtlasState(): AtlasTestState {
     entries: new Map(),
     refs: new Map(),
     images: new Map(),
+    focus: new Map(),
   };
+}
+
+function focusKey(atlasId: string, entryKey: string): string {
+  return `${atlasId}\0${entryKey}`;
 }
 
 function entriesForAtlas(state: AtlasTestState, atlasId: string) {
@@ -83,6 +99,30 @@ export function atlasFirst<T>(
       if (row.subject_id === subjectId) return row as T;
     }
     return null;
+  }
+
+  if (normalized.startsWith("SELECT id FROM atlases WHERE subject_id =")) {
+    const subjectId = bound[0] as string;
+    for (const row of state.atlases.values()) {
+      if (row.subject_id === subjectId) return { id: row.id } as T;
+    }
+    return null;
+  }
+
+  if (
+    normalized.startsWith("SELECT id, subject_id FROM atlases WHERE id =")
+  ) {
+    const row = state.atlases.get(bound[0] as string);
+    return row ? ({ id: row.id, subject_id: row.subject_id } as T) : null;
+  }
+
+  if (
+    normalized.includes("FROM atlas_entry_focus WHERE atlas_id =") &&
+    normalized.includes("AND entry_key =")
+  ) {
+    const [atlasId, entryKey] = bound as [string, string];
+    const row = state.focus.get(focusKey(atlasId, entryKey));
+    return (row as T) ?? null;
   }
 
   if (
@@ -150,6 +190,15 @@ export function atlasAll<T>(
     const rows = [...state.images.values()].filter(
       (r) => entryIds.has(r.entry_id) && r.deleted_at == null,
     );
+    return { results: rows as T[] };
+  }
+
+  if (
+    normalized.includes("FROM atlas_entry_focus WHERE atlas_id =") &&
+    !normalized.includes("AND entry_key =")
+  ) {
+    const atlasId = bound[0] as string;
+    const rows = [...state.focus.values()].filter((r) => r.atlas_id === atlasId);
     return { results: rows as T[] };
   }
 
@@ -402,6 +451,68 @@ export function atlasRun(
       return { success: true, meta: { changes: 0 } } as D1Result;
     }
     state.images.set(id, { ...row, deleted_at });
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
+
+  if (
+    normalized.startsWith(
+      "DELETE FROM atlas_entry_focus WHERE atlas_id = ? AND entry_key =",
+    ) ||
+    (normalized.startsWith("DELETE FROM atlas_entry_focus WHERE atlas_id =") &&
+      normalized.includes("AND entry_key ="))
+  ) {
+    const [atlasId, entryKey] = bound as [string, string];
+    const key = focusKey(atlasId, entryKey);
+    const existed = state.focus.has(key);
+    state.focus.delete(key);
+    return {
+      success: true,
+      meta: { changes: existed ? 1 : 0 },
+    } as D1Result;
+  }
+
+  if (normalized.startsWith("DELETE FROM atlas_entry_focus WHERE atlas_id =")) {
+    const atlasId = bound[0] as string;
+    let changes = 0;
+    for (const [key, row] of [...state.focus.entries()]) {
+      if (row.atlas_id === atlasId) {
+        state.focus.delete(key);
+        changes += 1;
+      }
+    }
+    return { success: true, meta: { changes } } as D1Result;
+  }
+
+  if (
+    normalized.startsWith("INSERT OR REPLACE INTO atlas_entry_focus") ||
+    normalized.startsWith("INSERT INTO atlas_entry_focus")
+  ) {
+    const [
+      atlas_id,
+      entry_key,
+      tier,
+      reason,
+      material_ids_json,
+      override,
+      updated_at,
+    ] = bound as [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string | null,
+      string,
+    ];
+    state.focus.set(focusKey(atlas_id, entry_key), {
+      atlas_id,
+      entry_key,
+      tier,
+      reason,
+      material_ids_json,
+      override,
+      updated_at,
+    });
     return { success: true, meta: { changes: 1 } } as D1Result;
   }
 
