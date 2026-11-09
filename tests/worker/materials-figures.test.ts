@@ -103,7 +103,7 @@ describe("PDF figure crop materials", () => {
     expect(env.getQueueMessages()).toHaveLength(0);
   });
 
-  it("still enqueues generation for an unrelated image upload", async () => {
+  it("skips free-path generation for an unrelated image upload", async () => {
     const env = createTestEnv();
     seedOwner(env);
     env.seedMaterial({
@@ -127,11 +127,12 @@ describe("PDF figure crop materials", () => {
     );
 
     expect(res.status).toBe(200);
-    expect((await res.json()) as { jobId: string | null }).toMatchObject({
-      jobId: expect.any(String),
+    expect(await res.json()).toMatchObject({
+      jobId: null,
+      manual_occlusion: true,
     });
-    expect(env.getGenerationJobs()).toHaveLength(1);
-    expect(env.getQueueMessages()).toHaveLength(1);
+    expect(env.getGenerationJobs()).toHaveLength(0);
+    expect(env.getQueueMessages()).toHaveLength(0);
   });
 
   it("returns 404 when another user tries to presign figures", async () => {

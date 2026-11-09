@@ -82,6 +82,7 @@ type Props = {
   hubDiyAllowedTypes: CardType[];
   materials: MaterialListItem[];
   onMaterialsChanged: () => void;
+  onCreateOcclusion?: (material: MaterialListItem) => void;
   draftCount: number;
   onReviewDrafts: () => void;
 };
@@ -125,6 +126,7 @@ export default function AddMaterialWorkshop({
   hubDiyAllowedTypes,
   materials,
   onMaterialsChanged,
+  onCreateOcclusion,
   draftCount,
   onReviewDrafts,
 }: Props) {
@@ -452,6 +454,7 @@ export default function AddMaterialWorkshop({
             materials={materials}
             showDeckTitle={false}
             onChanged={onMaterialsChanged}
+            onCreateOcclusion={onCreateOcclusion}
           />
         </Box>
       ) : null}

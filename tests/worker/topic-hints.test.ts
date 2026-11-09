@@ -304,6 +304,43 @@ describe("POST /api/decks/:id/topic-generate", () => {
     expect(res.status).toBe(422);
     expect(env.getGenerationJobs()).toHaveLength(0);
   });
+
+  it("rejects free-path image generate with DIY occlusion guidance", async () => {
+    const env = createTestEnv();
+    seedPasteOwner(env);
+    env.seedMaterial({
+      id: "mat-img",
+      deck_id: "deck-a",
+      kind: "image",
+      r2_key: "materials/deck-a/mat-img.png",
+      filename: "diagram.png",
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/decks/deck-a/topic-generate",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          topic: "labels",
+          materialId: "mat-img",
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(422);
+    const body = (await res.json()) as { error?: string; message?: string };
+    const msg = body.error ?? body.message ?? JSON.stringify(body);
+    expect(msg).toMatch(/Occlusion|Suggest regions|API key/i);
+    expect(env.getGenerationJobs()).toHaveLength(0);
+  });
 });
 
 describe("topicHints consumer injection", () => {

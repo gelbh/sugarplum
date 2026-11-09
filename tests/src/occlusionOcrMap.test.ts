@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  BOX_PADDING_PX,
+  HORIZONTAL_MERGE_FACTOR,
   MAX_REGIONS,
   MIN_AREA_FRACTION,
   MIN_CONFIDENCE,
+  VERTICAL_MERGE_FACTOR,
   mapOcrWordsToRegions,
   type OcrWord,
 } from "../../src/lib/occlusionOcrMap";
@@ -21,6 +24,9 @@ describe("constants", () => {
     expect(MAX_REGIONS).toBe(8);
     expect(MIN_AREA_FRACTION).toBe(0.0004);
     expect(MIN_CONFIDENCE).toBe(40);
+    expect(BOX_PADDING_PX).toBe(4);
+    expect(HORIZONTAL_MERGE_FACTOR).toBe(1.5);
+    expect(VERTICAL_MERGE_FACTOR).toBe(0.8);
   });
 });
 
@@ -28,7 +34,7 @@ describe("mapOcrWordsToRegions", () => {
   const imageW = 1000;
   const imageH = 800;
 
-  it("normalizes pixel bbox to 0–1 x, y, w, h with cleaned label", () => {
+  it("normalizes pixel bbox to 0–1 x, y, w, h with cleaned label and padding", () => {
     const regions = mapOcrWordsToRegions(
       [
         word({
@@ -44,10 +50,10 @@ describe("mapOcrWordsToRegions", () => {
     expect(regions).toEqual([
       {
         id: "r1",
-        x: 0.1,
-        y: 0.25,
-        w: 0.2,
-        h: 0.25,
+        x: (100 - BOX_PADDING_PX) / imageW,
+        y: (200 - BOX_PADDING_PX) / imageH,
+        w: (200 + 2 * BOX_PADDING_PX) / imageW,
+        h: (200 + 2 * BOX_PADDING_PX) / imageH,
         label: "Femur",
       },
     ]);
@@ -130,6 +136,75 @@ describe("mapOcrWordsToRegions", () => {
     expect(regions.map((r) => r.label)).toEqual(["Na+", "-5"]);
   });
 
+  it("merges adjacent words on the same line into one region", () => {
+    const regions = mapOcrWordsToRegions(
+      [
+        word({
+          text: "Superior",
+          bbox: { x0: 100, y0: 100, x1: 200, y1: 140 },
+        }),
+        word({
+          text: "vena",
+          bbox: { x0: 210, y0: 102, x1: 280, y1: 138 },
+        }),
+        word({
+          text: "cava",
+          bbox: { x0: 290, y0: 100, x1: 360, y1: 140 },
+        }),
+      ],
+      imageW,
+      imageH,
+    );
+
+    expect(regions).toHaveLength(1);
+    expect(regions[0]?.label).toBe("Superior vena cava");
+    expect(regions[0]?.x).toBeCloseTo((100 - BOX_PADDING_PX) / imageW);
+    expect(regions[0]?.w).toBeCloseTo((260 + 2 * BOX_PADDING_PX) / imageW);
+  });
+
+  it("vertically merges nearby lines into one multi-line label", () => {
+    const regions = mapOcrWordsToRegions(
+      [
+        word({
+          text: "Left",
+          bbox: { x0: 100, y0: 100, x1: 160, y1: 130 },
+        }),
+        word({
+          text: "atrium",
+          bbox: { x0: 100, y0: 140, x1: 200, y1: 170 },
+        }),
+      ],
+      imageW,
+      imageH,
+    );
+
+    // Gap 10px; shorter height 30 → 0.8 * 30 = 24 → merge.
+    expect(VERTICAL_MERGE_FACTOR * 30).toBeGreaterThanOrEqual(10);
+    expect(regions).toHaveLength(1);
+    expect(regions[0]?.label).toBe("Left atrium");
+    expect(regions[0]?.y).toBeCloseTo((100 - BOX_PADDING_PX) / imageH);
+    expect(regions[0]?.h).toBeCloseTo((70 + 2 * BOX_PADDING_PX) / imageH);
+  });
+
+  it("does not vertically merge lines separated by a large gap", () => {
+    const regions = mapOcrWordsToRegions(
+      [
+        word({
+          text: "Top",
+          bbox: { x0: 100, y0: 100, x1: 160, y1: 130 },
+        }),
+        word({
+          text: "Bottom",
+          bbox: { x0: 100, y0: 300, x1: 200, y1: 330 },
+        }),
+      ],
+      imageW,
+      imageH,
+    );
+
+    expect(regions.map((r) => r.label)).toEqual(["Top", "Bottom"]);
+  });
+
   it("sorts survivors in reading order (top then left)", () => {
     const regions = mapOcrWordsToRegions(
       [
@@ -159,22 +234,23 @@ describe("mapOcrWordsToRegions", () => {
   });
 
   it("caps output at MAX_REGIONS", () => {
-    const box = { x0: 0, y0: 0, x1: 100, y1: 100 };
+    const tallH = 4000;
     const words = Array.from({ length: 10 }, (_, i) =>
       word({
         text: `w${i}`,
-        bbox: { ...box, y0: i * 110, y1: i * 110 + 100 },
+        // Large gaps so lines do not vertically merge.
+        bbox: { x0: 0, y0: i * 200, x1: 100, y1: i * 200 + 100 },
       }),
     );
 
-    const regions = mapOcrWordsToRegions(words, imageW, imageH);
+    const regions = mapOcrWordsToRegions(words, imageW, tallH);
 
     expect(regions).toHaveLength(MAX_REGIONS);
     expect(regions[0]?.id).toBe("r1");
     expect(regions[MAX_REGIONS - 1]?.id).toBe(`r${MAX_REGIONS}`);
   });
 
-  it("clamps boxes that extend past the image edge", () => {
+  it("padding stays within image bounds", () => {
     const regions = mapOcrWordsToRegions(
       [
         word({

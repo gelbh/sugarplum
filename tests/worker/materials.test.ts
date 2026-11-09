@@ -433,6 +433,112 @@ describe("material complete", () => {
     expect(env.getQueueMessages()).toHaveLength(0);
   });
 
+  it("skips free-path image generate and returns manual_occlusion", async () => {
+    const env = createTestEnv();
+    seedUploadingPdf(env);
+    env.seedMaterial({
+      id: "mat-img-free",
+      deck_id: "deck-a",
+      kind: "image",
+      r2_key: "materials/deck-a/mat-img-free.png",
+      filename: "diagram.png",
+      page_count: null,
+      status: "uploading",
+      created_at: "2026-01-02T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/materials/mat-img-free/complete",
+      {
+        method: "POST",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      jobId: null,
+      manual_occlusion: true,
+      status: "ready",
+    });
+    expect(env.getGenerationJobs()).toHaveLength(0);
+    expect(env.getQueueMessages()).toHaveLength(0);
+  });
+
+  it("ready free-path image complete stays DIY (manual_occlusion)", async () => {
+    const env = createTestEnv();
+    seedUploadingPdf(env);
+    env.seedMaterial({
+      id: "mat-img-ready",
+      deck_id: "deck-a",
+      kind: "image",
+      r2_key: "materials/deck-a/mat-img-ready.png",
+      filename: "diagram.png",
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-02T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/materials/mat-img-ready/complete",
+      {
+        method: "POST",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      jobId: null,
+      manual_occlusion: true,
+      status: "ready",
+    });
+    expect(env.getGenerationJobs()).toHaveLength(0);
+  });
+
+  it("enqueues image generate when the owner has a BYO secret", async () => {
+    const env = createTestEnv();
+    seedUploadingPdf(env);
+    env.seedUserSecret({
+      user_id: "user-a",
+      provider: "openai",
+      ciphertext: "packed",
+      model: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedMaterial({
+      id: "mat-img-byo",
+      deck_id: "deck-a",
+      kind: "image",
+      r2_key: "materials/deck-a/mat-img-byo.png",
+      filename: "diagram.png",
+      page_count: null,
+      status: "uploading",
+      created_at: "2026-01-02T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/materials/mat-img-byo/complete",
+      {
+        method: "POST",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      jobId: string | null;
+      manual_occlusion?: boolean;
+    };
+    expect(body.jobId).toBeTruthy();
+    expect(body.manual_occlusion).toBeUndefined();
+    expect(env.getGenerationJobs()).toHaveLength(1);
+  });
+
   it("rejects unknown figureExtractMode with 400", async () => {
     const env = createTestEnv();
     seedUploadingPdf(env);

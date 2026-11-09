@@ -223,7 +223,7 @@ describe("auth turnstile", () => {
     expect(res.status).toBe(403);
   });
 
-  it("register rejects success without matching action", async () => {
+  it("register allows siteverify success when action omitted (dummy keys)", async () => {
     const env = createTestEnv();
     stubSiteverify({ success: true });
     const res = await app.request(
@@ -233,6 +233,25 @@ describe("auth turnstile", () => {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           email: "act@example.com",
+          password: "long-enough-password",
+          turnstileToken: DUMMY_TURNSTILE_TOKEN,
+        }),
+      },
+      env,
+    );
+    expect(res.status).toBe(201);
+  });
+
+  it("register rejects siteverify success with wrong action", async () => {
+    const env = createTestEnv();
+    stubSiteverify({ success: true, action: "login" });
+    const res = await app.request(
+      "/api/auth/register",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email: "wrong-act@example.com",
           password: "long-enough-password",
           turnstileToken: DUMMY_TURNSTILE_TOKEN,
         }),

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  canCreateOcclusionFromMaterial,
   canGenerateMoreFromMaterial,
   isFigureMaterial,
   materialDisplayName,
@@ -23,6 +24,37 @@ describe("materialActions", () => {
     ).toBe(false);
     expect(
       canGenerateMoreFromMaterial({ kind: "pdf", status: "uploading" }),
+    ).toBe(false);
+  });
+
+  it("allows DIY occlusion for ready non-figure images with an r2 key", () => {
+    expect(
+      canCreateOcclusionFromMaterial({
+        kind: "image",
+        status: "ready",
+        r2_key: "materials/d/img.png",
+      }),
+    ).toBe(true);
+    expect(
+      canCreateOcclusionFromMaterial({
+        kind: "image",
+        status: "ready",
+        r2_key: "materials/d/figures/pdf-1/0.png",
+      }),
+    ).toBe(false);
+    expect(
+      canCreateOcclusionFromMaterial({
+        kind: "image",
+        status: "uploading",
+        r2_key: "materials/d/img.png",
+      }),
+    ).toBe(false);
+    expect(
+      canCreateOcclusionFromMaterial({
+        kind: "pdf",
+        status: "ready",
+        r2_key: "materials/d/a.pdf",
+      }),
     ).toBe(false);
   });
 
