@@ -168,6 +168,8 @@ settingsRoutes.put("/study", async (c) => {
     introBudget?: unknown;
     reviewBudget?: unknown;
     rFloor?: unknown;
+    desiredRetention?: unknown;
+    enableFuzz?: unknown;
   };
   try {
     body = await c.req.json();

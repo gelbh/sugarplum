@@ -129,6 +129,8 @@ type UserStudyPrefsRow = {
   intro_budget: number;
   review_budget: number;
   r_floor: number;
+  desired_retention: number;
+  enable_fuzz: number;
   updated_at: string;
 };
 
@@ -515,6 +517,8 @@ export function createTestEnv(opts?: {
                 intro_budget: row.intro_budget,
                 review_budget: row.review_budget,
                 r_floor: row.r_floor,
+                desired_retention: row.desired_retention,
+                enable_fuzz: row.enable_fuzz,
                 updated_at: row.updated_at,
               } as T)
             : null;
@@ -929,6 +933,8 @@ export function createTestEnv(opts?: {
                 intro_budget: row.intro_budget,
                 review_budget: row.review_budget,
                 r_floor: row.r_floor,
+                desired_retention: row.desired_retention,
+                enable_fuzz: row.enable_fuzz,
               } as T)
             : null;
         }
@@ -3284,13 +3290,30 @@ export function createTestEnv(opts?: {
           const had = userSecrets.delete(id);
           return { success: true, meta: { changes: had ? 1 : 0 } } as D1Result;
         } else if (normalized.startsWith("INSERT INTO user_study_prefs")) {
-          const [user_id, intro_budget, review_budget, r_floor, updated_at] =
-            bound as [string, number, number, number, string];
+          const [
+            user_id,
+            intro_budget,
+            review_budget,
+            r_floor,
+            desired_retention,
+            enable_fuzz,
+            updated_at,
+          ] = bound as [
+            string,
+            number,
+            number,
+            number,
+            number,
+            number,
+            string,
+          ];
           userStudyPrefs.set(user_id, {
             user_id,
             intro_budget,
             review_budget,
             r_floor,
+            desired_retention,
+            enable_fuzz,
             updated_at,
           });
         } else if (normalized.startsWith("INSERT INTO user_study_day")) {
