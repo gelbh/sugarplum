@@ -187,7 +187,7 @@ describe("guest store", () => {
     }
   });
 
-  it("guestSubjectComposition all-new → null avg and 0 etk", () => {
+  it("guestSubjectComposition all-new → avg 0 and 0 etk", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(COMPOSITION_NOW);
     try {
@@ -209,9 +209,9 @@ describe("guest store", () => {
         total: 2,
         graduated: 0,
         graduatedPct: 0,
-        avgRetrievability: null,
+        avgRetrievability: 0,
         etk: 0,
-        recallCardCount: 0,
+        recallCardCount: 2,
       });
     } finally {
       vi.useRealTimers();

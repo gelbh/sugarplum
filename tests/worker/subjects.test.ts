@@ -377,7 +377,7 @@ describe("GET /api/subjects/:id/composition", () => {
     });
   });
 
-  it("all New / no last_review → null avg and 0 etk", async () => {
+  it("all New / no last_review → avg 0 and 0 etk", async () => {
     const env = createTestEnv();
     seedOwner(env);
     env.seedSubject({
@@ -411,9 +411,9 @@ describe("GET /api/subjects/:id/composition", () => {
       total: 2,
       graduated: 0,
       graduatedPct: 0,
-      avgRetrievability: null,
+      avgRetrievability: 0,
       etk: 0,
-      recallCardCount: 0,
+      recallCardCount: 2,
     });
   });
 });

@@ -21,8 +21,6 @@ export default function SubjectKnowledgeBar({ knowledge }: Props) {
     );
   }
 
-  const showReviewedClause = knowledge.recallCardCount < knowledge.total;
-
   return (
     <Stack spacing={0.75} sx={{ mt: 1.5 }}>
       <CompositionSpark
@@ -45,11 +43,8 @@ export default function SubjectKnowledgeBar({ knowledge }: Props) {
       {knowledge.avgRetrievability != null ? (
         <Typography variant="caption" color="text.secondary">
           Estimated recall now:{" "}
-          {Math.round(100 * knowledge.avgRetrievability)}%
-          {showReviewedClause
-            ? ` of ${knowledge.recallCardCount} reviewed`
-            : ""}{" "}
-          · ~{formatEtkCards(knowledge.etk)} cards
+          {Math.round(100 * knowledge.avgRetrievability)}% · ~
+          {formatEtkCards(knowledge.etk)} cards
         </Typography>
       ) : null}
     </Stack>

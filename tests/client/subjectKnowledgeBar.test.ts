@@ -34,7 +34,7 @@ function renderBar(knowledge: SubjectKnowledge): HTMLDivElement {
 }
 
 describe("SubjectKnowledgeBar recall caption", () => {
-  it("New-heavy with recall → of N reviewed", () => {
+  it("New-heavy → pct without of-N reviewed", () => {
     const host = renderBar({
       ...base,
       new: 8,
@@ -42,17 +42,18 @@ describe("SubjectKnowledgeBar recall caption", () => {
       total: 10,
       graduated: 2,
       graduatedPct: 20,
-      avgRetrievability: 0.84,
+      avgRetrievability: 0.168,
       etk: 1.68,
-      recallCardCount: 2,
+      recallCardCount: 10,
     });
     expect(host.textContent).toMatch(
-      /Estimated recall now:\s*84%\s*of\s*2\s*reviewed/,
+      /Estimated recall now:\s*17%\s*·\s*~1\.7 cards/,
     );
+    expect(host.textContent).not.toMatch(/reviewed/);
     host.remove();
   });
 
-  it("all reviewed → no of-N clause", () => {
+  it("all reviewed → estimated recall line", () => {
     const host = renderBar({
       ...base,
       young: 2,
@@ -63,8 +64,26 @@ describe("SubjectKnowledgeBar recall caption", () => {
       etk: 1,
       recallCardCount: 2,
     });
-    expect(host.textContent).toMatch(/Estimated recall now:\s*50%/);
+    expect(host.textContent).toMatch(
+      /Estimated recall now:\s*50%\s*·\s*~1 cards/,
+    );
     expect(host.textContent).not.toMatch(/reviewed/);
+    host.remove();
+  });
+
+  it("all-New with avg 0 → show 0% recall line", () => {
+    const host = renderBar({
+      ...base,
+      new: 4,
+      total: 4,
+      graduatedPct: 0,
+      avgRetrievability: 0,
+      etk: 0,
+      recallCardCount: 4,
+    });
+    expect(host.textContent).toMatch(
+      /Estimated recall now:\s*0%\s*·\s*~0 cards/,
+    );
     host.remove();
   });
 
