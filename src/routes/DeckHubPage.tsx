@@ -2,7 +2,6 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type FormEvent,
 } from "react";
@@ -28,9 +27,7 @@ import CardsWorkshop from "../deckHub/CardsWorkshop";
 import DeckHubTitleHeader from "../deckHub/DeckHubTitleHeader";
 import DraftsWorkshop from "../deckHub/DraftsWorkshop";
 import MissionBoard, { type MissionTileId } from "../deckHub/MissionBoard";
-import StudyReadySheet, {
-  type StudyReadySummary,
-} from "../deckHub/StudyReadySheet";
+import StudyReadySheet from "../deckHub/StudyReadySheet";
 import WorkshopShell from "../deckHub/WorkshopShell";
 import {
   popWorkshop,
@@ -38,13 +35,15 @@ import {
   replaceWorkshop,
   type WorkshopFrame,
 } from "../deckHub/workshopStack";
+import { useCreateCardController } from "../deckHub/useCreateCardController";
+import { useAddMaterialWorkshop } from "../deckHub/useAddMaterialWorkshop";
+import { useCardsWorkshop } from "../deckHub/useCardsWorkshop";
+import { useStudyReadySheet } from "../deckHub/useStudyReadySheet";
 import "../deckHub/deckHubMotion.css";
 import {
   ApiError,
   apkgFilenameForDeckTitle,
-  archiveCard,
   clearCover,
-  createDeckCard,
   createDeckExport,
   deckStats,
   deleteDeck,
@@ -52,25 +51,17 @@ import {
   listDeckCards,
   listDeckMaterials,
   listDecks,
-  listDueCards,
   listJobsWithDrafts,
   listSubjects,
   me,
   moveCard,
-  pasteMaterial,
   patchCard,
   patchDeck,
-  PPTX_MIME,
   asRegenType,
   cardHasRegenSource,
   regenCard,
   resetCardSchedule,
-  restoreCard,
-  resolveUploadContentType,
   setCover,
-  topicGenerate,
-  uploadMaterialFile,
-  uploadPdfWithFigureCrops,
   type CardDraftView,
   type Deck,
   type DeckStats,
@@ -84,18 +75,7 @@ import DraftCardEditor, {
   type DraftEditorChange,
 } from "../components/DraftCardEditor";
 import { isGuest } from "../guest/session";
-import { guestPasteToCards } from "../guest/pasteToCards";
-import { guestAddAcceptedCards } from "../guest/store";
-import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
-import {
-  isOcclusionFront,
-  starterOcclusionFront,
-} from "../lib/draftCardModel";
-import {
-  collectDeckImageKeys,
-  hubDiyTypes,
-  validateHubCreateCard,
-} from "../lib/hubDiyCreate";
+import { collectDeckImageKeys, hubDiyTypes } from "../lib/hubDiyCreate";
 import { navigate } from "../nav/navigate";
 import {
   formatExportWarnings,
@@ -107,30 +87,6 @@ import { useTrackedOp } from "../progress/useTrackedOp";
 type Props = {
   deckId: string;
 };
-
-function blankHubCreateCard(deckId: string): CardDraftView {
-  return {
-    id: "hub-create-draft",
-    deck_id: deckId,
-    job_id: null,
-    type: "qa",
-    front: "",
-    back: "",
-    provenance: null,
-    status: "draft",
-    created_at: "",
-    updated_at: "",
-  };
-}
-
-const MAX_FILE_BYTES = 25 * 1024 * 1024;
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
-const IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const ALLOWED_UPLOAD_MIMES = new Set([
-  "application/pdf",
-  PPTX_MIME,
-  ...IMAGE_MIMES,
-]);
 
 export default function DeckHubPage({ deckId }: Props) {
   const guest = isGuest();
@@ -167,9 +123,6 @@ export default function DeckHubPage({ deckId }: Props) {
 
   const [moveTarget, setMoveTarget] = useState<CardDraftView | null>(null);
   const [moveAsBatch, setMoveAsBatch] = useState(false);
-  const [studySummaryError, setStudySummaryError] = useState<string | null>(
-    null,
-  );
   const [moveSubjects, setMoveSubjects] = useState<Subject[]>([]);
   const [moveDecks, setMoveDecks] = useState<Deck[]>([]);
   const [moveSubjectId, setMoveSubjectId] = useState("");
@@ -177,53 +130,45 @@ export default function DeckHubPage({ deckId }: Props) {
   const [moveBusy, setMoveBusy] = useState(false);
   const [moveError, setMoveError] = useState<string | null>(null);
 
-  const [createCard, setCreateCard] = useState<CardDraftView>(() =>
-    blankHubCreateCard(deckId),
-  );
-  const [createBusy, setCreateBusy] = useState(false);
-  const [createImageBusy, setCreateImageBusy] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
-  const createImageInputRef = useRef<HTMLInputElement>(null);
-
-  const hubDiyAllowedTypes = hubDiyTypes(guest);
-  const deckImageKeys = useMemo(() => collectDeckImageKeys(cards), [cards]);
-  const createImageKey =
-    createCard.media_r2_keys?.[0] ??
-    (isOcclusionFront(createCard.front) ? createCard.front.image_key : "");
-  const createNeedsImage =
-    !guest &&
-    (createCard.type === "occlusion" || createCard.type === "image_label");
-
-  const [materialTab, setMaterialTab] = useState<
-    "upload" | "paste" | "topic" | "diy"
-  >("upload");
-  const [pasteText, setPasteText] = useState("");
-  const [pasteFilename, setPasteFilename] = useState("");
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [figureFiles, setFigureFiles] = useState<File[]>([]);
-  const [materialBusy, setMaterialBusy] = useState(false);
-  const [readingScan, setReadingScan] = useState(false);
-  const [materialError, setMaterialError] = useState<string | null>(null);
-  const [materialNotice, setMaterialNotice] = useState<string | null>(null);
-
-  const [topicValue, setTopicValue] = useState("");
-  const [topicBusy, setTopicBusy] = useState(false);
-  const [topicError, setTopicError] = useState<string | null>(null);
-
-  const [showArchived, setShowArchived] = useState(false);
-  const [archiveBusyId, setArchiveBusyId] = useState<string | null>(null);
   const [workshopStack, setWorkshopStack] = useState<WorkshopFrame[]>([]);
   const [overflowAnchor, setOverflowAnchor] = useState<null | HTMLElement>(
     null,
   );
-  const [studySummary, setStudySummary] = useState<StudyReadySummary | null>(
-    null,
-  );
-  const [studySummaryLoading, setStudySummaryLoading] = useState(false);
-  const [selectedCardIds, setSelectedCardIds] = useState<Set<string>>(
-    () => new Set(),
-  );
-  const [batchBusy, setBatchBusy] = useState(false);
+
+  const deckImageKeys = useMemo(() => collectDeckImageKeys(cards), [cards]);
+
+  const cardsWorkshop = useCardsWorkshop({
+    setCards,
+    setAcceptedCount,
+    setError,
+    setNotice,
+    editCard,
+    setEditCard,
+  });
+  const {
+    showArchived,
+    setShowArchived,
+    archiveBusyId,
+    selectedCardIds,
+    setSelectedCardIds,
+    batchBusy,
+    clearSelection,
+    onToggleSelect,
+    onSelectAll,
+    onArchiveCard,
+    onRestoreCard,
+    onBatchArchive,
+  } = cardsWorkshop;
+
+  const create = useCreateCardController({
+    deckId,
+    guest,
+    showArchived,
+    setCards,
+    setAcceptedCount,
+    setNotice,
+    setWorkshopStack,
+  });
 
   const { end: endLoad } = useTrackedOp("Loading deck…", {
     trackOnMount: true,
@@ -269,6 +214,16 @@ export default function DeckHubPage({ deckId }: Props) {
       setMaterials([]);
     }
   }, [deckId, guest]);
+
+  const material = useAddMaterialWorkshop({
+    deckId,
+    refreshCards,
+    refreshDraftJobs,
+    refreshMaterials,
+    setWorkshopStack,
+  });
+
+  const study = useStudyReadySheet();
 
   const refreshDeckCover = useCallback(async () => {
     if (guest) {
@@ -368,38 +323,17 @@ export default function DeckHubPage({ deckId }: Props) {
   function openWorkshop(id: MissionTileId) {
     const frame: WorkshopFrame =
       id === "addMaterial"
-        ? { id: "addMaterial", tab: materialTab }
+        ? { id: "addMaterial", tab: material.materialTab }
         : { id };
     setWorkshopStack([frame]);
     if (id === "addMaterial") {
-      setMaterialError(null);
-      setMaterialNotice(null);
-      setTopicError(null);
+      material.resetMaterialMessages();
     }
     if (id === "study" && deck) {
-      setStudySummaryLoading(true);
-      setStudySummary(null);
-      setStudySummaryError(null);
-      void listDueCards({ deckId: deck.id })
-        .then((result) => {
-          setStudySummary({
-            due: result.cards.length,
-            accepted: acceptedCount,
-            introRemaining: result.meta.introRemaining,
-          });
-        })
-        .catch((err) => {
-          setStudySummary(null);
-          setStudySummaryError(
-            err instanceof ApiError
-              ? err.message
-              : "Could not load study counts",
-          );
-        })
-        .finally(() => setStudySummaryLoading(false));
+      study.loadStudySummary(deck.id, acceptedCount);
     }
     if (id === "cards") {
-      setSelectedCardIds(new Set());
+      clearSelection();
     }
   }
 
@@ -409,46 +343,6 @@ export default function DeckHubPage({ deckId }: Props) {
 
   function jumpWorkshop(frame: WorkshopFrame) {
     setWorkshopStack((prev) => replaceWorkshop(prev, frame));
-  }
-
-  async function onArchiveCard(card: CardDraftView) {
-    setArchiveBusyId(card.id);
-    setError(null);
-    try {
-      await archiveCard(card.id);
-      setCards((prev) => prev.filter((c) => c.id !== card.id));
-      setAcceptedCount((n) => Math.max(0, n - 1));
-      if (editCard?.id === card.id) {
-        setEditCard(null);
-      }
-      setNotice("Card archived");
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Could not archive card",
-      );
-    } finally {
-      setArchiveBusyId(null);
-    }
-  }
-
-  async function onRestoreCard(card: CardDraftView) {
-    setArchiveBusyId(card.id);
-    setError(null);
-    try {
-      await restoreCard(card.id);
-      setCards((prev) => prev.filter((c) => c.id !== card.id));
-      setAcceptedCount((n) => n + 1);
-      if (editCard?.id === card.id) {
-        setEditCard(null);
-      }
-      setNotice("Card restored");
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Could not restore card",
-      );
-    } finally {
-      setArchiveBusyId(null);
-    }
   }
 
   async function onRenameSubmit(e?: FormEvent) {
@@ -672,129 +566,6 @@ export default function DeckHubPage({ deckId }: Props) {
     }
   }
 
-  function applyCreateImageKey(key: string) {
-    setCreateCard((prev) => {
-      if (prev.type === "occlusion" && isOcclusionFront(prev.front)) {
-        return {
-          ...prev,
-          media_r2_keys: [key],
-          front: { ...prev.front, image_key: key },
-        };
-      }
-      return { ...prev, media_r2_keys: [key] };
-    });
-  }
-
-  async function onCreateImageUpload(file: File) {
-    setCreateError(null);
-    const contentType = resolveUploadContentType(file);
-    if (!IMAGE_MIMES.has(contentType)) {
-      setCreateError("Use a JPEG, PNG, or WebP image");
-      return;
-    }
-    if (file.size > MAX_IMAGE_BYTES) {
-      setCreateError("Images must be 8MB or smaller");
-      return;
-    }
-    setCreateImageBusy(true);
-    try {
-      const material = await uploadMaterialFile(deckId, file, undefined, {
-        attachOnly: true,
-      });
-      if (!material.r2_key) {
-        setCreateError("Upload did not return an image key");
-        return;
-      }
-      applyCreateImageKey(material.r2_key);
-    } catch (err) {
-      setCreateError(
-        err instanceof ApiError ? err.message : "Could not upload image",
-      );
-    } finally {
-      setCreateImageBusy(false);
-      if (createImageInputRef.current) {
-        createImageInputRef.current.value = "";
-      }
-    }
-  }
-
-  function onCreateChange(next: DraftEditorChange) {
-    setCreateCard((prev) => {
-      const imageKey = prev.media_r2_keys?.[0] ?? "";
-      let front = next.front;
-      let back = next.back;
-      if (
-        next.type === "occlusion" &&
-        typeof front === "string" &&
-        !isOcclusionFront(front)
-      ) {
-        front = starterOcclusionFront(imageKey);
-        back = { answer: "r1" };
-      }
-      return {
-        ...prev,
-        front,
-        back,
-        type: next.type,
-        options: next.options,
-      };
-    });
-  }
-
-  async function onCreateCard(e?: FormEvent) {
-    e?.preventDefault();
-    setCreateError(null);
-    const validated = validateHubCreateCard(createCard);
-    if (!validated.ok) {
-      setCreateError(validated.error);
-      return;
-    }
-    setCreateBusy(true);
-    try {
-      const created = await createDeckCard(deckId, validated.body);
-      if (!showArchived) {
-        setCards((prev) => [...prev, created]);
-      }
-      setAcceptedCount((n) => n + 1);
-      setCreateCard(blankHubCreateCard(deckId));
-      setNotice("Card added");
-      setWorkshopStack((prev) => {
-        const top = prev[prev.length - 1];
-        return top?.id === "createCard" ? popWorkshop(prev) : prev;
-      });
-    } catch (err) {
-      setCreateError(
-        err instanceof ApiError ? err.message : "Could not create card",
-      );
-    } finally {
-      setCreateBusy(false);
-    }
-  }
-
-  async function onBatchArchive() {
-    if (selectedCardIds.size === 0 || showArchived) return;
-    setBatchBusy(true);
-    setError(null);
-    try {
-      const ids = [...selectedCardIds];
-      for (const id of ids) {
-        await archiveCard(id);
-      }
-      setCards((prev) => prev.filter((c) => !selectedCardIds.has(c.id)));
-      setAcceptedCount((n) => Math.max(0, n - ids.length));
-      setSelectedCardIds(new Set());
-      setNotice(
-        ids.length === 1 ? "Card archived" : `${ids.length} cards archived`,
-      );
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Could not archive cards",
-      );
-    } finally {
-      setBatchBusy(false);
-    }
-  }
-
   async function onBatchMoveOpen() {
     if (selectedCardIds.size === 0) return;
     const first = cards.find((c) => selectedCardIds.has(c.id));
@@ -802,45 +573,6 @@ export default function DeckHubPage({ deckId }: Props) {
     await openMove(first, { batch: true });
   }
 
-  async function onGuestPaste(e?: FormEvent) {
-    e?.preventDefault();
-    setMaterialError(null);
-    setMaterialNotice(null);
-    const { cards: pairs, truncated } = guestPasteToCards(pasteText);
-    if (pairs.length === 0) {
-      setMaterialError(
-        "Paste needs clearer paragraphs or Q&A lines (blank line between cards).",
-      );
-      return;
-    }
-    setMaterialBusy(true);
-    try {
-      const added = guestAddAcceptedCards(deckId, pairs);
-      if (added.length === 0) {
-        setMaterialError("Could not save. Try again.");
-        return;
-      }
-      setPasteText("");
-      await refreshCards();
-      const truncNote = truncated
-        ? ` (kept first ${added.length}; paste was longer than the 40-card limit)`
-        : "";
-      setMaterialNotice(`Added ${added.length} local cards${truncNote}`);
-    } catch (err) {
-      if (
-        err instanceof DOMException &&
-        (err.name === "QuotaExceededError" || err.code === 22)
-      ) {
-        setMaterialError(
-          "Browser storage is full. Shorten the paste or clear guest data, then try again.",
-        );
-      } else {
-        setMaterialError("Could not save local cards");
-      }
-    } finally {
-      setMaterialBusy(false);
-    }
-  }
 
   async function onExportAnki() {
     if (!deck || guest) return;
@@ -861,135 +593,6 @@ export default function DeckHubPage({ deckId }: Props) {
       });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Export failed");
-    }
-  }
-
-  async function onTopicGenerate(e?: FormEvent) {
-    e?.preventDefault();
-    const topic = topicValue.trim();
-    if (!topic) {
-      setTopicError("Enter a topic");
-      return;
-    }
-    setTopicBusy(true);
-    setTopicError(null);
-    try {
-      const { jobId } = await topicGenerate(deckId, { topic });
-      setTopicValue("");
-      window.location.assign(`/jobs/${encodeURIComponent(jobId)}/drafts`);
-    } catch (err) {
-      setTopicError(
-        err instanceof ApiError ? err.message : "Could not start generation",
-      );
-    } finally {
-      setTopicBusy(false);
-    }
-  }
-
-  async function onAccountPaste(e?: FormEvent) {
-    e?.preventDefault();
-    setMaterialError(null);
-    setMaterialNotice(null);
-    if (!pasteText.trim()) {
-      setMaterialError("Paste some text first");
-      return;
-    }
-    setMaterialBusy(true);
-    try {
-      const material = await pasteMaterial(deckId, {
-        text: pasteText,
-        ...(pasteFilename.trim() ? { filename: pasteFilename.trim() } : {}),
-      });
-      setPasteText("");
-      setPasteFilename("");
-      if (material.jobId) {
-        window.location.assign(
-          `/jobs/${encodeURIComponent(material.jobId)}/drafts`,
-        );
-        return;
-      }
-      setMaterialNotice(`Saved paste material (${material.status})`);
-      await Promise.all([refreshDraftJobs(), refreshMaterials()]);
-    } catch (err) {
-      setMaterialError(
-        err instanceof ApiError ? err.message : "Could not save paste",
-      );
-    } finally {
-      setMaterialBusy(false);
-    }
-  }
-
-  async function onUploadFile(e?: FormEvent) {
-    e?.preventDefault();
-    setMaterialError(null);
-    setMaterialNotice(null);
-    if (!uploadFile) {
-      setMaterialError("Choose a PDF, PPTX, or image file");
-      return;
-    }
-    const contentType = resolveUploadContentType(uploadFile);
-    if (!ALLOWED_UPLOAD_MIMES.has(contentType)) {
-      setMaterialError(
-        "Only PDF, PPTX, or image (jpeg/png/webp) files are allowed",
-      );
-      return;
-    }
-    if (uploadFile.size > MAX_FILE_BYTES) {
-      setMaterialError("File must be 25MB or smaller");
-      return;
-    }
-    if (IMAGE_MIMES.has(contentType) && uploadFile.size > MAX_IMAGE_BYTES) {
-      setMaterialError("Images for generation must be 8MB or smaller");
-      return;
-    }
-    if (figureFiles.length > MAX_CLIENT_FIGURES) {
-      setMaterialError(`Attach at most ${MAX_CLIENT_FIGURES} figure crops`);
-      return;
-    }
-    for (const figure of figureFiles) {
-      if (resolveUploadContentType(figure) !== "image/png") {
-        setMaterialError("Figure crops must be PNG images");
-        return;
-      }
-      if (figure.size > MAX_IMAGE_BYTES) {
-        setMaterialError("Figure crops must be 8MB or smaller");
-        return;
-      }
-    }
-    setMaterialBusy(true);
-    try {
-      const material =
-        contentType === "application/pdf" && figureFiles.length > 0
-          ? await uploadPdfWithFigureCrops(
-              deckId,
-              uploadFile,
-              figureFiles,
-              undefined,
-              { onScan: () => setReadingScan(true) },
-            )
-          : await uploadMaterialFile(deckId, uploadFile, undefined, {
-              onScan: () => setReadingScan(true),
-            });
-      setUploadFile(null);
-      setFigureFiles([]);
-      if (material.jobId) {
-        setMaterialNotice(
-          `Stored file (${material.status}). Generation started.`,
-        );
-        window.location.assign(
-          `/jobs/${encodeURIComponent(material.jobId)}/drafts`,
-        );
-        return;
-      }
-      setMaterialNotice(`Stored file (${material.status}).`);
-      await Promise.all([refreshDraftJobs(), refreshMaterials()]);
-    } catch (err) {
-      setMaterialError(
-        err instanceof ApiError ? err.message : "Could not upload file",
-      );
-    } finally {
-      setMaterialBusy(false);
-      setReadingScan(false);
     }
   }
 
@@ -1085,48 +688,41 @@ export default function DeckHubPage({ deckId }: Props) {
         {topWorkshop?.id === "addMaterial" ? (
           <AddMaterialWorkshop
             guest={guest}
-            tab={topWorkshop.tab ?? materialTab}
-            onTabChange={(tab) => {
-              setMaterialTab(tab);
-              setWorkshopStack((prev) => {
-                const top = prev[prev.length - 1];
-                if (!top || top.id !== "addMaterial") return prev;
-                return [...prev.slice(0, -1), { ...top, tab }];
-              });
-            }}
-            materialError={materialError}
-            materialNotice={materialNotice}
-            materialBusy={materialBusy}
-            readingScan={readingScan}
-            pasteText={pasteText}
-            onPasteTextChange={setPasteText}
-            pasteFilename={pasteFilename}
-            onPasteFilenameChange={setPasteFilename}
-            onGuestPaste={onGuestPaste}
-            onAccountPaste={onAccountPaste}
-            uploadFile={uploadFile}
-            onUploadFileChange={setUploadFile}
-            figureFiles={figureFiles}
-            onFigureFilesChange={setFigureFiles}
-            onUploadFile={onUploadFile}
-            topicValue={topicValue}
-            onTopicValueChange={setTopicValue}
-            topicBusy={topicBusy}
-            topicError={topicError}
-            onTopicGenerate={onTopicGenerate}
-            createCard={createCard}
-            createBusy={createBusy}
-            createImageBusy={createImageBusy}
-            createError={createError}
-            createNeedsImage={createNeedsImage}
-            createImageKey={createImageKey}
+            tab={topWorkshop.tab ?? material.materialTab}
+            onTabChange={material.onTabChange}
+            materialError={material.materialError}
+            materialNotice={material.materialNotice}
+            materialBusy={material.materialBusy}
+            readingScan={material.readingScan}
+            pasteText={material.pasteText}
+            onPasteTextChange={material.setPasteText}
+            pasteFilename={material.pasteFilename}
+            onPasteFilenameChange={material.setPasteFilename}
+            onGuestPaste={material.onGuestPaste}
+            onAccountPaste={material.onAccountPaste}
+            uploadFile={material.uploadFile}
+            onUploadFileChange={material.setUploadFile}
+            figureFiles={material.figureFiles}
+            onFigureFilesChange={material.setFigureFiles}
+            onUploadFile={material.onUploadFile}
+            topicValue={material.topicValue}
+            onTopicValueChange={material.setTopicValue}
+            topicBusy={material.topicBusy}
+            topicError={material.topicError}
+            onTopicGenerate={material.onTopicGenerate}
+            createCard={create.createCard}
+            createBusy={create.createBusy}
+            createImageBusy={create.createImageBusy}
+            createError={create.createError}
+            createNeedsImage={create.createNeedsImage}
+            createImageKey={create.createImageKey}
             deckImageKeys={deckImageKeys}
-            createImageInputRef={createImageInputRef}
-            onCreateChange={onCreateChange}
-            onCreateCard={onCreateCard}
-            onCreateImageUpload={onCreateImageUpload}
-            applyCreateImageKey={applyCreateImageKey}
-            hubDiyAllowedTypes={hubDiyAllowedTypes}
+            createImageInputRef={create.createImageInputRef}
+            onCreateChange={create.onCreateChange}
+            onCreateCard={create.onCreateCard}
+            onCreateImageUpload={create.onCreateImageUpload}
+            applyCreateImageKey={create.applyCreateImageKey}
+            hubDiyAllowedTypes={create.hubDiyAllowedTypes}
             materials={materials}
             onMaterialsChanged={() => {
               void Promise.all([
@@ -1153,9 +749,9 @@ export default function DeckHubPage({ deckId }: Props) {
           <StudyReadySheet
             deckId={deck.id}
             acceptedCount={acceptedCount}
-            summary={studySummary}
-            loading={studySummaryLoading}
-            error={studySummaryError}
+            summary={study.studySummary}
+            loading={study.studySummaryLoading}
+            error={study.studySummaryError}
           />
         ) : null}
 
@@ -1166,18 +762,9 @@ export default function DeckHubPage({ deckId }: Props) {
             showArchived={showArchived}
             onShowArchivedChange={setShowArchived}
             selectedIds={selectedCardIds}
-            onToggleSelect={(id) => {
-              setSelectedCardIds((prev) => {
-                const next = new Set(prev);
-                if (next.has(id)) next.delete(id);
-                else next.add(id);
-                return next;
-              });
-            }}
-            onSelectAll={() =>
-              setSelectedCardIds(new Set(cards.map((c) => c.id)))
-            }
-            onClearSelection={() => setSelectedCardIds(new Set())}
+            onToggleSelect={onToggleSelect}
+            onSelectAll={() => onSelectAll(cards)}
+            onClearSelection={clearSelection}
             archiveBusyId={archiveBusyId}
             batchBusy={batchBusy}
             onBatchArchive={() => {
@@ -1197,8 +784,7 @@ export default function DeckHubPage({ deckId }: Props) {
               void onRestoreCard(card);
             }}
             onCreateCard={() => {
-              setCreateError(null);
-              setCreateCard(blankHubCreateCard(deckId));
+              create.prepareCreateFrame();
               setWorkshopStack((prev) =>
                 pushWorkshop(prev, { id: "createCard" }),
               );
@@ -1209,19 +795,19 @@ export default function DeckHubPage({ deckId }: Props) {
         {topWorkshop?.id === "createCard" ? (
           <CardsWorkshop
             mode="create"
-            createCard={createCard}
-            createBusy={createBusy}
-            createImageBusy={createImageBusy}
-            createError={createError}
-            createNeedsImage={createNeedsImage}
-            createImageKey={createImageKey}
+            createCard={create.createCard}
+            createBusy={create.createBusy}
+            createImageBusy={create.createImageBusy}
+            createError={create.createError}
+            createNeedsImage={create.createNeedsImage}
+            createImageKey={create.createImageKey}
             deckImageKeys={deckImageKeys}
-            createImageInputRef={createImageInputRef}
-            hubDiyAllowedTypes={hubDiyAllowedTypes}
-            onCreateChange={onCreateChange}
-            onCreateSubmit={onCreateCard}
-            onCreateImageUpload={onCreateImageUpload}
-            applyCreateImageKey={applyCreateImageKey}
+            createImageInputRef={create.createImageInputRef}
+            hubDiyAllowedTypes={create.hubDiyAllowedTypes}
+            onCreateChange={create.onCreateChange}
+            onCreateSubmit={create.onCreateCard}
+            onCreateImageUpload={create.onCreateImageUpload}
+            applyCreateImageKey={create.applyCreateImageKey}
           />
         ) : null}
       </WorkshopShell>
@@ -1313,7 +899,7 @@ export default function DeckHubPage({ deckId }: Props) {
                 card={editCard}
                 disabled={editDialogBusy}
                 onChange={onEditChange}
-                allowedTypes={hubDiyAllowedTypes}
+                allowedTypes={hubDiyTypes(guest)}
                 regenAction={
                   guest
                     ? undefined
