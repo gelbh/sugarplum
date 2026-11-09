@@ -13,6 +13,13 @@ import Typography from "@mui/material/Typography";
 import { ZodError } from "zod";
 import { ApiError } from "../api/client";
 import {
+  diagnosticMirrorForSave,
+  diagnosticOwnershipIssue,
+  diagnosticStageFromStages,
+  hydrateLifecycleDraft,
+} from "../../worker/atlas/lifecycleDiagnostic";
+import LifecycleSwimlane from "./LifecycleSwimlane";
+import {
   PARASITE_GROUPS,
   lifecycleStageSchema,
 } from "../../worker/atlas/templates/parasite";
@@ -26,25 +33,19 @@ import {
   softDeleteEntry,
 } from "./apiSource";
 import { GROUP_LABELS } from "./filter";
-import LifecycleBoard from "./LifecycleBoard";
-import { stageIsDiagnostic } from "./lifecycle";
 import StageListEditor, { type StageDraft } from "./StageListEditor";
 import type { AtlasEntryView, DatasetFields, ParasiteGroup } from "./types";
 
-/** Lift entry-level diagnosticStage into stage.diagnostic so save does not wipe legacy rows. */
-function hydrateLifecycleDraft(
+/** Preview accepts free-text hosts the same way learner overlays do. */
+function previewLifecycleFields(
+  base: DatasetFields,
   stages: StageDraft[],
-  diagnosticStage: string | null,
-): StageDraft[] {
-  return stages.map((s) => ({
-    ...s,
-    diagnostic: stageIsDiagnostic(s, diagnosticStage),
-  }));
-}
-
-function diagnosticStageFromDraft(stages: StageDraft[]): string | null {
-  const flagged = stages.filter((s) => s.diagnostic);
-  return flagged.length === 1 ? flagged[0].name : null;
+): DatasetFields {
+  return {
+    ...base,
+    lifecycleStages: stages as DatasetFields["lifecycleStages"],
+    diagnosticStage: diagnosticStageFromStages(stages),
+  };
 }
 
 type Busy = boolean;
@@ -331,12 +332,7 @@ export function EditLifecycleDialog({
 
   const previewFields = useMemo((): DatasetFields | null => {
     if (!entry) return null;
-    return {
-      ...entry.fields,
-      // Preview accepts free-text hosts the same way learner overlays do.
-      lifecycleStages: stages as DatasetFields["lifecycleStages"],
-      diagnosticStage: diagnosticStageFromDraft(stages),
-    };
+    return previewLifecycleFields(entry.fields, stages);
   }, [entry, stages]);
 
   async function onSubmit(ev: FormEvent) {
@@ -346,9 +342,13 @@ export function EditLifecycleDialog({
     setError(null);
     try {
       const parsed = stages.map((s) => lifecycleStageSchema.parse(s));
-      const diagnosticStages = parsed.filter((s) => s.diagnostic);
-      if (diagnosticStages.length > 1) {
-        setError("At most one diagnostic stage");
+      const ownershipError = diagnosticOwnershipIssue(parsed, null);
+      if (ownershipError) {
+        setError(
+          ownershipError === "at most one diagnostic stage"
+            ? "At most one diagnostic stage"
+            : ownershipError,
+        );
         setBusy(false);
         return;
       }
@@ -360,8 +360,10 @@ export function EditLifecycleDialog({
           return;
         }
       }
-      // Keep entry-level diagnosticStage in sync with the stage flag (one owner on write).
-      const diagnosticStage = diagnosticStageFromDraft(parsed);
+      const diagnosticStage = diagnosticMirrorForSave(
+        parsed,
+        entry.fields.diagnosticStage,
+      );
       await patchEntry(subjectId, entry.id, {
         fields: {
           lifecycleStages: parsed as DatasetFields["lifecycleStages"],
@@ -418,11 +420,7 @@ export function EditLifecycleDialog({
                 Live preview
               </Typography>
               {previewFields ? (
-                <LifecycleBoard
-                  fields={previewFields}
-                  images={entry?.images}
-                  preview
-                />
+                <LifecycleSwimlane fields={previewFields} compactStepLabel />
               ) : null}
             </Box>
           </Stack>

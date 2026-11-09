@@ -120,15 +120,13 @@ describe("pppBracket and durationLabel", () => {
 });
 
 describe("stageIsDiagnostic", () => {
-  it("prefers the stage flag, else matches diagnosticStage name", () => {
+  it("reads the hydrated stage flag only", () => {
     const f = fields("fasciola-hepatica");
-    expect(stageIsDiagnostic(f.lifecycleStages[0], "egg")).toBe(true);
-    expect(stageIsDiagnostic(f.lifecycleStages[5], "egg")).toBe(false);
+    expect(f.lifecycleStages[0].diagnostic).toBe(true);
+    expect(stageIsDiagnostic(f.lifecycleStages[0])).toBe(true);
+    expect(stageIsDiagnostic(f.lifecycleStages[5])).toBe(false);
     expect(
-      stageIsDiagnostic(
-        { ...f.lifecycleStages[5], diagnostic: true },
-        "egg",
-      ),
+      stageIsDiagnostic({ ...f.lifecycleStages[5], diagnostic: true }),
     ).toBe(true);
   });
 

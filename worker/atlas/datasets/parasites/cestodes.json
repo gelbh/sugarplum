@@ -1135,6 +1135,16 @@
           "license": "Public domain",
           "sourceUrl": "https://commons.wikimedia.org/wiki/File:Gravid_proglottid_from_the_cestode_Taenia_saginata_5259_lores.jpg",
           "isHero": true
+        },
+        {
+          "id": "taenia-saginata-lifecycle",
+          "file": "taenia-saginata-lifecycle.webp",
+          "role": "lifecycle_diagram",
+          "caption": "Linear host-band lifecycle (pilot diagram)",
+          "credit": "Sugarplum",
+          "license": "CC0-1.0",
+          "sourceUrl": "https://github.com/gelbh/sugarplum",
+          "isHero": false
         }
       ]
     },
