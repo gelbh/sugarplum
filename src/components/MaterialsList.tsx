@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -10,13 +10,18 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
 import FormControl from "@mui/material/FormControl";
+import IconButton from "@mui/material/IconButton";
 import InputLabel from "@mui/material/InputLabel";
 import Link from "@mui/material/Link";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import {
   ApiError,
   deleteMaterial,
@@ -44,10 +49,42 @@ export type MaterialsListProps = {
   onChanged: () => void;
 };
 
+const KIND_ORDER = ["pdf", "pptx", "paste", "image", "topic"];
+
 function formatMaterialDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleDateString(undefined, { dateStyle: "medium" });
+}
+
+function kindLabel(kind: string): string {
+  if (kind === "pdf") return "PDF";
+  if (kind === "pptx") return "PPTX";
+  if (kind === "paste") return "Paste";
+  if (kind === "image") return "Image";
+  if (kind === "topic") return "Topic";
+  return kind;
+}
+
+function groupMaterials(
+  materials: MaterialListItem[],
+): { kind: string; rows: MaterialListItem[] }[] {
+  const byKind = new Map<string, MaterialListItem[]>();
+  for (const material of materials) {
+    const key = material.kind || "other";
+    const list = byKind.get(key);
+    if (list) list.push(material);
+    else byKind.set(key, [material]);
+  }
+  const keys = [...byKind.keys()].sort((a, b) => {
+    const ai = KIND_ORDER.indexOf(a);
+    const bi = KIND_ORDER.indexOf(b);
+    const ao = ai === -1 ? KIND_ORDER.length : ai;
+    const bo = bi === -1 ? KIND_ORDER.length : bi;
+    if (ao !== bo) return ao - bo;
+    return a.localeCompare(b);
+  });
+  return keys.map((kind) => ({ kind, rows: byKind.get(kind) ?? [] }));
 }
 
 export default function MaterialsList({
@@ -69,6 +106,8 @@ export default function MaterialsList({
   const [topicError, setTopicError] = useState<string | null>(null);
   const [roleBusyId, setRoleBusyId] = useState<string | null>(null);
   const [roleError, setRoleError] = useState<string | null>(null);
+
+  const groups = useMemo(() => groupMaterials(materials), [materials]);
 
   async function confirmDelete() {
     if (!deleteTarget) return;
@@ -161,120 +200,155 @@ export default function MaterialsList({
           {roleError}
         </Alert>
       ) : null}
-      <Stack
-        component="ul"
-        spacing={0}
-        divider={<Divider flexItem />}
-        sx={{ m: 0, p: 0, listStyle: "none" }}
-      >
-        {materials.map((material) => {
-          const name = materialDisplayName(material.filename);
-          const deckHref = `/library/decks/${encodeURIComponent(material.deck_id)}`;
-          const canGenerate = canGenerateMoreFromMaterial(material);
-          const roleValue = material.source_role ?? "lecture";
-          const roleBusy = roleBusyId === material.id;
-          return (
-            <Box
-              component="li"
-              key={material.id}
+      <Stack spacing={2}>
+        {groups.map(({ kind, rows }) => (
+          <Box key={kind}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
               sx={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 1,
-                py: 1,
-                flexWrap: "wrap",
+                display: "block",
+                fontWeight: 600,
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+                mb: 0.5,
               }}
             >
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Stack
-                  direction="row"
-                  spacing={0.75}
-                  alignItems="center"
-                  flexWrap="wrap"
-                  useFlexGap
-                >
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    {name}
-                  </Typography>
-                  {isFigureMaterial(material.r2_key) ? (
-                    <Chip size="small" label="Figure" variant="outlined" />
-                  ) : null}
-                </Stack>
-                <Typography variant="caption" color="text.secondary">
-                  {material.kind}
-                  {" · "}
-                  {material.status}
-                  {" · "}
-                  {formatMaterialDate(material.created_at)}
-                </Typography>
-                {showDeckTitle ? (
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    component="div"
-                  >
-                    <Link
-                      href={deckHref}
-                      underline="hover"
-                      color="primary"
-                      onClick={(ev) => {
-                        ev.preventDefault();
-                        navigate(deckHref);
-                      }}
-                    >
-                      {material.deck_title?.trim() || "Untitled deck"}
-                    </Link>
-                  </Typography>
-                ) : null}
-              </Box>
-              <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-                <FormControl size="small" sx={{ minWidth: 132 }}>
-                  <InputLabel id={`source-role-${material.id}`}>Role</InputLabel>
-                  <Select
-                    labelId={`source-role-${material.id}`}
-                    label="Role"
-                    value={roleValue}
-                    disabled={roleBusy}
-                    onChange={(ev) => {
-                      void onSourceRoleChange(
-                        material,
-                        ev.target.value as SourceRole,
-                      );
+              {kindLabel(kind)}
+            </Typography>
+            <Stack
+              component="ul"
+              spacing={0}
+              divider={<Divider flexItem />}
+              sx={{ m: 0, p: 0, listStyle: "none" }}
+            >
+              {rows.map((material) => {
+                const name = materialDisplayName(material.filename);
+                const deckHref = `/library/decks/${encodeURIComponent(material.deck_id)}`;
+                const canGenerate = canGenerateMoreFromMaterial(material);
+                const roleValue = material.source_role ?? "lecture";
+                const roleBusy = roleBusyId === material.id;
+                return (
+                  <Box
+                    component="li"
+                    key={material.id}
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 1,
+                      py: 1.25,
+                      flexWrap: "wrap",
                     }}
                   >
-                    {SOURCE_ROLES.map((role) => (
-                      <MenuItem key={role} value={role}>
-                        {SOURCE_ROLE_LABELS[role]}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <Button
-                  size="small"
-                  component="a"
-                  href={downloadMaterialUrl(material.id)}
-                >
-                  Download
-                </Button>
-                {canGenerate ? (
-                  <Button size="small" onClick={() => openGenerate(material)}>
-                    Generate more
-                  </Button>
-                ) : null}
-                <Button
-                  size="small"
-                  color="error"
-                  onClick={() => {
-                    setDeleteError(null);
-                    setDeleteTarget(material);
-                  }}
-                >
-                  Delete
-                </Button>
-              </Stack>
-            </Box>
-          );
-        })}
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Stack
+                        direction="row"
+                        spacing={0.75}
+                        alignItems="center"
+                        flexWrap="wrap"
+                        useFlexGap
+                      >
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          {name}
+                        </Typography>
+                        {isFigureMaterial(material.r2_key) ? (
+                          <Chip
+                            size="small"
+                            label="Figure"
+                            variant="outlined"
+                          />
+                        ) : null}
+                      </Stack>
+                      <Typography variant="caption" color="text.secondary">
+                        {material.status}
+                        {" · "}
+                        {formatMaterialDate(material.created_at)}
+                      </Typography>
+                      {showDeckTitle ? (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          component="div"
+                        >
+                          <Link
+                            href={deckHref}
+                            underline="hover"
+                            color="primary"
+                            onClick={(ev) => {
+                              ev.preventDefault();
+                              navigate(deckHref);
+                            }}
+                          >
+                            {material.deck_title?.trim() || "Untitled deck"}
+                          </Link>
+                        </Typography>
+                      ) : null}
+                    </Box>
+                    <FormControl size="small" sx={{ minWidth: 132 }}>
+                      <InputLabel id={`source-role-${material.id}`}>
+                        Role
+                      </InputLabel>
+                      <Select
+                        labelId={`source-role-${material.id}`}
+                        label="Role"
+                        value={roleValue}
+                        disabled={roleBusy}
+                        onChange={(ev) => {
+                          void onSourceRoleChange(
+                            material,
+                            ev.target.value as SourceRole,
+                          );
+                        }}
+                      >
+                        {SOURCE_ROLES.map((role) => (
+                          <MenuItem key={role} value={role}>
+                            {SOURCE_ROLE_LABELS[role]}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    <Stack direction="row" spacing={0.25}>
+                      <Tooltip title={`Download ${name}`}>
+                        <IconButton
+                          size="small"
+                          component="a"
+                          href={downloadMaterialUrl(material.id)}
+                          aria-label={`Download ${name}`}
+                        >
+                          <DownloadOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      {canGenerate ? (
+                        <Tooltip title={`Generate more from ${name}`}>
+                          <IconButton
+                            size="small"
+                            aria-label={`Generate more from ${name}`}
+                            onClick={() => openGenerate(material)}
+                          >
+                            <AddCircleOutlineIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      ) : null}
+                      <Tooltip title={`Delete ${name}`}>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          aria-label={`Delete ${name}`}
+                          onClick={() => {
+                            setDeleteError(null);
+                            setDeleteTarget(material);
+                          }}
+                        >
+                          <DeleteOutlineIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
+                  </Box>
+                );
+              })}
+            </Stack>
+          </Box>
+        ))}
       </Stack>
 
       <Dialog
