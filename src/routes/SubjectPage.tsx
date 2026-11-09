@@ -35,7 +35,6 @@ import {
   me,
   patchDeck,
   patchSubject,
-  setCover,
   subjectComposition,
   type Deck,
   type DeckStats,
@@ -163,23 +162,6 @@ export default function SubjectPage({ subjectId }: Props) {
       cancelled = true;
     };
   }, [endLoad, load]);
-
-  async function onPickCover(photoId: string) {
-    if (!coverPicker) return;
-    const row = await setCover(
-      coverPicker.ownerKind,
-      coverPicker.ownerId,
-      photoId,
-    );
-    setCovers((prev) => [
-      ...prev.filter(
-        (cover) =>
-          cover.ownerKind !== row.ownerKind || cover.ownerId !== row.ownerId,
-      ),
-      row,
-    ]);
-    setCoverPicker(null);
-  }
 
   async function onClearCover() {
     if (!coverPicker) return;
@@ -693,8 +675,7 @@ export default function SubjectPage({ subjectId }: Props) {
           ownerKind={coverPicker?.ownerKind ?? "deck"}
           ownerId={coverPicker?.ownerId ?? ""}
           onClose={() => setCoverPicker(null)}
-          onPick={onPickCover}
-          onUploaded={(row) => {
+          onSaved={(row) => {
             setCovers((prev) => [
               row,
               ...prev.filter(

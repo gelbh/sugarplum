@@ -45,7 +45,6 @@ import {
   listSubjects,
   me,
   patchSubject,
-  setCover,
   type Deck,
   type JobListItem,
   type MaterialListItem,
@@ -294,23 +293,6 @@ export default function LibraryPage() {
     } finally {
       setDialogBusy(false);
     }
-  }
-
-  async function onPickCover(photoId: string) {
-    if (!coverPicker) return;
-    const row = await setCover(
-      coverPicker.ownerKind,
-      coverPicker.ownerId,
-      photoId,
-    );
-    setCovers((prev) => [
-      ...prev.filter(
-        (cover) =>
-          cover.ownerKind !== row.ownerKind || cover.ownerId !== row.ownerId,
-      ),
-      row,
-    ]);
-    setCoverPicker(null);
   }
 
   async function onClearCover() {
@@ -1004,8 +986,7 @@ export default function LibraryPage() {
           ownerKind={coverPicker?.ownerKind ?? "subject"}
           ownerId={coverPicker?.ownerId ?? ""}
           onClose={() => setCoverPicker(null)}
-          onPick={onPickCover}
-          onUploaded={(row) => {
+          onSaved={(row) => {
             setCovers((prev) => [
               row,
               ...prev.filter(

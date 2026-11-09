@@ -4,7 +4,12 @@
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiError, searchCovers, uploadCoverFile } from "../../src/api/client";
+import {
+  ApiError,
+  searchCovers,
+  setCover,
+  uploadCoverFile,
+} from "../../src/api/client";
 import CoverPickerDialog from "../../src/components/CoverPickerDialog";
 
 vi.mock("../../src/api/client", () => {
@@ -21,6 +26,7 @@ vi.mock("../../src/api/client", () => {
   return {
     ApiError,
     searchCovers: vi.fn(),
+    setCover: vi.fn(),
     uploadCoverFile: vi.fn(),
   };
 });
@@ -40,7 +46,7 @@ afterEach(() => {
 
 async function renderDialog(
   props?: Partial<{
-    onUploaded: (row: unknown) => void;
+    onSaved: (row: unknown) => void;
   }>,
 ): Promise<void> {
   const host = document.createElement("div");
@@ -55,8 +61,7 @@ async function renderDialog(
         ownerKind: "subject",
         ownerId: "sub-1",
         onClose: () => {},
-        onPick: () => {},
-        onUploaded: props?.onUploaded ?? (() => {}),
+        onSaved: props?.onSaved ?? (() => {}),
         onClear: () => {},
       }),
     );
@@ -120,8 +125,8 @@ describe("CoverPickerDialog", () => {
       r2Key: "covers/user-a/subject/sub-1/img-1.jpg",
     };
     vi.mocked(uploadCoverFile).mockResolvedValueOnce(uploaded);
-    const onUploaded = vi.fn();
-    await renderDialog({ onUploaded });
+    const onSaved = vi.fn();
+    await renderDialog({ onSaved });
 
     const fileInput = document.body.querySelector(
       'input[type="file"]',
@@ -134,6 +139,35 @@ describe("CoverPickerDialog", () => {
       fileInput.dispatchEvent(new Event("change", { bubbles: true }));
     });
     expect(uploadCoverFile).toHaveBeenCalledWith("subject", "sub-1", file);
-    expect(onUploaded).toHaveBeenCalledWith(uploaded);
+    expect(onSaved).toHaveBeenCalledWith(uploaded);
+  });
+
+  it("saves an Unsplash pick through setCover", async () => {
+    const photo = {
+      photoId: "p1",
+      imageUrl: "https://images.unsplash.com/p1",
+      photographerName: "Ada",
+      photographerUrl: "https://unsplash.com/@ada",
+      photoHtmlUrl: "https://unsplash.com/photos/p1",
+      source: "unsplash" as const,
+      r2Key: null,
+    };
+    const saved = {
+      ...photo,
+      ownerKind: "subject" as const,
+      ownerId: "sub-1",
+    };
+    vi.mocked(searchCovers).mockResolvedValueOnce([photo]);
+    vi.mocked(setCover).mockResolvedValueOnce(saved);
+    const onSaved = vi.fn();
+    await renderDialog({ onSaved });
+
+    await act(async () => {
+      document.body
+        .querySelector<HTMLButtonElement>('button[aria-label="Photo by Ada"]')
+        ?.click();
+    });
+    expect(setCover).toHaveBeenCalledWith("subject", "sub-1", "p1");
+    expect(onSaved).toHaveBeenCalledWith(saved);
   });
 });
