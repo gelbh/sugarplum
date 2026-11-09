@@ -972,7 +972,7 @@ describe("guest store", () => {
     expect(guestGetStudyPrefs(storage)).toEqual({
       introBudget: 20,
       reviewBudget: 200,
-      rFloor: 0.8,
+      rFloor: 0.9,
       desiredRetention: 0.9,
       enableFuzz: true,
     });
