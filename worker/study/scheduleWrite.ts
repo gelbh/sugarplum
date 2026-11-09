@@ -19,7 +19,6 @@ export type ScheduleWriteCols = {
   last_review: string | null;
 };
 
-/** Map numeric review rating to ts-fsrs Grade; null when not 1–4. */
 export function ratingToGrade(rating: number): Grade | null {
   switch (rating) {
     case 1:
