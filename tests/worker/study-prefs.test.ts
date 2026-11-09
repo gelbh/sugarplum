@@ -1,7 +1,18 @@
 import { describe, it, expect } from "vitest";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
+import { clampStudyPrefs } from "../../src/study/policyPrefs";
 import { createTestEnv } from "./test-env";
+
+describe("clampStudyPrefs rFloor alias", () => {
+  it("mirrors rFloor to clamped desiredRetention", () => {
+    expect(
+      clampStudyPrefs({ desiredRetention: 0.85, rFloor: 0.5 }).rFloor,
+    ).toBe(0.85);
+    expect(clampStudyPrefs({ desiredRetention: 0.5 }).rFloor).toBe(0.7);
+    expect(clampStudyPrefs({ rFloor: 0.1 }).rFloor).toBe(0.9);
+  });
+});
 
 describe("GET/PUT /api/settings/study", () => {
   function seedUser(env: ReturnType<typeof createTestEnv>) {
@@ -51,13 +62,13 @@ describe("GET/PUT /api/settings/study", () => {
     expect(await getRes.json()).toEqual({
       introBudget: 20,
       reviewBudget: 200,
-      rFloor: 0.8,
+      rFloor: 0.9,
       desiredRetention: 0.9,
       enableFuzz: true,
     });
   });
 
-  it("PUT clamps and round-trips via GET", async () => {
+  it("PUT clamps budgets and mirrors rFloor to desiredRetention", async () => {
     const env = createTestEnv();
     seedUser(env);
 
@@ -81,7 +92,7 @@ describe("GET/PUT /api/settings/study", () => {
     expect(await putRes.json()).toEqual({
       introBudget: 1,
       reviewBudget: 2000,
-      rFloor: 0.5,
+      rFloor: 0.9,
       desiredRetention: 0.9,
       enableFuzz: true,
     });
@@ -95,13 +106,13 @@ describe("GET/PUT /api/settings/study", () => {
     expect(await getRes.json()).toEqual({
       introBudget: 1,
       reviewBudget: 2000,
-      rFloor: 0.5,
+      rFloor: 0.9,
       desiredRetention: 0.9,
       enableFuzz: true,
     });
   });
 
-  it("PUT clamps desiredRetention and enableFuzz", async () => {
+  it("PUT clamps desiredRetention and mirrors rFloor", async () => {
     const env = createTestEnv();
     seedUser(env);
 
@@ -127,13 +138,13 @@ describe("GET/PUT /api/settings/study", () => {
     expect(await putRes.json()).toEqual({
       introBudget: 10,
       reviewBudget: 100,
-      rFloor: 0.8,
+      rFloor: 0.7,
       desiredRetention: 0.7,
       enableFuzz: false,
     });
   });
 
-  it("PUT clamps high intro and low review; high rFloor", async () => {
+  it("PUT clamps high intro and low review; ignores high rFloor input", async () => {
     const env = createTestEnv();
     seedUser(env);
 
@@ -157,7 +168,7 @@ describe("GET/PUT /api/settings/study", () => {
     expect(await putRes.json()).toEqual({
       introBudget: 200,
       reviewBudget: 1,
-      rFloor: 0.99,
+      rFloor: 0.9,
       desiredRetention: 0.9,
       enableFuzz: true,
     });

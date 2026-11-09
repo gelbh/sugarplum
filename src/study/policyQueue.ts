@@ -53,7 +53,7 @@ export type BuildStudyQueueOpts = {
 export const DEFAULT_STUDY_PREFS: StudyPrefs = {
   introBudget: 20,
   reviewBudget: 200,
-  rFloor: 0.8,
+  rFloor: 0.9,
   desiredRetention: 0.9,
   enableFuzz: true,
 };
@@ -122,13 +122,14 @@ function tryDeferral(
 ): { newDue: string } | null {
   if (isLearningOrRelearning(c)) return null;
   if (isOverdue(c, overdueDayStartIso)) return null;
-  if (rNow == null || rNow < prefs.rFloor) return null;
+  const floor = prefs.desiredRetention;
+  if (rNow == null || rNow < floor) return null;
 
   const card = cardFromScheduleRow(c);
   for (let days = 1; days <= 3; days++) {
     const at = new Date(now.getTime() + days * MS_PER_DAY);
     const rLater = retrievability(card, at);
-    if (rLater != null && rLater >= prefs.rFloor) {
+    if (rLater != null && rLater >= floor) {
       return { newDue: addDaysIso(c.due, days) };
     }
   }

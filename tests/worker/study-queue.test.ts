@@ -13,7 +13,7 @@ const LOCAL_DAY_START = "2026-10-28T00:00:00.000Z";
 const DEFAULT_PREFS: StudyPrefs = {
   introBudget: 20,
   reviewBudget: 200,
-  rFloor: 0.8,
+  rFloor: 0.9,
   desiredRetention: 0.9,
   enableFuzz: true,
 };
@@ -211,6 +211,25 @@ describe("buildStudyQueue review deferral", () => {
     expect(result.meta.reviewUsed).toBe(3);
     expect(result.meta.deferredCount).toBe(0);
     expect(result.dueIds).toEqual(["r-0", "r-1", "r-2"]);
+  });
+
+  it("defers using desiredRetention even when rFloor is stale lower", () => {
+    const reviews = Array.from({ length: 5 }, (_, i) =>
+      highRReview(`r-${String(i).padStart(3, "0")}`),
+    );
+    const result = buildStudyQueue(
+      reviews,
+      {
+        ...DEFAULT_PREFS,
+        reviewBudget: 2,
+        rFloor: 0.5,
+        desiredRetention: 0.9,
+      },
+      NOW,
+      DEFAULT_OPTS,
+    );
+    expect(result.meta.deferredCount).toBe(3);
+    expect(result.deferrals).toHaveLength(3);
   });
 
   it("keeps higher again_14d when R and lapses tie under soft budget", () => {
