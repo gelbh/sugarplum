@@ -180,6 +180,23 @@ describe("scanFocus", () => {
     ).toBe("key");
   });
 
+  it("matches hyphenated aliases against spaced page text", () => {
+    const hyphenEntry: FocusEntry = {
+      canonicalName: "Fasciola hepatica",
+      commonName: null,
+      aliases: ["fasciola-hepatica"],
+    };
+    expect(
+      scanFocus(hyphenEntry, [
+        mat({
+          id: "h1",
+          sourceRole: "tutorial",
+          pages: [{ page: 1, text: "Today: fasciola hepatica lifecycle" }],
+        }),
+      ]).tier,
+    ).toBe("key");
+  });
+
   it("matches commonName and aliases for Frequent / Key", () => {
     expect(
       scanFocus(entry, [

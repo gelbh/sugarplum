@@ -49,7 +49,10 @@ type MaterialScanRow = {
   r2_key: string | null;
   filename: string | null;
   source_role: string | null;
+  status: string;
 };
+
+const READY_STATUS = "ready";
 
 type EntryOverlayRow = {
   id: string;
@@ -158,14 +161,16 @@ async function loadSubjectMaterials(
 ): Promise<MaterialScanRow[]> {
   const { results } = await db
     .prepare(
-      `SELECT m.id, m.deck_id, m.kind, m.r2_key, m.filename, m.source_role
+      `SELECT m.id, m.deck_id, m.kind, m.r2_key, m.filename, m.source_role, m.status
        FROM materials m
        INNER JOIN decks d ON d.id = m.deck_id
        WHERE d.subject_id = ?`,
     )
     .bind(subjectId)
     .all<MaterialScanRow>();
-  return (results ?? []).filter((m) => SCAN_KINDS.has(m.kind));
+  return (results ?? []).filter(
+    (m) => SCAN_KINDS.has(m.kind) && m.status === READY_STATUS,
+  );
 }
 
 async function toFocusMaterial(
@@ -250,8 +255,27 @@ export async function refreshAtlasFocus(
   const now = new Date().toISOString();
 
   if (materials.length === 0) {
-    // Final state is empty; delete after computing keep-set (none).
-    for (const entryKey of existing.keys()) {
+    // Keep manual pins when nothing is scannable so Focus PATCH sticks.
+    for (const [entryKey, row] of existing) {
+      if (row.override != null) {
+        await db
+          .prepare(
+            `INSERT OR REPLACE INTO atlas_entry_focus (
+               atlas_id, entry_key, tier, reason, material_ids_json, override, updated_at
+             ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          )
+          .bind(
+            atlasId,
+            entryKey,
+            "standard",
+            "Standard",
+            "[]",
+            row.override,
+            now,
+          )
+          .run();
+        continue;
+      }
       await db
         .prepare(
           `DELETE FROM atlas_entry_focus WHERE atlas_id = ? AND entry_key = ?`,
@@ -301,8 +325,11 @@ export async function refreshAtlasFocus(
       .run();
   }
 
-  for (const entryKey of existing.keys()) {
+  // Preserve overrides for soft-deleted (or otherwise omitted) keys so restore
+  // still sees the pin without a re-pin.
+  for (const [entryKey, row] of existing) {
     if (keep.has(entryKey)) continue;
+    if (row.override != null) continue;
     await db
       .prepare(
         `DELETE FROM atlas_entry_focus WHERE atlas_id = ? AND entry_key = ?`,
@@ -323,11 +350,44 @@ export async function refreshAtlasFocusForDeck(
     .bind(deckId)
     .first<{ subject_id: string | null }>();
   if (!deck?.subject_id) return;
+  await refreshFocusBestEffort(db, env, { subjectId: deck.subject_id });
+}
+
+/** Swallow refresh failures so material/entry writes still succeed. */
+export async function refreshFocusBestEffort(
+  db: D1Database,
+  env: Env,
+  opts: { atlasId: string } | { subjectId: string },
+): Promise<void> {
   try {
-    await refreshAtlasFocus(db, env, { subjectId: deck.subject_id });
+    await refreshAtlasFocus(db, env, opts);
   } catch (err) {
     console.warn("atlas focus refresh failed", err);
   }
+}
+
+/**
+ * Enrich entries with cached Focus; if the cache is empty but the subject has
+ * ready scannable materials, refresh once then reload.
+ */
+export async function listEntriesWithFocus(
+  db: D1Database,
+  env: Env,
+  opts: {
+    atlasId: string;
+    subjectId: string;
+    entries: AtlasEntryView[];
+  },
+): Promise<AtlasEntryView[]> {
+  let focus = await loadFocusMap(db, opts.atlasId);
+  if (focus.size === 0) {
+    const materials = await loadSubjectMaterials(db, opts.subjectId);
+    if (materials.length > 0) {
+      await refreshFocusBestEffort(db, env, { atlasId: opts.atlasId });
+      focus = await loadFocusMap(db, opts.atlasId);
+    }
+  }
+  return enrichEntriesWithFocus(opts.entries, focus);
 }
 
 export async function setFocusOverride(

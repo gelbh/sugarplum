@@ -1160,6 +1160,7 @@ export function createTestEnv(opts?: {
           normalized.includes("m.source_role")
         ) {
           const subjectId = bound[0] as string;
+          const includeStatus = normalized.includes("m.status");
           const rows = [...materials.values()]
             .map((m) => {
               const deck = decks.get(m.deck_id);
@@ -1171,6 +1172,7 @@ export function createTestEnv(opts?: {
                 r2_key: m.r2_key,
                 filename: m.filename,
                 source_role: m.source_role ?? "lecture",
+                ...(includeStatus ? { status: m.status } : {}),
               };
             })
             .filter((row): row is NonNullable<typeof row> => row != null);

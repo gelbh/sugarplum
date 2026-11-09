@@ -221,4 +221,34 @@ describe("materials source_role API", () => {
     );
     expect(patch.status).toBe(400);
   });
+
+  it("rejects a null JSON body on source_role patch", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedMaterial({
+      id: "mat-1",
+      deck_id: "deck-a",
+      kind: "pdf",
+      r2_key: null,
+      filename: "x.pdf",
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+      source_role: "lecture",
+    });
+
+    const patch = await app.request(
+      "/api/materials/mat-1",
+      {
+        method: "PATCH",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: "null",
+      },
+      env,
+    );
+    expect(patch.status).toBe(400);
+  });
 });

@@ -560,9 +560,10 @@ describe("atlas owned-subject routes", () => {
       env,
     );
     const beforeBody = (await before.json()) as { entries: AtlasEntryView[] };
+    // Lazy GET backfills an empty Focus cache from ready materials.
     expect(
       beforeBody.entries.find((e) => e.id === "fasciola-hepatica")?.tier,
-    ).toBeNull();
+    ).toBe("standard");
 
     const patch = await app.request(
       "/api/materials/mat-1",

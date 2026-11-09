@@ -1314,6 +1314,9 @@ materialRoutes.patch("/:id", async (c) => {
   } catch {
     throw new HTTPException(400, { message: "Invalid JSON body" });
   }
+  if (body === null || typeof body !== "object" || Array.isArray(body)) {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
 
   if (!isSourceRole(body.source_role)) {
     throw new HTTPException(400, { message: "Valid source_role required" });
@@ -1643,6 +1646,7 @@ materialRoutes.post("/:id/ocr-pages", async (c) => {
       merged,
       nextUnstudied,
     );
+    await refreshAtlasFocusForDeck(db, c.env, material.deck_id);
   }
   return c.json({ stored: merged.length });
 });

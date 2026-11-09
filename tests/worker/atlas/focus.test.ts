@@ -161,6 +161,7 @@ describe("atlas focus persistence helpers", () => {
                     r2_key: null,
                     filename: "notes.pdf",
                     source_role: "lecture",
+                    status: "ready",
                   },
                 ] as T[],
               };
@@ -289,5 +290,197 @@ describe("enrichEntriesWithFocus override", () => {
       reason: "Manual demote",
       focusMaterialIds: [],
     });
+  });
+});
+
+describe("atlas focus empty materials and lazy GET", () => {
+  it("keeps override rows when scannable materials become empty", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedDeck({
+      id: "deck-1",
+      user_id: "user-a",
+      title: "Parasitology deck",
+      subject_hint: null,
+      subject_id: "sub-1",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const created = await app.request(
+      "/api/subjects/sub-1/atlas",
+      { method: "POST", headers: authHeaders() },
+      env,
+    );
+    expect(created.status).toBe(201);
+    const atlas = (await created.json()) as { id: string };
+
+    const paste = await app.request(
+      "/api/decks/deck-1/materials/paste",
+      {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          text: "Intro",
+          filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
+        }),
+      },
+      env,
+    );
+    expect(paste.status).toBe(201);
+    const material = (await paste.json()) as { id: string };
+
+    const pin = await app.request(
+      "/api/subjects/sub-1/atlas/entries/fasciola-hepatica/focus",
+      {
+        method: "PATCH",
+        headers: authHeaders(true),
+        body: JSON.stringify({ override: "key" }),
+      },
+      env,
+    );
+    expect(pin.status).toBe(200);
+
+    const del = await app.request(`/api/materials/${material.id}`, {
+      method: "DELETE",
+      headers: authHeaders(),
+    }, env);
+    expect(del.status).toBe(204);
+
+    const list = await app.request(
+      "/api/subjects/sub-1/atlas/entries",
+      { headers: authHeaders() },
+      env,
+    );
+    expect(list.status).toBe(200);
+    const body = (await list.json()) as { entries: AtlasEntryView[] };
+    expect(
+      body.entries.find((e) => e.id === "fasciola-hepatica"),
+    ).toMatchObject({
+      tier: "key",
+      reason: "Manual pin",
+    });
+
+    // Focus PATCH must stick even with no materials left.
+    const demote = await app.request(
+      "/api/subjects/sub-1/atlas/entries/fasciola-hepatica/focus",
+      {
+        method: "PATCH",
+        headers: authHeaders(true),
+        body: JSON.stringify({ override: "standard" }),
+      },
+      env,
+    );
+    expect(demote.status).toBe(200);
+    expect(await demote.json()).toMatchObject({
+      tier: "standard",
+      reason: "Manual demote",
+    });
+  });
+
+  it("rejects a null JSON body on focus PATCH", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    await app.request(
+      "/api/subjects/sub-1/atlas",
+      { method: "POST", headers: authHeaders() },
+      env,
+    );
+
+    const res = await app.request(
+      "/api/subjects/sub-1/atlas/entries/fasciola-hepatica/focus",
+      {
+        method: "PATCH",
+        headers: authHeaders(true),
+        body: "null",
+      },
+      env,
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("lazy-refreshes Focus on GET when cache is empty but ready materials exist", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedDeck({
+      id: "deck-1",
+      user_id: "user-a",
+      title: "Parasitology deck",
+      subject_hint: null,
+      subject_id: "sub-1",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    const created = await app.request(
+      "/api/subjects/sub-1/atlas",
+      { method: "POST", headers: authHeaders() },
+      env,
+    );
+    expect(created.status).toBe(201);
+
+    // Seed after atlas create so focus cache stays empty until GET.
+    env.seedMaterial({
+      id: "mat-pre",
+      deck_id: "deck-1",
+      kind: "pdf",
+      r2_key: "materials/deck-1/mat-pre.pdf",
+      filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+      source_role: "tutorial",
+    });
+
+    const list = await app.request(
+      "/api/subjects/sub-1/atlas/entries",
+      { headers: authHeaders() },
+      env,
+    );
+    expect(list.status).toBe(200);
+    const body = (await list.json()) as { entries: AtlasEntryView[] };
+    expect(
+      body.entries.find((e) => e.id === "fasciola-hepatica"),
+    ).toMatchObject({
+      tier: "key",
+      reason: expect.stringMatching(/tutorial/i),
+    });
+  });
+
+  it("ignores non-ready materials during Focus refresh", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedDeck({
+      id: "deck-1",
+      user_id: "user-a",
+      title: "Parasitology deck",
+      subject_hint: null,
+      subject_id: "sub-1",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    await app.request(
+      "/api/subjects/sub-1/atlas",
+      { method: "POST", headers: authHeaders() },
+      env,
+    );
+    env.seedMaterial({
+      id: "mat-uploading",
+      deck_id: "deck-1",
+      kind: "pdf",
+      r2_key: "materials/deck-1/mat-uploading.pdf",
+      filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
+      page_count: null,
+      status: "uploading",
+      created_at: "2026-01-01T00:00:00.000Z",
+      source_role: "tutorial",
+    });
+
+    const list = await app.request(
+      "/api/subjects/sub-1/atlas/entries",
+      { headers: authHeaders() },
+      env,
+    );
+    expect(list.status).toBe(200);
+    const body = (await list.json()) as { entries: AtlasEntryView[] };
+    expect(
+      body.entries.find((e) => e.id === "fasciola-hepatica")?.tier,
+    ).toBeNull();
   });
 });

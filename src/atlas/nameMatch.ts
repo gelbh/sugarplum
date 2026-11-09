@@ -16,11 +16,14 @@ export type NameMatchEntry = {
   aliases: string[];
 };
 
+/** Collapse `_` / `-` runs the same way filenames are normalized for matching. */
+const collapseSeparators = (s: string) => s.replace(/[_-]+/g, " ");
+
 /** Searchable name forms for an Atlas entry (canonical, common, aliases, genus-initial). */
 export function entryNameForms(entry: NameMatchEntry): string[] {
   const names = [entry.canonicalName, entry.commonName, ...entry.aliases]
     .filter((n): n is string => n !== null)
-    .map(searchable);
+    .map((n) => searchable(collapseSeparators(n)));
   return [...names, ...genusInitialForms(entry.canonicalName)];
 }
 
@@ -30,6 +33,8 @@ export function textMentionsEntry(
   forms: readonly string[],
 ): boolean {
   // Filenames often use Fasciola_hepatica / F._hepatica; treat _ and - as spaces.
-  const hay = searchable(haystack.replace(/[_-]+/g, " "));
-  return forms.some((form) => hay.includes(form));
+  const hay = searchable(collapseSeparators(haystack));
+  return forms.some((form) =>
+    hay.includes(searchable(collapseSeparators(form))),
+  );
 }
