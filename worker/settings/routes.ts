@@ -220,8 +220,16 @@ settingsRoutes.put("/study/fsrs-weights", async (c) => {
     throw new HTTPException(400, { message: "Invalid JSON body" });
   }
   try {
-    const w = await saveFsrsWeights(getDb(c.env), userId, body.w);
-    return c.json({ ok: true as const, wLength: w.length });
+    const { w, rescheduled } = await saveFsrsWeights(
+      getDb(c.env),
+      userId,
+      body.w,
+    );
+    return c.json({
+      ok: true as const,
+      wLength: w.length,
+      rescheduled,
+    });
   } catch {
     throw new HTTPException(400, { message: "Invalid FSRS weights" });
   }
@@ -229,8 +237,8 @@ settingsRoutes.put("/study/fsrs-weights", async (c) => {
 
 settingsRoutes.post("/study/fsrs-weights/reset", async (c) => {
   const userId = await requireUser(c);
-  await resetFsrsWeights(getDb(c.env), userId);
-  return c.json({ ok: true as const });
+  const { rescheduled } = await resetFsrsWeights(getDb(c.env), userId);
+  return c.json({ ok: true as const, rescheduled });
 });
 
 settingsRoutes.post("/study/fsrs-optimize/run", async (c) => {
