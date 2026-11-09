@@ -39,6 +39,11 @@ export type GuestReviewLog = {
   state?: number;
 };
 
+/** True when the log can feed FSRS `computeParameters` (finite pre-grade state). */
+export function isGuestLogTrainable(log: GuestReviewLog): boolean {
+  return typeof log.state === "number" && Number.isFinite(log.state);
+}
+
 export function cardDueIso(card: CardDraftView, fallback: string): string {
   return typeof card.due === "string" && card.due.length > 0
     ? card.due
