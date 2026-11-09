@@ -69,6 +69,11 @@ describe("parasite template", () => {
       hostRole: null,
       host: null,
       durationDays: null,
+      infective: false,
+      diagnostic: false,
+      transmission: null,
+      note: null,
+      imageId: null,
     });
     expect(parsed.diagnosticTests[0].windowStartWeek).toBe(10);
     expect(parsed.diagnosticStage).toBeNull();

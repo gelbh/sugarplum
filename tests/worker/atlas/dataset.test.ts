@@ -117,6 +117,60 @@ describe("dataset schema", () => {
       },
     ],
     [
+      "two diagnostic stages",
+      {
+        ...minimal,
+        fields: {
+          group: "trematode",
+          lifecycleStages: [
+            { name: "egg", hostRole: "environment", diagnostic: true },
+            { name: "adult", hostRole: "definitive", diagnostic: true },
+          ],
+          definitiveHosts: ["sheep"],
+        },
+        refs: [
+          ...minimal.refs,
+          {
+            field: "lifecycleStages",
+            citation: "CDC DPDx: Fascioliasis",
+            url: "https://www.cdc.gov/dpdx/fascioliasis/index.html",
+          },
+        ],
+      },
+    ],
+    [
+      "infective without lifecycleStages ref",
+      {
+        ...minimal,
+        fields: {
+          group: "trematode",
+          lifecycleStages: [
+            {
+              name: "metacercaria",
+              hostRole: "environment",
+              infective: true,
+            },
+          ],
+        },
+      },
+    ],
+    [
+      "stage imageId missing from images",
+      {
+        ...minimal,
+        fields: {
+          group: "trematode",
+          lifecycleStages: [
+            {
+              name: "egg",
+              hostRole: "environment",
+              imageId: "missing-img",
+            },
+          ],
+        },
+      },
+    ],
+    [
       "duration ending before it starts",
       {
         ...minimal,
@@ -250,7 +304,11 @@ describe("dataset schema", () => {
   it("accepts vocabulary hosts, organs and nested objects", () => {
     const r = datasetEntrySchema.safeParse({
       ...minimal,
-      refs: [...minimal.refs, { ...minimal.refs[0], field: "pppDays" }],
+      refs: [
+        ...minimal.refs,
+        { ...minimal.refs[0], field: "pppDays" },
+        { ...minimal.refs[0], field: "lifecycleStages" },
+      ],
       fields: {
         group: "trematode",
         definitiveHosts: ["sheep"],

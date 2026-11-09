@@ -7,10 +7,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   AddEntryDialog,
   EditEntryDialog,
+  EditLifecycleDialog,
   RecentlyDeletedDialog,
 } from "../../src/atlas/AtlasMutateDialogs";
 import type { AtlasEntryView } from "../../src/atlas/types";
-import { emptyParasiteFields } from "../../worker/atlas/templates/parasite";
+import {
+  emptyParasiteFields,
+  lifecycleStageSchema,
+} from "../../worker/atlas/templates/parasite";
 
 vi.mock("../../src/atlas/apiSource", () => ({
   createEntry: vi.fn(),
@@ -139,6 +143,62 @@ describe("AtlasMutateDialogs", () => {
       commonName: "Custom",
       fields: { definitiveHosts: ["sheep", "cattle"] },
     });
+    expect(onDone).toHaveBeenCalled();
+  });
+
+  it("PATCHes lifecycleStages from the lifecycle dialog", async () => {
+    vi.mocked(patchEntry).mockResolvedValueOnce(entry());
+    const onDone = vi.fn();
+    const start = entry({
+      fields: {
+        ...emptyParasiteFields(),
+        group: "trematode",
+        lifecycleStages: [
+          lifecycleStageSchema.parse({
+            name: "egg",
+            hostRole: "environment",
+            diagnostic: true,
+          }),
+        ],
+      },
+    });
+
+    await render(
+      createElement(EditLifecycleDialog, {
+        open: true,
+        subjectId: "sub-1",
+        entry: start,
+        onClose: () => {},
+        onDone,
+      }),
+    );
+
+    expect(document.body.textContent).toContain("Edit lifecycle");
+    expect(document.body.textContent).toContain("Live preview");
+
+    const form = document.body.querySelector("form")!;
+    await act(async () => {
+      form.dispatchEvent(
+        new Event("submit", { bubbles: true, cancelable: true }),
+      );
+    });
+
+    expect(patchEntry).toHaveBeenCalledWith(
+      "sub-1",
+      "e1",
+      expect.objectContaining({
+        fields: expect.objectContaining({
+          diagnosticStage: "egg",
+          lifecycleStages: [
+            expect.objectContaining({
+              name: "egg",
+              diagnostic: true,
+              infective: false,
+            }),
+          ],
+        }),
+      }),
+    );
     expect(onDone).toHaveBeenCalled();
   });
 

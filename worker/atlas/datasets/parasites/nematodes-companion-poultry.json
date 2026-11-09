@@ -32,7 +32,11 @@
             "durationDays": {
               "min": 21,
               "max": 28
-            }
+            },
+            "infective": true,
+            "diagnostic": true,
+            "transmission": "dog or person swallows larvated eggs from the environment",
+            "note": "Infective and usual faecal diagnostic form (egg)"
           },
           {
             "name": "migrating L3",
@@ -47,7 +51,10 @@
           {
             "name": "encysted L3",
             "location": "tissues of paratenic hosts such as rodents and birds; infective when eaten by a dog",
-            "hostRole": "paratenic"
+            "hostRole": "paratenic",
+            "infective": true,
+            "transmission": "dog eats a paratenic host carrying L3",
+            "note": "Alternate infective route via prey"
           },
           {
             "name": "adult",
@@ -55,7 +62,7 @@
             "hostRole": "definitive"
           }
         ],
-        "diagnosticStage": "egg",
+        "diagnosticStage": "larvated egg",
         "diagnosticTests": [
           {
             "name": "faecal flotation",
