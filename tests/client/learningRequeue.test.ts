@@ -113,4 +113,19 @@ describe("upsert + merge + wake", () => {
       ]),
     ).toBe("2026-11-09T12:05:00.000Z");
   });
+
+  it("nextLearningWakeAt is null when all pending are already due", () => {
+    expect(
+      nextLearningWakeAt(
+        [
+          {
+            cardId: "a",
+            dueAt: "2026-11-09T11:59:00.000Z",
+            card: { id: "a" },
+          },
+        ],
+        new Date("2026-11-09T12:00:00.000Z"),
+      ),
+    ).toBeNull();
+  });
 });

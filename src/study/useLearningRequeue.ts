@@ -124,8 +124,13 @@ export function useLearningRequeue(
   }, [applyMergedQueue, queueRef, setRevealed]);
 
   useEffect(() => {
+    if (pendingLearning.length === 0) return;
     const wake = nextLearningWakeAt(pendingLearning, new Date());
-    if (!wake) return;
+    // Already-due pending: wakeAt is null; flush now or soft_wait can stick.
+    if (!wake) {
+      flushDueLearning();
+      return;
+    }
     const delay = Math.max(0, wake.getTime() - Date.now());
     const id = window.setTimeout(() => {
       flushDueLearning();
