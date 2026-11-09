@@ -35,6 +35,7 @@ export function toEntryView(entry: DatasetEntry): AtlasEntryView {
     editedAt: null,
     tier: null,
     reason: null,
+    focusMaterialIds: [],
   };
 }
 
@@ -72,6 +73,7 @@ export function viewFromOverlay(
     editedAt: row.edited_at,
     tier: null,
     reason: null,
+    focusMaterialIds: [],
   };
 }
 

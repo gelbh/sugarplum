@@ -23,8 +23,24 @@ export type FocusRow = {
 
 export type FocusMap = Map<
   string,
-  { tier: AtlasTier; reason: string; override: AtlasTier | null }
+  {
+    tier: AtlasTier;
+    reason: string;
+    override: AtlasTier | null;
+    materialIds: string[];
+  }
 >;
+
+function parseMaterialIds(json: string): string[] {
+  try {
+    const parsed: unknown = JSON.parse(json);
+    return Array.isArray(parsed)
+      ? parsed.filter((id): id is string => typeof id === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
 
 type MaterialScanRow = {
   id: string;
@@ -71,16 +87,33 @@ export function enrichEntriesWithFocus(
   focus: FocusMap | null,
 ): AtlasEntryView[] {
   if (!focus) {
-    return entries.map((e) => ({ ...e, tier: null, reason: null }));
+    return entries.map((e) => ({
+      ...e,
+      tier: null,
+      reason: null,
+      focusMaterialIds: [],
+    }));
   }
   return entries.map((e) => {
     const row = focus.get(focusEntryKey(e));
-    if (!row) return { ...e, tier: null, reason: null };
+    if (!row) {
+      return { ...e, tier: null, reason: null, focusMaterialIds: [] };
+    }
     if (row.override) {
       const pinned = overrideFocusView(row.override);
-      return { ...e, tier: pinned.tier, reason: pinned.reason };
+      return {
+        ...e,
+        tier: pinned.tier,
+        reason: pinned.reason,
+        focusMaterialIds: [],
+      };
     }
-    return { ...e, tier: row.tier, reason: row.reason };
+    return {
+      ...e,
+      tier: row.tier,
+      reason: row.reason,
+      focusMaterialIds: row.materialIds,
+    };
   });
 }
 
@@ -101,6 +134,7 @@ export async function loadFocusMap(
       tier: row.tier,
       reason: row.reason,
       override: row.override,
+      materialIds: parseMaterialIds(row.material_ids_json),
     });
   }
   return map;

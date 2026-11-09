@@ -12,6 +12,7 @@ import AtlasImage, { heroImage } from "./AtlasImage";
 import { atlasHeroName } from "./paths";
 import {
   GROUP_LABELS,
+  TIER_LABELS,
   hostSummary,
   pppLabel,
   sortTable,
@@ -25,9 +26,10 @@ type Props = {
   entries: AtlasEntryView[];
   entryHref: (id: string) => string;
   onOpen: (id: string) => void;
+  focusActive: boolean;
 };
 
-const COLUMNS: { id: TableColumn; label: string; wide?: boolean }[] = [
+const BASE_COLUMNS: { id: TableColumn; label: string; wide?: boolean }[] = [
   { id: "name", label: "Name" },
   { id: "group", label: "Group" },
   { id: "host", label: "Definitive hosts" },
@@ -37,7 +39,23 @@ const COLUMNS: { id: TableColumn; label: string; wide?: boolean }[] = [
 
 const wideOnly = { display: { xs: "none", sm: "table-cell" } };
 
-export default function AtlasTable({ entries, entryHref, onOpen }: Props) {
+export default function AtlasTable({
+  entries,
+  entryHref,
+  onOpen,
+  focusActive,
+}: Props) {
+  const columns = useMemo(
+    () =>
+      focusActive
+        ? [
+            BASE_COLUMNS[0],
+            { id: "focus" as const, label: "Focus" },
+            ...BASE_COLUMNS.slice(1),
+          ]
+        : BASE_COLUMNS,
+    [focusActive],
+  );
   const [sort, setSort] = useState<{ column: TableColumn; dir: SortDir }>({
     column: "name",
     dir: "asc",
@@ -57,7 +75,7 @@ export default function AtlasTable({ entries, entryHref, onOpen }: Props) {
         <TableHead>
           <TableRow>
             <TableCell sx={{ width: { xs: 32, sm: 40 } }} aria-hidden />
-            {COLUMNS.map((c) => (
+            {columns.map((c) => (
               <TableCell
                 key={c.id}
                 sortDirection={sort.column === c.id ? sort.dir : false}
@@ -115,6 +133,11 @@ export default function AtlasTable({ entries, entryHref, onOpen }: Props) {
                   {e.canonicalName}
                 </Link>
               </TableCell>
+              {focusActive ? (
+                <TableCell>
+                  {e.tier === null ? "-" : TIER_LABELS[e.tier]}
+                </TableCell>
+              ) : null}
               <TableCell>
                 {e.fields.group
                   ? GROUP_LABELS[e.fields.group].plural

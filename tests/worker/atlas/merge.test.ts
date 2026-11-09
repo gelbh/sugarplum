@@ -260,6 +260,7 @@ describe("overlayAtlas", () => {
           tier: "key" as const,
           reason: 'Named in tutorial "Week2.pdf"',
           override: null,
+          materialIds: ["mat-week2"],
         },
       ],
     ]);
@@ -267,10 +268,12 @@ describe("overlayAtlas", () => {
     expect(enriched.find((e) => e.id === "fasciola-hepatica")).toMatchObject({
       tier: "key",
       reason: 'Named in tutorial "Week2.pdf"',
+      focusMaterialIds: ["mat-week2"],
     });
     expect(enriched.find((e) => e.id === "toxocara-canis")).toMatchObject({
       tier: null,
       reason: null,
+      focusMaterialIds: [],
     });
   });
 
@@ -283,6 +286,7 @@ describe("overlayAtlas", () => {
           tier: "key" as const,
           reason: 'Named in tutorial "Week2.pdf"',
           override: "standard" as const,
+          materialIds: ["mat-week2"],
         },
       ],
     ]);
@@ -290,6 +294,7 @@ describe("overlayAtlas", () => {
     expect(enriched[0]).toMatchObject({
       tier: "standard",
       reason: "Manual demote",
+      focusMaterialIds: [],
     });
   });
 });

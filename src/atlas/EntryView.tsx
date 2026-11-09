@@ -26,7 +26,13 @@ import {
   windowLabel,
   type EntryRefs,
 } from "./entryFields";
-import { groupRows, matchesSearch, pppLabel, termLabel } from "./filter";
+import {
+  focusActive as isFocusActive,
+  matchesSearch,
+  pppLabel,
+  railSections,
+  termLabel,
+} from "./filter";
 import { isShortcutTarget } from "./keys";
 import { atlasHeroName } from "./paths";
 import type { AtlasEntryView, DatasetFields } from "./types";
@@ -67,9 +73,14 @@ export default function EntryView({
   const [query, setQuery] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  const useFocus = isFocusActive(entries);
   const rows = useMemo(
-    () => groupRows(entries.filter((e) => matchesSearch(e, query))),
-    [entries, query],
+    () =>
+      railSections(
+        entries.filter((e) => matchesSearch(e, query)),
+        useFocus,
+      ),
+    [entries, query, useFocus],
   );
   const order = useMemo(
     () => rows.flatMap((r) => r.entries.map((e) => e.id)),

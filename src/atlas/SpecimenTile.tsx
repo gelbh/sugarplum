@@ -1,15 +1,16 @@
-import { useEffect, useRef, ViewTransition, type ReactNode } from "react";
+import { useEffect, useRef, useState, ViewTransition, type ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
 import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
+import Popover from "@mui/material/Popover";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import AtlasImage, { heroImage } from "./AtlasImage";
-import { hostSummary, pppLabel, termLabel } from "./filter";
+import { TIER_LABELS, hostSummary, pppLabel, termLabel } from "./filter";
 import { atlasHeroName } from "./paths";
 import TermList from "./TermList";
 import type { AtlasEntryView } from "./types";
@@ -33,6 +34,61 @@ function findItAs(entry: AtlasEntryView): string | null {
   if (diagnosticStage && test)
     return `${termLabel(diagnosticStage)}, by ${test}`;
   return diagnosticStage ? termLabel(diagnosticStage) : test && termLabel(test);
+}
+
+function FocusBadge({ entry }: { entry: AtlasEntryView }) {
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  if (entry.tier !== "key" && entry.tier !== "frequent") return null;
+  return (
+    <>
+      <Chip
+        label={TIER_LABELS[entry.tier]}
+        size="small"
+        color={entry.tier === "key" ? "primary" : "default"}
+        variant="outlined"
+        onClick={(ev) => {
+          ev.stopPropagation();
+          ev.preventDefault();
+          setAnchor(ev.currentTarget);
+        }}
+        sx={{
+          fontWeight: 600,
+          bgcolor: "background.paper",
+          height: 22,
+          "& .MuiChip-label": { px: 0.75 },
+        }}
+      />
+      <Popover
+        open={anchor !== null}
+        anchorEl={anchor}
+        onClose={() => setAnchor(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        slotProps={{ paper: { sx: { p: 1.5, maxWidth: 280 } } }}
+      >
+        <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+          {TIER_LABELS[entry.tier]}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {entry.reason ?? "No Focus reason"}
+        </Typography>
+        {entry.focusMaterialIds.length > 0 ? (
+          <Stack component="ul" spacing={0.25} sx={{ m: 0, mt: 1, pl: 0, listStyle: "none" }}>
+            {entry.focusMaterialIds.map((id) => (
+              <Typography
+                key={id}
+                component="li"
+                variant="caption"
+                sx={{ fontFamily: "ui-monospace, monospace" }}
+              >
+                {id}
+              </Typography>
+            ))}
+          </Stack>
+        ) : null}
+      </Popover>
+    </>
+  );
 }
 
 export default function SpecimenTile({
@@ -61,74 +117,83 @@ export default function SpecimenTile({
   const { fields } = entry;
   const definitive = hostSummary(fields.definitiveHosts, 2);
   const titleId = `atlas-tile-${entry.id}`;
+  const focusBadge = <FocusBadge entry={entry} />;
 
   if (!expanded) {
     return (
-      <ButtonBase
-        ref={toggleRef}
-        onClick={onToggle}
-        aria-expanded={false}
-        focusRipple
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "stretch",
-          textAlign: "left",
-          bgcolor: "background.paper",
-          border: 1,
-          borderColor: "divider",
-          borderRadius: 2,
-          overflow: "hidden",
-          minWidth: 0,
-          transition: "border-color 180ms ease",
-          ...(staggerIndex !== undefined && {
-            "@keyframes atlasTileUp": {
-              from: { opacity: 0, transform: "translateY(8px)" },
-              to: { opacity: 1, transform: "none" },
+      <Box sx={{ position: "relative", minWidth: 0 }}>
+        <ButtonBase
+          ref={toggleRef}
+          onClick={onToggle}
+          aria-expanded={false}
+          focusRipple
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "stretch",
+            textAlign: "left",
+            width: "100%",
+            bgcolor: "background.paper",
+            border: 1,
+            borderColor: "divider",
+            borderRadius: 2,
+            overflow: "hidden",
+            minWidth: 0,
+            transition: "border-color 180ms ease",
+            ...(staggerIndex !== undefined && {
+              "@keyframes atlasTileUp": {
+                from: { opacity: 0, transform: "translateY(8px)" },
+                to: { opacity: 1, transform: "none" },
+              },
+              animation: `atlasTileUp 360ms cubic-bezier(0.2, 0, 0, 1) ${
+                Math.min(staggerIndex, STAGGER_CAP) * 35
+              }ms both`,
+              "@media (prefers-reduced-motion: reduce)": { animation: "none" },
+            }),
+            "&:hover": {
+              borderColor: (t) => alpha(t.palette.primary.main, 0.45),
             },
-            animation: `atlasTileUp 360ms cubic-bezier(0.2, 0, 0, 1) ${
-              Math.min(staggerIndex, STAGGER_CAP) * 35
-            }ms both`,
-            "@media (prefers-reduced-motion: reduce)": { animation: "none" },
-          }),
-          "&:hover": {
-            borderColor: (t) => alpha(t.palette.primary.main, 0.45),
-          },
-        }}
-      >
-        <ViewTransition name={atlasHeroName(entry.id)} share="atlas-morph">
-          <AtlasImage
-            image={hero}
-            ratio={IMAGE_RATIO}
-            sx={{
-              opacity: dimmed ? 0.45 : 1,
-              transition: "opacity 220ms ease",
-            }}
-          />
-        </ViewTransition>
-        <Box sx={{ px: 1.25, pt: 1, pb: 1.25, minWidth: 0 }}>
-          <Typography
-            sx={{
-              fontStyle: "italic",
-              fontWeight: 600,
-              fontSize: "0.9rem",
-              lineHeight: 1.25,
-            }}
-          >
-            {entry.canonicalName}
-          </Typography>
-          {definitive ? (
+          }}
+        >
+          <ViewTransition name={atlasHeroName(entry.id)} share="atlas-morph">
+            <AtlasImage
+              image={hero}
+              ratio={IMAGE_RATIO}
+              sx={{
+                opacity: dimmed ? 0.45 : 1,
+                transition: "opacity 220ms ease",
+              }}
+            />
+          </ViewTransition>
+          <Box sx={{ px: 1.25, pt: 1, pb: 1.25, minWidth: 0 }}>
             <Typography
-              variant="body2"
-              color="text.secondary"
-              noWrap
-              sx={{ fontSize: "0.8rem", mt: 0.25 }}
+              sx={{
+                fontStyle: "italic",
+                fontWeight: 600,
+                fontSize: "0.9rem",
+                lineHeight: 1.25,
+              }}
             >
-              {definitive}
+              {entry.canonicalName}
             </Typography>
-          ) : null}
-        </Box>
-      </ButtonBase>
+            {definitive ? (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                noWrap
+                sx={{ fontSize: "0.8rem", mt: 0.25 }}
+              >
+                {definitive}
+              </Typography>
+            ) : null}
+          </Box>
+        </ButtonBase>
+        {entry.tier === "key" || entry.tier === "frequent" ? (
+          <Box sx={{ position: "absolute", top: 8, left: 8, zIndex: 1 }}>
+            {focusBadge}
+          </Box>
+        ) : null}
+      </Box>
     );
   }
 
@@ -186,7 +251,7 @@ export default function SpecimenTile({
         >
           <CloseIcon fontSize="small" />
         </IconButton>
-        <Stack direction="row" alignItems="center" gap={1} sx={{ pr: 4 }}>
+        <Stack direction="row" alignItems="center" gap={1} sx={{ pr: 4 }} flexWrap="wrap">
           <Typography
             id={titleId}
             component="h3"
@@ -199,6 +264,7 @@ export default function SpecimenTile({
           >
             {entry.canonicalName}
           </Typography>
+          {focusBadge}
           {entry.editedAt ? (
             <Chip label="Edited" size="small" variant="outlined" />
           ) : null}

@@ -267,6 +267,7 @@ describe("enrichEntriesWithFocus override", () => {
         editedAt: null,
         tier: null,
         reason: null,
+        focusMaterialIds: [],
       },
     ];
     const enriched = enrichEntriesWithFocus(
@@ -278,6 +279,7 @@ describe("enrichEntriesWithFocus override", () => {
             tier: "key",
             reason: 'Named in tutorial "x.pdf"',
             override: "frequent",
+            materialIds: ["mat-1"],
           },
         ],
       ]),
@@ -285,6 +287,7 @@ describe("enrichEntriesWithFocus override", () => {
     expect(enriched[0]).toMatchObject({
       tier: "frequent",
       reason: "Manual demote",
+      focusMaterialIds: [],
     });
   });
 });

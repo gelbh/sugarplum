@@ -4,12 +4,16 @@ import {
   NO_FILTERS,
   applyFilters,
   entryHosts,
+  focusActive,
+  focusGroupRows,
   groupRows,
   hostOptions,
   matchesSearch,
   organOptions,
+  railSections,
   sortTable,
 } from "../../src/atlas/filter";
+import type { AtlasEntryView } from "../../src/atlas/types";
 import {
   HOST_TERM_KEYS,
   ORGAN_TERMS,
@@ -22,6 +26,19 @@ import { PARASITE_GROUPS } from "../../worker/atlas/templates/parasite";
 const entries = await bundledAtlasSource.list("subj_1");
 const byId = (id: string) => entries.find((e) => e.id === id)!;
 const ids = (list: { id: string }[]) => list.map((e) => e.id);
+
+function withTier(
+  entry: AtlasEntryView,
+  tier: AtlasEntryView["tier"],
+  reason = "test",
+): AtlasEntryView {
+  return {
+    ...entry,
+    tier,
+    reason: tier === null ? null : reason,
+    focusMaterialIds: tier === null ? [] : ["mat-1"],
+  };
+}
 
 describe("applyFilters", () => {
   it("matches a broader host term against specific hosts", () => {
@@ -49,6 +66,85 @@ describe("applyFilters", () => {
     const hits = applyFilters(entries, { ...NO_FILTERS, groups: ["cestode"] });
     expect(hits.length).toBeGreaterThan(0);
     expect(hits.every((e) => e.fields.group === "cestode")).toBe(true);
+  });
+
+  it("limits to the selected Focus tier", () => {
+    const mixed = [
+      withTier(byId("fasciola-hepatica"), "key"),
+      withTier(byId("dipylidium-caninum"), "frequent"),
+      withTier(byId("toxocara-canis"), "standard"),
+    ];
+    const hits = applyFilters(mixed, { ...NO_FILTERS, tier: "key" });
+    expect(ids(hits)).toEqual(["fasciola-hepatica"]);
+  });
+});
+
+describe("Focus helpers", () => {
+  it("hides Focus when every tier is null", () => {
+    expect(focusActive(entries)).toBe(false);
+    expect(railSections(entries, false).map((r) => r.heading)[0]).toMatch(
+      /Protozoa|Nematodes|Cestodes|Trematodes|Arthropods/,
+    );
+  });
+
+  it("groups rail Key then Frequent then Standard", () => {
+    const mixed = [
+      withTier(byId("toxocara-canis"), "standard"),
+      withTier(byId("fasciola-hepatica"), "key"),
+      withTier(byId("dipylidium-caninum"), "frequent"),
+      withTier(byId("fascioloides-magna"), "key"),
+    ];
+    expect(focusActive(mixed)).toBe(true);
+    expect(focusGroupRows(mixed).map((r) => r.heading)).toEqual([
+      "Key",
+      "Frequent",
+      "Standard",
+    ]);
+    expect(ids(focusGroupRows(mixed)[0].entries)).toEqual([
+      "fasciola-hepatica",
+      "fascioloides-magna",
+    ]);
+    expect(railSections(mixed, true).map((r) => r.heading)).toEqual([
+      "Key",
+      "Frequent",
+      "Standard",
+    ]);
+  });
+
+  it("keeps null-tier entries in a trailing Unscanned section", () => {
+    const mixed = [
+      withTier(byId("toxocara-canis"), null),
+      withTier(byId("fasciola-hepatica"), "key"),
+      withTier(byId("dipylidium-caninum"), null),
+      withTier(byId("fascioloides-magna"), "frequent"),
+    ];
+    expect(focusActive(mixed)).toBe(true);
+    const rows = focusGroupRows(mixed);
+    expect(rows.map((r) => r.heading)).toEqual([
+      "Key",
+      "Frequent",
+      "Unscanned",
+    ]);
+    expect(ids(rows[2].entries)).toEqual([
+      "dipylidium-caninum",
+      "toxocara-canis",
+    ]);
+    expect(rows.flatMap((r) => r.entries).map((e) => e.id).sort()).toEqual(
+      mixed.map((e) => e.id).sort(),
+    );
+  });
+
+  it("sorts Focus column Key before Frequent before Standard", () => {
+    const mixed = [
+      withTier(byId("toxocara-canis"), "standard"),
+      withTier(byId("dipylidium-caninum"), "frequent"),
+      withTier(byId("fasciola-hepatica"), "key"),
+    ];
+    expect(ids(sortTable(mixed, "focus", "asc"))).toEqual([
+      "fasciola-hepatica",
+      "dipylidium-caninum",
+      "toxocara-canis",
+    ]);
   });
 });
 

@@ -42,6 +42,8 @@ describe("apiAtlasSource", () => {
         images: [],
         editedAt: null,
         tier: null,
+        reason: null,
+        focusMaterialIds: [],
       },
     ];
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, { entries }));
@@ -110,6 +112,8 @@ describe("apiAtlasSource", () => {
           images: [],
           editedAt: "2026-01-01T00:00:00.000Z",
           tier: null,
+          reason: null,
+          focusMaterialIds: [],
         }),
       )
       .mockResolvedValueOnce(
@@ -124,6 +128,8 @@ describe("apiAtlasSource", () => {
           images: [],
           editedAt: "2026-01-01T00:00:00.000Z",
           tier: null,
+          reason: null,
+          focusMaterialIds: [],
         }),
       )
       .mockResolvedValueOnce(jsonResponse(204))

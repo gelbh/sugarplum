@@ -7,11 +7,11 @@ import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
 import AtlasImage, { heroImage } from "./AtlasImage";
-import { GROUP_LABELS, groupRows } from "./filter";
+import type { RailSection } from "./filter";
 import type { AtlasEntryView } from "./types";
 
 type Props = {
-  rows: ReturnType<typeof groupRows>;
+  rows: RailSection[];
   total: number;
   currentId: string;
   query: string;
@@ -90,13 +90,13 @@ export default function EntryRail({
           </Typography>
         ) : null}
         {rows.map((row) => (
-          <Box key={row.group} sx={{ mt: 1.5 }}>
+          <Box key={row.heading} sx={{ mt: 1.5 }}>
             <Typography
               component="h2"
               color="text.secondary"
               sx={{ fontSize: "0.76rem", fontWeight: 600, px: 0.75, mb: 0.5 }}
             >
-              {GROUP_LABELS[row.group].plural}
+              {row.heading}
             </Typography>
             {row.entries.map((e) => (
               <RailItem
