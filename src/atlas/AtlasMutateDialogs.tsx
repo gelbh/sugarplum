@@ -27,8 +27,25 @@ import {
 } from "./apiSource";
 import { GROUP_LABELS } from "./filter";
 import LifecycleBoard from "./LifecycleBoard";
+import { stageIsDiagnostic } from "./lifecycle";
 import StageListEditor, { type StageDraft } from "./StageListEditor";
 import type { AtlasEntryView, DatasetFields, ParasiteGroup } from "./types";
+
+/** Lift entry-level diagnosticStage into stage.diagnostic so save does not wipe legacy rows. */
+function hydrateLifecycleDraft(
+  stages: StageDraft[],
+  diagnosticStage: string | null,
+): StageDraft[] {
+  return stages.map((s) => ({
+    ...s,
+    diagnostic: stageIsDiagnostic(s, diagnosticStage),
+  }));
+}
+
+function diagnosticStageFromDraft(stages: StageDraft[]): string | null {
+  const flagged = stages.filter((s) => s.diagnostic);
+  return flagged.length === 1 ? flagged[0].name : null;
+}
 
 type Busy = boolean;
 
@@ -302,7 +319,12 @@ export function EditLifecycleDialog({
 
   useEffect(() => {
     if (!open || !entry) return;
-    setStages(structuredClone(entry.fields.lifecycleStages));
+    setStages(
+      hydrateLifecycleDraft(
+        structuredClone(entry.fields.lifecycleStages),
+        entry.fields.diagnosticStage,
+      ),
+    );
     setError(null);
     setBusy(false);
   }, [open, entry]);
@@ -313,6 +335,7 @@ export function EditLifecycleDialog({
       ...entry.fields,
       // Preview accepts free-text hosts the same way learner overlays do.
       lifecycleStages: stages as DatasetFields["lifecycleStages"],
+      diagnosticStage: diagnosticStageFromDraft(stages),
     };
   }, [entry, stages]);
 
@@ -338,7 +361,7 @@ export function EditLifecycleDialog({
         }
       }
       // Keep entry-level diagnosticStage in sync with the stage flag (one owner on write).
-      const diagnosticStage = diagnosticStages[0]?.name ?? null;
+      const diagnosticStage = diagnosticStageFromDraft(parsed);
       await patchEntry(subjectId, entry.id, {
         fields: {
           lifecycleStages: parsed as DatasetFields["lifecycleStages"],

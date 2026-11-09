@@ -203,7 +203,7 @@ export const windowLit = (w: DetectableWindow, span: DaySpan | null) =>
 
 /** Stage flag wins; otherwise match the entry-level diagnosticStage name. */
 export function stageIsDiagnostic(
-  stage: Stage,
+  stage: { name: string; diagnostic?: boolean },
   diagnosticStage: string | null,
 ): boolean {
   if (stage.diagnostic) return true;
