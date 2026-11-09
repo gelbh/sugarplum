@@ -346,6 +346,128 @@ describe("GET /api/decks/:id/stats", () => {
   });
 });
 
+describe("GET /api/decks/:id/composition", () => {
+  it("401 when unauthenticated", async () => {
+    const env = createTestEnv();
+    const res = await app.request("/api/decks/deck-1/composition", {}, env);
+    expect(res.status).toBe(401);
+  });
+
+  it("404 for another user's deck", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedUser({
+      id: "user-b",
+      email: "b@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-b",
+      user_id: "user-b",
+      title: "Other",
+      subject_hint: null,
+      subject_id: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    const res = await app.request(
+      "/api/decks/deck-b/composition",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(res.status).toBe(404);
+  });
+
+  it("returns composition for accepted cards only", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedSubject({
+      id: "sub-1",
+      user_id: "user-a",
+      title: "Anatomy",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-1",
+      user_id: "user-a",
+      title: "Bones",
+      subject_hint: null,
+      subject_id: "sub-1",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedCard({
+      id: "c-new",
+      deck_id: "deck-1",
+      job_id: null,
+      type: "qa",
+      front_json: '"Q"',
+      back_json: '"A"',
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "accepted",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedCard({
+      id: "c-young",
+      deck_id: "deck-1",
+      job_id: null,
+      type: "qa",
+      front_json: '"Qy"',
+      back_json: '"Ay"',
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "accepted",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSchedule({
+      card_id: "c-young",
+      due: "2026-01-02T00:00:00.000Z",
+      stability: 20,
+      difficulty: 5,
+      elapsed_days: 0,
+      scheduled_days: 20,
+      learning_steps: 0,
+      reps: 1,
+      lapses: 0,
+      state: 2,
+      last_review: "2026-01-01T12:00:00.000Z",
+    });
+    env.seedCard({
+      id: "c-draft",
+      deck_id: "deck-1",
+      job_id: null,
+      type: "qa",
+      front_json: '"Qd"',
+      back_json: '"Ad"',
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "draft",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/decks/deck-1/composition",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      new: 1,
+      learning: 0,
+      young: 1,
+      mature: 0,
+      total: 2,
+      graduated: 1,
+      graduatedPct: 50,
+      recallCardCount: 2,
+    });
+  });
+});
+
 describe("DELETE /api/decks/:id", () => {
   it("deletes an owned deck and cascades cards and schedules", async () => {
     const env = createTestEnv();

@@ -1790,6 +1790,29 @@ export function createTestEnv(opts?: {
             });
           return { results: rows as T[] };
         }
+        if (normalized.includes("sugarplum:deck-composition")) {
+          const deckId = bound[0] as string;
+          const rows = [...cards.values()]
+            .filter(
+              (card) => card.deck_id === deckId && card.status === "accepted",
+            )
+            .map((card) => {
+              const schedule = schedules.get(card.id);
+              return {
+                state: schedule?.state ?? null,
+                scheduled_days: schedule?.scheduled_days ?? null,
+                due: schedule?.due ?? null,
+                stability: schedule?.stability ?? null,
+                difficulty: schedule?.difficulty ?? null,
+                elapsed_days: schedule?.elapsed_days ?? null,
+                learning_steps: schedule?.learning_steps ?? null,
+                reps: schedule?.reps ?? null,
+                lapses: schedule?.lapses ?? null,
+                last_review: schedule?.last_review ?? null,
+              };
+            });
+          return { results: rows as T[] };
+        }
         if (normalized.includes("sugarplum:subject-composition")) {
           const subjectId = bound[0] as string;
           const userId = bound[1] as string | undefined;
