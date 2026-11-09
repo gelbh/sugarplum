@@ -50,9 +50,12 @@ export function assertValidMcqOptions(
   return { back: answer, options: trimmed };
 }
 
+/** Material page provenance; optional Atlas Make cards fields when present. */
 export const ProvenanceSchema = z.object({
   pages: z.array(z.number().int().positive()),
   excerpt: z.string(),
+  atlasEntryId: z.string().min(1).optional(),
+  citations: z.array(z.string()).optional(),
 });
 
 const OcclusionRegionSchema = z

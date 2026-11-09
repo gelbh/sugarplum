@@ -23,6 +23,7 @@ import "../atlas/atlasMotion.css";
 import Cabinet from "../atlas/Cabinet";
 import CompareView from "../atlas/CompareView";
 import EntryView from "../atlas/EntryView";
+import MakeCardsDeckDialog from "../atlas/MakeCardsDeckDialog";
 import {
   atlasCompareHref,
   atlasEntryHref,
@@ -32,6 +33,10 @@ import {
 import type { AtlasEntryView, AtlasSource } from "../atlas/types";
 import { isGuest } from "../guest/session";
 import { isPlainClick, navigate, navigateReplace } from "../nav/navigate";
+
+function entryMakeCardsKey(entry: AtlasEntryView): string {
+  return entry.originKey ?? entry.id;
+}
 
 type Props = {
   atlasId: string;
@@ -102,6 +107,14 @@ export default function AtlasPage({
   const [editLifecycle, setEditLifecycle] = useState<AtlasEntryView | null>(
     null,
   );
+  const [makeCardsDialog, setMakeCardsDialog] = useState<{
+    keys: string[];
+    title: string;
+  } | null>(null);
+  const [queueNotice, setQueueNotice] = useState<{
+    jobId: string;
+    jobCount: number;
+  } | null>(null);
   // The first-load stagger runs once per page mount, not again on Back from an entry.
   const staggered = useRef(false);
   useEffect(() => {
@@ -181,6 +194,17 @@ export default function AtlasPage({
         onAddEntry={canMutate ? () => setAddOpen(true) : undefined}
         onRecentlyDeleted={canMutate ? () => setDeletedOpen(true) : undefined}
         onEditEntry={canMutate ? (entry) => setEditEntry(entry) : undefined}
+        onMakeCardsFromKey={
+          canMutate
+            ? (keys) => {
+                if (keys.length === 0) return;
+                setMakeCardsDialog({
+                  keys,
+                  title: "Make cards from Key",
+                });
+              }
+            : undefined
+        }
       />
     );
   } else if (route.kind === "entry") {
@@ -202,6 +226,16 @@ export default function AtlasPage({
         onReset={
           canMutate && entry.originKey && entry.editedAt
             ? () => void onResetEntry(entry)
+            : undefined
+        }
+        onMakeCards={
+          canMutate
+            ? () => {
+                setMakeCardsDialog({
+                  keys: [entryMakeCardsKey(entry)],
+                  title: `Make cards · ${entry.canonicalName}`,
+                });
+              }
             : undefined
         }
       />
@@ -238,6 +272,20 @@ export default function AtlasPage({
       }}
     >
       {crumb ? <Box sx={{ mb: 1 }}>{crumb}</Box> : null}
+      {queueNotice ? (
+        <Alert
+          severity="success"
+          sx={{ mb: 2 }}
+          onClose={() => setQueueNotice(null)}
+        >
+          {queueNotice.jobCount > 1
+            ? `${queueNotice.jobCount} jobs queued (opening the first). `
+            : "Cards queued. "}
+          <Link href={`/jobs/${queueNotice.jobId}/drafts`} underline="hover">
+            Open Draft Review
+          </Link>
+        </Alert>
+      ) : null}
       {body}
       {canMutate ? (
         <>
@@ -275,6 +323,16 @@ export default function AtlasPage({
             onClose={() => setDeletedOpen(false)}
             onChanged={() => {
               void reloadEntries();
+            }}
+          />
+          <MakeCardsDeckDialog
+            open={makeCardsDialog !== null}
+            atlasId={atlasId}
+            entryKeys={makeCardsDialog?.keys ?? []}
+            title={makeCardsDialog?.title}
+            onClose={() => setMakeCardsDialog(null)}
+            onQueued={(jobId, jobCount) => {
+              setQueueNotice({ jobId, jobCount });
             }}
           />
         </>

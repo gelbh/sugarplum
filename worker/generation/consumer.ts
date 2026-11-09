@@ -56,6 +56,7 @@ import {
 } from "./progress";
 import { buildCoverageLedger } from "./coverage";
 import { consumeFreeGenSlot } from "./quota";
+import { parseAtlasJobProvenance } from "../atlas/makeCardsSource";
 import { appendGapFillDrafts, insertDraftCards } from "./gap-fill";
 export { insertDraftCards };
 import { filterDraftsByQuality } from "./quality";
@@ -596,7 +597,7 @@ export async function processGenerateJob(
 
     const progressRow = await db
       .prepare(
-        "SELECT progress_json, topic_hints_json, avoid_patterns_json, run_topic_hints_json FROM generation_jobs WHERE id = ?",
+        "SELECT progress_json, topic_hints_json, avoid_patterns_json, run_topic_hints_json, atlas_provenance_json FROM generation_jobs WHERE id = ?",
       )
       .bind(jobId)
       .first<{
@@ -604,6 +605,7 @@ export async function processGenerateJob(
         topic_hints_json: string | null;
         avoid_patterns_json: string | null;
         run_topic_hints_json: string | null;
+        atlas_provenance_json: string | null;
       }>();
     const freeGenCharged = isFreeGenCharged(progressRow?.progress_json);
     const freeGenSlots = readFreeGenSlots(progressRow?.progress_json);
@@ -613,6 +615,9 @@ export async function processGenerateJob(
       parseTopicHintsJson(progressRow?.topic_hints_json),
     );
     const avoidPatterns = parseTopicHintsJson(progressRow?.avoid_patterns_json);
+    const atlasProvenance = parseAtlasJobProvenance(
+      progressRow?.atlas_provenance_json,
+    );
     const prior = await loadPriorResume(db, materialId, jobId);
     const deckFronts = await loadDeckFronts(db, deckId);
     let windowResume: WindowResume | null = null;
@@ -696,7 +701,7 @@ export async function processGenerateJob(
         mediaR2Keys: [imageR2Key],
       }));
       await progress.emit("persist", 0, 1, "Saving drafts");
-      await insertDraftCards(db, { deckId, jobId, drafts });
+      await insertDraftCards(db, { deckId, jobId, drafts, atlasProvenance });
       await progress.emit("persist", 1, 1, "Saving drafts");
     } else if (material.kind === "pdf") {
       // Figure helper narrows this to figure-only stages when the PDF has no text.
@@ -810,7 +815,7 @@ export async function processGenerateJob(
         );
       }
       await progress.emit("persist", 0, 1, "Saving drafts");
-      await insertDraftCards(db, { deckId, jobId, drafts });
+      await insertDraftCards(db, { deckId, jobId, drafts, atlasProvenance });
       await progress.emit("persist", 1, 1, "Saving drafts");
     } else {
       // TEXT_LLM catalog; emit before extract so failures leave progress.
@@ -903,7 +908,7 @@ export async function processGenerateJob(
         );
       }
       await progress.emit("persist", 0, 1, "Saving drafts");
-      await insertDraftCards(db, { deckId, jobId, drafts });
+      await insertDraftCards(db, { deckId, jobId, drafts, atlasProvenance });
       await progress.emit("persist", 1, 1, "Saving drafts");
     }
 
@@ -919,6 +924,7 @@ export async function processGenerateJob(
       coverageMaterial,
       drafts,
       autoFollowup: message.autoFollowup === true,
+      atlasProvenance,
       runPipeline: ({ topicHints: hints, avoidFronts, onUsage, heartbeat }) =>
         runTextDraftPipeline({
           text: coverageMaterial,

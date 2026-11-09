@@ -630,4 +630,59 @@ describe("atlas user-owned routes", () => {
       true,
     );
   });
+
+  it("enqueues Make cards jobs with atlas provenance for an entry", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedDeck({
+      id: "deck-1",
+      user_id: "user-a",
+      title: "Parasitology deck",
+      subject_hint: null,
+      subject_id: "sub-1",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    const { id: atlasId } = await createAtlas(env);
+
+    const res = await app.request(
+      `/api/atlas/${atlasId}/make-cards`,
+      {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          deckId: "deck-1",
+          entryKeys: ["toxocara-canis"],
+        }),
+      },
+      env,
+    );
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as {
+      deckId: string;
+      jobId: string;
+      jobs: Array<{ entryKey: string; materialId: string; jobId: string }>;
+    };
+    expect(body.deckId).toBe("deck-1");
+    expect(body.jobs).toHaveLength(1);
+    expect(body.jobs[0]?.entryKey).toBe("toxocara-canis");
+    expect(body.jobId).toBe(body.jobs[0]?.jobId);
+
+    const job = await env.DB.prepare(
+      "SELECT material_id, topic_hints_json, atlas_provenance_json FROM generation_jobs WHERE id = ?",
+    )
+      .bind(body.jobId)
+      .first<{
+        material_id: string;
+        topic_hints_json: string | null;
+        atlas_provenance_json: string | null;
+      }>();
+    expect(job?.material_id).toBe(body.jobs[0]?.materialId);
+    expect(job?.topic_hints_json).toContain("Toxocara");
+    const provenance = JSON.parse(job?.atlas_provenance_json ?? "null") as {
+      atlasEntryId: string;
+      citations: string[];
+    };
+    expect(provenance.atlasEntryId).toBe("toxocara-canis");
+    expect(Array.isArray(provenance.citations)).toBe(true);
+  });
 });

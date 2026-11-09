@@ -29,6 +29,9 @@ export async function enqueueGeneration(
     deckId: string;
     figureExtractMode?: FigureExtractMode;
     topicHints?: string[] | null;
+    /** Atlas Make cards: entry key + citations for draft provenance. */
+    atlasEntryId?: string | null;
+    atlasCitations?: string[] | null;
   },
 ): Promise<string> {
   const jobId = newId();
@@ -39,11 +42,20 @@ export async function enqueueGeneration(
     args.topicHints && args.topicHints.length > 0
       ? JSON.stringify(args.topicHints)
       : null;
+  const atlasProvenanceJson =
+    args.atlasEntryId && args.atlasEntryId.trim()
+      ? JSON.stringify({
+          atlasEntryId: args.atlasEntryId.trim(),
+          citations: (args.atlasCitations ?? []).filter(
+            (c) => typeof c === "string" && c.trim().length > 0,
+          ),
+        })
+      : null;
   const db = getDb(env);
 
   await db
     .prepare(
-      "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at, figure_extract_mode, topic_hints_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at, figure_extract_mode, topic_hints_json, atlas_provenance_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(
       jobId,
@@ -55,6 +67,7 @@ export async function enqueueGeneration(
       null,
       figureExtractMode,
       topicHintsJson,
+      atlasProvenanceJson,
     )
     .run();
 
