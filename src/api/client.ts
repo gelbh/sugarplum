@@ -43,11 +43,13 @@ import {
   guestPutStudyPrefs,
   guestResetCardSchedule,
   guestReviewCard,
+  type GuestHubCardBody,
+} from "../guest/store";
+import {
   guestSubjectComposition,
   guestSubjectCompositionSummaries,
-  type GuestHubCardBody,
   type SubjectCompositionSummary,
-} from "../guest/store";
+} from "../guest/composition";
 import type { RejectReason } from "../lib/rejectReasons";
 import { clearDueCache } from "../study/dueCache";
 import { clearPendingGrades } from "../study/pendingGrades";
@@ -613,7 +615,11 @@ export function subjectComposition(id: string) {
 
 export function listSubjectCompositionSummaries() {
   if (isGuest()) {
-    return Promise.resolve(guestSubjectCompositionSummaries());
+    try {
+      return Promise.resolve(guestSubjectCompositionSummaries());
+    } catch {
+      return Promise.resolve([]);
+    }
   }
   return api<SubjectCompositionSummary[]>(
     `/api/subjects/composition-summaries`,

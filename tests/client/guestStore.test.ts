@@ -22,9 +22,11 @@ import {
   guestResetCardSchedule,
   guestRestoreCard,
   guestReviewCard,
+} from "../../src/guest/store";
+import {
   guestSubjectComposition,
   guestSubjectCompositionSummaries,
-} from "../../src/guest/store";
+} from "../../src/guest/composition";
 import { cardDueIso } from "../../src/guest/policyDue";
 import {
   cardFromScheduleRow,
