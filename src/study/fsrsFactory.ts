@@ -1,5 +1,5 @@
 import { fsrs } from "ts-fsrs";
-import { FSRS_W_LENGTH, validateFsrsW } from "./fsrsWeights";
+import { validateFsrsW } from "./fsrsWeights";
 
 /** Subset of study prefs that affect ts-fsrs scheduling. */
 export type FsrsPrefs = {
@@ -22,6 +22,6 @@ export function fsrsForPrefs(
   return fsrs({
     request_retention: prefs.desiredRetention,
     enable_fuzz: prefs.enableFuzz,
-    ...(validated && validated.length === FSRS_W_LENGTH ? { w: validated } : {}),
+    ...(validated ? { w: validated } : {}),
   });
 }

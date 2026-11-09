@@ -24,7 +24,6 @@ import {
   deleteLlmSettings,
   disconnectCalendar,
   getCalendarStatus,
-  getFsrsOptimizeStatus,
   getGamification,
   getLlmSettings,
   getStudyPrefs,
@@ -33,10 +32,7 @@ import {
   patchGamificationSettings,
   putLlmSettings,
   putStudyPrefs,
-  resetFsrsWeights,
-  runFsrsOptimizeNow,
   type CalendarStatus,
-  type FsrsOptimizeStatus,
   type GamificationResponse,
   type LlmSettings,
   type StudyPrefs,
@@ -47,17 +43,11 @@ import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { ankiExportFsrsBlurb } from "../settings/ankiExportFsrsBlurb";
 import { freeGenFaqBody, freeGenIntroBlurb } from "../settings/freeGenFaq";
+import FsrsWeightsSettings from "../settings/FsrsWeightsSettings";
 import {
   ZAI_DEFAULT_TEXT_MODEL,
   ZAI_TEXT_MODEL_OPTIONS,
 } from "../settings/zaiModels";
-import {
-  FSRS_MIN_REVIEWS,
-} from "../study/fsrsOptimizeConstants";
-import {
-  maybeRunFsrsOptimize,
-  runFsrsOptimizeTrainNow,
-} from "../study/fsrsOptimizeClient";
 
 const DEFAULT_STUDY_FORM: StudyPrefs = {
   introBudget: 20,
@@ -132,10 +122,6 @@ export default function SettingsPage() {
     String(DEFAULT_STUDY_FORM.desiredRetention),
   );
   const [enableFuzz, setEnableFuzz] = useState(DEFAULT_STUDY_FORM.enableFuzz);
-  const [fsrsStatus, setFsrsStatus] = useState<FsrsOptimizeStatus | null>(null);
-  const [fsrsBusy, setFsrsBusy] = useState(false);
-  const [fsrsError, setFsrsError] = useState<string | null>(null);
-  const [fsrsNotice, setFsrsNotice] = useState<string | null>(null);
   const [googleLinked, setGoogleLinked] = useState(false);
   const [calendarStatus, setCalendarStatus] = useState<CalendarStatus | null>(
     null,
@@ -203,15 +189,6 @@ export default function SettingsPage() {
         setReviewBudgetInput(String(prefs.reviewBudget));
         setDesiredRetentionInput(String(prefs.desiredRetention));
         setEnableFuzz(prefs.enableFuzz);
-        if (!guestMode) {
-          const opt = await getFsrsOptimizeStatus().catch(() => null);
-          if (!cancelled) setFsrsStatus(opt);
-          void maybeRunFsrsOptimize().then(async (result) => {
-            if (cancelled || result === "skipped") return;
-            const refreshed = await getFsrsOptimizeStatus().catch(() => null);
-            if (!cancelled) setFsrsStatus(refreshed);
-          });
-        }
         if (gam) {
           setGamification(gam);
           setDisplayNameInput(gam.displayName ?? "");
@@ -744,107 +721,7 @@ export default function SettingsPage() {
               </Button>
             </Stack>
           </Box>
-          {!guest ? (
-            <Box sx={{ mt: 3 }}>
-              <Typography
-                variant="subtitle2"
-                sx={{ fontWeight: 600, mb: 1, color: "primary.main" }}
-              >
-                Personal FSRS weights
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                Sugarplum retrains FSRS-6 weights from your review history when
-                you have at least {FSRS_MIN_REVIEWS} reviews and about a month
-                has passed. Training runs in the background in this browser
-                after you open Today or Settings. Existing dues stay until the
-                next grade.
-              </Typography>
-              {fsrsError ? <Alert severity="error" sx={{ mb: 1 }}>{fsrsError}</Alert> : null}
-              {fsrsNotice ? (
-                <Alert severity="success" sx={{ mb: 1 }}>{fsrsNotice}</Alert>
-              ) : null}
-              <Typography variant="body2" sx={{ mb: 1.5 }}>
-                {fsrsStatus
-                  ? `Reviews: ${fsrsStatus.reviewCount} / ${FSRS_MIN_REVIEWS}. ${
-                      fsrsStatus.hasCustomW
-                        ? "Using personal weights."
-                        : "Using library defaults."
-                    } Last optimized: ${
-                      fsrsStatus.lastOptimizedAt
-                        ? new Date(fsrsStatus.lastOptimizedAt).toLocaleString()
-                        : "never"
-                    }. ${
-                      fsrsBusy || fsrsStatus.pending
-                        ? fsrsBusy
-                          ? "Training…"
-                          : "Pending train."
-                        : "Up to date."
-                    }`
-                  : "Loading optimize status…"}
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  disabled={
-                    fsrsBusy || !fsrsStatus?.eligible || guest
-                  }
-                  onClick={() => {
-                    void (async () => {
-                      setFsrsError(null);
-                      setFsrsNotice(null);
-                      setFsrsBusy(true);
-                      try {
-                        await runFsrsOptimizeNow();
-                        await runFsrsOptimizeTrainNow();
-                        setFsrsStatus(await getFsrsOptimizeStatus());
-                        setFsrsNotice("Weights updated.");
-                      } catch (err) {
-                        setFsrsError(
-                          err instanceof ApiError
-                            ? err.message
-                            : err instanceof Error
-                              ? err.message
-                              : "Optimize failed",
-                        );
-                      } finally {
-                        setFsrsBusy(false);
-                      }
-                    })();
-                  }}
-                >
-                  Run now
-                </Button>
-                <Button
-                  size="small"
-                  variant="text"
-                  disabled={fsrsBusy || !fsrsStatus?.hasCustomW || guest}
-                  onClick={() => {
-                    void (async () => {
-                      setFsrsError(null);
-                      setFsrsNotice(null);
-                      setFsrsBusy(true);
-                      try {
-                        await resetFsrsWeights();
-                        setFsrsStatus(await getFsrsOptimizeStatus());
-                        setFsrsNotice("Reset to library defaults.");
-                      } catch (err) {
-                        setFsrsError(
-                          err instanceof ApiError
-                            ? err.message
-                            : "Reset failed",
-                        );
-                      } finally {
-                        setFsrsBusy(false);
-                      }
-                    })();
-                  }}
-                >
-                  Reset to defaults
-                </Button>
-              </Stack>
-            </Box>
-          ) : null}
+          {!guest ? <FsrsWeightsSettings /> : null}
         </Paper>
 
         {guest ? (

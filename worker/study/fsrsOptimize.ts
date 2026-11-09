@@ -3,16 +3,11 @@ import {
   FSRS_MIN_REVIEWS,
   FSRS_RETRAIN_DAYS,
 } from "../../src/study/fsrsOptimizeConstants";
+import type { FsrsOptimizeStatus } from "../../src/study/fsrsOptimizeTypes";
 import { validateFsrsW } from "../../src/study/fsrsWeights";
-import { loadStudyPrefs } from "./prefs";
+import { DEFAULT_STUDY_PREFS, loadStudyPrefs } from "./prefs";
 
-export type FsrsOptimizeStatus = {
-  pending: boolean;
-  lastOptimizedAt: string | null;
-  reviewCount: number;
-  hasCustomW: boolean;
-  eligible: boolean;
-};
+export type { FsrsOptimizeStatus };
 
 const MS_PER_DAY = 86_400_000;
 
@@ -73,10 +68,18 @@ async function ensurePrefsRow(
     .prepare(
       `INSERT INTO user_study_prefs
          (user_id, intro_budget, review_budget, r_floor, desired_retention, enable_fuzz, updated_at)
-       VALUES (?, 20, 200, 0.8, 0.9, 1, ?)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(user_id) DO NOTHING`,
     )
-    .bind(userId, nowIso)
+    .bind(
+      userId,
+      DEFAULT_STUDY_PREFS.introBudget,
+      DEFAULT_STUDY_PREFS.reviewBudget,
+      DEFAULT_STUDY_PREFS.rFloor,
+      DEFAULT_STUDY_PREFS.desiredRetention,
+      DEFAULT_STUDY_PREFS.enableFuzz ? 1 : 0,
+      nowIso,
+    )
     .run();
 }
 

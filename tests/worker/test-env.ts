@@ -968,14 +968,6 @@ export function createTestEnv(opts?: {
           return { cnt } as T;
         }
         if (
-          normalized.includes("SELECT rl.card_id AS card_id") &&
-          normalized.includes("FROM review_logs rl") &&
-          normalized.includes("WHERE d.user_id =")
-        ) {
-          // Handled in .all() below via same pattern — first() unused.
-          return null;
-        }
-        if (
           normalized.includes("FROM user_study_day") &&
           normalized.includes("WHERE user_id =") &&
           normalized.includes("AND day =")

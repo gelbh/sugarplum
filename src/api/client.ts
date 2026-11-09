@@ -1,4 +1,5 @@
 import type { AchievementItem, UnlockView } from "../achievements/wire";
+import type { FsrsOptimizeStatus } from "../study/fsrsOptimizeTypes";
 import {
   UploadError,
   uploadWithProgress,
@@ -1018,13 +1019,7 @@ export function putStudyPrefs(prefs: StudyPrefs) {
   });
 }
 
-export type FsrsOptimizeStatus = {
-  pending: boolean;
-  lastOptimizedAt: string | null;
-  reviewCount: number;
-  hasCustomW: boolean;
-  eligible: boolean;
-};
+export type { FsrsOptimizeStatus } from "../study/fsrsOptimizeTypes";
 
 export function getFsrsOptimizeStatus() {
   if (isGuest()) guestUnsupported("FSRS optimize status");

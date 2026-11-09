@@ -19,11 +19,6 @@ export function resetFsrsOptimizeClientGuardsForTests(): void {
   skipAutoThisSession = false;
 }
 
-/** True while a train is running (also used by Settings UI). */
-export function isFsrsOptimizeInFlight(): boolean {
-  return inFlight;
-}
-
 async function trainWeightsFromCsv(csv: string): Promise<number[]> {
   const worker = new FsrsOptimizeWorker();
   try {
@@ -44,9 +39,15 @@ async function trainWeightsFromCsv(csv: string): Promise<number[]> {
   }
 }
 
+async function trainAndSave(): Promise<void> {
+  const csv = await getFsrsRevlogCsv();
+  const w = await trainWeightsFromCsv(csv);
+  await putFsrsWeights(w);
+}
+
 /**
- * If the account has optimize pending, train in a Web Worker and PUT weights.
- * No-ops for guests; at most one in-flight train; failures skip further auto
+ * Auto path: if pending, train in a Web Worker and PUT weights.
+ * No-ops for guests; at most one in-flight; failures skip further auto
  * attempts for this page session.
  */
 export async function maybeRunFsrsOptimize(): Promise<"skipped" | "ran" | "failed"> {
@@ -55,9 +56,7 @@ export async function maybeRunFsrsOptimize(): Promise<"skipped" | "ran" | "faile
   try {
     const status = await getFsrsOptimizeStatus();
     if (!status.pending) return "skipped";
-    const csv = await getFsrsRevlogCsv();
-    const w = await trainWeightsFromCsv(csv);
-    await putFsrsWeights(w);
+    await trainAndSave();
     return "ran";
   } catch {
     skipAutoThisSession = true;
@@ -67,15 +66,13 @@ export async function maybeRunFsrsOptimize(): Promise<"skipped" | "ran" | "faile
   }
 }
 
-/** Force a train when pending (or after run-now). Respects in-flight guard only. */
+/** Manual Run now: force train regardless of pending flag. */
 export async function runFsrsOptimizeTrainNow(): Promise<void> {
   if (isGuest()) throw new Error("Guest cannot optimize FSRS weights");
   if (inFlight) throw new Error("Optimize already in progress");
   inFlight = true;
   try {
-    const csv = await getFsrsRevlogCsv();
-    const w = await trainWeightsFromCsv(csv);
-    await putFsrsWeights(w);
+    await trainAndSave();
     skipAutoThisSession = false;
   } finally {
     inFlight = false;
