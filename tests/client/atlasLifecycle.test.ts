@@ -77,7 +77,9 @@ describe("axis", () => {
   });
 
   it("builds the axis from test windows alone when there is no PPP", () => {
-    const f = fields("taenia-saginata");
+    // Study-floor catalog now fills PPP for helminths; keep a null-PPP fixture
+    // so this axis path stays covered.
+    const f = { ...fields("taenia-saginata"), pppDays: null };
     expect(f.pppDays).toBeNull();
     const model = lifecycleModel(f);
     expect(model.axis?.unit).toBe("weeks");
@@ -86,7 +88,7 @@ describe("axis", () => {
   });
 
   it("gives an open-ended window room when there is no PPP", () => {
-    const f = fields("fasciola-gigantica");
+    const f = { ...fields("fasciola-gigantica"), pppDays: null };
     expect(f.pppDays).toBeNull();
     const ax = axis(f)!;
     const [w] = detectableWindows(f, ax);
@@ -95,7 +97,7 @@ describe("axis", () => {
   });
 
   it("marks entries with no PPP and no windows as untimed", () => {
-    const model = lifecycleModel(fields("davainea-proglottina"));
+    const model = lifecycleModel(fields("pulex-irritans"));
     expect(model.timed).toBe(false);
     expect(model.axis).toBeNull();
     expect(model.windows).toEqual([]);
