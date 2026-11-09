@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import { useState, type DragEvent, type FormEvent } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -18,6 +18,7 @@ import { FigureSuggestPanel } from "../components/FigureSuggestPanel";
 import MaterialsList from "../components/MaterialsList";
 import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
 import {
+  PPTX_MIME,
   resolveUploadContentType,
   type CardDraftView,
   type CardType,
@@ -25,6 +26,21 @@ import {
 } from "../api/client";
 
 export type AddMaterialTab = "upload" | "paste" | "topic" | "diy";
+
+const UPLOAD_ACCEPT =
+  "application/pdf,.pdf,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp";
+
+const ALLOWED_UPLOAD_TYPES = new Set([
+  "application/pdf",
+  PPTX_MIME,
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+
+function isAllowedUploadFile(file: File): boolean {
+  return ALLOWED_UPLOAD_TYPES.has(resolveUploadContentType(file));
+}
 
 type Props = {
   guest: boolean;
@@ -111,15 +127,42 @@ export default function AddMaterialWorkshop({
   draftCount,
   onReviewDrafts,
 }: Props) {
+  const [dropActive, setDropActive] = useState(false);
+  const [dropError, setDropError] = useState<string | null>(null);
   const tabs: AddMaterialTab[] = guest
     ? ["paste", "diy"]
     : ["upload", "paste", "topic", "diy"];
   const activeTab = tabs.includes(tab) ? tab : tabs[0];
 
+  function applyUploadFile(file: File | null) {
+    setDropError(null);
+    onUploadFileChange(file);
+    if (!file || resolveUploadContentType(file) !== "application/pdf") {
+      onFigureFilesChange([]);
+    }
+  }
+
+  function onDropZoneDrop(ev: DragEvent<HTMLDivElement>) {
+    ev.preventDefault();
+    setDropActive(false);
+    const file = ev.dataTransfer.files?.[0] ?? null;
+    if (!file) return;
+    if (!isAllowedUploadFile(file)) {
+      setDropError("Use a PDF, PPTX, or image (JPEG, PNG, WebP).");
+      return;
+    }
+    applyUploadFile(file);
+  }
+
   return (
     <Stack spacing={2}>
       {materialError ? <Alert severity="error">{materialError}</Alert> : null}
       {materialNotice ? <Alert severity="success">{materialNotice}</Alert> : null}
+      {dropError ? (
+        <Alert severity="error" onClose={() => setDropError(null)}>
+          {dropError}
+        </Alert>
+      ) : null}
       {guest ? (
         <Alert severity="info">
           Cards stay in this browser only. Sign in for uploads and AI
@@ -143,24 +186,65 @@ export default function AddMaterialWorkshop({
       {activeTab === "upload" && !guest ? (
         <Box component="form" onSubmit={onUploadFile} noValidate>
           <Stack spacing={2}>
-            <Button variant="outlined" component="label" disabled={materialBusy}>
-              {uploadFile ? uploadFile.name : "Choose PDF, PPTX, or image"}
-              <input
-                type="file"
-                accept="application/pdf,.pdf,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
-                hidden
-                onChange={(ev) => {
-                  const file = ev.target.files?.[0] ?? null;
-                  onUploadFileChange(file);
-                  if (
-                    !file ||
-                    resolveUploadContentType(file) !== "application/pdf"
-                  ) {
-                    onFigureFilesChange([]);
-                  }
-                }}
-              />
-            </Button>
+            <Box
+              onDragEnter={(ev) => {
+                ev.preventDefault();
+                setDropActive(true);
+              }}
+              onDragOver={(ev) => {
+                ev.preventDefault();
+                setDropActive(true);
+              }}
+              onDragLeave={(ev) => {
+                ev.preventDefault();
+                if (ev.currentTarget.contains(ev.relatedTarget as Node)) return;
+                setDropActive(false);
+              }}
+              onDrop={onDropZoneDrop}
+              sx={{
+                border: 2,
+                borderStyle: "dashed",
+                borderColor: dropActive ? "primary.main" : "divider",
+                bgcolor: dropActive
+                  ? "rgba(91, 44, 111, 0.1)"
+                  : "background.paper",
+                borderRadius: 2,
+                minHeight: 148,
+                px: 3,
+                py: 3,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1,
+                textAlign: "center",
+              }}
+            >
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                {uploadFile
+                  ? uploadFile.name
+                  : "Drop PDF, PPTX, or image here"}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                or choose a file from your device
+              </Typography>
+              <Button
+                variant="outlined"
+                component="label"
+                disabled={materialBusy}
+                sx={{ mt: 1, px: 3, py: 1.25 }}
+              >
+                Choose file
+                <input
+                  type="file"
+                  accept={UPLOAD_ACCEPT}
+                  hidden
+                  onChange={(ev) => {
+                    applyUploadFile(ev.target.files?.[0] ?? null);
+                  }}
+                />
+              </Button>
+            </Box>
             {uploadFile &&
             resolveUploadContentType(uploadFile) === "application/pdf" ? (
               <Stack spacing={1.5}>

@@ -12,6 +12,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
@@ -306,48 +307,64 @@ export default function CardsWorkshop(props: Props) {
                       {cardTypeLabel(card.type)}
                     </Typography>
                   </Box>
-                  <IconButton
-                    size="small"
-                    aria-label="Move card"
-                    disabled={busy}
-                    onClick={() => {
-                      void onMove(card);
-                    }}
-                  >
-                    <DriveFileMoveOutlinedIcon fontSize="small" />
-                  </IconButton>
+                  <Tooltip title="Move card">
+                    <span>
+                      <IconButton
+                        size="small"
+                        aria-label="Move card"
+                        disabled={busy}
+                        onClick={() => {
+                          void onMove(card);
+                        }}
+                      >
+                        <DriveFileMoveOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
                   {!showArchived && card.status !== "archived" ? (
-                    <IconButton
-                      size="small"
-                      aria-label="Edit card"
-                      disabled={busy}
-                      onClick={() => onEdit(card)}
-                    >
-                      <EditOutlinedIcon fontSize="small" />
-                    </IconButton>
+                    <Tooltip title="Edit card">
+                      <span>
+                        <IconButton
+                          size="small"
+                          aria-label="Edit card"
+                          disabled={busy}
+                          onClick={() => onEdit(card)}
+                        >
+                          <EditOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
                   ) : null}
                   {showArchived ? (
-                    <IconButton
-                      size="small"
-                      aria-label="Restore card"
-                      disabled={busy}
-                      onClick={() => {
-                        void onRestore(card);
-                      }}
-                    >
-                      <UnarchiveOutlinedIcon fontSize="small" />
-                    </IconButton>
+                    <Tooltip title="Restore card">
+                      <span>
+                        <IconButton
+                          size="small"
+                          aria-label="Restore card"
+                          disabled={busy}
+                          onClick={() => {
+                            void onRestore(card);
+                          }}
+                        >
+                          <UnarchiveOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
                   ) : (
-                    <IconButton
-                      size="small"
-                      aria-label="Archive card"
-                      disabled={busy}
-                      onClick={() => {
-                        void onArchive(card);
-                      }}
-                    >
-                      <ArchiveOutlinedIcon fontSize="small" />
-                    </IconButton>
+                    <Tooltip title="Archive card">
+                      <span>
+                        <IconButton
+                          size="small"
+                          aria-label="Archive card"
+                          disabled={busy}
+                          onClick={() => {
+                            void onArchive(card);
+                          }}
+                        >
+                          <ArchiveOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
                   )}
                 </Box>
               );

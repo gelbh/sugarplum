@@ -23,9 +23,11 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import AddMaterialWorkshop from "../deckHub/AddMaterialWorkshop";
+import CoverPickerDialog from "../components/CoverPickerDialog";
 import CardsWorkshop from "../deckHub/CardsWorkshop";
 import DraftsWorkshop from "../deckHub/DraftsWorkshop";
 import MissionBoard, { type MissionTileId } from "../deckHub/MissionBoard";
@@ -44,10 +46,12 @@ import {
   ApiError,
   apkgFilenameForDeckTitle,
   archiveCard,
+  clearCover,
   createDeckCard,
   createDeckExport,
   deckStats,
   deleteDeck,
+  listCovers,
   listDeckCards,
   listDeckMaterials,
   listDecks,
@@ -66,6 +70,7 @@ import {
   resetCardSchedule,
   restoreCard,
   resolveUploadContentType,
+  setCover,
   topicGenerate,
   uploadMaterialFile,
   uploadPdfWithFigureCrops,
@@ -74,6 +79,7 @@ import {
   type DeckStats,
   type JobListItem,
   type MaterialListItem,
+  type StoredCoverRow,
   type Subject,
 } from "../api/client";
 import { cardPatchBody } from "../cards/cardPatchBody";
@@ -138,6 +144,8 @@ export default function DeckHubPage({ deckId }: Props) {
   const [acceptedCount, setAcceptedCount] = useState(0);
   const [draftJobs, setDraftJobs] = useState<JobListItem[]>([]);
   const [materials, setMaterials] = useState<MaterialListItem[]>([]);
+  const [deckCover, setDeckCover] = useState<StoredCoverRow | null>(null);
+  const [coverPickerOpen, setCoverPickerOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [exportWarning, setExportWarning] = useState<string | null>(null);
@@ -265,6 +273,23 @@ export default function DeckHubPage({ deckId }: Props) {
     }
   }, [deckId, guest]);
 
+  const refreshDeckCover = useCallback(async () => {
+    if (guest) {
+      setDeckCover(null);
+      return;
+    }
+    try {
+      const covers = await listCovers();
+      setDeckCover(
+        covers.find(
+          (cover) => cover.ownerKind === "deck" && cover.ownerId === deckId,
+        ) ?? null,
+      );
+    } catch {
+      setDeckCover(null);
+    }
+  }, [deckId, guest]);
+
   const load = useCallback(async () => {
     const [deckList, subjects] = await Promise.all([
       listDecks(),
@@ -276,10 +301,14 @@ export default function DeckHubPage({ deckId }: Props) {
       found ? (subjects.find((s) => s.id === found.subject_id) ?? null) : null,
     );
     if (found) {
-      await Promise.all([refreshDraftJobs(), refreshMaterials()]);
+      await Promise.all([
+        refreshDraftJobs(),
+        refreshMaterials(),
+        refreshDeckCover(),
+      ]);
     }
     return found;
-  }, [deckId, refreshDraftJobs, refreshMaterials]);
+  }, [deckId, refreshDeckCover, refreshDraftJobs, refreshMaterials]);
 
   useEffect(() => {
     let cancelled = false;
@@ -993,25 +1022,98 @@ export default function DeckHubPage({ deckId }: Props) {
               direction="row"
               alignItems="flex-start"
               justifyContent="space-between"
-              gap={1}
+              gap={1.5}
             >
-              <Typography
-                variant="h4"
-                component="h1"
-                sx={{ color: "text.primary", fontWeight: 600, flex: 1 }}
+              <Stack
+                direction="row"
+                spacing={2}
+                alignItems="flex-start"
+                sx={{ flex: 1, minWidth: 0 }}
               >
-                {deck?.title ?? "Deck"}
-              </Typography>
+                {deckCover ? (
+                  <Box
+                    component="img"
+                    src={deckCover.imageUrl}
+                    alt=""
+                    sx={{
+                      width: 88,
+                      height: 88,
+                      borderRadius: 2,
+                      border: 1,
+                      borderColor: "divider",
+                      objectFit: "cover",
+                      flexShrink: 0,
+                      bgcolor: "background.paper",
+                    }}
+                  />
+                ) : (
+                  <Box
+                    aria-hidden
+                    sx={{
+                      width: 88,
+                      height: 88,
+                      borderRadius: 2,
+                      border: 1,
+                      borderColor: "divider",
+                      bgcolor: "background.paper",
+                      display: "grid",
+                      placeItems: "center",
+                      flexShrink: 0,
+                      color: "text.secondary",
+                      typography: "caption",
+                      fontWeight: 600,
+                      textAlign: "center",
+                      px: 1,
+                    }}
+                  >
+                    No cover
+                  </Box>
+                )}
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Typography
+                    variant="h4"
+                    component="h1"
+                    sx={{ color: "text.primary", fontWeight: 600 }}
+                  >
+                    {deck?.title ?? "Deck"}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 0.5 }}
+                  >
+                    {acceptedCount === 0
+                      ? "No accepted cards yet"
+                      : acceptedCount === 1
+                        ? "1 accepted card"
+                        : `${acceptedCount} accepted cards`}
+                    {draftJobs.length > 0
+                      ? ` · ${draftJobs.length} draft job${draftJobs.length === 1 ? "" : "s"}`
+                      : ""}
+                  </Typography>
+                  {!guest && deck ? (
+                    <Button
+                      size="small"
+                      onClick={() => setCoverPickerOpen(true)}
+                      sx={{ mt: 1, px: 0, minWidth: 0 }}
+                    >
+                      {deckCover ? "Change cover" : "Add cover"}
+                    </Button>
+                  ) : null}
+                </Box>
+              </Stack>
               {deck ? (
                 <>
-                  <IconButton
-                    size="small"
-                    aria-label="Deck actions"
-                    onClick={(ev) => setOverflowAnchor(ev.currentTarget)}
-                    sx={{ color: "text.secondary" }}
-                  >
-                    <MoreVertIcon fontSize="small" />
-                  </IconButton>
+                  <Tooltip title="Deck actions">
+                    <IconButton
+                      size="small"
+                      aria-label="Deck actions"
+                      onClick={(ev) => setOverflowAnchor(ev.currentTarget)}
+                      sx={{ color: "text.secondary" }}
+                    >
+                      <MoreVertIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                   <Menu
                     anchorEl={overflowAnchor}
                     open={overflowAnchor !== null}
@@ -1050,16 +1152,6 @@ export default function DeckHubPage({ deckId }: Props) {
                 </>
               ) : null}
             </Stack>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {acceptedCount === 0
-                ? "No accepted cards yet"
-                : acceptedCount === 1
-                  ? "1 accepted card"
-                  : `${acceptedCount} accepted cards`}
-              {draftJobs.length > 0
-                ? ` · ${draftJobs.length} draft job${draftJobs.length === 1 ? "" : "s"}`
-                : ""}
-            </Typography>
           </Box>
 
           {error ? <Alert severity="error">{error}</Alert> : null}
@@ -1491,6 +1583,24 @@ export default function DeckHubPage({ deckId }: Props) {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {!guest && deck ? (
+        <CoverPickerDialog
+          open={coverPickerOpen}
+          title={deck.title}
+          onClose={() => setCoverPickerOpen(false)}
+          onPick={async (photoId) => {
+            const row = await setCover("deck", deck.id, photoId);
+            setDeckCover(row);
+            setCoverPickerOpen(false);
+          }}
+          onClear={async () => {
+            await clearCover("deck", deck.id);
+            setDeckCover(null);
+            setCoverPickerOpen(false);
+          }}
+        />
+      ) : null}
     </Container>
   );
 }
