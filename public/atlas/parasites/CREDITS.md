@@ -102,6 +102,8 @@ These stay available for the Lifecycle panel. `isHero` must stay false.
 | --- | --- | --- | --- | --- |
 | Cryptosporidium spp. | `cryptosporidium-spp-lifecycle.webp` | CDC / PHIL or DPDx (via Wikimedia Commons) | Public domain | [https://commons.wikimedia.org/wiki/File:Cicle_de_Cryptosporidium_spp.png](https://commons.wikimedia.org/wiki/File:Cicle_de_Cryptosporidium_spp.png) |
 | Dirofilaria repens | `dirofilaria-repens-lifecycle.webp` | CDC / PHIL or DPDx (via Wikimedia Commons) | Public domain | [https://commons.wikimedia.org/wiki/File:D_repens_Lebenszyklus.png](https://commons.wikimedia.org/wiki/File:D_repens_Lebenszyklus.png) |
+| Echinococcus granulosus | `echinococcus-granulosus-lifecycle.webp` | Besnoitjm | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Ciclo_biol%C3%B3gico_Echinococcus_granulosus.jpg](https://commons.wikimedia.org/wiki/File:Ciclo_biol%C3%B3gico_Echinococcus_granulosus.jpg) |
+| Eimeria spp. | `eimeria-spp-lifecycle.webp` | USDA | Public domain | [https://commons.wikimedia.org/wiki/File:Eimeria_life_cycle_usda.jpg](https://commons.wikimedia.org/wiki/File:Eimeria_life_cycle_usda.jpg) |
 | Fasciola hepatica | `fasciola-hepatica-lifecycle.webp` | Sugarplum | CC0-1.0 | [https://github.com/gelbh/sugarplum](https://github.com/gelbh/sugarplum) |
 | Psoroptes ovis | `psoroptes-ovis-lifecycle.webp` | Daktaridudu | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Life-cycle-psoroptes-ovis-mite-diagram.jpg](https://commons.wikimedia.org/wiki/File:Life-cycle-psoroptes-ovis-mite-diagram.jpg) |
 | Schistosoma spp. | `schistosoma-spp-lifecycle.webp` | Centers for Disease Control and Prevention | Public domain | [https://commons.wikimedia.org/wiki/File:Schistosomiasis_life_cycle.png](https://commons.wikimedia.org/wiki/File:Schistosomiasis_life_cycle.png) |
@@ -128,8 +130,6 @@ No catalog hero until a taxon-correct, study-useful, licence-ok asset exists (sp
 | Dictyocaulus arnfieldi | No hero yet |
 | Dictyocaulus filaria | Removed: source was D. viviparus |
 | Draschia megastoma | No hero yet |
-| Echinococcus granulosus | Lifecycle diagram retained; catalog hero cleared |
-| Eimeria spp. | Lifecycle diagram retained; catalog hero cleared |
 | Encephalitozoon cuniculi | Removed: pet photo, not organism |
 | Filaroides hirthi | No hero yet |
 | Habronema spp. | No hero yet |
