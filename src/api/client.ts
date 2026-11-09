@@ -1278,6 +1278,19 @@ export function acceptAllJobDrafts(jobId: string) {
   );
 }
 
+export function acceptSafeJobDrafts(jobId: string) {
+  if (isGuest()) guestUnsupported("accept cards");
+  return api<{
+    accepted: number;
+    failed: number;
+    leftUnsafe: number;
+    rejectedSiblingCount: number;
+    unlocks?: UnlockView[];
+  }>(`/api/jobs/${jobId}/drafts/accept-safe`, { method: "POST" }).then(
+    notifyGamificationChanged,
+  );
+}
+
 export function rejectCard(cardId: string, reason?: RejectReason | null) {
   if (isGuest()) guestUnsupported("reject cards");
   return api<CardDraftView>(`/api/cards/${cardId}/reject`, {
