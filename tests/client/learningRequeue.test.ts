@@ -1,6 +1,7 @@
 import { State } from "ts-fsrs";
 import { describe, expect, it } from "vitest";
 import {
+  earliestPendingDueAt,
   isShortTermFollowUp,
   mergeDueLearning,
   nextLearningWakeAt,
@@ -94,5 +95,22 @@ describe("upsert + merge + wake", () => {
       new Date("2026-11-09T12:00:00.000Z"),
     );
     expect(wake?.toISOString()).toBe("2026-11-09T12:05:00.000Z");
+  });
+
+  it("earliestPendingDueAt ignores wake filtering", () => {
+    expect(
+      earliestPendingDueAt([
+        {
+          cardId: "a",
+          dueAt: "2026-11-09T12:10:00.000Z",
+          card: { id: "a" },
+        },
+        {
+          cardId: "b",
+          dueAt: "2026-11-09T12:05:00.000Z",
+          card: { id: "b" },
+        },
+      ]),
+    ).toBe("2026-11-09T12:05:00.000Z");
   });
 });

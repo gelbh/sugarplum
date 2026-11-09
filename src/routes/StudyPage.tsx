@@ -63,6 +63,7 @@ import { enqueuePendingGrade, pendingCardIdSet } from "../study/pendingGrades";
 import SessionComplete from "../study/SessionComplete";
 import { StudyCardActions } from "../study/StudyCardActions";
 import {
+  earliestPendingDueAt,
   isShortTermFollowUp,
   mergeDueLearning,
   nextLearningWakeAt,
@@ -162,17 +163,6 @@ function formatLearningEta(dueAt: string, now = new Date()): string {
   const mins = Math.max(1, Math.ceil(ms / 60_000));
   if (mins < 60) return `${mins}m`;
   return `${Math.ceil(mins / 60)}h`;
-}
-
-function earliestPendingDue(
-  pending: PendingLearning<CardDraftView>[],
-): string | null {
-  if (pending.length === 0) return null;
-  let best = pending[0]!.dueAt;
-  for (let i = 1; i < pending.length; i++) {
-    if (pending[i]!.dueAt < best) best = pending[i]!.dueAt;
-  }
-  return best;
 }
 
 /** Study session: reveal answer, grade with FSRS (keys 1-4 or arrows; Space flips). Code-led MUI. */
@@ -414,7 +404,7 @@ export default function StudyPage() {
     gradedTotal(tally),
     pendingLearning.length,
   );
-  const nextLearningDue = earliestPendingDue(pendingLearning);
+  const nextLearningDue = earliestPendingDueAt(pendingLearning);
   const mcqMode = isMcqCard(current);
   const occlusionParts = current
     ? occlusionStudyParts(current)

@@ -53,6 +53,17 @@ export function mergeDueLearning<T extends { id: string }>(
   return { queue: nextQueue, pending: still };
 }
 
+export function earliestPendingDueAt<T extends { id: string }>(
+  pending: PendingLearning<T>[],
+): string | null {
+  if (pending.length === 0) return null;
+  let best = pending[0]!.dueAt;
+  for (let i = 1; i < pending.length; i++) {
+    if (pending[i]!.dueAt < best) best = pending[i]!.dueAt;
+  }
+  return best;
+}
+
 export function nextLearningWakeAt<T extends { id: string }>(
   pending: PendingLearning<T>[],
   now: Date,
