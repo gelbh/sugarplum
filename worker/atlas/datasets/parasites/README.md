@@ -14,7 +14,7 @@ The list of taxa is fixed in `tests/eval/atlas/course-taxa.json`: every taxon in
 | `nematodes-ruminant.json`          | 16   | authored |
 | `nematodes-equine-pig.json`        | 19   | authored |
 | `nematodes-companion-poultry.json` | 23   | planned  |
-| `arthropods.json`                  | 29   | planned  |
+| `arthropods.json`                  | 29   | authored |
 
 ## Sources
 
@@ -39,6 +39,7 @@ Phylum, order and family follow the course when a cited reference supports the c
 - Set a stage's `durationDays` only when a cited reference states how long that one stage lasts, and add a `lifecycleStages` ref for it. Leave it empty for spans that cover several stages ("4 to 7 weeks from egg to metacercaria") and for time to adulthood, which `pppDays` already covers.
 - Set `majorOrgan` to the site of the adult or sexual stage in a vertebrate definitive host, for example the small intestine for _Echinococcus granulosus_ and _Toxoplasma gondii_. When no vertebrate is a definitive host, use the main site in the vertebrate host instead. For a parasite with one host, use its main site in that host.
 - An arthropod vector that carries stages of the parasite is a host. It is the definitive host when a cited reference places sexual reproduction or sporogony in it (ticks for _Babesia_), and the vertebrate is then an intermediate host. When no cited reference places a sexual stage in the vector (_Leishmania_, _Trypanosoma_), the vertebrate is the definitive host and the vector is an intermediate host. A vector that only carries the parasite mechanically, or a helminth that carries it in its eggs (_Heterakis gallinarum_ for _Histomonas meleagridis_), appears in `vectorRole` and in no host list.
+- For an arthropod entry, list the vertebrates it lives or feeds on in `definitiveHosts`. Stages on the host get `definitive` and stages off it get `environment`. A tick's egg is `environment` and its larva, nymph and adult are `definitive`. A flea's egg, larva and pupa are `environment`. Lice and burrowing mites spend every stage on the host. Bot and blowfly larvae are `definitive`, as are bot fly eggs glued to the host's hair. Biting flies are `definitive` only as feeding adults. Use `vectorRole` for the pathogens the arthropod transmits, framed the way the pathogen's own entry frames the arthropod. _Linguatula serrata_ keeps true definitive and intermediate hosts.
 - Record a slide misspelling in `misspellings` only if `normalizeParasiteName` maps it to the canonical name. Otherwise add the fix to `worker/atlas/names.ts` first, with a test.
 
 ## Adding an Entry

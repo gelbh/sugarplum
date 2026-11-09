@@ -4,6 +4,7 @@ import {
   type DatasetGroupFile,
   type ParasiteDataset,
 } from "../schema";
+import arthropods from "./arthropods.json";
 import cestodes from "./cestodes.json";
 import nematodesEquinePig from "./nematodes-equine-pig.json";
 import nematodesRuminant from "./nematodes-ruminant.json";
@@ -18,6 +19,7 @@ const GROUP_FILES: Record<string, unknown> = {
   "nematodes-ruminant": nematodesRuminant,
   protozoa,
   "nematodes-equine-pig": nematodesEquinePig,
+  arthropods,
 };
 
 export function loadGroupFiles(): (DatasetGroupFile & { file: string })[] {

@@ -28,6 +28,7 @@ export const HOST_TERMS = {
   human: { broader: ["mammal"] },
   rodent: { broader: ["mammal"] },
   rabbit: { broader: ["mammal"] },
+  hedgehog: { broader: ["mammal"] },
   "non-human primate": { broader: ["mammal"] },
   frog: { broader: ["vertebrate"] },
   invertebrate: { broader: [] },
@@ -100,6 +101,8 @@ export const ORGAN_TERMS = {
   "lymph nodes": { broader: ["haemolymphatic organs"] },
   "bone marrow": { broader: ["haemolymphatic organs"] },
   eye: { broader: [] },
+  "ear canal": { broader: ["skin"] },
+  "nasal cavity": { broader: [] },
   "connective tissue": { broader: [] },
   "nuchal ligament": { broader: ["connective tissue"] },
 } as const satisfies Vocabulary;
