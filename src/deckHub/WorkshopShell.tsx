@@ -15,7 +15,6 @@ type Props = {
   title: string;
   subtitle?: string;
   onBack: () => void;
-  /** When true, Back is labeled as close (stack depth 1). */
   closeMode?: boolean;
   children: ReactNode;
   footer?: ReactNode;
