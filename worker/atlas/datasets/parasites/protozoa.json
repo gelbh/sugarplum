@@ -4,7 +4,7 @@
     {
       "key": "entamoeba-histolytica",
       "canonicalName": "Entamoeba histolytica",
-      "commonName": null,
+      "commonName": "Amoebic dysentery parasite",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -12,9 +12,15 @@
         "order": "Mastigamoebida",
         "family": "Endamoebidae",
         "group": "protozoan",
-        "definitiveHosts": ["human", "dog", "non-human primate"],
+        "definitiveHosts": [
+          "human",
+          "dog",
+          "non-human primate"
+        ],
         "majorOrgan": "large intestine",
-        "onHostStages": ["trophozoite"],
+        "onHostStages": [
+          "trophozoite"
+        ],
         "distribution": "Worldwide; most human cases arise in developing countries",
         "zoonotic": "potential",
         "significance": "Agent of amoebic dysentery in people; invasive trophozoites can reach the liver and form abscesses. Also found in dogs and non-human primates.",
@@ -60,7 +66,7 @@
         },
         {
           "field": "definitiveHosts",
-          "citation": "Ko\u00e7 et al. 2026, Veterinary Sciences 13:1072: zoonotic protozoa in stray and owned dogs with diarrhoea in Trabzon, T\u00fcrkiye",
+          "citation": "Koç et al. 2026, Veterinary Sciences 13:1072: zoonotic protozoa in stray and owned dogs with diarrhoea in Trabzon, Türkiye",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13709635/",
           "note": "Course also lists cats; cited references do not."
         },
@@ -129,8 +135,11 @@
     {
       "key": "giardia-duodenalis",
       "canonicalName": "Giardia duodenalis",
-      "commonName": null,
-      "aliases": ["Giardia intestinalis", "Giardia lamblia"],
+      "commonName": "Giardia",
+      "aliases": [
+        "Giardia intestinalis",
+        "Giardia lamblia"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Metamonada",
@@ -150,7 +159,9 @@
           "rabbit"
         ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["trophozoite"],
+        "onHostStages": [
+          "trophozoite"
+        ],
         "distribution": "Worldwide in humans and in domestic and wild mammals",
         "zoonotic": "yes",
         "significance": "Common gut flagellate of young dogs, cats, ruminants and people; often silent but can cause diarrhoea and malabsorption. Assemblages A and B cross species.",
@@ -275,17 +286,27 @@
     {
       "key": "balantidium-coli",
       "canonicalName": "Balantidium coli",
-      "commonName": null,
-      "aliases": ["Balantioides coli", "Neobalantidium coli"],
+      "commonName": "Balantidium",
+      "aliases": [
+        "Balantioides coli",
+        "Neobalantidium coli"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Ciliophora",
         "order": "Vestibuliferida",
         "family": "Balantidiidae",
         "group": "protozoan",
-        "definitiveHosts": ["pig", "human", "rodent", "non-human primate"],
+        "definitiveHosts": [
+          "pig",
+          "human",
+          "rodent",
+          "non-human primate"
+        ],
         "majorOrgan": "large intestine",
-        "onHostStages": ["trophozoite"],
+        "onHostStages": [
+          "trophozoite"
+        ],
         "distribution": "Worldwide, mainly where pigs are kept; commoner in warm humid regions",
         "zoonotic": "yes",
         "significance": "Large ciliate with the pig as main reservoir; usually harmless there but linked to diarrhoea and poor growth in pigs, and to ulcerative colitis in people.",
@@ -408,17 +429,27 @@
     {
       "key": "eimeria-spp",
       "canonicalName": "Eimeria spp.",
-      "commonName": null,
+      "commonName": "Coccidia",
       "aliases": [],
-      "misspellings": ["Eimieria species"],
+      "misspellings": [
+        "Eimieria species"
+      ],
       "fields": {
         "phylum": "Apicomplexa",
         "order": "Eucoccidiorida",
         "family": "Eimeriidae",
         "group": "protozoan",
-        "definitiveHosts": ["chicken", "turkey", "cattle", "sheep"],
+        "definitiveHosts": [
+          "chicken",
+          "turkey",
+          "cattle",
+          "sheep"
+        ],
         "majorOrgan": "gastrointestinal tract",
-        "onHostStages": ["meront", "gamont"],
+        "onHostStages": [
+          "meront",
+          "gamont"
+        ],
         "distribution": "Worldwide in poultry, cattle and sheep",
         "significance": "Host-specific coccidia; a major disease of commercial chickens (E. tenella, E. necatrix) and a cause of bloody diarrhoea in young calves (E. bovis, E. zuernii).",
         "lifecycleType": "direct",
@@ -533,7 +564,7 @@
     {
       "key": "cryptosporidium-spp",
       "canonicalName": "Cryptosporidium spp.",
-      "commonName": null,
+      "commonName": "Cryptosporidium",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -554,7 +585,10 @@
           "bird"
         ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["meront", "gamont"],
+        "onHostStages": [
+          "meront",
+          "gamont"
+        ],
         "distribution": "Worldwide",
         "zoonotic": "yes",
         "significance": "Major cause of diarrhoea in newborn calves, lambs and kids. Oocysts resist chlorine; zoonotic C. parvum is a leading cause of human infection.",
@@ -708,17 +742,27 @@
     {
       "key": "tritrichomonas-foetus",
       "canonicalName": "Tritrichomonas foetus",
-      "commonName": null,
-      "aliases": ["Trichomonas foetus"],
-      "misspellings": ["Trichomonas fetus"],
+      "commonName": "Cattle trichomonad",
+      "aliases": [
+        "Trichomonas foetus"
+      ],
+      "misspellings": [
+        "Trichomonas fetus"
+      ],
       "fields": {
         "phylum": "Parabasalia",
         "order": "Tritrichomonadida",
         "family": "Tritrichomonadidae",
         "group": "protozoan",
-        "definitiveHosts": ["cattle", "cat", "pig"],
+        "definitiveHosts": [
+          "cattle",
+          "cat",
+          "pig"
+        ],
         "majorOrgan": "reproductive tract",
-        "onHostStages": ["trophozoite"],
+        "onHostStages": [
+          "trophozoite"
+        ],
         "distribution": "Cattle, cats and pigs in several regions worldwide",
         "zoonotic": "no",
         "significance": "Venereal flagellate of cattle causing early embryonic loss and abortion, with bulls as lifelong carriers; a cat genotype causes chronic large-bowel diarrhoea.",
@@ -828,7 +872,7 @@
           "file": "tritrichomonas-foetus-hero.webp",
           "role": "adult",
           "caption": null,
-          "credit": "Chaoqun Yaor and Liza S K\u00f6ster",
+          "credit": "Chaoqun Yaor and Liza S Köster",
           "license": "CC BY 4.0",
           "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tritrichomonas_foetus.jpg",
           "isHero": true
@@ -838,7 +882,7 @@
     {
       "key": "histomonas-meleagridis",
       "canonicalName": "Histomonas meleagridis",
-      "commonName": null,
+      "commonName": "Blackhead parasite",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -846,11 +890,19 @@
         "order": "Tritrichomonadida",
         "family": "Dientamoebidae",
         "group": "protozoan",
-        "definitiveHosts": ["turkey", "chicken"],
-        "paratenicHosts": ["earthworm"],
+        "definitiveHosts": [
+          "turkey",
+          "chicken"
+        ],
+        "paratenicHosts": [
+          "earthworm"
+        ],
         "vectorRole": "Eggs of the caecal worm Heterakis gallinarum carry histomonads and keep them viable in litter and soil for years; earthworms that swallow these eggs pass them on to birds.",
         "majorOrgan": "caecum",
-        "onHostStages": ["flagellate form", "amoeboid form"],
+        "onHostStages": [
+          "flagellate form",
+          "amoeboid form"
+        ],
         "significance": "Blackhead disease: caecal ulcers and target-shaped liver necrosis. Turkey flocks can lose most birds, while chickens mostly survive as carriers.",
         "lifecycleType": "direct",
         "lifecycleStages": [
@@ -988,16 +1040,26 @@
     {
       "key": "encephalitozoon-cuniculi",
       "canonicalName": "Encephalitozoon cuniculi",
-      "commonName": null,
+      "commonName": "Rabbit encephalitozoon",
       "aliases": [],
       "misspellings": [],
       "fields": {
         "phylum": "Microsporidia",
         "family": "Unikaryonidae",
         "group": "protozoan",
-        "definitiveHosts": ["rabbit", "rodent", "dog", "cat", "fox", "human"],
+        "definitiveHosts": [
+          "rabbit",
+          "rodent",
+          "dog",
+          "cat",
+          "fox",
+          "human"
+        ],
         "majorOrgan": "central nervous system",
-        "onHostStages": ["meront", "sporont"],
+        "onHostStages": [
+          "meront",
+          "sporont"
+        ],
         "zoonotic": "yes",
         "significance": "Spore-forming microsporidian common in pet rabbits; often silent, but causes head tilt and other vestibular signs, kidney disease and lens-induced uveitis.",
         "lifecycleType": "direct",
@@ -1041,7 +1103,7 @@
       "refs": [
         {
           "field": null,
-          "citation": "Dobo\u0219i et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
+          "citation": "Doboși et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9785705/",
           "note": null
         },
@@ -1059,31 +1121,31 @@
         },
         {
           "field": "definitiveHosts",
-          "citation": "Dobo\u0219i et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
+          "citation": "Doboși et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9785705/",
           "note": null
         },
         {
           "field": "majorOrgan",
-          "citation": "Dobo\u0219i et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
+          "citation": "Doboși et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9785705/",
           "note": null
         },
         {
           "field": "zoonotic",
-          "citation": "Dobo\u0219i et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
+          "citation": "Doboși et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9785705/",
           "note": "Course states potential; reference gives yes."
         },
         {
           "field": "lifecycleStages",
-          "citation": "Dobo\u0219i et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
+          "citation": "Doboși et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9785705/",
           "note": null
         },
         {
           "field": "diagnosticTests",
-          "citation": "Dobo\u0219i et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
+          "citation": "Doboși et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9785705/",
           "note": null
         },
@@ -1116,7 +1178,7 @@
     {
       "key": "toxoplasma-gondii",
       "canonicalName": "Toxoplasma gondii",
-      "commonName": null,
+      "commonName": "Toxoplasma",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1124,7 +1186,10 @@
         "order": "Eucoccidiorida",
         "family": "Sarcocystidae",
         "group": "protozoan",
-        "definitiveHosts": ["cat", "felid"],
+        "definitiveHosts": [
+          "cat",
+          "felid"
+        ],
         "intermediateHosts": [
           "warm-blooded vertebrate",
           "sheep",
@@ -1316,7 +1381,7 @@
           "file": "toxoplasma-gondii-hero.webp",
           "role": "adult",
           "caption": null,
-          "credit": "Jacques Rigoulet, Alain Hennache, Pierre Lagourette, Catherine George, Lo\u00efc Longeart, Jean-Lo\u00efc Le Net and Jitender P. D",
+          "credit": "Jacques Rigoulet, Alain Hennache, Pierre Lagourette, Catherine George, Loïc Longeart, Jean-Loïc Le Net and Jitender P. D",
           "license": "CC BY 4.0",
           "sourceUrl": "https://commons.wikimedia.org/wiki/File:Parasite140105-fig3_Toxoplasmosis_in_a_bar-shouldered_dove_-_TEM_of_2_tachyzoites.tif",
           "isHero": true
@@ -1326,7 +1391,7 @@
     {
       "key": "neospora-caninum",
       "canonicalName": "Neospora caninum",
-      "commonName": null,
+      "commonName": "Neospora",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1334,8 +1399,16 @@
         "order": "Eucoccidiorida",
         "family": "Sarcocystidae",
         "group": "protozoan",
-        "definitiveHosts": ["dog", "canid"],
-        "intermediateHosts": ["cattle", "deer", "sheep", "goat"],
+        "definitiveHosts": [
+          "dog",
+          "canid"
+        ],
+        "intermediateHosts": [
+          "cattle",
+          "deer",
+          "sheep",
+          "goat"
+        ],
         "majorOrgan": "small intestine",
         "onHostStages": [
           "tachyzoite",
@@ -1498,7 +1571,7 @@
     {
       "key": "sarcocystis-spp",
       "canonicalName": "Sarcocystis spp.",
-      "commonName": null,
+      "commonName": "Sarcocystis",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1506,7 +1579,12 @@
         "order": "Eucoccidiorida",
         "family": "Sarcocystidae",
         "group": "protozoan",
-        "definitiveHosts": ["dog", "cat", "fox", "human"],
+        "definitiveHosts": [
+          "dog",
+          "cat",
+          "fox",
+          "human"
+        ],
         "intermediateHosts": [
           "cattle",
           "sheep",
@@ -1516,7 +1594,11 @@
           "human"
         ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["meront", "sarcocyst with bradyzoites", "gamont"],
+        "onHostStages": [
+          "meront",
+          "sarcocyst with bradyzoites",
+          "gamont"
+        ],
         "distribution": "Worldwide, commonest where livestock are raised",
         "zoonotic": "yes",
         "significance": "Most species cause little disease; others cause illness, abortion or carcass downgrading. S. neurona can cause myeloencephalitis in horses.",
@@ -1678,7 +1760,7 @@
     {
       "key": "besnoitia-besnoiti",
       "canonicalName": "Besnoitia besnoiti",
-      "commonName": null,
+      "commonName": "Bovine besnoitiosis parasite",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1686,10 +1768,16 @@
         "order": "Eucoccidiorida",
         "family": "Sarcocystidae",
         "group": "protozoan",
-        "intermediateHosts": ["cattle", "deer"],
+        "intermediateHosts": [
+          "cattle",
+          "deer"
+        ],
         "vectorRole": "Tabanids and stable flies have carried it mechanically in experiments; direct contact and natural mating also spread it within herds.",
         "majorOrgan": "skin",
-        "onHostStages": ["tachyzoite", "tissue cyst with bradyzoites"],
+        "onHostStages": [
+          "tachyzoite",
+          "tissue cyst with bradyzoites"
+        ],
         "distribution": "Africa, Asia and Europe, spreading in southern and western Europe",
         "significance": "Chronic cattle disease: fever and oedema, then thick folded skin; causes weight loss, bull infertility and hide damage, with no treatment.",
         "lifecycleType": "indirect",
@@ -1806,7 +1894,7 @@
     {
       "key": "babesia-spp",
       "canonicalName": "Babesia spp.",
-      "commonName": null,
+      "commonName": "Babesia",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1814,7 +1902,9 @@
         "order": "Piroplasmida",
         "family": "Babesiidae",
         "group": "protozoan",
-        "definitiveHosts": ["tick"],
+        "definitiveHosts": [
+          "tick"
+        ],
         "intermediateHosts": [
           "cattle",
           "horse",
@@ -1828,7 +1918,10 @@
         ],
         "vectorRole": "Ixodid ticks are the definitive hosts and pass sporozoites in saliva as they feed; many species also pass through tick eggs.",
         "majorOrgan": "red blood cells",
-        "onHostStages": ["trophozoite and merozoite", "gametocyte"],
+        "onHostStages": [
+          "trophozoite and merozoite",
+          "gametocyte"
+        ],
         "distribution": "Worldwide, wherever competent tick vectors occur",
         "zoonotic": "yes",
         "significance": "Red cell destruction causes fever, anaemia, jaundice and red urine; severe in cattle and horses, also dogs, cats and people.",
@@ -2020,7 +2113,7 @@
     {
       "key": "theileria-spp",
       "canonicalName": "Theileria spp.",
-      "commonName": null,
+      "commonName": "Theileria",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -2028,7 +2121,9 @@
         "order": "Piroplasmida",
         "family": "Theileriidae",
         "group": "protozoan",
-        "definitiveHosts": ["tick"],
+        "definitiveHosts": [
+          "tick"
+        ],
         "intermediateHosts": [
           "cattle",
           "African buffalo",
@@ -2038,7 +2133,10 @@
         ],
         "vectorRole": "Ixodid ticks are the definitive hosts; they pick up piroplasms and pass sporozoites in saliva at the next life stage, not via eggs.",
         "majorOrgan": "lymph nodes",
-        "onHostStages": ["schizont", "merozoite and piroplasm"],
+        "onHostStages": [
+          "schizont",
+          "merozoite and piroplasm"
+        ],
         "distribution": "Tropical and subtropical regions, limited by the tick vectors",
         "significance": "Tick-borne diseases of ruminants; East Coast fever and tropical theileriosis kill many cattle, and some species are lethal to sheep.",
         "lifecycleType": "indirect",
@@ -2184,19 +2282,29 @@
     {
       "key": "leishmania-infantum",
       "canonicalName": "Leishmania infantum",
-      "commonName": null,
-      "aliases": ["Leishmania chagasi"],
+      "commonName": "Canine leishmania",
+      "aliases": [
+        "Leishmania chagasi"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Euglenozoa",
         "order": "Trypanosomatida",
         "family": "Trypanosomatidae",
         "group": "protozoan",
-        "definitiveHosts": ["dog", "canid", "human"],
-        "intermediateHosts": ["sand fly"],
+        "definitiveHosts": [
+          "dog",
+          "canid",
+          "human"
+        ],
+        "intermediateHosts": [
+          "sand fly"
+        ],
         "vectorRole": "Female phlebotomine sand flies take up infected macrophages, the parasite develops in the fly gut, and promastigotes enter the skin at the next bite.",
         "majorOrgan": "haemolymphatic organs",
-        "onHostStages": ["amastigote"],
+        "onHostStages": [
+          "amastigote"
+        ],
         "distribution": "Southern Europe, Africa, Asia, the Middle East, Latin America; US foxhounds",
         "zoonotic": "yes",
         "significance": "Main cause of canine leishmaniosis, with skin, eye and systemic disease; kidney failure is the main cause of death. Dogs are the reservoir for people.",
@@ -2396,7 +2504,7 @@
     {
       "key": "trypanosoma-spp",
       "canonicalName": "Trypanosoma spp.",
-      "commonName": null,
+      "commonName": "Trypanosome",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -2415,10 +2523,14 @@
           "camelid",
           "human"
         ],
-        "intermediateHosts": ["tsetse fly"],
+        "intermediateHosts": [
+          "tsetse fly"
+        ],
         "vectorRole": "Tsetse flies carry most species cyclically, the parasite multiplying in the fly; tabanids and other biting flies spread some mechanically, and T. equiperdum is venereal.",
         "majorOrgan": "blood",
-        "onHostStages": ["bloodstream trypomastigote"],
+        "onHostStages": [
+          "bloodstream trypomastigote"
+        ],
         "distribution": "Mainly sub-Saharan Africa; some species in Latin America and Asia",
         "zoonotic": "yes",
         "significance": "Nagana: chronic anaemia, fever and wasting in cattle and other livestock across tsetse areas of Africa; T. brucei subspecies cause sleeping sickness.",
@@ -2590,7 +2702,7 @@
     {
       "key": "plasmodium-spp",
       "canonicalName": "Plasmodium spp.",
-      "commonName": null,
+      "commonName": "Malaria parasite",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -2598,8 +2710,14 @@
         "order": "Haemosporida",
         "family": "Plasmodiidae",
         "group": "protozoan",
-        "definitiveHosts": ["mosquito"],
-        "intermediateHosts": ["bird", "chicken", "turkey"],
+        "definitiveHosts": [
+          "mosquito"
+        ],
+        "intermediateHosts": [
+          "bird",
+          "chicken",
+          "turkey"
+        ],
         "vectorRole": "Mosquitoes (Culex, Culiseta or Aedes for bird species) take up gametocytes, host the sexual and sporogonic cycle, and inject sporozoites when feeding.",
         "majorOrgan": "red blood cells",
         "onHostStages": [
@@ -2764,7 +2882,7 @@
           "file": "plasmodium-spp-hero.webp",
           "role": "adult",
           "caption": null,
-          "credit": "Merit Gonz\u00e1lez-Olvera, Arturo Hernandez-Colina, Tanja Himmel, Lindsay Eckley, Javier Lopez, Julian Chantrey, Matthew Bay",
+          "credit": "Merit González-Olvera, Arturo Hernandez-Colina, Tanja Himmel, Lindsay Eckley, Javier Lopez, Julian Chantrey, Matthew Bay",
           "license": "CC BY 4.0",
           "sourceUrl": "https://commons.wikimedia.org/wiki/File:Graphical_abstract_of_avian_malaria_affecting_Humboldt_penguins.jpg",
           "isHero": true
@@ -2774,18 +2892,27 @@
     {
       "key": "hepatozoon-canis",
       "canonicalName": "Hepatozoon canis",
-      "commonName": null,
+      "commonName": "Canine hepatozoon",
       "aliases": [],
       "misspellings": [],
       "fields": {
         "phylum": "Apicomplexa",
         "family": "Hepatozoidae",
         "group": "protozoan",
-        "definitiveHosts": ["Rhipicephalus sanguineus", "tick"],
-        "intermediateHosts": ["dog", "canid"],
+        "definitiveHosts": [
+          "Rhipicephalus sanguineus",
+          "tick"
+        ],
+        "intermediateHosts": [
+          "dog",
+          "canid"
+        ],
         "vectorRole": "The brown dog tick is the definitive host; dogs are infected by swallowing an infected tick, not by its bite.",
         "majorOrgan": "bone marrow",
-        "onHostStages": ["meront", "gamont"],
+        "onHostStages": [
+          "meront",
+          "gamont"
+        ],
         "distribution": "Asia, Africa, Europe and the Americas",
         "significance": "Tick-borne infection of dogs and wild canids, usually mild or subclinical but sometimes causing fever, lethargy and anaemia.",
         "lifecycleType": "indirect",

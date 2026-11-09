@@ -9,6 +9,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
 import AtlasImage, { heroImage } from "./AtlasImage";
+import { entryTitles } from "./entryTitles";
 import { atlasHeroName } from "./paths";
 import {
   GROUP_LABELS,
@@ -128,9 +129,9 @@ export default function AtlasTable({
                     }
                     ev.preventDefault();
                   }}
-                  sx={{ fontStyle: "italic", fontWeight: 600 }}
+                  sx={{ fontWeight: 600 }}
                 >
-                  {e.canonicalName}
+                  {entryTitles(e).primary}
                 </Link>
               </TableCell>
               {focusActive ? (

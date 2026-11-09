@@ -32,6 +32,7 @@ import {
   restoreEntry,
   softDeleteEntry,
 } from "./apiSource";
+import { entryTitles } from "./entryTitles";
 import { GROUP_LABELS } from "./filter";
 import StageListEditor, { type StageDraft } from "./StageListEditor";
 import type { AtlasEntryView, DatasetFields, ParasiteGroup } from "./types";
@@ -74,6 +75,7 @@ type AddProps = {
 
 export function AddEntryDialog({ open, atlasId, onClose, onDone }: AddProps) {
   const [name, setName] = useState("");
+  const [commonName, setCommonName] = useState("");
   const [group, setGroup] = useState<ParasiteGroup | "">("");
   const [busy, setBusy] = useState<Busy>(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +83,7 @@ export function AddEntryDialog({ open, atlasId, onClose, onDone }: AddProps) {
   useEffect(() => {
     if (!open) return;
     setName("");
+    setCommonName("");
     setGroup("");
     setError(null);
     setBusy(false);
@@ -89,8 +92,13 @@ export function AddEntryDialog({ open, atlasId, onClose, onDone }: AddProps) {
   async function onSubmit(ev: FormEvent) {
     ev.preventDefault();
     const canonicalName = name.trim();
+    const common = commonName.trim();
     if (!canonicalName) {
       setError("Canonical name required");
+      return;
+    }
+    if (!common) {
+      setError("Common name required");
       return;
     }
     if (!group) {
@@ -102,6 +110,7 @@ export function AddEntryDialog({ open, atlasId, onClose, onDone }: AddProps) {
     try {
       const entry = await createEntry(atlasId, {
         canonicalName,
+        commonName: common,
         fields: { group },
       });
       onDone(entry);
@@ -122,6 +131,14 @@ export function AddEntryDialog({ open, atlasId, onClose, onDone }: AddProps) {
             {error ? <Alert severity="error">{error}</Alert> : null}
             <TextField
               autoFocus
+              label="Common name"
+              value={commonName}
+              onChange={(ev) => setCommonName(ev.target.value)}
+              disabled={busy}
+              fullWidth
+              required
+            />
+            <TextField
               label="Canonical name"
               value={name}
               onChange={(ev) => setName(ev.target.value)}
@@ -192,11 +209,16 @@ export function EditEntryDialog({
   async function onSubmit(ev: FormEvent) {
     ev.preventDefault();
     if (!entry) return;
+    const common = commonName.trim();
+    if (!common) {
+      setError("Common name required");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
       await patchEntry(atlasId, entry.id, {
-        commonName: commonName.trim() || null,
+        commonName: common,
         // Learner edits accept free-text hosts; DatasetFields vocab is dataset-only.
         fields: {
           definitiveHosts: parseHostList(
@@ -215,7 +237,7 @@ export function EditEntryDialog({
 
   async function onSoftDelete() {
     if (!entry) return;
-    if (!window.confirm(`Soft-delete ${entry.canonicalName}?`)) return;
+    if (!window.confirm(`Soft-delete ${entryTitles(entry).primary}?`)) return;
     setBusy(true);
     setError(null);
     try {
@@ -231,7 +253,8 @@ export function EditEntryDialog({
 
   async function onReset() {
     if (!entry?.originKey) return;
-    if (!window.confirm(`Reset ${entry.canonicalName} to the dataset?`)) return;
+    if (!window.confirm(`Reset ${entryTitles(entry).primary} to the dataset?`))
+      return;
     setBusy(true);
     setError(null);
     try {
@@ -251,7 +274,7 @@ export function EditEntryDialog({
     <Dialog open={open} onClose={() => !busy && onClose()} fullWidth maxWidth="xs">
       <form onSubmit={onSubmit}>
         <DialogTitle>
-          Edit {entry ? <em>{entry.canonicalName}</em> : "entry"}
+          Edit {entry ? entryTitles(entry).primary : "entry"}
         </DialogTitle>
         <DialogContent>
           <Stack spacing={1.5} sx={{ pt: 0.5 }}>
@@ -263,6 +286,7 @@ export function EditEntryDialog({
               onChange={(ev) => setCommonName(ev.target.value)}
               disabled={busy}
               fullWidth
+              required
             />
             <TextField
               label="Definitive hosts"
@@ -392,7 +416,7 @@ export function EditLifecycleDialog({
           {entry ? (
             <>
               {" — "}
-              <em>{entry.canonicalName}</em>
+              {entryTitles(entry).primary}
             </>
           ) : null}
         </DialogTitle>
@@ -491,7 +515,8 @@ export function RecentlyDeletedDialog({
   }
 
   async function onPurge(entry: AtlasEntryView) {
-    if (!window.confirm(`Permanently delete ${entry.canonicalName}?`)) return;
+    if (!window.confirm(`Permanently delete ${entryTitles(entry).primary}?`))
+      return;
     setBusyId(entry.id);
     setError(null);
     try {
@@ -531,8 +556,8 @@ export function RecentlyDeletedDialog({
                   py: 1,
                 }}
               >
-                <Typography sx={{ fontStyle: "italic", fontWeight: 600 }}>
-                  {e.canonicalName}
+                <Typography sx={{ fontWeight: 600 }}>
+                  {entryTitles(e).primary}
                 </Typography>
                 <Stack direction="row" gap={1}>
                   <Button

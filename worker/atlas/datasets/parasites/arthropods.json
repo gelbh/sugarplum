@@ -12,7 +12,11 @@
         "order": "Porocephalida",
         "family": "Linguatulidae",
         "group": "arthropod",
-        "definitiveHosts": ["dog", "fox", "cat"],
+        "definitiveHosts": [
+          "dog",
+          "fox",
+          "cat"
+        ],
         "intermediateHosts": [
           "sheep",
           "goat",
@@ -22,7 +26,11 @@
           "rodent"
         ],
         "majorOrgan": "nasal cavity",
-        "onHostStages": ["larva", "nymph", "adult"],
+        "onHostStages": [
+          "larva",
+          "nymph",
+          "adult"
+        ],
         "distribution": "Almost worldwide; most cases reported in the Middle East",
         "zoonotic": "yes",
         "significance": "Adults in the nasal passages cause sneezing and a slight, sometimes bloody, nasal discharge; large burdens can block the airway.",
@@ -217,10 +225,18 @@
         "order": "Siphonaptera",
         "family": "Pulicidae",
         "group": "arthropod",
-        "definitiveHosts": ["cat", "dog", "fox", "rodent", "human"],
+        "definitiveHosts": [
+          "cat",
+          "dog",
+          "fox",
+          "rodent",
+          "human"
+        ],
         "vectorRole": "Intermediate host of the tapeworm Dipylidium caninum, which pets pick up by swallowing an infected flea.",
         "majorOrgan": "skin",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Worldwide on dogs and cats",
         "zoonotic": "yes",
         "significance": "Causes itching, flea-bite allergic dermatitis and, in heavy burdens, blood-loss anaemia, mainly in dogs and cats.",
@@ -379,10 +395,15 @@
         "order": "Siphonaptera",
         "family": "Pulicidae",
         "group": "arthropod",
-        "definitiveHosts": ["dog", "human"],
+        "definitiveHosts": [
+          "dog",
+          "human"
+        ],
         "vectorRole": "Intermediate host of the tapeworm Dipylidium caninum.",
         "majorOrgan": "skin",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Found in Europe; rare on dogs in North America",
         "zoonotic": "yes",
         "significance": "Causes skin irritation and flea-bite allergic dermatitis in dogs, and blood-loss anaemia when burdens are heavy.",
@@ -531,10 +552,19 @@
         "order": "Siphonaptera",
         "family": "Pulicidae",
         "group": "arthropod",
-        "definitiveHosts": ["human", "dog", "cat", "rodent", "pig", "goat"],
+        "definitiveHosts": [
+          "human",
+          "dog",
+          "cat",
+          "rodent",
+          "pig",
+          "goat"
+        ],
         "vectorRole": "Intermediate host of the tapeworm Dipylidium caninum: larvae eat egg packets and adults pass it on when swallowed.",
         "majorOrgan": "skin",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Cosmopolitan",
         "zoonotic": "yes",
         "significance": "A nuisance biter of people and animals, causing itchy red papules and dermatitis where flea burdens are high.",
@@ -651,7 +681,9 @@
       "key": "ixodes-ricinus",
       "canonicalName": "Ixodes ricinus",
       "commonName": "Castor bean tick",
-      "aliases": ["sheep tick"],
+      "aliases": [
+        "sheep tick"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Arthropoda",
@@ -669,7 +701,11 @@
         ],
         "vectorRole": "Definitive host of Babesia divergens of cattle; also transmits louping ill virus, Borrelia burgdorferi (Lyme disease) and Anaplasma phagocytophilum (tick-borne fever).",
         "majorOrgan": "skin",
-        "onHostStages": ["larva", "nymph", "adult"],
+        "onHostStages": [
+          "larva",
+          "nymph",
+          "adult"
+        ],
         "distribution": "Europe from Portugal to Russia and Scandinavia, plus North Africa",
         "zoonotic": "yes",
         "significance": "Common European hard tick that feeds on many mammals, birds and people and carries a wide range of animal and human pathogens.",
@@ -801,10 +837,20 @@
         "order": "Ixodida",
         "family": "Ixodidae",
         "group": "arthropod",
-        "definitiveHosts": ["hedgehog", "fox", "dog", "cat", "human"],
+        "definitiveHosts": [
+          "hedgehog",
+          "fox",
+          "dog",
+          "cat",
+          "human"
+        ],
         "vectorRole": "Competent vector of Borrelia burgdorferi s.l.; hedgehog ticks were also found infected with Anaplasma phagocytophilum and Rickettsia helvetica.",
         "majorOrgan": "skin",
-        "onHostStages": ["larva", "nymph", "adult"],
+        "onHostStages": [
+          "larva",
+          "nymph",
+          "adult"
+        ],
         "distribution": "Europe, from Portugal and Britain to the Balkans, plus Turkey",
         "zoonotic": "yes",
         "significance": "Hedgehog-specialist tick that also feeds on foxes, dogs, cats and occasionally people, and carries tick-borne bacteria.",
@@ -916,7 +962,10 @@
       "key": "dermacentor-reticulatus",
       "canonicalName": "Dermacentor reticulatus",
       "commonName": "Ornate dog tick",
-      "aliases": ["marsh tick", "meadow tick"],
+      "aliases": [
+        "marsh tick",
+        "meadow tick"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Arthropoda",
@@ -941,7 +990,11 @@
         ],
         "vectorRole": "Definitive host of Babesia canis of dogs and Babesia caballi of horses; B. canis also passes transovarially from the female tick to her larvae.",
         "majorOrgan": "skin",
-        "onHostStages": ["larva", "nymph", "adult"],
+        "onHostStages": [
+          "larva",
+          "nymph",
+          "adult"
+        ],
         "distribution": "Europe, from Portugal to western Siberia",
         "zoonotic": "yes",
         "significance": "Hard tick of dogs, horses and livestock whose adults feed in clusters and leave inflamed bite lesions; mainly important for the piroplasms it carries.",
@@ -1067,10 +1120,17 @@
         "order": "Ixodida",
         "family": "Ixodidae",
         "group": "arthropod",
-        "definitiveHosts": ["dog", "human"],
+        "definitiveHosts": [
+          "dog",
+          "human"
+        ],
         "vectorRole": "Definitive host of Hepatozoon canis; dogs are infected by swallowing the tick, not through its bite.",
         "majorOrgan": "skin",
-        "onHostStages": ["larva", "nymph", "adult"],
+        "onHostStages": [
+          "larva",
+          "nymph",
+          "adult"
+        ],
         "distribution": "Tropical and subtropical regions worldwide; indoors in cooler climates",
         "zoonotic": "yes",
         "significance": "Few ticks usually cause no signs in dogs; heavy burdens irritate the skin and thin the coat, and the tick carries several dog pathogens.",
@@ -1232,7 +1292,11 @@
         ],
         "vectorRole": "Definitive host of Babesia major of cattle and of Babesia motasi and Theileria ovis of sheep; also carries other livestock pathogens.",
         "majorOrgan": "skin",
-        "onHostStages": ["larva", "nymph", "adult"],
+        "onHostStages": [
+          "larva",
+          "nymph",
+          "adult"
+        ],
         "distribution": "Mediterranean Europe, N Africa and Asia; north to southern Britain",
         "zoonotic": "yes",
         "significance": "Adults on sheep and cattle can cause tick paralysis, and the tick carries blood parasites of livestock.",
@@ -1362,9 +1426,11 @@
     {
       "key": "sarcoptes-scabiei",
       "canonicalName": "Sarcoptes scabiei",
-      "commonName": null,
+      "commonName": "Itch mite",
       "aliases": [],
-      "misspellings": ["Sarcoptes scabei"],
+      "misspellings": [
+        "Sarcoptes scabei"
+      ],
       "fields": {
         "phylum": "Arthropoda",
         "order": "Sarcoptiformes",
@@ -1381,7 +1447,12 @@
           "human"
         ],
         "majorOrgan": "skin",
-        "onHostStages": ["egg", "larva", "nymph", "adult"],
+        "onHostStages": [
+          "egg",
+          "larva",
+          "nymph",
+          "adult"
+        ],
         "distribution": "Worldwide in domestic and wild mammals and in people",
         "zoonotic": "yes",
         "significance": "Causes scabies (sarcoptic mange): intense itching, crusting and hair loss. Spreads between hosts by direct contact.",
@@ -1528,7 +1599,7 @@
     {
       "key": "psoroptes-ovis",
       "canonicalName": "Psoroptes ovis",
-      "commonName": null,
+      "commonName": "Sheep scab mite",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1536,9 +1607,20 @@
         "order": "Sarcoptiformes",
         "family": "Psoroptidae",
         "group": "arthropod",
-        "definitiveHosts": ["cattle", "sheep", "goat", "horse", "camelid"],
+        "definitiveHosts": [
+          "cattle",
+          "sheep",
+          "goat",
+          "horse",
+          "camelid"
+        ],
         "majorOrgan": "skin",
-        "onHostStages": ["egg", "larva", "nymph", "adult"],
+        "onHostStages": [
+          "egg",
+          "larva",
+          "nymph",
+          "adult"
+        ],
         "distribution": "Worldwide; sheep scab is endemic in the UK but absent from Canada and the US",
         "significance": "Surface mite behind psoroptic mange; on sheep it causes scab, with severe itching, patchy fleece loss and weight loss.",
         "lifecycleType": "direct",
@@ -1671,9 +1753,17 @@
         "order": "Sarcoptiformes",
         "family": "Psoroptidae",
         "group": "arthropod",
-        "definitiveHosts": ["dog", "cat"],
+        "definitiveHosts": [
+          "dog",
+          "cat"
+        ],
         "majorOrgan": "ear canal",
-        "onHostStages": ["egg", "larva", "nymph", "adult"],
+        "onHostStages": [
+          "egg",
+          "larva",
+          "nymph",
+          "adult"
+        ],
         "distribution": "Worldwide; dogs, cats and free-ranging carnivores",
         "zoonotic": "yes",
         "significance": "Ear mite of dogs and cats causing itchy otitis with dark waxy debris, head shaking and scratching. Spreads by contact.",
@@ -1799,7 +1889,7 @@
     {
       "key": "demodex-canis",
       "canonicalName": "Demodex canis",
-      "commonName": null,
+      "commonName": "Canine demodex mite",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1807,9 +1897,16 @@
         "order": "Trombidiformes",
         "family": "Demodicidae",
         "group": "arthropod",
-        "definitiveHosts": ["dog"],
+        "definitiveHosts": [
+          "dog"
+        ],
         "majorOrgan": "skin",
-        "onHostStages": ["egg", "larva", "nymph", "adult"],
+        "onHostStages": [
+          "egg",
+          "larva",
+          "nymph",
+          "adult"
+        ],
         "distribution": "Worldwide on dogs",
         "zoonotic": "no",
         "significance": "Follicle mite of dogs, usually harmless; with immune deficits it causes demodectic mange, from small patches to severe generalised folliculitis.",
@@ -1932,7 +2029,7 @@
     {
       "key": "cheyletiella-spp",
       "canonicalName": "Cheyletiella spp.",
-      "commonName": null,
+      "commonName": "Walking dandruff mite",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1940,9 +2037,19 @@
         "order": "Trombidiformes",
         "family": "Cheyletidae",
         "group": "arthropod",
-        "definitiveHosts": ["dog", "cat", "rabbit", "human"],
+        "definitiveHosts": [
+          "dog",
+          "cat",
+          "rabbit",
+          "human"
+        ],
         "majorOrgan": "skin",
-        "onHostStages": ["egg", "larva", "nymph", "adult"],
+        "onHostStages": [
+          "egg",
+          "larva",
+          "nymph",
+          "adult"
+        ],
         "distribution": "Worldwide on dogs, cats and rabbits",
         "zoonotic": "yes",
         "significance": "Surface mites causing scaling and itch in dogs and cats ('walking dandruff'); they pass readily to people.",
@@ -2085,7 +2192,7 @@
     {
       "key": "chorioptes-bovis",
       "canonicalName": "Chorioptes bovis",
-      "commonName": null,
+      "commonName": "Chorioptic mange mite",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -2093,9 +2200,19 @@
         "order": "Sarcoptiformes",
         "family": "Psoroptidae",
         "group": "arthropod",
-        "definitiveHosts": ["cattle", "sheep", "goat", "horse", "camelid"],
+        "definitiveHosts": [
+          "cattle",
+          "sheep",
+          "goat",
+          "horse",
+          "camelid"
+        ],
         "majorOrgan": "skin",
-        "onHostStages": ["egg", "larva", "adult"],
+        "onHostStages": [
+          "egg",
+          "larva",
+          "adult"
+        ],
         "distribution": "Worldwide; common on housed dairy cattle",
         "significance": "Surface mange mite causing itchy, crusted lesions at the tail head and lower limbs; most common in confined cattle in winter.",
         "lifecycleType": "direct",
@@ -2223,10 +2340,17 @@
         "order": "Mesostigmata",
         "family": "Dermanyssidae",
         "group": "arthropod",
-        "definitiveHosts": ["chicken", "bird", "human"],
+        "definitiveHosts": [
+          "chicken",
+          "bird",
+          "human"
+        ],
         "vectorRole": "Reported as a reservoir and possible vector of Salmonella Enteritidis and Pasteurella multocida.",
         "majorOrgan": "skin",
-        "onHostStages": ["nymph", "adult"],
+        "onHostStages": [
+          "nymph",
+          "adult"
+        ],
         "distribution": "Worldwide; a major pest of laying hen houses, especially in Europe",
         "zoonotic": "yes",
         "significance": "Blood-feeding mite of laying hens that shelters in housing crevices; causes welfare and production losses and can bite people.",
@@ -2356,7 +2480,7 @@
     {
       "key": "trichodectes-canis",
       "canonicalName": "Trichodectes canis",
-      "commonName": null,
+      "commonName": "Dog biting louse",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -2364,10 +2488,16 @@
         "order": "Psocodea",
         "family": "Trichodectidae",
         "group": "arthropod",
-        "definitiveHosts": ["dog"],
+        "definitiveHosts": [
+          "dog"
+        ],
         "vectorRole": "Acts as an intermediate host of Dipylidium caninum alongside fleas, though its epidemiological importance is not known.",
         "majorOrgan": "skin",
-        "onHostStages": ["egg", "nymph", "adult"],
+        "onHostStages": [
+          "egg",
+          "nymph",
+          "adult"
+        ],
         "distribution": "Dogs worldwide",
         "significance": "Chewing louse causing itching and hair loss in dogs, mostly young pups; many infested dogs show no signs.",
         "lifecycleType": "direct",
@@ -2484,7 +2614,7 @@
     {
       "key": "felicola-subrostratus",
       "canonicalName": "Felicola subrostratus",
-      "commonName": null,
+      "commonName": "Cat biting louse",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -2492,9 +2622,15 @@
         "order": "Psocodea",
         "family": "Trichodectidae",
         "group": "arthropod",
-        "definitiveHosts": ["cat"],
+        "definitiveHosts": [
+          "cat"
+        ],
         "majorOrgan": "skin",
-        "onHostStages": ["egg", "nymph", "adult"],
+        "onHostStages": [
+          "egg",
+          "nymph",
+          "adult"
+        ],
         "distribution": "Cats worldwide; uncommon in western Canada",
         "significance": "Chewing louse causing irritation and hair loss in cats, most often farm cats; many cats show no signs.",
         "lifecycleType": "direct",
@@ -2595,7 +2731,7 @@
           "file": "felicola-subrostratus-hero.webp",
           "role": "adult",
           "caption": null,
-          "credit": "Jana Bulantov\u00e1",
+          "credit": "Jana Bulantová",
           "license": "CC BY-SA 4.0",
           "sourceUrl": "https://commons.wikimedia.org/wiki/File:14_Felicola_subrostratus.tif",
           "isHero": true
@@ -2605,17 +2741,25 @@
     {
       "key": "bovicola-ovis",
       "canonicalName": "Bovicola ovis",
-      "commonName": null,
-      "aliases": ["Damalinia ovis"],
+      "commonName": "Sheep biting louse",
+      "aliases": [
+        "Damalinia ovis"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Arthropoda",
         "order": "Psocodea",
         "family": "Bovicoliidae",
         "group": "arthropod",
-        "definitiveHosts": ["sheep"],
+        "definitiveHosts": [
+          "sheep"
+        ],
         "majorOrgan": "skin",
-        "onHostStages": ["egg", "nymph", "adult"],
+        "onHostStages": [
+          "egg",
+          "nymph",
+          "adult"
+        ],
         "distribution": "Sheep-farming countries including Australia, New Zealand and the UK",
         "significance": "Chewing louse causing itch, rubbing and fleece damage in sheep; signs are easily mistaken for early sheep scab.",
         "lifecycleType": "direct",
@@ -2755,16 +2899,24 @@
       "key": "bovicola-bovis",
       "canonicalName": "Bovicola bovis",
       "commonName": "Cattle biting louse",
-      "aliases": ["Damalinia bovis"],
+      "aliases": [
+        "Damalinia bovis"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Arthropoda",
         "order": "Psocodea",
         "family": "Bovicoliidae",
         "group": "arthropod",
-        "definitiveHosts": ["cattle"],
+        "definitiveHosts": [
+          "cattle"
+        ],
         "majorOrgan": "skin",
-        "onHostStages": ["egg", "nymph", "adult"],
+        "onHostStages": [
+          "egg",
+          "nymph",
+          "adult"
+        ],
         "distribution": "Cattle worldwide; common in western Canada",
         "zoonotic": "no",
         "significance": "Chewing louse causing itching, rubbing and hair loss in cattle, mainly in winter.",
@@ -2895,9 +3047,15 @@
         "order": "Psocodea",
         "family": "Linognathidae",
         "group": "arthropod",
-        "definitiveHosts": ["cattle"],
+        "definitiveHosts": [
+          "cattle"
+        ],
         "majorOrgan": "skin",
-        "onHostStages": ["egg", "nymph", "adult"],
+        "onHostStages": [
+          "egg",
+          "nymph",
+          "adult"
+        ],
         "distribution": "Cattle worldwide; common in western Canada",
         "zoonotic": "no",
         "significance": "Sucking louse causing itch and hair loss in cattle, especially calves; heavy burdens can cause anaemia.",
@@ -3027,17 +3185,27 @@
     {
       "key": "lucilia-sericata",
       "canonicalName": "Lucilia sericata",
-      "commonName": null,
-      "aliases": ["Phaenicia sericata"],
+      "commonName": "Greenbottle blowfly",
+      "aliases": [
+        "Phaenicia sericata"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Arthropoda",
         "order": "Diptera",
         "family": "Calliphoridae",
         "group": "arthropod",
-        "definitiveHosts": ["sheep", "dog", "cat", "human"],
+        "definitiveHosts": [
+          "sheep",
+          "dog",
+          "cat",
+          "human"
+        ],
         "majorOrgan": "skin",
-        "onHostStages": ["egg", "larva"],
+        "onHostStages": [
+          "egg",
+          "larva"
+        ],
         "distribution": "Primary strike fly in Europe and North America",
         "zoonotic": "yes",
         "significance": "Maggots cause strike in sheep and wound myiasis in dogs and cats; severe cases can be fatal if untreated.",
@@ -3186,7 +3354,7 @@
     {
       "key": "hypoderma-bovis",
       "canonicalName": "Hypoderma bovis",
-      "commonName": null,
+      "commonName": "Cattle warble fly",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -3194,9 +3362,16 @@
         "order": "Diptera",
         "family": "Oestridae",
         "group": "arthropod",
-        "definitiveHosts": ["cattle"],
+        "definitiveHosts": [
+          "cattle"
+        ],
         "majorOrgan": "skin",
-        "onHostStages": ["egg", "L1", "L2", "L3"],
+        "onHostStages": [
+          "egg",
+          "L1",
+          "L2",
+          "L3"
+        ],
         "distribution": "Cattle in the northern hemisphere",
         "zoonotic": "yes",
         "significance": "Larvae under the skin of the back perforate the hide, and egg-laying flies panic cattle, cutting weight gain and milk yield.",
@@ -3355,9 +3530,16 @@
         "order": "Diptera",
         "family": "Oestridae",
         "group": "arthropod",
-        "definitiveHosts": ["sheep", "goat"],
+        "definitiveHosts": [
+          "sheep",
+          "goat"
+        ],
         "majorOrgan": "nasal cavity",
-        "onHostStages": ["L1", "L2", "L3"],
+        "onHostStages": [
+          "L1",
+          "L2",
+          "L3"
+        ],
         "distribution": "Sheep-farming areas worldwide",
         "zoonotic": "yes",
         "significance": "Larvae irritate the nose and sinus, giving discharge and sneezing; attacking flies stress the flock, and rare heavy infections reach the brain.",
@@ -3484,7 +3666,7 @@
     {
       "key": "gasterophilus-intestinalis",
       "canonicalName": "Gasterophilus intestinalis",
-      "commonName": null,
+      "commonName": "Horse bot fly",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -3492,9 +3674,16 @@
         "order": "Diptera",
         "family": "Oestridae",
         "group": "arthropod",
-        "definitiveHosts": ["horse"],
+        "definitiveHosts": [
+          "horse"
+        ],
         "majorOrgan": "stomach",
-        "onHostStages": ["egg", "L1", "L2", "L3"],
+        "onHostStages": [
+          "egg",
+          "L1",
+          "L2",
+          "L3"
+        ],
         "distribution": "Horses and other equids worldwide",
         "zoonotic": "yes",
         "significance": "Larvae in the stomach can erode the mucosa, though signs are rare; egg-laying adult flies distress horses.",
@@ -3647,16 +3836,26 @@
       "canonicalName": "Culicoides spp.",
       "commonName": "Biting midge",
       "aliases": [],
-      "misspellings": ["Cullicoides"],
+      "misspellings": [
+        "Cullicoides"
+      ],
       "fields": {
         "phylum": "Arthropoda",
         "order": "Diptera",
         "family": "Ceratopogonidae",
         "group": "arthropod",
-        "definitiveHosts": ["horse", "bird", "human", "cattle", "sheep"],
+        "definitiveHosts": [
+          "horse",
+          "bird",
+          "human",
+          "cattle",
+          "sheep"
+        ],
         "vectorRole": "Intermediate host of Onchocerca cervicalis; also transmits bluetongue, African horse sickness (C. imicola) and Schmallenberg viruses.",
         "majorOrgan": "skin",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Worldwide, from the tropics to cooler regions",
         "zoonotic": "yes",
         "significance": "Females give painful bites, and in horses saliva hypersensitivity causes Queensland (sweet) itch with intense pruritus.",
@@ -3801,10 +4000,18 @@
         "order": "Diptera",
         "family": "Muscidae",
         "group": "arthropod",
-        "definitiveHosts": ["horse", "cattle", "sheep", "human", "bird"],
+        "definitiveHosts": [
+          "horse",
+          "cattle",
+          "sheep",
+          "human",
+          "bird"
+        ],
         "vectorRole": "Intermediate host of the stomach worms Habronema and Draschia of horses; also carries trypanosomes mechanically in the tropics.",
         "majorOrgan": "skin",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Worldwide",
         "zoonotic": "yes",
         "significance": "Painful bites on the lower body irritate livestock and can reduce milk and meat production.",
@@ -3924,7 +4131,7 @@
           "file": "stomoxys-calcitrans-hero.webp",
           "role": "adult",
           "caption": null,
-          "credit": "Fr\u00e9d\u00e9ric Baldacchino, Coline Tramut, Ali Salem, Emmanuel Li\u00e9nard, \u00c9milie Del\u00e9tr\u00e9, Michel Franc, Thibaud Martin, G\u00e9rard D",
+          "credit": "Frédéric Baldacchino, Coline Tramut, Ali Salem, Emmanuel Liénard, Émilie Delétré, Michel Franc, Thibaud Martin, Gérard D",
           "license": "CC BY 4.0",
           "sourceUrl": "https://commons.wikimedia.org/wiki/File:Repellency_of_lemongrass_oil_against_stable_flies_-_Figure_1.tif",
           "isHero": true
@@ -3942,10 +4149,15 @@
         "order": "Diptera",
         "family": "Muscidae",
         "group": "arthropod",
-        "definitiveHosts": ["cattle", "horse"],
+        "definitiveHosts": [
+          "cattle",
+          "horse"
+        ],
         "vectorRole": "Intermediate host of Stephanofilaria stilesi in cattle and thought to carry Parafilaria multipapillosa larvae between horses.",
         "majorOrgan": "skin",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Europe, North and Central America and Australia",
         "significance": "Large numbers feed repeatedly on cattle, causing irritation that lowers productivity.",
         "lifecycleType": "direct",
@@ -4100,10 +4312,15 @@
         "order": "Diptera",
         "family": "Muscidae",
         "group": "arthropod",
-        "definitiveHosts": ["cattle", "horse"],
+        "definitiveHosts": [
+          "cattle",
+          "horse"
+        ],
         "vectorRole": "Intermediate host of Thelazia eye worms; also mechanically spreads Moraxella bovis (infectious bovine keratoconjunctivitis) among cattle.",
         "majorOrgan": "eye",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Europe, Asia, North America and some African regions",
         "significance": "A nuisance when numerous, as adults feed at the face; also implicated in spreading pink eye between cattle.",
         "lifecycleType": "direct",

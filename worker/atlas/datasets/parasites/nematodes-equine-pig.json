@@ -4,7 +4,7 @@
     {
       "key": "parascaris-equorum",
       "canonicalName": "Parascaris equorum",
-      "commonName": null,
+      "commonName": "Equine roundworm",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -12,9 +12,13 @@
         "order": "Ascaridida",
         "family": "Ascarididae",
         "group": "nematode",
-        "definitiveHosts": ["equid"],
+        "definitiveHosts": [
+          "equid"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Worldwide in horses and other equids; common in foals and old horses",
         "zoonotic": "no",
         "significance": "Heavy burdens stunt growth in young horses; masses of adults can block or perforate the gut, sometimes right after worming.",
@@ -148,7 +152,7 @@
     {
       "key": "strongyloides-westeri",
       "canonicalName": "Strongyloides westeri",
-      "commonName": null,
+      "commonName": "Equine threadworm",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -156,9 +160,13 @@
         "order": "Rhabditida",
         "family": "Strongyloididae",
         "group": "nematode",
-        "definitiveHosts": ["equid"],
+        "definitiveHosts": [
+          "equid"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Worldwide in equids; commonest in warm, moist regions",
         "zoonotic": "no",
         "significance": "Mainly a problem of suckling foals, which pick it up from the milk and may get diarrhoea and thrive poorly.",
@@ -298,7 +306,7 @@
     {
       "key": "cylicostephanus-longibursatus",
       "canonicalName": "Cylicostephanus longibursatus",
-      "commonName": null,
+      "commonName": "Small strongyle",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -306,9 +314,14 @@
         "order": "Strongylida",
         "family": "Strongylidae",
         "group": "nematode",
-        "definitiveHosts": ["equid"],
+        "definitiveHosts": [
+          "equid"
+        ],
         "majorOrgan": "large intestine",
-        "onHostStages": ["adult", "encysted L3"],
+        "onHostStages": [
+          "adult",
+          "encysted L3"
+        ],
         "distribution": "Worldwide in horses and other equids",
         "zoonotic": "no",
         "significance": "Arrested larvae in the gut wall can emerge together, causing larval cyathostominosis: diarrhoea, weight loss and sometimes death.",
@@ -449,7 +462,7 @@
     {
       "key": "strongylus-equinus",
       "canonicalName": "Strongylus equinus",
-      "commonName": null,
+      "commonName": "Equine large strongyle",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -457,9 +470,14 @@
         "order": "Strongylida",
         "family": "Strongylidae",
         "group": "nematode",
-        "definitiveHosts": ["equid"],
+        "definitiveHosts": [
+          "equid"
+        ],
         "majorOrgan": "large intestine",
-        "onHostStages": ["adult", "migrating larva"],
+        "onHostStages": [
+          "adult",
+          "migrating larva"
+        ],
         "distribution": "Worldwide in horses and other equids",
         "zoonotic": "no",
         "significance": "Rarely causes signs; problems come mostly from larvae straying to odd sites, usually found by chance at surgery or post-mortem.",
@@ -583,17 +601,24 @@
     {
       "key": "strongylus-edentatus",
       "canonicalName": "Strongylus edentatus",
-      "commonName": null,
+      "commonName": "Toothless large strongyle",
       "aliases": [],
-      "misspellings": ["Stongylus edentates"],
+      "misspellings": [
+        "Stongylus edentates"
+      ],
       "fields": {
         "phylum": "Nematoda",
         "order": "Strongylida",
         "family": "Strongylidae",
         "group": "nematode",
-        "definitiveHosts": ["equid"],
+        "definitiveHosts": [
+          "equid"
+        ],
         "majorOrgan": "large intestine",
-        "onHostStages": ["adult", "migrating larva"],
+        "onHostStages": [
+          "adult",
+          "migrating larva"
+        ],
         "distribution": "Worldwide in horses and other equids",
         "zoonotic": "no",
         "significance": "Rarely clinical; migrating larvae leave haemorrhagic gut nodules and may stray to sites such as a cryptorchid testis.",
@@ -717,17 +742,24 @@
     {
       "key": "strongylus-vulgaris",
       "canonicalName": "Strongylus vulgaris",
-      "commonName": null,
+      "commonName": "Bloodworm",
       "aliases": [],
-      "misspellings": ["Stongylus vulgaris"],
+      "misspellings": [
+        "Stongylus vulgaris"
+      ],
       "fields": {
         "phylum": "Nematoda",
         "order": "Strongylida",
         "family": "Strongylidae",
         "group": "nematode",
-        "definitiveHosts": ["equid"],
+        "definitiveHosts": [
+          "equid"
+        ],
         "majorOrgan": "large intestine",
-        "onHostStages": ["adult", "migrating larva"],
+        "onHostStages": [
+          "adult",
+          "migrating larva"
+        ],
         "distribution": "Worldwide in horses and other equids; may be declining",
         "zoonotic": "no",
         "significance": "Larvae cause verminous arteritis; thrombi can compromise gut blood supply and cause colic, though its role in colic may be overrated.",
@@ -851,7 +883,7 @@
     {
       "key": "oxyuris-equi",
       "canonicalName": "Oxyuris equi",
-      "commonName": null,
+      "commonName": "Equine pinworm",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -859,9 +891,13 @@
         "order": "Oxyurida",
         "family": "Oxyuridae",
         "group": "nematode",
-        "definitiveHosts": ["equid"],
+        "definitiveHosts": [
+          "equid"
+        ],
         "majorOrgan": "large intestine",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Worldwide in horses and other equids; thrives in dirty, crowded conditions",
         "zoonotic": "no",
         "significance": "Females laying eggs around the anus cause intense itching, so horses rub the tail head; many infected horses show no signs.",
@@ -1000,7 +1036,7 @@
     {
       "key": "habronema-spp",
       "canonicalName": "Habronema spp.",
-      "commonName": null,
+      "commonName": "Habronema stomach worm",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1008,10 +1044,18 @@
         "order": "Spirurida",
         "family": "Habronematidae",
         "group": "nematode",
-        "definitiveHosts": ["equid"],
-        "intermediateHosts": ["Musca domestica", "Stomoxys calcitrans"],
+        "definitiveHosts": [
+          "equid"
+        ],
+        "intermediateHosts": [
+          "Musca domestica",
+          "Stomoxys calcitrans"
+        ],
         "majorOrgan": "stomach",
-        "onHostStages": ["adult", "L3"],
+        "onHostStages": [
+          "adult",
+          "L3"
+        ],
         "distribution": "Worldwide, mainly tropical and subtropical; also present in temperate regions",
         "zoonotic": "no",
         "significance": "Adults in the stomach are usually harmless; larvae in wounds cause granulomatous cutaneous lesions that heal slowly.",
@@ -1180,7 +1224,7 @@
     {
       "key": "draschia-megastoma",
       "canonicalName": "Draschia megastoma",
-      "commonName": null,
+      "commonName": "Draschia stomach worm",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1188,10 +1232,16 @@
         "order": "Spirurida",
         "family": "Habronematidae",
         "group": "nematode",
-        "definitiveHosts": ["equid"],
-        "intermediateHosts": ["Stomoxys calcitrans"],
+        "definitiveHosts": [
+          "equid"
+        ],
+        "intermediateHosts": [
+          "Stomoxys calcitrans"
+        ],
         "majorOrgan": "stomach",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Worldwide but uncommon; frequent in the USA and Australia",
         "zoonotic": "no",
         "significance": "Adults form large fibrous nodules in the stomach wall that can hinder stomach movement or the pyloric opening.",
@@ -1333,7 +1383,7 @@
     {
       "key": "parafilaria-multipapillosa",
       "canonicalName": "Parafilaria multipapillosa",
-      "commonName": null,
+      "commonName": "Summer bleeding worm",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1341,11 +1391,17 @@
         "order": "Spirurida",
         "family": "Filariidae",
         "group": "nematode",
-        "definitiveHosts": ["equid"],
-        "intermediateHosts": ["Haematobia"],
+        "definitiveHosts": [
+          "equid"
+        ],
+        "intermediateHosts": [
+          "Haematobia"
+        ],
         "vectorRole": "Horn flies are thought to carry the larvae between horses.",
         "majorOrgan": "skin",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Eurasia, Africa and South America; common in eastern Europe",
         "significance": "Seasonal bleeding skin nodules on the head and forequarters; unsightly and can hinder harness, but usually of little consequence.",
         "lifecycleType": "indirect",
@@ -1477,7 +1533,7 @@
     {
       "key": "onchocerca-cervicalis",
       "canonicalName": "Onchocerca cervicalis",
-      "commonName": null,
+      "commonName": "Neck threadworm",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1485,11 +1541,18 @@
         "order": "Spirurida",
         "family": "Onchocercidae",
         "group": "nematode",
-        "definitiveHosts": ["equid"],
-        "intermediateHosts": ["Culicoides"],
+        "definitiveHosts": [
+          "equid"
+        ],
+        "intermediateHosts": [
+          "Culicoides"
+        ],
         "vectorRole": "Biting midges take up microfilariae from the skin and pass infective larvae on during a later blood meal.",
         "majorOrgan": "nuchal ligament",
-        "onHostStages": ["microfilaria", "adult"],
+        "onHostStages": [
+          "microfilaria",
+          "adult"
+        ],
         "distribution": "Horses and mules worldwide where Culicoides midges occur",
         "zoonotic": "no",
         "significance": "Often silent; microfilariae in the skin may accompany itchy, scaly or depigmented lesions, though the link to disease is unclear.",
@@ -1604,19 +1667,27 @@
     {
       "key": "thelazia-lacrymalis",
       "canonicalName": "Thelazia lacrymalis",
-      "commonName": null,
+      "commonName": "Eyeworm",
       "aliases": [],
-      "misspellings": ["Thelezia lacrymalis"],
+      "misspellings": [
+        "Thelezia lacrymalis"
+      ],
       "fields": {
         "phylum": "Nematoda",
         "order": "Spirurida",
         "family": "Thelaziidae",
         "group": "nematode",
-        "definitiveHosts": ["horse"],
-        "intermediateHosts": ["Musca autumnalis"],
+        "definitiveHosts": [
+          "horse"
+        ],
+        "intermediateHosts": [
+          "Musca autumnalis"
+        ],
         "vectorRole": "Non-biting muscid flies feed on tear fluid, pick up L1 larvae, and later deposit infective L3 on the eye.",
         "majorOrgan": "eye",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Several continents, including Europe, Asia and the Americas",
         "significance": "Often mild or silent; worms in the conjunctival sac and tear ducts can bring conjunctivitis, and chronic cases may cause lasting eye damage.",
         "lifecycleType": "indirect",
@@ -1656,7 +1727,7 @@
       "refs": [
         {
           "field": null,
-          "citation": "Cotu\u021biu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
           "note": null
         },
@@ -1686,31 +1757,31 @@
         },
         {
           "field": "intermediateHosts",
-          "citation": "Cotu\u021biu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
           "note": null
         },
         {
           "field": "vectorRole",
-          "citation": "Cotu\u021biu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
           "note": null
         },
         {
           "field": "majorOrgan",
-          "citation": "Cotu\u021biu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
           "note": null
         },
         {
           "field": "distribution",
-          "citation": "Cotu\u021biu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
           "note": "Course states rarely reported in the UK; reference lists England among occasional European reports."
         },
         {
           "field": "significance",
-          "citation": "Cotu\u021biu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
           "note": null
         },
@@ -1722,13 +1793,13 @@
         },
         {
           "field": "lifecycleStages",
-          "citation": "Cotu\u021biu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
           "note": null
         },
         {
           "field": "diagnosticTests",
-          "citation": "Cotu\u021biu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
           "note": null
         },
@@ -1744,7 +1815,7 @@
     {
       "key": "dictyocaulus-arnfieldi",
       "canonicalName": "Dictyocaulus arnfieldi",
-      "commonName": null,
+      "commonName": "Equine lungworm",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1752,10 +1823,16 @@
         "order": "Strongylida",
         "family": "Dictyocaulidae",
         "group": "nematode",
-        "definitiveHosts": ["donkey", "horse"],
+        "definitiveHosts": [
+          "donkey",
+          "horse"
+        ],
         "intermediateHosts": [],
         "majorOrgan": "lungs",
-        "onHostStages": ["pre-adult larva", "adult"],
+        "onHostStages": [
+          "pre-adult larva",
+          "adult"
+        ],
         "distribution": "Mainly donkeys, also horses and other equids; widespread",
         "zoonotic": "no",
         "significance": "Donkeys are the usual reservoir and often carry it with little illness; in horses, migrating larvae can cause coughing and breathing difficulty.",
@@ -1871,7 +1948,7 @@
     {
       "key": "metastrongylus-apri",
       "canonicalName": "Metastrongylus apri",
-      "commonName": null,
+      "commonName": "Pig lungworm",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1879,10 +1956,16 @@
         "order": "Strongylida",
         "family": "Metastrongylidae",
         "group": "nematode",
-        "definitiveHosts": ["pig"],
-        "intermediateHosts": ["earthworm"],
+        "definitiveHosts": [
+          "pig"
+        ],
+        "intermediateHosts": [
+          "earthworm"
+        ],
         "majorOrgan": "lungs",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Many parts of the world; mainly pigs kept outdoors",
         "zoonotic": "potential",
         "significance": "Mostly silent; heavier burdens in young pigs bring coughing, laboured breathing and weight loss.",
@@ -2001,10 +2084,15 @@
         "order": "Strongylida",
         "family": "Trichostrongylidae",
         "group": "nematode",
-        "definitiveHosts": ["pig"],
+        "definitiveHosts": [
+          "pig"
+        ],
         "intermediateHosts": [],
         "majorOrgan": "stomach",
-        "onHostStages": ["larva", "adult"],
+        "onHostStages": [
+          "larva",
+          "adult"
+        ],
         "distribution": "Worldwide; mainly pigs reared outdoors",
         "significance": "Often silent; heavy burdens cause gastric ulcers, poor appetite, weight loss and anaemia, and have been linked to thin sow syndrome.",
         "lifecycleType": "direct",
@@ -2145,11 +2233,19 @@
         "order": "Ascaridida",
         "family": "Ascarididae",
         "group": "nematode",
-        "definitiveHosts": ["pig"],
+        "definitiveHosts": [
+          "pig"
+        ],
         "intermediateHosts": [],
-        "paratenicHosts": ["earthworm", "beetle"],
+        "paratenicHosts": [
+          "earthworm",
+          "beetle"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["L3", "adult"],
+        "onHostStages": [
+          "L3",
+          "adult"
+        ],
         "distribution": "Worldwide, including wild boar and feral pigs",
         "zoonotic": "yes",
         "significance": "Larval migration scars the liver (milk spots, condemnation) and can cause pneumonia; adults slow growth.",
@@ -2316,10 +2412,15 @@
         "order": "Rhabditida",
         "family": "Strongyloididae",
         "group": "nematode",
-        "definitiveHosts": ["pig"],
+        "definitiveHosts": [
+          "pig"
+        ],
         "intermediateHosts": [],
         "majorOrgan": "small intestine",
-        "onHostStages": ["adult female", "migrating L3"],
+        "onHostStages": [
+          "adult female",
+          "migrating L3"
+        ],
         "distribution": "Worldwide, most important in tropical and subtropical regions",
         "significance": "Mainly a problem in nursing piglets, where heavy burdens cause diarrhoea, anaemia and wasting; light infections pass unnoticed.",
         "lifecycleType": "direct",
@@ -2439,7 +2540,7 @@
     {
       "key": "trichuris-suis",
       "canonicalName": "Trichuris suis",
-      "commonName": null,
+      "commonName": "Pig whipworm",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -2447,10 +2548,15 @@
         "order": "Trichinellida",
         "family": "Trichuridae",
         "group": "nematode",
-        "definitiveHosts": ["pig"],
+        "definitiveHosts": [
+          "pig"
+        ],
         "intermediateHosts": [],
         "majorOrgan": "large intestine",
-        "onHostStages": ["larva", "adult"],
+        "onHostStages": [
+          "larva",
+          "adult"
+        ],
         "distribution": "Worldwide in pigs",
         "significance": "Light infections are silent; heavy ones inflame the caecum and colon, with diarrhoea, poor growth and mucosal ulceration, mostly in young pigs.",
         "lifecycleType": "direct",
@@ -2575,7 +2681,7 @@
     {
       "key": "trichinella-spiralis",
       "canonicalName": "Trichinella spiralis",
-      "commonName": null,
+      "commonName": "Trichina worm",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -2583,10 +2689,28 @@
         "order": "Trichinellida",
         "family": "Trichinellidae",
         "group": "nematode",
-        "definitiveHosts": ["pig", "rodent", "dog", "cat", "horse", "human"],
-        "intermediateHosts": ["pig", "rodent", "dog", "cat", "horse", "human"],
+        "definitiveHosts": [
+          "pig",
+          "rodent",
+          "dog",
+          "cat",
+          "horse",
+          "human"
+        ],
+        "intermediateHosts": [
+          "pig",
+          "rodent",
+          "dog",
+          "cat",
+          "horse",
+          "human"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["adult", "newborn larva", "nurse cell larva"],
+        "onHostStages": [
+          "adult",
+          "newborn larva",
+          "nurse cell larva"
+        ],
         "distribution": "Worldwide; flesh-eating and omnivorous mammals",
         "zoonotic": "yes",
         "significance": "Animals rarely show signs, but eating infected pork or wild meat can cause severe, occasionally fatal, disease in people.",
