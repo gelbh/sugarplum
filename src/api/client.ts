@@ -456,17 +456,22 @@ export function listSubjects() {
 
 export type CoverOwnerKind = "subject" | "deck";
 
+export type CoverSource = "unsplash" | "custom";
+
 export type CoverFields = {
   photoId: string;
   imageUrl: string;
   photographerName: string;
   photographerUrl: string;
   photoHtmlUrl: string;
+  source?: CoverSource;
+  r2Key?: string | null;
 };
 
 export type StoredCoverRow = CoverFields & {
   ownerKind: CoverOwnerKind;
   ownerId: string;
+  source: CoverSource;
 };
 
 function rejectGuestCover(): never {
@@ -497,6 +502,72 @@ export function setCover(
     method: "PUT",
     json: { ownerKind, ownerId, photoId },
   });
+}
+
+export function setCustomCover(
+  ownerKind: CoverOwnerKind,
+  ownerId: string,
+  r2Key: string,
+  photoId?: string,
+) {
+  if (isGuest()) rejectGuestCover();
+  return api<StoredCoverRow>("/api/covers", {
+    method: "PUT",
+    json: { ownerKind, ownerId, source: "custom", r2Key, photoId },
+  });
+}
+
+export type CoverUploadUrlResponse = {
+  imageId: string;
+  uploadUrl: string;
+  r2Key: string;
+};
+
+export function requestCoverUploadUrl(
+  ownerKind: CoverOwnerKind,
+  ownerId: string,
+  opts: { contentType: string; size: number },
+) {
+  if (isGuest()) rejectGuestCover();
+  return api<CoverUploadUrlResponse>("/api/covers/upload-url", {
+    method: "POST",
+    json: {
+      ownerKind,
+      ownerId,
+      contentType: opts.contentType,
+      size: opts.size,
+    },
+  });
+}
+
+export async function uploadCoverFile(
+  ownerKind: CoverOwnerKind,
+  ownerId: string,
+  file: File,
+) {
+  if (isGuest()) rejectGuestCover();
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"] as const;
+  if (!allowedTypes.includes(file.type as (typeof allowedTypes)[number])) {
+    throw new Error("Cover must be a JPEG, PNG, or WebP image");
+  }
+  const contentType = file.type;
+  const { imageId, uploadUrl, r2Key } = await requestCoverUploadUrl(
+    ownerKind,
+    ownerId,
+    { contentType, size: file.size },
+  );
+  const put = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: {
+      "Content-Type": contentType,
+      "Content-Length": String(file.size),
+    },
+    body: file,
+  });
+  if (!put.ok) {
+    throw new ApiError(put.status, "Failed to upload cover image");
+  }
+  return setCustomCover(ownerKind, ownerId, r2Key, imageId);
 }
 
 export function clearCover(ownerKind: CoverOwnerKind, ownerId: string) {

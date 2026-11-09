@@ -690,8 +690,21 @@ export default function SubjectPage({ subjectId }: Props) {
         <CoverPickerDialog
           open={coverPicker !== null}
           title={coverPicker?.title ?? ""}
+          ownerKind={coverPicker?.ownerKind ?? "deck"}
+          ownerId={coverPicker?.ownerId ?? ""}
           onClose={() => setCoverPicker(null)}
           onPick={onPickCover}
+          onUploaded={(row) => {
+            setCovers((prev) => [
+              row,
+              ...prev.filter(
+                (cover) =>
+                  cover.ownerKind !== row.ownerKind ||
+                  cover.ownerId !== row.ownerId,
+              ),
+            ]);
+            setCoverPicker(null);
+          }}
           onClear={onClearCover}
         />
       )}

@@ -1001,8 +1001,21 @@ export default function LibraryPage() {
         <CoverPickerDialog
           open={coverPicker !== null}
           title={coverPicker?.title ?? ""}
+          ownerKind={coverPicker?.ownerKind ?? "subject"}
+          ownerId={coverPicker?.ownerId ?? ""}
           onClose={() => setCoverPicker(null)}
           onPick={onPickCover}
+          onUploaded={(row) => {
+            setCovers((prev) => [
+              row,
+              ...prev.filter(
+                (cover) =>
+                  cover.ownerKind !== row.ownerKind ||
+                  cover.ownerId !== row.ownerId,
+              ),
+            ]);
+            setCoverPicker(null);
+          }}
           onClear={onClearCover}
         />
       )}

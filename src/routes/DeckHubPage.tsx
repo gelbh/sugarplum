@@ -1118,9 +1118,15 @@ export default function DeckHubPage({ deckId }: Props) {
           key={deck.id}
           open={coverPickerOpen}
           title={deck.title}
+          ownerKind="deck"
+          ownerId={deck.id}
           onClose={() => setCoverPickerOpen(false)}
           onPick={async (photoId) => {
             const row = await setCover("deck", deck.id, photoId);
+            setDeckCover(row);
+            setCoverPickerOpen(false);
+          }}
+          onUploaded={(row) => {
             setDeckCover(row);
             setCoverPickerOpen(false);
           }}
