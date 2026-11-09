@@ -1732,7 +1732,7 @@ export function createTestEnv(opts?: {
             .filter((row): row is NonNullable<typeof row> => row != null);
           return { results: rows as T[] };
         }
-        if (normalized.includes("sugarplum:subject-knowledge")) {
+        if (normalized.includes("sugarplum:subject-composition")) {
           const subjectId = bound[0] as string;
           const userId = bound[1] as string | undefined;
           const rows = [...cards.values()]

@@ -43,7 +43,7 @@ import {
   guestPutStudyPrefs,
   guestResetCardSchedule,
   guestReviewCard,
-  guestSubjectKnowledge,
+  guestSubjectComposition,
   type GuestHubCardBody,
 } from "../guest/store";
 import type { RejectReason } from "../lib/rejectReasons";
@@ -594,10 +594,10 @@ export function deckStats(id: string) {
   return api<DeckStats>(`/api/decks/${id}/stats`);
 }
 
-export function subjectKnowledge(id: string) {
+export function subjectComposition(id: string) {
   if (isGuest()) {
     try {
-      return Promise.resolve(guestSubjectKnowledge(id));
+      return Promise.resolve(guestSubjectComposition(id));
     } catch (err) {
       throw new ApiError(
         404,
@@ -605,7 +605,7 @@ export function subjectKnowledge(id: string) {
       );
     }
   }
-  return api<SubjectKnowledge>(`/api/subjects/${id}/knowledge`);
+  return api<SubjectKnowledge>(`/api/subjects/${id}/composition`);
 }
 
 export type ListDeckCardsOpts = { status?: "archived" };

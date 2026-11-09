@@ -132,7 +132,7 @@ subjectRoutes.patch("/:id", async (c) => {
   });
 });
 
-subjectRoutes.get("/:id/knowledge", async (c) => {
+subjectRoutes.get("/:id/composition", async (c) => {
   const userId = await requireUser(c);
   const subjectId = c.req.param("id");
   const db = getDb(c.env);
@@ -140,7 +140,7 @@ subjectRoutes.get("/:id/knowledge", async (c) => {
 
   const { results } = await db
     .prepare(
-      `-- sugarplum:subject-knowledge
+      `-- sugarplum:subject-composition
        SELECT s.state AS state, s.scheduled_days AS scheduled_days
        FROM cards c
        INNER JOIN decks d ON d.id = c.deck_id
