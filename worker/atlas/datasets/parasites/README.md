@@ -13,7 +13,7 @@ The list of taxa is fixed in `tests/eval/atlas/course-taxa.json`: every taxon in
 | `protozoa.json`                    | 18   | authored |
 | `nematodes-ruminant.json`          | 16   | authored |
 | `nematodes-equine-pig.json`        | 19   | authored |
-| `nematodes-companion-poultry.json` | 23   | planned  |
+| `nematodes-companion-poultry.json` | 23   | authored |
 | `arthropods.json`                  | 29   | planned  |
 
 ## Sources
