@@ -8,6 +8,7 @@ import {
   ocrEmptyPdfPagesInWindow,
   type PageText,
 } from "../lib/pdfScanOcr";
+import type { SourceRole } from "../lib/sourceRole";
 import { endGuestLocal } from "../guest/endGuestLocal";
 import {
   clearGuestMergeArtifacts,
@@ -413,6 +414,8 @@ export type Material = {
   page_count: number | null;
   status: string;
   created_at: string;
+  /** Present after migration 0025; treat missing as lecture. */
+  source_role?: SourceRole;
 };
 
 export type MaterialListItem = Material & {
@@ -698,12 +701,28 @@ export function sanitizeTopicHints(hints: string[]): string[] | undefined {
 
 export function pasteMaterial(
   deckId: string,
-  body: { text: string; filename?: string; topicHints?: string[] },
+  body: {
+    text: string;
+    filename?: string;
+    topicHints?: string[];
+    source_role?: SourceRole;
+  },
 ) {
   if (isGuest()) guestUnsupported("generate cards from materials");
   return api<PasteMaterialResponse>(`/api/decks/${deckId}/materials/paste`, {
     method: "POST",
     json: body,
+  });
+}
+
+export function patchMaterialSourceRole(
+  materialId: string,
+  source_role: SourceRole,
+) {
+  if (isGuest()) guestUnsupported("edit materials");
+  return api<Material>(`/api/materials/${materialId}`, {
+    method: "PATCH",
+    json: { source_role },
   });
 }
 
@@ -859,7 +878,12 @@ export type UploadUrlResponse = {
 
 export function requestMaterialUploadUrl(
   deckId: string,
-  body: { filename: string; contentType: string; size: number },
+  body: {
+    filename: string;
+    contentType: string;
+    size: number;
+    source_role?: SourceRole;
+  },
 ) {
   if (isGuest()) guestUnsupported("upload materials");
   return api<UploadUrlResponse>(`/api/decks/${deckId}/materials/upload-url`, {
@@ -1524,6 +1548,7 @@ export async function uploadMaterialFile(
     topicHints?: string[];
     attachOnly?: boolean;
     onScan?: () => void;
+    source_role?: SourceRole;
   },
 ): Promise<CompleteMaterialResponse> {
   const contentType = resolveUploadContentType(file);
@@ -1531,6 +1556,7 @@ export async function uploadMaterialFile(
     filename: file.name || "upload.bin",
     contentType,
     size: file.size,
+    ...(opts?.source_role ? { source_role: opts.source_role } : {}),
   });
 
   try {
@@ -1568,6 +1594,7 @@ export async function uploadPdfWithFigureCrops(
     figureExtractMode?: FigureExtractMode;
     topicHints?: string[];
     onScan?: () => void;
+    source_role?: SourceRole;
   },
 ): Promise<CompleteMaterialResponse> {
   const contentType = resolveUploadContentType(pdfFile);
@@ -1575,6 +1602,7 @@ export async function uploadPdfWithFigureCrops(
     filename: pdfFile.name || "upload.pdf",
     contentType,
     size: pdfFile.size,
+    ...(opts?.source_role ? { source_role: opts.source_role } : {}),
   });
 
   try {

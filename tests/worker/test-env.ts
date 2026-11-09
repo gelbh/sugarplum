@@ -98,6 +98,7 @@ type MaterialRow = {
   created_at: string;
   body_text?: string | null;
   content_hash?: string | null;
+  source_role?: string | null;
 };
 
 type GenerationJobRow = {
@@ -1338,6 +1339,7 @@ export function createTestEnv(opts?: {
                 page_count: m.page_count,
                 status: m.status,
                 created_at: m.created_at,
+                source_role: m.source_role ?? "lecture",
               };
             })
             .filter((row): row is NonNullable<typeof row> => row != null)
@@ -1980,6 +1982,7 @@ export function createTestEnv(opts?: {
                 page_count: m.page_count,
                 status: m.status,
                 created_at: m.created_at,
+                source_role: m.source_role ?? "lecture",
                 deck_title: deck.title,
               };
             })
@@ -2770,7 +2773,46 @@ export function createTestEnv(opts?: {
             });
           }
         } else if (normalized.startsWith("INSERT INTO materials")) {
-          if (normalized.includes("content_hash")) {
+          if (
+            normalized.includes("content_hash") &&
+            normalized.includes("source_role")
+          ) {
+            const [
+              id,
+              deck_id,
+              kind,
+              r2_key,
+              filename,
+              page_count,
+              status,
+              created_at,
+              content_hash,
+              source_role,
+            ] = bound as [
+              string,
+              string,
+              string,
+              string | null,
+              string | null,
+              number | null,
+              string,
+              string,
+              string | null,
+              string,
+            ];
+            materials.set(id, {
+              id,
+              deck_id,
+              kind,
+              r2_key,
+              filename,
+              page_count,
+              status,
+              created_at,
+              content_hash,
+              source_role,
+            });
+          } else if (normalized.includes("content_hash")) {
             const [
               id,
               deck_id,
@@ -2802,6 +2844,40 @@ export function createTestEnv(opts?: {
               status,
               created_at,
               content_hash,
+              source_role: "lecture",
+            });
+          } else if (normalized.includes("source_role")) {
+            const [
+              id,
+              deck_id,
+              kind,
+              r2_key,
+              filename,
+              page_count,
+              status,
+              created_at,
+              source_role,
+            ] = bound as [
+              string,
+              string,
+              string,
+              string | null,
+              string | null,
+              number | null,
+              string,
+              string,
+              string,
+            ];
+            materials.set(id, {
+              id,
+              deck_id,
+              kind,
+              r2_key,
+              filename,
+              page_count,
+              status,
+              created_at,
+              source_role,
             });
           } else {
             const [
@@ -2832,8 +2908,15 @@ export function createTestEnv(opts?: {
               page_count,
               status,
               created_at,
+              source_role: "lecture",
             });
           }
+        } else if (
+          normalized.startsWith("UPDATE materials SET source_role = ? WHERE id = ?")
+        ) {
+          const [source_role, id] = bound as [string, string];
+          const row = materials.get(id);
+          if (row) materials.set(id, { ...row, source_role });
         } else if (
           normalized.startsWith(
             "UPDATE materials SET status = ?, content_hash = ? WHERE id = ? AND status = ?",
