@@ -377,7 +377,7 @@ studyRoutes.post("/review", async (c) => {
     reviewedAt: new Date(reviewedAt),
   });
 
-  return c.json({ due: cols.due, unlocks });
+  return c.json({ due: cols.due, state: cols.state, unlocks });
 });
 
 function toIsoRequired(value: Date | string): string {

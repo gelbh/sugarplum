@@ -1317,7 +1317,11 @@ export function listStrugglingCards() {
 
 export type StudyRating = 1 | 2 | 3 | 4;
 
-export type ReviewResult = { due: string; unlocks?: UnlockView[] };
+export type ReviewResult = {
+  due: string;
+  state: number;
+  unlocks?: UnlockView[];
+};
 
 export function reviewCard(
   cardId: string,

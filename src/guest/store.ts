@@ -904,7 +904,7 @@ export function guestReviewCard(
     store.introsByDay[day] = (store.introsByDay[day] ?? 0) + 1;
   }
   writeStore(store, storage);
-  return { due: next.due };
+  return { due: next.due, state: next.state };
 }
 
 /** Put every guest card back in the due queue (manual restudy). */

@@ -4,6 +4,7 @@ import {
   emptyTally,
   gradedTotal,
   sessionEndKind,
+  sessionSurface,
 } from "../../src/study/sessionTally";
 
 describe("session tally", () => {
@@ -23,5 +24,13 @@ describe("session tally", () => {
     expect(sessionEndKind(false, 2)).toBe("fresh");
     expect(sessionEndKind(true, 0)).toBe("quiet");
     expect(sessionEndKind(true, 1)).toBe("complete");
+  });
+
+  it("soft_wait when pending learning remains", () => {
+    expect(sessionSurface(true, 3, 2)).toBe("soft_wait");
+  });
+
+  it("complete only when graded and no pending", () => {
+    expect(sessionSurface(true, 3, 0)).toBe("complete");
   });
 });

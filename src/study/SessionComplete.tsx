@@ -85,7 +85,7 @@ export default function SessionComplete(props: SessionCompleteProps) {
           animation: "sessionCompleteIn 400ms cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
-        Session complete
+        Caught up for now
       </Typography>
       <Typography variant="body1" sx={{ color: ink }}>
         {reviewed} reviewed

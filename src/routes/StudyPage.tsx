@@ -66,10 +66,17 @@ import {
 import SessionComplete from "../study/SessionComplete";
 import { StudyCardActions } from "../study/StudyCardActions";
 import {
+  isShortTermFollowUp,
+  mergeDueLearning,
+  nextLearningWakeAt,
+  upsertPendingLearning,
+  type PendingLearning,
+} from "../study/learningRequeue";
+import {
   addGrade,
   emptyTally,
   gradedTotal,
-  sessionEndKind,
+  sessionSurface,
 } from "../study/sessionTally";
 import {
   occlusionRevealAnswer,
@@ -149,6 +156,25 @@ function scopeLibraryBack(scope: DueScopeOpts): { href: string; label: string } 
   };
 }
 
+function formatLearningEta(dueAt: string, now = new Date()): string {
+  const ms = Date.parse(dueAt) - now.getTime();
+  if (!Number.isFinite(ms) || ms <= 0) return "a moment";
+  const mins = Math.max(1, Math.ceil(ms / 60_000));
+  if (mins < 60) return `${mins}m`;
+  return `${Math.ceil(mins / 60)}h`;
+}
+
+function earliestPendingDue(
+  pending: PendingLearning<CardDraftView>[],
+): string | null {
+  if (pending.length === 0) return null;
+  let best = pending[0]!.dueAt;
+  for (let i = 1; i < pending.length; i++) {
+    if (pending[i]!.dueAt < best) best = pending[i]!.dueAt;
+  }
+  return best;
+}
+
 /** Study session: reveal answer, grade with FSRS (keys 1-4 or arrows; Space flips). Code-led MUI. */
 export default function StudyPage() {
   const [queue, setQueue] = useState<CardDraftView[]>([]);
@@ -168,6 +194,11 @@ export default function StudyPage() {
   const [queueMeta, setQueueMeta] = useState<StudyQueueMeta | null>(null);
   const [tally, setTally] = useState(emptyTally);
   const [unlocks, setUnlocks] = useState<readonly UnlockView[]>([]);
+  const [pendingLearning, setPendingLearning] = useState<
+    PendingLearning<CardDraftView>[]
+  >([]);
+  const pendingLearningRef = useRef(pendingLearning);
+  pendingLearningRef.current = pendingLearning;
   const cardDialogOpenRef = useRef(false);
   const onCardDialogOpen = useCallback((open: boolean) => {
     cardDialogOpenRef.current = open;
@@ -377,7 +408,12 @@ export default function StudyPage() {
   const queueFraction = studyQueueProgress(queueTotal, queue.length);
   const cardHostRef = useRef<HTMLDivElement>(null);
   const [plateWidth, setPlateWidth] = useState<number | null>(null);
-  const endKind = sessionEndKind(hadCards, gradedTotal(tally));
+  const surface = sessionSurface(
+    hadCards,
+    gradedTotal(tally),
+    pendingLearning.length,
+  );
+  const nextLearningDue = earliestPendingDue(pendingLearning);
   const mcqMode = isMcqCard(current);
   const occlusionParts = current
     ? occlusionStudyParts(current)
@@ -424,8 +460,59 @@ export default function StudyPage() {
     answerFocusRef.current?.focus();
   }, [revealed, current?.id]);
 
+  const parkShortTermFollowUp = useCallback(
+    (card: CardDraftView, dueIso: string, state: number | undefined) => {
+      const gradedAt = new Date();
+      if (isShortTermFollowUp({ dueIso, gradedAt, state })) {
+        pendingLearningRef.current = upsertPendingLearning(
+          pendingLearningRef.current,
+          { cardId: card.id, dueAt: dueIso, card },
+        );
+      } else {
+        pendingLearningRef.current = pendingLearningRef.current.filter(
+          (p) => p.cardId !== card.id,
+        );
+      }
+      setPendingLearning(pendingLearningRef.current);
+    },
+    [],
+  );
+
+  const flushDueLearning = useCallback(() => {
+    setQueue((prev) => {
+      const merged = mergeDueLearning(
+        prev,
+        pendingLearningRef.current,
+        new Date(),
+      );
+      const added = merged.queue.length - prev.length;
+      if (added > 0) {
+        setQueueTotal((total) => total + added);
+        setHadCards(true);
+      }
+      pendingLearningRef.current = merged.pending;
+      setPendingLearning(merged.pending);
+      return merged.queue;
+    });
+  }, []);
+
   const advanceAfterGrade = useCallback(() => {
-    setQueue((prev) => prev.slice(1));
+    setQueue((prev) => {
+      const sliced = prev.slice(1);
+      const merged = mergeDueLearning(
+        sliced,
+        pendingLearningRef.current,
+        new Date(),
+      );
+      const added = merged.queue.length - sliced.length;
+      if (added > 0) {
+        setQueueTotal((total) => total + added);
+        setHadCards(true);
+      }
+      pendingLearningRef.current = merged.pending;
+      setPendingLearning(merged.pending);
+      return merged.queue;
+    });
     setRevealed(false);
   }, []);
 
@@ -465,6 +552,7 @@ export default function StudyPage() {
           setUnlocks((prev) => rememberUnlocks(prev, incoming));
         }
         setTally((prev) => addGrade(prev, rating));
+        parkShortTermFollowUp(current, result.due, result.state);
         advanceAfterGrade();
         end();
         return true;
@@ -486,12 +574,32 @@ export default function StudyPage() {
       end,
       enqueueUnlocks,
       offlineCopy,
+      parkShortTermFollowUp,
       refreshPendingCount,
       revealed,
       scopeOpts,
       userId,
     ],
   );
+
+  useEffect(() => {
+    const wake = nextLearningWakeAt(pendingLearning, new Date());
+    if (!wake) return;
+    const delay = Math.max(0, wake.getTime() - Date.now());
+    const id = window.setTimeout(() => {
+      flushDueLearning();
+    }, delay);
+    return () => window.clearTimeout(id);
+  }, [flushDueLearning, pendingLearning]);
+
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState !== "visible") return;
+      flushDueLearning();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [flushDueLearning]);
 
   useEffect(() => {
     function onFullscreenChange() {
@@ -652,7 +760,7 @@ export default function StudyPage() {
   }
 
   const stage = zen;
-  const finish = !current && endKind === "complete";
+  const finish = !current && surface === "complete";
   const fillColumn = finish
     ? ({
         minHeight: "100%",
@@ -832,10 +940,31 @@ export default function StudyPage() {
                   Open Library
                 </Button>
               </Stack>
-            ) : endKind === "quiet" ? (
+            ) : surface === "soft_wait" ? (
               <Stack spacing={1.5} alignItems="stretch">
                 <Typography variant="body1" sx={{ textAlign: "center" }}>
-                  No cards left in this session.
+                  Next learning card in{" "}
+                  {nextLearningDue
+                    ? formatLearningEta(nextLearningDue)
+                    : "a moment"}
+                  .
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ textAlign: "center", opacity: 0.8 }}
+                >
+                  {pendingLearning.length} learning{" "}
+                  {pendingLearning.length === 1 ? "card" : "cards"} coming
+                  back.
+                </Typography>
+                <Button variant="contained" onClick={leaveStudy}>
+                  Today
+                </Button>
+              </Stack>
+            ) : surface === "quiet" ? (
+              <Stack spacing={1.5} alignItems="stretch">
+                <Typography variant="body1" sx={{ textAlign: "center" }}>
+                  No cards left for now.
                 </Typography>
                 <Button variant="contained" onClick={leaveStudy}>
                   Today

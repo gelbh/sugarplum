@@ -35,3 +35,16 @@ export function sessionEndKind(
   if (gradedCount > 0) return "complete";
   return "quiet";
 }
+
+export type SessionSurface = "fresh" | "quiet" | "soft_wait" | "complete";
+
+export function sessionSurface(
+  hadCards: boolean,
+  gradedCount: number,
+  pendingLearningCount: number,
+): SessionSurface {
+  if (!hadCards) return "fresh";
+  if (pendingLearningCount > 0) return "soft_wait";
+  if (gradedCount > 0) return "complete";
+  return "quiet";
+}
