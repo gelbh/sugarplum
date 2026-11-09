@@ -512,7 +512,7 @@ export default function StudyPage() {
       }
       const key = plainShortcutKey(e);
       if (key === null) return;
-      if ((key === "s" || key === "S") && revealed && notes.notesAvailable) {
+      if ((key === "s" || key === "S") && notes.notesAvailable) {
         e.preventDefault();
         notes.openNotes();
         return;
