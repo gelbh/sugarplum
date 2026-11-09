@@ -427,9 +427,7 @@ export default function SettingsPage() {
                       Google Calendar connected
                       {calendarStatus.suggestions || calendarStatus.gaps
                         ? ` (${[
-                            calendarStatus.suggestions
-                              ? "suggestions"
-                              : null,
+                            calendarStatus.suggestions ? "suggestions" : null,
                             calendarStatus.gaps ? "study gaps" : null,
                           ]
                             .filter(Boolean)
@@ -658,9 +656,7 @@ export default function SettingsPage() {
           </Typography>
           <Box component="form" onSubmit={onSubmitStudy} noValidate>
             <Stack spacing={2}>
-              {studyError ? (
-                <Alert severity="error">{studyError}</Alert>
-              ) : null}
+              {studyError ? <Alert severity="error">{studyError}</Alert> : null}
               {studyNotice ? (
                 <Alert severity="success">{studyNotice}</Alert>
               ) : null}

@@ -211,8 +211,10 @@ export function buildStudyQueue(
       .sort((a, b) => {
         const rA = rById.get(a.id);
         const rB = rById.get(b.id);
-        const nA = rA == null || Number.isNaN(rA) ? Number.POSITIVE_INFINITY : rA;
-        const nB = rB == null || Number.isNaN(rB) ? Number.POSITIVE_INFINITY : rB;
+        const nA =
+          rA == null || Number.isNaN(rA) ? Number.POSITIVE_INFINITY : rA;
+        const nB =
+          rB == null || Number.isNaN(rB) ? Number.POSITIVE_INFINITY : rB;
         if (nA !== nB) return nA - nB;
         return byDueThenId(a, b);
       }),

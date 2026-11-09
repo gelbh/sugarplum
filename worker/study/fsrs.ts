@@ -5,10 +5,7 @@ import {
   type Grade,
   type ReviewLog,
 } from "ts-fsrs";
-import {
-  fsrsForPrefs,
-  type FsrsPrefs,
-} from "../../src/study/fsrsFactory";
+import { fsrsForPrefs, type FsrsPrefs } from "../../src/study/fsrsFactory";
 import { DEFAULT_STUDY_PREFS } from "../../src/study/policyPrefs";
 
 export type { Card, Grade, ReviewLog };

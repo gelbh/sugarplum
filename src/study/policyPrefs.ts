@@ -1,7 +1,4 @@
-import {
-  DEFAULT_STUDY_PREFS,
-  type StudyPrefs,
-} from "./policyQueue";
+import { DEFAULT_STUDY_PREFS, type StudyPrefs } from "./policyQueue";
 
 export { DEFAULT_STUDY_PREFS, type StudyPrefs };
 
