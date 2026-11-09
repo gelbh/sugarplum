@@ -26,6 +26,10 @@ import {
 } from "../gamification/onStudyEvent";
 import { REJECT_REASONS } from "../../src/lib/rejectReasons";
 import { parseOptionalJsonBody } from "../optional-json";
+import {
+  isStoredDraftSafe,
+  type StoredDraftFields,
+} from "../generation/storedDraftQuality";
 
 const STUDY_STRUGGLE_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 
@@ -345,6 +349,103 @@ jobDraftRoutes.post("/:id/drafts/accept-all", async (c) => {
       : 0;
 
   return c.json({ accepted, failed, rejectedSiblingCount, unlocks });
+});
+
+function storedFieldsFromCardRow(row: CardRow): StoredDraftFields {
+  const front = parseJsonField(row.front_json, row.front_json);
+  const provenance = row.provenance_json
+    ? parseJsonField(row.provenance_json, null)
+    : null;
+  const media_keys = row.media_r2_keys_json
+    ? parseJsonField<string[]>(row.media_r2_keys_json, [])
+    : [];
+  if (row.type === "occlusion") {
+    return {
+      type: row.type,
+      front,
+      back: parseJsonField(row.back_json, row.back_json),
+      provenance,
+      media_keys,
+    };
+  }
+  const { back, options } = decodeStoredBack(row.type, row.back_json);
+  return {
+    type: row.type,
+    front,
+    back:
+      row.type === "mcq"
+        ? { answer: back, options: options ?? [] }
+        : back,
+    options,
+    provenance,
+    media_keys,
+  };
+}
+
+/** Accept only drafts that still pass Layer-1 quality when mapped from storage. */
+jobDraftRoutes.post("/:id/drafts/accept-safe", async (c) => {
+  const userId = await requireUser(c);
+  const jobId = c.req.param("id");
+  const db = getDb(c.env);
+
+  const job = await db
+    .prepare(
+      `SELECT j.id
+       FROM generation_jobs j
+       INNER JOIN materials m ON m.id = j.material_id
+       INNER JOIN decks d ON d.id = m.deck_id
+       WHERE j.id = ? AND d.user_id = ?`,
+    )
+    .bind(jobId, userId)
+    .first<{ id: string }>();
+  if (!job) throw new HTTPException(404, { message: "Job not found" });
+
+  const { results } = await db
+    .prepare(
+      `SELECT id, deck_id, job_id, type, front_json, back_json,
+              media_r2_keys_json, provenance_json, status, created_at, updated_at
+       FROM cards
+       WHERE job_id = ? AND status = ? ORDER BY created_at ASC`,
+    )
+    .bind(jobId, "draft")
+    .all<CardRow>();
+
+  const rows = results ?? [];
+  let accepted = 0;
+  let failed = 0;
+  let leftUnsafe = 0;
+  const acceptedCards: { cardId: string; cardType: string }[] = [];
+
+  for (const row of rows) {
+    if (!isStoredDraftSafe(storedFieldsFromCardRow(row))) {
+      leftUnsafe += 1;
+      continue;
+    }
+    try {
+      const outcome = await acceptDraftCard(db, row);
+      if (outcome === "accepted") {
+        accepted += 1;
+        acceptedCards.push({ cardId: row.id, cardType: row.type });
+      } else failed += 1;
+    } catch (err) {
+      console.error("accept-safe failed for card", row.id, err);
+      failed += 1;
+    }
+  }
+
+  const unlocks = await onCardsAccepted(db, userId, acceptedCards);
+  const rejectedSiblingCount =
+    accepted > 0 && failed === 0 && leftUnsafe === 0
+      ? await rejectOwnedSiblingDrafts(db, { userId, excludeJobId: jobId })
+      : 0;
+
+  return c.json({
+    accepted,
+    failed,
+    leftUnsafe,
+    rejectedSiblingCount,
+    unlocks,
+  });
 });
 
 cardRoutes.patch("/:id", async (c) => {

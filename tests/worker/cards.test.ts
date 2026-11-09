@@ -345,6 +345,85 @@ describe("draft review / accept gate", () => {
     expect(res.status).toBe(400);
   });
 
+  it("accept-safe accepts only quality survivors and leaves junk as draft", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedMaterial({
+      id: "mat-safe",
+      deck_id: "deck-a",
+      kind: "paste",
+      r2_key: null,
+      filename: null,
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    await env.DB.prepare(
+      "INSERT INTO generation_jobs (id, material_id, status, error, coverage_json, created_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    )
+      .bind(
+        "job-safe",
+        "mat-safe",
+        "needs_review",
+        null,
+        null,
+        "2026-01-01T00:00:00.000Z",
+        "2026-01-01T00:01:00.000Z",
+      )
+      .run();
+
+    env.seedCard({
+      id: "safe-1",
+      deck_id: "deck-a",
+      job_id: "job-safe",
+      type: "qa",
+      front_json: JSON.stringify("What is ATP?"),
+      back_json: JSON.stringify("Adenosine triphosphate"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "ATP" }),
+      status: "draft",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedCard({
+      id: "junk-1",
+      deck_id: "deck-a",
+      job_id: "job-safe",
+      type: "qa",
+      front_json: JSON.stringify("Phylum"),
+      back_json: JSON.stringify("Hosts Family"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "table" }),
+      status: "draft",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/jobs/job-safe/drafts/accept-safe",
+      {
+        method: "POST",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      accepted: number;
+      failed: number;
+      leftUnsafe: number;
+      rejectedSiblingCount: number;
+    };
+    expect(body.accepted).toBe(1);
+    expect(body.failed).toBe(0);
+    expect(body.leftUnsafe).toBe(1);
+    expect(body.rejectedSiblingCount).toBe(0);
+    const byId = Object.fromEntries(env.getCards().map((c) => [c.id, c.status]));
+    expect(byId["safe-1"]).toBe("accepted");
+    expect(byId["junk-1"]).toBe("draft");
+    expect(env.getSchedules()).toHaveLength(1);
+  });
+
   it("accept-all accepts every draft for the job and schedules them", async () => {
     const env = createTestEnv();
     seedOwner(env);
