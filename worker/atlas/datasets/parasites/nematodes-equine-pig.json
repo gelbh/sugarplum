@@ -1101,7 +1101,11 @@
             "name": "PCR",
             "sample": "skin"
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 56,
+          "max": 70
+        }
       },
       "refs": [
         {
@@ -1217,6 +1221,12 @@
           "citation": "Barlaam et al. 2020, Front Vet Sci 7:358: habronematidosis in equids",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7347746/",
           "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Habronema species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/habronema-species.php",
+          "note": null
         }
       ],
       "images": []
@@ -1278,7 +1288,11 @@
             "name": "faecal flotation",
             "sample": "faeces"
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 56,
+          "max": 70
+        }
       },
       "refs": [
         {
@@ -1376,6 +1390,12 @@
           "citation": "Barlaam et al. 2020, Front Vet Sci 7:358: habronematidosis in equids",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7347746/",
           "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Draschia megastoma",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/draschia-megastoma.php",
+          "note": null
         }
       ],
       "images": []
@@ -1428,7 +1448,12 @@
             "name": "exudate sediment microscopy",
             "sample": "exudate"
           }
-        ]
+        ],
+        "zoonotic": "no",
+        "pppDays": {
+          "min": 270,
+          "max": 365
+        }
       },
       "refs": [
         {
@@ -1526,6 +1551,18 @@
           "citation": "MSD Veterinary Manual: Parafilaria infection in animals",
           "url": "https://www.msdvetmanual.com/integumentary-system/helminths-of-the-skin/parafilaria-infection-in-animals",
           "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Helminths of the Skin in Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/helminths-of-the-skin/helminths-of-the-skin-in-animals",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Helminths of the Skin in Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/helminths-of-the-skin/helminths-of-the-skin-in-animals",
+          "note": null
         }
       ],
       "images": []
@@ -1580,7 +1617,11 @@
             "name": "skin biopsy",
             "sample": "skin"
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 120,
+          "max": 240
+        }
       },
       "refs": [
         {
@@ -1660,6 +1701,12 @@
           "citation": "WCVM Learn About Parasites: Onchocerca cervicalis",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/onchocerca-cervicalis.php",
           "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Helminths of the Skin in Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/helminths-of-the-skin/helminths-of-the-skin-in-animals",
+          "note": null
         }
       ],
       "images": []
@@ -1722,7 +1769,12 @@
             "name": "post-mortem examination",
             "sample": "eye"
           }
-        ]
+        ],
+        "zoonotic": "no",
+        "pppDays": {
+          "min": 70,
+          "max": 90
+        }
       },
       "refs": [
         {
@@ -1807,6 +1859,18 @@
           "field": "diagnosticTests",
           "citation": "WCVM Learn About Parasites: Thelazia species",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/thelazia-species.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Ocular Parasites in Animals",
+          "url": "https://www.msdvetmanual.com/eye-diseases-and-disorders/ocular-parasites/ocular-parasites-in-animals",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Ocular Parasites in Animals",
+          "url": "https://www.msdvetmanual.com/eye-diseases-and-disorders/ocular-parasites/ocular-parasites-in-animals",
           "note": null
         }
       ],
@@ -2132,7 +2196,8 @@
             "name": "post-mortem examination",
             "sample": "stomach"
           }
-        ]
+        ],
+        "zoonotic": "no"
       },
       "refs": [
         {
@@ -2217,6 +2282,12 @@
           "field": "lifecycleType",
           "citation": "MSD Veterinary Manual: Stomach worms in pigs (Hyostrongylus rubidus)",
           "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/hyostrongylus-rubidus-ascarops-gnathostoma-physocephalus-and-simondsia-stomach-worms-in-pigs",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Gastrointestinal Parasites of Pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/gastrointestinal-parasites-of-pigs",
           "note": null
         }
       ],
@@ -2465,7 +2536,8 @@
             "name": "post-mortem examination",
             "sample": "intestine"
           }
-        ]
+        ],
+        "zoonotic": "potential"
       },
       "refs": [
         {
@@ -2533,6 +2605,12 @@
           "citation": "WCVM Learn About Parasites: Gastro-intestinal nematodes of pigs",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/gastro-intestinal-nematodes-pigs.php",
           "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Gastrointestinal Parasites of Pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/gastrointestinal-parasites-of-pigs",
+          "note": null
         }
       ],
       "images": []
@@ -2595,7 +2673,8 @@
             "name": "post-mortem examination",
             "sample": "intestine"
           }
-        ]
+        ],
+        "zoonotic": "potential"
       },
       "refs": [
         {
@@ -2662,6 +2741,12 @@
           "field": "majorOrgan",
           "citation": "WCVM Learn About Parasites: Gastro-intestinal nematodes of pigs",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/gastro-intestinal-nematodes-pigs.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Gastrointestinal Parasites of Pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/gastrointestinal-parasites-of-pigs",
           "note": null
         }
       ],
@@ -2739,7 +2824,11 @@
             "name": "antibody detection",
             "sample": "serum"
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 5,
+          "max": 7
+        }
       },
       "refs": [
         {
@@ -2837,6 +2926,12 @@
           "citation": "CDC DPDx: Trichinellosis",
           "url": "https://www.cdc.gov/dpdx/trichinellosis/index.html",
           "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "CDC DPDx: Trichinellosis",
+          "url": "https://www.cdc.gov/dpdx/trichinellosis/index.html",
+          "note": "Adults in gut about 5–7 days after infection; larvae in muscle later."
         }
       ],
       "images": [

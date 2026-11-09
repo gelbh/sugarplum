@@ -324,9 +324,21 @@
         "lifecycleType": "indirect",
         "lifecycleStages": [
           {
+            "name": "egg / gravid proglottid",
+            "location": "passed in faeces; eaten by slug or snail",
+            "hostRole": "environment",
+            "diagnostic": false
+          },
+          {
+            "name": "cysticercoid",
+            "location": "body of slug or snail intermediate host",
+            "hostRole": "intermediate"
+          },
+          {
             "name": "adult tapeworm",
             "location": "duodenum",
-            "hostRole": "definitive"
+            "hostRole": "definitive",
+            "diagnostic": true
           }
         ],
         "diagnosticTests": [
@@ -334,7 +346,14 @@
             "name": "post-mortem examination",
             "sample": "intestine"
           }
-        ]
+        ],
+        "distribution": "Worldwide in poultry where intermediate hosts are present",
+        "zoonotic": "no",
+        "pppDays": {
+          "min": 10,
+          "max": 16
+        },
+        "diagnosticStage": "adult tapeworm"
       },
       "refs": [
         {
@@ -365,6 +384,36 @@
           "field": "order",
           "citation": "WCVM Learn About Parasites: Taenia species",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "MSD Veterinary Manual: Helminthiasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/helminthiasis/helminthiasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Helminthiasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/helminthiasis/helminthiasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Helminthiasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/helminthiasis/helminthiasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Helminthiasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/helminthiasis/helminthiasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Helminthiasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/helminthiasis/helminthiasis-in-poultry",
           "note": null
         }
       ],
@@ -398,9 +447,21 @@
         "lifecycleType": "indirect",
         "lifecycleStages": [
           {
+            "name": "egg / gravid proglottid",
+            "location": "passed in faeces; eaten by beetle, ant or other arthropod",
+            "hostRole": "environment",
+            "diagnostic": false
+          },
+          {
+            "name": "cysticercoid",
+            "location": "body of arthropod intermediate host",
+            "hostRole": "intermediate"
+          },
+          {
             "name": "adult tapeworm",
             "location": "intestine, duodenum to lower intestine by species",
-            "hostRole": "definitive"
+            "hostRole": "definitive",
+            "diagnostic": true
           }
         ],
         "diagnosticTests": [
@@ -412,7 +473,14 @@
             "name": "PCR",
             "sample": null
           }
-        ]
+        ],
+        "distribution": "Worldwide in domestic poultry",
+        "zoonotic": "no",
+        "pppDays": {
+          "min": 14,
+          "max": 21
+        },
+        "diagnosticStage": "adult tapeworm"
       },
       "refs": [
         {
@@ -455,6 +523,36 @@
           "field": "order",
           "citation": "WCVM Learn About Parasites: Taenia species",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "MSD Veterinary Manual: Helminthiasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/helminthiasis/helminthiasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Helminthiasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/helminthiasis/helminthiasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Helminthiasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/helminthiasis/helminthiasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Helminthiasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/helminthiasis/helminthiasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Helminthiasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/helminthiasis/helminthiasis-in-poultry",
           "note": null
         }
       ],
@@ -650,7 +748,11 @@
             "name": "post-mortem examination",
             "sample": "liver"
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 51,
+          "max": 76
+        }
       },
       "refs": [
         {
@@ -711,6 +813,12 @@
           "field": "order",
           "citation": "WCVM Learn About Parasites: Taenia species",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Taenia hydatigena",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-hydatigena.php",
           "note": null
         }
       ],
@@ -792,7 +900,11 @@
             "name": "post-mortem examination",
             "sample": "muscle"
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 42,
+          "max": 49
+        }
       },
       "refs": [
         {
@@ -841,6 +953,12 @@
           "field": "order",
           "citation": "WCVM Learn About Parasites: Taenia species",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Cestodes in Animals",
+          "url": "https://www.msdvetmanual.com/digestive-system/cestodes/cestodes-in-animals",
           "note": null
         }
       ],
@@ -1114,7 +1232,11 @@
             "name": "antibody detection",
             "sample": "serum"
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 56,
+          "max": 84
+        }
       },
       "refs": [
         {
@@ -1199,6 +1321,12 @@
           "field": "order",
           "citation": "WCVM Learn About Parasites: Taenia species",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "CDC DPDx: Taeniasis",
+          "url": "https://www.cdc.gov/dpdx/taeniasis/index.html",
           "note": null
         }
       ],
@@ -1301,7 +1429,11 @@
             "name": "antibody detection",
             "sample": "serum"
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 35,
+          "max": 84
+        }
       },
       "refs": [
         {
@@ -1404,6 +1536,12 @@
           "field": "order",
           "citation": "WCVM Learn About Parasites: Taenia species",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "CDC DPDx: Taeniasis",
+          "url": "https://www.cdc.gov/dpdx/taeniasis/index.html",
           "note": null
         }
       ],

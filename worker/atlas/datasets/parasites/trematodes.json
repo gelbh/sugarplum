@@ -287,7 +287,11 @@
             "sample": "serum",
             "windowStartWeek": 2
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 70,
+          "max": 90
+        }
       },
       "refs": [
         {
@@ -334,6 +338,12 @@
         },
         {
           "field": "lifecycleStages",
+          "citation": "CDC DPDx: Fascioliasis",
+          "url": "https://www.cdc.gov/dpdx/fascioliasis/index.html",
+          "note": null
+        },
+        {
+          "field": "pppDays",
           "citation": "CDC DPDx: Fascioliasis",
           "url": "https://www.cdc.gov/dpdx/fascioliasis/index.html",
           "note": null
@@ -714,7 +724,8 @@
             "name": "faecal egg microscopy",
             "sample": "faeces"
           }
-        ]
+        ],
+        "zoonotic": "no"
       },
       "refs": [
         {
@@ -746,6 +757,12 @@
           "citation": "NCBI Taxonomy: Calicophoron daubneyi",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/300641/",
           "note": "Course lists Digenea as the order; NCBI ranks Digenea as a subclass and gives the order as Plagiorchiida."
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Fluke Infections in Ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/flukes-in-ruminants/fluke-infections-in-ruminants",
+          "note": null
         }
       ],
       "images": []
@@ -783,6 +800,17 @@
         "lifecycleType": "indirect",
         "lifecycleStages": [
           {
+            "name": "egg",
+            "location": "passed in faeces; miracidium hatches in water",
+            "hostRole": "environment",
+            "diagnostic": true
+          },
+          {
+            "name": "cercaria / metacercaria",
+            "location": "snail then encysted on vegetation",
+            "hostRole": "intermediate"
+          },
+          {
             "name": "immature fluke",
             "location": "duodenum",
             "hostRole": "definitive"
@@ -790,7 +818,25 @@
           {
             "name": "adult fluke",
             "location": "rumen",
-            "hostRole": "definitive"
+            "hostRole": "definitive",
+            "diagnostic": false
+          }
+        ],
+        "distribution": "Worldwide in ruminants where suitable snails occur",
+        "zoonotic": "no",
+        "pppDays": {
+          "min": 70,
+          "max": 100
+        },
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal sedimentation",
+            "sample": "faeces"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "rumen"
           }
         ]
       },
@@ -812,6 +858,42 @@
           "citation": "NCBI Taxonomy: Paramphistomum cervi",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/762801/",
           "note": "Course lists Digenea as the order; NCBI ranks Digenea as a subclass and gives the order as Plagiorchiida."
+        },
+        {
+          "field": "distribution",
+          "citation": "Chaoudhary et al. 2015, Vet World 8:125: identification of Paramphistomum cervi in the rumen of sheep",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4777801/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Fluke Infections in Ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/flukes-in-ruminants/fluke-infections-in-ruminants",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Fluke Infections in Ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/flukes-in-ruminants/fluke-infections-in-ruminants",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Fluke Infections in Ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/flukes-in-ruminants/fluke-infections-in-ruminants",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Fluke Infections in Ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/flukes-in-ruminants/fluke-infections-in-ruminants",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Fluke Infections in Ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/flukes-in-ruminants/fluke-infections-in-ruminants",
+          "note": null
         }
       ],
       "images": []
@@ -1272,7 +1354,11 @@
             "name": "antibody detection",
             "sample": "serum"
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 28,
+          "max": 56
+        }
       },
       "refs": [
         {
@@ -1310,6 +1396,12 @@
           "citation": "NCBI Taxonomy: Schistosoma",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6181/",
           "note": "Course lists Digenea as the order; NCBI ranks Digenea as a subclass and gives the order as Strigeidida."
+        },
+        {
+          "field": "pppDays",
+          "citation": "CDC DPDx: Schistosomiasis",
+          "url": "https://www.cdc.gov/dpdx/schistosomiasis/index.html",
+          "note": null
         }
       ],
       "images": [
