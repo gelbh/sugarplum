@@ -12,6 +12,7 @@ import {
   type StrugglingRow,
 } from "../api/client";
 import { isGuest } from "../guest/session";
+import { GRADE_LABELS } from "../study/gradeLabels";
 
 export function formatStrugglingCaption(row: {
   again_14d: number;
@@ -20,8 +21,8 @@ export function formatStrugglingCaption(row: {
   retrievability?: number | null;
 }): string {
   const parts = [
-    `Again (14d): ${row.again_14d}`,
-    `Hard (14d): ${row.hard_14d}`,
+    `${GRADE_LABELS[1]} (14d): ${row.again_14d}`,
+    `${GRADE_LABELS[2]} (14d): ${row.hard_14d}`,
     `Lapses: ${row.lapses}`,
   ];
   const r = row.retrievability;

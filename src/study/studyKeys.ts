@@ -1,6 +1,6 @@
 import type { StudyRating } from "../api/client";
 
-/** Arrows mirror swipe directions (← Again · ↓ Hard · → Good · ↑ Easy). */
+/** Arrows mirror swipe directions (← No Idea · ↓ Tough Cookie · → Good Enough · ↑ Easy Peasy). */
 export const GRADE_BINDINGS: readonly {
   rating: StudyRating;
   digit: string;
