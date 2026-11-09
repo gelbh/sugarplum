@@ -7,24 +7,10 @@ import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import DraftCardEditor from "../components/DraftCardEditor";
-import type { CardDraftView, CardType, JobListItem } from "../api/client";
-import { TYPE_LABELS } from "../lib/draftCardModel";
+import type { CardType, JobListItem } from "../api/client";
+import { cardFrontPreview, TYPE_LABELS } from "../lib/draftCardModel";
 import { navigate } from "../nav/navigate";
 import { useDraftsWorkshop } from "./useDraftsWorkshop";
-
-function cardFrontPreview(card: CardDraftView): string {
-  if (typeof card.front === "string") return card.front;
-  if (
-    typeof card.front === "object" &&
-    card.front !== null &&
-    "prompt" in card.front &&
-    typeof card.front.prompt === "string" &&
-    card.front.prompt.trim()
-  ) {
-    return card.front.prompt;
-  }
-  return card.type === "occlusion" ? "Occlusion card" : "Card";
-}
 
 type Props = {
   guest: boolean;
@@ -59,16 +45,39 @@ export default function DraftsWorkshop({
     );
   }
 
-  if (desk.loading && desk.drafts.length === 0) {
+  if (desk.loading && desk.drafts.length === 0 && !desk.error) {
     return (
       <Typography color="text.secondary">Loading drafts…</Typography>
+    );
+  }
+
+  if (desk.error && desk.remaining === 0) {
+    return (
+      <Stack spacing={2}>
+        <Alert severity="error">{desk.error}</Alert>
+        <Button
+          variant="outlined"
+          onClick={() => {
+            void desk.reload();
+          }}
+          sx={{ alignSelf: "flex-start" }}
+        >
+          Retry
+        </Button>
+        <Button
+          variant="text"
+          onClick={onAddMoreMaterial}
+          sx={{ alignSelf: "flex-start" }}
+        >
+          Add more material
+        </Button>
+      </Stack>
     );
   }
 
   if (draftJobs.length === 0 || desk.remaining === 0) {
     return (
       <Stack spacing={2}>
-        {desk.error ? <Alert severity="error">{desk.error}</Alert> : null}
         <Alert severity="info">
           No draft cards for this deck yet. Add material to generate cards.
         </Alert>

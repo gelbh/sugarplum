@@ -39,6 +39,31 @@ vi.mock("../../src/nav/navigate", () => ({
   navigate: vi.fn(),
 }));
 
+let editorOnChange:
+  | ((next: {
+      front: string;
+      back: string;
+      type: "qa";
+      options?: string[];
+    }) => void)
+  | null = null;
+
+vi.mock("../../src/components/DraftCardEditor", () => ({
+  default: ({
+    onChange,
+  }: {
+    onChange: (next: {
+      front: string;
+      back: string;
+      type: "qa";
+      options?: string[];
+    }) => void;
+  }) => {
+    editorOnChange = onChange;
+    return createElement("div", { "data-testid": "draft-editor" }, "editor");
+  },
+}));
+
 const roots: Root[] = [];
 
 afterEach(() => {
@@ -48,6 +73,7 @@ afterEach(() => {
     });
   }
   document.body.replaceChildren();
+  editorOnChange = null;
   vi.clearAllMocks();
 });
 
@@ -135,9 +161,7 @@ describe("deck hub drafts workshop", () => {
       front: "Olfactory nerve is…",
       type: "cloze",
     });
-    listJobDrafts
-      .mockResolvedValueOnce([first, second])
-      .mockResolvedValueOnce([second]);
+    listJobDrafts.mockResolvedValue([first, second]);
     acceptCard.mockResolvedValue({ ...first, status: "accepted" });
 
     await render(
@@ -168,7 +192,66 @@ describe("deck hub drafts workshop", () => {
     });
 
     expect(acceptCard).toHaveBeenCalledWith("c1");
+    expect(listJobDrafts).toHaveBeenCalledTimes(1);
     expect(document.body.textContent).toMatch(/1 of 1 remaining/);
     expect(document.body.textContent).toMatch(/Olfactory nerve/);
+  });
+
+  it("blocks queue select while the editor is dirty", async () => {
+    const first = blankDraft({ id: "c1", front: "First draft" });
+    const second = blankDraft({ id: "c2", front: "Second draft" });
+    listJobDrafts.mockResolvedValue([first, second]);
+
+    await render(
+      createElement(DraftsWorkshop, {
+        guest: false,
+        draftJobs: [job],
+        onAddMoreMaterial: vi.fn(),
+      }),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(editorOnChange).toBeTruthy();
+    await act(async () => {
+      editorOnChange!({
+        front: "Edited",
+        back: "Back one",
+        type: "qa",
+      });
+      await Promise.resolve();
+    });
+
+    const queueButtons = Array.from(
+      document.querySelectorAll('[aria-label="Draft queue"] button'),
+    );
+    await act(async () => {
+      (queueButtons[1] as HTMLButtonElement).click();
+      await Promise.resolve();
+    });
+    expect(document.body.textContent).toMatch(
+      /Save, Accept, or Skip before switching/,
+    );
+  });
+
+  it("shows retry when every job load fails", async () => {
+    listJobDrafts.mockRejectedValue(new Error("network down"));
+    await render(
+      createElement(DraftsWorkshop, {
+        guest: false,
+        draftJobs: [job],
+        onAddMoreMaterial: vi.fn(),
+      }),
+    );
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(document.body.textContent).toMatch(/Could not load some drafts|network/i);
+    expect(document.body.textContent).toMatch(/Retry/);
+    expect(document.body.textContent).not.toMatch(
+      /No draft cards for this deck yet/,
+    );
   });
 });

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useUnlockToasts } from "../achievements/UnlockToastProvider";
 import {
   ApiError,
@@ -31,45 +31,77 @@ export function useDraftsWorkshop({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const loadSeq = useRef(0);
+
+  const jobIdsKey = useMemo(
+    () => draftJobs.map((job) => job.id).join("|"),
+    [draftJobs],
+  );
 
   const load = useCallback(async () => {
+    const seq = ++loadSeq.current;
     if (guest) {
+      if (seq !== loadSeq.current) return;
       setDrafts([]);
       setSelectedId(null);
       setDirty(false);
       setError(null);
+      setLoading(false);
       return;
     }
-    if (draftJobs.length === 0) {
+    const jobIds = jobIdsKey ? jobIdsKey.split("|") : [];
+    if (jobIds.length === 0) {
+      if (seq !== loadSeq.current) return;
       setDrafts([]);
       setSelectedId(null);
       setDirty(false);
       setError(null);
+      setLoading(false);
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      const lists = await Promise.all(
-        draftJobs.map((job) => listJobDrafts(job.id)),
+      const settled = await Promise.allSettled(
+        jobIds.map((id) => listJobDrafts(id)),
       );
-      const next = lists.flat();
+      if (seq !== loadSeq.current) return;
+      const next: CardDraftView[] = [];
+      const failures: string[] = [];
+      for (const result of settled) {
+        if (result.status === "fulfilled") {
+          next.push(...result.value);
+        } else {
+          const reason = result.reason;
+          failures.push(
+            reason instanceof ApiError
+              ? reason.message
+              : "Could not load some drafts",
+          );
+        }
+      }
       setDrafts(next);
       setSelectedId((prev) => {
         if (prev && next.some((c) => c.id === prev)) return prev;
         return next[0]?.id ?? null;
       });
       setDirty(false);
+      setError(
+        failures.length === settled.length
+          ? failures[0] ?? "Could not load drafts"
+          : failures.length > 0
+            ? failures[0] ?? null
+            : null,
+      );
     } catch (err) {
-      setDrafts([]);
-      setSelectedId(null);
+      if (seq !== loadSeq.current) return;
       setError(
         err instanceof ApiError ? err.message : "Could not load drafts",
       );
     } finally {
-      setLoading(false);
+      if (seq === loadSeq.current) setLoading(false);
     }
-  }, [draftJobs, guest]);
+  }, [guest, jobIdsKey]);
 
   useEffect(() => {
     void load();
@@ -88,8 +120,11 @@ export function useDraftsWorkshop({
 
   function onSelect(id: string) {
     if (busy) return;
+    if (dirty && id !== selectedId) {
+      setError("Save, Accept, or Skip before switching drafts");
+      return;
+    }
     setSelectedId(id);
-    setDirty(false);
     setError(null);
   }
 
@@ -111,15 +146,23 @@ export function useDraftsWorkshop({
     setDirty(true);
   }
 
-  async function afterDecision(noticeText: string) {
+  async function afterDecision(decidedId: string, noticeText: string) {
     setNotice(noticeText);
     setDirty(false);
-    await load();
+    setDrafts((prev) => {
+      const next = prev.filter((card) => card.id !== decidedId);
+      setSelectedId((cur) => {
+        if (cur && next.some((c) => c.id === cur)) return cur;
+        return next[0]?.id ?? null;
+      });
+      return next;
+    });
     await onDraftsChanged?.();
   }
 
   async function onAccept() {
     if (!selected || guest) return;
+    const decidedId = selected.id;
     setBusy(true);
     setError(null);
     setNotice(null);
@@ -131,7 +174,7 @@ export function useDraftsWorkshop({
       if (accepted.unlocks?.length) {
         enqueueUnlocks(accepted.unlocks);
       }
-      await afterDecision("Card accepted into study");
+      await afterDecision(decidedId, "Card accepted into study");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not accept");
     } finally {
@@ -141,12 +184,13 @@ export function useDraftsWorkshop({
 
   async function onSkip() {
     if (!selected || guest) return;
+    const decidedId = selected.id;
     setBusy(true);
     setError(null);
     setNotice(null);
     try {
       await rejectCard(selected.id);
-      await afterDecision("Card skipped");
+      await afterDecision(decidedId, "Card skipped");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not skip");
     } finally {
