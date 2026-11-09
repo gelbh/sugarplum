@@ -134,7 +134,7 @@ export default function ComparePicker({
                         <Typography component="span" sx={{ fontWeight: 600 }}>
                           {titles.primary}
                         </Typography>
-                        {titles.primary !== titles.scientific ? (
+                        {titles.scientific ? (
                           <Typography
                             component="span"
                             variant="body2"

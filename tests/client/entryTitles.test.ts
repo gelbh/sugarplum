@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { entryTitles } from "../../src/atlas/entryTitles";
 
 describe("entryTitles", () => {
-  it("uses common name as primary when present", () => {
+  it("uses common name as primary with scientific subtitle", () => {
     expect(
       entryTitles({
         commonName: "Common liver fluke",
@@ -14,7 +14,7 @@ describe("entryTitles", () => {
     });
   });
 
-  it("falls back to canonical when commonName is null", () => {
+  it("omits scientific when commonName is missing", () => {
     expect(
       entryTitles({
         commonName: null,
@@ -22,7 +22,7 @@ describe("entryTitles", () => {
       }),
     ).toEqual({
       primary: "Fasciola hepatica",
-      scientific: "Fasciola hepatica",
+      scientific: null,
     });
   });
 
@@ -34,7 +34,7 @@ describe("entryTitles", () => {
       }),
     ).toEqual({
       primary: "Fasciola hepatica",
-      scientific: "Fasciola hepatica",
+      scientific: null,
     });
   });
 });

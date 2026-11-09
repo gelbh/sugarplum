@@ -177,7 +177,7 @@ export default function SpecimenTile({
             >
               {titles.primary}
             </Typography>
-            {titles.primary !== titles.scientific ? (
+            {titles.scientific ? (
               <Typography
                 variant="body2"
                 color="text.secondary"
@@ -279,7 +279,7 @@ export default function SpecimenTile({
             <Chip label="Edited" size="small" variant="outlined" />
           ) : null}
         </Stack>
-        {titles.primary !== titles.scientific ? (
+        {titles.scientific ? (
           <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
             {titles.scientific}
           </Typography>

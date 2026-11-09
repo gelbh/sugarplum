@@ -170,7 +170,7 @@ function RailItem({
         >
           {titles.primary}
         </Typography>
-        {titles.primary !== titles.scientific ? (
+        {titles.scientific ? (
           <Typography
             noWrap
             color="text.secondary"

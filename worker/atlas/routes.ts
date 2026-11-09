@@ -594,15 +594,13 @@ atlasItemRoutes.patch("/entries/:entryId", async (c) => {
 
   const fieldsPatch = parseFieldsPatch(body.fields);
   const commonNameProvided = "commonName" in body;
-  const commonName = commonNameProvided
-    ? typeof body.commonName === "string"
-      ? body.commonName.trim() || null
-      : body.commonName === null
-        ? null
-        : (() => {
-            throw new HTTPException(400, { message: "Invalid commonName" });
-          })()
-    : undefined;
+  let commonName: string | undefined;
+  if (commonNameProvided) {
+    if (typeof body.commonName !== "string" || !body.commonName.trim()) {
+      throw new HTTPException(400, { message: "commonName required" });
+    }
+    commonName = body.commonName.trim();
+  }
 
   if (fieldsPatch === undefined && !commonNameProvided) {
     throw new HTTPException(400, { message: "No changes" });

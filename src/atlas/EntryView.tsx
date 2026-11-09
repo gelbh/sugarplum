@@ -209,7 +209,7 @@ export default function EntryView({
           >
             {titles.primary}
           </Typography>
-          {titles.primary !== titles.scientific ? (
+          {titles.scientific ? (
             <Typography
               color="text.secondary"
               sx={{ mt: 0.5, fontStyle: "italic" }}

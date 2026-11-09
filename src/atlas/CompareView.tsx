@@ -106,7 +106,7 @@ function SidePicker({
               <Box component="span" sx={{ fontWeight: 600 }}>
                 {titles.primary}
               </Box>
-              {titles.primary !== titles.scientific ? (
+              {titles.scientific ? (
                 <Box
                   component="span"
                   sx={{
@@ -175,7 +175,7 @@ function Hero({
         >
           {titles.primary}
         </Typography>
-        {titles.primary !== titles.scientific ? (
+        {titles.scientific ? (
           <Typography
             variant="body2"
             color="text.secondary"
