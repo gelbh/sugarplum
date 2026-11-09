@@ -24,21 +24,21 @@ type Props = {
 const emptyStage = (): StageDraft =>
   lifecycleStageSchema.parse({ name: "new stage" });
 
-function parseDays(raw: string): StageDraft["durationDays"] {
+/** Parse duration text; incomplete ranges (`14-`, `to`) stay null until both sides exist. */
+export function parseDays(raw: string): StageDraft["durationDays"] {
   const t = raw.trim();
   if (!t) return null;
-  const parts = t.split(/\s*[-–to]+\s*/i).map((p) => Number(p.trim()));
-  if (parts.length === 1 && Number.isFinite(parts[0])) {
-    return { min: parts[0], max: parts[0] };
+  if (/[-–]|to/i.test(t)) {
+    const parts = t.split(/\s*[-–to]+\s*/i).map((p) => p.trim());
+    if (parts.length < 2 || parts.some((p) => p === "")) return null;
+    const min = Number(parts[0]);
+    const max = Number(parts[1]);
+    if (!Number.isFinite(min) || !Number.isFinite(max)) return null;
+    return { min, max };
   }
-  if (
-    parts.length >= 2 &&
-    Number.isFinite(parts[0]) &&
-    Number.isFinite(parts[1])
-  ) {
-    return { min: parts[0], max: parts[1] };
-  }
-  return null;
+  const n = Number(t);
+  if (!Number.isFinite(n)) return null;
+  return { min: n, max: n };
 }
 
 function daysText(d: StageDraft["durationDays"]): string {
