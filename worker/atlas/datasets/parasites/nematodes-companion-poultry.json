@@ -200,7 +200,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "toxocara-canis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Joel Mills",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Canine_roundworm_1.JPG",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "toxocara-cati",
@@ -388,7 +399,18 @@
           "note": "Course states rare migration; reference gives hepatotracheal migration in young cats."
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "toxocara-cati-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "L\u00e9odras",
+          "license": "CC BY-SA 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Extr%C3%A9mit%C3%A9_ant%C3%A9rieure_de_Toxocara_cati.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "toxascaris-leonina",
@@ -553,7 +575,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "toxascaris-leonina-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Joel Mills",
+          "license": "CC BY-SA 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:A_toxascaris_leonina1.JPG",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "ancylostoma-caninum",
@@ -772,7 +805,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "ancylostoma-caninum-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Daniel J. Drew",
+          "license": "CC0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ancylostoma_caninum_(YPM_IZ_093168).jpeg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "uncinaria-stenocephala",
@@ -1105,7 +1149,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "strongyloides-stercoralis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Ajay Kumar Chaurasiya",
+          "license": "CC BY-SA 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Larva_of_Strongyloides_in_Saline_wet_mount_of_stool_microscopy.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "trichuris-vulpis",
@@ -1283,7 +1338,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "trichuris-vulpis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "CDC / PHIL or DPDx (via Wikimedia Commons)",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Eggs_of_Trichuris_trichiura_and_Trichuris_vulpis_06G0018_jpg_lores.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "crenosoma-vulpis",
@@ -2023,7 +2089,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "angiostrongylus-vasorum-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "John F. Lindo, Cecilia Waugh, John Hall, Colette Cunningham-Myrie, Deanna Ashley, Mark L. Eberhard, James J. Sullivan, H",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Angiostrongylus_cantonensis.png",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "dirofilaria-immitis",
@@ -2192,7 +2269,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "dirofilaria-immitis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Alan R Walker",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Dirofilaria-immitis-dog-heart.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "dirofilaria-repens",
@@ -2317,7 +2405,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "dirofilaria-repens-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "CDC / PHIL or DPDx (via Wikimedia Commons)",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:D_repens_Lebenszyklus.png",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "capillaria-aerophila",
@@ -2478,7 +2577,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "capillaria-aerophila-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Lalo\u0161evi\u0107, V., Lalo\u0161evi\u0107, D., \u010capo, I., Simin, V., Galfi, A. &amp; Traversa, D.",
+          "license": "CC BY 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Eucoleus_aerophilus_female_vulva.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "capillaria-plica",
@@ -2786,7 +2896,18 @@
           "note": "Course lists the suborder Spirurina in the order column; reference gives the order Spirurida."
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "spirocerca-lupi-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Stefan Walkowski",
+          "license": "CC BY-SA 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Spirocerca_lupi.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "ascaridia-galli",
@@ -2939,7 +3060,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "ascaridia-galli-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Chhandama",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ascaridia_galli.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "heterakis-gallinarum",
@@ -3077,7 +3209,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "heterakis-gallinarum-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Daniel J. Drew",
+          "license": "CC0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Heterakis_gallinarum_(YPM_IZ_097869).jpeg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "syngamus-trachea",
@@ -3250,7 +3393,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "syngamus-trachea-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Milton Friend at the Geological Survey National Wildlife Health Center",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Gapeworms.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "anisakis-simplex",
@@ -3414,7 +3568,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "anisakis-simplex-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Anilocra",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Anisakids.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "contracaecum-osculatum",
@@ -3746,7 +3911,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "pseudoterranova-decipiens-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "CDC / PHIL or DPDx (via Wikimedia Commons)",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Anasakid_whole.jpg",
+          "isHero": true
+        }
+      ]
     }
   ]
 }

@@ -1,3 +1,6 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   datasetEntrySchema,
@@ -15,7 +18,13 @@ import {
   hostCovers,
   organCovers,
 } from "../../../worker/atlas/datasets/vocab";
+import { toEntryView } from "../../../worker/atlas/merge";
 import manifest from "../../eval/atlas/course-taxa.json";
+
+const parasitesDir = join(
+  fileURLToPath(new URL("../../..", import.meta.url)),
+  "public/atlas/parasites",
+);
 
 const minimal = {
   key: "fasciola-hepatica",
@@ -297,8 +306,88 @@ describe("dataset schema", () => {
         ],
       },
     ],
+    [
+      "two hero images",
+      {
+        ...minimal,
+        images: [
+          {
+            id: "adult",
+            file: "adult.webp",
+            role: "adult",
+            credit: "CDC",
+            license: "Public domain",
+            sourceUrl: "https://example.org/adult.jpg",
+            isHero: true,
+          },
+          {
+            id: "egg",
+            file: "egg.webp",
+            role: "egg_oocyst",
+            credit: "CDC",
+            license: "Public domain",
+            sourceUrl: "https://example.org/egg.jpg",
+            isHero: true,
+          },
+        ],
+      },
+    ],
+    [
+      "duplicate image ids",
+      {
+        ...minimal,
+        images: [
+          {
+            id: "adult",
+            file: "adult.webp",
+            role: "adult",
+            credit: "CDC",
+            license: "Public domain",
+            sourceUrl: "https://example.org/adult.jpg",
+          },
+          {
+            id: "adult",
+            file: "adult-2.webp",
+            role: "adult",
+            credit: "CDC",
+            license: "Public domain",
+            sourceUrl: "https://example.org/adult-2.jpg",
+          },
+        ],
+      },
+    ],
   ])("rejects %s", (_label, input) => {
     expect(datasetEntrySchema.safeParse(input).success).toBe(false);
+  });
+
+  it("maps dataset image file to AtlasEntryView src", () => {
+    const e = datasetEntrySchema.parse({
+      ...minimal,
+      images: [
+        {
+          id: "adult",
+          file: "fasciola-hepatica-adult.webp",
+          role: "adult",
+          credit: "CDC / DPDx",
+          license: "Public domain",
+          sourceUrl: "https://www.cdc.gov/dpdx/fascioliasis/index.html",
+          isHero: true,
+        },
+      ],
+    });
+    expect(toEntryView(e).images).toEqual([
+      {
+        id: "adult",
+        src: "/atlas/parasites/fasciola-hepatica-adult.webp",
+        placeholderSrc: "/atlas/parasites/fasciola-hepatica-adult-blur.webp",
+        role: "adult",
+        caption: null,
+        credit: "CDC / DPDx",
+        license: "Public domain",
+        sourceUrl: "https://www.cdc.gov/dpdx/fascioliasis/index.html",
+        isHero: true,
+      },
+    ]);
   });
 
   it("accepts vocabulary hosts, organs and nested objects", () => {
@@ -439,7 +528,9 @@ describe("built-in parasite dataset", () => {
   it("records every known slide misspelling on its entry", async () => {
     const { KNOWN_MISSPELLINGS } = await import("../../../worker/atlas/names");
     const all = new Set(
-      dataset.entries.flatMap((e) => e.misspellings.map((m) => m.split(" ")[0])),
+      dataset.entries.flatMap((e) =>
+        e.misspellings.map((m) => m.split(" ")[0]),
+      ),
     );
     for (const genus of KNOWN_MISSPELLINGS)
       expect(all.has(genus), genus).toBe(true);
@@ -475,7 +566,34 @@ describe("built-in parasite dataset", () => {
     expect(stray).toEqual([]);
   });
 
-  it("ships no images before step 2", () => {
-    expect(dataset.entries.flatMap((e) => e.images)).toEqual([]);
+  it("requires every dataset image file under public/atlas/parasites", () => {
+    const missing = dataset.entries.flatMap((e) =>
+      e.images.flatMap((img) => {
+        const paths = [img.file];
+        if (img.file.endsWith(".webp")) {
+          paths.push(`${img.file.slice(0, -5)}-blur.webp`);
+        }
+        return paths
+          .filter((file) => !existsSync(join(parasitesDir, file)))
+          .map((file) => `${e.key}/${file}`);
+      }),
+    );
+    expect(missing).toEqual([]);
+  });
+
+  it("requires credit and license on every dataset image", () => {
+    const incomplete = dataset.entries.flatMap((e) =>
+      e.images
+        .filter((img) => !img.credit.trim() || !img.license.trim())
+        .map((img) => `${e.key}/${img.id}`),
+    );
+    expect(incomplete).toEqual([]);
+  });
+
+  it("allows at most one hero image per entry", () => {
+    const extras = dataset.entries
+      .filter((e) => e.images.filter((img) => img.isHero).length > 1)
+      .map((e) => e.key);
+    expect(extras).toEqual([]);
   });
 });

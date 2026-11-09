@@ -60,7 +60,7 @@
         },
         {
           "field": "definitiveHosts",
-          "citation": "Koç et al. 2026, Veterinary Sciences 13:1072: zoonotic protozoa in stray and owned dogs with diarrhoea in Trabzon, Türkiye",
+          "citation": "Ko\u00e7 et al. 2026, Veterinary Sciences 13:1072: zoonotic protozoa in stray and owned dogs with diarrhoea in Trabzon, T\u00fcrkiye",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13709635/",
           "note": "Course also lists cats; cited references do not."
         },
@@ -113,7 +113,18 @@
           "note": "Course states Entamoebidae; reference gives Endamoebidae."
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "entamoeba-histolytica-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "The Other 95%",
+          "license": "CC BY-SA 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:E_histolytica_oil_immersion.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "giardia-duodenalis",
@@ -248,7 +259,18 @@
           "note": "Course states Heamitidae; reference gives Hexamitidae."
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "giardia-duodenalis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "CDC / PHIL or DPDx (via Wikimedia Commons)",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Giardia_lamblia_SEM_8698_lores.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "balantidium-coli",
@@ -370,7 +392,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "balantidium-coli-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "The Other 95%",
+          "license": "CC BY-SA 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Balantidium_1000x_oil_(2).jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "eimeria-spp",
@@ -484,7 +517,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "eimeria-spp-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "USDA",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Eimeria_life_cycle_usda.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "cryptosporidium-spp",
@@ -648,7 +692,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "cryptosporidium-spp-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "CDC / PHIL or DPDx (via Wikimedia Commons)",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cicle_de_Cryptosporidium_spp.png",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "tritrichomonas-foetus",
@@ -767,7 +822,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "tritrichomonas-foetus-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Chaoqun Yaor and Liza S K\u00f6ster",
+          "license": "CC BY 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tritrichomonas_foetus.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "histomonas-meleagridis",
@@ -975,7 +1041,7 @@
       "refs": [
         {
           "field": null,
-          "citation": "Doboși et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
+          "citation": "Dobo\u0219i et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9785705/",
           "note": null
         },
@@ -993,31 +1059,31 @@
         },
         {
           "field": "definitiveHosts",
-          "citation": "Doboși et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
+          "citation": "Dobo\u0219i et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9785705/",
           "note": null
         },
         {
           "field": "majorOrgan",
-          "citation": "Doboși et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
+          "citation": "Dobo\u0219i et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9785705/",
           "note": null
         },
         {
           "field": "zoonotic",
-          "citation": "Doboși et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
+          "citation": "Dobo\u0219i et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9785705/",
           "note": "Course states potential; reference gives yes."
         },
         {
           "field": "lifecycleStages",
-          "citation": "Doboși et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
+          "citation": "Dobo\u0219i et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9785705/",
           "note": null
         },
         {
           "field": "diagnosticTests",
-          "citation": "Doboși et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
+          "citation": "Dobo\u0219i et al. 2022, Pathogens 11:1486: review of Encephalitozoon cuniculi in domestic rabbits",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9785705/",
           "note": null
         },
@@ -1034,7 +1100,18 @@
           "note": "Course states Nosematidae; reference gives Unikaryonidae."
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "encephalitozoon-cuniculi-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "No machine-readable author provided. MGrieb~commonswiki assumed (based on copyright claims).",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:2006-01-19_Monty2.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "toxoplasma-gondii",
@@ -1233,7 +1310,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "toxoplasma-gondii-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Jacques Rigoulet, Alain Hennache, Pierre Lagourette, Catherine George, Lo\u00efc Longeart, Jean-Lo\u00efc Le Net and Jitender P. D",
+          "license": "CC BY 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Parasite140105-fig3_Toxoplasmosis_in_a_bar-shouldered_dove_-_TEM_of_2_tachyzoites.tif",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "neospora-caninum",
@@ -1394,7 +1482,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "neospora-caninum-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Peter Barr",
+          "license": "CC BY-SA 2.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Footpath_sign_and_small_footbridge_-_geograph.org.uk_-_1739368.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "sarcocystis-spp",
@@ -1905,7 +2004,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "babesia-spp-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Emmanuelmosaku",
+          "license": "CC BY-SA 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:A_Veterinary_medical_student_in_the_Laboratory_during_his_undergraduate_project_research_01.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "theileria-spp",
@@ -2270,7 +2380,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "leishmania-infantum-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "CIRA / NOAA / NESDIS Center for Satellite Applications and Research",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:20252212350_GOES18-ABI-FL-14-EP092025-2000x2000.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "trypanosoma-spp",
@@ -2453,7 +2574,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "trypanosoma-spp-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "CDC / PHIL or DPDx (via Wikimedia Commons)",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:IRG_activation_following_pathogen_entry.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "plasmodium-spp",
@@ -2626,7 +2758,18 @@
           "note": "Course states Plasmodidae; reference gives Plasmodiidae."
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "plasmodium-spp-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Merit Gonz\u00e1lez-Olvera, Arturo Hernandez-Colina, Tanja Himmel, Lindsay Eckley, Javier Lopez, Julian Chantrey, Matthew Bay",
+          "license": "CC BY 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Graphical_abstract_of_avian_malaria_affecting_Humboldt_penguins.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "hepatozoon-canis",
@@ -2772,7 +2915,18 @@
           "note": "Course states Coccidea (Coccidia); reference gives Hepatozoidae."
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "hepatozoon-canis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "K.regaskova",
+          "license": "CC BY-SA 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hepatozoon.jpg",
+          "isHero": true
+        }
+      ]
     }
   ]
 }
