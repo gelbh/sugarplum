@@ -14,9 +14,20 @@ import type {
 } from "../api/client";
 import { assertSingleCloze } from "../lib/clozeFormat";
 import { fsrsForPrefs } from "../study/fsrsFactory";
+import {
+  buildGuestFsrsPrefs,
+  DEFAULT_GUEST_FSRS_OPTIMIZE,
+  guestFsrsOptimizeStatus,
+  guestRevlogCsv,
+  nextGuestFsrsPending,
+  normalizeGuestFsrsOptimize,
+  type GuestFsrsOptimizeFields,
+} from "../study/guestFsrsOptimize";
 import { clientLocalDay } from "../study/localDay";
 import { type StudyPrefs } from "../study/policyQueue";
 import { clampStudyPrefs, DEFAULT_STUDY_PREFS } from "../study/policyPrefs";
+import type { FsrsOptimizeStatus } from "../study/fsrsOptimizeTypes";
+import { validateFsrsW } from "../study/fsrsWeights";
 import {
   cardFromScheduleRow,
   scheduleColumnsFromCard,
@@ -61,7 +72,7 @@ type GuestStore = {
   schedules: Record<string, GuestCardSchedule>;
   /** Local calendar day → intros already graded that day. */
   introsByDay: Record<string, number>;
-};
+} & GuestFsrsOptimizeFields;
 
 /** Legacy deck shape before subject hierarchy. */
 type LegacyDeck = {
@@ -81,6 +92,9 @@ type LegacyGuestStore = {
   reviewLogs?: GuestReviewLog[];
   schedules?: Record<string, GuestCardSchedule>;
   introsByDay?: Record<string, number>;
+  fsrsW?: number[] | null;
+  fsrsLastOptimizedAt?: string | null;
+  fsrsOptimizePending?: boolean;
 };
 
 function backend(storage?: Store): Store {
@@ -147,6 +161,11 @@ function migrateStore(raw: LegacyGuestStore): GuestStore {
     };
   });
 
+  const optimize = normalizeGuestFsrsOptimize({
+    fsrsW: raw.fsrsW,
+    fsrsLastOptimizedAt: raw.fsrsLastOptimizedAt,
+    fsrsOptimizePending: raw.fsrsOptimizePending,
+  });
   return {
     subjects,
     decks,
@@ -160,6 +179,7 @@ function migrateStore(raw: LegacyGuestStore): GuestStore {
       raw.introsByDay && typeof raw.introsByDay === "object"
         ? raw.introsByDay
         : {},
+    ...optimize,
   };
 }
 
@@ -223,6 +243,7 @@ function seedStore(): GuestStore {
     reviewLogs: [],
     schedules: {},
     introsByDay: {},
+    ...DEFAULT_GUEST_FSRS_OPTIMIZE,
   };
 }
 
@@ -742,6 +763,74 @@ export function guestPutStudyPrefs(
   return { ...clamped };
 }
 
+export function guestGetFsrsOptimizeStatus(
+  storage?: Store,
+): FsrsOptimizeStatus {
+  const store = readStore(storage);
+  return guestFsrsOptimizeStatus(store.reviewLogs, {
+    fsrsW: store.fsrsW,
+    fsrsLastOptimizedAt: store.fsrsLastOptimizedAt,
+    fsrsOptimizePending: store.fsrsOptimizePending,
+  });
+}
+
+/** Set local pending when due (enriched floor + 30-day gate). */
+export function guestMarkFsrsOptimizePendingIfDue(
+  storage?: Store,
+  now: Date = new Date(),
+): FsrsOptimizeStatus {
+  const store = readStore(storage);
+  const pending = nextGuestFsrsPending(
+    store.reviewLogs,
+    {
+      fsrsW: store.fsrsW,
+      fsrsLastOptimizedAt: store.fsrsLastOptimizedAt,
+      fsrsOptimizePending: store.fsrsOptimizePending,
+    },
+    now,
+  );
+  if (pending !== store.fsrsOptimizePending) {
+    store.fsrsOptimizePending = pending;
+    writeStore(store, storage);
+  }
+  return guestFsrsOptimizeStatus(store.reviewLogs, {
+    fsrsW: store.fsrsW,
+    fsrsLastOptimizedAt: store.fsrsLastOptimizedAt,
+    fsrsOptimizePending: store.fsrsOptimizePending,
+  });
+}
+
+export function guestGetFsrsRevlogCsv(storage?: Store): string {
+  return guestRevlogCsv(readStore(storage).reviewLogs);
+}
+
+export function guestSaveFsrsWeights(
+  w: number[],
+  storage?: Store,
+  now: Date = new Date(),
+): { ok: true; wLength: number } {
+  const validated = validateFsrsW(w);
+  if (!validated) throw new Error("Invalid FSRS weights");
+  const store = readStore(storage);
+  store.fsrsW = validated;
+  store.fsrsLastOptimizedAt = now.toISOString();
+  store.fsrsOptimizePending = false;
+  writeStore(store, storage);
+  return { ok: true, wLength: validated.length };
+}
+
+export function guestResetFsrsWeights(
+  storage?: Store,
+  now: Date = new Date(),
+): { ok: true } {
+  const store = readStore(storage);
+  store.fsrsW = null;
+  store.fsrsLastOptimizedAt = now.toISOString();
+  store.fsrsOptimizePending = false;
+  writeStore(store, storage);
+  return { ok: true };
+}
+
 function policyInput(store: GuestStore): GuestPolicyInput {
   return {
     cards: store.cards,
@@ -858,11 +947,9 @@ export function guestReviewCard(
       })
     : createEmptyCard(now);
 
-  const { card: nextCard, log } = fsrsForPrefs(store.studyPrefs).next(
-    fsrsCard,
-    now,
-    ratingToGrade(rating),
-  );
+  const { card: nextCard, log } = fsrsForPrefs(
+    buildGuestFsrsPrefs(store.studyPrefs, store.fsrsW),
+  ).next(fsrsCard, now, ratingToGrade(rating));
   const next = scheduleColumnsFromCard(nextCard);
 
   store.schedules[cardId] = {

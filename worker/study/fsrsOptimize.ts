@@ -3,6 +3,7 @@ import {
   FSRS_MIN_REVIEWS,
   FSRS_RETRAIN_DAYS,
 } from "../../src/study/fsrsOptimizeConstants";
+import { isOptimizeDue } from "../../src/study/fsrsOptimizeDue";
 import type { FsrsOptimizeStatus } from "../../src/study/fsrsOptimizeTypes";
 import { validateFsrsW } from "../../src/study/fsrsWeights";
 import {
@@ -12,6 +13,7 @@ import {
 import { DEFAULT_STUDY_PREFS, loadStudyPrefs } from "./prefs";
 
 export type { FsrsOptimizeStatus, RescheduleSummary };
+export { isOptimizeDue };
 
 const MS_PER_DAY = 86_400_000;
 
@@ -44,18 +46,6 @@ export async function countUserReviews(
     .bind(userId)
     .first<{ cnt: number }>();
   return Number(row?.cnt ?? 0);
-}
-
-export function isOptimizeDue(
-  reviewCount: number,
-  lastOptimizedAt: string | null | undefined,
-  now: Date,
-): boolean {
-  if (reviewCount < FSRS_MIN_REVIEWS) return false;
-  if (lastOptimizedAt == null || lastOptimizedAt === "") return true;
-  const last = Date.parse(lastOptimizedAt);
-  if (!Number.isFinite(last)) return true;
-  return now.getTime() - last >= FSRS_RETRAIN_DAYS * MS_PER_DAY;
 }
 
 export async function getFsrsOptimizeStatus(

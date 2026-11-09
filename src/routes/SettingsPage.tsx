@@ -721,7 +721,7 @@ export default function SettingsPage() {
               </Button>
             </Stack>
           </Box>
-          {!guest ? <FsrsWeightsSettings /> : null}
+          <FsrsWeightsSettings />
         </Paper>
 
         {guest ? (

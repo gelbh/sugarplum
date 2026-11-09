@@ -148,7 +148,7 @@ export default function TodayPage() {
           setReady(true);
           endLoad();
         }
-        if (!isGuest() && !cancelled) {
+        if (!cancelled) {
           void maybeRunFsrsOptimize();
         }
         try {

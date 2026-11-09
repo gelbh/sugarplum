@@ -18,10 +18,13 @@ import {
   guestDeleteCard,
   guestMoveCard,
   guestPatchCard,
+  guestGetFsrsOptimizeStatus,
   guestPutStudyPrefs,
   guestResetCardSchedule,
+  guestResetFsrsWeights,
   guestRestoreCard,
   guestReviewCard,
+  guestSaveFsrsWeights,
 } from "../../src/guest/store";
 import {
   guestDeckComposition,
@@ -1148,5 +1151,25 @@ describe("guest store", () => {
     expect(() => guestDeleteCard(card.id, storage)).toThrow(
       /Only accepted cards can be deleted/,
     );
+  });
+
+  it("preserves fsrsW across studyPrefs PUT and reset clears it", async () => {
+    const { default_w } = await import("ts-fsrs");
+    enterGuest(storage);
+    const customW = default_w.map((x, i) => (i === 8 ? x * 3 : x));
+    guestSaveFsrsWeights(customW, storage);
+
+    guestPutStudyPrefs({ introBudget: 7 }, storage);
+    expect(guestGetStudyPrefs(storage).introBudget).toBe(7);
+    expect(guestGetFsrsOptimizeStatus(storage).hasCustomW).toBe(true);
+    const rawAfterPrefs = JSON.parse(storage.getItem(STORE_KEY)!) as {
+      fsrsW: number[];
+    };
+    expect(rawAfterPrefs.fsrsW).toEqual(customW);
+
+    guestResetFsrsWeights(storage);
+    expect(guestGetFsrsOptimizeStatus(storage).hasCustomW).toBe(false);
+    expect(guestGetFsrsOptimizeStatus(storage).pending).toBe(false);
+    expect(guestGetFsrsOptimizeStatus(storage).lastOptimizedAt).not.toBeNull();
   });
 });

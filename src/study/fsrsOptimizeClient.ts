@@ -4,6 +4,11 @@ import {
   putFsrsWeights,
 } from "../api/client";
 import { isGuest } from "../guest/session";
+import {
+  guestGetFsrsRevlogCsv,
+  guestMarkFsrsOptimizePendingIfDue,
+  guestSaveFsrsWeights,
+} from "../guest/store";
 import type {
   FsrsOptimizeWorkerRequest,
   FsrsOptimizeWorkerResponse,
@@ -39,24 +44,36 @@ async function trainWeightsFromCsv(csv: string): Promise<number[]> {
   }
 }
 
-async function trainAndSave(): Promise<void> {
+async function trainAndSaveAccount(): Promise<void> {
   const csv = await getFsrsRevlogCsv();
   const w = await trainWeightsFromCsv(csv);
   await putFsrsWeights(w);
 }
 
+async function trainAndSaveGuest(): Promise<void> {
+  const csv = guestGetFsrsRevlogCsv();
+  const w = await trainWeightsFromCsv(csv);
+  guestSaveFsrsWeights(w);
+}
+
 /**
- * Auto path: if pending, train in a Web Worker and PUT weights.
- * No-ops for guests; at most one in-flight; failures skip further auto
- * attempts for this page session.
+ * Auto path: if pending, train in a Web Worker and persist weights.
+ * Guests use local store + CSV; accounts use API. At most one in-flight;
+ * failures skip further auto attempts for this page session.
  */
 export async function maybeRunFsrsOptimize(): Promise<"skipped" | "ran" | "failed"> {
-  if (isGuest() || inFlight || skipAutoThisSession) return "skipped";
+  if (inFlight || skipAutoThisSession) return "skipped";
   inFlight = true;
   try {
+    if (isGuest()) {
+      const status = guestMarkFsrsOptimizePendingIfDue();
+      if (!status.pending) return "skipped";
+      await trainAndSaveGuest();
+      return "ran";
+    }
     const status = await getFsrsOptimizeStatus();
     if (!status.pending) return "skipped";
-    await trainAndSave();
+    await trainAndSaveAccount();
     return "ran";
   } catch {
     skipAutoThisSession = true;
@@ -68,11 +85,14 @@ export async function maybeRunFsrsOptimize(): Promise<"skipped" | "ran" | "faile
 
 /** Manual Run now: force train regardless of pending flag. */
 export async function runFsrsOptimizeTrainNow(): Promise<void> {
-  if (isGuest()) throw new Error("Guest cannot optimize FSRS weights");
   if (inFlight) throw new Error("Optimize already in progress");
   inFlight = true;
   try {
-    await trainAndSave();
+    if (isGuest()) {
+      await trainAndSaveGuest();
+    } else {
+      await trainAndSaveAccount();
+    }
     skipAutoThisSession = false;
   } finally {
     inFlight = false;
