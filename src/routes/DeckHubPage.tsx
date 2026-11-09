@@ -63,7 +63,6 @@ import {
   cardHasRegenSource,
   regenCard,
   resetCardSchedule,
-  setCover,
   type CardDraftView,
   type Deck,
   type DeckStats,
@@ -1121,12 +1120,7 @@ export default function DeckHubPage({ deckId }: Props) {
           ownerKind="deck"
           ownerId={deck.id}
           onClose={() => setCoverPickerOpen(false)}
-          onPick={async (photoId) => {
-            const row = await setCover("deck", deck.id, photoId);
-            setDeckCover(row);
-            setCoverPickerOpen(false);
-          }}
-          onUploaded={(row) => {
+          onSaved={(row) => {
             setDeckCover(row);
             setCoverPickerOpen(false);
           }}

@@ -511,9 +511,9 @@ export function setCustomCover(
   photoId?: string,
 ) {
   if (isGuest()) rejectGuestCover();
-  return api<StoredCoverRow>("/api/covers", {
+  return api<StoredCoverRow>("/api/covers/custom", {
     method: "PUT",
-    json: { ownerKind, ownerId, source: "custom", r2Key, photoId },
+    json: { ownerKind, ownerId, r2Key, photoId },
   });
 }
 
