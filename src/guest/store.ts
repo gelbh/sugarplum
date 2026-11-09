@@ -20,6 +20,10 @@ import {
   cardFromScheduleRow,
   scheduleColumnsFromCard,
 } from "../study/retrievability";
+import {
+  aggregateSubjectKnowledge,
+  type SubjectKnowledge,
+} from "../study/subjectKnowledge";
 import { GUEST_USER_ID } from "./session";
 import {
   buildGuestDueResult,
@@ -419,6 +423,27 @@ export function guestDeckStats(
     archived: cards.filter((c) => c.status === "archived").length,
     materials: 0,
   };
+}
+
+export function guestSubjectKnowledge(
+  subjectId: string,
+  storage?: Store,
+): SubjectKnowledge {
+  const store = readStore(storage);
+  if (!store.subjects.some((s) => s.id === subjectId)) {
+    throw new Error("Subject not found");
+  }
+  const deckIds = new Set(
+    store.decks.filter((d) => d.subject_id === subjectId).map((d) => d.id),
+  );
+  const rows = store.cards
+    .filter((c) => deckIds.has(c.deck_id) && c.status === "accepted")
+    .map((c) => {
+      const sched = store.schedules[c.id];
+      if (!sched) return { state: null, stability: null };
+      return { state: sched.state, stability: sched.stability };
+    });
+  return aggregateSubjectKnowledge(rows);
 }
 
 /** Persist paste pairs as accepted cards; prepend ids to the due queue. */

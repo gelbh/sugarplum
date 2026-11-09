@@ -41,6 +41,7 @@ import {
   guestPutStudyPrefs,
   guestResetCardSchedule,
   guestReviewCard,
+  guestSubjectKnowledge,
   type GuestHubCardBody,
 } from "../guest/store";
 import type { RejectReason } from "../lib/rejectReasons";
@@ -400,6 +401,16 @@ export type DeckStats = {
   materials: number;
 };
 
+export type SubjectKnowledge = {
+  new: number;
+  learning: number;
+  young: number;
+  mature: number;
+  total: number;
+  graduated: number;
+  graduatedPct: number | null;
+};
+
 export type Material = {
   id: string;
   deck_id: string;
@@ -585,6 +596,20 @@ export function deckStats(id: string) {
     }
   }
   return api<DeckStats>(`/api/decks/${id}/stats`);
+}
+
+export function subjectKnowledge(id: string) {
+  if (isGuest()) {
+    try {
+      return Promise.resolve(guestSubjectKnowledge(id));
+    } catch (err) {
+      throw new ApiError(
+        404,
+        err instanceof Error ? err.message : "Subject not found",
+      );
+    }
+  }
+  return api<SubjectKnowledge>(`/api/subjects/${id}/knowledge`);
 }
 
 export type ListDeckCardsOpts = { status?: "archived" };

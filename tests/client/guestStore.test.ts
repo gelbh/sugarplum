@@ -22,6 +22,7 @@ import {
   guestResetCardSchedule,
   guestRestoreCard,
   guestReviewCard,
+  guestSubjectKnowledge,
 } from "../../src/guest/store";
 
 const STORE_KEY = "sugarplum.guest.store.v1";
@@ -67,6 +68,79 @@ describe("guest store", () => {
     const decks = guestListDecks(undefined, storage);
     expect(decks.length).toBeGreaterThan(0);
     expect(decks.every((d) => d.subject_id === anatomy.id)).toBe(true);
+  });
+
+  it("guestSubjectKnowledge aggregates accepted buckets and ignores drafts", () => {
+    const subject = guestCreateSubject("Knowledge subject", storage);
+    const deck = guestCreateDeck("Knowledge deck", subject.id, storage);
+    const [cNew, cLearn, cYoung, cMature, cDraft] = guestAddAcceptedCards(
+      deck.id,
+      [
+        { front: "New?", back: "n" },
+        { front: "Learn?", back: "l" },
+        { front: "Young?", back: "y" },
+        { front: "Mature?", back: "m" },
+        { front: "Draft?", back: "d" },
+      ],
+      storage,
+    );
+    const raw = JSON.parse(storage.getItem(STORE_KEY)!) as {
+      cards: Array<{ id: string; status: string }>;
+      schedules: Record<string, unknown>;
+    };
+    const draftIdx = raw.cards.findIndex((c) => c.id === cDraft!.id);
+    raw.cards[draftIdx] = { ...raw.cards[draftIdx]!, status: "draft" };
+    // Leave cNew without a schedule → New.
+    raw.schedules[cLearn!.id] = {
+      state: 1,
+      reps: 1,
+      lapses: 0,
+      stability: 0.1,
+      difficulty: 5,
+      elapsed_days: 0,
+      scheduled_days: 0,
+      learning_steps: 0,
+      last_review: "2026-01-01T12:00:00.000Z",
+    };
+    raw.schedules[cYoung!.id] = {
+      state: 2,
+      reps: 3,
+      lapses: 0,
+      stability: 20,
+      difficulty: 5,
+      elapsed_days: 1,
+      scheduled_days: 5,
+      learning_steps: 0,
+      last_review: "2026-01-01T12:00:00.000Z",
+    };
+    raw.schedules[cMature!.id] = {
+      state: 2,
+      reps: 5,
+      lapses: 0,
+      stability: 21,
+      difficulty: 5,
+      elapsed_days: 1,
+      scheduled_days: 10,
+      learning_steps: 0,
+      last_review: "2026-01-01T12:00:00.000Z",
+    };
+    storage.setItem(STORE_KEY, JSON.stringify(raw));
+
+    expect(guestSubjectKnowledge(subject.id, storage)).toEqual({
+      new: 1,
+      learning: 1,
+      young: 1,
+      mature: 1,
+      total: 4,
+      graduated: 2,
+      graduatedPct: 50,
+    });
+  });
+
+  it("guestSubjectKnowledge throws for missing subject", () => {
+    expect(() => guestSubjectKnowledge("missing", storage)).toThrow(
+      "Subject not found",
+    );
   });
 
   it("migrates old store without subjects into Unfiled / subject_hint", () => {
