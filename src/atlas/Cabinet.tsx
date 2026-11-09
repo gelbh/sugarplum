@@ -54,6 +54,8 @@ type Props = {
   onAddEntry?: () => void;
   onRecentlyDeleted?: () => void;
   onEditEntry?: (entry: AtlasEntryView) => void;
+  /** Keys for the currently visible Key row (already filtered). */
+  onMakeCardsFromKey?: (entryKeys: string[]) => void;
 };
 
 const plural = (n: number) => `${n} ${n === 1 ? "parasite" : "parasites"}`;
@@ -68,6 +70,7 @@ export default function Cabinet({
   onAddEntry,
   onRecentlyDeleted,
   onEditEntry,
+  onMakeCardsFromKey,
 }: Props) {
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
@@ -218,6 +221,24 @@ export default function Cabinet({
               "& .MuiInputBase-root": { bgcolor: "background.paper" },
             }}
           />
+          {onMakeCardsFromKey && showKeyRow ? (
+            <Button
+              variant="contained"
+              onClick={() =>
+                onMakeCardsFromKey(
+                  keyEntries.map((e) => e.originKey ?? e.id),
+                )
+              }
+              aria-label="Make cards from Key"
+              sx={{
+                flex: "none",
+                height: 40,
+                px: { xs: 1.25, sm: 1.75 },
+              }}
+            >
+              Make cards from Key
+            </Button>
+          ) : null}
           {onAddEntry ? (
             <Button
               variant="outlined"

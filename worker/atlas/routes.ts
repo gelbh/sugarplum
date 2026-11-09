@@ -39,8 +39,16 @@ import {
   type ParasiteFields,
 } from "./templates/parasite";
 import { createR2PutUrl } from "../materials/r2-presign";
+import { sha256Hex } from "../materials/content-hash";
+import { MAX_PASTE_BYTES } from "../materials/limits";
+import { requireOwnedDeck } from "../materials/routes";
+import { enqueueGeneration } from "../generation/enqueue";
+import { normalizeTopicHints } from "../generation/topic-hints";
+import { buildAtlasMakeCardsSource } from "./makeCardsSource";
 import type { AtlasEntryView, AtlasTier } from "../../src/atlas/types";
 import type { Context } from "hono";
+
+const MAX_MAKE_CARDS_ENTRIES = 8;
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -347,6 +355,151 @@ atlasItemRoutes.get("/deleted", async (c) => {
   const overlays = await toOverlayRows(db, atlas.id, rows);
   const entries = deletedEntryViews(rows, overlays, datasetByKey());
   return c.json({ entries });
+});
+
+atlasItemRoutes.post("/make-cards", async (c) => {
+  const { atlas, db, userId } = await requireOwnedAtlas(
+    c,
+    requireParam(c, "atlasId"),
+  );
+  let body: { deckId?: unknown; entryKeys?: unknown };
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+
+  const deckId = typeof body.deckId === "string" ? body.deckId.trim() : "";
+  if (!deckId) throw new HTTPException(400, { message: "deckId required" });
+  await requireOwnedDeck(db, deckId, userId);
+
+  const rawKeys = Array.isArray(body.entryKeys) ? body.entryKeys : [];
+  const entryKeys = [
+    ...new Set(
+      rawKeys
+        .filter((k): k is string => typeof k === "string")
+        .map((k) => k.trim())
+        .filter(Boolean),
+    ),
+  ];
+  if (entryKeys.length === 0) {
+    throw new HTTPException(400, { message: "entryKeys required" });
+  }
+  if (entryKeys.length > MAX_MAKE_CARDS_ENTRIES) {
+    throw new HTTPException(400, {
+      message: `At most ${MAX_MAKE_CARDS_ENTRIES} entries per request`,
+    });
+  }
+
+  const rows = await loadEntryRows(db, atlas.id);
+  const overlays = await toOverlayRows(db, atlas.id, rows);
+  const merged = overlayAtlas(loadParasiteDataset().entries, overlays);
+  const entries = await listEntriesWithFocus(db, c.env, {
+    atlasId: atlas.id,
+    userId,
+    entries: merged,
+  });
+
+  // Resolve + validate every entry before any R2/D1/queue write (no partial queue).
+  const prepared: Array<{
+    entryKey: string;
+    text: string;
+    citations: string[];
+    topicHints: string[];
+  }> = [];
+  for (const key of entryKeys) {
+    const hit =
+      entries.find((e) => e.id === key) ??
+      entries.find((e) => e.originKey === key) ??
+      null;
+    if (!hit) {
+      throw new HTTPException(404, { message: `Entry not found: ${key}` });
+    }
+    const entryKey = hit.originKey ?? hit.id;
+    const source = buildAtlasMakeCardsSource({
+      entryKey,
+      canonicalName: hit.canonicalName,
+      commonName: hit.commonName,
+      aliases: hit.aliases,
+      fields: hit.fields,
+      refs: hit.refs,
+    });
+    const textBytes = new TextEncoder().encode(source.text).byteLength;
+    if (textBytes > MAX_PASTE_BYTES) {
+      throw new HTTPException(400, {
+        message: `Atlas source for ${hit.canonicalName} exceeds paste size`,
+      });
+    }
+    let topicHints: string[];
+    try {
+      topicHints = normalizeTopicHints(source.topicHints) ?? [];
+    } catch (err) {
+      throw new HTTPException(400, {
+        message: err instanceof Error ? err.message : "Invalid topicHints",
+      });
+    }
+    prepared.push({
+      entryKey,
+      text: source.text,
+      citations: source.citations,
+      topicHints,
+    });
+  }
+
+  const jobs: Array<{
+    entryKey: string;
+    materialId: string;
+    jobId: string;
+  }> = [];
+
+  for (const item of prepared) {
+    const materialId = newId();
+    const createdAt = nowIso();
+    const filename = `atlas-${item.entryKey}.txt`;
+    const r2Key = `materials/${deckId}/${materialId}.txt`;
+    const contentHash = await sha256Hex(item.text);
+
+    await c.env.MATERIALS.put(r2Key, item.text, {
+      httpMetadata: { contentType: "text/plain; charset=utf-8" },
+    });
+
+    await db
+      .prepare(
+        "INSERT INTO materials (id, deck_id, kind, r2_key, filename, page_count, status, created_at, content_hash, source_role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      )
+      .bind(
+        materialId,
+        deckId,
+        "paste",
+        r2Key,
+        filename,
+        null,
+        "ready",
+        createdAt,
+        contentHash,
+        "notes",
+      )
+      .run();
+
+    const jobId = await enqueueGeneration(c.env, {
+      materialId,
+      deckId,
+      topicHints: item.topicHints,
+      atlasEntryId: item.entryKey,
+      atlasCitations: item.citations,
+    });
+
+    jobs.push({ entryKey: item.entryKey, materialId, jobId });
+  }
+
+  return c.json(
+    {
+      deckId,
+      jobs,
+      jobId: jobs[0]?.jobId ?? null,
+    },
+    201,
+  );
 });
 
 atlasItemRoutes.post("/entries", async (c) => {

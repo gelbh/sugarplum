@@ -20,6 +20,7 @@ type Props = {
   onCite: (field: FieldKey) => void;
   onEdit?: () => void;
   onReset?: () => void;
+  onMakeCards?: () => void;
 };
 
 const IMAGE_ROLE_LABELS: Record<
@@ -59,15 +60,21 @@ export default function EntryFacts({
   onCite,
   onEdit,
   onReset,
+  onMakeCards,
 }: Props) {
   const rows = factRows(entry.fields).filter(([, v]) => v !== null && v !== "");
-  const showActions = Boolean(onEdit || onReset);
+  const showActions = Boolean(onEdit || onReset || onMakeCards);
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.75 }}>
       {showActions || entry.editedAt ? (
         <Stack direction="row" gap={1} flexWrap="wrap" alignItems="center">
           {entry.editedAt ? (
             <Chip label="Edited" size="small" variant="outlined" />
+          ) : null}
+          {onMakeCards ? (
+            <Button variant="contained" size="small" onClick={onMakeCards}>
+              Make cards
+            </Button>
           ) : null}
           {onEdit ? (
             <Button variant="outlined" size="small" onClick={onEdit}>

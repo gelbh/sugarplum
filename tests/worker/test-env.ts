@@ -114,6 +114,7 @@ type GenerationJobRow = {
   topic_hints_json?: string | null;
   avoid_patterns_json?: string | null;
   run_topic_hints_json?: string | null;
+  atlas_provenance_json?: string | null;
 };
 
 type UserSecretRow = {
@@ -710,6 +711,21 @@ export function createTestEnv(opts?: {
         }
         if (
           normalized.startsWith(
+            "SELECT progress_json, topic_hints_json, avoid_patterns_json, run_topic_hints_json, atlas_provenance_json FROM generation_jobs WHERE id =",
+          )
+        ) {
+          const job = generationJobs.get(bound[0] as string);
+          if (!job) return null;
+          return {
+            progress_json: job.progress_json,
+            topic_hints_json: job.topic_hints_json ?? null,
+            avoid_patterns_json: job.avoid_patterns_json ?? null,
+            run_topic_hints_json: job.run_topic_hints_json ?? null,
+            atlas_provenance_json: job.atlas_provenance_json ?? null,
+          } as T;
+        }
+        if (
+          normalized.startsWith(
             "SELECT progress_json, topic_hints_json, avoid_patterns_json, run_topic_hints_json FROM generation_jobs WHERE id =",
           )
         ) {
@@ -720,6 +736,19 @@ export function createTestEnv(opts?: {
             topic_hints_json: job.topic_hints_json ?? null,
             avoid_patterns_json: job.avoid_patterns_json ?? null,
             run_topic_hints_json: job.run_topic_hints_json ?? null,
+          } as T;
+        }
+        if (
+          normalized.startsWith(
+            "SELECT material_id, topic_hints_json, atlas_provenance_json FROM generation_jobs WHERE id =",
+          )
+        ) {
+          const job = generationJobs.get(bound[0] as string);
+          if (!job) return null;
+          return {
+            material_id: job.material_id,
+            topic_hints_json: job.topic_hints_json ?? null,
+            atlas_provenance_json: job.atlas_provenance_json ?? null,
           } as T;
         }
         if (
@@ -3247,6 +3276,7 @@ export function createTestEnv(opts?: {
             finished_at,
             figure_extract_mode,
             topic_hints_json,
+            atlas_provenance_json,
           ] = bound as [
             string,
             string,
@@ -3256,6 +3286,7 @@ export function createTestEnv(opts?: {
             string,
             string | null,
             string | undefined,
+            string | null | undefined,
             string | null | undefined,
           ];
           generationJobs.set(id, {
@@ -3270,6 +3301,7 @@ export function createTestEnv(opts?: {
             figure_extract_mode: figure_extract_mode ?? "fast",
             topic_hints_json: topic_hints_json ?? null,
             avoid_patterns_json: null,
+            atlas_provenance_json: atlas_provenance_json ?? null,
           });
         } else if (
           normalized.startsWith(
