@@ -197,8 +197,8 @@ export default function StudyPage() {
   const [pendingLearning, setPendingLearning] = useState<
     PendingLearning<CardDraftView>[]
   >([]);
-  const pendingLearningRef = useRef(pendingLearning);
-  pendingLearningRef.current = pendingLearning;
+  const pendingLearningRef = useRef<PendingLearning<CardDraftView>[]>([]);
+  const queueRef = useRef<CardDraftView[]>([]);
   const cardDialogOpenRef = useRef(false);
   const onCardDialogOpen = useCallback((open: boolean) => {
     cardDialogOpenRef.current = open;
@@ -239,6 +239,7 @@ export default function StudyPage() {
   const applyDueQueue = useCallback(
     (cards: CardDraftView[], wanted: string | null) => {
       const { queue: next, found } = prioritizeDueCard(cards, wanted);
+      queueRef.current = next;
       setQueue(next);
       setQueueTotal(next.length);
       if (next.length > 0) setHadCards(true);
@@ -460,61 +461,70 @@ export default function StudyPage() {
     answerFocusRef.current?.focus();
   }, [revealed, current?.id]);
 
-  const parkShortTermFollowUp = useCallback(
-    (card: CardDraftView, dueIso: string, state: number | undefined) => {
-      const gradedAt = new Date();
-      if (isShortTermFollowUp({ dueIso, gradedAt, state })) {
-        pendingLearningRef.current = upsertPendingLearning(
-          pendingLearningRef.current,
-          { cardId: card.id, dueAt: dueIso, card },
-        );
-      } else {
-        pendingLearningRef.current = pendingLearningRef.current.filter(
-          (p) => p.cardId !== card.id,
-        );
-      }
-      setPendingLearning(pendingLearningRef.current);
+  const commitPendingLearning = useCallback(
+    (next: PendingLearning<CardDraftView>[]) => {
+      pendingLearningRef.current = next;
+      setPendingLearning(next);
     },
     [],
   );
 
-  const flushDueLearning = useCallback(() => {
-    setQueue((prev) => {
-      const merged = mergeDueLearning(
-        prev,
-        pendingLearningRef.current,
-        new Date(),
-      );
-      const added = merged.queue.length - prev.length;
+  const applyMergedQueue = useCallback(
+    (
+      merged: {
+        queue: CardDraftView[];
+        pending: PendingLearning<CardDraftView>[];
+      },
+      prevLen: number,
+    ) => {
+      const added = merged.queue.length - prevLen;
+      queueRef.current = merged.queue;
+      setQueue(merged.queue);
+      commitPendingLearning(merged.pending);
       if (added > 0) {
         setQueueTotal((total) => total + added);
         setHadCards(true);
       }
-      pendingLearningRef.current = merged.pending;
-      setPendingLearning(merged.pending);
-      return merged.queue;
-    });
-  }, []);
+    },
+    [commitPendingLearning],
+  );
+
+  const parkShortTermFollowUp = useCallback(
+    (card: CardDraftView, dueIso: string, state: number | undefined) => {
+      const gradedAt = new Date();
+      if (isShortTermFollowUp({ dueIso, gradedAt, state })) {
+        commitPendingLearning(
+          upsertPendingLearning(pendingLearningRef.current, {
+            cardId: card.id,
+            dueAt: dueIso,
+            card,
+          }),
+        );
+      } else {
+        commitPendingLearning(
+          pendingLearningRef.current.filter((p) => p.cardId !== card.id),
+        );
+      }
+    },
+    [commitPendingLearning],
+  );
+
+  const flushDueLearning = useCallback(() => {
+    const prev = queueRef.current;
+    applyMergedQueue(
+      mergeDueLearning(prev, pendingLearningRef.current, new Date()),
+      prev.length,
+    );
+  }, [applyMergedQueue]);
 
   const advanceAfterGrade = useCallback(() => {
-    setQueue((prev) => {
-      const sliced = prev.slice(1);
-      const merged = mergeDueLearning(
-        sliced,
-        pendingLearningRef.current,
-        new Date(),
-      );
-      const added = merged.queue.length - sliced.length;
-      if (added > 0) {
-        setQueueTotal((total) => total + added);
-        setHadCards(true);
-      }
-      pendingLearningRef.current = merged.pending;
-      setPendingLearning(merged.pending);
-      return merged.queue;
-    });
+    const sliced = queueRef.current.slice(1);
+    applyMergedQueue(
+      mergeDueLearning(sliced, pendingLearningRef.current, new Date()),
+      sliced.length,
+    );
     setRevealed(false);
-  }, []);
+  }, [applyMergedQueue]);
 
   const onGrade = useCallback(
     async (rating: StudyRating, fromMcq = false): Promise<boolean> => {
@@ -743,11 +753,17 @@ export default function StudyPage() {
   };
 
   const replaceQueuedCard = useCallback((updated: CardDraftView) => {
-    setQueue((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+    const next = queueRef.current.map((c) =>
+      c.id === updated.id ? updated : c,
+    );
+    queueRef.current = next;
+    setQueue(next);
   }, []);
 
   const removeQueuedCard = useCallback((cardId: string) => {
-    setQueue((prev) => prev.filter((c) => c.id !== cardId));
+    const next = queueRef.current.filter((c) => c.id !== cardId);
+    queueRef.current = next;
+    setQueue(next);
     setRevealed(false);
   }, []);
 
