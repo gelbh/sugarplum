@@ -10,7 +10,6 @@ import { atlasHref } from "../atlas/paths";
 import { isGuest } from "../guest/session";
 import { navigateReplace } from "../nav/navigate";
 
-/** `/atlas` hub: guests sign in; signed-in users ensure + open Parasitology Atlas. */
 export default function AtlasHub() {
   const [error, setError] = useState<string | null>(null);
   const guest = isGuest();

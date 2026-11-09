@@ -23,19 +23,16 @@ function entryPath(atlasId: string, entryId: string, suffix = ""): string {
   );
 }
 
-/** List atlases for the signed-in user. */
 export function listAtlases() {
   return api<{ atlases: AtlasMeta[] }>(atlasCollectionPath()).then(
     (body) => body.atlases,
   );
 }
 
-/** Ensure the Parasitology Atlas exists (create or return existing). */
 export function ensureAtlas() {
   return api<AtlasMeta>(atlasCollectionPath(), { method: "POST" });
 }
 
-/** GET atlas meta; `null` when not found (404). */
 export async function getAtlas(atlasId: string): Promise<AtlasMeta | null> {
   try {
     return await api<AtlasMeta>(atlasPath(atlasId));

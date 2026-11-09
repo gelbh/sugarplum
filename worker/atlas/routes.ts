@@ -268,7 +268,6 @@ async function requireOwnedAtlas(
   return { userId, atlas, db };
 }
 
-/** User-owned Atlas overlay API. Guests get 401 via requireUser. */
 export const atlasRoutes = new Hono<AppEnv>();
 
 atlasRoutes.get("/", async (c) => {

@@ -1184,7 +1184,8 @@ export function createTestEnv(opts?: {
           normalized.includes("INNER JOIN decks d ON d.id = m.deck_id") &&
           (normalized.includes("WHERE d.subject_id =") ||
             normalized.includes("WHERE d.user_id =")) &&
-          normalized.includes("m.source_role")
+          normalized.includes("m.source_role") &&
+          !normalized.includes("deck_title")
         ) {
           const ownerId = bound[0] as string;
           const byUser = normalized.includes("WHERE d.user_id =");
