@@ -15,26 +15,31 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import Divider from "@mui/material/Divider";
 import FormControl from "@mui/material/FormControl";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
 import InputLabel from "@mui/material/InputLabel";
+import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
-import Switch from "@mui/material/Switch";
-import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
-import OperateSection from "../components/OperateSection";
-import Tab from "@mui/material/Tab";
-import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import AddMaterialWorkshop from "../deckHub/AddMaterialWorkshop";
+import CardsWorkshop from "../deckHub/CardsWorkshop";
+import DraftsWorkshop from "../deckHub/DraftsWorkshop";
+import MissionBoard, { type MissionTileId } from "../deckHub/MissionBoard";
+import StudyReadySheet, {
+  type StudyReadySummary,
+} from "../deckHub/StudyReadySheet";
+import WorkshopShell from "../deckHub/WorkshopShell";
+import {
+  popWorkshop,
+  pushWorkshop,
+  replaceWorkshop,
+  type WorkshopFrame,
+} from "../deckHub/workshopStack";
+import "../deckHub/deckHubMotion.css";
 import {
   ApiError,
   apkgFilenameForDeckTitle,
@@ -46,6 +51,7 @@ import {
   listDeckCards,
   listDeckMaterials,
   listDecks,
+  listDueCards,
   listJobsWithDrafts,
   listSubjects,
   me,
@@ -74,8 +80,6 @@ import { cardPatchBody } from "../cards/cardPatchBody";
 import DraftCardEditor, {
   type DraftEditorChange,
 } from "../components/DraftCardEditor";
-import { FigureSuggestPanel } from "../components/FigureSuggestPanel";
-import MaterialsList from "../components/MaterialsList";
 import { isGuest } from "../guest/session";
 import { guestPasteToCards } from "../guest/pasteToCards";
 import { guestAddAcceptedCards } from "../guest/store";
@@ -125,29 +129,6 @@ const ALLOWED_UPLOAD_MIMES = new Set([
   ...IMAGE_MIMES,
 ]);
 
-function cardFrontPreview(card: CardDraftView): string {
-  if (typeof card.front === "string") return card.front;
-  if (
-    typeof card.front === "object" &&
-    card.front !== null &&
-    "prompt" in card.front &&
-    typeof card.front.prompt === "string" &&
-    card.front.prompt.trim()
-  ) {
-    return card.front.prompt;
-  }
-  return card.type === "occlusion" ? "Occlusion card" : "Card";
-}
-
-function cardTypeLabel(type: CardDraftView["type"]): string {
-  if (type === "cloze") return "Cloze";
-  if (type === "mcq") return "MCQ";
-  if (type === "occlusion") return "Occlusion";
-  if (type === "image_label") return "Image label";
-  if (type === "diagram") return "Diagram";
-  return "Q&A";
-}
-
 export default function DeckHubPage({ deckId }: Props) {
   const guest = isGuest();
   const [deck, setDeck] = useState<Deck | null>(null);
@@ -180,6 +161,10 @@ export default function DeckHubPage({ deckId }: Props) {
   const editDialogBusy = editBusy || resetBusy || cardRegenBusy;
 
   const [moveTarget, setMoveTarget] = useState<CardDraftView | null>(null);
+  const [moveAsBatch, setMoveAsBatch] = useState(false);
+  const [studySummaryError, setStudySummaryError] = useState<string | null>(
+    null,
+  );
   const [moveSubjects, setMoveSubjects] = useState<Subject[]>([]);
   const [moveDecks, setMoveDecks] = useState<Deck[]>([]);
   const [moveSubjectId, setMoveSubjectId] = useState("");
@@ -204,7 +189,9 @@ export default function DeckHubPage({ deckId }: Props) {
     !guest &&
     (createCard.type === "occlusion" || createCard.type === "image_label");
 
-  const [materialTab, setMaterialTab] = useState<"paste" | "file">("paste");
+  const [materialTab, setMaterialTab] = useState<
+    "upload" | "paste" | "topic" | "diy"
+  >("upload");
   const [pasteText, setPasteText] = useState("");
   const [pasteFilename, setPasteFilename] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -214,16 +201,24 @@ export default function DeckHubPage({ deckId }: Props) {
   const [materialError, setMaterialError] = useState<string | null>(null);
   const [materialNotice, setMaterialNotice] = useState<string | null>(null);
 
-  const [topicOpen, setTopicOpen] = useState(false);
   const [topicValue, setTopicValue] = useState("");
   const [topicBusy, setTopicBusy] = useState(false);
   const [topicError, setTopicError] = useState<string | null>(null);
 
   const [showArchived, setShowArchived] = useState(false);
   const [archiveBusyId, setArchiveBusyId] = useState<string | null>(null);
-  /** Paste / upload / DIY stay collapsed once the deck has content. */
-  const [workshopOpen, setWorkshopOpen] = useState(false);
-  const workshopSeededRef = useRef(false);
+  const [workshopStack, setWorkshopStack] = useState<WorkshopFrame[]>([]);
+  const [overflowAnchor, setOverflowAnchor] = useState<null | HTMLElement>(
+    null,
+  );
+  const [studySummary, setStudySummary] = useState<StudyReadySummary | null>(
+    null,
+  );
+  const [studySummaryLoading, setStudySummaryLoading] = useState(false);
+  const [selectedCardIds, setSelectedCardIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [batchBusy, setBatchBusy] = useState(false);
 
   const { end: endLoad } = useTrackedOp("Loading deck…", {
     trackOnMount: true,
@@ -333,13 +328,6 @@ export default function DeckHubPage({ deckId }: Props) {
             if (!cancelled) setAcceptedCount(0);
           }
         }
-        if (!workshopSeededRef.current) {
-          workshopSeededRef.current = true;
-          // First seed runs with showArchived false (default); use accepted emptiness.
-          setWorkshopOpen(
-            !showArchived && next.length === 0 && draftJobs.length === 0,
-          );
-        }
       } catch {
         if (!cancelled) setCards([]);
       }
@@ -347,7 +335,55 @@ export default function DeckHubPage({ deckId }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [deck, deckId, draftJobs.length, ready, showArchived]);
+  }, [deck, deckId, ready, showArchived]);
+
+  const topWorkshop = workshopStack[workshopStack.length - 1] ?? null;
+
+  function openWorkshop(id: MissionTileId) {
+    const frame: WorkshopFrame =
+      id === "addMaterial"
+        ? { id: "addMaterial", tab: materialTab }
+        : { id };
+    setWorkshopStack([frame]);
+    if (id === "addMaterial") {
+      setMaterialError(null);
+      setMaterialNotice(null);
+      setTopicError(null);
+    }
+    if (id === "study" && deck) {
+      setStudySummaryLoading(true);
+      setStudySummary(null);
+      setStudySummaryError(null);
+      void listDueCards({ deckId: deck.id })
+        .then((result) => {
+          setStudySummary({
+            due: result.cards.length,
+            accepted: acceptedCount,
+            introRemaining: result.meta.introRemaining,
+          });
+        })
+        .catch((err) => {
+          setStudySummary(null);
+          setStudySummaryError(
+            err instanceof ApiError
+              ? err.message
+              : "Could not load study counts",
+          );
+        })
+        .finally(() => setStudySummaryLoading(false));
+    }
+    if (id === "cards") {
+      setSelectedCardIds(new Set());
+    }
+  }
+
+  function onWorkshopBack() {
+    setWorkshopStack((prev) => popWorkshop(prev));
+  }
+
+  function jumpWorkshop(frame: WorkshopFrame) {
+    setWorkshopStack((prev) => replaceWorkshop(prev, frame));
+  }
 
   async function onArchiveCard(card: CardDraftView) {
     setArchiveBusyId(card.id);
@@ -503,8 +539,9 @@ export default function DeckHubPage({ deckId }: Props) {
     (d) => d.subject_id === moveSubjectId && d.id !== deckId,
   );
 
-  async function openMove(card: CardDraftView) {
+  async function openMove(card: CardDraftView, opts?: { batch?: boolean }) {
     setMoveError(null);
+    setMoveAsBatch(Boolean(opts?.batch));
     setMoveTarget(card);
     setMoveBusy(true);
     try {
@@ -546,15 +583,31 @@ export default function DeckHubPage({ deckId }: Props) {
     setMoveBusy(true);
     setMoveError(null);
     try {
-      await moveCard(moveTarget.id, moveDeckId);
-      setCards((prev) => prev.filter((c) => c.id !== moveTarget.id));
-      if (editCard?.id === moveTarget.id) {
+      const batchIds =
+        moveAsBatch && selectedCardIds.size > 0
+          ? [...selectedCardIds]
+          : [moveTarget.id];
+      for (const id of batchIds) {
+        await moveCard(id, moveDeckId);
+      }
+      const moved = new Set(batchIds);
+      setCards((prev) => prev.filter((c) => !moved.has(c.id)));
+      if (!showArchived) {
+        setAcceptedCount((n) => Math.max(0, n - batchIds.length));
+      }
+      if (editCard && moved.has(editCard.id)) {
         setEditCard(null);
       }
+      setSelectedCardIds(new Set());
       const destTitle =
         moveDecks.find((d) => d.id === moveDeckId)?.title ?? "deck";
       setMoveTarget(null);
-      setNotice(`Moved card to “${destTitle}”`);
+      setMoveAsBatch(false);
+      setNotice(
+        batchIds.length === 1
+          ? `Moved card to "${destTitle}"`
+          : `Moved ${batchIds.length} cards to "${destTitle}"`,
+      );
     } catch (err) {
       setMoveError(
         err instanceof ApiError ? err.message : "Could not move card",
@@ -676,8 +729,13 @@ export default function DeckHubPage({ deckId }: Props) {
       if (!showArchived) {
         setCards((prev) => [...prev, created]);
       }
+      setAcceptedCount((n) => n + 1);
       setCreateCard(blankHubCreateCard(deckId));
       setNotice("Card added");
+      setWorkshopStack((prev) => {
+        const top = prev[prev.length - 1];
+        return top?.id === "createCard" ? popWorkshop(prev) : prev;
+      });
     } catch (err) {
       setCreateError(
         err instanceof ApiError ? err.message : "Could not create card",
@@ -685,6 +743,37 @@ export default function DeckHubPage({ deckId }: Props) {
     } finally {
       setCreateBusy(false);
     }
+  }
+
+  async function onBatchArchive() {
+    if (selectedCardIds.size === 0 || showArchived) return;
+    setBatchBusy(true);
+    setError(null);
+    try {
+      const ids = [...selectedCardIds];
+      for (const id of ids) {
+        await archiveCard(id);
+      }
+      setCards((prev) => prev.filter((c) => !selectedCardIds.has(c.id)));
+      setAcceptedCount((n) => Math.max(0, n - ids.length));
+      setSelectedCardIds(new Set());
+      setNotice(
+        ids.length === 1 ? "Card archived" : `${ids.length} cards archived`,
+      );
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Could not archive cards",
+      );
+    } finally {
+      setBatchBusy(false);
+    }
+  }
+
+  async function onBatchMoveOpen() {
+    if (selectedCardIds.size === 0) return;
+    const first = cards.find((c) => selectedCardIds.has(c.id));
+    if (!first) return;
+    await openMove(first, { batch: true });
   }
 
   async function onGuestPaste(e?: FormEvent) {
@@ -760,7 +849,6 @@ export default function DeckHubPage({ deckId }: Props) {
     setTopicError(null);
     try {
       const { jobId } = await topicGenerate(deckId, { topic });
-      setTopicOpen(false);
       setTopicValue("");
       window.location.assign(`/jobs/${encodeURIComponent(jobId)}/drafts`);
     } catch (err) {
@@ -879,8 +967,23 @@ export default function DeckHubPage({ deckId }: Props) {
     }
   }
 
+  const workshopTitle =
+    topWorkshop?.id === "addMaterial"
+      ? "Add material"
+      : topWorkshop?.id === "drafts"
+        ? "Review drafts"
+        : topWorkshop?.id === "cards"
+          ? "Browse cards"
+          : topWorkshop?.id === "createCard"
+            ? "Create card"
+            : topWorkshop?.id === "study"
+              ? "Study ready"
+              : "";
+
+  const workshopOpen = workshopStack.length > 0;
+
   return (
-    <Container maxWidth="sm" sx={{ py: { xs: 4, md: 5 } }}>
+    <Container maxWidth="md" sx={{ py: { xs: 4, md: 5 } }}>
       {!ready ? (
         <Typography color="text.secondary">Loading deck…</Typography>
       ) : (
@@ -900,114 +1003,63 @@ export default function DeckHubPage({ deckId }: Props) {
                 {deck?.title ?? "Deck"}
               </Typography>
               {deck ? (
-                <Stack direction="row" spacing={0.5}>
+                <>
                   <IconButton
                     size="small"
-                    aria-label="Rename deck"
-                    onClick={() => {
-                      setRenameError(null);
-                      setRenameValue(deck.title);
-                      setRenameOpen(true);
-                    }}
+                    aria-label="Deck actions"
+                    onClick={(ev) => setOverflowAnchor(ev.currentTarget)}
                     sx={{ color: "text.secondary" }}
                   >
-                    <EditOutlinedIcon fontSize="small" />
+                    <MoreVertIcon fontSize="small" />
                   </IconButton>
-                  <IconButton
-                    size="small"
-                    aria-label="Delete deck"
-                    onClick={openDelete}
-                    sx={{ color: "text.secondary" }}
+                  <Menu
+                    anchorEl={overflowAnchor}
+                    open={overflowAnchor !== null}
+                    onClose={() => setOverflowAnchor(null)}
                   >
-                    <DeleteOutlineIcon fontSize="small" />
-                  </IconButton>
-                </Stack>
+                    {!guest ? (
+                      <MenuItem
+                        disabled={exportBusy || acceptedCount === 0}
+                        onClick={() => {
+                          setOverflowAnchor(null);
+                          void onExportAnki();
+                        }}
+                      >
+                        {exportBusy ? "Exporting…" : "Export Anki"}
+                      </MenuItem>
+                    ) : null}
+                    <MenuItem
+                      onClick={() => {
+                        setOverflowAnchor(null);
+                        setRenameError(null);
+                        setRenameValue(deck.title);
+                        setRenameOpen(true);
+                      }}
+                    >
+                      Rename
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        setOverflowAnchor(null);
+                        openDelete();
+                      }}
+                    >
+                      Delete
+                    </MenuItem>
+                  </Menu>
+                </>
               ) : null}
             </Stack>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {cards.length === 0
-                ? "No cards yet"
-                : cards.length === 1
-                  ? "1 card"
-                  : `${cards.length} cards`}
+              {acceptedCount === 0
+                ? "No accepted cards yet"
+                : acceptedCount === 1
+                  ? "1 accepted card"
+                  : `${acceptedCount} accepted cards`}
               {draftJobs.length > 0
                 ? ` · ${draftJobs.length} draft job${draftJobs.length === 1 ? "" : "s"}`
                 : ""}
-              {!guest && materials.length > 0
-                ? ` · ${materials.length} material${materials.length === 1 ? "" : "s"}`
-                : ""}
             </Typography>
-            <Stack
-              direction="row"
-              spacing={1}
-              useFlexGap
-              flexWrap="wrap"
-              alignItems="center"
-              sx={{ mt: 1.5 }}
-            >
-              {deck && acceptedCount > 0 ? (
-                <Button
-                  size="small"
-                  variant="contained"
-                  onClick={() =>
-                    navigate(`/study?deckId=${encodeURIComponent(deck.id)}`)
-                  }
-                >
-                  Study
-                </Button>
-              ) : null}
-              {!guest && draftJobs[0] ? (
-                <Button
-                  size="small"
-                  variant="contained"
-                  onClick={() =>
-                    navigate(
-                      `/jobs/${encodeURIComponent(draftJobs[0].id)}/drafts`,
-                    )
-                  }
-                >
-                  Review drafts
-                </Button>
-              ) : null}
-              {!workshopOpen ? (
-                <Button
-                  size="small"
-                  variant={cards.length === 0 ? "contained" : "outlined"}
-                  onClick={() => setWorkshopOpen(true)}
-                >
-                  Add material
-                </Button>
-              ) : (
-                <Button size="small" onClick={() => setWorkshopOpen(false)}>
-                  Hide tools
-                </Button>
-              )}
-              {!guest && deck ? (
-                <Button
-                  size="small"
-                  variant="text"
-                  onClick={() => {
-                    setTopicError(null);
-                    setTopicValue("");
-                    setTopicOpen(true);
-                  }}
-                >
-                  Topic…
-                </Button>
-              ) : null}
-              {!guest && deck ? (
-                <Button
-                  size="small"
-                  variant="text"
-                  disabled={exportBusy || acceptedCount === 0}
-                  onClick={() => {
-                    void onExportAnki();
-                  }}
-                >
-                  {exportBusy ? "Exporting…" : "Export"}
-                </Button>
-              ) : null}
-            </Stack>
           </Box>
 
           {error ? <Alert severity="error">{error}</Alert> : null}
@@ -1022,420 +1074,167 @@ export default function DeckHubPage({ deckId }: Props) {
             </Alert>
           ) : null}
 
-          {deck && workshopOpen ? (
-            <OperateSection>
-              <Typography
-                variant="subtitle1"
-                component="h2"
-                sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
-              >
-                Add material
-              </Typography>
-              {materialError ? (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                  {materialError}
-                </Alert>
-              ) : null}
-              {materialNotice ? (
-                <Alert severity="success" sx={{ mb: 2 }}>
-                  {materialNotice}
-                </Alert>
-              ) : null}
-              {guest ? (
-                <Stack spacing={2}>
-                  <Alert severity="info">
-                    Cards stay in this browser only. Sign in for uploads and AI
-                    generation.
-                  </Alert>
-                  <Box component="form" onSubmit={onGuestPaste} noValidate>
-                    <Stack spacing={2}>
-                      <TextField
-                        label="Paste text"
-                        value={pasteText}
-                        onChange={(ev) => setPasteText(ev.target.value)}
-                        required
-                        fullWidth
-                        multiline
-                        minRows={5}
-                      />
-                      <Button
-                        type="submit"
-                        variant="contained"
-                        disabled={materialBusy || !pasteText.trim()}
-                      >
-                        {materialBusy ? "Saving…" : "Save paste"}
-                      </Button>
-                    </Stack>
-                  </Box>
-                </Stack>
-              ) : (
-                <Box>
-                  <Tabs
-                    value={materialTab}
-                    onChange={(_ev, v: "paste" | "file") => setMaterialTab(v)}
-                    aria-label="material-type-tabs"
-                    sx={{ mb: 2 }}
-                  >
-                    <Tab value="paste" label="Paste" />
-                    <Tab value="file" label="Upload" />
-                  </Tabs>
-                  {materialTab === "paste" ? (
-                    <Box component="form" onSubmit={onAccountPaste} noValidate>
-                      <Stack spacing={2}>
-                        <TextField
-                          label="Filename (optional)"
-                          value={pasteFilename}
-                          onChange={(ev) => setPasteFilename(ev.target.value)}
-                          fullWidth
-                        />
-                        <TextField
-                          label="Paste text"
-                          value={pasteText}
-                          onChange={(ev) => setPasteText(ev.target.value)}
-                          required
-                          fullWidth
-                          multiline
-                          minRows={5}
-                        />
-                        <Button
-                          type="submit"
-                          variant="contained"
-                          disabled={materialBusy || !pasteText.trim()}
-                        >
-                          {materialBusy ? "Saving…" : "Save paste"}
-                        </Button>
-                      </Stack>
-                    </Box>
-                  ) : (
-                    <Box component="form" onSubmit={onUploadFile} noValidate>
-                      <Stack spacing={2}>
-                        <Button
-                          variant="outlined"
-                          component="label"
-                          disabled={materialBusy}
-                        >
-                          {uploadFile
-                            ? uploadFile.name
-                            : "Choose PDF, PPTX, or image"}
-                          <input
-                            type="file"
-                            accept="application/pdf,.pdf,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
-                            hidden
-                            onChange={(ev) => {
-                              const file = ev.target.files?.[0] ?? null;
-                              setUploadFile(file);
-                              if (
-                                !file ||
-                                resolveUploadContentType(file) !==
-                                  "application/pdf"
-                              ) {
-                                setFigureFiles([]);
-                              }
-                            }}
-                          />
-                        </Button>
-                        {uploadFile &&
-                        resolveUploadContentType(uploadFile) ===
-                          "application/pdf" ? (
-                          <Stack spacing={1.5}>
-                            <FigureSuggestPanel
-                              pdfFile={uploadFile}
-                              disabled={materialBusy}
-                              crops={figureFiles}
-                              onCropsChange={setFigureFiles}
-                            />
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              Optional: Suggest or drag-crop figures on-device.
-                              Accept appends up to {MAX_CLIENT_FIGURES} PNG
-                              crops.
-                            </Typography>
-                          </Stack>
-                        ) : null}
-                        <Button
-                          type="submit"
-                          variant="contained"
-                          disabled={materialBusy || !uploadFile}
-                        >
-                          {materialBusy
-                            ? readingScan
-                              ? "Reading scanned pages"
-                              : "Uploading…"
-                            : "Upload"}
-                        </Button>
-                      </Stack>
-                    </Box>
-                  )}
-                </Box>
-              )}
-            </OperateSection>
-          ) : null}
-
-          {!guest && materials.length > 0 ? (
-            <OperateSection>
-              <Typography
-                variant="subtitle1"
-                component="h2"
-                sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
-              >
-                Materials
-              </Typography>
-              <MaterialsList
-                materials={materials}
-                showDeckTitle={false}
-                onChanged={() => {
-                  void Promise.all([
-                    refreshMaterials(),
-                    refreshDraftJobs(),
-                    refreshCards(),
-                  ]);
-                }}
-              />
-            </OperateSection>
-          ) : null}
-
-          {!guest && draftJobs.length > 0 ? (
-            <OperateSection>
-              <Typography
-                variant="subtitle1"
-                component="h2"
-                sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
-              >
-                Drafts for this deck
-              </Typography>
-              <Stack
-                component="ul"
-                spacing={0}
-                divider={<Divider flexItem />}
-                sx={{ m: 0, p: 0, listStyle: "none" }}
-              >
-                {draftJobs.map((job) => (
-                  <Box component="li" key={job.id} sx={{ py: 1 }}>
-                    <Link
-                      href={`/jobs/${encodeURIComponent(job.id)}/drafts`}
-                      underline="hover"
-                      color="primary"
-                      variant="body2"
-                      onClick={(ev) => {
-                        ev.preventDefault();
-                        navigate(`/jobs/${encodeURIComponent(job.id)}/drafts`);
-                      }}
-                    >
-                      {job.filename?.trim() || "Untitled material"}
-                      {" · "}
-                      {job.draft_count} draft
-                      {job.draft_count === 1 ? "" : "s"}
-                    </Link>
-                  </Box>
-                ))}
-              </Stack>
-            </OperateSection>
-          ) : null}
-
           {deck ? (
-            <OperateSection>
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                sx={{ mb: 1.5 }}
-              >
-                <Typography
-                  variant="subtitle1"
-                  component="h2"
-                  sx={{ fontWeight: 600, color: "primary.main" }}
-                >
-                  Cards
-                </Typography>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      size="small"
-                      checked={showArchived}
-                      onChange={(_ev, checked) => setShowArchived(checked)}
-                      disabled={archiveBusyId !== null}
-                    />
-                  }
-                  label="Show archived"
-                  sx={{ mr: 0 }}
-                />
-              </Stack>
-              {cards.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
-                  {showArchived
-                    ? "No archived cards."
-                    : workshopOpen
-                      ? "Paste or add a card below."
-                      : "No accepted cards yet. Use Add material to begin."}
-                </Typography>
-              ) : (
-                <Stack
-                  component="ul"
-                  spacing={0}
-                  divider={<Divider flexItem />}
-                  sx={{ m: 0, p: 0, listStyle: "none" }}
-                >
-                  {cards.map((card) => (
-                    <Box
-                      component="li"
-                      key={card.id}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        py: 1,
-                      }}
-                    >
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="body2" noWrap>
-                          {cardFrontPreview(card)}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {cardTypeLabel(card.type)}
-                        </Typography>
-                      </Box>
-                      <IconButton
-                        size="small"
-                        aria-label="Move card"
-                        disabled={archiveBusyId !== null}
-                        onClick={() => {
-                          void openMove(card);
-                        }}
-                      >
-                        <DriveFileMoveOutlinedIcon fontSize="small" />
-                      </IconButton>
-                      {!showArchived && card.status !== "archived" ? (
-                        <IconButton
-                          size="small"
-                          aria-label="Edit card"
-                          disabled={archiveBusyId !== null}
-                          onClick={() => openEdit(card)}
-                        >
-                          <EditOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      ) : null}
-                      {showArchived ? (
-                        <IconButton
-                          size="small"
-                          aria-label="Restore card"
-                          disabled={archiveBusyId !== null}
-                          onClick={() => {
-                            void onRestoreCard(card);
-                          }}
-                        >
-                          <UnarchiveOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      ) : (
-                        <IconButton
-                          size="small"
-                          aria-label="Archive card"
-                          disabled={archiveBusyId !== null}
-                          onClick={() => {
-                            void onArchiveCard(card);
-                          }}
-                        >
-                          <ArchiveOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      )}
-                    </Box>
-                  ))}
-                </Stack>
-              )}
-            </OperateSection>
-          ) : null}
-
-          {deck && workshopOpen ? (
-            <OperateSection>
-              <Typography
-                variant="subtitle1"
-                component="h2"
-                sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
-              >
-                Add card
-              </Typography>
-              {createError ? (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                  {createError}
-                </Alert>
-              ) : null}
-              <Box component="form" onSubmit={onCreateCard} noValidate>
-                <Stack spacing={2}>
-                  {createNeedsImage ? (
-                    <Stack spacing={1}>
-                      <Typography variant="body2" color="text.secondary">
-                        Image (deck material)
-                      </Typography>
-                      <Stack
-                        direction={{ xs: "column", sm: "row" }}
-                        spacing={1}
-                      >
-                        {deckImageKeys.length > 0 ? (
-                          <FormControl fullWidth size="small">
-                            <InputLabel id="hub-create-image-key">
-                              Existing image
-                            </InputLabel>
-                            <Select
-                              labelId="hub-create-image-key"
-                              label="Existing image"
-                              value={createImageKey || ""}
-                              disabled={createBusy || createImageBusy}
-                              onChange={(ev) =>
-                                applyCreateImageKey(String(ev.target.value))
-                              }
-                            >
-                              <MenuItem value="">
-                                <em>Select…</em>
-                              </MenuItem>
-                              {deckImageKeys.map((key) => (
-                                <MenuItem key={key} value={key}>
-                                  {key.split("/").pop() ?? key}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                        ) : null}
-                        <Button
-                          variant="outlined"
-                          component="label"
-                          disabled={createBusy || createImageBusy}
-                          sx={{ flexShrink: 0, whiteSpace: "nowrap" }}
-                        >
-                          {createImageBusy ? "Uploading…" : "Upload image"}
-                          <input
-                            ref={createImageInputRef}
-                            type="file"
-                            hidden
-                            accept="image/jpeg,image/png,image/webp"
-                            onChange={(ev) => {
-                              const file = ev.target.files?.[0];
-                              if (file) void onCreateImageUpload(file);
-                            }}
-                          />
-                        </Button>
-                      </Stack>
-                    </Stack>
-                  ) : null}
-                  <DraftCardEditor
-                    card={createCard}
-                    disabled={createBusy || createImageBusy}
-                    onChange={onCreateChange}
-                    allowedTypes={hubDiyAllowedTypes}
-                  />
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    disabled={createBusy || createImageBusy}
-                  >
-                    {createBusy ? "Adding…" : "Add card"}
-                  </Button>
-                </Stack>
-              </Box>
-            </OperateSection>
+            <MissionBoard
+              draftCount={draftJobs.length}
+              cardCount={acceptedCount}
+              acceptedCount={acceptedCount}
+              emptyDeck={acceptedCount === 0 && draftJobs.length === 0}
+              onOpen={openWorkshop}
+            />
           ) : null}
         </Stack>
       )}
+
+      <WorkshopShell
+        open={workshopOpen}
+        title={workshopTitle}
+        closeMode={workshopStack.length <= 1}
+        onBack={onWorkshopBack}
+      >
+        {topWorkshop?.id === "addMaterial" ? (
+          <AddMaterialWorkshop
+            guest={guest}
+            tab={topWorkshop.tab ?? materialTab}
+            onTabChange={(tab) => {
+              setMaterialTab(tab);
+              setWorkshopStack((prev) => {
+                const top = prev[prev.length - 1];
+                if (!top || top.id !== "addMaterial") return prev;
+                return [...prev.slice(0, -1), { ...top, tab }];
+              });
+            }}
+            materialError={materialError}
+            materialNotice={materialNotice}
+            materialBusy={materialBusy}
+            readingScan={readingScan}
+            pasteText={pasteText}
+            onPasteTextChange={setPasteText}
+            pasteFilename={pasteFilename}
+            onPasteFilenameChange={setPasteFilename}
+            onGuestPaste={onGuestPaste}
+            onAccountPaste={onAccountPaste}
+            uploadFile={uploadFile}
+            onUploadFileChange={setUploadFile}
+            figureFiles={figureFiles}
+            onFigureFilesChange={setFigureFiles}
+            onUploadFile={onUploadFile}
+            topicValue={topicValue}
+            onTopicValueChange={setTopicValue}
+            topicBusy={topicBusy}
+            topicError={topicError}
+            onTopicGenerate={onTopicGenerate}
+            createCard={createCard}
+            createBusy={createBusy}
+            createImageBusy={createImageBusy}
+            createError={createError}
+            createNeedsImage={createNeedsImage}
+            createImageKey={createImageKey}
+            deckImageKeys={deckImageKeys}
+            createImageInputRef={createImageInputRef}
+            onCreateChange={onCreateChange}
+            onCreateCard={onCreateCard}
+            onCreateImageUpload={onCreateImageUpload}
+            applyCreateImageKey={applyCreateImageKey}
+            hubDiyAllowedTypes={hubDiyAllowedTypes}
+            materials={materials}
+            onMaterialsChanged={() => {
+              void Promise.all([
+                refreshMaterials(),
+                refreshDraftJobs(),
+                refreshCards(),
+              ]);
+            }}
+            draftCount={draftJobs.length}
+            onReviewDrafts={() => jumpWorkshop({ id: "drafts" })}
+          />
+        ) : null}
+
+        {topWorkshop?.id === "drafts" ? (
+          <DraftsWorkshop
+            draftJobs={draftJobs}
+            onAddMoreMaterial={() =>
+              jumpWorkshop({ id: "addMaterial", tab: "upload" })
+            }
+          />
+        ) : null}
+
+        {topWorkshop?.id === "study" && deck ? (
+          <StudyReadySheet
+            deckId={deck.id}
+            acceptedCount={acceptedCount}
+            summary={studySummary}
+            loading={studySummaryLoading}
+            error={studySummaryError}
+          />
+        ) : null}
+
+        {topWorkshop?.id === "cards" ? (
+          <CardsWorkshop
+            mode="list"
+            cards={cards}
+            showArchived={showArchived}
+            onShowArchivedChange={setShowArchived}
+            selectedIds={selectedCardIds}
+            onToggleSelect={(id) => {
+              setSelectedCardIds((prev) => {
+                const next = new Set(prev);
+                if (next.has(id)) next.delete(id);
+                else next.add(id);
+                return next;
+              });
+            }}
+            onSelectAll={() =>
+              setSelectedCardIds(new Set(cards.map((c) => c.id)))
+            }
+            onClearSelection={() => setSelectedCardIds(new Set())}
+            archiveBusyId={archiveBusyId}
+            batchBusy={batchBusy}
+            onBatchArchive={() => {
+              void onBatchArchive();
+            }}
+            onBatchMove={() => {
+              void onBatchMoveOpen();
+            }}
+            onEdit={openEdit}
+            onMove={(card) => {
+              void openMove(card);
+            }}
+            onArchive={(card) => {
+              void onArchiveCard(card);
+            }}
+            onRestore={(card) => {
+              void onRestoreCard(card);
+            }}
+            onCreateCard={() => {
+              setCreateError(null);
+              setCreateCard(blankHubCreateCard(deckId));
+              setWorkshopStack((prev) =>
+                pushWorkshop(prev, { id: "createCard" }),
+              );
+            }}
+          />
+        ) : null}
+
+        {topWorkshop?.id === "createCard" ? (
+          <CardsWorkshop
+            mode="create"
+            createCard={createCard}
+            createBusy={createBusy}
+            createImageBusy={createImageBusy}
+            createError={createError}
+            createNeedsImage={createNeedsImage}
+            createImageKey={createImageKey}
+            deckImageKeys={deckImageKeys}
+            createImageInputRef={createImageInputRef}
+            hubDiyAllowedTypes={hubDiyAllowedTypes}
+            onCreateChange={onCreateChange}
+            onCreateSubmit={onCreateCard}
+            onCreateImageUpload={onCreateImageUpload}
+            applyCreateImageKey={applyCreateImageKey}
+          />
+        ) : null}
+      </WorkshopShell>
 
       <Dialog
         open={renameOpen}
@@ -1471,50 +1270,6 @@ export default function DeckHubPage({ deckId }: Props) {
               disabled={renameBusy || !renameValue.trim()}
             >
               {renameBusy ? "Saving…" : "Save"}
-            </Button>
-          </DialogActions>
-        </Box>
-      </Dialog>
-
-      <Dialog
-        open={topicOpen}
-        onClose={() => !topicBusy && setTopicOpen(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <Box component="form" onSubmit={onTopicGenerate} noValidate>
-          <DialogTitle>Generate cards for topic</DialogTitle>
-          <DialogContent>
-            <DialogContentText sx={{ mb: 2 }}>
-              Uses the latest ready paste or PDF on this deck. Existing cards
-              stay.
-            </DialogContentText>
-            {topicError ? (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {topicError}
-              </Alert>
-            ) : null}
-            <TextField
-              autoFocus
-              label="Topic"
-              value={topicValue}
-              onChange={(ev) => setTopicValue(ev.target.value)}
-              required
-              fullWidth
-              disabled={topicBusy}
-              inputProps={{ maxLength: 200 }}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setTopicOpen(false)} disabled={topicBusy}>
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={topicBusy || !topicValue.trim()}
-            >
-              {topicBusy ? "Starting…" : "Generate"}
             </Button>
           </DialogActions>
         </Box>
@@ -1622,11 +1377,16 @@ export default function DeckHubPage({ deckId }: Props) {
         fullWidth
         maxWidth="xs"
       >
-        <DialogTitle>Move card</DialogTitle>
+        <DialogTitle>
+          {moveAsBatch && selectedCardIds.size > 1
+            ? `Move ${selectedCardIds.size} cards`
+            : "Move card"}
+        </DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ mb: 2 }}>
-            Choose a subject and deck. The card leaves this deck; its study
-            schedule stays the same.
+            {moveAsBatch && selectedCardIds.size > 1
+              ? "Choose a subject and deck. Selected cards leave this deck; study schedules stay the same."
+              : "Choose a subject and deck. The card leaves this deck; its study schedule stays the same."}
           </DialogContentText>
           {moveError ? (
             <Alert severity="error" sx={{ mb: 2 }}>
@@ -1685,7 +1445,13 @@ export default function DeckHubPage({ deckId }: Props) {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setMoveTarget(null)} disabled={moveBusy}>
+          <Button
+            onClick={() => {
+              setMoveTarget(null);
+              setMoveAsBatch(false);
+            }}
+            disabled={moveBusy}
+          >
             Cancel
           </Button>
           <Button
