@@ -84,6 +84,7 @@ describe("ShelfVolume", () => {
           moreLabel: "More actions for Anatomy",
           onMore: () => {},
           cover: {
+            source: "unsplash",
             imageUrl,
             photographerName: "Ada",
             photographerUrl: "https://unsplash.com/@ada",
@@ -122,9 +123,6 @@ describe("ShelfVolume", () => {
           onMore: () => {},
           cover: {
             imageUrl: "/api/covers/media?key=covers%2Fx.jpg",
-            photographerName: "",
-            photographerUrl: "",
-            photoHtmlUrl: "",
             source: "custom",
           },
         }),

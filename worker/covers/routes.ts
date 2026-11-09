@@ -9,9 +9,8 @@ import {
   coverFieldsFromPhoto,
   resolveChosenPhoto,
   type CoverPhoto,
-  type CoverSource,
   type StoredCover,
-} from "./rank";
+} from "./model";
 import { fetchCoverPhoto, searchCoverPhotos, trackDownload } from "./unsplash";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
@@ -97,18 +96,30 @@ function readOwner(body: unknown): OwnerRef {
   return { ownerKind, ownerId };
 }
 
-function toStoredCoverRow(row: ShelfSqlRow): StoredCoverRow {
-  const source: CoverSource = row.source === "custom" ? "custom" : "unsplash";
+function toStoredCoverRow(row: ShelfSqlRow): StoredCoverRow | null {
+  const ownerKind = row.owner_kind as StoredCoverRow["ownerKind"];
+  const ownerId = row.owner_id;
+  if (row.source === "custom") {
+    const r2Key = row.r2_key?.trim();
+    if (!r2Key) return null;
+    return {
+      source: "custom",
+      ownerKind,
+      ownerId,
+      photoId: row.photo_id,
+      imageUrl: row.image_url,
+      r2Key,
+    };
+  }
   return {
-    ownerKind: row.owner_kind as StoredCoverRow["ownerKind"],
-    ownerId: row.owner_id,
+    source: "unsplash",
+    ownerKind,
+    ownerId,
     photoId: row.photo_id,
     imageUrl: row.image_url,
     photographerName: row.photographer_name,
     photographerUrl: row.photographer_url,
     photoHtmlUrl: row.photo_html_url,
-    source,
-    r2Key: row.r2_key,
   };
 }
 
@@ -162,6 +173,20 @@ async function upsertCoverRow(
   owner: OwnerRef,
   stored: StoredCover,
 ): Promise<void> {
+  const attribution =
+    stored.source === "unsplash"
+      ? {
+          photographerName: stored.photographerName,
+          photographerUrl: stored.photographerUrl,
+          photoHtmlUrl: stored.photoHtmlUrl,
+          r2Key: null as string | null,
+        }
+      : {
+          photographerName: "",
+          photographerUrl: "",
+          photoHtmlUrl: "",
+          r2Key: stored.r2Key,
+        };
   await db
     .prepare(UPSERT_COVER_SQL)
     .bind(
@@ -170,11 +195,11 @@ async function upsertCoverRow(
       owner.ownerId,
       stored.photoId,
       stored.imageUrl,
-      stored.photographerName,
-      stored.photographerUrl,
-      stored.photoHtmlUrl,
+      attribution.photographerName,
+      attribution.photographerUrl,
+      attribution.photoHtmlUrl,
       stored.source,
-      stored.r2Key ?? null,
+      attribution.r2Key,
     )
     .run();
 }
@@ -202,7 +227,10 @@ coverRoutes.get("/", async (c) => {
     .prepare(LIST_COVERS_SQL)
     .bind(userId)
     .all<ShelfSqlRow>();
-  return c.json({ covers: (results ?? []).map(toStoredCoverRow) });
+  const covers = (results ?? [])
+    .map(toStoredCoverRow)
+    .filter((row): row is StoredCoverRow => row != null);
+  return c.json({ covers });
 });
 
 coverRoutes.get("/search", async (c) => {
@@ -213,7 +241,7 @@ coverRoutes.get("/search", async (c) => {
   if (!q) throw new HTTPException(400, { message: "Title required" });
   const photos = await searchCoverPhotos(accessKey, q, globalThis.fetch);
   return c.json({
-    photos: photos.map((photo) => coverFieldsFromPhoto(photo, "unsplash")),
+    photos: photos.map((photo) => coverFieldsFromPhoto(photo)),
   });
 });
 
@@ -323,12 +351,9 @@ coverRoutes.put("/custom", async (c) => {
       ? record.photoId.trim()
       : newId();
   const stored: StoredCover = {
+    source: "custom",
     photoId,
     imageUrl: coverMediaPath(r2Key),
-    photographerName: "",
-    photographerUrl: "",
-    photoHtmlUrl: "",
-    source: "custom",
     r2Key,
   };
   await upsertCoverRow(db, userId, owner, stored);
@@ -363,7 +388,7 @@ coverRoutes.put("/", async (c) => {
   }
 
   const priorKey = await readPriorR2Key(db, userId, owner);
-  const stored = coverFieldsFromPhoto(chosen, "unsplash");
+  const stored = coverFieldsFromPhoto(chosen);
   await upsertCoverRow(db, userId, owner, stored);
   await deleteR2Key(c.env, priorKey);
 

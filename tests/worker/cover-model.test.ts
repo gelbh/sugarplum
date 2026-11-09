@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  rankCoverPhotos,
   resolveChosenPhoto,
   type CoverPhoto,
-} from "../../worker/covers/rank";
+} from "../../worker/covers/model";
 
 const photo = (id: string, downloads: number, imageUrl: string): CoverPhoto => ({
   id,
@@ -15,23 +14,7 @@ const photo = (id: string, downloads: number, imageUrl: string): CoverPhoto => (
   downloadLocation: `https://api.unsplash.com/photos/${id}/download?ixid=1`,
 });
 
-describe("cover ranking", () => {
-  it("keeps Unsplash search order and caps at six", () => {
-    const ranked = rankCoverPhotos(
-      [1, 9, 3, 8, 2, 7, 4].map((n) =>
-        photo(`p${n}`, n, `https://images.unsplash.com/${n}?ixid=1`),
-      ),
-    );
-    expect(ranked.map((p) => p.id)).toEqual([
-      "p1",
-      "p9",
-      "p3",
-      "p8",
-      "p2",
-      "p7",
-    ]);
-  });
-
+describe("cover model helpers", () => {
   it("rejects a photo id the worker did not fetch", () => {
     const known = [photo("p1", 3, "https://images.unsplash.com/a?ixid=1")];
     expect(resolveChosenPhoto("p1", known).imageUrl).toBe(
