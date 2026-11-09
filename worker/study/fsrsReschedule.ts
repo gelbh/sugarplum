@@ -37,17 +37,19 @@ export function replayCardFromLogs(
   const ordered = [...logs].sort((a, b) =>
     a.reviewed_at.localeCompare(b.reviewed_at),
   );
-  let card: Card | undefined;
+  let card: Card | null = null;
   for (const row of ordered) {
     const when = Date.parse(row.reviewed_at);
     if (!Number.isFinite(when)) continue;
     const grade = ratingToGrade(row.rating);
     if (grade == null) continue;
     const now = new Date(when);
-    const current = card ?? createEmptyCard(now);
-    card = scheduler.next(current, now, grade).card;
+    if (card == null) {
+      card = createEmptyCard(now);
+    }
+    card = scheduler.next(card, now, grade).card;
   }
-  return card ?? null;
+  return card;
 }
 
 type LogRow = {
