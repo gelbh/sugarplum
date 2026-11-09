@@ -40,6 +40,7 @@ afterEach(() => {
 function stubSiteverify(opts?: {
   success?: boolean;
   action?: string;
+  testingKey?: boolean;
 }) {
   const success = opts?.success ?? true;
   vi.stubGlobal(
@@ -51,6 +52,9 @@ function stubSiteverify(opts?: {
           JSON.stringify({
             success,
             ...(opts?.action != null ? { action: opts.action } : {}),
+            ...(opts?.testingKey
+              ? { metadata: { result_with_testing_key: true } }
+              : {}),
           }),
           {
             status: 200,
@@ -223,7 +227,7 @@ describe("auth turnstile", () => {
     expect(res.status).toBe(403);
   });
 
-  it("register allows siteverify success when action omitted (dummy keys)", async () => {
+  it("register rejects success without matching action", async () => {
     const env = createTestEnv();
     stubSiteverify({ success: true });
     const res = await app.request(
@@ -239,26 +243,26 @@ describe("auth turnstile", () => {
       },
       env,
     );
-    expect(res.status).toBe(201);
+    expect(res.status).toBe(403);
   });
 
-  it("register rejects siteverify success with wrong action", async () => {
+  it("register accepts testing-key siteverify without action", async () => {
     const env = createTestEnv();
-    stubSiteverify({ success: true, action: "login" });
+    stubSiteverify({ success: true, testingKey: true });
     const res = await app.request(
       "/api/auth/register",
       {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          email: "wrong-act@example.com",
+          email: "dummy-key@example.com",
           password: "long-enough-password",
           turnstileToken: DUMMY_TURNSTILE_TOKEN,
         }),
       },
       env,
     );
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(201);
   });
 });
 

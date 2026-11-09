@@ -77,7 +77,24 @@ npx wrangler secret put ADMIN_EMAILS          # comma-separated; Google-linked a
 npx wrangler secret put TURNSTILE_SECRET_KEY  # Turnstile Siteverify secret (pair with vars.TURNSTILE_SITE_KEY)
 ```
 
-Set `vars.TURNSTILE_SITE_KEY` (or `.dev.vars`) to the widget sitekey before email auth works. Leave empty in committed wrangler until the prod widget exists. Local dummy always-pass: sitekey `1x00000000000000000000AA`, secret `1x0000000000000000000000000000000AA` in `.dev.vars`.
+Set `vars.TURNSTILE_SITE_KEY` (or `.dev.vars`) to the widget sitekey before email auth works. Leave empty in committed wrangler until the prod widget exists. Local dummy always-pass: sitekey `1x00000000000000000000AA`, secret `1x0000000000000000000000000000000AA` in `.dev.vars` (required for localhost; the prod sitekey in `wrangler.jsonc` does not allow local domains).
+
+**Local signed-in account** (D1 + dummy Turnstile; does not touch remote):
+
+```bash
+npm run db:seed:local   # writes TURNSTILE_* into .dev.vars if missing; migrates + seeds
+# restart npm run dev after first seed if Turnstile keys were just added
+```
+
+Sign in with `dev@local.test` / `local-dev-password`. Seed also creates deck `Local Atlas FR` for Make cards. Atlas itself is created on first `/atlas` open via `ensureAtlas`.
+
+With other FR worktrees already on Vite, pick a free port instead of stealing theirs:
+
+```bash
+lsof -nP -iTCP:5173-5185 -sTCP:LISTEN
+npm run dev -- --host 127.0.0.1 --port 5181   # use any free port from the scan
+```
+
 
 Local: put `ADMIN_EMAILS=...` in `.dev.vars` (gitignored). Open `/admin` while signed in as a Google-linked allowlisted user. Empty/unset → all `/api/admin/*` return 403.
 
