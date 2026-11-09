@@ -921,12 +921,17 @@
           {
             "name": "egg",
             "location": "passed in human faeces",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "cattle ingest eggs from contaminated pasture",
+            "note": "Infective for cattle (intermediate host)"
           },
           {
             "name": "gravid proglottid",
             "location": "passed in faeces or crawls out through the anus",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "diagnostic": true,
+            "note": "Usual diagnostic form in faeces or peri-anal samples"
           },
           {
             "name": "oncosphere",
@@ -936,7 +941,10 @@
           {
             "name": "cysticercus",
             "location": "skeletal and heart muscle of cattle",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "person eats undercooked beef with cysticerci",
+            "note": "Infective for people (definitive host)"
           },
           {
             "name": "adult tapeworm",
@@ -974,6 +982,12 @@
         },
         {
           "field": null,
+          "citation": "CDC DPDx: Taeniasis",
+          "url": "https://www.cdc.gov/dpdx/taeniasis/index.html",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
           "citation": "CDC DPDx: Taeniasis",
           "url": "https://www.cdc.gov/dpdx/taeniasis/index.html",
           "note": null
