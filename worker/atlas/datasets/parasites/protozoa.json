@@ -3156,7 +3156,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "plasmodium-spp-hero.webp",
+          "role": "other",
+          "caption": "P. falciparum macro- and microgametocytes in blood smear",
+          "credit": "CDC / Dr. Mae Melvin",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Plasmodium_falciparum_01.png",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "hepatozoon-canis",
