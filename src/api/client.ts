@@ -43,9 +43,13 @@ import {
   guestPutStudyPrefs,
   guestResetCardSchedule,
   guestReviewCard,
-  guestSubjectComposition,
   type GuestHubCardBody,
 } from "../guest/store";
+import {
+  guestSubjectComposition,
+  guestSubjectCompositionSummaries,
+  type SubjectCompositionSummary,
+} from "../guest/composition";
 import type { RejectReason } from "../lib/rejectReasons";
 import { clearDueCache } from "../study/dueCache";
 import { clearPendingGrades } from "../study/pendingGrades";
@@ -53,6 +57,7 @@ import { STUDY_MEDIA_CACHE } from "../study/studyMediaCache";
 import type { SubjectKnowledge } from "../study/subjectKnowledge";
 
 export type { SubjectKnowledge } from "../study/subjectKnowledge";
+export type { SubjectCompositionSummary };
 
 export type ApiErrorBody = {
   error?: string;
@@ -606,6 +611,19 @@ export function subjectComposition(id: string) {
     }
   }
   return api<SubjectKnowledge>(`/api/subjects/${id}/composition`);
+}
+
+export function listSubjectCompositionSummaries() {
+  if (isGuest()) {
+    try {
+      return Promise.resolve(guestSubjectCompositionSummaries());
+    } catch {
+      return Promise.resolve([]);
+    }
+  }
+  return api<SubjectCompositionSummary[]>(
+    `/api/subjects/composition-summaries`,
+  );
 }
 
 export type ListDeckCardsOpts = { status?: "archived" };

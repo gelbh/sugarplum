@@ -30,6 +30,7 @@ type Props = {
   openLabel?: string;
   cover?: ShelfCover | null;
   meta?: string;
+  chip?: string | null;
   studyLabel: string;
   onStudy: () => void;
   moreLabel: string;
@@ -51,6 +52,7 @@ export default function ShelfVolume({
   onNavigate,
   openLabel,
   meta,
+  chip,
   studyLabel,
   onStudy,
   moreLabel,
@@ -94,6 +96,11 @@ export default function ShelfVolume({
           )}
           {meta ? (
             <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>{meta}</Typography>
+          ) : null}
+          {chip ? (
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.25 }}>
+              {chip}
+            </Typography>
           ) : null}
         </Box>
       </Box>
