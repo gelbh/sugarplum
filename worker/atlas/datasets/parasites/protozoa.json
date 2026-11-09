@@ -1172,18 +1172,7 @@
           "note": null
         }
       ],
-      "images": [
-        {
-          "id": "hero",
-          "file": "histomonas-meleagridis-hero.webp",
-          "role": "lesion",
-          "caption": "Histomoniasis (blackhead) lesion",
-          "credit": "USGS",
-          "license": "Public domain",
-          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Histomoniasis.jpg",
-          "isHero": true
-        }
-      ]
+      "images": []
     },
     {
       "key": "encephalitozoon-cuniculi",
