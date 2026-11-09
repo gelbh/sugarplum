@@ -5,6 +5,7 @@ import {
   organCovers,
 } from "../../worker/atlas/datasets/vocab";
 import { PARASITE_GROUPS } from "../../worker/atlas/templates/parasite";
+import { entryNameForms, searchable } from "./nameMatch";
 import type { AtlasEntryView, ParasiteGroup } from "./types";
 
 export type AtlasFilters = {
@@ -32,25 +33,10 @@ export const GROUP_LABELS: Record<
   arthropod: { plural: "Arthropods", common: "Mites, ticks and insects" },
 };
 
-const searchable = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
-
-/** Slides abbreviate the genus ("F. hepatica"), so that form matches too. */
-function genusInitialForms(canonicalName: string): string[] {
-  const [genus, species] = canonicalName.split(" ");
-  if (!species || species === "spp.") return [];
-  const initial = genus[0].toLowerCase();
-  return [`${initial}. ${species}`, `${initial} ${species}`];
-}
-
 export function matchesSearch(entry: AtlasEntryView, q: string): boolean {
   const needle = searchable(q);
   if (needle === "") return true;
-  const names = [entry.canonicalName, entry.commonName, ...entry.aliases]
-    .filter((n): n is string => n !== null)
-    .map(searchable);
-  return [...names, ...genusInitialForms(entry.canonicalName)].some((n) =>
-    n.includes(needle),
-  );
+  return entryNameForms(entry).some((n) => n.includes(needle));
 }
 
 export const entryHosts = (e: AtlasEntryView) => [
