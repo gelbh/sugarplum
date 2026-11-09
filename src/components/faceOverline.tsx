@@ -1,16 +1,14 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { StudyNotesButton } from "./StudyNotesButton";
+import type { ReactNode } from "react";
 import { OVERLINE_SX } from "./studyFaceSx";
 
 export function FaceOverline({
   label,
-  notesAvailable,
-  onOpenNotes,
+  trailing,
 }: {
   label: string;
-  notesAvailable?: boolean;
-  onOpenNotes?: () => void;
+  trailing?: ReactNode;
 }) {
   return (
     <Box
@@ -27,9 +25,7 @@ export function FaceOverline({
       <Typography component="div" sx={OVERLINE_SX}>
         {label}
       </Typography>
-      {notesAvailable && onOpenNotes ? (
-        <StudyNotesButton onOpenNotes={onOpenNotes} />
-      ) : null}
+      {trailing ?? null}
     </Box>
   );
 }

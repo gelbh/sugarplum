@@ -13,6 +13,7 @@ import { CardFaceMcqBody } from "./cardFaceMcq";
 import ClozePrompt from "./ClozePrompt";
 import { FaceOverline } from "./faceOverline";
 import KeyChip from "./KeyChip";
+import { StudyNotesButton } from "./StudyNotesButton";
 import {
   CARD_COLUMN_SX,
   FACE_ANSWER_TEXT_SX,
@@ -120,8 +121,7 @@ export function FlipCardPlate({
   onPlateClick,
   plateSx,
   faceSx,
-  notesAvailable,
-  onOpenNotes,
+  overlineTrailing,
 }: {
   revealed: boolean;
   front: ReactNode;
@@ -129,8 +129,7 @@ export function FlipCardPlate({
   onPlateClick?: () => void;
   plateSx?: Record<string, unknown>;
   faceSx?: Record<string, unknown>;
-  notesAvailable?: boolean;
-  onOpenNotes?: () => void;
+  overlineTrailing?: ReactNode;
 }) {
   return (
     <StudyCardPlate
@@ -156,11 +155,7 @@ export function FlipCardPlate({
         className="sp-playing-card"
         sx={{ ...faceMotionSx(false, !revealed), ...faceSx }}
       >
-        <FaceOverline
-          label="Front"
-          notesAvailable={notesAvailable}
-          onOpenNotes={onOpenNotes}
-        />
+        <FaceOverline label="Front" trailing={overlineTrailing} />
         {front}
       </Paper>
 
@@ -171,11 +166,7 @@ export function FlipCardPlate({
         className="sp-playing-card"
         sx={{ ...faceMotionSx(true, revealed), ...faceSx }}
       >
-        <FaceOverline
-          label="Back"
-          notesAvailable={notesAvailable}
-          onOpenNotes={onOpenNotes}
-        />
+        <FaceOverline label="Back" trailing={overlineTrailing} />
         {back}
       </Paper>
     </StudyCardPlate>
@@ -289,6 +280,11 @@ export default function CardFace({
   notesAvailable,
   onOpenNotes,
 }: Props) {
+  const notesTrailing =
+    notesAvailable && onOpenNotes ? (
+      <StudyNotesButton onOpenNotes={onOpenNotes} />
+    ) : undefined;
+
   if (type === "mcq") {
     if (!cardId || !onGrade) return null;
     return (
@@ -300,8 +296,7 @@ export default function CardFace({
           options={options}
           disabled={disabled}
           onGrade={onGrade}
-          notesAvailable={notesAvailable}
-          onOpenNotes={onOpenNotes}
+          overlineTrailing={notesTrailing}
         />
       </StudyCardPlate>
     );
@@ -340,8 +335,7 @@ export default function CardFace({
       revealed={revealed}
       onPlateClick={canReveal ? reveal : canFlipBack ? flipBack : undefined}
       plateSx={{ cursor: canReveal || canFlipBack ? "pointer" : "default" }}
-      notesAvailable={notesAvailable}
-      onOpenNotes={onOpenNotes}
+      overlineTrailing={notesTrailing}
       front={
         <Box data-card-face-content sx={FACE_BODY_SX}>
           <Box sx={PROMPT_SX}>

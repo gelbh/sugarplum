@@ -9,6 +9,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from "react";
 import type { StudyRating } from "../api/client";
 import {
@@ -35,8 +36,7 @@ type Props = {
   disabled?: boolean;
   /** Return false (or reject) so the face unlocks for another tap. */
   onGrade: (rating: StudyRating) => boolean | Promise<boolean>;
-  notesAvailable?: boolean;
-  onOpenNotes?: () => void;
+  overlineTrailing?: ReactNode;
 };
 
 /** MCQ interior for the shared CardFace plate (no own column / aspect shell). */
@@ -47,8 +47,7 @@ export function CardFaceMcqBody({
   options,
   disabled,
   onGrade,
-  notesAvailable,
-  onOpenNotes,
+  overlineTrailing,
 }: Props) {
   const choices = useMemo(
     () => (options?.length ? shuffledMcqOptions(cardId, options) : []),
@@ -115,11 +114,7 @@ export function CardFaceMcqBody({
         height: "100%",
       }}
     >
-      <FaceOverline
-        label="Front"
-        notesAvailable={notesAvailable}
-        onOpenNotes={onOpenNotes}
-      />
+      <FaceOverline label="Front" trailing={overlineTrailing} />
       <Box
         data-card-face-content
         sx={{

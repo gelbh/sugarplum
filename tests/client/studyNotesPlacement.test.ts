@@ -6,6 +6,7 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CardFaceMcqBody } from "../../src/components/cardFaceMcq";
+import { StudyNotesButton } from "../../src/components/StudyNotesButton";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -24,15 +25,15 @@ describe("study notes placement (source)", () => {
 
   it("CardFace does not keep Notes in the answer footer above Show question", () => {
     const src = readFileSync(join(rootDir, "src/components/CardFace.tsx"), "utf8");
-    // Footer block pattern: Notes immediately before Show question in answer footer.
     expect(src).not.toMatch(/Notes[\s\S]{0,200}Show question/);
   });
 
-  it("CardFace MCQ branch forwards notes props into CardFaceMcqBody", () => {
+  it("CardFace composes Notes trailing into MCQ and flip plates", () => {
     const src = readFileSync(join(rootDir, "src/components/CardFace.tsx"), "utf8");
+    expect(src).toMatch(/StudyNotesButton/);
+    expect(src).toMatch(/overlineTrailing=\{notesTrailing\}/);
     const mcqBlock = src.slice(src.indexOf('type === "mcq"'));
-    expect(mcqBlock).toMatch(/notesAvailable=\{notesAvailable\}/);
-    expect(mcqBlock).toMatch(/onOpenNotes=\{onOpenNotes\}/);
+    expect(mcqBlock).toMatch(/overlineTrailing=\{notesTrailing\}/);
   });
 });
 
@@ -53,7 +54,7 @@ describe("CardFaceMcqBody notes control", () => {
     host.remove();
   });
 
-  it("shows Notes and opens when notesAvailable", () => {
+  it("shows Notes trailing and opens when provided", () => {
     act(() => {
       root.render(
         createElement(CardFaceMcqBody, {
@@ -62,8 +63,7 @@ describe("CardFaceMcqBody notes control", () => {
           back: "A",
           options: ["A", "B", "C"],
           onGrade: () => true,
-          notesAvailable: true,
-          onOpenNotes,
+          overlineTrailing: createElement(StudyNotesButton, { onOpenNotes }),
         }),
       );
     });
@@ -75,7 +75,7 @@ describe("CardFaceMcqBody notes control", () => {
     expect(onOpenNotes).toHaveBeenCalledTimes(1);
   });
 
-  it("hides Notes when notesAvailable is false", () => {
+  it("hides Notes when overlineTrailing is omitted", () => {
     act(() => {
       root.render(
         createElement(CardFaceMcqBody, {
@@ -84,8 +84,6 @@ describe("CardFaceMcqBody notes control", () => {
           back: "A",
           options: ["A", "B", "C"],
           onGrade: () => true,
-          notesAvailable: false,
-          onOpenNotes,
         }),
       );
     });
