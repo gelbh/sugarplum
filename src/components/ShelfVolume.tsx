@@ -17,13 +17,18 @@ export type ShelfSelect = {
   inputLabel: string;
 };
 
-export type ShelfCover = {
-  imageUrl: string;
-  photographerName: string;
-  photographerUrl: string;
-  photoHtmlUrl: string;
-  source?: "unsplash" | "custom";
-};
+export type ShelfCover =
+  | {
+      source: "unsplash";
+      imageUrl: string;
+      photographerName: string;
+      photographerUrl: string;
+      photoHtmlUrl: string;
+    }
+  | {
+      source: "custom";
+      imageUrl: string;
+    };
 
 type Props = {
   title: string;
@@ -74,16 +79,13 @@ export default function ShelfVolume({
       {cover ? (
         <Box sx={{ mx: -2.5, mt: -2.5, mb: 2 }}>
           <Box component="img" src={cover.imageUrl} alt="" sx={{ display: "block", width: "100%", height: 160, objectFit: "cover" }} />
-          {cover.source !== "custom" &&
-          cover.photographerName &&
-          cover.photographerUrl &&
-          cover.photoHtmlUrl ? (
+          {cover.source === "custom" ? null : (
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", px: 2.5, pt: 0.5 }}>
               Photo by <Link href={withReferral(cover.photographerUrl)} target="_blank" rel="noopener noreferrer">{cover.photographerName}</Link>
               {" on "}
               <Link href={withReferral(cover.photoHtmlUrl)} target="_blank" rel="noopener noreferrer">Unsplash</Link>
             </Typography>
-          ) : null}
+          )}
         </Box>
       ) : null}
       <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
