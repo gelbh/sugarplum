@@ -294,6 +294,8 @@ export default function SettingsPage() {
       !Number.isFinite(introBudget) ||
       !Number.isFinite(reviewBudget) ||
       !Number.isFinite(desiredRetention) ||
+      desiredRetention < 0.7 ||
+      desiredRetention > 0.97 ||
       introBudget < 1 ||
       reviewBudget < 1
     ) {
