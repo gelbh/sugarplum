@@ -31,6 +31,7 @@ type Props = {
   cover?: ShelfCover | null;
   meta?: string;
   chip?: string | null;
+  spark?: ReactNode;
   studyLabel: string;
   onStudy: () => void;
   moreLabel: string;
@@ -53,6 +54,7 @@ export default function ShelfVolume({
   openLabel,
   meta,
   chip,
+  spark,
   studyLabel,
   onStudy,
   moreLabel,
@@ -102,6 +104,7 @@ export default function ShelfVolume({
               {chip}
             </Typography>
           ) : null}
+          {spark ?? null}
         </Box>
       </Box>
       {select ? null : (

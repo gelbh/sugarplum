@@ -1,0 +1,81 @@
+/**
+ * @vitest-environment jsdom
+ */
+import { act, createElement } from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { describe, expect, it } from "vitest";
+import SubjectKnowledgeBar from "../../src/components/SubjectKnowledgeBar";
+import type { SubjectKnowledge } from "../../src/study/subjectKnowledge";
+
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
+  true;
+
+const base: SubjectKnowledge = {
+  new: 0,
+  learning: 0,
+  young: 0,
+  mature: 0,
+  total: 0,
+  graduated: 0,
+  graduatedPct: null,
+  avgRetrievability: null,
+  etk: 0,
+  recallCardCount: 0,
+};
+
+function renderBar(knowledge: SubjectKnowledge): HTMLDivElement {
+  const host = document.createElement("div");
+  document.body.append(host);
+  const root: Root = createRoot(host);
+  act(() => {
+    root.render(createElement(SubjectKnowledgeBar, { knowledge }));
+  });
+  return host;
+}
+
+describe("SubjectKnowledgeBar recall caption", () => {
+  it("New-heavy with recall → of N reviewed", () => {
+    const host = renderBar({
+      ...base,
+      new: 8,
+      young: 2,
+      total: 10,
+      graduated: 2,
+      graduatedPct: 20,
+      avgRetrievability: 0.84,
+      etk: 1.68,
+      recallCardCount: 2,
+    });
+    expect(host.textContent).toMatch(
+      /Estimated recall now:\s*84%\s*of\s*2\s*reviewed/,
+    );
+    host.remove();
+  });
+
+  it("all reviewed → no of-N clause", () => {
+    const host = renderBar({
+      ...base,
+      young: 2,
+      total: 2,
+      graduated: 2,
+      graduatedPct: 100,
+      avgRetrievability: 0.5,
+      etk: 1,
+      recallCardCount: 2,
+    });
+    expect(host.textContent).toMatch(/Estimated recall now:\s*50%/);
+    expect(host.textContent).not.toMatch(/reviewed/);
+    host.remove();
+  });
+
+  it("null avg → omit recall line", () => {
+    const host = renderBar({
+      ...base,
+      new: 4,
+      total: 4,
+      graduatedPct: 0,
+    });
+    expect(host.textContent).not.toMatch(/Estimated recall now/);
+    host.remove();
+  });
+});

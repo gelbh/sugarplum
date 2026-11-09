@@ -1,24 +1,11 @@
-import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { SubjectKnowledge } from "../api/client";
+import CompositionSpark from "./CompositionSpark";
 
 type Props = {
   knowledge: SubjectKnowledge;
 };
-
-const SEGMENTS: {
-  key: keyof Pick<
-    SubjectKnowledge,
-    "mature" | "young" | "learning" | "new"
-  >;
-  color: string;
-}[] = [
-  { key: "mature", color: "success.main" },
-  { key: "young", color: "info.main" },
-  { key: "learning", color: "warning.main" },
-  { key: "new", color: "grey.400" },
-];
 
 function formatEtkCards(etk: number): string {
   const rounded = Math.round(etk * 10) / 10;
@@ -34,35 +21,19 @@ export default function SubjectKnowledgeBar({ knowledge }: Props) {
     );
   }
 
+  const showReviewedClause = knowledge.recallCardCount < knowledge.total;
+
   return (
     <Stack spacing={0.75} sx={{ mt: 1.5 }}>
-      <Box
-        role="img"
-        aria-label={`${knowledge.mature} mature, ${knowledge.young} young, ${knowledge.learning} learning, ${knowledge.new} new`}
-        sx={{
-          display: "flex",
-          height: 8,
-          borderRadius: 1,
-          overflow: "hidden",
-          bgcolor: "action.hover",
-        }}
-      >
-        {SEGMENTS.map(({ key, color }) => {
-          const count = knowledge[key];
-          if (count <= 0) return null;
-          return (
-            <Box
-              key={key}
-              sx={{
-                flexGrow: count,
-                flexBasis: 0,
-                bgcolor: color,
-                minWidth: count > 0 ? 2 : 0,
-              }}
-            />
-          );
-        })}
-      </Box>
+      <CompositionSpark
+        new={knowledge.new}
+        learning={knowledge.learning}
+        young={knowledge.young}
+        mature={knowledge.mature}
+        total={knowledge.total}
+        height={8}
+        maxWidth="100%"
+      />
       <Typography variant="caption" color="text.secondary">
         {knowledge.mature} mature · {knowledge.young} young ·{" "}
         {knowledge.learning} learning · {knowledge.new} new
@@ -74,8 +45,11 @@ export default function SubjectKnowledgeBar({ knowledge }: Props) {
       {knowledge.avgRetrievability != null ? (
         <Typography variant="caption" color="text.secondary">
           Estimated recall now:{" "}
-          {Math.round(100 * knowledge.avgRetrievability)}% · ~
-          {formatEtkCards(knowledge.etk)} cards
+          {Math.round(100 * knowledge.avgRetrievability)}%
+          {showReviewedClause
+            ? ` of ${knowledge.recallCardCount} reviewed`
+            : ""}{" "}
+          · ~{formatEtkCards(knowledge.etk)} cards
         </Typography>
       ) : null}
     </Stack>

@@ -1,10 +1,9 @@
 import type { SubjectKnowledge } from "../study/subjectKnowledge";
-import { aggregateSubjectKnowledge } from "../study/subjectKnowledge";
-import { aggregateSubjectRecall } from "../study/subjectRecall";
 import {
-  cardFromScheduleRow,
-  retrievability,
-} from "../study/retrievability";
+  aggregateSubjectKnowledge,
+  composeSubjectKnowledge,
+  type CompositionScheduleInput,
+} from "../study/subjectKnowledge";
 import { cardDueIso } from "./policyDue";
 import { ensureGuestStore, peekGuestStore } from "./store";
 
@@ -14,6 +13,10 @@ export type SubjectCompositionSummary = {
   subjectId: string;
   total: number;
   graduatedPct: number | null;
+  new: number;
+  learning: number;
+  young: number;
+  mature: number;
 };
 
 function loadStore(storage?: Store) {
@@ -43,6 +46,10 @@ export function guestSubjectCompositionSummaries(
       subjectId: subject.id,
       total: agg.total,
       graduatedPct: agg.graduatedPct,
+      new: agg.new,
+      learning: agg.learning,
+      young: agg.young,
+      mature: agg.mature,
     };
   });
 }
@@ -60,47 +67,37 @@ export function guestSubjectComposition(
   const deckIds = new Set(
     store.decks.filter((d) => d.subject_id === subjectId).map((d) => d.id),
   );
-  const bucketRows: Array<{
-    state: number | null;
-    scheduled_days: number | null;
-  }> = [];
-  const rValues: Array<number | null> = [];
+  const rows: CompositionScheduleInput[] = [];
   for (const card of store.cards) {
     if (!deckIds.has(card.deck_id) || card.status !== "accepted") continue;
     const sched = store.schedules[card.id];
     if (!sched) {
-      bucketRows.push({ state: null, scheduled_days: null });
-      rValues.push(null);
+      rows.push({
+        state: null,
+        scheduled_days: null,
+        due: null,
+        stability: null,
+        difficulty: null,
+        elapsed_days: null,
+        learning_steps: null,
+        reps: null,
+        lapses: null,
+        last_review: null,
+      });
       continue;
     }
-    bucketRows.push({
+    rows.push({
       state: sched.state,
       scheduled_days: sched.scheduled_days,
+      due: cardDueIso(card, nowIsoValue),
+      stability: sched.stability,
+      difficulty: sched.difficulty,
+      elapsed_days: sched.elapsed_days,
+      learning_steps: sched.learning_steps,
+      reps: sched.reps,
+      lapses: sched.lapses,
+      last_review: sched.last_review,
     });
-    try {
-      rValues.push(
-        retrievability(
-          cardFromScheduleRow({
-            due: cardDueIso(card, nowIsoValue),
-            stability: sched.stability,
-            difficulty: sched.difficulty,
-            elapsed_days: sched.elapsed_days,
-            scheduled_days: sched.scheduled_days,
-            learning_steps: sched.learning_steps,
-            reps: sched.reps,
-            lapses: sched.lapses,
-            state: sched.state,
-            last_review: sched.last_review,
-          }),
-          now,
-        ),
-      );
-    } catch {
-      rValues.push(null);
-    }
   }
-  return {
-    ...aggregateSubjectKnowledge(bucketRows),
-    ...aggregateSubjectRecall(rValues),
-  };
+  return composeSubjectKnowledge(rows, now);
 }
