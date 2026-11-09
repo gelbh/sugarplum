@@ -654,6 +654,12 @@ export function createTestEnv(opts?: {
           const deck = decks.get(bound[0] as string);
           return deck ? ({ id: deck.id, user_id: deck.user_id } as T) : null;
         }
+        if (normalized.startsWith("SELECT subject_id FROM decks WHERE id =")) {
+          const deck = decks.get(bound[0] as string);
+          return deck
+            ? ({ subject_id: deck.subject_id ?? null } as T)
+            : null;
+        }
         if (
           normalized.startsWith(
             "SELECT id, deck_id, kind, r2_key, status FROM materials WHERE id =",
@@ -1147,6 +1153,29 @@ export function createTestEnv(opts?: {
         if (gamificationAllHit !== null) return gamificationAllHit;
         const atlasAllHit = atlasAll<T>(atlasState, normalized, bound);
         if (atlasAllHit !== null) return atlasAllHit;
+        if (
+          normalized.includes("FROM materials m") &&
+          normalized.includes("INNER JOIN decks d ON d.id = m.deck_id") &&
+          normalized.includes("WHERE d.subject_id =") &&
+          normalized.includes("m.source_role")
+        ) {
+          const subjectId = bound[0] as string;
+          const rows = [...materials.values()]
+            .map((m) => {
+              const deck = decks.get(m.deck_id);
+              if (!deck || deck.subject_id !== subjectId) return null;
+              return {
+                id: m.id,
+                deck_id: m.deck_id,
+                kind: m.kind,
+                r2_key: m.r2_key,
+                filename: m.filename,
+                source_role: m.source_role ?? "lecture",
+              };
+            })
+            .filter((row): row is NonNullable<typeof row> => row != null);
+          return { results: rows as T[] };
+        }
         if (
           normalized.startsWith(
             "SELECT cluster_key, subject_id FROM calendar_subject_links WHERE user_id =",

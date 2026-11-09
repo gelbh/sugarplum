@@ -10,6 +10,13 @@ import {
   type OverlayRow,
 } from "./merge";
 import {
+  enrichEntriesWithFocus,
+  focusEntryKey,
+  loadFocusMap,
+  refreshAtlasFocus,
+  setFocusOverride,
+} from "./focus";
+import {
   loadParasiteDataset,
   PARASITE_DATASET_VERSION,
 } from "./datasets/parasites";
@@ -22,7 +29,11 @@ import {
   type ParasiteFields,
 } from "./templates/parasite";
 import { createR2PutUrl } from "../materials/r2-presign";
-import type { AtlasEntryView, AtlasImageView } from "../../src/atlas/types";
+import type {
+  AtlasEntryView,
+  AtlasImageView,
+  AtlasTier,
+} from "../../src/atlas/types";
 import type { Context } from "hono";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
@@ -375,6 +386,26 @@ function parseFieldsPatch(
   return parsed.data;
 }
 
+function parseFocusOverride(raw: unknown): AtlasTier | null {
+  if (raw === null) return null;
+  if (raw === "key" || raw === "frequent" || raw === "standard") return raw;
+  throw new HTTPException(400, {
+    message: "override must be key, frequent, standard, or null",
+  });
+}
+
+async function refreshFocusBestEffort(
+  db: D1Database,
+  env: Env,
+  atlasId: string,
+): Promise<void> {
+  try {
+    await refreshAtlasFocus(db, env, { atlasId });
+  } catch (err) {
+    console.warn("atlas focus refresh failed", err);
+  }
+}
+
 function mergeFields(
   base: ParasiteFields,
   patch: Partial<ParasiteFields> | undefined,
@@ -422,6 +453,8 @@ atlasRoutes.post("/", async (c) => {
     .bind(id, subjectId, TEMPLATE_KEY, createdAt)
     .run();
 
+  await refreshFocusBestEffort(db, c.env, id);
+
   return c.json(
     atlasMeta({
       id,
@@ -446,7 +479,9 @@ atlasRoutes.get("/entries", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "subjectId"));
   const rows = await loadEntryRows(db, atlas.id);
   const overlays = await toOverlayRows(db, atlas.id, rows);
-  const entries = overlayAtlas(loadParasiteDataset().entries, overlays);
+  const merged = overlayAtlas(loadParasiteDataset().entries, overlays);
+  const focus = await loadFocusMap(db, atlas.id);
+  const entries = enrichEntriesWithFocus(merged, focus);
   return c.json({ entries });
 });
 
@@ -528,10 +563,13 @@ atlasRoutes.post("/entries", async (c) => {
 
   const row = await findEntryById(db, atlas.id, id);
   if (!row) throw new HTTPException(500, { message: "Failed to create entry" });
+  await refreshFocusBestEffort(db, c.env, atlas.id);
   const overlays = await toOverlayRows(db, atlas.id, [row]);
-  const view = overlayAtlas(loadParasiteDataset().entries, overlays).find(
-    (e) => e.id === row.id,
-  );
+  const focus = await loadFocusMap(db, atlas.id);
+  const view = enrichEntriesWithFocus(
+    overlayAtlas(loadParasiteDataset().entries, overlays),
+    focus,
+  ).find((e) => e.id === row.id);
   if (!view) throw new HTTPException(500, { message: "Failed to create entry" });
   return c.json(view, 201);
 });
@@ -602,9 +640,55 @@ atlasRoutes.patch("/entries/:entryId", async (c) => {
     row = updated;
   }
 
+  if (commonNameProvided) {
+    await refreshFocusBestEffort(db, c.env, atlas.id);
+  }
   const overlays = await toOverlayRows(db, atlas.id, [row]);
-  const views = overlayAtlas(loadParasiteDataset().entries, overlays);
+  const focus = await loadFocusMap(db, atlas.id);
+  const views = enrichEntriesWithFocus(
+    overlayAtlas(loadParasiteDataset().entries, overlays),
+    focus,
+  );
   const view = views.find((v) => v.id === row.id) ?? views[0];
+  return c.json(view);
+});
+
+atlasRoutes.patch("/entries/:entryId/focus", async (c) => {
+  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "subjectId"));
+  const entryId = requireParam(c, "entryId");
+  let body: { override?: unknown };
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+  if (!("override" in body)) {
+    throw new HTTPException(400, { message: "override required" });
+  }
+  const override = parseFocusOverride(body.override);
+
+  const resolved = await resolveEntry(db, atlas.id, entryId);
+  if (!resolved) throw new HTTPException(404, { message: "Entry not found" });
+  if (resolved.kind === "row" && resolved.row.deleted_at) {
+    throw new HTTPException(409, { message: "Entry is deleted" });
+  }
+
+  const entryKey =
+    resolved.kind === "dataset"
+      ? resolved.entry.key
+      : (resolved.row.origin_key ?? resolved.row.id);
+  await setFocusOverride(db, atlas.id, entryKey, override);
+  await refreshFocusBestEffort(db, c.env, atlas.id);
+
+  const rows = await loadEntryRows(db, atlas.id);
+  const overlays = await toOverlayRows(db, atlas.id, rows);
+  const focus = await loadFocusMap(db, atlas.id);
+  const entries = enrichEntriesWithFocus(
+    overlayAtlas(loadParasiteDataset().entries, overlays),
+    focus,
+  );
+  const view = entries.find((e) => focusEntryKey(e) === entryKey);
+  if (!view) throw new HTTPException(404, { message: "Entry not found" });
   return c.json(view);
 });
 
@@ -619,6 +703,7 @@ atlasRoutes.post("/entries/:entryId/soft-delete", async (c) => {
     await insertOverlayFromDataset(db, atlas.id, resolved.entry, {
       deletedAt: ts,
     });
+    await refreshFocusBestEffort(db, c.env, atlas.id);
     return c.body(null, 204);
   }
   if (resolved.row.deleted_at) {
@@ -630,6 +715,7 @@ atlasRoutes.post("/entries/:entryId/soft-delete", async (c) => {
     )
     .bind(ts, ts, resolved.row.id, atlas.id)
     .run();
+  await refreshFocusBestEffort(db, c.env, atlas.id);
   return c.body(null, 204);
 });
 
@@ -654,6 +740,7 @@ atlasRoutes.post("/entries/:entryId/restore", async (c) => {
       .prepare(`DELETE FROM atlas_entries WHERE id = ? AND atlas_id = ?`)
       .bind(row.id, atlas.id)
       .run();
+    await refreshFocusBestEffort(db, c.env, atlas.id);
     return c.body(null, 204);
   }
 
@@ -664,6 +751,7 @@ atlasRoutes.post("/entries/:entryId/restore", async (c) => {
     )
     .bind(ts, row.id, atlas.id)
     .run();
+  await refreshFocusBestEffort(db, c.env, atlas.id);
   return c.body(null, 204);
 });
 
@@ -705,6 +793,7 @@ atlasRoutes.delete("/entries/:entryId", async (c) => {
     .prepare(`DELETE FROM atlas_entries WHERE id = ? AND atlas_id = ?`)
     .bind(row.id, atlas.id)
     .run();
+  await refreshFocusBestEffort(db, c.env, atlas.id);
   return c.body(null, 204);
 });
 

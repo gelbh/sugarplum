@@ -34,6 +34,7 @@ export function toEntryView(entry: DatasetEntry): AtlasEntryView {
     })),
     editedAt: null,
     tier: null,
+    reason: null,
   };
 }
 
@@ -70,6 +71,7 @@ export function viewFromOverlay(
     images: media.images,
     editedAt: row.edited_at,
     tier: null,
+    reason: null,
   };
 }
 

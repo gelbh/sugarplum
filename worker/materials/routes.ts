@@ -48,6 +48,7 @@ import {
   suggestSourceRole,
   type SourceRole,
 } from "../../src/lib/sourceRole";
+import { refreshAtlasFocusForDeck } from "../atlas/focus";
 
 export { MAX_IMAGE_BYTES } from "./limits";
 
@@ -830,6 +831,8 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
     source_role: sourceRole,
   };
 
+  await refreshAtlasFocusForDeck(db, c.env, deckId);
+
   return c.json({ ...material, jobId }, 201);
 });
 
@@ -1277,6 +1280,8 @@ materialRoutes.delete("/:id", async (c) => {
     }
   }
 
+  await refreshAtlasFocusForDeck(db, c.env, material.deck_id);
+
   return c.body(null, 204);
 });
 
@@ -1319,6 +1324,8 @@ materialRoutes.patch("/:id", async (c) => {
     .prepare("UPDATE materials SET source_role = ? WHERE id = ?")
     .bind(sourceRole, materialId)
     .run();
+
+  await refreshAtlasFocusForDeck(db, c.env, material.deck_id);
 
   return c.json({
     id: material.id,
@@ -1497,6 +1504,8 @@ materialRoutes.post("/:id/complete", async (c) => {
         figureExtractMode,
         topicHints,
       });
+
+  await refreshAtlasFocusForDeck(db, c.env, material.deck_id);
 
   return c.json({
     id: material.id,

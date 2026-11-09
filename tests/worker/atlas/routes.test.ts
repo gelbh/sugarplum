@@ -414,6 +414,178 @@ describe("atlas owned-subject routes", () => {
     expect(deletedBody.entries).toHaveLength(0);
   });
 
+  it("returns null focus tiers when the subject has no materials", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    await createAtlas(env);
+
+    const list = await app.request(
+      "/api/subjects/sub-1/atlas/entries",
+      { headers: authHeaders() },
+      env,
+    );
+    expect(list.status).toBe(200);
+    const body = (await list.json()) as { entries: AtlasEntryView[] };
+    expect(body.entries.length).toBeGreaterThan(0);
+    expect(body.entries.every((e) => e.tier === null && e.reason === null)).toBe(
+      true,
+    );
+  });
+
+  it("exposes Key tier after a subject tutorial material is added", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedDeck({
+      id: "deck-1",
+      user_id: "user-a",
+      title: "Parasitology deck",
+      subject_hint: null,
+      subject_id: "sub-1",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    await createAtlas(env);
+
+    const paste = await app.request(
+      "/api/decks/deck-1/materials/paste",
+      {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          text: "Intro to flukes",
+          filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
+        }),
+      },
+      env,
+    );
+    expect(paste.status).toBe(201);
+
+    const list = await app.request(
+      "/api/subjects/sub-1/atlas/entries",
+      { headers: authHeaders() },
+      env,
+    );
+    expect(list.status).toBe(200);
+    const body = (await list.json()) as { entries: AtlasEntryView[] };
+    const fasciola = body.entries.find((e) => e.id === "fasciola-hepatica");
+    expect(fasciola?.tier).toBe("key");
+    expect(fasciola?.reason).toMatch(/tutorial/i);
+    expect(
+      body.entries.some((e) => e.id !== "fasciola-hepatica" && e.tier === "standard"),
+    ).toBe(true);
+  });
+
+  it("lets a focus override pin win and clear restore the scan", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedDeck({
+      id: "deck-1",
+      user_id: "user-a",
+      title: "Parasitology deck",
+      subject_hint: null,
+      subject_id: "sub-1",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    await createAtlas(env);
+
+    const paste = await app.request(
+      "/api/decks/deck-1/materials/paste",
+      {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          text: "Intro to flukes",
+          filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
+        }),
+      },
+      env,
+    );
+    expect(paste.status).toBe(201);
+
+    const demote = await app.request(
+      "/api/subjects/sub-1/atlas/entries/fasciola-hepatica/focus",
+      {
+        method: "PATCH",
+        headers: authHeaders(true),
+        body: JSON.stringify({ override: "standard" }),
+      },
+      env,
+    );
+    expect(demote.status).toBe(200);
+    const demoted = (await demote.json()) as AtlasEntryView;
+    expect(demoted.tier).toBe("standard");
+    expect(demoted.reason).toBe("Manual demote");
+
+    const clear = await app.request(
+      "/api/subjects/sub-1/atlas/entries/fasciola-hepatica/focus",
+      {
+        method: "PATCH",
+        headers: authHeaders(true),
+        body: JSON.stringify({ override: null }),
+      },
+      env,
+    );
+    expect(clear.status).toBe(200);
+    const restored = (await clear.json()) as AtlasEntryView;
+    expect(restored.tier).toBe("key");
+    expect(restored.reason).toMatch(/tutorial/i);
+  });
+
+  it("rescans when source_role is patched", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedDeck({
+      id: "deck-1",
+      user_id: "user-a",
+      title: "Parasitology deck",
+      subject_hint: null,
+      subject_id: "sub-1",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    await createAtlas(env);
+    env.seedMaterial({
+      id: "mat-1",
+      deck_id: "deck-1",
+      kind: "pdf",
+      r2_key: "materials/deck-1/mat-1.pdf",
+      filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+      source_role: "lecture",
+    });
+
+    const before = await app.request(
+      "/api/subjects/sub-1/atlas/entries",
+      { headers: authHeaders() },
+      env,
+    );
+    const beforeBody = (await before.json()) as { entries: AtlasEntryView[] };
+    expect(
+      beforeBody.entries.find((e) => e.id === "fasciola-hepatica")?.tier,
+    ).toBeNull();
+
+    const patch = await app.request(
+      "/api/materials/mat-1",
+      {
+        method: "PATCH",
+        headers: authHeaders(true),
+        body: JSON.stringify({ source_role: "tutorial" }),
+      },
+      env,
+    );
+    expect(patch.status).toBe(200);
+
+    const after = await app.request(
+      "/api/subjects/sub-1/atlas/entries",
+      { headers: authHeaders() },
+      env,
+    );
+    const afterBody = (await after.json()) as { entries: AtlasEntryView[] };
+    expect(
+      afterBody.entries.find((e) => e.id === "fasciola-hepatica")?.tier,
+    ).toBe("key");
+  });
+
   it("stores a learner ref and concats it with dataset refs", async () => {
     const env = createTestEnv();
     seedOwner(env);
