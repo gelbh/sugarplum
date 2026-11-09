@@ -23,6 +23,8 @@ describe("normalizeParasiteName", () => {
     ["Dicrocoelium dentriticum", "Dicrocoelium dendriticum"],
     ["Dicrocelium dendriticum", "Dicrocoelium dendriticum"],
     ["Trichomonas fetus", "Tritrichomonas foetus"],
+    ["Cullicoides spp.", "Culicoides spp."],
+    ["Sarcoptes scabei", "Sarcoptes scabiei"],
   ])("fixes %s to %s and flags the correction", (raw, canonical) => {
     expect(normalizeParasiteName(raw)).toEqual({ canonical, corrected: true });
   });

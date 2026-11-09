@@ -2,6 +2,7 @@
 const GENUS_FIXES: Record<string, string> = {
   Ancyclostoma: "Ancylostoma",
   Ascarida: "Ascaridia",
+  Cullicoides: "Culicoides",
   Davainae: "Davainea",
   Dicrocelium: "Dicrocoelium",
   Dictylocaulus: "Dictyocaulus",
@@ -22,6 +23,7 @@ const BINOMIAL_FIXES: Record<string, string> = {
   "Dicrocoelium dentriticum": "Dicrocoelium dendriticum",
   "Dictyocaulus filariae": "Dictyocaulus filaria",
   "Dictyocaulus viviparous": "Dictyocaulus viviparus",
+  "Sarcoptes scabei": "Sarcoptes scabiei",
   "Strongylus edentates": "Strongylus edentatus",
   "Teladorsagia circumcinta": "Teladorsagia circumcincta",
   "Trichomonas fetus": "Tritrichomonas foetus",
