@@ -57,25 +57,21 @@ import {
   saveDueCache,
   type DueScopeOpts,
 } from "../study/dueCache";
+import { scopeLibraryBack } from "../study/scopeLibraryBack";
 import { bumpIntroBonus, getIntroBonus } from "../study/introBonus";
 import { clientLocalDay } from "../study/localDay";
 import { enqueuePendingGrade, pendingCardIdSet } from "../study/pendingGrades";
+import LearningSoftWait from "../study/LearningSoftWait";
 import SessionComplete from "../study/SessionComplete";
+import SessionQuietEnd from "../study/SessionQuietEnd";
 import { StudyCardActions } from "../study/StudyCardActions";
-import {
-  earliestPendingDueAt,
-  isShortTermFollowUp,
-  mergeDueLearning,
-  nextLearningWakeAt,
-  upsertPendingLearning,
-  type PendingLearning,
-} from "../study/learningRequeue";
 import {
   addGrade,
   emptyTally,
   gradedTotal,
   sessionSurface,
 } from "../study/sessionTally";
+import { useLearningRequeue } from "../study/useLearningRequeue";
 import {
   occlusionRevealAnswer,
   pickOcclusionRegion,
@@ -143,28 +139,6 @@ function occlusionStudyParts(card: CardDraftView): OcclusionStudyParts {
   };
 }
 
-function scopeLibraryBack(scope: DueScopeOpts): {
-  href: string;
-  label: string;
-} {
-  const deck = Boolean(scope.deckId);
-  const id = (deck ? scope.deckId : scope.subjectId) ?? "";
-  return {
-    href: deck
-      ? `/library/decks/${encodeURIComponent(id)}`
-      : `/library/subjects/${encodeURIComponent(id)}`,
-    label: `Back to ${deck ? "deck" : "subject"}`,
-  };
-}
-
-function formatLearningEta(dueAt: string, now = new Date()): string {
-  const ms = Date.parse(dueAt) - now.getTime();
-  if (!Number.isFinite(ms) || ms <= 0) return "a moment";
-  const mins = Math.max(1, Math.ceil(ms / 60_000));
-  if (mins < 60) return `${mins}m`;
-  return `${Math.ceil(mins / 60)}h`;
-}
-
 /** Study session: reveal answer, grade with FSRS (keys 1-4 or arrows; Space flips). Code-led MUI. */
 export default function StudyPage() {
   const [queue, setQueue] = useState<CardDraftView[]>([]);
@@ -184,11 +158,19 @@ export default function StudyPage() {
   const [queueMeta, setQueueMeta] = useState<StudyQueueMeta | null>(null);
   const [tally, setTally] = useState(emptyTally);
   const [unlocks, setUnlocks] = useState<readonly UnlockView[]>([]);
-  const [pendingLearning, setPendingLearning] = useState<
-    PendingLearning<CardDraftView>[]
-  >([]);
-  const pendingLearningRef = useRef<PendingLearning<CardDraftView>[]>([]);
   const queueRef = useRef<CardDraftView[]>([]);
+  const {
+    pendingLearning,
+    nextLearningDue,
+    parkShortTermFollowUp,
+    advanceAfterGrade,
+  } = useLearningRequeue({
+    queueRef,
+    setQueue,
+    setQueueTotal,
+    setHadCards,
+    setRevealed,
+  });
   const cardDialogOpenRef = useRef(false);
   const onCardDialogOpen = useCallback((open: boolean) => {
     cardDialogOpenRef.current = open;
@@ -404,7 +386,6 @@ export default function StudyPage() {
     gradedTotal(tally),
     pendingLearning.length,
   );
-  const nextLearningDue = earliestPendingDueAt(pendingLearning);
   const mcqMode = isMcqCard(current);
   const occlusionParts = current
     ? occlusionStudyParts(current)
@@ -450,71 +431,6 @@ export default function StudyPage() {
     if (!revealed) return;
     answerFocusRef.current?.focus();
   }, [revealed, current?.id]);
-
-  const commitPendingLearning = useCallback(
-    (next: PendingLearning<CardDraftView>[]) => {
-      pendingLearningRef.current = next;
-      setPendingLearning(next);
-    },
-    [],
-  );
-
-  const applyMergedQueue = useCallback(
-    (
-      merged: {
-        queue: CardDraftView[];
-        pending: PendingLearning<CardDraftView>[];
-      },
-      prevLen: number,
-    ) => {
-      const added = merged.queue.length - prevLen;
-      queueRef.current = merged.queue;
-      setQueue(merged.queue);
-      commitPendingLearning(merged.pending);
-      if (added > 0) {
-        setQueueTotal((total) => total + added);
-        setHadCards(true);
-      }
-    },
-    [commitPendingLearning],
-  );
-
-  const parkShortTermFollowUp = useCallback(
-    (card: CardDraftView, dueIso: string, state: number | undefined) => {
-      const gradedAt = new Date();
-      if (isShortTermFollowUp({ dueIso, gradedAt, state })) {
-        commitPendingLearning(
-          upsertPendingLearning(pendingLearningRef.current, {
-            cardId: card.id,
-            dueAt: dueIso,
-            card,
-          }),
-        );
-      } else {
-        commitPendingLearning(
-          pendingLearningRef.current.filter((p) => p.cardId !== card.id),
-        );
-      }
-    },
-    [commitPendingLearning],
-  );
-
-  const flushDueLearning = useCallback(() => {
-    const prev = queueRef.current;
-    applyMergedQueue(
-      mergeDueLearning(prev, pendingLearningRef.current, new Date()),
-      prev.length,
-    );
-  }, [applyMergedQueue]);
-
-  const advanceAfterGrade = useCallback(() => {
-    const sliced = queueRef.current.slice(1);
-    applyMergedQueue(
-      mergeDueLearning(sliced, pendingLearningRef.current, new Date()),
-      sliced.length,
-    );
-    setRevealed(false);
-  }, [applyMergedQueue]);
 
   const onGrade = useCallback(
     async (rating: StudyRating, fromMcq = false): Promise<boolean> => {
@@ -581,25 +497,6 @@ export default function StudyPage() {
       userId,
     ],
   );
-
-  useEffect(() => {
-    const wake = nextLearningWakeAt(pendingLearning, new Date());
-    if (!wake) return;
-    const delay = Math.max(0, wake.getTime() - Date.now());
-    const id = window.setTimeout(() => {
-      flushDueLearning();
-    }, delay);
-    return () => window.clearTimeout(id);
-  }, [flushDueLearning, pendingLearning]);
-
-  useEffect(() => {
-    const onVis = () => {
-      if (document.visibilityState !== "visible") return;
-      flushDueLearning();
-    };
-    document.addEventListener("visibilitychange", onVis);
-    return () => document.removeEventListener("visibilitychange", onVis);
-  }, [flushDueLearning]);
 
   useEffect(() => {
     function onFullscreenChange() {
@@ -945,55 +842,23 @@ export default function StudyPage() {
                 </Button>
               </Stack>
             ) : surface === "soft_wait" ? (
-              <Stack spacing={1.5} alignItems="stretch">
-                <Typography variant="body1" sx={{ textAlign: "center" }}>
-                  Next learning card in{" "}
-                  {nextLearningDue
-                    ? formatLearningEta(nextLearningDue)
-                    : "a moment"}
-                  .
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ textAlign: "center", opacity: 0.8 }}
-                >
-                  {pendingLearning.length} learning{" "}
-                  {pendingLearning.length === 1 ? "card" : "cards"} coming back.
-                </Typography>
-                <Button variant="contained" onClick={leaveStudy}>
-                  Today
-                </Button>
-              </Stack>
+              <LearningSoftWait
+                pendingCount={pendingLearning.length}
+                nextDueAt={nextLearningDue}
+                onToday={leaveStudy}
+              />
             ) : surface === "quiet" ? (
-              <Stack spacing={1.5} alignItems="stretch">
-                <Typography variant="body1" sx={{ textAlign: "center" }}>
-                  No cards left for now.
-                </Typography>
-                <Button variant="contained" onClick={leaveStudy}>
-                  Today
-                </Button>
-                {canStudyMore ? (
-                  <Button
-                    variant="outlined"
-                    disabled={studyMoreBusy}
-                    onClick={() => void onStudyMore()}
-                  >
-                    {studyMoreBusy ? "Loading…" : "Study more"}
-                  </Button>
-                ) : null}
-                {scopeBack ? (
-                  <Link
-                    href={scopeBack.href}
-                    underline="hover"
-                    onClick={(ev) => {
-                      ev.preventDefault();
-                      openScopeBack(true);
-                    }}
-                  >
-                    {scopeBack.label}
-                  </Link>
-                ) : null}
-              </Stack>
+              <SessionQuietEnd
+                canStudyMore={canStudyMore}
+                studyMoreBusy={studyMoreBusy}
+                onStudyMore={() => void onStudyMore()}
+                onToday={leaveStudy}
+                scopeBack={
+                  scopeBack
+                    ? { ...scopeBack, onClick: () => openScopeBack(true) }
+                    : null
+                }
+              />
             ) : (
               <Box
                 sx={{

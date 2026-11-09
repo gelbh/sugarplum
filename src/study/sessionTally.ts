@@ -24,9 +24,6 @@ export function gradedTotal(tally: GradeTally): number {
 
 export type SessionSurface = "fresh" | "quiet" | "soft_wait" | "complete";
 
-/** @deprecated Prefer sessionSurface; kept as zero-pending alias. */
-export type SessionEndKind = Exclude<SessionSurface, "soft_wait">;
-
 export function sessionSurface(
   hadCards: boolean,
   gradedCount: number,
@@ -36,12 +33,4 @@ export function sessionSurface(
   if (pendingLearningCount > 0) return "soft_wait";
   if (gradedCount > 0) return "complete";
   return "quiet";
-}
-
-export function sessionEndKind(
-  hadCards: boolean,
-  gradedCount: number,
-): SessionEndKind {
-  const surface = sessionSurface(hadCards, gradedCount, 0);
-  return surface === "soft_wait" ? "quiet" : surface;
 }
