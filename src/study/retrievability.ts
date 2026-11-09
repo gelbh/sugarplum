@@ -32,6 +32,7 @@ export function cardFromScheduleRow(row: ScheduleRowLike): Card {
 /**
  * Numeric FSRS retrievability at `now`, or null when unavailable / on error.
  * Uses `get_retrievability(..., false)` from ts-fsrs ^5.
+ * Retention/fuzz prefs do not affect R reads; keep this path free of prefs imports.
  */
 export function retrievability(
   card: Card,

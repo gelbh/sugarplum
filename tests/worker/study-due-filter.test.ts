@@ -328,6 +328,8 @@ describe("GET /api/study/due filter", () => {
       intro_budget: 20,
       review_budget: 2,
       r_floor: 0.5,
+      desired_retention: 0.9,
+      enable_fuzz: 1,
       updated_at: "2026-01-01T00:00:00.000Z",
     });
     const dueNow = new Date().toISOString();

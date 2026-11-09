@@ -1,4 +1,4 @@
-import { createEmptyCard, fsrs, Rating, State, type Grade } from "ts-fsrs";
+import { createEmptyCard, Rating, State, type Grade } from "ts-fsrs";
 import type {
   CardDraftView,
   CardType,
@@ -13,6 +13,7 @@ import type {
   Subject,
 } from "../api/client";
 import { assertSingleCloze } from "../lib/clozeFormat";
+import { fsrsForPrefs } from "../study/fsrsFactory";
 import { clientLocalDay } from "../study/localDay";
 import { type StudyPrefs } from "../study/policyQueue";
 import { clampStudyPrefs, DEFAULT_STUDY_PREFS } from "../study/policyPrefs";
@@ -883,7 +884,9 @@ export function guestReviewCard(
     : createEmptyCard(now);
 
   const next = scheduleColumnsFromCard(
-    fsrs().next(fsrsCard, now, ratingToGrade(rating)).card,
+    fsrsForPrefs(store.studyPrefs)
+      .next(fsrsCard, now, ratingToGrade(rating))
+      .card,
   );
 
   store.schedules[cardId] = {

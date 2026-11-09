@@ -974,6 +974,8 @@ export type StudyPrefs = {
   introBudget: number;
   reviewBudget: number;
   rFloor: number;
+  desiredRetention: number;
+  enableFuzz: boolean;
 };
 
 export function getStudyPrefs() {
