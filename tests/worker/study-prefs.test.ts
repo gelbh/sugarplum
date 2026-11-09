@@ -52,6 +52,8 @@ describe("GET/PUT /api/settings/study", () => {
       introBudget: 20,
       reviewBudget: 200,
       rFloor: 0.8,
+      desiredRetention: 0.9,
+      enableFuzz: true,
     });
   });
 
@@ -80,6 +82,8 @@ describe("GET/PUT /api/settings/study", () => {
       introBudget: 1,
       reviewBudget: 2000,
       rFloor: 0.5,
+      desiredRetention: 0.9,
+      enableFuzz: true,
     });
 
     const getRes = await app.request(
@@ -92,6 +96,40 @@ describe("GET/PUT /api/settings/study", () => {
       introBudget: 1,
       reviewBudget: 2000,
       rFloor: 0.5,
+      desiredRetention: 0.9,
+      enableFuzz: true,
+    });
+  });
+
+  it("PUT clamps desiredRetention and enableFuzz", async () => {
+    const env = createTestEnv();
+    seedUser(env);
+
+    const putRes = await app.request(
+      "/api/settings/study",
+      {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          introBudget: 10,
+          reviewBudget: 100,
+          rFloor: 0.8,
+          desiredRetention: 0.5,
+          enableFuzz: false,
+        }),
+      },
+      env,
+    );
+    expect(putRes.status).toBe(200);
+    expect(await putRes.json()).toEqual({
+      introBudget: 10,
+      reviewBudget: 100,
+      rFloor: 0.8,
+      desiredRetention: 0.7,
+      enableFuzz: false,
     });
   });
 
@@ -120,6 +158,8 @@ describe("GET/PUT /api/settings/study", () => {
       introBudget: 200,
       reviewBudget: 1,
       rFloor: 0.99,
+      desiredRetention: 0.9,
+      enableFuzz: true,
     });
   });
 });

@@ -17,6 +17,7 @@ import Typography from "@mui/material/Typography";
 import { useColorScheme } from "@mui/material/styles";
 import Brightness6Icon from "@mui/icons-material/Brightness6";
 import Switch from "@mui/material/Switch";
+import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import {
   ApiError,
@@ -51,6 +52,8 @@ const DEFAULT_STUDY_FORM: StudyPrefs = {
   introBudget: 20,
   reviewBudget: 200,
   rFloor: 0.8,
+  desiredRetention: 0.9,
+  enableFuzz: true,
 };
 
 type ThemeMode = "system" | "light" | "dark";
@@ -114,6 +117,10 @@ export default function SettingsPage() {
   const [reviewBudgetInput, setReviewBudgetInput] = useState(
     String(DEFAULT_STUDY_FORM.reviewBudget),
   );
+  const [desiredRetentionInput, setDesiredRetentionInput] = useState(
+    String(DEFAULT_STUDY_FORM.desiredRetention),
+  );
+  const [enableFuzz, setEnableFuzz] = useState(DEFAULT_STUDY_FORM.enableFuzz);
   const [googleLinked, setGoogleLinked] = useState(false);
   const [calendarStatus, setCalendarStatus] = useState<CalendarStatus | null>(
     null,
@@ -179,6 +186,8 @@ export default function SettingsPage() {
         setStudyPrefs(prefs);
         setIntroBudgetInput(String(prefs.introBudget));
         setReviewBudgetInput(String(prefs.reviewBudget));
+        setDesiredRetentionInput(String(prefs.desiredRetention));
+        setEnableFuzz(prefs.enableFuzz);
         if (gam) {
           setGamification(gam);
           setDisplayNameInput(gam.displayName ?? "");
@@ -280,13 +289,17 @@ export default function SettingsPage() {
     setStudyNotice(null);
     const introBudget = Number(introBudgetInput);
     const reviewBudget = Number(reviewBudgetInput);
+    const desiredRetention = Number(desiredRetentionInput);
     if (
       !Number.isFinite(introBudget) ||
       !Number.isFinite(reviewBudget) ||
+      !Number.isFinite(desiredRetention) ||
       introBudget < 1 ||
       reviewBudget < 1
     ) {
-      setStudyError("Enter positive numbers for intro and review budgets.");
+      setStudyError(
+        "Enter positive budgets and a retention between 0.70 and 0.97.",
+      );
       return;
     }
     beginStudy();
@@ -295,11 +308,15 @@ export default function SettingsPage() {
         introBudget,
         reviewBudget,
         rFloor: studyPrefs.rFloor,
+        desiredRetention,
+        enableFuzz,
       });
       setStudyPrefs(saved);
       setIntroBudgetInput(String(saved.introBudget));
       setReviewBudgetInput(String(saved.reviewBudget));
-      setStudyNotice("Study budgets saved.");
+      setDesiredRetentionInput(String(saved.desiredRetention));
+      setEnableFuzz(saved.enableFuzz);
+      setStudyNotice("Study settings saved.");
       endStudy();
     } catch (err) {
       setStudyError(
@@ -669,13 +686,39 @@ export default function SettingsPage() {
                 inputProps={{ min: 1, max: 2000, step: 1 }}
                 helperText="Soft review budget (1–2000). Default 200."
               />
+              <TextField
+                label="Desired retention"
+                type="number"
+                name="desiredRetention"
+                value={desiredRetentionInput}
+                onChange={(ev) => setDesiredRetentionInput(ev.target.value)}
+                required
+                fullWidth
+                inputProps={{ min: 0.7, max: 0.97, step: 0.01 }}
+                helperText="Target recall when due (0.70–0.97). Higher means more reviews. Applies on the next grade."
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={enableFuzz}
+                    onChange={(ev) => setEnableFuzz(ev.target.checked)}
+                    name="enableFuzz"
+                  />
+                }
+                label="Spread intervals (fuzz)"
+              />
+              <Typography variant="body2" color="text.secondary">
+                Fuzz slightly varies due dates so same-interval cards do not all
+                land on one day. Existing dues are unchanged until the next
+                grade.
+              </Typography>
               <Button
                 type="submit"
                 variant="contained"
                 color="primary"
                 disabled={studyBusy}
               >
-                {studyBusy ? "Saving…" : "Save study budgets"}
+                {studyBusy ? "Saving…" : "Save study settings"}
               </Button>
             </Stack>
           </Box>

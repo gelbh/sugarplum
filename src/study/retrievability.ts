@@ -1,4 +1,6 @@
-import { fsrs, State, type Card } from "ts-fsrs";
+import { State, type Card } from "ts-fsrs";
+import { fsrsForPrefs, type FsrsPrefs } from "./fsrsFactory";
+import { DEFAULT_STUDY_PREFS } from "./policyPrefs";
 
 export type ScheduleRowLike = {
   due: string;
@@ -36,12 +38,13 @@ export function cardFromScheduleRow(row: ScheduleRowLike): Card {
 export function retrievability(
   card: Card,
   now: Date = new Date(),
+  prefs: FsrsPrefs = DEFAULT_STUDY_PREFS,
 ): number | null {
   // New / never-reviewed: FSRS often reports R=0, which is not a real recall
   // probability for Insights (would score every new card as weakness 2).
   if (card.state === State.New || card.last_review == null) return null;
   try {
-    const r = fsrs().get_retrievability(card, now, false);
+    const r = fsrsForPrefs(prefs).get_retrievability(card, now, false);
     if (typeof r !== "number" || Number.isNaN(r)) return null;
     return r;
   } catch {
