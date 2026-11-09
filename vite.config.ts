@@ -7,7 +7,7 @@ import { patchSqlJsForWorkers } from "./vite/patchSqlJsPlugin";
 
 export default defineConfig({
   optimizeDeps: {
-    exclude: ["@open-spaced-repetition/binding"],
+    exclude: ["@open-spaced-repetition/binding-wasm32-wasip1"],
   },
   plugins: [
     patchSqlJsForWorkers(),

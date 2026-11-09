@@ -115,6 +115,52 @@ describe("FSRS optimize API", () => {
     expect(await statusRes.json()).toMatchObject({ hasCustomW: true });
   });
 
+  it("reset clears custom w but keeps Run-now eligible with enough reviews", async () => {
+    const env = createTestEnv();
+    seedUser(env);
+    for (let i = 0; i < 400; i++) {
+      env.seedReviewLog({
+        id: `rl-reset-${i}`,
+        card_id: "card-a",
+        rating: 3,
+        scheduled_days: 1,
+        elapsed_days: 0,
+        reviewed_at: `2026-01-${String((i % 28) + 1).padStart(2, "0")}T00:00:00.000Z`,
+        state_json: JSON.stringify({ state: 1 }),
+      });
+    }
+    env.seedUserStudyPrefs({
+      user_id: "user-a",
+      intro_budget: 20,
+      review_budget: 200,
+      r_floor: 0.8,
+      desired_retention: 0.9,
+      enable_fuzz: 1,
+      fsrs_w_json: JSON.stringify(fixtureW),
+      fsrs_last_optimized_at: "2026-01-01T00:00:00.000Z",
+      fsrs_optimize_pending: 0,
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const resetRes = await app.request(
+      "/api/settings/study/fsrs-weights/reset",
+      { method: "POST", headers: authHeaders() },
+      env,
+    );
+    expect(resetRes.status).toBe(200);
+
+    const statusRes = await app.request(
+      "/api/settings/study/fsrs-optimize",
+      { headers: authHeaders() },
+      env,
+    );
+    expect(await statusRes.json()).toMatchObject({
+      hasCustomW: false,
+      eligible: true,
+      pending: false,
+    });
+  });
+
   it("PUT weights rejects invalid vectors and accepts 21 finites", async () => {
     const env = createTestEnv();
     seedUser(env);

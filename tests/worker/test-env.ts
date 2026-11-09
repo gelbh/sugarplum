@@ -1243,7 +1243,7 @@ export function createTestEnv(opts?: {
               const p = userStudyPrefs.get(user_id);
               if ((p?.fsrs_optimize_pending ?? 0) === 1) return null;
               const last = p?.fsrs_last_optimized_at ?? null;
-              if (last != null && last !== "" && !(last < cutoff)) return null;
+              if (last != null && last !== "" && !(last <= cutoff)) return null;
               if (cnt < minReviews) return null;
               return { user_id, cnt };
             })
@@ -3544,7 +3544,7 @@ export function createTestEnv(opts?: {
           }
         } else if (
           normalized.startsWith("UPDATE user_study_prefs") &&
-          normalized.includes("fsrs_w_json = ?") &&
+          normalized.includes("fsrs_w_json") &&
           normalized.includes("fsrs_optimize_pending = 0")
         ) {
           // saveFsrsWeights: bind(w_json, last_at, updated_at, user_id)

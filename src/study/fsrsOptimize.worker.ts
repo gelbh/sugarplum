@@ -7,10 +7,14 @@ export type FsrsOptimizeWorkerResponse =
   | { ok: true; w: number[] }
   | { ok: false; error: string };
 
+/**
+ * Threadless wasip1 build (no COOP/COEP). Runs inside this dedicated Worker so
+ * the main thread stays responsive while computeParameters is sync-under-Promise.
+ */
 self.onmessage = async (ev: MessageEvent<FsrsOptimizeWorkerRequest>) => {
   try {
     const { convertCsvToFsrsItems, computeParameters } = await import(
-      "@open-spaced-repetition/binding"
+      "@open-spaced-repetition/binding-wasm32-wasip1"
     );
     const bytes = new TextEncoder().encode(ev.data.csv);
     const items = convertCsvToFsrsItems(

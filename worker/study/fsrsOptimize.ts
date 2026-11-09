@@ -43,12 +43,13 @@ export function isOptimizeDue(
 export async function getFsrsOptimizeStatus(
   db: D1Database,
   userId: string,
-  now: Date = new Date(),
+  _now: Date = new Date(),
 ): Promise<FsrsOptimizeStatus> {
   const prefs = await loadStudyPrefs(db, userId);
   const reviewCount = await countUserReviews(db, userId);
   const lastOptimizedAt = prefs.fsrsLastOptimizedAt ?? null;
-  const eligible = isOptimizeDue(reviewCount, lastOptimizedAt, now);
+  // Run now: enough history. Cron/auto still use isOptimizeDue (30-day gate).
+  const eligible = reviewCount >= FSRS_MIN_REVIEWS;
   return {
     pending: prefs.fsrsOptimizePending === true,
     lastOptimizedAt,
@@ -228,7 +229,7 @@ export async function markOptimizePendingBatch(
        WHERE IFNULL(p.fsrs_optimize_pending, 0) = 0
          AND (
            p.fsrs_last_optimized_at IS NULL
-           OR p.fsrs_last_optimized_at < ?
+           OR p.fsrs_last_optimized_at <= ?
          )
        GROUP BY d.user_id
        HAVING cnt >= ?

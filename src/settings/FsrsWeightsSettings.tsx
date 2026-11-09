@@ -72,8 +72,9 @@ export default function FsrsWeightsSettings() {
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
         Sugarplum retrains FSRS-6 weights from your review history when you have
-        at least {FSRS_MIN_REVIEWS} reviews and about a month has passed.
-        Training runs in the background in this browser after you open Today or
+        at least {FSRS_MIN_REVIEWS} reviews. Auto-retrain waits about a month
+        after the last train or reset; Run now works whenever you meet the
+        review floor. Training runs in this browser after you open Today or
         Settings. Existing dues stay until the next grade.
       </Typography>
       {error ? (
