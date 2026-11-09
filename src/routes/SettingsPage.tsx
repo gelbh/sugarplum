@@ -43,6 +43,7 @@ import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { ankiExportFsrsBlurb } from "../settings/ankiExportFsrsBlurb";
 import { freeGenFaqBody, freeGenIntroBlurb } from "../settings/freeGenFaq";
+import FsrsWeightsSettings from "../settings/FsrsWeightsSettings";
 import {
   ZAI_DEFAULT_TEXT_MODEL,
   ZAI_TEXT_MODEL_OPTIONS,
@@ -720,6 +721,7 @@ export default function SettingsPage() {
               </Button>
             </Stack>
           </Box>
+          {!guest ? <FsrsWeightsSettings /> : null}
         </Paper>
 
         {guest ? (
