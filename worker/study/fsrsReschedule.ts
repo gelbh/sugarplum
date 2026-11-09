@@ -44,10 +44,8 @@ export function replayCardFromLogs(
     const grade = ratingToGrade(row.rating);
     if (grade == null) continue;
     const now = new Date(when);
-    if (card == null) {
-      card = createEmptyCard(now);
-    }
-    card = scheduler.next(card, now, grade).card;
+    const base: Card = card ?? createEmptyCard(now);
+    card = scheduler.next(base, now, grade).card;
   }
   return card;
 }
