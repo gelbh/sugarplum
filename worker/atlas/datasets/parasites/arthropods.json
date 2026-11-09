@@ -1846,6 +1846,16 @@
       ],
       "images": [
         {
+          "id": "hero",
+          "file": "psoroptes-ovis-hero.webp",
+          "role": "adult",
+          "caption": "Psoroptes mite of sheep",
+          "credit": "Alan R Walker",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Psoroptes-communis-ovis.JPG",
+          "isHero": true
+        },
+        {
           "id": "lifecycle",
           "file": "psoroptes-ovis-lifecycle.webp",
           "role": "lifecycle_diagram",
@@ -2302,7 +2312,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "cheyletiella-spp-hero.webp",
+          "role": "adult",
+          "caption": "Cheyletiella sp. (likely C. yasguri) from a dog",
+          "credit": "Joel Mills",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cheyletiella_22.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "chorioptes-bovis",
@@ -3485,7 +3506,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "lucilia-sericata-hero.webp",
+          "role": "adult",
+          "caption": "Adult female (left) and male (right)",
+          "credit": "Charles J. Sharp",
+          "license": "CC BY-SA 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Common_green_bottle_flies_(Lucilia_sericata)_female_left_and_male_B%C3%BCrgerpark.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "hypoderma-bovis",
@@ -4169,7 +4201,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "culicoides-spp-hero.webp",
+          "role": "adult",
+          "caption": "Adult female Culicoides imicola",
+          "credit": "Alan R Walker",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Culicoides-imicola.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "stomoxys-calcitrans",
@@ -4515,7 +4558,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "haematobia-irritans-hero.webp",
+          "role": "adult",
+          "caption": "Adult horn flies",
+          "credit": "Scott Bauer / USDA ARS",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Horn_flies.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "musca-autumnalis",

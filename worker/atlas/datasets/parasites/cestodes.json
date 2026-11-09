@@ -1726,6 +1726,16 @@
       ],
       "images": [
         {
+          "id": "hero",
+          "file": "echinococcus-granulosus-hero.webp",
+          "role": "larva",
+          "caption": "Protoscolex from hydatid cyst",
+          "credit": "CDC / Dr. L.L.A. Moore, Jr",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Echinococcus_granulosus_scolex.jpg",
+          "isHero": true
+        },
+        {
           "id": "lifecycle",
           "file": "echinococcus-granulosus-lifecycle.webp",
           "role": "lifecycle_diagram",
