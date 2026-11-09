@@ -65,6 +65,8 @@ describe("shellBackHref", () => {
     expect(shellBackHref("/today")).toBeNull();
     expect(shellBackHref("/insights")).toBeNull();
     expect(shellBackHref("/library")).toBeNull();
+    expect(shellBackHref("/atlas")).toBeNull();
+    expect(shellBackHref("/atlas/a1")).toBeNull();
     expect(shellBackHref("/settings")).toBeNull();
     expect(shellBackHref("/achievements")).toBeNull();
     expect(shellBackHref("/study")).toBeNull();
@@ -78,16 +80,10 @@ describe("shellBackHref", () => {
     expect(shellBackHref("/admin")).toBeNull();
   });
 
-  it("maps Atlas paths to their parent", () => {
-    expect(shellBackHref("/library/subjects/s1/atlas")).toBe(
-      "/library/subjects/s1",
-    );
-    expect(shellBackHref("/library/subjects/s1/atlas/entry/x")).toBe(
-      "/library/subjects/s1/atlas",
-    );
-    expect(shellBackHref("/library/subjects/s1/atlas/compare/x/y")).toBe(
-      "/library/subjects/s1/atlas",
-    );
+  it("maps Atlas entry and compare paths to the cabinet", () => {
+    expect(shellBackHref("/library/subjects/s1/atlas")).toBeNull();
+    expect(shellBackHref("/atlas/a1/entry/x")).toBe("/atlas/a1");
+    expect(shellBackHref("/atlas/a1/compare/x/y")).toBe("/atlas/a1");
   });
 });
 

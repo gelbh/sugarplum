@@ -1,6 +1,6 @@
 export type AtlasRow = {
   id: string;
-  subject_id: string;
+  user_id: string;
   template_key: string;
   created_at: string;
 };
@@ -91,29 +91,45 @@ export function atlasFirst<T>(
 ): T | null {
   if (
     normalized.startsWith(
-      "SELECT id, subject_id, template_key, created_at FROM atlases WHERE subject_id =",
+      "SELECT id, user_id, template_key, created_at FROM atlases WHERE id =",
     )
   ) {
-    const subjectId = bound[0] as string;
-    for (const row of state.atlases.values()) {
-      if (row.subject_id === subjectId) return row as T;
-    }
-    return null;
+    return (state.atlases.get(bound[0] as string) as T) ?? null;
   }
 
-  if (normalized.startsWith("SELECT id FROM atlases WHERE subject_id =")) {
-    const subjectId = bound[0] as string;
+  if (
+    normalized.startsWith(
+      "SELECT id, user_id, template_key, created_at FROM atlases WHERE user_id =",
+    ) &&
+    normalized.includes("AND template_key =")
+  ) {
+    const [userId, templateKey] = bound as [string, string];
     for (const row of state.atlases.values()) {
-      if (row.subject_id === subjectId) return { id: row.id } as T;
+      if (row.user_id === userId && row.template_key === templateKey) {
+        return row as T;
+      }
     }
     return null;
   }
 
   if (
-    normalized.startsWith("SELECT id, subject_id FROM atlases WHERE id =")
+    normalized.startsWith(
+      "SELECT id FROM atlases WHERE user_id =",
+    ) &&
+    normalized.includes("template_key")
   ) {
+    const [userId] = bound as [string];
+    for (const row of state.atlases.values()) {
+      if (row.user_id === userId && row.template_key === "parasite") {
+        return { id: row.id } as T;
+      }
+    }
+    return null;
+  }
+
+  if (normalized.startsWith("SELECT id, user_id FROM atlases WHERE id =")) {
     const row = state.atlases.get(bound[0] as string);
-    return row ? ({ id: row.id, subject_id: row.subject_id } as T) : null;
+    return row ? ({ id: row.id, user_id: row.user_id } as T) : null;
   }
 
   if (
@@ -156,6 +172,19 @@ export function atlasAll<T>(
   normalized: string,
   bound: unknown[],
 ): { results: T[] } | null {
+  if (
+    normalized.startsWith(
+      "SELECT id, user_id, template_key, created_at FROM atlases WHERE user_id =",
+    ) &&
+    !normalized.includes("AND template_key =")
+  ) {
+    const userId = bound[0] as string;
+    const rows = [...state.atlases.values()]
+      .filter((row) => row.user_id === userId)
+      .sort((a, b) => a.created_at.localeCompare(b.created_at));
+    return { results: rows as T[] };
+  }
+
   if (
     normalized.includes("FROM atlas_entries WHERE atlas_id =") &&
     !normalized.includes("AND id =") &&
@@ -212,21 +241,23 @@ export function atlasRun(
 ): D1Result | null {
   if (
     normalized.startsWith(
-      "INSERT INTO atlases (id, subject_id, template_key, created_at) VALUES",
+      "INSERT INTO atlases (id, user_id, template_key, created_at) VALUES",
     )
   ) {
-    const [id, subject_id, template_key, created_at] = bound as [
+    const [id, user_id, template_key, created_at] = bound as [
       string,
       string,
       string,
       string,
     ];
     for (const row of state.atlases.values()) {
-      if (row.subject_id === subject_id) {
-        throw new Error("UNIQUE constraint failed: atlases.subject_id");
+      if (row.user_id === user_id && row.template_key === template_key) {
+        throw new Error(
+          "UNIQUE constraint failed: atlases.user_id, template_key",
+        );
       }
     }
-    state.atlases.set(id, { id, subject_id, template_key, created_at });
+    state.atlases.set(id, { id, user_id, template_key, created_at });
     return { success: true, meta: { changes: 1 } } as D1Result;
   }
 

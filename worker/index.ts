@@ -59,7 +59,7 @@ app.onError((err, c) => {
 app.route("/api/auth", authRoutes);
 app.route("/api/calendar", calendarRoutes);
 app.route("/api/subjects", subjectRoutes);
-app.route("/api/subjects/:subjectId/atlas", atlasRoutes);
+app.route("/api/atlas", atlasRoutes);
 app.route("/api/covers", coverRoutes);
 app.route("/api/decks", deckRoutes);
 app.route("/api/materials", materialRoutes);

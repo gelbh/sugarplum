@@ -82,7 +82,8 @@ describe("atlasCompareHref", () => {
   it("round-trips encoded keys through matchAtlasPath", () => {
     const href = atlasCompareHref("s 1", "a/b", "c d");
     expect(matchAtlasPath(href)).toEqual({
-      subjectId: "s 1",
+      kind: "atlas",
+      atlasId: "s 1",
       route: { kind: "compare", a: "a/b", b: "c d" },
     });
   });

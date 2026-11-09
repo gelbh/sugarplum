@@ -49,9 +49,9 @@ describe("apiAtlasSource", () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse(200, { entries }));
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(apiAtlasSource.list("sub-1")).resolves.toEqual(entries);
+    await expect(apiAtlasSource.list("atl-1")).resolves.toEqual(entries);
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/subjects/sub-1/atlas/entries",
+      "/api/atlas/atl-1/entries",
       expect.objectContaining({ credentials: "include" }),
     );
   });
@@ -63,33 +63,33 @@ describe("apiAtlasSource", () => {
         jsonResponse(404, { message: "Atlas not found" }),
       ),
     );
-    await expect(getAtlas("sub-1")).resolves.toBeNull();
+    await expect(getAtlas("atl-1")).resolves.toBeNull();
   });
 
   it("getAtlas returns meta when present", async () => {
     const meta = {
       id: "atl-1",
-      subjectId: "sub-1",
+      userId: "user-a",
       templateKey: "parasite",
       createdAt: "2026-01-01T00:00:00.000Z",
     };
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(200, meta)));
-    await expect(getAtlas("sub-1")).resolves.toEqual(meta);
+    await expect(getAtlas("atl-1")).resolves.toEqual(meta);
   });
 
   it("createAtlas POSTs to the atlas collection", async () => {
     const meta = {
       id: "atl-1",
-      subjectId: "sub-1",
+      userId: "user-a",
       templateKey: "parasite",
       createdAt: "2026-01-01T00:00:00.000Z",
     };
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse(201, meta));
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(createAtlas("sub-1")).resolves.toEqual(meta);
+    await expect(createAtlas()).resolves.toEqual(meta);
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/subjects/sub-1/atlas",
+      "/api/atlas",
       expect.objectContaining({
         method: "POST",
         credentials: "include",
@@ -139,23 +139,23 @@ describe("apiAtlasSource", () => {
       .mockResolvedValueOnce(jsonResponse(200, { entries: [] }));
     vi.stubGlobal("fetch", fetchMock);
 
-    await createEntry("sub-1", { canonicalName: "New parasite" });
-    await patchEntry("sub-1", "e1", { commonName: "Nick" });
-    await softDeleteEntry("sub-1", "e1");
-    await restoreEntry("sub-1", "e1");
-    await resetEntry("sub-1", "e1");
-    await purgeDeletedEntry("sub-1", "e1");
-    await expect(listDeletedEntries("sub-1")).resolves.toEqual([]);
+    await createEntry("atl-1", { canonicalName: "New parasite" });
+    await patchEntry("atl-1", "e1", { commonName: "Nick" });
+    await softDeleteEntry("atl-1", "e1");
+    await restoreEntry("atl-1", "e1");
+    await resetEntry("atl-1", "e1");
+    await purgeDeletedEntry("atl-1", "e1");
+    await expect(listDeletedEntries("atl-1")).resolves.toEqual([]);
 
     const urls = fetchMock.mock.calls.map((c) => c[0]);
     expect(urls).toEqual([
-      "/api/subjects/sub-1/atlas/entries",
-      "/api/subjects/sub-1/atlas/entries/e1",
-      "/api/subjects/sub-1/atlas/entries/e1/soft-delete",
-      "/api/subjects/sub-1/atlas/entries/e1/restore",
-      "/api/subjects/sub-1/atlas/entries/e1/reset",
-      "/api/subjects/sub-1/atlas/entries/e1",
-      "/api/subjects/sub-1/atlas/deleted",
+      "/api/atlas/atl-1/entries",
+      "/api/atlas/atl-1/entries/e1",
+      "/api/atlas/atl-1/entries/e1/soft-delete",
+      "/api/atlas/atl-1/entries/e1/restore",
+      "/api/atlas/atl-1/entries/e1/reset",
+      "/api/atlas/atl-1/entries/e1",
+      "/api/atlas/atl-1/deleted",
     ]);
   });
 
@@ -164,6 +164,6 @@ describe("apiAtlasSource", () => {
       "fetch",
       vi.fn().mockResolvedValue(jsonResponse(401, { message: "Unauthorized" })),
     );
-    await expect(apiAtlasSource.list("sub-1")).rejects.toBeInstanceOf(ApiError);
+    await expect(apiAtlasSource.list("atl-1")).rejects.toBeInstanceOf(ApiError);
   });
 });
