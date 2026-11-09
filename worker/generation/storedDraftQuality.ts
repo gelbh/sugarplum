@@ -13,6 +13,29 @@ export type StoredDraftFields = {
   media_keys?: string[] | null;
 };
 
+/** View / serializeCard shape → quality gate fields. */
+export function fieldsForQualityGate(card: {
+  type: string;
+  front: unknown;
+  back: unknown;
+  options?: string[] | null;
+  provenance?: unknown;
+  media_r2_keys?: string[] | null;
+  media_keys?: string[] | null;
+}): StoredDraftFields {
+  return {
+    type: card.type,
+    front: card.front,
+    back:
+      card.type === "mcq" && typeof card.back === "string"
+        ? { answer: card.back, options: card.options ?? [] }
+        : card.back,
+    options: card.options,
+    provenance: card.provenance,
+    media_keys: card.media_keys ?? card.media_r2_keys,
+  };
+}
+
 type TextType = "qa" | "cloze" | "image_label" | "diagram" | "mcq";
 
 const TEXT_TYPES = new Set<string>([
@@ -23,8 +46,8 @@ const TEXT_TYPES = new Set<string>([
   "mcq",
 ]);
 
-function defaultProvenance(excerpt: string) {
-  return { pages: [1] as number[], excerpt: excerpt.slice(0, 240) || "stored" };
+function defaultProvenance() {
+  return { pages: [1] as number[], excerpt: "stored" };
 }
 
 /**
@@ -47,7 +70,7 @@ export function mapStoredDraftToQualityDraft(
       type: "occlusion" as const,
       front: fields.front,
       back: fields.back,
-      provenance: provenance ?? defaultProvenance("occlusion"),
+      provenance: provenance ?? defaultProvenance(),
       ...(fields.media_keys?.length
         ? { media_keys: fields.media_keys }
         : {}),
@@ -89,7 +112,7 @@ export function mapStoredDraftToQualityDraft(
     front: fields.front,
     back,
     ...(options ? { options } : {}),
-    provenance: provenance ?? defaultProvenance(fields.front),
+    provenance: provenance ?? defaultProvenance(),
   };
   const parsed = CardDraftSchema.safeParse(candidate);
   return parsed.success ? parsed.data : null;
@@ -101,14 +124,24 @@ export function isStoredDraftSafe(fields: StoredDraftFields): boolean {
   return filterDraftsByQuality([mapped]).length === 1;
 }
 
+/** Partition with one Layer-1 pass so front-key dedupe applies across the batch. */
 export function partitionStoredDraftsByQuality<T extends StoredDraftFields>(
   rows: T[],
 ): { safe: T[]; unsafe: T[] } {
+  const pairs = rows.map((row) => ({
+    row,
+    mapped: mapStoredDraftToQualityDraft(row),
+  }));
+  const survivors = new Set(
+    filterDraftsByQuality(
+      pairs.flatMap((pair) => (pair.mapped ? [pair.mapped] : [])),
+    ),
+  );
   const safe: T[] = [];
   const unsafe: T[] = [];
-  for (const row of rows) {
-    if (isStoredDraftSafe(row)) safe.push(row);
-    else unsafe.push(row);
+  for (const pair of pairs) {
+    if (pair.mapped && survivors.has(pair.mapped)) safe.push(pair.row);
+    else unsafe.push(pair.row);
   }
   return { safe, unsafe };
 }

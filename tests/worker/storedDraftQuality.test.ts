@@ -107,4 +107,28 @@ describe("mapStoredDraftToQualityDraft", () => {
     expect(safe.map((r) => r.id)).toEqual(["good"]);
     expect(unsafe.map((r) => r.id)).toEqual(["junk"]);
   });
+
+  it("batch partition drops duplicate fronts that solo isStoredDraftSafe would keep", () => {
+    const rows = [
+      {
+        id: "first",
+        type: "qa",
+        front: "What is ATP?",
+        back: "Adenosine triphosphate",
+        provenance: { pages: [1], excerpt: "ATP" },
+      },
+      {
+        id: "dup",
+        type: "qa",
+        front: "What is ATP?",
+        back: "Energy currency of the cell",
+        provenance: { pages: [1], excerpt: "ATP" },
+      },
+    ];
+    expect(isStoredDraftSafe(rows[0]!)).toBe(true);
+    expect(isStoredDraftSafe(rows[1]!)).toBe(true);
+    const { safe, unsafe } = partitionStoredDraftsByQuality(rows);
+    expect(safe.map((r) => r.id)).toEqual(["first"]);
+    expect(unsafe.map((r) => r.id)).toEqual(["dup"]);
+  });
 });

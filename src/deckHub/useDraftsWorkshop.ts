@@ -12,24 +12,10 @@ import {
 } from "../api/client";
 import { cardPatchBody } from "../cards/cardPatchBody";
 import type { DraftEditorChange } from "../components/DraftCardEditor";
-import { isStoredDraftSafe } from "../../worker/generation/storedDraftQuality";
-
-function fieldsFromView(card: CardDraftView) {
-  return {
-    type: card.type,
-    front: card.front,
-    back:
-      card.type === "mcq"
-        ? {
-            answer: typeof card.back === "string" ? card.back : "",
-            options: card.options ?? [],
-          }
-        : card.back,
-    options: card.options,
-    provenance: card.provenance,
-    media_keys: card.media_r2_keys,
-  };
-}
+import {
+  fieldsForQualityGate,
+  isStoredDraftSafe,
+} from "../../worker/generation/storedDraftQuality";
 
 type Args = {
   guest: boolean;
@@ -239,7 +225,7 @@ export function useDraftsWorkshop({
   const primaryJobId = selected?.job_id ?? draftJobs[0]?.id ?? null;
 
   const safePreviewCount = drafts.filter((card) =>
-    isStoredDraftSafe(fieldsFromView(card)),
+    isStoredDraftSafe(fieldsForQualityGate(card)),
   ).length;
   const unsafePreviewCount = Math.max(0, drafts.length - safePreviewCount);
 
@@ -248,7 +234,15 @@ export function useDraftsWorkshop({
     setBusy(true);
     setError(null);
     setNotice(null);
+    let accepted = 0;
+    let failed = 0;
+    let leftUnsafe = 0;
+    let progressed = false;
     try {
+      if (dirty && selected) {
+        await patchCard(selected.id, cardPatchBody(selected));
+        setDirty(false);
+      }
       let jobIds = [
         ...new Set(
           drafts
@@ -259,11 +253,9 @@ export function useDraftsWorkshop({
       if (jobIds.length === 0 && draftJobs[0]) {
         jobIds = [draftJobs[0].id];
       }
-      let accepted = 0;
-      let failed = 0;
-      let leftUnsafe = 0;
       for (const jobId of jobIds) {
         const result = await acceptSafeJobDrafts(jobId);
+        progressed = true;
         accepted += result.accepted;
         failed += result.failed;
         leftUnsafe += result.leftUnsafe;
@@ -278,6 +270,18 @@ export function useDraftsWorkshop({
       if (failed > 0) parts.push(`${failed} failed`);
       setNotice(parts.join(" · "));
     } catch (err) {
+      if (progressed) {
+        try {
+          await load();
+          await onDraftsChanged?.();
+        } catch {
+          /* keep original error */
+        }
+        const parts = [`Accepted ${accepted} safe before error`];
+        if (leftUnsafe > 0) parts.push(`${leftUnsafe} left for review`);
+        if (failed > 0) parts.push(`${failed} failed`);
+        setNotice(parts.join(" · "));
+      }
       setError(
         err instanceof ApiError ? err.message : "Could not accept safe drafts",
       );

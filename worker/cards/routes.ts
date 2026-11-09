@@ -20,16 +20,10 @@ import { recordRegenUsageEvent } from "../generation/usage";
 import { WorkersAiCapacityError } from "../generation/workers-ai";
 import { requireOwnedDeck } from "../materials/routes";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
-import {
-  onCardAccepted,
-  onCardsAccepted,
-} from "../gamification/onStudyEvent";
+import { onCardAccepted } from "../gamification/onStudyEvent";
 import { REJECT_REASONS } from "../../src/lib/rejectReasons";
 import { parseOptionalJsonBody } from "../optional-json";
-import {
-  isStoredDraftSafe,
-  type StoredDraftFields,
-} from "../generation/storedDraftQuality";
+import { acceptOwnedJobDrafts } from "./acceptOwnedJobDrafts";
 
 const STUDY_STRUGGLE_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 
@@ -304,148 +298,36 @@ jobDraftRoutes.post("/:id/drafts/accept-all", async (c) => {
   const userId = await requireUser(c);
   const jobId = c.req.param("id");
   const db = getDb(c.env);
-
-  const job = await db
-    .prepare(
-      `SELECT j.id
-       FROM generation_jobs j
-       INNER JOIN materials m ON m.id = j.material_id
-       INNER JOIN decks d ON d.id = m.deck_id
-       WHERE j.id = ? AND d.user_id = ?`,
-    )
-    .bind(jobId, userId)
-    .first<{ id: string }>();
-  if (!job) throw new HTTPException(404, { message: "Job not found" });
-
-  const { results } = await db
-    .prepare(
-      `SELECT id, type, back_json, status FROM cards
-       WHERE job_id = ? AND status = ? ORDER BY created_at ASC`,
-    )
-    .bind(jobId, "draft")
-    .all<{ id: string; type: string; back_json: string; status: string }>();
-
-  let accepted = 0;
-  let failed = 0;
-  const acceptedCards: { cardId: string; cardType: string }[] = [];
-  for (const row of results ?? []) {
-    try {
-      const outcome = await acceptDraftCard(db, row);
-      if (outcome === "accepted") {
-        accepted += 1;
-        acceptedCards.push({ cardId: row.id, cardType: row.type });
-      } else failed += 1;
-    } catch (err) {
-      // Schedule race or D1 abort: count as failed, keep accepting the rest.
-      console.error("accept-all failed for card", row.id, err);
-      failed += 1;
-    }
-  }
-  const unlocks = await onCardsAccepted(db, userId, acceptedCards);
-
-  const rejectedSiblingCount =
-    accepted > 0 && failed === 0
-      ? await rejectOwnedSiblingDrafts(db, { userId, excludeJobId: jobId })
-      : 0;
-
-  return c.json({ accepted, failed, rejectedSiblingCount, unlocks });
+  const result = await acceptOwnedJobDrafts(db, {
+    userId,
+    jobId,
+    mode: "all",
+    acceptDraftCard,
+    rejectOwnedSiblingDrafts,
+    serializeCard,
+  });
+  return c.json({
+    accepted: result.accepted,
+    failed: result.failed,
+    rejectedSiblingCount: result.rejectedSiblingCount,
+    unlocks: result.unlocks,
+  });
 });
-
-function storedFieldsFromCardRow(row: CardRow): StoredDraftFields {
-  const front = parseJsonField(row.front_json, row.front_json);
-  const provenance = row.provenance_json
-    ? parseJsonField(row.provenance_json, null)
-    : null;
-  const media_keys = row.media_r2_keys_json
-    ? parseJsonField<string[]>(row.media_r2_keys_json, [])
-    : [];
-  if (row.type === "occlusion") {
-    return {
-      type: row.type,
-      front,
-      back: parseJsonField(row.back_json, row.back_json),
-      provenance,
-      media_keys,
-    };
-  }
-  const { back, options } = decodeStoredBack(row.type, row.back_json);
-  return {
-    type: row.type,
-    front,
-    back:
-      row.type === "mcq"
-        ? { answer: back, options: options ?? [] }
-        : back,
-    options,
-    provenance,
-    media_keys,
-  };
-}
 
 /** Accept only drafts that still pass Layer-1 quality when mapped from storage. */
 jobDraftRoutes.post("/:id/drafts/accept-safe", async (c) => {
   const userId = await requireUser(c);
   const jobId = c.req.param("id");
   const db = getDb(c.env);
-
-  const job = await db
-    .prepare(
-      `SELECT j.id
-       FROM generation_jobs j
-       INNER JOIN materials m ON m.id = j.material_id
-       INNER JOIN decks d ON d.id = m.deck_id
-       WHERE j.id = ? AND d.user_id = ?`,
-    )
-    .bind(jobId, userId)
-    .first<{ id: string }>();
-  if (!job) throw new HTTPException(404, { message: "Job not found" });
-
-  const { results } = await db
-    .prepare(
-      `SELECT id, deck_id, job_id, type, front_json, back_json,
-              media_r2_keys_json, provenance_json, status, created_at, updated_at
-       FROM cards
-       WHERE job_id = ? AND status = ? ORDER BY created_at ASC`,
-    )
-    .bind(jobId, "draft")
-    .all<CardRow>();
-
-  const rows = results ?? [];
-  let accepted = 0;
-  let failed = 0;
-  let leftUnsafe = 0;
-  const acceptedCards: { cardId: string; cardType: string }[] = [];
-
-  for (const row of rows) {
-    if (!isStoredDraftSafe(storedFieldsFromCardRow(row))) {
-      leftUnsafe += 1;
-      continue;
-    }
-    try {
-      const outcome = await acceptDraftCard(db, row);
-      if (outcome === "accepted") {
-        accepted += 1;
-        acceptedCards.push({ cardId: row.id, cardType: row.type });
-      } else failed += 1;
-    } catch (err) {
-      console.error("accept-safe failed for card", row.id, err);
-      failed += 1;
-    }
-  }
-
-  const unlocks = await onCardsAccepted(db, userId, acceptedCards);
-  const rejectedSiblingCount =
-    accepted > 0 && failed === 0 && leftUnsafe === 0
-      ? await rejectOwnedSiblingDrafts(db, { userId, excludeJobId: jobId })
-      : 0;
-
-  return c.json({
-    accepted,
-    failed,
-    leftUnsafe,
-    rejectedSiblingCount,
-    unlocks,
+  const result = await acceptOwnedJobDrafts(db, {
+    userId,
+    jobId,
+    mode: "safe",
+    acceptDraftCard,
+    rejectOwnedSiblingDrafts,
+    serializeCard,
   });
+  return c.json(result);
 });
 
 cardRoutes.patch("/:id", async (c) => {
