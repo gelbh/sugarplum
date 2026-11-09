@@ -38,7 +38,6 @@ export type AtlasEntryView = {
   editedAt: string | null;
   tier: AtlasTier | null;
   reason: string | null;
-  /** Material ids that drove the Focus scan; empty when unscanned or override. */
   focusMaterialIds: string[];
 };
 

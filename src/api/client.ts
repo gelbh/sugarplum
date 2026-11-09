@@ -414,7 +414,6 @@ export type Material = {
   page_count: number | null;
   status: string;
   created_at: string;
-  /** Present after migration 0025; treat missing as lecture. */
   source_role?: SourceRole;
 };
 

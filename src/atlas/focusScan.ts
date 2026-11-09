@@ -12,7 +12,6 @@ export type FocusMaterial = {
   id: string;
   filename: string | null;
   sourceRole: SourceRole;
-  /** Extracted pages already loaded by the caller (OCR sidecar / paste). */
   pages: { page: number; text: string }[];
 };
 
@@ -30,10 +29,6 @@ export type FocusScanResult = {
   materialIds: string[];
 };
 
-/**
- * Pure Focus scan for one Atlas entry against a subject's materials.
- * Callers re-run on material add/remove and entry name/alias changes.
- */
 export function scanFocus(
   entry: FocusEntry,
   materials: FocusMaterial[],

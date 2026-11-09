@@ -102,7 +102,6 @@ export type RailSection = {
   entries: AtlasEntryView[];
 };
 
-/** Key → Frequent → Standard → Unscanned, each sorted by name. Omits empty. */
 export function focusGroupRows(entries: AtlasEntryView[]): RailSection[] {
   const tiers = TIER_ORDER.map((tier) => ({
     heading: TIER_LABELS[tier],

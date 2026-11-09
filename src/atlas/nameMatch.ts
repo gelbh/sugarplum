@@ -1,4 +1,3 @@
-/** Normalize for case-insensitive, whitespace-collapsed substring checks. */
 export const searchable = (s: string) =>
   s.toLowerCase().replace(/\s+/g, " ").trim();
 
@@ -16,10 +15,8 @@ export type NameMatchEntry = {
   aliases: string[];
 };
 
-/** Collapse `_` / `-` runs the same way filenames are normalized for matching. */
 const collapseSeparators = (s: string) => s.replace(/[_-]+/g, " ");
 
-/** Searchable name forms for an Atlas entry (canonical, common, aliases, genus-initial). */
 export function entryNameForms(entry: NameMatchEntry): string[] {
   const names = [entry.canonicalName, entry.commonName, ...entry.aliases]
     .filter((n): n is string => n !== null)
@@ -27,7 +24,6 @@ export function entryNameForms(entry: NameMatchEntry): string[] {
   return [...names, ...genusInitialForms(entry.canonicalName)];
 }
 
-/** True when haystack contains any entry name form (case-insensitive). */
 export function textMentionsEntry(
   haystack: string,
   forms: readonly string[],

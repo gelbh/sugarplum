@@ -74,7 +74,6 @@ export function focusEntryKey(entry: {
   return entry.originKey ?? entry.id;
 }
 
-/** Same wording as scanFocus manual override. */
 export function overrideFocusView(override: AtlasTier): {
   tier: AtlasTier;
   reason: string;
@@ -232,10 +231,6 @@ async function loadMergedEntries(
   return overlayAtlas(loadParasiteDataset().entries, overlays);
 }
 
-/**
- * Recompute Focus tiers for an Atlas from subject-linked materials.
- * Prefer calling on material/entry writes; GET reads the cached table.
- */
 export async function refreshAtlasFocus(
   db: D1Database,
   env: Env,
@@ -339,7 +334,6 @@ export async function refreshAtlasFocus(
   }
 }
 
-/** Best-effort rescan when a deck's subject may have an Atlas. */
 export async function refreshAtlasFocusForDeck(
   db: D1Database,
   env: Env,
@@ -353,7 +347,6 @@ export async function refreshAtlasFocusForDeck(
   await refreshFocusBestEffort(db, env, { subjectId: deck.subject_id });
 }
 
-/** Swallow refresh failures so material/entry writes still succeed. */
 export async function refreshFocusBestEffort(
   db: D1Database,
   env: Env,
@@ -366,10 +359,6 @@ export async function refreshFocusBestEffort(
   }
 }
 
-/**
- * Enrich entries with cached Focus; if the cache is empty but the subject has
- * ready scannable materials, refresh once then reload.
- */
 export async function listEntriesWithFocus(
   db: D1Database,
   env: Env,

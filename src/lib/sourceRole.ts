@@ -23,22 +23,17 @@ export function isSourceRole(value: unknown): value is SourceRole {
   );
 }
 
-/** Match `needle` as a filename token (non-alnum boundaries). */
 function hasToken(haystack: string, needle: string): boolean {
   const re = new RegExp(`(?:^|[^a-z0-9])${needle}(?:[^a-z0-9]|$)`, "i");
   return re.test(haystack);
 }
 
-/** Match a token that starts with `prefix` (e.g. note → notes). */
 function hasTokenPrefix(haystack: string, prefix: string): boolean {
   const re = new RegExp(`(?:^|[^a-z0-9])${prefix}`, "i");
   return re.test(haystack);
 }
 
-/**
- * Suggest a material source_role from a filename.
- * Case-insensitive; first hit wins (past_paper → tutorial → practical → notes → lecture).
- */
+/** First hit wins: past_paper → tutorial → practical → notes → lecture. */
 export function suggestSourceRole(
   filename: string | null | undefined,
 ): SourceRole {
