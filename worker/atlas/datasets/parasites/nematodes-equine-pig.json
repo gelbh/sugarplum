@@ -1,0 +1,2677 @@
+{
+  "group": "nematode",
+  "entries": [
+    {
+      "key": "parascaris-equorum",
+      "canonicalName": "Parascaris equorum",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Ascaridida",
+        "family": "Ascarididae",
+        "group": "nematode",
+        "definitiveHosts": ["equid"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["adult"],
+        "distribution": "Worldwide in horses and other equids; common in foals and old horses",
+        "zoonotic": "no",
+        "significance": "Heavy burdens stunt growth in young horses; masses of adults can block or perforate the gut, sometimes right after worming.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 70,
+          "max": 70
+        },
+        "lifecycleStages": [
+          {
+            "name": "larvated egg",
+            "location": "faeces and the surrounding environment; an L2 forms inside the egg",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 21,
+              "max": 21
+            }
+          },
+          {
+            "name": "migrating larva",
+            "location": "gut wall, portal veins, liver, heart and lungs, then coughed up and swallowed (tracheal migration)",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "small intestine",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Parascaris equorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/parascaris-equorum.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Parascaris equorum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6256/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Parascaris equorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/parascaris-equorum.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Parascaris equorum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6256/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Parascaris equorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/parascaris-equorum.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Parascaris equorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/parascaris-equorum.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Parascaris equorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/parascaris-equorum.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Parascaris equorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/parascaris-equorum.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Parascaris equorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/parascaris-equorum.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Parascaris equorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/parascaris-equorum.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Parascaris equorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/parascaris-equorum.php",
+          "note": "Course states PPP 10-16 weeks; reference gives about 10 weeks."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Parascaris equorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/parascaris-equorum.php",
+          "note": "Course states about 2 weeks for the egg to become infective; reference gives about 3 weeks."
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Parascaris equorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/parascaris-equorum.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "strongyloides-westeri",
+      "canonicalName": "Strongyloides westeri",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Rhabditida",
+        "family": "Strongyloididae",
+        "group": "nematode",
+        "definitiveHosts": ["equid"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["adult"],
+        "distribution": "Worldwide in equids; commonest in warm, moist regions",
+        "zoonotic": "no",
+        "significance": "Mainly a problem of suckling foals, which pick it up from the milk and may get diarrhoea and thrive poorly.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 10,
+          "max": 14
+        },
+        "lifecycleStages": [
+          {
+            "name": "larvated egg",
+            "location": "passed in faeces; hatches in the environment",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L1",
+            "location": "free in the environment; becomes L3 directly or via free-living adults",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "environment; infective by skin penetration or ingestion",
+            "hostRole": "environment"
+          },
+          {
+            "name": "migrating L3",
+            "location": "through liver and lungs or body tissues; larvae can reach the milk of lactating mares",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "small intestine mucosa (parasitic females only)",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "larvated egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Strongyloides westeri",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-westeri.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Strongyloides westeri",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/174724/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Strongyloides westeri",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-westeri.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Strongyloides westeri",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/174724/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Strongyloides westeri",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-westeri.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Strongyloides westeri",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-westeri.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Strongyloides westeri",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-westeri.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Strongyloides westeri",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-westeri.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Strongyloides westeri",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-westeri.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Strongyloides westeri",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-westeri.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Strongyloides westeri",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-westeri.php",
+          "note": "Course states PPP 1-2 weeks; reference gives 10-14 days."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Strongyloides westeri",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-westeri.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Strongyloides westeri",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-westeri.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "cylicostephanus-longibursatus",
+      "canonicalName": "Cylicostephanus longibursatus",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Strongylidae",
+        "group": "nematode",
+        "definitiveHosts": ["equid"],
+        "majorOrgan": "large intestine",
+        "onHostStages": ["adult", "encysted L3"],
+        "distribution": "Worldwide in horses and other equids",
+        "zoonotic": "no",
+        "significance": "Arrested larvae in the gut wall can emerge together, causing larval cyathostominosis: diarrhoea, weight loss and sometimes death.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 60,
+          "max": 90
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces; hatches to a larva in the environment",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "pasture; infective stage reached from about 7 days after hatching",
+            "hostRole": "environment"
+          },
+          {
+            "name": "encysted L3",
+            "location": "large intestine mucosa; may stay arrested for long periods",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "larva",
+            "location": "emerges from the mucosa into the large intestine lumen",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "large intestine lumen",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Cyathostomins",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cyathostomins.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Lyons et al. 2011, Parasitol Res: observations on development of natural infection and species composition of small strongyles in young equids in Kentucky",
+          "url": "https://link.springer.com/article/10.1007/s00436-011-2460-y",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Cylicostephanus longibursatus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/71466/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Cyathostomins",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cyathostomins.php",
+          "note": "Course lists the superfamily Strongyloidea in the order column; reference gives the order Strongylida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Cylicostephanus longibursatus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/71466/",
+          "note": "Course lists the subfamily Cyathostominae; reference gives the family Strongylidae."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Cyathostomins",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cyathostomins.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Cyathostomins",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cyathostomins.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "Lyons et al. 2011, Parasitol Res: observations on development of natural infection and species composition of small strongyles in young equids in Kentucky",
+          "url": "https://link.springer.com/article/10.1007/s00436-011-2460-y",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Cyathostomins",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cyathostomins.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Cyathostomins",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cyathostomins.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Cyathostomins",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cyathostomins.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Cyathostomins",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cyathostomins.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Cyathostomins",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cyathostomins.php",
+          "note": "Course states PPP 1.5-3 months; reference gives 2-3 months."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Cyathostomins",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cyathostomins.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Cyathostomins",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cyathostomins.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "strongylus-equinus",
+      "canonicalName": "Strongylus equinus",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Strongylidae",
+        "group": "nematode",
+        "definitiveHosts": ["equid"],
+        "majorOrgan": "large intestine",
+        "onHostStages": ["adult", "migrating larva"],
+        "distribution": "Worldwide in horses and other equids",
+        "zoonotic": "no",
+        "significance": "Rarely causes signs; problems come mostly from larvae straying to odd sites, usually found by chance at surgery or post-mortem.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 240,
+          "max": 270
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces; hatches to an L1 in the environment",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "pasture; infective stage reached in about a week",
+            "hostRole": "environment"
+          },
+          {
+            "name": "migrating larva",
+            "location": "gut wall, across the peritoneal cavity to the liver (weeks), then hepatic ligament and pancreas to the caecum",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "large intestine",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Strongylus equinus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-equinus.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Strongylus equinus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/40347/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Strongylus equinus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-equinus.php",
+          "note": "Course lists the superfamily Strongyloidea in the order column; reference gives the order Strongylida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Strongylus equinus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/40347/",
+          "note": "Course lists the subfamily Strongylinae; reference gives the family Strongylidae."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Strongylus equinus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-equinus.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Strongylus equinus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-equinus.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Strongylus equinus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-equinus.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Strongylus equinus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-equinus.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Strongylus equinus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-equinus.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Strongylus equinus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-equinus.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Strongylus equinus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-equinus.php",
+          "note": "Course states PPP 6-18 months; reference gives 8-9 months."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Strongylus equinus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-equinus.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Strongylus equinus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-equinus.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "strongylus-edentatus",
+      "canonicalName": "Strongylus edentatus",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": ["Stongylus edentates"],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Strongylidae",
+        "group": "nematode",
+        "definitiveHosts": ["equid"],
+        "majorOrgan": "large intestine",
+        "onHostStages": ["adult", "migrating larva"],
+        "distribution": "Worldwide in horses and other equids",
+        "zoonotic": "no",
+        "significance": "Rarely clinical; migrating larvae leave haemorrhagic gut nodules and may stray to sites such as a cryptorchid testis.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 300,
+          "max": 360
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces; hatches to an L1 in the environment",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "pasture; infective stage reached in about a week",
+            "hostRole": "environment"
+          },
+          {
+            "name": "migrating larva",
+            "location": "gut wall, portal veins to the liver (weeks), then subperitoneal connective tissue and mesentery back to the large intestine",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "large intestine",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Strongylus edentatus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-edentatus.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Strongylus edentatus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/40346/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Strongylus edentatus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-edentatus.php",
+          "note": "Course lists the superfamily Strongyloidea in the order column; reference gives the order Strongylida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Strongylus edentatus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/40346/",
+          "note": "Course lists the subfamily Strongylinae; reference gives the family Strongylidae."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Strongylus edentatus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-edentatus.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Strongylus edentatus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-edentatus.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Strongylus edentatus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-edentatus.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Strongylus edentatus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-edentatus.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Strongylus edentatus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-edentatus.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Strongylus edentatus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-edentatus.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Strongylus edentatus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-edentatus.php",
+          "note": "Course states PPP 6-18 months; reference gives 10-12 months."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Strongylus edentatus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-edentatus.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Strongylus edentatus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-edentatus.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "strongylus-vulgaris",
+      "canonicalName": "Strongylus vulgaris",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": ["Stongylus vulgaris"],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Strongylidae",
+        "group": "nematode",
+        "definitiveHosts": ["equid"],
+        "majorOrgan": "large intestine",
+        "onHostStages": ["adult", "migrating larva"],
+        "distribution": "Worldwide in horses and other equids; may be declining",
+        "zoonotic": "no",
+        "significance": "Larvae cause verminous arteritis; thrombi can compromise gut blood supply and cause colic, though its role in colic may be overrated.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 180,
+          "max": 180
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces; hatches to an L1 in the environment",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "pasture; infective stage reached in about a week",
+            "hostRole": "environment"
+          },
+          {
+            "name": "migrating larva",
+            "location": "gut wall, then cranial mesenteric artery up to its root (verminous arteritis), returning in the artery to the gut",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "large intestine",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Strongylus vulgaris",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-vulgaris.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Strongylus vulgaris",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/40348/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Strongylus vulgaris",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-vulgaris.php",
+          "note": "Course lists the superfamily Strongyloidea in the order column; reference gives the order Strongylida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Strongylus vulgaris",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/40348/",
+          "note": "Course lists the subfamily Strongylinae; reference gives the family Strongylidae."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Strongylus vulgaris",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-vulgaris.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Strongylus vulgaris",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-vulgaris.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Strongylus vulgaris",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-vulgaris.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Strongylus vulgaris",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-vulgaris.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Strongylus vulgaris",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-vulgaris.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Strongylus vulgaris",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-vulgaris.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Strongylus vulgaris",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-vulgaris.php",
+          "note": "Course states PPP 6.5-9 months; reference gives about 6 months."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Strongylus vulgaris",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-vulgaris.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Strongylus vulgaris",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongylus-vulgaris.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "oxyuris-equi",
+      "canonicalName": "Oxyuris equi",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Oxyurida",
+        "family": "Oxyuridae",
+        "group": "nematode",
+        "definitiveHosts": ["equid"],
+        "majorOrgan": "large intestine",
+        "onHostStages": ["adult"],
+        "distribution": "Worldwide in horses and other equids; thrives in dirty, crowded conditions",
+        "zoonotic": "no",
+        "significance": "Females laying eggs around the anus cause intense itching, so horses rub the tail head; many infected horses show no signs.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 150,
+          "max": 150
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "glued in clumps to perianal skin, then dropping to the ground",
+            "hostRole": "environment"
+          },
+          {
+            "name": "larvated egg",
+            "location": "environment, bedding, feed and water; infective L3 forms inside the egg",
+            "hostRole": "environment"
+          },
+          {
+            "name": "larva",
+            "location": "hatches in small intestine, then migrates through the large intestine mucosa",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "large intestine; mated females move to the rectum to lay eggs",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "perianal swab",
+            "sample": "perianal skin"
+          },
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Oxyuris equi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oxyuris-equi.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Oxyuris equi",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/132389/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Oxyuris equi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oxyuris-equi.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Oxyuris equi",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/132389/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Oxyuris equi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oxyuris-equi.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Oxyuris equi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oxyuris-equi.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Oxyuris equi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oxyuris-equi.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Oxyuris equi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oxyuris-equi.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Oxyuris equi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oxyuris-equi.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Oxyuris equi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oxyuris-equi.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Oxyuris equi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oxyuris-equi.php",
+          "note": "Course states PPP 4.5 months; reference gives about 5 months."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Oxyuris equi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oxyuris-equi.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Oxyuris equi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oxyuris-equi.php",
+          "note": "Course also lists the tape strip test; cited references do not."
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "habronema-spp",
+      "canonicalName": "Habronema spp.",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Spirurida",
+        "family": "Habronematidae",
+        "group": "nematode",
+        "definitiveHosts": ["equid"],
+        "intermediateHosts": ["Musca domestica", "Stomoxys calcitrans"],
+        "majorOrgan": "stomach",
+        "onHostStages": ["adult", "L3"],
+        "distribution": "Worldwide, mainly tropical and subtropical; also present in temperate regions",
+        "zoonotic": "no",
+        "significance": "Adults in the stomach are usually harmless; larvae in wounds cause granulomatous cutaneous lesions that heal slowly.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "larvated egg",
+            "location": "passed in faeces; may hatch there or during gut transit",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L1",
+            "location": "ingested by dung-feeding fly larvae",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "L3",
+            "location": "inside the fly; deposited around the horse's lips or on wounds",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "adult",
+            "location": "stomach: mucosal surface and gastric glands",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "L3 (aberrant)",
+            "location": "skin wounds, eyes or other mucosae; does not mature",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "larvated egg",
+        "diagnosticTests": [
+          {
+            "name": "gastric lavage",
+            "sample": "gastric fluid"
+          },
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "PCR",
+            "sample": "skin"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Habronema species and Draschia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/habronema-species-and-draschia-species.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Barlaam et al. 2020, Front Vet Sci 7:358: habronematidosis in equids",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7347746/",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Habronema (family Habronematidae)",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/227890/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "Barlaam et al. 2020, Front Vet Sci 7:358: habronematidosis in equids",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7347746/",
+          "note": "Course lists the suborder Spirurina in the order column; reference gives the order Spirurida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Habronematidae",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/227889/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Habronema species and Draschia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/habronema-species-and-draschia-species.php",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "Barlaam et al. 2020, Front Vet Sci 7:358: habronematidosis in equids",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7347746/",
+          "note": "Course states Haematobia flies are intermediate hosts; reference gives them only as a suspected vector."
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "WCVM Learn About Parasites: Habronema species and Draschia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/habronema-species-and-draschia-species.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Habronema species and Draschia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/habronema-species-and-draschia-species.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "Barlaam et al. 2020, Front Vet Sci 7:358: habronematidosis in equids",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7347746/",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Habronema species and Draschia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/habronema-species-and-draschia-species.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Barlaam et al. 2020, Front Vet Sci 7:358: habronematidosis in equids",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7347746/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Habronema species and Draschia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/habronema-species-and-draschia-species.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Habronema species and Draschia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/habronema-species-and-draschia-species.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Habronema species and Draschia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/habronema-species-and-draschia-species.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Barlaam et al. 2020, Front Vet Sci 7:358: habronematidosis in equids",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7347746/",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Habronema species and Draschia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/habronema-species-and-draschia-species.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Habronema species and Draschia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/habronema-species-and-draschia-species.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Barlaam et al. 2020, Front Vet Sci 7:358: habronematidosis in equids",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7347746/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "draschia-megastoma",
+      "canonicalName": "Draschia megastoma",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Spirurida",
+        "family": "Habronematidae",
+        "group": "nematode",
+        "definitiveHosts": ["equid"],
+        "intermediateHosts": ["Stomoxys calcitrans"],
+        "majorOrgan": "stomach",
+        "onHostStages": ["adult"],
+        "distribution": "Worldwide but uncommon; frequent in the USA and Australia",
+        "zoonotic": "no",
+        "significance": "Adults form large fibrous nodules in the stomach wall that can hinder stomach movement or the pyloric opening.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "larvated egg",
+            "location": "passed in faeces; hatches there or during gut transit",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L1",
+            "location": "hatched larva swallowed by a fly, often the stable fly",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "L3",
+            "location": "forms after two moults inside the fly; released around the horse's lips",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "adult",
+            "location": "fibrous nodules in the stomach wall beneath the mucosa",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "larvated egg",
+        "diagnosticTests": [
+          {
+            "name": "gastric lavage",
+            "sample": "gastric fluid"
+          },
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Habronema species and Draschia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/habronema-species-and-draschia-species.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Barlaam et al. 2020, Front Vet Sci 7:358: habronematidosis in equids",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7347746/",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Habronema (family Habronematidae)",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/227890/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "Barlaam et al. 2020, Front Vet Sci 7:358: habronematidosis in equids",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7347746/",
+          "note": "Course lists the suborder Spirurina in the order column; reference gives the order Spirurida."
+        },
+        {
+          "field": "family",
+          "citation": "Barlaam et al. 2020, Front Vet Sci 7:358: habronematidosis in equids",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7347746/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Habronema species and Draschia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/habronema-species-and-draschia-species.php",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "WCVM Learn About Parasites: Habronema species and Draschia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/habronema-species-and-draschia-species.php",
+          "note": "Course lists Musca, Stomoxys and Haematobia flies; the reference names the stable fly as the usual intermediate host for both Habronema and Draschia."
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Habronema species and Draschia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/habronema-species-and-draschia-species.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Barlaam et al. 2020, Front Vet Sci 7:358: habronematidosis in equids",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7347746/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Habronema species and Draschia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/habronema-species-and-draschia-species.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Barlaam et al. 2020, Front Vet Sci 7:358: habronematidosis in equids",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7347746/",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Habronema species and Draschia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/habronema-species-and-draschia-species.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Habronema species and Draschia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/habronema-species-and-draschia-species.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Barlaam et al. 2020, Front Vet Sci 7:358: habronematidosis in equids",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7347746/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Habronema species and Draschia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/habronema-species-and-draschia-species.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Barlaam et al. 2020, Front Vet Sci 7:358: habronematidosis in equids",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7347746/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "parafilaria-multipapillosa",
+      "canonicalName": "Parafilaria multipapillosa",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Spirurida",
+        "family": "Filariidae",
+        "group": "nematode",
+        "definitiveHosts": ["equid"],
+        "intermediateHosts": ["Haematobia"],
+        "vectorRole": "Horn flies are thought to carry the larvae between horses.",
+        "majorOrgan": "skin",
+        "onHostStages": ["adult"],
+        "distribution": "Eurasia, Africa and South America; common in eastern Europe",
+        "significance": "Seasonal bleeding skin nodules on the head and forequarters; unsightly and can hinder harness, but usually of little consequence.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "laid in blood oozing from a bleeding skin nodule",
+            "hostRole": "environment"
+          },
+          {
+            "name": "larva",
+            "location": "develops in the horn fly",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "adult",
+            "location": "subcutaneous tissue, forming skin nodules",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "exudate sediment microscopy",
+            "sample": "exudate"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Parafilaria infection in animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/helminths-of-the-skin/parafilaria-infection-in-animals",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Solismaa et al. 2008, Acta Vet Scand 50:20: filarioid nematodes in cattle, sheep and horses in Finland",
+          "url": "https://actavetscand.biomedcentral.com/articles/10.1186/1751-0147-50-20",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Parafilaria (family Filariidae)",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/1562943/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Onchocerca cervicalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/onchocerca-cervicalis.php",
+          "note": "Course lists the suborder Spirurina in the order column; reference gives the order Spirurida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Parafilaria (family Filariidae)",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/1562943/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "Solismaa et al. 2008, Acta Vet Scand 50:20: filarioid nematodes in cattle, sheep and horses in Finland",
+          "url": "https://actavetscand.biomedcentral.com/articles/10.1186/1751-0147-50-20",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Parafilaria infection in animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/helminths-of-the-skin/parafilaria-infection-in-animals",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "MSD Veterinary Manual: Parafilaria infection in animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/helminths-of-the-skin/parafilaria-infection-in-animals",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "MSD Veterinary Manual: Parafilaria infection in animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/helminths-of-the-skin/parafilaria-infection-in-animals",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Parafilaria infection in animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/helminths-of-the-skin/parafilaria-infection-in-animals",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "Solismaa et al. 2008, Acta Vet Scand 50:20: filarioid nematodes in cattle, sheep and horses in Finland",
+          "url": "https://actavetscand.biomedcentral.com/articles/10.1186/1751-0147-50-20",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Solismaa et al. 2008, Acta Vet Scand 50:20: filarioid nematodes in cattle, sheep and horses in Finland",
+          "url": "https://actavetscand.biomedcentral.com/articles/10.1186/1751-0147-50-20",
+          "note": "Course states North America, Asia and Eastern Europe; reference gives Eurasia, Africa and South America."
+        },
+        {
+          "field": "significance",
+          "citation": "MSD Veterinary Manual: Parafilaria infection in animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/helminths-of-the-skin/parafilaria-infection-in-animals",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "MSD Veterinary Manual: Parafilaria infection in animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/helminths-of-the-skin/parafilaria-infection-in-animals",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Parafilaria infection in animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/helminths-of-the-skin/parafilaria-infection-in-animals",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Parafilaria infection in animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/helminths-of-the-skin/parafilaria-infection-in-animals",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "onchocerca-cervicalis",
+      "canonicalName": "Onchocerca cervicalis",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Spirurida",
+        "family": "Onchocercidae",
+        "group": "nematode",
+        "definitiveHosts": ["equid"],
+        "intermediateHosts": ["Culicoides"],
+        "vectorRole": "Biting midges take up microfilariae from the skin and pass infective larvae on during a later blood meal.",
+        "majorOrgan": "nuchal ligament",
+        "onHostStages": ["microfilaria", "adult"],
+        "distribution": "Horses and mules worldwide where Culicoides midges occur",
+        "zoonotic": "no",
+        "significance": "Often silent; microfilariae in the skin may accompany itchy, scaly or depigmented lesions, though the link to disease is unclear.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "microfilaria",
+            "location": "dermis, most abundant where local midges feed",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "L3",
+            "location": "inside Culicoides midge after it feeds on a carrier horse; enters the horse at a later bite",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "adult",
+            "location": "nuchal ligament",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "microfilaria",
+        "diagnosticTests": [
+          {
+            "name": "skin biopsy",
+            "sample": "skin"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Onchocerca cervicalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/onchocerca-cervicalis.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Onchocerca cervicalis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/35522/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Onchocerca cervicalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/onchocerca-cervicalis.php",
+          "note": "Course lists the suborder Spirurina in the order column; reference gives the order Spirurida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Onchocerca cervicalis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/35522/",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "WCVM Learn About Parasites: Onchocerca cervicalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/onchocerca-cervicalis.php",
+          "note": "Course states Simulium black flies; reference gives Culicoides midges."
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Onchocerca cervicalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/onchocerca-cervicalis.php",
+          "note": "Course states skin; reference gives the nuchal ligament."
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Onchocerca cervicalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/onchocerca-cervicalis.php",
+          "note": "Course states foci in tropical countries; reference gives horses and mules worldwide where midges occur."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Onchocerca cervicalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/onchocerca-cervicalis.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Onchocerca cervicalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/onchocerca-cervicalis.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Onchocerca cervicalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/onchocerca-cervicalis.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Onchocerca cervicalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/onchocerca-cervicalis.php",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "WCVM Learn About Parasites: Onchocerca cervicalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/onchocerca-cervicalis.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Onchocerca cervicalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/onchocerca-cervicalis.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "thelazia-lacrymalis",
+      "canonicalName": "Thelazia lacrymalis",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": ["Thelezia lacrymalis"],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Spirurida",
+        "family": "Thelaziidae",
+        "group": "nematode",
+        "definitiveHosts": ["horse"],
+        "intermediateHosts": ["Musca autumnalis"],
+        "vectorRole": "Non-biting muscid flies feed on tear fluid, pick up L1 larvae, and later deposit infective L3 on the eye.",
+        "majorOrgan": "eye",
+        "onHostStages": ["adult"],
+        "distribution": "Several continents, including Europe, Asia and the Americas",
+        "significance": "Often mild or silent; worms in the conjunctival sac and tear ducts can bring conjunctivitis, and chronic cases may cause lasting eye damage.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "L1",
+            "location": "tear fluid of the horse, where flies pick it up",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "L3",
+            "location": "inside a Musca fly; passed to the conjunctival sac when the fly feeds",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "adult",
+            "location": "conjunctival sac and tear ducts",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "conjunctival worm recovery",
+            "sample": "eye"
+          },
+          {
+            "name": "lacrimal fluid microscopy",
+            "sample": "lacrimal fluid"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "eye"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Thelazia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/thelazia-species.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Thelazia lacrymalis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/114232/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Thelazia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/thelazia-species.php",
+          "note": "Course lists the suborder Spirurina in the order column; reference gives the order Spirurida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Thelazia lacrymalis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/114232/",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
+          "note": "Course states rarely reported in the UK; reference lists England among occasional European reports."
+        },
+        {
+          "field": "significance",
+          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Thelazia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/thelazia-species.php",
+          "note": "Course also lists 15-30 days of larval development in the fly; cited references do not."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Thelazia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/thelazia-species.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "dictyocaulus-arnfieldi",
+      "canonicalName": "Dictyocaulus arnfieldi",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Dictyocaulidae",
+        "group": "nematode",
+        "definitiveHosts": ["donkey", "horse"],
+        "intermediateHosts": [],
+        "majorOrgan": "lungs",
+        "onHostStages": ["pre-adult larva", "adult"],
+        "distribution": "Mainly donkeys, also horses and other equids; widespread",
+        "zoonotic": "no",
+        "significance": "Donkeys are the usual reservoir and often carry it with little illness; in horses, migrating larvae can cause coughing and breathing difficulty.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 84,
+          "max": 98
+        },
+        "lifecycleStages": [
+          {
+            "name": "larvated egg",
+            "location": "passed in faeces; hatches on pasture",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "pasture; infective stage, swallowed by the equid",
+            "hostRole": "environment"
+          },
+          {
+            "name": "pre-adult larva",
+            "location": "migrates through the lung tissue; in horses it rarely matures",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "bronchi and sometimes trachea; rarely reached in horses",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "larvated egg",
+        "diagnosticTests": [
+          {
+            "name": "Baermann technique",
+            "sample": "faeces"
+          },
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Dictyocaulus arnfieldi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-arnfieldi.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Dictyocaulus arnfieldi",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/928216/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus arnfieldi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-arnfieldi.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus arnfieldi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-arnfieldi.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus arnfieldi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-arnfieldi.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus arnfieldi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-arnfieldi.php",
+          "note": "Course states PPP 60-90 days; reference gives 12-14 weeks in donkeys."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus arnfieldi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-arnfieldi.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus arnfieldi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-arnfieldi.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus arnfieldi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-arnfieldi.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus arnfieldi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-arnfieldi.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Lungworm infection in animals",
+          "url": "https://www.msdvetmanual.com/respiratory-system/lungworm-infection/lungworm-infection-in-animals",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "metastrongylus-apri",
+      "canonicalName": "Metastrongylus apri",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Metastrongylidae",
+        "group": "nematode",
+        "definitiveHosts": ["pig"],
+        "intermediateHosts": ["earthworm"],
+        "majorOrgan": "lungs",
+        "onHostStages": ["adult"],
+        "distribution": "Many parts of the world; mainly pigs kept outdoors",
+        "zoonotic": "potential",
+        "significance": "Mostly silent; heavier burdens in young pigs bring coughing, laboured breathing and weight loss.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 21,
+          "max": 28
+        },
+        "lifecycleStages": [
+          {
+            "name": "larvated egg",
+            "location": "passed in faeces; hatches in soil or inside an earthworm that swallows it",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "earthworm tissues, reached after two moults",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "adult",
+            "location": "bronchi and bronchioles",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "larvated egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "Baermann technique",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Metastrongylus species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/metastrongylus-species.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Metastrongylus apri",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/1705085/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Metastrongylus species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/metastrongylus-species.php",
+          "note": "Course lists the superfamily Metastrongyloidea in the order column; reference gives the order Strongylida."
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Metastrongylus species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/metastrongylus-species.php",
+          "note": "Course states Protostrongylidae; reference gives Metastrongylidae."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Metastrongylus apri",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/1705085/",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Metastrongylus species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/metastrongylus-species.php",
+          "note": "Course states PPP 24 days; reference gives 3-4 weeks."
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Metastrongylus species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/metastrongylus-species.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Metastrongylus species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/metastrongylus-species.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Metastrongylus species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/metastrongylus-species.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Metastrongylus species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/metastrongylus-species.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Metastrongylus species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/metastrongylus-species.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "hyostrongylus-rubidus",
+      "canonicalName": "Hyostrongylus rubidus",
+      "commonName": "Red stomach worm",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Trichostrongylidae",
+        "group": "nematode",
+        "definitiveHosts": ["pig"],
+        "intermediateHosts": [],
+        "majorOrgan": "stomach",
+        "onHostStages": ["larva", "adult"],
+        "distribution": "Worldwide; mainly pigs reared outdoors",
+        "significance": "Often silent; heavy burdens cause gastric ulcers, poor appetite, weight loss and anaemia, and have been linked to thin sow syndrome.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 21,
+          "max": 21
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "pasture; free-living infective stage",
+            "hostRole": "environment"
+          },
+          {
+            "name": "larva",
+            "location": "gastric glands of the stomach; development can be paused",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "stomach, under mucus on the lining",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal egg microscopy",
+            "sample": "faeces"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "stomach"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Stomach worms in pigs (Hyostrongylus rubidus)",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/hyostrongylus-rubidus-ascarops-gnathostoma-physocephalus-and-simondsia-stomach-worms-in-pigs",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Gastro-intestinal nematodes of pigs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/gastro-intestinal-nematodes-pigs.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Hyostrongylus rubidus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/108470/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": "Course lists the superfamily Trichostrongyloidea in the order column; reference gives the order Strongylida."
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Trichostrongyles and other GI nematodes",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichostrongyles-and-other-gi-nematodes.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Hyostrongylus rubidus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/108470/",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Stomach worms in pigs (Hyostrongylus rubidus)",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/hyostrongylus-rubidus-ascarops-gnathostoma-physocephalus-and-simondsia-stomach-worms-in-pigs",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Stomach worms in pigs (Hyostrongylus rubidus)",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/hyostrongylus-rubidus-ascarops-gnathostoma-physocephalus-and-simondsia-stomach-worms-in-pigs",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "MSD Veterinary Manual: Stomach worms in pigs (Hyostrongylus rubidus)",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/hyostrongylus-rubidus-ascarops-gnathostoma-physocephalus-and-simondsia-stomach-worms-in-pigs",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Stomach worms in pigs (Hyostrongylus rubidus)",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/hyostrongylus-rubidus-ascarops-gnathostoma-physocephalus-and-simondsia-stomach-worms-in-pigs",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Stomach worms in pigs (Hyostrongylus rubidus)",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/hyostrongylus-rubidus-ascarops-gnathostoma-physocephalus-and-simondsia-stomach-worms-in-pigs",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Gastro-intestinal nematodes of pigs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/gastro-intestinal-nematodes-pigs.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "MSD Veterinary Manual: Stomach worms in pigs (Hyostrongylus rubidus)",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/hyostrongylus-rubidus-ascarops-gnathostoma-physocephalus-and-simondsia-stomach-worms-in-pigs",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "MSD Veterinary Manual: Stomach worms in pigs (Hyostrongylus rubidus)",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/hyostrongylus-rubidus-ascarops-gnathostoma-physocephalus-and-simondsia-stomach-worms-in-pigs",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "ascaris-suum",
+      "canonicalName": "Ascaris suum",
+      "commonName": "Pig ascarid",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Ascaridida",
+        "family": "Ascarididae",
+        "group": "nematode",
+        "definitiveHosts": ["pig"],
+        "intermediateHosts": [],
+        "paratenicHosts": ["earthworm", "beetle"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["L3", "adult"],
+        "distribution": "Worldwide, including wild boar and feral pigs",
+        "zoonotic": "yes",
+        "significance": "Larval migration scars the liver (milk spots, condemnation) and can cause pneumonia; adults slow growth.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 42,
+          "max": 56
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces; L3 forms inside the shell and eggs stay viable for years",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 21,
+              "max": 28
+            }
+          },
+          {
+            "name": "L3",
+            "location": "hatches in the gut, enters the wall of the caecum and colon, then travels via portal blood to the liver and lungs",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "small intestine",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "antibody detection"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "liver"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Ascaris suum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ascaris-suum.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Ascaris suum in pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/ascaris-suum-ascarid-or-roundworm-in-pigs",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Ascaris suum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6253/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Ascaris suum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ascaris-suum.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Ascaris suum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6253/",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "MSD Veterinary Manual: Ascaris suum in pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/ascaris-suum-ascarid-or-roundworm-in-pigs",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Ascaris suum in pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/ascaris-suum-ascarid-or-roundworm-in-pigs",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Ascaris suum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ascaris-suum.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Ascaris suum in pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/ascaris-suum-ascarid-or-roundworm-in-pigs",
+          "note": "Course states PPP 7-9 weeks; reference gives 6-8 weeks."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Ascaris suum in pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/ascaris-suum-ascarid-or-roundworm-in-pigs",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Ascaris suum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ascaris-suum.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Ascaris suum in pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/ascaris-suum-ascarid-or-roundworm-in-pigs",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Ascaris suum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ascaris-suum.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "MSD Veterinary Manual: Ascaris suum in pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/ascaris-suum-ascarid-or-roundworm-in-pigs",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Ascaris suum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ascaris-suum.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "MSD Veterinary Manual: Ascaris suum in pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/ascaris-suum-ascarid-or-roundworm-in-pigs",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "strongyloides-ransomi",
+      "canonicalName": "Strongyloides ransomi",
+      "commonName": "Pig threadworm",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Rhabditida",
+        "family": "Strongyloididae",
+        "group": "nematode",
+        "definitiveHosts": ["pig"],
+        "intermediateHosts": [],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["adult female", "migrating L3"],
+        "distribution": "Worldwide, most important in tropical and subtropical regions",
+        "significance": "Mainly a problem in nursing piglets, where heavy burdens cause diarrhoea, anaemia and wasting; light infections pass unnoticed.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 6,
+          "max": 10
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "larvated when freshly passed in faeces",
+            "hostRole": "environment"
+          },
+          {
+            "name": "free-living adult",
+            "location": "soil and bedding; males and females of a free-living generation",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "soil or bedding; enters the pig through the skin",
+            "hostRole": "environment"
+          },
+          {
+            "name": "migrating L3",
+            "location": "larvae reach the lungs after skin penetration; dormant larvae in the sow's udder pass to piglets in the milk",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult female",
+            "location": "small intestine; females burrow into the lining beside the villus bases",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "intestine"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Strongyloides ransomi in pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/strongyloidesransomi-threadworm-in-pigs",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Gastro-intestinal nematodes of pigs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/gastro-intestinal-nematodes-pigs.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Strongyloides ransomi",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/553534/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Strongyloides westeri",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-westeri.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Strongyloides ransomi",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/553534/",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Strongyloides ransomi in pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/strongyloidesransomi-threadworm-in-pigs",
+          "note": "Course states PPP 1-2 weeks; reference gives 6-10 days."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Strongyloides ransomi in pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/strongyloidesransomi-threadworm-in-pigs",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Strongyloides ransomi in pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/strongyloidesransomi-threadworm-in-pigs",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "MSD Veterinary Manual: Strongyloides ransomi in pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/strongyloidesransomi-threadworm-in-pigs",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "MSD Veterinary Manual: Strongyloides ransomi in pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/strongyloidesransomi-threadworm-in-pigs",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Gastro-intestinal nematodes of pigs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/gastro-intestinal-nematodes-pigs.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "trichuris-suis",
+      "canonicalName": "Trichuris suis",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Trichinellida",
+        "family": "Trichuridae",
+        "group": "nematode",
+        "definitiveHosts": ["pig"],
+        "intermediateHosts": [],
+        "majorOrgan": "large intestine",
+        "onHostStages": ["larva", "adult"],
+        "distribution": "Worldwide in pigs",
+        "significance": "Light infections are silent; heavy ones inflame the caecum and colon, with diarrhoea, poor growth and mucosal ulceration, mostly in young pigs.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 42,
+          "max": 49
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces; L1 forms inside the shell and eggs stay infective for years",
+            "hostRole": "environment"
+          },
+          {
+            "name": "larva",
+            "location": "hatches in the distal ileum, caecum or colon and burrows into the mucosa",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "caecum and colon; thin front end embedded in the epithelium",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "faecal sedimentation",
+            "sample": "faeces"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "intestine"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Trichuris suis in pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/trichurissuis-whipworm-in-pigs",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Gastro-intestinal nematodes of pigs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/gastro-intestinal-nematodes-pigs.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Trichuris suis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/68888/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Trichuris suis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/68888/",
+          "note": "Course lists the superfamily Trichinelloidea in the order column; reference gives the order Trichinellida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Trichuris suis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/68888/",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Trichuris suis in pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/trichurissuis-whipworm-in-pigs",
+          "note": "Course states PPP 6-8 weeks; reference gives 6-7 weeks."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Trichuris suis in pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/trichurissuis-whipworm-in-pigs",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Trichuris suis in pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/trichurissuis-whipworm-in-pigs",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "MSD Veterinary Manual: Trichuris suis in pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/trichurissuis-whipworm-in-pigs",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "MSD Veterinary Manual: Trichuris suis in pigs",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-pigs/trichurissuis-whipworm-in-pigs",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Gastro-intestinal nematodes of pigs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/gastro-intestinal-nematodes-pigs.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "trichinella-spiralis",
+      "canonicalName": "Trichinella spiralis",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Trichinellida",
+        "family": "Trichinellidae",
+        "group": "nematode",
+        "definitiveHosts": ["pig", "rodent", "dog", "cat", "horse", "human"],
+        "intermediateHosts": ["pig", "rodent", "dog", "cat", "horse", "human"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["adult", "newborn larva", "nurse cell larva"],
+        "distribution": "Worldwide; flesh-eating and omnivorous mammals",
+        "zoonotic": "yes",
+        "significance": "Animals rarely show signs, but eating infected pork or wild meat can cause severe, occasionally fatal, disease in people.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "adult",
+            "location": "small intestine",
+            "hostRole": "definitive",
+            "durationDays": {
+              "min": 28,
+              "max": 28
+            }
+          },
+          {
+            "name": "newborn larva",
+            "location": "born in the gut about a week after infection; carried by blood and lymph to striated muscle",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "nurse cell larva",
+            "location": "striated muscle cell (tongue, diaphragm and other predilection sites); waits for the host to be eaten",
+            "hostRole": "intermediate"
+          }
+        ],
+        "diagnosticStage": "nurse cell larva",
+        "diagnosticTests": [
+          {
+            "name": "muscle digestion",
+            "sample": "muscle"
+          },
+          {
+            "name": "trichinoscopy",
+            "sample": "muscle"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Trichinella species in people and animals",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichinella-people-animals.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Trichinellosis",
+          "url": "https://www.cdc.gov/dpdx/trichinellosis/index.html",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Trichinella spiralis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6334/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Trichinella spiralis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6334/",
+          "note": "Course lists the superfamily Trichinelloidea in the order column; reference gives the order Trichinellida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Trichinella spiralis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6334/",
+          "note": "Course states Trichuridae; reference gives Trichinellidae."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Trichinella species in people and animals",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichinella-people-animals.php",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "WCVM Learn About Parasites: Trichinella species in people and animals",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichinella-people-animals.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Trichinellosis",
+          "url": "https://www.cdc.gov/dpdx/trichinellosis/index.html",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Trichinella species in people and animals",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichinella-people-animals.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "CDC DPDx: Trichinellosis",
+          "url": "https://www.cdc.gov/dpdx/trichinellosis/index.html",
+          "note": "Course also lists eradication in the UK, Denmark and Australia; cited references do not."
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Trichinella species in people and animals",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichinella-people-animals.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Trichinella species in people and animals",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichinella-people-animals.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Trichinellosis",
+          "url": "https://www.cdc.gov/dpdx/trichinellosis/index.html",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Trichinella species in people and animals",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichinella-people-animals.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Trichinella species in people and animals",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichinella-people-animals.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Trichinellosis",
+          "url": "https://www.cdc.gov/dpdx/trichinellosis/index.html",
+          "note": null
+        }
+      ],
+      "images": []
+    }
+  ]
+}
