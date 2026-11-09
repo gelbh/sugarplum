@@ -1778,6 +1778,14 @@ export function createTestEnv(opts?: {
                 subject_id: deck.subject_id,
                 state: schedule?.state ?? null,
                 scheduled_days: schedule?.scheduled_days ?? null,
+                due: schedule?.due ?? null,
+                stability: schedule?.stability ?? null,
+                difficulty: schedule?.difficulty ?? null,
+                elapsed_days: schedule?.elapsed_days ?? null,
+                learning_steps: schedule?.learning_steps ?? null,
+                reps: schedule?.reps ?? null,
+                lapses: schedule?.lapses ?? null,
+                last_review: schedule?.last_review ?? null,
               };
             });
           return { results: rows as T[] };

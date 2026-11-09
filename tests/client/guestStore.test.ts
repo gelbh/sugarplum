@@ -252,7 +252,8 @@ describe("guest store", () => {
     };
     storage.setItem(STORE_KEY, JSON.stringify(raw));
 
-    expect(guestSubjectCompositionSummaries(storage)).toEqual(
+    const summaries = guestSubjectCompositionSummaries(storage);
+    expect(summaries).toEqual(
       expect.arrayContaining([
         {
           subjectId: empty.id,
@@ -262,8 +263,11 @@ describe("guest store", () => {
           learning: 0,
           young: 0,
           mature: 0,
+          avgRetrievability: null,
+          etk: 0,
+          recallCardCount: 0,
         },
-        {
+        expect.objectContaining({
           subjectId: subject.id,
           total: 2,
           graduatedPct: 50,
@@ -271,9 +275,13 @@ describe("guest store", () => {
           learning: 0,
           young: 1,
           mature: 0,
-        },
+          recallCardCount: 2,
+        }),
       ]),
     );
+    const mixed = summaries.find((s) => s.subjectId === subject.id)!;
+    expect(mixed.avgRetrievability).not.toBeNull();
+    expect(mixed.etk).toBeGreaterThanOrEqual(0);
   });
 
   it("migrates old store without subjects into Unfiled / subject_hint", () => {

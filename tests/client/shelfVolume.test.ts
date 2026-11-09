@@ -132,4 +132,31 @@ describe("ShelfVolume", () => {
     expect(host.querySelector('[data-testid="spark"]')).toBeTruthy();
     host.remove();
   });
+
+  it("renders recall chip with tooltip text", () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root: Root = createRoot(host);
+    act(() => {
+      root.render(
+        createElement(ShelfVolume, {
+          title: "Anatomy",
+          href: "/library/subjects/sub-1",
+          onNavigate: (event: MouseEvent<HTMLAnchorElement>) =>
+            event.preventDefault(),
+          meta: "2 decks",
+          chip: "50% graduated",
+          recallChip: "42% recall",
+          recallTooltip: "~1.2 card-equivalents",
+          studyLabel: "Study",
+          onStudy: () => {},
+          moreLabel: "More actions for Anatomy",
+          onMore: () => {},
+        }),
+      );
+    });
+    expect(host.textContent).toContain("50% graduated");
+    expect(host.textContent).toContain("42% recall");
+    host.remove();
+  });
 });

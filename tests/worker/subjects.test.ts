@@ -528,30 +528,47 @@ describe("GET /api/subjects/composition-summaries", () => {
       env,
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as Record<string, unknown>[];
-    expect(body).toEqual([
-      {
-        subjectId: "sub-empty",
-        total: 0,
-        graduatedPct: null,
-        new: 0,
-        learning: 0,
-        young: 0,
-        mature: 0,
-      },
-      {
-        subjectId: "sub-1",
-        total: 2,
-        graduatedPct: 50,
-        new: 1,
-        learning: 0,
-        young: 1,
-        mature: 0,
-      },
-    ]);
+    const body = (await res.json()) as Array<{
+      subjectId: string;
+      total: number;
+      graduatedPct: number | null;
+      new: number;
+      learning: number;
+      young: number;
+      mature: number;
+      avgRetrievability: number | null;
+      etk: number;
+      recallCardCount: number;
+    }>;
+    expect(body).toHaveLength(2);
+    expect(body[0]).toEqual({
+      subjectId: "sub-empty",
+      total: 0,
+      graduatedPct: null,
+      new: 0,
+      learning: 0,
+      young: 0,
+      mature: 0,
+      avgRetrievability: null,
+      etk: 0,
+      recallCardCount: 0,
+    });
+    expect(body[1]).toMatchObject({
+      subjectId: "sub-1",
+      total: 2,
+      graduatedPct: 50,
+      new: 1,
+      learning: 0,
+      young: 1,
+      mature: 0,
+      recallCardCount: 2,
+    });
+    expect(body[1]!.avgRetrievability).not.toBeNull();
+    expect(body[1]!.etk).toBeGreaterThan(0);
     for (const row of body) {
-      expect(row).not.toHaveProperty("avgRetrievability");
-      expect(row).not.toHaveProperty("etk");
+      expect(row).toHaveProperty("avgRetrievability");
+      expect(row).toHaveProperty("etk");
+      expect(row).toHaveProperty("recallCardCount");
     }
   });
 });
