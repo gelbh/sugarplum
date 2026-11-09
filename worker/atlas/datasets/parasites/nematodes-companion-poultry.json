@@ -2622,6 +2622,16 @@
       ],
       "images": [
         {
+          "id": "hero",
+          "file": "dirofilaria-repens-hero.webp",
+          "role": "larva",
+          "caption": "Microfilaria inside uterus of adult female",
+          "credit": "CDC / Wikimedia Commons",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Dirofilaria_repens_1.jpg",
+          "isHero": true
+        },
+        {
           "id": "lifecycle",
           "file": "dirofilaria-repens-lifecycle.webp",
           "role": "lifecycle_diagram",

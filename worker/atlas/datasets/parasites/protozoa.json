@@ -614,6 +614,16 @@
       ],
       "images": [
         {
+          "id": "hero",
+          "file": "eimeria-spp-hero.webp",
+          "role": "egg_oocyst",
+          "caption": "Eimeria tenella (Peabody microslide)",
+          "credit": "Yale Peabody Museum of Natural History",
+          "license": "CC0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Eimeria_tenella_(Railliet_and_Lucet,_1891)_Fantham,_1909_1570710830.png",
+          "isHero": true
+        },
+        {
           "id": "lifecycle",
           "file": "eimeria-spp-lifecycle.webp",
           "role": "lifecycle_diagram",
@@ -1912,7 +1922,18 @@
           "note": "Definitive-host PPP varies by species; often about 1–3 weeks."
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "sarcocystis-spp-hero.webp",
+          "role": "lesion",
+          "caption": "Sarcocystis in sheep cardiac muscle (H&E)",
+          "credit": "Tameem Baker",
+          "license": "CC BY 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Sarcocystis.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "besnoitia-besnoiti",
@@ -2488,7 +2509,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "theileria-spp-hero.webp",
+          "role": "other",
+          "caption": "Theileria annulata piroplasms in bovine RBCs",
+          "credit": "Alan R Walker",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Theileria-annulata-piroplasms-cattle.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "leishmania-infantum",
@@ -3124,7 +3156,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "plasmodium-spp-hero.webp",
+          "role": "other",
+          "caption": "P. falciparum macro- and microgametocytes in blood smear",
+          "credit": "CDC / Dr. Mae Melvin",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Plasmodium_falciparum_01.png",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "hepatozoon-canis",

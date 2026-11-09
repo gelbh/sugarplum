@@ -878,7 +878,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "strongylus-vulgaris-hero.webp",
+          "role": "adult",
+          "caption": "Buccal capsule, lateral DIC",
+          "credit": "Vitaliy Kharchenko",
+          "license": "CC BY-SA 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Strongylus_vulgaris_-_parasite_of_horses_01.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "oxyuris-equi",
@@ -2750,7 +2761,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "trichuris-suis-hero.webp",
+          "role": "adult",
+          "caption": "Adult Trichuris suis",
+          "credit": "Universidad de Córdoba",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Trichuris_Suis.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "trichinella-spiralis",
