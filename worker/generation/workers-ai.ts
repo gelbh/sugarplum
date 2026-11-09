@@ -40,6 +40,12 @@ type AiRunContent = {
 
 export class WorkersAiCapacityError extends Error {}
 
+/** Mirror BYO `postLlm` BACKOFF_MS: two sleeps after the first timeout. */
+const TIMEOUT_BACKOFF_MS = [2000, 5000] as const;
+
+const TIMEOUT_ERROR =
+  "Workers AI timed out. Try again, or add a BYO API key in Settings.";
+
 function isWorkersAiCapacityError(err: unknown): boolean {
   const status =
     err && typeof err === "object" && "status" in err
@@ -53,6 +59,20 @@ function isWorkersAiCapacityError(err: unknown): boolean {
   return /rate.?limit|too many requests|capacity|neuron|overloaded|quota/.test(
     msg,
   );
+}
+
+function isWorkersAiRequestTimeoutError(err: unknown): boolean {
+  if (err && typeof err === "object") {
+    for (const key of ["code", "status"] as const) {
+      if (key in err && Number((err as Record<string, unknown>)[key]) === 3046) {
+        return true;
+      }
+    }
+  }
+  const msg = (
+    err instanceof Error ? err.message : String(err ?? "")
+  ).toLowerCase();
+  return /3046|request timeout/.test(msg);
 }
 
 function mapWorkersAiRunError(err: unknown): never {
@@ -175,25 +195,43 @@ export function createWorkersAiAdapter(
     };
 
     async function tryRun(withJsonMode: boolean): Promise<unknown | null> {
-      try {
-        return await env.AI!.run(
-          WORKERS_AI_MODEL,
-          {
-            ...base,
-            ...(withJsonMode
-              ? { response_format: workersAiJsonSchemaResponseFormat() }
-              : {}),
-          },
-          {
-            gateway: {
-              id: "sugarplum",
-              skipCache: true,
-            },
-          },
-        );
-      } catch (err) {
-        if (withJsonMode && isJsonModeUnmetError(err)) return null;
-        mapWorkersAiRunError(err);
+      const inputs = {
+        ...base,
+        ...(withJsonMode
+          ? { response_format: workersAiJsonSchemaResponseFormat() }
+          : {}),
+      };
+      const gateway = {
+        gateway: {
+          id: "sugarplum",
+          skipCache: true,
+        },
+      };
+
+      for (let attempt = 0; ; attempt++) {
+        try {
+          return await env.AI!.run(WORKERS_AI_MODEL, inputs, gateway);
+        } catch (err) {
+          if (withJsonMode && isJsonModeUnmetError(err)) return null;
+          if (
+            isWorkersAiRequestTimeoutError(err) &&
+            attempt < TIMEOUT_BACKOFF_MS.length
+          ) {
+            console.warn(
+              "Workers AI request timeout; retrying",
+              attempt + 1,
+              WORKERS_AI_MODEL,
+            );
+            await new Promise((resolve) =>
+              setTimeout(resolve, TIMEOUT_BACKOFF_MS[attempt]),
+            );
+            continue;
+          }
+          if (isWorkersAiRequestTimeoutError(err)) {
+            throw new Error(TIMEOUT_ERROR);
+          }
+          mapWorkersAiRunError(err);
+        }
       }
     }
 
