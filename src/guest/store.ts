@@ -858,11 +858,12 @@ export function guestReviewCard(
       })
     : createEmptyCard(now);
 
-  const next = scheduleColumnsFromCard(
-    fsrsForPrefs(store.studyPrefs)
-      .next(fsrsCard, now, ratingToGrade(rating))
-      .card,
+  const { card: nextCard, log } = fsrsForPrefs(store.studyPrefs).next(
+    fsrsCard,
+    now,
+    ratingToGrade(rating),
   );
+  const next = scheduleColumnsFromCard(nextCard);
 
   store.schedules[cardId] = {
     state: next.state,
@@ -884,7 +885,10 @@ export function guestReviewCard(
   } else {
     store.dueIds = store.dueIds.filter((id) => id !== cardId);
   }
-  store.reviewLogs = [...store.reviewLogs, { cardId, rating, at: nowIsoValue }];
+  store.reviewLogs = [
+    ...store.reviewLogs,
+    { cardId, rating, at: nowIsoValue, state: log.state },
+  ];
   if (wasNew) {
     const day = opts?.localDay ?? clientLocalDay(now);
     store.introsByDay[day] = (store.introsByDay[day] ?? 0) + 1;

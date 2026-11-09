@@ -35,6 +35,8 @@ export type GuestReviewLog = {
   cardId: string;
   rating: StudyRating;
   at: string;
+  /** Pre-transition FSRS state; absent on historical thin logs. */
+  state?: number;
 };
 
 export function cardDueIso(card: CardDraftView, fallback: string): string {
