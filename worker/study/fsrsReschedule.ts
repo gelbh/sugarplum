@@ -110,7 +110,12 @@ export async function rescheduleUserSchedules(
              due = ?, stability = ?, difficulty = ?, elapsed_days = ?,
              scheduled_days = ?, learning_steps = ?, reps = ?, lapses = ?,
              state = ?, last_review = ?
-           WHERE card_id = ?`,
+           WHERE card_id = ?
+             AND EXISTS (
+               SELECT 1 FROM cards c
+               INNER JOIN decks d ON d.id = c.deck_id
+               WHERE c.id = card_schedules.card_id AND d.user_id = ?
+             )`,
         )
         .bind(
           cols.due,
@@ -124,6 +129,7 @@ export async function rescheduleUserSchedules(
           cols.state,
           cols.last_review,
           cardId,
+          userId,
         ),
     );
     cardsUpdated += 1;

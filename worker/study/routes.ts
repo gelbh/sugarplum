@@ -166,7 +166,7 @@ studyRoutes.post("/commit-pacing", async (c) => {
     localDay,
   );
 
-  await applyDeferrals(db, queue.deferrals);
+  await applyDeferrals(db, userId, queue.deferrals);
   return c.json({ deferredCount: queue.deferrals.length });
 });
 
@@ -331,7 +331,12 @@ studyRoutes.post("/review", async (c) => {
            due = ?, stability = ?, difficulty = ?, elapsed_days = ?,
            scheduled_days = ?, learning_steps = ?, reps = ?, lapses = ?,
            state = ?, last_review = ?
-         WHERE card_id = ?`,
+         WHERE card_id = ?
+           AND EXISTS (
+             SELECT 1 FROM cards c
+             INNER JOIN decks d ON d.id = c.deck_id
+             WHERE c.id = card_schedules.card_id AND d.user_id = ?
+           )`,
       )
       .bind(
         cols.due,
@@ -345,6 +350,7 @@ studyRoutes.post("/review", async (c) => {
         cols.state,
         cols.last_review,
         cardId,
+        userId,
       ),
     db
       .prepare(

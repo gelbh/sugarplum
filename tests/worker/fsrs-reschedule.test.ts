@@ -1,17 +1,20 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { default_w } from "ts-fsrs";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { createTestEnv } from "./test-env";
 import { getDb } from "../../worker/db/client";
+import * as fsrsReschedule from "../../worker/study/fsrsReschedule";
 import {
   replayCardFromLogs,
   type ReviewLogReplayRow,
 } from "../../worker/study/fsrsReschedule";
 import {
+  FsrsRescheduleError,
   resetFsrsWeights,
   saveFsrsWeights,
 } from "../../worker/study/fsrsOptimize";
+import { applyDeferrals } from "../../worker/study/dueQueue";
 
 const customW = default_w.map((x, i) => (i === 8 ? x * 3 : x));
 
@@ -275,5 +278,103 @@ describe("reschedule on weight save/reset", () => {
     expect(after).toEqual(before);
     const prefs = env.getUserStudyPrefs().find((p) => p.user_id === "user-a")!;
     expect(prefs.fsrs_w_json).toBe(JSON.stringify(customW));
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("keeps prefs and throws FsrsRescheduleError when reschedule fails", async () => {
+    const env = createTestEnv();
+    seedBase(env);
+    vi.spyOn(fsrsReschedule, "rescheduleUserSchedules").mockRejectedValue(
+      new Error("d1 boom"),
+    );
+
+    await expect(
+      saveFsrsWeights(getDb(env), "user-a", customW),
+    ).rejects.toBeInstanceOf(FsrsRescheduleError);
+
+    const prefs = env.getUserStudyPrefs().find((p) => p.user_id === "user-a")!;
+    expect(prefs.fsrs_w_json).toBe(JSON.stringify(customW));
+  });
+
+  it("PUT weights maps reschedule failure to 500 not Invalid FSRS weights", async () => {
+    const env = createTestEnv();
+    seedBase(env);
+    vi.spyOn(fsrsReschedule, "rescheduleUserSchedules").mockRejectedValue(
+      new Error("d1 boom"),
+    );
+
+    const res = await app.request(
+      "/api/settings/study/fsrs-weights",
+      {
+        method: "PUT",
+        headers: {
+          cookie: `${SESSION_COOKIE}=sess-a`,
+          origin: "http://localhost",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ w: customW }),
+      },
+      env,
+    );
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(JSON.stringify(body)).toContain(
+      "Weights saved; schedule reschedule failed",
+    );
+    expect(JSON.stringify(body)).not.toContain("Invalid FSRS weights");
+  });
+
+  it("applyDeferrals does not rewrite another user's due", async () => {
+    const env = createTestEnv();
+    seedBase(env);
+    env.seedUser({
+      id: "user-b",
+      email: "b@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-b",
+      user_id: "user-b",
+      title: "Other",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedCard({
+      id: "card-b-owned",
+      deck_id: "deck-b",
+      job_id: null,
+      type: "qa",
+      front_json: "{}",
+      back_json: "{}",
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "accepted",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSchedule({
+      card_id: "card-b-owned",
+      due: "2026-03-01T00:00:00.000Z",
+      stability: 9,
+      difficulty: 4,
+      elapsed_days: 0,
+      scheduled_days: 3,
+      learning_steps: 0,
+      reps: 2,
+      lapses: 0,
+      state: 2,
+      last_review: "2026-01-05T00:00:00.000Z",
+    });
+
+    await applyDeferrals(getDb(env), "user-a", [
+      { id: "card-b-owned", newDue: "2099-01-01T00:00:00.000Z" },
+    ]);
+
+    const after = env.getSchedules().find((s) => s.card_id === "card-b-owned")!;
+    expect(after.due).toBe("2026-03-01T00:00:00.000Z");
   });
 });
