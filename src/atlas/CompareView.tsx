@@ -10,6 +10,7 @@ import Typography from "@mui/material/Typography";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import AtlasImage, { heroImage } from "./AtlasImage";
 import { compareRows, type CompareValue } from "./compare";
+import { entryTitles } from "./entryTitles";
 import { byName, matchesSearch, pppLabel, termLabel } from "./filter";
 import TermList from "./TermList";
 import { isPlainClick } from "../nav/navigate";
@@ -89,7 +90,7 @@ function SidePicker({
       options={options}
       value={value}
       disableClearable={value !== null}
-      getOptionLabel={(e) => e.canonicalName}
+      getOptionLabel={(e) => entryTitles(e).primary}
       isOptionEqualToValue={(x, y) => x.id === y.id}
       filterOptions={(list, { inputValue }) =>
         list.filter((e) => matchesSearch(e, inputValue))
@@ -100,15 +101,20 @@ function SidePicker({
       renderOption={({ key, ...props }, e) => (
         <li key={key} {...props}>
           <Box>
-            <Box component="span" sx={{ fontStyle: "italic" }}>
-              {e.canonicalName}
+            <Box component="span" sx={{ fontWeight: 600 }}>
+              {entryTitles(e).primary}
             </Box>
-            {e.commonName ? (
+            {entryTitles(e).primary !== entryTitles(e).scientific ? (
               <Box
                 component="span"
-                sx={{ color: "text.secondary", ml: 1, fontSize: "0.85em" }}
+                sx={{
+                  color: "text.secondary",
+                  ml: 1,
+                  fontSize: "0.85em",
+                  fontStyle: "italic",
+                }}
               >
-                {e.commonName}
+                {entryTitles(e).scientific}
               </Box>
             ) : null}
           </Box>
@@ -120,7 +126,6 @@ function SidePicker({
           label={label}
           sx={{
             "& .MuiInputBase-root": { bgcolor: "background.paper" },
-            "& input": { fontStyle: value ? "italic" : undefined },
           }}
         />
       )}
@@ -159,17 +164,20 @@ function Hero({
         <Typography
           component="h2"
           sx={{
-            fontStyle: "italic",
             fontWeight: 600,
             fontSize: { xs: "0.95rem", sm: "1.15rem" },
             lineHeight: 1.25,
           }}
         >
-          {entry.canonicalName}
+          {entryTitles(entry).primary}
         </Typography>
-        {entry.commonName ? (
-          <Typography variant="body2" color="text.secondary">
-            {entry.commonName}
+        {entryTitles(entry).primary !== entryTitles(entry).scientific ? (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ fontStyle: "italic" }}
+          >
+            {entryTitles(entry).scientific}
           </Typography>
         ) : null}
         <Link
@@ -277,7 +285,7 @@ export default function CompareView({
       {rows && left && right ? (
         <Box
           role="table"
-          aria-label={`${left.canonicalName} compared with ${right.canonicalName}`}
+          aria-label={`${entryTitles(left).primary} compared with ${entryTitles(right).primary}`}
           key={`${a}|${b}`}
           sx={{
             bgcolor: "background.paper",
@@ -294,8 +302,8 @@ export default function CompareView({
         >
           <Box role="row" sx={srOnly}>
             <span role="columnheader">Field</span>
-            <span role="columnheader">{left.canonicalName}</span>
-            <span role="columnheader">{right.canonicalName}</span>
+            <span role="columnheader">{entryTitles(left).primary}</span>
+            <span role="columnheader">{entryTitles(right).primary}</span>
           </Box>
           {rows.map((row, i) => (
             <Box

@@ -66,7 +66,7 @@ export function createEntry(
   atlasId: string,
   body: {
     canonicalName: string;
-    commonName?: string | null;
+    commonName: string;
     fields?: Partial<DatasetFields>;
   },
 ) {

@@ -29,6 +29,7 @@ const parasitesDir = join(
 const minimal = {
   key: "fasciola-hepatica",
   canonicalName: "Fasciola hepatica",
+  commonName: "Common liver fluke",
   fields: { group: "trematode" },
   refs: [
     {
@@ -41,11 +42,18 @@ const minimal = {
 describe("dataset schema", () => {
   it("accepts a minimal entry and fills defaults", () => {
     const e = datasetEntrySchema.parse(minimal);
+    expect(e.commonName).toBe("Common liver fluke");
     expect(e.aliases).toEqual([]);
     expect(e.misspellings).toEqual([]);
     expect(e.images).toEqual([]);
     expect(e.fields.definitiveHosts).toEqual([]);
     expect(e.refs[0].field).toBeNull();
+  });
+
+  it("rejects null commonName", () => {
+    expect(() =>
+      datasetEntrySchema.parse({ ...minimal, commonName: null }),
+    ).toThrow();
   });
 
   it("derives keys from canonical names", () => {
@@ -432,6 +440,7 @@ describe("dataset schema", () => {
     ...minimal,
     key: "fascioloides-magna",
     canonicalName: "Fascioloides magna",
+    commonName: "Large American fluke",
   };
   const dataset = (...groups: unknown[][]) => ({
     version: 1,

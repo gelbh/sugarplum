@@ -7,6 +7,7 @@ import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
 import AtlasImage, { heroImage } from "./AtlasImage";
+import { entryTitles } from "./entryTitles";
 import type { RailSection } from "./filter";
 import type { AtlasEntryView } from "./types";
 
@@ -161,21 +162,20 @@ function RailItem({
         <Typography
           noWrap
           sx={{
-            fontStyle: "italic",
             fontWeight: 600,
             fontSize: "0.86rem",
             lineHeight: 1.25,
           }}
         >
-          {entry.canonicalName}
+          {entryTitles(entry).primary}
         </Typography>
-        {entry.commonName ? (
+        {entryTitles(entry).primary !== entryTitles(entry).scientific ? (
           <Typography
             noWrap
             color="text.secondary"
-            sx={{ fontSize: "0.76rem", lineHeight: 1.3 }}
+            sx={{ fontSize: "0.76rem", lineHeight: 1.3, fontStyle: "italic" }}
           >
-            {entry.commonName}
+            {entryTitles(entry).scientific}
           </Typography>
         ) : null}
       </Box>

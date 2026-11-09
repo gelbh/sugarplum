@@ -19,6 +19,7 @@ import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import AtlasImage, { heroImage } from "./AtlasImage";
 import EntryFacts from "./EntryFacts";
 import EntryRail from "./EntryRail";
+import { entryTitles } from "./entryTitles";
 import LifecycleBoard from "./LifecycleBoard";
 import {
   entryRefs,
@@ -91,6 +92,7 @@ export default function EntryView({
     [rows],
   );
   const refs = useMemo(() => entryRefs(entry.refs), [entry.refs]);
+  const titles = entryTitles(entry);
 
   const onKey = useEffectEvent((ev: KeyboardEvent) => {
     if (!isShortcutTarget(ev) || (ev.key !== "j" && ev.key !== "k")) return;
@@ -199,18 +201,20 @@ export default function EntryView({
           <Typography
             component="h1"
             sx={{
-              fontStyle: "italic",
               fontWeight: 600,
               fontSize: { xs: "1.6rem", md: "2.125rem" },
               lineHeight: 1.1,
               overflowWrap: "anywhere",
             }}
           >
-            {entry.canonicalName}
+            {titles.primary}
           </Typography>
-          {entry.commonName ? (
-            <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-              {entry.commonName}
+          {titles.primary !== titles.scientific ? (
+            <Typography
+              color="text.secondary"
+              sx={{ mt: 0.5, fontStyle: "italic" }}
+            >
+              {titles.scientific}
             </Typography>
           ) : null}
           <Stack direction="row" gap={0.75} flexWrap="wrap" sx={{ mt: 1.25 }}>

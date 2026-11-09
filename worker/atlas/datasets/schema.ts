@@ -99,7 +99,7 @@ export const datasetEntrySchema = z
   .strictObject({
     key: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/),
     canonicalName: name,
-    commonName: name.nullable().default(null),
+    commonName: name,
     aliases: z.array(name).default([]),
     misspellings: z.array(name).default([]),
     fields: datasetFieldsSchema,

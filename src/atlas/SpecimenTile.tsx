@@ -10,6 +10,7 @@ import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import AtlasImage, { heroImage } from "./AtlasImage";
+import { entryTitles } from "./entryTitles";
 import { TIER_LABELS, hostSummary, pppLabel, termLabel } from "./filter";
 import { atlasHeroName } from "./paths";
 import TermList from "./TermList";
@@ -168,14 +169,23 @@ export default function SpecimenTile({
           <Box sx={{ px: 1.25, pt: 1, pb: 1.25, minWidth: 0 }}>
             <Typography
               sx={{
-                fontStyle: "italic",
                 fontWeight: 600,
                 fontSize: "0.9rem",
                 lineHeight: 1.25,
               }}
             >
-              {entry.canonicalName}
+              {entryTitles(entry).primary}
             </Typography>
+            {entryTitles(entry).primary !== entryTitles(entry).scientific ? (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                noWrap
+                sx={{ fontSize: "0.75rem", mt: 0.15, fontStyle: "italic" }}
+              >
+                {entryTitles(entry).scientific}
+              </Typography>
+            ) : null}
             {definitive ? (
               <Typography
                 variant="body2"
@@ -240,7 +250,7 @@ export default function SpecimenTile({
         <IconButton
           ref={closeRef}
           size="small"
-          aria-label={`Close ${entry.canonicalName}`}
+          aria-label={`Close ${entryTitles(entry).primary}`}
           onClick={onToggle}
           sx={{
             position: "absolute",
@@ -256,22 +266,21 @@ export default function SpecimenTile({
             id={titleId}
             component="h3"
             sx={{
-              fontStyle: "italic",
               fontWeight: 600,
               fontSize: "1.3rem",
               lineHeight: 1.15,
             }}
           >
-            {entry.canonicalName}
+            {entryTitles(entry).primary}
           </Typography>
           {focusBadge}
           {entry.editedAt ? (
             <Chip label="Edited" size="small" variant="outlined" />
           ) : null}
         </Stack>
-        {entry.commonName ? (
-          <Typography variant="body2" color="text.secondary">
-            {entry.commonName}
+        {entryTitles(entry).primary !== entryTitles(entry).scientific ? (
+          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
+            {entryTitles(entry).scientific}
           </Typography>
         ) : null}
         <Box

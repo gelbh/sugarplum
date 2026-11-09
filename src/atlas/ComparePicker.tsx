@@ -14,6 +14,7 @@ import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import type { Theme } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
+import { entryTitles } from "./entryTitles";
 import { GROUP_LABELS, groupRows, matchesSearch } from "./filter";
 import type { AtlasEntryView } from "./types";
 
@@ -76,7 +77,7 @@ export default function ComparePicker({
         <Typography variant="body2" color="text.secondary" aria-live="polite">
           {first ? (
             <>
-              Step 2 of 2: compare <i>{first.canonicalName}</i> with
+              Step 2 of 2: compare {entryTitles(first).primary} with
             </>
           ) : (
             "Step 1 of 2: pick the first parasite"
@@ -130,18 +131,18 @@ export default function ComparePicker({
                     >
                       <Typography
                         component="span"
-                        sx={{ fontStyle: "italic", fontWeight: 600 }}
+                        sx={{ fontWeight: 600 }}
                       >
-                        {e.canonicalName}
+                        {entryTitles(e).primary}
                       </Typography>
-                      {e.commonName ? (
+                      {entryTitles(e).primary !== entryTitles(e).scientific ? (
                         <Typography
                           component="span"
                           variant="body2"
                           color="text.secondary"
-                          sx={{ ml: 1 }}
+                          sx={{ ml: 1, fontStyle: "italic" }}
                         >
-                          {e.commonName}
+                          {entryTitles(e).scientific}
                         </Typography>
                       ) : null}
                     </ListItemButton>

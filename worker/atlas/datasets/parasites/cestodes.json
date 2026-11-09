@@ -4,7 +4,7 @@
     {
       "key": "anoplocephala-perfoliata",
       "canonicalName": "Anoplocephala perfoliata",
-      "commonName": null,
+      "commonName": "Equine tapeworm",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -12,10 +12,17 @@
         "order": "Cyclophyllida",
         "family": "Anoplocephalidae",
         "group": "cestode",
-        "definitiveHosts": ["horse", "donkey"],
-        "intermediateHosts": ["oribatid mite"],
+        "definitiveHosts": [
+          "horse",
+          "donkey"
+        ],
+        "intermediateHosts": [
+          "oribatid mite"
+        ],
         "majorOrgan": "ileum",
-        "onHostStages": ["adult tapeworm"],
+        "onHostStages": [
+          "adult tapeworm"
+        ],
         "distribution": "Horses and donkeys worldwide",
         "zoonotic": "no",
         "significance": "The commonest equine tapeworm; often silent, but infection is a risk factor for ileal impaction and spasmodic colic, with mucosal damage at the attachment site.",
@@ -70,13 +77,13 @@
         },
         {
           "field": null,
-          "citation": "J\u00fcrgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
+          "citation": "Jürgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-020-04318-5",
           "note": null
         },
         {
           "field": "pppDays",
-          "citation": "J\u00fcrgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
+          "citation": "Jürgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-020-04318-5",
           "note": "Course states PPP 1-2 months; reference gives 1.5-4 months."
         },
@@ -88,13 +95,13 @@
         },
         {
           "field": "lifecycleStages",
-          "citation": "J\u00fcrgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
+          "citation": "Jürgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-020-04318-5",
           "note": null
         },
         {
           "field": "diagnosticTests",
-          "citation": "J\u00fcrgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
+          "citation": "Jürgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-020-04318-5",
           "note": "Course states a saliva antigen ELISA; reference gives a saliva antibody ELISA."
         },
@@ -135,7 +142,7 @@
           "file": "anoplocephala-perfoliata-hero.webp",
           "role": "adult",
           "caption": null,
-          "credit": "Krzysztof Tomczuk, Krzysztof Kostro, Klaudiusz Oktawian Szczepaniak, Maciej Grzybek, Maria Studzi\u0144ska, Marta Demkowska-K",
+          "credit": "Krzysztof Tomczuk, Krzysztof Kostro, Klaudiusz Oktawian Szczepaniak, Maciej Grzybek, Maria Studzińska, Marta Demkowska-K",
           "license": "CC BY 4.0",
           "sourceUrl": "https://commons.wikimedia.org/wiki/File:Anoplocephala_perfoliata_fig1.jpg",
           "isHero": true
@@ -146,17 +153,31 @@
       "key": "dipylidium-caninum",
       "canonicalName": "Dipylidium caninum",
       "commonName": "Double-pored tapeworm",
-      "aliases": ["Flea tapeworm", "Cucumber tapeworm"],
+      "aliases": [
+        "Flea tapeworm",
+        "Cucumber tapeworm"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Cyclophyllida",
         "family": "Dipylidiidae",
         "group": "cestode",
-        "definitiveHosts": ["dog", "cat", "fox", "human"],
-        "intermediateHosts": ["flea", "Trichodectes canis"],
+        "definitiveHosts": [
+          "dog",
+          "cat",
+          "fox",
+          "human"
+        ],
+        "intermediateHosts": [
+          "flea",
+          "Trichodectes canis"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["adult tapeworm", "gravid proglottid"],
+        "onHostStages": [
+          "adult tapeworm",
+          "gravid proglottid"
+        ],
         "distribution": "Worldwide wherever pet dogs and cats carry fleas",
         "zoonotic": "yes",
         "significance": "Rarely causes disease in dogs or cats; mobile segments in faeces worry owners, and children are occasionally infected by swallowing a flea.",
@@ -278,18 +299,27 @@
     {
       "key": "davainea-proglottina",
       "canonicalName": "Davainea proglottina",
-      "commonName": null,
+      "commonName": "Davainea poultry tapeworm",
       "aliases": [],
-      "misspellings": ["Davainae proglottina"],
+      "misspellings": [
+        "Davainae proglottina"
+      ],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Cyclophyllida",
         "family": "Davaineidae",
         "group": "cestode",
-        "definitiveHosts": ["chicken"],
-        "intermediateHosts": ["slug", "snail"],
+        "definitiveHosts": [
+          "chicken"
+        ],
+        "intermediateHosts": [
+          "slug",
+          "snail"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["adult tapeworm"],
+        "onHostStages": [
+          "adult tapeworm"
+        ],
         "significance": "Very small tapeworm of the chicken duodenum; a single bird can carry thousands, and infection is associated with weight loss.",
         "lifecycleType": "indirect",
         "lifecycleStages": [
@@ -343,18 +373,27 @@
     {
       "key": "raillietina-spp",
       "canonicalName": "Raillietina spp.",
-      "commonName": null,
+      "commonName": "Raillietina poultry tapeworm",
       "aliases": [],
-      "misspellings": ["Raillientina spp."],
+      "misspellings": [
+        "Raillientina spp."
+      ],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Cyclophyllida",
         "family": "Davaineidae",
         "group": "cestode",
-        "definitiveHosts": ["chicken"],
-        "intermediateHosts": ["beetle", "ant"],
+        "definitiveHosts": [
+          "chicken"
+        ],
+        "intermediateHosts": [
+          "beetle",
+          "ant"
+        ],
         "majorOrgan": "gastrointestinal tract",
-        "onHostStages": ["adult tapeworm"],
+        "onHostStages": [
+          "adult tapeworm"
+        ],
         "significance": "Poultry tapeworms ranging from mild (R. cesticillus) to harmful: R. tetragona cuts weight and egg output, R. echinobothrida forms nodules in the gut wall.",
         "lifecycleType": "indirect",
         "lifecycleStages": [
@@ -432,10 +471,18 @@
         "order": "Cyclophyllida",
         "family": "Anoplocephalidae",
         "group": "cestode",
-        "definitiveHosts": ["sheep", "goat", "cattle"],
-        "intermediateHosts": ["oribatid mite"],
+        "definitiveHosts": [
+          "sheep",
+          "goat",
+          "cattle"
+        ],
+        "intermediateHosts": [
+          "oribatid mite"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["adult tapeworm"],
+        "onHostStages": [
+          "adult tapeworm"
+        ],
         "distribution": "Ruminant-rearing regions in most of the world",
         "zoonotic": "no",
         "significance": "Mostly harmless; very heavy burdens in young lambs and kids may bring mild ill thrift, and segments seen in faeces often worry farmers.",
@@ -535,18 +582,30 @@
     {
       "key": "taenia-hydatigena",
       "canonicalName": "Taenia hydatigena",
-      "commonName": null,
-      "aliases": ["Cysticercus tenuicollis"],
+      "commonName": "Cysticercus tenuicollis",
+      "aliases": [
+        "Cysticercus tenuicollis"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Cyclophyllida",
         "family": "Taeniidae",
         "group": "cestode",
-        "definitiveHosts": ["dog"],
-        "intermediateHosts": ["sheep", "goat", "cattle", "pig"],
+        "definitiveHosts": [
+          "dog"
+        ],
+        "intermediateHosts": [
+          "sheep",
+          "goat",
+          "cattle",
+          "pig"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["adult tapeworm", "cysticercus"],
+        "onHostStages": [
+          "adult tapeworm",
+          "cysticercus"
+        ],
         "distribution": "Worldwide",
         "zoonotic": "no",
         "significance": "Adults in dogs do little harm; heavy infections can kill lambs through haemorrhagic liver migration, and cysts in offal are condemned at slaughter.",
@@ -671,18 +730,29 @@
     {
       "key": "taenia-ovis",
       "canonicalName": "Taenia ovis",
-      "commonName": null,
-      "aliases": ["Cysticercus ovis", "Sheep measles"],
+      "commonName": "Sheep measles",
+      "aliases": [
+        "Cysticercus ovis",
+        "Sheep measles"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Cyclophyllida",
         "family": "Taeniidae",
         "group": "cestode",
-        "definitiveHosts": ["dog"],
-        "intermediateHosts": ["sheep", "goat"],
+        "definitiveHosts": [
+          "dog"
+        ],
+        "intermediateHosts": [
+          "sheep",
+          "goat"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["adult tapeworm", "cysticercus"],
+        "onHostStages": [
+          "adult tapeworm",
+          "cysticercus"
+        ],
         "distribution": "Widespread, including New Zealand, Australia, Canada and parts of Africa",
         "zoonotic": "no",
         "significance": "Harmless to sheep and dogs clinically, but cysts in heart and skeletal muscle of sheep and goats lead to trimmed or condemned carcasses.",
@@ -790,15 +860,21 @@
     {
       "key": "taenia-multiceps",
       "canonicalName": "Taenia multiceps",
-      "commonName": null,
-      "aliases": ["Coenurus cerebralis", "Multiceps multiceps"],
+      "commonName": "Gid tapeworm",
+      "aliases": [
+        "Coenurus cerebralis",
+        "Multiceps multiceps"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Cyclophyllida",
         "family": "Taeniidae",
         "group": "cestode",
-        "definitiveHosts": ["dog", "fox"],
+        "definitiveHosts": [
+          "dog",
+          "fox"
+        ],
         "intermediateHosts": [
           "sheep",
           "goat",
@@ -808,7 +884,10 @@
           "human"
         ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["adult tapeworm", "coenurus"],
+        "onHostStages": [
+          "adult tapeworm",
+          "coenurus"
+        ],
         "distribution": "Widespread; sheep areas of Europe, Asia, the Middle East and Africa",
         "zoonotic": "yes",
         "significance": "Coenuri in the brain or spinal cord of young sheep and goats cause gid, a neurological and often fatal disease; people are rarely infected.",
@@ -968,17 +1047,26 @@
       "key": "taenia-saginata",
       "canonicalName": "Taenia saginata",
       "commonName": "Beef tapeworm",
-      "aliases": ["Cysticercus bovis"],
+      "aliases": [
+        "Cysticercus bovis"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Cyclophyllida",
         "family": "Taeniidae",
         "group": "cestode",
-        "definitiveHosts": ["human"],
-        "intermediateHosts": ["cattle"],
+        "definitiveHosts": [
+          "human"
+        ],
+        "intermediateHosts": [
+          "cattle"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["adult tapeworm", "cysticercus"],
+        "onHostStages": [
+          "adult tapeworm",
+          "cysticercus"
+        ],
         "distribution": "Worldwide where beef is eaten raw or undercooked",
         "zoonotic": "yes",
         "significance": "Mild gut upset in people and no signs in cattle, but cysts found at slaughter mean carcass condemnation, farm trace-back and trade costs.",
@@ -1152,17 +1240,27 @@
       "key": "taenia-solium",
       "canonicalName": "Taenia solium",
       "commonName": "Pork tapeworm",
-      "aliases": ["Cysticercus cellulosae"],
+      "aliases": [
+        "Cysticercus cellulosae"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Cyclophyllida",
         "family": "Taeniidae",
         "group": "cestode",
-        "definitiveHosts": ["human"],
-        "intermediateHosts": ["pig", "human"],
+        "definitiveHosts": [
+          "human"
+        ],
+        "intermediateHosts": [
+          "pig",
+          "human"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["adult tapeworm", "cysticercus"],
+        "onHostStages": [
+          "adult tapeworm",
+          "cysticercus"
+        ],
         "distribution": "Nearly worldwide; most cases in low- and middle-income countries",
         "zoonotic": "yes",
         "significance": "Adults in people and cysts in pigs are mostly silent; eggs swallowed by people cause cysticercosis, and brain cysts bring seizures.",
@@ -1336,7 +1434,7 @@
     {
       "key": "echinococcus-granulosus",
       "canonicalName": "Echinococcus granulosus",
-      "commonName": null,
+      "commonName": "Hydatid tapeworm",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1344,7 +1442,10 @@
         "order": "Cyclophyllida",
         "family": "Taeniidae",
         "group": "cestode",
-        "definitiveHosts": ["dog", "canid"],
+        "definitiveHosts": [
+          "dog",
+          "canid"
+        ],
         "intermediateHosts": [
           "sheep",
           "goat",
@@ -1354,7 +1455,10 @@
           "human"
         ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["adult tapeworm", "hydatid cyst"],
+        "onHostStages": [
+          "adult tapeworm",
+          "hydatid cyst"
+        ],
         "distribution": "Almost worldwide, mainly rural grazing areas where dogs eat offal",
         "zoonotic": "yes",
         "significance": "Harmless to dogs, but its hydatid cysts in the liver and lungs of livestock and people cause cystic echinococcosis.",
@@ -1509,7 +1613,7 @@
     {
       "key": "echinococcus-multilocularis",
       "canonicalName": "Echinococcus multilocularis",
-      "commonName": null,
+      "commonName": "Alveolar hydatid tapeworm",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1517,10 +1621,19 @@
         "order": "Cyclophyllida",
         "family": "Taeniidae",
         "group": "cestode",
-        "definitiveHosts": ["fox", "dog"],
-        "intermediateHosts": ["rodent", "human"],
+        "definitiveHosts": [
+          "fox",
+          "dog"
+        ],
+        "intermediateHosts": [
+          "rodent",
+          "human"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["adult tapeworm", "hydatid cyst"],
+        "onHostStages": [
+          "adult tapeworm",
+          "hydatid cyst"
+        ],
         "distribution": "Northern hemisphere: Europe, Asia, Japan and northern North America",
         "zoonotic": "yes",
         "significance": "Its alveolar cyst grows like a tumour in the liver of rodents and people; human alveolar echinococcosis is often fatal untreated.",
@@ -1682,18 +1795,31 @@
       "key": "diphyllobothrium-latum",
       "canonicalName": "Diphyllobothrium latum",
       "commonName": "Broad fish tapeworm",
-      "aliases": ["Dibothriocephalus latus"],
+      "aliases": [
+        "Dibothriocephalus latus"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Diphyllobothriidea",
         "family": "Diphyllobothriidae",
         "group": "cestode",
-        "definitiveHosts": ["human", "dog", "felid"],
-        "intermediateHosts": ["copepod", "freshwater fish"],
-        "paratenicHosts": ["freshwater fish"],
+        "definitiveHosts": [
+          "human",
+          "dog",
+          "felid"
+        ],
+        "intermediateHosts": [
+          "copepod",
+          "freshwater fish"
+        ],
+        "paratenicHosts": [
+          "freshwater fish"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["adult tapeworm"],
+        "onHostStages": [
+          "adult tapeworm"
+        ],
         "distribution": "Mostly circumpolar northern regions; very rare in South America",
         "zoonotic": "yes",
         "significance": "Fish-borne tapeworm of people and dogs; usually mild gut upset, once tied to vitamin B12-deficiency anaemia in people.",

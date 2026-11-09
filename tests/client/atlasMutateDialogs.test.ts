@@ -264,11 +264,13 @@ describe("AtlasMutateDialogs", () => {
         id: "tomb-1",
         originKey: "fasciola-hepatica",
         canonicalName: "Fasciola hepatica",
+        commonName: "Common liver fluke",
       }),
       entry({
         id: "tomb-2",
         originKey: null,
         canonicalName: "Learner gone",
+        commonName: "Learner gone",
       }),
     ]);
 
@@ -286,7 +288,7 @@ describe("AtlasMutateDialogs", () => {
     });
 
     const text = document.body.textContent ?? "";
-    expect(text).toContain("Fasciola hepatica");
+    expect(text).toContain("Common liver fluke");
     expect(text).toContain("Learner gone");
     const purgeButtons = [...document.body.querySelectorAll("button")].filter(
       (b) => b.textContent?.includes("Delete permanently"),

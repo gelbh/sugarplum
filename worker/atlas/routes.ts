@@ -536,11 +536,10 @@ atlasItemRoutes.post("/entries", async (c) => {
     throw new HTTPException(400, { message: "group required" });
   }
   const commonName =
-    typeof body.commonName === "string"
-      ? body.commonName.trim() || null
-      : body.commonName === null
-        ? null
-        : null;
+    typeof body.commonName === "string" ? body.commonName.trim() : "";
+  if (!commonName) {
+    throw new HTTPException(400, { message: "commonName required" });
+  }
 
   const id = newId();
   const ts = nowIso();

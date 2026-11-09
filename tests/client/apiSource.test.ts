@@ -139,7 +139,10 @@ describe("apiAtlasSource", () => {
       .mockResolvedValueOnce(jsonResponse(200, { entries: [] }));
     vi.stubGlobal("fetch", fetchMock);
 
-    await createEntry("atl-1", { canonicalName: "New parasite" });
+    await createEntry("atl-1", {
+      canonicalName: "New parasite",
+      commonName: "Made-up worm",
+    });
     await patchEntry("atl-1", "e1", { commonName: "Nick" });
     await softDeleteEntry("atl-1", "e1");
     await restoreEntry("atl-1", "e1");
