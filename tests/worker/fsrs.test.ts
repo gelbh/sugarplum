@@ -25,4 +25,25 @@ describe("fsrs review", () => {
     });
     expect(high.due.getTime()).toBeLessThan(low.due.getTime());
   });
+
+  it("custom w changes next due vs default with fuzz off", async () => {
+    const { default_w } = await import("ts-fsrs");
+    const now = new Date("2026-01-01T12:00:00.000Z");
+    const later = new Date("2026-01-10T12:00:00.000Z");
+    const graduated = review(newCard(now), Rating.Easy, now, {
+      desiredRetention: 0.9,
+      enableFuzz: false,
+    });
+    const w = default_w.map((x, i) => (i === 8 ? x * 3 : x));
+    const withDefault = review(graduated, Rating.Good, later, {
+      desiredRetention: 0.9,
+      enableFuzz: false,
+    });
+    const withCustom = review(graduated, Rating.Good, later, {
+      desiredRetention: 0.9,
+      enableFuzz: false,
+      w,
+    });
+    expect(withCustom.due.getTime()).not.toBe(withDefault.due.getTime());
+  });
 });

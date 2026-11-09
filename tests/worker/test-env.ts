@@ -132,6 +132,9 @@ type UserStudyPrefsRow = {
   r_floor: number;
   desired_retention: number;
   enable_fuzz: number;
+  fsrs_w_json?: string | null;
+  fsrs_last_optimized_at?: string | null;
+  fsrs_optimize_pending?: number;
   updated_at: string;
 };
 
@@ -509,7 +512,6 @@ export function createTestEnv(opts?: {
         if (
           normalized.includes("FROM user_study_prefs") &&
           normalized.includes("intro_budget") &&
-          normalized.includes("updated_at") &&
           normalized.includes("WHERE user_id =")
         ) {
           const row = userStudyPrefs.get(bound[0] as string);
@@ -520,6 +522,9 @@ export function createTestEnv(opts?: {
                 r_floor: row.r_floor,
                 desired_retention: row.desired_retention,
                 enable_fuzz: row.enable_fuzz,
+                fsrs_w_json: row.fsrs_w_json ?? null,
+                fsrs_last_optimized_at: row.fsrs_last_optimized_at ?? null,
+                fsrs_optimize_pending: row.fsrs_optimize_pending ?? 0,
                 updated_at: row.updated_at,
               } as T)
             : null;
@@ -942,8 +947,33 @@ export function createTestEnv(opts?: {
                 r_floor: row.r_floor,
                 desired_retention: row.desired_retention,
                 enable_fuzz: row.enable_fuzz,
+                fsrs_w_json: row.fsrs_w_json ?? null,
+                fsrs_last_optimized_at: row.fsrs_last_optimized_at ?? null,
+                fsrs_optimize_pending: row.fsrs_optimize_pending ?? 0,
               } as T)
             : null;
+        }
+        if (
+          normalized.includes("SELECT COUNT(*) AS cnt") &&
+          normalized.includes("FROM review_logs rl") &&
+          normalized.includes("WHERE d.user_id =")
+        ) {
+          const userId = bound[0] as string;
+          const cnt = reviewLogs.filter((rl) => {
+            const card = cards.get(rl.card_id);
+            if (!card) return false;
+            const deck = decks.get(card.deck_id);
+            return deck?.user_id === userId;
+          }).length;
+          return { cnt } as T;
+        }
+        if (
+          normalized.includes("SELECT rl.card_id AS card_id") &&
+          normalized.includes("FROM review_logs rl") &&
+          normalized.includes("WHERE d.user_id =")
+        ) {
+          // Handled in .all() below via same pattern — first() unused.
+          return null;
         }
         if (
           normalized.includes("FROM user_study_day") &&
@@ -1176,6 +1206,58 @@ export function createTestEnv(opts?: {
               };
             })
             .filter((row): row is NonNullable<typeof row> => row != null);
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("SELECT rl.card_id AS card_id") &&
+          normalized.includes("FROM review_logs rl") &&
+          normalized.includes("WHERE d.user_id =")
+        ) {
+          const userId = bound[0] as string;
+          const rows = reviewLogs
+            .filter((rl) => {
+              const card = cards.get(rl.card_id);
+              if (!card) return false;
+              const deck = decks.get(card.deck_id);
+              return deck?.user_id === userId;
+            })
+            .sort((a, b) => a.reviewed_at.localeCompare(b.reviewed_at))
+            .map((rl) => ({
+              card_id: rl.card_id,
+              reviewed_at: rl.reviewed_at,
+              rating: rl.rating,
+              state_json: rl.state_json,
+            }));
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("SELECT d.user_id AS user_id") &&
+          normalized.includes("COUNT(rl.id) AS cnt") &&
+          normalized.includes("FROM review_logs rl")
+        ) {
+          const cutoff = bound[0] as string;
+          const minReviews = bound[1] as number;
+          const limit = bound[2] as number;
+          const byUser = new Map<string, number>();
+          for (const rl of reviewLogs) {
+            const card = cards.get(rl.card_id);
+            if (!card) continue;
+            const deck = decks.get(card.deck_id);
+            if (!deck) continue;
+            byUser.set(deck.user_id, (byUser.get(deck.user_id) ?? 0) + 1);
+          }
+          const rows = [...byUser.entries()]
+            .map(([user_id, cnt]) => {
+              const p = userStudyPrefs.get(user_id);
+              if ((p?.fsrs_optimize_pending ?? 0) === 1) return null;
+              const last = p?.fsrs_last_optimized_at ?? null;
+              if (last != null && last !== "" && !(last < cutoff)) return null;
+              if (cnt < minReviews) return null;
+              return { user_id, cnt };
+            })
+            .filter((row): row is { user_id: string; cnt: number } => row != null)
+            .sort((a, b) => b.cnt - a.cnt)
+            .slice(0, limit);
           return { results: rows as T[] };
         }
         if (
@@ -3441,15 +3523,88 @@ export function createTestEnv(opts?: {
             number,
             string,
           ];
-          userStudyPrefs.set(user_id, {
-            user_id,
-            intro_budget,
-            review_budget,
-            r_floor,
-            desired_retention,
-            enable_fuzz,
-            updated_at,
-          });
+          const existing = userStudyPrefs.get(user_id);
+          if (normalized.includes("DO NOTHING") && existing) {
+            // keep existing
+          } else if (existing && normalized.includes("DO UPDATE SET")) {
+            userStudyPrefs.set(user_id, {
+              ...existing,
+              intro_budget,
+              review_budget,
+              r_floor,
+              desired_retention,
+              enable_fuzz,
+              updated_at,
+            });
+          } else {
+            userStudyPrefs.set(user_id, {
+              user_id,
+              intro_budget,
+              review_budget,
+              r_floor,
+              desired_retention,
+              enable_fuzz,
+              fsrs_w_json: existing?.fsrs_w_json ?? null,
+              fsrs_last_optimized_at: existing?.fsrs_last_optimized_at ?? null,
+              fsrs_optimize_pending: existing?.fsrs_optimize_pending ?? 0,
+              updated_at,
+            });
+          }
+        } else if (
+          normalized.startsWith("UPDATE user_study_prefs") &&
+          normalized.includes("fsrs_w_json = ?") &&
+          normalized.includes("fsrs_optimize_pending = 0")
+        ) {
+          // saveFsrsWeights: bind(w_json, last_at, updated_at, user_id)
+          // resetFsrsWeights: bind(last_at, updated_at, user_id) with fsrs_w_json = NULL
+          const row = userStudyPrefs.get(bound[bound.length - 1] as string);
+          if (row) {
+            if (normalized.includes("fsrs_w_json = NULL")) {
+              const [last_at, updated_at, user_id] = bound as [
+                string,
+                string,
+                string,
+              ];
+              userStudyPrefs.set(user_id, {
+                ...row,
+                fsrs_w_json: null,
+                fsrs_optimize_pending: 0,
+                fsrs_last_optimized_at: last_at,
+                updated_at,
+              });
+            } else {
+              const [w_json, last_at, updated_at, user_id] = bound as [
+                string,
+                string,
+                string,
+                string,
+              ];
+              userStudyPrefs.set(user_id, {
+                ...row,
+                fsrs_w_json: w_json,
+                fsrs_optimize_pending: 0,
+                fsrs_last_optimized_at: last_at,
+                updated_at,
+              });
+            }
+          }
+        } else if (
+          normalized.startsWith("UPDATE user_study_prefs") &&
+          normalized.includes("fsrs_optimize_pending =")
+        ) {
+          const [pending, updated_at, user_id] = bound as [
+            number,
+            string,
+            string,
+          ];
+          const row = userStudyPrefs.get(user_id);
+          if (row) {
+            userStudyPrefs.set(user_id, {
+              ...row,
+              fsrs_optimize_pending: pending,
+              updated_at,
+            });
+          }
         } else if (normalized.startsWith("INSERT INTO user_study_day")) {
           const [user_id, day] = bound as [string, string];
           const key = `${user_id}\0${day}`;

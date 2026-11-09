@@ -18,6 +18,8 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.4",
     "@mui/material": "^7.3.4",
+    "@open-spaced-repetition/binding": "^0.6.0",
+    "@open-spaced-repetition/binding-wasm32-wasip1": "^0.6.0",
     "aws4fetch": "^1.0.20",
     "hono": "^4.9.12",
     "jszip": "^3.10.2",

@@ -14,8 +14,18 @@ import {
   clampStudyPrefs,
   loadStudyPrefs,
   saveStudyPrefs,
+  studyPrefsResponse,
 } from "../study/prefs";
 import type { StudyPrefs } from "../study/queue";
+import {
+  countUserReviews,
+  exportRevlogCsv,
+  getFsrsOptimizeStatus,
+  isOptimizeDue,
+  resetFsrsWeights,
+  saveFsrsWeights,
+  setOptimizePending,
+} from "../study/fsrsOptimize";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -157,7 +167,7 @@ settingsRoutes.delete("/llm", async (c) => {
 settingsRoutes.get("/study", async (c) => {
   const userId = await requireUser(c);
   const prefs = await loadStudyPrefs(getDb(c.env), userId);
-  return c.json(prefs satisfies StudyPrefs);
+  return c.json(studyPrefsResponse(prefs) satisfies StudyPrefs);
 });
 
 settingsRoutes.put("/study", async (c) => {
@@ -181,4 +191,56 @@ settingsRoutes.put("/study", async (c) => {
   const clamped = clampStudyPrefs(body, existing);
   const prefs = await saveStudyPrefs(db, userId, clamped);
   return c.json(prefs satisfies StudyPrefs);
+});
+
+settingsRoutes.get("/study/fsrs-optimize", async (c) => {
+  const userId = await requireUser(c);
+  const status = await getFsrsOptimizeStatus(getDb(c.env), userId);
+  return c.json(status);
+});
+
+settingsRoutes.get("/study/fsrs-revlog.csv", async (c) => {
+  const userId = await requireUser(c);
+  const csv = await exportRevlogCsv(getDb(c.env), userId);
+  return new Response(csv, {
+    status: 200,
+    headers: {
+      "content-type": "text/csv; charset=utf-8",
+      "cache-control": "no-store",
+    },
+  });
+});
+
+settingsRoutes.put("/study/fsrs-weights", async (c) => {
+  const userId = await requireUser(c);
+  let body: { w?: unknown };
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+  try {
+    const w = await saveFsrsWeights(getDb(c.env), userId, body.w);
+    return c.json({ ok: true as const, wLength: w.length });
+  } catch {
+    throw new HTTPException(400, { message: "Invalid FSRS weights" });
+  }
+});
+
+settingsRoutes.post("/study/fsrs-weights/reset", async (c) => {
+  const userId = await requireUser(c);
+  await resetFsrsWeights(getDb(c.env), userId);
+  return c.json({ ok: true as const });
+});
+
+settingsRoutes.post("/study/fsrs-optimize/run", async (c) => {
+  const userId = await requireUser(c);
+  const db = getDb(c.env);
+  const prefs = await loadStudyPrefs(db, userId);
+  const reviewCount = await countUserReviews(db, userId);
+  if (!isOptimizeDue(reviewCount, prefs.fsrsLastOptimizedAt ?? null, new Date())) {
+    throw new HTTPException(400, { message: "Not eligible to optimize" });
+  }
+  await setOptimizePending(db, userId, true);
+  return c.json({ ok: true as const, pending: true as const });
 });

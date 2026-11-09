@@ -6,6 +6,9 @@ import { STUDY_MEDIA_CACHE } from "./src/study/studyMediaCache";
 import { patchSqlJsForWorkers } from "./vite/patchSqlJsPlugin";
 
 export default defineConfig({
+  optimizeDeps: {
+    exclude: ["@open-spaced-repetition/binding"],
+  },
   plugins: [
     patchSqlJsForWorkers(),
     react(),
