@@ -238,9 +238,9 @@ export const datasetGroupFileSchema = z
 
 const entryNames = (e: DatasetEntry) =>
   new Set(
-    [e.canonicalName, e.commonName, ...e.aliases, ...e.misspellings]
-      .filter((n): n is string => n !== null)
-      .map((n) => n.toLowerCase()),
+    [e.canonicalName, e.commonName, ...e.aliases, ...e.misspellings].map((n) =>
+      n.toLowerCase(),
+    ),
   );
 
 // Takes the group files so each entry is validated once, then flattens them.

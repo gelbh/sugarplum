@@ -23,6 +23,7 @@ import "../atlas/atlasMotion.css";
 import Cabinet from "../atlas/Cabinet";
 import CompareView from "../atlas/CompareView";
 import EntryView from "../atlas/EntryView";
+import { entryTitles } from "../atlas/entryTitles";
 import MakeCardsDeckDialog from "../atlas/MakeCardsDeckDialog";
 import {
   atlasCompareHref,
@@ -163,7 +164,8 @@ export default function AtlasPage({
 
   async function onResetEntry(entry: AtlasEntryView) {
     if (!entry.originKey || !entry.editedAt) return;
-    if (!window.confirm(`Reset ${entry.canonicalName} to the dataset?`)) return;
+    if (!window.confirm(`Reset ${entryTitles(entry).primary} to the dataset?`))
+      return;
     try {
       await resetEntry(atlasId, entry.id);
       await reloadEntries();
@@ -233,7 +235,7 @@ export default function AtlasPage({
             ? () => {
                 setMakeCardsDialog({
                   keys: [entryMakeCardsKey(entry)],
-                  title: `Make cards · ${entry.canonicalName}`,
+                  title: `Make cards · ${entryTitles(entry).primary}`,
                 });
               }
             : undefined
