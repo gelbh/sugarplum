@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { CardDraftView } from "../api/client";
+import type { CardDraftView, StudyQueueMeta } from "../api/client";
 import { useUnlockToasts } from "../achievements/UnlockToastProvider";
 import { isGuest } from "../guest/session";
 import { listPendingGrades } from "./pendingGrades";
@@ -26,7 +26,10 @@ export type PendingGradeSync = {
  * Pages supply onDueRefreshed when a successful flush returns a fresh due list.
  */
 export function usePendingGradeSync(options: {
-  onDueRefreshed?: (due: CardDraftView[]) => void;
+  onDueRefreshed?: (
+    due: CardDraftView[],
+    meta: StudyQueueMeta | null,
+  ) => void;
   onDueRefreshFailed?: (userId: string) => void | Promise<void>;
   onUnlocks?: (unlocks: readonly unknown[]) => void;
 }): PendingGradeSync {
@@ -82,7 +85,7 @@ export function usePendingGradeSync(options: {
           if (summary && summary.applied > 0) {
             if (summary.due) {
               warmDueMedia(summary.due);
-              onDueRefreshed?.(summary.due);
+              onDueRefreshed?.(summary.due, summary.meta);
             } else {
               await onDueRefreshFailed?.(userId);
             }
