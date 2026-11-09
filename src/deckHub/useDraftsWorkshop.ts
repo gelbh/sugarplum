@@ -3,6 +3,7 @@ import { useUnlockToasts } from "../achievements/UnlockToastProvider";
 import {
   ApiError,
   acceptCard,
+  acceptSafeJobDrafts,
   listJobDrafts,
   patchCard,
   rejectCard,
@@ -11,6 +12,10 @@ import {
 } from "../api/client";
 import { cardPatchBody } from "../cards/cardPatchBody";
 import type { DraftEditorChange } from "../components/DraftCardEditor";
+import {
+  fieldsForQualityGate,
+  isStoredDraftSafe,
+} from "../../worker/generation/storedDraftQuality";
 
 type Args = {
   guest: boolean;
@@ -219,6 +224,72 @@ export function useDraftsWorkshop({
 
   const primaryJobId = selected?.job_id ?? draftJobs[0]?.id ?? null;
 
+  const safePreviewCount = drafts.filter((card) =>
+    isStoredDraftSafe(fieldsForQualityGate(card)),
+  ).length;
+  const unsafePreviewCount = Math.max(0, drafts.length - safePreviewCount);
+
+  async function onAcceptAllSafe() {
+    if (guest || drafts.length === 0) return;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    let accepted = 0;
+    let failed = 0;
+    let leftUnsafe = 0;
+    let progressed = false;
+    try {
+      if (dirty && selected) {
+        await patchCard(selected.id, cardPatchBody(selected));
+        setDirty(false);
+      }
+      let jobIds = [
+        ...new Set(
+          drafts
+            .map((card) => card.job_id)
+            .filter((id): id is string => typeof id === "string" && id.length > 0),
+        ),
+      ];
+      if (jobIds.length === 0 && draftJobs[0]) {
+        jobIds = [draftJobs[0].id];
+      }
+      for (const jobId of jobIds) {
+        const result = await acceptSafeJobDrafts(jobId);
+        progressed = true;
+        accepted += result.accepted;
+        failed += result.failed;
+        leftUnsafe += result.leftUnsafe;
+        if (result.unlocks?.length) {
+          enqueueUnlocks(result.unlocks);
+        }
+      }
+      await load();
+      await onDraftsChanged?.();
+      const parts = [`Accepted ${accepted} safe`];
+      if (leftUnsafe > 0) parts.push(`${leftUnsafe} left for review`);
+      if (failed > 0) parts.push(`${failed} failed`);
+      setNotice(parts.join(" · "));
+    } catch (err) {
+      if (progressed) {
+        try {
+          await load();
+          await onDraftsChanged?.();
+        } catch {
+          /* keep original error */
+        }
+        const parts = [`Accepted ${accepted} safe before error`];
+        if (leftUnsafe > 0) parts.push(`${leftUnsafe} left for review`);
+        if (failed > 0) parts.push(`${failed} failed`);
+        setNotice(parts.join(" · "));
+      }
+      setError(
+        err instanceof ApiError ? err.message : "Could not accept safe drafts",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return {
     drafts,
     selected,
@@ -232,11 +303,14 @@ export function useDraftsWorkshop({
     remaining,
     progressLabel,
     primaryJobId,
+    safePreviewCount,
+    unsafePreviewCount,
     onSelect,
     onChange,
     onAccept,
     onSkip,
     onSave,
+    onAcceptAllSafe,
     reload: load,
   };
 }
