@@ -291,6 +291,61 @@ describe("guest store", () => {
     expect(due.every((c) => c.deck_id === deckA.id)).toBe(true);
   });
 
+  it("interleaves multi-deck review due order for a subject", () => {
+    enterGuest(storage);
+    const subject = guestCreateSubject("Interleave subject", storage);
+    const deckA = guestCreateDeck("Deck A", subject.id, storage);
+    const deckB = guestCreateDeck("Deck B", subject.id, storage);
+    const [a1, a2] = guestAddAcceptedCards(
+      deckA.id,
+      [
+        { front: "A1?", back: "a1" },
+        { front: "A2?", back: "a2" },
+      ],
+      storage,
+    );
+    const [b1] = guestAddAcceptedCards(
+      deckB.id,
+      [{ front: "B1?", back: "b1" }],
+      storage,
+    );
+    const dues = {
+      [a1!.id]: "2026-10-28T10:00:00.000Z",
+      [a2!.id]: "2026-10-28T11:00:00.000Z",
+      [b1!.id]: "2026-10-28T10:30:00.000Z",
+    };
+    const raw = JSON.parse(storage.getItem(STORE_KEY)!) as {
+      cards: Array<{ id: string; due?: string }>;
+      schedules: Record<string, unknown>;
+    };
+    for (const id of Object.keys(dues)) {
+      raw.schedules[id] = {
+        state: 2,
+        reps: 5,
+        lapses: 0,
+        stability: 100,
+        difficulty: 5,
+        elapsed_days: 1,
+        scheduled_days: 10,
+        learning_steps: 0,
+        last_review: "2026-10-27T12:00:00.000Z",
+      };
+      const idx = raw.cards.findIndex((c) => c.id === id);
+      if (idx >= 0) raw.cards[idx] = { ...raw.cards[idx]!, due: dues[id] };
+    }
+    storage.setItem(STORE_KEY, JSON.stringify(raw));
+
+    const due = guestListDueCards(
+      {
+        subjectId: subject.id,
+        localDay: "2026-10-28",
+        tzOffsetMinutes: 0,
+      },
+      storage,
+    ).cards;
+    expect(due.map((c) => c.id)).toEqual([a1!.id, b1!.id, a2!.id]);
+  });
+
   it("filters due cards by subjectId via deck.subject_id", () => {
     enterGuest(storage);
     const sub1 = guestCreateSubject("Subject One", storage);
@@ -572,9 +627,9 @@ describe("guest store", () => {
 
     const moved = guestMoveCard(card.id, deckB.id, storage);
     expect(moved.deck_id).toBe(deckB.id);
-    expect(guestListDeckCards(deckA.id, storage).map((c) => c.id)).not.toContain(
-      card.id,
-    );
+    expect(
+      guestListDeckCards(deckA.id, storage).map((c) => c.id),
+    ).not.toContain(card.id);
     expect(guestListDeckCards(deckB.id, storage).map((c) => c.id)).toContain(
       card.id,
     );

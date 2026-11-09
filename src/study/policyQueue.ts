@@ -10,6 +10,7 @@ export type StudyPrefs = {
 
 export type QueueCandidate = {
   id: string;
+  deck_id: string;
   due: string;
   state: number;
   reps: number;
@@ -64,6 +65,30 @@ function byDueThenId(a: QueueCandidate, b: QueueCandidate): number {
   if (a.due !== b.due) return a.due < b.due ? -1 : 1;
   if (a.id !== b.id) return a.id < b.id ? -1 : 1;
   return 0;
+}
+
+/** Deterministic round-robin by deck; preserves within-deck input order. */
+function interleaveByDeck(cards: QueueCandidate[]): QueueCandidate[] {
+  if (cards.length <= 1) return cards;
+  const buckets = new Map<string, QueueCandidate[]>();
+  for (const c of cards) {
+    const list = buckets.get(c.deck_id);
+    if (list) list.push(c);
+    else buckets.set(c.deck_id, [c]);
+  }
+  if (buckets.size <= 1) return cards;
+  const deckIds = [...buckets.keys()].sort();
+  const out: QueueCandidate[] = [];
+  let remaining = cards.length;
+  while (remaining > 0) {
+    for (const deckId of deckIds) {
+      const list = buckets.get(deckId);
+      if (!list || list.length === 0) continue;
+      out.push(list.shift()!);
+      remaining--;
+    }
+  }
+  return out;
 }
 
 function isLearningOrRelearning(c: QueueCandidate): boolean {
@@ -178,10 +203,10 @@ export function buildStudyQueue(
     .filter((c) => isLearningOrRelearning(c) || mustIds.has(c.id))
     .sort(byDueThenId);
   const bandForcedIds = new Set(bandForced.map((c) => c.id));
-  const bandReviews = selectedReviews
-    .filter((c) => !bandForcedIds.has(c.id))
-    .sort(byDueThenId);
-  const bandIntro = [...selectedIntro].sort(byDueThenId);
+  const bandReviews = interleaveByDeck(
+    selectedReviews.filter((c) => !bandForcedIds.has(c.id)).sort(byDueThenId),
+  );
+  const bandIntro = interleaveByDeck([...selectedIntro].sort(byDueThenId));
 
   const selected = [...bandForced, ...bandReviews, ...bandIntro];
   const dueIds = selected.map((c) => c.id);
