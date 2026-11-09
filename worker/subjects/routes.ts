@@ -3,10 +3,7 @@ import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
-import {
-  aggregateSubjectKnowledge,
-  composeSubjectKnowledge,
-} from "../../src/study/subjectKnowledge";
+import { composeSubjectKnowledge } from "../../src/study/subjectKnowledge";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -106,6 +103,7 @@ subjectRoutes.post("/", async (c) => {
 subjectRoutes.get("/composition-summaries", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
+  const now = new Date();
 
   const [subjectQuery, scheduleQuery] = await Promise.all([
     db
@@ -120,7 +118,15 @@ subjectRoutes.get("/composition-summaries", async (c) => {
         `-- sugarplum:subject-composition-summaries-rows
          SELECT d.subject_id AS subject_id,
                 s.state AS state,
-                s.scheduled_days AS scheduled_days
+                s.scheduled_days AS scheduled_days,
+                s.due AS due,
+                s.stability AS stability,
+                s.difficulty AS difficulty,
+                s.elapsed_days AS elapsed_days,
+                s.learning_steps AS learning_steps,
+                s.reps AS reps,
+                s.lapses AS lapses,
+                s.last_review AS last_review
          FROM cards c
          INNER JOIN decks d ON d.id = c.deck_id
          LEFT JOIN card_schedules s ON s.card_id = c.id
@@ -131,6 +137,14 @@ subjectRoutes.get("/composition-summaries", async (c) => {
         subject_id: string;
         state: number | null;
         scheduled_days: number | null;
+        due: string | null;
+        stability: number | null;
+        difficulty: number | null;
+        elapsed_days: number | null;
+        learning_steps: number | null;
+        reps: number | null;
+        lapses: number | null;
+        last_review: string | null;
       }>(),
   ]);
   const subjectRows = subjectQuery.results;
@@ -138,7 +152,18 @@ subjectRoutes.get("/composition-summaries", async (c) => {
 
   const bySubject = new Map<
     string,
-    Array<{ state: number | null; scheduled_days: number | null }>
+    Array<{
+      state: number | null;
+      scheduled_days: number | null;
+      due: string | null;
+      stability: number | null;
+      difficulty: number | null;
+      elapsed_days: number | null;
+      learning_steps: number | null;
+      reps: number | null;
+      lapses: number | null;
+      last_review: string | null;
+    }>
   >();
   for (const row of subjectRows ?? []) {
     bySubject.set(row.id, []);
@@ -149,20 +174,31 @@ subjectRoutes.get("/composition-summaries", async (c) => {
     bucket.push({
       state: row.state ?? null,
       scheduled_days: row.scheduled_days ?? null,
+      due: row.due ?? null,
+      stability: row.stability ?? null,
+      difficulty: row.difficulty ?? null,
+      elapsed_days: row.elapsed_days ?? null,
+      learning_steps: row.learning_steps ?? null,
+      reps: row.reps ?? null,
+      lapses: row.lapses ?? null,
+      last_review: row.last_review ?? null,
     });
   }
 
   return c.json(
     [...bySubject.entries()].map(([subjectId, rows]) => {
-      const agg = aggregateSubjectKnowledge(rows);
+      const knowledge = composeSubjectKnowledge(rows, now);
       return {
         subjectId,
-        total: agg.total,
-        graduatedPct: agg.graduatedPct,
-        new: agg.new,
-        learning: agg.learning,
-        young: agg.young,
-        mature: agg.mature,
+        total: knowledge.total,
+        graduatedPct: knowledge.graduatedPct,
+        new: knowledge.new,
+        learning: knowledge.learning,
+        young: knowledge.young,
+        mature: knowledge.mature,
+        avgRetrievability: knowledge.avgRetrievability,
+        etk: knowledge.etk,
+        recallCardCount: knowledge.recallCardCount,
       };
     }),
   );

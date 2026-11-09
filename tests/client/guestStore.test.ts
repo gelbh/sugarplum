@@ -24,6 +24,7 @@ import {
   guestReviewCard,
 } from "../../src/guest/store";
 import {
+  guestDeckComposition,
   guestSubjectComposition,
   guestSubjectCompositionSummaries,
 } from "../../src/guest/composition";
@@ -187,7 +188,7 @@ describe("guest store", () => {
     }
   });
 
-  it("guestSubjectComposition all-new → null avg and 0 etk", () => {
+  it("guestSubjectComposition all-new → avg 0 and 0 etk", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(COMPOSITION_NOW);
     try {
@@ -209,9 +210,9 @@ describe("guest store", () => {
         total: 2,
         graduated: 0,
         graduatedPct: 0,
-        avgRetrievability: null,
+        avgRetrievability: 0,
         etk: 0,
-        recallCardCount: 0,
+        recallCardCount: 2,
       });
     } finally {
       vi.useRealTimers();
@@ -222,6 +223,49 @@ describe("guest store", () => {
     expect(() => guestSubjectComposition("missing", storage)).toThrow(
       "Subject not found",
     );
+  });
+
+  it("guestDeckComposition matches subject buckets for a single deck", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(COMPOSITION_NOW);
+    try {
+      const subject = guestCreateSubject("Deck knowledge", storage);
+      const deck = guestCreateDeck("Only deck", subject.id, storage);
+      const [, cYoung] = guestAddAcceptedCards(
+        deck.id,
+        [
+          { front: "New?", back: "n" },
+          { front: "Young?", back: "y" },
+        ],
+        storage,
+      );
+      const raw = JSON.parse(storage.getItem(STORE_KEY)!) as {
+        schedules: Record<string, unknown>;
+      };
+      raw.schedules[cYoung!.id] = {
+        state: 2,
+        reps: 3,
+        lapses: 0,
+        stability: 20,
+        difficulty: 5,
+        elapsed_days: 1,
+        scheduled_days: 20,
+        learning_steps: 0,
+        last_review: "2026-01-01T12:00:00.000Z",
+      };
+      storage.setItem(STORE_KEY, JSON.stringify(raw));
+
+      const out = guestDeckComposition(deck.id, storage);
+      expect(out).toMatchObject({
+        new: 1,
+        young: 1,
+        total: 2,
+        graduatedPct: 50,
+        recallCardCount: 2,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("guestSubjectCompositionSummaries returns graduated pct per subject", () => {
@@ -252,7 +296,8 @@ describe("guest store", () => {
     };
     storage.setItem(STORE_KEY, JSON.stringify(raw));
 
-    expect(guestSubjectCompositionSummaries(storage)).toEqual(
+    const summaries = guestSubjectCompositionSummaries(storage);
+    expect(summaries).toEqual(
       expect.arrayContaining([
         {
           subjectId: empty.id,
@@ -262,8 +307,11 @@ describe("guest store", () => {
           learning: 0,
           young: 0,
           mature: 0,
+          avgRetrievability: null,
+          etk: 0,
+          recallCardCount: 0,
         },
-        {
+        expect.objectContaining({
           subjectId: subject.id,
           total: 2,
           graduatedPct: 50,
@@ -271,9 +319,13 @@ describe("guest store", () => {
           learning: 0,
           young: 1,
           mature: 0,
-        },
+          recallCardCount: 2,
+        }),
       ]),
     );
+    const mixed = summaries.find((s) => s.subjectId === subject.id)!;
+    expect(mixed.avgRetrievability).not.toBeNull();
+    expect(mixed.etk).toBeGreaterThanOrEqual(0);
   });
 
   it("migrates old store without subjects into Unfiled / subject_hint", () => {

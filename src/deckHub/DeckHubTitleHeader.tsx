@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
@@ -14,6 +15,7 @@ type Props = {
   cover: StoredCoverRow | null;
   guest: boolean;
   metaLine: string;
+  spark?: ReactNode;
   exportBusy: boolean;
   exportDisabled: boolean;
   overflowAnchor: HTMLElement | null;
@@ -30,6 +32,7 @@ export default function DeckHubTitleHeader({
   cover,
   guest,
   metaLine,
+  spark,
   exportBusy,
   exportDisabled,
   overflowAnchor,
@@ -104,6 +107,7 @@ export default function DeckHubTitleHeader({
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               {metaLine}
             </Typography>
+            {spark ?? null}
             {!guest ? (
               <Button
                 size="small"
