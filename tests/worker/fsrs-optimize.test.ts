@@ -307,7 +307,6 @@ describe("FSRS optimize API", () => {
     );
     expect(await statusRes.json()).toMatchObject({ pending: true });
 
-    // Fresh optimize: clear pending, stamp last, should not re-mark.
     await saveFsrsWeights(db, "user-a", fixtureW, new Date("2026-06-01T00:00:00.000Z"));
     const markedAgain = await markOptimizePendingBatch(
       db,

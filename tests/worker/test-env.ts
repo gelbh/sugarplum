@@ -3517,7 +3517,7 @@ export function createTestEnv(opts?: {
           ];
           const existing = userStudyPrefs.get(user_id);
           if (normalized.includes("DO NOTHING") && existing) {
-            // keep existing
+            /* no-op */
           } else if (existing && normalized.includes("DO UPDATE SET")) {
             userStudyPrefs.set(user_id, {
               ...existing,
@@ -3547,8 +3547,6 @@ export function createTestEnv(opts?: {
           normalized.includes("fsrs_w_json") &&
           normalized.includes("fsrs_optimize_pending = 0")
         ) {
-          // saveFsrsWeights: bind(w_json, last_at, updated_at, user_id)
-          // resetFsrsWeights: bind(last_at, updated_at, user_id) with fsrs_w_json = NULL
           const row = userStudyPrefs.get(bound[bound.length - 1] as string);
           if (row) {
             if (normalized.includes("fsrs_w_json = NULL")) {

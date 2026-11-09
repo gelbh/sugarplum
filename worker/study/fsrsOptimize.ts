@@ -217,8 +217,6 @@ export async function markOptimizePendingBatch(
   ).toISOString();
   const nowIso = now.toISOString();
 
-  // Candidates: users with enough reviews whose last optimize is null or stale,
-  // and not already pending. Prefer users who already have a prefs row.
   const { results } = await db
     .prepare(
       `SELECT d.user_id AS user_id, COUNT(rl.id) AS cnt
