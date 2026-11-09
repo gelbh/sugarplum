@@ -341,6 +341,23 @@ describe("dataset schema", () => {
       },
     ],
     [
+      "lifecycle_diagram as hero",
+      {
+        ...minimal,
+        images: [
+          {
+            id: "lifecycle",
+            file: "lifecycle.webp",
+            role: "lifecycle_diagram",
+            credit: "CDC",
+            license: "Public domain",
+            sourceUrl: "https://example.org/lifecycle.png",
+            isHero: true,
+          },
+        ],
+      },
+    ],
+    [
       "duplicate image ids",
       {
         ...minimal,
@@ -606,15 +623,26 @@ describe("built-in parasite dataset", () => {
     expect(extras).toEqual([]);
   });
 
-  it("ships pilot lifecycle_diagram images", () => {
+  it("ships pilot lifecycle_diagram images and never marks them hero", () => {
     const diagrams = dataset.entries.flatMap((e) =>
       e.images
         .filter((img) => img.role === "lifecycle_diagram")
-        .map((img) => `${e.key}:${img.id}`),
+        .map((img) => ({ key: e.key, id: img.id, isHero: img.isHero })),
     );
-    expect(diagrams.sort()).toEqual([
-      "fasciola-hepatica:fasciola-hepatica-lifecycle",
-      "taenia-saginata:taenia-saginata-lifecycle",
-    ]);
+    expect(diagrams).toEqual(
+      expect.arrayContaining([
+        {
+          key: "fasciola-hepatica",
+          id: "fasciola-hepatica-lifecycle",
+          isHero: false,
+        },
+        {
+          key: "taenia-saginata",
+          id: "taenia-saginata-lifecycle",
+          isHero: false,
+        },
+      ]),
+    );
+    expect(diagrams.filter((d) => d.isHero)).toEqual([]);
   });
 });

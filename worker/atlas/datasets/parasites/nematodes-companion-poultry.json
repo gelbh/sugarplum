@@ -2214,9 +2214,9 @@
           "file": "angiostrongylus-vasorum-hero.webp",
           "role": "adult",
           "caption": null,
-          "credit": "John F. Lindo, Cecilia Waugh, John Hall, Colette Cunningham-Myrie, Deanna Ashley, Mark L. Eberhard, James J. Sullivan, H",
-          "license": "Public domain",
-          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Angiostrongylus_cantonensis.png",
+          "credit": "Stefan Walkowski",
+          "license": "CC BY-SA 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Angiostrongylus_vasorum.jpg",
           "isHero": true
         }
       ]
@@ -2545,14 +2545,14 @@
       ],
       "images": [
         {
-          "id": "hero",
-          "file": "dirofilaria-repens-hero.webp",
-          "role": "adult",
+          "id": "lifecycle",
+          "file": "dirofilaria-repens-lifecycle.webp",
+          "role": "lifecycle_diagram",
           "caption": null,
           "credit": "CDC / PHIL or DPDx (via Wikimedia Commons)",
           "license": "Public domain",
           "sourceUrl": "https://commons.wikimedia.org/wiki/File:D_repens_Lebenszyklus.png",
-          "isHero": true
+          "isHero": false
         }
       ]
     },
@@ -4149,18 +4149,7 @@
           "note": null
         }
       ],
-      "images": [
-        {
-          "id": "hero",
-          "file": "pseudoterranova-decipiens-hero.webp",
-          "role": "adult",
-          "caption": null,
-          "credit": "CDC / PHIL or DPDx (via Wikimedia Commons)",
-          "license": "Public domain",
-          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Anasakid_whole.jpg",
-          "isHero": true
-        }
-      ]
+      "images": []
     }
   ]
 }

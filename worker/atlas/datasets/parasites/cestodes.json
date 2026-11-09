@@ -844,18 +844,7 @@
           "note": null
         }
       ],
-      "images": [
-        {
-          "id": "hero",
-          "file": "taenia-ovis-hero.webp",
-          "role": "adult",
-          "caption": null,
-          "credit": "Dr. Guido Bohne",
-          "license": "CC BY-SA 4.0",
-          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Taenia_94124824.jpg",
-          "isHero": true
-        }
-      ]
+      "images": []
     },
     {
       "key": "taenia-multiceps",
@@ -1424,9 +1413,9 @@
           "file": "taenia-solium-hero.webp",
           "role": "adult",
           "caption": null,
-          "credit": "Wikimedia Commons",
+          "credit": "CDC / PHIL or DPDx (via Wikimedia Commons)",
           "license": "Public domain",
-          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bandwurm-drawing.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Taenia_solium_tapeworm_scolex_with_its_four_suckers_and_two_rows_of_hooks_5262_lores.jpg",
           "isHero": true
         }
       ]
@@ -1599,14 +1588,14 @@
       ],
       "images": [
         {
-          "id": "hero",
-          "file": "echinococcus-granulosus-hero.webp",
-          "role": "adult",
+          "id": "lifecycle",
+          "file": "echinococcus-granulosus-lifecycle.webp",
+          "role": "lifecycle_diagram",
           "caption": null,
           "credit": "Besnoitjm",
           "license": "CC BY-SA 3.0",
           "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ciclo_biol%C3%B3gico_Echinococcus_granulosus.jpg",
-          "isHero": true
+          "isHero": false
         }
       ]
     },

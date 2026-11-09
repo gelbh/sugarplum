@@ -292,14 +292,14 @@
       ],
       "images": [
         {
-          "id": "hero",
-          "file": "strongyloides-westeri-hero.webp",
-          "role": "adult",
+          "id": "lifecycle",
+          "file": "strongyloides-westeri-lifecycle.webp",
+          "role": "lifecycle_diagram",
           "caption": null,
           "credit": "LeChFr",
           "license": "CC BY-SA 4.0",
           "sourceUrl": "https://commons.wikimedia.org/wiki/File:Strongyloides_westeri_lifecycle.png",
-          "isHero": true
+          "isHero": false
         }
       ]
     },
@@ -2396,7 +2396,7 @@
           "caption": null,
           "credit": "VlaminckJ",
           "license": "CC BY-SA 4.0",
-          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Adult_Ascaris_in_hand.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Asuum_male_and_female.jpg",
           "isHero": true
         }
       ]
@@ -2665,18 +2665,7 @@
           "note": null
         }
       ],
-      "images": [
-        {
-          "id": "hero",
-          "file": "trichuris-suis-hero.webp",
-          "role": "adult",
-          "caption": null,
-          "credit": "Cinzia Cantacessi, Neil D. Young, Peter Nejsum, Aaron R. Jex, Bronwyn E. Campbell, Ross S. Hall, Stig M. Thamsborg, Jean",
-          "license": "CC BY 2.5",
-          "sourceUrl": "https://commons.wikimedia.org/wiki/File:T.suis_Immuno-modulatory_mechanisms.png",
-          "isHero": true
-        }
-      ]
+      "images": []
     },
     {
       "key": "trichinella-spiralis",

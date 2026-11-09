@@ -668,18 +668,7 @@
           "note": null
         }
       ],
-      "images": [
-        {
-          "id": "hero",
-          "file": "trichostrongylus-spp-hero.webp",
-          "role": "adult",
-          "caption": null,
-          "credit": "Umbertocalderon (talk).\n\nOriginal uploader was Umbertocalderon at en.wikipedia",
-          "license": "CC BY-SA 3.0",
-          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Doramec_L.A._Injectable_Solution.png",
-          "isHero": true
-        }
-      ]
+      "images": []
     },
     {
       "key": "strongyloides-papillosus",
@@ -2599,18 +2588,7 @@
           "note": null
         }
       ],
-      "images": [
-        {
-          "id": "hero",
-          "file": "dictyocaulus-filaria-hero.webp",
-          "role": "adult",
-          "caption": null,
-          "credit": "Alan R Walker",
-          "license": "CC BY-SA 3.0",
-          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Dictyocaulus-viviparus-cattle.jpg",
-          "isHero": true
-        }
-      ]
+      "images": []
     },
     {
       "key": "ostertagia-ostertagi",
