@@ -1,7 +1,13 @@
+import { useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
@@ -26,6 +32,7 @@ export default function DraftsWorkshop({
   onDraftsChanged,
 }: Props) {
   const desk = useDraftsWorkshop({ guest, draftJobs, onDraftsChanged });
+  const [confirmSafe, setConfirmSafe] = useState(false);
 
   if (guest) {
     return (
@@ -227,37 +234,47 @@ export default function DraftsWorkshop({
       <Stack
         direction="row"
         spacing={1}
-        justifyContent="flex-end"
+        justifyContent="space-between"
+        alignItems="center"
         flexWrap="wrap"
         useFlexGap
       >
         <Button
           variant="outlined"
-          disabled={desk.busy || !desk.selected}
-          onClick={() => {
-            void desk.onSkip();
-          }}
+          disabled={desk.busy || desk.safePreviewCount === 0}
+          onClick={() => setConfirmSafe(true)}
         >
-          Skip
+          Accept all safe
         </Button>
-        <Button
-          variant="outlined"
-          disabled={desk.busy || !desk.selected || !desk.dirty}
-          onClick={() => {
-            void desk.onSave();
-          }}
-        >
-          Save
-        </Button>
-        <Button
-          variant="contained"
-          disabled={desk.busy || !desk.selected}
-          onClick={() => {
-            void desk.onAccept();
-          }}
-        >
-          Accept
-        </Button>
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          <Button
+            variant="outlined"
+            disabled={desk.busy || !desk.selected}
+            onClick={() => {
+              void desk.onSkip();
+            }}
+          >
+            Skip
+          </Button>
+          <Button
+            variant="outlined"
+            disabled={desk.busy || !desk.selected || !desk.dirty}
+            onClick={() => {
+              void desk.onSave();
+            }}
+          >
+            Save
+          </Button>
+          <Button
+            variant="contained"
+            disabled={desk.busy || !desk.selected}
+            onClick={() => {
+              void desk.onAccept();
+            }}
+          >
+            Accept
+          </Button>
+        </Stack>
       </Stack>
 
       <Button
@@ -267,6 +284,42 @@ export default function DraftsWorkshop({
       >
         Add more material
       </Button>
+
+      <Dialog
+        open={confirmSafe}
+        onClose={() => !desk.busy && setConfirmSafe(false)}
+      >
+        <DialogTitle>Accept all safe drafts?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Accept {desk.safePreviewCount} quality-gated draft
+            {desk.safePreviewCount === 1 ? "" : "s"} into study
+            {desk.unsafePreviewCount > 0
+              ? ` and leave ${desk.unsafePreviewCount} for review`
+              : ""}
+            ? Counts are a preview; the server re-checks before accepting.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setConfirmSafe(false)}
+            disabled={desk.busy}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            disabled={desk.busy}
+            autoFocus
+            onClick={() => {
+              setConfirmSafe(false);
+              void desk.onAcceptAllSafe();
+            }}
+          >
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 }

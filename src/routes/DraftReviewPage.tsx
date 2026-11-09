@@ -640,10 +640,11 @@ export default function DraftReviewPage() {
         )}
 
         <Dialog open={confirmAll} onClose={() => !busy && setConfirmAll(false)}>
-          <DialogTitle>Accept all drafts?</DialogTitle>
+          <DialogTitle>Accept all remaining drafts?</DialogTitle>
           <DialogContent>
             <DialogContentText>
-              Accept all {drafts.length} remaining drafts into study?
+              Accept all {drafts.length} remaining drafts into study? This is
+              not quality-gated (unlike Accept all safe on the deck hub).
             </DialogContentText>
           </DialogContent>
           <DialogActions>
