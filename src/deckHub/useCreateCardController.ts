@@ -67,6 +67,7 @@ export type CreateCardController = {
   onCreateImageUpload: (file: File) => void;
   applyCreateImageKey: (key: string) => void;
   prepareCreateFrame: () => void;
+  prepareOcclusionFromImageKey: (imageKey: string) => void;
 };
 
 export function useCreateCardController({
@@ -197,6 +198,18 @@ export function useCreateCardController({
     setCreateCard(blankHubCreateCard(deckId));
   }
 
+  function prepareOcclusionFromImageKey(imageKey: string) {
+    const key = imageKey.trim();
+    setCreateError(null);
+    setCreateCard({
+      ...blankHubCreateCard(deckId),
+      type: "occlusion",
+      media_r2_keys: key ? [key] : [],
+      front: starterOcclusionFront(key),
+      back: { answer: "r1" },
+    });
+  }
+
   return {
     createCard,
     createBusy,
@@ -211,5 +224,6 @@ export function useCreateCardController({
     onCreateImageUpload,
     applyCreateImageKey,
     prepareCreateFrame,
+    prepareOcclusionFromImageKey,
   };
 }

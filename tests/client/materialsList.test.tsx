@@ -74,4 +74,32 @@ describe("MaterialsList residual A", () => {
       document.querySelectorAll('[aria-label^="Delete"]').length,
     ).toBeGreaterThan(0);
   });
+
+  it("exposes Create occlusion for ready images when a callback is set", async () => {
+    const onCreateOcclusion = vi.fn();
+    await render(
+      createElement(MaterialsList, {
+        showDeckTitle: false,
+        onChanged: vi.fn(),
+        onCreateOcclusion,
+        materials: [
+          material({
+            id: "i1",
+            kind: "image",
+            filename: "fig.png",
+            r2_key: "materials/d/fig.png",
+          }),
+        ],
+      }),
+    );
+
+    const btn = document.querySelector(
+      '[aria-label="Create occlusion from fig.png"]',
+    );
+    expect(btn).toBeTruthy();
+    await act(async () => {
+      (btn as HTMLButtonElement).click();
+    });
+    expect(onCreateOcclusion).toHaveBeenCalledTimes(1);
+  });
 });

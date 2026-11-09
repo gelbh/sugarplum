@@ -35,6 +35,7 @@ type Args = {
   refreshDraftJobs: () => Promise<void>;
   refreshMaterials: () => Promise<void>;
   setWorkshopStack: Dispatch<SetStateAction<WorkshopFrame[]>>;
+  onManualOcclusion?: (imageKey: string) => void;
 };
 
 export function useAddMaterialWorkshop({
@@ -43,6 +44,7 @@ export function useAddMaterialWorkshop({
   refreshDraftJobs,
   refreshMaterials,
   setWorkshopStack,
+  onManualOcclusion,
 }: Args) {
   const [materialTab, setMaterialTab] = useState<MaterialTab>("upload");
   const [pasteText, setPasteText] = useState("");
@@ -205,6 +207,19 @@ export function useAddMaterialWorkshop({
         window.location.assign(
           `/jobs/${encodeURIComponent(material.jobId)}/drafts`,
         );
+        return;
+      }
+      if (
+        material.manual_occlusion &&
+        material.r2_key &&
+        onManualOcclusion
+      ) {
+        onManualOcclusion(material.r2_key);
+        onTabChange("diy");
+        setMaterialNotice(
+          "Image saved. Free path uses Suggest regions on an Occlusion card (or add a BYO API key for auto vision drafts).",
+        );
+        await Promise.all([refreshDraftJobs(), refreshMaterials()]);
         return;
       }
       setMaterialNotice(`Stored file (${material.status}).`);

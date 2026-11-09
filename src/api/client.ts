@@ -1018,6 +1018,7 @@ export function presignPdfFigure(
 export type CompleteMaterialResponse = Material & {
   jobId: string | null;
   reused?: boolean;
+  manual_occlusion?: boolean;
 };
 
 export type FigureExtractMode = "fast" | "accurate";
