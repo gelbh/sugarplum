@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { default_w } from "ts-fsrs";
+import { createEmptyCard, default_w, fsrs, Rating } from "ts-fsrs";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { createTestEnv } from "./test-env";
@@ -65,6 +65,20 @@ describe("replayCardFromLogs", () => {
         { desiredRetention: 0.9, enableFuzz: false },
       ),
     ).toBeNull();
+  });
+
+  it("accept-time empty seed matches first-log seed after first grade", () => {
+    const acceptAt = new Date("2026-01-01T10:00:00.000Z");
+    const firstAt = new Date("2026-01-03T12:00:00.000Z");
+    const scheduler = fsrs({ enable_fuzz: false });
+    for (const grade of [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy]) {
+      const fromAccept = scheduler.next(createEmptyCard(acceptAt), firstAt, grade).card;
+      const fromFirst = scheduler.next(createEmptyCard(firstAt), firstAt, grade).card;
+      expect(fromAccept.due.toISOString()).toBe(fromFirst.due.toISOString());
+      expect(fromAccept.stability).toBe(fromFirst.stability);
+      expect(fromAccept.difficulty).toBe(fromFirst.difficulty);
+      expect(fromAccept.state).toBe(fromFirst.state);
+    }
   });
 });
 
