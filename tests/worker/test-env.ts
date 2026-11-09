@@ -1206,6 +1206,7 @@ export function createTestEnv(opts?: {
           normalized.includes("WHERE d.user_id =")
         ) {
           const userId = bound[0] as string;
+          const withScheduleJoin = normalized.includes("LEFT JOIN card_schedules");
           const rows = reviewLogs
             .filter((rl) => {
               const card = cards.get(rl.card_id);
@@ -1219,6 +1220,13 @@ export function createTestEnv(opts?: {
               reviewed_at: rl.reviewed_at,
               rating: rl.rating,
               state_json: rl.state_json,
+              ...(withScheduleJoin
+                ? {
+                    schedule_card_id: schedules.has(rl.card_id)
+                      ? rl.card_id
+                      : null,
+                  }
+                : {}),
             }));
           return { results: rows as T[] };
         }

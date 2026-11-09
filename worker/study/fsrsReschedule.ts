@@ -58,6 +58,7 @@ type LogRow = {
   card_id: string;
   reviewed_at: string;
   rating: number;
+  schedule_card_id: string | null;
 };
 
 /**
@@ -73,10 +74,12 @@ export async function rescheduleUserSchedules(
     .prepare(
       `SELECT rl.card_id AS card_id,
               rl.reviewed_at AS reviewed_at,
-              rl.rating AS rating
+              rl.rating AS rating,
+              cs.card_id AS schedule_card_id
        FROM review_logs rl
        INNER JOIN cards c ON c.id = rl.card_id
        INNER JOIN decks d ON d.id = c.deck_id
+       LEFT JOIN card_schedules cs ON cs.card_id = rl.card_id
        WHERE d.user_id = ?
        ORDER BY rl.reviewed_at ASC`,
     )
@@ -84,7 +87,9 @@ export async function rescheduleUserSchedules(
     .all<LogRow>();
 
   const byCard = new Map<string, ReviewLogReplayRow[]>();
+  const hasSchedule = new Set<string>();
   for (const row of results ?? []) {
+    if (row.schedule_card_id != null) hasSchedule.add(row.card_id);
     const list = byCard.get(row.card_id) ?? [];
     list.push({ reviewed_at: row.reviewed_at, rating: row.rating });
     byCard.set(row.card_id, list);
@@ -95,11 +100,7 @@ export async function rescheduleUserSchedules(
   const statements: D1PreparedStatement[] = [];
 
   for (const [cardId, logs] of byCard) {
-    const schedule = await db
-      .prepare(`SELECT due FROM card_schedules WHERE card_id = ?`)
-      .bind(cardId)
-      .first<{ due: string }>();
-    if (!schedule) {
+    if (!hasSchedule.has(cardId)) {
       cardsSkipped += 1;
       continue;
     }

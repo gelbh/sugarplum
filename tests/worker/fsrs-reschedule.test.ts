@@ -40,12 +40,12 @@ describe("replayCardFromLogs", () => {
   it("is deterministic with fuzz forced off", () => {
     const a = replayCardFromLogs(sampleLogs, {
       desiredRetention: 0.9,
-      enableFuzz: true,
+      enableFuzz: false,
       w: customW,
     });
     const b = replayCardFromLogs(sampleLogs, {
       desiredRetention: 0.9,
-      enableFuzz: true,
+      enableFuzz: false,
       w: customW,
     });
     expect(a).not.toBeNull();
@@ -170,6 +170,67 @@ describe("reschedule on weight save/reset", () => {
     expect(reset.rescheduled.cardsUpdated).toBe(1);
     const afterReset = env.getSchedules().find((s) => s.card_id === "card-a")!;
     expect(afterReset.due).not.toBe(afterCustom.due);
+  });
+
+  it("saveFsrsWeights does not rewrite another user's schedules", async () => {
+    const env = createTestEnv();
+    seedBase(env);
+    env.seedUser({
+      id: "user-b",
+      email: "b@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-b",
+      user_id: "user-b",
+      title: "Other",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedCard({
+      id: "card-b-owned",
+      deck_id: "deck-b",
+      job_id: null,
+      type: "qa",
+      front_json: "{}",
+      back_json: "{}",
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "accepted",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSchedule({
+      card_id: "card-b-owned",
+      due: "2026-03-01T00:00:00.000Z",
+      stability: 9,
+      difficulty: 4,
+      elapsed_days: 0,
+      scheduled_days: 3,
+      learning_steps: 0,
+      reps: 2,
+      lapses: 0,
+      state: 2,
+      last_review: "2026-01-05T00:00:00.000Z",
+    });
+    env.seedReviewLog({
+      id: "rl-b-1",
+      card_id: "card-b-owned",
+      rating: 3,
+      scheduled_days: 1,
+      elapsed_days: 0,
+      reviewed_at: "2026-01-05T00:00:00.000Z",
+      state_json: JSON.stringify({ state: 1 }),
+    });
+    const beforeB = {
+      ...env.getSchedules().find((s) => s.card_id === "card-b-owned")!,
+    };
+
+    await saveFsrsWeights(getDb(env), "user-a", customW);
+
+    const afterB = env.getSchedules().find((s) => s.card_id === "card-b-owned")!;
+    expect(afterB).toEqual(beforeB);
   });
 
   it("budget PUT does not change schedules or fsrs_w_json", async () => {
