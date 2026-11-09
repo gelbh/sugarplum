@@ -594,6 +594,17 @@
             "location": "mostly in host nests and burrows; on the host to feed",
             "hostRole": "definitive"
           }
+        ],
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "visual identification",
+            "sample": "host or environment"
+          },
+          {
+            "name": "comb morphology",
+            "sample": "adult flea"
+          }
         ]
       },
       "refs": [
@@ -661,6 +672,18 @@
           "field": "family",
           "citation": "NCBI Taxonomy: Pulex irritans",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/173820/",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "CDC DPDx: Fleas",
+          "url": "https://www.cdc.gov/dpdx/fleas/index.html",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Fleas",
+          "url": "https://www.cdc.gov/dpdx/fleas/index.html",
           "note": null
         }
       ],
@@ -730,6 +753,17 @@
             "name": "adult",
             "location": "feeds and mates on larger hosts such as cattle and deer; the engorged female drops off to lay eggs",
             "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "adult or nymph",
+        "diagnosticTests": [
+          {
+            "name": "visual identification",
+            "sample": "tick removed from host"
+          },
+          {
+            "name": "morphology keys",
+            "sample": "tick"
           }
         ]
       },
@@ -811,6 +845,18 @@
           "citation": "Gray et al. 2003, Clin Microbiol Rev: Babesia divergens, a bovine blood parasite of zoonotic importance",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC207107/",
           "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Ticks of Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/ticks/ticks-of-animals",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Ticks of Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/ticks/ticks-of-animals",
+          "note": null
         }
       ],
       "images": [
@@ -874,6 +920,17 @@
             "name": "adult",
             "location": "feeds on hedgehogs and occasionally on foxes, dogs and cats",
             "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "adult or nymph",
+        "diagnosticTests": [
+          {
+            "name": "visual identification",
+            "sample": "tick removed from host"
+          },
+          {
+            "name": "morphology keys",
+            "sample": "tick"
           }
         ]
       },
@@ -942,6 +999,18 @@
           "field": "vectorRole",
           "citation": "Jahfari et al. 2017, Parasit Vectors 10:134: European hedgehog and tick-borne zoonoses",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-017-2065-0",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Ticks of Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/ticks/ticks-of-animals",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Ticks of Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/ticks/ticks-of-animals",
           "note": null
         }
       ],
@@ -1020,6 +1089,17 @@
             "location": "feeds on medium-sized and large mammals, mates on the host; the engorged female drops off to lay eggs",
             "hostRole": "definitive"
           }
+        ],
+        "diagnosticStage": "adult or nymph",
+        "diagnosticTests": [
+          {
+            "name": "visual identification",
+            "sample": "tick removed from host"
+          },
+          {
+            "name": "morphology keys",
+            "sample": "tick"
+          }
         ]
       },
       "refs": [
@@ -1093,6 +1173,18 @@
           "field": null,
           "citation": "Atlas of ticks in Germany, Exp Appl Acarol 2021",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8102463/",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Ticks of Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/ticks/ticks-of-animals",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Ticks of Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/ticks/ticks-of-animals",
           "note": null
         }
       ],
@@ -1322,6 +1414,17 @@
             "location": "feeds mainly on large mammals, especially grazing livestock",
             "hostRole": "definitive"
           }
+        ],
+        "diagnosticStage": "adult or nymph",
+        "diagnosticTests": [
+          {
+            "name": "visual identification",
+            "sample": "tick removed from host"
+          },
+          {
+            "name": "morphology keys",
+            "sample": "tick"
+          }
         ]
       },
       "refs": [
@@ -1407,6 +1510,18 @@
           "field": null,
           "citation": "Atlas of ticks in Germany, Exp Appl Acarol 2021",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8102463/",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Ticks of Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/ticks/ticks-of-animals",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Ticks of Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/ticks/ticks-of-animals",
           "note": null
         }
       ],
@@ -2528,7 +2643,8 @@
             "name": "tape impression",
             "sample": "hair"
           }
-        ]
+        ],
+        "zoonotic": "no"
       },
       "refs": [
         {
@@ -2596,6 +2712,12 @@
           "citation": "NCBI Taxonomy: Trichodectes canis",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/209909/",
           "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Lice of Dogs and Cats",
+          "url": "https://www.msdvetmanual.com/integumentary-system/lice/lice-of-dogs-and-cats",
+          "note": null
         }
       ],
       "images": [
@@ -2661,7 +2783,8 @@
             "name": "tape impression",
             "sample": "hair"
           }
-        ]
+        ],
+        "zoonotic": "no"
       },
       "refs": [
         {
@@ -2722,6 +2845,12 @@
           "field": "family",
           "citation": "NCBI Taxonomy: Felicola subrostratus",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/160123/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Lice of Dogs and Cats",
+          "url": "https://www.msdvetmanual.com/integumentary-system/lice/lice-of-dogs-and-cats",
           "note": null
         }
       ],
@@ -2794,7 +2923,8 @@
             "name": "visual inspection",
             "sample": "hair"
           }
-        ]
+        ],
+        "zoonotic": "no"
       },
       "refs": [
         {
@@ -2879,6 +3009,12 @@
           "field": "family",
           "citation": "NCBI Taxonomy: Bovicola ovis",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/186214/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Lice of Sheep and Goats",
+          "url": "https://www.msdvetmanual.com/integumentary-system/lice/lice-of-sheep-and-goats",
           "note": null
         }
       ],
@@ -3574,6 +3710,17 @@
             "location": "free-living; females live only about two weeks",
             "hostRole": "environment"
           }
+        ],
+        "diagnosticStage": "larva",
+        "diagnosticTests": [
+          {
+            "name": "endoscopy",
+            "sample": "nasal passage"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "nasal cavity / sinuses"
+          }
         ]
       },
       "refs": [
@@ -3647,6 +3794,18 @@
           "field": "family",
           "citation": "NCBI Taxonomy: Oestrus ovis",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/123737/",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Nasal Bots",
+          "url": "https://www.msdvetmanual.com/respiratory-system/respiratory-diseases-of-sheep-and-goats/nasal-bots",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Nasal Bots",
+          "url": "https://www.msdvetmanual.com/respiratory-system/respiratory-diseases-of-sheep-and-goats/nasal-bots",
           "note": null
         }
       ],
@@ -3881,6 +4040,17 @@
             "location": "females bite and blood-feed every few days, mainly around dusk, night and dawn",
             "hostRole": "definitive"
           }
+        ],
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "light or sticky trap catch",
+            "sample": "adult midges"
+          },
+          {
+            "name": "morphology keys",
+            "sample": "adult midge"
+          }
         ]
       },
       "refs": [
@@ -3985,6 +4155,18 @@
           "citation": "Wilson et al. 2008, Vet Res 40:16: adaptive strategies of African horse sickness virus for vector transmission",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2695022/",
           "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Culicoides Biting Midges",
+          "url": "https://www.msdvetmanual.com/integumentary-system/flies/culicoides-biting-midges",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Culicoides Biting Midges",
+          "url": "https://www.msdvetmanual.com/integumentary-system/flies/culicoides-biting-midges",
+          "note": null
         }
       ],
       "images": []
@@ -4036,6 +4218,13 @@
             "name": "adult",
             "location": "both sexes blood-feed on the host, most actively around sunrise and sunset, and then leave it",
             "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "visual identification",
+            "sample": "adult fly on host or premises"
           }
         ]
       },
@@ -4123,6 +4312,18 @@
           "citation": "NCBI Taxonomy: Stomoxys calcitrans",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/35570/",
           "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Stable Fly",
+          "url": "https://www.msdvetmanual.com/integumentary-system/flies/stable-fly",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Stable Fly",
+          "url": "https://www.msdvetmanual.com/integumentary-system/flies/stable-fly",
+          "note": null
         }
       ],
       "images": [
@@ -4193,6 +4394,14 @@
             "name": "adult",
             "location": "both sexes spend nearly all their time on the animal, clustering over the back, shoulders and head; females leave briefly to lay",
             "hostRole": "definitive"
+          }
+        ],
+        "zoonotic": "no",
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "visual identification",
+            "sample": "adult fly on host"
           }
         ]
       },
@@ -4286,6 +4495,24 @@
           "citation": "NCBI Taxonomy: Haematobia irritans",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/7368/",
           "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Horn Fly",
+          "url": "https://www.msdvetmanual.com/integumentary-system/flies/horn-fly",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Horn Fly",
+          "url": "https://www.msdvetmanual.com/integumentary-system/flies/horn-fly",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Horn Fly",
+          "url": "https://www.msdvetmanual.com/integumentary-system/flies/horn-fly",
+          "note": null
         }
       ],
       "images": []
@@ -4345,6 +4572,14 @@
             "name": "adult",
             "location": "moves over the face and eyes, taking up eye and nose secretions and blood from wounds opened by other flies; leaves the host only briefly to lay eggs",
             "hostRole": "definitive"
+          }
+        ],
+        "zoonotic": "no",
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "visual identification",
+            "sample": "adult fly on host or premises"
           }
         ]
       },
@@ -4419,6 +4654,24 @@
           "field": "family",
           "citation": "NCBI Taxonomy: Musca autumnalis",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/221902/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Face Fly",
+          "url": "https://www.msdvetmanual.com/integumentary-system/flies/face-fly",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Face Fly",
+          "url": "https://www.msdvetmanual.com/integumentary-system/flies/face-fly",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "MSD Veterinary Manual: Face Fly",
+          "url": "https://www.msdvetmanual.com/integumentary-system/flies/face-fly",
           "note": null
         }
       ],

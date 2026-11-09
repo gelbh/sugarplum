@@ -1612,12 +1612,19 @@
           {
             "name": "L1",
             "location": "coughed up in mucus or saliva, or passed in faeces; infective when swallowed, often by pups from the dam",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "diagnostic": true
+          },
+          {
+            "name": "L2–L3",
+            "location": "develop in the definitive host after ingestion of L1",
+            "hostRole": "definitive"
           },
           {
             "name": "adult",
             "location": "wart-like nodules on the airway lining, grouped around the bifurcation of the trachea",
-            "hostRole": "definitive"
+            "hostRole": "definitive",
+            "diagnostic": false
           }
         ],
         "diagnosticStage": "L1",
@@ -1634,7 +1641,8 @@
             "name": "endoscopy",
             "sample": null
           }
-        ]
+        ],
+        "zoonotic": "no"
       },
       "refs": [
         {
@@ -1720,6 +1728,18 @@
           "citation": "NCBI Taxonomy / literature: Oslerus osleri (syn. Filaroides osleri)",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13127552/",
           "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Oslerus osleri",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oslerus-osleri.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Oslerus osleri",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oslerus-osleri.php",
+          "note": null
         }
       ],
       "images": []
@@ -1753,12 +1773,19 @@
           {
             "name": "L1",
             "location": "coughed up and passed in sputum, saliva or very fresh faeces; infective straight away",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "diagnostic": true
+          },
+          {
+            "name": "migrating larvae",
+            "location": "gut wall to lung via blood or lymph after ingestion",
+            "hostRole": "definitive"
           },
           {
             "name": "adult",
             "location": "bronchioles, embedded in lung parenchyma",
-            "hostRole": "definitive"
+            "hostRole": "definitive",
+            "diagnostic": false
           }
         ],
         "diagnosticStage": "L1",
@@ -1775,7 +1802,8 @@
             "name": "Baermann technique",
             "sample": "faeces"
           }
-        ]
+        ],
+        "zoonotic": "no"
       },
       "refs": [
         {
@@ -1854,6 +1882,18 @@
           "field": "order",
           "citation": "WCVM Learn About Parasites: Angiostrongylus vasorum",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/angiostrongylus-vasorum.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Filaroides hirthi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/filaroides-hirthi.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Filaroides hirthi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/filaroides-hirthi.php",
           "note": null
         }
       ],
@@ -2461,6 +2501,25 @@
             "location": "subcutaneous tissue",
             "hostRole": "definitive"
           }
+        ],
+        "pppDays": {
+          "min": 180,
+          "max": 270
+        },
+        "diagnosticStage": "microfilaria",
+        "diagnosticTests": [
+          {
+            "name": "Knott test",
+            "sample": "blood"
+          },
+          {
+            "name": "PCR",
+            "sample": "blood"
+          },
+          {
+            "name": "surgical removal and morphology",
+            "sample": "subcutaneous nodule"
+          }
         ]
       },
       "refs": [
@@ -2538,6 +2597,24 @@
         },
         {
           "field": "lifecycleStages",
+          "citation": "CDC DPDx: Dirofilariasis",
+          "url": "https://www.cdc.gov/dpdx/dirofilariasis/index.html",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "CDC DPDx: Dirofilariasis",
+          "url": "https://www.cdc.gov/dpdx/dirofilariasis/index.html",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "CDC DPDx: Dirofilariasis",
+          "url": "https://www.cdc.gov/dpdx/dirofilariasis/index.html",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
           "citation": "CDC DPDx: Dirofilariasis",
           "url": "https://www.cdc.gov/dpdx/dirofilariasis/index.html",
           "note": null
@@ -2976,7 +3053,8 @@
             "name": "PCR",
             "sample": "faeces"
           }
-        ]
+        ],
+        "zoonotic": "no"
       },
       "refs": [
         {
@@ -3068,6 +3146,12 @@
           "citation": "Alfaro-Segura et al. 2023, Front Parasitol: Spirocerca lupi (order Spirurida, family Spirocercidae)",
           "url": "https://www.frontiersin.org/journals/parasitology/articles/10.3389/fpara.2023.1249593/full",
           "note": "Course lists the suborder Spirurina in the order column; reference gives the order Spirurida."
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Spirocerca lupi",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/spirocerca-lupi.php",
+          "note": null
         }
       ],
       "images": [
@@ -3156,7 +3240,8 @@
             "name": "post-mortem examination",
             "sample": "tissue"
           }
-        ]
+        ],
+        "zoonotic": "no"
       },
       "refs": [
         {
@@ -3242,6 +3327,12 @@
           "citation": "Nunn et al.: Fenbendazole resistance in Ascaridia galli and Heterakis gallinarum",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12475845/",
           "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Helminthiasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/helminthiasis/helminthiasis-in-poultry",
+          "note": null
         }
       ],
       "images": [
@@ -3322,7 +3413,12 @@
             "name": "post-mortem examination",
             "sample": "caecal contents"
           }
-        ]
+        ],
+        "zoonotic": "no",
+        "pppDays": {
+          "min": 24,
+          "max": 30
+        }
       },
       "refs": [
         {
@@ -3401,6 +3497,18 @@
           "field": "diagnosticTests",
           "citation": "Nunn et al.: Fenbendazole resistance in Ascaridia galli and Heterakis gallinarum",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12475845/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Helminthiasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/helminthiasis/helminthiasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Helminthiasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/helminthiasis/helminthiasis-in-poultry",
           "note": null
         }
       ],
@@ -3500,7 +3608,8 @@
             "name": "tracheoscopy",
             "sample": null
           }
-        ]
+        ],
+        "zoonotic": "no"
       },
       "refs": [
         {
@@ -3598,6 +3707,12 @@
           "citation": "Vrabec et al. 2025: Syngamus trachea in pheasants",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12651135/",
           "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Helminthiasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/helminthiasis/helminthiasis-in-poultry",
+          "note": null
         }
       ],
       "images": [
@@ -3692,7 +3807,11 @@
             "name": "histopathology",
             "sample": "tissue"
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 7,
+          "max": 14
+        }
       },
       "refs": [
         {
@@ -3784,6 +3903,12 @@
           "citation": "CDC DPDx: Anisakiasis",
           "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
           "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": "Human gastric symptoms often within hours to days; larval persistence varies."
         }
       ],
       "images": [
@@ -3870,7 +3995,11 @@
             "name": "histopathology",
             "sample": "tissue"
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 7,
+          "max": 14
+        }
       },
       "refs": [
         {
@@ -3974,6 +4103,12 @@
           "citation": "CDC DPDx: Anisakiasis",
           "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
           "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": "Anisakid group; human disease timing similar to Anisakis."
         }
       ],
       "images": []
@@ -4049,7 +4184,11 @@
             "name": "histopathology",
             "sample": "tissue"
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 7,
+          "max": 14
+        }
       },
       "refs": [
         {
@@ -4147,6 +4286,12 @@
           "citation": "CDC DPDx: Anisakiasis",
           "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
           "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": "Anisakid group; human disease timing similar to Anisakis."
         }
       ],
       "images": []
