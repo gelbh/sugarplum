@@ -1,156 +1,249 @@
 import { describe, expect, it } from "vitest";
 import {
-  mergeCandidates,
-  type CandidateEntry,
+  overlayAtlas,
+  toEntryView,
+  withoutOverlayForOrigin,
+  type OverlayRow,
 } from "../../../worker/atlas/merge";
-import { parasiteFieldsSchema } from "../../../worker/atlas/templates/parasite";
+import type { DatasetEntry } from "../../../worker/atlas/datasets/schema";
+import { emptyParasiteFields } from "../../../worker/atlas/templates/parasite";
 
-function candidate(
-  rawName: string,
-  fields: Record<string, unknown>,
-  page: number,
-  materialId = "m-pa11",
-  commonName: string | null = null,
-): CandidateEntry {
+function datasetEntry(
+  overrides: Partial<DatasetEntry> &
+    Pick<DatasetEntry, "key" | "canonicalName">,
+): DatasetEntry {
   return {
-    rawName,
-    commonName,
-    fields: parasiteFieldsSchema.parse(fields),
-    source: { materialId, page, excerpt: `${rawName} p${page}` },
+    commonName: null,
+    aliases: [],
+    misspellings: [],
+    fields: {
+      ...emptyParasiteFields(),
+      group: "nematode",
+    },
+    refs: [
+      {
+        field: null,
+        citation: "Taylor 2016",
+        url: "https://example.com/ref",
+        note: null,
+      },
+    ],
+    images: [],
+    ...overrides,
+  } as DatasetEntry;
+}
+
+function overlayRow(
+  overrides: Partial<OverlayRow> & Pick<OverlayRow, "id" | "canonical_name">,
+): OverlayRow {
+  return {
+    origin_key: null,
+    origin_version: null,
+    common_name: null,
+    fields_json: JSON.stringify({
+      ...emptyParasiteFields(),
+      group: "nematode",
+      family: "Editedidae",
+    }),
+    edited_at: "2026-11-09T12:00:00.000Z",
+    deleted_at: null,
+    ...overrides,
   };
 }
 
-describe("mergeCandidates", () => {
-  it("merges slide spellings of one species into one corrected entry", () => {
-    const { entries } = mergeCandidates([
-      candidate(
-        "Ancyclostoma caninum",
-        { family: "Ancylostomatidae" },
-        16,
-        "m-pa09",
-        "Canine hookworm",
-      ),
-      candidate(
-        "Ancylostoma caninum",
-        { majorOrgan: "Small intestine" },
-        17,
-        "m-pa09",
-      ),
-    ]);
-    expect(entries).toHaveLength(1);
-    expect(entries[0].canonicalName).toBe("Ancylostoma caninum");
-    expect(entries[0].nameCorrected).toBe(true);
-    expect(entries[0].commonName).toBe("Canine hookworm");
-    expect(entries[0].fields.family).toBe("Ancylostomatidae");
-    expect(entries[0].fields.majorOrgan).toBe("Small intestine");
+describe("overlayAtlas", () => {
+  const fasciola = datasetEntry({
+    key: "fasciola-hepatica",
+    canonicalName: "Fasciola hepatica",
+    commonName: "Liver fluke",
+    fields: {
+      ...emptyParasiteFields(),
+      group: "trematode",
+      family: "Fasciolidae",
+    },
+  });
+  const toxocara = datasetEntry({
+    key: "toxocara-canis",
+    canonicalName: "Toxocara canis",
+    commonName: "Canine roundworm",
   });
 
-  it("unions host lists case-insensitively, keeping the first spelling", () => {
-    const { entries } = mergeCandidates([
-      candidate(
-        "Toxocara canis",
-        { definitiveHosts: ["Dog", "wild canids"] },
-        8,
-      ),
-      candidate(
-        "Toxocara canis",
-        { definitiveHosts: ["dog", "human"], paratenicHosts: ["rodents"] },
-        9,
-      ),
-    ]);
-    expect(entries[0].fields.definitiveHosts).toEqual([
-      "Dog",
-      "wild canids",
-      "human",
-    ]);
-    expect(entries[0].fields.paratenicHosts).toEqual(["rodents"]);
+  it("passes unedited dataset entries through with dataset key as id", () => {
+    const views = overlayAtlas([fasciola, toxocara], []);
+    expect(views).toEqual([toEntryView(fasciola), toEntryView(toxocara)]);
+    expect(views[0].id).toBe("fasciola-hepatica");
+    expect(views[0].editedAt).toBeNull();
   });
 
-  it("keeps the first scalar and records a conflict for a different later value", () => {
-    const { entries } = mergeCandidates([
-      candidate("Dipylidium caninum", { family: "Diphyllobothriidae" }, 9),
-      candidate("Dipylidium caninum", { family: "Dipylidiidae" }, 10),
-      candidate("Dipylidium caninum", { family: "dipylidiidae " }, 11),
-    ]);
-    expect(entries[0].fields.family).toBe("Diphyllobothriidae");
-    expect(entries[0].conflicts).toEqual([
-      { fieldKey: "family", values: ["Diphyllobothriidae", "Dipylidiidae"] },
-    ]);
-    expect(entries[0].sources.map((s) => s.value)).toEqual([
-      "Diphyllobothriidae",
-      "Dipylidiidae",
-      "dipylidiidae",
-    ]);
+  it("hides soft-deleted origin keys", () => {
+    const views = overlayAtlas(
+      [fasciola, toxocara],
+      [
+        overlayRow({
+          id: "row-del",
+          origin_key: "fasciola-hepatica",
+          canonical_name: "Fasciola hepatica",
+          deleted_at: "2026-11-09T13:00:00.000Z",
+          edited_at: null,
+        }),
+      ],
+    );
+    expect(views.map((v) => v.originKey)).toEqual(["toxocara-canis"]);
   });
 
-  it("does not record a conflict when values differ only in case or spacing", () => {
-    const { entries } = mergeCandidates([
-      candidate("Fasciola hepatica", { majorOrgan: "Liver" }, 6, "m-pa12"),
-      candidate("Fasciola hepatica", { majorOrgan: " liver" }, 7, "m-pa12"),
-    ]);
-    expect(entries[0].conflicts).toEqual([]);
+  it("overrides commonName and fields for edited origin keys", () => {
+    const views = overlayAtlas(
+      [fasciola, toxocara],
+      [
+        overlayRow({
+          id: "row-edit",
+          origin_key: "fasciola-hepatica",
+          origin_version: 1,
+          canonical_name: "Fasciola hepatica",
+          common_name: "Sheep liver fluke",
+          fields_json: JSON.stringify({
+            ...emptyParasiteFields(),
+            group: "trematode",
+            family: "Editedidae",
+          }),
+        }),
+      ],
+    );
+    expect(views).toHaveLength(2);
+    const edited = views.find((v) => v.originKey === "fasciola-hepatica")!;
+    expect(edited.id).toBe("row-edit");
+    expect(edited.commonName).toBe("Sheep liver fluke");
+    expect(edited.fields.family).toBe("Editedidae");
+    expect(edited.fields.group).toBe("trematode");
+    expect(edited.editedAt).toBe("2026-11-09T12:00:00.000Z");
+    expect(edited.refs).toEqual(fasciola.refs);
+    expect(views.find((v) => v.originKey === "toxocara-canis")!.id).toBe(
+      "toxocara-canis",
+    );
   });
 
-  it("records a conflict for differing structured values", () => {
-    const { entries } = mergeCandidates([
-      candidate(
-        "Haemonchus contortus",
-        { pppDays: { min: 14, max: 21 } },
-        17,
-        "m-pa07",
-      ),
-      candidate(
-        "Haemonchus contortus",
-        { pppDays: { min: 18, max: 21 } },
-        18,
-        "m-pa07",
-      ),
+  it("uses joined refs/images for edited rows when provided", () => {
+    const views = overlayAtlas(
+      [fasciola],
+      [
+        overlayRow({
+          id: "row-edit",
+          origin_key: "fasciola-hepatica",
+          canonical_name: "Fasciola hepatica",
+          refs: [
+            {
+              field: "family",
+              citation: "Learner note",
+              url: null,
+              note: null,
+            },
+          ],
+          images: [
+            {
+              id: "hero",
+              src: "https://cdn.example/hero.webp",
+              role: "adult",
+              caption: null,
+              credit: "me",
+              license: "CC0",
+              sourceUrl: "https://example.com/img",
+              isHero: true,
+            },
+          ],
+        }),
+      ],
+    );
+    expect(views[0].refs).toEqual([
+      { field: "family", citation: "Learner note", url: null, note: null },
     ]);
-    expect(entries[0].fields.pppDays).toEqual({ min: 14, max: 21 });
-    expect(entries[0].conflicts).toEqual([
-      {
-        fieldKey: "pppDays",
-        values: [
-          { min: 14, max: 21 },
-          { min: 18, max: 21 },
-        ],
-      },
-    ]);
+    expect(views[0].images[0].src).toBe("https://cdn.example/hero.webp");
   });
 
-  it("adds one source per filled field and drops repeated identical sources", () => {
-    const { entries } = mergeCandidates([
-      candidate(
-        "Moniezia expansa",
-        { family: "Anoplocephalidae", definitiveHosts: ["sheep"] },
-        11,
-      ),
-      candidate("Moniezia expansa", { family: "Anoplocephalidae" }, 11),
-      candidate("Moniezia expansa", { family: "Anoplocephalidae" }, 12),
-    ]);
-    const sources = entries[0].sources.map((s) => `${s.fieldKey}@${s.page}`);
-    expect(sources).toEqual(["family@11", "definitiveHosts@11", "family@12"]);
+  it("appends learner-added rows with null originKey", () => {
+    const views = overlayAtlas(
+      [toxocara],
+      [
+        overlayRow({
+          id: "row-add",
+          origin_key: null,
+          canonical_name: "My custom parasite",
+          common_name: "Custom",
+          fields_json: JSON.stringify({
+            ...emptyParasiteFields(),
+            group: "protozoan",
+          }),
+        }),
+      ],
+    );
+    expect(views).toHaveLength(2);
+    expect(views[0]).toEqual(toEntryView(toxocara));
+    expect(views[1]).toMatchObject({
+      id: "row-add",
+      originKey: null,
+      canonicalName: "My custom parasite",
+      commonName: "Custom",
+      fields: { group: "protozoan" },
+      aliases: [],
+      refs: [],
+      images: [],
+    });
   });
 
-  it("puts candidates without a usable name in unnamed", () => {
-    const { entries, unnamed } = mergeCandidates([
-      candidate("123", { family: "Taeniidae" }, 3),
-      candidate("Taenia ovis", { family: "Taeniidae" }, 4),
-    ]);
-    expect(entries.map((e) => e.canonicalName)).toEqual(["Taenia ovis"]);
-    expect(unnamed).toHaveLength(1);
+  it("omits soft-deleted learner-added rows", () => {
+    const views = overlayAtlas(
+      [],
+      [
+        overlayRow({
+          id: "row-add",
+          origin_key: null,
+          canonical_name: "Gone",
+          deleted_at: "2026-11-09T14:00:00.000Z",
+        }),
+      ],
+    );
+    expect(views).toEqual([]);
   });
 
-  it("sorts entries by canonical name", () => {
-    const { entries } = mergeCandidates([
-      candidate("Toxocara canis", {}, 8),
-      candidate("Ancylostoma caninum", {}, 16),
-      candidate("Fasciola hepatica", {}, 6),
+  it("keeps an edited origin row when the dataset entry is missing", () => {
+    const views = overlayAtlas(
+      [],
+      [
+        overlayRow({
+          id: "row-orphan",
+          origin_key: "missing-key",
+          canonical_name: "Orphan parasite",
+          common_name: "Orphan",
+        }),
+      ],
+    );
+    expect(views).toEqual([
+      expect.objectContaining({
+        id: "row-orphan",
+        originKey: "missing-key",
+        canonicalName: "Orphan parasite",
+        commonName: "Orphan",
+        aliases: [],
+      }),
     ]);
-    expect(entries.map((e) => e.canonicalName)).toEqual([
-      "Ancylostoma caninum",
-      "Fasciola hepatica",
-      "Toxocara canis",
+  });
+});
+
+describe("withoutOverlayForOrigin", () => {
+  it("drops the overlay row so the dataset entry would show again", () => {
+    const rows = [
+      overlayRow({
+        id: "row-edit",
+        origin_key: "fasciola-hepatica",
+        canonical_name: "Fasciola hepatica",
+      }),
+      overlayRow({
+        id: "row-add",
+        origin_key: null,
+        canonical_name: "Custom",
+      }),
+    ];
+    expect(withoutOverlayForOrigin(rows, "fasciola-hepatica")).toEqual([
+      rows[1],
     ]);
   });
 });
