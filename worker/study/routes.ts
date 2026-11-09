@@ -8,7 +8,6 @@ import { requireUser, type AuthVariables } from "../auth/session";
 import { type CardRow } from "../cards/routes";
 import { requireOwnedDeck } from "../materials/routes";
 import {
-  Rating,
   cardFromScheduleRow,
   retrievability,
   reviewWithLog,
@@ -29,6 +28,10 @@ import {
 } from "../../src/study/regenSource";
 import { onReviewGraded } from "../gamification/onStudyEvent";
 import { loadStudyPrefs } from "./prefs";
+import {
+  prepareFullScheduleUpdate,
+  ratingToGrade,
+} from "./scheduleWrite";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -312,6 +315,11 @@ studyRoutes.post("/review", async (c) => {
     (schedule.reps === 0 && schedule.last_review == null);
 
   const grade = ratingToGrade(rating);
+  if (grade == null) {
+    throw new HTTPException(400, {
+      message: "cardId and rating (1-4) required",
+    });
+  }
   const prefs = await loadStudyPrefs(db, userId);
 
   const { card: nextCard, log } = reviewWithLog(
@@ -325,33 +333,7 @@ studyRoutes.post("/review", async (c) => {
   const reviewLogId = crypto.randomUUID();
 
   await db.batch([
-    db
-      .prepare(
-        `UPDATE card_schedules SET
-           due = ?, stability = ?, difficulty = ?, elapsed_days = ?,
-           scheduled_days = ?, learning_steps = ?, reps = ?, lapses = ?,
-           state = ?, last_review = ?
-         WHERE card_id = ?
-           AND EXISTS (
-             SELECT 1 FROM cards c
-             INNER JOIN decks d ON d.id = c.deck_id
-             WHERE c.id = card_schedules.card_id AND d.user_id = ?
-           )`,
-      )
-      .bind(
-        cols.due,
-        cols.stability,
-        cols.difficulty,
-        cols.elapsed_days,
-        cols.scheduled_days,
-        cols.learning_steps,
-        cols.reps,
-        cols.lapses,
-        cols.state,
-        cols.last_review,
-        cardId,
-        userId,
-      ),
+    prepareFullScheduleUpdate(db, cols, cardId, userId),
     db
       .prepare(
         `INSERT INTO review_logs (
@@ -392,27 +374,4 @@ studyRoutes.post("/review", async (c) => {
 function toIsoRequired(value: Date | string): string {
   if (value instanceof Date) return value.toISOString();
   return String(value);
-}
-
-function ratingToGrade(
-  rating: 1 | 2 | 3 | 4,
-):
-  | typeof Rating.Again
-  | typeof Rating.Hard
-  | typeof Rating.Good
-  | typeof Rating.Easy {
-  switch (rating) {
-    case 1:
-      return Rating.Again;
-    case 2:
-      return Rating.Hard;
-    case 3:
-      return Rating.Good;
-    case 4:
-      return Rating.Easy;
-    default: {
-      const _exhaustive: never = rating;
-      return _exhaustive;
-    }
-  }
 }

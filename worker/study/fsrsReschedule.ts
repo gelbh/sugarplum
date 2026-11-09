@@ -1,6 +1,10 @@
-import { createEmptyCard, Rating, type Card, type Grade } from "ts-fsrs";
+import { createEmptyCard, type Card } from "ts-fsrs";
 import { fsrsForPrefs, type FsrsPrefs } from "../../src/study/fsrsFactory";
 import { scheduleColumnsFromCard } from "../../src/study/retrievability";
+import {
+  prepareFullScheduleUpdate,
+  ratingToGrade,
+} from "./scheduleWrite";
 
 const D1_BATCH_SIZE = 50;
 
@@ -13,21 +17,6 @@ export type RescheduleSummary = {
   cardsUpdated: number;
   cardsSkipped: number;
 };
-
-function ratingToGrade(rating: number): Grade | null {
-  switch (rating) {
-    case 1:
-      return Rating.Again;
-    case 2:
-      return Rating.Hard;
-    case 3:
-      return Rating.Good;
-    case 4:
-      return Rating.Easy;
-    default:
-      return null;
-  }
-}
 
 export function replayCardFromLogs(
   logs: readonly ReviewLogReplayRow[],
@@ -103,35 +92,7 @@ export async function rescheduleUserSchedules(
       continue;
     }
     const cols = scheduleColumnsFromCard(next);
-    statements.push(
-      db
-        .prepare(
-          `UPDATE card_schedules SET
-             due = ?, stability = ?, difficulty = ?, elapsed_days = ?,
-             scheduled_days = ?, learning_steps = ?, reps = ?, lapses = ?,
-             state = ?, last_review = ?
-           WHERE card_id = ?
-             AND EXISTS (
-               SELECT 1 FROM cards c
-               INNER JOIN decks d ON d.id = c.deck_id
-               WHERE c.id = card_schedules.card_id AND d.user_id = ?
-             )`,
-        )
-        .bind(
-          cols.due,
-          cols.stability,
-          cols.difficulty,
-          cols.elapsed_days,
-          cols.scheduled_days,
-          cols.learning_steps,
-          cols.reps,
-          cols.lapses,
-          cols.state,
-          cols.last_review,
-          cardId,
-          userId,
-        ),
-    );
+    statements.push(prepareFullScheduleUpdate(db, cols, cardId, userId));
     cardsUpdated += 1;
   }
 
