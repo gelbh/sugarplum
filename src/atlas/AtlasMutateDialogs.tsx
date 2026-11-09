@@ -67,12 +67,12 @@ function parseHostList(raw: string): string[] {
 
 type AddProps = {
   open: boolean;
-  subjectId: string;
+  atlasId: string;
   onClose: () => void;
   onDone: (entry: AtlasEntryView) => void;
 };
 
-export function AddEntryDialog({ open, subjectId, onClose, onDone }: AddProps) {
+export function AddEntryDialog({ open, atlasId, onClose, onDone }: AddProps) {
   const [name, setName] = useState("");
   const [group, setGroup] = useState<ParasiteGroup | "">("");
   const [busy, setBusy] = useState<Busy>(false);
@@ -100,7 +100,7 @@ export function AddEntryDialog({ open, subjectId, onClose, onDone }: AddProps) {
     setBusy(true);
     setError(null);
     try {
-      const entry = await createEntry(subjectId, {
+      const entry = await createEntry(atlasId, {
         canonicalName,
         fields: { group },
       });
@@ -163,7 +163,7 @@ export function AddEntryDialog({ open, subjectId, onClose, onDone }: AddProps) {
 
 type EditProps = {
   open: boolean;
-  subjectId: string;
+  atlasId: string;
   entry: AtlasEntryView | null;
   onClose: () => void;
   onDone: () => void;
@@ -171,7 +171,7 @@ type EditProps = {
 
 export function EditEntryDialog({
   open,
-  subjectId,
+  atlasId,
   entry,
   onClose,
   onDone,
@@ -195,7 +195,7 @@ export function EditEntryDialog({
     setBusy(true);
     setError(null);
     try {
-      await patchEntry(subjectId, entry.id, {
+      await patchEntry(atlasId, entry.id, {
         commonName: commonName.trim() || null,
         // Learner edits accept free-text hosts; DatasetFields vocab is dataset-only.
         fields: {
@@ -219,7 +219,7 @@ export function EditEntryDialog({
     setBusy(true);
     setError(null);
     try {
-      await softDeleteEntry(subjectId, entry.id);
+      await softDeleteEntry(atlasId, entry.id);
       onDone();
       onClose();
     } catch (err) {
@@ -235,7 +235,7 @@ export function EditEntryDialog({
     setBusy(true);
     setError(null);
     try {
-      await resetEntry(subjectId, entry.id);
+      await resetEntry(atlasId, entry.id);
       onDone();
       onClose();
     } catch (err) {
@@ -301,7 +301,7 @@ export function EditEntryDialog({
 
 type LifecycleEditProps = {
   open: boolean;
-  subjectId: string;
+  atlasId: string;
   entry: AtlasEntryView | null;
   onClose: () => void;
   onDone: () => void;
@@ -309,7 +309,7 @@ type LifecycleEditProps = {
 
 export function EditLifecycleDialog({
   open,
-  subjectId,
+  atlasId,
   entry,
   onClose,
   onDone,
@@ -364,7 +364,7 @@ export function EditLifecycleDialog({
         parsed,
         entry.fields.diagnosticStage,
       );
-      await patchEntry(subjectId, entry.id, {
+      await patchEntry(atlasId, entry.id, {
         fields: {
           lifecycleStages: parsed as DatasetFields["lifecycleStages"],
           diagnosticStage,
@@ -440,14 +440,14 @@ export function EditLifecycleDialog({
 
 type DeletedProps = {
   open: boolean;
-  subjectId: string;
+  atlasId: string;
   onClose: () => void;
   onChanged: () => void;
 };
 
 export function RecentlyDeletedDialog({
   open,
-  subjectId,
+  atlasId,
   onClose,
   onChanged,
 }: DeletedProps) {
@@ -462,7 +462,7 @@ export function RecentlyDeletedDialog({
     setError(null);
     (async () => {
       try {
-        const list = await listDeletedEntries(subjectId);
+        const list = await listDeletedEntries(atlasId);
         if (!cancelled) setEntries(list);
       } catch (err) {
         if (!cancelled) {
@@ -474,13 +474,13 @@ export function RecentlyDeletedDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, subjectId]);
+  }, [open, atlasId]);
 
   async function onRestore(id: string) {
     setBusyId(id);
     setError(null);
     try {
-      await restoreEntry(subjectId, id);
+      await restoreEntry(atlasId, id);
       setEntries((prev) => (prev ?? []).filter((e) => e.id !== id));
       onChanged();
     } catch (err) {
@@ -495,7 +495,7 @@ export function RecentlyDeletedDialog({
     setBusyId(entry.id);
     setError(null);
     try {
-      await purgeDeletedEntry(subjectId, entry.id);
+      await purgeDeletedEntry(atlasId, entry.id);
       setEntries((prev) => (prev ?? []).filter((e) => e.id !== entry.id));
       onChanged();
     } catch (err) {

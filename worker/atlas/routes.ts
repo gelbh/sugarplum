@@ -3,7 +3,6 @@ import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
-import { requireOwnedSubject } from "../subjects/routes";
 import {
   overlayAtlas,
   viewFromOverlay,
@@ -51,7 +50,7 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
 type AtlasRow = {
   id: string;
-  subject_id: string;
+  user_id: string;
   template_key: string;
   created_at: string;
 };
@@ -73,7 +72,7 @@ function requireParam(c: Context<AppEnv>, name: string): string {
 function atlasMeta(row: AtlasRow) {
   return {
     id: row.id,
-    subjectId: row.subject_id,
+    userId: row.user_id,
     templateKey: row.template_key,
     createdAt: row.created_at,
   };
@@ -91,13 +90,13 @@ function datasetByCanonical(): Map<string, DatasetEntry> {
 
 async function requireAtlas(
   db: D1Database,
-  subjectId: string,
+  atlasId: string,
 ): Promise<AtlasRow> {
   const atlas = await db
     .prepare(
-      "SELECT id, subject_id, template_key, created_at FROM atlases WHERE subject_id = ?",
+      "SELECT id, user_id, template_key, created_at FROM atlases WHERE id = ?",
     )
-    .bind(subjectId)
+    .bind(atlasId)
     .first<AtlasRow>();
   if (!atlas) throw new HTTPException(404, { message: "Atlas not found" });
   return atlas;
@@ -258,41 +257,52 @@ function mergeFields(
 
 async function requireOwnedAtlas(
   c: Parameters<typeof requireUser>[0],
-  subjectId: string,
+  atlasId: string,
 ): Promise<{ userId: string; atlas: AtlasRow; db: D1Database }> {
   const userId = await requireUser(c);
   const db = getDb(c.env);
-  await requireOwnedSubject(db, subjectId, userId);
-  const atlas = await requireAtlas(db, subjectId);
+  const atlas = await requireAtlas(db, atlasId);
+  if (atlas.user_id !== userId) {
+    throw new HTTPException(404, { message: "Atlas not found" });
+  }
   return { userId, atlas, db };
 }
 
-/** Owned-subject Atlas overlay API. Guests get 401 via requireUser; SubjectPage sign-in CTA is Task 4. */
 export const atlasRoutes = new Hono<AppEnv>();
+
+atlasRoutes.get("/", async (c) => {
+  const userId = await requireUser(c);
+  const db = getDb(c.env);
+  const { results } = await db
+    .prepare(
+      "SELECT id, user_id, template_key, created_at FROM atlases WHERE user_id = ? ORDER BY created_at ASC",
+    )
+    .bind(userId)
+    .all<AtlasRow>();
+  return c.json({ atlases: (results ?? []).map(atlasMeta) });
+});
 
 atlasRoutes.post("/", async (c) => {
   const userId = await requireUser(c);
-  const subjectId = requireParam(c, "subjectId");
   const db = getDb(c.env);
-  await requireOwnedSubject(db, subjectId, userId);
 
   const existing = await db
     .prepare(
-      "SELECT id, subject_id, template_key, created_at FROM atlases WHERE subject_id = ?",
+      "SELECT id, user_id, template_key, created_at FROM atlases WHERE user_id = ? AND template_key = ?",
     )
-    .bind(subjectId)
+    .bind(userId, TEMPLATE_KEY)
     .first<AtlasRow>();
   if (existing) {
-    throw new HTTPException(409, { message: "Atlas already exists" });
+    return c.json(atlasMeta(existing));
   }
 
   const id = newId();
   const createdAt = nowIso();
   await db
     .prepare(
-      "INSERT INTO atlases (id, subject_id, template_key, created_at) VALUES (?, ?, ?, ?)",
+      "INSERT INTO atlases (id, user_id, template_key, created_at) VALUES (?, ?, ?, ?)",
     )
-    .bind(id, subjectId, TEMPLATE_KEY, createdAt)
+    .bind(id, userId, TEMPLATE_KEY, createdAt)
     .run();
 
   await refreshFocusBestEffort(db, c.env, { atlasId: id });
@@ -300,7 +310,7 @@ atlasRoutes.post("/", async (c) => {
   return c.json(
     atlasMeta({
       id,
-      subject_id: subjectId,
+      user_id: userId,
       template_key: TEMPLATE_KEY,
       created_at: createdAt,
     }),
@@ -308,38 +318,39 @@ atlasRoutes.post("/", async (c) => {
   );
 });
 
-atlasRoutes.get("/", async (c) => {
-  const userId = await requireUser(c);
-  const subjectId = requireParam(c, "subjectId");
-  const db = getDb(c.env);
-  await requireOwnedSubject(db, subjectId, userId);
-  const atlas = await requireAtlas(db, subjectId);
+const atlasItemRoutes = new Hono<AppEnv>();
+
+atlasItemRoutes.get("/", async (c) => {
+  const { atlas } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   return c.json(atlasMeta(atlas));
 });
 
-atlasRoutes.get("/entries", async (c) => {
-  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "subjectId"));
+atlasItemRoutes.get("/entries", async (c) => {
+  const { atlas, db, userId } = await requireOwnedAtlas(
+    c,
+    requireParam(c, "atlasId"),
+  );
   const rows = await loadEntryRows(db, atlas.id);
   const overlays = await toOverlayRows(db, atlas.id, rows);
   const merged = overlayAtlas(loadParasiteDataset().entries, overlays);
   const entries = await listEntriesWithFocus(db, c.env, {
     atlasId: atlas.id,
-    subjectId: atlas.subject_id,
+    userId,
     entries: merged,
   });
   return c.json({ entries });
 });
 
-atlasRoutes.get("/deleted", async (c) => {
-  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "subjectId"));
+atlasItemRoutes.get("/deleted", async (c) => {
+  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const rows = await loadEntryRows(db, atlas.id);
   const overlays = await toOverlayRows(db, atlas.id, rows);
   const entries = deletedEntryViews(rows, overlays, datasetByKey());
   return c.json({ entries });
 });
 
-atlasRoutes.post("/entries", async (c) => {
-  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "subjectId"));
+atlasItemRoutes.post("/entries", async (c) => {
+  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   let body: {
     canonicalName?: unknown;
     commonName?: unknown;
@@ -419,8 +430,8 @@ atlasRoutes.post("/entries", async (c) => {
   return c.json(view, 201);
 });
 
-atlasRoutes.patch("/entries/:entryId", async (c) => {
-  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "subjectId"));
+atlasItemRoutes.patch("/entries/:entryId", async (c) => {
+  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
   let body: { commonName?: unknown; fields?: unknown };
   try {
@@ -498,8 +509,8 @@ atlasRoutes.patch("/entries/:entryId", async (c) => {
   return c.json(view);
 });
 
-atlasRoutes.patch("/entries/:entryId/focus", async (c) => {
-  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "subjectId"));
+atlasItemRoutes.patch("/entries/:entryId/focus", async (c) => {
+  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
   let body: { override?: unknown };
   try {
@@ -540,8 +551,8 @@ atlasRoutes.patch("/entries/:entryId/focus", async (c) => {
   return c.json(view);
 });
 
-atlasRoutes.post("/entries/:entryId/soft-delete", async (c) => {
-  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "subjectId"));
+atlasItemRoutes.post("/entries/:entryId/soft-delete", async (c) => {
+  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
   const resolved = await resolveEntry(db, atlas.id, entryId);
   if (!resolved) throw new HTTPException(404, { message: "Entry not found" });
@@ -567,8 +578,8 @@ atlasRoutes.post("/entries/:entryId/soft-delete", async (c) => {
   return c.body(null, 204);
 });
 
-atlasRoutes.post("/entries/:entryId/restore", async (c) => {
-  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "subjectId"));
+atlasItemRoutes.post("/entries/:entryId/restore", async (c) => {
+  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
   const row =
     (await findEntryById(db, atlas.id, entryId)) ??
@@ -603,8 +614,8 @@ atlasRoutes.post("/entries/:entryId/restore", async (c) => {
   return c.body(null, 204);
 });
 
-atlasRoutes.post("/entries/:entryId/reset", async (c) => {
-  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "subjectId"));
+atlasItemRoutes.post("/entries/:entryId/reset", async (c) => {
+  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
   const row =
     (await findEntryById(db, atlas.id, entryId)) ??
@@ -623,8 +634,8 @@ atlasRoutes.post("/entries/:entryId/reset", async (c) => {
   return c.body(null, 204);
 });
 
-atlasRoutes.delete("/entries/:entryId", async (c) => {
-  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "subjectId"));
+atlasItemRoutes.delete("/entries/:entryId", async (c) => {
+  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
   const row =
     (await findEntryById(db, atlas.id, entryId)) ??
@@ -646,8 +657,8 @@ atlasRoutes.delete("/entries/:entryId", async (c) => {
   return c.body(null, 204);
 });
 
-atlasRoutes.post("/entries/:entryId/refs", async (c) => {
-  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "subjectId"));
+atlasItemRoutes.post("/entries/:entryId/refs", async (c) => {
+  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
   let body: {
     field?: unknown;
@@ -728,8 +739,8 @@ atlasRoutes.post("/entries/:entryId/refs", async (c) => {
   );
 });
 
-atlasRoutes.delete("/entries/:entryId/refs/:refId", async (c) => {
-  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "subjectId"));
+atlasItemRoutes.delete("/entries/:entryId/refs/:refId", async (c) => {
+  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
   const refId = requireParam(c, "refId");
   const row =
@@ -747,8 +758,8 @@ atlasRoutes.delete("/entries/:entryId/refs/:refId", async (c) => {
   return c.body(null, 204);
 });
 
-atlasRoutes.post("/entries/:entryId/images/upload-url", async (c) => {
-  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "subjectId"));
+atlasItemRoutes.post("/entries/:entryId/images/upload-url", async (c) => {
+  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
   let body: { contentType?: unknown; size?: unknown };
   try {
@@ -818,8 +829,8 @@ atlasRoutes.post("/entries/:entryId/images/upload-url", async (c) => {
   return c.json({ imageId, uploadUrl, r2Key, entryId: row.id });
 });
 
-atlasRoutes.post("/entries/:entryId/images", async (c) => {
-  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "subjectId"));
+atlasItemRoutes.post("/entries/:entryId/images", async (c) => {
+  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
   let body: {
     src?: unknown;
@@ -908,8 +919,8 @@ atlasRoutes.post("/entries/:entryId/images", async (c) => {
   );
 });
 
-atlasRoutes.delete("/entries/:entryId/images/:imageId", async (c) => {
-  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "subjectId"));
+atlasItemRoutes.delete("/entries/:entryId/images/:imageId", async (c) => {
+  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
   const imageId = requireParam(c, "imageId");
   const row =
@@ -930,3 +941,5 @@ atlasRoutes.delete("/entries/:entryId/images/:imageId", async (c) => {
   }
   return c.body(null, 204);
 });
+
+atlasRoutes.route("/:atlasId", atlasItemRoutes);

@@ -40,7 +40,7 @@ describe("windowLabel", () => {
 
 describe("isAtlasToAtlas", () => {
   it("holds only when both paths are inside an Atlas", () => {
-    const home = "/library/subjects/s1/atlas";
+    const home = "/atlas/a1";
     expect(isAtlasToAtlas(home, `${home}/entry/fasciola-hepatica`)).toBe(true);
     expect(isAtlasToAtlas(`${home}/entry/x`, home)).toBe(true);
     expect(isAtlasToAtlas("/library/subjects/s1", home)).toBe(false);

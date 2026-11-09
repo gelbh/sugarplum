@@ -142,30 +142,18 @@ export async function loadFocusMap(
   return map;
 }
 
-async function resolveAtlasId(
+async function loadUserMaterials(
   db: D1Database,
-  opts: { atlasId: string } | { subjectId: string },
-): Promise<string | null> {
-  if ("atlasId" in opts) return opts.atlasId;
-  const row = await db
-    .prepare("SELECT id FROM atlases WHERE subject_id = ?")
-    .bind(opts.subjectId)
-    .first<{ id: string }>();
-  return row?.id ?? null;
-}
-
-async function loadSubjectMaterials(
-  db: D1Database,
-  subjectId: string,
+  userId: string,
 ): Promise<MaterialScanRow[]> {
   const { results } = await db
     .prepare(
       `SELECT m.id, m.deck_id, m.kind, m.r2_key, m.filename, m.source_role, m.status
        FROM materials m
        INNER JOIN decks d ON d.id = m.deck_id
-       WHERE d.subject_id = ?`,
+       WHERE d.user_id = ?`,
     )
-    .bind(subjectId)
+    .bind(userId)
     .all<MaterialScanRow>();
   return (results ?? []).filter(
     (m) => SCAN_KINDS.has(m.kind) && m.status === READY_STATUS,
@@ -234,19 +222,18 @@ async function loadMergedEntries(
 export async function refreshAtlasFocus(
   db: D1Database,
   env: Env,
-  opts: { atlasId: string } | { subjectId: string },
+  opts: { atlasId: string },
 ): Promise<void> {
-  const atlasId = await resolveAtlasId(db, opts);
-  if (!atlasId) return;
+  const atlasId = opts.atlasId;
 
   const atlas = await db
-    .prepare("SELECT id, subject_id FROM atlases WHERE id = ?")
+    .prepare("SELECT id, user_id FROM atlases WHERE id = ?")
     .bind(atlasId)
-    .first<{ id: string; subject_id: string }>();
+    .first<{ id: string; user_id: string }>();
   if (!atlas) return;
 
   const existing = await loadFocusMap(db, atlasId);
-  const materials = await loadSubjectMaterials(db, atlas.subject_id);
+  const materials = await loadUserMaterials(db, atlas.user_id);
   const now = new Date().toISOString();
 
   if (materials.length === 0) {
@@ -340,17 +327,24 @@ export async function refreshAtlasFocusForDeck(
   deckId: string,
 ): Promise<void> {
   const deck = await db
-    .prepare("SELECT subject_id FROM decks WHERE id = ?")
+    .prepare("SELECT user_id FROM decks WHERE id = ?")
     .bind(deckId)
-    .first<{ subject_id: string | null }>();
-  if (!deck?.subject_id) return;
-  await refreshFocusBestEffort(db, env, { subjectId: deck.subject_id });
+    .first<{ user_id: string }>();
+  if (!deck) return;
+  const atlas = await db
+    .prepare(
+      "SELECT id FROM atlases WHERE user_id = ? AND template_key = 'parasite'",
+    )
+    .bind(deck.user_id)
+    .first<{ id: string }>();
+  if (!atlas) return;
+  await refreshFocusBestEffort(db, env, { atlasId: atlas.id });
 }
 
 export async function refreshFocusBestEffort(
   db: D1Database,
   env: Env,
-  opts: { atlasId: string } | { subjectId: string },
+  opts: { atlasId: string },
 ): Promise<void> {
   try {
     await refreshAtlasFocus(db, env, opts);
@@ -364,13 +358,13 @@ export async function listEntriesWithFocus(
   env: Env,
   opts: {
     atlasId: string;
-    subjectId: string;
+    userId: string;
     entries: AtlasEntryView[];
   },
 ): Promise<AtlasEntryView[]> {
   let focus = await loadFocusMap(db, opts.atlasId);
   if (focus.size === 0) {
-    const materials = await loadSubjectMaterials(db, opts.subjectId);
+    const materials = await loadUserMaterials(db, opts.userId);
     if (materials.length > 0) {
       await refreshFocusBestEffort(db, env, { atlasId: opts.atlasId });
       focus = await loadFocusMap(db, opts.atlasId);

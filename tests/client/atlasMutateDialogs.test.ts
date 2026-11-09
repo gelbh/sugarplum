@@ -81,7 +81,7 @@ describe("AtlasMutateDialogs", () => {
     await render(
       createElement(AddEntryDialog, {
         open: true,
-        subjectId: "sub-1",
+        atlasId: "atlas-1",
         onClose: () => {},
         onDone: () => {},
       }),
@@ -105,7 +105,7 @@ describe("AtlasMutateDialogs", () => {
     await render(
       createElement(EditEntryDialog, {
         open: true,
-        subjectId: "sub-1",
+        atlasId: "atlas-1",
         entry: entry({
           originKey: "fasciola-hepatica",
           fields: {
@@ -140,7 +140,7 @@ describe("AtlasMutateDialogs", () => {
       );
     });
 
-    expect(patchEntry).toHaveBeenCalledWith("sub-1", "e1", {
+    expect(patchEntry).toHaveBeenCalledWith("atlas-1", "e1", {
       commonName: "Custom",
       fields: { definitiveHosts: ["sheep", "cattle"] },
     });
@@ -167,7 +167,7 @@ describe("AtlasMutateDialogs", () => {
     await render(
       createElement(EditLifecycleDialog, {
         open: true,
-        subjectId: "sub-1",
+        atlasId: "atlas-1",
         entry: start,
         onClose: () => {},
         onDone,
@@ -185,7 +185,7 @@ describe("AtlasMutateDialogs", () => {
     });
 
     expect(patchEntry).toHaveBeenCalledWith(
-      "sub-1",
+      "atlas-1",
       "e1",
       expect.objectContaining({
         fields: expect.objectContaining({
@@ -222,7 +222,7 @@ describe("AtlasMutateDialogs", () => {
     await render(
       createElement(EditLifecycleDialog, {
         open: true,
-        subjectId: "sub-1",
+        atlasId: "atlas-1",
         entry: start,
         onClose: () => {},
         onDone: () => {},
@@ -237,7 +237,7 @@ describe("AtlasMutateDialogs", () => {
     });
 
     expect(patchEntry).toHaveBeenCalledWith(
-      "sub-1",
+      "atlas-1",
       "e1",
       expect.objectContaining({
         fields: expect.objectContaining({
@@ -275,7 +275,7 @@ describe("AtlasMutateDialogs", () => {
     await render(
       createElement(RecentlyDeletedDialog, {
         open: true,
-        subjectId: "sub-1",
+        atlasId: "atlas-1",
         onClose: () => {},
         onChanged: () => {},
       }),
