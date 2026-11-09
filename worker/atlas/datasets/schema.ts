@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { normalizeParasiteName } from "../names";
 import {
+  diagnosticOwnershipIssue,
+  syncDiagnosticOwnership,
+} from "../lifecycleDiagnostic";
+import {
   diagnosticTestSchema,
   lifecycleStageSchema,
   PARASITE_GROUPS,
@@ -132,10 +136,19 @@ export const datasetEntrySchema = z
         message: "at most one hero image",
       });
     }
-    let diagnosticCount = 0;
+    const diagnosticIssue = diagnosticOwnershipIssue(
+      e.fields.lifecycleStages,
+      e.fields.diagnosticStage,
+    );
+    if (diagnosticIssue) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["fields", "lifecycleStages"],
+        message: diagnosticIssue,
+      });
+    }
     e.fields.lifecycleStages.forEach((stage, i) => {
       const path = ["fields", "lifecycleStages", i];
-      if (stage.diagnostic) diagnosticCount += 1;
       if (stage.imageId !== null && !imageIds.has(stage.imageId)) {
         ctx.addIssue({
           code: "custom",
@@ -174,13 +187,6 @@ export const datasetEntrySchema = z
         });
       }
     });
-    if (diagnosticCount > 1) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["fields", "lifecycleStages"],
-        message: "at most one diagnostic stage",
-      });
-    }
     if (!e.refs.some((r) => r.field === null)) {
       ctx.addIssue({
         code: "custom",
@@ -197,6 +203,20 @@ export const datasetEntrySchema = z
         });
       }
     });
+  })
+  .transform((e) => {
+    const synced = syncDiagnosticOwnership(
+      e.fields.lifecycleStages,
+      e.fields.diagnosticStage,
+    );
+    return {
+      ...e,
+      fields: {
+        ...e.fields,
+        lifecycleStages: synced.stages,
+        diagnosticStage: synced.diagnosticStage,
+      },
+    };
   });
 
 export const datasetGroupFileSchema = z

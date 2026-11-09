@@ -24,6 +24,13 @@ type Props = {
 const emptyStage = (): StageDraft =>
   lifecycleStageSchema.parse({ name: "new stage" });
 
+function parseHostRole(raw: string): StageDraft["hostRole"] {
+  if (!raw) return null;
+  return (STAGE_HOST_ROLES as readonly string[]).includes(raw)
+    ? (raw as (typeof STAGE_HOST_ROLES)[number])
+    : null;
+}
+
 /** Parse duration text; incomplete ranges (`14-`, `to`) stay null until both sides exist. */
 export function parseDays(raw: string): StageDraft["durationDays"] {
   const t = raw.trim();
@@ -133,9 +140,7 @@ export default function StageListEditor({
             value={s.hostRole ?? ""}
             disabled={disabled}
             onChange={(ev) =>
-              update(i, {
-                hostRole: (ev.target.value || null) as StageDraft["hostRole"],
-              })
+              update(i, { hostRole: parseHostRole(ev.target.value) })
             }
             fullWidth
           >
