@@ -198,6 +198,106 @@ describe("subject CRUD", () => {
   });
 });
 
+describe("GET /api/subjects/:id/knowledge", () => {
+  function seedAccepted(
+    env: ReturnType<typeof createTestEnv>,
+    id: string,
+    schedule?: { state: number; stability: number },
+  ) {
+    env.seedCard({
+      id,
+      deck_id: "deck-1",
+      job_id: null,
+      type: "qa",
+      front_json: JSON.stringify(`${id}?`),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "accepted",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+    if (schedule) {
+      env.seedSchedule({
+        card_id: id,
+        due: "2026-01-02T00:00:00.000Z",
+        stability: schedule.stability,
+        difficulty: 5,
+        elapsed_days: 0,
+        scheduled_days: 1,
+        learning_steps: 0,
+        reps: 1,
+        lapses: 0,
+        state: schedule.state,
+        last_review: "2026-01-01T12:00:00.000Z",
+      });
+    }
+  }
+
+  it("404 for missing subject", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    const res = await app.request(
+      "/api/subjects/missing/knowledge",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(res.status).toBe(404);
+  });
+
+  it("aggregates accepted schedules across subject decks", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedSubject({
+      id: "sub-1",
+      user_id: "user-a",
+      title: "Anatomy",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-1",
+      user_id: "user-a",
+      title: "Bones",
+      subject_id: "sub-1",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    seedAccepted(env, "c-new");
+    seedAccepted(env, "c-learn", { state: 1, stability: 0.1 });
+    seedAccepted(env, "c-young", { state: 2, stability: 20 });
+    seedAccepted(env, "c-mature", { state: 2, stability: 21 });
+    env.seedCard({
+      id: "c-draft",
+      deck_id: "deck-1",
+      job_id: null,
+      type: "qa",
+      front_json: JSON.stringify("Draft?"),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "draft",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/subjects/sub-1/knowledge",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      new: 1,
+      learning: 1,
+      young: 1,
+      mature: 1,
+      total: 4,
+      graduated: 2,
+      graduatedPct: 50,
+    });
+  });
+});
+
 describe("subject ownership", () => {
   it("returns 404 when PATCH targets another user's subject", async () => {
     const env = createTestEnv();

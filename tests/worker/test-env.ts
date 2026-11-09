@@ -1621,6 +1621,27 @@ export function createTestEnv(opts?: {
         }
         if (
           normalized.includes("FROM cards c") &&
+          normalized.includes("LEFT JOIN card_schedules") &&
+          normalized.includes("d.subject_id")
+        ) {
+          const subjectId = bound[0] as string;
+          const rows = [...cards.values()]
+            .filter((card) => {
+              if (card.status !== "accepted") return false;
+              const deck = decks.get(card.deck_id);
+              return deck?.subject_id === subjectId;
+            })
+            .map((card) => {
+              const schedule = schedules.get(card.id);
+              return {
+                state: schedule?.state ?? null,
+                stability: schedule?.stability ?? null,
+              };
+            });
+          return { results: rows as T[] };
+        }
+        if (
+          normalized.includes("FROM cards c") &&
           normalized.includes("LEFT JOIN card_schedules")
         ) {
           const [deckId, status] = bound as [string, string];
