@@ -266,8 +266,6 @@ export function atlasRun(
     normalized.includes("SET deleted_at =") &&
     normalized.includes("updated_at =")
   ) {
-    // soft-delete: deleted_at, updated_at, id, atlas_id
-    // restore: updated_at, id, atlas_id (deleted_at = NULL in SQL, not bound)
     if (normalized.includes("SET deleted_at = NULL")) {
       const [updated_at, id, atlas_id] = bound as [string, string, string];
       const row = state.entries.get(id);
