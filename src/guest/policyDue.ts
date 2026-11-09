@@ -12,15 +12,9 @@ import {
   type QueueCandidate,
   type StudyPrefs,
 } from "../study/policyQueue";
-import {
-  cardFromScheduleRow,
-  retrievability,
-} from "../study/retrievability";
+import { cardFromScheduleRow, retrievability } from "../study/retrievability";
 import { cardHasRegenSource } from "../study/regenSource";
-import {
-  rankWeakness,
-  type WeaknessCandidate,
-} from "../study/weakness";
+import { rankWeakness, type WeaknessCandidate } from "../study/weakness";
 
 const MS_PER_DAY = 86_400_000;
 
@@ -59,6 +53,7 @@ export function toQueueCandidate(
   if (!sched) {
     return {
       id: card.id,
+      deck_id: card.deck_id,
       due,
       state: State.New,
       reps: 0,
@@ -73,6 +68,7 @@ export function toQueueCandidate(
   }
   return {
     id: card.id,
+    deck_id: card.deck_id,
     due,
     state: sched.state,
     reps: sched.reps,
@@ -183,8 +179,7 @@ export function buildGuestStruggling(
     counts.set(log.cardId, cur);
   }
 
-  const candidates: (WeaknessCandidate & { has_regen_source: boolean })[] =
-    [];
+  const candidates: (WeaknessCandidate & { has_regen_source: boolean })[] = [];
   for (const card of accepted) {
     const tallies = counts.get(card.id);
     if (!tallies) continue;
