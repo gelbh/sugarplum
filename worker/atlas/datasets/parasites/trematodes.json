@@ -1270,7 +1270,18 @@
           "note": "Course lists Digenea as the order; NCBI ranks Digenea as a subclass and gives the order as Opisthorchiida."
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "opisthorchis-felineus-hero.webp",
+          "role": "adult",
+          "caption": "Adult Opisthorchis felineus",
+          "credit": "Web Atlas of Medical Parasitology / Korean Society for Parasitology",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Opisthorchis_felineus_Korea.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "schistosoma-spp",
