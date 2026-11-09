@@ -11,6 +11,8 @@ type SiteverifyResult = {
   success?: boolean;
   action?: string;
   "error-codes"?: string[];
+  /** Present when Siteverify used a Cloudflare test/dummy secret. */
+  metadata?: { result_with_testing_key?: boolean };
 };
 
 function failVerify(): never {
@@ -60,14 +62,10 @@ export async function verifyTurnstileToken(
 
     if (result == null || typeof result !== "object") failVerify();
     if (result.success !== true) failVerify();
-    // Dummy always-pass keys omit `action`; enforce only when Cloudflare returns one.
-    if (
-      typeof result.action === "string" &&
-      result.action.length > 0 &&
-      result.action !== opts.action
-    ) {
-      failVerify();
-    }
+    // Dummy Siteverify omits action/cdata; only skip when Cloudflare marks a testing key.
+    // https://developers.cloudflare.com/turnstile/troubleshooting/testing/
+    const testingKey = result.metadata?.result_with_testing_key === true;
+    if (!testingKey && result.action !== opts.action) failVerify();
   } catch (err) {
     if (err instanceof HTTPException) throw err;
     console.error("turnstile siteverify error", err);

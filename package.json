@@ -11,7 +11,9 @@
     "deploy": "npm run build && wrangler deploy",
     "cf-typegen": "wrangler types",
     "test": "vitest run",
-    "eval:live": "vitest run --config vitest.live.config.ts"
+    "eval:live": "vitest run --config vitest.live.config.ts",
+    "db:migrate:local": "wrangler d1 migrations apply sugarplum --local",
+    "db:seed:local": "node scripts/seed-local-dev.mjs"
   },
   "dependencies": {
     "@emnapi/core": "^2.0.0-beta.2",
