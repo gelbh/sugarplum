@@ -6,6 +6,7 @@ import {
 } from "../schema";
 import arthropods from "./arthropods.json";
 import cestodes from "./cestodes.json";
+import nematodesCompanionPoultry from "./nematodes-companion-poultry.json";
 import nematodesEquinePig from "./nematodes-equine-pig.json";
 import nematodesRuminant from "./nematodes-ruminant.json";
 import protozoa from "./protozoa.json";
@@ -19,6 +20,7 @@ const GROUP_FILES: Record<string, unknown> = {
   "nematodes-ruminant": nematodesRuminant,
   protozoa,
   "nematodes-equine-pig": nematodesEquinePig,
+  "nematodes-companion-poultry": nematodesCompanionPoultry,
   arthropods,
 };
 

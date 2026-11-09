@@ -2,6 +2,7 @@
 const GENUS_FIXES: Record<string, string> = {
   Ancyclostoma: "Ancylostoma",
   Ascarida: "Ascaridia",
+  Contracecum: "Contracaecum",
   Cullicoides: "Culicoides",
   Davainae: "Davainea",
   Dicrocelium: "Dicrocoelium",
@@ -23,14 +24,18 @@ const BINOMIAL_FIXES: Record<string, string> = {
   "Dicrocoelium dentriticum": "Dicrocoelium dendriticum",
   "Dictyocaulus filariae": "Dictyocaulus filaria",
   "Dictyocaulus viviparous": "Dictyocaulus viviparus",
+  "Heterakis gallinarium": "Heterakis gallinarum",
   "Sarcoptes scabei": "Sarcoptes scabiei",
   "Strongylus edentates": "Strongylus edentatus",
   "Teladorsagia circumcinta": "Teladorsagia circumcincta",
+  "Toxocara leonina": "Toxascaris leonina",
   "Trichomonas fetus": "Tritrichomonas foetus",
 };
 
 const SPP_WORDS = new Set(["spp", "spp.", "sp", "sp.", "species"]);
 const JOINERS = new Set(["and", "&", "or"]);
+
+export const KNOWN_MISSPELLINGS = Object.keys(GENUS_FIXES);
 
 export type NormalizedName = { canonical: string; corrected: boolean };
 

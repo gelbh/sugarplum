@@ -13,8 +13,10 @@ The list of taxa is fixed in `tests/eval/atlas/course-taxa.json`: every taxon in
 | `protozoa.json`                    | 18   | authored |
 | `nematodes-ruminant.json`          | 16   | authored |
 | `nematodes-equine-pig.json`        | 19   | authored |
-| `nematodes-companion-poultry.json` | 23   | planned  |
+| `nematodes-companion-poultry.json` | 23   | authored |
 | `arthropods.json`                  | 29   | authored |
+
+The 29 arthropods are _Linguatula serrata_, _Ctenocephalides felis_, _Ctenocephalides canis_, _Pulex irritans_, _Ixodes ricinus_, _Ixodes hexagonus_, _Dermacentor reticulatus_, _Rhipicephalus sanguineus_, _Haemaphysalis punctata_, _Sarcoptes scabiei_, _Psoroptes ovis_, _Otodectes cynotis_, _Demodex canis_, _Cheyletiella spp._, _Chorioptes bovis_, _Dermanyssus gallinae_, _Trichodectes canis_, _Felicola subrostratus_, _Bovicola ovis_, _Bovicola bovis_, _Linognathus vituli_, _Lucilia sericata_, _Hypoderma bovis_, _Oestrus ovis_, _Gasterophilus intestinalis_, _Culicoides spp._, _Stomoxys calcitrans_, _Haematobia irritans_ and _Musca autumnalis_.
 
 ## Sources
 

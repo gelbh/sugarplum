@@ -75,6 +75,15 @@ export const HOST_TERMS = {
   "Musca autumnalis": { broader: ["fly"] },
   "Stomoxys calcitrans": { broader: ["fly"] },
   Haematobia: { broader: ["fly"] },
+  reptile: { broader: ["vertebrate"] },
+  gamebird: { broader: ["bird"] },
+  pheasant: { broader: ["gamebird"] },
+  "marine mammal": { broader: ["mammal"] },
+  cetacean: { broader: ["marine mammal"] },
+  pinniped: { broader: ["marine mammal"] },
+  "marine fish": { broader: ["fish"] },
+  crustacean: { broader: ["invertebrate"] },
+  squid: { broader: ["invertebrate"] },
 } as const satisfies Vocabulary;
 
 export const ORGAN_TERMS = {
@@ -105,6 +114,9 @@ export const ORGAN_TERMS = {
   "nasal cavity": { broader: [] },
   "connective tissue": { broader: [] },
   "nuchal ligament": { broader: ["connective tissue"] },
+  oesophagus: { broader: ["gastrointestinal tract"] },
+  trachea: { broader: [] },
+  "urinary bladder": { broader: [] },
 } as const satisfies Vocabulary;
 
 export type HostTerm = keyof typeof HOST_TERMS;
