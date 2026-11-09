@@ -125,13 +125,22 @@ export function serializeDueCards(
 
 export async function applyDeferrals(
   db: D1Database,
+  userId: string,
   deferrals: { id: string; newDue: string }[],
 ): Promise<void> {
   if (deferrals.length === 0) return;
   const stmts = deferrals.map((d) =>
     db
-      .prepare("UPDATE card_schedules SET due = ? WHERE card_id = ?")
-      .bind(d.newDue, d.id),
+      .prepare(
+        `UPDATE card_schedules SET due = ?
+         WHERE card_id = ?
+           AND EXISTS (
+             SELECT 1 FROM cards c
+             INNER JOIN decks d ON d.id = c.deck_id
+             WHERE c.id = card_schedules.card_id AND d.user_id = ?
+           )`,
+      )
+      .bind(d.newDue, d.id, userId),
   );
   await db.batch(stmts);
 }

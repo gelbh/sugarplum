@@ -177,6 +177,7 @@ describe("FSRS optimize API", () => {
       env,
     );
     expect(bad.status).toBe(400);
+    expect(JSON.stringify(await bad.json())).toContain("Invalid FSRS weights");
 
     const good = await app.request(
       "/api/settings/study/fsrs-weights",
