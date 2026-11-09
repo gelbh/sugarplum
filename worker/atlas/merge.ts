@@ -1,144 +1,125 @@
-import { normalizeParasiteName } from "./names";
-import {
-  emptyParasiteFields,
-  PARASITE_FIELD_KEYS,
-  type ParasiteFieldKey,
-  type ParasiteFields,
-} from "./templates/parasite";
+import type {
+  AtlasEntryView,
+  AtlasImageView,
+  DatasetFields,
+} from "../../src/atlas/types";
+import type { DatasetEntry } from "./datasets/schema";
 
-export type FieldSource = { materialId: string; page: number; excerpt: string };
-
-export type CandidateEntry = {
-  rawName: string;
-  commonName: string | null;
-  fields: ParasiteFields;
-  source: FieldSource;
+/** D1 atlas_entries row shape used by overlay (refs/images optional joins). */
+export type OverlayRow = {
+  id: string;
+  origin_key: string | null;
+  origin_version: number | null;
+  canonical_name: string;
+  common_name: string | null;
+  fields_json: string;
+  edited_at: string | null;
+  deleted_at: string | null;
+  refs?: AtlasEntryView["refs"];
+  images?: AtlasImageView[];
 };
 
-export type EntrySource = FieldSource & {
-  fieldKey: ParasiteFieldKey;
-  value: unknown;
-};
-
-export type FieldConflict = { fieldKey: ParasiteFieldKey; values: unknown[] };
-
-export type MergedEntry = {
-  canonicalName: string;
-  commonName: string | null;
-  nameCorrected: boolean;
-  fields: ParasiteFields;
-  sources: EntrySource[];
-  conflicts: FieldConflict[];
-};
-
-const UNION_KEYS = new Set<ParasiteFieldKey>([
-  "definitiveHosts",
-  "intermediateHosts",
-  "paratenicHosts",
-  "onHostStages",
-]);
-
-function isEmpty(value: unknown): boolean {
-  return value === null || (Array.isArray(value) && value.length === 0);
+export function toEntryView(entry: DatasetEntry): AtlasEntryView {
+  return {
+    id: entry.key,
+    originKey: entry.key,
+    canonicalName: entry.canonicalName,
+    commonName: entry.commonName,
+    aliases: [...entry.aliases, ...entry.misspellings],
+    fields: entry.fields,
+    refs: entry.refs,
+    images: entry.images.map(({ file, ...image }) => ({
+      ...image,
+      src: `/atlas/parasites/${file}`,
+    })),
+    editedAt: null,
+    tier: null,
+  };
 }
 
-function comparable(value: unknown): string {
-  return JSON.stringify(value, (_key, v: unknown) =>
-    typeof v === "string" ? v.trim().toLowerCase() : v,
-  );
+function parseFields(fieldsJson: string): DatasetFields {
+  return JSON.parse(fieldsJson) as DatasetFields;
 }
 
-function unionStrings(current: string[], incoming: string[]): string[] {
-  const seen = new Set(current.map((s) => s.toLowerCase()));
-  const out = [...current];
-  for (const item of incoming) {
-    const key = item.toLowerCase();
-    if (!seen.has(key)) {
-      seen.add(key);
-      out.push(item);
-    }
-  }
-  return out;
+/** Dataset refs/images first, then learner overlay refs/images. */
+export function concatOverlayMedia(
+  base: DatasetEntry | null,
+  row: Pick<OverlayRow, "refs" | "images">,
+): Pick<AtlasEntryView, "refs" | "images"> {
+  const fromDataset = base ? toEntryView(base) : null;
+  return {
+    refs: [...(fromDataset?.refs ?? []), ...(row.refs ?? [])],
+    images: [...(fromDataset?.images ?? []), ...(row.images ?? [])],
+  };
 }
 
-function recordConflict(
-  entry: MergedEntry,
-  fieldKey: ParasiteFieldKey,
-  kept: unknown,
-  incoming: unknown,
-): void {
-  let conflict = entry.conflicts.find((c) => c.fieldKey === fieldKey);
-  if (!conflict) {
-    conflict = { fieldKey, values: [kept] };
-    entry.conflicts.push(conflict);
-  }
-  if (!conflict.values.some((v) => comparable(v) === comparable(incoming))) {
-    conflict.values.push(incoming);
-  }
+export function viewFromOverlay(
+  row: OverlayRow,
+  base: DatasetEntry | null,
+): AtlasEntryView {
+  const fromDataset = base ? toEntryView(base) : null;
+  const media = concatOverlayMedia(base, row);
+  return {
+    id: row.id,
+    originKey: row.origin_key,
+    canonicalName: base?.canonicalName ?? row.canonical_name,
+    commonName: row.common_name,
+    aliases: fromDataset?.aliases ?? [],
+    fields: parseFields(row.fields_json),
+    refs: media.refs,
+    images: media.images,
+    editedAt: row.edited_at,
+    tier: null,
+  };
 }
 
-function addSource(entry: MergedEntry, source: EntrySource): void {
-  const duplicate = entry.sources.some(
-    (s) =>
-      s.fieldKey === source.fieldKey &&
-      s.materialId === source.materialId &&
-      s.page === source.page,
-  );
-  if (!duplicate) entry.sources.push(source);
-}
+/**
+ * Merge bundled dataset entries with D1 overlay rows (edits-over-dataset).
+ * Soft-deleted origin keys are omitted (Recently deleted is a separate query).
+ * Unedited entries keep dataset `key` as `id`; edited/added use the D1 row `id`.
+ */
+export function overlayAtlas(
+  datasetEntries: DatasetEntry[],
+  rows: OverlayRow[],
+): AtlasEntryView[] {
+  const byOrigin = new Map<string, OverlayRow>();
+  const deletedOrigins = new Set<string>();
+  const added: OverlayRow[] = [];
 
-export function mergeCandidates(candidates: CandidateEntry[]): {
-  entries: MergedEntry[];
-  unnamed: CandidateEntry[];
-} {
-  const byName = new Map<string, MergedEntry>();
-  const unnamed: CandidateEntry[] = [];
-
-  for (const candidate of candidates) {
-    const name = normalizeParasiteName(candidate.rawName);
-    if (!name) {
-      unnamed.push(candidate);
+  for (const row of rows) {
+    if (row.origin_key === null) {
+      if (!row.deleted_at) added.push(row);
       continue;
     }
-
-    let entry = byName.get(name.canonical);
-    if (!entry) {
-      entry = {
-        canonicalName: name.canonical,
-        commonName: null,
-        nameCorrected: false,
-        fields: emptyParasiteFields(),
-        sources: [],
-        conflicts: [],
-      };
-      byName.set(name.canonical, entry);
+    if (row.deleted_at) {
+      deletedOrigins.add(row.origin_key);
+      continue;
     }
-    entry.nameCorrected ||= name.corrected;
-    entry.commonName ??= candidate.commonName;
-
-    const fields = entry.fields as Record<ParasiteFieldKey, unknown>;
-    for (const key of PARASITE_FIELD_KEYS) {
-      const incoming = candidate.fields[key];
-      if (isEmpty(incoming)) continue;
-      addSource(entry, { ...candidate.source, fieldKey: key, value: incoming });
-
-      const current = fields[key];
-      if (isEmpty(current)) {
-        fields[key] = incoming;
-      } else if (UNION_KEYS.has(key)) {
-        fields[key] = unionStrings(current as string[], incoming as string[]);
-      } else if (comparable(current) !== comparable(incoming)) {
-        recordConflict(entry, key, current, incoming);
-      }
-    }
+    byOrigin.set(row.origin_key, row);
   }
 
-  const entries = [...byName.values()].sort((a, b) =>
-    a.canonicalName < b.canonicalName
-      ? -1
-      : a.canonicalName > b.canonicalName
-        ? 1
-        : 0,
-  );
-  return { entries, unnamed };
+  const seenOrigins = new Set<string>();
+  const out: AtlasEntryView[] = [];
+
+  for (const entry of datasetEntries) {
+    seenOrigins.add(entry.key);
+    if (deletedOrigins.has(entry.key)) continue;
+    const row = byOrigin.get(entry.key);
+    if (!row) {
+      out.push(toEntryView(entry));
+      continue;
+    }
+    out.push(viewFromOverlay(row, entry));
+  }
+
+  for (const [originKey, row] of byOrigin) {
+    if (seenOrigins.has(originKey)) continue;
+    out.push(viewFromOverlay(row, null));
+  }
+
+  for (const row of added) {
+    out.push(viewFromOverlay(row, null));
+  }
+
+  return out;
 }

@@ -108,7 +108,9 @@ function sortValue(
     case "name":
       return e.canonicalName;
     case "group":
-      return PARASITE_GROUPS.indexOf(e.fields.group);
+      return e.fields.group
+        ? PARASITE_GROUPS.indexOf(e.fields.group)
+        : -1;
     case "host":
       return e.fields.definitiveHosts[0] ?? null;
     case "site":

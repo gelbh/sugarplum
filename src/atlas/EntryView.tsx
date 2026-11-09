@@ -42,6 +42,8 @@ type Props = {
   onOpen: (id: string) => void;
   /** Moves to a neighbour without growing history (j/k). */
   onStep: (id: string) => void;
+  onEdit?: () => void;
+  onReset?: () => void;
 };
 
 const TABS: { key: TabKey; label: string }[] = [
@@ -56,6 +58,8 @@ export default function EntryView({
   entryHref,
   onOpen,
   onStep,
+  onEdit,
+  onReset,
 }: Props) {
   const [tab, setTab] = useState<TabKey>("lifecycle");
   // An object per click, so citing the same field twice still scrolls.
@@ -282,6 +286,8 @@ export default function EntryView({
             setCite({ field });
             setTab("references");
           }}
+          onEdit={onEdit}
+          onReset={onReset}
         />
       </Box>
 

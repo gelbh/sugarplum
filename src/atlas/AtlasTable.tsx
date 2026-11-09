@@ -115,7 +115,11 @@ export default function AtlasTable({ entries, entryHref, onOpen }: Props) {
                   {e.canonicalName}
                 </Link>
               </TableCell>
-              <TableCell>{GROUP_LABELS[e.fields.group].plural}</TableCell>
+              <TableCell>
+                {e.fields.group
+                  ? GROUP_LABELS[e.fields.group].plural
+                  : "Ungrouped"}
+              </TableCell>
               <TableCell>{hostSummary(e.fields.definitiveHosts, 3)}</TableCell>
               <TableCell sx={wideOnly}>
                 {e.fields.majorOrgan ? termLabel(e.fields.majorOrgan) : null}
