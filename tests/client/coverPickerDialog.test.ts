@@ -118,9 +118,6 @@ describe("CoverPickerDialog", () => {
       ownerId: "sub-1",
       photoId: "img-1",
       imageUrl: "/api/covers/media?key=covers%2Fx.jpg",
-      photographerName: "",
-      photographerUrl: "",
-      photoHtmlUrl: "",
       source: "custom" as const,
       r2Key: "covers/user-a/subject/sub-1/img-1.jpg",
     };
@@ -149,11 +146,10 @@ describe("CoverPickerDialog", () => {
       photographerName: "Ada",
       photographerUrl: "https://unsplash.com/@ada",
       photoHtmlUrl: "https://unsplash.com/photos/p1",
-      source: "unsplash" as const,
-      r2Key: null,
     };
     const saved = {
       ...photo,
+      source: "unsplash" as const,
       ownerKind: "subject" as const,
       ownerId: "sub-1",
     };
