@@ -19,6 +19,8 @@ describe("normalizeParasiteName", () => {
     ["Fasciolides magna", "Fascioloides magna"],
     ["Toxocaris leonina", "Toxascaris leonina"],
     ["Ascarida galli", "Ascaridia galli"],
+    ["Heterakis gallinarium", "Heterakis gallinarum"],
+    ["Contracecum osculatum", "Contracaecum osculatum"],
     ["Eimieria species", "Eimeria spp."],
     ["Dicrocoelium dentriticum", "Dicrocoelium dendriticum"],
     ["Dicrocelium dendriticum", "Dicrocoelium dendriticum"],
