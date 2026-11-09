@@ -190,7 +190,11 @@ describe("FSRS optimize API", () => {
       env,
     );
     expect(good.status).toBe(200);
-    expect(await good.json()).toEqual({ ok: true, wLength: 21 });
+    expect(await good.json()).toMatchObject({
+      ok: true,
+      wLength: 21,
+      rescheduled: { cardsUpdated: 0, cardsSkipped: 0 },
+    });
 
     const statusRes = await app.request(
       "/api/settings/study/fsrs-optimize",
