@@ -51,6 +51,7 @@ import {
   type MaterialListItem,
   type StoredCoverRow,
   type Subject,
+  type SubjectCompositionSummary,
   getJourney,
 } from "../api/client";
 import { deriveJourney } from "../journey/derive";
@@ -106,17 +107,7 @@ export default function LibraryPage() {
   } | null>(null);
   const [covers, setCovers] = useState<StoredCoverRow[]>([]);
   const [compositionBySubject, setCompositionBySubject] = useState<
-    Record<
-      string,
-      {
-        graduatedPct: number | null;
-        total: number;
-        new: number;
-        learning: number;
-        young: number;
-        mature: number;
-      }
-    >
+    Record<string, Omit<SubjectCompositionSummary, "subjectId">>
   >({});
   const [coverPicker, setCoverPicker] = useState<CoverTarget | null>(null);
   /** Selection is deck ids only; subject checkbox toggles all decks in that subject. */
@@ -168,6 +159,25 @@ export default function LibraryPage() {
     setDecks(await listDecks());
   }, []);
 
+  const applyCompositionSummaries = useCallback(
+    (summaries: SubjectCompositionSummary[]) => {
+      setCompositionBySubject(
+        Object.fromEntries(
+          summaries.map(({ subjectId, ...rest }) => [subjectId, rest]),
+        ),
+      );
+    },
+    [],
+  );
+
+  const refreshCompositionSummaries = useCallback(async () => {
+    try {
+      applyCompositionSummaries(await listSubjectCompositionSummaries());
+    } catch {
+      applyCompositionSummaries([]);
+    }
+  }, [applyCompositionSummaries]);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -192,21 +202,7 @@ export default function LibraryPage() {
         setDraftJobs(jobs);
         setMaterials(materialList);
         setCovers(coverList);
-        setCompositionBySubject(
-          Object.fromEntries(
-            summaries.map((row) => [
-              row.subjectId,
-              {
-                graduatedPct: row.graduatedPct,
-                total: row.total,
-                new: row.new,
-                learning: row.learning,
-                young: row.young,
-                mature: row.mature,
-              },
-            ]),
-          ),
-        );
+        applyCompositionSummaries(summaries);
         setReady(true);
         endLoad();
         void calendar.refresh();
@@ -569,6 +565,7 @@ export default function LibraryPage() {
                       ? "1 deck"
                       : `${deckCount} decks`;
                 const href = `/library/subjects/${encodeURIComponent(s.id)}`;
+                const composition = compositionBySubject[s.id];
                 return (
                   <Grid key={s.id} component="li" size={{ xs: 12, md: 6 }}>
                     <ShelfVolume
@@ -590,19 +587,18 @@ export default function LibraryPage() {
                       }}
                       meta={meta}
                       chip={
-                        compositionBySubject[s.id]?.graduatedPct != null
-                          ? `${compositionBySubject[s.id].graduatedPct}% graduated`
+                        composition?.graduatedPct != null
+                          ? `${composition.graduatedPct}% graduated`
                           : null
                       }
                       spark={
-                        compositionBySubject[s.id] != null &&
-                        compositionBySubject[s.id].total > 0 ? (
+                        composition != null && composition.total > 0 ? (
                           <CompositionSpark
-                            new={compositionBySubject[s.id].new}
-                            learning={compositionBySubject[s.id].learning}
-                            young={compositionBySubject[s.id].young}
-                            mature={compositionBySubject[s.id].mature}
-                            total={compositionBySubject[s.id].total}
+                            new={composition.new}
+                            learning={composition.learning}
+                            young={composition.young}
+                            mature={composition.mature}
+                            total={composition.total}
                           />
                         ) : null
                       }
@@ -824,6 +820,7 @@ export default function LibraryPage() {
                   await refreshSubjects();
                   await calendar.refresh();
                   await refreshDecks();
+                  await refreshCompositionSummaries();
                 }}
               />
             </OperateSection>

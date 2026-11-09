@@ -32,9 +32,7 @@ export type SubjectKnowledge = SubjectKnowledgeBucketsAggregate & {
 };
 
 /** Schedule row for shared composition (buckets + R). Nulls → null R. */
-export type CompositionScheduleInput = {
-  state: number | null;
-  scheduled_days: number | null;
+export type CompositionScheduleInput = KnowledgeScheduleInput & {
   due: string | null;
   stability: number | null;
   difficulty: number | null;

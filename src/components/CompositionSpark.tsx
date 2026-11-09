@@ -1,8 +1,10 @@
 import Box from "@mui/material/Box";
 import type { SubjectKnowledgeBuckets } from "../study/subjectKnowledge";
 
-type Props = SubjectKnowledgeBuckets & {
+export type CompositionSparkProps = SubjectKnowledgeBuckets & {
   total: number;
+  height?: number;
+  maxWidth?: number | string;
 };
 
 const SEGMENTS: {
@@ -21,7 +23,9 @@ export default function CompositionSpark({
   young,
   mature,
   total,
-}: Props) {
+  height = 4,
+  maxWidth = 120,
+}: CompositionSparkProps) {
   if (total <= 0) return null;
 
   const counts = { new: newCount, learning, young, mature };
@@ -32,12 +36,13 @@ export default function CompositionSpark({
       aria-label={`${mature} mature, ${young} young, ${learning} learning, ${newCount} new`}
       sx={{
         display: "flex",
-        height: 4,
-        borderRadius: 0.5,
+        height,
+        borderRadius: height >= 8 ? 1 : 0.5,
         overflow: "hidden",
         bgcolor: "action.hover",
-        mt: 0.5,
-        maxWidth: 120,
+        mt: height >= 8 ? 0 : 0.5,
+        maxWidth,
+        width: maxWidth === "100%" ? "100%" : undefined,
       }}
     >
       {SEGMENTS.map(({ key, color }) => {
@@ -50,7 +55,7 @@ export default function CompositionSpark({
               flexGrow: count,
               flexBasis: 0,
               bgcolor: color,
-              minWidth: count > 0 ? 2 : 0,
+              minWidth: 2,
             }}
           />
         );
