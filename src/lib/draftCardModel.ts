@@ -27,6 +27,20 @@ export const TYPE_LABELS: Record<CardType, string> = {
   occlusion: "Occlusion",
 };
 
+export function cardFrontPreview(card: CardDraftView): string {
+  if (typeof card.front === "string") return card.front;
+  if (
+    typeof card.front === "object" &&
+    card.front !== null &&
+    "prompt" in card.front &&
+    typeof card.front.prompt === "string" &&
+    card.front.prompt.trim()
+  ) {
+    return card.front.prompt;
+  }
+  return card.type === "occlusion" ? "Occlusion card" : "Card";
+}
+
 export function diySelectableTypes(allowedTypes?: CardType[]): CardType[] {
   if (allowedTypes && allowedTypes.length > 0) {
     return allowedTypes.filter(

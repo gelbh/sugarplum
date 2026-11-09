@@ -22,20 +22,7 @@ import DraftCardEditor, {
   type DraftEditorChange,
 } from "../components/DraftCardEditor";
 import type { CardDraftView, CardType } from "../api/client";
-
-function cardFrontPreview(card: CardDraftView): string {
-  if (typeof card.front === "string") return card.front;
-  if (
-    typeof card.front === "object" &&
-    card.front !== null &&
-    "prompt" in card.front &&
-    typeof card.front.prompt === "string" &&
-    card.front.prompt.trim()
-  ) {
-    return card.front.prompt;
-  }
-  return card.type === "occlusion" ? "Occlusion card" : "Card";
-}
+import { cardFrontPreview } from "../lib/draftCardModel";
 
 function cardTypeLabel(type: CardDraftView["type"]): string {
   if (type === "cloze") return "Cloze";

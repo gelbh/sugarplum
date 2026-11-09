@@ -779,10 +779,14 @@ export default function DeckHubPage({ deckId }: Props) {
 
         {topWorkshop?.id === "drafts" ? (
           <DraftsWorkshop
+            guest={guest}
             draftJobs={draftJobs}
             onAddMoreMaterial={() =>
               jumpWorkshop({ id: "addMaterial", tab: "upload" })
             }
+            onDraftsChanged={async () => {
+              await Promise.all([refreshDraftJobs(), refreshCards()]);
+            }}
           />
         ) : null}
 
