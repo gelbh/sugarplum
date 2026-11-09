@@ -1,49 +1,77 @@
 // Main-chunk module: no dataset or worker imports here.
-export const ATLAS_PATH =
+export const ATLAS_LEGACY_PATH =
   /^\/library\/subjects\/([^/]+)\/atlas(?:\/(entry|compare)\/([^/]+)(?:\/([^/]+))?)?\/?$/;
+
+export const ATLAS_HUB_PATH = /^\/atlas\/?$/;
+
+export const ATLAS_PATH =
+  /^\/atlas\/([^/]+)(?:\/(entry|compare)\/([^/]+)(?:\/([^/]+))?)?\/?$/;
 
 export type AtlasRoute =
   | { kind: "cabinet" }
   | { kind: "entry"; key: string }
   | { kind: "compare"; a: string; b: string };
 
-export function matchAtlasPath(
-  pathname: string,
-): { subjectId: string; route: AtlasRoute } | null {
-  const m = pathname.match(ATLAS_PATH);
-  if (!m) return null;
-  const [, subject, kind, first, second] = m;
-  const subjectId = decodeURIComponent(subject);
-  if (kind === "entry" && second === undefined) {
+export type AtlasPathMatch =
+  | { kind: "hub" }
+  | { kind: "legacy"; subjectId: string; route: AtlasRoute }
+  | { kind: "atlas"; atlasId: string; route: AtlasRoute };
+
+function parseRoute(
+  kind: string | undefined,
+  first: string | undefined,
+  second: string | undefined,
+): AtlasRoute | null {
+  if (kind === "entry" && first !== undefined && second === undefined) {
+    return { kind: "entry", key: decodeURIComponent(first) };
+  }
+  if (kind === "compare" && first !== undefined && second !== undefined) {
     return {
-      subjectId,
-      route: { kind: "entry", key: decodeURIComponent(first) },
+      kind: "compare",
+      a: decodeURIComponent(first),
+      b: decodeURIComponent(second),
     };
   }
-  if (kind === "compare" && second !== undefined) {
-    return {
-      subjectId,
-      route: {
-        kind: "compare",
-        a: decodeURIComponent(first),
-        b: decodeURIComponent(second),
-      },
-    };
-  }
-  return kind === undefined ? { subjectId, route: { kind: "cabinet" } } : null;
+  return kind === undefined ? { kind: "cabinet" } : null;
 }
 
-export const subjectHref = (subjectId: string) =>
-  `/library/subjects/${encodeURIComponent(subjectId)}`;
+export function matchAtlasPath(pathname: string): AtlasPathMatch | null {
+  if (ATLAS_HUB_PATH.test(pathname)) return { kind: "hub" };
 
-export const atlasHref = (subjectId: string) =>
-  `${subjectHref(subjectId)}/atlas`;
+  const legacy = pathname.match(ATLAS_LEGACY_PATH);
+  if (legacy) {
+    const [, subject, kind, first, second] = legacy;
+    const route = parseRoute(kind, first, second);
+    if (!route) return null;
+    return {
+      kind: "legacy",
+      subjectId: decodeURIComponent(subject),
+      route,
+    };
+  }
 
-export const atlasEntryHref = (subjectId: string, key: string) =>
-  `${atlasHref(subjectId)}/entry/${encodeURIComponent(key)}`;
+  const m = pathname.match(ATLAS_PATH);
+  if (!m) return null;
+  const [, atlas, kind, first, second] = m;
+  const route = parseRoute(kind, first, second);
+  if (!route) return null;
+  return {
+    kind: "atlas",
+    atlasId: decodeURIComponent(atlas),
+    route,
+  };
+}
 
-export const atlasCompareHref = (subjectId: string, a: string, b: string) =>
-  `${atlasHref(subjectId)}/compare/${encodeURIComponent(a)}/${encodeURIComponent(b)}`;
+export const atlasHubHref = () => "/atlas";
+
+export const atlasHref = (atlasId: string) =>
+  `/atlas/${encodeURIComponent(atlasId)}`;
+
+export const atlasEntryHref = (atlasId: string, key: string) =>
+  `${atlasHref(atlasId)}/entry/${encodeURIComponent(key)}`;
+
+export const atlasCompareHref = (atlasId: string, a: string, b: string) =>
+  `${atlasHref(atlasId)}/compare/${encodeURIComponent(a)}/${encodeURIComponent(b)}`;
 
 export const isAtlasToAtlas = (prev: string, next: string) =>
   matchAtlasPath(prev) !== null && matchAtlasPath(next) !== null;

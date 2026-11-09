@@ -3,97 +3,114 @@ import type { AtlasEntryView, AtlasSource, DatasetFields } from "./types";
 
 export type AtlasMeta = {
   id: string;
-  subjectId: string;
+  userId: string;
   templateKey: string;
   createdAt: string;
 };
 
-function atlasPath(subjectId: string, suffix = ""): string {
-  return `/api/subjects/${encodeURIComponent(subjectId)}/atlas${suffix}`;
+function atlasCollectionPath(suffix = ""): string {
+  return `/api/atlas${suffix}`;
 }
 
-function entryPath(subjectId: string, entryId: string, suffix = ""): string {
+function atlasPath(atlasId: string, suffix = ""): string {
+  return `/api/atlas/${encodeURIComponent(atlasId)}${suffix}`;
+}
+
+function entryPath(atlasId: string, entryId: string, suffix = ""): string {
   return atlasPath(
-    subjectId,
+    atlasId,
     `/entries/${encodeURIComponent(entryId)}${suffix}`,
   );
 }
 
-/** GET atlas meta; `null` when the subject has no Atlas yet (404). */
-export async function getAtlas(subjectId: string): Promise<AtlasMeta | null> {
+/** List atlases for the signed-in user. */
+export function listAtlases() {
+  return api<{ atlases: AtlasMeta[] }>(atlasCollectionPath()).then(
+    (body) => body.atlases,
+  );
+}
+
+/** Ensure the Parasitology Atlas exists (create or return existing). */
+export function ensureAtlas() {
+  return api<AtlasMeta>(atlasCollectionPath(), { method: "POST" });
+}
+
+/** GET atlas meta; `null` when not found (404). */
+export async function getAtlas(atlasId: string): Promise<AtlasMeta | null> {
   try {
-    return await api<AtlasMeta>(atlasPath(subjectId));
+    return await api<AtlasMeta>(atlasPath(atlasId));
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) return null;
     throw err;
   }
 }
 
-export function createAtlas(subjectId: string) {
-  return api<AtlasMeta>(atlasPath(subjectId), { method: "POST" });
+/** @deprecated Prefer ensureAtlas(); kept as alias for create. */
+export function createAtlas() {
+  return ensureAtlas();
 }
 
 export const apiAtlasSource: AtlasSource = {
-  async list(subjectId) {
+  async list(atlasId) {
     const body = await api<{ entries: AtlasEntryView[] }>(
-      atlasPath(subjectId, "/entries"),
+      atlasPath(atlasId, "/entries"),
     );
     return body.entries;
   },
 };
 
-export function listDeletedEntries(subjectId: string) {
+export function listDeletedEntries(atlasId: string) {
   return api<{ entries: AtlasEntryView[] }>(
-    atlasPath(subjectId, "/deleted"),
+    atlasPath(atlasId, "/deleted"),
   ).then((body) => body.entries);
 }
 
 export function createEntry(
-  subjectId: string,
+  atlasId: string,
   body: {
     canonicalName: string;
     commonName?: string | null;
     fields?: Partial<DatasetFields>;
   },
 ) {
-  return api<AtlasEntryView>(atlasPath(subjectId, "/entries"), {
+  return api<AtlasEntryView>(atlasPath(atlasId, "/entries"), {
     method: "POST",
     json: body,
   });
 }
 
 export function patchEntry(
-  subjectId: string,
+  atlasId: string,
   entryId: string,
   body: {
     commonName?: string | null;
     fields?: Partial<DatasetFields>;
   },
 ) {
-  return api<AtlasEntryView>(entryPath(subjectId, entryId), {
+  return api<AtlasEntryView>(entryPath(atlasId, entryId), {
     method: "PATCH",
     json: body,
   });
 }
 
-export function softDeleteEntry(subjectId: string, entryId: string) {
-  return api<void>(entryPath(subjectId, entryId, "/soft-delete"), {
+export function softDeleteEntry(atlasId: string, entryId: string) {
+  return api<void>(entryPath(atlasId, entryId, "/soft-delete"), {
     method: "POST",
   });
 }
 
-export function restoreEntry(subjectId: string, entryId: string) {
-  return api<void>(entryPath(subjectId, entryId, "/restore"), {
+export function restoreEntry(atlasId: string, entryId: string) {
+  return api<void>(entryPath(atlasId, entryId, "/restore"), {
     method: "POST",
   });
 }
 
-export function resetEntry(subjectId: string, entryId: string) {
-  return api<void>(entryPath(subjectId, entryId, "/reset"), {
+export function resetEntry(atlasId: string, entryId: string) {
+  return api<void>(entryPath(atlasId, entryId, "/reset"), {
     method: "POST",
   });
 }
 
-export function purgeDeletedEntry(subjectId: string, entryId: string) {
-  return api<void>(entryPath(subjectId, entryId), { method: "DELETE" });
+export function purgeDeletedEntry(atlasId: string, entryId: string) {
+  return api<void>(entryPath(atlasId, entryId), { method: "DELETE" });
 }

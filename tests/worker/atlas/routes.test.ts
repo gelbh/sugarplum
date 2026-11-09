@@ -31,20 +31,20 @@ function authHeaders(json = false): HeadersInit {
 
 async function createAtlas(env: ReturnType<typeof createTestEnv>) {
   const res = await app.request(
-    "/api/subjects/sub-1/atlas",
+    "/api/atlas",
     { method: "POST", headers: authHeaders() },
     env,
   );
   expect(res.status).toBe(201);
   return (await res.json()) as {
     id: string;
-    subjectId: string;
+    userId: string;
     templateKey: string;
     createdAt: string;
   };
 }
 
-describe("atlas owned-subject routes", () => {
+describe("atlas user-owned routes", () => {
   it("returns 401 for unauthenticated create", async () => {
     const env = createTestEnv();
     env.seedSubject({
@@ -54,16 +54,17 @@ describe("atlas owned-subject routes", () => {
       created_at: "2026-01-01T00:00:00.000Z",
     });
     const res = await app.request(
-      "/api/subjects/sub-1/atlas",
+      "/api/atlas",
       { method: "POST" },
       env,
     );
     expect(res.status).toBe(401);
   });
 
-  it("returns 404 for non-owner create", async () => {
+  it("returns 404 for non-owner atlas access", async () => {
     const env = createTestEnv();
     seedOwner(env);
+    const { id: atlasId } = await createAtlas(env);
     env.seedUser({
       id: "user-b",
       email: "b@example.com",
@@ -74,9 +75,8 @@ describe("atlas owned-subject routes", () => {
     env.seedSession("sess-b", "user-b");
 
     const res = await app.request(
-      "/api/subjects/sub-1/atlas",
+      `/api/atlas/${atlasId}`,
       {
-        method: "POST",
         headers: { cookie: `${SESSION_COOKIE}=sess-b` },
       },
       env,
@@ -89,33 +89,35 @@ describe("atlas owned-subject routes", () => {
     seedOwner(env);
 
     const created = await createAtlas(env);
+    const atlasId = created.id;
     expect(created).toMatchObject({
-      subjectId: "sub-1",
+      userId: "user-a",
       templateKey: "parasite",
     });
     expect(created.id).toBeTruthy();
 
     const again = await app.request(
-      "/api/subjects/sub-1/atlas",
+      "/api/atlas",
       { method: "POST", headers: authHeaders() },
       env,
     );
-    expect(again.status).toBe(409);
+    expect(again.status).toBe(200);
+    expect(await again.json()).toMatchObject({ id: created.id });
 
     const meta = await app.request(
-      "/api/subjects/sub-1/atlas",
+      `/api/atlas/${atlasId}`,
       { headers: authHeaders() },
       env,
     );
     expect(meta.status).toBe(200);
     expect(await meta.json()).toMatchObject({
       id: created.id,
-      subjectId: "sub-1",
+      userId: "user-a",
       templateKey: "parasite",
     });
 
     const list = await app.request(
-      "/api/subjects/sub-1/atlas/entries",
+      `/api/atlas/${atlasId}/entries`,
       { headers: authHeaders() },
       env,
     );
@@ -132,8 +134,9 @@ describe("atlas owned-subject routes", () => {
   it("returns 404 for entries when atlas is missing", async () => {
     const env = createTestEnv();
     seedOwner(env);
+    const atlasId = "missing-atlas";
     const res = await app.request(
-      "/api/subjects/sub-1/atlas/entries",
+      `/api/atlas/${atlasId}/entries`,
       { headers: authHeaders() },
       env,
     );
@@ -143,10 +146,10 @@ describe("atlas owned-subject routes", () => {
   it("persists an edit over a dataset entry", async () => {
     const env = createTestEnv();
     seedOwner(env);
-    await createAtlas(env);
+    const { id: atlasId } = await createAtlas(env);
 
     const patch = await app.request(
-      "/api/subjects/sub-1/atlas/entries/fasciola-hepatica",
+      `/api/atlas/${atlasId}/entries/fasciola-hepatica`,
       {
         method: "PATCH",
         headers: authHeaders(true),
@@ -166,7 +169,7 @@ describe("atlas owned-subject routes", () => {
     expect(edited.id).not.toBe("fasciola-hepatica");
 
     const list = await app.request(
-      "/api/subjects/sub-1/atlas/entries",
+      `/api/atlas/${atlasId}/entries`,
       { headers: authHeaders() },
       env,
     );
@@ -179,17 +182,17 @@ describe("atlas owned-subject routes", () => {
   it("soft-deletes, restores pristine dataset id, and resets overlay edits", async () => {
     const env = createTestEnv();
     seedOwner(env);
-    await createAtlas(env);
+    const { id: atlasId } = await createAtlas(env);
 
     const soft = await app.request(
-      "/api/subjects/sub-1/atlas/entries/fasciola-hepatica/soft-delete",
+      `/api/atlas/${atlasId}/entries/fasciola-hepatica/soft-delete`,
       { method: "POST", headers: authHeaders() },
       env,
     );
     expect(soft.status).toBe(204);
 
     const hidden = await app.request(
-      "/api/subjects/sub-1/atlas/entries",
+      `/api/atlas/${atlasId}/entries`,
       { headers: authHeaders() },
       env,
     );
@@ -202,7 +205,7 @@ describe("atlas owned-subject routes", () => {
     ).toBe(false);
 
     const deleted = await app.request(
-      "/api/subjects/sub-1/atlas/deleted",
+      `/api/atlas/${atlasId}/deleted`,
       { headers: authHeaders() },
       env,
     );
@@ -214,14 +217,14 @@ describe("atlas owned-subject routes", () => {
     expect(deletedBody.entries[0].originKey).toBe("fasciola-hepatica");
 
     const restore = await app.request(
-      `/api/subjects/sub-1/atlas/entries/${deletedBody.entries[0].id}/restore`,
+      `/api/atlas/${atlasId}/entries/${deletedBody.entries[0].id}/restore`,
       { method: "POST", headers: authHeaders() },
       env,
     );
     expect(restore.status).toBe(204);
 
     const afterRestore = await app.request(
-      "/api/subjects/sub-1/atlas/entries",
+      `/api/atlas/${atlasId}/entries`,
       { headers: authHeaders() },
       env,
     );
@@ -235,7 +238,7 @@ describe("atlas owned-subject routes", () => {
     expect(pristine?.editedAt).toBeNull();
 
     const patch = await app.request(
-      "/api/subjects/sub-1/atlas/entries/fasciola-hepatica",
+      `/api/atlas/${atlasId}/entries/fasciola-hepatica`,
       {
         method: "PATCH",
         headers: authHeaders(true),
@@ -251,14 +254,14 @@ describe("atlas owned-subject routes", () => {
     expect(edited.fields.definitiveHosts).toEqual(["sheep", "cattle"]);
 
     const reset = await app.request(
-      `/api/subjects/sub-1/atlas/entries/${edited.id}/reset`,
+      `/api/atlas/${atlasId}/entries/${edited.id}/reset`,
       { method: "POST", headers: authHeaders() },
       env,
     );
     expect(reset.status).toBe(204);
 
     const list = await app.request(
-      "/api/subjects/sub-1/atlas/entries",
+      `/api/atlas/${atlasId}/entries`,
       { headers: authHeaders() },
       env,
     );
@@ -271,17 +274,17 @@ describe("atlas owned-subject routes", () => {
   it("refuses permanent delete of a soft-deleted dataset overlay", async () => {
     const env = createTestEnv();
     seedOwner(env);
-    await createAtlas(env);
+    const { id: atlasId } = await createAtlas(env);
 
     const soft = await app.request(
-      "/api/subjects/sub-1/atlas/entries/fasciola-hepatica/soft-delete",
+      `/api/atlas/${atlasId}/entries/fasciola-hepatica/soft-delete`,
       { method: "POST", headers: authHeaders() },
       env,
     );
     expect(soft.status).toBe(204);
 
     const deleted = await app.request(
-      "/api/subjects/sub-1/atlas/deleted",
+      `/api/atlas/${atlasId}/deleted`,
       { headers: authHeaders() },
       env,
     );
@@ -292,7 +295,7 @@ describe("atlas owned-subject routes", () => {
     const tombstoneId = deletedBody.entries[0].id;
 
     const purge = await app.request(
-      `/api/subjects/sub-1/atlas/entries/${tombstoneId}`,
+      `/api/atlas/${atlasId}/entries/${tombstoneId}`,
       { method: "DELETE", headers: authHeaders() },
       env,
     );
@@ -301,7 +304,7 @@ describe("atlas owned-subject routes", () => {
     expect(purgeBody.message).toMatch(/cannot be permanently deleted/i);
 
     const stillHidden = await app.request(
-      "/api/subjects/sub-1/atlas/entries",
+      `/api/atlas/${atlasId}/entries`,
       { headers: authHeaders() },
       env,
     );
@@ -316,7 +319,7 @@ describe("atlas owned-subject routes", () => {
     ).toBe(false);
 
     const stillDeleted = await app.request(
-      "/api/subjects/sub-1/atlas/deleted",
+      `/api/atlas/${atlasId}/deleted`,
       { headers: authHeaders() },
       env,
     );
@@ -329,10 +332,10 @@ describe("atlas owned-subject routes", () => {
   it("requires group when adding a learner entry", async () => {
     const env = createTestEnv();
     seedOwner(env);
-    await createAtlas(env);
+    const { id: atlasId } = await createAtlas(env);
 
     const missing = await app.request(
-      "/api/subjects/sub-1/atlas/entries",
+      `/api/atlas/${atlasId}/entries`,
       {
         method: "POST",
         headers: authHeaders(true),
@@ -348,7 +351,7 @@ describe("atlas owned-subject routes", () => {
     expect(missingBody.message).toMatch(/group required/i);
 
     const create = await app.request(
-      "/api/subjects/sub-1/atlas/entries",
+      `/api/atlas/${atlasId}/entries`,
       {
         method: "POST",
         headers: authHeaders(true),
@@ -369,10 +372,10 @@ describe("atlas owned-subject routes", () => {
   it("adds a learner entry and permanently deletes it from trash", async () => {
     const env = createTestEnv();
     seedOwner(env);
-    await createAtlas(env);
+    const { id: atlasId } = await createAtlas(env);
 
     const create = await app.request(
-      "/api/subjects/sub-1/atlas/entries",
+      `/api/atlas/${atlasId}/entries`,
       {
         method: "POST",
         headers: authHeaders(true),
@@ -390,21 +393,21 @@ describe("atlas owned-subject routes", () => {
     expect(added.originKey).toBeNull();
 
     const soft = await app.request(
-      `/api/subjects/sub-1/atlas/entries/${added.id}/soft-delete`,
+      `/api/atlas/${atlasId}/entries/${added.id}/soft-delete`,
       { method: "POST", headers: authHeaders() },
       env,
     );
     expect(soft.status).toBe(204);
 
     const gone = await app.request(
-      `/api/subjects/sub-1/atlas/entries/${added.id}`,
+      `/api/atlas/${atlasId}/entries/${added.id}`,
       { method: "DELETE", headers: authHeaders() },
       env,
     );
     expect(gone.status).toBe(204);
 
     const deleted = await app.request(
-      "/api/subjects/sub-1/atlas/deleted",
+      `/api/atlas/${atlasId}/deleted`,
       { headers: authHeaders() },
       env,
     );
@@ -417,10 +420,10 @@ describe("atlas owned-subject routes", () => {
   it("returns null focus tiers when the subject has no materials", async () => {
     const env = createTestEnv();
     seedOwner(env);
-    await createAtlas(env);
+    const { id: atlasId } = await createAtlas(env);
 
     const list = await app.request(
-      "/api/subjects/sub-1/atlas/entries",
+      `/api/atlas/${atlasId}/entries`,
       { headers: authHeaders() },
       env,
     );
@@ -443,7 +446,7 @@ describe("atlas owned-subject routes", () => {
       subject_id: "sub-1",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    await createAtlas(env);
+    const { id: atlasId } = await createAtlas(env);
 
     const paste = await app.request(
       "/api/decks/deck-1/materials/paste",
@@ -460,7 +463,7 @@ describe("atlas owned-subject routes", () => {
     expect(paste.status).toBe(201);
 
     const list = await app.request(
-      "/api/subjects/sub-1/atlas/entries",
+      `/api/atlas/${atlasId}/entries`,
       { headers: authHeaders() },
       env,
     );
@@ -485,7 +488,7 @@ describe("atlas owned-subject routes", () => {
       subject_id: "sub-1",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    await createAtlas(env);
+    const { id: atlasId } = await createAtlas(env);
 
     const paste = await app.request(
       "/api/decks/deck-1/materials/paste",
@@ -502,7 +505,7 @@ describe("atlas owned-subject routes", () => {
     expect(paste.status).toBe(201);
 
     const demote = await app.request(
-      "/api/subjects/sub-1/atlas/entries/fasciola-hepatica/focus",
+      `/api/atlas/${atlasId}/entries/fasciola-hepatica/focus`,
       {
         method: "PATCH",
         headers: authHeaders(true),
@@ -516,7 +519,7 @@ describe("atlas owned-subject routes", () => {
     expect(demoted.reason).toBe("Manual demote");
 
     const clear = await app.request(
-      "/api/subjects/sub-1/atlas/entries/fasciola-hepatica/focus",
+      `/api/atlas/${atlasId}/entries/fasciola-hepatica/focus`,
       {
         method: "PATCH",
         headers: authHeaders(true),
@@ -541,7 +544,7 @@ describe("atlas owned-subject routes", () => {
       subject_id: "sub-1",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    await createAtlas(env);
+    const { id: atlasId } = await createAtlas(env);
     env.seedMaterial({
       id: "mat-1",
       deck_id: "deck-1",
@@ -555,7 +558,7 @@ describe("atlas owned-subject routes", () => {
     });
 
     const before = await app.request(
-      "/api/subjects/sub-1/atlas/entries",
+      `/api/atlas/${atlasId}/entries`,
       { headers: authHeaders() },
       env,
     );
@@ -577,7 +580,7 @@ describe("atlas owned-subject routes", () => {
     expect(patch.status).toBe(200);
 
     const after = await app.request(
-      "/api/subjects/sub-1/atlas/entries",
+      `/api/atlas/${atlasId}/entries`,
       { headers: authHeaders() },
       env,
     );
@@ -590,12 +593,12 @@ describe("atlas owned-subject routes", () => {
   it("stores a learner ref and concats it with dataset refs", async () => {
     const env = createTestEnv();
     seedOwner(env);
-    await createAtlas(env);
+    const { id: atlasId } = await createAtlas(env);
     const dataset = loadParasiteDataset();
     const base = dataset.entries.find((e) => e.key === "fasciola-hepatica")!;
 
     const res = await app.request(
-      "/api/subjects/sub-1/atlas/entries/fasciola-hepatica/refs",
+      `/api/atlas/${atlasId}/entries/fasciola-hepatica/refs`,
       {
         method: "POST",
         headers: authHeaders(true),
@@ -616,7 +619,7 @@ describe("atlas owned-subject routes", () => {
     expect(ref.note).toBe("PPP table");
 
     const list = await app.request(
-      "/api/subjects/sub-1/atlas/entries",
+      `/api/atlas/${atlasId}/entries`,
       { headers: authHeaders() },
       env,
     );

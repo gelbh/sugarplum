@@ -8,9 +8,11 @@ import {
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import InsightsIcon from "@mui/icons-material/Insights";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 import MilitaryTechIcon from "@mui/icons-material/MilitaryTech";
 import SettingsIcon from "@mui/icons-material/Settings";
 import TodayIcon from "@mui/icons-material/Today";
+import { ATLAS_LEGACY_PATH } from "../atlas/paths";
 import Box from "@mui/material/Box";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -61,9 +63,20 @@ const LEARNER_NAV: NavItem[] = [
     href: "/library",
     icon: <LibraryBooksIcon fontSize="small" />,
     match: (path) =>
-      path === "/library" ||
-      path.startsWith("/library/") ||
-      /^\/jobs\/[^/]+\/drafts\/?$/.test(path),
+      (path === "/library" ||
+        path.startsWith("/library/") ||
+        /^\/jobs\/[^/]+\/drafts\/?$/.test(path)) &&
+      !ATLAS_LEGACY_PATH.test(path),
+  },
+  {
+    id: "atlas",
+    label: "Atlas",
+    href: "/atlas",
+    icon: <MenuBookIcon fontSize="small" />,
+    match: (path) =>
+      path === "/atlas" ||
+      path.startsWith("/atlas/") ||
+      ATLAS_LEGACY_PATH.test(path),
   },
   {
     id: "achievements",

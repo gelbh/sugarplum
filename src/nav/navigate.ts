@@ -1,4 +1,4 @@
-import { atlasHref, matchAtlasPath, subjectHref } from "../atlas/paths";
+import { atlasHref, matchAtlasPath } from "../atlas/paths";
 
 /** Pathname + search for SPA location equality (query-only study scopes). */
 export function locationKey(href = window.location.href): string {
@@ -76,15 +76,16 @@ export function navigateReplace(path: string): void {
 
 /**
  * In-app parent for the mobile Back control. Null on shell roots (Today,
- * Insights, Library, Achievements, Settings, Study) even when browser history
- * is longer.
+ * Insights, Library, Atlas, Achievements, Settings, Study) even when browser
+ * history is longer.
  */
 export function shellBackHref(pathname: string): string | null {
   const atlas = matchAtlasPath(pathname);
-  if (atlas) {
-    return atlas.route.kind === "cabinet"
-      ? subjectHref(atlas.subjectId)
-      : atlasHref(atlas.subjectId);
+  if (atlas?.kind === "atlas") {
+    return atlas.route.kind === "cabinet" ? null : atlasHref(atlas.atlasId);
+  }
+  if (atlas?.kind === "hub" || atlas?.kind === "legacy") {
+    return null;
   }
   if (/^\/library\/(decks|subjects)\/[^/]+\/?$/.test(pathname)) {
     return "/library";

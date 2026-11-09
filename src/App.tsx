@@ -31,6 +31,7 @@ import AchievementsPage from "./routes/AchievementsPage";
 import { StudyChromeProvider } from "./study/StudyChromeContext";
 import AtlasLoading from "./atlas/AtlasLoading";
 import { isAtlasToAtlas, matchAtlasPath } from "./atlas/paths";
+import AtlasHub from "./routes/AtlasHub";
 
 // Keeps the dataset and its schemas out of the main chunk.
 const AtlasPage = lazy(() => import("./routes/AtlasPage"));
@@ -90,12 +91,15 @@ function AppInner() {
   if (path === "/terms") return bare(<TermsPage />);
   if (path === "/data-deletion") return bare(<DataDeletionPage />);
   const atlasMatch = matchAtlasPath(path);
-  if (atlasMatch) {
+  if (atlasMatch?.kind === "hub" || atlasMatch?.kind === "legacy") {
+    return shell(<AtlasHub />);
+  }
+  if (atlasMatch?.kind === "atlas") {
     return shell(
       <Suspense fallback={<AtlasLoading />}>
         <AtlasPage
-          key={atlasMatch.subjectId}
-          subjectId={atlasMatch.subjectId}
+          key={atlasMatch.atlasId}
+          atlasId={atlasMatch.atlasId}
           route={atlasMatch.route}
         />
       </Suspense>,
