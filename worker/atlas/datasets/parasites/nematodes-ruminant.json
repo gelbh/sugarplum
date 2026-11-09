@@ -732,7 +732,8 @@
             "name": "post-mortem examination",
             "sample": "small intestine"
           }
-        ]
+        ],
+        "zoonotic": "potential"
       },
       "refs": [
         {
@@ -865,6 +866,12 @@
           "field": "diagnosticTests",
           "citation": "Cornell AHDC: Strongyloides papillosus",
           "url": "https://www.vet.cornell.edu/animal-health-diagnostic-center/veterinary-resources/testing-guidelines/strongyloides-papillosus",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Gastrointestinal Parasites of Ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/gastrointestinal-parasites-of-ruminants",
           "note": null
         }
       ],
@@ -1109,7 +1116,13 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "passed in faeces",
+            "location": "passed in faeces; embryonates in the environment",
+            "hostRole": "environment",
+            "diagnostic": true
+          },
+          {
+            "name": "infective larva in egg",
+            "location": "embryonated egg on pasture",
             "hostRole": "environment"
           },
           {
@@ -1124,7 +1137,13 @@
             "name": "faecal egg count",
             "sample": "faeces"
           }
-        ]
+        ],
+        "zoonotic": "no",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 21,
+          "max": 35
+        }
       },
       "refs": [
         {
@@ -1221,6 +1240,24 @@
           "field": "diagnosticTests",
           "citation": "Holm et al. 2014, Parasite 21:37: GI nematodes and anthelmintic resistance in Danish goat herds",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4115478/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Common gastrointestinal parasites of small ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/gastrointestinal-parasites-of-ruminants/common-gastrointestinal-parasites-of-small-ruminants",
           "note": null
         }
       ],
@@ -2476,7 +2513,11 @@
             "name": "post-mortem examination",
             "sample": "lungs"
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 28,
+          "max": 35
+        }
       },
       "refs": [
         {
@@ -2585,6 +2626,12 @@
           "field": "diagnosticTests",
           "citation": "Engdawork et al. 2025, Vet Med Int 2025:4001491: lungworms of sheep and cattle, North Shewa, Ethiopia",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12605887/",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Dictyocaulus filaria",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dictyocaulus-filaria.php",
           "note": null
         }
       ],
@@ -3042,7 +3089,12 @@
             "name": "skin biopsy",
             "sample": "skin"
           }
-        ]
+        ],
+        "zoonotic": "no",
+        "pppDays": {
+          "min": 180,
+          "max": 365
+        }
       },
       "refs": [
         {
@@ -3170,6 +3222,18 @@
           "citation": "WCVM Learn About Parasites: Dirofilaria immitis (Onchocercidae)",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dirofilaria-immitis.php",
           "note": "Course lists the suborder Spirurina as the order; reference gives Spirurida."
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Helminths of the Skin in Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/helminths-of-the-skin/helminths-of-the-skin-in-animals",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Helminths of the Skin in Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/helminths-of-the-skin/helminths-of-the-skin-in-animals",
+          "note": null
         }
       ],
       "images": []
