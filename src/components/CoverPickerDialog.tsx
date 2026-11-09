@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -38,31 +38,25 @@ export default function CoverPickerDialog({
   onClear,
 }: Props) {
   const [query, setQuery] = useState(title);
-  const [searchTerm, setSearchTerm] = useState(title);
   const [photos, setPhotos] = useState<CoverFields[]>([]);
   const [empty, setEmpty] = useState(false);
   const [notConfigured, setNotConfigured] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const searchGen = useRef(0);
 
-  useEffect(() => {
-    if (!open) return;
-    setQuery(title);
-    setSearchTerm(title);
-  }, [open, title]);
-
-  useEffect(() => {
-    if (!open) return;
-    const q = searchTerm.trim();
+  const startSearch = useCallback((raw: string) => {
+    const q = raw.trim();
     if (!q) {
       setPhotos([]);
       setEmpty(false);
       setNotConfigured(false);
       setActionError("Enter a search term");
+      setSearching(false);
       return;
     }
-    let cancelled = false;
+    const gen = ++searchGen.current;
     setSearching(true);
     setPhotos([]);
     setEmpty(false);
@@ -70,24 +64,30 @@ export default function CoverPickerDialog({
     setActionError(null);
     searchCovers(q)
       .then((found) => {
-        if (cancelled) return;
+        if (gen !== searchGen.current) return;
         const next = found.slice(0, 6);
         setPhotos(next);
         setEmpty(next.length === 0);
       })
       .catch((err: unknown) => {
-        if (cancelled) return;
+        if (gen !== searchGen.current) return;
         setPhotos([]);
         setEmpty(true);
         setNotConfigured(err instanceof ApiError && err.status === 503);
       })
       .finally(() => {
-        if (!cancelled) setSearching(false);
+        if (gen === searchGen.current) setSearching(false);
       });
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    setQuery(title);
+    startSearch(title);
     return () => {
-      cancelled = true;
+      searchGen.current += 1;
     };
-  }, [open, searchTerm]);
+  }, [open, title, startSearch]);
 
   function run(action: () => void | Promise<void>) {
     setActionError(null);
@@ -105,7 +105,7 @@ export default function CoverPickerDialog({
       setActionError("Enter a search term");
       return;
     }
-    setSearchTerm(next);
+    startSearch(next);
   }
 
   function onFileChange(event: React.ChangeEvent<HTMLInputElement>) {

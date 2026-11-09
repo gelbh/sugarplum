@@ -1,4 +1,4 @@
-import { rankCoverPhotos, type CoverPhoto } from "./rank";
+import type { CoverPhoto } from "./model";
 
 function unsplashHeaders(accessKey: string): HeadersInit {
   return {
@@ -91,7 +91,8 @@ export async function searchCoverPhotos(
     }),
   );
   const photos = details.filter((photo): photo is CoverPhoto => photo != null);
-  return rankCoverPhotos(photos);
+  // Keep Unsplash search relevance order; take first six only.
+  return photos.slice(0, 6);
 }
 
 export async function trackDownload(

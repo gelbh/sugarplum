@@ -367,11 +367,11 @@ describe("cover routes", () => {
     const saved = (await put.json()) as {
       source: string;
       imageUrl: string;
-      photographerName: string;
       r2Key: string;
+      photographerName?: string;
     };
     expect(saved.source).toBe("custom");
-    expect(saved.photographerName).toBe("");
+    expect(saved.photographerName).toBeUndefined();
     expect(saved.imageUrl).toBe(
       `/api/covers/media?key=${encodeURIComponent(upload.r2Key)}`,
     );

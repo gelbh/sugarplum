@@ -469,15 +469,25 @@ export type CoverFields = {
   photographerName: string;
   photographerUrl: string;
   photoHtmlUrl: string;
-  source?: CoverSource;
-  r2Key?: string | null;
 };
 
-export type StoredCoverRow = CoverFields & {
+export type StoredCoverRow = {
   ownerKind: CoverOwnerKind;
   ownerId: string;
-  source: CoverSource;
-};
+  photoId: string;
+  imageUrl: string;
+} & (
+  | {
+      source: "unsplash";
+      photographerName: string;
+      photographerUrl: string;
+      photoHtmlUrl: string;
+    }
+  | {
+      source: "custom";
+      r2Key: string;
+    }
+);
 
 function rejectGuestCover(): never {
   throw new Error("Sign in to choose a cover");

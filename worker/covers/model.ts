@@ -10,32 +10,30 @@ export type CoverPhoto = {
 
 export type CoverSource = "unsplash" | "custom";
 
-export type StoredCover = {
-  photoId: string;
-  imageUrl: string;
-  photographerName: string;
-  photographerUrl: string;
-  photoHtmlUrl: string;
-  source: CoverSource;
-  r2Key?: string | null;
-};
+export type StoredCover =
+  | {
+      source: "unsplash";
+      photoId: string;
+      imageUrl: string;
+      photographerName: string;
+      photographerUrl: string;
+      photoHtmlUrl: string;
+    }
+  | {
+      source: "custom";
+      photoId: string;
+      imageUrl: string;
+      r2Key: string;
+    };
 
-export function rankCoverPhotos(photos: CoverPhoto[]): CoverPhoto[] {
-  // Keep Unsplash search relevance order; downloads sort fights relevance.
-  return photos.slice(0, 6);
-}
-
-export function coverFieldsFromPhoto(
-  photo: CoverPhoto,
-  source: CoverSource = "unsplash",
-): StoredCover {
+export function coverFieldsFromPhoto(photo: CoverPhoto): StoredCover {
   return {
+    source: "unsplash",
     photoId: photo.id,
     imageUrl: photo.imageUrl,
     photographerName: photo.photographerName,
     photographerUrl: photo.photographerUrl,
     photoHtmlUrl: photo.photoHtmlUrl,
-    source,
   };
 }
 
