@@ -202,7 +202,7 @@ describe("GET /api/subjects/:id/knowledge", () => {
   function seedAccepted(
     env: ReturnType<typeof createTestEnv>,
     id: string,
-    schedule?: { state: number; stability: number },
+    schedule?: { state: number; scheduled_days: number },
   ) {
     env.seedCard({
       id,
@@ -221,10 +221,10 @@ describe("GET /api/subjects/:id/knowledge", () => {
       env.seedSchedule({
         card_id: id,
         due: "2026-01-02T00:00:00.000Z",
-        stability: schedule.stability,
+        stability: Math.max(schedule.scheduled_days, 0.1),
         difficulty: 5,
         elapsed_days: 0,
-        scheduled_days: 1,
+        scheduled_days: schedule.scheduled_days,
         learning_steps: 0,
         reps: 1,
         lapses: 0,
@@ -263,9 +263,9 @@ describe("GET /api/subjects/:id/knowledge", () => {
       created_at: "2026-01-01T00:00:00.000Z",
     });
     seedAccepted(env, "c-new");
-    seedAccepted(env, "c-learn", { state: 1, stability: 0.1 });
-    seedAccepted(env, "c-young", { state: 2, stability: 20 });
-    seedAccepted(env, "c-mature", { state: 2, stability: 21 });
+    seedAccepted(env, "c-learn", { state: 1, scheduled_days: 0 });
+    seedAccepted(env, "c-young", { state: 2, scheduled_days: 20 });
+    seedAccepted(env, "c-mature", { state: 2, scheduled_days: 21 });
     env.seedCard({
       id: "c-draft",
       deck_id: "deck-1",

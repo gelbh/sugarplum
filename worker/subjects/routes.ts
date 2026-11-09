@@ -140,20 +140,20 @@ subjectRoutes.get("/:id/knowledge", async (c) => {
 
   const { results } = await db
     .prepare(
-      `SELECT s.state AS state, s.stability AS stability
+      `SELECT s.state AS state, s.scheduled_days AS scheduled_days
        FROM cards c
        INNER JOIN decks d ON d.id = c.deck_id
        LEFT JOIN card_schedules s ON s.card_id = c.id
-       WHERE d.subject_id = ? AND c.status = 'accepted'`,
+       WHERE d.subject_id = ? AND d.user_id = ? AND c.status = 'accepted'`,
     )
-    .bind(subjectId)
-    .all<{ state: number | null; stability: number | null }>();
+    .bind(subjectId, userId)
+    .all<{ state: number | null; scheduled_days: number | null }>();
 
   return c.json(
     aggregateSubjectKnowledge(
       (results ?? []).map((row) => ({
         state: row.state ?? null,
-        stability: row.stability ?? null,
+        scheduled_days: row.scheduled_days ?? null,
       })),
     ),
   );

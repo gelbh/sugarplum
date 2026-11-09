@@ -109,7 +109,7 @@ describe("guest store", () => {
       stability: 20,
       difficulty: 5,
       elapsed_days: 1,
-      scheduled_days: 5,
+      scheduled_days: 20,
       learning_steps: 0,
       last_review: "2026-01-01T12:00:00.000Z",
     };
@@ -117,10 +117,10 @@ describe("guest store", () => {
       state: 2,
       reps: 5,
       lapses: 0,
-      stability: 21,
+      stability: 30,
       difficulty: 5,
       elapsed_days: 1,
-      scheduled_days: 10,
+      scheduled_days: 21,
       learning_steps: 0,
       last_review: "2026-01-01T12:00:00.000Z",
     };

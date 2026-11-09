@@ -135,6 +135,14 @@ export default function SubjectPage({ subjectId }: Props) {
     return found;
   }, [subjectId]);
 
+  const refreshKnowledge = useCallback(async () => {
+    try {
+      setKnowledge(await subjectKnowledge(subjectId));
+    } catch {
+      // Soft-fail: keep prior bar rather than blanking the page.
+    }
+  }, [subjectId]);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -298,6 +306,7 @@ export default function SubjectPage({ subjectId }: Props) {
       await deleteDeck(deleteTarget.id);
       setDecks((prev) => prev.filter((d) => d.id !== deleteTarget.id));
       await syncSubjectFromList();
+      await refreshKnowledge();
       setDeleteTarget(null);
       setDeleteStats(null);
     } catch (err) {

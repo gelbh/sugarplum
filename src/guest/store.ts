@@ -440,8 +440,8 @@ export function guestSubjectKnowledge(
     .filter((c) => deckIds.has(c.deck_id) && c.status === "accepted")
     .map((c) => {
       const sched = store.schedules[c.id];
-      if (!sched) return { state: null, stability: null };
-      return { state: sched.state, stability: sched.stability };
+      if (!sched) return { state: null, scheduled_days: null };
+      return { state: sched.state, scheduled_days: sched.scheduled_days };
     });
   return aggregateSubjectKnowledge(rows);
 }

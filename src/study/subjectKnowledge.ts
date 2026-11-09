@@ -1,10 +1,12 @@
 import { State } from "ts-fsrs";
 
-export const MATURE_STABILITY_DAYS = 21;
+/** Interval days for Mature; same threshold as gamification `MATURE_DAYS`. */
+export const MATURE_INTERVAL_DAYS = 21;
 
 export type KnowledgeScheduleInput = {
   state: number | null;
-  stability: number | null;
+  /** FSRS scheduled interval in days; used for Young vs Mature. */
+  scheduled_days: number | null;
 };
 
 export type SubjectKnowledgeBuckets = {
@@ -31,8 +33,8 @@ export function classifyKnowledgeBucket(
     return "learning";
   }
   if (row.state === State.Review) {
-    const s = row.stability ?? 0;
-    return s >= MATURE_STABILITY_DAYS ? "mature" : "young";
+    const interval = row.scheduled_days ?? 0;
+    return interval >= MATURE_INTERVAL_DAYS ? "mature" : "young";
   }
   return "new";
 }

@@ -1,47 +1,47 @@
 import { State } from "ts-fsrs";
 import { describe, expect, it } from "vitest";
 import {
-  MATURE_STABILITY_DAYS,
+  MATURE_INTERVAL_DAYS,
   aggregateSubjectKnowledge,
   classifyKnowledgeBucket,
 } from "../../src/study/subjectKnowledge";
 
 describe("classifyKnowledgeBucket", () => {
   it("missing schedule → new", () => {
-    expect(classifyKnowledgeBucket({ state: null, stability: null })).toBe(
-      "new",
-    );
+    expect(
+      classifyKnowledgeBucket({ state: null, scheduled_days: null }),
+    ).toBe("new");
   });
 
   it("State.New → new", () => {
     expect(
-      classifyKnowledgeBucket({ state: State.New, stability: 0 }),
+      classifyKnowledgeBucket({ state: State.New, scheduled_days: 0 }),
     ).toBe("new");
   });
 
   it("Learning and Relearning → learning", () => {
     expect(
-      classifyKnowledgeBucket({ state: State.Learning, stability: 0.1 }),
+      classifyKnowledgeBucket({ state: State.Learning, scheduled_days: 0 }),
     ).toBe("learning");
     expect(
-      classifyKnowledgeBucket({ state: State.Relearning, stability: 1 }),
+      classifyKnowledgeBucket({ state: State.Relearning, scheduled_days: 1 }),
     ).toBe("learning");
   });
 
-  it("Review below mature threshold → young", () => {
+  it("Review below mature interval → young", () => {
     expect(
       classifyKnowledgeBucket({
         state: State.Review,
-        stability: MATURE_STABILITY_DAYS - 1,
+        scheduled_days: MATURE_INTERVAL_DAYS - 1,
       }),
     ).toBe("young");
   });
 
-  it("Review at mature threshold → mature", () => {
+  it("Review at mature interval → mature", () => {
     expect(
       classifyKnowledgeBucket({
         state: State.Review,
-        stability: MATURE_STABILITY_DAYS,
+        scheduled_days: MATURE_INTERVAL_DAYS,
       }),
     ).toBe("mature");
   });
@@ -62,10 +62,10 @@ describe("aggregateSubjectKnowledge", () => {
 
   it("sums buckets and integer graduatedPct", () => {
     const out = aggregateSubjectKnowledge([
-      { state: State.New, stability: 0 },
-      { state: State.Review, stability: 10 },
-      { state: State.Review, stability: 21 },
-      { state: State.Learning, stability: 0.5 },
+      { state: State.New, scheduled_days: 0 },
+      { state: State.Review, scheduled_days: 10 },
+      { state: State.Review, scheduled_days: 21 },
+      { state: State.Learning, scheduled_days: 0 },
     ]);
     expect(out).toEqual({
       new: 1,
