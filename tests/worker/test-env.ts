@@ -8,6 +8,12 @@ import {
   type UserGamificationRow,
   type XpLedgerRow,
 } from "./gamification-test-handlers";
+import {
+  atlasAll,
+  atlasFirst,
+  atlasRun,
+  initAtlasState,
+} from "./atlas-test-handlers";
 import type { AchievementDefSeed } from "./gamification-seeds";
 
 /** Mirrors SQL `lower(email) LIKE '%' || lower(q) || '%'` (% and _ wildcards). */
@@ -288,6 +294,7 @@ export function createTestEnv(opts?: {
     schedules,
     reviewLogs,
   );
+  const atlasState = initAtlasState();
 
   // Test harness only: missing wrap key → fixed 32-byte test key.
   const wrapKey =
@@ -311,6 +318,8 @@ export function createTestEnv(opts?: {
           bound,
         );
         if (gamificationEarly !== null) return gamificationEarly;
+        const atlasEarly = atlasFirst<T>(atlasState, normalized, bound);
+        if (atlasEarly !== null) return atlasEarly;
         if (normalized.startsWith("INSERT INTO free_gen_usage")) {
           const [user_id, day, cap] = bound as [string, string, number];
           const key = `${user_id}:${day}`;
@@ -1129,6 +1138,8 @@ export function createTestEnv(opts?: {
           bound,
         );
         if (gamificationAllHit !== null) return gamificationAllHit;
+        const atlasAllHit = atlasAll<T>(atlasState, normalized, bound);
+        if (atlasAllHit !== null) return atlasAllHit;
         if (
           normalized.startsWith(
             "SELECT cluster_key, subject_id FROM calendar_subject_links WHERE user_id =",
@@ -3724,6 +3735,8 @@ export function createTestEnv(opts?: {
           bound,
         );
         if (gamificationRunHit !== null) return gamificationRunHit;
+        const atlasRunHit = atlasRun(atlasState, normalized, bound);
+        if (atlasRunHit !== null) return atlasRunHit;
         return { success: true, meta: { changes: 1 } } as D1Result;
       },
     };

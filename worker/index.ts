@@ -5,6 +5,7 @@ import { authRoutes } from "./auth/routes";
 import type { AuthVariables } from "./auth/session";
 import { deckRoutes, materialRoutes } from "./materials/routes";
 import { subjectRoutes } from "./subjects/routes";
+import { atlasRoutes } from "./atlas/routes";
 import { coverRoutes } from "./covers/routes";
 import { settingsRoutes } from "./settings/routes";
 import { jobRoutes } from "./generation/routes";
@@ -55,6 +56,7 @@ app.onError((err, c) => {
 app.route("/api/auth", authRoutes);
 app.route("/api/calendar", calendarRoutes);
 app.route("/api/subjects", subjectRoutes);
+app.route("/api/subjects/:subjectId/atlas", atlasRoutes);
 app.route("/api/covers", coverRoutes);
 app.route("/api/decks", deckRoutes);
 app.route("/api/materials", materialRoutes);
