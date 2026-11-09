@@ -4,7 +4,7 @@
     {
       "key": "linguatula-serrata",
       "canonicalName": "Linguatula serrata",
-      "commonName": "tongue worm",
+      "commonName": "Tongue worm",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -207,7 +207,6 @@
         "family": "Pulicidae",
         "group": "arthropod",
         "definitiveHosts": ["cat", "dog", "fox", "rodent", "human"],
-        "intermediateHosts": [],
         "vectorRole": "Intermediate host of the tapeworm Dipylidium caninum, which pets pick up by swallowing an infected flea.",
         "majorOrgan": "skin",
         "onHostStages": ["adult"],
@@ -218,12 +217,12 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "Laid in the hair coat, then fall off into bedding and resting areas",
+            "location": "laid in the hair coat, then fall off into bedding and resting areas",
             "hostRole": "environment"
           },
           {
             "name": "larva",
-            "location": "Deeper layers of carpet and bedding, feeding on adult flea faeces",
+            "location": "deeper layers of carpet and bedding, feeding on adult flea faeces",
             "hostRole": "environment",
             "durationDays": {
               "min": 5,
@@ -232,12 +231,12 @@
           },
           {
             "name": "pupa",
-            "location": "Sticky cocoon with debris stuck to it; the young adult can wait months inside",
+            "location": "sticky cocoon with debris stuck to it; the young adult can wait months inside",
             "hostRole": "environment"
           },
           {
             "name": "adult",
-            "location": "Hair coat, mostly around head and neck; feeds on blood",
+            "location": "hair coat, mostly around head and neck; feeds on blood",
             "hostRole": "definitive"
           }
         ],
@@ -245,7 +244,7 @@
         "diagnosticTests": [
           {
             "name": "flea combing",
-            "sample": "hair"
+            "sample": "coat debris"
           },
           {
             "name": "visual inspection",
@@ -358,31 +357,33 @@
         "order": "Siphonaptera",
         "family": "Pulicidae",
         "group": "arthropod",
-        "definitiveHosts": ["dog"],
+        "definitiveHosts": ["dog", "human"],
+        "vectorRole": "Intermediate host of the tapeworm Dipylidium caninum.",
         "majorOrgan": "skin",
         "onHostStages": ["adult"],
-        "distribution": "Uncommon on dogs; reported in Europe",
+        "distribution": "Found in Europe; rare on dogs in North America",
+        "zoonotic": "yes",
         "significance": "Causes skin irritation and flea-bite allergic dermatitis in dogs, and blood-loss anaemia when burdens are heavy.",
         "lifecycleType": "direct",
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "Laid in the hair coat, then fall off into bedding and resting areas",
+            "location": "laid in the hair coat, then fall off into bedding and resting areas",
             "hostRole": "environment"
           },
           {
             "name": "larva",
-            "location": "Deeper layers of carpet and bedding, feeding on adult flea faeces",
+            "location": "deeper layers of carpet and bedding, feeding on adult flea faeces",
             "hostRole": "environment"
           },
           {
             "name": "pupa",
-            "location": "Sticky cocoon with debris stuck to it; the young adult can wait months inside",
+            "location": "sticky cocoon with debris stuck to it; the young adult can wait months inside",
             "hostRole": "environment"
           },
           {
             "name": "adult",
-            "location": "Hair coat, mostly around head and neck; feeds on blood",
+            "location": "hair coat, mostly around head and neck; feeds on blood",
             "hostRole": "definitive"
           }
         ],
@@ -390,7 +391,7 @@
         "diagnosticTests": [
           {
             "name": "flea combing",
-            "sample": "hair"
+            "sample": "coat debris"
           },
           {
             "name": "visual inspection",
@@ -418,6 +419,12 @@
           "note": null
         },
         {
+          "field": "vectorRole",
+          "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
+          "note": null
+        },
+        {
           "field": "majorOrgan",
           "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
@@ -433,6 +440,12 @@
           "field": "distribution",
           "citation": "UF/IFAS Featured Creatures EENY-011: Cat flea, Ctenocephalides felis",
           "url": "https://edis.ifas.ufl.edu/publication/IN137/pdf",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
           "note": null
         },
         {
@@ -496,12 +509,12 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "Laid off the host in its nest",
+            "location": "laid off the host in its nest",
             "hostRole": "environment"
           },
           {
             "name": "larva",
-            "location": "Nest or burrow, feeding on blood-rich flea faeces",
+            "location": "nest or burrow, feeding on blood-rich flea faeces",
             "hostRole": "environment",
             "durationDays": {
               "min": 9,
@@ -510,12 +523,12 @@
           },
           {
             "name": "pupa",
-            "location": "Silk cocoon in the nest with debris stuck to it",
+            "location": "silk cocoon in the nest with debris stuck to it",
             "hostRole": "environment"
           },
           {
             "name": "adult",
-            "location": "Mostly in host nests and burrows; on the host to feed",
+            "location": "mostly in host nests and burrows; on the host to feed",
             "hostRole": "definitive"
           }
         ]
@@ -593,7 +606,7 @@
     {
       "key": "ixodes-ricinus",
       "canonicalName": "Ixodes ricinus",
-      "commonName": "castor bean tick",
+      "commonName": "Castor bean tick",
       "aliases": ["sheep tick"],
       "misspellings": [],
       "fields": {
@@ -606,10 +619,11 @@
           "bird",
           "hedgehog",
           "deer",
+          "sheep",
           "cattle",
           "human"
         ],
-        "vectorRole": "Carries louping ill virus, which affects sheep and red grouse and occasionally people, and Babesia divergens of cattle.",
+        "vectorRole": "Definitive host of Babesia divergens of cattle; also transmits louping ill virus, Borrelia burgdorferi (Lyme disease) and Anaplasma phagocytophilum (tick-borne fever).",
         "majorOrgan": "skin",
         "onHostStages": ["larva", "nymph", "adult"],
         "distribution": "Europe from Portugal to Russia and Scandinavia, plus North Africa",
@@ -671,6 +685,12 @@
           "note": null
         },
         {
+          "field": "definitiveHosts",
+          "citation": "Population genomics of louping ill virus, PLoS Negl Trop Dis 2020",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7515184/",
+          "note": null
+        },
+        {
           "field": "distribution",
           "citation": "ECDC: Ixodes ricinus factsheet for experts",
           "url": "https://www.ecdc.europa.eu/en/disease-vectors/facts/tick-factsheets/ixodes-ricinus",
@@ -718,7 +738,7 @@
     {
       "key": "ixodes-hexagonus",
       "canonicalName": "Ixodes hexagonus",
-      "commonName": "hedgehog tick",
+      "commonName": "Hedgehog tick",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -829,7 +849,7 @@
     {
       "key": "dermacentor-reticulatus",
       "canonicalName": "Dermacentor reticulatus",
-      "commonName": "ornate dog tick",
+      "commonName": "Ornate dog tick",
       "aliases": ["marsh tick", "meadow tick"],
       "misspellings": [],
       "fields": {
@@ -853,7 +873,7 @@
           "human",
           "bird"
         ],
-        "vectorRole": "Carries Babesia canis of dogs and Babesia caballi of horses; B. canis is also handed on transovarially, from female tick to her larvae.",
+        "vectorRole": "Definitive host of Babesia canis of dogs and Babesia caballi of horses; B. canis also passes transovarially from the female tick to her larvae.",
         "majorOrgan": "skin",
         "onHostStages": ["larva", "nymph", "adult"],
         "distribution": "Europe, from Portugal to western Siberia",
@@ -962,7 +982,7 @@
     {
       "key": "rhipicephalus-sanguineus",
       "canonicalName": "Rhipicephalus sanguineus",
-      "commonName": "brown dog tick",
+      "commonName": "Brown dog tick",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1098,7 +1118,7 @@
     {
       "key": "haemaphysalis-punctata",
       "canonicalName": "Haemaphysalis punctata",
-      "commonName": "red sheep tick",
+      "commonName": "Red sheep tick",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1122,7 +1142,7 @@
           "bird",
           "human"
         ],
-        "vectorRole": "Carries piroplasms including Babesia major of cattle and Babesia motasi and Theileria ovis of sheep, among other livestock pathogens.",
+        "vectorRole": "Definitive host of Babesia major of cattle and of Babesia motasi and Theileria ovis of sheep; also carries other livestock pathogens.",
         "majorOrgan": "skin",
         "onHostStages": ["larva", "nymph", "adult"],
         "distribution": "Mediterranean Europe, N Africa and Asia; north to southern Britain",
@@ -1261,7 +1281,6 @@
           "horse",
           "human"
         ],
-        "intermediateHosts": [],
         "majorOrgan": "skin",
         "onHostStages": ["egg", "larva", "nymph", "adult"],
         "distribution": "Worldwide in domestic and wild mammals and in people",
@@ -1408,7 +1427,6 @@
         "family": "Psoroptidae",
         "group": "arthropod",
         "definitiveHosts": ["cattle", "sheep", "goat", "horse", "camelid"],
-        "intermediateHosts": [],
         "majorOrgan": "skin",
         "onHostStages": ["egg", "larva", "nymph", "adult"],
         "distribution": "Worldwide; sheep scab is endemic in the UK but absent from Canada and the US",
@@ -1517,7 +1535,7 @@
     {
       "key": "otodectes-cynotis",
       "canonicalName": "Otodectes cynotis",
-      "commonName": "Dog and cat ear mite",
+      "commonName": "Ear mite",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1526,7 +1544,6 @@
         "family": "Psoroptidae",
         "group": "arthropod",
         "definitiveHosts": ["dog", "cat"],
-        "intermediateHosts": [],
         "majorOrgan": "ear canal",
         "onHostStages": ["egg", "larva", "nymph", "adult"],
         "distribution": "Worldwide; dogs, cats and free-ranging carnivores",
@@ -1652,7 +1669,6 @@
         "family": "Demodicidae",
         "group": "arthropod",
         "definitiveHosts": ["dog"],
-        "intermediateHosts": [],
         "majorOrgan": "skin",
         "onHostStages": ["egg", "larva", "nymph", "adult"],
         "distribution": "Worldwide on dogs",
@@ -1775,12 +1791,11 @@
         "family": "Cheyletidae",
         "group": "arthropod",
         "definitiveHosts": ["dog", "cat", "rabbit", "human"],
-        "intermediateHosts": [],
         "majorOrgan": "skin",
         "onHostStages": ["egg", "larva", "nymph", "adult"],
         "distribution": "Worldwide on dogs, cats and rabbits",
         "zoonotic": "yes",
-        "significance": "Surface mites causing scurfy skin ('walking dandruff') and itch in dogs, cats and rabbits; they pass readily to people.",
+        "significance": "Surface mites causing scaling and itch in dogs and cats ('walking dandruff'); they pass readily to people.",
         "lifecycleType": "direct",
         "lifecycleStages": [
           {
@@ -1855,6 +1870,12 @@
           "note": null
         },
         {
+          "field": "diagnosticStage",
+          "citation": "WCVM Learn About Parasites: Cheyletiella species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cheyletiella-species.php",
+          "note": null
+        },
+        {
           "field": "diagnosticTests",
           "citation": "WCVM Learn About Parasites: Cheyletiella species",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cheyletiella-species.php",
@@ -1923,7 +1944,6 @@
         "family": "Psoroptidae",
         "group": "arthropod",
         "definitiveHosts": ["cattle", "sheep", "goat", "horse", "camelid"],
-        "intermediateHosts": [],
         "majorOrgan": "skin",
         "onHostStages": ["egg", "larva", "adult"],
         "distribution": "Worldwide; common on housed dairy cattle",
@@ -2036,8 +2056,7 @@
         "family": "Dermanyssidae",
         "group": "arthropod",
         "definitiveHosts": ["chicken", "bird", "human"],
-        "intermediateHosts": [],
-        "vectorRole": "Reported as a reservoir and possible vector of Salmonella enteritidis, Borrelia burgdorferi and Pasteurella multocida.",
+        "vectorRole": "Reported as a reservoir and possible vector of Salmonella Enteritidis and Pasteurella multocida.",
         "majorOrgan": "skin",
         "onHostStages": ["nymph", "adult"],
         "distribution": "Worldwide; a major pest of laying hen houses, especially in Europe",
@@ -2158,7 +2177,7 @@
     {
       "key": "trichodectes-canis",
       "canonicalName": "Trichodectes canis",
-      "commonName": "Dog chewing louse",
+      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -2176,17 +2195,17 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "Glued to hairs on the dog",
+            "location": "glued to hairs on the dog",
             "hostRole": "definitive"
           },
           {
             "name": "nymph",
-            "location": "In the coat; two moults to adult",
+            "location": "in the coat; two moults to adult",
             "hostRole": "definitive"
           },
           {
             "name": "adult",
-            "location": "In the coat, feeding on skin debris and hair",
+            "location": "in the coat, feeding on skin debris and hair",
             "hostRole": "definitive"
           }
         ],
@@ -2275,7 +2294,7 @@
     {
       "key": "felicola-subrostratus",
       "canonicalName": "Felicola subrostratus",
-      "commonName": "Cat chewing louse",
+      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -2292,17 +2311,17 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "Glued to hairs on the cat",
+            "location": "glued to hairs on the cat",
             "hostRole": "definitive"
           },
           {
             "name": "nymph",
-            "location": "In the coat; two moults to adult",
+            "location": "in the coat; two moults to adult",
             "hostRole": "definitive"
           },
           {
             "name": "adult",
-            "location": "In the coat, feeding on skin debris and hair",
+            "location": "in the coat, feeding on skin debris and hair",
             "hostRole": "definitive"
           }
         ],
@@ -2385,7 +2404,7 @@
     {
       "key": "bovicola-ovis",
       "canonicalName": "Bovicola ovis",
-      "commonName": "Sheep body louse",
+      "commonName": null,
       "aliases": ["Damalinia ovis"],
       "misspellings": [],
       "fields": {
@@ -2402,7 +2421,7 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "Cemented to wool fibres within about 12 mm of the skin",
+            "location": "cemented to wool fibres within about 12 mm of the skin",
             "hostRole": "definitive",
             "durationDays": {
               "min": 9,
@@ -2411,7 +2430,7 @@
           },
           {
             "name": "nymph",
-            "location": "In the fleece; three moults to adult",
+            "location": "in the fleece; three moults to adult",
             "hostRole": "definitive",
             "durationDays": {
               "min": 21,
@@ -2420,7 +2439,7 @@
           },
           {
             "name": "adult",
-            "location": "In the fleece, mostly in autumn to late winter",
+            "location": "in the fleece, mostly in autumn to late winter",
             "hostRole": "definitive"
           }
         ],
@@ -2541,7 +2560,7 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "Glued to hairs close to the skin",
+            "location": "glued to hairs close to the skin",
             "hostRole": "definitive",
             "durationDays": {
               "min": 6,
@@ -2550,7 +2569,7 @@
           },
           {
             "name": "nymph",
-            "location": "In the coat; three moults to adult",
+            "location": "in the coat; three moults to adult",
             "hostRole": "definitive",
             "durationDays": {
               "min": 12,
@@ -2559,7 +2578,7 @@
           },
           {
             "name": "adult",
-            "location": "In the coat, feeding on skin debris",
+            "location": "in the coat, feeding on skin debris",
             "hostRole": "definitive"
           }
         ],
@@ -2656,7 +2675,7 @@
     {
       "key": "linognathus-vituli",
       "canonicalName": "Linognathus vituli",
-      "commonName": "Longnosed cattle louse",
+      "commonName": "Long-nosed cattle louse",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -2674,7 +2693,7 @@
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "Glued to hairs close to the skin",
+            "location": "glued to hairs close to the skin",
             "hostRole": "definitive",
             "durationDays": {
               "min": 8,
@@ -2683,12 +2702,12 @@
           },
           {
             "name": "nymph",
-            "location": "In the coat; three moults to adult",
+            "location": "in the coat; three moults to adult",
             "hostRole": "definitive"
           },
           {
             "name": "adult",
-            "location": "In the coat, feeding on blood",
+            "location": "in the coat, feeding on blood",
             "hostRole": "definitive"
           }
         ],
@@ -2785,7 +2804,7 @@
     {
       "key": "lucilia-sericata",
       "canonicalName": "Lucilia sericata",
-      "commonName": "Green bottle fly",
+      "commonName": null,
       "aliases": ["Phaenicia sericata"],
       "misspellings": [],
       "fields": {
@@ -2825,8 +2844,7 @@
         "diagnosticStage": "larva",
         "diagnosticTests": [
           {
-            "name": "visual inspection",
-            "sample": null
+            "name": "visual inspection"
           }
         ]
       },
@@ -2945,7 +2963,7 @@
     {
       "key": "hypoderma-bovis",
       "canonicalName": "Hypoderma bovis",
-      "commonName": "Cattle warble fly",
+      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -2953,7 +2971,7 @@
         "order": "Diptera",
         "family": "Oestridae",
         "group": "arthropod",
-        "definitiveHosts": ["cattle", "horse", "human"],
+        "definitiveHosts": ["cattle"],
         "majorOrgan": "skin",
         "onHostStages": ["egg", "L1", "L2", "L3"],
         "distribution": "Cattle in the northern hemisphere",
@@ -2995,8 +3013,7 @@
         "diagnosticStage": "L3",
         "diagnosticTests": [
           {
-            "name": "visual inspection",
-            "sample": null
+            "name": "visual inspection"
           },
           {
             "name": "antibody detection",
@@ -3095,7 +3112,7 @@
     {
       "key": "oestrus-ovis",
       "canonicalName": "Oestrus ovis",
-      "commonName": "Sheep nasal bot fly",
+      "commonName": "Sheep nasal bot",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -3103,7 +3120,7 @@
         "order": "Diptera",
         "family": "Oestridae",
         "group": "arthropod",
-        "definitiveHosts": ["sheep", "goat", "human"],
+        "definitiveHosts": ["sheep", "goat"],
         "majorOrgan": "nasal cavity",
         "onHostStages": ["L1", "L2", "L3"],
         "distribution": "Sheep-farming areas worldwide",
@@ -3221,7 +3238,7 @@
     {
       "key": "gasterophilus-intestinalis",
       "canonicalName": "Gasterophilus intestinalis",
-      "commonName": "Horse bot fly",
+      "commonName": null,
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -3229,9 +3246,9 @@
         "order": "Diptera",
         "family": "Oestridae",
         "group": "arthropod",
-        "definitiveHosts": ["horse", "human"],
+        "definitiveHosts": ["horse"],
         "majorOrgan": "stomach",
-        "onHostStages": ["egg", "larva"],
+        "onHostStages": ["egg", "L1", "L2", "L3"],
         "distribution": "Horses and other equids worldwide",
         "zoonotic": "yes",
         "significance": "Larvae in the stomach can erode the mucosa, though signs are rare; egg-laying adult flies distress horses.",
@@ -3247,8 +3264,18 @@
             }
           },
           {
-            "name": "larva",
-            "location": "wanders in the tongue and gums for about four weeks, is swallowed and fixes to the stomach lining near the cardia for several months, then passes in the faeces",
+            "name": "L1",
+            "location": "hatches from the egg, gets into the mouth and burrows about in the tongue, with the gums also visited at times, for around four weeks",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "L2",
+            "location": "swallowed, then fixed to the lining of the stomach near the cardia",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "L3",
+            "location": "stays fixed in the stomach for several months, then lets go and leaves in the faeces",
             "hostRole": "definitive"
           },
           {
@@ -3269,8 +3296,7 @@
             "sample": "hair"
           },
           {
-            "name": "post-mortem examination",
-            "sample": null
+            "name": "post-mortem examination"
           }
         ]
       },
@@ -3373,7 +3399,7 @@
         "order": "Diptera",
         "family": "Ceratopogonidae",
         "group": "arthropod",
-        "definitiveHosts": ["mammal", "bird", "human"],
+        "definitiveHosts": ["horse", "bird", "human"],
         "vectorRole": "Carry Onchocerca cervicalis between horses and several arboviruses, notably bluetongue, African horse sickness (C. imicola) and Schmallenberg viruses.",
         "majorOrgan": "skin",
         "onHostStages": ["adult"],
@@ -3646,7 +3672,7 @@
         "family": "Muscidae",
         "group": "arthropod",
         "definitiveHosts": ["cattle", "horse"],
-        "vectorRole": "Intermediate host of Stephanofilaria stilesi in cattle and thought to carry Parafilaria multipapillosa larvae between horses; only a possible vector of Habronema.",
+        "vectorRole": "Intermediate host of Stephanofilaria stilesi in cattle and thought to carry Parafilaria multipapillosa larvae between horses.",
         "majorOrgan": "skin",
         "onHostStages": ["adult"],
         "distribution": "Europe, North and Central America and Australia",
@@ -3796,13 +3822,13 @@
         "vectorRole": "Hosts the larvae of Thelazia eye worms, and mechanically spreads the bacterium Moraxella bovis (infectious bovine keratoconjunctivitis) among cattle.",
         "majorOrgan": "eye",
         "onHostStages": ["adult"],
-        "distribution": "North America, Europe, Asia, parts of Africa",
+        "distribution": "Europe, Asia, North America and some African regions",
         "significance": "A nuisance when numerous, as adults feed at the face; also implicated in spreading pink eye between cattle.",
         "lifecycleType": "direct",
         "lifecycleStages": [
           {
             "name": "egg",
-            "location": "laid in freshly passed cattle faeces",
+            "location": "deposited by the female in fresh cow dung",
             "hostRole": "environment",
             "durationDays": {
               "min": 1,
@@ -3829,7 +3855,7 @@
           },
           {
             "name": "adult",
-            "location": "walks over the muzzle and around the eyes taking tears, nasal discharge and blood from wounds made by other flies; leaves only to lay",
+            "location": "moves over the face and eyes, taking up eye and nose secretions and blood from wounds opened by other flies; leaves the host only briefly to lay eggs",
             "hostRole": "definitive"
           }
         ]
