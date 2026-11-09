@@ -46,12 +46,12 @@ export function clampStudyPrefs(
     typeof input.reviewBudget === "number"
       ? clampInt(input.reviewBudget, 1, 2000)
       : base.reviewBudget;
-  const rFloor =
-    typeof input.rFloor === "number" ? clampRFloor(input.rFloor) : base.rFloor;
   const desiredRetention =
     typeof input.desiredRetention === "number"
       ? clampDesiredRetention(input.desiredRetention)
       : base.desiredRetention;
+  // Alias: stored rFloor mirrors desiredRetention (deferral reads retention).
+  const rFloor = clampRFloor(desiredRetention);
   const enableFuzz =
     input.enableFuzz === undefined
       ? base.enableFuzz
