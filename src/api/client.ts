@@ -1055,19 +1055,30 @@ export async function getFsrsRevlogCsv(): Promise<string> {
   return res.text();
 }
 
+export type FsrsRescheduleSummary = {
+  cardsUpdated: number;
+  cardsSkipped: number;
+};
+
 export function putFsrsWeights(w: number[]) {
   if (isGuest()) guestUnsupported("save FSRS weights");
-  return api<{ ok: true; wLength: number }>("/api/settings/study/fsrs-weights", {
-    method: "PUT",
-    json: { w },
-  });
+  return api<{ ok: true; wLength: number; rescheduled: FsrsRescheduleSummary }>(
+    "/api/settings/study/fsrs-weights",
+    {
+      method: "PUT",
+      json: { w },
+    },
+  );
 }
 
 export function resetFsrsWeights() {
   if (isGuest()) guestUnsupported("reset FSRS weights");
-  return api<{ ok: true }>("/api/settings/study/fsrs-weights/reset", {
-    method: "POST",
-  });
+  return api<{ ok: true; rescheduled: FsrsRescheduleSummary }>(
+    "/api/settings/study/fsrs-weights/reset",
+    {
+      method: "POST",
+    },
+  );
 }
 
 export function runFsrsOptimizeNow() {
