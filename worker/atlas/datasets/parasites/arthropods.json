@@ -1731,14 +1731,14 @@
       ],
       "images": [
         {
-          "id": "hero",
-          "file": "psoroptes-ovis-hero.webp",
-          "role": "adult",
+          "id": "lifecycle",
+          "file": "psoroptes-ovis-lifecycle.webp",
+          "role": "lifecycle_diagram",
           "caption": null,
           "credit": "Daktaridudu",
           "license": "CC BY-SA 3.0",
           "sourceUrl": "https://commons.wikimedia.org/wiki/File:Life-cycle-psoroptes-ovis-mite-diagram.jpg",
-          "isHero": true
+          "isHero": false
         }
       ]
     },
@@ -2019,9 +2019,9 @@
           "file": "demodex-canis-hero.webp",
           "role": "adult",
           "caption": null,
-          "credit": "Kalumet",
-          "license": "CC BY-SA 3.0",
-          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Demodex_Milbe_adult.jpg",
+          "credit": "Stanley Hirst (1883–1930)",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Demodex_canis.png",
           "isHero": true
         }
       ]
@@ -4288,18 +4288,7 @@
           "note": null
         }
       ],
-      "images": [
-        {
-          "id": "hero",
-          "file": "haematobia-irritans-hero.webp",
-          "role": "adult",
-          "caption": null,
-          "credit": "division, CSIRO",
-          "license": "CC BY 3.0",
-          "sourceUrl": "https://commons.wikimedia.org/wiki/File:CSIRO_ScienceImage_1887_A_Closeup_of_the_Buffalo_Fly_Trap.jpg",
-          "isHero": true
-        }
-      ]
+      "images": []
     },
     {
       "key": "musca-autumnalis",

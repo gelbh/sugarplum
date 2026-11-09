@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import type { AtlasEntryView, AtlasImageView } from "./types";
 
 export function heroImage(entry: AtlasEntryView): AtlasImageView | null {
-  return entry.images.find((i) => i.isHero) ?? entry.images[0] ?? null;
+  // Explicit isHero only; no images[0] fallback.
+  return entry.images.find((i) => i.isHero) ?? null;
 }
 
 type Props = {

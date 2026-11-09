@@ -550,14 +550,14 @@
       ],
       "images": [
         {
-          "id": "hero",
-          "file": "eimeria-spp-hero.webp",
-          "role": "adult",
+          "id": "lifecycle",
+          "file": "eimeria-spp-lifecycle.webp",
+          "role": "lifecycle_diagram",
           "caption": null,
           "credit": "USDA",
           "license": "Public domain",
           "sourceUrl": "https://commons.wikimedia.org/wiki/File:Eimeria_life_cycle_usda.jpg",
-          "isHero": true
+          "isHero": false
         }
       ]
     },
@@ -728,13 +728,23 @@
       ],
       "images": [
         {
-          "id": "hero",
-          "file": "cryptosporidium-spp-hero.webp",
-          "role": "adult",
+          "id": "lifecycle",
+          "file": "cryptosporidium-spp-lifecycle.webp",
+          "role": "lifecycle_diagram",
           "caption": null,
           "credit": "CDC / PHIL or DPDx (via Wikimedia Commons)",
           "license": "Public domain",
           "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cicle_de_Cryptosporidium_spp.png",
+          "isHero": false
+        },
+        {
+          "id": "hero",
+          "file": "cryptosporidium-spp-hero.webp",
+          "role": "egg_oocyst",
+          "caption": null,
+          "credit": "CDC / DPDx (via Wikimedia Commons)",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cryptosporidium_DPDxCrypto_oo_AF.JPG",
           "isHero": true
         }
       ]
@@ -1162,18 +1172,7 @@
           "note": "Course states Nosematidae; reference gives Unikaryonidae."
         }
       ],
-      "images": [
-        {
-          "id": "hero",
-          "file": "encephalitozoon-cuniculi-hero.webp",
-          "role": "adult",
-          "caption": null,
-          "credit": "No machine-readable author provided. MGrieb~commonswiki assumed (based on copyright claims).",
-          "license": "Public domain",
-          "sourceUrl": "https://commons.wikimedia.org/wiki/File:2006-01-19_Monty2.jpg",
-          "isHero": true
-        }
-      ]
+      "images": []
     },
     {
       "key": "toxoplasma-gondii",
@@ -1561,9 +1560,9 @@
           "file": "neospora-caninum-hero.webp",
           "role": "adult",
           "caption": null,
-          "credit": "Peter Barr",
-          "license": "CC BY-SA 2.0",
-          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Footpath_sign_and_small_footbridge_-_geograph.org.uk_-_1739368.jpg",
+          "credit": "agricultura.sp",
+          "license": "CC BY 2.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Neospora_caninum_(5256961091).jpg",
           "isHero": true
         }
       ]
@@ -2103,9 +2102,9 @@
           "file": "babesia-spp-hero.webp",
           "role": "adult",
           "caption": null,
-          "credit": "Emmanuelmosaku",
-          "license": "CC BY-SA 4.0",
-          "sourceUrl": "https://commons.wikimedia.org/wiki/File:A_Veterinary_medical_student_in_the_Laboratory_during_his_undergraduate_project_research_01.jpg",
+          "credit": "Michael Lippert",
+          "license": "CC0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Babesia_canis_in_red_blood_cells_of_a_dog_after_tick_bite.png",
           "isHero": true
         }
       ]
@@ -2494,9 +2493,9 @@
           "file": "leishmania-infantum-hero.webp",
           "role": "adult",
           "caption": null,
-          "credit": "CIRA / NOAA / NESDIS Center for Satellite Applications and Research",
+          "credit": "CDC / DPDx Image Library",
           "license": "Public domain",
-          "sourceUrl": "https://commons.wikimedia.org/wiki/File:20252212350_GOES18-ABI-FL-14-EP092025-2000x2000.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Leish_amast_free_DPDx.JPG",
           "isHero": true
         }
       ]
@@ -2692,9 +2691,9 @@
           "file": "trypanosoma-spp-hero.webp",
           "role": "adult",
           "caption": null,
-          "credit": "CDC / PHIL or DPDx (via Wikimedia Commons)",
-          "license": "CC BY-SA 3.0",
-          "sourceUrl": "https://commons.wikimedia.org/wiki/File:IRG_activation_following_pathogen_entry.jpg",
+          "credit": "CDC / Dr. Myron G. Schultz",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Trypanosoma_cruzi_crithidia.jpeg",
           "isHero": true
         }
       ]
@@ -2876,18 +2875,7 @@
           "note": "Course states Plasmodidae; reference gives Plasmodiidae."
         }
       ],
-      "images": [
-        {
-          "id": "hero",
-          "file": "plasmodium-spp-hero.webp",
-          "role": "adult",
-          "caption": null,
-          "credit": "Merit González-Olvera, Arturo Hernandez-Colina, Tanja Himmel, Lindsay Eckley, Javier Lopez, Julian Chantrey, Matthew Bay",
-          "license": "CC BY 4.0",
-          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Graphical_abstract_of_avian_malaria_affecting_Humboldt_penguins.jpg",
-          "isHero": true
-        }
-      ]
+      "images": []
     },
     {
       "key": "hepatozoon-canis",
