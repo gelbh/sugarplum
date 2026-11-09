@@ -5,17 +5,27 @@
       "key": "teladorsagia-circumcincta",
       "canonicalName": "Teladorsagia circumcincta",
       "commonName": "Medium stomach worm",
-      "aliases": ["Ostertagia circumcincta"],
-      "misspellings": ["Telodorsagia circumcinta"],
+      "aliases": [
+        "Ostertagia circumcincta"
+      ],
+      "misspellings": [
+        "Telodorsagia circumcinta"
+      ],
       "fields": {
         "phylum": "Nematoda",
         "order": "Strongylida",
         "family": "Trichostrongylidae",
         "group": "nematode",
-        "definitiveHosts": ["sheep", "goat"],
+        "definitiveHosts": [
+          "sheep",
+          "goat"
+        ],
         "intermediateHosts": [],
         "majorOrgan": "abomasum",
-        "onHostStages": ["L4", "adult"],
+        "onHostStages": [
+          "L4",
+          "adult"
+        ],
         "distribution": "Cooler temperate regions with wet winters",
         "zoonotic": "no",
         "significance": "Key abomasal worm of sheep and goats in cool climates; larvae damage gastric glands, causing diarrhoea and poor growth, and boost the periparturient egg rise.",
@@ -208,17 +218,26 @@
       "key": "haemonchus-contortus",
       "canonicalName": "Haemonchus contortus",
       "commonName": "Barber's pole worm",
-      "aliases": ["Large stomach worm"],
+      "aliases": [
+        "Large stomach worm"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Nematoda",
         "order": "Strongylida",
         "family": "Trichostrongylidae",
         "group": "nematode",
-        "definitiveHosts": ["sheep", "goat", "cattle"],
+        "definitiveHosts": [
+          "sheep",
+          "goat",
+          "cattle"
+        ],
         "intermediateHosts": [],
         "majorOrgan": "abomasum",
-        "onHostStages": ["L4", "adult"],
+        "onHostStages": [
+          "L4",
+          "adult"
+        ],
         "distribution": "Worldwide, especially warm regions with summer rainfall",
         "zoonotic": "no",
         "significance": "Blood-feeding abomasal worm and the leading trichostrongyle of sheep; heavy burdens cause anaemia, oedema and deaths, and drug resistance is widespread.",
@@ -436,10 +455,17 @@
         "order": "Strongylida",
         "family": "Trichostrongylidae",
         "group": "nematode",
-        "definitiveHosts": ["sheep", "goat", "cattle"],
+        "definitiveHosts": [
+          "sheep",
+          "goat",
+          "cattle"
+        ],
         "intermediateHosts": [],
         "majorOrgan": "small intestine",
-        "onHostStages": ["L4", "adult"],
+        "onHostStages": [
+          "L4",
+          "adult"
+        ],
         "distribution": "Worldwide in grazing ruminants",
         "zoonotic": "potential",
         "significance": "Small-intestinal genus causing persistent watery diarrhoea, weight loss and poor wool growth in lambs and weaners; light burdens resemble malnutrition.",
@@ -627,16 +653,24 @@
       "canonicalName": "Strongyloides papillosus",
       "commonName": "Intestinal threadworm",
       "aliases": [],
-      "misspellings": ["Stronyloides papillosus"],
+      "misspellings": [
+        "Stronyloides papillosus"
+      ],
       "fields": {
         "phylum": "Nematoda",
         "order": "Rhabditida",
         "family": "Strongyloididae",
         "group": "nematode",
-        "definitiveHosts": ["sheep", "goat", "cattle"],
+        "definitiveHosts": [
+          "sheep",
+          "goat",
+          "cattle"
+        ],
         "intermediateHosts": [],
         "majorOrgan": "small intestine",
-        "onHostStages": ["parasitic adult female"],
+        "onHostStages": [
+          "parasitic adult female"
+        ],
         "distribution": "Worldwide in cattle and small ruminants",
         "significance": "Usually minor, but heavy burdens in young animals cause diarrhoea and ill-thrift; hyperinfection has killed weaned calves suddenly, and larvae can pass in milk.",
         "lifecycleType": "direct",
@@ -825,10 +859,16 @@
         "order": "Strongylida",
         "family": "Ancylostomatidae",
         "group": "nematode",
-        "definitiveHosts": ["sheep", "goat"],
+        "definitiveHosts": [
+          "sheep",
+          "goat"
+        ],
         "intermediateHosts": [],
         "majorOrgan": "small intestine",
-        "onHostStages": ["migrating larva", "adult"],
+        "onHostStages": [
+          "migrating larva",
+          "adult"
+        ],
         "distribution": "Sheep and goats in warm, moist climates",
         "zoonotic": "no",
         "significance": "Blood-feeding hookworm of the small intestine; a burden of around 100 worms is enough to cause disease. Uncommon in Canada.",
@@ -1013,17 +1053,24 @@
       "key": "capillaria-longipes",
       "canonicalName": "Capillaria longipes",
       "commonName": null,
-      "aliases": ["Aonchotheca longipes"],
+      "aliases": [
+        "Aonchotheca longipes"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Nematoda",
         "order": "Trichinellida",
         "family": "Capillariidae",
         "group": "nematode",
-        "definitiveHosts": ["sheep", "goat"],
+        "definitiveHosts": [
+          "sheep",
+          "goat"
+        ],
         "intermediateHosts": [],
         "majorOrgan": "small intestine",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Reported in sheep in Scotland and goats in Denmark",
         "significance": "Not known to cause disease in small ruminants; usually an incidental finding whose eggs can be mistaken for Trichuris eggs.",
         "lifecycleStages": [
@@ -1157,10 +1204,16 @@
         "order": "Strongylida",
         "family": "Strongylidae",
         "group": "nematode",
-        "definitiveHosts": ["sheep", "goat"],
+        "definitiveHosts": [
+          "sheep",
+          "goat"
+        ],
         "intermediateHosts": [],
         "majorOrgan": "large intestine",
-        "onHostStages": ["L4", "adult"],
+        "onHostStages": [
+          "L4",
+          "adult"
+        ],
         "distribution": "Small ruminants; reported in Canada and Australia",
         "zoonotic": "no",
         "significance": "Heavy burdens damage the colon, giving soft, mucus-streaked or bloody faeces and ill-thrift in young or stressed animals; immunity builds quickly.",
@@ -1350,10 +1403,18 @@
         "order": "Strongylida",
         "family": "Strongylidae",
         "group": "nematode",
-        "definitiveHosts": ["sheep", "goat", "deer", "cattle"],
+        "definitiveHosts": [
+          "sheep",
+          "goat",
+          "deer",
+          "cattle"
+        ],
         "intermediateHosts": [],
         "majorOrgan": "large intestine",
-        "onHostStages": ["L4", "adult"],
+        "onHostStages": [
+          "L4",
+          "adult"
+        ],
         "distribution": "Reported in Europe, Canada and Australia",
         "zoonotic": "no",
         "significance": "Eggs look like trichostrongyle eggs on flotation, so counts cannot separate it; larvae sit briefly in the large-gut wall before settling in the lumen.",
@@ -1557,10 +1618,16 @@
         "order": "Trichinellida",
         "family": "Trichuridae",
         "group": "nematode",
-        "definitiveHosts": ["sheep", "goat"],
+        "definitiveHosts": [
+          "sheep",
+          "goat"
+        ],
         "intermediateHosts": [],
         "majorOrgan": "large intestine",
-        "onHostStages": ["larva", "adult"],
+        "onHostStages": [
+          "larva",
+          "adult"
+        ],
         "distribution": "Reported in sheep and goats in Europe and Central Asia",
         "zoonotic": "no",
         "significance": "Heavy burdens are uncommon but can affect lambs and kids, with caecal inflammation, diarrhoea and low plasma protein; the eggs persist on farms.",
@@ -1747,10 +1814,16 @@
         "order": "Strongylida",
         "family": "Molineidae",
         "group": "nematode",
-        "definitiveHosts": ["sheep", "cattle"],
+        "definitiveHosts": [
+          "sheep",
+          "cattle"
+        ],
         "intermediateHosts": [],
         "majorOrgan": "small intestine",
-        "onHostStages": ["L4", "adult"],
+        "onHostStages": [
+          "L4",
+          "adult"
+        ],
         "distribution": "Temperate Europe, mainly the British Isles; patchy in North America",
         "zoonotic": "no",
         "significance": "Mass spring hatching can cause severe diarrhoea, dehydration and deaths in young lambs, with disease starting before adults shed eggs.",
@@ -1936,10 +2009,18 @@
         "order": "Strongylida",
         "family": "Protostrongylidae",
         "group": "nematode",
-        "definitiveHosts": ["sheep", "goat"],
-        "intermediateHosts": ["land snail", "slug"],
+        "definitiveHosts": [
+          "sheep",
+          "goat"
+        ],
+        "intermediateHosts": [
+          "land snail",
+          "slug"
+        ],
         "majorOrgan": "lungs",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Mainly warmer, damper regions worldwide; reported in Canada",
         "zoonotic": "no",
         "significance": "Small lungworm of sheep and goats, commoner in goats; often silent, but heavy burdens can cause interstitial pneumonia and poor growth.",
@@ -2124,10 +2205,18 @@
         "order": "Strongylida",
         "family": "Protostrongylidae",
         "group": "nematode",
-        "definitiveHosts": ["sheep", "goat"],
-        "intermediateHosts": ["land snail", "slug"],
+        "definitiveHosts": [
+          "sheep",
+          "goat"
+        ],
+        "intermediateHosts": [
+          "land snail",
+          "slug"
+        ],
         "majorOrgan": "lungs",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Mainly warmer, damper regions worldwide",
         "zoonotic": "no",
         "significance": "The commonest small lungworm of domestic sheep and goats; usually only mildly pathogenic, but lung lesions often get lungs condemned at meat inspection.",
@@ -2306,16 +2395,23 @@
       "canonicalName": "Dictyocaulus filaria",
       "commonName": null,
       "aliases": [],
-      "misspellings": ["Dictyocaulus filariae"],
+      "misspellings": [
+        "Dictyocaulus filariae"
+      ],
       "fields": {
         "phylum": "Nematoda",
         "order": "Strongylida",
         "family": "Dictyocaulidae",
         "group": "nematode",
-        "definitiveHosts": ["sheep", "goat"],
+        "definitiveHosts": [
+          "sheep",
+          "goat"
+        ],
         "intermediateHosts": [],
         "majorOrgan": "lungs",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Sheep worldwide, with cases reported in Canada",
         "zoonotic": "no",
         "significance": "Common lungworm of sheep and goats in many regions, though a rare cause of disease in Canada; infection brings bronchitis, cough and laboured breathing.",
@@ -2472,10 +2568,15 @@
         "order": "Strongylida",
         "family": "Trichostrongylidae",
         "group": "nematode",
-        "definitiveHosts": ["cattle"],
+        "definitiveHosts": [
+          "cattle"
+        ],
         "intermediateHosts": [],
         "majorOrgan": "abomasum",
-        "onHostStages": ["L4", "adult"],
+        "onHostStages": [
+          "L4",
+          "adult"
+        ],
         "distribution": "Cattle worldwide; probably the most important cattle trichostrongyle",
         "zoonotic": "no",
         "significance": "Larvae in abomasal glands cause nodules and raised pH; type I hits first-season calves, type II follows mass emergence of arrested larvae and can be fatal.",
@@ -2679,16 +2780,24 @@
       "canonicalName": "Dictyocaulus viviparus",
       "commonName": "Bovine lungworm",
       "aliases": [],
-      "misspellings": ["Dictyocaulus viviparous"],
+      "misspellings": [
+        "Dictyocaulus viviparous",
+        "Dictylocaulus viviparous"
+      ],
       "fields": {
         "phylum": "Nematoda",
         "order": "Strongylida",
         "family": "Dictyocaulidae",
         "group": "nematode",
-        "definitiveHosts": ["cattle"],
+        "definitiveHosts": [
+          "cattle"
+        ],
         "intermediateHosts": [],
         "majorOrgan": "lungs",
-        "onHostStages": ["migrating L3", "adult"],
+        "onHostStages": [
+          "migrating L3",
+          "adult"
+        ],
         "distribution": "Cattle across much of the globe, Canada included",
         "zoonotic": "no",
         "significance": "Causes lung disease, mainly in calves in their first grazing season, with coughing and laboured breathing; deaths occur in some outbreaks.",
@@ -2852,10 +2961,17 @@
         "order": "Spirurida",
         "family": "Onchocercidae",
         "group": "nematode",
-        "definitiveHosts": ["cattle"],
-        "intermediateHosts": ["Simulium"],
+        "definitiveHosts": [
+          "cattle"
+        ],
+        "intermediateHosts": [
+          "Simulium"
+        ],
         "majorOrgan": "skin",
-        "onHostStages": ["adult", "microfilaria"],
+        "onHostStages": [
+          "adult",
+          "microfilaria"
+        ],
         "distribution": "African cattle areas with Simulium damnosum, e.g. northern Cameroon",
         "significance": "Forms skin nodules in cattle; the nearest bovine relative of the human river blindness worm, so it serves as that parasite's cattle model.",
         "lifecycleType": "indirect",

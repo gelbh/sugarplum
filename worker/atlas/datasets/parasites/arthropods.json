@@ -1,0 +1,3958 @@
+{
+  "group": "arthropod",
+  "entries": [
+    {
+      "key": "linguatula-serrata",
+      "canonicalName": "Linguatula serrata",
+      "commonName": "Tongue worm",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Pentastomida",
+        "order": "Porocephalida",
+        "family": "Linguatulidae",
+        "group": "arthropod",
+        "definitiveHosts": ["dog", "fox", "cat"],
+        "intermediateHosts": [
+          "sheep",
+          "goat",
+          "cattle",
+          "pig",
+          "rabbit",
+          "rodent"
+        ],
+        "majorOrgan": "nasal cavity",
+        "onHostStages": ["larva", "nymph", "adult"],
+        "distribution": "Almost worldwide; most cases reported in the Middle East",
+        "zoonotic": "yes",
+        "significance": "Adults in the nasal passages cause sneezing and a slight, sometimes bloody, nasal discharge; large burdens can block the airway.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 180,
+          "max": 180
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed out in nasal secretions, or in faeces if swallowed, and eaten by a herbivore from wet vegetation or water",
+            "hostRole": "environment"
+          },
+          {
+            "name": "larva",
+            "location": "hatches in the herbivore's intestine, burrows through the wall and lodges in the mesenteric lymph nodes, liver or lungs",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "nymph",
+            "location": "infective stage in the same organs of the herbivore, waiting to be eaten by a dog or fox",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "adult",
+            "location": "in the nasal passages and sinuses of the dog or fox, hooked onto the mucosa",
+            "hostRole": "definitive",
+            "durationDays": {
+              "min": 730,
+              "max": 730
+            }
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "nasal discharge microscopy",
+            "sample": "nasal discharge"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": "phylum",
+          "citation": "Hami et al. 2009, Iran J Parasitol 4:25-31: Linguatula serrata in bovids slaughtered in Tabriz",
+          "url": "https://ijpa.tums.ac.ir/index.php/ijpa/article/view/105/104",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Linguatula serrata",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/646052/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Linguatula serrata",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/646052/",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Hami et al. 2009, Iran J Parasitol 4:25-31: Linguatula serrata in bovids slaughtered in Tabriz",
+          "url": "https://ijpa.tums.ac.ir/index.php/ijpa/article/view/105/104",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Animal Diversity Web: Linguatula serrata",
+          "url": "https://animaldiversity.org/accounts/Linguatula_serrata/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Hami et al. 2009, Iran J Parasitol 4:25-31: Linguatula serrata in bovids slaughtered in Tabriz",
+          "url": "https://ijpa.tums.ac.ir/index.php/ijpa/article/view/105/104",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "Animal Diversity Web: Linguatula serrata",
+          "url": "https://animaldiversity.org/accounts/Linguatula_serrata/",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "Hami et al. 2009, Iran J Parasitol 4:25-31: Linguatula serrata in bovids slaughtered in Tabriz",
+          "url": "https://ijpa.tums.ac.ir/index.php/ijpa/article/view/105/104",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "dvm360: Respiratory disease caused by parasites (Proceedings)",
+          "url": "https://dvm360.com/view/respiratory-disease-caused-parasites-proceedings",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Animal Diversity Web: Linguatula serrata",
+          "url": "https://animaldiversity.org/accounts/Linguatula_serrata/",
+          "note": "Course states worldwide, particularly Europe, the Middle East, North America and Australia; reference gives almost worldwide, mostly the Middle East."
+        },
+        {
+          "field": "zoonotic",
+          "citation": "Hami et al. 2009, Iran J Parasitol 4:25-31: Linguatula serrata in bovids slaughtered in Tabriz",
+          "url": "https://ijpa.tums.ac.ir/index.php/ijpa/article/view/105/104",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "dvm360: Respiratory disease caused by parasites (Proceedings)",
+          "url": "https://dvm360.com/view/respiratory-disease-caused-parasites-proceedings",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "Hami et al. 2009, Iran J Parasitol 4:25-31: Linguatula serrata in bovids slaughtered in Tabriz",
+          "url": "https://ijpa.tums.ac.ir/index.php/ijpa/article/view/105/104",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "dvm360: Respiratory disease caused by parasites (Proceedings)",
+          "url": "https://dvm360.com/view/respiratory-disease-caused-parasites-proceedings",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Hami et al. 2009, Iran J Parasitol 4:25-31: Linguatula serrata in bovids slaughtered in Tabriz",
+          "url": "https://ijpa.tums.ac.ir/index.php/ijpa/article/view/105/104",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Animal Diversity Web: Linguatula serrata",
+          "url": "https://animaldiversity.org/accounts/Linguatula_serrata/",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Alborzi et al. 2021, Iran J Parasitol 16:402-410: ELISA for Linguatula serrata antibodies in dogs",
+          "url": "https://ijpa.tums.ac.ir/index.php/ijpa/article/view/2858/1150",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "dvm360: Respiratory disease caused by parasites (Proceedings)",
+          "url": "https://dvm360.com/view/respiratory-disease-caused-parasites-proceedings",
+          "note": "Course states adults live 15 months; reference gives about 2 years."
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "dvm360: Respiratory disease caused by parasites (Proceedings)",
+          "url": "https://dvm360.com/view/respiratory-disease-caused-parasites-proceedings",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "dvm360: Respiratory disease caused by parasites (Proceedings)",
+          "url": "https://dvm360.com/view/respiratory-disease-caused-parasites-proceedings",
+          "note": "Course also lists faecal salt flotation; cited references do not."
+        },
+        {
+          "field": null,
+          "citation": "Animal Diversity Web: Linguatula serrata",
+          "url": "https://animaldiversity.org/accounts/Linguatula_serrata/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "ctenocephalides-felis",
+      "canonicalName": "Ctenocephalides felis",
+      "commonName": "Cat flea",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Siphonaptera",
+        "family": "Pulicidae",
+        "group": "arthropod",
+        "definitiveHosts": ["cat", "dog", "fox", "rodent", "human"],
+        "vectorRole": "Intermediate host of the tapeworm Dipylidium caninum, which pets pick up by swallowing an infected flea.",
+        "majorOrgan": "skin",
+        "onHostStages": ["adult"],
+        "distribution": "Worldwide on dogs and cats",
+        "zoonotic": "yes",
+        "significance": "Causes itching, flea-bite allergic dermatitis and, in heavy burdens, blood-loss anaemia, mainly in dogs and cats.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "laid in the hair coat, then fall off into bedding and resting areas",
+            "hostRole": "environment"
+          },
+          {
+            "name": "larva",
+            "location": "deeper layers of carpet and bedding, feeding on adult flea faeces",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 5,
+              "max": 15
+            }
+          },
+          {
+            "name": "pupa",
+            "location": "sticky cocoon with debris stuck to it; the young adult can wait months inside",
+            "hostRole": "environment"
+          },
+          {
+            "name": "adult",
+            "location": "hair coat, mostly around head and neck; feeds on blood",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "flea combing",
+            "sample": "coat debris"
+          },
+          {
+            "name": "visual inspection",
+            "sample": "coat debris"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "UF/IFAS Featured Creatures EENY-011: Cat flea, Ctenocephalides felis",
+          "url": "https://edis.ifas.ufl.edu/publication/IN137/pdf",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "UF/IFAS Featured Creatures EENY-011: Cat flea, Ctenocephalides felis",
+          "url": "https://edis.ifas.ufl.edu/publication/IN137/pdf",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "UF/IFAS Featured Creatures EENY-011: Cat flea, Ctenocephalides felis",
+          "url": "https://edis.ifas.ufl.edu/publication/IN137/pdf",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Ctenocephalides felis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/7515/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Ctenocephalides felis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/7515/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Ctenocephalides felis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/7515/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "ctenocephalides-canis",
+      "canonicalName": "Ctenocephalides canis",
+      "commonName": "Dog flea",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Siphonaptera",
+        "family": "Pulicidae",
+        "group": "arthropod",
+        "definitiveHosts": ["dog", "human"],
+        "vectorRole": "Intermediate host of the tapeworm Dipylidium caninum.",
+        "majorOrgan": "skin",
+        "onHostStages": ["adult"],
+        "distribution": "Found in Europe; rare on dogs in North America",
+        "zoonotic": "yes",
+        "significance": "Causes skin irritation and flea-bite allergic dermatitis in dogs, and blood-loss anaemia when burdens are heavy.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "laid in the hair coat, then fall off into bedding and resting areas",
+            "hostRole": "environment"
+          },
+          {
+            "name": "larva",
+            "location": "deeper layers of carpet and bedding, feeding on adult flea faeces",
+            "hostRole": "environment"
+          },
+          {
+            "name": "pupa",
+            "location": "sticky cocoon with debris stuck to it; the young adult can wait months inside",
+            "hostRole": "environment"
+          },
+          {
+            "name": "adult",
+            "location": "hair coat, mostly around head and neck; feeds on blood",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "flea combing",
+            "sample": "coat debris"
+          },
+          {
+            "name": "visual inspection",
+            "sample": "coat debris"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "UF/IFAS Featured Creatures EENY-011: Cat flea, Ctenocephalides felis",
+          "url": "https://edis.ifas.ufl.edu/publication/IN137/pdf",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "UF/IFAS Featured Creatures EENY-011: Cat flea, Ctenocephalides felis",
+          "url": "https://edis.ifas.ufl.edu/publication/IN137/pdf",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Ctenocephalides (cat flea and dog flea)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ctenocephalides.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Ctenocephalides canis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/50434/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Ctenocephalides canis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/50434/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Ctenocephalides canis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/50434/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "pulex-irritans",
+      "canonicalName": "Pulex irritans",
+      "commonName": "Human flea",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Siphonaptera",
+        "family": "Pulicidae",
+        "group": "arthropod",
+        "definitiveHosts": ["human", "dog", "cat", "rodent", "pig", "goat"],
+        "vectorRole": "Intermediate host of the tapeworm Dipylidium caninum: larvae eat egg packets and adults pass it on when swallowed.",
+        "majorOrgan": "skin",
+        "onHostStages": ["adult"],
+        "distribution": "Cosmopolitan",
+        "zoonotic": "yes",
+        "significance": "A nuisance biter of people and animals, causing itchy red papules and dermatitis where flea burdens are high.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "laid off the host in its nest",
+            "hostRole": "environment"
+          },
+          {
+            "name": "larva",
+            "location": "nest or burrow, feeding on blood-rich flea faeces",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 9,
+              "max": 15
+            }
+          },
+          {
+            "name": "pupa",
+            "location": "silk cocoon in the nest with debris stuck to it",
+            "hostRole": "environment"
+          },
+          {
+            "name": "adult",
+            "location": "mostly in host nests and burrows; on the host to feed",
+            "hostRole": "definitive"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "UF/IFAS Featured Creatures EENY-798: Human flea, Pulex irritans",
+          "url": "https://edis.ifas.ufl.edu/publication/IN1383/pdf",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "UF/IFAS Featured Creatures EENY-798: Human flea, Pulex irritans",
+          "url": "https://edis.ifas.ufl.edu/publication/IN1383/pdf",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "UF/IFAS Featured Creatures EENY-798: Human flea, Pulex irritans",
+          "url": "https://edis.ifas.ufl.edu/publication/IN1383/pdf",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "UF/IFAS Featured Creatures EENY-798: Human flea, Pulex irritans",
+          "url": "https://edis.ifas.ufl.edu/publication/IN1383/pdf",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "UF/IFAS Featured Creatures EENY-798: Human flea, Pulex irritans",
+          "url": "https://edis.ifas.ufl.edu/publication/IN1383/pdf",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "UF/IFAS Featured Creatures EENY-798: Human flea, Pulex irritans",
+          "url": "https://edis.ifas.ufl.edu/publication/IN1383/pdf",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "UF/IFAS Featured Creatures EENY-798: Human flea, Pulex irritans",
+          "url": "https://edis.ifas.ufl.edu/publication/IN1383/pdf",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "UF/IFAS Featured Creatures EENY-798: Human flea, Pulex irritans",
+          "url": "https://edis.ifas.ufl.edu/publication/IN1383/pdf",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Pulex irritans",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/173820/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Pulex irritans",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/173820/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Pulex irritans",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/173820/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "ixodes-ricinus",
+      "canonicalName": "Ixodes ricinus",
+      "commonName": "Castor bean tick",
+      "aliases": ["sheep tick"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Ixodida",
+        "family": "Ixodidae",
+        "group": "arthropod",
+        "definitiveHosts": [
+          "rodent",
+          "bird",
+          "hedgehog",
+          "deer",
+          "sheep",
+          "cattle",
+          "human"
+        ],
+        "vectorRole": "Definitive host of Babesia divergens of cattle; also transmits louping ill virus, Borrelia burgdorferi (Lyme disease) and Anaplasma phagocytophilum (tick-borne fever).",
+        "majorOrgan": "skin",
+        "onHostStages": ["larva", "nymph", "adult"],
+        "distribution": "Europe from Portugal to Russia and Scandinavia, plus North Africa",
+        "zoonotic": "yes",
+        "significance": "Common European hard tick that feeds on many mammals, birds and people and carries a wide range of animal and human pathogens.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "laid on the ground by the engorged female, which dies afterwards",
+            "hostRole": "environment"
+          },
+          {
+            "name": "larva",
+            "location": "feeds on small to medium-sized animals, then drops off and moults in the vegetation litter",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "nymph",
+            "location": "feeds on small to medium-sized animals, then drops off and moults in the vegetation litter",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "feeds and mates on larger hosts such as cattle and deer; the engorged female drops off to lay eggs",
+            "hostRole": "definitive"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Ixodes ricinus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/34613/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Ixodes ricinus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/34613/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Ixodes ricinus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/34613/",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "ECDC: Ixodes ricinus factsheet for experts",
+          "url": "https://www.ecdc.europa.eu/en/disease-vectors/facts/tick-factsheets/ixodes-ricinus",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "ECDC: Ixodes ricinus factsheet for experts",
+          "url": "https://www.ecdc.europa.eu/en/disease-vectors/facts/tick-factsheets/ixodes-ricinus",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Population genomics of louping ill virus, PLoS Negl Trop Dis 2020",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7515184/",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "ECDC: Ixodes ricinus factsheet for experts",
+          "url": "https://www.ecdc.europa.eu/en/disease-vectors/facts/tick-factsheets/ixodes-ricinus",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "ECDC: Ixodes ricinus factsheet for experts",
+          "url": "https://www.ecdc.europa.eu/en/disease-vectors/facts/tick-factsheets/ixodes-ricinus",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "ECDC: Ixodes ricinus factsheet for experts",
+          "url": "https://www.ecdc.europa.eu/en/disease-vectors/facts/tick-factsheets/ixodes-ricinus",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "ECDC: Ixodes ricinus factsheet for experts",
+          "url": "https://www.ecdc.europa.eu/en/disease-vectors/facts/tick-factsheets/ixodes-ricinus",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "ECDC: Ixodes ricinus factsheet for experts",
+          "url": "https://www.ecdc.europa.eu/en/disease-vectors/facts/tick-factsheets/ixodes-ricinus",
+          "note": "Course also lists Babesia major; cited references do not."
+        },
+        {
+          "field": "vectorRole",
+          "citation": "Population genomics of louping ill virus, PLoS Negl Trop Dis 2020",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7515184/",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "Gray et al. 2003, Clin Microbiol Rev: Babesia divergens, a bovine blood parasite of zoonotic importance",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC207107/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "ixodes-hexagonus",
+      "canonicalName": "Ixodes hexagonus",
+      "commonName": "Hedgehog tick",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Ixodida",
+        "family": "Ixodidae",
+        "group": "arthropod",
+        "definitiveHosts": ["hedgehog", "fox", "dog", "cat", "human"],
+        "vectorRole": "Competent vector of Borrelia burgdorferi s.l.; hedgehog ticks were also found infected with Anaplasma phagocytophilum and Rickettsia helvetica.",
+        "majorOrgan": "skin",
+        "onHostStages": ["larva", "nymph", "adult"],
+        "distribution": "Europe, from Portugal and Britain to the Balkans, plus Turkey",
+        "zoonotic": "yes",
+        "significance": "Hedgehog-specialist tick that also feeds on foxes, dogs, cats and occasionally people, and carries tick-borne bacteria.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "hostRole": "environment"
+          },
+          {
+            "name": "larva",
+            "location": "feeds on hedgehogs, mostly in or near the host's nest, then drops off to moult",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "nymph",
+            "location": "feeds on hedgehogs, mostly in or near the host's nest, then drops off to moult",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "feeds on hedgehogs and occasionally on foxes, dogs and cats",
+            "hostRole": "definitive"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Ixodes hexagonus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/34612/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Ixodes hexagonus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/34612/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Ixodes hexagonus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/34612/",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Atlas of ticks in Germany, Exp Appl Acarol 2021",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8102463/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Atlas of ticks in Germany, Exp Appl Acarol 2021",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8102463/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Jahfari et al. 2017, Parasit Vectors 10:134: European hedgehog and tick-borne zoonoses",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-017-2065-0",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Atlas of ticks in Germany, Exp Appl Acarol 2021",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8102463/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "Jahfari et al. 2017, Parasit Vectors 10:134: European hedgehog and tick-borne zoonoses",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-017-2065-0",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Jahfari et al. 2017, Parasit Vectors 10:134: European hedgehog and tick-borne zoonoses",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-017-2065-0",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Jahfari et al. 2017, Parasit Vectors 10:134: European hedgehog and tick-borne zoonoses",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-017-2065-0",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "Jahfari et al. 2017, Parasit Vectors 10:134: European hedgehog and tick-borne zoonoses",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-017-2065-0",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "dermacentor-reticulatus",
+      "canonicalName": "Dermacentor reticulatus",
+      "commonName": "Ornate dog tick",
+      "aliases": ["marsh tick", "meadow tick"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Ixodida",
+        "family": "Ixodidae",
+        "group": "arthropod",
+        "definitiveHosts": [
+          "rodent",
+          "hedgehog",
+          "rabbit",
+          "deer",
+          "fox",
+          "pig",
+          "dog",
+          "horse",
+          "donkey",
+          "cattle",
+          "sheep",
+          "goat",
+          "human",
+          "bird"
+        ],
+        "vectorRole": "Definitive host of Babesia canis of dogs and Babesia caballi of horses; B. canis also passes transovarially from the female tick to her larvae.",
+        "majorOrgan": "skin",
+        "onHostStages": ["larva", "nymph", "adult"],
+        "distribution": "Europe, from Portugal to western Siberia",
+        "zoonotic": "yes",
+        "significance": "Hard tick of dogs, horses and livestock whose adults feed in clusters and leave inflamed bite lesions; mainly important for the piroplasms it carries.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "laid on the ground in large batches by the engorged female",
+            "hostRole": "environment"
+          },
+          {
+            "name": "larva",
+            "location": "feeds mostly on small mammals such as voles, then drops off and moults",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "nymph",
+            "location": "feeds mostly on small mammals, sometimes on dogs, goats, deer or people, then drops off and moults",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "feeds on medium-sized and large mammals, mates on the host; the engorged female drops off to lay eggs",
+            "hostRole": "definitive"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Dermacentor reticulatus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/57047/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Dermacentor reticulatus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/57047/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Dermacentor reticulatus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/57047/",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Foldvari et al. 2016, Parasit Vectors 9:187: Dermacentor reticulatus, a vector on the rise",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-016-1599-x",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Foldvari et al. 2016, Parasit Vectors 9:187: Dermacentor reticulatus, a vector on the rise",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-016-1599-x",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Atlas of ticks in Germany, Exp Appl Acarol 2021",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8102463/",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Foldvari et al. 2016, Parasit Vectors 9:187: Dermacentor reticulatus, a vector on the rise",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-016-1599-x",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "Foldvari et al. 2016, Parasit Vectors 9:187: Dermacentor reticulatus, a vector on the rise",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-016-1599-x",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Foldvari et al. 2016, Parasit Vectors 9:187: Dermacentor reticulatus, a vector on the rise",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-016-1599-x",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Foldvari et al. 2016, Parasit Vectors 9:187: Dermacentor reticulatus, a vector on the rise",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-016-1599-x",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "Foldvari et al. 2016, Parasit Vectors 9:187: Dermacentor reticulatus, a vector on the rise",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-016-1599-x",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Atlas of ticks in Germany, Exp Appl Acarol 2021",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8102463/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "rhipicephalus-sanguineus",
+      "canonicalName": "Rhipicephalus sanguineus",
+      "commonName": "Brown dog tick",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Ixodida",
+        "family": "Ixodidae",
+        "group": "arthropod",
+        "definitiveHosts": ["dog", "human"],
+        "vectorRole": "Definitive host of Hepatozoon canis; dogs are infected by swallowing the tick, not through its bite.",
+        "majorOrgan": "skin",
+        "onHostStages": ["larva", "nymph", "adult"],
+        "distribution": "Tropical and subtropical regions worldwide; indoors in cooler climates",
+        "zoonotic": "yes",
+        "significance": "Few ticks usually cause no signs in dogs; heavy burdens irritate the skin and thin the coat, and the tick carries several dog pathogens.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "laid in cracks and crevices where infested dogs rest, often indoors",
+            "hostRole": "environment"
+          },
+          {
+            "name": "larva",
+            "location": "feeds on the dog, then drops off to moult to a nymph in the environment",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "nymph",
+            "location": "feeds on the dog, then drops off to moult to an adult in the environment",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "feeds and mates on the dog; the engorged female drops off to lay eggs",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "visual inspection"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Rhipicephalus sanguineus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/34632/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Rhipicephalus sanguineus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/34632/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Rhipicephalus sanguineus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/34632/",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Rhipicephalus sanguineus, brown dog tick",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/rhipicephalus-sanguineus-brown-dog-tick.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Rhipicephalus sanguineus, brown dog tick",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/rhipicephalus-sanguineus-brown-dog-tick.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Rhipicephalus sanguineus, brown dog tick",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/rhipicephalus-sanguineus-brown-dog-tick.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Atlas of ticks in Germany, Exp Appl Acarol 2021",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8102463/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Rhipicephalus sanguineus, brown dog tick",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/rhipicephalus-sanguineus-brown-dog-tick.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Rhipicephalus sanguineus, brown dog tick",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/rhipicephalus-sanguineus-brown-dog-tick.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Rhipicephalus sanguineus, brown dog tick",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/rhipicephalus-sanguineus-brown-dog-tick.php",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "WCVM Learn About Parasites: Rhipicephalus sanguineus, brown dog tick",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/rhipicephalus-sanguineus-brown-dog-tick.php",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "Little et al. 2009, Parasit Vectors 2(Suppl 1):S5: canine hepatozoonosis",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2679397/",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "WCVM Learn About Parasites: Rhipicephalus sanguineus, brown dog tick",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/rhipicephalus-sanguineus-brown-dog-tick.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Rhipicephalus sanguineus, brown dog tick",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/rhipicephalus-sanguineus-brown-dog-tick.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "haemaphysalis-punctata",
+      "canonicalName": "Haemaphysalis punctata",
+      "commonName": "Red sheep tick",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Ixodida",
+        "family": "Ixodidae",
+        "group": "arthropod",
+        "definitiveHosts": [
+          "cattle",
+          "sheep",
+          "goat",
+          "pig",
+          "horse",
+          "donkey",
+          "dog",
+          "deer",
+          "fox",
+          "rabbit",
+          "hedgehog",
+          "rodent",
+          "bird",
+          "human"
+        ],
+        "vectorRole": "Definitive host of Babesia major of cattle and of Babesia motasi and Theileria ovis of sheep; also carries other livestock pathogens.",
+        "majorOrgan": "skin",
+        "onHostStages": ["larva", "nymph", "adult"],
+        "distribution": "Mediterranean Europe, N Africa and Asia; north to southern Britain",
+        "zoonotic": "yes",
+        "significance": "Adults on sheep and cattle can cause tick paralysis, and the tick carries blood parasites of livestock.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "laid on the ground by the engorged female",
+            "hostRole": "environment"
+          },
+          {
+            "name": "larva",
+            "location": "feeds on birds and small mammals, then drops off and moults",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "nymph",
+            "location": "feeds on birds and small mammals, then drops off and moults",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "feeds mainly on large mammals, especially grazing livestock",
+            "hostRole": "definitive"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Haemaphysalis punctata",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/49204/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Haemaphysalis punctata",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/49204/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Haemaphysalis punctata",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/49204/",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "USDA APHIS: red sheep tick information sheet",
+          "url": "https://www.aphis.usda.gov/sites/default/files/fs-red-sheep-tick.pdf",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "USDA APHIS: red sheep tick information sheet",
+          "url": "https://www.aphis.usda.gov/sites/default/files/fs-red-sheep-tick.pdf",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "USDA APHIS: red sheep tick information sheet",
+          "url": "https://www.aphis.usda.gov/sites/default/files/fs-red-sheep-tick.pdf",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "USDA APHIS: red sheep tick information sheet",
+          "url": "https://www.aphis.usda.gov/sites/default/files/fs-red-sheep-tick.pdf",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "MSD Veterinary Manual: Haemaphysalis spp",
+          "url": "https://www.msdvetmanual.com/integumentary-system/ticks/haemaphysalis-spp",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Atlas of ticks in Germany, Exp Appl Acarol 2021",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8102463/",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "MSD Veterinary Manual: Haemaphysalis spp",
+          "url": "https://www.msdvetmanual.com/integumentary-system/ticks/haemaphysalis-spp",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "USDA APHIS: red sheep tick information sheet",
+          "url": "https://www.aphis.usda.gov/sites/default/files/fs-red-sheep-tick.pdf",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Haemaphysalis spp",
+          "url": "https://www.msdvetmanual.com/integumentary-system/ticks/haemaphysalis-spp",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "USDA APHIS: red sheep tick information sheet",
+          "url": "https://www.aphis.usda.gov/sites/default/files/fs-red-sheep-tick.pdf",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Atlas of ticks in Germany, Exp Appl Acarol 2021",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8102463/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "sarcoptes-scabiei",
+      "canonicalName": "Sarcoptes scabiei",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": ["Sarcoptes scabei"],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Sarcoptiformes",
+        "family": "Sarcoptidae",
+        "group": "arthropod",
+        "definitiveHosts": [
+          "dog",
+          "cat",
+          "pig",
+          "cattle",
+          "sheep",
+          "goat",
+          "horse",
+          "human"
+        ],
+        "majorOrgan": "skin",
+        "onHostStages": ["egg", "larva", "nymph", "adult"],
+        "distribution": "Worldwide in domestic and wild mammals and in people",
+        "zoonotic": "yes",
+        "significance": "Causes scabies (sarcoptic mange): intense itching, crusting and hair loss. Spreads between hosts by direct contact.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "laid by the female in tunnels she digs in the outer epidermis",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "larva",
+            "location": "hatches in the tunnel and develops on the skin surface",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "nymph",
+            "location": "on the skin surface; moults to the adult",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "stratum corneum of the skin; mates in small epidermal pits, females then tunnel to lay eggs",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "skin scraping",
+            "sample": "skin"
+          },
+          {
+            "name": "skin biopsy",
+            "sample": "skin"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Sarcoptes species, sarcoptic mange or scabies",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcoptes-species-sarcoptic-mange-or-scabies.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Sarcoptes species, sarcoptic mange or scabies",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcoptes-species-sarcoptic-mange-or-scabies.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Sarcoptes species in cattle",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcoptes-species-sarcoptic-mange-or-scabies-in-cattle.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Sarcoptes species in pigs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcoptes-species-pigs.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Sarcoptes species, sarcoptic mange or scabies",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcoptes-species-sarcoptic-mange-or-scabies.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Sarcoptes species, sarcoptic mange or scabies",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcoptes-species-sarcoptic-mange-or-scabies.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Sarcoptes species, sarcoptic mange or scabies",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcoptes-species-sarcoptic-mange-or-scabies.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Sarcoptes species in pigs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcoptes-species-pigs.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Sarcoptes species, sarcoptic mange or scabies",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcoptes-species-sarcoptic-mange-or-scabies.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Sarcoptes species in pigs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcoptes-species-pigs.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Sarcoptes species in pigs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcoptes-species-pigs.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Sarcoptes species, sarcoptic mange or scabies",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcoptes-species-sarcoptic-mange-or-scabies.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Sarcoptes scabiei",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/52283/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Sarcoptes scabiei",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/52283/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Sarcoptes scabiei",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/52283/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "psoroptes-ovis",
+      "canonicalName": "Psoroptes ovis",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Sarcoptiformes",
+        "family": "Psoroptidae",
+        "group": "arthropod",
+        "definitiveHosts": ["cattle", "sheep", "goat", "horse", "camelid"],
+        "majorOrgan": "skin",
+        "onHostStages": ["egg", "larva", "nymph", "adult"],
+        "distribution": "Worldwide; sheep scab is endemic in the UK but absent from Canada and the US",
+        "significance": "Surface mite behind psoroptic mange; on sheep it causes scab, with severe itching, patchy fleece loss and weight loss.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "laid by the adult female on the skin surface",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "larva",
+            "location": "six-legged stage that hatches onto the skin surface",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "nymph",
+            "location": "protonymph and tritonymph on the skin surface",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "skin surface; pierces the skin and feeds on blood and tissue fluid",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "skin scraping",
+            "sample": "skin"
+          }
+        ],
+        "zoonotic": "no"
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Psoroptes ovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/images/psoroptes-ovis.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Psoroptes ovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/images/psoroptes-ovis.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Psoroptes ovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/images/psoroptes-ovis.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Psoroptes ovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/images/psoroptes-ovis.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "A genomic analysis and transcriptomic atlas of gene expression in Psoroptes ovis (BMC Genomics 2019)",
+          "url": "https://link.springer.com/article/10.1186/s12864-019-6082-6",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Psoroptes ovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/images/psoroptes-ovis.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Psoroptes ovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/images/psoroptes-ovis.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Psoroptes ovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/images/psoroptes-ovis.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Psoroptes ovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/83912/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Psoroptes ovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/83912/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Psoroptes ovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/83912/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Psoroptes ovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/images/psoroptes-ovis.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "otodectes-cynotis",
+      "canonicalName": "Otodectes cynotis",
+      "commonName": "Ear mite",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Sarcoptiformes",
+        "family": "Psoroptidae",
+        "group": "arthropod",
+        "definitiveHosts": ["dog", "cat"],
+        "majorOrgan": "ear canal",
+        "onHostStages": ["egg", "larva", "nymph", "adult"],
+        "distribution": "Worldwide; dogs, cats and free-ranging carnivores",
+        "zoonotic": "yes",
+        "significance": "Ear mite of dogs and cats causing itchy otitis with dark waxy debris, head shaking and scratching. Spreads by contact.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "glued to ear-canal hairs or skin by the female",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "larva",
+            "location": "six-legged stage that hatches from the egg in the ear",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "nymph",
+            "location": "two eight-legged nymph stages before the adult",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "skin surface of the outer ear canal, eating debris and fluid",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "ear swab microscopy",
+            "sample": "ear cerumen"
+          },
+          {
+            "name": "visual inspection"
+          },
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Otodectes cynotis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/otodectes-cynotis.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Otodectes cynotis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/otodectes-cynotis.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Otodectes cynotis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/otodectes-cynotis.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Otodectes cynotis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/otodectes-cynotis.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Otodectes cynotis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/otodectes-cynotis.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Otodectes cynotis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/otodectes-cynotis.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Otodectes cynotis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/otodectes-cynotis.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Otodectes cynotis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/179871/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Otodectes cynotis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/179871/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Otodectes cynotis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/179871/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Otodectes cynotis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/otodectes-cynotis.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "demodex-canis",
+      "canonicalName": "Demodex canis",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Trombidiformes",
+        "family": "Demodicidae",
+        "group": "arthropod",
+        "definitiveHosts": ["dog"],
+        "majorOrgan": "skin",
+        "onHostStages": ["egg", "larva", "nymph", "adult"],
+        "distribution": "Worldwide on dogs",
+        "zoonotic": "no",
+        "significance": "Follicle mite of dogs, usually harmless; with immune deficits it causes demodectic mange, from small patches to severe generalised folliculitis.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "spindle-shaped egg laid by the female in a hair follicle",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "larva",
+            "location": "hatches from the egg and develops on the dog",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "nymph",
+            "location": "moults through nymphal stages on the dog before the adult",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "mostly in hair follicles; occasionally in sebaceous glands",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "skin scraping",
+            "sample": "skin"
+          },
+          {
+            "name": "skin biopsy",
+            "sample": "skin"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Demodex canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/demodex-canis.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Demodex canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/demodex-canis.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Demodex canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/demodex-canis.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Demodex canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/demodex-canis.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Demodex canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/demodex-canis.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Demodex canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/demodex-canis.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Demodex canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/demodex-canis.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Demodex canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/demodex-canis.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Demodex canis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/188545/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Demodex canis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/188545/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Demodex canis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/188545/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "cheyletiella-spp",
+      "canonicalName": "Cheyletiella spp.",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Trombidiformes",
+        "family": "Cheyletidae",
+        "group": "arthropod",
+        "definitiveHosts": ["dog", "cat", "rabbit", "human"],
+        "majorOrgan": "skin",
+        "onHostStages": ["egg", "larva", "nymph", "adult"],
+        "distribution": "Worldwide on dogs, cats and rabbits",
+        "zoonotic": "yes",
+        "significance": "Surface mites causing scaling and itch in dogs and cats ('walking dandruff'); they pass readily to people.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "glued to hairs by fine threads; the larva develops inside before hatching",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "larva",
+            "location": "released from the egg onto the host and moults to the first nymph",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "nymph",
+            "location": "two nymphal stages on the host",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "skin surface and hair coat; pierces the keratin layer and feeds on tissue fluid",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "coat brushing",
+            "sample": "coat debris"
+          },
+          {
+            "name": "tape impression",
+            "sample": "coat debris"
+          },
+          {
+            "name": "flea combing",
+            "sample": "coat debris"
+          },
+          {
+            "name": "visual inspection"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Cheyletiella species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cheyletiella-species.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Cheyletiella species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cheyletiella-species.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Cheyletiella species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cheyletiella-species.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Cheyletiella species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cheyletiella-species.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Cheyletiella species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cheyletiella-species.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "WCVM Learn About Parasites: Cheyletiella species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cheyletiella-species.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Cheyletiella species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cheyletiella-species.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Cheyletiella species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cheyletiella-species.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Cheyletiella species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/cheyletiella-species.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Integumentary system, in Jubb, Kennedy and Palmer's Pathology of Domestic Animals, Vol 1 (2016)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7810815/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "Integumentary system, in Jubb, Kennedy and Palmer's Pathology of Domestic Animals, Vol 1 (2016)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7810815/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Integumentary system, in Jubb, Kennedy and Palmer's Pathology of Domestic Animals, Vol 1 (2016)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7810815/",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Cheyletidae",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/296201/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Cheyletidae",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/296201/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Cheyletidae",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/296201/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "chorioptes-bovis",
+      "canonicalName": "Chorioptes bovis",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Sarcoptiformes",
+        "family": "Psoroptidae",
+        "group": "arthropod",
+        "definitiveHosts": ["cattle", "sheep", "goat", "horse", "camelid"],
+        "majorOrgan": "skin",
+        "onHostStages": ["egg", "larva", "adult"],
+        "distribution": "Worldwide; common on housed dairy cattle",
+        "significance": "Surface mange mite causing itchy, crusted lesions at the tail head and lower limbs; most common in confined cattle in winter.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "laid by the adult female on the skin surface",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "larva",
+            "location": "six-legged stage that hatches onto the skin surface",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "skin surface; feeds on skin debris without piercing the skin",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "skin scraping",
+            "sample": "skin"
+          }
+        ],
+        "zoonotic": "no"
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Chorioptes bovis, chorioptic mange",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/chorioptes-bovis-chorioptic-mange.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Chorioptes bovis, chorioptic mange",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/chorioptes-bovis-chorioptic-mange.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Chorioptes bovis, chorioptic mange",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/chorioptes-bovis-chorioptic-mange.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Chorioptes bovis, chorioptic mange",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/chorioptes-bovis-chorioptic-mange.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Chorioptes bovis, chorioptic mange",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/chorioptes-bovis-chorioptic-mange.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Chorioptes bovis, chorioptic mange",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/chorioptes-bovis-chorioptic-mange.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Integumentary system, in Jubb, Kennedy and Palmer's Pathology of Domestic Animals, Vol 1 (2016)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7810815/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Integumentary system, in Jubb, Kennedy and Palmer's Pathology of Domestic Animals, Vol 1 (2016)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7810815/",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Chorioptes bovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/420257/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Chorioptes bovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/420257/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Chorioptes bovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/420257/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Chorioptes bovis, chorioptic mange",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/chorioptes-bovis-chorioptic-mange.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "dermanyssus-gallinae",
+      "canonicalName": "Dermanyssus gallinae",
+      "commonName": "Poultry red mite",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Mesostigmata",
+        "family": "Dermanyssidae",
+        "group": "arthropod",
+        "definitiveHosts": ["chicken", "bird", "human"],
+        "vectorRole": "Reported as a reservoir and possible vector of Salmonella Enteritidis and Pasteurella multocida.",
+        "majorOrgan": "skin",
+        "onHostStages": ["nymph", "adult"],
+        "distribution": "Worldwide; a major pest of laying hen houses, especially in Europe",
+        "zoonotic": "yes",
+        "significance": "Blood-feeding mite of laying hens that shelters in housing crevices; causes welfare and production losses and can bite people.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "laid by the fed female, hidden in housing cracks close to where the birds roost",
+            "hostRole": "environment"
+          },
+          {
+            "name": "larva",
+            "location": "non-feeding six-legged stage that stays in the housing and moults to the protonymph",
+            "hostRole": "environment"
+          },
+          {
+            "name": "nymph",
+            "location": "protonymph and deutonymph each take a blood meal from the bird at night and shelter off it by day",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "feeds on the bird at night every few days and shelters in crevices by day",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "visual inspection"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "Transcriptomic analysis of the poultry red mite, Dermanyssus gallinae, across all stages of the lifecycle (BMC Genomics 2021)",
+          "url": "https://link.springer.com/article/10.1186/s12864-021-07547-9",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Transcriptomic analysis of the poultry red mite, Dermanyssus gallinae, across all stages of the lifecycle (BMC Genomics 2021)",
+          "url": "https://link.springer.com/article/10.1186/s12864-021-07547-9",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "Transcriptomic analysis of the poultry red mite, Dermanyssus gallinae, across all stages of the lifecycle (BMC Genomics 2021)",
+          "url": "https://link.springer.com/article/10.1186/s12864-021-07547-9",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "Decru et al. 2020, Front Vet Sci 7:565866: IPM strategies against the poultry red mite",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7705068/",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "Decru et al. 2020, Front Vet Sci 7:565866: IPM strategies against the poultry red mite",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7705068/",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Transcriptomic analysis of the poultry red mite, Dermanyssus gallinae, across all stages of the lifecycle (BMC Genomics 2021)",
+          "url": "https://link.springer.com/article/10.1186/s12864-021-07547-9",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Decru et al. 2020, Front Vet Sci 7:565866: IPM strategies against the poultry red mite",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7705068/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Decru et al. 2020, Front Vet Sci 7:565866: IPM strategies against the poultry red mite",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7705068/",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Decru et al. 2020, Front Vet Sci 7:565866: IPM strategies against the poultry red mite",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7705068/",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Transcriptomic analysis of the poultry red mite, Dermanyssus gallinae, across all stages of the lifecycle (BMC Genomics 2021)",
+          "url": "https://link.springer.com/article/10.1186/s12864-021-07547-9",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Dermanyssus gallinae",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/34641/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Dermanyssus gallinae",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/34641/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Dermanyssus gallinae",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/34641/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "trichodectes-canis",
+      "canonicalName": "Trichodectes canis",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Psocodea",
+        "family": "Trichodectidae",
+        "group": "arthropod",
+        "definitiveHosts": ["dog"],
+        "vectorRole": "Acts as an intermediate host of Dipylidium caninum alongside fleas, though its epidemiological importance is not known.",
+        "majorOrgan": "skin",
+        "onHostStages": ["egg", "nymph", "adult"],
+        "distribution": "Dogs worldwide",
+        "significance": "Chewing louse causing itching and hair loss in dogs, mostly young pups; many infested dogs show no signs.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "glued to hairs on the dog",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "nymph",
+            "location": "in the coat; two moults to adult",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "in the coat, feeding on skin debris and hair",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "visual inspection",
+            "sample": "hair"
+          },
+          {
+            "name": "tape impression",
+            "sample": "hair"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Lice of dogs and cats",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-mallophaga,-and-sucking-anoplura.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Lice of dogs and cats",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-mallophaga,-and-sucking-anoplura.php",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "WCVM Learn About Parasites: Lice of dogs and cats",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-mallophaga,-and-sucking-anoplura.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Lice of dogs and cats",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-mallophaga,-and-sucking-anoplura.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Lice of dogs and cats",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-mallophaga,-and-sucking-anoplura.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Lice of dogs and cats",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-mallophaga,-and-sucking-anoplura.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Lice of dogs and cats",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-mallophaga,-and-sucking-anoplura.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Lice of dogs and cats",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-mallophaga,-and-sucking-anoplura.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Trichodectes canis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/209909/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Trichodectes canis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/209909/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Trichodectes canis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/209909/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "felicola-subrostratus",
+      "canonicalName": "Felicola subrostratus",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Psocodea",
+        "family": "Trichodectidae",
+        "group": "arthropod",
+        "definitiveHosts": ["cat"],
+        "majorOrgan": "skin",
+        "onHostStages": ["egg", "nymph", "adult"],
+        "distribution": "Cats worldwide; uncommon in western Canada",
+        "significance": "Chewing louse causing irritation and hair loss in cats, most often farm cats; many cats show no signs.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "glued to hairs on the cat",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "nymph",
+            "location": "in the coat; two moults to adult",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "in the coat, feeding on skin debris and hair",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "visual inspection",
+            "sample": "hair"
+          },
+          {
+            "name": "tape impression",
+            "sample": "hair"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Lice of dogs and cats",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-mallophaga,-and-sucking-anoplura.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Lice of dogs and cats",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-mallophaga,-and-sucking-anoplura.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Lice of dogs and cats",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-mallophaga,-and-sucking-anoplura.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Lice of dogs and cats",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-mallophaga,-and-sucking-anoplura.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Lice of dogs and cats",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-mallophaga,-and-sucking-anoplura.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Lice of dogs and cats",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-mallophaga,-and-sucking-anoplura.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Lice of dogs and cats",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-mallophaga,-and-sucking-anoplura.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Felicola subrostratus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/160123/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Felicola subrostratus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/160123/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Felicola subrostratus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/160123/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "bovicola-ovis",
+      "canonicalName": "Bovicola ovis",
+      "commonName": null,
+      "aliases": ["Damalinia ovis"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Psocodea",
+        "family": "Bovicoliidae",
+        "group": "arthropod",
+        "definitiveHosts": ["sheep"],
+        "majorOrgan": "skin",
+        "onHostStages": ["egg", "nymph", "adult"],
+        "distribution": "Sheep-farming countries including Australia, New Zealand and the UK",
+        "significance": "Chewing louse causing itch, rubbing and fleece damage in sheep; signs are easily mistaken for early sheep scab.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "cemented to wool fibres within about 12 mm of the skin",
+            "hostRole": "definitive",
+            "durationDays": {
+              "min": 9,
+              "max": 11
+            }
+          },
+          {
+            "name": "nymph",
+            "location": "in the fleece; three moults to adult",
+            "hostRole": "definitive",
+            "durationDays": {
+              "min": 21,
+              "max": 21
+            }
+          },
+          {
+            "name": "adult",
+            "location": "in the fleece, mostly in autumn to late winter",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "visual inspection",
+            "sample": "hair"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "Beef + Lamb New Zealand Fact sheet 254: Managing lice",
+          "url": "https://beeflambnz.com/sites/default/files/2026-06/Managing-lice.pdf",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "NADIS Forecasts: Lice in sheep",
+          "url": "https://clients.nadis.org.uk/planner-articles/lice-in-sheep",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Lice of cattle (chewing and sucking species)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-and-sucking-species.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "NADIS Forecasts: Lice in sheep",
+          "url": "https://clients.nadis.org.uk/planner-articles/lice-in-sheep",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "NADIS Forecasts: Lice in sheep",
+          "url": "https://clients.nadis.org.uk/planner-articles/lice-in-sheep",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "NADIS Forecasts: Lice in sheep",
+          "url": "https://clients.nadis.org.uk/planner-articles/lice-in-sheep",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Beef + Lamb New Zealand Fact sheet 254: Managing lice",
+          "url": "https://beeflambnz.com/sites/default/files/2026-06/Managing-lice.pdf",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Lice of cattle (chewing and sucking species)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-and-sucking-species.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "NADIS Forecasts: Lice in sheep",
+          "url": "https://clients.nadis.org.uk/planner-articles/lice-in-sheep",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Beef + Lamb New Zealand Fact sheet 254: Managing lice",
+          "url": "https://beeflambnz.com/sites/default/files/2026-06/Managing-lice.pdf",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "NADIS Forecasts: Lice in sheep",
+          "url": "https://clients.nadis.org.uk/planner-articles/lice-in-sheep",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Bovicola ovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/186214/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Bovicola ovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/186214/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Bovicola ovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/186214/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "bovicola-bovis",
+      "canonicalName": "Bovicola bovis",
+      "commonName": "Cattle biting louse",
+      "aliases": ["Damalinia bovis"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Psocodea",
+        "family": "Bovicoliidae",
+        "group": "arthropod",
+        "definitiveHosts": ["cattle"],
+        "majorOrgan": "skin",
+        "onHostStages": ["egg", "nymph", "adult"],
+        "distribution": "Cattle worldwide; common in western Canada",
+        "zoonotic": "no",
+        "significance": "Chewing louse causing itching, rubbing and hair loss in cattle, mainly in winter.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "glued to hairs close to the skin",
+            "hostRole": "definitive",
+            "durationDays": {
+              "min": 6,
+              "max": 11
+            }
+          },
+          {
+            "name": "nymph",
+            "location": "in the coat; three moults to adult",
+            "hostRole": "definitive",
+            "durationDays": {
+              "min": 12,
+              "max": 21
+            }
+          },
+          {
+            "name": "adult",
+            "location": "in the coat, feeding on skin debris",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "visual inspection",
+            "sample": "hair"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Lice of cattle (chewing and sucking species)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-and-sucking-species.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Mock D.E., Kansas State University, Beef Cattle Handbook BCH-3805: Lice on beef cattle",
+          "url": "https://www.iowabeefcenter.org/bch/Lice.pdf",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Lice of cattle (chewing and sucking species)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-and-sucking-species.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Lice of cattle (chewing and sucking species)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-and-sucking-species.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Lice of cattle (chewing and sucking species)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-and-sucking-species.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Lice of cattle (chewing and sucking species)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-and-sucking-species.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Lice of cattle (chewing and sucking species)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-and-sucking-species.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Lice of cattle (chewing and sucking species)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-and-sucking-species.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Mock D.E., Kansas State University, Beef Cattle Handbook BCH-3805: Lice on beef cattle",
+          "url": "https://www.iowabeefcenter.org/bch/Lice.pdf",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Mock D.E., Kansas State University, Beef Cattle Handbook BCH-3805: Lice on beef cattle",
+          "url": "https://www.iowabeefcenter.org/bch/Lice.pdf",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Bovicola bovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/160097/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Bovicola bovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/160097/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Bovicola bovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/160097/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "linognathus-vituli",
+      "canonicalName": "Linognathus vituli",
+      "commonName": "Long-nosed cattle louse",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Psocodea",
+        "family": "Linognathidae",
+        "group": "arthropod",
+        "definitiveHosts": ["cattle"],
+        "majorOrgan": "skin",
+        "onHostStages": ["egg", "nymph", "adult"],
+        "distribution": "Cattle worldwide; common in western Canada",
+        "zoonotic": "no",
+        "significance": "Sucking louse causing itch and hair loss in cattle, especially calves; heavy burdens can cause anaemia.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "glued to hairs close to the skin",
+            "hostRole": "definitive",
+            "durationDays": {
+              "min": 8,
+              "max": 14
+            }
+          },
+          {
+            "name": "nymph",
+            "location": "in the coat; three moults to adult",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "in the coat, feeding on blood",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "visual inspection",
+            "sample": "hair"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Lice of cattle (chewing and sucking species)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-and-sucking-species.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Mock D.E., Kansas State University, Beef Cattle Handbook BCH-3805: Lice on beef cattle",
+          "url": "https://www.iowabeefcenter.org/bch/Lice.pdf",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Lice of cattle (chewing and sucking species)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-and-sucking-species.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Lice of cattle (chewing and sucking species)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-and-sucking-species.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Lice of cattle (chewing and sucking species)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-and-sucking-species.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Lice of cattle (chewing and sucking species)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-and-sucking-species.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Lice of cattle (chewing and sucking species)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-and-sucking-species.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Lice of cattle (chewing and sucking species)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/lice-chewing-and-sucking-species.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Mock D.E., Kansas State University, Beef Cattle Handbook BCH-3805: Lice on beef cattle",
+          "url": "https://www.iowabeefcenter.org/bch/Lice.pdf",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Mock D.E., Kansas State University, Beef Cattle Handbook BCH-3805: Lice on beef cattle",
+          "url": "https://www.iowabeefcenter.org/bch/Lice.pdf",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Linognathus vituli",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/186220/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Linognathus vituli",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/186220/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Linognathus vituli",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/186220/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "lucilia-sericata",
+      "canonicalName": "Lucilia sericata",
+      "commonName": null,
+      "aliases": ["Phaenicia sericata"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Diptera",
+        "family": "Calliphoridae",
+        "group": "arthropod",
+        "definitiveHosts": ["sheep", "dog", "cat", "human"],
+        "majorOrgan": "skin",
+        "onHostStages": ["egg", "larva"],
+        "distribution": "Primary strike fly in Europe and North America",
+        "zoonotic": "yes",
+        "significance": "Maggots cause strike in sheep and wound myiasis in dogs and cats; severe cases can be fatal if untreated.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "laid on fouled fleece or wounds of the live animal; hatch within about a day in moist conditions",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "larva",
+            "location": "maggots crawl over and into the wound or skin lesion, often at the breech of sheep, until mature and then leave the lesion",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "pupa",
+            "location": "fully grown maggots fall off and form puparia in the soil",
+            "hostRole": "environment"
+          },
+          {
+            "name": "adult",
+            "location": "free-living fly attracted to wounds, soiled coats and decaying matter",
+            "hostRole": "environment"
+          }
+        ],
+        "diagnosticStage": "larva",
+        "diagnosticTests": [
+          {
+            "name": "visual inspection"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "MSD Veterinary Manual: Facultative myiasis-producing flies of animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/flies/facultative-myiasis-producing-flies-of-animals",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Myiasis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/myiasis.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Facultative myiasis-producing flies of animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/flies/facultative-myiasis-producing-flies-of-animals",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Myiasis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/myiasis.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Myiasis",
+          "url": "https://www.cdc.gov/dpdx/myiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Myiasis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/myiasis.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "MSD Veterinary Manual: Facultative myiasis-producing flies of animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/flies/facultative-myiasis-producing-flies-of-animals",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "CDC DPDx: Myiasis",
+          "url": "https://www.cdc.gov/dpdx/myiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "MSD Veterinary Manual: Facultative myiasis-producing flies of animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/flies/facultative-myiasis-producing-flies-of-animals",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Myiasis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/myiasis.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "MSD Veterinary Manual: Facultative myiasis-producing flies of animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/flies/facultative-myiasis-producing-flies-of-animals",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Facultative myiasis-producing flies of animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/flies/facultative-myiasis-producing-flies-of-animals",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Myiasis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/myiasis.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "WCVM Learn About Parasites: Myiasis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/myiasis.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Myiasis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/myiasis.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Lucilia sericata",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/13632/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Lucilia sericata",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/13632/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Lucilia sericata",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/13632/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "hypoderma-bovis",
+      "canonicalName": "Hypoderma bovis",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Diptera",
+        "family": "Oestridae",
+        "group": "arthropod",
+        "definitiveHosts": ["cattle"],
+        "majorOrgan": "skin",
+        "onHostStages": ["egg", "L1", "L2", "L3"],
+        "distribution": "Cattle in the northern hemisphere",
+        "zoonotic": "yes",
+        "significance": "Larvae under the skin of the back perforate the hide, and egg-laying flies panic cattle, cutting weight gain and milk yield.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "stuck one at a time to hairs over the rump and top of the hind leg in summer",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "L1",
+            "location": "hatch in under a week, burrow through the skin and travel inside the body, overwintering in the epidural fat after following the nerves",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "L2",
+            "location": "arrive under the skin of the back in late winter and develop there",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "L3",
+            "location": "lie in a swelling on the back with a breathing hole in the skin, then emerge in spring and drop to the ground",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "pupa",
+            "location": "form puparia on the ground after falling from the back",
+            "hostRole": "environment"
+          },
+          {
+            "name": "adult",
+            "location": "free-living; mouthparts are vestigial so the fly does not feed, and it mates and dies within a couple of weeks",
+            "hostRole": "environment"
+          }
+        ],
+        "diagnosticStage": "L3",
+        "diagnosticTests": [
+          {
+            "name": "visual inspection",
+            "sample": "skin"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Hypoderma bovis and H. lineatum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/hypoderma-bovis-and-h.-lineatum.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Hypoderma bovis and H. lineatum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/hypoderma-bovis-and-h.-lineatum.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Hypoderma bovis and H. lineatum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/hypoderma-bovis-and-h.-lineatum.php",
+          "note": null
+        },
+        {
+          "field": "onHostStages",
+          "citation": "WCVM Learn About Parasites: Hypoderma bovis and H. lineatum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/hypoderma-bovis-and-h.-lineatum.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Hypoderma bovis and H. lineatum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/hypoderma-bovis-and-h.-lineatum.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Hypoderma bovis and H. lineatum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/hypoderma-bovis-and-h.-lineatum.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Hypoderma bovis and H. lineatum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/hypoderma-bovis-and-h.-lineatum.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Hypoderma bovis and H. lineatum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/hypoderma-bovis-and-h.-lineatum.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Hypoderma bovis and H. lineatum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/hypoderma-bovis-and-h.-lineatum.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "WCVM Learn About Parasites: Hypoderma bovis and H. lineatum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/hypoderma-bovis-and-h.-lineatum.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Hypoderma bovis and H. lineatum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/hypoderma-bovis-and-h.-lineatum.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Hypoderma bovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/123734/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Hypoderma bovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/123734/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Hypoderma bovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/123734/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "oestrus-ovis",
+      "canonicalName": "Oestrus ovis",
+      "commonName": "Sheep nasal bot",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Diptera",
+        "family": "Oestridae",
+        "group": "arthropod",
+        "definitiveHosts": ["sheep", "goat"],
+        "majorOrgan": "nasal cavity",
+        "onHostStages": ["L1", "L2", "L3"],
+        "distribution": "Sheep-farming areas worldwide",
+        "zoonotic": "yes",
+        "significance": "Larvae irritate the nose and sinus, giving discharge and sneezing; attacking flies stress the flock, and rare heavy infections reach the brain.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "L1",
+            "location": "squirted into the nostril by the female; stays in the nasal passages and may rest there over winter before moving on",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "L2",
+            "location": "nasal passages, where larvae may stay dormant through the winter",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "L3",
+            "location": "frontal sinus, then returns to the nostrils and is sneezed out onto the ground",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "pupa",
+            "location": "pupates in the environment",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 21,
+              "max": 63
+            }
+          },
+          {
+            "name": "adult",
+            "location": "free-living; females live only about two weeks",
+            "hostRole": "environment"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Oestrus ovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oestrus-ovis.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Oestrus ovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oestrus-ovis.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Oestrus ovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oestrus-ovis.php",
+          "note": null
+        },
+        {
+          "field": "onHostStages",
+          "citation": "WCVM Learn About Parasites: Oestrus ovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oestrus-ovis.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Oestrus ovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oestrus-ovis.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Oestrus ovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oestrus-ovis.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Oestrus ovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oestrus-ovis.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Oestrus ovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oestrus-ovis.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Oestrus ovis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/oestrus-ovis.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Oestrus ovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/123737/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Oestrus ovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/123737/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Oestrus ovis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/123737/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "gasterophilus-intestinalis",
+      "canonicalName": "Gasterophilus intestinalis",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Diptera",
+        "family": "Oestridae",
+        "group": "arthropod",
+        "definitiveHosts": ["horse"],
+        "majorOrgan": "stomach",
+        "onHostStages": ["egg", "L1", "L2", "L3"],
+        "distribution": "Horses and other equids worldwide",
+        "zoonotic": "yes",
+        "significance": "Larvae in the stomach can erode the mucosa, though signs are rare; egg-laying adult flies distress horses.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "attached to hairs, mainly of the forelimbs and shoulders; the larva develops in the egg in about ten days and hatches when the horse licks or bites",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "L1",
+            "location": "hatches from the egg, gets into the mouth and burrows about in the tongue, with the gums also visited at times, for around four weeks",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "L2",
+            "location": "swallowed, then fixed to the lining of the stomach near the cardia",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "L3",
+            "location": "stays fixed in the stomach for several months, then lets go and leaves in the faeces",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "pupa",
+            "location": "pupates in the environment after passing out in the faeces",
+            "hostRole": "environment"
+          },
+          {
+            "name": "adult",
+            "location": "free-living; lacks functional mouthparts and does not feed, and lives only a few days",
+            "hostRole": "environment"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "visual inspection",
+            "sample": "hair"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "stomach"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Gasterophilus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/gasterophilus.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Gasterophilus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/gasterophilus.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Gasterophilus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/gasterophilus.php",
+          "note": null
+        },
+        {
+          "field": "onHostStages",
+          "citation": "WCVM Learn About Parasites: Gasterophilus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/gasterophilus.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Gasterophilus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/gasterophilus.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Gasterophilus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/gasterophilus.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Gasterophilus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/gasterophilus.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Gasterophilus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/gasterophilus.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Gasterophilus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/gasterophilus.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "WCVM Learn About Parasites: Gasterophilus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/gasterophilus.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Gasterophilus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/gasterophilus.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Gasterophilus intestinalis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/84525/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Gasterophilus intestinalis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/84525/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Gasterophilus intestinalis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/84525/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "culicoides-spp",
+      "canonicalName": "Culicoides spp.",
+      "commonName": "Biting midge",
+      "aliases": [],
+      "misspellings": ["Cullicoides"],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Diptera",
+        "family": "Ceratopogonidae",
+        "group": "arthropod",
+        "definitiveHosts": ["horse", "bird", "human", "cattle", "sheep"],
+        "vectorRole": "Intermediate host of Onchocerca cervicalis; also transmits bluetongue, African horse sickness (C. imicola) and Schmallenberg viruses.",
+        "majorOrgan": "skin",
+        "onHostStages": ["adult"],
+        "distribution": "Worldwide, from the tropics to cooler regions",
+        "zoonotic": "yes",
+        "significance": "Females give painful bites, and in horses saliva hypersensitivity causes Queensland (sweet) itch with intense pruritus.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "deposited after a blood meal, in wet soil by water or in decaying plant matter",
+            "hostRole": "environment"
+          },
+          {
+            "name": "larva",
+            "location": "four instars, living in that same wet soil or decaying plant matter",
+            "hostRole": "environment"
+          },
+          {
+            "name": "pupa",
+            "location": "pupates there; pupae in water float to the surface before the adult emerges",
+            "hostRole": "environment"
+          },
+          {
+            "name": "adult",
+            "location": "females bite and blood-feed every few days, mainly around dusk, night and dawn",
+            "hostRole": "definitive"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Culicoides species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/culicoides-species-biting-midges-or-no-see-ums.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Culicoides species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/culicoides-species-biting-midges-or-no-see-ums.php",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "WCVM Learn About Parasites: Culicoides species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/culicoides-species-biting-midges-or-no-see-ums.php",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "Harrup et al. 2015, Infect Genet Evol 30:249-266: Culicoides taxonomy, challenges and directions",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4330985/",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "Wilson et al. 2008, Vet Res 40:16: adaptive strategies of African horse sickness virus for vector transmission",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2695022/",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Culicoides species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/culicoides-species-biting-midges-or-no-see-ums.php",
+          "note": null
+        },
+        {
+          "field": "onHostStages",
+          "citation": "WCVM Learn About Parasites: Culicoides species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/culicoides-species-biting-midges-or-no-see-ums.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Culicoides species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/culicoides-species-biting-midges-or-no-see-ums.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Culicoides species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/culicoides-species-biting-midges-or-no-see-ums.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Culicoides species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/culicoides-species-biting-midges-or-no-see-ums.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Culicoides species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/culicoides-species-biting-midges-or-no-see-ums.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Culicoides species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/culicoides-species-biting-midges-or-no-see-ums.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Culicoides species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/culicoides-species-biting-midges-or-no-see-ums.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Culicoides",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/58271/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Culicoides",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/58271/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Culicoides",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/58271/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Wilson et al. 2008, Vet Res 40:16: adaptive strategies of African horse sickness virus for vector transmission",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2695022/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "stomoxys-calcitrans",
+      "canonicalName": "Stomoxys calcitrans",
+      "commonName": "Stable fly",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Diptera",
+        "family": "Muscidae",
+        "group": "arthropod",
+        "definitiveHosts": ["horse", "cattle", "sheep", "human", "bird"],
+        "vectorRole": "Intermediate host of the stomach worms Habronema and Draschia of horses; also carries trypanosomes mechanically in the tropics.",
+        "majorOrgan": "skin",
+        "onHostStages": ["adult"],
+        "distribution": "Worldwide",
+        "zoonotic": "yes",
+        "significance": "Painful bites on the lower body irritate livestock and can reduce milk and meat production.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "deposited after several blood meals in new horse dung or damp decaying plant material, for example soiled straw",
+            "hostRole": "environment"
+          },
+          {
+            "name": "larva",
+            "location": "three instars, living in that dung or damp decaying material",
+            "hostRole": "environment"
+          },
+          {
+            "name": "pupa",
+            "location": "pupates in the environment",
+            "hostRole": "environment"
+          },
+          {
+            "name": "adult",
+            "location": "both sexes blood-feed on the host, most actively around sunrise and sunset, and then leave it",
+            "hostRole": "definitive"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Stomoxys calcitrans (stable fly)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/stomoxys-calcitrans-stable-fly.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Stomoxys calcitrans (stable fly)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/stomoxys-calcitrans-stable-fly.php",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "WCVM Learn About Parasites: Stomoxys calcitrans (stable fly)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/stomoxys-calcitrans-stable-fly.php",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "WCVM Learn About Parasites: Habronema species and Draschia species",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/habronema-species-and-draschia-species.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Stomoxys calcitrans (stable fly)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/stomoxys-calcitrans-stable-fly.php",
+          "note": null
+        },
+        {
+          "field": "onHostStages",
+          "citation": "WCVM Learn About Parasites: Stomoxys calcitrans (stable fly)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/stomoxys-calcitrans-stable-fly.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Stomoxys calcitrans (stable fly)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/stomoxys-calcitrans-stable-fly.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Stomoxys calcitrans (stable fly)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/stomoxys-calcitrans-stable-fly.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Stomoxys calcitrans (stable fly)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/stomoxys-calcitrans-stable-fly.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Stomoxys calcitrans (stable fly)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/stomoxys-calcitrans-stable-fly.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Stomoxys calcitrans (stable fly)",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/stomoxys-calcitrans-stable-fly.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Stomoxys calcitrans",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/35570/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Stomoxys calcitrans",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/35570/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Stomoxys calcitrans",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/35570/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "haematobia-irritans",
+      "canonicalName": "Haematobia irritans",
+      "commonName": "Horn fly",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Diptera",
+        "family": "Muscidae",
+        "group": "arthropod",
+        "definitiveHosts": ["cattle", "horse"],
+        "vectorRole": "Intermediate host of Stephanofilaria stilesi in cattle and thought to carry Parafilaria multipapillosa larvae between horses.",
+        "majorOrgan": "skin",
+        "onHostStages": ["adult"],
+        "distribution": "Europe, North and Central America and Australia",
+        "significance": "Large numbers feed repeatedly on cattle, causing irritation that lowers productivity.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "laid in freshly passed cattle faeces",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 1,
+              "max": 1
+            }
+          },
+          {
+            "name": "larva",
+            "location": "three larval stages in the dung",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 7,
+              "max": 7
+            }
+          },
+          {
+            "name": "pupa",
+            "location": "pupates in a cocoon, overwintering beneath faecal masses",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 7,
+              "max": 7
+            }
+          },
+          {
+            "name": "adult",
+            "location": "both sexes spend nearly all their time on the animal, clustering over the back, shoulders and head; females leave briefly to lay",
+            "hostRole": "definitive"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Haematobia irritans",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/haematobia-irritans.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Haematobia irritans",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/haematobia-irritans.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "MSD Veterinary Manual: Parafilaria infection in animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/helminths-of-the-skin/parafilaria-infection-in-animals",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "WCVM Learn About Parasites: Haematobia irritans",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/haematobia-irritans.php",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "MSD Veterinary Manual: Parafilaria infection in animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/helminths-of-the-skin/parafilaria-infection-in-animals",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "Barlaam et al. 2020, Front Vet Sci 7:358: habronematidosis in equids",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7347746/",
+          "note": "Course states the horn fly carries Habronema; reference gives it only as a possible vector."
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Haematobia irritans",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/haematobia-irritans.php",
+          "note": null
+        },
+        {
+          "field": "onHostStages",
+          "citation": "WCVM Learn About Parasites: Haematobia irritans",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/haematobia-irritans.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Haematobia irritans",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/haematobia-irritans.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Haematobia irritans",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/haematobia-irritans.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Haematobia irritans",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/haematobia-irritans.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Haematobia irritans",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/haematobia-irritans.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Haematobia irritans",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/7368/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Haematobia irritans",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/7368/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Haematobia irritans",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/7368/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "musca-autumnalis",
+      "canonicalName": "Musca autumnalis",
+      "commonName": "Face fly",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Arthropoda",
+        "order": "Diptera",
+        "family": "Muscidae",
+        "group": "arthropod",
+        "definitiveHosts": ["cattle", "horse"],
+        "vectorRole": "Intermediate host of Thelazia eye worms; also mechanically spreads Moraxella bovis (infectious bovine keratoconjunctivitis) among cattle.",
+        "majorOrgan": "eye",
+        "onHostStages": ["adult"],
+        "distribution": "Europe, Asia, North America and some African regions",
+        "significance": "A nuisance when numerous, as adults feed at the face; also implicated in spreading pink eye between cattle.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "deposited by the female in fresh cow dung",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 1,
+              "max": 1
+            }
+          },
+          {
+            "name": "larva",
+            "location": "three larval stages in the dung",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 7,
+              "max": 7
+            }
+          },
+          {
+            "name": "pupa",
+            "location": "pupates in a cocoon in the dung",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 7,
+              "max": 7
+            }
+          },
+          {
+            "name": "adult",
+            "location": "moves over the face and eyes, taking up eye and nose secretions and blood from wounds opened by other flies; leaves the host only briefly to lay eggs",
+            "hostRole": "definitive"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Musca autumnalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/musca-autumnalis.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Musca autumnalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/musca-autumnalis.php",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "WCVM Learn About Parasites: Musca autumnalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/musca-autumnalis.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Musca autumnalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/musca-autumnalis.php",
+          "note": null
+        },
+        {
+          "field": "onHostStages",
+          "citation": "WCVM Learn About Parasites: Musca autumnalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/musca-autumnalis.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Musca autumnalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/musca-autumnalis.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Musca autumnalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/musca-autumnalis.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Musca autumnalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/musca-autumnalis.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Musca autumnalis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/musca-autumnalis.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Musca autumnalis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/221902/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Musca autumnalis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/221902/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Musca autumnalis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/221902/",
+          "note": null
+        }
+      ],
+      "images": []
+    }
+  ]
+}
