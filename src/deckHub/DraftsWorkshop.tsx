@@ -1,77 +1,256 @@
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import type { JobListItem } from "../api/client";
+import DraftCardEditor from "../components/DraftCardEditor";
+import type { CardDraftView, CardType, JobListItem } from "../api/client";
+import { TYPE_LABELS } from "../lib/draftCardModel";
 import { navigate } from "../nav/navigate";
+import { useDraftsWorkshop } from "./useDraftsWorkshop";
+
+function cardFrontPreview(card: CardDraftView): string {
+  if (typeof card.front === "string") return card.front;
+  if (
+    typeof card.front === "object" &&
+    card.front !== null &&
+    "prompt" in card.front &&
+    typeof card.front.prompt === "string" &&
+    card.front.prompt.trim()
+  ) {
+    return card.front.prompt;
+  }
+  return card.type === "occlusion" ? "Occlusion card" : "Card";
+}
 
 type Props = {
+  guest: boolean;
   draftJobs: JobListItem[];
   onAddMoreMaterial: () => void;
+  onDraftsChanged?: () => void | Promise<void>;
 };
 
 export default function DraftsWorkshop({
+  guest,
   draftJobs,
   onAddMoreMaterial,
+  onDraftsChanged,
 }: Props) {
-  const primary = draftJobs[0] ?? null;
-  const totalDrafts = draftJobs.reduce((sum, job) => sum + job.draft_count, 0);
+  const desk = useDraftsWorkshop({ guest, draftJobs, onDraftsChanged });
+
+  if (guest) {
+    return (
+      <Stack spacing={2}>
+        <Alert severity="info">
+          Draft review needs a signed-in account. Guests can still add local
+          cards from paste under Add material.
+        </Alert>
+        <Button
+          variant="text"
+          onClick={onAddMoreMaterial}
+          sx={{ alignSelf: "flex-start" }}
+        >
+          Add more material
+        </Button>
+      </Stack>
+    );
+  }
+
+  if (desk.loading && desk.drafts.length === 0) {
+    return (
+      <Typography color="text.secondary">Loading drafts…</Typography>
+    );
+  }
+
+  if (draftJobs.length === 0 || desk.remaining === 0) {
+    return (
+      <Stack spacing={2}>
+        {desk.error ? <Alert severity="error">{desk.error}</Alert> : null}
+        <Alert severity="info">
+          No draft cards for this deck yet. Add material to generate cards.
+        </Alert>
+        <Button
+          variant="text"
+          onClick={onAddMoreMaterial}
+          sx={{ alignSelf: "flex-start" }}
+        >
+          Add more material
+        </Button>
+      </Stack>
+    );
+  }
 
   return (
-    <Stack spacing={2}>
-      {draftJobs.length === 0 ? (
-        <Alert severity="info">
-          No draft jobs for this deck yet. Add material to generate cards.
+    <Stack spacing={2} sx={{ minHeight: 0 }}>
+      {desk.error ? <Alert severity="error">{desk.error}</Alert> : null}
+      {desk.notice ? (
+        <Alert severity="success" onClose={() => desk.setNotice(null)}>
+          {desk.notice}
         </Alert>
-      ) : (
-        <>
-          <Typography variant="body2" color="text.secondary">
-            {totalDrafts} draft{totalDrafts === 1 ? "" : "s"} across{" "}
-            {draftJobs.length} job{draftJobs.length === 1 ? "" : "s"}. Open a
-            job to accept, edit, or skip.
-          </Typography>
-          {primary ? (
-            <Button
-              variant="contained"
-              onClick={() =>
-                navigate(`/jobs/${encodeURIComponent(primary.id)}/drafts`)
-              }
-            >
-              Review{" "}
-              {primary.filename?.trim() || "latest drafts"}
-            </Button>
-          ) : null}
-          <Stack
-            component="ul"
-            spacing={0}
-            divider={<Divider flexItem />}
-            sx={{ m: 0, p: 0, listStyle: "none" }}
+      ) : null}
+
+      <Stack
+        direction="row"
+        alignItems="baseline"
+        justifyContent="space-between"
+        spacing={1}
+      >
+        <Typography variant="body2" color="text.secondary" fontWeight={600}>
+          {desk.progressLabel}
+        </Typography>
+        {desk.primaryJobId ? (
+          <Link
+            href={`/jobs/${encodeURIComponent(desk.primaryJobId)}/drafts`}
+            underline="hover"
+            color="primary"
+            variant="body2"
+            fontWeight={600}
+            onClick={(ev) => {
+              ev.preventDefault();
+              navigate(
+                `/jobs/${encodeURIComponent(desk.primaryJobId!)}/drafts`,
+              );
+            }}
           >
-            {draftJobs.map((job) => (
-              <Box component="li" key={job.id} sx={{ py: 1 }}>
-                <Link
-                  href={`/jobs/${encodeURIComponent(job.id)}/drafts`}
-                  underline="hover"
-                  color="primary"
-                  variant="body2"
-                  onClick={(ev) => {
-                    ev.preventDefault();
-                    navigate(`/jobs/${encodeURIComponent(job.id)}/drafts`);
+            Open full review
+          </Link>
+        ) : null}
+      </Stack>
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", sm: "minmax(200px, 320px) 1fr" },
+          gap: 0,
+          border: 1,
+          borderColor: "divider",
+          borderRadius: 1,
+          overflow: "hidden",
+          minHeight: { sm: 360 },
+        }}
+      >
+        <Stack
+          component="ul"
+          spacing={0}
+          divider={<Divider flexItem />}
+          sx={{
+            m: 0,
+            p: 0,
+            listStyle: "none",
+            borderRight: { sm: 1 },
+            borderColor: "divider",
+            maxHeight: { xs: 220, sm: 480 },
+            overflow: "auto",
+          }}
+          aria-label="Draft queue"
+        >
+          {desk.drafts.map((card) => {
+            const selected = card.id === desk.selectedId;
+            return (
+              <Box
+                component="li"
+                key={card.id}
+                sx={{
+                  py: 1.5,
+                  px: 2,
+                  cursor: desk.busy ? "default" : "pointer",
+                  bgcolor: selected
+                    ? "color-mix(in srgb, var(--sp-plum, #5B2C6F) 10%, transparent)"
+                    : "transparent",
+                }}
+              >
+                <Button
+                  fullWidth
+                  disableRipple
+                  disabled={desk.busy}
+                  onClick={() => desk.onSelect(card.id)}
+                  sx={{
+                    display: "block",
+                    textAlign: "left",
+                    textTransform: "none",
+                    color: "inherit",
+                    p: 0,
+                    minWidth: 0,
+                    "&:hover": { bgcolor: "transparent" },
                   }}
                 >
-                  {job.filename?.trim() || "Untitled material"}
-                  {" · "}
-                  {job.draft_count} draft
-                  {job.draft_count === 1 ? "" : "s"}
-                </Link>
+                  <Typography
+                    variant="body2"
+                    fontWeight={600}
+                    sx={{
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {cardFrontPreview(card)}
+                  </Typography>
+                  <Chip
+                    size="small"
+                    label={
+                      TYPE_LABELS[card.type as CardType] ?? card.type
+                    }
+                    sx={{ mt: 0.75, height: 22, fontWeight: 700 }}
+                  />
+                </Button>
               </Box>
-            ))}
-          </Stack>
-        </>
-      )}
+            );
+          })}
+        </Stack>
+
+        <Box sx={{ p: { xs: 2, sm: 2.5 }, minWidth: 0 }}>
+          {desk.selected ? (
+            <DraftCardEditor
+              card={desk.selected}
+              disabled={desk.busy}
+              onChange={desk.onChange}
+            />
+          ) : (
+            <Typography color="text.secondary">Select a draft</Typography>
+          )}
+        </Box>
+      </Box>
+
+      <Stack
+        direction="row"
+        spacing={1}
+        justifyContent="flex-end"
+        flexWrap="wrap"
+        useFlexGap
+      >
+        <Button
+          variant="outlined"
+          disabled={desk.busy || !desk.selected}
+          onClick={() => {
+            void desk.onSkip();
+          }}
+        >
+          Skip
+        </Button>
+        <Button
+          variant="outlined"
+          disabled={desk.busy || !desk.selected || !desk.dirty}
+          onClick={() => {
+            void desk.onSave();
+          }}
+        >
+          Save
+        </Button>
+        <Button
+          variant="contained"
+          disabled={desk.busy || !desk.selected}
+          onClick={() => {
+            void desk.onAccept();
+          }}
+        >
+          Accept
+        </Button>
+      </Stack>
+
       <Button
         variant="text"
         onClick={onAddMoreMaterial}
