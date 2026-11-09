@@ -3,6 +3,8 @@ import {
   listDueCards,
   reviewCard,
   type CardDraftView,
+  type ListDueResult,
+  type StudyQueueMeta,
 } from "../api/client";
 import { isGuest } from "../guest/session";
 import { saveDueCache } from "./dueCache";
@@ -18,6 +20,8 @@ export type FlushSummary = {
   skipped: number;
   /** Post-flush due list when refreshed; null if refresh failed after applied > 0. */
   due: CardDraftView[] | null;
+  /** Queue meta from the same listDue snapshot as `due`. */
+  meta: StudyQueueMeta | null;
   /** Achievement unlocks from the flushed reviews (for toasts). */
   unlocks: unknown[];
 };
@@ -25,7 +29,8 @@ export type FlushSummary = {
 export type RunPendingFlushDeps = {
   isGuestFn?: () => boolean;
   listPending?: (userId: string) => PendingGrade[];
-  listDue?: () => Promise<CardDraftView[]>;
+  /** Prefer full ListDueResult so FlushSummary can carry meta. */
+  listDue?: () => Promise<ListDueResult>;
   review?: (cardId: string, rating: 1 | 2 | 3 | 4) => Promise<unknown>;
   replacePending?: (userId: string, items: PendingGrade[]) => boolean | void;
   saveDue?: (userId: string, cards: CardDraftView[]) => void;
@@ -63,8 +68,7 @@ async function runPendingFlushInner(
   const snapshot = listPending(userId);
   if (snapshot.length === 0) return null;
 
-  const listDue =
-    deps.listDue ?? (async () => (await listDueCards()).cards);
+  const listDue = deps.listDue ?? listDueCards;
   const baseReview = deps.review ?? reviewCard;
   const unlocks: unknown[] = [];
   const review = async (cardId: string, rating: 1 | 2 | 3 | 4) => {
@@ -76,7 +80,8 @@ async function runPendingFlushInner(
   const replacePending = deps.replacePending ?? replacePendingGrades;
   const saveDue = deps.saveDue ?? saveDueCache;
 
-  const due = await listDue();
+  const first = await listDue();
+  const due = first.cards;
   const dueIds = new Set(due.map((c) => c.id));
   const result = await flushPendingGrades({
     pending: snapshot,
@@ -92,11 +97,12 @@ async function runPendingFlushInner(
   if (result.applied > 0) {
     try {
       const refreshed = await listDue();
-      saveDue(userId, refreshed);
+      saveDue(userId, refreshed.cards);
       return {
         applied: result.applied,
         skipped: result.skipped,
-        due: refreshed,
+        due: refreshed.cards,
+        meta: refreshed.meta,
         unlocks,
       };
     } catch {
@@ -104,13 +110,20 @@ async function runPendingFlushInner(
         applied: result.applied,
         skipped: result.skipped,
         due: null,
+        meta: null,
         unlocks,
       };
     }
   }
 
   saveDue(userId, due);
-  return { applied: result.applied, skipped: result.skipped, due, unlocks };
+  return {
+    applied: result.applied,
+    skipped: result.skipped,
+    due,
+    meta: first.meta,
+    unlocks,
+  };
 }
 
 /**
