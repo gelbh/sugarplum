@@ -441,13 +441,68 @@ describe("guest store", () => {
     expect(typeof result.state).toBe("number");
     const raw = JSON.parse(storage.getItem(STORE_KEY)!) as {
       schedules: Record<string, { state: number; reps: number }>;
-      reviewLogs: Array<{ cardId: string; rating: number }>;
+      reviewLogs: Array<{
+        cardId: string;
+        rating: number;
+        at: string;
+        state?: number;
+      }>;
     };
     expect(raw.schedules[id]?.reps).toBeGreaterThan(0);
     expect(raw.schedules[id]?.state).not.toBe(0); // not State.New
-    expect(raw.reviewLogs.some((l) => l.cardId === id && l.rating === 3)).toBe(
-      true,
+    const graded = raw.reviewLogs.find((l) => l.cardId === id && l.rating === 3);
+    expect(graded).toBeDefined();
+    // Pre-transition state for a first New grade is State.New (0).
+    expect(graded?.state).toBe(0);
+  });
+
+  it("keeps thin historical logs and enriches only new grades", () => {
+    enterGuest(storage);
+    const subject = guestCreateSubject("Thin logs subject", storage);
+    const deck = guestCreateDeck("Thin logs deck", subject.id, storage);
+    const card = guestCreateDeckCard(
+      deck.id,
+      { type: "qa", front: "Thin?", back: "Yes" },
+      storage,
     );
+    const raw = JSON.parse(storage.getItem(STORE_KEY)!) as {
+      reviewLogs: Array<{
+        cardId: string;
+        rating: number;
+        at: string;
+        state?: number;
+      }>;
+    };
+    const thinAt = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+    raw.reviewLogs.push({
+      cardId: card.id,
+      rating: 1,
+      at: thinAt,
+    });
+    storage.setItem(STORE_KEY, JSON.stringify(raw));
+
+    guestReviewCard(card.id, 3, storage);
+
+    const after = JSON.parse(storage.getItem(STORE_KEY)!) as {
+      reviewLogs: Array<{
+        cardId: string;
+        rating: number;
+        at: string;
+        state?: number;
+      }>;
+    };
+    const thin = after.reviewLogs.find(
+      (l) => l.cardId === card.id && l.rating === 1,
+    );
+    const enriched = after.reviewLogs.find(
+      (l) => l.cardId === card.id && l.rating === 3,
+    );
+    expect(thin).toBeDefined();
+    expect(thin?.state).toBeUndefined();
+    expect(enriched?.state).toBe(0);
+
+    const rows = guestListStrugglingCards(storage);
+    expect(rows.some((r) => r.id === card.id && r.again_14d === 1)).toBe(true);
   });
 
   it("day-sticky intro: grading New cards reduces same-day remaining slice", () => {
