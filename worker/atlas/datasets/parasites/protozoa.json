@@ -29,12 +29,19 @@
           {
             "name": "cyst",
             "location": "passed in faeces; stays infective for days to weeks and is swallowed with contaminated food or water",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "diagnostic": true
+          },
+          {
+            "name": "metacystic trophozoite",
+            "location": "excysts in the small intestine then colonises the colon",
+            "hostRole": "definitive"
           },
           {
             "name": "trophozoite",
             "location": "large intestine lumen after excystation in the small intestine; may invade the mucosa and spread to the liver",
-            "hostRole": "definitive"
+            "hostRole": "definitive",
+            "diagnostic": false
           }
         ],
         "diagnosticStage": "cyst",
@@ -55,7 +62,11 @@
             "name": "PCR",
             "sample": "faeces"
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 2,
+          "max": 28
+        }
       },
       "refs": [
         {
@@ -117,6 +128,12 @@
           "citation": "NCBI Taxonomy: Entamoeba histolytica",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5759/",
           "note": "Course states Entamoebidae; reference gives Endamoebidae."
+        },
+        {
+          "field": "pppDays",
+          "citation": "CDC DPDx: Amebiasis",
+          "url": "https://www.cdc.gov/dpdx/amebiasis/index.html",
+          "note": null
         }
       ],
       "images": [
@@ -174,12 +191,19 @@
           {
             "name": "cyst",
             "location": "passed in faeces, infective at once and long-lived in cool damp places",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "diagnostic": true
+          },
+          {
+            "name": "excystation",
+            "location": "stomach and proximal small intestine after ingestion",
+            "hostRole": "definitive"
           },
           {
             "name": "trophozoite",
             "location": "proximal small intestine, held to the brush border by the ventral disc",
-            "hostRole": "definitive"
+            "hostRole": "definitive",
+            "diagnostic": false
           }
         ],
         "diagnosticStage": "cyst",
@@ -268,6 +292,12 @@
           "citation": "NCBI Taxonomy: Giardia duodenalis",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5741/",
           "note": "Course states Heamitidae; reference gives Hexamitidae."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Giardiasis",
+          "url": "https://www.cdc.gov/dpdx/giardiasis/index.html",
+          "note": null
         }
       ],
       "images": [
@@ -315,12 +345,19 @@
           {
             "name": "cyst",
             "location": "passed in faeces and swallowed with contaminated food or water",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "diagnostic": false
+          },
+          {
+            "name": "excystation",
+            "location": "intestine after ingestion",
+            "hostRole": "definitive"
           },
           {
             "name": "trophozoite",
             "location": "lumen of the large intestine, dividing by binary fission; some invade the colon wall",
-            "hostRole": "definitive"
+            "hostRole": "definitive",
+            "diagnostic": true
           }
         ],
         "diagnosticStage": "trophozoite",
@@ -337,7 +374,11 @@
             "name": "histopathology",
             "sample": "tissue"
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 4,
+          "max": 5
+        }
       },
       "refs": [
         {
@@ -410,6 +451,12 @@
           "field": "family",
           "citation": "NCBI Taxonomy: Balantioides coli",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/71585/",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "CDC DPDx: Balantidiasis",
+          "url": "https://www.cdc.gov/dpdx/balantidiasis/index.html",
           "note": null
         }
       ],
@@ -484,7 +531,12 @@
             "name": "histopathology",
             "sample": "intestine"
           }
-        ]
+        ],
+        "zoonotic": "no",
+        "pppDays": {
+          "min": 4,
+          "max": 14
+        }
       },
       "refs": [
         {
@@ -545,6 +597,18 @@
           "field": "family",
           "citation": "NCBI Taxonomy: Eimeria",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5800/",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Coccidiosis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/coccidiosis/coccidiosis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Coccidiosis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/coccidiosis/coccidiosis-in-poultry",
           "note": null
         }
       ],
@@ -781,6 +845,17 @@
           {
             "name": "trophozoite",
             "location": "preputial crypts of bulls and reproductive tract of cows, spread at mating; ileum, caecum and colon of cats",
+            "hostRole": "definitive",
+            "diagnostic": true
+          },
+          {
+            "name": "binary fission",
+            "location": "mucosal surface of the infected host",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "transmission form",
+            "location": "venereal transfer in cattle; faecal–oral in cats",
             "hostRole": "definitive"
           }
         ],
@@ -806,7 +881,11 @@
             "name": "PCR",
             "sample": "faeces"
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 7,
+          "max": 14
+        }
       },
       "refs": [
         {
@@ -874,6 +953,18 @@
           "citation": "NCBI Taxonomy: Tritrichomonas foetus",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/1144522/",
           "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Trichomonosis in Animals",
+          "url": "https://www.msdvetmanual.com/reproductive-system/trichomonosis/trichomonosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Trichomonosis in Animals",
+          "url": "https://www.msdvetmanual.com/reproductive-system/trichomonosis/trichomonosis-in-animals",
+          "note": null
         }
       ],
       "images": [
@@ -917,47 +1008,43 @@
         "lifecycleType": "direct",
         "lifecycleStages": [
           {
-            "name": "histomonad in Heterakis egg",
-            "location": "inside Heterakis gallinarum eggs shed in faeces onto litter and soil",
-            "hostRole": "environment"
-          },
-          {
-            "name": "histomonad in Heterakis larva",
-            "location": "earthworm that has eaten infected Heterakis eggs",
-            "hostRole": "paratenic"
-          },
-          {
             "name": "flagellate form",
-            "location": "caecal lumen, then the caecal wall; also spread bird to bird by cloacal uptake",
-            "hostRole": "definitive"
+            "location": "caecal lumen of galliform birds",
+            "hostRole": "definitive",
+            "diagnostic": true
           },
           {
             "name": "amoeboid form",
-            "location": "liver, reached through the hepatic portal blood",
+            "location": "caecal wall and liver of galliform birds",
             "hostRole": "definitive"
+          },
+          {
+            "name": "stage in Heterakis egg",
+            "location": "carried inside Heterakis gallinarum eggs on litter",
+            "hostRole": "environment"
           }
         ],
         "diagnosticTests": [
           {
-            "name": "post-mortem examination",
-            "sample": "caecum"
-          },
-          {
-            "name": "post-mortem examination",
-            "sample": "liver"
-          },
-          {
             "name": "histopathology",
+            "sample": "liver or caecum"
+          },
+          {
+            "name": "PCR",
             "sample": "tissue"
           },
           {
-            "name": "PCR"
-          },
-          {
-            "name": "caecal content microscopy",
-            "sample": "caecal contents"
+            "name": "culture",
+            "sample": "caecal content"
           }
-        ]
+        ],
+        "distribution": "Wherever poultry and Heterakis are present; severe in turkeys",
+        "zoonotic": "no",
+        "pppDays": {
+          "min": 7,
+          "max": 12
+        },
+        "diagnosticStage": "flagellate form"
       },
       "refs": [
         {
@@ -1043,6 +1130,36 @@
           "citation": "NCBI Taxonomy: Histomonas meleagridis",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/135588/",
           "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "MSD Veterinary Manual: Histomoniasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/histomoniasis/histomoniasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Histomoniasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/histomoniasis/histomoniasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Histomoniasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/histomoniasis/histomoniasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
+          "citation": "MSD Veterinary Manual: Histomoniasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/histomoniasis/histomoniasis-in-poultry",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Histomoniasis in Poultry",
+          "url": "https://www.msdvetmanual.com/poultry/histomoniasis/histomoniasis-in-poultry",
+          "note": null
         }
       ],
       "images": []
@@ -1108,7 +1225,13 @@
             "name": "PCR",
             "sample": "tissue"
           }
-        ]
+        ],
+        "distribution": "Worldwide in rabbits; also dogs, foxes and other mammals",
+        "order": "Microsporida",
+        "pppDays": {
+          "min": 30,
+          "max": 70
+        }
       },
       "refs": [
         {
@@ -1170,6 +1293,24 @@
           "citation": "NCBI Taxonomy: Encephalitozoon cuniculi",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6035/",
           "note": "Course states Nosematidae; reference gives Unikaryonidae."
+        },
+        {
+          "field": "distribution",
+          "citation": "MSD Veterinary Manual: Parasitic Diseases of Rabbits",
+          "url": "https://www.msdvetmanual.com/exotic-and-laboratory-animals/rabbits/parasitic-diseases-of-rabbits",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Encephalitozoon cuniculi",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6035/",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Parasitic Diseases of Rabbits",
+          "url": "https://www.msdvetmanual.com/exotic-and-laboratory-animals/rabbits/parasitic-diseases-of-rabbits",
+          "note": null
         }
       ],
       "images": []
@@ -1472,7 +1613,8 @@
             "name": "faecal flotation",
             "sample": "faeces"
           }
-        ]
+        ],
+        "diagnosticStage": "unsporulated oocyst"
       },
       "refs": [
         {
@@ -1549,6 +1691,12 @@
         },
         {
           "field": "family",
+          "citation": "WCVM Learn About Parasites: Neospora caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticStage",
           "citation": "WCVM Learn About Parasites: Neospora caninum",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/neospora-caninum.php",
           "note": null
@@ -1642,7 +1790,11 @@
             "name": "PCR",
             "sample": "tissue"
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 7,
+          "max": 21
+        }
       },
       "refs": [
         {
@@ -1752,6 +1904,12 @@
           "citation": "WCVM Learn About Parasites: Sarcocystis species",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/sarcocystis-species.php",
           "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "CDC DPDx: Sarcocystosis",
+          "url": "https://www.cdc.gov/dpdx/sarcocystosis/index.html",
+          "note": "Definitive-host PPP varies by species; often about 1–3 weeks."
         }
       ],
       "images": []
@@ -1782,14 +1940,21 @@
         "lifecycleType": "indirect",
         "lifecycleStages": [
           {
+            "name": "oocyst",
+            "location": "thought to be shed in felid faeces; role of cats still debated",
+            "hostRole": "environment"
+          },
+          {
             "name": "tachyzoite",
             "location": "multiplies in blood vessel endothelium during the acute febrile stage",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "diagnostic": false
           },
           {
             "name": "tissue cyst with bradyzoites",
             "location": "skin, subcutis, mucous membranes, sclera and testes of the bovine",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "diagnostic": true
           }
         ],
         "diagnosticStage": "tissue cyst with bradyzoites",
@@ -1806,7 +1971,15 @@
             "name": "PCR",
             "sample": "skin biopsy"
           }
-        ]
+        ],
+        "definitiveHosts": [
+          "cat"
+        ],
+        "zoonotic": "no",
+        "pppDays": {
+          "min": 11,
+          "max": 16
+        }
       },
       "refs": [
         {
@@ -1886,6 +2059,18 @@
           "citation": "MSD Veterinary Manual: Besnoitiosis in Animals",
           "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals",
           "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Besnoitiosis in Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Besnoitiosis in Animals",
+          "url": "https://www.msdvetmanual.com/integumentary-system/besnoitiosis/besnoitiosis-in-animals",
+          "note": "Experimental feline PPP cited around 11–16 days where cats act as definitive hosts."
         }
       ],
       "images": []
@@ -1966,7 +2151,11 @@
             "name": "PCR",
             "sample": "blood"
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 7,
+          "max": 21
+        }
       },
       "refs": [
         {
@@ -2094,6 +2283,12 @@
           "citation": "MSD Veterinary Manual: Babesiosis in Animals",
           "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/babesiosis-in-animals",
           "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Babesiosis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/babesiosis-in-animals",
+          "note": null
         }
       ],
       "images": [
@@ -2188,7 +2383,12 @@
             "name": "antibody detection",
             "sample": "serum"
           }
-        ]
+        ],
+        "zoonotic": "no",
+        "pppDays": {
+          "min": 7,
+          "max": 21
+        }
       },
       "refs": [
         {
@@ -2274,6 +2474,18 @@
           "citation": "NCBI Taxonomy: Theileria",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5873/",
           "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Theileriosis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Theileriosis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/theileriosis-in-animals",
+          "note": null
         }
       ],
       "images": []
@@ -2351,7 +2563,11 @@
             "name": "PCR",
             "sample": "lymph node aspirate"
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 60,
+          "max": 365
+        }
       },
       "refs": [
         {
@@ -2485,6 +2701,12 @@
           "citation": "WCVM Learn About Parasites: Leishmania species",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/leishmania-species.php",
           "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "CDC DPDx: Leishmaniasis",
+          "url": "https://www.cdc.gov/dpdx/leishmaniasis/index.html",
+          "note": "Clinical PPP highly variable; often months."
         }
       ],
       "images": [
@@ -2573,7 +2795,11 @@
             "name": "PCR",
             "sample": "blood"
           }
-        ]
+        ],
+        "pppDays": {
+          "min": 7,
+          "max": 21
+        }
       },
       "refs": [
         {
@@ -2682,6 +2908,12 @@
           "field": "family",
           "citation": "NCBI Taxonomy: Trypanosoma",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5690/",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "CDC DPDx: African Trypanosomiasis",
+          "url": "https://www.cdc.gov/dpdx/trypanosomiasisAfrican/index.html",
           "note": null
         }
       ],
@@ -2781,7 +3013,12 @@
             "name": "antibody detection",
             "sample": "serum"
           }
-        ]
+        ],
+        "zoonotic": "potential",
+        "pppDays": {
+          "min": 7,
+          "max": 30
+        }
       },
       "refs": [
         {
@@ -2873,6 +3110,18 @@
           "citation": "NCBI Taxonomy: Plasmodium",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/5820/",
           "note": "Course states Plasmodidae; reference gives Plasmodiidae."
+        },
+        {
+          "field": "zoonotic",
+          "citation": "CDC DPDx: Malaria",
+          "url": "https://www.cdc.gov/dpdx/malaria/index.html",
+          "note": "Human malaria species; avian/other Plasmodium not human zoonoses."
+        },
+        {
+          "field": "pppDays",
+          "citation": "CDC DPDx: Malaria",
+          "url": "https://www.cdc.gov/dpdx/malaria/index.html",
+          "note": null
         }
       ],
       "images": []
@@ -2936,7 +3185,13 @@
             "name": "PCR",
             "sample": "blood"
           }
-        ]
+        ],
+        "zoonotic": "no",
+        "order": "Eucoccidiorida",
+        "pppDays": {
+          "min": 28,
+          "max": 35
+        }
       },
       "refs": [
         {
@@ -3028,6 +3283,24 @@
           "citation": "NCBI Taxonomy: Hepatozoon canis",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/110120/",
           "note": "Course states Coccidea (Coccidia); reference gives Hepatozoidae."
+        },
+        {
+          "field": "zoonotic",
+          "citation": "MSD Veterinary Manual: Hepatozoonosis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/hepatozoonosis-in-animals",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Hepatozoon canis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/92645/",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "MSD Veterinary Manual: Hepatozoonosis in Animals",
+          "url": "https://www.msdvetmanual.com/circulatory-system/blood-parasites/hepatozoonosis-in-animals",
+          "note": null
         }
       ],
       "images": [
