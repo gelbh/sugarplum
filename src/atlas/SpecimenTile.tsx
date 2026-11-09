@@ -2,7 +2,9 @@ import { useEffect, useRef, ViewTransition, type ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
+import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
+import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
@@ -19,6 +21,7 @@ type Props = {
   staggerIndex?: number;
   onToggle: () => void;
   onOpen: () => void;
+  onEdit?: () => void;
 };
 
 const IMAGE_RATIO = "6 / 5";
@@ -39,6 +42,7 @@ export default function SpecimenTile({
   staggerIndex,
   onToggle,
   onOpen,
+  onEdit,
 }: Props) {
   const toggleRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -182,19 +186,23 @@ export default function SpecimenTile({
         >
           <CloseIcon fontSize="small" />
         </IconButton>
-        <Typography
-          id={titleId}
-          component="h3"
-          sx={{
-            fontStyle: "italic",
-            fontWeight: 600,
-            fontSize: "1.3rem",
-            lineHeight: 1.15,
-            pr: 4,
-          }}
-        >
-          {entry.canonicalName}
-        </Typography>
+        <Stack direction="row" alignItems="center" gap={1} sx={{ pr: 4 }}>
+          <Typography
+            id={titleId}
+            component="h3"
+            sx={{
+              fontStyle: "italic",
+              fontWeight: 600,
+              fontSize: "1.3rem",
+              lineHeight: 1.15,
+            }}
+          >
+            {entry.canonicalName}
+          </Typography>
+          {entry.editedAt ? (
+            <Chip label="Edited" size="small" variant="outlined" />
+          ) : null}
+        </Stack>
         {entry.commonName ? (
           <Typography variant="body2" color="text.secondary">
             {entry.commonName}
@@ -222,9 +230,16 @@ export default function SpecimenTile({
               </Box>
             ))}
         </Box>
-        <Button variant="contained" size="small" onClick={onOpen}>
-          Open lifecycle
-        </Button>
+        <Stack direction="row" gap={1} flexWrap="wrap">
+          <Button variant="contained" size="small" onClick={onOpen}>
+            Open lifecycle
+          </Button>
+          {onEdit ? (
+            <Button variant="outlined" size="small" onClick={onEdit}>
+              Edit
+            </Button>
+          ) : null}
+        </Stack>
       </Box>
     </Box>
   );

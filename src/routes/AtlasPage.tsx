@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -11,7 +12,12 @@ import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import { ApiError, listSubjects, me } from "../api/client";
-import { bundledAtlasSource } from "../atlas/bundledSource";
+import {
+  AddEntryDialog,
+  EditEntryDialog,
+  RecentlyDeletedDialog,
+} from "../atlas/AtlasMutateDialogs";
+import { apiAtlasSource, resetEntry } from "../atlas/apiSource";
 import "../atlas/atlasMotion.css";
 import Cabinet from "../atlas/Cabinet";
 import CompareView from "../atlas/CompareView";
@@ -87,15 +93,23 @@ function Notice({
 export default function AtlasPage({
   subjectId,
   route,
-  source = bundledAtlasSource,
+  source = apiAtlasSource,
 }: Props) {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [deletedOpen, setDeletedOpen] = useState(false);
+  const [editEntry, setEditEntry] = useState<AtlasEntryView | null>(null);
   // The first-load stagger runs once per page mount, not again on Back from an entry.
   const staggered = useRef(false);
   useEffect(() => {
     if (loaded && route.kind === "cabinet") staggered.current = true;
   }, [loaded, route.kind]);
+
+  const reloadEntries = useCallback(async () => {
+    const entries = await source.list(subjectId);
+    setLoaded((prev) => (prev ? { ...prev, entries } : prev));
+  }, [source, subjectId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -138,6 +152,24 @@ export default function AtlasPage({
       <NavLink href={home}>Parasitology Atlas</NavLink>
     );
 
+  const canMutate = !isGuest();
+
+  async function onResetEntry(entry: AtlasEntryView) {
+    if (!entry.originKey || !entry.editedAt) return;
+    if (!window.confirm(`Reset ${entry.canonicalName} to the dataset?`)) return;
+    try {
+      await resetEntry(subjectId, entry.id);
+      await reloadEntries();
+      if (route.kind === "entry") {
+        navigateReplace(atlasEntryHref(subjectId, entry.originKey));
+      }
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Could not reset entry",
+      );
+    }
+  }
+
   let body;
   if (error) {
     body = <Alert severity="error">{error}</Alert>;
@@ -152,10 +184,16 @@ export default function AtlasPage({
         onOpenEntry={(id) => navigate(atlasEntryHref(subjectId, id))}
         onCompare={(a, b) => navigate(atlasCompareHref(subjectId, a, b))}
         stagger={!staggered.current}
+        onAddEntry={canMutate ? () => setAddOpen(true) : undefined}
+        onRecentlyDeleted={canMutate ? () => setDeletedOpen(true) : undefined}
+        onEditEntry={canMutate ? (entry) => setEditEntry(entry) : undefined}
       />
     );
   } else if (route.kind === "entry") {
-    const entry = loaded.entries.find((e) => e.id === route.key);
+    const entry =
+      loaded.entries.find((e) => e.id === route.key) ??
+      loaded.entries.find((e) => e.originKey === route.key) ??
+      null;
     body = entry ? (
       <EntryView
         entry={entry}
@@ -163,6 +201,12 @@ export default function AtlasPage({
         entryHref={(id) => atlasEntryHref(subjectId, id)}
         onOpen={(id) => navigate(atlasEntryHref(subjectId, id))}
         onStep={(id) => navigateReplace(atlasEntryHref(subjectId, id))}
+        onEdit={canMutate ? () => setEditEntry(entry) : undefined}
+        onReset={
+          canMutate && entry.originKey && entry.editedAt
+            ? () => void onResetEntry(entry)
+            : undefined
+        }
       />
     ) : (
       <Notice
@@ -198,6 +242,37 @@ export default function AtlasPage({
     >
       <Box sx={{ mb: 1 }}>{crumb}</Box>
       {body}
+      {canMutate ? (
+        <>
+          <AddEntryDialog
+            open={addOpen}
+            subjectId={subjectId}
+            onClose={() => setAddOpen(false)}
+            onDone={(entry) => {
+              void reloadEntries().then(() =>
+                navigate(atlasEntryHref(subjectId, entry.id)),
+              );
+            }}
+          />
+          <EditEntryDialog
+            open={editEntry !== null}
+            subjectId={subjectId}
+            entry={editEntry}
+            onClose={() => setEditEntry(null)}
+            onDone={() => {
+              void reloadEntries();
+            }}
+          />
+          <RecentlyDeletedDialog
+            open={deletedOpen}
+            subjectId={subjectId}
+            onClose={() => setDeletedOpen(false)}
+            onChanged={() => {
+              void reloadEntries();
+            }}
+          />
+        </>
+      ) : null}
     </Box>
   );
 }

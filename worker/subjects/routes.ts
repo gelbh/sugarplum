@@ -17,7 +17,7 @@ function newId(): string {
   return crypto.randomUUID();
 }
 
-async function requireOwnedSubject(
+export async function requireOwnedSubject(
   db: D1Database,
   subjectId: string,
   userId: string,
