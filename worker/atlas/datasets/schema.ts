@@ -117,10 +117,34 @@ export const datasetEntrySchema = z
         message: "key must derive from canonicalName",
       });
     }
+    const imageIds = new Set(e.images.map((img) => img.id));
+    let diagnosticCount = 0;
     e.fields.lifecycleStages.forEach((stage, i) => {
+      const path = ["fields", "lifecycleStages", i];
+      if (stage.diagnostic) diagnosticCount += 1;
+      if (stage.imageId !== null && !imageIds.has(stage.imageId)) {
+        ctx.addIssue({
+          code: "custom",
+          path: [...path, "imageId"],
+          message: `${stage.imageId} is not an image on this entry`,
+        });
+      }
+      const needsStageRef =
+        stage.infective ||
+        stage.durationDays !== null ||
+        stage.transmission !== null;
+      if (
+        needsStageRef &&
+        !e.refs.some((r) => r.field === "lifecycleStages")
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: [...path],
+          message: "infective, durationDays, or transmission needs a lifecycleStages ref",
+        });
+      }
       if (stage.hostRole === null || stage.hostRole === "environment") return;
       const hosts = e.fields[ROLE_HOSTS[stage.hostRole]];
-      const path = ["fields", "lifecycleStages", i];
       if (hosts.length === 0) {
         ctx.addIssue({
           code: "custom",
@@ -138,6 +162,13 @@ export const datasetEntrySchema = z
         });
       }
     });
+    if (diagnosticCount > 1) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["fields", "lifecycleStages"],
+        message: "at most one diagnostic stage",
+      });
+    }
     if (!e.refs.some((r) => r.field === null)) {
       ctx.addIssue({
         code: "custom",
