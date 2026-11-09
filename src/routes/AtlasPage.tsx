@@ -15,6 +15,7 @@ import { ApiError, listSubjects, me } from "../api/client";
 import {
   AddEntryDialog,
   EditEntryDialog,
+  EditLifecycleDialog,
   RecentlyDeletedDialog,
 } from "../atlas/AtlasMutateDialogs";
 import { apiAtlasSource, resetEntry } from "../atlas/apiSource";
@@ -100,6 +101,9 @@ export default function AtlasPage({
   const [addOpen, setAddOpen] = useState(false);
   const [deletedOpen, setDeletedOpen] = useState(false);
   const [editEntry, setEditEntry] = useState<AtlasEntryView | null>(null);
+  const [editLifecycle, setEditLifecycle] = useState<AtlasEntryView | null>(
+    null,
+  );
   // The first-load stagger runs once per page mount, not again on Back from an entry.
   const staggered = useRef(false);
   useEffect(() => {
@@ -202,6 +206,9 @@ export default function AtlasPage({
         onOpen={(id) => navigate(atlasEntryHref(subjectId, id))}
         onStep={(id) => navigateReplace(atlasEntryHref(subjectId, id))}
         onEdit={canMutate ? () => setEditEntry(entry) : undefined}
+        onEditLifecycle={
+          canMutate ? () => setEditLifecycle(entry) : undefined
+        }
         onReset={
           canMutate && entry.originKey && entry.editedAt
             ? () => void onResetEntry(entry)
@@ -259,6 +266,15 @@ export default function AtlasPage({
             subjectId={subjectId}
             entry={editEntry}
             onClose={() => setEditEntry(null)}
+            onDone={() => {
+              void reloadEntries();
+            }}
+          />
+          <EditLifecycleDialog
+            open={editLifecycle !== null}
+            subjectId={subjectId}
+            entry={editLifecycle}
+            onClose={() => setEditLifecycle(null)}
             onDone={() => {
               void reloadEntries();
             }}

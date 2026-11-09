@@ -7,10 +7,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   AddEntryDialog,
   EditEntryDialog,
+  EditLifecycleDialog,
   RecentlyDeletedDialog,
 } from "../../src/atlas/AtlasMutateDialogs";
 import type { AtlasEntryView } from "../../src/atlas/types";
-import { emptyParasiteFields } from "../../worker/atlas/templates/parasite";
+import {
+  emptyParasiteFields,
+  lifecycleStageSchema,
+} from "../../worker/atlas/templates/parasite";
 
 vi.mock("../../src/atlas/apiSource", () => ({
   createEntry: vi.fn(),
@@ -27,6 +31,7 @@ import {
   listDeletedEntries,
   patchEntry,
 } from "../../src/atlas/apiSource";
+import { parseDays } from "../../src/atlas/StageListEditor";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true;
@@ -140,6 +145,117 @@ describe("AtlasMutateDialogs", () => {
       fields: { definitiveHosts: ["sheep", "cattle"] },
     });
     expect(onDone).toHaveBeenCalled();
+  });
+
+  it("PATCHes lifecycleStages from the lifecycle dialog", async () => {
+    vi.mocked(patchEntry).mockResolvedValueOnce(entry());
+    const onDone = vi.fn();
+    const start = entry({
+      fields: {
+        ...emptyParasiteFields(),
+        group: "trematode",
+        lifecycleStages: [
+          lifecycleStageSchema.parse({
+            name: "egg",
+            hostRole: "environment",
+            diagnostic: true,
+          }),
+        ],
+      },
+    });
+
+    await render(
+      createElement(EditLifecycleDialog, {
+        open: true,
+        subjectId: "sub-1",
+        entry: start,
+        onClose: () => {},
+        onDone,
+      }),
+    );
+
+    expect(document.body.textContent).toContain("Edit lifecycle");
+    expect(document.body.textContent).toContain("Live preview");
+
+    const form = document.body.querySelector("form")!;
+    await act(async () => {
+      form.dispatchEvent(
+        new Event("submit", { bubbles: true, cancelable: true }),
+      );
+    });
+
+    expect(patchEntry).toHaveBeenCalledWith(
+      "sub-1",
+      "e1",
+      expect.objectContaining({
+        fields: expect.objectContaining({
+          diagnosticStage: "egg",
+          lifecycleStages: [
+            expect.objectContaining({
+              name: "egg",
+              diagnostic: true,
+              infective: false,
+            }),
+          ],
+        }),
+      }),
+    );
+    expect(onDone).toHaveBeenCalled();
+  });
+
+  it("preserves diagnosticStage when only the legacy string is set", async () => {
+    vi.mocked(patchEntry).mockResolvedValueOnce(entry());
+    const start = entry({
+      fields: {
+        ...emptyParasiteFields(),
+        group: "trematode",
+        diagnosticStage: "egg",
+        lifecycleStages: [
+          lifecycleStageSchema.parse({
+            name: "egg",
+            hostRole: "environment",
+          }),
+        ],
+      },
+    });
+
+    await render(
+      createElement(EditLifecycleDialog, {
+        open: true,
+        subjectId: "sub-1",
+        entry: start,
+        onClose: () => {},
+        onDone: () => {},
+      }),
+    );
+
+    const form = document.body.querySelector("form")!;
+    await act(async () => {
+      form.dispatchEvent(
+        new Event("submit", { bubbles: true, cancelable: true }),
+      );
+    });
+
+    expect(patchEntry).toHaveBeenCalledWith(
+      "sub-1",
+      "e1",
+      expect.objectContaining({
+        fields: expect.objectContaining({
+          diagnosticStage: "egg",
+          lifecycleStages: [
+            expect.objectContaining({ name: "egg", diagnostic: true }),
+          ],
+        }),
+      }),
+    );
+  });
+
+  it("parseDays ignores incomplete ranges", () => {
+    expect(parseDays("14")).toEqual({ min: 14, max: 14 });
+    expect(parseDays("14-21")).toEqual({ min: 14, max: 21 });
+    expect(parseDays("14-")).toBeNull();
+    expect(parseDays("to")).toBeNull();
+    expect(parseDays("")).toBeNull();
   });
 
   it("hides permanent delete for dataset origin tombstones", async () => {

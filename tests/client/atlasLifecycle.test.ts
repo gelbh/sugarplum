@@ -7,6 +7,7 @@ import {
   durationLabel,
   lifecycleModel,
   pppBracket,
+  stageIsDiagnostic,
   stageLanes,
   stageSpan,
   windowLit,
@@ -115,6 +116,28 @@ describe("pppBracket and durationLabel", () => {
     expect(durationLabel({ min: 1, max: 1 })).toBe("about 1 day");
     expect(durationLabel({ min: 10, max: 21 })).toBe("about 1 to 3 weeks");
     expect(durationLabel({ min: 1, max: 21 })).toBe("about 1 to 3 weeks");
+  });
+});
+
+describe("stageIsDiagnostic", () => {
+  it("prefers the stage flag, else matches diagnosticStage name", () => {
+    const f = fields("fasciola-hepatica");
+    expect(stageIsDiagnostic(f.lifecycleStages[0], "egg")).toBe(true);
+    expect(stageIsDiagnostic(f.lifecycleStages[5], "egg")).toBe(false);
+    expect(
+      stageIsDiagnostic(
+        { ...f.lifecycleStages[5], diagnostic: true },
+        "egg",
+      ),
+    ).toBe(true);
+  });
+
+  it("marks infective and transmission on the Fasciola pilot", () => {
+    const f = fields("fasciola-hepatica");
+    expect(f.lifecycleStages[5].infective).toBe(true);
+    expect(f.lifecycleStages[5].transmission).toBe(
+      "encysts on aquatic vegetation",
+    );
   });
 });
 

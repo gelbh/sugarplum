@@ -1,5 +1,6 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -9,8 +10,12 @@ import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { ZodError } from "zod";
 import { ApiError } from "../api/client";
-import { PARASITE_GROUPS } from "../../worker/atlas/templates/parasite";
+import {
+  PARASITE_GROUPS,
+  lifecycleStageSchema,
+} from "../../worker/atlas/templates/parasite";
 import {
   createEntry,
   listDeletedEntries,
@@ -21,12 +26,35 @@ import {
   softDeleteEntry,
 } from "./apiSource";
 import { GROUP_LABELS } from "./filter";
-import type { AtlasEntryView, ParasiteGroup } from "./types";
+import LifecycleBoard from "./LifecycleBoard";
+import { stageIsDiagnostic } from "./lifecycle";
+import StageListEditor, { type StageDraft } from "./StageListEditor";
+import type { AtlasEntryView, DatasetFields, ParasiteGroup } from "./types";
+
+/** Lift entry-level diagnosticStage into stage.diagnostic so save does not wipe legacy rows. */
+function hydrateLifecycleDraft(
+  stages: StageDraft[],
+  diagnosticStage: string | null,
+): StageDraft[] {
+  return stages.map((s) => ({
+    ...s,
+    diagnostic: stageIsDiagnostic(s, diagnosticStage),
+  }));
+}
+
+function diagnosticStageFromDraft(stages: StageDraft[]): string | null {
+  const flagged = stages.filter((s) => s.diagnostic);
+  return flagged.length === 1 ? flagged[0].name : null;
+}
 
 type Busy = boolean;
 
 function errMessage(err: unknown, fallback: string): string {
-  return err instanceof ApiError ? err.message : fallback;
+  if (err instanceof ApiError) return err.message;
+  if (err instanceof ZodError) {
+    return err.issues.map((i) => i.message).join("; ") || fallback;
+  }
+  return fallback;
 }
 
 function parseHostList(raw: string): string[] {
@@ -264,6 +292,148 @@ export function EditEntryDialog({
               {busy ? "Saving…" : "Save"}
             </Button>
           </Stack>
+        </DialogActions>
+      </form>
+    </Dialog>
+  );
+}
+
+type LifecycleEditProps = {
+  open: boolean;
+  subjectId: string;
+  entry: AtlasEntryView | null;
+  onClose: () => void;
+  onDone: () => void;
+};
+
+export function EditLifecycleDialog({
+  open,
+  subjectId,
+  entry,
+  onClose,
+  onDone,
+}: LifecycleEditProps) {
+  const [stages, setStages] = useState<StageDraft[]>([]);
+  const [busy, setBusy] = useState<Busy>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open || !entry) return;
+    setStages(
+      hydrateLifecycleDraft(
+        structuredClone(entry.fields.lifecycleStages),
+        entry.fields.diagnosticStage,
+      ),
+    );
+    setError(null);
+    setBusy(false);
+  }, [open, entry]);
+
+  const previewFields = useMemo((): DatasetFields | null => {
+    if (!entry) return null;
+    return {
+      ...entry.fields,
+      // Preview accepts free-text hosts the same way learner overlays do.
+      lifecycleStages: stages as DatasetFields["lifecycleStages"],
+      diagnosticStage: diagnosticStageFromDraft(stages),
+    };
+  }, [entry, stages]);
+
+  async function onSubmit(ev: FormEvent) {
+    ev.preventDefault();
+    if (!entry) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const parsed = stages.map((s) => lifecycleStageSchema.parse(s));
+      const diagnosticStages = parsed.filter((s) => s.diagnostic);
+      if (diagnosticStages.length > 1) {
+        setError("At most one diagnostic stage");
+        setBusy(false);
+        return;
+      }
+      const imageIds = new Set(entry.images.map((img) => img.id));
+      for (const s of parsed) {
+        if (s.imageId && !imageIds.has(s.imageId)) {
+          setError(`Unknown image id: ${s.imageId}`);
+          setBusy(false);
+          return;
+        }
+      }
+      // Keep entry-level diagnosticStage in sync with the stage flag (one owner on write).
+      const diagnosticStage = diagnosticStageFromDraft(parsed);
+      await patchEntry(subjectId, entry.id, {
+        fields: {
+          lifecycleStages: parsed as DatasetFields["lifecycleStages"],
+          diagnosticStage,
+        },
+      });
+      onDone();
+      onClose();
+    } catch (err) {
+      setError(errMessage(err, "Could not save lifecycle"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={() => !busy && onClose()}
+      fullWidth
+      maxWidth="lg"
+    >
+      <form onSubmit={onSubmit}>
+        <DialogTitle>
+          Edit lifecycle
+          {entry ? (
+            <>
+              {" — "}
+              <em>{entry.canonicalName}</em>
+            </>
+          ) : null}
+        </DialogTitle>
+        <DialogContent>
+          {error ? (
+            <Alert severity="error" sx={{ mb: 1.5 }}>
+              {error}
+            </Alert>
+          ) : null}
+          <Stack spacing={2}>
+            <StageListEditor
+              stages={stages}
+              onChange={setStages}
+              disabled={busy}
+            />
+            <Box
+              sx={{
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 1,
+                p: 1.5,
+              }}
+            >
+              <Typography sx={{ fontWeight: 600, mb: 1, fontSize: "0.9rem" }}>
+                Live preview
+              </Typography>
+              {previewFields ? (
+                <LifecycleBoard
+                  fields={previewFields}
+                  images={entry?.images}
+                  preview
+                />
+              ) : null}
+            </Box>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose} disabled={busy}>
+            Cancel
+          </Button>
+          <Button type="submit" variant="contained" disabled={busy || !entry}>
+            {busy ? "Saving…" : "Save"}
+          </Button>
         </DialogActions>
       </form>
     </Dialog>

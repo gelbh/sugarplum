@@ -2,33 +2,52 @@ import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
+import Chip from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import AtlasImage from "./AtlasImage";
 import { termLabel } from "./filter";
 import {
   durationLabel,
   lifecycleModel,
+  stageIsDiagnostic,
   stageSpan,
   windowLit,
   type Axis,
   type DaySpan,
   type DetectableWindow,
+  type HostRole,
   type PppBracket,
 } from "./lifecycle";
 import { isShortcutTarget } from "./keys";
 import TermList from "./TermList";
-import type { DatasetFields } from "./types";
+import type { AtlasImageView, DatasetFields } from "./types";
 
-type Props = { fields: DatasetFields };
+type Props = {
+  fields: DatasetFields;
+  images?: AtlasImageView[];
+  onCiteLifecycle?: () => void;
+  onEditLifecycle?: () => void;
+  /** Compact preview inside the stage editor (no step list / edit chrome). */
+  preview?: boolean;
+};
 
 const PLAY_STEP_MS = 1200;
 const MARKER_MS = 300;
 const LABEL_COL = { xs: "120px", sm: "148px" };
-// Phones scroll the board, so their columns can fit the longest stage name ("Metacercaria").
-const STAGE_MIN_PX = { xs: 100, sm: 84 };
-const LANE_PX = 72;
+// Phones scroll the board; room for badges on stage cards.
+const STAGE_MIN_PX = { xs: 112, sm: 96 };
+const LANE_PX = 88;
+
+const laneWash = (role: HostRole | null, primary: string) => {
+  if (role === "definitive") return alpha(primary, 0.12);
+  if (role === "intermediate") return alpha(primary, 0.07);
+  if (role === "paratenic") return alpha(primary, 0.09);
+  if (role === "environment") return alpha(primary, 0.03);
+  return "transparent";
+};
 
 const motion = (props: string) => ({
   transition: props
@@ -40,11 +59,21 @@ const motion = (props: string) => ({
 
 const pct = (day: number, ax: Axis) => `${(day / ax.endDay) * 100}%`;
 
-export default function LifecycleBoard({ fields }: Props) {
+export default function LifecycleBoard({
+  fields,
+  images = [],
+  onCiteLifecycle,
+  onEditLifecycle,
+  preview = false,
+}: Props) {
   const model = useMemo(() => lifecycleModel(fields), [fields]);
   const stages = fields.lifecycleStages;
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
+
+  useEffect(() => {
+    setIndex((i) => Math.min(i, Math.max(0, stages.length - 1)));
+  }, [stages.length]);
   const playRef = useRef<HTMLButtonElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -173,6 +202,7 @@ export default function LifecycleBoard({ fields }: Props) {
                   pr: 1.5,
                   borderBottom: "1px dashed",
                   borderColor: "divider",
+                  bgcolor: (t) => laneWash(lane.role, t.palette.primary.main),
                 }}
               >
                 <Typography sx={{ fontWeight: 600, fontSize: "0.84rem" }}>
@@ -212,6 +242,18 @@ export default function LifecycleBoard({ fields }: Props) {
                 }px, ${t.palette.divider} ${LANE_PX - 1}px ${LANE_PX}px)`,
             }}
           >
+            {lanes.map((lane, li) => (
+              <Box
+                key={`wash-${lane.key}`}
+                aria-hidden
+                sx={{
+                  gridColumn: `1 / -1`,
+                  gridRow: li + 1,
+                  bgcolor: (t) => laneWash(lane.role, t.palette.primary.main),
+                  pointerEvents: "none",
+                }}
+              />
+            ))}
             <Box
               aria-hidden
               sx={{
@@ -226,56 +268,112 @@ export default function LifecycleBoard({ fields }: Props) {
                   stageLane[index] * 100
                 }%)`,
                 ...motion("transform"),
+                zIndex: 1,
               }}
             />
-            {stages.map((s, i) => (
-              <Box
-                key={`${s.name}-${i}`}
-                sx={{
-                  gridColumn: i + 1,
-                  gridRow: stageLane[i] + 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  px: 0.75,
-                  minWidth: 0,
-                  zIndex: 1,
-                }}
-              >
-                <Typography
-                  component="span"
+            {stages.map((s, i) => {
+              const diagnostic = stageIsDiagnostic(s, fields.diagnosticStage);
+              return (
+                <Box
+                  key={`${s.name}-${i}`}
                   sx={{
-                    fontSize: "0.72rem",
-                    fontWeight: 700,
-                    color: i === index ? "primary.main" : "text.secondary",
-                    fontVariantNumeric: "tabular-nums",
+                    gridColumn: i + 1,
+                    gridRow: stageLane[i] + 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    px: 0.5,
+                    py: 0.5,
+                    minWidth: 0,
+                    zIndex: 2,
                   }}
                 >
-                  {i + 1}
-                </Typography>
-                <Typography
-                  component="span"
-                  sx={{
-                    fontSize: "0.82rem",
-                    fontWeight: 600,
-                    lineHeight: 1.2,
-                    hyphens: "auto",
-                    overflowWrap: "break-word",
-                  }}
-                >
-                  {termLabel(s.name)}
-                </Typography>
-                {s.durationDays ? (
-                  <Typography
-                    component="span"
-                    color="text.secondary"
-                    sx={{ fontSize: "0.72rem", lineHeight: 1.25 }}
+                  <Box
+                    sx={{
+                      border: 1,
+                      borderColor: i === index ? "primary.main" : "divider",
+                      borderRadius: 1,
+                      bgcolor: "background.paper",
+                      px: 0.75,
+                      py: 0.5,
+                      minHeight: LANE_PX - 12,
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                      gap: 0.25,
+                      position: "relative",
+                    }}
                   >
-                    {durationLabel(s.durationDays)}
-                  </Typography>
-                ) : null}
-              </Box>
-            ))}
+                    {s.transmission ? (
+                      <Typography
+                        component="span"
+                        sx={{
+                          fontSize: "0.62rem",
+                          lineHeight: 1.2,
+                          color: "primary.main",
+                          fontWeight: 600,
+                        }}
+                      >
+                        ← {s.transmission}
+                      </Typography>
+                    ) : null}
+                    <Typography
+                      component="span"
+                      sx={{
+                        fontSize: "0.7rem",
+                        fontWeight: 700,
+                        color: i === index ? "primary.main" : "text.secondary",
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      {i + 1}
+                    </Typography>
+                    <Typography
+                      component="span"
+                      sx={{
+                        fontSize: "0.78rem",
+                        fontWeight: 600,
+                        lineHeight: 1.15,
+                        hyphens: "auto",
+                        overflowWrap: "break-word",
+                      }}
+                    >
+                      {termLabel(s.name)}
+                    </Typography>
+                    {s.durationDays ? (
+                      <Typography
+                        component="span"
+                        color="text.secondary"
+                        sx={{ fontSize: "0.68rem", lineHeight: 1.2 }}
+                      >
+                        {durationLabel(s.durationDays)}
+                      </Typography>
+                    ) : null}
+                    {s.infective || diagnostic ? (
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.4 }}>
+                        {s.infective ? (
+                          <Chip
+                            size="small"
+                            label="Infective"
+                            color="primary"
+                            sx={{ height: 18, fontSize: "0.62rem" }}
+                          />
+                        ) : null}
+                        {diagnostic ? (
+                          <Chip
+                            size="small"
+                            label="Diagnostic"
+                            variant="outlined"
+                            color="primary"
+                            sx={{ height: 18, fontSize: "0.62rem" }}
+                          />
+                        ) : null}
+                      </Box>
+                    ) : null}
+                  </Box>
+                </Box>
+              );
+            })}
           </Box>
         </Box>
       </Box>
@@ -286,31 +384,46 @@ export default function LifecycleBoard({ fields }: Props) {
           ppp={model.ppp}
           windows={model.windows}
           span={span}
+          emphasizePpp={current.hostRole === "definitive"}
+        />
+      ) : null}
+
+      {!preview ? (
+        <SelectedStagePanel
+          stage={current}
+          diagnosticStage={fields.diagnosticStage}
+          index={index}
+          total={stages.length}
+          image={
+            current.imageId
+              ? (images.find((img) => img.id === current.imageId) ?? null)
+              : null
+          }
+          onCite={onCiteLifecycle}
+          onEdit={onEditLifecycle}
         />
       ) : null}
 
       <Box
         sx={{
-          mt: 2.5,
+          mt: preview ? 1.5 : 2.5,
           pt: 2,
           borderTop: 1,
           borderColor: "divider",
         }}
       >
-        <Typography
-          aria-live="polite"
-          color="text.secondary"
-          sx={{ mb: 1.25, fontSize: "0.92rem" }}
-        >
-          Now, step {index + 1} of {stages.length}:{" "}
-          <Box component="b" sx={{ color: "text.primary" }}>
-            {termLabel(current.name)}
-          </Box>
-          {current.location ? `, ${current.location}` : null}
-          {current.durationDays
-            ? ` (${durationLabel(current.durationDays)})`
-            : null}
-        </Typography>
+        {preview ? (
+          <Typography
+            aria-live="polite"
+            color="text.secondary"
+            sx={{ mb: 1.25, fontSize: "0.86rem" }}
+          >
+            Step {index + 1} of {stages.length}:{" "}
+            <Box component="b" sx={{ color: "text.primary" }}>
+              {termLabel(current.name)}
+            </Box>
+          </Typography>
+        ) : null}
         <Box
           sx={{
             display: { xs: "grid", sm: "flex" },
@@ -348,14 +461,103 @@ export default function LifecycleBoard({ fields }: Props) {
         </Box>
       </Box>
 
-      <StepList
-        stages={stages}
-        index={index}
-        onPick={(i) => {
-          setPlaying(false);
-          setIndex(i);
-        }}
-      />
+      {!preview ? (
+        <StepList
+          stages={stages}
+          index={index}
+          onPick={(i) => {
+            setPlaying(false);
+            setIndex(i);
+          }}
+        />
+      ) : null}
+    </Box>
+  );
+}
+
+function SelectedStagePanel({
+  stage,
+  diagnosticStage,
+  index,
+  total,
+  image,
+  onCite,
+  onEdit,
+}: {
+  stage: DatasetFields["lifecycleStages"][number];
+  diagnosticStage: string | null;
+  index: number;
+  total: number;
+  image: AtlasImageView | null;
+  onCite?: () => void;
+  onEdit?: () => void;
+}) {
+  const diagnostic = stageIsDiagnostic(stage, diagnosticStage);
+  return (
+    <Box
+      sx={{
+        mt: 2,
+        p: 1.75,
+        border: 1,
+        borderColor: "divider",
+        borderRadius: 1.5,
+        display: "grid",
+        gridTemplateColumns: image ? { xs: "1fr", sm: "1fr 112px" } : "1fr",
+        gap: 1.5,
+        alignItems: "start",
+      }}
+    >
+      <Box>
+        <Typography
+          aria-live="polite"
+          sx={{ fontSize: "0.92rem", fontWeight: 600 }}
+        >
+          Now, step {index + 1} of {total}: {termLabel(stage.name)}
+        </Typography>
+        <Typography color="text.secondary" sx={{ mt: 0.5, fontSize: "0.86rem" }}>
+          {[
+            stage.location,
+            stage.durationDays ? durationLabel(stage.durationDays) : null,
+            stage.host ? termLabel(stage.host) : null,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </Typography>
+        {stage.note ? (
+          <Typography sx={{ mt: 1, fontSize: "0.9rem" }}>{stage.note}</Typography>
+        ) : null}
+        {stage.transmission ? (
+          <Typography color="text.secondary" sx={{ mt: 0.75, fontSize: "0.84rem" }}>
+            Arrives via: {stage.transmission}
+          </Typography>
+        ) : null}
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1 }}>
+          {stage.infective ? (
+            <Chip size="small" label="Infective" color="primary" />
+          ) : null}
+          {diagnostic ? (
+            <Chip
+              size="small"
+              label="Diagnostic"
+              variant="outlined"
+              color="primary"
+            />
+          ) : null}
+          {onCite ? (
+            <Button size="small" onClick={onCite}>
+              Cite
+            </Button>
+          ) : null}
+          {onEdit ? (
+            <Button size="small" variant="outlined" onClick={onEdit}>
+              Edit lifecycle
+            </Button>
+          ) : null}
+        </Box>
+      </Box>
+      {image ? (
+        <AtlasImage image={image} ratio="1" compact sx={{ borderRadius: 1 }} />
+      ) : null}
     </Box>
   );
 }
@@ -473,11 +675,13 @@ function Timeline({
   ppp,
   windows,
   span,
+  emphasizePpp = false,
 }: {
   axis: Axis;
   ppp: PppBracket | null;
   windows: DetectableWindow[];
   span: DaySpan | null;
+  emphasizePpp?: boolean;
 }) {
   const unit = ax.unit === "weeks" ? "Weeks" : "Days";
   const rows = ["18px", "22px", ...(ppp ? ["30px"] : []), "auto"];
@@ -587,9 +791,9 @@ function Timeline({
                 width: pct(ppp.endDay, ax),
                 top: 0,
                 height: 10,
-                border: "1.5px solid",
+                border: emphasizePpp ? "2px solid" : "1.5px solid",
                 borderTop: 0,
-                borderColor: "text.primary",
+                borderColor: emphasizePpp ? "primary.main" : "text.primary",
                 borderRadius: "0 0 3px 3px",
               }}
             />
@@ -604,7 +808,7 @@ function Timeline({
                 textAlign: "center",
                 fontSize: "0.74rem",
                 fontWeight: 700,
-                color: "text.primary",
+                color: emphasizePpp ? "primary.main" : "text.primary",
               }}
             >
               {ppp.label}

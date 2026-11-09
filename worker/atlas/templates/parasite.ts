@@ -50,6 +50,11 @@ export const lifecycleStageSchema = z.object({
   hostRole: z.enum(STAGE_HOST_ROLES).nullable().default(null),
   host: optionalText,
   durationDays: pppDaysSchema.nullable().default(null),
+  infective: z.boolean().default(false),
+  diagnostic: z.boolean().default(false),
+  transmission: optionalText,
+  note: optionalText,
+  imageId: optionalText,
 });
 
 export const parasiteFieldsSchema = z.object({
