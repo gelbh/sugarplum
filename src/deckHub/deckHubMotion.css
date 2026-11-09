@@ -1,0 +1,51 @@
+/* Deck hub workshop view transitions (atlas grammar; React ViewTransition classes). */
+::view-transition-group(.deck-hub-workshop) {
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+::view-transition-old(.deck-hub-workshop),
+::view-transition-new(.deck-hub-workshop) {
+  height: 100%;
+  object-fit: cover;
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+::view-transition-old(.deck-hub-workshop) {
+  animation-name: deck-hub-workshop-exit;
+}
+
+::view-transition-new(.deck-hub-workshop) {
+  animation-name: deck-hub-workshop-enter;
+}
+
+@keyframes deck-hub-workshop-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes deck-hub-workshop-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(.deck-hub-workshop),
+  ::view-transition-old(.deck-hub-workshop),
+  ::view-transition-new(.deck-hub-workshop) {
+    animation-duration: 0s !important;
+  }
+}
