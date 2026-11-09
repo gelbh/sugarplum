@@ -24,6 +24,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import CoverPickerDialog from "../components/CoverPickerDialog";
 import OperateSection from "../components/OperateSection";
+import CompositionSpark from "../components/CompositionSpark";
 import ShelfVolume from "../components/ShelfVolume";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
@@ -50,6 +51,7 @@ import {
   type MaterialListItem,
   type StoredCoverRow,
   type Subject,
+  type SubjectCompositionSummary,
   getJourney,
 } from "../api/client";
 import { deriveJourney } from "../journey/derive";
@@ -104,8 +106,8 @@ export default function LibraryPage() {
     subject: Subject;
   } | null>(null);
   const [covers, setCovers] = useState<StoredCoverRow[]>([]);
-  const [graduatedBySubject, setGraduatedBySubject] = useState<
-    Record<string, number | null>
+  const [compositionBySubject, setCompositionBySubject] = useState<
+    Record<string, Omit<SubjectCompositionSummary, "subjectId">>
   >({});
   const [coverPicker, setCoverPicker] = useState<CoverTarget | null>(null);
   /** Selection is deck ids only; subject checkbox toggles all decks in that subject. */
@@ -157,6 +159,25 @@ export default function LibraryPage() {
     setDecks(await listDecks());
   }, []);
 
+  const applyCompositionSummaries = useCallback(
+    (summaries: SubjectCompositionSummary[]) => {
+      setCompositionBySubject(
+        Object.fromEntries(
+          summaries.map(({ subjectId, ...rest }) => [subjectId, rest]),
+        ),
+      );
+    },
+    [],
+  );
+
+  const refreshCompositionSummaries = useCallback(async () => {
+    try {
+      applyCompositionSummaries(await listSubjectCompositionSummaries());
+    } catch {
+      applyCompositionSummaries([]);
+    }
+  }, [applyCompositionSummaries]);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -181,11 +202,7 @@ export default function LibraryPage() {
         setDraftJobs(jobs);
         setMaterials(materialList);
         setCovers(coverList);
-        setGraduatedBySubject(
-          Object.fromEntries(
-            summaries.map((row) => [row.subjectId, row.graduatedPct]),
-          ),
-        );
+        applyCompositionSummaries(summaries);
         setReady(true);
         endLoad();
         void calendar.refresh();
@@ -548,6 +565,7 @@ export default function LibraryPage() {
                       ? "1 deck"
                       : `${deckCount} decks`;
                 const href = `/library/subjects/${encodeURIComponent(s.id)}`;
+                const composition = compositionBySubject[s.id];
                 return (
                   <Grid key={s.id} component="li" size={{ xs: 12, md: 6 }}>
                     <ShelfVolume
@@ -569,9 +587,20 @@ export default function LibraryPage() {
                       }}
                       meta={meta}
                       chip={
-                        graduatedBySubject[s.id] != null
-                          ? `${graduatedBySubject[s.id]}% graduated`
+                        composition?.graduatedPct != null
+                          ? `${composition.graduatedPct}% graduated`
                           : null
+                      }
+                      spark={
+                        composition != null && composition.total > 0 ? (
+                          <CompositionSpark
+                            new={composition.new}
+                            learning={composition.learning}
+                            young={composition.young}
+                            mature={composition.mature}
+                            total={composition.total}
+                          />
+                        ) : null
                       }
                       studyLabel="Study"
                       onStudy={() => {
@@ -791,6 +820,7 @@ export default function LibraryPage() {
                   await refreshSubjects();
                   await calendar.refresh();
                   await refreshDecks();
+                  await refreshCompositionSummaries();
                 }}
               />
             </OperateSection>

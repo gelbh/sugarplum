@@ -4,11 +4,9 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import {
-  cardFromScheduleRow,
-  retrievability,
-} from "../../src/study/retrievability";
-import { aggregateSubjectKnowledge } from "../../src/study/subjectKnowledge";
-import { aggregateSubjectRecall } from "../../src/study/subjectRecall";
+  aggregateSubjectKnowledge,
+  composeSubjectKnowledge,
+} from "../../src/study/subjectKnowledge";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -161,6 +159,10 @@ subjectRoutes.get("/composition-summaries", async (c) => {
         subjectId,
         total: agg.total,
         graduatedPct: agg.graduatedPct,
+        new: agg.new,
+        learning: agg.learning,
+        young: agg.young,
+        mature: agg.mature,
       };
     }),
   );
@@ -237,58 +239,20 @@ subjectRoutes.get("/:id/composition", async (c) => {
     }>();
 
   const now = new Date();
-  const bucketRows: Array<{
-    state: number | null;
-    scheduled_days: number | null;
-  }> = [];
-  const rValues: Array<number | null> = [];
+  const rows = (results ?? []).map((row) => ({
+    state: row.state ?? null,
+    scheduled_days: row.scheduled_days ?? null,
+    due: row.due ?? null,
+    stability: row.stability ?? null,
+    difficulty: row.difficulty ?? null,
+    elapsed_days: row.elapsed_days ?? null,
+    learning_steps: row.learning_steps ?? null,
+    reps: row.reps ?? null,
+    lapses: row.lapses ?? null,
+    last_review: row.last_review ?? null,
+  }));
 
-  for (const row of results ?? []) {
-    bucketRows.push({
-      state: row.state ?? null,
-      scheduled_days: row.scheduled_days ?? null,
-    });
-    if (
-      row.due == null ||
-      row.stability == null ||
-      row.difficulty == null ||
-      row.elapsed_days == null ||
-      row.scheduled_days == null ||
-      row.learning_steps == null ||
-      row.reps == null ||
-      row.lapses == null ||
-      row.state == null
-    ) {
-      rValues.push(null);
-      continue;
-    }
-    try {
-      rValues.push(
-        retrievability(
-          cardFromScheduleRow({
-            due: row.due,
-            stability: row.stability,
-            difficulty: row.difficulty,
-            elapsed_days: row.elapsed_days,
-            scheduled_days: row.scheduled_days,
-            learning_steps: row.learning_steps,
-            reps: row.reps,
-            lapses: row.lapses,
-            state: row.state,
-            last_review: row.last_review,
-          }),
-          now,
-        ),
-      );
-    } catch {
-      rValues.push(null);
-    }
-  }
-
-  return c.json({
-    ...aggregateSubjectKnowledge(bucketRows),
-    ...aggregateSubjectRecall(rValues),
-  });
+  return c.json(composeSubjectKnowledge(rows, now));
 });
 
 subjectRoutes.delete("/:id", async (c) => {

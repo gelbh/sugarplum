@@ -4,6 +4,7 @@ import {
   MATURE_INTERVAL_DAYS,
   aggregateSubjectKnowledge,
   classifyKnowledgeBucket,
+  composeSubjectKnowledge,
 } from "../../src/study/subjectKnowledge";
 
 describe("classifyKnowledgeBucket", () => {
@@ -76,5 +77,57 @@ describe("aggregateSubjectKnowledge", () => {
       graduated: 2,
       graduatedPct: 50,
     });
+  });
+});
+
+describe("composeSubjectKnowledge", () => {
+  const incomplete = {
+    state: null as number | null,
+    scheduled_days: null as number | null,
+    due: null as string | null,
+    stability: null as number | null,
+    difficulty: null as number | null,
+    elapsed_days: null as number | null,
+    learning_steps: null as number | null,
+    reps: null as number | null,
+    lapses: null as number | null,
+    last_review: null as string | null,
+  };
+
+  it("incomplete rows → buckets only, null avg, 0 count", () => {
+    const out = composeSubjectKnowledge(
+      [incomplete],
+      new Date("2026-11-09T12:00:00.000Z"),
+    );
+    expect(out.total).toBe(1);
+    expect(out.new).toBe(1);
+    expect(out.avgRetrievability).toBeNull();
+    expect(out.etk).toBe(0);
+    expect(out.recallCardCount).toBe(0);
+  });
+
+  it("complete Review row → non-null R and recallCardCount 1", () => {
+    const out = composeSubjectKnowledge(
+      [
+        {
+          state: State.Review,
+          scheduled_days: 10,
+          due: "2026-11-10T12:00:00.000Z",
+          stability: 10,
+          difficulty: 5,
+          elapsed_days: 0,
+          learning_steps: 0,
+          reps: 1,
+          lapses: 0,
+          last_review: "2026-11-09T12:00:00.000Z",
+        },
+      ],
+      new Date("2026-11-09T12:00:00.000Z"),
+    );
+    expect(out.young).toBe(1);
+    expect(out.total).toBe(1);
+    expect(out.recallCardCount).toBe(1);
+    expect(out.avgRetrievability).not.toBeNull();
+    expect(out.avgRetrievability).toBe(out.etk);
   });
 });
