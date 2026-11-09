@@ -1732,6 +1732,38 @@ export function createTestEnv(opts?: {
             .filter((row): row is NonNullable<typeof row> => row != null);
           return { results: rows as T[] };
         }
+        if (
+          normalized.includes("sugarplum:subject-composition-summaries-subjects")
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...subjects.values()]
+            .filter((s) => s.user_id === userId)
+            .sort((a, b) => a.created_at.localeCompare(b.created_at))
+            .map((s) => ({ id: s.id }));
+          return { results: rows as T[] };
+        }
+        if (normalized.includes("sugarplum:subject-composition-summaries-rows")) {
+          const userId = bound[0] as string;
+          const rows = [...cards.values()]
+            .filter((card) => {
+              if (card.status !== "accepted") return false;
+              const deck = decks.get(card.deck_id);
+              if (!deck || deck.user_id !== userId || deck.subject_id == null) {
+                return false;
+              }
+              return true;
+            })
+            .map((card) => {
+              const deck = decks.get(card.deck_id)!;
+              const schedule = schedules.get(card.id);
+              return {
+                subject_id: deck.subject_id,
+                state: schedule?.state ?? null,
+                scheduled_days: schedule?.scheduled_days ?? null,
+              };
+            });
+          return { results: rows as T[] };
+        }
         if (normalized.includes("sugarplum:subject-composition")) {
           const subjectId = bound[0] as string;
           const userId = bound[1] as string | undefined;

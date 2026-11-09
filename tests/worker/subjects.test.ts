@@ -416,6 +416,123 @@ describe("GET /api/subjects/:id/composition", () => {
   });
 });
 
+describe("GET /api/subjects/composition-summaries", () => {
+  it("401 when unauthenticated", async () => {
+    const env = createTestEnv();
+    const res = await app.request("/api/subjects/composition-summaries", {}, env);
+    expect(res.status).toBe(401);
+  });
+
+  it("returns owner summaries only with graduated pct", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedUser({
+      id: "user-b",
+      email: "b@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSubject({
+      id: "sub-empty",
+      user_id: "user-a",
+      title: "Empty",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSubject({
+      id: "sub-1",
+      user_id: "user-a",
+      title: "Anatomy",
+      created_at: "2026-01-02T00:00:00.000Z",
+    });
+    env.seedSubject({
+      id: "sub-other",
+      user_id: "user-b",
+      title: "Other",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-1",
+      user_id: "user-a",
+      title: "Bones",
+      subject_id: "sub-1",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-other",
+      user_id: "user-b",
+      title: "Stolen",
+      subject_id: "sub-other",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedCard({
+      id: "c-new",
+      deck_id: "deck-1",
+      job_id: null,
+      type: "qa",
+      front_json: JSON.stringify("New?"),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "accepted",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedCard({
+      id: "c-young",
+      deck_id: "deck-1",
+      job_id: null,
+      type: "qa",
+      front_json: JSON.stringify("Young?"),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "accepted",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSchedule({
+      card_id: "c-young",
+      due: "2026-01-02T00:00:00.000Z",
+      stability: 20,
+      difficulty: 5,
+      elapsed_days: 0,
+      scheduled_days: 20,
+      learning_steps: 0,
+      reps: 1,
+      lapses: 0,
+      state: 2,
+      last_review: "2026-01-01T12:00:00.000Z",
+    });
+    env.seedCard({
+      id: "c-other",
+      deck_id: "deck-other",
+      job_id: null,
+      type: "qa",
+      front_json: JSON.stringify("Other?"),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: null,
+      status: "accepted",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/subjects/composition-summaries",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual([
+      { subjectId: "sub-empty", total: 0, graduatedPct: null },
+      { subjectId: "sub-1", total: 2, graduatedPct: 50 },
+    ]);
+  });
+});
+
 describe("subject ownership", () => {
   it("returns 404 when PATCH targets another user's subject", async () => {
     const env = createTestEnv();

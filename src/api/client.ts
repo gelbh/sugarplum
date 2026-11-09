@@ -44,7 +44,9 @@ import {
   guestResetCardSchedule,
   guestReviewCard,
   guestSubjectComposition,
+  guestSubjectCompositionSummaries,
   type GuestHubCardBody,
+  type SubjectCompositionSummary,
 } from "../guest/store";
 import type { RejectReason } from "../lib/rejectReasons";
 import { clearDueCache } from "../study/dueCache";
@@ -53,6 +55,7 @@ import { STUDY_MEDIA_CACHE } from "../study/studyMediaCache";
 import type { SubjectKnowledge } from "../study/subjectKnowledge";
 
 export type { SubjectKnowledge } from "../study/subjectKnowledge";
+export type { SubjectCompositionSummary };
 
 export type ApiErrorBody = {
   error?: string;
@@ -606,6 +609,15 @@ export function subjectComposition(id: string) {
     }
   }
   return api<SubjectKnowledge>(`/api/subjects/${id}/composition`);
+}
+
+export function listSubjectCompositionSummaries() {
+  if (isGuest()) {
+    return Promise.resolve(guestSubjectCompositionSummaries());
+  }
+  return api<SubjectCompositionSummary[]>(
+    `/api/subjects/composition-summaries`,
+  );
 }
 
 export type ListDeckCardsOpts = { status?: "archived" };

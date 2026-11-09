@@ -429,6 +429,36 @@ export function guestDeckStats(
   };
 }
 
+export type SubjectCompositionSummary = {
+  subjectId: string;
+  total: number;
+  graduatedPct: number | null;
+};
+
+export function guestSubjectCompositionSummaries(
+  storage?: Store,
+): SubjectCompositionSummary[] {
+  const store = readStore(storage);
+  return store.subjects.map((subject) => {
+    const deckIds = new Set(
+      store.decks.filter((d) => d.subject_id === subject.id).map((d) => d.id),
+    );
+    const rows = store.cards
+      .filter((c) => deckIds.has(c.deck_id) && c.status === "accepted")
+      .map((c) => {
+        const sched = store.schedules[c.id];
+        if (!sched) return { state: null, scheduled_days: null };
+        return { state: sched.state, scheduled_days: sched.scheduled_days };
+      });
+    const agg = aggregateSubjectKnowledge(rows);
+    return {
+      subjectId: subject.id,
+      total: agg.total,
+      graduatedPct: agg.graduatedPct,
+    };
+  });
+}
+
 export function guestSubjectComposition(
   subjectId: string,
   storage?: Store,

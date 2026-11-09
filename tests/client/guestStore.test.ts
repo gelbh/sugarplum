@@ -23,6 +23,7 @@ import {
   guestRestoreCard,
   guestReviewCard,
   guestSubjectComposition,
+  guestSubjectCompositionSummaries,
 } from "../../src/guest/store";
 import { cardDueIso } from "../../src/guest/policyDue";
 import {
@@ -216,6 +217,42 @@ describe("guest store", () => {
   it("guestSubjectComposition throws for missing subject", () => {
     expect(() => guestSubjectComposition("missing", storage)).toThrow(
       "Subject not found",
+    );
+  });
+
+  it("guestSubjectCompositionSummaries returns graduated pct per subject", () => {
+    const empty = guestCreateSubject("Empty", storage);
+    const subject = guestCreateSubject("Knowledge subject", storage);
+    const deck = guestCreateDeck("Knowledge deck", subject.id, storage);
+    const [, cYoung] = guestAddAcceptedCards(
+      deck.id,
+      [
+        { front: "New?", back: "n" },
+        { front: "Young?", back: "y" },
+      ],
+      storage,
+    );
+    const raw = JSON.parse(storage.getItem(STORE_KEY)!) as {
+      schedules: Record<string, unknown>;
+    };
+    raw.schedules[cYoung!.id] = {
+      state: 2,
+      reps: 3,
+      lapses: 0,
+      stability: 20,
+      difficulty: 5,
+      elapsed_days: 1,
+      scheduled_days: 20,
+      learning_steps: 0,
+      last_review: "2026-01-01T12:00:00.000Z",
+    };
+    storage.setItem(STORE_KEY, JSON.stringify(raw));
+
+    expect(guestSubjectCompositionSummaries(storage)).toEqual(
+      expect.arrayContaining([
+        { subjectId: empty.id, total: 0, graduatedPct: null },
+        { subjectId: subject.id, total: 2, graduatedPct: 50 },
+      ]),
     );
   });
 

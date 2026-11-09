@@ -105,6 +105,64 @@ subjectRoutes.post("/", async (c) => {
   );
 });
 
+subjectRoutes.get("/composition-summaries", async (c) => {
+  const userId = await requireUser(c);
+  const db = getDb(c.env);
+
+  const { results: subjectRows } = await db
+    .prepare(
+      `-- sugarplum:subject-composition-summaries-subjects
+       SELECT id FROM subjects WHERE user_id = ? ORDER BY created_at ASC`,
+    )
+    .bind(userId)
+    .all<{ id: string }>();
+
+  const { results: scheduleRows } = await db
+    .prepare(
+      `-- sugarplum:subject-composition-summaries-rows
+       SELECT d.subject_id AS subject_id,
+              s.state AS state,
+              s.scheduled_days AS scheduled_days
+       FROM cards c
+       INNER JOIN decks d ON d.id = c.deck_id
+       LEFT JOIN card_schedules s ON s.card_id = c.id
+       WHERE d.user_id = ? AND c.status = 'accepted' AND d.subject_id IS NOT NULL`,
+    )
+    .bind(userId)
+    .all<{
+      subject_id: string;
+      state: number | null;
+      scheduled_days: number | null;
+    }>();
+
+  const bySubject = new Map<
+    string,
+    Array<{ state: number | null; scheduled_days: number | null }>
+  >();
+  for (const row of subjectRows ?? []) {
+    bySubject.set(row.id, []);
+  }
+  for (const row of scheduleRows ?? []) {
+    const bucket = bySubject.get(row.subject_id);
+    if (!bucket) continue;
+    bucket.push({
+      state: row.state ?? null,
+      scheduled_days: row.scheduled_days ?? null,
+    });
+  }
+
+  return c.json(
+    [...bySubject.entries()].map(([subjectId, rows]) => {
+      const agg = aggregateSubjectKnowledge(rows);
+      return {
+        subjectId,
+        total: agg.total,
+        graduatedPct: agg.graduatedPct,
+      };
+    }),
+  );
+});
+
 subjectRoutes.patch("/:id", async (c) => {
   const userId = await requireUser(c);
   const subjectId = c.req.param("id");
