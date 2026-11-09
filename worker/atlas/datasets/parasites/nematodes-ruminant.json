@@ -668,18 +668,7 @@
           "note": null
         }
       ],
-      "images": [
-        {
-          "id": "hero",
-          "file": "trichostrongylus-spp-hero.webp",
-          "role": "adult",
-          "caption": "Male bursal copulatrix, Trichostrongylus sp.",
-          "credit": "CDC-DPD",
-          "license": "Public domain",
-          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Trichostrongylus_male_posterior_200x.jpg",
-          "isHero": true
-        }
-      ]
+      "images": []
     },
     {
       "key": "strongyloides-papillosus",

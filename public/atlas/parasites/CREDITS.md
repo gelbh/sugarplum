@@ -51,7 +51,6 @@ Rejected: all-rights-reserved, unclear, and NC/ND licences.
 | Haemonchus contortus | `haemonchus-contortus-hero.webp` | division, CSIRO | CC BY 3.0 | [https://commons.wikimedia.org/wiki/File:CSIRO_ScienceImage_10819_The_tail_ends_of_11_Haemonchus_contortus_barbers_pole_worm_adult_females_The_worms_are_all_taken_from_one_sheep_infected_with_a_single_strain_of_this_worm_species.jpg](https://commons.wikimedia.org/wiki/File:CSIRO_ScienceImage_10819_The_tail_ends_of_11_Haemonchus_contortus_barbers_pole_worm_adult_females_The_worms_are_all_taken_from_one_sheep_infected_with_a_single_strain_of_this_worm_species.jpg) |
 | Hepatozoon canis | `hepatozoon-canis-hero.webp` | K.regaskova | CC BY-SA 4.0 | [https://commons.wikimedia.org/wiki/File:Hepatozoon.jpg](https://commons.wikimedia.org/wiki/File:Hepatozoon.jpg) |
 | Heterakis gallinarum | `heterakis-gallinarum-hero.webp` | Daniel J. Drew | CC0 | [https://commons.wikimedia.org/wiki/File:Heterakis_gallinarum_(YPM_IZ_097869).jpeg](https://commons.wikimedia.org/wiki/File:Heterakis_gallinarum_(YPM_IZ_097869).jpeg) |
-| Histomonas meleagridis | `histomonas-meleagridis-hero.webp` | USGS | Public domain | [https://commons.wikimedia.org/wiki/File:Histomoniasis.jpg](https://commons.wikimedia.org/wiki/File:Histomoniasis.jpg) |
 | Hypoderma bovis | `hypoderma-bovis-hero.webp` | Wikimedia Commons | Public domain | [https://commons.wikimedia.org/wiki/File:Hypoderma_-_Print_-_Iconographia_Zoologica_-_Special_Collections_University_of_Amsterdam_-_UBAINV0274_039_04_0002.tif](https://commons.wikimedia.org/wiki/File:Hypoderma_-_Print_-_Iconographia_Zoologica_-_Special_Collections_University_of_Amsterdam_-_UBAINV0274_039_04_0002.tif) |
 | Ixodes hexagonus | `ixodes-hexagonus-hero.webp` | AJC1 | CC BY-SA 2.0 | [https://commons.wikimedia.org/wiki/File:Hedgehog_Tick,_Ixodes_hexagonus_(50064527123).jpg](https://commons.wikimedia.org/wiki/File:Hedgehog_Tick,_Ixodes_hexagonus_(50064527123).jpg) |
 | Ixodes ricinus | `ixodes-ricinus-hero.webp` | Zerrin Uzum, Dmitry Ershov, Michael J. Pavia, Adeline Mallet, Olivier Gorgette, Olivier Plantard, Davide Sassera, Fabriz | CC BY 4.0 | [https://commons.wikimedia.org/wiki/File:41467_2023_39758_Fig1b.jpg](https://commons.wikimedia.org/wiki/File:41467_2023_39758_Fig1b.jpg) |
@@ -93,7 +92,6 @@ Rejected: all-rights-reserved, unclear, and NC/ND licences.
 | Toxoplasma gondii | `toxoplasma-gondii-hero.webp` | Jacques Rigoulet, Alain Hennache, Pierre Lagourette, Catherine George, Loïc Longeart, Jean-Loïc Le Net and Jitender P. D | CC BY 4.0 | [https://commons.wikimedia.org/wiki/File:Parasite140105-fig3_Toxoplasmosis_in_a_bar-shouldered_dove_-_TEM_of_2_tachyzoites.tif](https://commons.wikimedia.org/wiki/File:Parasite140105-fig3_Toxoplasmosis_in_a_bar-shouldered_dove_-_TEM_of_2_tachyzoites.tif) |
 | Trichinella spiralis | `trichinella-spiralis-hero.webp` | Izvora | CC BY-SA 4.0 | [https://commons.wikimedia.org/wiki/File:Tr._spiralis_2.JPG](https://commons.wikimedia.org/wiki/File:Tr._spiralis_2.JPG) |
 | Trichodectes canis | `trichodectes-canis-hero.webp` | Adam Cuerden | Public domain | [https://commons.wikimedia.org/wiki/File:Trichodectes_canis.jpg](https://commons.wikimedia.org/wiki/File:Trichodectes_canis.jpg) |
-| Trichostrongylus spp. | `trichostrongylus-spp-hero.webp` | CDC-DPD | Public domain | [https://commons.wikimedia.org/wiki/File:Trichostrongylus_male_posterior_200x.jpg](https://commons.wikimedia.org/wiki/File:Trichostrongylus_male_posterior_200x.jpg) |
 | Trichuris suis | `trichuris-suis-hero.webp` | Universidad de Córdoba | Public domain | [https://commons.wikimedia.org/wiki/File:Trichuris_Suis.jpg](https://commons.wikimedia.org/wiki/File:Trichuris_Suis.jpg) |
 | Trichuris vulpis | `trichuris-vulpis-hero.webp` | CDC / PHIL or DPDx (via Wikimedia Commons) | Public domain | [https://commons.wikimedia.org/wiki/File:Eggs_of_Trichuris_trichiura_and_Trichuris_vulpis_06G0018_jpg_lores.jpg](https://commons.wikimedia.org/wiki/File:Eggs_of_Trichuris_trichiura_and_Trichuris_vulpis_06G0018_jpg_lores.jpg) |
 | Tritrichomonas foetus | `tritrichomonas-foetus-hero.webp` | Chaoqun Yaor and Liza S Köster | CC BY 4.0 | [https://commons.wikimedia.org/wiki/File:Tritrichomonas_foetus.jpg](https://commons.wikimedia.org/wiki/File:Tritrichomonas_foetus.jpg) |
@@ -138,6 +136,7 @@ No catalog hero until a taxon-correct, study-useful, licence-ok asset exists (sp
 | Encephalitozoon cuniculi | Removed: pet photo, not organism |
 | Filaroides hirthi | No hero yet |
 | Habronema spp. | No hero yet |
+| Histomonas meleagridis | No hero yet |
 | Hyostrongylus rubidus | No hero yet |
 | Metastrongylus apri | No hero yet |
 | Muellerius capillaris | No hero yet |
@@ -157,5 +156,6 @@ No catalog hero until a taxon-correct, study-useful, licence-ok asset exists (sp
 | Strongylus edentatus | No hero yet |
 | Strongylus equinus | No hero yet |
 | Thelazia lacrymalis | No hero yet |
+| Trichostrongylus spp. | Removed: drug product packaging |
 | Trichuris ovis | No hero yet |
 | Uncinaria stenocephala | No hero yet |
