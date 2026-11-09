@@ -6,6 +6,11 @@ ALTER TABLE atlas_entries ADD COLUMN origin_version INTEGER;
 ALTER TABLE atlas_entries ADD COLUMN edited_at TEXT;
 ALTER TABLE atlas_entries ADD COLUMN deleted_at TEXT;
 
+-- One overlay row per dataset origin per atlas (learner-added rows keep null).
+CREATE UNIQUE INDEX idx_atlas_entries_origin
+  ON atlas_entries (atlas_id, origin_key)
+  WHERE origin_key IS NOT NULL;
+
 DROP TABLE atlas_field_sources;
 
 CREATE TABLE atlas_entry_refs (

@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   overlayAtlas,
   toEntryView,
-  withoutOverlayForOrigin,
   type OverlayRow,
 } from "../../../worker/atlas/merge";
 import type { DatasetEntry } from "../../../worker/atlas/datasets/schema";
@@ -122,9 +121,29 @@ describe("overlayAtlas", () => {
     );
   });
 
-  it("uses joined refs/images for edited rows when provided", () => {
+  it("concats learner refs/images after dataset refs/images", () => {
+    const withImage = datasetEntry({
+      key: "fasciola-hepatica",
+      canonicalName: "Fasciola hepatica",
+      fields: {
+        ...emptyParasiteFields(),
+        group: "trematode",
+      },
+      images: [
+        {
+          id: "ds-img",
+          file: "fasciola.webp",
+          role: "adult",
+          caption: null,
+          credit: "CDC",
+          license: "Public Domain",
+          sourceUrl: "https://example.com/ds",
+          isHero: true,
+        },
+      ],
+    });
     const views = overlayAtlas(
-      [fasciola],
+      [withImage],
       [
         overlayRow({
           id: "row-edit",
@@ -154,9 +173,13 @@ describe("overlayAtlas", () => {
       ],
     );
     expect(views[0].refs).toEqual([
+      ...withImage.refs,
       { field: "family", citation: "Learner note", url: null, note: null },
     ]);
-    expect(views[0].images[0].src).toBe("https://cdn.example/hero.webp");
+    expect(views[0].images.map((i) => i.src)).toEqual([
+      "/atlas/parasites/fasciola.webp",
+      "https://cdn.example/hero.webp",
+    ]);
   });
 
   it("appends learner-added rows with null originKey", () => {
@@ -224,26 +247,6 @@ describe("overlayAtlas", () => {
         commonName: "Orphan",
         aliases: [],
       }),
-    ]);
-  });
-});
-
-describe("withoutOverlayForOrigin", () => {
-  it("drops the overlay row so the dataset entry would show again", () => {
-    const rows = [
-      overlayRow({
-        id: "row-edit",
-        origin_key: "fasciola-hepatica",
-        canonical_name: "Fasciola hepatica",
-      }),
-      overlayRow({
-        id: "row-add",
-        origin_key: null,
-        canonical_name: "Custom",
-      }),
-    ];
-    expect(withoutOverlayForOrigin(rows, "fasciola-hepatica")).toEqual([
-      rows[1],
     ]);
   });
 });

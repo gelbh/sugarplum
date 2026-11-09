@@ -209,6 +209,37 @@ describe("0024_atlas_dataset migration", () => {
     expect(row.origin_key).toBeNull();
   });
 
+  it("enforces unique origin_key per atlas when set", () => {
+    expect(() =>
+      db
+        .prepare(
+          `INSERT INTO atlas_entries (
+             id, atlas_id, canonical_name, fields_json, status, origin_key, created_at, updated_at
+           ) VALUES ('e-dup', 'a1', 'Dipylidium caninum overlay', '{}', 'accepted',
+             'dipylidium-caninum', ?, ?)`,
+        )
+        .run(NOW, NOW),
+    ).toThrow(/UNIQUE/);
+
+    db.prepare(
+      `INSERT INTO atlas_entries (
+         id, atlas_id, canonical_name, fields_json, status, origin_key, created_at, updated_at
+       ) VALUES ('e3', 'a1', 'Learner A', '{}', 'accepted', NULL, ?, ?)`,
+    ).run(NOW, NOW);
+    db.prepare(
+      `INSERT INTO atlas_entries (
+         id, atlas_id, canonical_name, fields_json, status, origin_key, created_at, updated_at
+       ) VALUES ('e4', 'a1', 'Learner B', '{}', 'accepted', NULL, ?, ?)`,
+    ).run(NOW, NOW);
+    const nulls = db
+      .prepare(
+        `SELECT COUNT(*) AS n FROM atlas_entries
+         WHERE atlas_id = 'a1' AND origin_key IS NULL`,
+      )
+      .get() as { n: number };
+    expect(nulls.n).toBe(2);
+  });
+
   it("drops atlas_field_sources", () => {
     expect(tableExists(db, "atlas_field_sources")).toBe(false);
   });

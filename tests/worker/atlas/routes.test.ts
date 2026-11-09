@@ -176,7 +176,7 @@ describe("atlas owned-subject routes", () => {
     expect(view?.id).toBe(edited.id);
   });
 
-  it("soft-deletes, restores, and resets overlay edits", async () => {
+  it("soft-deletes, restores pristine dataset id, and resets overlay edits", async () => {
     const env = createTestEnv();
     seedOwner(env);
     await createAtlas(env);
@@ -220,17 +220,35 @@ describe("atlas owned-subject routes", () => {
     );
     expect(restore.status).toBe(204);
 
+    const afterRestore = await app.request(
+      "/api/subjects/sub-1/atlas/entries",
+      { headers: authHeaders() },
+      env,
+    );
+    const restoredBody = (await afterRestore.json()) as {
+      entries: AtlasEntryView[];
+    };
+    const pristine = restoredBody.entries.find(
+      (e) => e.id === "fasciola-hepatica",
+    );
+    expect(pristine?.originKey).toBe("fasciola-hepatica");
+    expect(pristine?.editedAt).toBeNull();
+
     const patch = await app.request(
       "/api/subjects/sub-1/atlas/entries/fasciola-hepatica",
       {
         method: "PATCH",
         headers: authHeaders(true),
-        body: JSON.stringify({ commonName: "Temp edit" }),
+        body: JSON.stringify({
+          commonName: "Temp edit",
+          fields: { definitiveHosts: ["sheep", "cattle"] },
+        }),
       },
       env,
     );
     expect(patch.status).toBe(200);
     const edited = (await patch.json()) as AtlasEntryView;
+    expect(edited.fields.definitiveHosts).toEqual(["sheep", "cattle"]);
 
     const reset = await app.request(
       `/api/subjects/sub-1/atlas/entries/${edited.id}/reset`,
@@ -248,6 +266,104 @@ describe("atlas owned-subject routes", () => {
     const view = body.entries.find((e) => e.id === "fasciola-hepatica");
     expect(view?.commonName).not.toBe("Temp edit");
     expect(view?.editedAt).toBeNull();
+  });
+
+  it("refuses permanent delete of a soft-deleted dataset overlay", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    await createAtlas(env);
+
+    const soft = await app.request(
+      "/api/subjects/sub-1/atlas/entries/fasciola-hepatica/soft-delete",
+      { method: "POST", headers: authHeaders() },
+      env,
+    );
+    expect(soft.status).toBe(204);
+
+    const deleted = await app.request(
+      "/api/subjects/sub-1/atlas/deleted",
+      { headers: authHeaders() },
+      env,
+    );
+    const deletedBody = (await deleted.json()) as {
+      entries: AtlasEntryView[];
+    };
+    expect(deletedBody.entries).toHaveLength(1);
+    const tombstoneId = deletedBody.entries[0].id;
+
+    const purge = await app.request(
+      `/api/subjects/sub-1/atlas/entries/${tombstoneId}`,
+      { method: "DELETE", headers: authHeaders() },
+      env,
+    );
+    expect(purge.status).toBe(400);
+    const purgeBody = (await purge.json()) as { message?: string };
+    expect(purgeBody.message).toMatch(/cannot be permanently deleted/i);
+
+    const stillHidden = await app.request(
+      "/api/subjects/sub-1/atlas/entries",
+      { headers: authHeaders() },
+      env,
+    );
+    const stillHiddenBody = (await stillHidden.json()) as {
+      entries: AtlasEntryView[];
+    };
+    expect(
+      stillHiddenBody.entries.some((e) => e.id === "fasciola-hepatica"),
+    ).toBe(false);
+    expect(
+      stillHiddenBody.entries.some((e) => e.originKey === "fasciola-hepatica"),
+    ).toBe(false);
+
+    const stillDeleted = await app.request(
+      "/api/subjects/sub-1/atlas/deleted",
+      { headers: authHeaders() },
+      env,
+    );
+    const stillDeletedBody = (await stillDeleted.json()) as {
+      entries: AtlasEntryView[];
+    };
+    expect(stillDeletedBody.entries).toHaveLength(1);
+  });
+
+  it("requires group when adding a learner entry", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    await createAtlas(env);
+
+    const missing = await app.request(
+      "/api/subjects/sub-1/atlas/entries",
+      {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          canonicalName: "Madeupius fictus",
+          commonName: "Imaginary worm",
+        }),
+      },
+      env,
+    );
+    expect(missing.status).toBe(400);
+    const missingBody = (await missing.json()) as { message?: string };
+    expect(missingBody.message).toMatch(/group required/i);
+
+    const create = await app.request(
+      "/api/subjects/sub-1/atlas/entries",
+      {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          canonicalName: "Madeupius fictus",
+          commonName: "Imaginary worm",
+          fields: { group: "nematode" },
+        }),
+      },
+      env,
+    );
+    expect(create.status).toBe(201);
+    const added = (await create.json()) as AtlasEntryView;
+    expect(added.fields.group).toBe("nematode");
+    expect(added.originKey).toBeNull();
   });
 
   it("adds a learner entry and permanently deletes it from trash", async () => {
@@ -298,10 +414,12 @@ describe("atlas owned-subject routes", () => {
     expect(deletedBody.entries).toHaveLength(0);
   });
 
-  it("stores a learner ref on an overlay entry", async () => {
+  it("stores a learner ref and concats it with dataset refs", async () => {
     const env = createTestEnv();
     seedOwner(env);
     await createAtlas(env);
+    const dataset = loadParasiteDataset();
+    const base = dataset.entries.find((e) => e.key === "fasciola-hepatica")!;
 
     const res = await app.request(
       "/api/subjects/sub-1/atlas/entries/fasciola-hepatica/refs",
@@ -323,5 +441,17 @@ describe("atlas owned-subject routes", () => {
     };
     expect(ref.citation).toBe("Lecture notes week 3");
     expect(ref.note).toBe("PPP table");
+
+    const list = await app.request(
+      "/api/subjects/sub-1/atlas/entries",
+      { headers: authHeaders() },
+      env,
+    );
+    const body = (await list.json()) as { entries: AtlasEntryView[] };
+    const view = body.entries.find((e) => e.originKey === "fasciola-hepatica");
+    expect(view?.refs.slice(0, base.refs.length)).toEqual(base.refs);
+    expect(view?.refs.some((r) => r.citation === "Lecture notes week 3")).toBe(
+      true,
+    );
   });
 });

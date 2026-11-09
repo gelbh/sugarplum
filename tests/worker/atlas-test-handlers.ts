@@ -213,6 +213,15 @@ export function atlasRun(
           "UNIQUE constraint failed: atlas_entries.atlas_id, canonical_name",
         );
       }
+      if (
+        origin_key != null &&
+        row.atlas_id === atlas_id &&
+        row.origin_key === origin_key
+      ) {
+        throw new Error(
+          "UNIQUE constraint failed: atlas_entries.atlas_id, origin_key",
+        );
+      }
     }
     state.entries.set(id, {
       id,

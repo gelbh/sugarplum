@@ -2,8 +2,6 @@ import { loadParasiteDataset } from "../../worker/atlas/datasets/parasites";
 import { toEntryView } from "../../worker/atlas/merge";
 import type { AtlasEntryView, AtlasSource } from "./types";
 
-export { toEntryView };
-
 let cached: Promise<AtlasEntryView[]> | null = null;
 
 // Step 3 swaps this for GET routes; every subject reads the one bundled dataset until then.

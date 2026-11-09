@@ -6,6 +6,7 @@ import { requireUser, type AuthVariables } from "../auth/session";
 import { requireOwnedSubject } from "../subjects/routes";
 import {
   overlayAtlas,
+  viewFromOverlay,
   type OverlayRow,
 } from "./merge";
 import {
@@ -21,11 +22,7 @@ import {
   type ParasiteFields,
 } from "./templates/parasite";
 import { createR2PutUrl } from "../materials/r2-presign";
-import type {
-  AtlasEntryView,
-  AtlasImageView,
-  DatasetFields,
-} from "../../src/atlas/types";
+import type { AtlasEntryView, AtlasImageView } from "../../src/atlas/types";
 import type { Context } from "hono";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
@@ -254,30 +251,24 @@ function deletedEntryViews(
     const overlay = byId.get(e.id);
     if (!overlay) continue;
     const base = e.origin_key ? (dataset.get(e.origin_key) ?? null) : null;
-    const fields = JSON.parse(e.fields_json) as DatasetFields;
-    out.push({
-      id: e.id,
-      originKey: e.origin_key,
-      canonicalName: base?.canonicalName ?? e.canonical_name,
-      commonName: e.common_name,
-      aliases: base
-        ? [...base.aliases, ...base.misspellings]
-        : [],
-      fields,
-      refs: overlay.refs ?? base?.refs ?? [],
-      images:
-        overlay.images ??
-        (base
-          ? base.images.map(({ file, ...image }) => ({
-              ...image,
-              src: `/atlas/parasites/${file}`,
-            }))
-          : []),
-      editedAt: e.edited_at,
-      tier: null,
-    });
+    out.push(viewFromOverlay(overlay, base));
   }
   return out;
+}
+
+async function hasLearnerRefsOrImages(
+  db: D1Database,
+  atlasId: string,
+  entryId: string,
+): Promise<boolean> {
+  const refs = await loadRefsForAtlas(db, atlasId);
+  const images = await loadImagesForAtlas(db, atlasId);
+  const entryRefs = refs.get(entryId) ?? [];
+  const entryImages = images.get(entryId) ?? [];
+  return (
+    entryRefs.some((r) => r.user_added === 1) ||
+    entryImages.some((i) => i.user_added === 1)
+  );
 }
 
 async function findEntryById(
@@ -493,7 +484,13 @@ atlasRoutes.post("/entries", async (c) => {
     });
   }
 
-  const fields = parseFieldsPatch(body.fields) ?? emptyParasiteFields();
+  const fields = mergeFields(
+    emptyParasiteFields(),
+    parseFieldsPatch(body.fields),
+  );
+  if (!fields.group) {
+    throw new HTTPException(400, { message: "group required" });
+  }
   const commonName =
     typeof body.commonName === "string"
       ? body.commonName.trim() || null
@@ -645,6 +642,21 @@ atlasRoutes.post("/entries/:entryId/restore", async (c) => {
   if (!row || !row.deleted_at) {
     throw new HTTPException(404, { message: "Deleted entry not found" });
   }
+
+  // Soft-delete of an unedited dataset entry is only a tombstone. Drop it on
+  // restore so the dataset key becomes the id again (no sticky overlay).
+  const pristineOrigin =
+    row.origin_key != null &&
+    row.edited_at == null &&
+    !(await hasLearnerRefsOrImages(db, atlas.id, row.id));
+  if (pristineOrigin) {
+    await db
+      .prepare(`DELETE FROM atlas_entries WHERE id = ? AND atlas_id = ?`)
+      .bind(row.id, atlas.id)
+      .run();
+    return c.body(null, 204);
+  }
+
   const ts = nowIso();
   await db
     .prepare(
@@ -682,6 +694,12 @@ atlasRoutes.delete("/entries/:entryId", async (c) => {
     (await findEntryByOrigin(db, atlas.id, entryId));
   if (!row || !row.deleted_at) {
     throw new HTTPException(404, { message: "Deleted entry not found" });
+  }
+  if (row.origin_key != null) {
+    throw new HTTPException(400, {
+      message:
+        "Dataset entries cannot be permanently deleted; restore them instead",
+    });
   }
   await db
     .prepare(`DELETE FROM atlas_entries WHERE id = ? AND atlas_id = ?`)

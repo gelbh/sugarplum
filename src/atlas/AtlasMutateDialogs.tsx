@@ -5,10 +5,12 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { ApiError } from "../api/client";
+import { PARASITE_GROUPS } from "../../worker/atlas/templates/parasite";
 import {
   createEntry,
   listDeletedEntries,
@@ -18,12 +20,20 @@ import {
   restoreEntry,
   softDeleteEntry,
 } from "./apiSource";
-import type { AtlasEntryView } from "./types";
+import { GROUP_LABELS } from "./filter";
+import type { AtlasEntryView, ParasiteGroup } from "./types";
 
 type Busy = boolean;
 
 function errMessage(err: unknown, fallback: string): string {
   return err instanceof ApiError ? err.message : fallback;
+}
+
+function parseHostList(raw: string): string[] {
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 type AddProps = {
@@ -35,12 +45,14 @@ type AddProps = {
 
 export function AddEntryDialog({ open, subjectId, onClose, onDone }: AddProps) {
   const [name, setName] = useState("");
+  const [group, setGroup] = useState<ParasiteGroup | "">("");
   const [busy, setBusy] = useState<Busy>(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setName("");
+    setGroup("");
     setError(null);
     setBusy(false);
   }, [open]);
@@ -52,10 +64,17 @@ export function AddEntryDialog({ open, subjectId, onClose, onDone }: AddProps) {
       setError("Canonical name required");
       return;
     }
+    if (!group) {
+      setError("Group required");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
-      const entry = await createEntry(subjectId, { canonicalName });
+      const entry = await createEntry(subjectId, {
+        canonicalName,
+        fields: { group },
+      });
       onDone(entry);
       onClose();
     } catch (err) {
@@ -81,6 +100,23 @@ export function AddEntryDialog({ open, subjectId, onClose, onDone }: AddProps) {
               fullWidth
               required
             />
+            <TextField
+              select
+              label="Group"
+              value={group}
+              onChange={(ev) =>
+                setGroup(ev.target.value as ParasiteGroup | "")
+              }
+              disabled={busy}
+              fullWidth
+              required
+            >
+              {PARASITE_GROUPS.map((g) => (
+                <MenuItem key={g} value={g}>
+                  {GROUP_LABELS[g].plural}
+                </MenuItem>
+              ))}
+            </TextField>
           </Stack>
         </DialogContent>
         <DialogActions>
@@ -112,12 +148,14 @@ export function EditEntryDialog({
   onDone,
 }: EditProps) {
   const [commonName, setCommonName] = useState("");
+  const [definitiveHosts, setDefinitiveHosts] = useState("");
   const [busy, setBusy] = useState<Busy>(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !entry) return;
     setCommonName(entry.commonName ?? "");
+    setDefinitiveHosts((entry.fields.definitiveHosts ?? []).join(", "));
     setError(null);
     setBusy(false);
   }, [open, entry]);
@@ -130,6 +168,12 @@ export function EditEntryDialog({
     try {
       await patchEntry(subjectId, entry.id, {
         commonName: commonName.trim() || null,
+        // Learner edits accept free-text hosts; DatasetFields vocab is dataset-only.
+        fields: {
+          definitiveHosts: parseHostList(
+            definitiveHosts,
+          ) as AtlasEntryView["fields"]["definitiveHosts"],
+        },
       });
       onDone();
       onClose();
@@ -190,6 +234,14 @@ export function EditEntryDialog({
               onChange={(ev) => setCommonName(ev.target.value)}
               disabled={busy}
               fullWidth
+            />
+            <TextField
+              label="Definitive hosts"
+              value={definitiveHosts}
+              onChange={(ev) => setDefinitiveHosts(ev.target.value)}
+              disabled={busy}
+              fullWidth
+              helperText="Comma-separated host terms"
             />
           </Stack>
         </DialogContent>
@@ -322,14 +374,16 @@ export function RecentlyDeletedDialog({
                   >
                     Restore
                   </Button>
-                  <Button
-                    size="small"
-                    color="error"
-                    disabled={busyId === e.id}
-                    onClick={() => void onPurge(e)}
-                  >
-                    Delete permanently
-                  </Button>
+                  {e.originKey == null ? (
+                    <Button
+                      size="small"
+                      color="error"
+                      disabled={busyId === e.id}
+                      onClick={() => void onPurge(e)}
+                    >
+                      Delete permanently
+                    </Button>
+                  ) : null}
                 </Stack>
               </Stack>
             ))

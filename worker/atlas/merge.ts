@@ -41,11 +41,24 @@ function parseFields(fieldsJson: string): DatasetFields {
   return JSON.parse(fieldsJson) as DatasetFields;
 }
 
-function viewFromOverlay(
+/** Dataset refs/images first, then learner overlay refs/images. */
+export function concatOverlayMedia(
+  base: DatasetEntry | null,
+  row: Pick<OverlayRow, "refs" | "images">,
+): Pick<AtlasEntryView, "refs" | "images"> {
+  const fromDataset = base ? toEntryView(base) : null;
+  return {
+    refs: [...(fromDataset?.refs ?? []), ...(row.refs ?? [])],
+    images: [...(fromDataset?.images ?? []), ...(row.images ?? [])],
+  };
+}
+
+export function viewFromOverlay(
   row: OverlayRow,
   base: DatasetEntry | null,
 ): AtlasEntryView {
   const fromDataset = base ? toEntryView(base) : null;
+  const media = concatOverlayMedia(base, row);
   return {
     id: row.id,
     originKey: row.origin_key,
@@ -53,8 +66,8 @@ function viewFromOverlay(
     commonName: row.common_name,
     aliases: fromDataset?.aliases ?? [],
     fields: parseFields(row.fields_json),
-    refs: row.refs ?? fromDataset?.refs ?? [],
-    images: row.images ?? fromDataset?.images ?? [],
+    refs: media.refs,
+    images: media.images,
     editedAt: row.edited_at,
     tier: null,
   };
@@ -109,16 +122,4 @@ export function overlayAtlas(
   }
 
   return out;
-}
-
-/**
- * Reset an origin-backed edit: drop the overlay row so the next overlayAtlas
- * pass shows the bundled dataset entry again. Routes (Task 3) should DELETE
- * the D1 row (or clear fields and null `edited_at`).
- */
-export function withoutOverlayForOrigin(
-  rows: OverlayRow[],
-  originKey: string,
-): OverlayRow[] {
-  return rows.filter((r) => r.origin_key !== originKey);
 }
