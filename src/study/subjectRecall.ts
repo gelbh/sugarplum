@@ -1,8 +1,14 @@
 export function aggregateSubjectRecall(
   values: Array<number | null>,
-): { avgRetrievability: number | null; etk: number } {
+): { avgRetrievability: number | null; etk: number; recallCardCount: number } {
   const rs = values.filter((v): v is number => v != null);
-  if (rs.length === 0) return { avgRetrievability: null, etk: 0 };
+  if (rs.length === 0) {
+    return { avgRetrievability: null, etk: 0, recallCardCount: 0 };
+  }
   const etk = rs.reduce((a, b) => a + b, 0);
-  return { avgRetrievability: etk / rs.length, etk };
+  return {
+    avgRetrievability: etk / rs.length,
+    etk,
+    recallCardCount: rs.length,
+  };
 }

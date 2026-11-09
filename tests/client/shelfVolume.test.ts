@@ -103,4 +103,33 @@ describe("ShelfVolume", () => {
     expect(unsplash?.getAttribute("href")).toContain("utm_medium=referral");
     host.remove();
   });
+
+  it("renders spark under chip when provided", () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root: Root = createRoot(host);
+    act(() => {
+      root.render(
+        createElement(ShelfVolume, {
+          title: "Anatomy",
+          href: "/library/subjects/sub-1",
+          onNavigate: (event: MouseEvent<HTMLAnchorElement>) =>
+            event.preventDefault(),
+          meta: "2 decks",
+          chip: "50% graduated",
+          spark: createElement("div", {
+            "data-testid": "spark",
+            children: "spark",
+          }),
+          studyLabel: "Study",
+          onStudy: () => {},
+          moreLabel: "More actions for Anatomy",
+          onMore: () => {},
+        }),
+      );
+    });
+    expect(host.textContent).toContain("50% graduated");
+    expect(host.querySelector('[data-testid="spark"]')).toBeTruthy();
+    host.remove();
+  });
 });

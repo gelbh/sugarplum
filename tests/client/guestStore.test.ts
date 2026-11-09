@@ -180,6 +180,7 @@ describe("guest store", () => {
         graduatedPct: 50,
         avgRetrievability: recall.avgRetrievability,
         etk: recall.etk,
+        recallCardCount: recall.recallCardCount,
       });
     } finally {
       vi.useRealTimers();
@@ -210,6 +211,7 @@ describe("guest store", () => {
         graduatedPct: 0,
         avgRetrievability: null,
         etk: 0,
+        recallCardCount: 0,
       });
     } finally {
       vi.useRealTimers();
@@ -252,8 +254,24 @@ describe("guest store", () => {
 
     expect(guestSubjectCompositionSummaries(storage)).toEqual(
       expect.arrayContaining([
-        { subjectId: empty.id, total: 0, graduatedPct: null },
-        { subjectId: subject.id, total: 2, graduatedPct: 50 },
+        {
+          subjectId: empty.id,
+          total: 0,
+          graduatedPct: null,
+          new: 0,
+          learning: 0,
+          young: 0,
+          mature: 0,
+        },
+        {
+          subjectId: subject.id,
+          total: 2,
+          graduatedPct: 50,
+          new: 1,
+          learning: 0,
+          young: 1,
+          mature: 0,
+        },
       ]),
     );
   });

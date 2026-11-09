@@ -24,6 +24,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import CoverPickerDialog from "../components/CoverPickerDialog";
 import OperateSection from "../components/OperateSection";
+import CompositionSpark from "../components/CompositionSpark";
 import ShelfVolume from "../components/ShelfVolume";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
@@ -104,8 +105,18 @@ export default function LibraryPage() {
     subject: Subject;
   } | null>(null);
   const [covers, setCovers] = useState<StoredCoverRow[]>([]);
-  const [graduatedBySubject, setGraduatedBySubject] = useState<
-    Record<string, number | null>
+  const [compositionBySubject, setCompositionBySubject] = useState<
+    Record<
+      string,
+      {
+        graduatedPct: number | null;
+        total: number;
+        new: number;
+        learning: number;
+        young: number;
+        mature: number;
+      }
+    >
   >({});
   const [coverPicker, setCoverPicker] = useState<CoverTarget | null>(null);
   /** Selection is deck ids only; subject checkbox toggles all decks in that subject. */
@@ -181,9 +192,19 @@ export default function LibraryPage() {
         setDraftJobs(jobs);
         setMaterials(materialList);
         setCovers(coverList);
-        setGraduatedBySubject(
+        setCompositionBySubject(
           Object.fromEntries(
-            summaries.map((row) => [row.subjectId, row.graduatedPct]),
+            summaries.map((row) => [
+              row.subjectId,
+              {
+                graduatedPct: row.graduatedPct,
+                total: row.total,
+                new: row.new,
+                learning: row.learning,
+                young: row.young,
+                mature: row.mature,
+              },
+            ]),
           ),
         );
         setReady(true);
@@ -569,9 +590,21 @@ export default function LibraryPage() {
                       }}
                       meta={meta}
                       chip={
-                        graduatedBySubject[s.id] != null
-                          ? `${graduatedBySubject[s.id]}% graduated`
+                        compositionBySubject[s.id]?.graduatedPct != null
+                          ? `${compositionBySubject[s.id].graduatedPct}% graduated`
                           : null
+                      }
+                      spark={
+                        compositionBySubject[s.id] != null &&
+                        compositionBySubject[s.id].total > 0 ? (
+                          <CompositionSpark
+                            new={compositionBySubject[s.id].new}
+                            learning={compositionBySubject[s.id].learning}
+                            young={compositionBySubject[s.id].young}
+                            mature={compositionBySubject[s.id].mature}
+                            total={compositionBySubject[s.id].total}
+                          />
+                        ) : null
                       }
                       studyLabel="Study"
                       onStudy={() => {

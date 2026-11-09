@@ -373,6 +373,7 @@ describe("GET /api/subjects/:id/composition", () => {
       graduatedPct: 50,
       avgRetrievability: recall.avgRetrievability,
       etk: recall.etk,
+      recallCardCount: recall.recallCardCount,
     });
   });
 
@@ -412,6 +413,7 @@ describe("GET /api/subjects/:id/composition", () => {
       graduatedPct: 0,
       avgRetrievability: null,
       etk: 0,
+      recallCardCount: 0,
     });
   });
 });
@@ -526,10 +528,31 @@ describe("GET /api/subjects/composition-summaries", () => {
       env,
     );
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual([
-      { subjectId: "sub-empty", total: 0, graduatedPct: null },
-      { subjectId: "sub-1", total: 2, graduatedPct: 50 },
+    const body = (await res.json()) as Record<string, unknown>[];
+    expect(body).toEqual([
+      {
+        subjectId: "sub-empty",
+        total: 0,
+        graduatedPct: null,
+        new: 0,
+        learning: 0,
+        young: 0,
+        mature: 0,
+      },
+      {
+        subjectId: "sub-1",
+        total: 2,
+        graduatedPct: 50,
+        new: 1,
+        learning: 0,
+        young: 1,
+        mature: 0,
+      },
     ]);
+    for (const row of body) {
+      expect(row).not.toHaveProperty("avgRetrievability");
+      expect(row).not.toHaveProperty("etk");
+    }
   });
 });
 

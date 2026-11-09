@@ -74,8 +74,11 @@ export default function SubjectKnowledgeBar({ knowledge }: Props) {
       {knowledge.avgRetrievability != null ? (
         <Typography variant="caption" color="text.secondary">
           Estimated recall now:{" "}
-          {Math.round(100 * knowledge.avgRetrievability)}% · ~
-          {formatEtkCards(knowledge.etk)} cards
+          {Math.round(100 * knowledge.avgRetrievability)}%
+          {knowledge.new > 0
+            ? ` of ${knowledge.recallCardCount} reviewed`
+            : ""}{" "}
+          · ~{formatEtkCards(knowledge.etk)} cards
         </Typography>
       ) : null}
     </Stack>

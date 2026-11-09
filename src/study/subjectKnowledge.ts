@@ -1,4 +1,6 @@
 import { State } from "ts-fsrs";
+import { cardFromScheduleRow, retrievability } from "./retrievability";
+import { aggregateSubjectRecall } from "./subjectRecall";
 
 /** Interval days for Mature; same threshold as gamification `MATURE_DAYS`. */
 export const MATURE_INTERVAL_DAYS = 21;
@@ -16,12 +18,31 @@ export type SubjectKnowledgeBuckets = {
   mature: number;
 };
 
-export type SubjectKnowledge = SubjectKnowledgeBuckets & {
+/** Buckets + graduated derived fields (no recall). */
+export type SubjectKnowledgeBucketsAggregate = SubjectKnowledgeBuckets & {
   total: number;
   graduated: number;
   graduatedPct: number | null;
+};
+
+export type SubjectKnowledge = SubjectKnowledgeBucketsAggregate & {
   avgRetrievability: number | null;
   etk: number;
+  recallCardCount: number;
+};
+
+/** Schedule row for shared composition (buckets + R). Nulls → null R. */
+export type CompositionScheduleInput = {
+  state: number | null;
+  scheduled_days: number | null;
+  due: string | null;
+  stability: number | null;
+  difficulty: number | null;
+  elapsed_days: number | null;
+  learning_steps: number | null;
+  reps: number | null;
+  lapses: number | null;
+  last_review: string | null;
 };
 
 export type KnowledgeBucket = keyof SubjectKnowledgeBuckets;
@@ -43,7 +64,7 @@ export function classifyKnowledgeBucket(
 
 export function aggregateSubjectKnowledge(
   rows: KnowledgeScheduleInput[],
-): Omit<SubjectKnowledge, "avgRetrievability" | "etk"> {
+): SubjectKnowledgeBucketsAggregate {
   const buckets: SubjectKnowledgeBuckets = {
     new: 0,
     learning: 0,
@@ -61,5 +82,53 @@ export function aggregateSubjectKnowledge(
     total,
     graduated,
     graduatedPct: total === 0 ? null : Math.round((100 * graduated) / total),
+  };
+}
+
+export function composeSubjectKnowledge(
+  rows: CompositionScheduleInput[],
+  now: Date = new Date(),
+): SubjectKnowledge {
+  const bucketRows = rows.map((r) => ({
+    state: r.state,
+    scheduled_days: r.scheduled_days,
+  }));
+  const rValues = rows.map((row) => {
+    if (
+      row.due == null ||
+      row.stability == null ||
+      row.difficulty == null ||
+      row.elapsed_days == null ||
+      row.scheduled_days == null ||
+      row.learning_steps == null ||
+      row.reps == null ||
+      row.lapses == null ||
+      row.state == null
+    ) {
+      return null;
+    }
+    try {
+      return retrievability(
+        cardFromScheduleRow({
+          due: row.due,
+          stability: row.stability,
+          difficulty: row.difficulty,
+          elapsed_days: row.elapsed_days,
+          scheduled_days: row.scheduled_days,
+          learning_steps: row.learning_steps,
+          reps: row.reps,
+          lapses: row.lapses,
+          state: row.state,
+          last_review: row.last_review,
+        }),
+        now,
+      );
+    } catch {
+      return null;
+    }
+  });
+  return {
+    ...aggregateSubjectKnowledge(bucketRows),
+    ...aggregateSubjectRecall(rValues),
   };
 }
