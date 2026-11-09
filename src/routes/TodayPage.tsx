@@ -29,6 +29,7 @@ import {
 import { pendingCardIdSet } from "../study/pendingGrades";
 import { usePendingGradeSync } from "../study/usePendingGradeSync";
 import { warmDueMedia } from "../study/warmDueMedia";
+import { maybeRunFsrsOptimize } from "../study/fsrsOptimizeClient";
 
 /** Home: giant due proof + Start study (today-dash-b). */
 export default function TodayPage() {
@@ -111,6 +112,9 @@ export default function TodayPage() {
           refreshPendingCount(user.id);
           setReady(true);
           endLoad();
+        }
+        if (!isGuest() && !cancelled) {
+          void maybeRunFsrsOptimize();
         }
         try {
           const journey = await getJourney();
