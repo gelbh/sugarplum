@@ -3,6 +3,7 @@ import { bundledAtlasSource } from "../../src/atlas/bundledSource";
 import {
   NO_FILTERS,
   applyFilters,
+  entryHosts,
   groupRows,
   hostOptions,
   matchesSearch,
@@ -10,8 +11,10 @@ import {
   sortTable,
 } from "../../src/atlas/filter";
 import {
+  HOST_TERM_KEYS,
   ORGAN_TERMS,
   ORGAN_TERM_KEYS,
+  hostCovers,
   organCovers,
 } from "../../worker/atlas/datasets/vocab";
 import { PARASITE_GROUPS } from "../../worker/atlas/templates/parasite";
@@ -106,7 +109,11 @@ describe("term options", () => {
     const terms = hostOptions(entries).map((o) => o.term);
     expect(terms).toContain("mammal");
     expect(terms.indexOf("mammal")).toBeLessThan(terms.indexOf("dog"));
-    expect(terms).not.toContain("frog");
+    const unused = HOST_TERM_KEYS.filter(
+      (t) => !entries.some((e) => entryHosts(e).some((h) => hostCovers(t, h))),
+    );
+    expect(unused.length).toBeGreaterThan(0);
+    for (const t of unused) expect(terms).not.toContain(t);
   });
 
   it("offers only organs in use plus their parents", () => {
