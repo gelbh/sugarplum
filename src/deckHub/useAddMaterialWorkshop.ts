@@ -35,7 +35,6 @@ type Args = {
   refreshDraftJobs: () => Promise<void>;
   refreshMaterials: () => Promise<void>;
   setWorkshopStack: Dispatch<SetStateAction<WorkshopFrame[]>>;
-  /** Free-path image: seed DIY occlusion create with material r2 key. */
   onManualOcclusion?: (imageKey: string) => void;
 };
 

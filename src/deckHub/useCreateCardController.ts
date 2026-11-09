@@ -67,7 +67,6 @@ export type CreateCardController = {
   onCreateImageUpload: (file: File) => void;
   applyCreateImageKey: (key: string) => void;
   prepareCreateFrame: () => void;
-  /** Seed DIY occlusion create from an existing material image key. */
   prepareOcclusionFromImageKey: (imageKey: string) => void;
 };
 

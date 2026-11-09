@@ -49,7 +49,6 @@ export type MaterialsListProps = {
   materials: MaterialListItem[];
   showDeckTitle: boolean;
   onChanged: () => void;
-  /** Free-path DIY: open occlusion create with this image. */
   onCreateOcclusion?: (material: MaterialListItem) => void;
 };
 

@@ -27,10 +27,6 @@ export async function userHasByoSecret(
   return Boolean(row);
 }
 
-/**
- * Image materials without BYO skip the doomed vision job and signal DIY.
- * Non-image always enqueues when requested.
- */
 export async function enqueueOrManualOcclusion(
   env: Env,
   db: D1Database,

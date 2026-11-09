@@ -12,7 +12,6 @@ export function canGenerateMoreFromMaterial(material: {
   );
 }
 
-/** Free-path DIY: open occlusion create with this image material. */
 export function canCreateOcclusionFromMaterial(material: {
   kind: string;
   status: string;
