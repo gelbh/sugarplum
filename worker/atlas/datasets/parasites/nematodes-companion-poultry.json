@@ -13,7 +13,7 @@
         "family": "Ascarididae",
         "group": "nematode",
         "definitiveHosts": ["dog", "fox", "canid"],
-        "paratenicHosts": ["rodent", "bird", "earthworm"],
+        "paratenicHosts": ["rodent", "bird"],
         "majorOrgan": "small intestine",
         "onHostStages": ["migrating L3", "somatic L3", "adult"],
         "distribution": "Worldwide in dogs and wild canids; commoner in young pups",
@@ -100,7 +100,7 @@
           "field": "definitiveHosts",
           "citation": "WCVM Learn About Parasites: Toxocara canis",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-canis.php",
-          "note": null
+          "note": "Course lists man as a definitive host; reference gives people as paratenic hosts."
         },
         {
           "field": "definitiveHosts",
@@ -207,7 +207,7 @@
         "family": "Ascarididae",
         "group": "nematode",
         "definitiveHosts": ["cat", "felid"],
-        "paratenicHosts": ["rodent", "bird", "earthworm"],
+        "paratenicHosts": ["rodent", "bird"],
         "majorOrgan": "small intestine",
         "onHostStages": ["migrating L3", "somatic L3", "adult"],
         "distribution": "Worldwide in cats and wild felids; commoner in kittens",
@@ -306,7 +306,7 @@
           "field": "paratenicHosts",
           "citation": "Canadian Parasitology Expert Panel Guidelines: Nematodes",
           "url": "https://research-groups.usask.ca/cpep/parasites/nematodes-supplementary.php",
-          "note": null
+          "note": "Course also lists earthworms; cited references do not."
         },
         {
           "field": "paratenicHosts",
@@ -360,7 +360,7 @@
           "field": "lifecycleStages",
           "citation": "WCVM Learn About Parasites: Toxocara cati",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-cati.php",
-          "note": "Course states infective L2 in the egg and rare migration; reference gives L3 in the egg and hepatotracheal migration in young cats."
+          "note": "Course states infective L2 in the egg; reference gives L3 in the egg."
         },
         {
           "field": "diagnosticTests",
@@ -373,6 +373,12 @@
           "citation": "CDC DPDx: Toxocariasis",
           "url": "https://www.cdc.gov/dpdx/toxocariasis/index.html",
           "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Toxocara cati",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-cati.php",
+          "note": "Course states rare migration; reference gives hepatotracheal migration in young cats."
         }
       ],
       "images": []
@@ -382,7 +388,7 @@
       "canonicalName": "Toxascaris leonina",
       "commonName": null,
       "aliases": [],
-      "misspellings": ["Toxocaris leonina"],
+      "misspellings": ["Toxocaris leonina", "Toxocara leonina"],
       "fields": {
         "phylum": "Nematoda",
         "order": "Ascaridida",
@@ -483,7 +489,7 @@
           "field": "paratenicHosts",
           "citation": "Canadian Parasitology Expert Panel Guidelines: Nematodes",
           "url": "https://research-groups.usask.ca/cpep/parasites/nematodes-supplementary.php",
-          "note": null
+          "note": "Course also lists earthworms; cited references do not."
         },
         {
           "field": "paratenicHosts",
@@ -654,7 +660,7 @@
           "field": "definitiveHosts",
           "citation": "WCVM Learn About Parasites: Ancylostoma caninum",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ancylostoma-caninum.php",
-          "note": null
+          "note": "Course lists man as a definitive host; reference gives people as aberrant hosts."
         },
         {
           "field": "definitiveHosts",
@@ -1047,7 +1053,7 @@
           "field": "zoonotic",
           "citation": "WCVM Learn About Parasites: Strongyloides stercoralis",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-stercoralis.php",
-          "note": "Course states potential; reference gives zoonotic."
+          "note": "Course states potential; reference gives yes."
         },
         {
           "field": "significance",
@@ -1422,7 +1428,7 @@
       "key": "oslerus-osleri",
       "canonicalName": "Oslerus osleri",
       "commonName": null,
-      "aliases": [],
+      "aliases": ["Filaroides osleri"],
       "misspellings": [],
       "fields": {
         "phylum": "Nematoda",
@@ -1481,12 +1487,6 @@
           "note": null
         },
         {
-          "field": "order",
-          "citation": "Parasites & Vectors 2016: Crenosoma vulpis in the garden snail Cornu aspersum",
-          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4832547/",
-          "note": "Course lists the superfamily Metastrongyloidea in the order column; reference gives the order Strongylida."
-        },
-        {
           "field": "family",
           "citation": "NCBI Taxonomy: Oslerus osleri",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/242455/",
@@ -1538,6 +1538,24 @@
           "field": "diagnosticTests",
           "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
           "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": "Course lists the superfamily Metastrongyloidea in the order column; reference gives the order Strongylida."
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Angiostrongylus vasorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/angiostrongylus-vasorum.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "NCBI Taxonomy / literature: Oslerus osleri (syn. Filaroides osleri)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13127552/",
           "note": null
         }
       ],
@@ -1606,12 +1624,6 @@
           "note": null
         },
         {
-          "field": "order",
-          "citation": "Parasites & Vectors 2016: Crenosoma vulpis in the garden snail Cornu aspersum",
-          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4832547/",
-          "note": "Course lists the superfamily Metastrongyloidea in the order column; reference gives the order Strongylida."
-        },
-        {
           "field": "family",
           "citation": "NCBI Taxonomy: Filaroides (genus)",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/242446/",
@@ -1664,6 +1676,18 @@
           "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
           "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
           "note": null
+        },
+        {
+          "field": "order",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": "Course lists the superfamily Metastrongyloidea in the order column; reference gives the order Strongylida."
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Angiostrongylus vasorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/angiostrongylus-vasorum.php",
+          "note": null
         }
       ],
       "images": []
@@ -1681,12 +1705,12 @@
         "group": "nematode",
         "definitiveHosts": ["cat", "felid"],
         "intermediateHosts": ["slug", "land snail"],
-        "paratenicHosts": ["rodent", "bird", "frog"],
+        "paratenicHosts": ["rodent", "bird", "frog", "reptile"],
         "majorOrgan": "lungs",
         "onHostStages": ["adult"],
         "distribution": "Worldwide except Antarctica",
         "zoonotic": "no",
-        "significance": "Often silent; signs when present are cough, wheeze and dyspnoea, mostly in young or immunosuppressed cats.",
+        "significance": "Often silent; signs when present are cough, wheeze and dyspnoea.",
         "lifecycleType": "indirect",
         "pppDays": {
           "min": 35,
@@ -1736,18 +1760,6 @@
           "field": "phylum",
           "citation": "NCBI Taxonomy: Aelurostrongylus abstrusus",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/321389/",
-          "note": null
-        },
-        {
-          "field": "order",
-          "citation": "WCVM Learn About Parasites: Angiostrongylus vasorum",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/angiostrongylus-vasorum.php",
-          "note": "Course lists the superfamily Metastrongyloidea in the order column; reference gives the order Strongylida."
-        },
-        {
-          "field": "family",
-          "citation": "WCVM Learn About Parasites: Angiostrongylus vasorum",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/angiostrongylus-vasorum.php",
           "note": null
         },
         {
@@ -1821,6 +1833,24 @@
           "citation": "WCVM Learn About Parasites: Aelurostrongylus abstrusus",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/aelurostrongylus-abstrusus.php",
           "note": null
+        },
+        {
+          "field": "family",
+          "citation": "Napoli et al. 2023, Pathogens 12:542: Aelurostrongylus abstrusus (Strongylida, Angiostrongylidae)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10144845/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "Napoli et al. 2023, Pathogens 12:542: Aelurostrongylus abstrusus (Strongylida, Angiostrongylidae)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10144845/",
+          "note": "Course lists the superfamily Metastrongyloidea in the order column; reference gives the order Strongylida."
+        },
+        {
+          "field": "order",
+          "citation": "Traversa et al. 2008, Parasites & Vectors: Diagnosis of Aelurostrongylus abstrusus",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2395095/",
+          "note": null
         }
       ],
       "images": []
@@ -1878,7 +1908,7 @@
           },
           {
             "name": "antigen detection",
-            "sample": "blood"
+            "sample": "serum"
           }
         ]
       },
@@ -1999,14 +2029,14 @@
         "order": "Spirurida",
         "family": "Onchocercidae",
         "group": "nematode",
-        "definitiveHosts": ["dog", "fox", "canid"],
+        "definitiveHosts": ["dog", "canid"],
         "intermediateHosts": ["mosquito"],
         "vectorRole": "Mosquitoes take up microfilariae from blood and later pass infective L3 into the skin of a new host while feeding.",
         "majorOrgan": "pulmonary arteries",
         "onHostStages": ["microfilaria", "L4", "adult"],
         "distribution": "Worldwide; mainly the tropics and warmer temperate zones",
         "zoonotic": "yes",
-        "significance": "Adults in the pulmonary arteries and right ventricle cause endarteritis, pulmonary hypertension and right heart failure; caval syndrome is often fatal.",
+        "significance": "Adults in pulmonary arteries and right ventricle cause endarteritis, pulmonary hypertension and right heart failure; caval syndrome is rare without surgery.",
         "lifecycleType": "indirect",
         "pppDays": {
           "min": 180,
@@ -2030,7 +2060,7 @@
           },
           {
             "name": "adult",
-            "location": "pulmonary artery and right ventricle (right atrium and vena cava in heavy burdens)",
+            "location": "pulmonary arteries and right ventricle (vena cava in heavy burdens)",
             "hostRole": "definitive"
           }
         ],
@@ -2080,7 +2110,7 @@
           "field": "definitiveHosts",
           "citation": "WCVM Learn About Parasites: Dirofilaria immitis",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dirofilaria-immitis.php",
-          "note": "Course also lists man as a rare host; cited references do not."
+          "note": "Course lists man as a rare definitive host; references treat humans as incidental hosts."
         },
         {
           "field": "definitiveHosts",
@@ -2217,7 +2247,7 @@
           "field": "order",
           "citation": "WCVM Learn About Parasites: Dirofilaria immitis",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dirofilaria-immitis.php",
-          "note": "Course lists the suborder Spirurina in the order column; reference gives the order Spirurida."
+          "note": null
         },
         {
           "field": "family",
@@ -2229,7 +2259,7 @@
           "field": "definitiveHosts",
           "citation": "CDC DPDx: Dirofilariasis",
           "url": "https://www.cdc.gov/dpdx/dirofilariasis/index.html",
-          "note": "Course also lists fox; cited references do not."
+          "note": null
         },
         {
           "field": "intermediateHosts",
@@ -2296,10 +2326,10 @@
         "definitiveHosts": ["fox", "dog", "cat"],
         "intermediateHosts": ["earthworm"],
         "majorOrgan": "trachea",
-        "onHostStages": ["adult"],
+        "onHostStages": ["L1", "adult"],
         "distribution": "Worldwide",
         "zoonotic": "potential",
-        "significance": "Often symptomless; heavier burdens cause bronchitis, wheezing cough and bronchopneumonia, which can kill young animals.",
+        "significance": "Often symptomless; heavier burdens cause bronchitis, wheezing cough and bronchopneumonia, especially dangerous in young animals.",
         "lifecycleType": "direct",
         "pppDays": {
           "min": 42,
@@ -2316,8 +2346,13 @@
             }
           },
           {
+            "name": "L1 in earthworm",
+            "location": "facultative; L1 may develop in an earthworm that ate the egg",
+            "hostRole": "intermediate"
+          },
+          {
             "name": "L1",
-            "location": "hatches in the small intestine, travels via lymph or blood to the lungs; may first pass through an earthworm",
+            "location": "hatches in the small intestine and reaches the lungs via lymph or blood",
             "hostRole": "definitive"
           },
           {
@@ -2333,8 +2368,8 @@
             "sample": "faeces"
           },
           {
-            "name": "tracheal wash",
-            "sample": "bronchial mucus"
+            "name": "bronchoalveolar lavage cytology",
+            "sample": null
           }
         ]
       },
@@ -2452,7 +2487,7 @@
         "definitiveHosts": ["dog", "cat"],
         "intermediateHosts": ["earthworm"],
         "majorOrgan": "urinary bladder",
-        "onHostStages": ["adult"],
+        "onHostStages": ["migrating L1", "adult"],
         "distribution": "Worldwide",
         "zoonotic": "no",
         "significance": "Most infected dogs and cats show no signs; heavy burdens can cause cystitis, haematuria and, rarely, urethral obstruction.",
@@ -2490,7 +2525,7 @@
         "diagnosticStage": "egg",
         "diagnosticTests": [
           {
-            "name": "urine sediment examination",
+            "name": "urine sediment microscopy",
             "sample": "urine"
           },
           {
@@ -2666,18 +2701,6 @@
           "note": null
         },
         {
-          "field": "order",
-          "citation": "WCVM Learn About Parasites: Dirofilaria immitis",
-          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dirofilaria-immitis.php",
-          "note": "Course lists the suborder Spirurina in the order column; reference gives the order Spirurida."
-        },
-        {
-          "field": "family",
-          "citation": "BMC Veterinary Research 2017: Spirocerca in black-backed jackals",
-          "url": "https://bmcvetres.biomedcentral.com/articles/10.1186/s12917-017-1175-4",
-          "note": null
-        },
-        {
           "field": "definitiveHosts",
           "citation": "BMC Veterinary Research 2017: Spirocerca in black-backed jackals",
           "url": "https://bmcvetres.biomedcentral.com/articles/10.1186/s12917-017-1175-4",
@@ -2742,6 +2765,18 @@
           "citation": "Nemaplex: Spirocerca lupi",
           "url": "https://nemaplex.ucdavis.edu/Taxadata/G9904S1.aspx",
           "note": null
+        },
+        {
+          "field": "family",
+          "citation": "Alfaro-Segura et al. 2023, Front Parasitol: Spirocerca lupi (order Spirurida, family Spirocercidae)",
+          "url": "https://www.frontiersin.org/journals/parasitology/articles/10.3389/fpara.2023.1249593/full",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "Alfaro-Segura et al. 2023, Front Parasitol: Spirocerca lupi (order Spirurida, family Spirocercidae)",
+          "url": "https://www.frontiersin.org/journals/parasitology/articles/10.3389/fpara.2023.1249593/full",
+          "note": "Course lists the suborder Spirurina in the order column; reference gives the order Spirurida."
         }
       ],
       "images": []
@@ -2882,7 +2917,7 @@
           "field": "lifecycleStages",
           "citation": "Shohana et al. 2023: Ascaridia galli infection in chicken (Immun Inflamm Dis)",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10540146/",
-          "note": null
+          "note": "Course states 2 to 3 weeks for the egg to become infective; reference gives 11 to 12 days."
         },
         {
           "field": "diagnosticTests",
@@ -2910,12 +2945,12 @@
         "order": "Ascaridida",
         "family": "Heterakidae",
         "group": "nematode",
-        "definitiveHosts": ["chicken", "turkey", "gamebird"],
+        "definitiveHosts": ["chicken", "turkey", "gamebird", "pheasant"],
         "paratenicHosts": ["earthworm"],
         "majorOrgan": "caecum",
         "onHostStages": ["adult"],
         "distribution": "Worldwide in chickens, turkeys and other galliform birds",
-        "significance": "Usually mild alone, but its eggs carry Histomonas meleagridis, the agent of blackhead, which can cause high mortality in turkeys and other poultry.",
+        "significance": "Usually mild alone, but its eggs carry Histomonas meleagridis, the agent of blackhead, which can cause serious disease in poultry.",
         "lifecycleType": "direct",
         "lifecycleStages": [
           {
@@ -2951,7 +2986,7 @@
           },
           {
             "name": "post-mortem examination",
-            "sample": "tissue"
+            "sample": "caecal contents"
           }
         ]
       },
@@ -3048,7 +3083,7 @@
         "order": "Strongylida",
         "family": "Syngamidae",
         "group": "nematode",
-        "definitiveHosts": ["bird"],
+        "definitiveHosts": ["bird", "pheasant"],
         "paratenicHosts": ["earthworm", "snail", "slug"],
         "majorOrgan": "trachea",
         "onHostStages": ["migrating L3", "adult"],
@@ -3099,6 +3134,14 @@
           {
             "name": "post-mortem examination",
             "sample": "tissue"
+          },
+          {
+            "name": "endoscopy",
+            "sample": null
+          },
+          {
+            "name": "tracheoscopy",
+            "sample": null
           }
         ]
       },
@@ -3180,6 +3223,24 @@
           "citation": "Meister et al. 2022: Syngamus trachea in free-ranging white stork nestlings (IJP-PAW)",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9062124/",
           "note": null
+        },
+        {
+          "field": "order",
+          "citation": "Meister et al. 2022: Syngamus trachea in free-ranging white stork nestlings",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9062124/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Vrabec et al. 2025: Syngamus trachea in pheasants",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12651135/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Vrabec et al. 2025: Syngamus trachea in pheasants",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12651135/",
+          "note": null
         }
       ],
       "images": []
@@ -3241,8 +3302,12 @@
         "diagnosticStage": "L3",
         "diagnosticTests": [
           {
+            "name": "candling",
+            "sample": "fish"
+          },
+          {
             "name": "endoscopy",
-            "sample": "tissue"
+            "sample": null
           },
           {
             "name": "histopathology",
@@ -3279,7 +3344,7 @@
           "field": "definitiveHosts",
           "citation": "CDC DPDx: Anisakiasis",
           "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
-          "note": "Course also lists humans as definitive hosts; cited references do not."
+          "note": "Course lists humans as definitive hosts; reference gives humans as incidental hosts."
         },
         {
           "field": "intermediateHosts",
@@ -3372,7 +3437,7 @@
           },
           {
             "name": "free-swimming L3",
-            "location": "hatches as an ensheathed L3 that crustaceans such as amphipods eat",
+            "location": "hatches as an ensheathed L3 that crustaceans eat",
             "hostRole": "environment"
           },
           {
@@ -3394,8 +3459,12 @@
         "diagnosticStage": "L3",
         "diagnosticTests": [
           {
+            "name": "candling",
+            "sample": "fish"
+          },
+          {
             "name": "endoscopy",
-            "sample": "tissue"
+            "sample": null
           },
           {
             "name": "histopathology",
@@ -3432,19 +3501,19 @@
           "field": "definitiveHosts",
           "citation": "CDC DPDx: Anisakiasis",
           "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
-          "note": "Course also lists humans and birds as definitive hosts; cited references do not."
+          "note": "Course lists humans as definitive hosts; reference gives humans as incidental hosts."
         },
         {
           "field": "intermediateHosts",
           "citation": "CDC DPDx: Anisakiasis",
           "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
-          "note": "Course states copepods are paratenic hosts; reference gives crustaceans as intermediate hosts."
+          "note": null
         },
         {
           "field": "paratenicHosts",
           "citation": "CDC DPDx: Anisakiasis",
           "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
-          "note": "Course states predatory fish and squid are intermediate hosts; reference gives marine fish as paratenic."
+          "note": null
         },
         {
           "field": "majorOrgan",
@@ -3460,7 +3529,7 @@
         },
         {
           "field": "distribution",
-          "citation": "Contracaecum osculatum nematodes in Baltic cod liver: encapsulation and release (Parasitol Res 2017)",
+          "citation": "Extrusion of Contracaecum osculatum nematode larvae from the liver of cod (Gadus morhua)",
           "url": "https://link.springer.com/article/10.1007/s00436-017-5580-1",
           "note": null
         },
@@ -3472,7 +3541,7 @@
         },
         {
           "field": "significance",
-          "citation": "Contracaecum osculatum nematodes in Baltic cod liver: encapsulation and release (Parasitol Res 2017)",
+          "citation": "Extrusion of Contracaecum osculatum nematode larvae from the liver of cod (Gadus morhua)",
           "url": "https://link.springer.com/article/10.1007/s00436-017-5580-1",
           "note": null
         },
@@ -3496,7 +3565,7 @@
         },
         {
           "field": "lifecycleStages",
-          "citation": "Contracaecum osculatum nematodes in Baltic cod liver: encapsulation and release (Parasitol Res 2017)",
+          "citation": "Extrusion of Contracaecum osculatum nematode larvae from the liver of cod (Gadus morhua)",
           "url": "https://link.springer.com/article/10.1007/s00436-017-5580-1",
           "note": null
         },
@@ -3559,11 +3628,15 @@
         "diagnosticStage": "L3",
         "diagnosticTests": [
           {
-            "name": "candling of fish fillets",
-            "sample": "fish fillet"
+            "name": "candling",
+            "sample": "fish"
           },
           {
             "name": "endoscopy",
+            "sample": null
+          },
+          {
+            "name": "histopathology",
             "sample": "tissue"
           }
         ]
@@ -3597,7 +3670,7 @@
           "field": "definitiveHosts",
           "citation": "CDC DPDx: Anisakiasis",
           "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
-          "note": "Course also lists humans as definitive hosts; cited references do not."
+          "note": "Course lists humans as definitive hosts; reference gives humans as incidental hosts."
         },
         {
           "field": "intermediateHosts",

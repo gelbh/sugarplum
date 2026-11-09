@@ -18,6 +18,7 @@ describe("normalizeParasiteName", () => {
     ["Thelezia lacrymalis", "Thelazia lacrymalis"],
     ["Fasciolides magna", "Fascioloides magna"],
     ["Toxocaris leonina", "Toxascaris leonina"],
+    ["Toxocara leonina", "Toxascaris leonina"],
     ["Ascarida galli", "Ascaridia galli"],
     ["Heterakis gallinarium", "Heterakis gallinarum"],
     ["Contracecum osculatum", "Contracaecum osculatum"],

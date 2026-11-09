@@ -26,6 +26,7 @@ const BINOMIAL_FIXES: Record<string, string> = {
   "Heterakis gallinarium": "Heterakis gallinarum",
   "Strongylus edentates": "Strongylus edentatus",
   "Teladorsagia circumcinta": "Teladorsagia circumcincta",
+  "Toxocara leonina": "Toxascaris leonina",
   "Trichomonas fetus": "Tritrichomonas foetus",
 };
 

@@ -76,6 +76,7 @@ export const HOST_TERMS = {
   Haematobia: { broader: ["fly"] },
   reptile: { broader: ["vertebrate"] },
   gamebird: { broader: ["bird"] },
+  pheasant: { broader: ["gamebird"] },
   "marine mammal": { broader: ["mammal"] },
   cetacean: { broader: ["marine mammal"] },
   pinniped: { broader: ["marine mammal"] },
