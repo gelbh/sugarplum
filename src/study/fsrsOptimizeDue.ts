@@ -5,7 +5,6 @@ import {
 
 const MS_PER_DAY = 86_400_000;
 
-/** True when reviewCount meets the floor and last optimize is missing or stale. */
 export function isOptimizeDue(
   reviewCount: number,
   lastOptimizedAt: string | null | undefined,

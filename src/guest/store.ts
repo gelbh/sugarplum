@@ -774,7 +774,6 @@ export function guestGetFsrsOptimizeStatus(
   });
 }
 
-/** Set local pending when due (enriched floor + 30-day gate). */
 export function guestMarkFsrsOptimizePendingIfDue(
   storage?: Store,
   now: Date = new Date(),

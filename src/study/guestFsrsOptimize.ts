@@ -19,7 +19,6 @@ export const DEFAULT_GUEST_FSRS_OPTIMIZE: GuestFsrsOptimizeFields = {
   fsrsOptimizePending: false,
 };
 
-/** Normalize persisted guest optimize fields; invalid `w` becomes null. */
 export function normalizeGuestFsrsOptimize(
   raw: Partial<GuestFsrsOptimizeFields> | null | undefined,
 ): GuestFsrsOptimizeFields {
@@ -59,7 +58,6 @@ export function guestFsrsOptimizeStatus(
   };
 }
 
-/** Mark pending when due; clear pending when not eligible. */
 export function nextGuestFsrsPending(
   reviewLogs: readonly GuestReviewLog[],
   fields: GuestFsrsOptimizeFields,
@@ -94,7 +92,6 @@ export function guestRevlogCsv(
   return `${lines.join("\n")}\n`;
 }
 
-/** Study prefs + optional personal `w` for `fsrsForPrefs`. */
 export function buildGuestFsrsPrefs(
   studyPrefs: StudyPrefs,
   fsrsW: number[] | null | undefined,
