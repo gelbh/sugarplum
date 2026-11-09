@@ -29,10 +29,6 @@ function ratingToGrade(rating: number): Grade | null {
   }
 }
 
-/**
- * Replay review history under prefs with fuzz forced off.
- * Returns null when no valid steps remain.
- */
 export function replayCardFromLogs(
   logs: readonly ReviewLogReplayRow[],
   prefs: FsrsPrefs,
@@ -61,10 +57,7 @@ type LogRow = {
   schedule_card_id: string | null;
 };
 
-/**
- * Rewrite owned card_schedules by replaying review_logs under prefs.
- * Leaves review_logs immutable; skips cards with no schedule or no valid logs.
- */
+/** Leaves review_logs immutable; skips cards with no schedule or no valid logs. */
 export async function rescheduleUserSchedules(
   db: D1Database,
   userId: string,
