@@ -16,19 +16,16 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import FormControl from "@mui/material/FormControl";
-import IconButton from "@mui/material/IconButton";
 import InputLabel from "@mui/material/InputLabel";
-import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import AddMaterialWorkshop from "../deckHub/AddMaterialWorkshop";
 import CoverPickerDialog from "../components/CoverPickerDialog";
 import CardsWorkshop from "../deckHub/CardsWorkshop";
+import DeckHubTitleHeader from "../deckHub/DeckHubTitleHeader";
 import DraftsWorkshop from "../deckHub/DraftsWorkshop";
 import MissionBoard, { type MissionTileId } from "../deckHub/MissionBoard";
 import StudyReadySheet, {
@@ -1017,142 +1014,43 @@ export default function DeckHubPage({ deckId }: Props) {
         <Typography color="text.secondary">Loading deck…</Typography>
       ) : (
         <Stack spacing={3}>
-          <Box>
-            <Stack
-              direction="row"
-              alignItems="flex-start"
-              justifyContent="space-between"
-              gap={1.5}
-            >
-              <Stack
-                direction="row"
-                spacing={2}
-                alignItems="flex-start"
-                sx={{ flex: 1, minWidth: 0 }}
-              >
-                {deckCover ? (
-                  <Box
-                    component="img"
-                    src={deckCover.imageUrl}
-                    alt=""
-                    sx={{
-                      width: 88,
-                      height: 88,
-                      borderRadius: 2,
-                      border: 1,
-                      borderColor: "divider",
-                      objectFit: "cover",
-                      flexShrink: 0,
-                      bgcolor: "background.paper",
-                    }}
-                  />
-                ) : (
-                  <Box
-                    aria-hidden
-                    sx={{
-                      width: 88,
-                      height: 88,
-                      borderRadius: 2,
-                      border: 1,
-                      borderColor: "divider",
-                      bgcolor: "background.paper",
-                      display: "grid",
-                      placeItems: "center",
-                      flexShrink: 0,
-                      color: "text.secondary",
-                      typography: "caption",
-                      fontWeight: 600,
-                      textAlign: "center",
-                      px: 1,
-                    }}
-                  >
-                    No cover
-                  </Box>
-                )}
-                <Box sx={{ minWidth: 0, flex: 1 }}>
-                  <Typography
-                    variant="h4"
-                    component="h1"
-                    sx={{ color: "text.primary", fontWeight: 600 }}
-                  >
-                    {deck?.title ?? "Deck"}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mt: 0.5 }}
-                  >
-                    {acceptedCount === 0
-                      ? "No accepted cards yet"
-                      : acceptedCount === 1
-                        ? "1 accepted card"
-                        : `${acceptedCount} accepted cards`}
-                    {draftJobs.length > 0
-                      ? ` · ${draftJobs.length} draft job${draftJobs.length === 1 ? "" : "s"}`
-                      : ""}
-                  </Typography>
-                  {!guest && deck ? (
-                    <Button
-                      size="small"
-                      onClick={() => setCoverPickerOpen(true)}
-                      sx={{ mt: 1, px: 0, minWidth: 0 }}
-                    >
-                      {deckCover ? "Change cover" : "Add cover"}
-                    </Button>
-                  ) : null}
-                </Box>
-              </Stack>
-              {deck ? (
-                <>
-                  <Tooltip title="Deck actions">
-                    <IconButton
-                      size="small"
-                      aria-label="Deck actions"
-                      onClick={(ev) => setOverflowAnchor(ev.currentTarget)}
-                      sx={{ color: "text.secondary" }}
-                    >
-                      <MoreVertIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Menu
-                    anchorEl={overflowAnchor}
-                    open={overflowAnchor !== null}
-                    onClose={() => setOverflowAnchor(null)}
-                  >
-                    {!guest ? (
-                      <MenuItem
-                        disabled={exportBusy || acceptedCount === 0}
-                        onClick={() => {
-                          setOverflowAnchor(null);
-                          void onExportAnki();
-                        }}
-                      >
-                        {exportBusy ? "Exporting…" : "Export Anki"}
-                      </MenuItem>
-                    ) : null}
-                    <MenuItem
-                      onClick={() => {
-                        setOverflowAnchor(null);
-                        setRenameError(null);
-                        setRenameValue(deck.title);
-                        setRenameOpen(true);
-                      }}
-                    >
-                      Rename
-                    </MenuItem>
-                    <MenuItem
-                      onClick={() => {
-                        setOverflowAnchor(null);
-                        openDelete();
-                      }}
-                    >
-                      Delete
-                    </MenuItem>
-                  </Menu>
-                </>
-              ) : null}
-            </Stack>
-          </Box>
+          {deck ? (
+            <DeckHubTitleHeader
+              title={deck.title}
+              cover={deckCover}
+              guest={guest}
+              metaLine={`${
+                acceptedCount === 0
+                  ? "No accepted cards yet"
+                  : acceptedCount === 1
+                    ? "1 accepted card"
+                    : `${acceptedCount} accepted cards`
+              }${
+                draftJobs.length > 0
+                  ? ` · ${draftJobs.length} draft job${draftJobs.length === 1 ? "" : "s"}`
+                  : ""
+              }`}
+              exportBusy={exportBusy}
+              exportDisabled={acceptedCount === 0}
+              overflowAnchor={overflowAnchor}
+              onOverflowOpen={setOverflowAnchor}
+              onOverflowClose={() => setOverflowAnchor(null)}
+              onExportAnki={() => {
+                void onExportAnki();
+              }}
+              onRename={() => {
+                setRenameError(null);
+                setRenameValue(deck.title);
+                setRenameOpen(true);
+              }}
+              onDelete={openDelete}
+              onChangeCover={() => setCoverPickerOpen(true)}
+            />
+          ) : (
+            <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+              Deck
+            </Typography>
+          )}
 
           {error ? <Alert severity="error">{error}</Alert> : null}
           {notice ? (
@@ -1586,6 +1484,7 @@ export default function DeckHubPage({ deckId }: Props) {
 
       {!guest && deck ? (
         <CoverPickerDialog
+          key={deck.id}
           open={coverPickerOpen}
           title={deck.title}
           onClose={() => setCoverPickerOpen(false)}

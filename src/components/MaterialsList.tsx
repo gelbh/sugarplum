@@ -8,6 +8,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
+import Divider from "@mui/material/Divider";
 import FormControl from "@mui/material/FormControl";
 import IconButton from "@mui/material/IconButton";
 import InputLabel from "@mui/material/InputLabel";
@@ -210,51 +211,17 @@ export default function MaterialsList({
                 fontWeight: 600,
                 letterSpacing: "0.04em",
                 textTransform: "uppercase",
-                mb: 0.75,
+                mb: 0.5,
               }}
             >
               {kindLabel(kind)}
             </Typography>
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: {
-                  xs: "1fr",
-                  sm: "minmax(0, 1.4fr) minmax(0, 1fr) 140px auto",
-                },
-                columnGap: 1.5,
-                rowGap: 0.5,
-                alignItems: "center",
-              }}
+            <Stack
+              component="ul"
+              spacing={0}
+              divider={<Divider flexItem />}
+              sx={{ m: 0, p: 0, listStyle: "none" }}
             >
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: { xs: "none", sm: "block" }, fontWeight: 600 }}
-              >
-                Name
-              </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: { xs: "none", sm: "block" }, fontWeight: 600 }}
-              >
-                Status
-              </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: { xs: "none", sm: "block" }, fontWeight: 600 }}
-              >
-                Role
-              </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: { xs: "none", sm: "block" }, fontWeight: 600 }}
-              >
-                Actions
-              </Typography>
               {rows.map((material) => {
                 const name = materialDisplayName(material.filename);
                 const deckHref = `/library/decks/${encodeURIComponent(material.deck_id)}`;
@@ -263,19 +230,17 @@ export default function MaterialsList({
                 const roleBusy = roleBusyId === material.id;
                 return (
                   <Box
+                    component="li"
                     key={material.id}
                     sx={{
-                      display: "contents",
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 1,
+                      py: 1.25,
+                      flexWrap: "wrap",
                     }}
                   >
-                    <Box
-                      sx={{
-                        minWidth: 0,
-                        py: { xs: 1, sm: 1.25 },
-                        borderBottom: 1,
-                        borderColor: "divider",
-                      }}
-                    >
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Stack
                         direction="row"
                         spacing={0.75}
@@ -294,6 +259,11 @@ export default function MaterialsList({
                           />
                         ) : null}
                       </Stack>
+                      <Typography variant="caption" color="text.secondary">
+                        {material.status}
+                        {" · "}
+                        {formatMaterialDate(material.created_at)}
+                      </Typography>
                       {showDeckTitle ? (
                         <Typography
                           variant="caption"
@@ -314,86 +284,56 @@ export default function MaterialsList({
                         </Typography>
                       ) : null}
                     </Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{
-                        py: { xs: 0, sm: 1.25 },
-                        borderBottom: { xs: 0, sm: 1 },
-                        borderColor: "divider",
-                      }}
-                    >
-                      {material.status}
-                      {" · "}
-                      {formatMaterialDate(material.created_at)}
-                    </Typography>
-                    <Box
-                      sx={{
-                        py: { xs: 0.5, sm: 1.25 },
-                        borderBottom: { xs: 0, sm: 1 },
-                        borderColor: "divider",
-                      }}
-                    >
-                      <FormControl size="small" fullWidth>
-                        <InputLabel id={`source-role-${material.id}`}>
-                          Role
-                        </InputLabel>
-                        <Select
-                          labelId={`source-role-${material.id}`}
-                          label="Role"
-                          value={roleValue}
-                          disabled={roleBusy}
-                          onChange={(ev) => {
-                            void onSourceRoleChange(
-                              material,
-                              ev.target.value as SourceRole,
-                            );
-                          }}
-                        >
-                          {SOURCE_ROLES.map((role) => (
-                            <MenuItem key={role} value={role}>
-                              {SOURCE_ROLE_LABELS[role]}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Box>
-                    <Stack
-                      direction="row"
-                      spacing={0.25}
-                      sx={{
-                        py: { xs: 0.5, sm: 1.25 },
-                        borderBottom: 1,
-                        borderColor: "divider",
-                        justifyContent: { xs: "flex-start", sm: "flex-end" },
-                      }}
-                    >
-                      <Tooltip title="Download">
+                    <FormControl size="small" sx={{ minWidth: 132 }}>
+                      <InputLabel id={`source-role-${material.id}`}>
+                        Role
+                      </InputLabel>
+                      <Select
+                        labelId={`source-role-${material.id}`}
+                        label="Role"
+                        value={roleValue}
+                        disabled={roleBusy}
+                        onChange={(ev) => {
+                          void onSourceRoleChange(
+                            material,
+                            ev.target.value as SourceRole,
+                          );
+                        }}
+                      >
+                        {SOURCE_ROLES.map((role) => (
+                          <MenuItem key={role} value={role}>
+                            {SOURCE_ROLE_LABELS[role]}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    <Stack direction="row" spacing={0.25}>
+                      <Tooltip title={`Download ${name}`}>
                         <IconButton
                           size="small"
                           component="a"
                           href={downloadMaterialUrl(material.id)}
-                          aria-label="Download"
+                          aria-label={`Download ${name}`}
                         >
                           <DownloadOutlinedIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                       {canGenerate ? (
-                        <Tooltip title="Generate more">
+                        <Tooltip title={`Generate more from ${name}`}>
                           <IconButton
                             size="small"
-                            aria-label="Generate more"
+                            aria-label={`Generate more from ${name}`}
                             onClick={() => openGenerate(material)}
                           >
                             <AddCircleOutlineIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
                       ) : null}
-                      <Tooltip title="Delete">
+                      <Tooltip title={`Delete ${name}`}>
                         <IconButton
                           size="small"
                           color="error"
-                          aria-label="Delete"
+                          aria-label={`Delete ${name}`}
                           onClick={() => {
                             setDeleteError(null);
                             setDeleteTarget(material);
@@ -406,7 +346,7 @@ export default function MaterialsList({
                   </Box>
                 );
               })}
-            </Box>
+            </Stack>
           </Box>
         ))}
       </Stack>

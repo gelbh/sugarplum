@@ -11,6 +11,7 @@ import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { alpha } from "@mui/material/styles";
 import DraftCardEditor, {
   type DraftEditorChange,
 } from "../components/DraftCardEditor";
@@ -188,10 +189,12 @@ export default function AddMaterialWorkshop({
           <Stack spacing={2}>
             <Box
               onDragEnter={(ev) => {
+                if (materialBusy) return;
                 ev.preventDefault();
                 setDropActive(true);
               }}
               onDragOver={(ev) => {
+                if (materialBusy) return;
                 ev.preventDefault();
                 setDropActive(true);
               }}
@@ -200,13 +203,20 @@ export default function AddMaterialWorkshop({
                 if (ev.currentTarget.contains(ev.relatedTarget as Node)) return;
                 setDropActive(false);
               }}
-              onDrop={onDropZoneDrop}
-              sx={{
+              onDrop={(ev) => {
+                if (materialBusy) {
+                  ev.preventDefault();
+                  setDropActive(false);
+                  return;
+                }
+                onDropZoneDrop(ev);
+              }}
+              sx={(theme) => ({
                 border: 2,
                 borderStyle: "dashed",
                 borderColor: dropActive ? "primary.main" : "divider",
                 bgcolor: dropActive
-                  ? "rgba(91, 44, 111, 0.1)"
+                  ? alpha(theme.palette.primary.main, 0.1)
                   : "background.paper",
                 borderRadius: 2,
                 minHeight: 148,
@@ -218,7 +228,9 @@ export default function AddMaterialWorkshop({
                 justifyContent: "center",
                 gap: 1,
                 textAlign: "center",
-              }}
+                opacity: materialBusy ? 0.7 : 1,
+                pointerEvents: materialBusy ? "none" : "auto",
+              })}
             >
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                 {uploadFile

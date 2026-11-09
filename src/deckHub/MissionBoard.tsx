@@ -3,11 +3,11 @@ import ButtonBase from "@mui/material/ButtonBase";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { alpha } from "@mui/material/styles";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import RateReviewOutlinedIcon from "@mui/icons-material/RateReviewOutlined";
 import StyleOutlinedIcon from "@mui/icons-material/StyleOutlined";
 import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
-import type { SvgIconComponent } from "@mui/icons-material";
 import type { WorkshopId } from "./workshopStack";
 
 export type MissionTileId = Extract<
@@ -15,12 +15,12 @@ export type MissionTileId = Extract<
   "addMaterial" | "drafts" | "cards" | "study"
 >;
 
-const TILE_ICONS: Record<MissionTileId, SvgIconComponent> = {
+const TILE_ICONS = {
   addMaterial: AddCircleOutlineIcon,
   drafts: RateReviewOutlinedIcon,
   cards: StyleOutlinedIcon,
   study: TimerOutlinedIcon,
-};
+} as const;
 
 type Tile = {
   id: MissionTileId;
@@ -133,16 +133,16 @@ export default function MissionBoard({
               >
                 <Box
                   aria-hidden
-                  sx={{
+                  sx={(theme) => ({
                     width: 28,
                     height: 28,
                     borderRadius: 1,
-                    bgcolor: "rgba(91, 44, 111, 0.1)",
+                    bgcolor: alpha(theme.palette.primary.main, 0.1),
                     color: "primary.main",
                     display: "grid",
                     placeItems: "center",
                     flexShrink: 0,
-                  }}
+                  })}
                 >
                   <Icon sx={{ fontSize: 18 }} />
                 </Box>

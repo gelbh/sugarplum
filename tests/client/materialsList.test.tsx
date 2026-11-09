@@ -68,10 +68,10 @@ describe("MaterialsList residual A", () => {
     expect(text.indexOf("Image")).toBeGreaterThan(-1);
     expect(text.indexOf("PDF")).toBeLessThan(text.indexOf("Image"));
     expect(
-      document.querySelectorAll('[aria-label="Download"]').length,
+      document.querySelectorAll('[aria-label^="Download"]').length,
     ).toBeGreaterThan(0);
     expect(
-      document.querySelectorAll('[aria-label="Delete"]').length,
+      document.querySelectorAll('[aria-label^="Delete"]').length,
     ).toBeGreaterThan(0);
   });
 });
