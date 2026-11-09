@@ -74,6 +74,7 @@ describe("gamification route hooks", () => {
       unlocks: { id: string }[];
     };
     expect(body.due).toBeTruthy();
+    expect(typeof body.state).toBe("number");
     expect(body.unlocks.map((u) => u.id)).toContain("reviews_1");
   });
 

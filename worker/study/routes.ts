@@ -54,14 +54,12 @@ type StrugglingSqlRow = {
 
 const ReviewBodySchema = z.object({
   cardId: z.string().min(1),
-  rating: z.union([
-    z.literal(1),
-    z.literal(2),
-    z.literal(3),
-    z.literal(4),
-  ]),
+  rating: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
   /** Client local calendar day for intro day-ledger (YYYY-MM-DD). */
-  localDay: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  localDay: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
 });
 
 export { resolveLocalDayStartIso };
@@ -180,7 +178,9 @@ studyRoutes.get("/struggling", async (c) => {
   const db = getDb(c.env);
   const now = new Date();
   const nowIso = now.toISOString();
-  const since = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();
+  const since = new Date(
+    now.getTime() - 14 * 24 * 60 * 60 * 1000,
+  ).toISOString();
 
   const { results } = await db
     .prepare(
@@ -377,7 +377,7 @@ studyRoutes.post("/review", async (c) => {
     reviewedAt: new Date(reviewedAt),
   });
 
-  return c.json({ due: cols.due, unlocks });
+  return c.json({ due: cols.due, state: cols.state, unlocks });
 });
 
 function toIsoRequired(value: Date | string): string {
@@ -387,7 +387,11 @@ function toIsoRequired(value: Date | string): string {
 
 function ratingToGrade(
   rating: 1 | 2 | 3 | 4,
-): typeof Rating.Again | typeof Rating.Hard | typeof Rating.Good | typeof Rating.Easy {
+):
+  | typeof Rating.Again
+  | typeof Rating.Hard
+  | typeof Rating.Good
+  | typeof Rating.Easy {
   switch (rating) {
     case 1:
       return Rating.Again;
