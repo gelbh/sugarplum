@@ -36,7 +36,7 @@ import {
   patchDeck,
   patchSubject,
   setCover,
-  subjectKnowledge,
+  subjectComposition,
   type Deck,
   type DeckStats,
   type StoredCoverRow,
@@ -117,7 +117,7 @@ export default function SubjectPage({ subjectId }: Props) {
           ? Promise.resolve([] as StoredCoverRow[])
           : listCovers().catch(() => [] as StoredCoverRow[]),
         guest ? Promise.resolve(null) : getAtlas(subjectId),
-        subjectKnowledge(subjectId).catch(() => null),
+        subjectComposition(subjectId).catch(() => null),
       ]);
     const found = subjects.find((s) => s.id === subjectId) ?? null;
     setSubject(found);
@@ -137,7 +137,7 @@ export default function SubjectPage({ subjectId }: Props) {
 
   const refreshKnowledge = useCallback(async () => {
     try {
-      setKnowledge(await subjectKnowledge(subjectId));
+      setKnowledge(await subjectComposition(subjectId));
     } catch {
       // Soft-fail: keep prior bar rather than blanking the page.
     }

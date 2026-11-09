@@ -426,7 +426,7 @@ export function guestDeckStats(
   };
 }
 
-export function guestSubjectKnowledge(
+export function guestSubjectComposition(
   subjectId: string,
   storage?: Store,
 ): SubjectKnowledge {

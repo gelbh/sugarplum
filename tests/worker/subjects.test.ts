@@ -198,7 +198,7 @@ describe("subject CRUD", () => {
   });
 });
 
-describe("GET /api/subjects/:id/knowledge", () => {
+describe("GET /api/subjects/:id/composition", () => {
   function seedAccepted(
     env: ReturnType<typeof createTestEnv>,
     id: string,
@@ -234,12 +234,50 @@ describe("GET /api/subjects/:id/knowledge", () => {
     }
   }
 
+  it("401 when unauthenticated", async () => {
+    const env = createTestEnv();
+    const res = await app.request("/api/subjects/sub-1/composition", {}, env);
+    expect(res.status).toBe(401);
+  });
+
   it("404 for missing subject", async () => {
     const env = createTestEnv();
     seedOwner(env);
     const res = await app.request(
-      "/api/subjects/missing/knowledge",
+      "/api/subjects/missing/composition",
       { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(res.status).toBe(404);
+  });
+
+  it("404 when another user owns the subject", async () => {
+    const env = createTestEnv();
+    env.seedUser({
+      id: "user-a",
+      email: "a@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedUser({
+      id: "user-b",
+      email: "b@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSubject({
+      id: "sub-a",
+      user_id: "user-a",
+      title: "Owner subject",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSession("sess-b", "user-b");
+
+    const res = await app.request(
+      "/api/subjects/sub-a/composition",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-b` } },
       env,
     );
     expect(res.status).toBe(404);
@@ -281,7 +319,7 @@ describe("GET /api/subjects/:id/knowledge", () => {
     });
 
     const res = await app.request(
-      "/api/subjects/sub-1/knowledge",
+      "/api/subjects/sub-1/composition",
       { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
       env,
     );

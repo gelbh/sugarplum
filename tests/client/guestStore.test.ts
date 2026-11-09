@@ -22,7 +22,7 @@ import {
   guestResetCardSchedule,
   guestRestoreCard,
   guestReviewCard,
-  guestSubjectKnowledge,
+  guestSubjectComposition,
 } from "../../src/guest/store";
 
 const STORE_KEY = "sugarplum.guest.store.v1";
@@ -70,7 +70,7 @@ describe("guest store", () => {
     expect(decks.every((d) => d.subject_id === anatomy.id)).toBe(true);
   });
 
-  it("guestSubjectKnowledge aggregates accepted buckets and ignores drafts", () => {
+  it("guestSubjectComposition aggregates accepted buckets and ignores drafts", () => {
     const subject = guestCreateSubject("Knowledge subject", storage);
     const deck = guestCreateDeck("Knowledge deck", subject.id, storage);
     const [cNew, cLearn, cYoung, cMature, cDraft] = guestAddAcceptedCards(
@@ -126,7 +126,7 @@ describe("guest store", () => {
     };
     storage.setItem(STORE_KEY, JSON.stringify(raw));
 
-    expect(guestSubjectKnowledge(subject.id, storage)).toEqual({
+    expect(guestSubjectComposition(subject.id, storage)).toEqual({
       new: 1,
       learning: 1,
       young: 1,
@@ -137,8 +137,8 @@ describe("guest store", () => {
     });
   });
 
-  it("guestSubjectKnowledge throws for missing subject", () => {
-    expect(() => guestSubjectKnowledge("missing", storage)).toThrow(
+  it("guestSubjectComposition throws for missing subject", () => {
+    expect(() => guestSubjectComposition("missing", storage)).toThrow(
       "Subject not found",
     );
   });
