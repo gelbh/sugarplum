@@ -33,6 +33,7 @@ export function replayCardFromLogs(
     const grade = ratingToGrade(row.rating);
     if (grade == null) continue;
     const now = new Date(when);
+    // Residual 2 (A): seed at first valid log; FSRS New ignores empty due.
     const base: Card = card ?? createEmptyCard(now);
     card = scheduler.next(base, now, grade).card;
   }
