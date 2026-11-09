@@ -1,4 +1,5 @@
 import type { AchievementItem, UnlockView } from "../achievements/wire";
+import type { FsrsOptimizeStatus } from "../study/fsrsOptimizeTypes";
 import {
   UploadError,
   uploadWithProgress,
@@ -1015,6 +1016,46 @@ export function putStudyPrefs(prefs: StudyPrefs) {
   return api<StudyPrefs>("/api/settings/study", {
     method: "PUT",
     json: prefs,
+  });
+}
+
+export type { FsrsOptimizeStatus } from "../study/fsrsOptimizeTypes";
+
+export function getFsrsOptimizeStatus() {
+  if (isGuest()) guestUnsupported("FSRS optimize status");
+  return api<FsrsOptimizeStatus>("/api/settings/study/fsrs-optimize");
+}
+
+export async function getFsrsRevlogCsv(): Promise<string> {
+  if (isGuest()) guestUnsupported("FSRS revlog export");
+  const res = await fetch("/api/settings/study/fsrs-revlog.csv", {
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new ApiError(res.status, res.statusText || "Request failed");
+  }
+  return res.text();
+}
+
+export function putFsrsWeights(w: number[]) {
+  if (isGuest()) guestUnsupported("save FSRS weights");
+  return api<{ ok: true; wLength: number }>("/api/settings/study/fsrs-weights", {
+    method: "PUT",
+    json: { w },
+  });
+}
+
+export function resetFsrsWeights() {
+  if (isGuest()) guestUnsupported("reset FSRS weights");
+  return api<{ ok: true }>("/api/settings/study/fsrs-weights/reset", {
+    method: "POST",
+  });
+}
+
+export function runFsrsOptimizeNow() {
+  if (isGuest()) guestUnsupported("run FSRS optimize");
+  return api<{ ok: true; pending: true }>("/api/settings/study/fsrs-optimize/run", {
+    method: "POST",
   });
 }
 

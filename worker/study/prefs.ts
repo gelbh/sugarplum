@@ -3,8 +3,16 @@ import {
   DEFAULT_STUDY_PREFS,
   type StudyPrefs,
 } from "../../src/study/policyPrefs";
+import { parseFsrsWJson } from "../../src/study/fsrsWeights";
 
 export { clampStudyPrefs, DEFAULT_STUDY_PREFS, type StudyPrefs };
+
+/** Study pacing prefs plus optional personal FSRS-6 weights for scheduling. */
+export type StudyPrefsLoaded = StudyPrefs & {
+  w?: number[];
+  fsrsLastOptimizedAt?: string | null;
+  fsrsOptimizePending?: boolean;
+};
 
 type PrefsRow = {
   intro_budget: number;
@@ -12,26 +20,48 @@ type PrefsRow = {
   r_floor: number;
   desired_retention: number;
   enable_fuzz: number;
+  fsrs_w_json?: string | null;
+  fsrs_last_optimized_at?: string | null;
+  fsrs_optimize_pending?: number | null;
 };
 
-export function prefsFromRow(row: PrefsRow | null | undefined): StudyPrefs {
+export function prefsFromRow(row: PrefsRow | null | undefined): StudyPrefsLoaded {
   if (!row) return { ...DEFAULT_STUDY_PREFS };
-  return clampStudyPrefs({
+  const base = clampStudyPrefs({
     introBudget: row.intro_budget,
     reviewBudget: row.review_budget,
     rFloor: row.r_floor,
     desiredRetention: row.desired_retention,
     enableFuzz: row.enable_fuzz,
   });
+  const w = parseFsrsWJson(row.fsrs_w_json ?? null);
+  return {
+    ...base,
+    ...(w ? { w } : {}),
+    fsrsLastOptimizedAt: row.fsrs_last_optimized_at ?? null,
+    fsrsOptimizePending: (row.fsrs_optimize_pending ?? 0) === 1,
+  };
+}
+
+/** Public settings JSON (no weight vector dump). */
+export function studyPrefsResponse(prefs: StudyPrefsLoaded): StudyPrefs {
+  return {
+    introBudget: prefs.introBudget,
+    reviewBudget: prefs.reviewBudget,
+    rFloor: prefs.rFloor,
+    desiredRetention: prefs.desiredRetention,
+    enableFuzz: prefs.enableFuzz,
+  };
 }
 
 export async function loadStudyPrefs(
   db: D1Database,
   userId: string,
-): Promise<StudyPrefs> {
+): Promise<StudyPrefsLoaded> {
   const row = await db
     .prepare(
-      `SELECT intro_budget, review_budget, r_floor, desired_retention, enable_fuzz
+      `SELECT intro_budget, review_budget, r_floor, desired_retention, enable_fuzz,
+              fsrs_w_json, fsrs_last_optimized_at, fsrs_optimize_pending
        FROM user_study_prefs WHERE user_id = ?`,
     )
     .bind(userId)
@@ -39,6 +69,7 @@ export async function loadStudyPrefs(
   return prefsFromRow(row);
 }
 
+/** Budget / retention / fuzz only. Never touches FSRS weight / optimize columns. */
 export async function saveStudyPrefs(
   db: D1Database,
   userId: string,

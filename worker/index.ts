@@ -22,6 +22,9 @@ import type { ExportQueueMessage } from "./export/enqueue";
 import { handleGenerateQueue } from "./generation/consumer";
 import type { GenerateQueueMessage } from "./generation/enqueue";
 import { isAllowedMutatingOrigin } from "./security/origin";
+import { getDb } from "./db/client";
+import { markOptimizePendingBatch } from "./study/fsrsOptimize";
+import { FSRS_CRON_MARK_LIMIT } from "../src/study/fsrsOptimizeConstants";
 
 const EXPORT_QUEUE_NAME = "sugarplum-export";
 
@@ -90,6 +93,13 @@ const worker = {
       batch as MessageBatch<GenerateQueueMessage>,
       env,
     );
+  },
+  async scheduled(
+    _controller: ScheduledController,
+    env: Env,
+    _ctx: ExecutionContext,
+  ): Promise<void> {
+    await markOptimizePendingBatch(getDb(env), new Date(), FSRS_CRON_MARK_LIMIT);
   },
 };
 
