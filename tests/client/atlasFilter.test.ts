@@ -125,9 +125,10 @@ describe("Focus helpers", () => {
       "Frequent",
       "Unscanned",
     ]);
+    // Primary sort is common name: Dog roundworm before Double-pored tapeworm.
     expect(ids(rows[2].entries)).toEqual([
-      "dipylidium-caninum",
       "toxocara-canis",
+      "dipylidium-caninum",
     ]);
     expect(rows.flatMap((r) => r.entries).map((e) => e.id).sort()).toEqual(
       mixed.map((e) => e.id).sort(),
@@ -184,7 +185,9 @@ describe("sortTable", () => {
   });
 
   it("sorts by name ascending", () => {
-    const names = sortTable(entries, "name", "asc").map((e) => e.canonicalName);
+    const names = sortTable(entries, "name", "asc").map(
+      (e) => e.commonName ?? e.canonicalName,
+    );
     expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
   });
 });
