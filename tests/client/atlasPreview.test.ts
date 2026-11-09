@@ -33,26 +33,43 @@ describe("syncAtlasPreviewParam", () => {
 });
 
 describe("matchAtlasPath", () => {
-  it("parses cabinet, entry and compare paths", () => {
+  it("parses hub, cabinet, entry and compare paths", () => {
+    expect(matchAtlasPath("/atlas")).toEqual({ kind: "hub" });
+    expect(matchAtlasPath("/atlas/a1")).toEqual({
+      kind: "atlas",
+      atlasId: "a1",
+      route: { kind: "cabinet" },
+    });
+    expect(matchAtlasPath("/atlas/a1/entry/fasciola-hepatica/")).toEqual({
+      kind: "atlas",
+      atlasId: "a1",
+      route: { kind: "entry", key: "fasciola-hepatica" },
+    });
+    expect(matchAtlasPath("/atlas/a1/compare/a/b")).toEqual({
+      kind: "atlas",
+      atlasId: "a1",
+      route: { kind: "compare", a: "a", b: "b" },
+    });
+  });
+
+  it("treats old Library atlas URLs as legacy redirects", () => {
     expect(matchAtlasPath("/library/subjects/s1/atlas")).toEqual({
+      kind: "legacy",
       subjectId: "s1",
       route: { kind: "cabinet" },
     });
     expect(
       matchAtlasPath("/library/subjects/s1/atlas/entry/fasciola-hepatica/"),
     ).toEqual({
+      kind: "legacy",
       subjectId: "s1",
       route: { kind: "entry", key: "fasciola-hepatica" },
-    });
-    expect(matchAtlasPath("/library/subjects/s1/atlas/compare/a/b")).toEqual({
-      subjectId: "s1",
-      route: { kind: "compare", a: "a", b: "b" },
     });
   });
 
   it("rejects malformed atlas paths and the plain subject path", () => {
     expect(matchAtlasPath("/library/subjects/s1")).toBeNull();
-    expect(matchAtlasPath("/library/subjects/s1/atlas/entry/a/b")).toBeNull();
-    expect(matchAtlasPath("/library/subjects/s1/atlas/compare/a")).toBeNull();
+    expect(matchAtlasPath("/atlas/a1/entry/a/b")).toBeNull();
+    expect(matchAtlasPath("/atlas/a1/compare/a")).toBeNull();
   });
 });

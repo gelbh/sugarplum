@@ -49,9 +49,6 @@ import {
   ANKI_EXPORT_BUSY_LABEL,
   runAnkiExportDownload,
 } from "../export/runAnkiExport";
-import { createAtlas, getAtlas } from "../atlas/apiSource";
-import { atlasHref } from "../atlas/paths";
-import { subjectAtlasAction } from "../atlas/subjectAtlasAction";
 import { isGuest } from "../guest/session";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
@@ -96,11 +93,8 @@ export default function SubjectPage({ subjectId }: Props) {
   >(null);
   const [covers, setCovers] = useState<StoredCoverRow[]>([]);
   const [coverPicker, setCoverPicker] = useState<CoverTarget | null>(null);
-  const [hasAtlas, setHasAtlas] = useState(false);
-  const [atlasBusy, setAtlasBusy] = useState(false);
   const [knowledge, setKnowledge] = useState<SubjectKnowledge | null>(null);
   const guest = isGuest();
-  const atlasAction = subjectAtlasAction(guest, hasAtlas);
   const { end: endLoad } = useTrackedOp("Loading subject…", {
     trackOnMount: true,
   });
@@ -109,21 +103,18 @@ export default function SubjectPage({ subjectId }: Props) {
   );
 
   const load = useCallback(async () => {
-    const [subjects, deckList, coverList, atlas, knowledgeResult] =
-      await Promise.all([
-        listSubjects(),
-        listDecks(subjectId),
-        guest
-          ? Promise.resolve([] as StoredCoverRow[])
-          : listCovers().catch(() => [] as StoredCoverRow[]),
-        guest ? Promise.resolve(null) : getAtlas(subjectId),
-        subjectComposition(subjectId).catch(() => null),
-      ]);
+    const [subjects, deckList, coverList, knowledgeResult] = await Promise.all([
+      listSubjects(),
+      listDecks(subjectId),
+      guest
+        ? Promise.resolve([] as StoredCoverRow[])
+        : listCovers().catch(() => [] as StoredCoverRow[]),
+      subjectComposition(subjectId).catch(() => null),
+    ]);
     const found = subjects.find((s) => s.id === subjectId) ?? null;
     setSubject(found);
     setDecks(deckList);
     setCovers(coverList);
-    setHasAtlas(atlas !== null);
     setKnowledge(knowledgeResult);
     return found;
   }, [guest, subjectId]);
@@ -437,51 +428,6 @@ export default function SubjectPage({ subjectId }: Props) {
               >
                 New deck
               </Button>
-              {atlasAction.kind === "sign-in" ? (
-                <Button size="small" variant="outlined" href="/login">
-                  {atlasAction.label}
-                </Button>
-              ) : atlasAction.kind === "add" ? (
-                <Button
-                  size="small"
-                  variant="outlined"
-                  disabled={!subject || atlasBusy}
-                  onClick={() => {
-                    void (async () => {
-                      setAtlasBusy(true);
-                      setError(null);
-                      try {
-                        await createAtlas(subjectId);
-                        setHasAtlas(true);
-                        navigate(atlasHref(subjectId));
-                      } catch (err) {
-                        if (err instanceof ApiError && err.status === 409) {
-                          setHasAtlas(true);
-                          navigate(atlasHref(subjectId));
-                          return;
-                        }
-                        setError(
-                          err instanceof ApiError
-                            ? err.message
-                            : "Could not create Atlas",
-                        );
-                      } finally {
-                        setAtlasBusy(false);
-                      }
-                    })();
-                  }}
-                >
-                  {atlasBusy ? "Adding…" : atlasAction.label}
-                </Button>
-              ) : (
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => navigate(atlasHref(subjectId))}
-                >
-                  {atlasAction.label}
-                </Button>
-              )}
             </Stack>
             {knowledge ? <SubjectKnowledgeBar knowledge={knowledge} /> : null}
           </Box>

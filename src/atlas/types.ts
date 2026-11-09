@@ -43,5 +43,5 @@ export type AtlasEntryView = {
 };
 
 export type AtlasSource = {
-  list(subjectId: string): Promise<AtlasEntryView[]>;
+  list(atlasId: string): Promise<AtlasEntryView[]>;
 };

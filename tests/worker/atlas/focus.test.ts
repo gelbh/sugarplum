@@ -48,12 +48,13 @@ describe("atlas focus persistence helpers", () => {
     });
 
     const created = await app.request(
-      "/api/subjects/sub-1/atlas",
+      "/api/atlas",
       { method: "POST", headers: authHeaders() },
       env,
     );
     expect(created.status).toBe(201);
     const atlas = (await created.json()) as { id: string };
+    const atlasId = atlas.id;
 
     const paste = await app.request(
       "/api/decks/deck-1/materials/paste",
@@ -74,7 +75,7 @@ describe("atlas focus persistence helpers", () => {
     await setFocusOverride(env.DB, atlas.id, "fasciola-hepatica", "standard");
 
     const list = await app.request(
-      "/api/subjects/sub-1/atlas/entries",
+      `/api/atlas/${atlasId}/entries`,
       { headers: authHeaders() },
       env,
     );
@@ -89,7 +90,7 @@ describe("atlas focus persistence helpers", () => {
     // Clear override without refresh: pure scan tier must resurface.
     await setFocusOverride(env.DB, atlas.id, "fasciola-hepatica", null);
     const cleared = await app.request(
-      "/api/subjects/sub-1/atlas/entries",
+      `/api/atlas/${atlasId}/entries`,
       { headers: authHeaders() },
       env,
     );
@@ -136,8 +137,8 @@ describe("atlas focus persistence helpers", () => {
             return stmt;
           },
           async first<T>() {
-            if (normalized.startsWith("SELECT id, subject_id FROM atlases")) {
-              return { id: "a1", subject_id: "s1" } as T;
+            if (normalized.startsWith("SELECT id, user_id FROM atlases")) {
+              return { id: "a1", user_id: "u1" } as T;
             }
             if (
               normalized.includes("FROM atlas_entry_focus") &&
@@ -150,7 +151,7 @@ describe("atlas focus persistence helpers", () => {
           async all<T>() {
             if (
               normalized.includes("FROM materials m") &&
-              normalized.includes("d.subject_id")
+              normalized.includes("d.user_id")
             ) {
               return {
                 results: [
@@ -307,12 +308,13 @@ describe("atlas focus empty materials and lazy GET", () => {
     });
 
     const created = await app.request(
-      "/api/subjects/sub-1/atlas",
+      "/api/atlas",
       { method: "POST", headers: authHeaders() },
       env,
     );
     expect(created.status).toBe(201);
     const atlas = (await created.json()) as { id: string };
+    const atlasId = atlas.id;
 
     const paste = await app.request(
       "/api/decks/deck-1/materials/paste",
@@ -330,7 +332,7 @@ describe("atlas focus empty materials and lazy GET", () => {
     const material = (await paste.json()) as { id: string };
 
     const pin = await app.request(
-      "/api/subjects/sub-1/atlas/entries/fasciola-hepatica/focus",
+      `/api/atlas/${atlasId}/entries/fasciola-hepatica/focus`,
       {
         method: "PATCH",
         headers: authHeaders(true),
@@ -347,7 +349,7 @@ describe("atlas focus empty materials and lazy GET", () => {
     expect(del.status).toBe(204);
 
     const list = await app.request(
-      "/api/subjects/sub-1/atlas/entries",
+      `/api/atlas/${atlasId}/entries`,
       { headers: authHeaders() },
       env,
     );
@@ -362,7 +364,7 @@ describe("atlas focus empty materials and lazy GET", () => {
 
     // Focus PATCH must stick even with no materials left.
     const demote = await app.request(
-      "/api/subjects/sub-1/atlas/entries/fasciola-hepatica/focus",
+      `/api/atlas/${atlasId}/entries/fasciola-hepatica/focus`,
       {
         method: "PATCH",
         headers: authHeaders(true),
@@ -380,14 +382,16 @@ describe("atlas focus empty materials and lazy GET", () => {
   it("rejects a null JSON body on focus PATCH", async () => {
     const env = createTestEnv();
     seedOwner(env);
-    await app.request(
-      "/api/subjects/sub-1/atlas",
+    const created = await app.request(
+      "/api/atlas",
       { method: "POST", headers: authHeaders() },
       env,
     );
+    expect(created.status).toBe(201);
+    const { id: atlasId } = (await created.json()) as { id: string };
 
     const res = await app.request(
-      "/api/subjects/sub-1/atlas/entries/fasciola-hepatica/focus",
+      `/api/atlas/${atlasId}/entries/fasciola-hepatica/focus`,
       {
         method: "PATCH",
         headers: authHeaders(true),
@@ -410,11 +414,12 @@ describe("atlas focus empty materials and lazy GET", () => {
       created_at: "2026-01-01T00:00:00.000Z",
     });
     const created = await app.request(
-      "/api/subjects/sub-1/atlas",
+      "/api/atlas",
       { method: "POST", headers: authHeaders() },
       env,
     );
     expect(created.status).toBe(201);
+    const { id: atlasId } = (await created.json()) as { id: string };
 
     // Seed after atlas create so focus cache stays empty until GET.
     env.seedMaterial({
@@ -430,7 +435,7 @@ describe("atlas focus empty materials and lazy GET", () => {
     });
 
     const list = await app.request(
-      "/api/subjects/sub-1/atlas/entries",
+      `/api/atlas/${atlasId}/entries`,
       { headers: authHeaders() },
       env,
     );
@@ -455,11 +460,13 @@ describe("atlas focus empty materials and lazy GET", () => {
       subject_id: "sub-1",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    await app.request(
-      "/api/subjects/sub-1/atlas",
+    const created = await app.request(
+      "/api/atlas",
       { method: "POST", headers: authHeaders() },
       env,
     );
+    expect(created.status).toBe(201);
+    const { id: atlasId } = (await created.json()) as { id: string };
     env.seedMaterial({
       id: "mat-uploading",
       deck_id: "deck-1",
@@ -473,7 +480,7 @@ describe("atlas focus empty materials and lazy GET", () => {
     });
 
     const list = await app.request(
-      "/api/subjects/sub-1/atlas/entries",
+      `/api/atlas/${atlasId}/entries`,
       { headers: authHeaders() },
       env,
     );

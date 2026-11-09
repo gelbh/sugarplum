@@ -11,7 +11,7 @@ import Box from "@mui/material/Box";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-import { ApiError, listSubjects, me } from "../api/client";
+import { ApiError, me } from "../api/client";
 import {
   AddEntryDialog,
   EditEntryDialog,
@@ -27,7 +27,6 @@ import {
   atlasCompareHref,
   atlasEntryHref,
   atlasHref,
-  subjectHref,
   type AtlasRoute,
 } from "../atlas/paths";
 import type { AtlasEntryView, AtlasSource } from "../atlas/types";
@@ -35,7 +34,7 @@ import { isGuest } from "../guest/session";
 import { isPlainClick, navigate, navigateReplace } from "../nav/navigate";
 
 type Props = {
-  subjectId: string;
+  atlasId: string;
   route: AtlasRoute;
   source?: AtlasSource;
 };
@@ -43,7 +42,6 @@ type Props = {
 type Loaded = {
   entries: AtlasEntryView[];
   userKey: string;
-  subjectTitle: string | null;
 };
 
 function NavLink({ href, children }: { href: string; children: string }) {
@@ -92,7 +90,7 @@ function Notice({
 }
 
 export default function AtlasPage({
-  subjectId,
+  atlasId,
   route,
   source = apiAtlasSource,
 }: Props) {
@@ -111,24 +109,20 @@ export default function AtlasPage({
   }, [loaded, route.kind]);
 
   const reloadEntries = useCallback(async () => {
-    const entries = await source.list(subjectId);
+    const entries = await source.list(atlasId);
     setLoaded((prev) => (prev ? { ...prev, entries } : prev));
-  }, [source, subjectId]);
+  }, [source, atlasId]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const user = await me();
-        const [entries, subjects] = await Promise.all([
-          source.list(subjectId),
-          listSubjects().catch(() => []),
-        ]);
+        const entries = await source.list(atlasId);
         if (cancelled) return;
         setLoaded({
           entries,
           userKey: isGuest() ? "guest" : user.id,
-          subjectTitle: subjects.find((s) => s.id === subjectId)?.title ?? null,
         });
       } catch (err) {
         if (cancelled) return;
@@ -144,15 +138,11 @@ export default function AtlasPage({
     return () => {
       cancelled = true;
     };
-  }, [source, subjectId]);
+  }, [source, atlasId]);
 
-  const home = atlasHref(subjectId);
+  const home = atlasHref(atlasId);
   const crumb =
-    route.kind === "cabinet" ? (
-      <NavLink href={subjectHref(subjectId)}>
-        {loaded?.subjectTitle ?? "Subject"}
-      </NavLink>
-    ) : (
+    route.kind === "cabinet" ? null : (
       <NavLink href={home}>Parasitology Atlas</NavLink>
     );
 
@@ -162,10 +152,10 @@ export default function AtlasPage({
     if (!entry.originKey || !entry.editedAt) return;
     if (!window.confirm(`Reset ${entry.canonicalName} to the dataset?`)) return;
     try {
-      await resetEntry(subjectId, entry.id);
+      await resetEntry(atlasId, entry.id);
       await reloadEntries();
       if (route.kind === "entry") {
-        navigateReplace(atlasEntryHref(subjectId, entry.originKey));
+        navigateReplace(atlasEntryHref(atlasId, entry.originKey));
       }
     } catch (err) {
       setError(
@@ -184,9 +174,9 @@ export default function AtlasPage({
       <Cabinet
         entries={loaded.entries}
         userKey={loaded.userKey}
-        entryHref={(id) => atlasEntryHref(subjectId, id)}
-        onOpenEntry={(id) => navigate(atlasEntryHref(subjectId, id))}
-        onCompare={(a, b) => navigate(atlasCompareHref(subjectId, a, b))}
+        entryHref={(id) => atlasEntryHref(atlasId, id)}
+        onOpenEntry={(id) => navigate(atlasEntryHref(atlasId, id))}
+        onCompare={(a, b) => navigate(atlasCompareHref(atlasId, a, b))}
         stagger={!staggered.current}
         onAddEntry={canMutate ? () => setAddOpen(true) : undefined}
         onRecentlyDeleted={canMutate ? () => setDeletedOpen(true) : undefined}
@@ -202,9 +192,9 @@ export default function AtlasPage({
       <EntryView
         entry={entry}
         entries={loaded.entries}
-        entryHref={(id) => atlasEntryHref(subjectId, id)}
-        onOpen={(id) => navigate(atlasEntryHref(subjectId, id))}
-        onStep={(id) => navigateReplace(atlasEntryHref(subjectId, id))}
+        entryHref={(id) => atlasEntryHref(atlasId, id)}
+        onOpen={(id) => navigate(atlasEntryHref(atlasId, id))}
+        onStep={(id) => navigateReplace(atlasEntryHref(atlasId, id))}
         onEdit={canMutate ? () => setEditEntry(entry) : undefined}
         onEditLifecycle={
           canMutate ? () => setEditLifecycle(entry) : undefined
@@ -231,9 +221,9 @@ export default function AtlasPage({
         entries={loaded.entries}
         a={route.a}
         b={route.b}
-        entryHref={(id) => atlasEntryHref(subjectId, id)}
-        onOpenEntry={(id) => navigate(atlasEntryHref(subjectId, id))}
-        onChange={(a, b) => navigateReplace(atlasCompareHref(subjectId, a, b))}
+        entryHref={(id) => atlasEntryHref(atlasId, id)}
+        onOpenEntry={(id) => navigate(atlasEntryHref(atlasId, id))}
+        onChange={(a, b) => navigateReplace(atlasCompareHref(atlasId, a, b))}
       />
     );
   }
@@ -247,23 +237,23 @@ export default function AtlasPage({
         py: { xs: 3, md: 4 },
       }}
     >
-      <Box sx={{ mb: 1 }}>{crumb}</Box>
+      {crumb ? <Box sx={{ mb: 1 }}>{crumb}</Box> : null}
       {body}
       {canMutate ? (
         <>
           <AddEntryDialog
             open={addOpen}
-            subjectId={subjectId}
+            atlasId={atlasId}
             onClose={() => setAddOpen(false)}
             onDone={(entry) => {
               void reloadEntries().then(() =>
-                navigate(atlasEntryHref(subjectId, entry.id)),
+                navigate(atlasEntryHref(atlasId, entry.id)),
               );
             }}
           />
           <EditEntryDialog
             open={editEntry !== null}
-            subjectId={subjectId}
+            atlasId={atlasId}
             entry={editEntry}
             onClose={() => setEditEntry(null)}
             onDone={() => {
@@ -272,7 +262,7 @@ export default function AtlasPage({
           />
           <EditLifecycleDialog
             open={editLifecycle !== null}
-            subjectId={subjectId}
+            atlasId={atlasId}
             entry={editLifecycle}
             onClose={() => setEditLifecycle(null)}
             onDone={() => {
@@ -281,7 +271,7 @@ export default function AtlasPage({
           />
           <RecentlyDeletedDialog
             open={deletedOpen}
-            subjectId={subjectId}
+            atlasId={atlasId}
             onClose={() => setDeletedOpen(false)}
             onChanged={() => {
               void reloadEntries();

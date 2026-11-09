@@ -665,6 +665,10 @@ export function createTestEnv(opts?: {
             ? ({ subject_id: deck.subject_id ?? null } as T)
             : null;
         }
+        if (normalized.startsWith("SELECT user_id FROM decks WHERE id =")) {
+          const deck = decks.get(bound[0] as string);
+          return deck ? ({ user_id: deck.user_id } as T) : null;
+        }
         if (
           normalized.startsWith(
             "SELECT id, deck_id, kind, r2_key, status FROM materials WHERE id =",
@@ -1178,15 +1182,21 @@ export function createTestEnv(opts?: {
         if (
           normalized.includes("FROM materials m") &&
           normalized.includes("INNER JOIN decks d ON d.id = m.deck_id") &&
-          normalized.includes("WHERE d.subject_id =") &&
-          normalized.includes("m.source_role")
+          (normalized.includes("WHERE d.subject_id =") ||
+            normalized.includes("WHERE d.user_id =")) &&
+          normalized.includes("m.source_role") &&
+          !normalized.includes("deck_title")
         ) {
-          const subjectId = bound[0] as string;
+          const ownerId = bound[0] as string;
+          const byUser = normalized.includes("WHERE d.user_id =");
           const includeStatus = normalized.includes("m.status");
           const rows = [...materials.values()]
             .map((m) => {
               const deck = decks.get(m.deck_id);
-              if (!deck || deck.subject_id !== subjectId) return null;
+              if (!deck) return null;
+              if (byUser ? deck.user_id !== ownerId : deck.subject_id !== ownerId) {
+                return null;
+              }
               return {
                 id: m.id,
                 deck_id: m.deck_id,
