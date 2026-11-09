@@ -76,6 +76,30 @@ describe("deck hub mission board smoke", () => {
     );
   });
 
+  it("renders a distinct icon per mission tile", async () => {
+    const onOpen = vi.fn();
+    await render(
+      createElement(MissionBoard, {
+        draftCount: 1,
+        cardCount: 2,
+        acceptedCount: 2,
+        emptyDeck: false,
+        onOpen,
+      }),
+    );
+    const tiles = document.querySelectorAll('[role="listitem"]');
+    expect(tiles).toHaveLength(4);
+    for (const tile of tiles) {
+      expect(tile.querySelector("svg")).not.toBeNull();
+    }
+    expect(
+      document.querySelector('[data-tile-id="addMaterial"] svg'),
+    ).not.toBeNull();
+    expect(document.querySelector('[data-tile-id="drafts"] svg')).not.toBeNull();
+    expect(document.querySelector('[data-tile-id="cards"] svg')).not.toBeNull();
+    expect(document.querySelector('[data-tile-id="study"] svg')).not.toBeNull();
+  });
+
   it("opens Add material from the mission board tile", async () => {
     const onOpen = vi.fn();
     await render(
@@ -191,6 +215,10 @@ describe("deck hub mission board smoke", () => {
     );
 
     expect(document.body.textContent).toContain("Also review drafts (2)");
+    expect(document.body.textContent).toContain(
+      "Drop PDF, PPTX, or image here",
+    );
+    expect(document.body.textContent).toContain("Choose file");
     const jump = Array.from(document.body.querySelectorAll("button")).find(
       (b) => b.textContent?.includes("Also review drafts"),
     );
