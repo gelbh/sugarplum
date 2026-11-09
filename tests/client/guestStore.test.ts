@@ -344,7 +344,13 @@ describe("guest store", () => {
       },
       storage,
     ).cards;
-    expect(due.map((c) => c.id)).toEqual([a1!.id, b1!.id, a2!.id]);
+    expect(due.map((c) => c.id).sort()).toEqual(
+      [a1!.id, a2!.id, b1!.id].sort(),
+    );
+    expect(due.findIndex((c) => c.id === a1!.id)).toBeLessThan(
+      due.findIndex((c) => c.id === a2!.id),
+    );
+    expect(new Set([due[0]!.deck_id, due[1]!.deck_id]).size).toBe(2);
   });
 
   it("filters due cards by subjectId via deck.subject_id", () => {
@@ -708,6 +714,8 @@ describe("guest store", () => {
       introBudget: 20,
       reviewBudget: 200,
       rFloor: 0.8,
+      desiredRetention: 0.9,
+      enableFuzz: true,
     });
     const persisted = JSON.parse(storage.getItem(STORE_KEY)!) as {
       studyPrefs: { introBudget: number };

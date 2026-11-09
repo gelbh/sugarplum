@@ -28,6 +28,7 @@ import {
   parseProvenanceJson,
 } from "../../src/study/regenSource";
 import { onReviewGraded } from "../gamification/onStudyEvent";
+import { loadStudyPrefs } from "./prefs";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -311,11 +312,13 @@ studyRoutes.post("/review", async (c) => {
     (schedule.reps === 0 && schedule.last_review == null);
 
   const grade = ratingToGrade(rating);
+  const prefs = await loadStudyPrefs(db, userId);
 
   const { card: nextCard, log } = reviewWithLog(
     cardFromScheduleRow(schedule),
     grade,
     now,
+    prefs,
   );
   const cols = scheduleColumnsFromCard(nextCard);
   const reviewedAt = toIsoRequired(log.review ?? now);

@@ -14,6 +14,8 @@ const DEFAULT_PREFS: StudyPrefs = {
   introBudget: 20,
   reviewBudget: 200,
   rFloor: 0.8,
+  desiredRetention: 0.9,
+  enableFuzz: true,
 };
 
 const DEFAULT_OPTS: BuildStudyQueueOpts = {
@@ -287,6 +289,60 @@ describe("buildStudyQueue deck interleaving", () => {
     ];
     const result = buildStudyQueue(reviews, DEFAULT_PREFS, NOW, DEFAULT_OPTS);
     expect(result.dueIds).toEqual(["r1", "r2", "r3"]);
+  });
+
+  it("orders ordinary reviews by ascending retrievability before deck interleave", () => {
+    const lowR = candidate({
+      id: "low-r",
+      deck_id: "deck-a",
+      due: "2026-10-28T10:00:00.000Z",
+      state: State.Review,
+      reps: 5,
+      last_review: "2026-10-20T12:00:00.000Z",
+      lapses: 0,
+      stability: 2,
+      difficulty: 5,
+      elapsed_days: 8,
+      scheduled_days: 10,
+      learning_steps: 0,
+    });
+    const highR = candidate({
+      id: "high-r",
+      deck_id: "deck-a",
+      due: "2026-10-28T09:00:00.000Z",
+      state: State.Review,
+      reps: 5,
+      last_review: "2026-10-27T12:00:00.000Z",
+      lapses: 0,
+      stability: 100,
+      difficulty: 5,
+      elapsed_days: 1,
+      scheduled_days: 10,
+      learning_steps: 0,
+    });
+    const learning = candidate({
+      id: "learn-1",
+      deck_id: "deck-b",
+      due: "2026-10-28T12:00:00.000Z",
+      state: State.Learning,
+      reps: 1,
+      last_review: "2026-10-28T11:00:00.000Z",
+      stability: 1,
+      difficulty: 5,
+      elapsed_days: 0,
+      scheduled_days: 0,
+      learning_steps: 1,
+    });
+    const result = buildStudyQueue(
+      [highR, learning, lowR],
+      DEFAULT_PREFS,
+      NOW,
+      DEFAULT_OPTS,
+    );
+    expect(result.dueIds[0]).toBe("learn-1");
+    expect(result.dueIds.indexOf("low-r")).toBeLessThan(
+      result.dueIds.indexOf("high-r"),
+    );
   });
 
   it("keeps forced learning ahead of interleaved regular reviews and intros", () => {

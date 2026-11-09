@@ -6,6 +6,8 @@ export type StudyPrefs = {
   introBudget: number;
   reviewBudget: number;
   rFloor: number;
+  desiredRetention: number;
+  enableFuzz: boolean;
 };
 
 export type QueueCandidate = {
@@ -52,6 +54,8 @@ export const DEFAULT_STUDY_PREFS: StudyPrefs = {
   introBudget: 20,
   reviewBudget: 200,
   rFloor: 0.8,
+  desiredRetention: 0.9,
+  enableFuzz: true,
 };
 
 const MS_PER_DAY = 86_400_000;
@@ -198,17 +202,26 @@ export function buildStudyQueue(
     deferrals = drop.map((x) => ({ id: x.c.id, newDue: x.newDue }));
   }
 
-  const mustIds = new Set(mustInclude.map((c) => c.id));
-  const bandForced = selectedReviews
-    .filter((c) => isLearningOrRelearning(c) || mustIds.has(c.id))
+  const bandLearning = selectedReviews
+    .filter(isLearningOrRelearning)
     .sort(byDueThenId);
-  const bandForcedIds = new Set(bandForced.map((c) => c.id));
-  const bandReviews = interleaveByDeck(
-    selectedReviews.filter((c) => !bandForcedIds.has(c.id)).sort(byDueThenId),
+  const bandOtherReviews = interleaveByDeck(
+    selectedReviews
+      .filter((c) => !isLearningOrRelearning(c))
+      .sort((a, b) => {
+        const rA = rById.get(a.id);
+        const rB = rById.get(b.id);
+        const nA =
+          rA == null || Number.isNaN(rA) ? Number.POSITIVE_INFINITY : rA;
+        const nB =
+          rB == null || Number.isNaN(rB) ? Number.POSITIVE_INFINITY : rB;
+        if (nA !== nB) return nA - nB;
+        return byDueThenId(a, b);
+      }),
   );
   const bandIntro = interleaveByDeck([...selectedIntro].sort(byDueThenId));
 
-  const selected = [...bandForced, ...bandReviews, ...bandIntro];
+  const selected = [...bandLearning, ...bandOtherReviews, ...bandIntro];
   const dueIds = selected.map((c) => c.id);
 
   return {
