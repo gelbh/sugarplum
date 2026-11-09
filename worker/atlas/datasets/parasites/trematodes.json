@@ -20,9 +20,15 @@
           "camelid",
           "human"
         ],
-        "intermediateHosts": ["lymnaeid snail", "Galba truncatula"],
+        "intermediateHosts": [
+          "lymnaeid snail",
+          "Galba truncatula"
+        ],
         "majorOrgan": "bile ducts",
-        "onHostStages": ["immature fluke", "adult fluke"],
+        "onHostStages": [
+          "immature fluke",
+          "adult fluke"
+        ],
         "distribution": "Grazing-livestock regions on every inhabited continent",
         "zoonotic": "yes",
         "significance": "Liver disease agent of ruminants, chiefly sheep and cattle; human cases come from eating contaminated water plants such as watercress.",
@@ -211,9 +217,15 @@
           "pig",
           "human"
         ],
-        "intermediateHosts": ["lymnaeid snail", "Radix"],
+        "intermediateHosts": [
+          "lymnaeid snail",
+          "Radix"
+        ],
         "majorOrgan": "bile ducts",
-        "onHostStages": ["immature fluke", "adult fluke"],
+        "onHostStages": [
+          "immature fluke",
+          "adult fluke"
+        ],
         "distribution": "Hot-climate zones worldwide, chiefly the tropics",
         "zoonotic": "yes",
         "significance": "Damages the liver of cattle and buffalo in hot regions, costing weight gain and yield; human cases follow eating contaminated greens.",
@@ -333,7 +345,7 @@
           "file": "fasciola-gigantica-hero.webp",
           "role": "adult",
           "caption": null,
-          "credit": "Thomas Spencer Cobbold (1828\u20131886)",
+          "credit": "Thomas Spencer Cobbold (1828–1886)",
           "license": "Public domain",
           "sourceUrl": "https://commons.wikimedia.org/wiki/File:Fasciola_gigantica.png",
           "isHero": true
@@ -345,20 +357,27 @@
       "canonicalName": "Fascioloides magna",
       "commonName": "Large liver fluke",
       "aliases": [],
-      "misspellings": ["Fasciolides magna"],
+      "misspellings": [
+        "Fasciolides magna"
+      ],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Plagiorchiida",
         "family": "Fasciolidae",
         "group": "trematode",
-        "definitiveHosts": ["deer"],
+        "definitiveHosts": [
+          "deer"
+        ],
         "intermediateHosts": [
           "lymnaeid snail",
           "Galba truncatula",
           "Radix labiata"
         ],
         "majorOrgan": "liver",
-        "onHostStages": ["immature fluke", "adult fluke"],
+        "onHostStages": [
+          "immature fluke",
+          "adult fluke"
+        ],
         "distribution": "Native to North America; introduced into central Europe",
         "zoonotic": "no",
         "significance": "Mainly infects wild deer; in sheep the wandering juveniles can be fatal, while in cattle cysts trap the flukes and their eggs.",
@@ -483,16 +502,30 @@
       "canonicalName": "Dicrocoelium dendriticum",
       "commonName": "Lancet fluke",
       "aliases": [],
-      "misspellings": ["Dicrocoelium dentriticum", "Dicrocelium dendriticum"],
+      "misspellings": [
+        "Dicrocoelium dentriticum",
+        "Dicrocelium dendriticum"
+      ],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Plagiorchiida",
         "family": "Dicrocoeliidae",
         "group": "trematode",
-        "definitiveHosts": ["cattle", "sheep", "deer", "human"],
-        "intermediateHosts": ["land snail", "Formica"],
+        "definitiveHosts": [
+          "cattle",
+          "sheep",
+          "deer",
+          "human"
+        ],
+        "intermediateHosts": [
+          "land snail",
+          "Formica"
+        ],
         "majorOrgan": "bile ducts",
-        "onHostStages": ["immature fluke", "adult fluke"],
+        "onHostStages": [
+          "immature fluke",
+          "adult fluke"
+        ],
         "distribution": "Widespread across Eurasia and North Africa; patchy in North America",
         "zoonotic": "yes",
         "significance": "Ant-borne fluke of ruminant bile ducts; usually causes no disease, though very heavy chronic infections may fibrose the liver.",
@@ -639,10 +672,18 @@
         "order": "Plagiorchiida",
         "family": "Paramphistomidae",
         "group": "trematode",
-        "definitiveHosts": ["cattle", "sheep"],
-        "intermediateHosts": ["Galba truncatula"],
+        "definitiveHosts": [
+          "cattle",
+          "sheep"
+        ],
+        "intermediateHosts": [
+          "Galba truncatula"
+        ],
         "majorOrgan": "rumen",
-        "onHostStages": ["immature fluke", "adult fluke"],
+        "onHostStages": [
+          "immature fluke",
+          "adult fluke"
+        ],
         "distribution": "Mainland Europe, spreading into Britain and Ireland",
         "significance": "Often tolerated in the rumen, yet a sudden intake of many cysts injures the duodenum and can kill cattle or sheep.",
         "lifecycleType": "indirect",
@@ -720,7 +761,12 @@
         "order": "Plagiorchiida",
         "family": "Paramphistomidae",
         "group": "trematode",
-        "definitiveHosts": ["sheep", "cattle", "water buffalo", "goat"],
+        "definitiveHosts": [
+          "sheep",
+          "cattle",
+          "water buffalo",
+          "goat"
+        ],
         "intermediateHosts": [
           "Bulinus",
           "Planorbis planorbis",
@@ -729,7 +775,10 @@
           "lymnaeid snail"
         ],
         "majorOrgan": "rumen",
-        "onHostStages": ["immature fluke", "adult fluke"],
+        "onHostStages": [
+          "immature fluke",
+          "adult fluke"
+        ],
         "significance": "Young flukes feeding in the duodenal wall of sheep, goats and cattle bring on scour, anaemia and poor appetite.",
         "lifecycleType": "indirect",
         "lifecycleStages": [
@@ -771,17 +820,26 @@
       "key": "fasciolopsis-buski",
       "canonicalName": "Fasciolopsis buski",
       "commonName": "Large intestinal fluke",
-      "aliases": ["Fasciolopsis buskii"],
+      "aliases": [
+        "Fasciolopsis buskii"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Plagiorchiida",
         "family": "Fasciolidae",
         "group": "trematode",
-        "definitiveHosts": ["human", "pig"],
-        "intermediateHosts": ["snail"],
+        "definitiveHosts": [
+          "human",
+          "pig"
+        ],
+        "intermediateHosts": [
+          "snail"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["adult fluke"],
+        "onHostStages": [
+          "adult fluke"
+        ],
         "distribution": "Parts of Asia, India included",
         "zoonotic": "yes",
         "significance": "Zoonotic gut fluke shared by pigs and people; heavy human infections cause diarrhoea, pain and sometimes gut blockage.",
@@ -885,10 +943,20 @@
         "order": "Opisthorchiida",
         "family": "Opisthorchiidae",
         "group": "trematode",
-        "definitiveHosts": ["human", "dog", "cat", "pig"],
-        "intermediateHosts": ["snail", "freshwater fish"],
+        "definitiveHosts": [
+          "human",
+          "dog",
+          "cat",
+          "pig"
+        ],
+        "intermediateHosts": [
+          "snail",
+          "freshwater fish"
+        ],
         "majorOrgan": "bile ducts",
-        "onHostStages": ["adult fluke"],
+        "onHostStages": [
+          "adult fluke"
+        ],
         "distribution": "East Asia and the Russian Far East",
         "zoonotic": "yes",
         "significance": "Fish-borne liver fluke of people and fish-eating animals in East Asia; long infections can rarely end in bile duct cancer.",
@@ -1006,10 +1074,19 @@
         "order": "Opisthorchiida",
         "family": "Opisthorchiidae",
         "group": "trematode",
-        "definitiveHosts": ["cat", "dog", "human"],
-        "intermediateHosts": ["Bithynia", "freshwater fish"],
+        "definitiveHosts": [
+          "cat",
+          "dog",
+          "human"
+        ],
+        "intermediateHosts": [
+          "Bithynia",
+          "freshwater fish"
+        ],
         "majorOrgan": "bile ducts",
-        "onHostStages": ["adult fluke"],
+        "onHostStages": [
+          "adult fluke"
+        ],
         "distribution": "Parts of Europe and northern Asia, east into Siberia",
         "zoonotic": "yes",
         "significance": "Liver fluke caught from raw carp-family fish; infects cats, dogs and people and can block the bile and pancreatic ducts.",
@@ -1111,18 +1188,7 @@
           "note": "Course lists Digenea as the order; NCBI ranks Digenea as a subclass and gives the order as Opisthorchiida."
         }
       ],
-      "images": [
-        {
-          "id": "hero",
-          "file": "opisthorchis-felineus-hero.webp",
-          "role": "adult",
-          "caption": null,
-          "credit": "Division of Parasitic Diseases and Malaria of Centers for Disease Control and Prevention",
-          "license": "Public domain",
-          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Nema_Fig5.gif",
-          "isHero": true
-        }
-      ]
+      "images": []
     },
     {
       "key": "schistosoma-spp",
@@ -1152,7 +1218,10 @@
           "Neotricula aperta"
         ],
         "majorOrgan": "blood vessels",
-        "onHostStages": ["schistosomulum", "adult fluke"],
+        "onHostStages": [
+          "schistosomulum",
+          "adult fluke"
+        ],
         "distribution": "Africa, Asia, parts of South America, the Middle East and Corsica",
         "zoonotic": "yes",
         "significance": "S. bovis is the usual cattle species, often silent but sapping meat and milk yield; livestock and hybrid strains can infect people.",
@@ -1245,13 +1314,23 @@
       ],
       "images": [
         {
-          "id": "hero",
-          "file": "schistosoma-spp-hero.webp",
-          "role": "adult",
+          "id": "lifecycle",
+          "file": "schistosoma-spp-lifecycle.webp",
+          "role": "lifecycle_diagram",
           "caption": null,
           "credit": "Centers for Disease Control and Prevention",
           "license": "Public domain",
           "sourceUrl": "https://commons.wikimedia.org/wiki/File:Schistosomiasis_life_cycle.png",
+          "isHero": false
+        },
+        {
+          "id": "hero",
+          "file": "schistosoma-spp-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "CDC",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Schistosoma_mansoni_trematodes.jpg",
           "isHero": true
         }
       ]

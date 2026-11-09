@@ -136,6 +136,15 @@ export const datasetEntrySchema = z
         message: "at most one hero image",
       });
     }
+    for (const [i, img] of e.images.entries()) {
+      if (img.role === "lifecycle_diagram" && img.isHero) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["images", i, "isHero"],
+          message: "lifecycle_diagram cannot be hero",
+        });
+      }
+    }
     const diagnosticIssue = diagnosticOwnershipIssue(
       e.fields.lifecycleStages,
       e.fields.diagnosticStage,
