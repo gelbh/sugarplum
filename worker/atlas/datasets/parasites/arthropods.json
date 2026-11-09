@@ -193,7 +193,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "linguatula-serrata-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Reginald Innes Pocock",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:EB1911_Pentastomida_-_Linguatula_taenioides_(Rud._adult.).jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "ctenocephalides-felis",
@@ -344,7 +355,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "ctenocephalides-felis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Andybrookestar at English Wikipedia",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Catflea2.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "ctenocephalides-canis",
@@ -485,7 +507,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "ctenocephalides-canis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Herms, William Brodbeck (1876-1949)",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:CtenecephalusCanis.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "pulex-irritans",
@@ -601,7 +634,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "pulex-irritans-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Anagoria",
+          "license": "CC BY 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:2013_Naturkundemuseum_Berlin_pulex_irritans_anagoria.JPG",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "ixodes-ricinus",
@@ -733,7 +777,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "ixodes-ricinus-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Zerrin Uzum, Dmitry Ershov, Michael J. Pavia, Adeline Mallet, Olivier Gorgette, Olivier Plantard, Davide Sassera, Fabriz",
+          "license": "CC BY 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:41467_2023_39758_Fig1b.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "ixodes-hexagonus",
@@ -844,7 +899,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "ixodes-hexagonus-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "AJC1",
+          "license": "CC BY-SA 2.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hedgehog_Tick,_Ixodes_hexagonus_(50064527123).jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "dermacentor-reticulatus",
@@ -977,7 +1043,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "dermacentor-reticulatus-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "NobbiP",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Auwaldzecke_Dermacentor_reticulatus_0723.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "rhipicephalus-sanguineus",
@@ -1113,7 +1190,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "rhipicephalus-sanguineus-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "(Latreille)",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Naturalis_Biodiversity_Center_-_RMNH.ART.1206_-_Rhipicephalus_sanguineus_(Latreille)_-_Mites_-_Collection_Anthonie_Cornelis_Oudemans.jpeg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "haemaphysalis-punctata",
@@ -1258,7 +1346,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "haemaphysalis-punctata-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Laura Carrera-Faja",
+          "license": "CC BY 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Haemaphysalis_punctata_(male).jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "sarcoptes-scabiei",
@@ -1413,7 +1512,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "sarcoptes-scabiei-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Joel Mills",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Canine_scabies_mite.JPG",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "psoroptes-ovis",
@@ -1537,7 +1647,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "psoroptes-ovis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Daktaridudu",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Life-cycle-psoroptes-ovis-mite-diagram.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "otodectes-cynotis",
@@ -1662,7 +1783,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "otodectes-cynotis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Wikimedia Commons",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ear_mite.JPG",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "demodex-canis",
@@ -1784,7 +1916,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "demodex-canis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Kalumet",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Demodex_Milbe_adult.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "cheyletiella-spp",
@@ -2056,7 +2199,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "chorioptes-bovis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Alan R Walker",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Chorioptes-bovis-(Hering).JPG",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "dermanyssus-gallinae",
@@ -2186,7 +2340,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "dermanyssus-gallinae-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Daktaridudu",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Dermanyssus-bird-mite.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "trichodectes-canis",
@@ -2303,7 +2468,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "trichodectes-canis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Adam Cuerden",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Trichodectes_canis.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "felicola-subrostratus",
@@ -2413,7 +2589,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "felicola-subrostratus-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Jana Bulantov\u00e1",
+          "license": "CC BY-SA 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:14_Felicola_subrostratus.tif",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "bovicola-ovis",
@@ -2551,7 +2738,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "bovicola-ovis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Franz von Paula Schrank",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bovicola_ovis_Sheep_chewing_louse_Schrank_1781.png",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "bovicola-bovis",
@@ -2813,7 +3011,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "linognathus-vituli-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Alan R Walker",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Linognathus-vituli-louse.JPG",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "lucilia-sericata",
@@ -3122,7 +3331,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "hypoderma-bovis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Wikimedia Commons",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hypoderma_-_Print_-_Iconographia_Zoologica_-_Special_Collections_University_of_Amsterdam_-_UBAINV0274_039_04_0002.tif",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "oestrus-ovis",
@@ -3248,7 +3468,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "oestrus-ovis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Unknown authorUnknown author",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Meyers_b16_s1010a.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "gasterophilus-intestinalis",
@@ -3398,7 +3629,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "gasterophilus-intestinalis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Janet Graham",
+          "license": "CC BY 2.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Gasterophilus_intestinalis,_Trawscoed,_North_Wales,_Aug_2015_(20134961243).jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "culicoides-spp",
@@ -3676,7 +3918,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "stomoxys-calcitrans-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Fr\u00e9d\u00e9ric Baldacchino, Coline Tramut, Ali Salem, Emmanuel Li\u00e9nard, \u00c9milie Del\u00e9tr\u00e9, Michel Franc, Thibaud Martin, G\u00e9rard D",
+          "license": "CC BY 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Repellency_of_lemongrass_oil_against_stable_flies_-_Figure_1.tif",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "haematobia-irritans",
@@ -3823,7 +4076,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "haematobia-irritans-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "division, CSIRO",
+          "license": "CC BY 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:CSIRO_ScienceImage_1887_A_Closeup_of_the_Buffalo_Fly_Trap.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "musca-autumnalis",
@@ -3952,7 +4216,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "musca-autumnalis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "James K. Lindsey",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Musca.autumnalis.female.jpg",
+          "isHero": true
+        }
+      ]
     }
   ]
 }

@@ -13,6 +13,7 @@ export type ImageRole = (typeof IMAGE_ROLES)[number];
 export type AtlasImageView = {
   id: string;
   src: string;
+  placeholderSrc?: string;
   role: ImageRole;
   caption: string | null;
   credit: string;

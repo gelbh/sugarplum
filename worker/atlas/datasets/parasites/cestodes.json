@@ -70,13 +70,13 @@
         },
         {
           "field": null,
-          "citation": "Jürgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
+          "citation": "J\u00fcrgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-020-04318-5",
           "note": null
         },
         {
           "field": "pppDays",
-          "citation": "Jürgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
+          "citation": "J\u00fcrgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-020-04318-5",
           "note": "Course states PPP 1-2 months; reference gives 1.5-4 months."
         },
@@ -88,13 +88,13 @@
         },
         {
           "field": "lifecycleStages",
-          "citation": "Jürgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
+          "citation": "J\u00fcrgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-020-04318-5",
           "note": null
         },
         {
           "field": "diagnosticTests",
-          "citation": "Jürgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
+          "citation": "J\u00fcrgenschellert et al. 2020, Parasites & Vectors 13:462: tapeworm infections in German horses, saliva and serum antibody tests",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-020-04318-5",
           "note": "Course states a saliva antigen ELISA; reference gives a saliva antibody ELISA."
         },
@@ -129,7 +129,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "anoplocephala-perfoliata-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Krzysztof Tomczuk, Krzysztof Kostro, Klaudiusz Oktawian Szczepaniak, Maciej Grzybek, Maria Studzi\u0144ska, Marta Demkowska-K",
+          "license": "CC BY 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Anoplocephala_perfoliata_fig1.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "dipylidium-caninum",
@@ -251,7 +262,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "dipylidium-caninum-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "CDC / PHIL or DPDx (via Wikimedia Commons)",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Dipyl_can_worm1.JPG",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "davainea-proglottina",
@@ -497,7 +519,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "moniezia-expansa-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Lucyin",
+          "license": "CC BY-SA 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Agnea_acs%C3%BBt_vier-riban_gros_vinte.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "taenia-hydatigena",
@@ -622,7 +655,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "taenia-hydatigena-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Wikimedia Commons",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Taenia_hydatigena_-_-_Print_-_Iconographia_Zoologica_-_Special_Collections_University_of_Amsterdam_-_UBAINV0274_105_19_0037.tif",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "taenia-ovis",
@@ -730,7 +774,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "taenia-ovis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Dr. Guido Bohne",
+          "license": "CC BY-SA 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Taenia_94124824.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "taenia-multiceps",
@@ -896,7 +951,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "taenia-multiceps-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Wikimedia Commons",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Coenurus.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "taenia-saginata",
@@ -1059,7 +1125,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "taenia-saginata-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Wikimedia Commons",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Gravid_proglottid_from_the_cestode_Taenia_saginata_5259_lores.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "taenia-solium",
@@ -1233,7 +1310,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "taenia-solium-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Wikimedia Commons",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bandwurm-drawing.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "echinococcus-granulosus",
@@ -1395,7 +1483,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "echinococcus-granulosus-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Besnoitjm",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ciclo_biol%C3%B3gico_Echinococcus_granulosus.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "echinococcus-multilocularis",
@@ -1556,7 +1655,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "echinococcus-multilocularis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Epp Moks et al",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:05-0339_b.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "diphyllobothrium-latum",
@@ -1709,7 +1819,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "diphyllobothrium-latum-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "The Other 95%",
+          "license": "CC BY-SA 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bothrian_tapeworm_21_1.jpg",
+          "isHero": true
+        }
+      ]
     }
   ]
 }

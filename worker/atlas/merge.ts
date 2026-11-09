@@ -28,10 +28,16 @@ export function toEntryView(entry: DatasetEntry): AtlasEntryView {
     aliases: [...entry.aliases, ...entry.misspellings],
     fields: entry.fields,
     refs: entry.refs,
-    images: entry.images.map(({ file, ...image }) => ({
-      ...image,
-      src: `/atlas/parasites/${file}`,
-    })),
+    images: entry.images.map(({ file, ...image }) => {
+      const src = `/atlas/parasites/${file}`;
+      return {
+        ...image,
+        src,
+        placeholderSrc: file.endsWith(".webp")
+          ? `/atlas/parasites/${file.slice(0, -5)}-blur.webp`
+          : undefined,
+      };
+    }),
     editedAt: null,
     tier: null,
     reason: null,
