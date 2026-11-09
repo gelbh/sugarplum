@@ -132,7 +132,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "parascaris-equorum-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "eXtensionHorses",
+          "license": "CC BY-SA 2.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ascarid1_(5842674095).jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "strongyloides-westeri",
@@ -271,7 +282,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "strongyloides-westeri-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "LeChFr",
+          "license": "CC BY-SA 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Strongyloides_westeri_lifecycle.png",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "cylicostephanus-longibursatus",
@@ -962,7 +984,18 @@
           "note": "Course also lists the tape strip test; cited references do not."
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "oxyuris-equi-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Imes, Marion.; Schwartz, Benjamin; Wright, Willard H.",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Parasites_and_parasitic_diseases_of_horses_(Page_27)_BHL41697913.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "habronema-spp",
@@ -1623,7 +1656,7 @@
       "refs": [
         {
           "field": null,
-          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "citation": "Cotu\u021biu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
           "note": null
         },
@@ -1653,31 +1686,31 @@
         },
         {
           "field": "intermediateHosts",
-          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "citation": "Cotu\u021biu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
           "note": null
         },
         {
           "field": "vectorRole",
-          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "citation": "Cotu\u021biu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
           "note": null
         },
         {
           "field": "majorOrgan",
-          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "citation": "Cotu\u021biu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
           "note": null
         },
         {
           "field": "distribution",
-          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "citation": "Cotu\u021biu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
           "note": "Course states rarely reported in the UK; reference lists England among occasional European reports."
         },
         {
           "field": "significance",
-          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "citation": "Cotu\u021biu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
           "note": null
         },
@@ -1689,13 +1722,13 @@
         },
         {
           "field": "lifecycleStages",
-          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "citation": "Cotu\u021biu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
           "note": null
         },
         {
           "field": "diagnosticTests",
-          "citation": "Cotuțiu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
+          "citation": "Cotu\u021biu et al. 2022, Parasites & Vectors: Thelazia lacrymalis in horses from Romania, epidemiology, morphology and phylogenetic analysis",
           "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-022-05532-z",
           "note": null
         },
@@ -2259,7 +2292,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "ascaris-suum-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "VlaminckJ",
+          "license": "CC BY-SA 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Adult_Ascaris_in_hand.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "strongyloides-ransomi",
@@ -2515,7 +2559,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "trichuris-suis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Cinzia Cantacessi, Neil D. Young, Peter Nejsum, Aaron R. Jex, Bronwyn E. Campbell, Ross S. Hall, Stig M. Thamsborg, Jean",
+          "license": "CC BY 2.5",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:T.suis_Immuno-modulatory_mechanisms.png",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "trichinella-spiralis",
@@ -2671,7 +2726,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "trichinella-spiralis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Izvora",
+          "license": "CC BY-SA 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tr._spiralis_2.JPG",
+          "isHero": true
+        }
+      ]
     }
   ]
 }

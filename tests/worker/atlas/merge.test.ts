@@ -181,6 +181,10 @@ describe("overlayAtlas", () => {
       "/atlas/parasites/fasciola.webp",
       "https://cdn.example/hero.webp",
     ]);
+    expect(views[0].images[0].placeholderSrc).toBe(
+      "/atlas/parasites/fasciola-blur.webp",
+    );
+    expect(views[0].images[1].placeholderSrc).toBeUndefined();
   });
 
   it("appends learner-added rows with null originKey", () => {

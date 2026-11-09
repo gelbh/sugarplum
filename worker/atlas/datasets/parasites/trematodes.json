@@ -167,7 +167,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "fasciola-hepatica-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Alan R Walker",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Fasciola-hepatica-adults.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "fasciola-gigantica",
@@ -306,7 +317,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "fasciola-gigantica-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Thomas Spencer Cobbold (1828\u20131886)",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Fasciola_gigantica.png",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "fascioloides-magna",
@@ -433,7 +455,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "fascioloides-magna-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Flukeman",
+          "license": "CC BY 2.5",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:F._magna_adhesion_and_fibrin_in_abdomen.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "dicrocoelium-dendriticum",
@@ -572,7 +605,18 @@
           "note": "Course gives sedimentation for all liver and rumen flukes; reference prefers dense-solution flotation, as sedimentation finds few eggs."
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "dicrocoelium-dendriticum-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Alan R Walker",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Dicrocoelium-adult-fresh.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "calicophoron-daubneyi",
@@ -807,7 +851,18 @@
           "note": "Course lists Digenea as the order; NCBI ranks Digenea as a subclass and gives the order as Plagiorchiida."
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "fasciolopsis-buski-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Ashish K Jha, Sharad K Jha",
+          "license": "CC BY 4.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Endoscopic_view_of_multiple_Fasciolopsis_buski.png",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "clonorchis-sinensis",
@@ -917,7 +972,18 @@
           "note": "Course lists Digenea as the order; NCBI ranks Digenea as a subclass and gives the order as Opisthorchiida."
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "clonorchis-sinensis-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Sarah J. Wu",
+          "license": "CC BY-SA 3.0",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Clonorchis.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "opisthorchis-felineus",
@@ -1035,7 +1101,18 @@
           "note": "Course lists Digenea as the order; NCBI ranks Digenea as a subclass and gives the order as Opisthorchiida."
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "opisthorchis-felineus-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Division of Parasitic Diseases and Malaria of Centers for Disease Control and Prevention",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Nema_Fig5.gif",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "schistosoma-spp",
@@ -1156,7 +1233,18 @@
           "note": "Course lists Digenea as the order; NCBI ranks Digenea as a subclass and gives the order as Strigeidida."
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "schistosoma-spp-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Centers for Disease Control and Prevention",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Schistosomiasis_life_cycle.png",
+          "isHero": true
+        }
+      ]
     }
   ]
 }

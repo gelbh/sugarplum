@@ -118,6 +118,20 @@ export const datasetEntrySchema = z
       });
     }
     const imageIds = new Set(e.images.map((img) => img.id));
+    if (imageIds.size !== e.images.length) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["images"],
+        message: "image ids must be unique on the entry",
+      });
+    }
+    if (e.images.filter((img) => img.isHero).length > 1) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["images"],
+        message: "at most one hero image",
+      });
+    }
     let diagnosticCount = 0;
     e.fields.lifecycleStages.forEach((stage, i) => {
       const path = ["fields", "lifecycleStages", i];
@@ -133,14 +147,12 @@ export const datasetEntrySchema = z
         stage.infective ||
         stage.durationDays !== null ||
         stage.transmission !== null;
-      if (
-        needsStageRef &&
-        !e.refs.some((r) => r.field === "lifecycleStages")
-      ) {
+      if (needsStageRef && !e.refs.some((r) => r.field === "lifecycleStages")) {
         ctx.addIssue({
           code: "custom",
           path: [...path],
-          message: "infective, durationDays, or transmission needs a lifecycleStages ref",
+          message:
+            "infective, durationDays, or transmission needs a lifecycleStages ref",
         });
       }
       if (stage.hostRole === null || stage.hostRole === "environment") return;
