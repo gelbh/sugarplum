@@ -25,6 +25,20 @@ function card(id: string): CardDraftView {
   } as CardDraftView;
 }
 
+function dueResult(cards: CardDraftView[], metaExtra: Partial<{ introUsed: number; reviewUsed: number }> = {}) {
+  return {
+    cards,
+    meta: {
+      introUsed: metaExtra.introUsed ?? cards.length,
+      introBudget: 20,
+      reviewUsed: metaExtra.reviewUsed ?? 0,
+      reviewBudget: 200,
+      heldIntroCount: 0,
+      deferredCount: 0,
+    },
+  };
+}
+
 const firstBite: UnlockView = {
   id: "reviews_1",
   title: "First bite",
@@ -66,8 +80,8 @@ describe("runPendingFlush", () => {
     const duePost = [card("c2")];
     const listDue = vi
       .fn()
-      .mockResolvedValueOnce(duePre)
-      .mockResolvedValueOnce(duePost);
+      .mockResolvedValueOnce(dueResult(duePre))
+      .mockResolvedValueOnce(dueResult(duePost));
     const review = vi
       .fn()
       .mockResolvedValueOnce({ due: "x", unlocks: [firstBite] })
@@ -84,6 +98,7 @@ describe("runPendingFlush", () => {
       applied: 1,
       skipped: 0,
       due: duePost,
+      meta: dueResult(duePost).meta,
       unlocks: [firstBite],
     });
     expect(replacePending).toHaveBeenCalledWith("u1", [
@@ -100,7 +115,7 @@ describe("runPendingFlush", () => {
     const duePre = [card("c1")];
     const listDue = vi
       .fn()
-      .mockResolvedValueOnce(duePre)
+      .mockResolvedValueOnce(dueResult(duePre))
       .mockRejectedValueOnce(new TypeError("Failed to fetch"));
     const result = await runPendingFlush("u1", {
       isGuestFn: () => false,
@@ -110,7 +125,7 @@ describe("runPendingFlush", () => {
       replacePending: () => {},
       saveDue,
     });
-    expect(result).toEqual({ applied: 1, skipped: 0, due: null, unlocks: [] });
+    expect(result).toEqual({ applied: 1, skipped: 0, due: null, meta: null, unlocks: [] });
     expect(saveDue).not.toHaveBeenCalled();
   });
 
@@ -132,8 +147,8 @@ describe("runPendingFlush", () => {
     const replacePending = vi.fn();
     const listDue = vi
       .fn()
-      .mockResolvedValueOnce([card("c1")])
-      .mockResolvedValueOnce([]);
+      .mockResolvedValueOnce(dueResult([card("c1")]))
+      .mockResolvedValueOnce(dueResult([]));
     await runPendingFlush("u1", {
       isGuestFn: () => false,
       listPending,
@@ -160,7 +175,7 @@ describe("runPendingFlush", () => {
       await reviewGate;
       return {};
     });
-    const listDue = vi.fn().mockResolvedValue([card("c1")]);
+    const listDue = vi.fn().mockResolvedValue(dueResult([card("c1")]));
     const p1 = runPendingFlush("u1", {
       isGuestFn: () => false,
       listPending: () => [grade("c1", 1)],

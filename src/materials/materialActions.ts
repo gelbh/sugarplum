@@ -12,6 +12,20 @@ export function canGenerateMoreFromMaterial(material: {
   );
 }
 
+export function canCreateOcclusionFromMaterial(material: {
+  kind: string;
+  status: string;
+  r2_key?: string | null;
+}): boolean {
+  return (
+    material.kind === "image" &&
+    material.status === "ready" &&
+    typeof material.r2_key === "string" &&
+    material.r2_key.length > 0 &&
+    !isFigureMaterial(material.r2_key)
+  );
+}
+
 export function materialDisplayName(
   filename: string | null | undefined,
 ): string {

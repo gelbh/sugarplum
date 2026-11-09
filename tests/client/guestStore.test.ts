@@ -18,10 +18,13 @@ import {
   guestDeleteCard,
   guestMoveCard,
   guestPatchCard,
+  guestGetFsrsOptimizeStatus,
   guestPutStudyPrefs,
   guestResetCardSchedule,
+  guestResetFsrsWeights,
   guestRestoreCard,
   guestReviewCard,
+  guestSaveFsrsWeights,
 } from "../../src/guest/store";
 import {
   guestDeckComposition,
@@ -441,13 +444,67 @@ describe("guest store", () => {
     expect(typeof result.state).toBe("number");
     const raw = JSON.parse(storage.getItem(STORE_KEY)!) as {
       schedules: Record<string, { state: number; reps: number }>;
-      reviewLogs: Array<{ cardId: string; rating: number }>;
+      reviewLogs: Array<{
+        cardId: string;
+        rating: number;
+        at: string;
+        state?: number;
+      }>;
     };
     expect(raw.schedules[id]?.reps).toBeGreaterThan(0);
     expect(raw.schedules[id]?.state).not.toBe(0); // not State.New
-    expect(raw.reviewLogs.some((l) => l.cardId === id && l.rating === 3)).toBe(
-      true,
+    const graded = raw.reviewLogs.find((l) => l.cardId === id && l.rating === 3);
+    expect(graded).toBeDefined();
+    expect(graded?.state).toBe(0);
+  });
+
+  it("keeps thin historical logs and enriches only new grades", () => {
+    enterGuest(storage);
+    const subject = guestCreateSubject("Thin logs subject", storage);
+    const deck = guestCreateDeck("Thin logs deck", subject.id, storage);
+    const card = guestCreateDeckCard(
+      deck.id,
+      { type: "qa", front: "Thin?", back: "Yes" },
+      storage,
     );
+    const raw = JSON.parse(storage.getItem(STORE_KEY)!) as {
+      reviewLogs: Array<{
+        cardId: string;
+        rating: number;
+        at: string;
+        state?: number;
+      }>;
+    };
+    const thinAt = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+    raw.reviewLogs.push({
+      cardId: card.id,
+      rating: 1,
+      at: thinAt,
+    });
+    storage.setItem(STORE_KEY, JSON.stringify(raw));
+
+    guestReviewCard(card.id, 3, storage);
+
+    const after = JSON.parse(storage.getItem(STORE_KEY)!) as {
+      reviewLogs: Array<{
+        cardId: string;
+        rating: number;
+        at: string;
+        state?: number;
+      }>;
+    };
+    const thin = after.reviewLogs.find(
+      (l) => l.cardId === card.id && l.rating === 1,
+    );
+    const enriched = after.reviewLogs.find(
+      (l) => l.cardId === card.id && l.rating === 3,
+    );
+    expect(thin).toBeDefined();
+    expect(thin?.state).toBeUndefined();
+    expect(enriched?.state).toBe(0);
+
+    const rows = guestListStrugglingCards(storage);
+    expect(rows.some((r) => r.id === card.id && r.again_14d === 1)).toBe(true);
   });
 
   it("day-sticky intro: grading New cards reduces same-day remaining slice", () => {
@@ -1094,5 +1151,25 @@ describe("guest store", () => {
     expect(() => guestDeleteCard(card.id, storage)).toThrow(
       /Only accepted cards can be deleted/,
     );
+  });
+
+  it("preserves fsrsW across studyPrefs PUT and reset clears it", async () => {
+    const { default_w } = await import("ts-fsrs");
+    enterGuest(storage);
+    const customW = default_w.map((x, i) => (i === 8 ? x * 3 : x));
+    guestSaveFsrsWeights(customW, storage);
+
+    guestPutStudyPrefs({ introBudget: 7 }, storage);
+    expect(guestGetStudyPrefs(storage).introBudget).toBe(7);
+    expect(guestGetFsrsOptimizeStatus(storage).hasCustomW).toBe(true);
+    const rawAfterPrefs = JSON.parse(storage.getItem(STORE_KEY)!) as {
+      fsrsW: number[];
+    };
+    expect(rawAfterPrefs.fsrsW).toEqual(customW);
+
+    guestResetFsrsWeights(storage);
+    expect(guestGetFsrsOptimizeStatus(storage).hasCustomW).toBe(false);
+    expect(guestGetFsrsOptimizeStatus(storage).pending).toBe(false);
+    expect(guestGetFsrsOptimizeStatus(storage).lastOptimizedAt).not.toBeNull();
   });
 });

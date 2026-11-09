@@ -290,7 +290,12 @@ coverRoutes.post("/upload-url", async (c) => {
   return c.json({ imageId, uploadUrl, r2Key });
 });
 
-coverRoutes.put("/", async (c) => {
+async function beginCoverPut(c: Context<AppEnv>): Promise<{
+  userId: string;
+  owner: OwnerRef;
+  record: Record<string, unknown>;
+  db: D1Database;
+}> {
   const userId = await requireUser(c);
   const body = await readJson(c);
   const owner = readOwner(body);
@@ -298,40 +303,47 @@ coverRoutes.put("/", async (c) => {
     body && typeof body === "object" ? (body as Record<string, unknown>) : {};
   const db = getDb(c.env);
   await requireOwnedTarget(db, userId, owner);
+  return { userId, owner, record, db };
+}
 
-  if (record.source === "custom") {
-    const r2Key = typeof record.r2Key === "string" ? record.r2Key.trim() : "";
-    const prefix = `covers/${userId}/${owner.ownerKind}/${owner.ownerId}/`;
-    if (!r2Key || !r2Key.startsWith(prefix)) {
-      throw new HTTPException(400, { message: "Invalid cover key" });
-    }
-    const head = await c.env.MATERIALS.head(r2Key);
-    if (!head) throw new HTTPException(400, { message: "Upload missing" });
+coverRoutes.put("/custom", async (c) => {
+  const { userId, owner, record, db } = await beginCoverPut(c);
 
-    const priorKey = await readPriorR2Key(db, userId, owner);
-    const photoId =
-      typeof record.photoId === "string" && record.photoId.trim()
-        ? record.photoId.trim()
-        : newId();
-    const stored: StoredCover = {
-      photoId,
-      imageUrl: coverMediaPath(r2Key),
-      photographerName: "",
-      photographerUrl: "",
-      photoHtmlUrl: "",
-      source: "custom",
-      r2Key,
-    };
-    await upsertCoverRow(db, userId, owner, stored);
-    if (priorKey && priorKey !== r2Key) {
-      await deleteR2Key(c.env, priorKey);
-    }
-    return c.json({
-      ...stored,
-      ownerKind: owner.ownerKind,
-      ownerId: owner.ownerId,
-    } satisfies StoredCoverRow);
+  const r2Key = typeof record.r2Key === "string" ? record.r2Key.trim() : "";
+  const prefix = `covers/${userId}/${owner.ownerKind}/${owner.ownerId}/`;
+  if (!r2Key || !r2Key.startsWith(prefix)) {
+    throw new HTTPException(400, { message: "Invalid cover key" });
   }
+  const head = await c.env.MATERIALS.head(r2Key);
+  if (!head) throw new HTTPException(400, { message: "Upload missing" });
+
+  const priorKey = await readPriorR2Key(db, userId, owner);
+  const photoId =
+    typeof record.photoId === "string" && record.photoId.trim()
+      ? record.photoId.trim()
+      : newId();
+  const stored: StoredCover = {
+    photoId,
+    imageUrl: coverMediaPath(r2Key),
+    photographerName: "",
+    photographerUrl: "",
+    photoHtmlUrl: "",
+    source: "custom",
+    r2Key,
+  };
+  await upsertCoverRow(db, userId, owner, stored);
+  if (priorKey && priorKey !== r2Key) {
+    await deleteR2Key(c.env, priorKey);
+  }
+  return c.json({
+    ...stored,
+    ownerKind: owner.ownerKind,
+    ownerId: owner.ownerId,
+  } satisfies StoredCoverRow);
+});
+
+coverRoutes.put("/", async (c) => {
+  const { userId, owner, record, db } = await beginCoverPut(c);
 
   const photoId = typeof record.photoId === "string" ? record.photoId.trim() : "";
   if (!photoId) throw new HTTPException(400, { message: "Photo required" });

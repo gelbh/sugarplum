@@ -8,6 +8,11 @@ import {
   enqueueGeneration,
   type FigureExtractMode,
 } from "../generation/enqueue";
+import {
+  enqueueOrManualOcclusion,
+  IMAGE_MANUAL_OCCLUSION_MESSAGE,
+  userHasByoSecret,
+} from "../generation/image-free-path";
 import { normalizeTopicHints } from "../generation/topic-hints";
 import { loadMaterialWindowResume } from "../generation/study-windows";
 import { parseOptionalJsonBody } from "../optional-json";
@@ -928,15 +933,23 @@ deckRoutes.post("/:id/topic-generate", async (c) => {
     if (material.deck_id !== deckId) {
       throw new HTTPException(404, { message: "Material not found" });
     }
-    if (
-      (material.kind !== "paste" && material.kind !== "pdf") ||
-      material.status !== PASTE_READY
+    if (material.kind === "image" && material.status === FILE_READY) {
+      if (!(await userHasByoSecret(db, userId))) {
+        throw new HTTPException(422, {
+          message: IMAGE_MANUAL_OCCLUSION_MESSAGE,
+        });
+      }
+      materialId = material.id;
+    } else if (
+      (material.kind === "paste" || material.kind === "pdf") &&
+      material.status === PASTE_READY
     ) {
+      materialId = material.id;
+    } else {
       throw new HTTPException(422, {
         message: "No material available for topic generation",
       });
     }
-    materialId = material.id;
   } else {
     const { results } = await db
       .prepare(
@@ -1405,6 +1418,9 @@ materialRoutes.post("/:id/complete", async (c) => {
   const material = await requireOwnedMaterial(db, materialId, userId);
 
   if (material.status === FILE_READY) {
+    const manual_occlusion =
+      material.kind === "image" &&
+      !(await userHasByoSecret(db, userId));
     return c.json({
       id: material.id,
       deck_id: material.deck_id,
@@ -1416,6 +1432,7 @@ materialRoutes.post("/:id/complete", async (c) => {
       created_at: material.created_at,
       source_role: material.source_role ?? "lecture",
       jobId: null,
+      ...(manual_occlusion ? { manual_occlusion: true } : {}),
     });
   }
 
@@ -1510,12 +1527,18 @@ materialRoutes.post("/:id/complete", async (c) => {
         if (material.r2_key) {
           await c.env.MATERIALS.delete(material.r2_key);
         }
-        const jobId = await enqueueGeneration(c.env, {
-          materialId: hit.materialId,
-          deckId: material.deck_id,
-          figureExtractMode,
-          topicHints,
-        });
+        const { jobId, manual_occlusion } = await enqueueOrManualOcclusion(
+          c.env,
+          db,
+          {
+            userId,
+            kind: hit.kind,
+            materialId: hit.materialId,
+            deckId: material.deck_id,
+            figureExtractMode,
+            topicHints,
+          },
+        );
         return c.json({
           id: hit.materialId,
           deck_id: hit.deck_id,
@@ -1528,6 +1551,7 @@ materialRoutes.post("/:id/complete", async (c) => {
           source_role: hit.source_role ?? "lecture",
           jobId,
           reused: false,
+          ...(manual_occlusion ? { manual_occlusion: true } : {}),
         });
       }
     }
@@ -1553,15 +1577,20 @@ materialRoutes.post("/:id/complete", async (c) => {
     }
   }
 
-  const jobId =
-    isFigure || attachOnly
-      ? null
-      : await enqueueGeneration(c.env, {
-        materialId,
-        deckId: material.deck_id,
-        figureExtractMode,
-        topicHints,
-      });
+  let jobId: string | null = null;
+  let manual_occlusion = false;
+  if (!isFigure && !attachOnly) {
+    const result = await enqueueOrManualOcclusion(c.env, db, {
+      userId,
+      kind: material.kind,
+      materialId,
+      deckId: material.deck_id,
+      figureExtractMode,
+      topicHints,
+    });
+    jobId = result.jobId;
+    manual_occlusion = result.manual_occlusion;
+  }
 
   await refreshAtlasFocusForDeck(db, c.env, material.deck_id);
 
@@ -1576,6 +1605,7 @@ materialRoutes.post("/:id/complete", async (c) => {
     created_at: material.created_at,
     source_role: material.source_role ?? "lecture",
     jobId,
+    ...(manual_occlusion ? { manual_occlusion: true } : {}),
   });
 });
 

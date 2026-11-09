@@ -350,14 +350,13 @@ describe("cover routes", () => {
     env.seedR2(upload.r2Key, "fake-bytes");
 
     const put = await app.request(
-      "/api/covers",
+      "/api/covers/custom",
       {
         method: "PUT",
         headers: authHeaders(true),
         body: JSON.stringify({
           ownerKind: "subject",
           ownerId: "sub-1",
-          source: "custom",
           r2Key: upload.r2Key,
           photoId: upload.imageId,
         }),
@@ -417,14 +416,13 @@ describe("cover routes", () => {
     env.seedR2(r2Key, "bytes");
 
     const bad = await app.request(
-      "/api/covers",
+      "/api/covers/custom",
       {
         method: "PUT",
         headers: authHeaders(true),
         body: JSON.stringify({
           ownerKind: "subject",
           ownerId: "sub-1",
-          source: "custom",
           r2Key: "covers/user-b/subject/sub-1/evil.jpg",
         }),
       },
@@ -433,14 +431,13 @@ describe("cover routes", () => {
     expect(bad.status).toBe(400);
 
     const put = await app.request(
-      "/api/covers",
+      "/api/covers/custom",
       {
         method: "PUT",
         headers: authHeaders(true),
         body: JSON.stringify({
           ownerKind: "subject",
           ownerId: "sub-1",
-          source: "custom",
           r2Key,
           photoId: "img-1",
         }),
@@ -450,14 +447,13 @@ describe("cover routes", () => {
     expect(put.status).toBe(200);
 
     const again = await app.request(
-      "/api/covers",
+      "/api/covers/custom",
       {
         method: "PUT",
         headers: authHeaders(true),
         body: JSON.stringify({
           ownerKind: "subject",
           ownerId: "sub-1",
-          source: "custom",
           r2Key,
           photoId: "img-1",
         }),

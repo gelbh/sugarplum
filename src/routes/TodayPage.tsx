@@ -7,9 +7,12 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import {
   ApiError,
+  listDecks,
   listDueCards,
   me,
   getJourney,
+  type CardDraftView,
+  type StudyQueueMeta,
 } from "../api/client";
 import {
   consumeMergeFailedNotice,
@@ -26,15 +29,29 @@ import {
   loadDueCache,
   saveDueCache,
 } from "../study/dueCache";
+import {
+  buildDueBreakdown,
+  type DueBreakdown,
+} from "../study/dueBreakdown";
+import TodayDueBreakdown from "../study/TodayDueBreakdown";
 import { pendingCardIdSet } from "../study/pendingGrades";
 import { usePendingGradeSync } from "../study/usePendingGradeSync";
 import { warmDueMedia } from "../study/warmDueMedia";
 import { maybeRunFsrsOptimize } from "../study/fsrsOptimizeClient";
 
+async function loadDeckTitles(): Promise<Record<string, string>> {
+  try {
+    const decks = await listDecks();
+    return Object.fromEntries(decks.map((d) => [d.id, d.title]));
+  } catch {
+    return {};
+  }
+}
+
 /** Home: giant due proof + Start study (today-dash-b). */
 export default function TodayPage() {
   const [dueCount, setDueCount] = useState(0);
-  const [heldIntroCount, setHeldIntroCount] = useState(0);
+  const [breakdown, setBreakdown] = useState<DueBreakdown | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mergeFailed, setMergeFailed] = useState(false);
   const [offlineCopy, setOfflineCopy] = useState(false);
@@ -44,18 +61,34 @@ export default function TodayPage() {
     trackOnMount: true,
   });
 
-  const refreshDueFromNetwork = useCallback(async (uid: string) => {
-    try {
-      const { cards: due, meta } = await listDueCards();
-      saveDueCache(uid, due);
-      warmDueMedia(due);
-      setDueCount(due.length);
-      setHeldIntroCount(meta.heldIntroCount ?? 0);
-      setOfflineCopy(false);
-    } catch {
-      /* keep current due count */
-    }
-  }, []);
+  const applyDueSnapshot = useCallback(
+    async (
+      cards: CardDraftView[],
+      meta: StudyQueueMeta | null | undefined,
+      opts?: { offline?: boolean },
+    ) => {
+      const titles = await loadDeckTitles();
+      const next = buildDueBreakdown(cards, meta, titles);
+      setDueCount(cards.length);
+      setBreakdown(next);
+      setOfflineCopy(opts?.offline ?? false);
+    },
+    [],
+  );
+
+  const refreshDueFromNetwork = useCallback(
+    async (uid: string) => {
+      try {
+        const { cards: due, meta } = await listDueCards();
+        saveDueCache(uid, due);
+        warmDueMedia(due);
+        await applyDueSnapshot(due, meta);
+      } catch {
+        /* keep current due count */
+      }
+    },
+    [applyDueSnapshot],
+  );
 
   const {
     setUserId,
@@ -65,9 +98,8 @@ export default function TodayPage() {
     refreshPendingCount,
     flushOnMount,
   } = usePendingGradeSync({
-    onDueRefreshed: (due) => {
-      setDueCount(due.length);
-      setOfflineCopy(false);
+    onDueRefreshed: (due, meta) => {
+      void applyDueSnapshot(due, meta);
     },
     onDueRefreshFailed: (uid) => refreshDueFromNetwork(uid),
   });
@@ -91,8 +123,10 @@ export default function TodayPage() {
           if (cancelled) return;
           saveDueCache(user.id, due);
           warmDueMedia(due);
+          const titles = await loadDeckTitles();
+          if (cancelled) return;
           setDueCount(due.length);
-          setHeldIntroCount(meta.heldIntroCount ?? 0);
+          setBreakdown(buildDueBreakdown(due, meta, titles));
           setOfflineCopy(false);
         } catch (err) {
           if (cancelled) return;
@@ -103,6 +137,7 @@ export default function TodayPage() {
               pendingCardIdSet(user.id),
             );
             setDueCount(filtered.length);
+            setBreakdown(null);
             setOfflineCopy(true);
           } else {
             throw err;
@@ -113,7 +148,7 @@ export default function TodayPage() {
           setReady(true);
           endLoad();
         }
-        if (!isGuest() && !cancelled) {
+        if (!cancelled) {
           void maybeRunFsrsOptimize();
         }
         try {
@@ -164,7 +199,7 @@ export default function TodayPage() {
       }}
     >
       <Stack spacing={3} alignItems="center" textAlign="center">
-        <Box>
+        <Box sx={{ width: "100%", maxWidth: 420 }}>
           <Typography
             component="p"
             aria-label={`${dueCount} ${dueCaption}`}
@@ -193,12 +228,13 @@ export default function TodayPage() {
           >
             {dueCaption}
           </Typography>
-          {heldIntroCount > 0 ? (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              {heldIntroCount === 1
-                ? "1 new card held for later (intro budget)."
-                : `${heldIntroCount} new cards held for later (intro budget).`}
-            </Typography>
+          {breakdown ? (
+            <TodayDueBreakdown
+              introUsed={breakdown.introUsed}
+              reviewUsed={breakdown.reviewUsed}
+              rows={breakdown.rows}
+              remainder={breakdown.remainder}
+            />
           ) : null}
         </Box>
 

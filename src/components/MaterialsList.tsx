@@ -20,6 +20,7 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import CropOutlinedIcon from "@mui/icons-material/CropOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import {
@@ -32,6 +33,7 @@ import {
   type MaterialListItem,
 } from "../api/client";
 import {
+  canCreateOcclusionFromMaterial,
   canGenerateMoreFromMaterial,
   isFigureMaterial,
   materialDisplayName,
@@ -47,6 +49,7 @@ export type MaterialsListProps = {
   materials: MaterialListItem[];
   showDeckTitle: boolean;
   onChanged: () => void;
+  onCreateOcclusion?: (material: MaterialListItem) => void;
 };
 
 const KIND_ORDER = ["pdf", "pptx", "paste", "image", "topic"];
@@ -91,6 +94,7 @@ export default function MaterialsList({
   materials,
   showDeckTitle,
   onChanged,
+  onCreateOcclusion,
 }: MaterialsListProps) {
   const [deleteTarget, setDeleteTarget] = useState<MaterialListItem | null>(
     null,
@@ -226,6 +230,9 @@ export default function MaterialsList({
                 const name = materialDisplayName(material.filename);
                 const deckHref = `/library/decks/${encodeURIComponent(material.deck_id)}`;
                 const canGenerate = canGenerateMoreFromMaterial(material);
+                const canOcclusion =
+                  Boolean(onCreateOcclusion) &&
+                  canCreateOcclusionFromMaterial(material);
                 const roleValue = material.source_role ?? "lecture";
                 const roleBusy = roleBusyId === material.id;
                 return (
@@ -318,6 +325,17 @@ export default function MaterialsList({
                           <DownloadOutlinedIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
+                      {canOcclusion ? (
+                        <Tooltip title={`Create occlusion from ${name}`}>
+                          <IconButton
+                            size="small"
+                            aria-label={`Create occlusion from ${name}`}
+                            onClick={() => onCreateOcclusion?.(material)}
+                          >
+                            <CropOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      ) : null}
                       {canGenerate ? (
                         <Tooltip title={`Generate more from ${name}`}>
                           <IconButton

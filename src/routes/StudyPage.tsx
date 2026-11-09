@@ -147,7 +147,6 @@ export default function StudyPage() {
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [offlineCopy, setOfflineCopy] = useState(false);
-  const [showSwipeHint, setShowSwipeHint] = useState(false);
   const [deepLinkMiss, setDeepLinkMiss] = useState(false);
   const [scopeOpts] = useState<DueScopeOpts | undefined>(() =>
     dueScopeFromSearch(window.location.search),
@@ -188,7 +187,6 @@ export default function StudyPage() {
   }, [exitZen]);
 
   const answerFocusRef = useRef<HTMLElement | null>(null);
-  const swipeHintUsedRef = useRef(false);
   const pointerRef = useRef<PointerStart | null>(null);
   const busyRef = useRef(false);
   /** Suppress leave-on-Esc for one tick after FS exits (UA may clear FS before keydown). */
@@ -414,17 +412,10 @@ export default function StudyPage() {
 
   const reveal = useCallback(() => {
     setRevealed(true);
-    if (!swipeHintUsedRef.current) {
-      swipeHintUsedRef.current = true;
-      setShowSwipeHint(true);
-    } else {
-      setShowSwipeHint(false);
-    }
   }, []);
 
   const flipBack = useCallback(() => {
     setRevealed(false);
-    setShowSwipeHint(false);
   }, []);
 
   useEffect(() => {
@@ -521,7 +512,7 @@ export default function StudyPage() {
       }
       const key = plainShortcutKey(e);
       if (key === null) return;
-      if ((key === "s" || key === "S") && revealed && notes.notesAvailable) {
+      if ((key === "s" || key === "S") && notes.notesAvailable) {
         e.preventDefault();
         notes.openNotes();
         return;
@@ -975,11 +966,7 @@ export default function StudyPage() {
                 />
               ) : revealed ? (
                 <Box sx={{ pb: { xs: 0.5, sm: 1 }, mt: "auto", flexShrink: 0 }}>
-                  <GradeButtons
-                    disabled={busy}
-                    onGrade={onGrade}
-                    showSwipeHint={showSwipeHint}
-                  />
+                  <GradeButtons disabled={busy} onGrade={onGrade} />
                 </Box>
               ) : (
                 <Box

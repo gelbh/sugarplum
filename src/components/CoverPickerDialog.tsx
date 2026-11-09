@@ -11,6 +11,7 @@ import Typography from "@mui/material/Typography";
 import {
   ApiError,
   searchCovers,
+  setCover,
   uploadCoverFile,
   type CoverFields,
   type CoverOwnerKind,
@@ -23,8 +24,7 @@ type Props = {
   ownerKind: CoverOwnerKind;
   ownerId: string;
   onClose: () => void;
-  onPick: (photoId: string) => void;
-  onUploaded: (row: StoredCoverRow) => void;
+  onSaved: (row: StoredCoverRow) => void;
   onClear: () => void;
 };
 
@@ -34,8 +34,7 @@ export default function CoverPickerDialog({
   ownerKind,
   ownerId,
   onClose,
-  onPick,
-  onUploaded,
+  onSaved,
   onClear,
 }: Props) {
   const [query, setQuery] = useState(title);
@@ -116,7 +115,7 @@ export default function CoverPickerDialog({
     setUploading(true);
     setActionError(null);
     void uploadCoverFile(ownerKind, ownerId, file)
-      .then((row) => onUploaded(row))
+      .then((row) => onSaved(row))
       .catch((err: unknown) => {
         setActionError(
           err instanceof Error ? err.message : "Could not upload cover",
@@ -194,7 +193,12 @@ export default function CoverPickerDialog({
                 component="button"
                 type="button"
                 aria-label={`Photo by ${photo.photographerName}`}
-                onClick={() => run(() => onPick(photo.photoId))}
+                onClick={() =>
+                  run(async () => {
+                    const row = await setCover(ownerKind, ownerId, photo.photoId);
+                    onSaved(row);
+                  })
+                }
                 sx={{
                   p: 0,
                   m: 0,

@@ -11,7 +11,9 @@ import {
 } from "../lib/clozeFormat";
 import { CardFaceMcqBody } from "./cardFaceMcq";
 import ClozePrompt from "./ClozePrompt";
+import { FaceOverline } from "./faceOverline";
 import KeyChip from "./KeyChip";
+import { StudyNotesButton } from "./StudyNotesButton";
 import {
   CARD_COLUMN_SX,
   FACE_ANSWER_TEXT_SX,
@@ -22,7 +24,6 @@ import {
   FACE_OUTLINE_BUTTON_SX,
   FACE_PROMPT_TEXT_SX,
   FACE_SANS,
-  OVERLINE_SX,
   PROMPT_SX,
   faceMotionSx,
 } from "./studyFaceSx";
@@ -64,15 +65,7 @@ type Props = {
   onOpenNotes?: () => void;
 };
 
-export function FaceOverline({ label }: { label: string }) {
-  return (
-    <Box sx={{ mb: 2, flexShrink: 0 }}>
-      <Typography component="div" sx={OVERLINE_SX}>
-        {label}
-      </Typography>
-    </Box>
-  );
-}
+export { FaceOverline } from "./faceOverline";
 
 /** Shared host + playing-card plate (MCQ and flip faces). */
 export function StudyCardPlate({
@@ -128,6 +121,7 @@ export function FlipCardPlate({
   onPlateClick,
   plateSx,
   faceSx,
+  overlineTrailing,
 }: {
   revealed: boolean;
   front: ReactNode;
@@ -135,6 +129,7 @@ export function FlipCardPlate({
   onPlateClick?: () => void;
   plateSx?: Record<string, unknown>;
   faceSx?: Record<string, unknown>;
+  overlineTrailing?: ReactNode;
 }) {
   return (
     <StudyCardPlate
@@ -160,7 +155,7 @@ export function FlipCardPlate({
         className="sp-playing-card"
         sx={{ ...faceMotionSx(false, !revealed), ...faceSx }}
       >
-        <FaceOverline label="Front" />
+        <FaceOverline label="Front" trailing={overlineTrailing} />
         {front}
       </Paper>
 
@@ -171,7 +166,7 @@ export function FlipCardPlate({
         className="sp-playing-card"
         sx={{ ...faceMotionSx(true, revealed), ...faceSx }}
       >
-        <FaceOverline label="Back" />
+        <FaceOverline label="Back" trailing={overlineTrailing} />
         {back}
       </Paper>
     </StudyCardPlate>
@@ -285,6 +280,11 @@ export default function CardFace({
   notesAvailable,
   onOpenNotes,
 }: Props) {
+  const notesTrailing =
+    notesAvailable && onOpenNotes ? (
+      <StudyNotesButton onOpenNotes={onOpenNotes} />
+    ) : undefined;
+
   if (type === "mcq") {
     if (!cardId || !onGrade) return null;
     return (
@@ -296,6 +296,7 @@ export default function CardFace({
           options={options}
           disabled={disabled}
           onGrade={onGrade}
+          overlineTrailing={notesTrailing}
         />
       </StudyCardPlate>
     );
@@ -334,6 +335,7 @@ export default function CardFace({
       revealed={revealed}
       onPlateClick={canReveal ? reveal : canFlipBack ? flipBack : undefined}
       plateSx={{ cursor: canReveal || canFlipBack ? "pointer" : "default" }}
+      overlineTrailing={notesTrailing}
       front={
         <Box data-card-face-content sx={FACE_BODY_SX}>
           <Box sx={PROMPT_SX}>
@@ -402,25 +404,6 @@ export default function CardFace({
           </Box>
           {revealed ? (
             <Box sx={{ pt: 2, width: "100%", flexShrink: 0 }}>
-              {notesAvailable && onOpenNotes ? (
-                <Button
-                  variant="text"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onOpenNotes();
-                  }}
-                  aria-keyshortcuts="s"
-                  sx={{
-                    fontFamily: FACE_SANS,
-                    minHeight: 44,
-                    color: "inherit",
-                    mb: 1,
-                  }}
-                >
-                  Notes
-                  <KeyChip label="S" ml={1} />
-                </Button>
-              ) : null}
               <Button
                 variant="outlined"
                 onClick={onShowQuestionClick}

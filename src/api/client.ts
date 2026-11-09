@@ -31,10 +31,13 @@ import {
   guestListDeckCards,
   guestListDecks,
   guestCommitPacing,
+  guestGetFsrsOptimizeStatus,
+  guestGetFsrsRevlogCsv,
   guestGetStudyPrefs,
   guestListDueCards,
   guestListStrugglingCards,
   guestListSubjects,
+  guestMarkFsrsOptimizePendingIfDue,
   guestMoveCard,
   guestRestoreCard,
   guestPatchCard,
@@ -42,7 +45,9 @@ import {
   guestPatchSubject,
   guestPutStudyPrefs,
   guestResetCardSchedule,
+  guestResetFsrsWeights,
   guestReviewCard,
+  guestSaveFsrsWeights,
   type GuestHubCardBody,
 } from "../guest/store";
 import {
@@ -511,9 +516,9 @@ export function setCustomCover(
   photoId?: string,
 ) {
   if (isGuest()) rejectGuestCover();
-  return api<StoredCoverRow>("/api/covers", {
+  return api<StoredCoverRow>("/api/covers/custom", {
     method: "PUT",
-    json: { ownerKind, ownerId, source: "custom", r2Key, photoId },
+    json: { ownerKind, ownerId, r2Key, photoId },
   });
 }
 
@@ -1018,6 +1023,7 @@ export function presignPdfFigure(
 export type CompleteMaterialResponse = Material & {
   jobId: string | null;
   reused?: boolean;
+  manual_occlusion?: boolean;
 };
 
 export type FigureExtractMode = "fast" | "accurate";
@@ -1126,12 +1132,14 @@ export function putStudyPrefs(prefs: StudyPrefs) {
 export type { FsrsOptimizeStatus } from "../study/fsrsOptimizeTypes";
 
 export function getFsrsOptimizeStatus() {
-  if (isGuest()) guestUnsupported("FSRS optimize status");
+  if (isGuest()) {
+    return Promise.resolve(guestGetFsrsOptimizeStatus());
+  }
   return api<FsrsOptimizeStatus>("/api/settings/study/fsrs-optimize");
 }
 
 export async function getFsrsRevlogCsv(): Promise<string> {
-  if (isGuest()) guestUnsupported("FSRS revlog export");
+  if (isGuest()) return guestGetFsrsRevlogCsv();
   const res = await fetch("/api/settings/study/fsrs-revlog.csv", {
     credentials: "include",
   });
@@ -1147,7 +1155,14 @@ export type FsrsRescheduleSummary = {
 };
 
 export function putFsrsWeights(w: number[]) {
-  if (isGuest()) guestUnsupported("save FSRS weights");
+  if (isGuest()) {
+    const saved = guestSaveFsrsWeights(w);
+    return Promise.resolve({
+      ok: true as const,
+      wLength: saved.wLength,
+      rescheduled: { cardsUpdated: 0, cardsSkipped: 0 },
+    });
+  }
   return api<{ ok: true; wLength: number; rescheduled: FsrsRescheduleSummary }>(
     "/api/settings/study/fsrs-weights",
     {
@@ -1158,7 +1173,13 @@ export function putFsrsWeights(w: number[]) {
 }
 
 export function resetFsrsWeights() {
-  if (isGuest()) guestUnsupported("reset FSRS weights");
+  if (isGuest()) {
+    guestResetFsrsWeights();
+    return Promise.resolve({
+      ok: true as const,
+      rescheduled: { cardsUpdated: 0, cardsSkipped: 0 },
+    });
+  }
   return api<{ ok: true; rescheduled: FsrsRescheduleSummary }>(
     "/api/settings/study/fsrs-weights/reset",
     {
@@ -1168,7 +1189,10 @@ export function resetFsrsWeights() {
 }
 
 export function runFsrsOptimizeNow() {
-  if (isGuest()) guestUnsupported("run FSRS optimize");
+  if (isGuest()) {
+    guestMarkFsrsOptimizePendingIfDue();
+    return Promise.resolve({ ok: true as const, pending: true as const });
+  }
   return api<{ ok: true; pending: true }>("/api/settings/study/fsrs-optimize/run", {
     method: "POST",
   });

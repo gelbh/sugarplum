@@ -66,8 +66,8 @@ export default function InsightsPage() {
               Insights
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Cards that recently felt hard (Again/Hard) or are at risk of
-              slipping.
+              Cards that recently felt hard (No Idea or Tough Cookie) or are at
+              risk of slipping.
             </Typography>
           </Box>
 
