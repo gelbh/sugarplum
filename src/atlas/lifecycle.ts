@@ -201,14 +201,12 @@ export function stageSpan(
 export const windowLit = (w: DetectableWindow, span: DaySpan | null) =>
   span !== null && w.startDay < span.endDay && w.endDay > span.startDay;
 
-/** Stage flag wins; otherwise match the entry-level diagnosticStage name. */
-export function stageIsDiagnostic(
-  stage: { name: string; diagnostic?: boolean },
-  diagnosticStage: string | null,
-): boolean {
-  if (stage.diagnostic) return true;
-  if (!diagnosticStage) return false;
-  return stage.name.toLowerCase() === diagnosticStage.toLowerCase();
+/** True when the stage flag is set (hydrate mirror → flag before calling). */
+export function stageIsDiagnostic(stage: {
+  name: string;
+  diagnostic?: boolean;
+}): boolean {
+  return Boolean(stage.diagnostic);
 }
 
 export type LifecycleModel = {

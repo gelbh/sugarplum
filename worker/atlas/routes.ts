@@ -31,6 +31,10 @@ import type { DatasetEntry } from "./datasets/schema";
 import { IMAGE_ROLES } from "./datasets/schema";
 import { normalizeParasiteName } from "./names";
 import {
+  diagnosticOwnershipIssue,
+  syncDiagnosticOwnership,
+} from "./lifecycleDiagnostic";
+import {
   emptyParasiteFields,
   parasiteFieldsSchema,
   type ParasiteFields,
@@ -233,7 +237,23 @@ function mergeFields(
   patch: Partial<ParasiteFields> | undefined,
 ): ParasiteFields {
   if (!patch) return base;
-  return parasiteFieldsSchema.parse({ ...base, ...patch });
+  const merged = parasiteFieldsSchema.parse({ ...base, ...patch });
+  const ownershipError = diagnosticOwnershipIssue(
+    merged.lifecycleStages,
+    merged.diagnosticStage,
+  );
+  if (ownershipError) {
+    throw new HTTPException(400, { message: ownershipError });
+  }
+  const synced = syncDiagnosticOwnership(
+    merged.lifecycleStages,
+    merged.diagnosticStage,
+  );
+  return {
+    ...merged,
+    lifecycleStages: synced.stages,
+    diagnosticStage: synced.diagnosticStage,
+  };
 }
 
 async function requireOwnedAtlas(

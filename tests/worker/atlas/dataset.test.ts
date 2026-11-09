@@ -596,4 +596,16 @@ describe("built-in parasite dataset", () => {
       .map((e) => e.key);
     expect(extras).toEqual([]);
   });
+
+  it("ships pilot lifecycle_diagram images", () => {
+    const diagrams = dataset.entries.flatMap((e) =>
+      e.images
+        .filter((img) => img.role === "lifecycle_diagram")
+        .map((img) => `${e.key}:${img.id}`),
+    );
+    expect(diagrams.sort()).toEqual([
+      "fasciola-hepatica:fasciola-hepatica-lifecycle",
+      "taenia-saginata:taenia-saginata-lifecycle",
+    ]);
+  });
 });

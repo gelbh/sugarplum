@@ -4,6 +4,7 @@ import type {
   DatasetFields,
 } from "../../src/atlas/types";
 import type { DatasetEntry } from "./datasets/schema";
+import { syncDiagnosticOwnership } from "./lifecycleDiagnostic";
 
 /** D1 atlas_entries row shape used by overlay (refs/images optional joins). */
 export type OverlayRow = {
@@ -46,7 +47,16 @@ export function toEntryView(entry: DatasetEntry): AtlasEntryView {
 }
 
 function parseFields(fieldsJson: string): DatasetFields {
-  return JSON.parse(fieldsJson) as DatasetFields;
+  const fields = JSON.parse(fieldsJson) as DatasetFields;
+  const synced = syncDiagnosticOwnership(
+    fields.lifecycleStages,
+    fields.diagnosticStage,
+  );
+  return {
+    ...fields,
+    lifecycleStages: synced.stages,
+    diagnosticStage: synced.diagnosticStage,
+  };
 }
 
 /** Dataset refs/images first, then learner overlay refs/images. */
