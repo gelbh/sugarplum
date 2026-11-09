@@ -1,4 +1,9 @@
-import { useState, type FormEvent } from "react";
+import {
+  useState,
+  type Dispatch,
+  type FormEvent,
+  type SetStateAction,
+} from "react";
 import {
   ApiError,
   pasteMaterial,
@@ -11,10 +16,10 @@ import {
 import { guestPasteToCards } from "../guest/pasteToCards";
 import { guestAddAcceptedCards } from "../guest/store";
 import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
+import { MAX_IMAGE_BYTES } from "../lib/pdfPageRender";
 import type { WorkshopFrame } from "./workshopStack";
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const ALLOWED_UPLOAD_MIMES = new Set([
   "application/pdf",
@@ -29,7 +34,7 @@ type Args = {
   refreshCards: () => Promise<void>;
   refreshDraftJobs: () => Promise<void>;
   refreshMaterials: () => Promise<void>;
-  setWorkshopStack: React.Dispatch<React.SetStateAction<WorkshopFrame[]>>;
+  setWorkshopStack: Dispatch<SetStateAction<WorkshopFrame[]>>;
 };
 
 export function useAddMaterialWorkshop({

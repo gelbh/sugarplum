@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import {
   ApiError,
   archiveCard,
@@ -7,12 +7,12 @@ import {
 } from "../api/client";
 
 type Args = {
-  setCards: React.Dispatch<React.SetStateAction<CardDraftView[]>>;
-  setAcceptedCount: React.Dispatch<React.SetStateAction<number>>;
-  setError: React.Dispatch<React.SetStateAction<string | null>>;
-  setNotice: React.Dispatch<React.SetStateAction<string | null>>;
+  setCards: Dispatch<SetStateAction<CardDraftView[]>>;
+  setAcceptedCount: Dispatch<SetStateAction<number>>;
+  setError: Dispatch<SetStateAction<string | null>>;
+  setNotice: Dispatch<SetStateAction<string | null>>;
   editCard: CardDraftView | null;
-  setEditCard: React.Dispatch<React.SetStateAction<CardDraftView | null>>;
+  setEditCard: Dispatch<SetStateAction<CardDraftView | null>>;
 };
 
 export function useCardsWorkshop({
@@ -118,7 +118,6 @@ export function useCardsWorkshop({
     selectedCardIds,
     setSelectedCardIds,
     batchBusy,
-    setBatchBusy,
     clearSelection,
     onToggleSelect,
     onSelectAll,

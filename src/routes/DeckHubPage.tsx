@@ -164,7 +164,6 @@ export default function DeckHubPage({ deckId }: Props) {
     deckId,
     guest,
     showArchived,
-    deckImageKeys,
     setCards,
     setAcceptedCount,
     setNotice,
@@ -717,7 +716,7 @@ export default function DeckHubPage({ deckId }: Props) {
             createError={create.createError}
             createNeedsImage={create.createNeedsImage}
             createImageKey={create.createImageKey}
-            deckImageKeys={create.deckImageKeys}
+            deckImageKeys={deckImageKeys}
             createImageInputRef={create.createImageInputRef}
             onCreateChange={create.onCreateChange}
             onCreateCard={create.onCreateCard}
@@ -802,7 +801,7 @@ export default function DeckHubPage({ deckId }: Props) {
             createError={create.createError}
             createNeedsImage={create.createNeedsImage}
             createImageKey={create.createImageKey}
-            deckImageKeys={create.deckImageKeys}
+            deckImageKeys={deckImageKeys}
             createImageInputRef={create.createImageInputRef}
             hubDiyAllowedTypes={create.hubDiyAllowedTypes}
             onCreateChange={create.onCreateChange}

@@ -1,8 +1,10 @@
 import {
   useRef,
   useState,
+  type Dispatch,
   type FormEvent,
   type RefObject,
+  type SetStateAction,
 } from "react";
 import {
   ApiError,
@@ -21,9 +23,9 @@ import {
   hubDiyTypes,
   validateHubCreateCard,
 } from "../lib/hubDiyCreate";
+import { MAX_IMAGE_BYTES } from "../lib/pdfPageRender";
 import { popWorkshop, type WorkshopFrame } from "./workshopStack";
 
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export function blankHubCreateCard(deckId: string): CardDraftView {
@@ -45,11 +47,10 @@ type Args = {
   deckId: string;
   guest: boolean;
   showArchived: boolean;
-  deckImageKeys: string[];
-  setCards: React.Dispatch<React.SetStateAction<CardDraftView[]>>;
-  setAcceptedCount: React.Dispatch<React.SetStateAction<number>>;
-  setNotice: React.Dispatch<React.SetStateAction<string | null>>;
-  setWorkshopStack: React.Dispatch<React.SetStateAction<WorkshopFrame[]>>;
+  setCards: Dispatch<SetStateAction<CardDraftView[]>>;
+  setAcceptedCount: Dispatch<SetStateAction<number>>;
+  setNotice: Dispatch<SetStateAction<string | null>>;
+  setWorkshopStack: Dispatch<SetStateAction<WorkshopFrame[]>>;
 };
 
 export type CreateCardController = {
@@ -59,7 +60,6 @@ export type CreateCardController = {
   createError: string | null;
   createNeedsImage: boolean;
   createImageKey: string;
-  deckImageKeys: string[];
   createImageInputRef: RefObject<HTMLInputElement | null>;
   hubDiyAllowedTypes: CardType[];
   onCreateChange: (next: DraftEditorChange) => void;
@@ -73,7 +73,6 @@ export function useCreateCardController({
   deckId,
   guest,
   showArchived,
-  deckImageKeys,
   setCards,
   setAcceptedCount,
   setNotice,
@@ -205,7 +204,6 @@ export function useCreateCardController({
     createError,
     createNeedsImage,
     createImageKey,
-    deckImageKeys,
     createImageInputRef,
     hubDiyAllowedTypes: hubDiyTypes(guest),
     onCreateChange,
