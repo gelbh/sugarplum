@@ -3,6 +3,7 @@ import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
+import { aggregateSubjectKnowledge } from "../../src/study/subjectKnowledge";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -129,6 +130,34 @@ subjectRoutes.patch("/:id", async (c) => {
     created_at: subject.created_at,
     deck_count,
   });
+});
+
+subjectRoutes.get("/:id/knowledge", async (c) => {
+  const userId = await requireUser(c);
+  const subjectId = c.req.param("id");
+  const db = getDb(c.env);
+  await requireOwnedSubject(db, subjectId, userId);
+
+  const { results } = await db
+    .prepare(
+      `-- sugarplum:subject-knowledge
+       SELECT s.state AS state, s.scheduled_days AS scheduled_days
+       FROM cards c
+       INNER JOIN decks d ON d.id = c.deck_id
+       LEFT JOIN card_schedules s ON s.card_id = c.id
+       WHERE d.subject_id = ? AND d.user_id = ? AND c.status = 'accepted'`,
+    )
+    .bind(subjectId, userId)
+    .all<{ state: number | null; scheduled_days: number | null }>();
+
+  return c.json(
+    aggregateSubjectKnowledge(
+      (results ?? []).map((row) => ({
+        state: row.state ?? null,
+        scheduled_days: row.scheduled_days ?? null,
+      })),
+    ),
+  );
 });
 
 subjectRoutes.delete("/:id", async (c) => {

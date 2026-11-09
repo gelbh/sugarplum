@@ -1625,6 +1625,26 @@ export function createTestEnv(opts?: {
             .filter((row): row is NonNullable<typeof row> => row != null);
           return { results: rows as T[] };
         }
+        if (normalized.includes("sugarplum:subject-knowledge")) {
+          const subjectId = bound[0] as string;
+          const userId = bound[1] as string | undefined;
+          const rows = [...cards.values()]
+            .filter((card) => {
+              if (card.status !== "accepted") return false;
+              const deck = decks.get(card.deck_id);
+              if (!deck || deck.subject_id !== subjectId) return false;
+              if (userId != null && deck.user_id !== userId) return false;
+              return true;
+            })
+            .map((card) => {
+              const schedule = schedules.get(card.id);
+              return {
+                state: schedule?.state ?? null,
+                scheduled_days: schedule?.scheduled_days ?? null,
+              };
+            });
+          return { results: rows as T[] };
+        }
         if (
           normalized.includes("FROM cards c") &&
           normalized.includes("LEFT JOIN card_schedules")
