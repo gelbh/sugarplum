@@ -179,6 +179,7 @@ describe("guest store", () => {
     const id = due[0]!.id;
     const result = guestReviewCard(id, 3, storage);
     expect(result.due).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(typeof result.state).toBe("number");
     const raw = JSON.parse(storage.getItem(STORE_KEY)!) as {
       schedules: Record<string, { state: number; reps: number }>;
       reviewLogs: Array<{ cardId: string; rating: number }>;
@@ -633,9 +634,12 @@ describe("guest store", () => {
     expect(guestListDeckCards(deckB.id, storage).map((c) => c.id)).toContain(
       card.id,
     );
+    // Membership stays; deck interleave may reorder after deck_id changes.
     expect(
-      guestListDueCards(undefined, storage).cards.map((c) => c.id),
-    ).toEqual(dueBefore);
+      guestListDueCards(undefined, storage)
+        .cards.map((c) => c.id)
+        .sort(),
+    ).toEqual([...dueBefore].sort());
   });
 
   it("moveCard allows archived cards", () => {
