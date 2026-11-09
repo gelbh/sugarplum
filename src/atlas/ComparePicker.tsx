@@ -14,6 +14,7 @@ import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import type { Theme } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
+import { entryTitles } from "./entryTitles";
 import { GROUP_LABELS, groupRows, matchesSearch } from "./filter";
 import type { AtlasEntryView } from "./types";
 
@@ -76,7 +77,7 @@ export default function ComparePicker({
         <Typography variant="body2" color="text.secondary" aria-live="polite">
           {first ? (
             <>
-              Step 2 of 2: compare <i>{first.canonicalName}</i> with
+              Step 2 of 2: compare {entryTitles(first).primary} with
             </>
           ) : (
             "Step 1 of 2: pick the first parasite"
@@ -122,30 +123,30 @@ export default function ComparePicker({
                   >
                     {GROUP_LABELS[row.group].plural}
                   </ListSubheader>
-                  {row.entries.map((e) => (
-                    <ListItemButton
-                      key={e.id}
-                      onClick={() => choose(e.id)}
-                      sx={{ px: 3, display: "block" }}
-                    >
-                      <Typography
-                        component="span"
-                        sx={{ fontStyle: "italic", fontWeight: 600 }}
+                  {row.entries.map((e) => {
+                    const titles = entryTitles(e);
+                    return (
+                      <ListItemButton
+                        key={e.id}
+                        onClick={() => choose(e.id)}
+                        sx={{ px: 3, display: "block" }}
                       >
-                        {e.canonicalName}
-                      </Typography>
-                      {e.commonName ? (
-                        <Typography
-                          component="span"
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ ml: 1 }}
-                        >
-                          {e.commonName}
+                        <Typography component="span" sx={{ fontWeight: 600 }}>
+                          {titles.primary}
                         </Typography>
-                      ) : null}
-                    </ListItemButton>
-                  ))}
+                        {titles.scientific ? (
+                          <Typography
+                            component="span"
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ ml: 1, fontStyle: "italic" }}
+                          >
+                            {titles.scientific}
+                          </Typography>
+                        ) : null}
+                      </ListItemButton>
+                    );
+                  })}
                 </Box>
               </li>
             ))}

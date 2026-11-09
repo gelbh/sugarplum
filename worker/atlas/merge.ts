@@ -81,7 +81,8 @@ export function viewFromOverlay(
     id: row.id,
     originKey: row.origin_key,
     canonicalName: base?.canonicalName ?? row.canonical_name,
-    commonName: row.common_name,
+    // Null overlay names are stale pre-backfill copies; inherit dataset.
+    commonName: row.common_name ?? base?.commonName ?? null,
     aliases: fromDataset?.aliases ?? [],
     fields: parseFields(row.fields_json),
     refs: media.refs,

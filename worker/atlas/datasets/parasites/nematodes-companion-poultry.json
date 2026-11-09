@@ -12,10 +12,21 @@
         "order": "Ascaridida",
         "family": "Ascarididae",
         "group": "nematode",
-        "definitiveHosts": ["dog", "fox", "canid"],
-        "paratenicHosts": ["rodent", "bird"],
+        "definitiveHosts": [
+          "dog",
+          "fox",
+          "canid"
+        ],
+        "paratenicHosts": [
+          "rodent",
+          "bird"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["migrating L3", "somatic L3", "adult"],
+        "onHostStages": [
+          "migrating L3",
+          "somatic L3",
+          "adult"
+        ],
         "distribution": "Worldwide in dogs and wild canids; commoner in young pups",
         "zoonotic": "yes",
         "significance": "Pot belly, poor growth, diarrhoea and cough in pups; swallowed eggs can lead to larva migrans in the human liver, eye or brain.",
@@ -224,10 +235,20 @@
         "order": "Ascaridida",
         "family": "Ascarididae",
         "group": "nematode",
-        "definitiveHosts": ["cat", "felid"],
-        "paratenicHosts": ["rodent", "bird"],
+        "definitiveHosts": [
+          "cat",
+          "felid"
+        ],
+        "paratenicHosts": [
+          "rodent",
+          "bird"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["migrating L3", "somatic L3", "adult"],
+        "onHostStages": [
+          "migrating L3",
+          "somatic L3",
+          "adult"
+        ],
         "distribution": "Worldwide in cats and wild felids; commoner in kittens",
         "zoonotic": "yes",
         "significance": "Pot belly, poor growth and diarrhoea in kittens; rarely causes larva migrans in people, less often than T. canis.",
@@ -405,7 +426,7 @@
           "file": "toxocara-cati-hero.webp",
           "role": "adult",
           "caption": null,
-          "credit": "L\u00e9odras",
+          "credit": "Léodras",
           "license": "CC BY-SA 4.0",
           "sourceUrl": "https://commons.wikimedia.org/wiki/File:Extr%C3%A9mit%C3%A9_ant%C3%A9rieure_de_Toxocara_cati.jpg",
           "isHero": true
@@ -415,18 +436,33 @@
     {
       "key": "toxascaris-leonina",
       "canonicalName": "Toxascaris leonina",
-      "commonName": null,
+      "commonName": "Lion ascarid",
       "aliases": [],
-      "misspellings": ["Toxocaris leonina", "Toxocara leonina"],
+      "misspellings": [
+        "Toxocaris leonina",
+        "Toxocara leonina"
+      ],
       "fields": {
         "phylum": "Nematoda",
         "order": "Ascaridida",
         "family": "Ascarididae",
         "group": "nematode",
-        "definitiveHosts": ["dog", "cat", "fox", "canid", "felid"],
-        "paratenicHosts": ["rodent", "bird"],
+        "definitiveHosts": [
+          "dog",
+          "cat",
+          "fox",
+          "canid",
+          "felid"
+        ],
+        "paratenicHosts": [
+          "rodent",
+          "bird"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["migrating L3", "adult"],
+        "onHostStages": [
+          "migrating L3",
+          "adult"
+        ],
         "distribution": "Worldwide in canids and felids; replaces T. canis in dogs in the far north",
         "zoonotic": "no",
         "significance": "Usually mild; heavy burdens in young or weakened animals upset the gut. No prenatal or milk route and no migration beyond the gut wall.",
@@ -593,16 +629,28 @@
       "canonicalName": "Ancylostoma caninum",
       "commonName": "Canine hookworm",
       "aliases": [],
-      "misspellings": ["Ancyclostoma caninum"],
+      "misspellings": [
+        "Ancyclostoma caninum"
+      ],
       "fields": {
         "phylum": "Nematoda",
         "order": "Strongylida",
         "family": "Ancylostomatidae",
         "group": "nematode",
-        "definitiveHosts": ["dog", "fox", "canid"],
-        "paratenicHosts": ["rodent"],
+        "definitiveHosts": [
+          "dog",
+          "fox",
+          "canid"
+        ],
+        "paratenicHosts": [
+          "rodent"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["migrating L3", "somatic L3", "adult"],
+        "onHostStages": [
+          "migrating L3",
+          "somatic L3",
+          "adult"
+        ],
         "distribution": "Warm, humid regions worldwide; uncommon in Canada",
         "zoonotic": "potential",
         "significance": "Blood-sucking adults cause anaemia, fatal in pups; larvae cause cutaneous larva migrans in people and rarely eosinophilic enteritis.",
@@ -829,10 +877,21 @@
         "order": "Strongylida",
         "family": "Ancylostomatidae",
         "group": "nematode",
-        "definitiveHosts": ["dog", "fox", "canid", "cat", "felid"],
-        "paratenicHosts": ["rodent"],
+        "definitiveHosts": [
+          "dog",
+          "fox",
+          "canid",
+          "cat",
+          "felid"
+        ],
+        "paratenicHosts": [
+          "rodent"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["migrating L3", "adult"],
+        "onHostStages": [
+          "migrating L3",
+          "adult"
+        ],
         "distribution": "Cool temperate and northern regions, including northern Canada",
         "zoonotic": "potential",
         "significance": "Only mildly pathogenic; heavy burdens can cause protein loss, mucoid diarrhoea and poor growth. Larvae occasionally cause dermatitis.",
@@ -993,7 +1052,7 @@
     {
       "key": "strongyloides-stercoralis",
       "canonicalName": "Strongyloides stercoralis",
-      "commonName": null,
+      "commonName": "Threadworm",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1001,9 +1060,17 @@
         "order": "Rhabditida",
         "family": "Strongyloididae",
         "group": "nematode",
-        "definitiveHosts": ["human", "dog", "cat", "non-human primate"],
+        "definitiveHosts": [
+          "human",
+          "dog",
+          "cat",
+          "non-human primate"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["migrating L3", "adult"],
+        "onHostStages": [
+          "migrating L3",
+          "adult"
+        ],
         "distribution": "Tropical and subtropical regions; very rare in Canada",
         "zoonotic": "yes",
         "significance": "Diarrhoea, cough and skin lesions in dogs, worst in pups and immunosuppressed animals; autoinfection can make human disease severe.",
@@ -1173,9 +1240,16 @@
         "order": "Trichinellida",
         "family": "Trichuridae",
         "group": "nematode",
-        "definitiveHosts": ["dog", "fox", "canid"],
+        "definitiveHosts": [
+          "dog",
+          "fox",
+          "canid"
+        ],
         "majorOrgan": "large intestine",
-        "onHostStages": ["L1", "adult"],
+        "onHostStages": [
+          "L1",
+          "adult"
+        ],
         "distribution": "Worldwide in dogs and wild canids",
         "zoonotic": "potential",
         "significance": "Often silent; some dogs get recurrent mucoid or bloody diarrhoea from adults threaded into the large bowel wall.",
@@ -1362,10 +1436,19 @@
         "order": "Strongylida",
         "family": "Crenosomatidae",
         "group": "nematode",
-        "definitiveHosts": ["dog", "fox", "canid"],
-        "intermediateHosts": ["slug", "land snail"],
+        "definitiveHosts": [
+          "dog",
+          "fox",
+          "canid"
+        ],
+        "intermediateHosts": [
+          "slug",
+          "land snail"
+        ],
         "majorOrgan": "lungs",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Europe, Asia and the north-eastern quarter of North America",
         "zoonotic": "no",
         "significance": "Causes a persistent cough in dogs; infection is usually mild and no fatal case has been reported.",
@@ -1500,17 +1583,24 @@
     {
       "key": "oslerus-osleri",
       "canonicalName": "Oslerus osleri",
-      "commonName": null,
-      "aliases": ["Filaroides osleri"],
+      "commonName": "Oslerus canine lungworm",
+      "aliases": [
+        "Filaroides osleri"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Nematoda",
         "order": "Strongylida",
         "family": "Filaroididae",
         "group": "nematode",
-        "definitiveHosts": ["dog", "canid"],
+        "definitiveHosts": [
+          "dog",
+          "canid"
+        ],
         "majorOrgan": "trachea",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Worldwide except Antarctica",
         "significance": "Wart-like nodules at the tracheal bifurcation cause a dry cough on exercise or in cold air; mostly seen in young dogs.",
         "lifecycleType": "direct",
@@ -1637,7 +1727,7 @@
     {
       "key": "filaroides-hirthi",
       "canonicalName": "Filaroides hirthi",
-      "commonName": null,
+      "commonName": "Filaroides canine lungworm",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -1645,9 +1735,13 @@
         "order": "Strongylida",
         "family": "Filaroididae",
         "group": "nematode",
-        "definitiveHosts": ["dog"],
+        "definitiveHosts": [
+          "dog"
+        ],
         "majorOrgan": "lungs",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Asia, Australia, Europe and North America",
         "significance": "Usually silent in research beagles; severe pneumonia is reported in pet dogs with an underlying immunosuppression.",
         "lifecycleType": "direct",
@@ -1776,11 +1870,24 @@
         "order": "Strongylida",
         "family": "Angiostrongylidae",
         "group": "nematode",
-        "definitiveHosts": ["cat", "felid"],
-        "intermediateHosts": ["slug", "land snail"],
-        "paratenicHosts": ["rodent", "bird", "frog", "reptile"],
+        "definitiveHosts": [
+          "cat",
+          "felid"
+        ],
+        "intermediateHosts": [
+          "slug",
+          "land snail"
+        ],
+        "paratenicHosts": [
+          "rodent",
+          "bird",
+          "frog",
+          "reptile"
+        ],
         "majorOrgan": "lungs",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Worldwide except Antarctica",
         "zoonotic": "no",
         "significance": "Often silent; signs when present are cough, wheeze and dyspnoea.",
@@ -1939,11 +2046,23 @@
         "order": "Strongylida",
         "family": "Angiostrongylidae",
         "group": "nematode",
-        "definitiveHosts": ["dog", "fox", "canid"],
-        "intermediateHosts": ["slug", "snail"],
-        "paratenicHosts": ["frog", "bird"],
+        "definitiveHosts": [
+          "dog",
+          "fox",
+          "canid"
+        ],
+        "intermediateHosts": [
+          "slug",
+          "snail"
+        ],
+        "paratenicHosts": [
+          "frog",
+          "bird"
+        ],
         "majorOrgan": "pulmonary arteries",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Endemic foci in Europe, Africa and the Americas; spreading",
         "zoonotic": "no",
         "significance": "Heartworm-like cardiopulmonary disease: cough, exercise intolerance, right heart failure and bleeding disorders; more pathogenic than D. immitis.",
@@ -2113,11 +2232,20 @@
         "order": "Spirurida",
         "family": "Onchocercidae",
         "group": "nematode",
-        "definitiveHosts": ["dog", "canid"],
-        "intermediateHosts": ["mosquito"],
+        "definitiveHosts": [
+          "dog",
+          "canid"
+        ],
+        "intermediateHosts": [
+          "mosquito"
+        ],
         "vectorRole": "Mosquitoes take up microfilariae from blood and later pass infective L3 into the skin of a new host while feeding.",
         "majorOrgan": "pulmonary arteries",
-        "onHostStages": ["microfilaria", "L4", "adult"],
+        "onHostStages": [
+          "microfilaria",
+          "L4",
+          "adult"
+        ],
         "distribution": "Worldwide; mainly the tropics and warmer temperate zones",
         "zoonotic": "yes",
         "significance": "Adults in pulmonary arteries and right ventricle cause endarteritis, pulmonary hypertension and right heart failure; caval syndrome is rare without surgery.",
@@ -2285,7 +2413,7 @@
     {
       "key": "dirofilaria-repens",
       "canonicalName": "Dirofilaria repens",
-      "commonName": null,
+      "commonName": "Subcutaneous heartworm",
       "aliases": [],
       "misspellings": [],
       "fields": {
@@ -2293,11 +2421,21 @@
         "order": "Spirurida",
         "family": "Onchocercidae",
         "group": "nematode",
-        "definitiveHosts": ["dog", "canid", "cat"],
-        "intermediateHosts": ["mosquito"],
+        "definitiveHosts": [
+          "dog",
+          "canid",
+          "cat"
+        ],
+        "intermediateHosts": [
+          "mosquito"
+        ],
         "vectorRole": "Mosquitoes carry the larvae between hosts and deposit infective L3 on the skin while feeding.",
         "majorOrgan": "skin",
-        "onHostStages": ["microfilaria", "L4", "adult"],
+        "onHostStages": [
+          "microfilaria",
+          "L4",
+          "adult"
+        ],
         "distribution": "Old World only: Europe, Asia and Africa; range expanding in Europe",
         "zoonotic": "yes",
         "significance": "Adults live under the skin of dogs; a zoonosis that causes subcutaneous nodules or wandering worms in people.",
@@ -2421,18 +2559,29 @@
     {
       "key": "capillaria-aerophila",
       "canonicalName": "Capillaria aerophila",
-      "commonName": null,
-      "aliases": ["Eucoleus aerophilus"],
+      "commonName": "Lung capillaria",
+      "aliases": [
+        "Eucoleus aerophilus"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Nematoda",
         "order": "Trichinellida",
         "family": "Capillariidae",
         "group": "nematode",
-        "definitiveHosts": ["fox", "dog", "cat"],
-        "intermediateHosts": ["earthworm"],
+        "definitiveHosts": [
+          "fox",
+          "dog",
+          "cat"
+        ],
+        "intermediateHosts": [
+          "earthworm"
+        ],
         "majorOrgan": "trachea",
-        "onHostStages": ["L1", "adult"],
+        "onHostStages": [
+          "L1",
+          "adult"
+        ],
         "distribution": "Worldwide",
         "zoonotic": "potential",
         "significance": "Often symptomless; heavier burdens cause bronchitis, wheezing cough and bronchopneumonia, especially dangerous in young animals.",
@@ -2583,7 +2732,7 @@
           "file": "capillaria-aerophila-hero.webp",
           "role": "adult",
           "caption": null,
-          "credit": "Lalo\u0161evi\u0107, V., Lalo\u0161evi\u0107, D., \u010capo, I., Simin, V., Galfi, A. &amp; Traversa, D.",
+          "credit": "Lalošević, V., Lalošević, D., Čapo, I., Simin, V., Galfi, A. &amp; Traversa, D.",
           "license": "CC BY 4.0",
           "sourceUrl": "https://commons.wikimedia.org/wiki/File:Eucoleus_aerophilus_female_vulva.jpg",
           "isHero": true
@@ -2593,18 +2742,28 @@
     {
       "key": "capillaria-plica",
       "canonicalName": "Capillaria plica",
-      "commonName": null,
-      "aliases": ["Pearsonema plica"],
+      "commonName": "Bladder worm",
+      "aliases": [
+        "Pearsonema plica"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Nematoda",
         "order": "Trichinellida",
         "family": "Capillariidae",
         "group": "nematode",
-        "definitiveHosts": ["dog", "cat"],
-        "intermediateHosts": ["earthworm"],
+        "definitiveHosts": [
+          "dog",
+          "cat"
+        ],
+        "intermediateHosts": [
+          "earthworm"
+        ],
         "majorOrgan": "urinary bladder",
-        "onHostStages": ["migrating L1", "adult"],
+        "onHostStages": [
+          "migrating L1",
+          "adult"
+        ],
         "distribution": "Worldwide",
         "zoonotic": "no",
         "significance": "Most infected dogs and cats show no signs; heavy burdens can cause cystitis, haematuria and, rarely, urethral obstruction.",
@@ -2744,17 +2903,32 @@
       "canonicalName": "Spirocerca lupi",
       "commonName": "Oesophageal worm",
       "aliases": [],
-      "misspellings": ["Spirocera lupi"],
+      "misspellings": [
+        "Spirocera lupi"
+      ],
       "fields": {
         "phylum": "Nematoda",
         "order": "Spirurida",
         "family": "Spirocercidae",
         "group": "nematode",
-        "definitiveHosts": ["dog", "fox", "canid"],
-        "intermediateHosts": ["beetle"],
-        "paratenicHosts": ["bird", "rodent", "reptile"],
+        "definitiveHosts": [
+          "dog",
+          "fox",
+          "canid"
+        ],
+        "intermediateHosts": [
+          "beetle"
+        ],
+        "paratenicHosts": [
+          "bird",
+          "rodent",
+          "reptile"
+        ],
         "majorOrgan": "oesophagus",
-        "onHostStages": ["migrating L3", "adult"],
+        "onHostStages": [
+          "migrating L3",
+          "adult"
+        ],
         "distribution": "Mostly tropical and subtropical regions",
         "significance": "Oesophageal nodules cause regurgitation and vomiting and may turn into sarcoma; damage to the aorta can cause sudden death.",
         "lifecycleType": "indirect",
@@ -2914,16 +3088,26 @@
       "canonicalName": "Ascaridia galli",
       "commonName": "Chicken roundworm",
       "aliases": [],
-      "misspellings": ["Ascarida galli"],
+      "misspellings": [
+        "Ascarida galli"
+      ],
       "fields": {
         "phylum": "Nematoda",
         "order": "Ascaridida",
         "family": "Ascaridiidae",
         "group": "nematode",
-        "definitiveHosts": ["chicken", "bird"],
-        "paratenicHosts": ["earthworm"],
+        "definitiveHosts": [
+          "chicken",
+          "bird"
+        ],
+        "paratenicHosts": [
+          "earthworm"
+        ],
         "majorOrgan": "small intestine",
-        "onHostStages": ["L3", "adult"],
+        "onHostStages": [
+          "L3",
+          "adult"
+        ],
         "distribution": "Worldwide in poultry, mainly chickens",
         "significance": "Commonest helminth of chickens, worst in young birds. Heavy burdens cause obstruction, anaemia, emaciation and lost production.",
         "lifecycleType": "direct",
@@ -3078,16 +3262,27 @@
       "canonicalName": "Heterakis gallinarum",
       "commonName": "Caecal worm",
       "aliases": [],
-      "misspellings": ["Heterakis gallinarium"],
+      "misspellings": [
+        "Heterakis gallinarium"
+      ],
       "fields": {
         "phylum": "Nematoda",
         "order": "Ascaridida",
         "family": "Heterakidae",
         "group": "nematode",
-        "definitiveHosts": ["chicken", "turkey", "gamebird", "pheasant"],
-        "paratenicHosts": ["earthworm"],
+        "definitiveHosts": [
+          "chicken",
+          "turkey",
+          "gamebird",
+          "pheasant"
+        ],
+        "paratenicHosts": [
+          "earthworm"
+        ],
         "majorOrgan": "caecum",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Worldwide in chickens, turkeys and other galliform birds",
         "significance": "Usually mild alone, but its eggs carry Histomonas meleagridis, the agent of blackhead, which can cause serious disease in poultry.",
         "lifecycleType": "direct",
@@ -3227,16 +3422,28 @@
       "canonicalName": "Syngamus trachea",
       "commonName": "Gapeworm",
       "aliases": [],
-      "misspellings": ["Syngymus trachea"],
+      "misspellings": [
+        "Syngymus trachea"
+      ],
       "fields": {
         "phylum": "Nematoda",
         "order": "Strongylida",
         "family": "Syngamidae",
         "group": "nematode",
-        "definitiveHosts": ["bird", "pheasant"],
-        "paratenicHosts": ["earthworm", "snail", "slug"],
+        "definitiveHosts": [
+          "bird",
+          "pheasant"
+        ],
+        "paratenicHosts": [
+          "earthworm",
+          "snail",
+          "slug"
+        ],
         "majorOrgan": "trachea",
-        "onHostStages": ["migrating L3", "adult"],
+        "onHostStages": [
+          "migrating L3",
+          "adult"
+        ],
         "distribution": "Worldwide in many wild and domestic bird species",
         "significance": "Many birds show no signs. Heavy burdens cause gaping, coughing and anaemia, and can kill young birds with narrow airways.",
         "lifecycleType": "direct",
@@ -3410,18 +3617,29 @@
       "key": "anisakis-simplex",
       "canonicalName": "Anisakis simplex",
       "commonName": "Herring worm",
-      "aliases": ["Whale worm"],
+      "aliases": [
+        "Whale worm"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Nematoda",
         "order": "Ascaridida",
         "family": "Anisakidae",
         "group": "nematode",
-        "definitiveHosts": ["cetacean"],
-        "intermediateHosts": ["crustacean"],
-        "paratenicHosts": ["marine fish", "squid"],
+        "definitiveHosts": [
+          "cetacean"
+        ],
+        "intermediateHosts": [
+          "crustacean"
+        ],
+        "paratenicHosts": [
+          "marine fish",
+          "squid"
+        ],
         "majorOrgan": "stomach",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Worldwide in marine waters, most reports from the Northern Hemisphere",
         "zoonotic": "yes",
         "significance": "Zoonotic. Larvae in raw or undercooked fish or squid cause acute stomach or bowel pain (anisakiasis); dead larvae can still trigger allergy.",
@@ -3584,19 +3802,29 @@
     {
       "key": "contracaecum-osculatum",
       "canonicalName": "Contracaecum osculatum",
-      "commonName": null,
+      "commonName": "Seal ascarid",
       "aliases": [],
-      "misspellings": ["Contracecum osculatum"],
+      "misspellings": [
+        "Contracecum osculatum"
+      ],
       "fields": {
         "phylum": "Nematoda",
         "order": "Ascaridida",
         "family": "Anisakidae",
         "group": "nematode",
-        "definitiveHosts": ["pinniped"],
-        "intermediateHosts": ["crustacean"],
-        "paratenicHosts": ["marine fish"],
+        "definitiveHosts": [
+          "pinniped"
+        ],
+        "intermediateHosts": [
+          "crustacean"
+        ],
+        "paratenicHosts": [
+          "marine fish"
+        ],
         "majorOrgan": "stomach",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Colder seas, including the North Atlantic and the Baltic Sea",
         "zoonotic": "yes",
         "significance": "Larvae encyst in fish, notably the liver of Baltic cod, with seals as final hosts. Human cases are reported less often than for Anisakis.",
@@ -3754,18 +3982,28 @@
       "key": "pseudoterranova-decipiens",
       "canonicalName": "Pseudoterranova decipiens",
       "commonName": "Seal worm",
-      "aliases": ["Cod worm"],
+      "aliases": [
+        "Cod worm"
+      ],
       "misspellings": [],
       "fields": {
         "phylum": "Nematoda",
         "order": "Ascaridida",
         "family": "Anisakidae",
         "group": "nematode",
-        "definitiveHosts": ["pinniped"],
-        "intermediateHosts": ["crustacean"],
-        "paratenicHosts": ["marine fish"],
+        "definitiveHosts": [
+          "pinniped"
+        ],
+        "intermediateHosts": [
+          "crustacean"
+        ],
+        "paratenicHosts": [
+          "marine fish"
+        ],
         "majorOrgan": "stomach",
-        "onHostStages": ["adult"],
+        "onHostStages": [
+          "adult"
+        ],
         "distribution": "Cold coastal waters: North Atlantic, Arctic, Antarctic, Japan, southern Chile",
         "zoonotic": "yes",
         "significance": "Zoonotic. Larvae in cod and other fish flesh infect people via raw fish, causing stomach pain, and cost fisheries money through fillet candling.",

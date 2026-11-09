@@ -1,11 +1,34 @@
 import { describe, expect, it } from "vitest";
 import { bundledAtlasSource } from "../../src/atlas/bundledSource";
 import { entryRefs, windowLabel } from "../../src/atlas/entryFields";
+import { entryTitles } from "../../src/atlas/entryTitles";
 import { isShortcutTarget } from "../../src/atlas/keys";
 import { isAtlasToAtlas } from "../../src/atlas/paths";
 
 const entries = await bundledAtlasSource.list("subj_1");
 const fasciola = entries.find((e) => e.id === "fasciola-hepatica")!;
+
+describe("common-name primacy", () => {
+  it("titles every bundled entry with a non-empty common name as primary", () => {
+    expect(entries.length).toBeGreaterThan(100);
+    for (const e of entries) {
+      const common = e.commonName!.trim();
+      expect(common).toBeTruthy();
+      const titles = entryTitles(e);
+      expect(titles.primary).toBe(common);
+      expect(titles.scientific).toBe(
+        common === e.canonicalName ? null : e.canonicalName,
+      );
+    }
+  });
+
+  it("shows Fasciola under its common name", () => {
+    expect(entryTitles(fasciola)).toEqual({
+      primary: "Common liver fluke",
+      scientific: "Fasciola hepatica",
+    });
+  });
+});
 
 describe("entryRefs", () => {
   it("numbers each source once and reuses the number across fields", () => {

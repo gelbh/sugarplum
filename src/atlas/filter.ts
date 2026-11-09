@@ -5,6 +5,7 @@ import {
   organCovers,
 } from "../../worker/atlas/datasets/vocab";
 import { PARASITE_GROUPS } from "../../worker/atlas/templates/parasite";
+import { entryTitles } from "./entryTitles";
 import { entryNameForms, searchable } from "./nameMatch";
 import type { AtlasEntryView, AtlasTier, ParasiteGroup } from "./types";
 
@@ -86,7 +87,7 @@ export const filtersActive = (f: AtlasFilters) =>
   f.tier !== null;
 
 export const byName = (a: AtlasEntryView, b: AtlasEntryView) =>
-  a.canonicalName.localeCompare(b.canonicalName);
+  entryTitles(a).primary.localeCompare(entryTitles(b).primary);
 
 export function groupRows(
   entries: AtlasEntryView[],
@@ -138,7 +139,7 @@ function sortValue(
 ): string | number | null {
   switch (column) {
     case "name":
-      return e.canonicalName;
+      return entryTitles(e).primary;
     case "group":
       return e.fields.group
         ? PARASITE_GROUPS.indexOf(e.fields.group)

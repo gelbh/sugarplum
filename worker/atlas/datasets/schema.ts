@@ -99,7 +99,7 @@ export const datasetEntrySchema = z
   .strictObject({
     key: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/),
     canonicalName: name,
-    commonName: name.nullable().default(null),
+    commonName: name,
     aliases: z.array(name).default([]),
     misspellings: z.array(name).default([]),
     fields: datasetFieldsSchema,
@@ -238,9 +238,9 @@ export const datasetGroupFileSchema = z
 
 const entryNames = (e: DatasetEntry) =>
   new Set(
-    [e.canonicalName, e.commonName, ...e.aliases, ...e.misspellings]
-      .filter((n): n is string => n !== null)
-      .map((n) => n.toLowerCase()),
+    [e.canonicalName, e.commonName, ...e.aliases, ...e.misspellings].map((n) =>
+      n.toLowerCase(),
+    ),
   );
 
 // Takes the group files so each entry is validated once, then flattens them.
