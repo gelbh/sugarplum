@@ -1,0 +1,3672 @@
+{
+  "group": "nematode",
+  "entries": [
+    {
+      "key": "toxocara-canis",
+      "canonicalName": "Toxocara canis",
+      "commonName": "Dog roundworm",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Ascaridida",
+        "family": "Ascarididae",
+        "group": "nematode",
+        "definitiveHosts": ["dog", "fox", "canid"],
+        "paratenicHosts": ["rodent", "bird", "earthworm"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["migrating L3", "somatic L3", "adult"],
+        "distribution": "Worldwide in dogs and wild canids; commoner in young pups",
+        "zoonotic": "yes",
+        "significance": "Pot belly, poor growth, diarrhoea and cough in pups; swallowed eggs can lead to larva migrans in the human liver, eye or brain.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 28,
+          "max": 35
+        },
+        "lifecycleStages": [
+          {
+            "name": "larvated egg",
+            "location": "faeces and soil; an infective L3 forms inside the egg over several weeks",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 21,
+              "max": 28
+            }
+          },
+          {
+            "name": "migrating L3",
+            "location": "gut wall, liver and lungs, then airways and back to the gut (pups under about 3 months)",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "somatic L3",
+            "location": "muscle and other tissues of older dogs and bitches; reactivated late in pregnancy to reach foetuses or milk",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "encysted L3",
+            "location": "tissues of paratenic hosts such as rodents and birds; infective when eaten by a dog",
+            "hostRole": "paratenic"
+          },
+          {
+            "name": "adult",
+            "location": "small intestine",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "antigen detection",
+            "sample": "faeces"
+          },
+          {
+            "name": "PCR",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Toxocara canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-canis.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "WCVM Learn About Parasites: Toxocara canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-canis.php",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Toxocara canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-canis.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Toxocara canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-canis.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Toxocara canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-canis.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Canadian Parasitology Expert Panel Guidelines: Nematodes",
+          "url": "https://research-groups.usask.ca/cpep/parasites/nematodes-supplementary.php",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "Canadian Parasitology Expert Panel Guidelines: Nematodes",
+          "url": "https://research-groups.usask.ca/cpep/parasites/nematodes-supplementary.php",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "WCVM Learn About Parasites: Toxocara canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-canis.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Toxocara canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-canis.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Toxocara canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-canis.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Toxocara canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-canis.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "Canadian Parasitology Expert Panel Guidelines: Nematodes",
+          "url": "https://research-groups.usask.ca/cpep/parasites/nematodes-supplementary.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Toxocara canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-canis.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "CDC DPDx: Toxocariasis",
+          "url": "https://www.cdc.gov/dpdx/toxocariasis/index.html",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Toxocara canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-canis.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Toxocara canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-canis.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Toxocara canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-canis.php",
+          "note": "Course states about 4 weeks for the egg to become infective; reference gives 3 to 4 weeks."
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Toxocara canis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-canis.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Canadian Parasitology Expert Panel Guidelines: Nematodes",
+          "url": "https://research-groups.usask.ca/cpep/parasites/nematodes-supplementary.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Toxocariasis",
+          "url": "https://www.cdc.gov/dpdx/toxocariasis/index.html",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "toxocara-cati",
+      "canonicalName": "Toxocara cati",
+      "commonName": "Cat roundworm",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Ascaridida",
+        "family": "Ascarididae",
+        "group": "nematode",
+        "definitiveHosts": ["cat", "felid"],
+        "paratenicHosts": ["rodent", "bird", "earthworm"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["migrating L3", "somatic L3", "adult"],
+        "distribution": "Worldwide in cats and wild felids; commoner in kittens",
+        "zoonotic": "yes",
+        "significance": "Pot belly, poor growth and diarrhoea in kittens; rarely causes larva migrans in people, less often than T. canis.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 42,
+          "max": 56
+        },
+        "lifecycleStages": [
+          {
+            "name": "larvated egg",
+            "location": "faeces and soil; an infective L3 forms inside the egg",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 14,
+              "max": 28
+            }
+          },
+          {
+            "name": "migrating L3",
+            "location": "gut wall, liver and lungs, then airways and back to the gut (young cats); gut mucosa only after eating a paratenic host",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "somatic L3",
+            "location": "tissues of lactating queens, including the mammary gland; passed to kittens in milk",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "encysted L3",
+            "location": "tissues of paratenic hosts such as rodents and birds; infective when eaten by a cat",
+            "hostRole": "paratenic"
+          },
+          {
+            "name": "adult",
+            "location": "small intestine",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "antigen detection",
+            "sample": "faeces"
+          },
+          {
+            "name": "PCR",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Toxocara cati",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-cati.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "WCVM Learn About Parasites: Toxocara cati",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-cati.php",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Toxocara cati",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-cati.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Toxocara cati",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-cati.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Toxocara cati",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-cati.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Canadian Parasitology Expert Panel Guidelines: Nematodes",
+          "url": "https://research-groups.usask.ca/cpep/parasites/nematodes-supplementary.php",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "Canadian Parasitology Expert Panel Guidelines: Nematodes",
+          "url": "https://research-groups.usask.ca/cpep/parasites/nematodes-supplementary.php",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "WCVM Learn About Parasites: Toxocara cati",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-cati.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Toxocara cati",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-cati.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Toxocara cati",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-cati.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Toxocara cati",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-cati.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "CDC DPDx: Toxocariasis",
+          "url": "https://www.cdc.gov/dpdx/toxocariasis/index.html",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Toxocara cati",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-cati.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Toxocara cati",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-cati.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Toxocara cati",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-cati.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Toxocara cati",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-cati.php",
+          "note": "Course states infective L2 in the egg and rare migration; reference gives L3 in the egg and hepatotracheal migration in young cats."
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Toxocara cati",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxocara-cati.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Toxocariasis",
+          "url": "https://www.cdc.gov/dpdx/toxocariasis/index.html",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "toxascaris-leonina",
+      "canonicalName": "Toxascaris leonina",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": ["Toxocaris leonina"],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Ascaridida",
+        "family": "Ascarididae",
+        "group": "nematode",
+        "definitiveHosts": ["dog", "cat", "fox", "canid", "felid"],
+        "paratenicHosts": ["rodent", "bird"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["migrating L3", "adult"],
+        "distribution": "Worldwide in canids and felids; replaces T. canis in dogs in the far north",
+        "zoonotic": "no",
+        "significance": "Usually mild; heavy burdens in young or weakened animals upset the gut. No prenatal or milk route and no migration beyond the gut wall.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 70,
+          "max": 77
+        },
+        "lifecycleStages": [
+          {
+            "name": "larvated egg",
+            "location": "faeces and soil; an infective L3 forms inside the egg",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 7,
+              "max": 28
+            }
+          },
+          {
+            "name": "migrating L3",
+            "location": "mucosa of the small intestine only; no spread to other organs",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "encysted L3",
+            "location": "tissues of small mammal and bird paratenic hosts; infective when eaten by a dog or cat",
+            "hostRole": "paratenic"
+          },
+          {
+            "name": "adult",
+            "location": "small intestine",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "antigen detection",
+            "sample": "faeces"
+          },
+          {
+            "name": "PCR",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Toxascaris leonina",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxascaris-leonina.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "WCVM Learn About Parasites: Toxascaris leonina",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxascaris-leonina.php",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Toxascaris leonina",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxascaris-leonina.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Toxascaris leonina",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxascaris-leonina.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Toxascaris leonina",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxascaris-leonina.php",
+          "note": "Course also lists man; cited references do not."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Karamon et al. 2018, Parasites & Vectors 11:436: Intestinal helminths of red foxes in Poland",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6064108/",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "Canadian Parasitology Expert Panel Guidelines: Nematodes",
+          "url": "https://research-groups.usask.ca/cpep/parasites/nematodes-supplementary.php",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "Parasites & Vectors 2012, 5:91: Pet roundworms and hookworms, a continuing need for global worming",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-5-91",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Toxascaris leonina",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxascaris-leonina.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Toxascaris leonina",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxascaris-leonina.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Toxascaris leonina",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxascaris-leonina.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Toxascaris leonina",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxascaris-leonina.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Toxascaris leonina",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxascaris-leonina.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "Parasites & Vectors 2012, 5:91: Pet roundworms and hookworms, a continuing need for global worming",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-5-91",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Toxascaris leonina",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxascaris-leonina.php",
+          "note": "Course states infective L2 in the egg; reference gives L3 in the egg."
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Toxascaris leonina",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/toxascaris-leonina.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "ancylostoma-caninum",
+      "canonicalName": "Ancylostoma caninum",
+      "commonName": "Canine hookworm",
+      "aliases": [],
+      "misspellings": ["Ancyclostoma caninum"],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Ancylostomatidae",
+        "group": "nematode",
+        "definitiveHosts": ["dog", "fox", "canid"],
+        "paratenicHosts": ["rodent"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["migrating L3", "somatic L3", "adult"],
+        "distribution": "Warm, humid regions worldwide; uncommon in Canada",
+        "zoonotic": "potential",
+        "significance": "Blood-sucking adults cause anaemia, fatal in pups; larvae cause cutaneous larva migrans in people and rarely eosinophilic enteritis.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 14,
+          "max": 21
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "faeces; L1 develops and hatches in warm, moist soil",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "soil and grass; infective by skin penetration or ingestion",
+            "hostRole": "environment"
+          },
+          {
+            "name": "migrating L3",
+            "location": "skin route: vessels, heart, lungs, airways, gut; ingested larvae mostly stay in the gut mucosa (young pups)",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "somatic L3",
+            "location": "muscle and other tissues of older dogs; reactivated in pregnancy to reach the milk",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "encysted L3",
+            "location": "tissues of paratenic hosts such as rodents; infective when eaten by a dog",
+            "hostRole": "paratenic"
+          },
+          {
+            "name": "adult",
+            "location": "small intestine, attached to the mucosa",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "antigen detection",
+            "sample": "faeces"
+          },
+          {
+            "name": "PCR",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Ancylostoma caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ancylostoma-caninum.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "CDC DPDx: Hookworm (Extraintestinal)",
+          "url": "https://www.cdc.gov/dpdx/zoonotichookworm/index.html",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Parasites & Vectors 2012, 5:91: Pet roundworms and hookworms, a continuing need for global worming",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-5-91",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "WCVM Learn About Parasites: Ancylostoma caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ancylostoma-caninum.php",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Ancylostoma caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ancylostoma-caninum.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Ancylostoma caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ancylostoma-caninum.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Ancylostoma caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ancylostoma-caninum.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Hookworm (Extraintestinal)",
+          "url": "https://www.cdc.gov/dpdx/zoonotichookworm/index.html",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Canadian Parasitology Expert Panel Guidelines: Nematodes",
+          "url": "https://research-groups.usask.ca/cpep/parasites/nematodes-supplementary.php",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "Parasites & Vectors 2012, 5:91: Pet roundworms and hookworms, a continuing need for global worming",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-5-91",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "WCVM Learn About Parasites: Ancylostoma caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ancylostoma-caninum.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Ancylostoma caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ancylostoma-caninum.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Ancylostoma caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ancylostoma-caninum.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Ancylostoma caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ancylostoma-caninum.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "CDC DPDx: Hookworm (Extraintestinal)",
+          "url": "https://www.cdc.gov/dpdx/zoonotichookworm/index.html",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "CDC DPDx: Hookworm (Intestinal)",
+          "url": "https://www.cdc.gov/dpdx/hookworm/index.html",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Ancylostoma caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ancylostoma-caninum.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Ancylostoma caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ancylostoma-caninum.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Ancylostoma caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ancylostoma-caninum.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "Canadian Parasitology Expert Panel Guidelines: Nematodes",
+          "url": "https://research-groups.usask.ca/cpep/parasites/nematodes-supplementary.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Ancylostoma caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ancylostoma-caninum.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Ancylostoma caninum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/ancylostoma-caninum.php",
+          "note": "Course also lists post-mortem examination and packed cell volume; cited references do not."
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Canadian Parasitology Expert Panel Guidelines: Nematodes",
+          "url": "https://research-groups.usask.ca/cpep/parasites/nematodes-supplementary.php",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "MicroPublication Biology 2024: Small animal models for Ancylostoma caninum, rodent hosts",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11704952/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "uncinaria-stenocephala",
+      "canonicalName": "Uncinaria stenocephala",
+      "commonName": "Northern hookworm",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Ancylostomatidae",
+        "group": "nematode",
+        "definitiveHosts": ["dog", "fox", "canid", "cat", "felid"],
+        "paratenicHosts": ["rodent"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["migrating L3", "adult"],
+        "distribution": "Cool temperate and northern regions, including northern Canada",
+        "zoonotic": "potential",
+        "significance": "Only mildly pathogenic; heavy burdens can cause protein loss, mucoid diarrhoea and poor growth. Larvae occasionally cause dermatitis.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 14,
+          "max": 21
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "faeces; L1 develops and hatches in moist soil",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "soil; infective, mostly by ingestion",
+            "hostRole": "environment"
+          },
+          {
+            "name": "migrating L3",
+            "location": "mucosa of the small intestine; no lung migration",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "encysted L3",
+            "location": "tissues of prey animals acting as paratenic hosts; infective when a dog eats them",
+            "hostRole": "paratenic"
+          },
+          {
+            "name": "adult",
+            "location": "small intestine, attached to the mucosa",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "antigen detection",
+            "sample": "faeces"
+          },
+          {
+            "name": "PCR",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Uncinaria stenocephala",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/uncinaria-stenocephala.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "WCVM Learn About Parasites: Uncinaria stenocephala",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/uncinaria-stenocephala.php",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Uncinaria stenocephala",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/uncinaria-stenocephala.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Uncinaria stenocephala",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/uncinaria-stenocephala.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Uncinaria stenocephala",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/uncinaria-stenocephala.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Canadian Parasitology Expert Panel Guidelines: Nematodes",
+          "url": "https://research-groups.usask.ca/cpep/parasites/nematodes-supplementary.php",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "WCVM Learn About Parasites: Uncinaria stenocephala",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/uncinaria-stenocephala.php",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "Parasites & Vectors 2012, 5:91: Pet roundworms and hookworms, a continuing need for global worming",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-5-91",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Uncinaria stenocephala",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/uncinaria-stenocephala.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Uncinaria stenocephala",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/uncinaria-stenocephala.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Uncinaria stenocephala",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/uncinaria-stenocephala.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "CDC DPDx: Hookworm (Extraintestinal)",
+          "url": "https://www.cdc.gov/dpdx/zoonotichookworm/index.html",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Uncinaria stenocephala",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/uncinaria-stenocephala.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Uncinaria stenocephala",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/uncinaria-stenocephala.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Uncinaria stenocephala",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/uncinaria-stenocephala.php",
+          "note": "Course states PPP 14 days; reference gives 2 to 3 weeks."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Uncinaria stenocephala",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/uncinaria-stenocephala.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Uncinaria stenocephala",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/uncinaria-stenocephala.php",
+          "note": "Course also lists post-mortem examination; cited references do not."
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "strongyloides-stercoralis",
+      "canonicalName": "Strongyloides stercoralis",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Rhabditida",
+        "family": "Strongyloididae",
+        "group": "nematode",
+        "definitiveHosts": ["human", "dog", "cat", "non-human primate"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["migrating L3", "adult"],
+        "distribution": "Tropical and subtropical regions; very rare in Canada",
+        "zoonotic": "yes",
+        "significance": "Diarrhoea, cough and skin lesions in dogs, worst in pups and immunosuppressed animals; autoinfection can make human disease severe.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 7,
+          "max": 14
+        },
+        "lifecycleStages": [
+          {
+            "name": "L1",
+            "location": "passed in faeces after hatching in the gut; rhabditiform, becomes L3 directly or via free-living adults",
+            "hostRole": "environment"
+          },
+          {
+            "name": "free-living adult",
+            "location": "soil and faeces in the heterogonic cycle; males and females mate and give a new generation of larvae",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "soil; filariform, infective by skin penetration or ingestion",
+            "hostRole": "environment"
+          },
+          {
+            "name": "migrating L3",
+            "location": "vessels, liver and lungs, then airways and back to the small intestine",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "small intestine mucosa; parasitic females only, reproducing by parthenogenesis",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "L1",
+        "diagnosticTests": [
+          {
+            "name": "Baermann technique",
+            "sample": "faeces"
+          },
+          {
+            "name": "antibody detection",
+            "sample": "serum"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Strongyloides stercoralis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-stercoralis.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "WCVM Learn About Parasites: Strongyloides stercoralis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-stercoralis.php",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Strongyloides stercoralis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-stercoralis.php",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Strongyloides stercoralis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-stercoralis.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Strongyloides stercoralis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-stercoralis.php",
+          "note": "Course also lists fox; cited references do not."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Strongyloidiasis",
+          "url": "https://www.cdc.gov/dpdx/strongyloidiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Strongyloides stercoralis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-stercoralis.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Strongyloides stercoralis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-stercoralis.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Strongyloides stercoralis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-stercoralis.php",
+          "note": "Course states potential; reference gives zoonotic."
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Strongyloides stercoralis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-stercoralis.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "CDC DPDx: Strongyloidiasis",
+          "url": "https://www.cdc.gov/dpdx/strongyloidiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Strongyloides stercoralis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-stercoralis.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Strongyloides stercoralis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-stercoralis.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Strongyloides stercoralis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-stercoralis.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Strongyloidiasis",
+          "url": "https://www.cdc.gov/dpdx/strongyloidiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Strongyloides stercoralis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/strongyloides-stercoralis.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "trichuris-vulpis",
+      "canonicalName": "Trichuris vulpis",
+      "commonName": "Dog whipworm",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Trichinellida",
+        "family": "Trichuridae",
+        "group": "nematode",
+        "definitiveHosts": ["dog", "fox", "canid"],
+        "majorOrgan": "large intestine",
+        "onHostStages": ["L1", "adult"],
+        "distribution": "Worldwide in dogs and wild canids",
+        "zoonotic": "potential",
+        "significance": "Often silent; some dogs get recurrent mucoid or bloody diarrhoea from adults threaded into the large bowel wall.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 90,
+          "max": 90
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "faeces and soil; an L1 forms inside the egg in about 10 days if warm and wet",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 10,
+              "max": 10
+            }
+          },
+          {
+            "name": "larvated egg",
+            "location": "soil; very hardy and infective for a long time, with an L1 inside",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L1",
+            "location": "hatches in the intestinal lumen, then moves through the mucosa and moults four times",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "caecum and large intestine, front end threaded into the mucosa",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "antigen detection",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Trichuris vulpis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichuris-vulpis.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "WCVM Learn About Parasites: Trichuris vulpis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichuris-vulpis.php",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Trichuris vulpis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/219738/",
+          "note": "Course lists the superfamily Trichinelloidea in the order column; reference gives the order Trichinellida."
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Trichuris vulpis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichuris-vulpis.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Trichuris vulpis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichuris-vulpis.php",
+          "note": "Course also lists cat; cited references do not."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Canadian Parasitology Expert Panel Guidelines: Nematodes",
+          "url": "https://research-groups.usask.ca/cpep/parasites/nematodes-supplementary.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Karamon et al. 2018, Parasites & Vectors 11:436: Intestinal helminths of red foxes in Poland",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6064108/",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Trichuris vulpis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichuris-vulpis.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "Canadian Parasitology Expert Panel Guidelines: Nematodes",
+          "url": "https://research-groups.usask.ca/cpep/parasites/nematodes-supplementary.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Trichuris vulpis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichuris-vulpis.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Canadian Parasitology Expert Panel Guidelines: Nematodes",
+          "url": "https://research-groups.usask.ca/cpep/parasites/nematodes-supplementary.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Trichuris vulpis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichuris-vulpis.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Trichuris vulpis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichuris-vulpis.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Trichuris vulpis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichuris-vulpis.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Trichuris vulpis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichuris-vulpis.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "Canadian Parasitology Expert Panel Guidelines: Nematodes",
+          "url": "https://research-groups.usask.ca/cpep/parasites/nematodes-supplementary.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Trichuris vulpis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichuris-vulpis.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Trichuris vulpis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/trichuris-vulpis.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Canadian Parasitology Expert Panel Guidelines: Nematodes",
+          "url": "https://research-groups.usask.ca/cpep/parasites/nematodes-supplementary.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "crenosoma-vulpis",
+      "canonicalName": "Crenosoma vulpis",
+      "commonName": "Fox lungworm",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Crenosomatidae",
+        "group": "nematode",
+        "definitiveHosts": ["dog", "fox", "canid"],
+        "intermediateHosts": ["slug", "land snail"],
+        "majorOrgan": "lungs",
+        "onHostStages": ["adult"],
+        "distribution": "Europe, Asia and the north-eastern quarter of North America",
+        "zoonotic": "no",
+        "significance": "Causes a persistent cough in dogs; infection is usually mild and no fatal case has been reported.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 21,
+          "max": 21
+        },
+        "lifecycleStages": [
+          {
+            "name": "L1",
+            "location": "brought up the airways, swallowed, shed with faeces; taken in by a slug or snail",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "slug or snail; infective stage for the canid",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "adult",
+            "location": "bronchioles and bronchi, rarely the trachea",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "L1",
+        "diagnosticTests": [
+          {
+            "name": "Baermann technique",
+            "sample": "faeces"
+          },
+          {
+            "name": "endoscopy",
+            "sample": null
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Crenosoma vulpis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/321390/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "Parasites & Vectors 2016: Crenosoma vulpis in the garden snail Cornu aspersum",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4832547/",
+          "note": "Course lists the superfamily Metastrongyloidea in the order column; reference gives the order Strongylida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Crenosoma vulpis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/321390/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "Traversa et al. 2010, Parasites & Vectors: Canine and feline cardiopulmonary parasitic nematodes in Europe",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2923136/",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Traversa et al. 2010, Parasites & Vectors: Canine and feline cardiopulmonary parasitic nematodes in Europe",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2923136/",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "Parasites & Vectors 2016: Crenosoma vulpis in the garden snail Cornu aspersum",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4832547/",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Other lungworms of dogs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/other-lungworms-of-dogs.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "oslerus-osleri",
+      "canonicalName": "Oslerus osleri",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Filaroididae",
+        "group": "nematode",
+        "definitiveHosts": ["dog", "canid"],
+        "majorOrgan": "trachea",
+        "onHostStages": ["adult"],
+        "distribution": "Worldwide except Antarctica",
+        "significance": "Wart-like nodules at the tracheal bifurcation cause a dry cough on exercise or in cold air; mostly seen in young dogs.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 70,
+          "max": 126
+        },
+        "lifecycleStages": [
+          {
+            "name": "L1",
+            "location": "coughed up in mucus or saliva, or passed in faeces; infective when swallowed, often by pups from the dam",
+            "hostRole": "environment"
+          },
+          {
+            "name": "adult",
+            "location": "wart-like nodules on the airway lining, grouped around the bifurcation of the trachea",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "L1",
+        "diagnosticTests": [
+          {
+            "name": "tracheal wash",
+            "sample": "bronchial mucus"
+          },
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "endoscopy",
+            "sample": null
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Oslerus osleri",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/242455/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "Parasites & Vectors 2016: Crenosoma vulpis in the garden snail Cornu aspersum",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4832547/",
+          "note": "Course lists the superfamily Metastrongyloidea in the order column; reference gives the order Strongylida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Oslerus osleri",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/242455/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": "Course also lists snails as intermediate hosts; cited references do not."
+        },
+        {
+          "field": "pppDays",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "filaroides-hirthi",
+      "canonicalName": "Filaroides hirthi",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Filaroididae",
+        "group": "nematode",
+        "definitiveHosts": ["dog"],
+        "majorOrgan": "lungs",
+        "onHostStages": ["adult"],
+        "distribution": "Asia, Australia, Europe and North America",
+        "significance": "Usually silent in research beagles; severe pneumonia is reported in pet dogs with an underlying immunosuppression.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 35,
+          "max": 35
+        },
+        "lifecycleStages": [
+          {
+            "name": "L1",
+            "location": "coughed up and passed in sputum, saliva or very fresh faeces; infective straight away",
+            "hostRole": "environment"
+          },
+          {
+            "name": "adult",
+            "location": "bronchioles, embedded in lung parenchyma",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "L1",
+        "diagnosticTests": [
+          {
+            "name": "tracheal wash",
+            "sample": "bronchial mucus"
+          },
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "Baermann technique",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Other lungworms of dogs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/other-lungworms-of-dogs.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Filaroides (genus)",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/242446/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "Parasites & Vectors 2016: Crenosoma vulpis in the garden snail Cornu aspersum",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4832547/",
+          "note": "Course lists the superfamily Metastrongyloidea in the order column; reference gives the order Strongylida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Filaroides (genus)",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/242446/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": "Course also lists wild carnivores; cited references do not."
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Other lungworms of dogs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/other-lungworms-of-dogs.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Other lungworms of dogs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/other-lungworms-of-dogs.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": "Course states PPP 10-18 weeks; reference gives about 35 days."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "aelurostrongylus-abstrusus",
+      "canonicalName": "Aelurostrongylus abstrusus",
+      "commonName": "Feline lungworm",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Angiostrongylidae",
+        "group": "nematode",
+        "definitiveHosts": ["cat", "felid"],
+        "intermediateHosts": ["slug", "land snail"],
+        "paratenicHosts": ["rodent", "bird", "frog"],
+        "majorOrgan": "lungs",
+        "onHostStages": ["adult"],
+        "distribution": "Worldwide except Antarctica",
+        "zoonotic": "no",
+        "significance": "Often silent; signs when present are cough, wheeze and dyspnoea, mostly in young or immunosuppressed cats.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 35,
+          "max": 42
+        },
+        "lifecycleStages": [
+          {
+            "name": "L1",
+            "location": "brought up the airways, swallowed, shed with faeces; taken in by a slug or snail",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "slug or snail; infective for the cat, which may also eat it via a paratenic host",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "adult",
+            "location": "small distal airways of the lungs (terminal bronchioles, alveolar ducts)",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "L1",
+        "diagnosticTests": [
+          {
+            "name": "Baermann technique",
+            "sample": "faeces"
+          },
+          {
+            "name": "tracheal wash",
+            "sample": "bronchial mucus"
+          },
+          {
+            "name": "radiography",
+            "sample": null
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Aelurostrongylus abstrusus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/aelurostrongylus-abstrusus.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Aelurostrongylus abstrusus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/321389/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Angiostrongylus vasorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/angiostrongylus-vasorum.php",
+          "note": "Course lists the superfamily Metastrongyloidea in the order column; reference gives the order Strongylida."
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Angiostrongylus vasorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/angiostrongylus-vasorum.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "WCVM Learn About Parasites: Aelurostrongylus abstrusus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/aelurostrongylus-abstrusus.php",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "Traversa et al. 2010, Parasites & Vectors: Canine and feline cardiopulmonary parasitic nematodes in Europe",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2923136/",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Aelurostrongylus abstrusus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/aelurostrongylus-abstrusus.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Aelurostrongylus abstrusus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/aelurostrongylus-abstrusus.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Aelurostrongylus abstrusus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/aelurostrongylus-abstrusus.php",
+          "note": "Course states PPP 4-6 weeks; reference gives 5-6 weeks."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Aelurostrongylus abstrusus",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/aelurostrongylus-abstrusus.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "angiostrongylus-vasorum",
+      "canonicalName": "Angiostrongylus vasorum",
+      "commonName": "French heartworm",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Angiostrongylidae",
+        "group": "nematode",
+        "definitiveHosts": ["dog", "fox", "canid"],
+        "intermediateHosts": ["slug", "snail"],
+        "paratenicHosts": ["frog", "bird"],
+        "majorOrgan": "pulmonary arteries",
+        "onHostStages": ["adult"],
+        "distribution": "Endemic foci in Europe, Africa and the Americas; spreading",
+        "zoonotic": "no",
+        "significance": "Heartworm-like cardiopulmonary disease: cough, exercise intolerance, right heart failure and bleeding disorders; more pathogenic than D. immitis.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 42,
+          "max": 56
+        },
+        "lifecycleStages": [
+          {
+            "name": "L1",
+            "location": "brought up the airways, swallowed, shed with faeces; taken in by a slug or snail",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "slug or snail (also held by frogs and birds); infective when eaten by a canid",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "adult",
+            "location": "pulmonary arteries and right ventricle",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "L1",
+        "diagnosticTests": [
+          {
+            "name": "Baermann technique",
+            "sample": "faeces"
+          },
+          {
+            "name": "tracheal wash",
+            "sample": "bronchial mucus"
+          },
+          {
+            "name": "antigen detection",
+            "sample": "blood"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Angiostrongylus vasorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/angiostrongylus-vasorum.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Angiostrongylus vasorum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/321387/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Angiostrongylus vasorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/angiostrongylus-vasorum.php",
+          "note": "Course lists the superfamily Metastrongyloidea in the order column; reference gives the order Strongylida."
+        },
+        {
+          "field": "family",
+          "citation": "WCVM Learn About Parasites: Angiostrongylus vasorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/angiostrongylus-vasorum.php",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Angiostrongylus vasorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/angiostrongylus-vasorum.php",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "WCVM Learn About Parasites: Angiostrongylus vasorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/angiostrongylus-vasorum.php",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "WCVM Learn About Parasites: Angiostrongylus vasorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/angiostrongylus-vasorum.php",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Angiostrongylus vasorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/angiostrongylus-vasorum.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": "Course states worldwide excluding the Americas; reference gives endemic foci in the Americas too."
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Angiostrongylus vasorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/angiostrongylus-vasorum.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Angiostrongylus vasorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/angiostrongylus-vasorum.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Angiostrongylus vasorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/angiostrongylus-vasorum.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Angiostrongylus vasorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/angiostrongylus-vasorum.php",
+          "note": "Course states PPP 7 weeks; reference gives 6-8 weeks."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Angiostrongylus vasorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/angiostrongylus-vasorum.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Angiostrongylus vasorum",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/angiostrongylus-vasorum.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CPEP: Metastrongyloid lungworms (Conboy)",
+          "url": "https://research-groups.usask.ca/cpep/parasites/metastrongyloid-lungworms.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "dirofilaria-immitis",
+      "canonicalName": "Dirofilaria immitis",
+      "commonName": "Canine heartworm",
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Spirurida",
+        "family": "Onchocercidae",
+        "group": "nematode",
+        "definitiveHosts": ["dog", "fox", "canid"],
+        "intermediateHosts": ["mosquito"],
+        "vectorRole": "Mosquitoes take up microfilariae from blood and later pass infective L3 into the skin of a new host while feeding.",
+        "majorOrgan": "pulmonary arteries",
+        "onHostStages": ["microfilaria", "L4", "adult"],
+        "distribution": "Worldwide; mainly the tropics and warmer temperate zones",
+        "zoonotic": "yes",
+        "significance": "Adults in the pulmonary arteries and right ventricle cause endarteritis, pulmonary hypertension and right heart failure; caval syndrome is often fatal.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 180,
+          "max": 210
+        },
+        "lifecycleStages": [
+          {
+            "name": "microfilaria",
+            "location": "blood of the dog; taken up by a feeding mosquito",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "L3",
+            "location": "mosquito mouthparts; enters the dog through the bite wound",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "L4",
+            "location": "subcutaneous connective tissue, then heart and pulmonary artery as immature adults",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "pulmonary artery and right ventricle (right atrium and vena cava in heavy burdens)",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "adult",
+        "diagnosticTests": [
+          {
+            "name": "antigen detection",
+            "sample": "serum",
+            "windowStartWeek": 26
+          },
+          {
+            "name": "modified Knott test",
+            "sample": "blood"
+          },
+          {
+            "name": "radiography",
+            "sample": null
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Dirofilaria immitis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dirofilaria-immitis.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Dirofilaria immitis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6287/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Dirofilaria immitis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dirofilaria-immitis.php",
+          "note": "Course lists the suborder Spirurina in the order column; reference gives the order Spirurida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Dirofilaria immitis",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6287/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Dirofilaria immitis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dirofilaria-immitis.php",
+          "note": "Course also lists man as a rare host; cited references do not."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Dirofilariasis",
+          "url": "https://www.cdc.gov/dpdx/dirofilariasis/index.html",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "CDC DPDx: Dirofilariasis",
+          "url": "https://www.cdc.gov/dpdx/dirofilariasis/index.html",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "WCVM Learn About Parasites: Dirofilaria immitis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dirofilaria-immitis.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Dirofilaria immitis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dirofilaria-immitis.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Dirofilaria immitis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dirofilaria-immitis.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "CDC DPDx: Dirofilariasis",
+          "url": "https://www.cdc.gov/dpdx/dirofilariasis/index.html",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Dirofilaria immitis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dirofilaria-immitis.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Dirofilaria immitis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dirofilaria-immitis.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Dirofilaria immitis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dirofilaria-immitis.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Dirofilaria immitis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dirofilaria-immitis.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Dirofilariasis",
+          "url": "https://www.cdc.gov/dpdx/dirofilariasis/index.html",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Dirofilaria immitis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dirofilaria-immitis.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "dirofilaria-repens",
+      "canonicalName": "Dirofilaria repens",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Spirurida",
+        "family": "Onchocercidae",
+        "group": "nematode",
+        "definitiveHosts": ["dog", "canid", "cat"],
+        "intermediateHosts": ["mosquito"],
+        "vectorRole": "Mosquitoes carry the larvae between hosts and deposit infective L3 on the skin while feeding.",
+        "majorOrgan": "skin",
+        "onHostStages": ["microfilaria", "L4", "adult"],
+        "distribution": "Old World only: Europe, Asia and Africa; range expanding in Europe",
+        "zoonotic": "yes",
+        "significance": "Adults live under the skin of dogs; a zoonosis that causes subcutaneous nodules or wandering worms in people.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "microfilaria",
+            "location": "peripheral blood of the definitive host; taken up by a feeding mosquito",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "L3",
+            "location": "mosquito proboscis; deposited on skin and enters the bite wound",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "L4",
+            "location": "subcutaneous tissue",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "subcutaneous tissue",
+            "hostRole": "definitive"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "CDC DPDx: Dirofilariasis",
+          "url": "https://www.cdc.gov/dpdx/dirofilariasis/index.html",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Dirofilaria repens",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/31241/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Dirofilaria immitis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dirofilaria-immitis.php",
+          "note": "Course lists the suborder Spirurina in the order column; reference gives the order Spirurida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Dirofilaria repens",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/31241/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Dirofilariasis",
+          "url": "https://www.cdc.gov/dpdx/dirofilariasis/index.html",
+          "note": "Course also lists fox; cited references do not."
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "CDC DPDx: Dirofilariasis",
+          "url": "https://www.cdc.gov/dpdx/dirofilariasis/index.html",
+          "note": null
+        },
+        {
+          "field": "vectorRole",
+          "citation": "CDC DPDx: Dirofilariasis",
+          "url": "https://www.cdc.gov/dpdx/dirofilariasis/index.html",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CDC DPDx: Dirofilariasis",
+          "url": "https://www.cdc.gov/dpdx/dirofilariasis/index.html",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "CDC DPDx: Dirofilariasis",
+          "url": "https://www.cdc.gov/dpdx/dirofilariasis/index.html",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "CDC DPDx: Dirofilariasis",
+          "url": "https://www.cdc.gov/dpdx/dirofilariasis/index.html",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "CDC DPDx: Dirofilariasis",
+          "url": "https://www.cdc.gov/dpdx/dirofilariasis/index.html",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "CDC DPDx: Dirofilariasis",
+          "url": "https://www.cdc.gov/dpdx/dirofilariasis/index.html",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Dirofilariasis",
+          "url": "https://www.cdc.gov/dpdx/dirofilariasis/index.html",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "capillaria-aerophila",
+      "canonicalName": "Capillaria aerophila",
+      "commonName": null,
+      "aliases": ["Eucoleus aerophilus"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Trichinellida",
+        "family": "Capillariidae",
+        "group": "nematode",
+        "definitiveHosts": ["fox", "dog", "cat"],
+        "intermediateHosts": ["earthworm"],
+        "majorOrgan": "trachea",
+        "onHostStages": ["adult"],
+        "distribution": "Worldwide",
+        "zoonotic": "potential",
+        "significance": "Often symptomless; heavier burdens cause bronchitis, wheezing cough and bronchopneumonia, which can kill young animals.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 42,
+          "max": 42
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "brought up the airways, swallowed, shed with faeces; the infective L1 forms inside in 5-6 weeks",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 35,
+              "max": 42
+            }
+          },
+          {
+            "name": "L1",
+            "location": "hatches in the small intestine, travels via lymph or blood to the lungs; may first pass through an earthworm",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "trachea and bronchi",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "tracheal wash",
+            "sample": "bronchial mucus"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Other lungworms of dogs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/other-lungworms-of-dogs.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Eucoleus aerophilus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/1237089/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Eucoleus aerophilus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/1237089/",
+          "note": "Course lists the superfamily Trichinelloidea in the order column; reference gives the order Trichinellida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Eucoleus aerophilus",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/1237089/",
+          "note": "Course lists the subfamily Capillariinae; reference gives the family Capillariidae."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Other lungworms of dogs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/other-lungworms-of-dogs.php",
+          "note": null
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "Traversa et al. 2010, Parasites & Vectors: Canine and feline cardiopulmonary parasitic nematodes in Europe",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2923136/",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Other lungworms of dogs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/other-lungworms-of-dogs.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Other lungworms of dogs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/other-lungworms-of-dogs.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "Traversa et al. 2010, Parasites & Vectors: Canine and feline cardiopulmonary parasitic nematodes in Europe",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2923136/",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Other lungworms of dogs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/other-lungworms-of-dogs.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "Traversa et al. 2010, Parasites & Vectors: Canine and feline cardiopulmonary parasitic nematodes in Europe",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2923136/",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Other lungworms of dogs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/other-lungworms-of-dogs.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Other lungworms of dogs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/other-lungworms-of-dogs.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Other lungworms of dogs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/other-lungworms-of-dogs.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Other lungworms of dogs",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/other-lungworms-of-dogs.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Traversa et al. 2010, Parasites & Vectors: Canine and feline cardiopulmonary parasitic nematodes in Europe",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2923136/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "capillaria-plica",
+      "canonicalName": "Capillaria plica",
+      "commonName": null,
+      "aliases": ["Pearsonema plica"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Trichinellida",
+        "family": "Capillariidae",
+        "group": "nematode",
+        "definitiveHosts": ["dog", "cat"],
+        "intermediateHosts": ["earthworm"],
+        "majorOrgan": "urinary bladder",
+        "onHostStages": ["adult"],
+        "distribution": "Worldwide",
+        "zoonotic": "no",
+        "significance": "Most infected dogs and cats show no signs; heavy burdens can cause cystitis, haematuria and, rarely, urethral obstruction.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 56,
+          "max": 56
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "shed in urine; the infective L1 forms inside in about 30 days",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 30,
+              "max": 30
+            }
+          },
+          {
+            "name": "L1",
+            "location": "hatches in an earthworm, which the carnivore then eats",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "migrating L1",
+            "location": "intestinal wall, bloodstream, kidney and ureters to the bladder",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "embedded in the bladder mucosa",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "urine sediment examination",
+            "sample": "urine"
+          },
+          {
+            "name": "endoscopy",
+            "sample": null
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "WCVM Learn About Parasites: Capillaria plica",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/capillaria-plica.php",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Pearsonema plica",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/2025202/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NCBI Taxonomy: Pearsonema plica",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/2025202/",
+          "note": "Course lists the superfamily Trichinelloidea in the order column; reference gives the order Trichinellida."
+        },
+        {
+          "field": "family",
+          "citation": "NCBI Taxonomy: Pearsonema plica",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/2025202/",
+          "note": "Course lists the subfamily Capillariinae; reference gives the family Capillariidae."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "WCVM Learn About Parasites: Capillaria plica",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/capillaria-plica.php",
+          "note": "Course also lists fox; cited references do not."
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "WCVM Learn About Parasites: Capillaria plica",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/capillaria-plica.php",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "WCVM Learn About Parasites: Capillaria plica",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/capillaria-plica.php",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "WCVM Learn About Parasites: Capillaria plica",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/capillaria-plica.php",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "WCVM Learn About Parasites: Capillaria plica",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/capillaria-plica.php",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "WCVM Learn About Parasites: Capillaria plica",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/capillaria-plica.php",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "WCVM Learn About Parasites: Capillaria plica",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/capillaria-plica.php",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "WCVM Learn About Parasites: Capillaria plica",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/capillaria-plica.php",
+          "note": "Course states PPP 6 weeks; reference gives approximately 8 weeks."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Capillaria plica",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/capillaria-plica.php",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "WCVM Learn About Parasites: Capillaria plica",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/capillaria-plica.php",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "spirocerca-lupi",
+      "canonicalName": "Spirocerca lupi",
+      "commonName": "Oesophageal worm",
+      "aliases": [],
+      "misspellings": ["Spirocera lupi"],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Spirurida",
+        "family": "Spirocercidae",
+        "group": "nematode",
+        "definitiveHosts": ["dog", "fox", "canid"],
+        "intermediateHosts": ["beetle"],
+        "paratenicHosts": ["bird", "rodent", "reptile"],
+        "majorOrgan": "oesophagus",
+        "onHostStages": ["migrating L3", "adult"],
+        "distribution": "Mostly tropical and subtropical regions",
+        "significance": "Oesophageal nodules cause regurgitation and vomiting and may turn into sarcoma; damage to the aorta can cause sudden death.",
+        "lifecycleType": "indirect",
+        "pppDays": {
+          "min": 90,
+          "max": 180
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces through a nipple-like opening of the oesophageal nodule; eaten by a dung beetle",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3",
+            "location": "encysted in a coprophagous beetle or in a paratenic host; freed in the dog's stomach",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "migrating L3",
+            "location": "gastric wall, gastric and coeliac arteries and thoracic aorta, then oesophageal wall (L4 and L5 on the way)",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "fibrous nodules in the caudal oesophageal wall",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "endoscopy",
+            "sample": null
+          },
+          {
+            "name": "radiography",
+            "sample": null
+          },
+          {
+            "name": "PCR",
+            "sample": "faeces"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "Segev et al. 2018, Parasites & Vectors: Imidacloprid-moxidectin for oesophageal spirocercosis in dogs",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-018-2731-x",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Spirocerca lupi",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/304461/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "WCVM Learn About Parasites: Dirofilaria immitis",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dirofilaria-immitis.php",
+          "note": "Course lists the suborder Spirurina in the order column; reference gives the order Spirurida."
+        },
+        {
+          "field": "family",
+          "citation": "BMC Veterinary Research 2017: Spirocerca in black-backed jackals",
+          "url": "https://bmcvetres.biomedcentral.com/articles/10.1186/s12917-017-1175-4",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "BMC Veterinary Research 2017: Spirocerca in black-backed jackals",
+          "url": "https://bmcvetres.biomedcentral.com/articles/10.1186/s12917-017-1175-4",
+          "note": "Course also lists cat; cited references do not."
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "Segev et al. 2018, Parasites & Vectors: Imidacloprid-moxidectin for oesophageal spirocercosis in dogs",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-018-2731-x",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "Segev et al. 2018, Parasites & Vectors: Imidacloprid-moxidectin for oesophageal spirocercosis in dogs",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-018-2731-x",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "Segev et al. 2018, Parasites & Vectors: Imidacloprid-moxidectin for oesophageal spirocercosis in dogs",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-018-2731-x",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Segev et al. 2018, Parasites & Vectors: Imidacloprid-moxidectin for oesophageal spirocercosis in dogs",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-018-2731-x",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Segev et al. 2018, Parasites & Vectors: Imidacloprid-moxidectin for oesophageal spirocercosis in dogs",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-018-2731-x",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "Segev et al. 2018, Parasites & Vectors: Imidacloprid-moxidectin for oesophageal spirocercosis in dogs",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-018-2731-x",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "Segev et al. 2018, Parasites & Vectors: Imidacloprid-moxidectin for oesophageal spirocercosis in dogs",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-018-2731-x",
+          "note": "Course states PPP 6 months; reference gives 3 to 6 months."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Segev et al. 2018, Parasites & Vectors: Imidacloprid-moxidectin for oesophageal spirocercosis in dogs",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-018-2731-x",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Segev et al. 2018, Parasites & Vectors: Imidacloprid-moxidectin for oesophageal spirocercosis in dogs",
+          "url": "https://parasitesandvectors.biomedcentral.com/articles/10.1186/s13071-018-2731-x",
+          "note": null
+        },
+        {
+          "field": null,
+          "citation": "Nemaplex: Spirocerca lupi",
+          "url": "https://nemaplex.ucdavis.edu/Taxadata/G9904S1.aspx",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "ascaridia-galli",
+      "canonicalName": "Ascaridia galli",
+      "commonName": "Chicken roundworm",
+      "aliases": [],
+      "misspellings": ["Ascarida galli"],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Ascaridida",
+        "family": "Ascaridiidae",
+        "group": "nematode",
+        "definitiveHosts": ["chicken", "bird"],
+        "paratenicHosts": ["earthworm"],
+        "majorOrgan": "small intestine",
+        "onHostStages": ["L3", "adult"],
+        "distribution": "Worldwide in poultry, mainly chickens",
+        "significance": "Commonest helminth of chickens, worst in young birds. Heavy burdens cause obstruction, anaemia, emaciation and lost production.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 28,
+          "max": 56
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces; a larva develops inside the shell on litter and soil",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 11,
+              "max": 12
+            }
+          },
+          {
+            "name": "larvated egg",
+            "location": "infective egg holding an L3; resists the environment for long periods",
+            "hostRole": "environment"
+          },
+          {
+            "name": "larvated egg in earthworm",
+            "location": "carried mechanically by an earthworm that swallowed it; infective if the worm is eaten soon after",
+            "hostRole": "paratenic"
+          },
+          {
+            "name": "L3",
+            "location": "hatches in the anterior jejunum; larvae live in the duodenal mucosa (histotrophic phase) before returning to the lumen",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "small intestine, mainly the duodenum",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "tissue"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "Shohana et al. 2023: Ascaridia galli infection in chicken (Immun Inflamm Dis)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10540146/",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Ascaridia galli",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/46685/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "Shuai et al. 2023: Ascaridia galli mitochondrial genome (Mitochondrial DNA B)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10552605/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "Shuai et al. 2023: Ascaridia galli mitochondrial genome (Mitochondrial DNA B)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10552605/",
+          "note": "Course lists the family as Ascarididae; reference gives Ascaridiidae."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Shohana et al. 2023: Ascaridia galli infection in chicken (Immun Inflamm Dis)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10540146/",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "Shohana et al. 2023: Ascaridia galli infection in chicken (Immun Inflamm Dis)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10540146/",
+          "note": "Course states earthworms are intermediate hosts; reference gives paratenic."
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "Shohana et al. 2023: Ascaridia galli infection in chicken (Immun Inflamm Dis)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10540146/",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Shuai et al. 2023: Ascaridia galli mitochondrial genome (Mitochondrial DNA B)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10552605/",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Shohana et al. 2023: Ascaridia galli infection in chicken (Immun Inflamm Dis)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10540146/",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "Shohana et al. 2023: Ascaridia galli infection in chicken (Immun Inflamm Dis)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10540146/",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "Shohana et al. 2023: Ascaridia galli infection in chicken (Immun Inflamm Dis)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10540146/",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Shohana et al. 2023: Ascaridia galli infection in chicken (Immun Inflamm Dis)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10540146/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Excretion of Histomonas meleagridis in chickens co-infected with Heterakis gallinarum and Ascaridia galli (Parasit Vectors)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8201732/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Nunn et al.: Fenbendazole resistance in Ascaridia galli and Heterakis gallinarum",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12475845/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "heterakis-gallinarum",
+      "canonicalName": "Heterakis gallinarum",
+      "commonName": "Caecal worm",
+      "aliases": [],
+      "misspellings": ["Heterakis gallinarium"],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Ascaridida",
+        "family": "Heterakidae",
+        "group": "nematode",
+        "definitiveHosts": ["chicken", "turkey", "gamebird"],
+        "paratenicHosts": ["earthworm"],
+        "majorOrgan": "caecum",
+        "onHostStages": ["adult"],
+        "distribution": "Worldwide in chickens, turkeys and other galliform birds",
+        "significance": "Usually mild alone, but its eggs carry Histomonas meleagridis, the agent of blackhead, which can cause high mortality in turkeys and other poultry.",
+        "lifecycleType": "direct",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in faeces; becomes infective in soil in about 2 weeks",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 14,
+              "max": 14
+            }
+          },
+          {
+            "name": "larvated egg",
+            "location": "infective egg; stays viable for over a year and can carry Histomonas meleagridis",
+            "hostRole": "environment"
+          },
+          {
+            "name": "larvated egg in earthworm",
+            "location": "earthworms that swallow eggs keep viable larvae for long periods and pass them to birds that eat them",
+            "hostRole": "paratenic"
+          },
+          {
+            "name": "adult",
+            "location": "caecum",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "tissue"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "Abdullah 2025: Heterakidae nematode from free-range chickens, Iraq (Vet World)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12501599/",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Heterakis (genus)",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/65464/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "Abdullah 2025: Heterakidae nematode from free-range chickens, Iraq (Vet World)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12501599/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "Abdullah 2025: Heterakidae nematode from free-range chickens, Iraq (Vet World)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12501599/",
+          "note": "Course lists the superfamily Heterakoidea in the family column; reference gives the family Heterakidae."
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Abdullah 2025: Heterakidae nematode from free-range chickens, Iraq (Vet World)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12501599/",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "Abdullah 2025: Heterakidae nematode from free-range chickens, Iraq (Vet World)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12501599/",
+          "note": "Course states earthworms are intermediate or paratenic hosts; reference gives paratenic."
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "Abdullah 2025: Heterakidae nematode from free-range chickens, Iraq (Vet World)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12501599/",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Abdullah 2025: Heterakidae nematode from free-range chickens, Iraq (Vet World)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12501599/",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Abdullah 2025: Heterakidae nematode from free-range chickens, Iraq (Vet World)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12501599/",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "Abdullah 2025: Heterakidae nematode from free-range chickens, Iraq (Vet World)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12501599/",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Abdullah 2025: Heterakidae nematode from free-range chickens, Iraq (Vet World)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12501599/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Excretion of Histomonas meleagridis in chickens co-infected with Heterakis gallinarum and Ascaridia galli (Parasit Vectors)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8201732/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Nunn et al.: Fenbendazole resistance in Ascaridia galli and Heterakis gallinarum",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12475845/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "syngamus-trachea",
+      "canonicalName": "Syngamus trachea",
+      "commonName": "Gapeworm",
+      "aliases": [],
+      "misspellings": ["Syngymus trachea"],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Strongylida",
+        "family": "Syngamidae",
+        "group": "nematode",
+        "definitiveHosts": ["bird"],
+        "paratenicHosts": ["earthworm", "snail", "slug"],
+        "majorOrgan": "trachea",
+        "onHostStages": ["migrating L3", "adult"],
+        "distribution": "Worldwide in many wild and domestic bird species",
+        "significance": "Many birds show no signs. Heavy burdens cause gaping, coughing and anaemia, and can kill young birds with narrow airways.",
+        "lifecycleType": "direct",
+        "pppDays": {
+          "min": 12,
+          "max": 21
+        },
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "coughed up and swallowed or expelled from the trachea, then passed in faeces",
+            "hostRole": "environment",
+            "durationDays": {
+              "min": 14,
+              "max": 28
+            }
+          },
+          {
+            "name": "larvated egg",
+            "location": "infective egg or hatched free-living L3 on soil",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3 in paratenic host",
+            "location": "encysted in earthworms, snails, slugs or insects that fed on eggs or larvae",
+            "hostRole": "paratenic"
+          },
+          {
+            "name": "migrating L3",
+            "location": "gut wall, then body cavity or bloodstream to the lungs, where it develops further",
+            "hostRole": "definitive"
+          },
+          {
+            "name": "adult",
+            "location": "trachea; male and female stay joined in a Y shape",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "egg",
+        "diagnosticTests": [
+          {
+            "name": "faecal flotation",
+            "sample": "faeces"
+          },
+          {
+            "name": "post-mortem examination",
+            "sample": "tissue"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "Meister et al. 2022: Syngamus trachea in free-ranging white stork nestlings (IJP-PAW)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9062124/",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Syngamus trachea",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/70241/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "NAL Agricultural Thesaurus: Syngamidae",
+          "url": "https://lod.nal.usda.gov/nalt/en/page/9390",
+          "note": "Course lists the superfamily Strongyloidea in the order column; reference gives the order Strongylida."
+        },
+        {
+          "field": "family",
+          "citation": "Meister et al. 2022: Syngamus trachea in free-ranging white stork nestlings (IJP-PAW)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9062124/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "Meister et al. 2022: Syngamus trachea in free-ranging white stork nestlings (IJP-PAW)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9062124/",
+          "note": null
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "Meister et al. 2022: Syngamus trachea in free-ranging white stork nestlings (IJP-PAW)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9062124/",
+          "note": null
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "Meister et al. 2022: Syngamus trachea in free-ranging white stork nestlings (IJP-PAW)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9062124/",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Meister et al. 2022: Syngamus trachea in free-ranging white stork nestlings (IJP-PAW)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9062124/",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Meister et al. 2022: Syngamus trachea in free-ranging white stork nestlings (IJP-PAW)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9062124/",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "Meister et al. 2022: Syngamus trachea in free-ranging white stork nestlings (IJP-PAW)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9062124/",
+          "note": null
+        },
+        {
+          "field": "pppDays",
+          "citation": "Meister et al. 2022: Syngamus trachea in free-ranging white stork nestlings (IJP-PAW)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9062124/",
+          "note": "Course states PPP 16-20 days; reference gives 12-21 days."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Meister et al. 2022: Syngamus trachea in free-ranging white stork nestlings (IJP-PAW)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9062124/",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "Meister et al. 2022: Syngamus trachea in free-ranging white stork nestlings (IJP-PAW)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9062124/",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "anisakis-simplex",
+      "canonicalName": "Anisakis simplex",
+      "commonName": "Herring worm",
+      "aliases": ["Whale worm"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Ascaridida",
+        "family": "Anisakidae",
+        "group": "nematode",
+        "definitiveHosts": ["cetacean"],
+        "intermediateHosts": ["crustacean"],
+        "paratenicHosts": ["marine fish", "squid"],
+        "majorOrgan": "stomach",
+        "onHostStages": ["adult"],
+        "distribution": "Worldwide in marine waters, most reports from the Northern Hemisphere",
+        "zoonotic": "yes",
+        "significance": "Zoonotic. Larvae in raw or undercooked fish or squid cause acute stomach or bowel pain (anisakiasis); dead larvae can still trigger allergy.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed unembryonated in cetacean faeces; becomes embryonated in sea water and moults twice inside",
+            "hostRole": "environment"
+          },
+          {
+            "name": "free-swimming L3",
+            "location": "hatches as an ensheathed L3 that is eaten by krill and other crustaceans",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3 in crustacean",
+            "location": "grows in the haemocoel until infective to fish and squid",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "L3 in squid",
+            "location": "moves from the gut into viscera and muscle; passes on when squid are eaten",
+            "hostRole": "paratenic",
+            "host": "squid"
+          },
+          {
+            "name": "L3 in marine fish",
+            "location": "body cavity, viscera and muscle; passes from fish to fish by predation, building up in large predators",
+            "hostRole": "paratenic",
+            "host": "marine fish"
+          },
+          {
+            "name": "adult",
+            "location": "stomach of whales, dolphins and porpoises, after two moults",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "L3",
+        "diagnosticTests": [
+          {
+            "name": "endoscopy",
+            "sample": "tissue"
+          },
+          {
+            "name": "histopathology",
+            "sample": "tissue"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Anisakis simplex",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6269/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "Common Symptoms from an Uncommon Infection: Gastrointestinal Anisakiasis (PMC)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5075291/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "Common Symptoms from an Uncommon Infection: Gastrointestinal Anisakiasis (PMC)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5075291/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": "Course also lists humans as definitive hosts; cited references do not."
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": "Course states copepods are paratenic hosts; reference gives crustaceans as intermediate hosts."
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": "Course states predatory fish and squid are intermediate hosts; reference gives them as paratenic."
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": "Course states stomach and small intestine; reference gives stomach."
+        },
+        {
+          "field": "distribution",
+          "citation": "USGS Circular 1393: Anisakiosis and Pseudoterranovosis (Measures 2014)",
+          "url": "https://pubs.usgs.gov/circ/1393/pdf/circ1393.pdf",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "USGS Circular 1393: Anisakiosis and Pseudoterranovosis (Measures 2014)",
+          "url": "https://pubs.usgs.gov/circ/1393/pdf/circ1393.pdf",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "contracaecum-osculatum",
+      "canonicalName": "Contracaecum osculatum",
+      "commonName": null,
+      "aliases": [],
+      "misspellings": ["Contracecum osculatum"],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Ascaridida",
+        "family": "Anisakidae",
+        "group": "nematode",
+        "definitiveHosts": ["pinniped"],
+        "intermediateHosts": ["crustacean"],
+        "paratenicHosts": ["marine fish"],
+        "majorOrgan": "stomach",
+        "onHostStages": ["adult"],
+        "distribution": "Colder seas, including the North Atlantic and the Baltic Sea",
+        "zoonotic": "yes",
+        "significance": "Larvae encyst in fish, notably the liver of Baltic cod, with seals as final hosts. Human cases are reported less often than for Anisakis.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed unembryonated in seal faeces; embryonates in sea water",
+            "hostRole": "environment"
+          },
+          {
+            "name": "free-swimming L3",
+            "location": "hatches as an ensheathed L3 that crustaceans such as amphipods eat",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3 in crustacean",
+            "location": "grows in the haemocoel until infective to fish",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "L3 in marine fish",
+            "location": "migrates from the gut to a site such as the cod liver, where the host encapsulates it",
+            "hostRole": "paratenic"
+          },
+          {
+            "name": "adult",
+            "location": "stomach of seals such as grey and bearded seals",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "L3",
+        "diagnosticTests": [
+          {
+            "name": "endoscopy",
+            "sample": "tissue"
+          },
+          {
+            "name": "histopathology",
+            "sample": "tissue"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Contracaecum osculatum",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/106324/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "Genera and species of the Anisakidae family and their geographical distribution (Animals 2020)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7763134/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "Genera and species of the Anisakidae family and their geographical distribution (Animals 2020)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7763134/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": "Course also lists humans and birds as definitive hosts; cited references do not."
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": "Course states copepods are paratenic hosts; reference gives crustaceans as intermediate hosts."
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": "Course states predatory fish and squid are intermediate hosts; reference gives marine fish as paratenic."
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": "Course states stomach and small intestine; reference gives stomach."
+        },
+        {
+          "field": "distribution",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "distribution",
+          "citation": "Contracaecum osculatum nematodes in Baltic cod liver: encapsulation and release (Parasitol Res 2017)",
+          "url": "https://link.springer.com/article/10.1007/s00436-017-5580-1",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "Contracaecum osculatum nematodes in Baltic cod liver: encapsulation and release (Parasitol Res 2017)",
+          "url": "https://link.springer.com/article/10.1007/s00436-017-5580-1",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "USGS Circular 1393: Anisakiosis and Pseudoterranovosis (Measures 2014)",
+          "url": "https://pubs.usgs.gov/circ/1393/pdf/circ1393.pdf",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "Contracaecum osculatum nematodes in Baltic cod liver: encapsulation and release (Parasitol Res 2017)",
+          "url": "https://link.springer.com/article/10.1007/s00436-017-5580-1",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": null
+        }
+      ],
+      "images": []
+    },
+    {
+      "key": "pseudoterranova-decipiens",
+      "canonicalName": "Pseudoterranova decipiens",
+      "commonName": "Seal worm",
+      "aliases": ["Cod worm"],
+      "misspellings": [],
+      "fields": {
+        "phylum": "Nematoda",
+        "order": "Ascaridida",
+        "family": "Anisakidae",
+        "group": "nematode",
+        "definitiveHosts": ["pinniped"],
+        "intermediateHosts": ["crustacean"],
+        "paratenicHosts": ["marine fish"],
+        "majorOrgan": "stomach",
+        "onHostStages": ["adult"],
+        "distribution": "Cold coastal waters: North Atlantic, Arctic, Antarctic, Japan, southern Chile",
+        "zoonotic": "yes",
+        "significance": "Zoonotic. Larvae in cod and other fish flesh infect people via raw fish, causing stomach pain, and cost fisheries money through fillet candling.",
+        "lifecycleType": "indirect",
+        "lifecycleStages": [
+          {
+            "name": "egg",
+            "location": "passed in seal faeces into the sea, where it needs time to develop",
+            "hostRole": "environment"
+          },
+          {
+            "name": "free-living L3",
+            "location": "hatches and attaches to sand or rocks by the tail until a small bottom-dwelling invertebrate eats it",
+            "hostRole": "environment"
+          },
+          {
+            "name": "L3 in crustacean",
+            "location": "copepods, amphipods, mysids and isopods are the first hosts",
+            "hostRole": "intermediate"
+          },
+          {
+            "name": "L3 in marine fish",
+            "location": "small bottom-living fish eat the invertebrates; larvae build up in large cod and other predators, mostly in the muscle",
+            "hostRole": "paratenic"
+          },
+          {
+            "name": "adult",
+            "location": "stomach of seals, sea lions and walruses",
+            "hostRole": "definitive"
+          }
+        ],
+        "diagnosticStage": "L3",
+        "diagnosticTests": [
+          {
+            "name": "candling of fish fillets",
+            "sample": "fish fillet"
+          },
+          {
+            "name": "endoscopy",
+            "sample": "tissue"
+          }
+        ]
+      },
+      "refs": [
+        {
+          "field": null,
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "phylum",
+          "citation": "NCBI Taxonomy: Pseudoterranova decipiens",
+          "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/6271/",
+          "note": null
+        },
+        {
+          "field": "order",
+          "citation": "Genera and species of the Anisakidae family and their geographical distribution (Animals 2020)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7763134/",
+          "note": null
+        },
+        {
+          "field": "family",
+          "citation": "Genera and species of the Anisakidae family and their geographical distribution (Animals 2020)",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7763134/",
+          "note": null
+        },
+        {
+          "field": "definitiveHosts",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": "Course also lists humans as definitive hosts; cited references do not."
+        },
+        {
+          "field": "intermediateHosts",
+          "citation": "USGS Circular 1393: Anisakiosis and Pseudoterranovosis (Measures 2014)",
+          "url": "https://pubs.usgs.gov/circ/1393/pdf/circ1393.pdf",
+          "note": "Course states copepods are paratenic hosts; reference gives crustaceans as intermediate hosts."
+        },
+        {
+          "field": "paratenicHosts",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": "Course states predatory fish and squid are intermediate hosts; reference gives marine fish as paratenic."
+        },
+        {
+          "field": "majorOrgan",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": "Course states stomach and small intestine; reference gives stomach."
+        },
+        {
+          "field": "distribution",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "zoonotic",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "significance",
+          "citation": "USGS Circular 1393: Anisakiosis and Pseudoterranovosis (Measures 2014)",
+          "url": "https://pubs.usgs.gov/circ/1393/pdf/circ1393.pdf",
+          "note": null
+        },
+        {
+          "field": "lifecycleType",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "USGS Circular 1393: Anisakiosis and Pseudoterranovosis (Measures 2014)",
+          "url": "https://pubs.usgs.gov/circ/1393/pdf/circ1393.pdf",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "USGS Circular 1393: Anisakiosis and Pseudoterranovosis (Measures 2014)",
+          "url": "https://pubs.usgs.gov/circ/1393/pdf/circ1393.pdf",
+          "note": null
+        },
+        {
+          "field": "diagnosticTests",
+          "citation": "CDC DPDx: Anisakiasis",
+          "url": "https://www.cdc.gov/dpdx/anisakiasis/index.html",
+          "note": null
+        }
+      ],
+      "images": []
+    }
+  ]
+}
