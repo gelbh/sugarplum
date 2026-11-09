@@ -7,8 +7,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import Box from "@mui/material/Box";
 import AppShell from "./components/AppShell";
 import BareScroll from "./components/BareScroll";
+import GradeButtons from "./components/GradeButtons";
 import DraftReviewPage from "./routes/DraftReviewPage";
 import HomePage from "./routes/HomePage";
 import LibraryPage from "./routes/LibraryPage";
@@ -125,6 +127,23 @@ function AppInner() {
   }
   if (path === "/today") return shell(<TodayPage />);
   if (path === "/insights") return shell(<InsightsPage />);
+  // Local preview for grade button chrome (not shipped in production builds).
+  if (import.meta.env.MODE !== "production" && path === "/dev/grades") {
+    return (
+      <Box
+        sx={{
+          minHeight: "100dvh",
+          bgcolor: "var(--sp-stage-bg, #1e0d1b)",
+          color: "var(--sp-ivory, #e8d8c7)",
+          display: "grid",
+          placeItems: "center",
+          p: 2,
+        }}
+      >
+        <GradeButtons onGrade={() => undefined} />
+      </Box>
+    );
+  }
   if (/^\/jobs\/[^/]+\/drafts\/?$/.test(path))
     return shell(<DraftReviewPage />);
   if (path === "/admin") return shell(<AdminPage />);

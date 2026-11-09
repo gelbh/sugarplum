@@ -8,13 +8,14 @@ import Typography from "@mui/material/Typography";
 import { GAMIFICATION_CHANGED_EVENT, getGamification } from "../api/client";
 import FruitMedal from "../achievements/FruitMedal";
 import type { UnlockView } from "../achievements/wire";
+import { gradeLabelMultiline } from "./gradeLabels";
 import { gradedTotal, type GradeTally } from "./sessionTally";
 
 const GRADES = [
-  { key: "again", label: "Again" },
-  { key: "hard", label: "Hard" },
-  { key: "good", label: "Good" },
-  { key: "easy", label: "Easy" },
+  { key: "again", rating: 1 as const },
+  { key: "hard", rating: 2 as const },
+  { key: "good", rating: 3 as const },
+  { key: "easy", rating: 4 as const },
 ] as const;
 
 export type SessionCompleteProps = {
@@ -122,9 +123,14 @@ export default function SessionComplete(props: SessionCompleteProps) {
             </Typography>
             <Typography
               variant="caption"
-              sx={{ color: `var(--sp-grade-${grade.key}-border)` }}
+              sx={{
+                color: `var(--sp-grade-${grade.key}-border)`,
+                display: "block",
+                whiteSpace: "pre-line",
+                lineHeight: 1.2,
+              }}
             >
-              {grade.label}
+              {gradeLabelMultiline(grade.rating)}
             </Typography>
           </Box>
         ))}
