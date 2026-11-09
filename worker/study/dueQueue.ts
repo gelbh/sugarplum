@@ -10,6 +10,7 @@ import type { ScheduleRowLike } from "./fsrs";
 import { loadIntrosUsedToday } from "./dayStats";
 import { loadStudyPrefs } from "./prefs";
 import { serverUtcDay, serverUtcDayStartIso } from "../../src/study/localDay";
+import { prepareDueOnlyUpdate } from "./scheduleWrite";
 
 export type DueSqlRow = CardRow &
   ScheduleRowLike & {
@@ -130,17 +131,7 @@ export async function applyDeferrals(
 ): Promise<void> {
   if (deferrals.length === 0) return;
   const stmts = deferrals.map((d) =>
-    db
-      .prepare(
-        `UPDATE card_schedules SET due = ?
-         WHERE card_id = ?
-           AND EXISTS (
-             SELECT 1 FROM cards c
-             INNER JOIN decks d ON d.id = c.deck_id
-             WHERE c.id = card_schedules.card_id AND d.user_id = ?
-           )`,
-      )
-      .bind(d.newDue, d.id, userId),
+    prepareDueOnlyUpdate(db, d.newDue, d.id, userId),
   );
   await db.batch(stmts);
 }
