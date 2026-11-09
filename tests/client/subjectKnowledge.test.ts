@@ -94,16 +94,16 @@ describe("composeSubjectKnowledge", () => {
     last_review: null as string | null,
   };
 
-  it("incomplete rows → buckets only, null avg, 0 count", () => {
+  it("incomplete rows → buckets + avg 0 (null R as 0)", () => {
     const out = composeSubjectKnowledge(
       [incomplete],
       new Date("2026-11-09T12:00:00.000Z"),
     );
     expect(out.total).toBe(1);
     expect(out.new).toBe(1);
-    expect(out.avgRetrievability).toBeNull();
+    expect(out.avgRetrievability).toBe(0);
     expect(out.etk).toBe(0);
-    expect(out.recallCardCount).toBe(0);
+    expect(out.recallCardCount).toBe(1);
   });
 
   it("complete Review row → non-null R and recallCardCount 1", () => {

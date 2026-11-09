@@ -46,6 +46,7 @@ import {
   type GuestHubCardBody,
 } from "../guest/store";
 import {
+  guestDeckComposition,
   guestSubjectComposition,
   guestSubjectCompositionSummaries,
   type SubjectCompositionSummary,
@@ -611,6 +612,20 @@ export function subjectComposition(id: string) {
     }
   }
   return api<SubjectKnowledge>(`/api/subjects/${id}/composition`);
+}
+
+export function getDeckComposition(deckId: string) {
+  if (isGuest()) {
+    try {
+      return Promise.resolve(guestDeckComposition(deckId));
+    } catch (err) {
+      throw new ApiError(
+        404,
+        err instanceof Error ? err.message : "Deck not found",
+      );
+    }
+  }
+  return api<SubjectKnowledge>(`/api/decks/${deckId}/composition`);
 }
 
 export function listSubjectCompositionSummaries() {

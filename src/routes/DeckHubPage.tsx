@@ -22,6 +22,7 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import AddMaterialWorkshop from "../deckHub/AddMaterialWorkshop";
+import CompositionSpark from "../components/CompositionSpark";
 import CoverPickerDialog from "../components/CoverPickerDialog";
 import CardsWorkshop from "../deckHub/CardsWorkshop";
 import DeckHubTitleHeader from "../deckHub/DeckHubTitleHeader";
@@ -47,6 +48,7 @@ import {
   createDeckExport,
   deckStats,
   deleteDeck,
+  getDeckComposition,
   listCovers,
   listDeckCards,
   listDeckMaterials,
@@ -69,6 +71,7 @@ import {
   type MaterialListItem,
   type StoredCoverRow,
   type Subject,
+  type SubjectKnowledge,
 } from "../api/client";
 import { cardPatchBody } from "../cards/cardPatchBody";
 import DraftCardEditor, {
@@ -95,6 +98,9 @@ export default function DeckHubPage({ deckId }: Props) {
   const [cards, setCards] = useState<CardDraftView[]>([]);
   /** Accepted (non-archived) count — independent of Show archived filter. */
   const [acceptedCount, setAcceptedCount] = useState(0);
+  const [composition, setComposition] = useState<SubjectKnowledge | null>(
+    null,
+  );
   const [draftJobs, setDraftJobs] = useState<JobListItem[]>([]);
   const [materials, setMaterials] = useState<MaterialListItem[]>([]);
   const [deckCover, setDeckCover] = useState<StoredCoverRow | null>(null);
@@ -176,6 +182,14 @@ export default function DeckHubPage({ deckId }: Props) {
   const { busy: exportBusy, run: runExport } =
     useTrackedOp(ANKI_EXPORT_BUSY_LABEL);
 
+  const refreshComposition = useCallback(async () => {
+    try {
+      setComposition(await getDeckComposition(deckId));
+    } catch {
+      setComposition(null);
+    }
+  }, [deckId]);
+
   const refreshCards = useCallback(async () => {
     const next = await listDeckCards(
       deckId,
@@ -188,7 +202,8 @@ export default function DeckHubPage({ deckId }: Props) {
       const accepted = await listDeckCards(deckId);
       setAcceptedCount(accepted.length);
     }
-  }, [deckId, showArchived]);
+    await refreshComposition();
+  }, [deckId, refreshComposition, showArchived]);
 
   const refreshDraftJobs = useCallback(async () => {
     if (guest) {
@@ -257,10 +272,19 @@ export default function DeckHubPage({ deckId }: Props) {
         refreshDraftJobs(),
         refreshMaterials(),
         refreshDeckCover(),
+        refreshComposition(),
       ]);
+    } else {
+      setComposition(null);
     }
     return found;
-  }, [deckId, refreshDeckCover, refreshDraftJobs, refreshMaterials]);
+  }, [
+    deckId,
+    refreshComposition,
+    refreshDeckCover,
+    refreshDraftJobs,
+    refreshMaterials,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -308,6 +332,12 @@ export default function DeckHubPage({ deckId }: Props) {
           } catch {
             if (!cancelled) setAcceptedCount(0);
           }
+        }
+        try {
+          const nextComposition = await getDeckComposition(deckId);
+          if (!cancelled) setComposition(nextComposition);
+        } catch {
+          if (!cancelled) setComposition(null);
         }
       } catch {
         if (!cancelled) setCards([]);
@@ -633,6 +663,17 @@ export default function DeckHubPage({ deckId }: Props) {
                   ? ` · ${draftJobs.length} draft job${draftJobs.length === 1 ? "" : "s"}`
                   : ""
               }`}
+              spark={
+                composition != null && composition.total > 0 ? (
+                  <CompositionSpark
+                    new={composition.new}
+                    learning={composition.learning}
+                    young={composition.young}
+                    mature={composition.mature}
+                    total={composition.total}
+                  />
+                ) : null
+              }
               exportBusy={exportBusy}
               exportDisabled={acceptedCount === 0}
               overflowAnchor={overflowAnchor}

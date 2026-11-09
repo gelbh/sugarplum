@@ -1,6 +1,5 @@
 import type { SubjectKnowledge } from "../study/subjectKnowledge";
 import {
-  aggregateSubjectKnowledge,
   composeSubjectKnowledge,
   type CompositionScheduleInput,
 } from "../study/subjectKnowledge";
@@ -17,6 +16,9 @@ export type SubjectCompositionSummary = {
   learning: number;
   young: number;
   mature: number;
+  avgRetrievability: number | null;
+  etk: number;
+  recallCardCount: number;
 };
 
 function loadStore(storage?: Store) {
@@ -26,47 +28,11 @@ function loadStore(storage?: Store) {
   return store;
 }
 
-export function guestSubjectCompositionSummaries(
-  storage?: Store,
-): SubjectCompositionSummary[] {
-  const store = loadStore(storage);
-  return store.subjects.map((subject) => {
-    const deckIds = new Set(
-      store.decks.filter((d) => d.subject_id === subject.id).map((d) => d.id),
-    );
-    const rows = store.cards
-      .filter((c) => deckIds.has(c.deck_id) && c.status === "accepted")
-      .map((c) => {
-        const sched = store.schedules[c.id];
-        if (!sched) return { state: null, scheduled_days: null };
-        return { state: sched.state, scheduled_days: sched.scheduled_days };
-      });
-    const agg = aggregateSubjectKnowledge(rows);
-    return {
-      subjectId: subject.id,
-      total: agg.total,
-      graduatedPct: agg.graduatedPct,
-      new: agg.new,
-      learning: agg.learning,
-      young: agg.young,
-      mature: agg.mature,
-    };
-  });
-}
-
-export function guestSubjectComposition(
-  subjectId: string,
-  storage?: Store,
-): SubjectKnowledge {
-  const store = loadStore(storage);
-  if (!store.subjects.some((s) => s.id === subjectId)) {
-    throw new Error("Subject not found");
-  }
-  const now = new Date();
-  const nowIsoValue = now.toISOString();
-  const deckIds = new Set(
-    store.decks.filter((d) => d.subject_id === subjectId).map((d) => d.id),
-  );
+function compositionRowsForDeckIds(
+  store: ReturnType<typeof loadStore>,
+  deckIds: Set<string>,
+  nowIsoValue: string,
+): CompositionScheduleInput[] {
   const rows: CompositionScheduleInput[] = [];
   for (const card of store.cards) {
     if (!deckIds.has(card.deck_id) || card.status !== "accepted") continue;
@@ -99,5 +65,76 @@ export function guestSubjectComposition(
       last_review: sched.last_review,
     });
   }
-  return composeSubjectKnowledge(rows, now);
+  return rows;
+}
+
+function summaryFromKnowledge(
+  subjectId: string,
+  knowledge: SubjectKnowledge,
+): SubjectCompositionSummary {
+  return {
+    subjectId,
+    total: knowledge.total,
+    graduatedPct: knowledge.graduatedPct,
+    new: knowledge.new,
+    learning: knowledge.learning,
+    young: knowledge.young,
+    mature: knowledge.mature,
+    avgRetrievability: knowledge.avgRetrievability,
+    etk: knowledge.etk,
+    recallCardCount: knowledge.recallCardCount,
+  };
+}
+
+export function guestSubjectCompositionSummaries(
+  storage?: Store,
+): SubjectCompositionSummary[] {
+  const store = loadStore(storage);
+  const now = new Date();
+  const nowIsoValue = now.toISOString();
+  return store.subjects.map((subject) => {
+    const deckIds = new Set(
+      store.decks.filter((d) => d.subject_id === subject.id).map((d) => d.id),
+    );
+    const knowledge = composeSubjectKnowledge(
+      compositionRowsForDeckIds(store, deckIds, nowIsoValue),
+      now,
+    );
+    return summaryFromKnowledge(subject.id, knowledge);
+  });
+}
+
+export function guestSubjectComposition(
+  subjectId: string,
+  storage?: Store,
+): SubjectKnowledge {
+  const store = loadStore(storage);
+  if (!store.subjects.some((s) => s.id === subjectId)) {
+    throw new Error("Subject not found");
+  }
+  const now = new Date();
+  const nowIsoValue = now.toISOString();
+  const deckIds = new Set(
+    store.decks.filter((d) => d.subject_id === subjectId).map((d) => d.id),
+  );
+  return composeSubjectKnowledge(
+    compositionRowsForDeckIds(store, deckIds, nowIsoValue),
+    now,
+  );
+}
+
+export function guestDeckComposition(
+  deckId: string,
+  storage?: Store,
+): SubjectKnowledge {
+  const store = loadStore(storage);
+  if (!store.decks.some((d) => d.id === deckId)) {
+    throw new Error("Deck not found");
+  }
+  const now = new Date();
+  const nowIsoValue = now.toISOString();
+  return composeSubjectKnowledge(
+    compositionRowsForDeckIds(store, new Set([deckId]), nowIsoValue),
+    now,
+  );
 }

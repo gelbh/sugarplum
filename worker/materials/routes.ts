@@ -26,6 +26,7 @@ import {
   type CardRow,
 } from "../cards/routes";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
+import { composeSubjectKnowledge } from "../../src/study/subjectKnowledge";
 import { MAX_FILE_BYTES, MAX_IMAGE_BYTES, MAX_PASTE_BYTES } from "./limits";
 import { MAX_FIGURES_PER_PDF } from "./docling";
 import {
@@ -383,6 +384,60 @@ deckRoutes.get("/:id/stats", async (c) => {
     archived: archived?.count ?? 0,
     materials: materials?.count ?? 0,
   });
+});
+
+deckRoutes.get("/:id/composition", async (c) => {
+  const userId = await requireUser(c);
+  const deckId = c.req.param("id");
+  const db = getDb(c.env);
+  await requireOwnedDeck(db, deckId, userId);
+
+  const { results } = await db
+    .prepare(
+      `-- sugarplum:deck-composition
+       SELECT s.state AS state,
+              s.scheduled_days AS scheduled_days,
+              s.due AS due,
+              s.stability AS stability,
+              s.difficulty AS difficulty,
+              s.elapsed_days AS elapsed_days,
+              s.learning_steps AS learning_steps,
+              s.reps AS reps,
+              s.lapses AS lapses,
+              s.last_review AS last_review
+       FROM cards c
+       LEFT JOIN card_schedules s ON s.card_id = c.id
+       WHERE c.deck_id = ? AND c.status = 'accepted'`,
+    )
+    .bind(deckId)
+    .all<{
+      state: number | null;
+      scheduled_days: number | null;
+      due: string | null;
+      stability: number | null;
+      difficulty: number | null;
+      elapsed_days: number | null;
+      learning_steps: number | null;
+      reps: number | null;
+      lapses: number | null;
+      last_review: string | null;
+    }>();
+
+  const now = new Date();
+  const rows = (results ?? []).map((row) => ({
+    state: row.state ?? null,
+    scheduled_days: row.scheduled_days ?? null,
+    due: row.due ?? null,
+    stability: row.stability ?? null,
+    difficulty: row.difficulty ?? null,
+    elapsed_days: row.elapsed_days ?? null,
+    learning_steps: row.learning_steps ?? null,
+    reps: row.reps ?? null,
+    lapses: row.lapses ?? null,
+    last_review: row.last_review ?? null,
+  }));
+
+  return c.json(composeSubjectKnowledge(rows, now));
 });
 
 const HubCreateTextCardSchema = z

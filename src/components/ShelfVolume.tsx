@@ -5,6 +5,7 @@ import Checkbox from "@mui/material/Checkbox";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 
@@ -31,6 +32,8 @@ type Props = {
   cover?: ShelfCover | null;
   meta?: string;
   chip?: string | null;
+  recallChip?: string | null;
+  recallTooltip?: string | null;
   spark?: ReactNode;
   studyLabel: string;
   onStudy: () => void;
@@ -54,6 +57,8 @@ export default function ShelfVolume({
   openLabel,
   meta,
   chip,
+  recallChip,
+  recallTooltip,
   spark,
   studyLabel,
   onStudy,
@@ -103,6 +108,17 @@ export default function ShelfVolume({
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.25 }}>
               {chip}
             </Typography>
+          ) : null}
+          {recallChip ? (
+            <Tooltip title={recallTooltip ?? ""} disableHoverListener={!recallTooltip}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mt: 0.25 }}
+              >
+                {recallChip}
+              </Typography>
+            </Tooltip>
           ) : null}
           {spark ?? null}
         </Box>
