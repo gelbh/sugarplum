@@ -15,6 +15,20 @@ export type { FsrsOptimizeStatus, RescheduleSummary };
 
 const MS_PER_DAY = 86_400_000;
 
+export class InvalidFsrsWeightsError extends Error {
+  constructor(message = "Invalid FSRS weights") {
+    super(message);
+    this.name = "InvalidFsrsWeightsError";
+  }
+}
+
+export class FsrsRescheduleError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "FsrsRescheduleError";
+  }
+}
+
 export async function countUserReviews(
   db: D1Database,
   userId: string,
@@ -113,7 +127,7 @@ export async function saveFsrsWeights(
 ): Promise<{ w: number[]; rescheduled: RescheduleSummary }> {
   const validated = validateFsrsW(w);
   if (!validated) {
-    throw new Error("Invalid FSRS weights");
+    throw new InvalidFsrsWeightsError();
   }
   const nowIso = now.toISOString();
   await ensurePrefsRow(db, userId, nowIso);
@@ -129,12 +143,19 @@ export async function saveFsrsWeights(
     .bind(JSON.stringify(validated), nowIso, nowIso, userId)
     .run();
   const prefs = await loadStudyPrefs(db, userId);
-  const rescheduled = await rescheduleUserSchedules(db, userId, {
-    desiredRetention: prefs.desiredRetention,
-    enableFuzz: false,
-    w: validated,
-  });
-  return { w: validated, rescheduled };
+  try {
+    const rescheduled = await rescheduleUserSchedules(db, userId, {
+      desiredRetention: prefs.desiredRetention,
+      enableFuzz: false,
+      w: validated,
+    });
+    return { w: validated, rescheduled };
+  } catch (err) {
+    if (err instanceof FsrsRescheduleError) throw err;
+    throw new FsrsRescheduleError(
+      "Weights saved; schedule reschedule failed",
+    );
+  }
 }
 
 export async function resetFsrsWeights(
@@ -156,11 +177,18 @@ export async function resetFsrsWeights(
     .bind(nowIso, nowIso, userId)
     .run();
   const prefs = await loadStudyPrefs(db, userId);
-  const rescheduled = await rescheduleUserSchedules(db, userId, {
-    desiredRetention: prefs.desiredRetention,
-    enableFuzz: false,
-  });
-  return { rescheduled };
+  try {
+    const rescheduled = await rescheduleUserSchedules(db, userId, {
+      desiredRetention: prefs.desiredRetention,
+      enableFuzz: false,
+    });
+    return { rescheduled };
+  } catch (err) {
+    if (err instanceof FsrsRescheduleError) throw err;
+    throw new FsrsRescheduleError(
+      "Weights reset; schedule reschedule failed",
+    );
+  }
 }
 
 export async function exportRevlogCsv(

@@ -20,7 +20,9 @@ import type { StudyPrefs } from "../study/queue";
 import {
   countUserReviews,
   exportRevlogCsv,
+  FsrsRescheduleError,
   getFsrsOptimizeStatus,
+  InvalidFsrsWeightsError,
   isOptimizeDue,
   resetFsrsWeights,
   saveFsrsWeights,
@@ -230,15 +232,28 @@ settingsRoutes.put("/study/fsrs-weights", async (c) => {
       wLength: w.length,
       rescheduled,
     });
-  } catch {
-    throw new HTTPException(400, { message: "Invalid FSRS weights" });
+  } catch (err) {
+    if (err instanceof InvalidFsrsWeightsError) {
+      throw new HTTPException(400, { message: "Invalid FSRS weights" });
+    }
+    if (err instanceof FsrsRescheduleError) {
+      throw new HTTPException(500, { message: err.message });
+    }
+    throw err;
   }
 });
 
 settingsRoutes.post("/study/fsrs-weights/reset", async (c) => {
   const userId = await requireUser(c);
-  const { rescheduled } = await resetFsrsWeights(getDb(c.env), userId);
-  return c.json({ ok: true as const, rescheduled });
+  try {
+    const { rescheduled } = await resetFsrsWeights(getDb(c.env), userId);
+    return c.json({ ok: true as const, rescheduled });
+  } catch (err) {
+    if (err instanceof FsrsRescheduleError) {
+      throw new HTTPException(500, { message: err.message });
+    }
+    throw err;
+  }
 });
 
 settingsRoutes.post("/study/fsrs-optimize/run", async (c) => {

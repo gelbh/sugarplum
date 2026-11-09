@@ -3880,10 +3880,20 @@ export function createTestEnv(opts?: {
           !normalized.includes("stability") &&
           normalized.includes("WHERE card_id =")
         ) {
-          const [due, card_id] = bound as [string, string];
+          const hasExists = normalized.includes("EXISTS");
+          const due = bound[0] as string;
+          const card_id = bound[1] as string;
+          const ownerId = hasExists ? (bound[2] as string) : undefined;
           const existing = schedules.get(card_id);
           if (!existing) {
             return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          if (hasExists && ownerId) {
+            const card = cards.get(card_id);
+            const deck = card ? decks.get(card.deck_id) : undefined;
+            if (!deck || deck.user_id !== ownerId) {
+              return { success: true, meta: { changes: 0 } } as D1Result;
+            }
           }
           schedules.set(card_id, { ...existing, due });
           return { success: true, meta: { changes: 1 } } as D1Result;
@@ -3891,34 +3901,29 @@ export function createTestEnv(opts?: {
           normalized.startsWith("UPDATE card_schedules SET") &&
           normalized.includes("WHERE card_id =")
         ) {
-          const [
-            due,
-            stability,
-            difficulty,
-            elapsed_days,
-            scheduled_days,
-            learning_steps,
-            reps,
-            lapses,
-            state,
-            last_review,
-            card_id,
-          ] = bound as [
-            string,
-            number,
-            number,
-            number,
-            number,
-            number,
-            number,
-            number,
-            number,
-            string | null,
-            string,
-          ];
+          const hasExists = normalized.includes("EXISTS");
+          const due = bound[0] as string;
+          const stability = bound[1] as number;
+          const difficulty = bound[2] as number;
+          const elapsed_days = bound[3] as number;
+          const scheduled_days = bound[4] as number;
+          const learning_steps = bound[5] as number;
+          const reps = bound[6] as number;
+          const lapses = bound[7] as number;
+          const state = bound[8] as number;
+          const last_review = bound[9] as string | null;
+          const card_id = bound[10] as string;
+          const ownerId = hasExists ? (bound[11] as string) : undefined;
           const existing = schedules.get(card_id);
           if (!existing) {
             return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          if (hasExists && ownerId) {
+            const card = cards.get(card_id);
+            const deck = card ? decks.get(card.deck_id) : undefined;
+            if (!deck || deck.user_id !== ownerId) {
+              return { success: true, meta: { changes: 0 } } as D1Result;
+            }
           }
           schedules.set(card_id, {
             card_id,
