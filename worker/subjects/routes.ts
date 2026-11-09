@@ -3,7 +3,12 @@ import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
+import {
+  cardFromScheduleRow,
+  retrievability,
+} from "../../src/study/retrievability";
 import { aggregateSubjectKnowledge } from "../../src/study/subjectKnowledge";
+import { aggregateSubjectRecall } from "../../src/study/subjectRecall";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -100,6 +105,67 @@ subjectRoutes.post("/", async (c) => {
   );
 });
 
+subjectRoutes.get("/composition-summaries", async (c) => {
+  const userId = await requireUser(c);
+  const db = getDb(c.env);
+
+  const [subjectQuery, scheduleQuery] = await Promise.all([
+    db
+      .prepare(
+        `-- sugarplum:subject-composition-summaries-subjects
+         SELECT id FROM subjects WHERE user_id = ? ORDER BY created_at ASC`,
+      )
+      .bind(userId)
+      .all<{ id: string }>(),
+    db
+      .prepare(
+        `-- sugarplum:subject-composition-summaries-rows
+         SELECT d.subject_id AS subject_id,
+                s.state AS state,
+                s.scheduled_days AS scheduled_days
+         FROM cards c
+         INNER JOIN decks d ON d.id = c.deck_id
+         LEFT JOIN card_schedules s ON s.card_id = c.id
+         WHERE d.user_id = ? AND c.status = 'accepted' AND d.subject_id IS NOT NULL`,
+      )
+      .bind(userId)
+      .all<{
+        subject_id: string;
+        state: number | null;
+        scheduled_days: number | null;
+      }>(),
+  ]);
+  const subjectRows = subjectQuery.results;
+  const scheduleRows = scheduleQuery.results;
+
+  const bySubject = new Map<
+    string,
+    Array<{ state: number | null; scheduled_days: number | null }>
+  >();
+  for (const row of subjectRows ?? []) {
+    bySubject.set(row.id, []);
+  }
+  for (const row of scheduleRows ?? []) {
+    const bucket = bySubject.get(row.subject_id);
+    if (!bucket) continue;
+    bucket.push({
+      state: row.state ?? null,
+      scheduled_days: row.scheduled_days ?? null,
+    });
+  }
+
+  return c.json(
+    [...bySubject.entries()].map(([subjectId, rows]) => {
+      const agg = aggregateSubjectKnowledge(rows);
+      return {
+        subjectId,
+        total: agg.total,
+        graduatedPct: agg.graduatedPct,
+      };
+    }),
+  );
+});
+
 subjectRoutes.patch("/:id", async (c) => {
   const userId = await requireUser(c);
   const subjectId = c.req.param("id");
@@ -141,23 +207,88 @@ subjectRoutes.get("/:id/composition", async (c) => {
   const { results } = await db
     .prepare(
       `-- sugarplum:subject-composition
-       SELECT s.state AS state, s.scheduled_days AS scheduled_days
+       SELECT s.state AS state,
+              s.scheduled_days AS scheduled_days,
+              s.due AS due,
+              s.stability AS stability,
+              s.difficulty AS difficulty,
+              s.elapsed_days AS elapsed_days,
+              s.learning_steps AS learning_steps,
+              s.reps AS reps,
+              s.lapses AS lapses,
+              s.last_review AS last_review
        FROM cards c
        INNER JOIN decks d ON d.id = c.deck_id
        LEFT JOIN card_schedules s ON s.card_id = c.id
        WHERE d.subject_id = ? AND d.user_id = ? AND c.status = 'accepted'`,
     )
     .bind(subjectId, userId)
-    .all<{ state: number | null; scheduled_days: number | null }>();
+    .all<{
+      state: number | null;
+      scheduled_days: number | null;
+      due: string | null;
+      stability: number | null;
+      difficulty: number | null;
+      elapsed_days: number | null;
+      learning_steps: number | null;
+      reps: number | null;
+      lapses: number | null;
+      last_review: string | null;
+    }>();
 
-  return c.json(
-    aggregateSubjectKnowledge(
-      (results ?? []).map((row) => ({
-        state: row.state ?? null,
-        scheduled_days: row.scheduled_days ?? null,
-      })),
-    ),
-  );
+  const now = new Date();
+  const bucketRows: Array<{
+    state: number | null;
+    scheduled_days: number | null;
+  }> = [];
+  const rValues: Array<number | null> = [];
+
+  for (const row of results ?? []) {
+    bucketRows.push({
+      state: row.state ?? null,
+      scheduled_days: row.scheduled_days ?? null,
+    });
+    if (
+      row.due == null ||
+      row.stability == null ||
+      row.difficulty == null ||
+      row.elapsed_days == null ||
+      row.scheduled_days == null ||
+      row.learning_steps == null ||
+      row.reps == null ||
+      row.lapses == null ||
+      row.state == null
+    ) {
+      rValues.push(null);
+      continue;
+    }
+    try {
+      rValues.push(
+        retrievability(
+          cardFromScheduleRow({
+            due: row.due,
+            stability: row.stability,
+            difficulty: row.difficulty,
+            elapsed_days: row.elapsed_days,
+            scheduled_days: row.scheduled_days,
+            learning_steps: row.learning_steps,
+            reps: row.reps,
+            lapses: row.lapses,
+            state: row.state,
+            last_review: row.last_review,
+          }),
+          now,
+        ),
+      );
+    } catch {
+      rValues.push(null);
+    }
+  }
+
+  return c.json({
+    ...aggregateSubjectKnowledge(bucketRows),
+    ...aggregateSubjectRecall(rValues),
+  });
 });
 
 subjectRoutes.delete("/:id", async (c) => {

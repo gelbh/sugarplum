@@ -20,6 +20,11 @@ const SEGMENTS: {
   { key: "new", color: "grey.400" },
 ];
 
+function formatEtkCards(etk: number): string {
+  const rounded = Math.round(etk * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}
+
 export default function SubjectKnowledgeBar({ knowledge }: Props) {
   if (knowledge.total === 0) {
     return (
@@ -66,6 +71,13 @@ export default function SubjectKnowledgeBar({ knowledge }: Props) {
         {knowledge.graduated} / {knowledge.total} graduated (
         {knowledge.graduatedPct}%)
       </Typography>
+      {knowledge.avgRetrievability != null ? (
+        <Typography variant="caption" color="text.secondary">
+          Estimated recall now:{" "}
+          {Math.round(100 * knowledge.avgRetrievability)}% · ~
+          {formatEtkCards(knowledge.etk)} cards
+        </Typography>
+      ) : null}
     </Stack>
   );
 }
