@@ -369,6 +369,24 @@ describe("built-in parasite dataset", () => {
     },
   );
 
+  it("authors every manifest file", () => {
+    const authored = new Set(files.map((f) => f.file));
+    expect(
+      [...new Set(manifest.taxa.map((t) => t.file))].filter(
+        (f) => !authored.has(f),
+      ),
+    ).toEqual([]);
+  });
+
+  it("records every known slide misspelling on its entry", async () => {
+    const { KNOWN_MISSPELLINGS } = await import("../../../worker/atlas/names");
+    const all = new Set(
+      dataset.entries.flatMap((e) => e.misspellings.map((m) => m.split(" ")[0])),
+    );
+    for (const genus of KNOWN_MISSPELLINGS)
+      expect(all.has(genus), genus).toBe(true);
+  });
+
   it("places each family in one order and phylum", () => {
     const seen = new Map<string, string>();
     for (const { fields: f } of dataset.entries) {
