@@ -36,11 +36,14 @@ import {
   patchDeck,
   patchSubject,
   setCover,
+  subjectKnowledge,
   type Deck,
   type DeckStats,
   type StoredCoverRow,
   type Subject,
+  type SubjectKnowledge,
 } from "../api/client";
+import SubjectKnowledgeBar from "../components/SubjectKnowledgeBar";
 import {
   formatExportWarnings,
   ANKI_EXPORT_BUSY_LABEL,
@@ -95,6 +98,7 @@ export default function SubjectPage({ subjectId }: Props) {
   const [coverPicker, setCoverPicker] = useState<CoverTarget | null>(null);
   const [hasAtlas, setHasAtlas] = useState(false);
   const [atlasBusy, setAtlasBusy] = useState(false);
+  const [knowledge, setKnowledge] = useState<SubjectKnowledge | null>(null);
   const guest = isGuest();
   const atlasAction = subjectAtlasAction(guest, hasAtlas);
   const { end: endLoad } = useTrackedOp("Loading subject…", {
@@ -105,19 +109,22 @@ export default function SubjectPage({ subjectId }: Props) {
   );
 
   const load = useCallback(async () => {
-    const [subjects, deckList, coverList, atlas] = await Promise.all([
-      listSubjects(),
-      listDecks(subjectId),
-      guest
-        ? Promise.resolve([] as StoredCoverRow[])
-        : listCovers().catch(() => [] as StoredCoverRow[]),
-      guest ? Promise.resolve(null) : getAtlas(subjectId),
-    ]);
+    const [subjects, deckList, coverList, atlas, knowledgeResult] =
+      await Promise.all([
+        listSubjects(),
+        listDecks(subjectId),
+        guest
+          ? Promise.resolve([] as StoredCoverRow[])
+          : listCovers().catch(() => [] as StoredCoverRow[]),
+        guest ? Promise.resolve(null) : getAtlas(subjectId),
+        subjectKnowledge(subjectId).catch(() => null),
+      ]);
     const found = subjects.find((s) => s.id === subjectId) ?? null;
     setSubject(found);
     setDecks(deckList);
     setCovers(coverList);
     setHasAtlas(atlas !== null);
+    setKnowledge(knowledgeResult);
     return found;
   }, [guest, subjectId]);
 
@@ -467,6 +474,7 @@ export default function SubjectPage({ subjectId }: Props) {
                 </Button>
               )}
             </Stack>
+            {knowledge ? <SubjectKnowledgeBar knowledge={knowledge} /> : null}
           </Box>
 
           {error ? <Alert severity="error">{error}</Alert> : null}
