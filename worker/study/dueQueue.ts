@@ -60,13 +60,17 @@ export async function loadDueCandidates(
 
   sql += " ORDER BY s.due ASC";
 
-  const { results } = await db.prepare(sql).bind(...binds).all<DueSqlRow>();
+  const { results } = await db
+    .prepare(sql)
+    .bind(...binds)
+    .all<DueSqlRow>();
   return results ?? [];
 }
 
 export function rowsToCandidates(rows: DueSqlRow[]): QueueCandidate[] {
   return rows.map((row) => ({
     id: row.id,
+    deck_id: row.deck_id,
     due: row.due,
     state: row.state,
     reps: row.reps,
@@ -93,9 +97,10 @@ export async function buildDueQueueForUser(
   const nowIso = now.toISOString();
   const rows = await loadDueCandidates(db, userId, nowIso, scope);
   const prefs = await loadStudyPrefs(db, userId);
-  const day = introDay && /^\d{4}-\d{2}-\d{2}$/.test(introDay)
-    ? introDay
-    : serverUtcDay(now);
+  const day =
+    introDay && /^\d{4}-\d{2}-\d{2}$/.test(introDay)
+      ? introDay
+      : serverUtcDay(now);
   const introAlreadyUsedToday = await loadIntrosUsedToday(db, userId, day);
   // Mutations / overdue: always server UTC day start (not client-forgable).
   const overdueDayStartIso = serverUtcDayStartIso(now);

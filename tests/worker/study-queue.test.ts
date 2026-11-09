@@ -24,6 +24,7 @@ function candidate(
   overrides: Partial<QueueCandidate> & Pick<QueueCandidate, "id">,
 ): QueueCandidate {
   return {
+    deck_id: "deck-default",
     due: "2026-10-28T12:00:00.000Z",
     state: State.New,
     reps: 0,
@@ -39,18 +40,31 @@ function candidate(
   };
 }
 
-function newCard(id: string, due = "2026-10-28T12:00:00.000Z"): QueueCandidate {
-  return candidate({ id, due, state: State.New, reps: 0, last_review: null });
+function newCard(
+  id: string,
+  due = "2026-10-28T12:00:00.000Z",
+  deckId = "deck-default",
+): QueueCandidate {
+  return candidate({
+    id,
+    due,
+    deck_id: deckId,
+    state: State.New,
+    reps: 0,
+    last_review: null,
+  });
 }
 
 /** High-stability review: R stays well above floor for +1..3d. */
 function highRReview(
   id: string,
   due = "2026-10-28T12:00:00.000Z",
+  deckId = "deck-default",
 ): QueueCandidate {
   return candidate({
     id,
     due,
+    deck_id: deckId,
     state: State.Review,
     reps: 5,
     last_review: "2026-10-27T12:00:00.000Z",
@@ -191,12 +205,7 @@ describe("buildStudyQueue review deferral", () => {
 
   it("includes all reviews when under budget (no deferrals)", () => {
     const reviews = Array.from({ length: 3 }, (_, i) => highRReview(`r-${i}`));
-    const result = buildStudyQueue(
-      reviews,
-      DEFAULT_PREFS,
-      NOW,
-      DEFAULT_OPTS,
-    );
+    const result = buildStudyQueue(reviews, DEFAULT_PREFS, NOW, DEFAULT_OPTS);
     expect(result.meta.reviewUsed).toBe(3);
     expect(result.meta.deferredCount).toBe(0);
     expect(result.dueIds).toEqual(["r-0", "r-1", "r-2"]);
@@ -231,5 +240,85 @@ describe("buildStudyQueue review deferral", () => {
       "again-once",
       "quiet",
     ]);
+  });
+});
+
+describe("buildStudyQueue deck interleaving", () => {
+  it("round-robins ordinary reviews by deck while preserving within-deck due order", () => {
+    const reviews = [
+      highRReview("a1", "2026-10-28T10:00:00.000Z", "deck-a"),
+      highRReview("a2", "2026-10-28T11:00:00.000Z", "deck-a"),
+      highRReview("b1", "2026-10-28T10:30:00.000Z", "deck-b"),
+    ];
+    const result = buildStudyQueue(reviews, DEFAULT_PREFS, NOW, DEFAULT_OPTS);
+    expect(result.dueIds).toEqual(["a1", "b1", "a2"]);
+    expect(result.meta.reviewUsed).toBe(3);
+    expect(result.meta.deferredCount).toBe(0);
+    expect(result.meta.introUsed).toBe(0);
+  });
+
+  it("round-robins intro cards by deck", () => {
+    const intros = [
+      newCard("a1", "2026-10-28T10:00:00.000Z", "deck-a"),
+      newCard("a2", "2026-10-28T11:00:00.000Z", "deck-a"),
+      newCard("b1", "2026-10-28T10:30:00.000Z", "deck-b"),
+    ];
+    const result = buildStudyQueue(intros, DEFAULT_PREFS, NOW, DEFAULT_OPTS);
+    expect(result.dueIds).toEqual(["a1", "b1", "a2"]);
+    expect(result.meta.introUsed).toBe(3);
+  });
+
+  it("drains the remaining deck after the other is exhausted", () => {
+    const reviews = [
+      highRReview("a1", "2026-10-28T10:00:00.000Z", "deck-a"),
+      highRReview("a2", "2026-10-28T11:00:00.000Z", "deck-a"),
+      highRReview("a3", "2026-10-28T12:00:00.000Z", "deck-a"),
+      highRReview("b1", "2026-10-28T10:30:00.000Z", "deck-b"),
+    ];
+    const result = buildStudyQueue(reviews, DEFAULT_PREFS, NOW, DEFAULT_OPTS);
+    expect(result.dueIds).toEqual(["a1", "b1", "a2", "a3"]);
+  });
+
+  it("keeps single-deck due/id order unchanged", () => {
+    const reviews = [
+      highRReview("r2", "2026-10-28T11:00:00.000Z"),
+      highRReview("r1", "2026-10-28T10:00:00.000Z"),
+      highRReview("r3", "2026-10-28T12:00:00.000Z"),
+    ];
+    const result = buildStudyQueue(reviews, DEFAULT_PREFS, NOW, DEFAULT_OPTS);
+    expect(result.dueIds).toEqual(["r1", "r2", "r3"]);
+  });
+
+  it("keeps forced learning ahead of interleaved regular reviews and intros", () => {
+    const learning = candidate({
+      id: "learn-1",
+      deck_id: "deck-b",
+      due: "2026-10-28T12:00:00.000Z",
+      state: State.Learning,
+      reps: 1,
+      last_review: "2026-10-28T11:00:00.000Z",
+      stability: 1,
+      difficulty: 5,
+      elapsed_days: 0,
+      scheduled_days: 0,
+      learning_steps: 1,
+    });
+    const reviews = [
+      highRReview("a1", "2026-10-28T10:00:00.000Z", "deck-a"),
+      highRReview("b1", "2026-10-28T10:30:00.000Z", "deck-b"),
+    ];
+    const intros = [
+      newCard("n-a", "2026-10-28T09:00:00.000Z", "deck-a"),
+      newCard("n-b", "2026-10-28T09:30:00.000Z", "deck-b"),
+    ];
+    const result = buildStudyQueue(
+      [learning, ...reviews, ...intros],
+      DEFAULT_PREFS,
+      NOW,
+      DEFAULT_OPTS,
+    );
+    expect(result.dueIds).toEqual(["learn-1", "a1", "b1", "n-a", "n-b"]);
+    expect(result.meta.reviewUsed).toBe(3);
+    expect(result.meta.introUsed).toBe(2);
   });
 });
