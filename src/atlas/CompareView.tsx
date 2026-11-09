@@ -98,28 +98,31 @@ function SidePicker({
       onChange={(_, next) => {
         if (next) onChange(next.id);
       }}
-      renderOption={({ key, ...props }, e) => (
-        <li key={key} {...props}>
-          <Box>
-            <Box component="span" sx={{ fontWeight: 600 }}>
-              {entryTitles(e).primary}
-            </Box>
-            {entryTitles(e).primary !== entryTitles(e).scientific ? (
-              <Box
-                component="span"
-                sx={{
-                  color: "text.secondary",
-                  ml: 1,
-                  fontSize: "0.85em",
-                  fontStyle: "italic",
-                }}
-              >
-                {entryTitles(e).scientific}
+      renderOption={({ key, ...props }, e) => {
+        const titles = entryTitles(e);
+        return (
+          <li key={key} {...props}>
+            <Box>
+              <Box component="span" sx={{ fontWeight: 600 }}>
+                {titles.primary}
               </Box>
-            ) : null}
-          </Box>
-        </li>
-      )}
+              {titles.primary !== titles.scientific ? (
+                <Box
+                  component="span"
+                  sx={{
+                    color: "text.secondary",
+                    ml: 1,
+                    fontSize: "0.85em",
+                    fontStyle: "italic",
+                  }}
+                >
+                  {titles.scientific}
+                </Box>
+              ) : null}
+            </Box>
+          </li>
+        );
+      }}
       renderInput={(params) => (
         <TextField
           {...params}
@@ -154,6 +157,7 @@ function Hero({
       </Paper>
     );
   }
+  const titles = entryTitles(entry);
   return (
     <Paper variant="outlined" sx={{ overflow: "hidden" }}>
       <AtlasImage
@@ -169,15 +173,15 @@ function Hero({
             lineHeight: 1.25,
           }}
         >
-          {entryTitles(entry).primary}
+          {titles.primary}
         </Typography>
-        {entryTitles(entry).primary !== entryTitles(entry).scientific ? (
+        {titles.primary !== titles.scientific ? (
           <Typography
             variant="body2"
             color="text.secondary"
             sx={{ fontStyle: "italic" }}
           >
-            {entryTitles(entry).scientific}
+            {titles.scientific}
           </Typography>
         ) : null}
         <Link
@@ -302,8 +306,12 @@ export default function CompareView({
         >
           <Box role="row" sx={srOnly}>
             <span role="columnheader">Field</span>
-            <span role="columnheader">{entryTitles(left).primary}</span>
-            <span role="columnheader">{entryTitles(right).primary}</span>
+            <span role="columnheader">
+              {entryTitles(left).primary}
+            </span>
+            <span role="columnheader">
+              {entryTitles(right).primary}
+            </span>
           </Box>
           {rows.map((row, i) => (
             <Box

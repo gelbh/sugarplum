@@ -126,6 +126,7 @@ function RailItem({
   href: string;
   onClick: (ev: MouseEvent<HTMLAnchorElement>) => void;
 }) {
+  const titles = entryTitles(entry);
   return (
     <ButtonBase
       component="a"
@@ -167,15 +168,15 @@ function RailItem({
             lineHeight: 1.25,
           }}
         >
-          {entryTitles(entry).primary}
+          {titles.primary}
         </Typography>
-        {entryTitles(entry).primary !== entryTitles(entry).scientific ? (
+        {titles.primary !== titles.scientific ? (
           <Typography
             noWrap
             color="text.secondary"
             sx={{ fontSize: "0.76rem", lineHeight: 1.3, fontStyle: "italic" }}
           >
-            {entryTitles(entry).scientific}
+            {titles.scientific}
           </Typography>
         ) : null}
       </Box>

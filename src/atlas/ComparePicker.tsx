@@ -123,30 +123,30 @@ export default function ComparePicker({
                   >
                     {GROUP_LABELS[row.group].plural}
                   </ListSubheader>
-                  {row.entries.map((e) => (
-                    <ListItemButton
-                      key={e.id}
-                      onClick={() => choose(e.id)}
-                      sx={{ px: 3, display: "block" }}
-                    >
-                      <Typography
-                        component="span"
-                        sx={{ fontWeight: 600 }}
+                  {row.entries.map((e) => {
+                    const titles = entryTitles(e);
+                    return (
+                      <ListItemButton
+                        key={e.id}
+                        onClick={() => choose(e.id)}
+                        sx={{ px: 3, display: "block" }}
                       >
-                        {entryTitles(e).primary}
-                      </Typography>
-                      {entryTitles(e).primary !== entryTitles(e).scientific ? (
-                        <Typography
-                          component="span"
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ ml: 1, fontStyle: "italic" }}
-                        >
-                          {entryTitles(e).scientific}
+                        <Typography component="span" sx={{ fontWeight: 600 }}>
+                          {titles.primary}
                         </Typography>
-                      ) : null}
-                    </ListItemButton>
-                  ))}
+                        {titles.primary !== titles.scientific ? (
+                          <Typography
+                            component="span"
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ ml: 1, fontStyle: "italic" }}
+                          >
+                            {titles.scientific}
+                          </Typography>
+                        ) : null}
+                      </ListItemButton>
+                    );
+                  })}
                 </Box>
               </li>
             ))}

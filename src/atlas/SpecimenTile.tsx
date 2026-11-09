@@ -115,6 +115,7 @@ export default function SpecimenTile({
   }, [expanded]);
 
   const hero = heroImage(entry);
+  const titles = entryTitles(entry);
   const { fields } = entry;
   const definitive = hostSummary(fields.definitiveHosts, 2);
   const titleId = `atlas-tile-${entry.id}`;
@@ -174,16 +175,16 @@ export default function SpecimenTile({
                 lineHeight: 1.25,
               }}
             >
-              {entryTitles(entry).primary}
+              {titles.primary}
             </Typography>
-            {entryTitles(entry).primary !== entryTitles(entry).scientific ? (
+            {titles.primary !== titles.scientific ? (
               <Typography
                 variant="body2"
                 color="text.secondary"
                 noWrap
                 sx={{ fontSize: "0.75rem", mt: 0.15, fontStyle: "italic" }}
               >
-                {entryTitles(entry).scientific}
+                {titles.scientific}
               </Typography>
             ) : null}
             {definitive ? (
@@ -250,7 +251,7 @@ export default function SpecimenTile({
         <IconButton
           ref={closeRef}
           size="small"
-          aria-label={`Close ${entryTitles(entry).primary}`}
+          aria-label={`Close ${titles.primary}`}
           onClick={onToggle}
           sx={{
             position: "absolute",
@@ -271,16 +272,16 @@ export default function SpecimenTile({
               lineHeight: 1.15,
             }}
           >
-            {entryTitles(entry).primary}
+            {titles.primary}
           </Typography>
           {focusBadge}
           {entry.editedAt ? (
             <Chip label="Edited" size="small" variant="outlined" />
           ) : null}
         </Stack>
-        {entryTitles(entry).primary !== entryTitles(entry).scientific ? (
+        {titles.primary !== titles.scientific ? (
           <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
-            {entryTitles(entry).scientific}
+            {titles.scientific}
           </Typography>
         ) : null}
         <Box
