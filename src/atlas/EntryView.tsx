@@ -49,6 +49,7 @@ type Props = {
   /** Moves to a neighbour without growing history (j/k). */
   onStep: (id: string) => void;
   onEdit?: () => void;
+  onEditLifecycle?: () => void;
   onReset?: () => void;
 };
 
@@ -65,6 +66,7 @@ export default function EntryView({
   onOpen,
   onStep,
   onEdit,
+  onEditLifecycle,
   onReset,
 }: Props) {
   const [tab, setTab] = useState<TabKey>("lifecycle");
@@ -280,7 +282,16 @@ export default function EntryView({
           aria-labelledby={`atlas-tab-${tab}`}
         >
           {tab === "lifecycle" ? (
-            <LifecycleBoard key={entry.id} fields={fields} />
+            <LifecycleBoard
+              key={entry.id}
+              fields={fields}
+              images={entry.images}
+              onCiteLifecycle={() => {
+                setCite({ field: "lifecycleStages" });
+                setTab("references");
+              }}
+              onEditLifecycle={onEditLifecycle}
+            />
           ) : tab === "diagnosis" ? (
             <Diagnosis fields={fields} />
           ) : (

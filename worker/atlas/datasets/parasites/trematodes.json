@@ -39,17 +39,21 @@
             "durationDays": {
               "min": 14,
               "max": 14
-            }
+            },
+            "diagnostic": true,
+            "note": "Usual diagnostic form in faecal sedimentation"
           },
           {
             "name": "miracidium",
             "location": "water",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "transmission": "hatches in water and seeks a snail"
           },
           {
             "name": "sporocyst",
             "location": "snail",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "transmission": "penetrates the snail"
           },
           {
             "name": "redia",
@@ -59,17 +63,22 @@
           {
             "name": "cercaria",
             "location": "leaves the snail",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "transmission": "emerges from the snail into water"
           },
           {
             "name": "metacercaria",
             "location": "aquatic vegetation",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "encysts on aquatic vegetation",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "immature fluke",
             "location": "liver parenchyma",
-            "hostRole": "definitive"
+            "hostRole": "definitive",
+            "transmission": "ingested on vegetation"
           },
           {
             "name": "adult fluke",
