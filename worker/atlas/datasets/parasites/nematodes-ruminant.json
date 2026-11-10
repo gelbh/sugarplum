@@ -276,7 +276,10 @@
           {
             "name": "L3",
             "location": "ensheathed infective larva on herbage",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "ingested on herbage",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "L4",

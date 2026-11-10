@@ -192,7 +192,10 @@
             "name": "cyst",
             "location": "passed in faeces, infective at once and long-lived in cool damp places",
             "hostRole": "environment",
-            "diagnostic": true
+            "diagnostic": true,
+            "infective": true,
+            "transmission": "ingested in contaminated water or food",
+            "note": "Infective stage for the next host"
           },
           {
             "name": "excystation",

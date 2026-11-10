@@ -799,7 +799,10 @@
           {
             "name": "L3",
             "location": "pasture; infective stage reached in about a week",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "ingested on pasture",
+            "note": "Infective stage for the horse"
           },
           {
             "name": "migrating larva",
