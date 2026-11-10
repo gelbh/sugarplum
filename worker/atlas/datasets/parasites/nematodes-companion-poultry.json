@@ -4304,7 +4304,18 @@
           "note": "Anisakid group; human disease timing similar to Anisakis."
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "pseudoterranova-decipiens-hero.webp",
+          "role": "larva",
+          "caption": null,
+          "credit": "CDC / DPDx",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Anasakid_whole.jpg",
+          "isHero": true
+        }
+      ]
     }
   ]
 }
