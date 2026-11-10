@@ -1,3 +1,4 @@
+import { clampEasyDays } from "./loadBalance";
 import { DEFAULT_STUDY_PREFS, type StudyPrefs } from "./policyQueue";
 
 export { DEFAULT_STUDY_PREFS, type StudyPrefs };
@@ -35,6 +36,8 @@ export function clampStudyPrefs(
     rFloor?: unknown;
     desiredRetention?: unknown;
     enableFuzz?: unknown;
+    enableLoadBalance?: unknown;
+    easyDays?: unknown;
   },
   base: StudyPrefs = DEFAULT_STUDY_PREFS,
 ): StudyPrefs {
@@ -56,5 +59,21 @@ export function clampStudyPrefs(
     input.enableFuzz === undefined
       ? base.enableFuzz
       : clampEnableFuzz(input.enableFuzz, base.enableFuzz);
-  return { introBudget, reviewBudget, rFloor, desiredRetention, enableFuzz };
+  const enableLoadBalance =
+    input.enableLoadBalance === undefined
+      ? base.enableLoadBalance
+      : clampEnableFuzz(input.enableLoadBalance, base.enableLoadBalance);
+  const easyDays =
+    input.easyDays === undefined
+      ? [...base.easyDays]
+      : clampEasyDays(input.easyDays, base.easyDays);
+  return {
+    introBudget,
+    reviewBudget,
+    rFloor,
+    desiredRetention,
+    enableFuzz,
+    enableLoadBalance,
+    easyDays,
+  };
 }

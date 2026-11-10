@@ -54,6 +54,8 @@ export function studyPrefsResponse(prefs: StudyPrefsLoaded): StudyPrefs {
     rFloor: prefs.rFloor,
     desiredRetention: prefs.desiredRetention,
     enableFuzz: prefs.enableFuzz,
+    enableLoadBalance: prefs.enableLoadBalance,
+    easyDays: [...prefs.easyDays],
   };
 }
 
