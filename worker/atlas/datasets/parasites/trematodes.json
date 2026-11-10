@@ -263,7 +263,10 @@
           {
             "name": "metacercaria",
             "location": "aquatic vegetation",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "ingested on aquatic vegetation",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "immature fluke",
@@ -425,7 +428,10 @@
           {
             "name": "metacercaria",
             "location": "vegetation",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "ingested on vegetation",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "immature fluke",
@@ -491,6 +497,12 @@
           "field": "order",
           "citation": "NCBI Taxonomy: Fascioloides magna",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/394415/",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Fascioloides magna",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/fascioloides-magna.php",
           "note": null
         }
       ],
@@ -571,7 +583,10 @@
             "name": "metacercaria",
             "location": "ant",
             "hostRole": "intermediate",
-            "host": "Formica"
+            "host": "Formica",
+            "infective": true,
+            "transmission": "ingested with an ant",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "immature fluke",
@@ -656,6 +671,12 @@
           "citation": "WCVM Learn About Parasites: Dicrocoelium dendriticum",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dicrocoelium-dendriticum.php",
           "note": "Course gives sedimentation for all liver and rumen flukes; reference prefers dense-solution flotation, as sedimentation finds few eggs."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Dicrocoeliasis",
+          "url": "https://www.cdc.gov/dpdx/dicrocoeliasis/index.html",
+          "note": null
         }
       ],
       "images": [
@@ -705,7 +726,10 @@
           {
             "name": "metacercaria",
             "location": "pasture",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "ingested on pasture",
+            "note": "Infective stage for the ruminant host"
           },
           {
             "name": "immature fluke",
@@ -763,6 +787,12 @@
           "citation": "MSD Veterinary Manual: Fluke Infections in Ruminants",
           "url": "https://www.msdvetmanual.com/digestive-system/flukes-in-ruminants/fluke-infections-in-ruminants",
           "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "MSD Veterinary Manual: Paramphistomes in Ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/fluke-infections-in-ruminants/paramphistomes-in-ruminants",
+          "note": null
         }
       ],
       "images": []
@@ -806,9 +836,18 @@
             "diagnostic": true
           },
           {
-            "name": "cercaria / metacercaria",
-            "location": "snail then encysted on vegetation",
-            "hostRole": "intermediate"
+            "name": "cercaria",
+            "location": "emerges from the snail into water",
+            "hostRole": "environment",
+            "transmission": "leaves the snail"
+          },
+          {
+            "name": "metacercaria",
+            "location": "encysted on vegetation",
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "ingested on vegetation",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "immature fluke",
@@ -867,32 +906,32 @@
         },
         {
           "field": "zoonotic",
-          "citation": "MSD Veterinary Manual: Fluke Infections in Ruminants",
-          "url": "https://www.msdvetmanual.com/digestive-system/flukes-in-ruminants/fluke-infections-in-ruminants",
+          "citation": "MSD Veterinary Manual: Paramphistomes in Ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/fluke-infections-in-ruminants/paramphistomes-in-ruminants",
           "note": null
         },
         {
           "field": "pppDays",
-          "citation": "MSD Veterinary Manual: Fluke Infections in Ruminants",
-          "url": "https://www.msdvetmanual.com/digestive-system/flukes-in-ruminants/fluke-infections-in-ruminants",
+          "citation": "MSD Veterinary Manual: Paramphistomes in Ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/fluke-infections-in-ruminants/paramphistomes-in-ruminants",
           "note": null
         },
         {
           "field": "diagnosticStage",
-          "citation": "MSD Veterinary Manual: Fluke Infections in Ruminants",
-          "url": "https://www.msdvetmanual.com/digestive-system/flukes-in-ruminants/fluke-infections-in-ruminants",
+          "citation": "MSD Veterinary Manual: Paramphistomes in Ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/fluke-infections-in-ruminants/paramphistomes-in-ruminants",
           "note": null
         },
         {
           "field": "diagnosticTests",
-          "citation": "MSD Veterinary Manual: Fluke Infections in Ruminants",
-          "url": "https://www.msdvetmanual.com/digestive-system/flukes-in-ruminants/fluke-infections-in-ruminants",
+          "citation": "MSD Veterinary Manual: Paramphistomes in Ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/fluke-infections-in-ruminants/paramphistomes-in-ruminants",
           "note": null
         },
         {
           "field": "lifecycleStages",
-          "citation": "MSD Veterinary Manual: Fluke Infections in Ruminants",
-          "url": "https://www.msdvetmanual.com/digestive-system/flukes-in-ruminants/fluke-infections-in-ruminants",
+          "citation": "MSD Veterinary Manual: Paramphistomes in Ruminants",
+          "url": "https://www.msdvetmanual.com/digestive-system/fluke-infections-in-ruminants/paramphistomes-in-ruminants",
           "note": null
         }
       ],
@@ -959,7 +998,10 @@
           {
             "name": "metacercaria",
             "location": "aquatic plants",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "ingested on water plants",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult fluke",
@@ -999,6 +1041,12 @@
           "citation": "NCBI Taxonomy: Fasciolopsis buskii",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/27845/",
           "note": "Course lists Digenea as the order; NCBI ranks Digenea as a subclass and gives the order as Plagiorchiida."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Fasciolopsiasis",
+          "url": "https://www.cdc.gov/dpdx/fasciolopsiasis/index.html",
+          "note": null
         }
       ],
       "images": [
@@ -1080,7 +1128,10 @@
             "name": "metacercaria",
             "location": "freshwater fish flesh",
             "hostRole": "intermediate",
-            "host": "freshwater fish"
+            "host": "freshwater fish",
+            "infective": true,
+            "transmission": "ingested in undercooked freshwater fish",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult fluke",
@@ -1130,6 +1181,12 @@
           "citation": "NCBI Taxonomy: Clonorchis sinensis",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/79923/",
           "note": "Course lists Digenea as the order; NCBI ranks Digenea as a subclass and gives the order as Opisthorchiida."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Clonorchiasis",
+          "url": "https://www.cdc.gov/dpdx/clonorchiasis/index.html",
+          "note": null
         }
       ],
       "images": [
@@ -1210,7 +1267,10 @@
             "name": "metacercaria",
             "location": "fish muscle or under scales",
             "hostRole": "intermediate",
-            "host": "freshwater fish"
+            "host": "freshwater fish",
+            "infective": true,
+            "transmission": "ingested in undercooked freshwater fish",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult fluke",
@@ -1268,6 +1328,12 @@
           "citation": "NCBI Taxonomy: Opisthorchis felineus",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/147828/",
           "note": "Course lists Digenea as the order; NCBI ranks Digenea as a subclass and gives the order as Opisthorchiida."
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Opisthorchiasis",
+          "url": "https://www.cdc.gov/dpdx/opisthorchiasis/index.html",
+          "note": null
         }
       ],
       "images": [
@@ -1338,7 +1404,10 @@
           {
             "name": "cercaria",
             "location": "water, enters through skin",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "penetrates intact skin in water",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "schistosomulum",
@@ -1411,6 +1480,12 @@
         {
           "field": "pppDays",
           "citation": "CDC DPDx: Schistosomiasis",
+          "url": "https://www.cdc.gov/dpdx/schistosomiasis/index.html",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Schistosomiasis Infection",
           "url": "https://www.cdc.gov/dpdx/schistosomiasis/index.html",
           "note": null
         }
