@@ -42,6 +42,7 @@ import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { backAnswer, isOcclusionFront } from "../lib/draftCardModel";
 import { resolveCardGesture } from "../study/cardGestures";
+import { useGradeMailboxFlight } from "../study/useGradeMailboxFlight";
 import { studyQueueProgress } from "../study/studyQueueProgress";
 import {
   faceScrollsFor,
@@ -423,9 +424,12 @@ export default function StudyPage() {
     answerFocusRef.current?.focus();
   }, [revealed, current?.id]);
 
+  const { mailboxHold, flightBusyRef, playGradeMailboxMotion } =
+    useGradeMailboxFlight(cardHostRef);
+
   const onGrade = useCallback(
     async (rating: StudyRating, fromMcq = false): Promise<boolean> => {
-      if (!current || busyRef.current) return false;
+      if (!current || busyRef.current || flightBusyRef.current) return false;
       if (!fromMcq && !revealed) return false;
       busyRef.current = true;
       setError(null);
@@ -440,6 +444,7 @@ export default function StudyPage() {
         setTally((prev) => addGrade(prev, rating));
         pruneDueCacheCard(uid, current.id, scopeOpts);
         refreshPendingCount(uid);
+        playGradeMailboxMotion(rating);
         advanceAfterGrade();
         end();
         return true;
@@ -460,6 +465,7 @@ export default function StudyPage() {
         }
         setTally((prev) => addGrade(prev, rating));
         parkShortTermFollowUp(current, result.due, result.state);
+        playGradeMailboxMotion(rating);
         advanceAfterGrade();
         end();
         return true;
@@ -480,8 +486,10 @@ export default function StudyPage() {
       current,
       end,
       enqueueUnlocks,
+      flightBusyRef,
       offlineCopy,
       parkShortTermFollowUp,
+      playGradeMailboxMotion,
       refreshPendingCount,
       revealed,
       scopeOpts,
@@ -535,7 +543,13 @@ export default function StudyPage() {
         toggleZen();
         return;
       }
-      if (isMcqCard(current) || busyRef.current || !current) return;
+      if (
+        isMcqCard(current) ||
+        busyRef.current ||
+        flightBusyRef.current ||
+        !current
+      )
+        return;
       const action = resolveStudyKey(key, revealed);
       switch (action.type) {
         case "reveal":
@@ -581,6 +595,7 @@ export default function StudyPage() {
     ready,
     reveal,
     revealed,
+    flightBusyRef,
     toggleZen,
   ]);
 
@@ -603,6 +618,7 @@ export default function StudyPage() {
       !start ||
       start.id !== e.pointerId ||
       busyRef.current ||
+      flightBusyRef.current ||
       !current ||
       isMcqCard(current)
     )
@@ -964,9 +980,12 @@ export default function StudyPage() {
                   sx={{ minHeight: { xs: 64, sm: 72 }, flexShrink: 0 }}
                   aria-hidden
                 />
-              ) : revealed ? (
+              ) : revealed || mailboxHold ? (
                 <Box sx={{ pb: { xs: 0.5, sm: 1 }, mt: "auto", flexShrink: 0 }}>
-                  <GradeButtons disabled={busy} onGrade={onGrade} />
+                  <GradeButtons
+                    disabled={busy || mailboxHold}
+                    onGrade={onGrade}
+                  />
                 </Box>
               ) : (
                 <Box
