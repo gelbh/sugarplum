@@ -135,6 +135,8 @@ type UserStudyPrefsRow = {
   r_floor: number;
   desired_retention: number;
   enable_fuzz: number;
+  enable_load_balance?: number;
+  easy_days_json?: string | null;
   fsrs_w_json?: string | null;
   fsrs_last_optimized_at?: string | null;
   fsrs_optimize_pending?: number;
@@ -526,6 +528,10 @@ export function createTestEnv(opts?: {
                 r_floor: row.r_floor,
                 desired_retention: row.desired_retention,
                 enable_fuzz: row.enable_fuzz,
+                enable_load_balance: row.enable_load_balance ?? 1,
+                easy_days_json:
+                  row.easy_days_json ??
+                  '["normal","normal","normal","normal","normal","normal","normal"]',
                 fsrs_w_json: row.fsrs_w_json ?? null,
                 fsrs_last_optimized_at: row.fsrs_last_optimized_at ?? null,
                 fsrs_optimize_pending: row.fsrs_optimize_pending ?? 0,
@@ -1005,6 +1011,10 @@ export function createTestEnv(opts?: {
                 r_floor: row.r_floor,
                 desired_retention: row.desired_retention,
                 enable_fuzz: row.enable_fuzz,
+                enable_load_balance: row.enable_load_balance ?? 1,
+                easy_days_json:
+                  row.easy_days_json ??
+                  '["normal","normal","normal","normal","normal","normal","normal"]',
                 fsrs_w_json: row.fsrs_w_json ?? null,
                 fsrs_last_optimized_at: row.fsrs_last_optimized_at ?? null,
                 fsrs_optimize_pending: row.fsrs_optimize_pending ?? 0,
@@ -1017,11 +1027,17 @@ export function createTestEnv(opts?: {
           normalized.includes("WHERE d.user_id =")
         ) {
           const userId = bound[0] as string;
+          const from = bound[1] as string | undefined;
+          const to = bound[2] as string | undefined;
           const cnt = reviewLogs.filter((rl) => {
             const card = cards.get(rl.card_id);
             if (!card) return false;
             const deck = decks.get(card.deck_id);
-            return deck?.user_id === userId;
+            if (deck?.user_id !== userId) return false;
+            if (from && to) {
+              return rl.reviewed_at >= from && rl.reviewed_at < to;
+            }
+            return true;
           }).length;
           return { cnt } as T;
         }
@@ -1233,6 +1249,24 @@ export function createTestEnv(opts?: {
         if (gamificationAllHit !== null) return gamificationAllHit;
         const atlasAllHit = atlasAll<T>(atlasState, normalized, bound);
         if (atlasAllHit !== null) return atlasAllHit;
+        if (
+          normalized.includes("SELECT s.due AS due") &&
+          normalized.includes("FROM card_schedules s") &&
+          normalized.includes("WHERE d.user_id =") &&
+          normalized.includes("c.status = 'accepted'")
+        ) {
+          const userId = bound[0] as string;
+          const rows = [...schedules.values()]
+            .map((s) => {
+              const card = cards.get(s.card_id);
+              if (!card || card.status !== "accepted") return null;
+              const deck = decks.get(card.deck_id);
+              if (!deck || deck.user_id !== userId) return null;
+              return { due: s.due };
+            })
+            .filter((row): row is { due: string } => row != null);
+          return { results: rows as T[] };
+        }
         if (
           normalized.includes("FROM materials m") &&
           normalized.includes("INNER JOIN decks d ON d.id = m.deck_id") &&
@@ -3652,49 +3686,105 @@ export function createTestEnv(opts?: {
           const had = userSecrets.delete(id);
           return { success: true, meta: { changes: had ? 1 : 0 } } as D1Result;
         } else if (normalized.startsWith("INSERT INTO user_study_prefs")) {
-          const [
-            user_id,
-            intro_budget,
-            review_budget,
-            r_floor,
-            desired_retention,
-            enable_fuzz,
-            updated_at,
-          ] = bound as [
-            string,
-            number,
-            number,
-            number,
-            number,
-            number,
-            string,
-          ];
-          const existing = userStudyPrefs.get(user_id);
+          const existing = userStudyPrefs.get(bound[0] as string);
           if (normalized.includes("DO NOTHING") && existing) {
             /* no-op */
-          } else if (existing && normalized.includes("DO UPDATE SET")) {
-            userStudyPrefs.set(user_id, {
-              ...existing,
-              intro_budget,
-              review_budget,
-              r_floor,
-              desired_retention,
-              enable_fuzz,
-              updated_at,
-            });
-          } else {
-            userStudyPrefs.set(user_id, {
+          } else if (bound.length >= 9) {
+            const [
               user_id,
               intro_budget,
               review_budget,
               r_floor,
               desired_retention,
               enable_fuzz,
-              fsrs_w_json: existing?.fsrs_w_json ?? null,
-              fsrs_last_optimized_at: existing?.fsrs_last_optimized_at ?? null,
-              fsrs_optimize_pending: existing?.fsrs_optimize_pending ?? 0,
+              enable_load_balance,
+              easy_days_json,
               updated_at,
-            });
+            ] = bound as [
+              string,
+              number,
+              number,
+              number,
+              number,
+              number,
+              number,
+              string,
+              string,
+            ];
+            if (existing && normalized.includes("DO UPDATE SET")) {
+              userStudyPrefs.set(user_id, {
+                ...existing,
+                intro_budget,
+                review_budget,
+                r_floor,
+                desired_retention,
+                enable_fuzz,
+                enable_load_balance,
+                easy_days_json,
+                updated_at,
+              });
+            } else {
+              userStudyPrefs.set(user_id, {
+                user_id,
+                intro_budget,
+                review_budget,
+                r_floor,
+                desired_retention,
+                enable_fuzz,
+                enable_load_balance,
+                easy_days_json,
+                fsrs_w_json: existing?.fsrs_w_json ?? null,
+                fsrs_last_optimized_at: existing?.fsrs_last_optimized_at ?? null,
+                fsrs_optimize_pending: existing?.fsrs_optimize_pending ?? 0,
+                updated_at,
+              });
+            }
+          } else {
+            const [
+              user_id,
+              intro_budget,
+              review_budget,
+              r_floor,
+              desired_retention,
+              enable_fuzz,
+              updated_at,
+            ] = bound as [
+              string,
+              number,
+              number,
+              number,
+              number,
+              number,
+              string,
+            ];
+            if (existing && normalized.includes("DO UPDATE SET")) {
+              userStudyPrefs.set(user_id, {
+                ...existing,
+                intro_budget,
+                review_budget,
+                r_floor,
+                desired_retention,
+                enable_fuzz,
+                updated_at,
+              });
+            } else {
+              userStudyPrefs.set(user_id, {
+                user_id,
+                intro_budget,
+                review_budget,
+                r_floor,
+                desired_retention,
+                enable_fuzz,
+                enable_load_balance: existing?.enable_load_balance ?? 1,
+                easy_days_json:
+                  existing?.easy_days_json ??
+                  '["normal","normal","normal","normal","normal","normal","normal"]',
+                fsrs_w_json: existing?.fsrs_w_json ?? null,
+                fsrs_last_optimized_at: existing?.fsrs_last_optimized_at ?? null,
+                fsrs_optimize_pending: existing?.fsrs_optimize_pending ?? 0,
+                updated_at,
+              });
+            }
           }
         } else if (
           normalized.startsWith("UPDATE user_study_prefs") &&

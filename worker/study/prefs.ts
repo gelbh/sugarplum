@@ -3,6 +3,7 @@ import {
   DEFAULT_STUDY_PREFS,
   type StudyPrefs,
 } from "../../src/study/policyPrefs";
+import { clampEasyDays, DEFAULT_EASY_DAYS } from "../../src/study/loadBalance";
 import {
   isLegacyFsrs6W,
   parseFsrsWJson,
@@ -23,10 +24,21 @@ type PrefsRow = {
   r_floor: number;
   desired_retention: number;
   enable_fuzz: number;
+  enable_load_balance?: number | null;
+  easy_days_json?: string | null;
   fsrs_w_json?: string | null;
   fsrs_last_optimized_at?: string | null;
   fsrs_optimize_pending?: number | null;
 };
+
+function parseEasyDaysJson(raw: string | null | undefined): unknown {
+  if (raw == null || raw === "") return undefined;
+  try {
+    return JSON.parse(raw) as unknown;
+  } catch {
+    return undefined;
+  }
+}
 
 export function prefsFromRow(row: PrefsRow | null | undefined): StudyPrefsLoaded {
   if (!row) return { ...DEFAULT_STUDY_PREFS };
@@ -36,6 +48,13 @@ export function prefsFromRow(row: PrefsRow | null | undefined): StudyPrefsLoaded
     rFloor: row.r_floor,
     desiredRetention: row.desired_retention,
     enableFuzz: row.enable_fuzz,
+    enableLoadBalance:
+      row.enable_load_balance == null
+        ? DEFAULT_STUDY_PREFS.enableLoadBalance
+        : row.enable_load_balance,
+    easyDays:
+      parseEasyDaysJson(row.easy_days_json) ??
+      clampEasyDays(DEFAULT_EASY_DAYS),
   });
   const w = parseFsrsWJson(row.fsrs_w_json ?? null);
   return {
@@ -66,6 +85,7 @@ export async function loadStudyPrefs(
   const row = await db
     .prepare(
       `SELECT intro_budget, review_budget, r_floor, desired_retention, enable_fuzz,
+              enable_load_balance, easy_days_json,
               fsrs_w_json, fsrs_last_optimized_at, fsrs_optimize_pending
        FROM user_study_prefs WHERE user_id = ?`,
     )
@@ -91,7 +111,7 @@ export async function loadStudyPrefs(
   return prefsFromRow(row);
 }
 
-/** Budget / retention / fuzz only. Never touches FSRS weight / optimize columns. */
+/** Budget / retention / fuzz / load-balance only. Never touches FSRS weight / optimize columns. */
 export async function saveStudyPrefs(
   db: D1Database,
   userId: string,
@@ -102,14 +122,17 @@ export async function saveStudyPrefs(
   await db
     .prepare(
       `INSERT INTO user_study_prefs
-         (user_id, intro_budget, review_budget, r_floor, desired_retention, enable_fuzz, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)
+         (user_id, intro_budget, review_budget, r_floor, desired_retention, enable_fuzz,
+          enable_load_balance, easy_days_json, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(user_id) DO UPDATE SET
          intro_budget = excluded.intro_budget,
          review_budget = excluded.review_budget,
          r_floor = excluded.r_floor,
          desired_retention = excluded.desired_retention,
          enable_fuzz = excluded.enable_fuzz,
+         enable_load_balance = excluded.enable_load_balance,
+         easy_days_json = excluded.easy_days_json,
          updated_at = excluded.updated_at`,
     )
     .bind(
@@ -119,6 +142,8 @@ export async function saveStudyPrefs(
       clamped.rFloor,
       clamped.desiredRetention,
       clamped.enableFuzz ? 1 : 0,
+      clamped.enableLoadBalance ? 1 : 0,
+      JSON.stringify(clamped.easyDays),
       now,
     )
     .run();
