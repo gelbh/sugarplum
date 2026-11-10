@@ -27,6 +27,8 @@ import {
   parseProvenanceJson,
 } from "../../src/study/regenSource";
 import { onReviewGraded } from "../gamification/onStudyEvent";
+import { applyLoadBalance } from "../../src/study/loadBalance";
+import { loadDueHistogram } from "./dueHistogram";
 import { loadStudyPrefs } from "./prefs";
 import {
   prepareFullScheduleUpdate,
@@ -65,6 +67,8 @@ const ReviewBodySchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
+  /** JS getTimezoneOffset-style minutes for easy-day weekday math. */
+  tzOffsetMinutes: z.number().finite().optional(),
 });
 
 export { resolveLocalDayStartIso };
@@ -278,8 +282,10 @@ studyRoutes.post("/review", async (c) => {
     });
   }
 
-  const { cardId, rating, localDay } = parsed.data;
+  const { cardId, rating, localDay, tzOffsetMinutes: tzRaw } = parsed.data;
   const now = new Date();
+  const tzOffsetMinutes =
+    typeof tzRaw === "number" && Number.isFinite(tzRaw) ? tzRaw : 0;
 
   const card = await db
     .prepare(
@@ -323,16 +329,51 @@ studyRoutes.post("/review", async (c) => {
     });
   }
   const prefs = await loadStudyPrefs(db, userId);
+  const useLoadBalance = prefs.enableLoadBalance && prefs.enableFuzz;
 
-  const { card: nextCard, log } = await reviewWithLog(
+  // When load balance is on, schedule the ideal interval (fuzz off) then pick
+  // within the fuzz window so we do not double-fuzz.
+  const { card: gradedCard, log } = await reviewWithLog(
     cardFromScheduleRow({ ...schedule, card_id: cardId }),
     grade,
     now,
-    prefs,
+    {
+      desiredRetention: prefs.desiredRetention,
+      enableFuzz: useLoadBalance ? false : prefs.enableFuzz,
+      w: prefs.w,
+    },
   );
+
+  let nextCard = gradedCard;
+  if (useLoadBalance) {
+    const hist = await loadDueHistogram(
+      db,
+      userId,
+      now,
+      tzOffsetMinutes,
+      localDay,
+    );
+    nextCard = applyLoadBalance(gradedCard, {
+      enableLoadBalance: true,
+      enableFuzz: true,
+      easyDays: prefs.easyDays,
+      now,
+      tzOffsetMinutes,
+      dueCntPerDay: hist.dueCntPerDay,
+      dueToday: hist.dueToday,
+      reviewedToday: hist.reviewedToday,
+    });
+  }
+
   const cols = scheduleColumnsFromCard(nextCard);
   const reviewedAt = toIsoRequired(log.review ?? now);
   const reviewLogId = crypto.randomUUID();
+  const logScheduledDays = cols.scheduled_days;
+  const logForPersist = {
+    ...log,
+    scheduled_days: logScheduledDays,
+    due: nextCard.dueAt,
+  };
 
   await db.batch([
     prepareFullScheduleUpdate(
@@ -363,10 +404,10 @@ studyRoutes.post("/review", async (c) => {
         reviewLogId,
         cardId,
         rating,
-        log.scheduled_days,
+        logScheduledDays,
         log.elapsed_days,
         reviewedAt,
-        JSON.stringify(log),
+        JSON.stringify(logForPersist),
       ),
   ]);
 

@@ -182,6 +182,8 @@ settingsRoutes.put("/study", async (c) => {
     rFloor?: unknown;
     desiredRetention?: unknown;
     enableFuzz?: unknown;
+    enableLoadBalance?: unknown;
+    easyDays?: unknown;
   };
   try {
     body = await c.req.json();
