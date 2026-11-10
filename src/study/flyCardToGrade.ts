@@ -146,7 +146,6 @@ export function flyCardToGrade(
 
   const ghost = buildGhost(from, a, rating);
   document.body.appendChild(ghost);
-  // Strong pulse on depart; light pulse on arrive (intentional two-beat).
   bumpGradeMailbox(to, { rating, intensity: "strong" });
 
   const endX = b.left + b.width / 2 - (a.left + a.width / 2);
@@ -209,7 +208,7 @@ export function bumpGradeMailbox(
         { duration: 160, easing: "ease-out" },
       );
     } catch {
-      /* visual-only */
+      // WAAPI missing: skip visual bump only.
     }
     return;
   }
@@ -233,6 +232,6 @@ export function bumpGradeMailbox(
       },
     );
   } catch {
-    // Visual-only; callers must not abort grading if WAAPI is missing.
+    // WAAPI missing: skip visual bump only.
   }
 }

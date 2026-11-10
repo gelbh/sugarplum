@@ -42,8 +42,7 @@ export function useGradeMailboxFlight(cardHostRef: {
         }
       };
 
-      // Visual-only: sync throw or rejected cleanup must not stick the gate
-      // or abort the caller's grade/advance path.
+      // Flight must not stick the gate or abort grade/advance if WAAPI throws.
       let flight: Promise<void>;
       try {
         flight = flyCardToGrade(from, to, { rating });
