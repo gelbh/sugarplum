@@ -6,17 +6,12 @@ import {
   type QueueCandidate,
   type StudyPrefs,
 } from "../../worker/study/queue";
+import { DEFAULT_STUDY_PREFS } from "../../src/study/policyPrefs";
 
 const NOW = new Date("2026-10-28T15:00:00.000Z");
 const LOCAL_DAY_START = "2026-10-28T00:00:00.000Z";
 
-const DEFAULT_PREFS: StudyPrefs = {
-  introBudget: 20,
-  reviewBudget: 200,
-  rFloor: 0.9,
-  desiredRetention: 0.9,
-  enableFuzz: true,
-};
+const DEFAULT_PREFS: StudyPrefs = { ...DEFAULT_STUDY_PREFS };
 
 const DEFAULT_OPTS: BuildStudyQueueOpts = {
   overdueDayStartIso: LOCAL_DAY_START,

@@ -1032,6 +1032,16 @@ describe("guest store", () => {
       rFloor: 0.9,
       desiredRetention: 0.9,
       enableFuzz: true,
+      enableLoadBalance: true,
+      easyDays: [
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+      ],
     });
     const persisted = JSON.parse(storage.getItem(STORE_KEY)!) as {
       studyPrefs: { introBudget: number };

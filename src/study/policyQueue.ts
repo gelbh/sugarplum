@@ -1,5 +1,11 @@
 import { State } from "ts-fsrs";
+import {
+  DEFAULT_EASY_DAYS,
+  type EasyDay,
+} from "./loadBalance";
 import { cardFromScheduleRow, retrievability } from "./retrievability";
+
+export type { EasyDay };
 
 /** Durable study pacing prefs (DB / settings). Session bonus is not stored here. */
 export type StudyPrefs = {
@@ -8,6 +14,9 @@ export type StudyPrefs = {
   rFloor: number;
   desiredRetention: number;
   enableFuzz: boolean;
+  enableLoadBalance: boolean;
+  /** Mon=0 … Sun=6 */
+  easyDays: EasyDay[];
 };
 
 export type QueueCandidate = {
@@ -57,6 +66,8 @@ export const DEFAULT_STUDY_PREFS: StudyPrefs = {
   rFloor: 0.9,
   desiredRetention: 0.9,
   enableFuzz: true,
+  enableLoadBalance: true,
+  easyDays: [...DEFAULT_EASY_DAYS],
 };
 
 const MS_PER_DAY = 86_400_000;
