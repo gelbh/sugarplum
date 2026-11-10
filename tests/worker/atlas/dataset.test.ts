@@ -645,4 +645,27 @@ describe("built-in parasite dataset", () => {
     );
     expect(diagrams.filter((d) => d.isHero)).toEqual([]);
   });
+
+  it("marks exactly one infective stage on phase-1 enrichment pilots", () => {
+    const pilots = {
+      "fasciola-hepatica": "metacercaria",
+      "haemonchus-contortus": "L3",
+      "giardia-duodenalis": "cyst",
+      "strongylus-vulgaris": "L3",
+    } as const;
+    for (const [key, stageName] of Object.entries(pilots)) {
+      const entry = dataset.entries.find((e) => e.key === key);
+      expect(entry, key).toBeDefined();
+      const infective = (entry?.fields.lifecycleStages ?? []).filter(
+        (s) => s.infective,
+      );
+      expect(infective, key).toHaveLength(1);
+      expect(infective[0]?.name, key).toBe(stageName);
+      expect(infective[0]?.transmission, key).toBeTruthy();
+      expect(
+        entry?.refs.some((r) => r.field === "lifecycleStages"),
+        `${key} lifecycleStages ref`,
+      ).toBe(true);
+    }
+  });
 });
