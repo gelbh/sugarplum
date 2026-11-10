@@ -1,31 +1,13 @@
-import { localDayKey } from "../../src/study/loadBalance";
+import { buildDueHistogramFromDues } from "../../src/study/dueHistogram";
 import { resolveLocalDayStartIso } from "../../src/study/localDay";
+
+export { buildDueHistogramFromDues };
 
 export type DueHistogram = {
   dueCntPerDay: Map<string, number>;
   dueToday: number;
   reviewedToday: number;
 };
-
-/**
- * Bucket owned accepted schedule dues by local calendar day.
- * `dueToday` = count of dues on or before today (backlog + today).
- */
-export function buildDueHistogramFromDues(
-  dues: readonly string[],
-  now: Date,
-  tzOffsetMinutes: number,
-): Omit<DueHistogram, "reviewedToday"> {
-  const todayKey = localDayKey(now, tzOffsetMinutes);
-  const dueCntPerDay = new Map<string, number>();
-  let dueToday = 0;
-  for (const due of dues) {
-    const key = localDayKey(new Date(due), tzOffsetMinutes);
-    dueCntPerDay.set(key, (dueCntPerDay.get(key) ?? 0) + 1);
-    if (key <= todayKey) dueToday++;
-  }
-  return { dueCntPerDay, dueToday };
-}
 
 /** Load due histogram + reviewed-today for the user's owned accepted cards. */
 export async function loadDueHistogram(

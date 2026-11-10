@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDueHistogramFromDues } from "../../worker/study/dueHistogram";
+import { buildDueHistogramFromDues } from "../../src/study/dueHistogram";
 
 describe("buildDueHistogramFromDues", () => {
   it("buckets dues and counts backlog as dueToday", () => {
