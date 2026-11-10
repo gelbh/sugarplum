@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  bumpGradeMailbox,
   flyCardToGrade,
   gradeMailboxEl,
   prefersReducedMotion,
@@ -128,11 +129,44 @@ describe("flyCardToGrade helpers", () => {
     expect(ghost).not.toBeNull();
     expect(ghost?.dataset.gradeRating).toBe("4");
     expect(ghost?.style.background).toContain("--sp-card-face");
+    expect(ghost?.style.backgroundColor).not.toBe("transparent");
     expect(ghost?.style.boxShadow).toContain("--sp-grade-easy-border");
+    expect(ghost?.textContent).toContain("card");
     resolveFlight();
     await flight;
     Element.prototype.animate = origAnimate;
     expect(document.querySelector("[data-grade-flight-ghost]")).toBeNull();
-    expect(bumpAnimate).toHaveBeenCalled();
+    // Depart strong + arrive light while mailbox stays connected.
+    expect(bumpAnimate).toHaveBeenCalledTimes(2);
+  });
+
+  it("strong mailbox bump peaks at 1.1 with grade wash and brightness", () => {
+    stubMotion(false);
+    const to = document.createElement("div");
+    document.body.append(to);
+    const animate = vi.fn(() => ({ finished: Promise.resolve() }));
+    to.animate = animate as unknown as typeof to.animate;
+
+    bumpGradeMailbox(to, { rating: 3, intensity: "strong" });
+
+    expect(animate).toHaveBeenCalledTimes(1);
+    const [frames] = animate.mock.calls[0] as [Keyframe[], KeyframeAnimationOptions];
+    const peak = frames[1];
+    expect(String(peak.transform)).toContain("scale(1.1)");
+    expect(String(peak.boxShadow)).toContain("--sp-grade-good-wash");
+    expect(String(peak.filter)).toContain("brightness(1.2)");
+  });
+
+  it("light mailbox bump peaks softer than strong", () => {
+    stubMotion(false);
+    const to = document.createElement("div");
+    document.body.append(to);
+    const animate = vi.fn(() => ({ finished: Promise.resolve() }));
+    to.animate = animate as unknown as typeof to.animate;
+
+    bumpGradeMailbox(to, { rating: 1, intensity: "light" });
+
+    const [frames] = animate.mock.calls[0] as [Keyframe[], KeyframeAnimationOptions];
+    expect(String(frames[1].transform)).toContain("scale(1.05)");
   });
 });

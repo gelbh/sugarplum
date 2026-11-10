@@ -424,12 +424,12 @@ export default function StudyPage() {
     answerFocusRef.current?.focus();
   }, [revealed, current?.id]);
 
-  const { mailboxHold, playGradeMailboxMotion } =
+  const { mailboxHold, flightBusyRef, playGradeMailboxMotion } =
     useGradeMailboxFlight(cardHostRef);
 
   const onGrade = useCallback(
     async (rating: StudyRating, fromMcq = false): Promise<boolean> => {
-      if (!current || busyRef.current || mailboxHold) return false;
+      if (!current || busyRef.current || flightBusyRef.current) return false;
       if (!fromMcq && !revealed) return false;
       busyRef.current = true;
       setError(null);
@@ -486,7 +486,7 @@ export default function StudyPage() {
       current,
       end,
       enqueueUnlocks,
-      mailboxHold,
+      flightBusyRef,
       offlineCopy,
       parkShortTermFollowUp,
       playGradeMailboxMotion,
@@ -543,7 +543,13 @@ export default function StudyPage() {
         toggleZen();
         return;
       }
-      if (isMcqCard(current) || busyRef.current || !current) return;
+      if (
+        isMcqCard(current) ||
+        busyRef.current ||
+        flightBusyRef.current ||
+        !current
+      )
+        return;
       const action = resolveStudyKey(key, revealed);
       switch (action.type) {
         case "reveal":
@@ -589,6 +595,7 @@ export default function StudyPage() {
     ready,
     reveal,
     revealed,
+    flightBusyRef,
     toggleZen,
   ]);
 
@@ -611,6 +618,7 @@ export default function StudyPage() {
       !start ||
       start.id !== e.pointerId ||
       busyRef.current ||
+      flightBusyRef.current ||
       !current ||
       isMcqCard(current)
     )

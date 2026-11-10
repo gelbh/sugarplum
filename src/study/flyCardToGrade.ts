@@ -199,34 +199,40 @@ export function bumpGradeMailbox(
   const wash = gradeColorVars(opts.rating).wash;
 
   if (prefersReducedMotion()) {
-    to.animate(
-      [
-        { filter: "brightness(1)" },
-        { filter: "brightness(1.25)" },
-        { filter: "brightness(1)" },
-      ],
-      { duration: 160, easing: "ease-out" },
-    );
+    try {
+      to.animate(
+        [
+          { filter: "brightness(1)" },
+          { filter: "brightness(1.25)" },
+          { filter: "brightness(1)" },
+        ],
+        { duration: 160, easing: "ease-out" },
+      );
+    } catch {
+      /* visual-only */
+    }
     return;
   }
 
-  const frames: Keyframe[] = wash
-    ? [
-        { transform: "scale(1)", boxShadow: "none" },
-        {
-          transform: `scale(${peak})`,
-          boxShadow: `inset 0 0 0 999px ${wash}`,
-        },
-        { transform: "scale(1)", boxShadow: "none" },
-      ]
-    : [
-        { transform: "scale(1)" },
-        { transform: `scale(${peak})` },
-        { transform: "scale(1)" },
-      ];
-
-  to.animate(frames, {
-    duration: intensity === "strong" ? BUMP_MS : Math.round(BUMP_MS * 0.75),
-    easing: ARRIVE_EASE,
-  });
+  const brightness = intensity === "strong" ? 1.2 : 1.1;
+  const mid: Keyframe = {
+    transform: `scale(${peak})`,
+    filter: `brightness(${brightness})`,
+  };
+  if (wash) mid.boxShadow = `inset 0 0 0 999px ${wash}`;
+  try {
+    to.animate(
+      [
+        { transform: "scale(1)", boxShadow: "none", filter: "brightness(1)" },
+        mid,
+        { transform: "scale(1)", boxShadow: "none", filter: "brightness(1)" },
+      ],
+      {
+        duration: intensity === "strong" ? BUMP_MS : Math.round(BUMP_MS * 0.75),
+        easing: ARRIVE_EASE,
+      },
+    );
+  } catch {
+    // Visual-only; callers must not abort grading if WAAPI is missing.
+  }
 }

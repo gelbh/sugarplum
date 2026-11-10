@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { StudyRating } from "../api/client";
 import {
   flyCardToGrade,
@@ -13,6 +13,14 @@ export function useGradeMailboxFlight(cardHostRef: {
   const [mailboxHold, setMailboxHold] = useState(false);
   const holdCountRef = useRef(0);
   const flightBusyRef = useRef(false);
+  const mountedRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const playGradeMailboxMotion = useCallback(
     (rating: StudyRating) => {
@@ -25,13 +33,24 @@ export function useGradeMailboxFlight(cardHostRef: {
       holdCountRef.current += 1;
       flightBusyRef.current = true;
       setMailboxHold(true);
-      void flyCardToGrade(from, to, { rating }).finally(() => {
+
+      const release = () => {
         holdCountRef.current = Math.max(0, holdCountRef.current - 1);
-        if (holdCountRef.current === 0) {
+        if (holdCountRef.current === 0 && mountedRef.current) {
           flightBusyRef.current = false;
           setMailboxHold(false);
         }
-      });
+      };
+
+      // Visual-only: sync throw or rejected cleanup must not stick the gate
+      // or abort the caller's grade/advance path.
+      let flight: Promise<void>;
+      try {
+        flight = flyCardToGrade(from, to, { rating });
+      } catch {
+        flight = Promise.resolve();
+      }
+      void flight.catch(() => {}).finally(release);
     },
     [cardHostRef],
   );
