@@ -1,8 +1,8 @@
 # Parasitology Atlas image credits
 
 Open-licensed heroes shipped under `public/atlas/parasites/`.
-Sources limited to CDC DPDx / PHIL (often via Wikimedia Commons) and Wikimedia Commons.
-Rejected: all-rights-reserved, unclear, and NC/ND licences.
+Allowed sources: CDC DPDx / PHIL (public domain, often via Wikimedia Commons); Wikimedia Commons (CC0 / public domain / CC BY / CC BY-SA); US government public domain image libraries when the page states public domain or US Gov work (USDA ARS, CDC PHIL direct, NIH/NLM when marked PD); Figshare and Zenodo deposits whose item licence is explicitly CC0 or CC BY (BY-SA only when the deposit states BY-SA).
+Rejected: all-rights-reserved, unclear, NC/ND, iNaturalist, random publisher sites, PMC scrape without a clear CC0/CC BY deposit, ARR textbook plates.
 
 ## Heroes
 
