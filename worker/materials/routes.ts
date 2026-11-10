@@ -1021,7 +1021,9 @@ deckRoutes.post("/:id/materials/upload-url", async (c) => {
     throw new HTTPException(400, { message: "Valid size required" });
   }
   if (size > MAX_FILE_BYTES) {
-    throw new HTTPException(400, { message: "File must be 25MB or smaller" });
+    throw new HTTPException(400, {
+      message: `File must be ${MAX_FILE_BYTES / (1024 * 1024)}MB or smaller`,
+    });
   }
   if (resolved.kind === "image" && size > MAX_IMAGE_BYTES) {
     throw new HTTPException(400, {

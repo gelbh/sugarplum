@@ -744,6 +744,12 @@ export default function DeckHubPage({ deckId }: Props) {
             figureFiles={material.figureFiles}
             onFigureFilesChange={material.setFigureFiles}
             onUploadFile={material.onUploadFile}
+            pdfSplitOpen={material.pdfSplitOpen}
+            pdfSplitProgress={material.pdfSplitProgress}
+            onPdfSplitConfirm={() => {
+              void material.onPdfSplitConfirm();
+            }}
+            onPdfSplitCancel={material.onPdfSplitCancel}
             topicValue={material.topicValue}
             onTopicValueChange={material.setTopicValue}
             topicBusy={material.topicBusy}

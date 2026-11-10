@@ -4,7 +4,8 @@ import { getDocumentProxy } from "unpdf";
  * Pages read per generation pass.
  * ponytail: sequential getPage, not unpdf extractText (that fans out every page).
  * Raise the window if a lecture still needs a later range in the same job.
- * File upload stays at 25MB so the PDF plus a decoded image fit in the 128MB isolate.
+ * Upload may be 50MB; isolate safety still depends on sequential windows + image
+ * pixel caps, not loading unbounded rasters.
  */
 export const PDF_EXTRACT_MAX_PAGES = 120;
 export const PDF_EXTRACT_MAX_CHARS = 600_000;

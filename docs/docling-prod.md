@@ -43,17 +43,17 @@ Set on the Docling container or VM:
 | `DOCLING_SERVE_API_KEY` | Strong secret; must match Worker `DOCLING_API_KEY` |
 | `DOCLING_SERVE_ENABLE_UI` | `false` (or omit; default is off in prod) |
 | `DOCLING_SERVE_ENABLE_API_DOCS` | `false` |
-| `DOCLING_SERVE_MAX_FILE_SIZE` | `26214400` (25 MiB) |
+| `DOCLING_SERVE_MAX_FILE_SIZE` | `52428800` (50 MiB) |
 | `DOCLING_SERVE_MAX_NUM_PAGES` | `50` |
 
 ### Limits (aligned with Sugarplum Worker)
 
 Worker upload and extract caps (see `worker/materials/limits.ts` and `worker/materials/extract-pdf.ts`):
 
-- **Upload max (PDF):** `MAX_FILE_BYTES = 25 * 1024 * 1024` (25 MiB). Use `26214400` bytes for `DOCLING_SERVE_MAX_FILE_SIZE`.
+- **Upload max (PDF):** `MAX_FILE_BYTES = 50 * 1024 * 1024` (50 MiB). Use `52428800` bytes for `DOCLING_SERVE_MAX_FILE_SIZE`.
 - **Page cap:** `PDF_EXTRACT_MAX_PAGES = 50`. Use `50` for `DOCLING_SERVE_MAX_NUM_PAGES`.
 
-Images use a separate `MAX_IMAGE_BYTES = 8 * 1024 * 1024` for vision paths; Docling here is PDF-focused, so the 25 MiB file cap is the relevant match.
+Images use a separate `MAX_IMAGE_BYTES = 8 * 1024 * 1024` for vision paths; Docling here is PDF-focused, so the 50 MiB file cap is the relevant match.
 
 ## TLS
 

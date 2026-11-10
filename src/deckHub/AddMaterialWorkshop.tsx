@@ -17,6 +17,7 @@ import DraftCardEditor, {
 } from "../components/DraftCardEditor";
 import { FigureSuggestPanel } from "../components/FigureSuggestPanel";
 import MaterialsList from "../components/MaterialsList";
+import PdfSplitConsent from "../components/PdfSplitConsent";
 import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
 import {
   PPTX_MIME,
@@ -62,6 +63,10 @@ type Props = {
   figureFiles: File[];
   onFigureFilesChange: (files: File[]) => void;
   onUploadFile: (e?: FormEvent) => void;
+  pdfSplitOpen: boolean;
+  pdfSplitProgress: string | null;
+  onPdfSplitConfirm: () => void;
+  onPdfSplitCancel: () => void;
   topicValue: string;
   onTopicValueChange: (value: string) => void;
   topicBusy: boolean;
@@ -106,6 +111,10 @@ export default function AddMaterialWorkshop({
   figureFiles,
   onFigureFilesChange,
   onUploadFile,
+  pdfSplitOpen,
+  pdfSplitProgress,
+  onPdfSplitConfirm,
+  onPdfSplitCancel,
   topicValue,
   onTopicValueChange,
   topicBusy,
@@ -274,6 +283,10 @@ export default function AddMaterialWorkshop({
                 </Typography>
               </Stack>
             ) : null}
+            <Typography variant="caption" color="text.secondary">
+              PDF/PPTX max 50MB; images max 8MB. Upload starts generation when
+              complete.
+            </Typography>
             <Button
               type="submit"
               variant="contained"
@@ -288,6 +301,16 @@ export default function AddMaterialWorkshop({
           </Stack>
         </Box>
       ) : null}
+
+      <PdfSplitConsent
+        open={pdfSplitOpen}
+        fileName={uploadFile?.name ?? "PDF"}
+        figuresWillSkip={figureFiles.length > 0}
+        progressLabel={pdfSplitProgress}
+        busy={materialBusy}
+        onConfirm={onPdfSplitConfirm}
+        onCancel={onPdfSplitCancel}
+      />
 
       {activeTab === "paste" ? (
         guest ? (

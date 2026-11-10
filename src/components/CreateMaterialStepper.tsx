@@ -39,12 +39,22 @@ import { guestPasteToCards } from "../guest/pasteToCards";
 import { guestAddAcceptedCards } from "../guest/store";
 import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
 import {
+  MAX_FILE_BYTES,
+  MAX_IMAGE_BYTES,
+  MAX_SPLIT_SOURCE_BYTES,
+  fileSizeCapMb,
+  fileTooLargeMessage,
+  splitSourceTooLargeMessage,
+} from "../lib/materialUploadLimits";
+import { runConsentedPdfSplitUpload } from "../lib/runConsentedPdfSplitUpload";
+import {
   SOURCE_ROLES,
   SOURCE_ROLE_LABELS,
   suggestSourceRole,
   type SourceRole,
 } from "../lib/sourceRole";
 import { FigureSuggestPanel } from "./FigureSuggestPanel";
+import PdfSplitConsent from "./PdfSplitConsent";
 import { stepperSx } from "./stepperSx";
 
 type Props = {
@@ -60,8 +70,6 @@ type Props = {
   localOnly?: boolean;
 };
 
-const MAX_FILE_BYTES = 25 * 1024 * 1024;
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const ALLOWED_UPLOAD_MIMES = new Set([
   "application/pdf",
@@ -70,6 +78,7 @@ const ALLOWED_UPLOAD_MIMES = new Set([
 ]);
 const CREATE_NEW_DECK = "__create_new_deck__";
 const CREATE_NEW_SUBJECT = "__create_new_subject__";
+const FIGURES_SKIPPED_NOTICE = "Figure crops skipped for split uploads";
 
 export default function CreateMaterialStepper({
   decks,
@@ -106,6 +115,8 @@ export default function CreateMaterialStepper({
   const [jobId, setJobId] = useState<string | null>(null);
   const [focusCreateTitle, setFocusCreateTitle] = useState(false);
   const [showNewDeckForm, setShowNewDeckForm] = useState(false);
+  const [pdfSplitOpen, setPdfSplitOpen] = useState(false);
+  const [pdfSplitProgress, setPdfSplitProgress] = useState<string | null>(null);
 
   const titleRef = useRef<HTMLInputElement | null>(null);
 
@@ -325,6 +336,85 @@ export default function CreateMaterialStepper({
     }
   }
 
+  function onPdfSplitCancel() {
+    if (busy) return;
+    setPdfSplitOpen(false);
+    setPdfSplitProgress(null);
+  }
+
+  async function onPdfSplitConfirm() {
+    if (busy) return;
+    if (!selectedDeckId || !uploadFile) return;
+    setError(null);
+    setNotice(null);
+    setBusy(true);
+    setPdfSplitProgress("Splitting PDF…");
+    try {
+      const topicHints = topicHintsFromLines(alsoCover);
+      const pdfOpts = {
+        figureExtractMode,
+        source_role: sourceRole,
+        ...(topicHints ? { topicHints } : {}),
+      };
+      const result = await runConsentedPdfSplitUpload({
+        file: uploadFile,
+        maxBytes: MAX_FILE_BYTES,
+        figureFiles,
+        onProgress: setPdfSplitProgress,
+        uploadPart: (part, figuresForThisPart) =>
+          figuresForThisPart.length > 0
+            ? uploadPdfWithFigureCrops(
+                selectedDeckId,
+                part,
+                figuresForThisPart,
+                undefined,
+                { ...pdfOpts, onScan: () => setReadingScan(true) },
+              )
+            : uploadMaterialFile(selectedDeckId, part, undefined, {
+                ...pdfOpts,
+                onScan: () => setReadingScan(true),
+              }),
+      });
+      if (!result.ok) {
+        setError(result.message);
+        setPdfSplitOpen(false);
+        setPdfSplitProgress(null);
+        return;
+      }
+
+      const { parts, lastJobId, lastStatus, skippedFigures } = result;
+      setUploadFile(null);
+      setFigureFiles([]);
+      setSourceRole("lecture");
+      setAlsoCover("");
+      setPdfSplitOpen(false);
+      setPdfSplitProgress(null);
+      const figureNote = skippedFigures ? ` ${FIGURES_SKIPPED_NOTICE}.` : "";
+      if (lastJobId) {
+        setJobId(lastJobId);
+        setNotice(
+          parts.length > 1
+            ? `Stored ${parts.length} materials (${lastStatus}). Generation started.${figureNote}`
+            : `Stored file (${lastStatus}). Generation started.`,
+        );
+        setActiveStep(2);
+      } else {
+        setNotice(
+          parts.length > 1
+            ? `Stored ${parts.length} materials (${lastStatus}).${figureNote}`
+            : `Stored file (${lastStatus}). Open drafts from a prior generate, or upload a new file.`,
+        );
+      }
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not upload file");
+      setPdfSplitOpen(false);
+      setPdfSplitProgress(null);
+    } finally {
+      setBusy(false);
+      setReadingScan(false);
+    }
+  }
+
   async function onUploadFile(e?: FormEvent) {
     e?.preventDefault();
     setError(null);
@@ -341,10 +431,6 @@ export default function CreateMaterialStepper({
     const contentType = resolveUploadContentType(uploadFile);
     if (!ALLOWED_UPLOAD_MIMES.has(contentType)) {
       setError("Only PDF, PPTX, or image (jpeg/png/webp) files are allowed");
-      return;
-    }
-    if (uploadFile.size > MAX_FILE_BYTES) {
-      setError("File must be 25MB or smaller");
       return;
     }
     if (IMAGE_MIMES.has(contentType) && uploadFile.size > MAX_IMAGE_BYTES) {
@@ -364,6 +450,22 @@ export default function CreateMaterialStepper({
         setError("Figure crops must be 8MB or smaller");
         return;
       }
+    }
+    if (
+      contentType === "application/pdf" &&
+      uploadFile.size > MAX_FILE_BYTES
+    ) {
+      if (uploadFile.size > MAX_SPLIT_SOURCE_BYTES) {
+        setError(splitSourceTooLargeMessage());
+        return;
+      }
+      setPdfSplitProgress(null);
+      setPdfSplitOpen(true);
+      return;
+    }
+    if (uploadFile.size > MAX_FILE_BYTES) {
+      setError(fileTooLargeMessage());
+      return;
     }
     setBusy(true);
     try {
@@ -727,7 +829,7 @@ export default function CreateMaterialStepper({
                     </Stack>
                   ) : null}
                   <Typography variant="caption" color="text.secondary">
-                    PDF/PPTX max 25MB; images max 8MB. Upload starts generation
+                    PDF/PPTX max 50MB; images max 8MB. Upload starts generation
                     when complete.
                   </Typography>
                   {alsoCoverField}
@@ -747,6 +849,19 @@ export default function CreateMaterialStepper({
             )}
           </Box>
         )}
+
+        <PdfSplitConsent
+          open={pdfSplitOpen}
+          fileName={uploadFile?.name ?? "PDF"}
+          maxMb={fileSizeCapMb()}
+          figuresWillSkip={figureFiles.length > 0}
+          progressLabel={pdfSplitProgress}
+          busy={busy}
+          onConfirm={() => {
+            void onPdfSplitConfirm();
+          }}
+          onCancel={onPdfSplitCancel}
+        />
 
         {activeStep === 2 && (
           <Stack spacing={2}>
