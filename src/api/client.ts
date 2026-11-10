@@ -1170,7 +1170,7 @@ export function putFsrsWeights(w: number[]) {
     return Promise.resolve({
       ok: true as const,
       wLength: saved.wLength,
-      rescheduled: { cardsUpdated: 0, cardsSkipped: 0 },
+      rescheduled: saved.rescheduled,
     });
   }
   return api<{ ok: true; wLength: number; rescheduled: FsrsRescheduleSummary }>(
@@ -1184,10 +1184,10 @@ export function putFsrsWeights(w: number[]) {
 
 export function resetFsrsWeights() {
   if (isGuest()) {
-    guestResetFsrsWeights();
+    const reset = guestResetFsrsWeights();
     return Promise.resolve({
       ok: true as const,
-      rescheduled: { cardsUpdated: 0, cardsSkipped: 0 },
+      rescheduled: reset.rescheduled,
     });
   }
   return api<{ ok: true; rescheduled: FsrsRescheduleSummary }>(

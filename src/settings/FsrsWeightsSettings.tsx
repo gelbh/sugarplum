@@ -9,6 +9,7 @@ import {
   getFsrsOptimizeStatus,
   resetFsrsWeights,
   type FsrsOptimizeStatus,
+  type FsrsRescheduleSummary,
 } from "../api/client";
 import { FSRS_MIN_REVIEWS } from "../study/fsrsOptimizeConstants";
 import {
@@ -30,6 +31,13 @@ function formatFsrsStatusLine(
   if (training) phase = "Training…";
   else if (status.pending) phase = "Pending train.";
   return `Reviews: ${status.reviewCount} / ${FSRS_MIN_REVIEWS}. ${weights} Last optimized: ${last}. ${phase}`;
+}
+
+function formatRescheduleNotice(
+  prefix: string,
+  summary: FsrsRescheduleSummary,
+): string {
+  return `${prefix} Rescheduled ${summary.cardsUpdated} card(s); skipped ${summary.cardsSkipped}.`;
 }
 
 /** Settings subsection: personal FSRS-6 weight status, Run now, Reset. */
@@ -75,7 +83,8 @@ export default function FsrsWeightsSettings() {
         at least {FSRS_MIN_REVIEWS} reviews. Auto-retrain waits about a month
         after the last train or reset; Run now works whenever you meet the
         review floor. Training runs in this browser after you open Today or
-        Settings. Existing dues stay until the next grade.
+        Settings. Saving or resetting weights also reschedules existing cards
+        from their review history.
       </Typography>
       {error ? (
         <Alert severity="error" sx={{ mb: 1 }}>
@@ -103,9 +112,11 @@ export default function FsrsWeightsSettings() {
               setNotice(null);
               setBusy(true);
               try {
-                await runFsrsOptimizeTrainNow();
+                const rescheduled = await runFsrsOptimizeTrainNow();
                 await refresh();
-                setNotice("Weights updated.");
+                setNotice(
+                  formatRescheduleNotice("Weights updated.", rescheduled),
+                );
               } catch (err) {
                 setError(
                   err instanceof ApiError
@@ -132,9 +143,14 @@ export default function FsrsWeightsSettings() {
               setNotice(null);
               setBusy(true);
               try {
-                await resetFsrsWeights();
+                const result = await resetFsrsWeights();
                 await refresh();
-                setNotice("Reset to library defaults.");
+                setNotice(
+                  formatRescheduleNotice(
+                    "Reset to library defaults.",
+                    result.rescheduled,
+                  ),
+                );
               } catch (err) {
                 setError(
                   err instanceof ApiError ? err.message : "Reset failed",

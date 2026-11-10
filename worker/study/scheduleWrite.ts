@@ -1,4 +1,6 @@
-import { Rating, type Grade } from "ts-fsrs";
+import { ratingToGrade } from "../../src/study/fsrsReplay";
+
+export { ratingToGrade };
 
 const OWNERSHIP_EXISTS = `AND EXISTS (
                SELECT 1 FROM cards c
@@ -18,21 +20,6 @@ export type ScheduleWriteCols = {
   state: number;
   last_review: string | null;
 };
-
-export function ratingToGrade(rating: number): Grade | null {
-  switch (rating) {
-    case 1:
-      return Rating.Again;
-    case 2:
-      return Rating.Hard;
-    case 3:
-      return Rating.Good;
-    case 4:
-      return Rating.Easy;
-    default:
-      return null;
-  }
-}
 
 /** Owned full-column card_schedules UPDATE (reschedule + grade). */
 export function prepareFullScheduleUpdate(
