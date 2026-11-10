@@ -180,10 +180,6 @@ export function applyLoadBalance(
   }));
 
   const pickedIvl = selectWeightedInterval(pool, hashSeed(card.cardId));
-  if (pickedIvl === Math.round(ideal) && Math.abs(ideal - pickedIvl) < 1e-9) {
-    // Still rewrite scheduledDays to integer when picker confirms ideal.
-  }
-
   const dueAt = new Date(last.getTime() + pickedIvl * MS_PER_DAY);
   return {
     ...card,
