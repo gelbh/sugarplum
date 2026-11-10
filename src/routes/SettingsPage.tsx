@@ -55,6 +55,16 @@ const DEFAULT_STUDY_FORM: StudyPrefs = {
   rFloor: 0.9,
   desiredRetention: 0.9,
   enableFuzz: true,
+  enableLoadBalance: true,
+  easyDays: [
+    "normal",
+    "normal",
+    "normal",
+    "normal",
+    "normal",
+    "normal",
+    "normal",
+  ],
 };
 
 type ThemeMode = "system" | "light" | "dark";

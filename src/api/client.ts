@@ -1120,6 +1120,8 @@ export type StudyPrefs = {
   rFloor: number;
   desiredRetention: number;
   enableFuzz: boolean;
+  enableLoadBalance: boolean;
+  easyDays: Array<"normal" | "reduced" | "minimum">;
 };
 
 export function getStudyPrefs() {
