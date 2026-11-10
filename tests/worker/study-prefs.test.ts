@@ -65,6 +65,16 @@ describe("GET/PUT /api/settings/study", () => {
       rFloor: 0.9,
       desiredRetention: 0.9,
       enableFuzz: true,
+      enableLoadBalance: true,
+      easyDays: [
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+      ],
     });
   });
 
@@ -95,6 +105,16 @@ describe("GET/PUT /api/settings/study", () => {
       rFloor: 0.9,
       desiredRetention: 0.9,
       enableFuzz: true,
+      enableLoadBalance: true,
+      easyDays: [
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+      ],
     });
 
     const getRes = await app.request(
@@ -109,6 +129,16 @@ describe("GET/PUT /api/settings/study", () => {
       rFloor: 0.9,
       desiredRetention: 0.9,
       enableFuzz: true,
+      enableLoadBalance: true,
+      easyDays: [
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+      ],
     });
   });
 
@@ -141,6 +171,55 @@ describe("GET/PUT /api/settings/study", () => {
       rFloor: 0.7,
       desiredRetention: 0.7,
       enableFuzz: false,
+      enableLoadBalance: true,
+      easyDays: [
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+      ],
+    });
+  });
+
+  it("PUT persists enableLoadBalance and easyDays", async () => {
+    const env = createTestEnv();
+    seedUser(env);
+
+    const easyDays = [
+      "minimum",
+      "reduced",
+      "normal",
+      "normal",
+      "normal",
+      "normal",
+      "minimum",
+    ];
+    const putRes = await app.request(
+      "/api/settings/study",
+      {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          introBudget: 20,
+          reviewBudget: 200,
+          desiredRetention: 0.9,
+          enableFuzz: true,
+          enableLoadBalance: false,
+          easyDays,
+        }),
+      },
+      env,
+    );
+    expect(putRes.status).toBe(200);
+    expect(await putRes.json()).toMatchObject({
+      enableLoadBalance: false,
+      easyDays,
     });
   });
 
@@ -171,6 +250,16 @@ describe("GET/PUT /api/settings/study", () => {
       rFloor: 0.9,
       desiredRetention: 0.9,
       enableFuzz: true,
+      enableLoadBalance: true,
+      easyDays: [
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+        "normal",
+      ],
     });
   });
 });

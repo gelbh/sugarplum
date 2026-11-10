@@ -1120,6 +1120,8 @@ export type StudyPrefs = {
   rFloor: number;
   desiredRetention: number;
   enableFuzz: boolean;
+  enableLoadBalance: boolean;
+  easyDays: Array<"normal" | "reduced" | "minimum">;
 };
 
 export function getStudyPrefs() {
@@ -1568,9 +1570,11 @@ export type ReviewResult = {
 export function reviewCard(
   cardId: string,
   rating: StudyRating,
-  opts?: { localDay?: string },
+  opts?: { localDay?: string; tzOffsetMinutes?: number },
 ) {
   const localDay = opts?.localDay;
+  const tzOffsetMinutes =
+    opts?.tzOffsetMinutes ?? new Date().getTimezoneOffset();
   if (isGuest()) {
     return guestReviewCard(cardId, rating, undefined, { localDay });
   }
@@ -1579,6 +1583,7 @@ export function reviewCard(
     json: {
       cardId,
       rating,
+      tzOffsetMinutes,
       ...(localDay ? { localDay } : {}),
     },
   }).then(notifyGamificationChanged);
