@@ -458,14 +458,16 @@ export default function StudyPage() {
         const result = await reviewCard(current.id, rating, {
           localDay: clientLocalDay(),
         });
+        setTally((prev) => addGrade(prev, rating));
+        parkShortTermFollowUp(current, result.due, result.state);
+        // Unlock toast after flight so FruitMedal mount/filter paint does not
+        // contend with the WAAPI swallow.
+        await playGradeMailboxMotion(rating);
         const incoming = result.unlocks;
         if (incoming?.length) {
           enqueueUnlocks(incoming);
           setUnlocks((prev) => rememberUnlocks(prev, incoming));
         }
-        setTally((prev) => addGrade(prev, rating));
-        parkShortTermFollowUp(current, result.due, result.state);
-        await playGradeMailboxMotion(rating);
         advanceAfterGrade();
         end();
         return true;
