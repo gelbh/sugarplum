@@ -109,7 +109,6 @@ const worker = {
         FSRS_CRON_MARK_LIMIT,
       );
     }
-    // Every cron tick (5m + daily): soft-complete/fail abandoned running jobs.
     await failStaleRunningJobs(getDb(env));
   },
 };
