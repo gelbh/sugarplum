@@ -79,6 +79,8 @@ npx wrangler secret put TURNSTILE_SECRET_KEY  # Turnstile Siteverify secret (pai
 
 Set `vars.TURNSTILE_SITE_KEY` (or `.dev.vars`) to the widget sitekey before email auth works. Leave empty in committed wrangler until the prod widget exists. Local dummy always-pass: sitekey `1x00000000000000000000AA`, secret `1x0000000000000000000000000000000AA` in `.dev.vars` (required for localhost; the prod sitekey in `wrangler.jsonc` does not allow local domains).
 
+**Local R2 signing** (image / material uploads): put `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` in gitignored `.dev.vars`. `R2_ACCOUNT_ID` is already in `wrangler.jsonc` vars. Use the same R2 API token values you would pass to the prod `wrangler secret put` lines above; Worker secrets are write-only (you cannot read them back). Never commit `.dev.vars` or paste real secret values into docs or PRs.
+
 **Local signed-in account** (D1 + dummy Turnstile; does not touch remote):
 
 ```bash
