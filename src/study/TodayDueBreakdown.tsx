@@ -2,6 +2,8 @@ import Box from "@mui/material/Box";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import type { MouseEvent } from "react";
+import { isPlainClick, navigate } from "../nav/navigate";
 import type { DueDeckRemainder, DueDeckRow } from "./dueBreakdown";
 
 export type TodayDueBreakdownProps = {
@@ -141,45 +143,53 @@ export default function TodayDueBreakdown({
           >
             From
           </Typography>
-          {rows.map((row) => (
-            <Link
-              key={row.deckId}
-              href={`/study?deckId=${encodeURIComponent(row.deckId)}`}
-              underline="none"
-              color="inherit"
-              sx={{
-                display: "flex",
-                alignItems: "baseline",
-                justifyContent: "space-between",
-                gap: 2,
-                py: 0.85,
-                borderBottom: 1,
-                borderColor: "divider",
-                fontSize: "0.95rem",
-              }}
-            >
-              <Box
-                component="span"
+          {rows.map((row) => {
+            const href = `/study?deckId=${encodeURIComponent(row.deckId)}`;
+            return (
+              <Link
+                key={row.deckId}
+                href={href}
+                underline="none"
+                color="inherit"
+                onClick={(ev: MouseEvent<HTMLAnchorElement>) => {
+                  if (!isPlainClick(ev)) return;
+                  ev.preventDefault();
+                  navigate(href);
+                }}
                 sx={{
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
+                  display: "flex",
+                  alignItems: "baseline",
+                  justifyContent: "space-between",
+                  gap: 2,
+                  py: 0.85,
+                  borderBottom: 1,
+                  borderColor: "divider",
+                  fontSize: "0.95rem",
                 }}
               >
-                {row.title}
-              </Box>
-              <Box
-                component="span"
-                sx={{
-                  flex: "none",
-                  color: "text.secondary",
-                  fontVariantNumeric: "tabular-nums",
-                }}
-              >
-                {row.count}
-              </Box>
-            </Link>
-          ))}
+                <Box
+                  component="span"
+                  sx={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {row.title}
+                </Box>
+                <Box
+                  component="span"
+                  sx={{
+                    flex: "none",
+                    color: "text.secondary",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {row.count}
+                </Box>
+              </Link>
+            );
+          })}
           {remainder ? (
             <Box
               sx={{
