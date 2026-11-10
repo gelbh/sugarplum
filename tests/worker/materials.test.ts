@@ -171,10 +171,10 @@ describe("PDF upload-url validation", () => {
     expect(env.getMaterials()).toHaveLength(0);
   });
 
-  it("rejects size over 25MB with 400", async () => {
+  it("rejects size over 50MB with 400", async () => {
     const env = createTestEnv();
     seedOwner(env);
-    const overLimit = 25 * 1024 * 1024 + 1;
+    const overLimit = 50 * 1024 * 1024 + 1;
 
     const res = await app.request(
       "/api/decks/deck-a/materials/upload-url",
@@ -194,7 +194,33 @@ describe("PDF upload-url validation", () => {
     );
 
     expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(String(body.error ?? body.message ?? "")).toMatch(/50MB/i);
     expect(env.getMaterials()).toHaveLength(0);
+  });
+
+  it("accepts size equal to 50MB for PDF upload-url", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+
+    const res = await app.request(
+      "/api/decks/deck-a/materials/upload-url",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({
+          filename: "edge.pdf",
+          contentType: "application/pdf",
+          size: 50 * 1024 * 1024,
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(200);
   });
 
   it("returns signed upload URL for valid PDF metadata", async () => {
