@@ -10,20 +10,69 @@ export type RunningJobStaleRow = {
   created_at: string;
 };
 
-/**
- * Fail one running job if its heartbeat is stale.
- * CAS matches reclaim: only succeeds if `progress_json` is still the snapshot
- * used for the stale check (reclaim that refreshed the heartbeat wins).
- */
-export async function failRunningJobIfStale(
+export function softCompleteCoverageJson(draftCount: number): string {
+  return JSON.stringify({
+    covered: [],
+    gaps: [],
+    draft_count: draftCount,
+  });
+}
+
+async function countJobCards(db: D1Database, jobId: string): Promise<number> {
+  const row = await db
+    .prepare("SELECT COUNT(*) AS n FROM cards WHERE job_id = ?")
+    .bind(jobId)
+    .first<{ n: number }>();
+  return Number(row?.n ?? 0);
+}
+
+/** Soft-complete: set coverage ledger. Fail path must not touch coverage_json. */
+async function casSoftComplete(
   db: D1Database,
   row: RunningJobStaleRow,
-  nowMs: number = Date.now(),
+  coverageJson: string,
+  finishedAt: string,
 ): Promise<boolean> {
-  if (!isRunningJobStale(row.progress_json, row.created_at, nowMs)) {
-    return false;
-  }
-  const finishedAt = new Date(nowMs).toISOString();
+  const result =
+    row.progress_json == null
+      ? await db
+          .prepare(
+            `UPDATE generation_jobs
+             SET status = ?, error = NULL, coverage_json = ?, finished_at = ?
+             WHERE id = ? AND status = ? AND progress_json IS NULL`,
+          )
+          .bind(
+            "needs_review",
+            coverageJson,
+            finishedAt,
+            row.id,
+            "running",
+          )
+          .run()
+      : await db
+          .prepare(
+            `UPDATE generation_jobs
+             SET status = ?, error = NULL, coverage_json = ?, finished_at = ?
+             WHERE id = ? AND status = ? AND progress_json = ?`,
+          )
+          .bind(
+            "needs_review",
+            coverageJson,
+            finishedAt,
+            row.id,
+            "running",
+            row.progress_json,
+          )
+          .run();
+  return (result.meta.changes ?? 0) > 0;
+}
+
+/** Fail: leave coverage_json unchanged (may hold window_resume). */
+async function casFail(
+  db: D1Database,
+  row: RunningJobStaleRow,
+  finishedAt: string,
+): Promise<boolean> {
   const result =
     row.progress_json == null
       ? await db
@@ -55,13 +104,42 @@ export async function failRunningJobIfStale(
             row.progress_json,
           )
           .run();
-  if ((result.meta.changes ?? 0) === 0) return false;
+  return (result.meta.changes ?? 0) > 0;
+}
+
+/**
+ * Fail or soft-complete one running job if its heartbeat is stale.
+ * Soft-complete (`needs_review`) when draft/persisted cards already exist.
+ * CAS matches reclaim: only succeeds if `progress_json` is still the snapshot
+ * used for the stale check (reclaim that refreshed the heartbeat wins).
+ */
+export async function failRunningJobIfStale(
+  db: D1Database,
+  row: RunningJobStaleRow,
+  nowMs: number = Date.now(),
+): Promise<boolean> {
+  if (!isRunningJobStale(row.progress_json, row.created_at, nowMs)) {
+    return false;
+  }
+  const finishedAt = new Date(nowMs).toISOString();
+  const cardCount = await countJobCards(db, row.id);
+  const ok =
+    cardCount > 0
+      ? await casSoftComplete(
+          db,
+          row,
+          softCompleteCoverageJson(cardCount),
+          finishedAt,
+        )
+      : await casFail(db, row, finishedAt);
+  if (!ok) return false;
   await recordGenerationUsageEventForJob(db, row.id);
   return true;
 }
 
 /**
- * Mark abandoned `running` jobs failed when their progress heartbeat is stale.
+ * Mark abandoned `running` jobs terminal when their progress heartbeat is stale.
+ * Soft-completes when cards exist; otherwise fails.
  * Does not reclaim or requeue; reclaim stays on queue redelivery in the consumer.
  */
 export async function failStaleRunningJobs(

@@ -7,10 +7,7 @@ import { requeueGeneration } from "./enqueue";
 import { isRejectReason, type RejectReason } from "../../src/lib/rejectReasons";
 import { buildAvoidPatternsFromRejected } from "./feedback-hints";
 import { getFreeGenUsage } from "./quota";
-import {
-  STALE_RUNNING_FAIL_ERROR,
-  failRunningJobIfStale,
-} from "./staleFail";
+import { failRunningJobIfStale } from "./staleFail";
 import { normalizeTopicHints } from "./topic-hints";
 import { parseOptionalJsonBody } from "../optional-json";
 
@@ -159,23 +156,27 @@ jobRoutes.get("/:id", async (c) => {
   if (!row) throw new HTTPException(404, { message: "Job not found" });
 
   if (row.status === "running") {
-    const nowMs = Date.now();
-    const failed = await failRunningJobIfStale(
+    const healed = await failRunningJobIfStale(
       db,
       {
         id: jobId,
         progress_json: row.progress_json,
         created_at: row.created_at,
       },
-      nowMs,
+      Date.now(),
     );
-    if (failed) {
-      row = {
-        ...row,
-        status: "failed",
-        error: STALE_RUNNING_FAIL_ERROR,
-        finished_at: new Date(nowMs).toISOString(),
-      };
+    if (healed) {
+      const refreshed = await db
+        .prepare(
+          `SELECT j.id, j.material_id, j.status, j.error, j.coverage_json, j.progress_json, j.created_at, j.finished_at
+           FROM generation_jobs j
+           INNER JOIN materials m ON m.id = j.material_id
+           INNER JOIN decks d ON d.id = m.deck_id
+           WHERE j.id = ? AND d.user_id = ?`,
+        )
+        .bind(jobId, userId)
+        .first<JobPollRow>();
+      if (refreshed) row = refreshed;
     }
   }
 

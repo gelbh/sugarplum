@@ -353,13 +353,16 @@ async function markJobFailed(
   error: string,
 ): Promise<void> {
   const finishedAt = new Date().toISOString();
-  await db
+  const result = await db
     .prepare(
-      "UPDATE generation_jobs SET status = ?, error = ?, finished_at = ? WHERE id = ?",
+      "UPDATE generation_jobs SET status = ?, error = ?, finished_at = ? WHERE id = ? AND status = ?",
     )
-    .bind("failed", error, finishedAt, jobId)
+    .bind("failed", error, finishedAt, jobId, "running")
     .run();
-  await recordGenerationUsageEventForJob(db, jobId);
+  // Soft-complete (or another healer) may have already left `running`.
+  if ((result.meta.changes ?? 0) > 0) {
+    await recordGenerationUsageEventForJob(db, jobId);
+  }
 }
 
 async function extractMaterialText(
