@@ -94,6 +94,7 @@
     ],
   },
   "triggers": {
-    "crons": ["0 6 * * *"],
+    // Daily FSRS mark batch; every 5m soft-completes/fails stale generation jobs.
+    "crons": ["0 6 * * *", "*/5 * * * *"],
   },
 }

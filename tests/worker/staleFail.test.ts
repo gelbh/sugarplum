@@ -8,6 +8,27 @@ import {
 } from "../../worker/generation/staleFail";
 import { createTestEnv } from "./test-env";
 
+function seedDraftCard(
+  env: ReturnType<typeof createTestEnv>,
+  jobId: string,
+  cardId = "card-1",
+) {
+  env.seedCard({
+    id: cardId,
+    deck_id: "d1",
+    job_id: jobId,
+    type: "basic",
+    front_json: '"front"',
+    back_json: '"back"',
+    media_r2_keys_json: null,
+    provenance_json: "{}",
+    status: "draft",
+    reject_reason: null,
+    created_at: "2026-01-01T00:00:00.000Z",
+    updated_at: "2026-01-01T00:00:00.000Z",
+  });
+}
+
 function seedJobGraph(env: ReturnType<typeof createTestEnv>) {
   env.seedUser({
     id: "u1",
@@ -36,7 +57,7 @@ function seedJobGraph(env: ReturnType<typeof createTestEnv>) {
 }
 
 describe("failStaleRunningJobs", () => {
-  it("fails a stale running job and sets finished_at", async () => {
+  it("fails a stale running job with no cards and sets finished_at", async () => {
     const env = createTestEnv();
     seedJobGraph(env);
     const staleAt = new Date(
@@ -63,6 +84,71 @@ describe("failStaleRunningJobs", () => {
     expect(row?.status).toBe("failed");
     expect(row?.error).toBe(STALE_RUNNING_FAIL_ERROR);
     expect(row?.finished_at).toBeTruthy();
+  });
+
+  it("preserves coverage_json when failing a stale job with no cards", async () => {
+    const env = createTestEnv();
+    seedJobGraph(env);
+    const staleAt = new Date(
+      Date.now() - RUNNING_JOB_STALE_MS - 1000,
+    ).toISOString();
+    const coverage = JSON.stringify({
+      covered: [],
+      gaps: [],
+      draft_count: 0,
+      window_resume: { start_page: 10 },
+    });
+    env.seedGenerationJob({
+      id: "job-cov",
+      material_id: "m1",
+      status: "running",
+      error: null,
+      coverage_json: coverage,
+      progress_json: JSON.stringify({ updated_at: staleAt }),
+      created_at: "2026-11-10T14:00:00.000Z",
+      finished_at: null,
+    });
+
+    const n = await failStaleRunningJobs(getDb(env));
+    expect(n).toBe(1);
+    const row = env.getGenerationJobs().find((j) => j.id === "job-cov");
+    expect(row?.status).toBe("failed");
+    expect(row?.coverage_json).toBe(coverage);
+  });
+
+  it("soft-completes a stale running job that already has draft cards", async () => {
+    const env = createTestEnv();
+    seedJobGraph(env);
+    const staleAt = new Date(
+      Date.now() - RUNNING_JOB_STALE_MS - 1000,
+    ).toISOString();
+    env.seedGenerationJob({
+      id: "job-drafts",
+      material_id: "m1",
+      status: "running",
+      error: null,
+      coverage_json: null,
+      progress_json: JSON.stringify({
+        updated_at: staleAt,
+        stage: "persist",
+        percent: 100,
+      }),
+      created_at: "2026-11-10T14:46:46.350Z",
+      finished_at: null,
+    });
+    seedDraftCard(env, "job-drafts");
+
+    const n = await failStaleRunningJobs(getDb(env));
+    expect(n).toBe(1);
+    const row = env.getGenerationJobs().find((j) => j.id === "job-drafts");
+    expect(row?.status).toBe("needs_review");
+    expect(row?.error).toBeNull();
+    expect(row?.finished_at).toBeTruthy();
+    expect(JSON.parse(row?.coverage_json ?? "{}")).toEqual({
+      covered: [],
+      gaps: [],
+      draft_count: 1,
+    });
   });
 
   it("leaves a fresh running job alone", async () => {
