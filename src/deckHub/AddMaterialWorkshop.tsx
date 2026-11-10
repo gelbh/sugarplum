@@ -305,6 +305,7 @@ export default function AddMaterialWorkshop({
       <PdfSplitConsent
         open={pdfSplitOpen}
         fileName={uploadFile?.name ?? "PDF"}
+        figuresWillSkip={figureFiles.length > 0}
         progressLabel={pdfSplitProgress}
         busy={materialBusy}
         onConfirm={onPdfSplitConfirm}

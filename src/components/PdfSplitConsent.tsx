@@ -5,11 +5,13 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
+import { fileSizeCapMb } from "../lib/materialUploadLimits";
 
 export type PdfSplitConsentProps = {
   open: boolean;
   fileName: string;
-  partCountEstimate?: number;
+  maxMb?: number;
+  figuresWillSkip?: boolean;
   progressLabel?: string | null;
   busy?: boolean;
   onConfirm: () => void;
@@ -19,7 +21,8 @@ export type PdfSplitConsentProps = {
 export default function PdfSplitConsent({
   open,
   fileName,
-  partCountEstimate,
+  maxMb = fileSizeCapMb(),
+  figuresWillSkip = false,
   progressLabel,
   busy = false,
   onConfirm,
@@ -37,12 +40,15 @@ export default function PdfSplitConsent({
       <DialogTitle>Large PDF</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          “{fileName}” is larger than 50MB. Split it into multiple materials
-          each under 50MB? Each part starts generation after upload.
-          {partCountEstimate != null
-            ? ` About ${partCountEstimate} parts expected.`
-            : null}
+          “{fileName}” is larger than {maxMb}MB. Split it into multiple materials
+          each under {maxMb}MB? Each part starts generation after upload.
         </DialogContentText>
+        {figuresWillSkip ? (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            Attached figure crops apply only if this PDF fits in one part.
+            Multi-part splits skip figure crops.
+          </Typography>
+        ) : null}
         {progressLabel ? (
           <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
             {progressLabel}

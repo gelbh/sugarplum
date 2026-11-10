@@ -41,9 +41,12 @@ import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
 import {
   MAX_FILE_BYTES,
   MAX_IMAGE_BYTES,
+  MAX_SPLIT_SOURCE_BYTES,
+  fileSizeCapMb,
   fileTooLargeMessage,
+  splitSourceTooLargeMessage,
 } from "../lib/materialUploadLimits";
-import { splitPdfUnderLimit } from "../lib/splitPdfUnderLimit";
+import { runConsentedPdfSplitUpload } from "../lib/runConsentedPdfSplitUpload";
 import {
   SOURCE_ROLES,
   SOURCE_ROLE_LABELS,
@@ -340,71 +343,53 @@ export default function CreateMaterialStepper({
   }
 
   async function onPdfSplitConfirm() {
+    if (busy) return;
     if (!selectedDeckId || !uploadFile) return;
     setError(null);
     setNotice(null);
     setBusy(true);
     setPdfSplitProgress("Splitting PDF…");
     try {
-      const nameStem =
-        uploadFile.name.replace(/\.pdf$/i, "") || "document";
-      const split = await splitPdfUnderLimit(uploadFile, MAX_FILE_BYTES, {
-        nameStem,
-      });
-      if (!split.ok) {
-        setError(split.message);
-        setPdfSplitOpen(false);
-        setPdfSplitProgress(null);
-        return;
-      }
-
-      const parts = split.files;
-      const skipFigures = figureFiles.length > 0 && parts.length > 1;
       const topicHints = topicHintsFromLines(alsoCover);
       const pdfOpts = {
         figureExtractMode,
         source_role: sourceRole,
         ...(topicHints ? { topicHints } : {}),
       };
-
-      let lastJobId: string | null = null;
-      let lastStatus = "";
-      for (let i = 0; i < parts.length; i++) {
-        const part = parts[i];
-        setPdfSplitProgress(`Uploading ${i + 1} of ${parts.length}`);
-        try {
-          const material =
-            parts.length === 1 && figureFiles.length > 0
-              ? await uploadPdfWithFigureCrops(
-                  selectedDeckId,
-                  part,
-                  figureFiles,
-                  undefined,
-                  { ...pdfOpts, onScan: () => setReadingScan(true) },
-                )
-              : await uploadMaterialFile(selectedDeckId, part, undefined, {
-                  ...pdfOpts,
-                  onScan: () => setReadingScan(true),
-                });
-          lastStatus = material.status;
-          if (material.jobId) lastJobId = material.jobId;
-        } catch (err) {
-          const detail =
-            err instanceof ApiError ? err.message : "Could not upload file";
-          setError(`Failed on part ${i + 1} of ${parts.length}: ${detail}`);
-          setPdfSplitOpen(false);
-          setPdfSplitProgress(null);
-          return;
-        }
+      const result = await runConsentedPdfSplitUpload({
+        file: uploadFile,
+        maxBytes: MAX_FILE_BYTES,
+        figureFiles,
+        onProgress: setPdfSplitProgress,
+        uploadPart: (part, figuresForThisPart) =>
+          figuresForThisPart.length > 0
+            ? uploadPdfWithFigureCrops(
+                selectedDeckId,
+                part,
+                figuresForThisPart,
+                undefined,
+                { ...pdfOpts, onScan: () => setReadingScan(true) },
+              )
+            : uploadMaterialFile(selectedDeckId, part, undefined, {
+                ...pdfOpts,
+                onScan: () => setReadingScan(true),
+              }),
+      });
+      if (!result.ok) {
+        setError(result.message);
+        setPdfSplitOpen(false);
+        setPdfSplitProgress(null);
+        return;
       }
 
+      const { parts, lastJobId, lastStatus, skippedFigures } = result;
       setUploadFile(null);
       setFigureFiles([]);
       setSourceRole("lecture");
       setAlsoCover("");
       setPdfSplitOpen(false);
       setPdfSplitProgress(null);
-      const figureNote = skipFigures ? ` ${FIGURES_SKIPPED_NOTICE}.` : "";
+      const figureNote = skippedFigures ? ` ${FIGURES_SKIPPED_NOTICE}.` : "";
       if (lastJobId) {
         setJobId(lastJobId);
         setNotice(
@@ -470,6 +455,10 @@ export default function CreateMaterialStepper({
       contentType === "application/pdf" &&
       uploadFile.size > MAX_FILE_BYTES
     ) {
+      if (uploadFile.size > MAX_SPLIT_SOURCE_BYTES) {
+        setError(splitSourceTooLargeMessage());
+        return;
+      }
       setPdfSplitProgress(null);
       setPdfSplitOpen(true);
       return;
@@ -864,6 +853,8 @@ export default function CreateMaterialStepper({
         <PdfSplitConsent
           open={pdfSplitOpen}
           fileName={uploadFile?.name ?? "PDF"}
+          maxMb={fileSizeCapMb()}
+          figuresWillSkip={figureFiles.length > 0}
           progressLabel={pdfSplitProgress}
           busy={busy}
           onConfirm={() => {

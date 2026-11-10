@@ -63,21 +63,24 @@ export async function splitPdfUnderLimit(
     };
   }
 
-  const ranges: Array<{ start: number; endExclusive: number }> = [];
+  const partBytes: Uint8Array[] = [];
   let rangeStart = 0;
-  let sealedEnd = 0;
+  let lastGood: Uint8Array | null = null;
+  let lastGoodEnd = 0;
 
   for (let end = 1; end <= pageCount; end++) {
     const candidate = await savePageRange(sourceDoc, rangeStart, end);
     if (candidate.byteLength <= maxBytes) {
-      sealedEnd = end;
+      lastGood = candidate;
+      lastGoodEnd = end;
       continue;
     }
 
-    if (sealedEnd > rangeStart) {
-      ranges.push({ start: rangeStart, endExclusive: sealedEnd });
-      rangeStart = sealedEnd;
-      sealedEnd = rangeStart;
+    if (lastGood && lastGoodEnd > rangeStart) {
+      partBytes.push(lastGood);
+      rangeStart = lastGoodEnd;
+      lastGood = null;
+      lastGoodEnd = rangeStart;
       end = rangeStart;
       continue;
     }
@@ -90,18 +93,11 @@ export async function splitPdfUnderLimit(
     };
   }
 
-  if (sealedEnd > rangeStart) {
-    ranges.push({ start: rangeStart, endExclusive: sealedEnd });
+  if (lastGood && lastGoodEnd > rangeStart) {
+    partBytes.push(lastGood);
   }
 
   const stem = resolveStem(source, opts);
-  const partBytes: Uint8Array[] = [];
-  for (const range of ranges) {
-    partBytes.push(
-      await savePageRange(sourceDoc, range.start, range.endExclusive),
-    );
-  }
-
   const n = partBytes.length;
   const files = partBytes.map((bytes, i) => {
     const copy = new Uint8Array(bytes.byteLength);

@@ -19,9 +19,11 @@ import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
 import {
   MAX_FILE_BYTES,
   MAX_IMAGE_BYTES,
+  MAX_SPLIT_SOURCE_BYTES,
   fileTooLargeMessage,
+  splitSourceTooLargeMessage,
 } from "../lib/materialUploadLimits";
-import { splitPdfUnderLimit } from "../lib/splitPdfUnderLimit";
+import { runConsentedPdfSplitUpload } from "../lib/runConsentedPdfSplitUpload";
 import type { WorkshopFrame } from "./workshopStack";
 import { openDiyOcclusionFromImageKey } from "./openDiyOcclusion";
 
@@ -174,65 +176,49 @@ export function useAddMaterialWorkshop({
   }
 
   async function onPdfSplitConfirm() {
+    if (materialBusy) return;
     if (!uploadFile) return;
     setMaterialError(null);
     setMaterialNotice(null);
     setMaterialBusy(true);
     setPdfSplitProgress("Splitting PDF…");
     try {
-      const nameStem =
-        uploadFile.name.replace(/\.pdf$/i, "") || "document";
-      const split = await splitPdfUnderLimit(uploadFile, MAX_FILE_BYTES, {
-        nameStem,
+      const result = await runConsentedPdfSplitUpload({
+        file: uploadFile,
+        maxBytes: MAX_FILE_BYTES,
+        figureFiles,
+        onProgress: setPdfSplitProgress,
+        uploadPart: (part, figuresForThisPart) =>
+          figuresForThisPart.length > 0
+            ? uploadPdfWithFigureCrops(
+                deckId,
+                part,
+                figuresForThisPart,
+                undefined,
+                { onScan: () => setReadingScan(true) },
+              )
+            : uploadMaterialFile(deckId, part, undefined, {
+                onScan: () => setReadingScan(true),
+              }),
       });
-      if (!split.ok) {
-        setMaterialError(split.message);
+      if (!result.ok) {
+        setMaterialError(result.message);
         setPdfSplitOpen(false);
         setPdfSplitProgress(null);
+        await Promise.all([refreshDraftJobs(), refreshMaterials()]);
         return;
       }
 
-      const parts = split.files;
-      const skipFigures = figureFiles.length > 0 && parts.length > 1;
-      let lastJobId: string | null = null;
-      let lastStatus = "";
+      const { parts, lastJobId, lastStatus, skippedFigures, materials } =
+        result;
       let lastManualKey: string | null = null;
-
-      for (let i = 0; i < parts.length; i++) {
-        const part = parts[i];
-        setPdfSplitProgress(`Uploading ${i + 1} of ${parts.length}`);
-        try {
-          const material =
-            parts.length === 1 && figureFiles.length > 0
-              ? await uploadPdfWithFigureCrops(
-                  deckId,
-                  part,
-                  figureFiles,
-                  undefined,
-                  { onScan: () => setReadingScan(true) },
-                )
-              : await uploadMaterialFile(deckId, part, undefined, {
-                  onScan: () => setReadingScan(true),
-                });
-          lastStatus = material.status;
-          if (material.jobId) lastJobId = material.jobId;
-          if (
-            material.manual_occlusion &&
-            material.r2_key &&
-            prepareOcclusionFromImageKey
-          ) {
-            lastManualKey = material.r2_key;
-          }
-        } catch (err) {
-          const detail =
-            err instanceof ApiError ? err.message : "Could not upload file";
-          setMaterialError(
-            `Failed on part ${i + 1} of ${parts.length}: ${detail}`,
-          );
-          setPdfSplitOpen(false);
-          setPdfSplitProgress(null);
-          await Promise.all([refreshDraftJobs(), refreshMaterials()]);
-          return;
+      for (const material of materials) {
+        if (
+          material.manual_occlusion &&
+          material.r2_key &&
+          prepareOcclusionFromImageKey
+        ) {
+          lastManualKey = material.r2_key;
         }
       }
 
@@ -240,7 +226,7 @@ export function useAddMaterialWorkshop({
       setFigureFiles([]);
       setPdfSplitOpen(false);
       setPdfSplitProgress(null);
-      const figureNote = skipFigures ? ` ${FIGURES_SKIPPED_NOTICE}.` : "";
+      const figureNote = skippedFigures ? ` ${FIGURES_SKIPPED_NOTICE}.` : "";
       if (lastJobId) {
         setMaterialNotice(
           parts.length > 1
@@ -312,6 +298,10 @@ export function useAddMaterialWorkshop({
       contentType === "application/pdf" &&
       uploadFile.size > MAX_FILE_BYTES
     ) {
+      if (uploadFile.size > MAX_SPLIT_SOURCE_BYTES) {
+        setMaterialError(splitSourceTooLargeMessage());
+        return;
+      }
       setPdfSplitProgress(null);
       setPdfSplitOpen(true);
       return;
