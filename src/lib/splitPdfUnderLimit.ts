@@ -103,12 +103,13 @@ export async function splitPdfUnderLimit(
   }
 
   const n = partBytes.length;
-  const files = partBytes.map(
-    (bytes, i) =>
-      new File([bytes], `${stem} (${i + 1}/${n}).pdf`, {
-        type: "application/pdf",
-      }),
-  );
+  const files = partBytes.map((bytes, i) => {
+    const copy = new Uint8Array(bytes.byteLength);
+    copy.set(bytes);
+    return new File([copy], `${stem} (${i + 1}/${n}).pdf`, {
+      type: "application/pdf",
+    });
+  });
 
   return { ok: true, files };
 }
