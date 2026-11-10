@@ -5,7 +5,6 @@ Allowed sources: CDC DPDx / PHIL (public domain, often via Wikimedia Commons); W
 Rejected: all-rights-reserved, unclear, NC/ND, iNaturalist, random publisher sites, PMC scrape without a clear CC0/CC BY deposit, ARR textbook plates.
 
 ## Heroes
-
 | Entry | File | Credit | Licence | Source |
 | --- | --- | --- | --- | --- |
 | Ancylostoma caninum | `ancylostoma-caninum-hero.webp` | Daniel J. Drew | CC0 | [https://commons.wikimedia.org/wiki/File:Ancylostoma_caninum_(YPM_IZ_093168).jpeg](https://commons.wikimedia.org/wiki/File:Ancylostoma_caninum_(YPM_IZ_093168).jpeg) |
@@ -19,10 +18,12 @@ Rejected: all-rights-reserved, unclear, NC/ND, iNaturalist, random publisher sit
 | Bovicola ovis | `bovicola-ovis-hero.webp` | Franz von Paula Schrank | Public domain | [https://commons.wikimedia.org/wiki/File:Bovicola_ovis_Sheep_chewing_louse_Schrank_1781.png](https://commons.wikimedia.org/wiki/File:Bovicola_ovis_Sheep_chewing_louse_Schrank_1781.png) |
 | Bunostomum trigonocephalum | `bunostomum-trigonocephalum-hero.webp` | Daniel J. Drew | CC0 | [https://commons.wikimedia.org/wiki/File:Bunostomum_trigonocephalum_(YPM_IZ_095213).jpeg](https://commons.wikimedia.org/wiki/File:Bunostomum_trigonocephalum_(YPM_IZ_095213).jpeg) |
 | Capillaria aerophila | `capillaria-aerophila-hero.webp` | Lalošević, V., Lalošević, D., Čapo, I., Simin, V., Galfi, A. &amp; Traversa, D. | CC BY 4.0 | [https://commons.wikimedia.org/wiki/File:Eucoleus_aerophilus_female_vulva.jpg](https://commons.wikimedia.org/wiki/File:Eucoleus_aerophilus_female_vulva.jpg) |
+| Chabertia ovina | `chabertia-ovina-hero.webp` | Brayton Howard Ransom / USDA Bureau of Animal Industry Bulletin 127 | Public domain | [https://commons.wikimedia.org/wiki/File:The_nematodes_parasitic_in_the_alimentary_tract_of_cattle,_sheep,_and_other_ruminants_(IA_bullbai127).pdf](https://commons.wikimedia.org/wiki/File:The_nematodes_parasitic_in_the_alimentary_tract_of_cattle,_sheep,_and_other_ruminants_(IA_bullbai127).pdf) |
 | Cheyletiella spp. | `cheyletiella-spp-hero.webp` | Joel Mills | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Cheyletiella_22.jpg](https://commons.wikimedia.org/wiki/File:Cheyletiella_22.jpg) |
 | Chorioptes bovis | `chorioptes-bovis-hero.webp` | Alan R Walker | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Chorioptes-bovis-(Hering).JPG](https://commons.wikimedia.org/wiki/File:Chorioptes-bovis-(Hering).JPG) |
 | Clonorchis sinensis | `clonorchis-sinensis-hero.webp` | Sarah J. Wu | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Clonorchis.jpg](https://commons.wikimedia.org/wiki/File:Clonorchis.jpg) |
 | Cryptosporidium spp. | `cryptosporidium-spp-hero.webp` | CDC / DPDx (via Wikimedia Commons) | Public domain | [https://commons.wikimedia.org/wiki/File:Cryptosporidium_DPDxCrypto_oo_AF.JPG](https://commons.wikimedia.org/wiki/File:Cryptosporidium_DPDxCrypto_oo_AF.JPG) |
+| Cryptosporidium spp. | `cryptosporidium-spp-lifecycle.webp` | CDC / PHIL or DPDx (via Wikimedia Commons) | Public domain | [https://commons.wikimedia.org/wiki/File:Cicle_de_Cryptosporidium_spp.png](https://commons.wikimedia.org/wiki/File:Cicle_de_Cryptosporidium_spp.png) |
 | Ctenocephalides canis | `ctenocephalides-canis-hero.webp` | Herms, William Brodbeck (1876-1949) | Public domain | [https://commons.wikimedia.org/wiki/File:CtenecephalusCanis.jpg](https://commons.wikimedia.org/wiki/File:CtenecephalusCanis.jpg) |
 | Ctenocephalides felis | `ctenocephalides-felis-hero.webp` | Andybrookestar at English Wikipedia | Public domain | [https://commons.wikimedia.org/wiki/File:Catflea2.jpg](https://commons.wikimedia.org/wiki/File:Catflea2.jpg) |
 | Culicoides spp. | `culicoides-spp-hero.webp` | Alan R Walker | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Culicoides-imicola.jpg](https://commons.wikimedia.org/wiki/File:Culicoides-imicola.jpg) |
@@ -35,12 +36,16 @@ Rejected: all-rights-reserved, unclear, NC/ND, iNaturalist, random publisher sit
 | Dipylidium caninum | `dipylidium-caninum-hero.webp` | CDC / PHIL or DPDx (via Wikimedia Commons) | Public domain | [https://commons.wikimedia.org/wiki/File:Dipyl_can_worm1.JPG](https://commons.wikimedia.org/wiki/File:Dipyl_can_worm1.JPG) |
 | Dirofilaria immitis | `dirofilaria-immitis-hero.webp` | Alan R Walker | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Dirofilaria-immitis-dog-heart.jpg](https://commons.wikimedia.org/wiki/File:Dirofilaria-immitis-dog-heart.jpg) |
 | Dirofilaria repens | `dirofilaria-repens-hero.webp` | CDC / Wikimedia Commons | Public domain | [https://commons.wikimedia.org/wiki/File:Dirofilaria_repens_1.jpg](https://commons.wikimedia.org/wiki/File:Dirofilaria_repens_1.jpg) |
+| Dirofilaria repens | `dirofilaria-repens-lifecycle.webp` | CDC / PHIL or DPDx (via Wikimedia Commons) | Public domain | [https://commons.wikimedia.org/wiki/File:D_repens_Lebenszyklus.png](https://commons.wikimedia.org/wiki/File:D_repens_Lebenszyklus.png) |
 | Echinococcus granulosus | `echinococcus-granulosus-hero.webp` | CDC / Dr. L.L.A. Moore, Jr | Public domain | [https://commons.wikimedia.org/wiki/File:Echinococcus_granulosus_scolex.jpg](https://commons.wikimedia.org/wiki/File:Echinococcus_granulosus_scolex.jpg) |
+| Echinococcus granulosus | `echinococcus-granulosus-lifecycle.webp` | Besnoitjm | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Ciclo_biol%C3%B3gico_Echinococcus_granulosus.jpg](https://commons.wikimedia.org/wiki/File:Ciclo_biol%C3%B3gico_Echinococcus_granulosus.jpg) |
 | Echinococcus multilocularis | `echinococcus-multilocularis-hero.webp` | Epp Moks et al | Public domain | [https://commons.wikimedia.org/wiki/File:05-0339_b.jpg](https://commons.wikimedia.org/wiki/File:05-0339_b.jpg) |
 | Eimeria spp. | `eimeria-spp-hero.webp` | Yale Peabody Museum of Natural History | CC0 | [https://commons.wikimedia.org/wiki/File:Eimeria_tenella_(Railliet_and_Lucet,_1891)_Fantham,_1909_1570710830.png](https://commons.wikimedia.org/wiki/File:Eimeria_tenella_(Railliet_and_Lucet,_1891)_Fantham,_1909_1570710830.png) |
+| Eimeria spp. | `eimeria-spp-lifecycle.webp` | USDA | Public domain | [https://commons.wikimedia.org/wiki/File:Eimeria_life_cycle_usda.jpg](https://commons.wikimedia.org/wiki/File:Eimeria_life_cycle_usda.jpg) |
 | Entamoeba histolytica | `entamoeba-histolytica-hero.webp` | The Other 95% | CC BY-SA 4.0 | [https://commons.wikimedia.org/wiki/File:E_histolytica_oil_immersion.jpg](https://commons.wikimedia.org/wiki/File:E_histolytica_oil_immersion.jpg) |
 | Fasciola gigantica | `fasciola-gigantica-hero.webp` | Thomas Spencer Cobbold (1828–1886) | Public domain | [https://commons.wikimedia.org/wiki/File:Fasciola_gigantica.png](https://commons.wikimedia.org/wiki/File:Fasciola_gigantica.png) |
 | Fasciola hepatica | `fasciola-hepatica-hero.webp` | Alan R Walker | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Fasciola-hepatica-adults.jpg](https://commons.wikimedia.org/wiki/File:Fasciola-hepatica-adults.jpg) |
+| Fasciola hepatica | `fasciola-hepatica-lifecycle.webp` | Sugarplum | CC0-1.0 | [https://github.com/gelbh/sugarplum](https://github.com/gelbh/sugarplum) |
 | Fascioloides magna | `fascioloides-magna-hero.webp` | Flukeman | CC BY 2.5 | [https://commons.wikimedia.org/wiki/File:F._magna_adhesion_and_fibrin_in_abdomen.jpg](https://commons.wikimedia.org/wiki/File:F._magna_adhesion_and_fibrin_in_abdomen.jpg) |
 | Fasciolopsis buski | `fasciolopsis-buski-hero.webp` | Ashish K Jha, Sharad K Jha | CC BY 4.0 | [https://commons.wikimedia.org/wiki/File:Endoscopic_view_of_multiple_Fasciolopsis_buski.png](https://commons.wikimedia.org/wiki/File:Endoscopic_view_of_multiple_Fasciolopsis_buski.png) |
 | Felicola subrostratus | `felicola-subrostratus-hero.webp` | Jana Bulantová | CC BY-SA 4.0 | [https://commons.wikimedia.org/wiki/File:14_Felicola_subrostratus.tif](https://commons.wikimedia.org/wiki/File:14_Felicola_subrostratus.tif) |
@@ -61,28 +66,37 @@ Rejected: all-rights-reserved, unclear, NC/ND, iNaturalist, random publisher sit
 | Moniezia expansa | `moniezia-expansa-hero.webp` | Lucyin | CC BY-SA 4.0 | [https://commons.wikimedia.org/wiki/File:Agnea_acs%C3%BBt_vier-riban_gros_vinte.jpg](https://commons.wikimedia.org/wiki/File:Agnea_acs%C3%BBt_vier-riban_gros_vinte.jpg) |
 | Musca autumnalis | `musca-autumnalis-hero.webp` | James K. Lindsey | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Musca.autumnalis.female.jpg](https://commons.wikimedia.org/wiki/File:Musca.autumnalis.female.jpg) |
 | Neospora caninum | `neospora-caninum-hero.webp` | agricultura.sp | CC BY 2.0 | [https://commons.wikimedia.org/wiki/File:Neospora_caninum_(5256961091).jpg](https://commons.wikimedia.org/wiki/File:Neospora_caninum_(5256961091).jpg) |
+| Oesophagostomum venulosum | `oesophagostomum-venulosum-hero.webp` | Brayton Howard Ransom / USDA Bureau of Animal Industry Bulletin 127 | Public domain | [https://commons.wikimedia.org/wiki/File:The_nematodes_parasitic_in_the_alimentary_tract_of_cattle,_sheep,_and_other_ruminants_(IA_bullbai127).pdf](https://commons.wikimedia.org/wiki/File:The_nematodes_parasitic_in_the_alimentary_tract_of_cattle,_sheep,_and_other_ruminants_(IA_bullbai127).pdf) |
 | Oestrus ovis | `oestrus-ovis-hero.webp` | Unknown authorUnknown author | Public domain | [https://commons.wikimedia.org/wiki/File:Meyers_b16_s1010a.jpg](https://commons.wikimedia.org/wiki/File:Meyers_b16_s1010a.jpg) |
 | Opisthorchis felineus | `opisthorchis-felineus-hero.webp` | Web Atlas of Medical Parasitology / Korean Society for Parasitology | Public domain | [https://commons.wikimedia.org/wiki/File:Opisthorchis_felineus_Korea.jpg](https://commons.wikimedia.org/wiki/File:Opisthorchis_felineus_Korea.jpg) |
+| Ostertagia ostertagi | `ostertagia-ostertagi-hero.webp` | USDA Agricultural Research Service | Public domain | [https://www.ars.usda.gov/is/graphics/photos/jan98/k7905-13.jpg](https://www.ars.usda.gov/is/graphics/photos/jan98/k7905-13.jpg) |
 | Otodectes cynotis | `otodectes-cynotis-hero.webp` | Wikimedia Commons | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Ear_mite.JPG](https://commons.wikimedia.org/wiki/File:Ear_mite.JPG) |
 | Oxyuris equi | `oxyuris-equi-hero.webp` | Imes, Marion.; Schwartz, Benjamin; Wright, Willard H. | Public domain | [https://commons.wikimedia.org/wiki/File:Parasites_and_parasitic_diseases_of_horses_(Page_27)_BHL41697913.jpg](https://commons.wikimedia.org/wiki/File:Parasites_and_parasitic_diseases_of_horses_(Page_27)_BHL41697913.jpg) |
 | Parascaris equorum | `parascaris-equorum-hero.webp` | eXtensionHorses | CC BY-SA 2.0 | [https://commons.wikimedia.org/wiki/File:Ascarid1_(5842674095).jpg](https://commons.wikimedia.org/wiki/File:Ascarid1_(5842674095).jpg) |
 | Plasmodium spp. | `plasmodium-spp-hero.webp` | CDC / Dr. Mae Melvin | Public domain | [https://commons.wikimedia.org/wiki/File:Plasmodium_falciparum_01.png](https://commons.wikimedia.org/wiki/File:Plasmodium_falciparum_01.png) |
+| Pseudoterranova decipiens | `pseudoterranova-decipiens-hero.webp` | CDC / DPDx | Public domain | [https://commons.wikimedia.org/wiki/File:Anasakid_whole.jpg](https://commons.wikimedia.org/wiki/File:Anasakid_whole.jpg) |
 | Psoroptes ovis | `psoroptes-ovis-hero.webp` | Alan R Walker | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Psoroptes-communis-ovis.JPG](https://commons.wikimedia.org/wiki/File:Psoroptes-communis-ovis.JPG) |
+| Psoroptes ovis | `psoroptes-ovis-lifecycle.webp` | Daktaridudu | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Life-cycle-psoroptes-ovis-mite-diagram.jpg](https://commons.wikimedia.org/wiki/File:Life-cycle-psoroptes-ovis-mite-diagram.jpg) |
 | Pulex irritans | `pulex-irritans-hero.webp` | Anagoria | CC BY 3.0 | [https://commons.wikimedia.org/wiki/File:2013_Naturkundemuseum_Berlin_pulex_irritans_anagoria.JPG](https://commons.wikimedia.org/wiki/File:2013_Naturkundemuseum_Berlin_pulex_irritans_anagoria.JPG) |
 | Raillietina spp. | `raillietina-spp-hero.webp` | K. Lalchhandama / Chhandama | CC BY 3.0 | [https://commons.wikimedia.org/wiki/File:Raillietina_echinobothrida.jpg](https://commons.wikimedia.org/wiki/File:Raillietina_echinobothrida.jpg) |
 | Rhipicephalus sanguineus | `rhipicephalus-sanguineus-hero.webp` | (Latreille) | Public domain | [https://commons.wikimedia.org/wiki/File:Naturalis_Biodiversity_Center_-_RMNH.ART.1206_-_Rhipicephalus_sanguineus_(Latreille)_-_Mites_-_Collection_Anthonie_Cornelis_Oudemans.jpeg](https://commons.wikimedia.org/wiki/File:Naturalis_Biodiversity_Center_-_RMNH.ART.1206_-_Rhipicephalus_sanguineus_(Latreille)_-_Mites_-_Collection_Anthonie_Cornelis_Oudemans.jpeg) |
 | Sarcocystis spp. | `sarcocystis-spp-hero.webp` | Tameem Baker | CC BY 4.0 | [https://commons.wikimedia.org/wiki/File:Sarcocystis.jpg](https://commons.wikimedia.org/wiki/File:Sarcocystis.jpg) |
 | Sarcoptes scabiei | `sarcoptes-scabiei-hero.webp` | Joel Mills | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Canine_scabies_mite.JPG](https://commons.wikimedia.org/wiki/File:Canine_scabies_mite.JPG) |
 | Schistosoma spp. | `schistosoma-spp-hero.webp` | CDC | Public domain | [https://commons.wikimedia.org/wiki/File:Schistosoma_mansoni_trematodes.jpg](https://commons.wikimedia.org/wiki/File:Schistosoma_mansoni_trematodes.jpg) |
+| Schistosoma spp. | `schistosoma-spp-lifecycle.webp` | Centers for Disease Control and Prevention | Public domain | [https://commons.wikimedia.org/wiki/File:Schistosomiasis_life_cycle.png](https://commons.wikimedia.org/wiki/File:Schistosomiasis_life_cycle.png) |
 | Spirocerca lupi | `spirocerca-lupi-hero.webp` | Stefan Walkowski | CC BY-SA 4.0 | [https://commons.wikimedia.org/wiki/File:Spirocerca_lupi.jpg](https://commons.wikimedia.org/wiki/File:Spirocerca_lupi.jpg) |
 | Stomoxys calcitrans | `stomoxys-calcitrans-hero.webp` | Frédéric Baldacchino, Coline Tramut, Ali Salem, Emmanuel Liénard, Émilie Delétré, Michel Franc, Thibaud Martin, Gérard D | CC BY 4.0 | [https://commons.wikimedia.org/wiki/File:Repellency_of_lemongrass_oil_against_stable_flies_-_Figure_1.tif](https://commons.wikimedia.org/wiki/File:Repellency_of_lemongrass_oil_against_stable_flies_-_Figure_1.tif) |
 | Strongyloides stercoralis | `strongyloides-stercoralis-hero.webp` | Ajay Kumar Chaurasiya | CC BY-SA 4.0 | [https://commons.wikimedia.org/wiki/File:Larva_of_Strongyloides_in_Saline_wet_mount_of_stool_microscopy.jpg](https://commons.wikimedia.org/wiki/File:Larva_of_Strongyloides_in_Saline_wet_mount_of_stool_microscopy.jpg) |
+| Strongyloides westeri | `strongyloides-westeri-lifecycle.webp` | LeChFr | CC BY-SA 4.0 | [https://commons.wikimedia.org/wiki/File:Strongyloides_westeri_lifecycle.png](https://commons.wikimedia.org/wiki/File:Strongyloides_westeri_lifecycle.png) |
+| Strongylus edentatus | `strongylus-edentatus-hero.webp` | Imes, Schwartz, Wright (USDA); illustration from Looss, 1901 | Public domain | [https://commons.wikimedia.org/wiki/File:Parasites_and_parasitic_diseases_of_horses_(Page_20)_BHL41697906.jpg](https://commons.wikimedia.org/wiki/File:Parasites_and_parasitic_diseases_of_horses_(Page_20)_BHL41697906.jpg) |
+| Strongylus equinus | `strongylus-equinus-hero.webp` | Imes, Schwartz, Wright (USDA); illustration from Looss, 1901 | Public domain | [https://commons.wikimedia.org/wiki/File:Parasites_and_parasitic_diseases_of_horses_(Page_20)_BHL41697906.jpg](https://commons.wikimedia.org/wiki/File:Parasites_and_parasitic_diseases_of_horses_(Page_20)_BHL41697906.jpg) |
 | Strongylus vulgaris | `strongylus-vulgaris-hero.webp` | Vitaliy Kharchenko | CC BY-SA 4.0 | [https://commons.wikimedia.org/wiki/File:Strongylus_vulgaris_-_parasite_of_horses_01.jpg](https://commons.wikimedia.org/wiki/File:Strongylus_vulgaris_-_parasite_of_horses_01.jpg) |
 | Syngamus trachea | `syngamus-trachea-hero.webp` | Milton Friend at the Geological Survey National Wildlife Health Center | Public domain | [https://commons.wikimedia.org/wiki/File:Gapeworms.jpg](https://commons.wikimedia.org/wiki/File:Gapeworms.jpg) |
 | Taenia hydatigena | `taenia-hydatigena-hero.webp` | Wikimedia Commons | Public domain | [https://commons.wikimedia.org/wiki/File:Taenia_hydatigena_-_-_Print_-_Iconographia_Zoologica_-_Special_Collections_University_of_Amsterdam_-_UBAINV0274_105_19_0037.tif](https://commons.wikimedia.org/wiki/File:Taenia_hydatigena_-_-_Print_-_Iconographia_Zoologica_-_Special_Collections_University_of_Amsterdam_-_UBAINV0274_105_19_0037.tif) |
 | Taenia multiceps | `taenia-multiceps-hero.webp` | Wikimedia Commons | Public domain | [https://commons.wikimedia.org/wiki/File:Coenurus.jpg](https://commons.wikimedia.org/wiki/File:Coenurus.jpg) |
 | Taenia ovis | `taenia-ovis-hero.webp` | Tony Rebelo | CC BY-SA 4.0 | [https://commons.wikimedia.org/wiki/File:Taenia_ovis_15965802.jpg](https://commons.wikimedia.org/wiki/File:Taenia_ovis_15965802.jpg) |
 | Taenia saginata | `taenia-saginata-hero.webp` | Wikimedia Commons | Public domain | [https://commons.wikimedia.org/wiki/File:Gravid_proglottid_from_the_cestode_Taenia_saginata_5259_lores.jpg](https://commons.wikimedia.org/wiki/File:Gravid_proglottid_from_the_cestode_Taenia_saginata_5259_lores.jpg) |
+| Taenia saginata | `taenia-saginata-lifecycle.webp` | Sugarplum | CC0-1.0 | [https://github.com/gelbh/sugarplum](https://github.com/gelbh/sugarplum) |
 | Taenia solium | `taenia-solium-hero.webp` | CDC / PHIL or DPDx (via Wikimedia Commons) | Public domain | [https://commons.wikimedia.org/wiki/File:Taenia_solium_tapeworm_scolex_with_its_four_suckers_and_two_rows_of_hooks_5262_lores.jpg](https://commons.wikimedia.org/wiki/File:Taenia_solium_tapeworm_scolex_with_its_four_suckers_and_two_rows_of_hooks_5262_lores.jpg) |
 | Teladorsagia circumcincta | `teladorsagia-circumcincta-hero.webp` | Dr Enterocasso | CC BY-SA 2.0 | [https://commons.wikimedia.org/wiki/File:A_scanning_electron_micrograph_of_the_nematode_Teladorsagia_circumcincta.tif](https://commons.wikimedia.org/wiki/File:A_scanning_electron_micrograph_of_the_nematode_Teladorsagia_circumcincta.tif) |
 | Theileria spp. | `theileria-spp-hero.webp` | Alan R Walker | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Theileria-annulata-piroplasms-cattle.jpg](https://commons.wikimedia.org/wiki/File:Theileria-annulata-piroplasms-cattle.jpg) |
@@ -92,26 +106,12 @@ Rejected: all-rights-reserved, unclear, NC/ND, iNaturalist, random publisher sit
 | Toxoplasma gondii | `toxoplasma-gondii-hero.webp` | Jacques Rigoulet, Alain Hennache, Pierre Lagourette, Catherine George, Loïc Longeart, Jean-Loïc Le Net and Jitender P. D | CC BY 4.0 | [https://commons.wikimedia.org/wiki/File:Parasite140105-fig3_Toxoplasmosis_in_a_bar-shouldered_dove_-_TEM_of_2_tachyzoites.tif](https://commons.wikimedia.org/wiki/File:Parasite140105-fig3_Toxoplasmosis_in_a_bar-shouldered_dove_-_TEM_of_2_tachyzoites.tif) |
 | Trichinella spiralis | `trichinella-spiralis-hero.webp` | Izvora | CC BY-SA 4.0 | [https://commons.wikimedia.org/wiki/File:Tr._spiralis_2.JPG](https://commons.wikimedia.org/wiki/File:Tr._spiralis_2.JPG) |
 | Trichodectes canis | `trichodectes-canis-hero.webp` | Adam Cuerden | Public domain | [https://commons.wikimedia.org/wiki/File:Trichodectes_canis.jpg](https://commons.wikimedia.org/wiki/File:Trichodectes_canis.jpg) |
+| Trichostrongylus spp. | `trichostrongylus-spp-hero.webp` | CDC / DPDx | Public domain | [https://commons.wikimedia.org/wiki/File:Trichostrongylus_egg_wtmt_HB1.jpg](https://commons.wikimedia.org/wiki/File:Trichostrongylus_egg_wtmt_HB1.jpg) |
+| Trichuris ovis | `trichuris-ovis-hero.webp` | Brayton Howard Ransom / USDA Bureau of Animal Industry Bulletin 127 (after Curtice, 1890) | Public domain | [https://commons.wikimedia.org/wiki/File:The_nematodes_parasitic_in_the_alimentary_tract_of_cattle,_sheep,_and_other_ruminants_(IA_bullbai127).pdf](https://commons.wikimedia.org/wiki/File:The_nematodes_parasitic_in_the_alimentary_tract_of_cattle,_sheep,_and_other_ruminants_(IA_bullbai127).pdf) |
 | Trichuris suis | `trichuris-suis-hero.webp` | Universidad de Córdoba | Public domain | [https://commons.wikimedia.org/wiki/File:Trichuris_Suis.jpg](https://commons.wikimedia.org/wiki/File:Trichuris_Suis.jpg) |
 | Trichuris vulpis | `trichuris-vulpis-hero.webp` | CDC / PHIL or DPDx (via Wikimedia Commons) | Public domain | [https://commons.wikimedia.org/wiki/File:Eggs_of_Trichuris_trichiura_and_Trichuris_vulpis_06G0018_jpg_lores.jpg](https://commons.wikimedia.org/wiki/File:Eggs_of_Trichuris_trichiura_and_Trichuris_vulpis_06G0018_jpg_lores.jpg) |
 | Tritrichomonas foetus | `tritrichomonas-foetus-hero.webp` | Chaoqun Yaor and Liza S Köster | CC BY 4.0 | [https://commons.wikimedia.org/wiki/File:Tritrichomonas_foetus.jpg](https://commons.wikimedia.org/wiki/File:Tritrichomonas_foetus.jpg) |
 | Trypanosoma spp. | `trypanosoma-spp-hero.webp` | CDC / Dr. Myron G. Schultz | Public domain | [https://commons.wikimedia.org/wiki/File:Trypanosoma_cruzi_crithidia.jpeg](https://commons.wikimedia.org/wiki/File:Trypanosoma_cruzi_crithidia.jpeg) |
-
-## Lifecycle diagrams (not catalog heroes)
-
-These stay available for the Lifecycle panel. `isHero` must stay false.
-
-| Entry | File | Credit | Licence | Source |
-| --- | --- | --- | --- | --- |
-| Cryptosporidium spp. | `cryptosporidium-spp-lifecycle.webp` | CDC / PHIL or DPDx (via Wikimedia Commons) | Public domain | [https://commons.wikimedia.org/wiki/File:Cicle_de_Cryptosporidium_spp.png](https://commons.wikimedia.org/wiki/File:Cicle_de_Cryptosporidium_spp.png) |
-| Dirofilaria repens | `dirofilaria-repens-lifecycle.webp` | CDC / PHIL or DPDx (via Wikimedia Commons) | Public domain | [https://commons.wikimedia.org/wiki/File:D_repens_Lebenszyklus.png](https://commons.wikimedia.org/wiki/File:D_repens_Lebenszyklus.png) |
-| Echinococcus granulosus | `echinococcus-granulosus-lifecycle.webp` | Besnoitjm | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Ciclo_biol%C3%B3gico_Echinococcus_granulosus.jpg](https://commons.wikimedia.org/wiki/File:Ciclo_biol%C3%B3gico_Echinococcus_granulosus.jpg) |
-| Eimeria spp. | `eimeria-spp-lifecycle.webp` | USDA | Public domain | [https://commons.wikimedia.org/wiki/File:Eimeria_life_cycle_usda.jpg](https://commons.wikimedia.org/wiki/File:Eimeria_life_cycle_usda.jpg) |
-| Fasciola hepatica | `fasciola-hepatica-lifecycle.webp` | Sugarplum | CC0-1.0 | [https://github.com/gelbh/sugarplum](https://github.com/gelbh/sugarplum) |
-| Psoroptes ovis | `psoroptes-ovis-lifecycle.webp` | Daktaridudu | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Life-cycle-psoroptes-ovis-mite-diagram.jpg](https://commons.wikimedia.org/wiki/File:Life-cycle-psoroptes-ovis-mite-diagram.jpg) |
-| Schistosoma spp. | `schistosoma-spp-lifecycle.webp` | Centers for Disease Control and Prevention | Public domain | [https://commons.wikimedia.org/wiki/File:Schistosomiasis_life_cycle.png](https://commons.wikimedia.org/wiki/File:Schistosomiasis_life_cycle.png) |
-| Strongyloides westeri | `strongyloides-westeri-lifecycle.webp` | LeChFr | CC BY-SA 4.0 | [https://commons.wikimedia.org/wiki/File:Strongyloides_westeri_lifecycle.png](https://commons.wikimedia.org/wiki/File:Strongyloides_westeri_lifecycle.png) |
-| Taenia saginata | `taenia-saginata-lifecycle.webp` | Sugarplum | CC0-1.0 | [https://github.com/gelbh/sugarplum](https://github.com/gelbh/sugarplum) |
 
 ## Missing / removed
 
@@ -125,7 +125,6 @@ No catalog hero until a taxon-correct, study-useful, licence-ok asset exists (sp
 | Calicophoron daubneyi | No hero yet |
 | Capillaria longipes | No hero yet |
 | Capillaria plica | No hero yet |
-| Chabertia ovina | No hero yet |
 | Contracaecum osculatum | No hero yet |
 | Crenosoma vulpis | No hero yet |
 | Cylicostephanus longibursatus | No hero yet |
@@ -141,21 +140,14 @@ No catalog hero until a taxon-correct, study-useful, licence-ok asset exists (sp
 | Metastrongylus apri | No hero yet |
 | Muellerius capillaris | No hero yet |
 | Nematodirus battus | No hero yet |
-| Oesophagostomum venulosum | No hero yet |
 | Onchocerca cervicalis | No hero yet |
 | Onchocerca ochengi | No hero yet |
 | Oslerus osleri | No hero yet |
-| Ostertagia ostertagi | No hero yet |
 | Parafilaria multipapillosa | No hero yet |
 | Paramphistomum cervi | No hero yet |
 | Protostrongylus rufescens | No hero yet |
-| Pseudoterranova decipiens | Removed: generic anasakid stand-in |
 | Strongyloides papillosus | No hero yet |
 | Strongyloides ransomi | No hero yet |
 | Strongyloides westeri | Lifecycle diagram retained; catalog hero cleared |
-| Strongylus edentatus | No hero yet |
-| Strongylus equinus | No hero yet |
 | Thelazia lacrymalis | No hero yet |
-| Trichostrongylus spp. | Removed: drug product packaging |
-| Trichuris ovis | No hero yet |
 | Uncinaria stenocephala | No hero yet |
