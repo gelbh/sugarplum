@@ -151,7 +151,7 @@ export function useCreateCardController({
         !isOcclusionFront(front)
       ) {
         front = starterOcclusionFront(imageKey);
-        back = { answer: "r1" };
+        back = { answer: "" };
       }
       return {
         ...prev,
@@ -206,7 +206,7 @@ export function useCreateCardController({
       type: "occlusion",
       media_r2_keys: key ? [key] : [],
       front: starterOcclusionFront(key),
-      back: { answer: "r1" },
+      back: { answer: "" },
     });
   }
 
