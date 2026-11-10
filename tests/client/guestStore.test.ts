@@ -1172,4 +1172,129 @@ describe("guest store", () => {
     expect(guestGetFsrsOptimizeStatus(storage).pending).toBe(false);
     expect(guestGetFsrsOptimizeStatus(storage).lastOptimizedAt).not.toBeNull();
   });
+
+  it("empty dueIds after future-only reschedule does not heal into all cards", async () => {
+    const { default_w } = await import("ts-fsrs");
+    enterGuest(storage);
+    const subject = guestCreateSubject("Heal subject", storage);
+    const deck = guestCreateDeck("Heal deck", subject.id, storage);
+    const [card] = guestAddAcceptedCards(
+      deck.id,
+      [{ front: "Q?", back: "A" }],
+      storage,
+    );
+    guestReviewCard(card.id, 4, storage);
+    guestReviewCard(card.id, 4, storage);
+    guestReviewCard(card.id, 4, storage);
+
+    const customW = default_w.map((x, i) => (i === 8 ? x * 3 : x));
+    guestSaveFsrsWeights(customW, storage);
+
+    const raw = JSON.parse(storage.getItem(STORE_KEY)!) as {
+      dueIds: string[];
+      cards: Array<{ id: string; due: string; status: string }>;
+    };
+    // All accepted dues in the future → empty dueIds is intentional, not a heal.
+    raw.cards = raw.cards.map((c) =>
+      c.status === "accepted"
+        ? { ...c, due: "2099-01-01T00:00:00.000Z" }
+        : c,
+    );
+    raw.dueIds = [];
+    storage.setItem(STORE_KEY, JSON.stringify(raw));
+
+    guestListDueCards({ deckId: deck.id }, storage);
+    const after = JSON.parse(storage.getItem(STORE_KEY)!) as {
+      dueIds: string[];
+    };
+    expect(after.dueIds).toEqual([]);
+  });
+
+  it("save and reset weights reschedule cards with review history", async () => {
+    const { default_w } = await import("ts-fsrs");
+    const { replayCardFromLogs } = await import("../../src/study/fsrsReplay");
+    const { scheduleColumnsFromCard } = await import(
+      "../../src/study/retrievability"
+    );
+    enterGuest(storage);
+    const subject = guestCreateSubject("Reschedule subject", storage);
+    const deck = guestCreateDeck("Reschedule deck", subject.id, storage);
+    const [card] = guestAddAcceptedCards(
+      deck.id,
+      [{ front: "Q?", back: "A" }],
+      storage,
+    );
+    guestReviewCard(card.id, 3, storage);
+    guestReviewCard(card.id, 3, storage);
+    guestReviewCard(card.id, 4, storage);
+
+    const rawBefore = JSON.parse(storage.getItem(STORE_KEY)!) as {
+      cards: Array<{ id: string; due: string }>;
+      reviewLogs: Array<{ cardId: string; rating: number; at: string }>;
+      schedules: Record<string, { stability: number }>;
+    };
+    const dueBefore = rawBefore.cards.find((c) => c.id === card.id)?.due;
+    const stabilityBefore = rawBefore.schedules[card.id]?.stability;
+    expect(dueBefore).toBeTruthy();
+    expect(stabilityBefore).toBeTruthy();
+
+    const customW = default_w.map((x, i) => (i === 8 ? x * 3 : x));
+    const saved = guestSaveFsrsWeights(customW, storage);
+    expect(saved.rescheduled.cardsUpdated).toBe(1);
+
+    const rawAfterSave = JSON.parse(storage.getItem(STORE_KEY)!) as {
+      cards: Array<{ id: string; due: string }>;
+      schedules: Record<string, { stability: number; difficulty: number }>;
+      reviewLogs: Array<{ cardId: string; rating: number; at: string }>;
+    };
+    const expectedCustom = replayCardFromLogs(
+      rawAfterSave.reviewLogs
+        .filter((l) => l.cardId === card.id)
+        .map((l) => ({ reviewed_at: l.at, rating: l.rating })),
+      { desiredRetention: 0.9, enableFuzz: false, w: customW },
+    );
+    expect(expectedCustom).not.toBeNull();
+    const customCols = scheduleColumnsFromCard(expectedCustom!);
+    expect(rawAfterSave.cards.find((c) => c.id === card.id)?.due).toBe(
+      customCols.due,
+    );
+    expect(rawAfterSave.schedules[card.id]?.stability).toBe(customCols.stability);
+
+    const dueAfterSave = rawAfterSave.cards.find((c) => c.id === card.id)?.due;
+    guestPutStudyPrefs({ introBudget: 9 }, storage);
+    const rawAfterPrefs = JSON.parse(storage.getItem(STORE_KEY)!) as {
+      cards: Array<{ id: string; due: string }>;
+      schedules: Record<string, { stability: number }>;
+      fsrsW: number[];
+    };
+    expect(rawAfterPrefs.fsrsW).toEqual(customW);
+    expect(rawAfterPrefs.cards.find((c) => c.id === card.id)?.due).toBe(
+      dueAfterSave,
+    );
+    expect(rawAfterPrefs.schedules[card.id]?.stability).toBe(
+      customCols.stability,
+    );
+
+    const reset = guestResetFsrsWeights(storage);
+    expect(reset.rescheduled.cardsUpdated).toBe(1);
+    const rawAfterReset = JSON.parse(storage.getItem(STORE_KEY)!) as {
+      cards: Array<{ id: string; due: string }>;
+      schedules: Record<string, { stability: number }>;
+      reviewLogs: Array<{ cardId: string; rating: number; at: string }>;
+    };
+    const expectedDefault = replayCardFromLogs(
+      rawAfterReset.reviewLogs
+        .filter((l) => l.cardId === card.id)
+        .map((l) => ({ reviewed_at: l.at, rating: l.rating })),
+      { desiredRetention: 0.9, enableFuzz: false },
+    );
+    expect(expectedDefault).not.toBeNull();
+    const defaultCols = scheduleColumnsFromCard(expectedDefault!);
+    expect(rawAfterReset.cards.find((c) => c.id === card.id)?.due).toBe(
+      defaultCols.due,
+    );
+    expect(rawAfterReset.schedules[card.id]?.stability).toBe(
+      defaultCols.stability,
+    );
+  });
 });
