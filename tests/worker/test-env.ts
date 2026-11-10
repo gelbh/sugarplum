@@ -189,6 +189,7 @@ export type ScheduleRow = {
   lapses: number;
   state: number;
   last_review: string | null;
+  stability_fast?: number | null;
 };
 
 export type ReviewLogRow = {
@@ -4007,6 +4008,7 @@ export function createTestEnv(opts?: {
           normalized.includes("WHERE card_id =")
         ) {
           const hasExists = normalized.includes("EXISTS");
+          const hasStabilityFast = normalized.includes("stability_fast");
           const due = bound[0] as string;
           const stability = bound[1] as number;
           const difficulty = bound[2] as number;
@@ -4017,8 +4019,13 @@ export function createTestEnv(opts?: {
           const lapses = bound[7] as number;
           const state = bound[8] as number;
           const last_review = bound[9] as string | null;
-          const card_id = bound[10] as string;
-          const ownerId = hasExists ? (bound[11] as string) : undefined;
+          const stability_fast = hasStabilityFast
+            ? (bound[10] as number | null)
+            : null;
+          const card_id = bound[hasStabilityFast ? 11 : 10] as string;
+          const ownerId = hasExists
+            ? (bound[hasStabilityFast ? 12 : 11] as string)
+            : undefined;
           const existing = schedules.get(card_id);
           if (!existing) {
             return { success: true, meta: { changes: 0 } } as D1Result;
@@ -4042,6 +4049,7 @@ export function createTestEnv(opts?: {
             lapses,
             state,
             last_review,
+            ...(hasStabilityFast ? { stability_fast } : {}),
           });
           return { success: true, meta: { changes: 1 } } as D1Result;
         } else if (

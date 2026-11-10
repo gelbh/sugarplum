@@ -52,6 +52,7 @@ type StrugglingSqlRow = {
   learning_steps: number;
   reps: number;
   state: number;
+  stability_fast: number | null;
   again_14d: number;
   hard_14d: number;
 };
@@ -191,7 +192,7 @@ studyRoutes.get("/struggling", async (c) => {
       `SELECT c.id, c.deck_id, c.job_id, c.type, c.front_json, c.provenance_json,
               s.lapses, s.difficulty, s.due, s.last_review,
               s.stability, s.elapsed_days, s.scheduled_days, s.learning_steps,
-              s.reps, s.state,
+              s.reps, s.state, s.stability_fast,
               (
                 SELECT COUNT(*) FROM review_logs rl
                 WHERE rl.card_id = c.id
@@ -229,6 +230,7 @@ studyRoutes.get("/struggling", async (c) => {
           lapses: row.lapses,
           state: row.state,
           last_review: row.last_review,
+          stability_fast: row.stability_fast,
         }),
         now,
       );
@@ -300,7 +302,7 @@ studyRoutes.post("/review", async (c) => {
   const schedule = await db
     .prepare(
       `SELECT due, stability, difficulty, elapsed_days, scheduled_days,
-              learning_steps, reps, lapses, state, last_review
+              learning_steps, reps, lapses, state, last_review, stability_fast
        FROM card_schedules WHERE card_id = ?`,
     )
     .bind(cardId)
@@ -322,8 +324,8 @@ studyRoutes.post("/review", async (c) => {
   }
   const prefs = await loadStudyPrefs(db, userId);
 
-  const { card: nextCard, log } = reviewWithLog(
-    cardFromScheduleRow(schedule),
+  const { card: nextCard, log } = await reviewWithLog(
+    cardFromScheduleRow({ ...schedule, card_id: cardId }),
     grade,
     now,
     prefs,
@@ -333,7 +335,24 @@ studyRoutes.post("/review", async (c) => {
   const reviewLogId = crypto.randomUUID();
 
   await db.batch([
-    prepareFullScheduleUpdate(db, cols, cardId, userId),
+    prepareFullScheduleUpdate(
+      db,
+      {
+        due: cols.due,
+        stability: cols.stability,
+        difficulty: cols.difficulty,
+        elapsed_days: cols.elapsed_days,
+        scheduled_days: cols.scheduled_days,
+        learning_steps: cols.learning_steps,
+        reps: cols.reps,
+        lapses: cols.lapses,
+        state: cols.state,
+        last_review: cols.last_review,
+        stability_fast: cols.stability_fast,
+      },
+      cardId,
+      userId,
+    ),
     db
       .prepare(
         `INSERT INTO review_logs (

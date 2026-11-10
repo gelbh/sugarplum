@@ -65,7 +65,7 @@ describe("guest store", () => {
     clearGuestStore(storage);
   });
 
-  it("seeds due cards after enterGuest + list", () => {
+  it("seeds due cards after enterGuest + list", async () => {
     enterGuest(storage);
     expect(storage.getItem(GUEST_FLAG_KEY)).toBe("1");
     const { cards: due, meta } = guestListDueCards(undefined, storage);
@@ -75,7 +75,7 @@ describe("guest store", () => {
     expect(meta.reviewBudget).toBe(200);
   });
 
-  it("seeds Anatomy subject and attaches demo deck subject_id", () => {
+  it("seeds Anatomy subject and attaches demo deck subject_id", async () => {
     enterGuest(storage);
     const subjects = guestListSubjects(storage);
     expect(subjects.some((s) => s.title === "Anatomy")).toBe(true);
@@ -85,7 +85,7 @@ describe("guest store", () => {
     expect(decks.every((d) => d.subject_id === anatomy.id)).toBe(true);
   });
 
-  it("guestSubjectComposition aggregates accepted buckets and ignores drafts", () => {
+  it("guestSubjectComposition aggregates accepted buckets and ignores drafts", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(COMPOSITION_NOW);
     try {
@@ -191,7 +191,7 @@ describe("guest store", () => {
     }
   });
 
-  it("guestSubjectComposition all-new → avg 0 and 0 etk", () => {
+  it("guestSubjectComposition all-new → avg 0 and 0 etk", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(COMPOSITION_NOW);
     try {
@@ -222,13 +222,13 @@ describe("guest store", () => {
     }
   });
 
-  it("guestSubjectComposition throws for missing subject", () => {
+  it("guestSubjectComposition throws for missing subject", async () => {
     expect(() => guestSubjectComposition("missing", storage)).toThrow(
       "Subject not found",
     );
   });
 
-  it("guestDeckComposition matches subject buckets for a single deck", () => {
+  it("guestDeckComposition matches subject buckets for a single deck", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(COMPOSITION_NOW);
     try {
@@ -271,7 +271,7 @@ describe("guest store", () => {
     }
   });
 
-  it("guestSubjectCompositionSummaries returns graduated pct per subject", () => {
+  it("guestSubjectCompositionSummaries returns graduated pct per subject", async () => {
     const empty = guestCreateSubject("Empty", storage);
     const subject = guestCreateSubject("Knowledge subject", storage);
     const deck = guestCreateDeck("Knowledge deck", subject.id, storage);
@@ -331,7 +331,7 @@ describe("guest store", () => {
     expect(mixed.etk).toBeGreaterThanOrEqual(0);
   });
 
-  it("migrates old store without subjects into Unfiled / subject_hint", () => {
+  it("migrates old store without subjects into Unfiled / subject_hint", async () => {
     storage.setItem(
       STORE_KEY,
       JSON.stringify({
@@ -366,7 +366,7 @@ describe("guest store", () => {
     );
   });
 
-  it("persists remap when deck.subject_id is dangling", () => {
+  it("persists remap when deck.subject_id is dangling", async () => {
     storage.setItem(
       STORE_KEY,
       JSON.stringify({
@@ -401,7 +401,7 @@ describe("guest store", () => {
     expect(persisted.subjects.some((s) => s.title === "Anatomy")).toBe(true);
   });
 
-  it("creates subject then deck under subject_id", () => {
+  it("creates subject then deck under subject_id", async () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Physiology", storage);
     expect(subject.title).toBe("Physiology");
@@ -416,7 +416,7 @@ describe("guest store", () => {
     expect(guestListDecks(subject.id, storage)).toHaveLength(1);
   });
 
-  it("deleteSubject throws when decks remain; empty subject deletes", () => {
+  it("deleteSubject throws when decks remain; empty subject deletes", async () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Emptyable", storage);
     const withDecks = guestCreateSubject("Busy", storage);
@@ -435,11 +435,11 @@ describe("guest store", () => {
     );
   });
 
-  it("writes FSRS schedule on grade (leaves New state)", () => {
+  it("writes FSRS schedule on grade (leaves New state)", async () => {
     enterGuest(storage);
     const due = guestListDueCards(undefined, storage).cards;
     const id = due[0]!.id;
-    const result = guestReviewCard(id, 3, storage);
+    const result = await guestReviewCard(id, 3, storage);
     expect(result.due).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(typeof result.state).toBe("number");
     const raw = JSON.parse(storage.getItem(STORE_KEY)!) as {
@@ -458,7 +458,7 @@ describe("guest store", () => {
     expect(graded?.state).toBe(0);
   });
 
-  it("keeps thin historical logs and enriches only new grades", () => {
+  it("keeps thin historical logs and enriches only new grades", async () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Thin logs subject", storage);
     const deck = guestCreateDeck("Thin logs deck", subject.id, storage);
@@ -483,7 +483,7 @@ describe("guest store", () => {
     });
     storage.setItem(STORE_KEY, JSON.stringify(raw));
 
-    guestReviewCard(card.id, 3, storage);
+    await guestReviewCard(card.id, 3, storage);
 
     const after = JSON.parse(storage.getItem(STORE_KEY)!) as {
       reviewLogs: Array<{
@@ -507,7 +507,7 @@ describe("guest store", () => {
     expect(rows.some((r) => r.id === card.id && r.again_14d === 1)).toBe(true);
   });
 
-  it("day-sticky intro: grading New cards reduces same-day remaining slice", () => {
+  it("day-sticky intro: grading New cards reduces same-day remaining slice", async () => {
     enterGuest(storage);
     guestPutStudyPrefs(
       { introBudget: 5, reviewBudget: 200, rFloor: 0.8 },
@@ -527,7 +527,7 @@ describe("guest store", () => {
     const first = guestListDueCards({ localDay: day }, storage);
     expect(first.meta.introUsed).toBe(5);
     for (const card of first.cards) {
-      guestReviewCard(card.id, 3, storage, { localDay: day });
+      await guestReviewCard(card.id, 3, storage, { localDay: day });
     }
     const second = guestListDueCards({ localDay: day }, storage);
     expect(second.meta.introAlreadyUsedToday).toBe(5);
@@ -535,7 +535,7 @@ describe("guest store", () => {
     expect(second.meta.heldIntroCount).toBeGreaterThan(0);
   });
 
-  it("listDue peeks deferrals without writing dues until commitPacing", () => {
+  it("listDue peeks deferrals without writing dues until commitPacing", async () => {
     enterGuest(storage);
     guestPutStudyPrefs(
       { introBudget: 1, reviewBudget: 1, rFloor: 0.5 },
@@ -587,7 +587,7 @@ describe("guest store", () => {
     expect(duesAfterPeek).toEqual(duesBefore);
   });
 
-  it("filters due cards by deckId", () => {
+  it("filters due cards by deckId", async () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Filter subject", storage);
     const deckA = guestCreateDeck("Deck A", subject.id, storage);
@@ -608,7 +608,7 @@ describe("guest store", () => {
     expect(due.every((c) => c.deck_id === deckA.id)).toBe(true);
   });
 
-  it("interleaves multi-deck review due order for a subject", () => {
+  it("interleaves multi-deck review due order for a subject", async () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Interleave subject", storage);
     const deckA = guestCreateDeck("Deck A", subject.id, storage);
@@ -669,7 +669,7 @@ describe("guest store", () => {
     expect(new Set([due[0]!.deck_id, due[1]!.deck_id]).size).toBe(2);
   });
 
-  it("filters due cards by subjectId via deck.subject_id", () => {
+  it("filters due cards by subjectId via deck.subject_id", async () => {
     enterGuest(storage);
     const sub1 = guestCreateSubject("Subject One", storage);
     const sub2 = guestCreateSubject("Subject Two", storage);
@@ -690,7 +690,7 @@ describe("guest store", () => {
     expect(due.map((c) => c.id)).not.toContain(c2!.id);
   });
 
-  it("endGuestLocal clears the guest flag so auth can take over", () => {
+  it("endGuestLocal clears the guest flag so auth can take over", async () => {
     enterGuest(storage);
     expect(isGuest(storage)).toBe(true);
     endGuestLocal(storage);
@@ -698,7 +698,7 @@ describe("guest store", () => {
     expect(storage.getItem(GUEST_FLAG_KEY)).toBeNull();
   });
 
-  it("guestAddAcceptedCards writes paste cards into the due queue", () => {
+  it("guestAddAcceptedCards writes paste cards into the due queue", async () => {
     enterGuest(storage);
     const olderDue = guestListDueCards(undefined, storage).cards.map(
       (c) => c.id,
@@ -731,7 +731,7 @@ describe("guest store", () => {
     expect(dueIds).toHaveLength(olderDue.length + newIds.length);
   });
 
-  it("guestAddAcceptedCards returns [] when deck is missing", () => {
+  it("guestAddAcceptedCards returns [] when deck is missing", async () => {
     enterGuest(storage);
     expect(
       guestAddAcceptedCards(
@@ -742,7 +742,7 @@ describe("guest store", () => {
     ).toEqual([]);
   });
 
-  it("createDeckCard accepts qa and lands the id in dueIds", () => {
+  it("createDeckCard accepts qa and lands the id in dueIds", async () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Hub subject", storage);
     const deck = guestCreateDeck("Hub deck", subject.id, storage);
@@ -776,7 +776,7 @@ describe("guest store", () => {
     expect(dueIds).toEqual(expect.arrayContaining([...olderDue, card.id]));
   });
 
-  it("createDeckCard rejects occlusion and image_label", () => {
+  it("createDeckCard rejects occlusion and image_label", async () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Image subject", storage);
     const deck = guestCreateDeck("Image deck", subject.id, storage);
@@ -804,7 +804,7 @@ describe("guest store", () => {
     ).toThrow(/Unsupported card type/);
   });
 
-  it("createDeckCard allows cloze with empty Extra", () => {
+  it("createDeckCard allows cloze with empty Extra", async () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Cloze subject", storage);
     const deck = guestCreateDeck("Cloze deck", subject.id, storage);
@@ -824,7 +824,7 @@ describe("guest store", () => {
     ).toContain(card.id);
   });
 
-  it("createDeckCard rejects MCQ without valid options", () => {
+  it("createDeckCard rejects MCQ without valid options", async () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Mcq subject", storage);
     const deck = guestCreateDeck("Mcq deck", subject.id, storage);
@@ -837,7 +837,7 @@ describe("guest store", () => {
     ).toThrow(/MCQ requires options/);
   });
 
-  it("createDeckCard rejects multi-blank cloze", () => {
+  it("createDeckCard rejects multi-blank cloze", async () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Cloze bad", storage);
     const deck = guestCreateDeck("Cloze bad deck", subject.id, storage);
@@ -854,7 +854,7 @@ describe("guest store", () => {
     ).toThrow(/at most one blank/);
   });
 
-  it("patchCard rejects invalid MCQ options", () => {
+  it("patchCard rejects invalid MCQ options", async () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Patch mcq", storage);
     const deck = guestCreateDeck("Patch mcq deck", subject.id, storage);
@@ -873,7 +873,7 @@ describe("guest store", () => {
     ).toThrow(/MCQ/);
   });
 
-  it("patchCard updates front on an accepted card", () => {
+  it("patchCard updates front on an accepted card", async () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Edit subject", storage);
     const deck = guestCreateDeck("Edit deck", subject.id, storage);
@@ -890,7 +890,7 @@ describe("guest store", () => {
     expect(guestListDeckCards(deck.id, storage)[0]?.front).toBe("New front");
   });
 
-  it("archiveCard sets archived and removes id from due list", () => {
+  it("archiveCard sets archived and removes id from due list", async () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Archive subject", storage);
     const deck = guestCreateDeck("Archive deck", subject.id, storage);
@@ -913,7 +913,7 @@ describe("guest store", () => {
     ).toBe(false);
   });
 
-  it("restoreCard sets accepted and returns card to the due queue", () => {
+  it("restoreCard sets accepted and returns card to the due queue", async () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Restore subject", storage);
     const deck = guestCreateDeck("Restore deck", subject.id, storage);
@@ -934,7 +934,7 @@ describe("guest store", () => {
     ).toContain(card.id);
   });
 
-  it("moveCard updates deck_id and leaves dueIds unchanged", () => {
+  it("moveCard updates deck_id and leaves dueIds unchanged", async () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Move subject", storage);
     const deckA = guestCreateDeck("Deck A", subject.id, storage);
@@ -964,7 +964,7 @@ describe("guest store", () => {
     ).toEqual([...dueBefore].sort());
   });
 
-  it("moveCard allows archived cards", () => {
+  it("moveCard allows archived cards", async () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Move arch subject", storage);
     const deckA = guestCreateDeck("Deck A", subject.id, storage);
@@ -981,7 +981,7 @@ describe("guest store", () => {
     expect(moved.status).toBe("archived");
   });
 
-  it("resetCardSchedule sets due now and keeps card in the due queue", () => {
+  it("resetCardSchedule sets due now and keeps card in the due queue", async () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Reset subject", storage);
     const deck = guestCreateDeck("Reset deck", subject.id, storage);
@@ -990,7 +990,7 @@ describe("guest store", () => {
       { type: "qa", front: "Q?", back: "A" },
       storage,
     );
-    guestReviewCard(card.id, 3, storage);
+    await guestReviewCard(card.id, 3, storage);
 
     const before = Date.now();
     const reset = guestResetCardSchedule(card.id, storage);
@@ -1003,7 +1003,7 @@ describe("guest store", () => {
     expect(dueMs).toBeLessThanOrEqual(Date.now() + 5_000);
   });
 
-  it("migrates missing studyPrefs to defaults", () => {
+  it("migrates missing studyPrefs to defaults", async () => {
     storage.setItem(
       STORE_KEY,
       JSON.stringify({
@@ -1039,7 +1039,7 @@ describe("guest store", () => {
     expect(persisted.studyPrefs.introBudget).toBe(20);
   });
 
-  it("caps guest intro at studyPrefs.introBudget and reports heldIntroCount", () => {
+  it("caps guest intro at studyPrefs.introBudget and reports heldIntroCount", async () => {
     enterGuest(storage);
     guestPutStudyPrefs(
       { introBudget: 5, reviewBudget: 200, rFloor: 0.8 },
@@ -1061,7 +1061,7 @@ describe("guest store", () => {
     expect(meta.introBudget).toBe(5);
   });
 
-  it("Study more introBonus raises effective intro slice", () => {
+  it("Study more introBonus raises effective intro slice", async () => {
     enterGuest(storage);
     guestPutStudyPrefs(
       { introBudget: 3, reviewBudget: 200, rFloor: 0.8 },
@@ -1084,13 +1084,13 @@ describe("guest store", () => {
     expect(boosted.meta.heldIntroCount).toBeLessThan(base.meta.heldIntroCount);
   });
 
-  it("local struggling ranks Again from guest review history", () => {
+  it("local struggling ranks Again from guest review history", async () => {
     enterGuest(storage);
     const due = guestListDueCards(undefined, storage).cards;
     const id = due[0]!.id;
     expect(guestListStrugglingCards(storage)).toEqual([]);
 
-    guestReviewCard(id, 1, storage);
+    await guestReviewCard(id, 1, storage);
     const rows = guestListStrugglingCards(storage);
     expect(rows).toHaveLength(1);
     expect(rows[0]?.id).toBe(id);
@@ -1101,16 +1101,16 @@ describe("guest store", () => {
     expect(rows[0]?.has_regen_source).toBe(false);
   });
 
-  it("two Hards in 14d surface on guest struggling", () => {
+  it("two Hards in 14d surface on guest struggling", async () => {
     enterGuest(storage);
     const id = guestListDueCards(undefined, storage).cards[0]!.id;
-    guestReviewCard(id, 2, storage);
-    guestReviewCard(id, 2, storage);
+    await guestReviewCard(id, 2, storage);
+    await guestReviewCard(id, 2, storage);
     const rows = guestListStrugglingCards(storage);
     expect(rows.some((r) => r.id === id && r.hard_14d === 2)).toBe(true);
   });
 
-  it("deleteCard removes the card, schedule, review log, and due id", () => {
+  it("deleteCard removes the card, schedule, review log, and due id", async () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Delete subject", storage);
     const deck = guestCreateDeck("Delete deck", subject.id, storage);
@@ -1119,7 +1119,7 @@ describe("guest store", () => {
       { type: "qa", front: "Gone?", back: "Yes" },
       storage,
     );
-    guestReviewCard(card.id, 3, storage);
+    await guestReviewCard(card.id, 3, storage);
 
     guestDeleteCard(card.id, storage);
 
@@ -1138,7 +1138,7 @@ describe("guest store", () => {
     expect(parsed.reviewLogs?.some((l) => l.cardId === card.id)).toBe(false);
   });
 
-  it("deleteCard rejects a non-accepted card", () => {
+  it("deleteCard rejects a non-accepted card", async () => {
     enterGuest(storage);
     const subject = guestCreateSubject("Delete subject", storage);
     const deck = guestCreateDeck("Delete deck", subject.id, storage);
@@ -1154,10 +1154,10 @@ describe("guest store", () => {
   });
 
   it("preserves fsrsW across studyPrefs PUT and reset clears it", async () => {
-    const { default_w } = await import("ts-fsrs");
+    const { FSRS7_DEFAULT_WEIGHTS } = await import("ts-fsrs/models/fsrs-7");
     enterGuest(storage);
-    const customW = default_w.map((x, i) => (i === 8 ? x * 3 : x));
-    guestSaveFsrsWeights(customW, storage);
+    const customW = FSRS7_DEFAULT_WEIGHTS.map((x, i) => (i < 10 ? x * 2 : x));
+    await guestSaveFsrsWeights(customW, storage);
 
     guestPutStudyPrefs({ introBudget: 7 }, storage);
     expect(guestGetStudyPrefs(storage).introBudget).toBe(7);
@@ -1167,14 +1167,14 @@ describe("guest store", () => {
     };
     expect(rawAfterPrefs.fsrsW).toEqual(customW);
 
-    guestResetFsrsWeights(storage);
+    await guestResetFsrsWeights(storage);
     expect(guestGetFsrsOptimizeStatus(storage).hasCustomW).toBe(false);
     expect(guestGetFsrsOptimizeStatus(storage).pending).toBe(false);
     expect(guestGetFsrsOptimizeStatus(storage).lastOptimizedAt).not.toBeNull();
   });
 
   it("empty dueIds after future-only reschedule does not heal into all cards", async () => {
-    const { default_w } = await import("ts-fsrs");
+    const { FSRS7_DEFAULT_WEIGHTS } = await import("ts-fsrs/models/fsrs-7");
     enterGuest(storage);
     const subject = guestCreateSubject("Heal subject", storage);
     const deck = guestCreateDeck("Heal deck", subject.id, storage);
@@ -1183,12 +1183,12 @@ describe("guest store", () => {
       [{ front: "Q?", back: "A" }],
       storage,
     );
-    guestReviewCard(card.id, 4, storage);
-    guestReviewCard(card.id, 4, storage);
-    guestReviewCard(card.id, 4, storage);
+    await guestReviewCard(card.id, 4, storage);
+    await guestReviewCard(card.id, 4, storage);
+    await guestReviewCard(card.id, 4, storage);
 
-    const customW = default_w.map((x, i) => (i === 8 ? x * 3 : x));
-    guestSaveFsrsWeights(customW, storage);
+    const customW = FSRS7_DEFAULT_WEIGHTS.map((x, i) => (i < 10 ? x * 2 : x));
+    await guestSaveFsrsWeights(customW, storage);
 
     const raw = JSON.parse(storage.getItem(STORE_KEY)!) as {
       dueIds: string[];
@@ -1211,7 +1211,7 @@ describe("guest store", () => {
   });
 
   it("save and reset weights reschedule cards with review history", async () => {
-    const { default_w } = await import("ts-fsrs");
+    const { FSRS7_DEFAULT_WEIGHTS } = await import("ts-fsrs/models/fsrs-7");
     const { replayCardFromLogs } = await import("../../src/study/fsrsReplay");
     const { scheduleColumnsFromCard } = await import(
       "../../src/study/retrievability"
@@ -1224,9 +1224,9 @@ describe("guest store", () => {
       [{ front: "Q?", back: "A" }],
       storage,
     );
-    guestReviewCard(card.id, 3, storage);
-    guestReviewCard(card.id, 3, storage);
-    guestReviewCard(card.id, 4, storage);
+    await guestReviewCard(card.id, 3, storage);
+    await guestReviewCard(card.id, 3, storage);
+    await guestReviewCard(card.id, 4, storage);
 
     const rawBefore = JSON.parse(storage.getItem(STORE_KEY)!) as {
       cards: Array<{ id: string; due: string }>;
@@ -1238,8 +1238,8 @@ describe("guest store", () => {
     expect(dueBefore).toBeTruthy();
     expect(stabilityBefore).toBeTruthy();
 
-    const customW = default_w.map((x, i) => (i === 8 ? x * 3 : x));
-    const saved = guestSaveFsrsWeights(customW, storage);
+    const customW = FSRS7_DEFAULT_WEIGHTS.map((x, i) => (i < 10 ? x * 2 : x));
+    const saved = await guestSaveFsrsWeights(customW, storage);
     expect(saved.rescheduled.cardsUpdated).toBe(1);
 
     const rawAfterSave = JSON.parse(storage.getItem(STORE_KEY)!) as {
@@ -1247,7 +1247,7 @@ describe("guest store", () => {
       schedules: Record<string, { stability: number; difficulty: number }>;
       reviewLogs: Array<{ cardId: string; rating: number; at: string }>;
     };
-    const expectedCustom = replayCardFromLogs(
+    const expectedCustom = await replayCardFromLogs(
       rawAfterSave.reviewLogs
         .filter((l) => l.cardId === card.id)
         .map((l) => ({ reviewed_at: l.at, rating: l.rating })),
@@ -1275,14 +1275,14 @@ describe("guest store", () => {
       customCols.stability,
     );
 
-    const reset = guestResetFsrsWeights(storage);
+    const reset = await guestResetFsrsWeights(storage);
     expect(reset.rescheduled.cardsUpdated).toBe(1);
     const rawAfterReset = JSON.parse(storage.getItem(STORE_KEY)!) as {
       cards: Array<{ id: string; due: string }>;
       schedules: Record<string, { stability: number }>;
       reviewLogs: Array<{ cardId: string; rating: number; at: string }>;
     };
-    const expectedDefault = replayCardFromLogs(
+    const expectedDefault = await replayCardFromLogs(
       rawAfterReset.reviewLogs
         .filter((l) => l.cardId === card.id)
         .map((l) => ({ reviewed_at: l.at, rating: l.rating })),

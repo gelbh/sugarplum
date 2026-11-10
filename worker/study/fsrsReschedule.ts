@@ -62,13 +62,32 @@ export async function rescheduleUserSchedules(
       cardsSkipped += 1;
       continue;
     }
-    const next = replayCardFromLogs(logs, prefs);
+    const next = await replayCardFromLogs(logs, prefs, cardId);
     if (!next) {
       cardsSkipped += 1;
       continue;
     }
     const cols = scheduleColumnsFromCard(next);
-    statements.push(prepareFullScheduleUpdate(db, cols, cardId, userId));
+    statements.push(
+      prepareFullScheduleUpdate(
+        db,
+        {
+          due: cols.due,
+          stability: cols.stability,
+          difficulty: cols.difficulty,
+          elapsed_days: cols.elapsed_days,
+          scheduled_days: cols.scheduled_days,
+          learning_steps: cols.learning_steps,
+          reps: cols.reps,
+          lapses: cols.lapses,
+          state: cols.state,
+          last_review: cols.last_review,
+          stability_fast: cols.stability_fast,
+        },
+        cardId,
+        userId,
+      ),
+    );
     cardsUpdated += 1;
   }
 

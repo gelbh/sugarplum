@@ -1164,14 +1164,14 @@ export type FsrsRescheduleSummary = {
   cardsSkipped: number;
 };
 
-export function putFsrsWeights(w: number[]) {
+export async function putFsrsWeights(w: number[]) {
   if (isGuest()) {
-    const saved = guestSaveFsrsWeights(w);
-    return Promise.resolve({
+    const saved = await guestSaveFsrsWeights(w);
+    return {
       ok: true as const,
       wLength: saved.wLength,
       rescheduled: saved.rescheduled,
-    });
+    };
   }
   return api<{ ok: true; wLength: number; rescheduled: FsrsRescheduleSummary }>(
     "/api/settings/study/fsrs-weights",
@@ -1182,13 +1182,13 @@ export function putFsrsWeights(w: number[]) {
   );
 }
 
-export function resetFsrsWeights() {
+export async function resetFsrsWeights() {
   if (isGuest()) {
-    const reset = guestResetFsrsWeights();
-    return Promise.resolve({
+    const reset = await guestResetFsrsWeights();
+    return {
       ok: true as const,
       rescheduled: reset.rescheduled,
-    });
+    };
   }
   return api<{ ok: true; rescheduled: FsrsRescheduleSummary }>(
     "/api/settings/study/fsrs-weights/reset",
@@ -1572,9 +1572,7 @@ export function reviewCard(
 ) {
   const localDay = opts?.localDay;
   if (isGuest()) {
-    return Promise.resolve(
-      guestReviewCard(cardId, rating, undefined, { localDay }),
-    );
+    return guestReviewCard(cardId, rating, undefined, { localDay });
   }
   return api<ReviewResult>("/api/study/review", {
     method: "POST",

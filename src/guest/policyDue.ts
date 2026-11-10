@@ -29,6 +29,8 @@ export type GuestCardSchedule = {
   scheduled_days: number;
   learning_steps: number;
   last_review: string | null;
+  /** FSRS-7 fast stability; absent until cutover rebuild. */
+  stability_fast?: number | null;
 };
 
 export type GuestReviewLog = {
@@ -86,6 +88,7 @@ export function toQueueCandidate(
     elapsed_days: sched.elapsed_days,
     scheduled_days: sched.scheduled_days,
     learning_steps: sched.learning_steps,
+    stability_fast: sched.stability_fast,
   };
 }
 
@@ -206,6 +209,7 @@ export function buildGuestStruggling(
             lapses: sched.lapses,
             state: sched.state,
             last_review: sched.last_review,
+            stability_fast: sched.stability_fast,
           }),
           now,
         );
