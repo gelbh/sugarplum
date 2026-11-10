@@ -7,11 +7,11 @@ import { BYO_PROVIDERS_PHRASE } from "./llm";
 
 /**
  * Free path has no Workers AI vision. Image auto-generate needs BYO;
- * otherwise clients open DIY occlusion + Suggest regions.
+ * otherwise clients open DIY occlusion (regions auto-suggest via on-device OCR).
  */
 export const IMAGE_MANUAL_OCCLUSION_MESSAGE =
   `Image auto-generation needs an ${BYO_PROVIDERS_PHRASE} API key under Settings. ` +
-  "Without a key, create an Occlusion card and use Suggest regions.";
+  "Without a key, create an Occlusion card; regions are suggested automatically.";
 
 export async function userHasByoSecret(
   db: D1Database,

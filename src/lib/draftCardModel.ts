@@ -99,9 +99,7 @@ export function backAnswer(back: CardDraftView["back"]): string {
 export function starterOcclusionFront(imageKey: string): OcclusionFrontView {
   return {
     image_key: imageKey,
-    regions: [
-      { id: "r1", x: 0.35, y: 0.35, w: 0.3, h: 0.25, label: "" },
-    ],
+    regions: [],
     mode: "hide_one",
   };
 }
@@ -150,7 +148,7 @@ export function draftForType(
       (isOcclusionFront(card.front) ? card.front.image_key : "");
     return {
       front: starterOcclusionFront(imageKey),
-      back: { answer: "r1" },
+      back: { answer: "" },
       type,
     };
   }

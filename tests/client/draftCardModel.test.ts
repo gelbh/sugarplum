@@ -54,8 +54,18 @@ describe("draftForType", () => {
       draftForType(card({ type: "image_label", media_r2_keys: ["img1"] }), "occlusion"),
     ).toEqual({
       front: starterOcclusionFront("img1"),
-      back: { answer: "r1" },
+      back: { answer: "" },
       type: "occlusion",
+    });
+  });
+});
+
+describe("starterOcclusionFront", () => {
+  it("seeds an empty region list for auto-Suggest", () => {
+    expect(starterOcclusionFront("img1")).toEqual({
+      image_key: "img1",
+      regions: [],
+      mode: "hide_one",
     });
   });
 });
