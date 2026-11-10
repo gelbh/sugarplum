@@ -132,7 +132,6 @@ describe("flyCardToGrade helpers", () => {
     expect(ghost?.style.backgroundColor).not.toBe("transparent");
     expect(ghost?.style.boxShadow).toContain("--sp-grade-easy-border");
     expect(ghost?.textContent).toContain("card");
-    // Source stays mounted under the ghost; hide it so the next card can wait.
     expect(from.style.visibility).toBe("hidden");
     resolveFlight();
     await flight;
