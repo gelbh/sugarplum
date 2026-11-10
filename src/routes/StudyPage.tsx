@@ -435,7 +435,7 @@ export default function StudyPage() {
       setError(null);
       begin();
 
-      const queueOffline = (uid: string) => {
+      const queueOffline = async (uid: string) => {
         if (!enqueuePendingGrade(uid, current.id, rating)) {
           setError("Could not save grade offline (storage full).");
           end(false);
@@ -444,7 +444,7 @@ export default function StudyPage() {
         setTally((prev) => addGrade(prev, rating));
         pruneDueCacheCard(uid, current.id, scopeOpts);
         refreshPendingCount(uid);
-        playGradeMailboxMotion(rating);
+        await playGradeMailboxMotion(rating);
         advanceAfterGrade();
         end();
         return true;
@@ -465,7 +465,7 @@ export default function StudyPage() {
         }
         setTally((prev) => addGrade(prev, rating));
         parkShortTermFollowUp(current, result.due, result.state);
-        playGradeMailboxMotion(rating);
+        await playGradeMailboxMotion(rating);
         advanceAfterGrade();
         end();
         return true;

@@ -23,17 +23,16 @@ export function useGradeMailboxFlight(cardHostRef: {
   }, []);
 
   const playGradeMailboxMotion = useCallback(
-    (rating: StudyRating) => {
+    (rating: StudyRating): Promise<void> => {
       const host = cardHostRef.current;
-      if (!host) return;
+      if (!host) return Promise.resolve();
       const from = studyCardFlightSource(host);
       const to = gradeMailboxEl(rating);
-      if (!from || !to) return;
+      if (!from || !to) return Promise.resolve();
 
       holdCountRef.current += 1;
       flightBusyRef.current = true;
       setMailboxHold(true);
-
       const release = () => {
         holdCountRef.current = Math.max(0, holdCountRef.current - 1);
         if (holdCountRef.current === 0 && mountedRef.current) {
@@ -49,7 +48,7 @@ export function useGradeMailboxFlight(cardHostRef: {
       } catch {
         flight = Promise.resolve();
       }
-      void flight.catch(() => {}).finally(release);
+      return flight.catch(() => {}).finally(release);
     },
     [cardHostRef],
   );
