@@ -668,4 +668,33 @@ describe("built-in parasite dataset", () => {
       ).toBe(true);
     }
   });
+
+  it("marks exactly one infective stage on every trematode entry", () => {
+    const expected = {
+      "fasciola-hepatica": "metacercaria",
+      "fasciola-gigantica": "metacercaria",
+      "fascioloides-magna": "metacercaria",
+      "dicrocoelium-dendriticum": "metacercaria",
+      "calicophoron-daubneyi": "metacercaria",
+      "paramphistomum-cervi": "metacercaria",
+      "fasciolopsis-buski": "metacercaria",
+      "clonorchis-sinensis": "metacercaria",
+      "opisthorchis-felineus": "metacercaria",
+      "schistosoma-spp": "cercaria",
+    } as const;
+    for (const [key, stageName] of Object.entries(expected)) {
+      const entry = dataset.entries.find((e) => e.key === key);
+      expect(entry, key).toBeDefined();
+      const infective = (entry?.fields.lifecycleStages ?? []).filter(
+        (s) => s.infective,
+      );
+      expect(infective, key).toHaveLength(1);
+      expect(infective[0]?.name, key).toBe(stageName);
+      expect(infective[0]?.transmission, key).toBeTruthy();
+      expect(
+        entry?.refs.some((r) => r.field === "lifecycleStages"),
+        `${key} lifecycleStages ref`,
+      ).toBe(true);
+    }
+  });
 });
