@@ -18,6 +18,7 @@ import { guestAddAcceptedCards } from "../guest/store";
 import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
 import { MAX_IMAGE_BYTES } from "../lib/pdfPageRender";
 import type { WorkshopFrame } from "./workshopStack";
+import { openDiyOcclusionFromImageKey } from "./openDiyOcclusion";
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 const IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -35,7 +36,7 @@ type Args = {
   refreshDraftJobs: () => Promise<void>;
   refreshMaterials: () => Promise<void>;
   setWorkshopStack: Dispatch<SetStateAction<WorkshopFrame[]>>;
-  onManualOcclusion?: (imageKey: string) => void;
+  prepareOcclusionFromImageKey?: (imageKey: string) => void;
 };
 
 export function useAddMaterialWorkshop({
@@ -44,7 +45,7 @@ export function useAddMaterialWorkshop({
   refreshDraftJobs,
   refreshMaterials,
   setWorkshopStack,
-  onManualOcclusion,
+  prepareOcclusionFromImageKey,
 }: Args) {
   const [materialTab, setMaterialTab] = useState<MaterialTab>("upload");
   const [pasteText, setPasteText] = useState("");
@@ -71,6 +72,16 @@ export function useAddMaterialWorkshop({
       const top = prev[prev.length - 1];
       if (!top || top.id !== "addMaterial") return prev;
       return [...prev.slice(0, -1), { ...top, tab }];
+    });
+  }
+
+  function openDiyOcclusion(imageKey: string) {
+    if (!prepareOcclusionFromImageKey) return;
+    openDiyOcclusionFromImageKey({
+      imageKey,
+      prepare: prepareOcclusionFromImageKey,
+      goDiy: () => onTabChange("diy"),
+      setNotice: setMaterialNotice,
     });
   }
 
@@ -212,13 +223,9 @@ export function useAddMaterialWorkshop({
       if (
         material.manual_occlusion &&
         material.r2_key &&
-        onManualOcclusion
+        prepareOcclusionFromImageKey
       ) {
-        onManualOcclusion(material.r2_key);
-        onTabChange("diy");
-        setMaterialNotice(
-          "Image saved. Free path uses Suggest regions on an Occlusion card (or add a BYO API key for auto vision drafts).",
-        );
+        openDiyOcclusion(material.r2_key);
         await Promise.all([refreshDraftJobs(), refreshMaterials()]);
         return;
       }
@@ -277,6 +284,7 @@ export function useAddMaterialWorkshop({
     topicError,
     resetMaterialMessages,
     onTabChange,
+    openDiyOcclusion,
     onGuestPaste,
     onAccountPaste,
     onUploadFile,

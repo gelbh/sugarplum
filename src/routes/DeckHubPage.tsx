@@ -97,9 +97,7 @@ export default function DeckHubPage({ deckId }: Props) {
   const [cards, setCards] = useState<CardDraftView[]>([]);
   /** Accepted (non-archived) count — independent of Show archived filter. */
   const [acceptedCount, setAcceptedCount] = useState(0);
-  const [composition, setComposition] = useState<SubjectKnowledge | null>(
-    null,
-  );
+  const [composition, setComposition] = useState<SubjectKnowledge | null>(null);
   const [draftJobs, setDraftJobs] = useState<JobListItem[]>([]);
   const [materials, setMaterials] = useState<MaterialListItem[]>([]);
   const [deckCover, setDeckCover] = useState<StoredCoverRow | null>(null);
@@ -178,8 +176,9 @@ export default function DeckHubPage({ deckId }: Props) {
   const { end: endLoad } = useTrackedOp("Loading deck…", {
     trackOnMount: true,
   });
-  const { busy: exportBusy, run: runExport } =
-    useTrackedOp(ANKI_EXPORT_BUSY_LABEL);
+  const { busy: exportBusy, run: runExport } = useTrackedOp(
+    ANKI_EXPORT_BUSY_LABEL,
+  );
 
   const refreshComposition = useCallback(async () => {
     try {
@@ -235,7 +234,7 @@ export default function DeckHubPage({ deckId }: Props) {
     refreshDraftJobs,
     refreshMaterials,
     setWorkshopStack,
-    onManualOcclusion: create.prepareOcclusionFromImageKey,
+    prepareOcclusionFromImageKey: create.prepareOcclusionFromImageKey,
   });
 
   const study = useStudyReadySheet();
@@ -603,7 +602,6 @@ export default function DeckHubPage({ deckId }: Props) {
     await openMove(first, { batch: true });
   }
 
-
   async function onExportAnki() {
     if (!deck || guest) return;
     setError(null);
@@ -773,13 +771,7 @@ export default function DeckHubPage({ deckId }: Props) {
               ]);
             }}
             onCreateOcclusion={(mat) => {
-              const key = mat.r2_key?.trim();
-              if (!key) return;
-              create.prepareOcclusionFromImageKey(key);
-              material.onTabChange("diy");
-              setNotice(
-                "Occlusion card ready. Use Suggest regions, edit masks, then Add card.",
-              );
+              material.openDiyOcclusion(mat.r2_key ?? "");
             }}
             draftCount={draftJobs.length}
             onReviewDrafts={() => jumpWorkshop({ id: "drafts" })}
