@@ -69,7 +69,6 @@ export function emptyFsrsCard(
   };
 }
 
-/** Rebuild a scheduler card from card_schedules / guest schedule columns. */
 export function cardFromScheduleRow(row: ScheduleRowLike): FsrsSchedulerCard {
   const hasFast =
     row.stability_fast != null &&

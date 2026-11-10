@@ -114,7 +114,6 @@ export async function cutoverUserSchedulesToFsrs7(
       cardsSkipped += 1;
       continue;
     }
-    // Narrow memory write: never clobber concurrent grade counters/due.
     statements.push(
       prepareCutoverMemoryUpdate(
         db,

@@ -55,7 +55,6 @@ export async function replayMemoryFromLogs(
   };
 }
 
-/** Apply cutover memory onto an existing card without changing due/counters. */
 export function applyCutoverMemory(
   card: FsrsSchedulerCard,
   memory: CutoverMemory,

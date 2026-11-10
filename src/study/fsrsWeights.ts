@@ -4,7 +4,6 @@ export const FSRS_W_LENGTH = 34;
 /** Legacy FSRS-6 length; cleared on FSRS-7 cutover. */
 export const FSRS6_W_LENGTH = 21;
 
-/** Return a copy of `w` when it is exactly 34 finite numbers; otherwise null. */
 export function validateFsrsW(w: unknown): number[] | null {
   if (!Array.isArray(w) || w.length !== FSRS_W_LENGTH) return null;
   const out: number[] = [];
@@ -15,7 +14,6 @@ export function validateFsrsW(w: unknown): number[] | null {
   return out;
 }
 
-/** True when stored vector is legacy FSRS-6 (21). */
 export function isLegacyFsrs6W(w: unknown): boolean {
   if (!Array.isArray(w) || w.length !== FSRS6_W_LENGTH) return false;
   return w.every((x) => typeof x === "number" && Number.isFinite(x));

@@ -31,7 +31,6 @@ function cacheKey(prefs: FsrsPrefs, validated: number[] | null): string {
   });
 }
 
-/** Build a DefaultScheduler from study prefs (async factory; results cached). */
 export async function schedulerForPrefs(
   prefs: FsrsPrefs = DEFAULT_FSRS_PREFS,
 ): Promise<StudyScheduler> {

@@ -996,7 +996,6 @@ export async function guestReviewCard(
     const prefsSnap = readStore(storage);
     const prefs = buildGuestFsrsPrefs(prefsSnap.studyPrefs, prefsSnap.fsrsW);
     const scheduler = await schedulerForPrefs(prefs);
-    // Re-read after await so concurrent queued work cannot overwrite a stale snap.
     const store = readStore(storage);
     const now = new Date();
     const nowIsoValue = now.toISOString();
