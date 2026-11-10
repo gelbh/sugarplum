@@ -1,15 +1,8 @@
-import {
-  applyCutoverMemory,
-  replayMemoryFromLogs,
-} from "../../src/study/fsrsCutover";
+import { replayMemoryFromLogs } from "../../src/study/fsrsCutover";
 import type { FsrsPrefs } from "../../src/study/fsrsFactory";
 import type { ReviewLogReplayRow } from "../../src/study/fsrsReplay";
-import {
-  cardFromScheduleRow,
-  scheduleColumnsFromCard,
-  type ScheduleRowLike,
-} from "../../src/study/retrievability";
-import { prepareFullScheduleUpdate } from "./scheduleWrite";
+import type { ScheduleRowLike } from "../../src/study/retrievability";
+import { prepareCutoverMemoryUpdate } from "./scheduleWrite";
 
 const D1_BATCH_SIZE = 50;
 
@@ -38,7 +31,7 @@ type LogRow = {
 
 /**
  * FSRS-7 cutover: rebuild memory via Reschedule.replay; preserve dues.
- * Skips cards that already have stability_fast or lack usable history.
+ * Skips cards that already have positive stability_fast or lack usable history.
  */
 export async function cutoverUserSchedulesToFsrs7(
   db: D1Database,
@@ -76,7 +69,13 @@ export async function cutoverUserSchedulesToFsrs7(
   const scheduleByCard = new Map<string, ScheduleRowLike>();
   for (const row of results ?? []) {
     if (row.schedule_card_id == null || row.due == null) continue;
-    if (row.stability_fast != null) continue;
+    if (
+      row.stability_fast != null &&
+      Number.isFinite(row.stability_fast) &&
+      row.stability_fast > 0
+    ) {
+      continue;
+    }
     const list = logsByCard.get(row.card_id) ?? [];
     list.push({ reviewed_at: row.reviewed_at, rating: row.rating });
     logsByCard.set(row.card_id, list);
@@ -115,27 +114,14 @@ export async function cutoverUserSchedulesToFsrs7(
       cardsSkipped += 1;
       continue;
     }
-    const dueBefore = schedule.due;
-    const next = applyCutoverMemory(cardFromScheduleRow(schedule), memory);
-    const cols = scheduleColumnsFromCard(next);
-    if (cols.due !== dueBefore) {
-      cols.due = dueBefore;
-    }
+    // Narrow memory write: never clobber concurrent grade counters/due.
     statements.push(
-      prepareFullScheduleUpdate(
+      prepareCutoverMemoryUpdate(
         db,
         {
-          due: cols.due,
-          stability: cols.stability,
-          difficulty: cols.difficulty,
-          elapsed_days: cols.elapsed_days,
-          scheduled_days: cols.scheduled_days,
-          learning_steps: cols.learning_steps,
-          reps: cols.reps,
-          lapses: cols.lapses,
-          state: cols.state,
-          last_review: cols.last_review,
-          stability_fast: cols.stability_fast,
+          stability: memory.stability,
+          difficulty: memory.difficulty,
+          stability_fast: memory.stabilityFast,
         },
         cardId,
         userId,

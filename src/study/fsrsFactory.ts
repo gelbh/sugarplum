@@ -7,7 +7,7 @@ export type FsrsPrefs = {
   enableFuzz: boolean;
   /** Personal FSRS weights (21 for FSRS-6; 34 for FSRS-7); omit for library defaults. */
   w?: readonly number[];
-  /** Model version for DefaultScheduler; Phase 1 locks FSRS-6. */
+  /** Model version for DefaultScheduler (default FSRS-7). */
   modelVersion?: "FSRS-6" | "FSRS-7";
 };
 
@@ -22,7 +22,7 @@ export type StudyScheduler = Awaited<ReturnType<typeof DefaultScheduler>>;
 const schedulerCache = new Map<string, StudyScheduler>();
 
 function cacheKey(prefs: FsrsPrefs, validated: number[] | null): string {
-  const version = prefs.modelVersion ?? "FSRS-6";
+  const version = prefs.modelVersion ?? "FSRS-7";
   return JSON.stringify({
     v: version,
     r: prefs.desiredRetention,

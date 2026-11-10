@@ -75,15 +75,12 @@ export function cardFromScheduleRow(row: ScheduleRowLike): FsrsSchedulerCard {
     row.stability_fast != null &&
     Number.isFinite(row.stability_fast) &&
     row.stability_fast > 0;
-  const isNew =
-    row.state === State.New || (row.reps === 0 && row.last_review == null);
   return {
     dueAt: new Date(row.due),
     stability: row.stability,
     difficulty: row.difficulty,
-    // New cards may start at 0/0. Learned rows without fast need lazy cutover
-    // before review (do not invent 0.8*S).
-    stabilityFast: hasFast ? row.stability_fast! : isNew ? 0 : row.stability,
+    // Missing fast → 0 until cutover rebuild (do not invent Sf = S).
+    stabilityFast: hasFast ? row.stability_fast! : 0,
     scheduledDays: row.scheduled_days,
     learningStep: row.learning_steps,
     reps: row.reps,

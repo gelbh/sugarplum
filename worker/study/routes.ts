@@ -52,6 +52,7 @@ type StrugglingSqlRow = {
   learning_steps: number;
   reps: number;
   state: number;
+  stability_fast: number | null;
   again_14d: number;
   hard_14d: number;
 };
@@ -191,7 +192,7 @@ studyRoutes.get("/struggling", async (c) => {
       `SELECT c.id, c.deck_id, c.job_id, c.type, c.front_json, c.provenance_json,
               s.lapses, s.difficulty, s.due, s.last_review,
               s.stability, s.elapsed_days, s.scheduled_days, s.learning_steps,
-              s.reps, s.state,
+              s.reps, s.state, s.stability_fast,
               (
                 SELECT COUNT(*) FROM review_logs rl
                 WHERE rl.card_id = c.id
@@ -229,6 +230,7 @@ studyRoutes.get("/struggling", async (c) => {
           lapses: row.lapses,
           state: row.state,
           last_review: row.last_review,
+          stability_fast: row.stability_fast,
         }),
         now,
       );
@@ -300,7 +302,7 @@ studyRoutes.post("/review", async (c) => {
   const schedule = await db
     .prepare(
       `SELECT due, stability, difficulty, elapsed_days, scheduled_days,
-              learning_steps, reps, lapses, state, last_review
+              learning_steps, reps, lapses, state, last_review, stability_fast
        FROM card_schedules WHERE card_id = ?`,
     )
     .bind(cardId)

@@ -39,6 +39,7 @@ export async function loadDueCandidates(
               c.media_r2_keys_json, c.provenance_json, c.status, c.created_at, c.updated_at,
               s.due, s.stability, s.difficulty, s.elapsed_days, s.scheduled_days,
               s.learning_steps, s.reps, s.lapses, s.state, s.last_review,
+              s.stability_fast,
               (
                 SELECT COUNT(*) FROM review_logs rl
                 WHERE rl.card_id = c.id
@@ -83,6 +84,7 @@ export function rowsToCandidates(rows: DueSqlRow[]): QueueCandidate[] {
     elapsed_days: row.elapsed_days,
     scheduled_days: row.scheduled_days,
     learning_steps: row.learning_steps,
+    stability_fast: row.stability_fast,
   }));
 }
 

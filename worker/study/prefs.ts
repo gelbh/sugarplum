@@ -3,7 +3,10 @@ import {
   DEFAULT_STUDY_PREFS,
   type StudyPrefs,
 } from "../../src/study/policyPrefs";
-import { parseFsrsWJson } from "../../src/study/fsrsWeights";
+import {
+  isLegacyFsrs6W,
+  parseFsrsWJson,
+} from "../../src/study/fsrsWeights";
 
 export { clampStudyPrefs, DEFAULT_STUDY_PREFS, type StudyPrefs };
 
@@ -66,6 +69,23 @@ export async function loadStudyPrefs(
     )
     .bind(userId)
     .first<PrefsRow>();
+  // Clear legacy FSRS-6 (21) weights so they cannot linger as opaque JSON.
+  if (row?.fsrs_w_json) {
+    try {
+      const parsed: unknown = JSON.parse(row.fsrs_w_json);
+      if (isLegacyFsrs6W(parsed)) {
+        await db
+          .prepare(
+            `UPDATE user_study_prefs SET fsrs_w_json = NULL WHERE user_id = ?`,
+          )
+          .bind(userId)
+          .run();
+        row.fsrs_w_json = null;
+      }
+    } catch {
+      // leave invalid JSON for parseFsrsWJson to ignore
+    }
+  }
   return prefsFromRow(row);
 }
 

@@ -88,6 +88,7 @@ export function toQueueCandidate(
     elapsed_days: sched.elapsed_days,
     scheduled_days: sched.scheduled_days,
     learning_steps: sched.learning_steps,
+    stability_fast: sched.stability_fast,
   };
 }
 
@@ -208,6 +209,7 @@ export function buildGuestStruggling(
             lapses: sched.lapses,
             state: sched.state,
             last_review: sched.last_review,
+            stability_fast: sched.stability_fast,
           }),
           now,
         );

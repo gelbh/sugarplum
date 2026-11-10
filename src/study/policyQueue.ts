@@ -24,6 +24,7 @@ export type QueueCandidate = {
   elapsed_days: number;
   scheduled_days: number;
   learning_steps: number;
+  stability_fast?: number | null;
 };
 
 export type QueueResult = {

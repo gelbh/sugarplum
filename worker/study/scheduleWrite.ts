@@ -55,6 +55,34 @@ export function prepareFullScheduleUpdate(
     );
 }
 
+/** Owned FSRS-7 cutover memory-only UPDATE (preserves counters/due). */
+export function prepareCutoverMemoryUpdate(
+  db: D1Database,
+  memory: {
+    stability: number;
+    difficulty: number;
+    stability_fast: number;
+  },
+  cardId: string,
+  userId: string,
+): D1PreparedStatement {
+  return db
+    .prepare(
+      `UPDATE card_schedules SET
+           stability = ?, difficulty = ?, stability_fast = ?
+         WHERE card_id = ?
+           AND (stability_fast IS NULL OR stability_fast = 0)
+           ${OWNERSHIP_EXISTS}`,
+    )
+    .bind(
+      memory.stability,
+      memory.difficulty,
+      memory.stability_fast,
+      cardId,
+      userId,
+    );
+}
+
 /** Owned due-only card_schedules UPDATE (deferrals). */
 export function prepareDueOnlyUpdate(
   db: D1Database,

@@ -3,7 +3,11 @@ import {
   applyCutoverMemory,
   replayMemoryFromLogs,
 } from "../../src/study/fsrsCutover";
-import { emptyFsrsCard } from "../../src/study/retrievability";
+import {
+  cardFromScheduleRow,
+  emptyFsrsCard,
+} from "../../src/study/retrievability";
+import { State } from "ts-fsrs";
 
 describe("replayMemoryFromLogs", () => {
   it("rebuilds FSRS-7 memory including stabilityFast", async () => {
@@ -28,6 +32,43 @@ describe("replayMemoryFromLogs", () => {
         enableFuzz: false,
       }),
     ).toBeNull();
+  });
+
+  it("cardFromScheduleRow does not invent Sf=S when fast is missing", () => {
+    const card = cardFromScheduleRow({
+      due: "2026-03-01T12:00:00.000Z",
+      stability: 12,
+      difficulty: 4,
+      elapsed_days: 3,
+      scheduled_days: 5,
+      learning_steps: 0,
+      reps: 4,
+      lapses: 0,
+      state: State.Review,
+      last_review: "2026-02-20T12:00:00.000Z",
+      stability_fast: null,
+      card_id: "c1",
+    });
+    expect(card.stability).toBe(12);
+    expect(card.stabilityFast).toBe(0);
+  });
+
+  it("cardFromScheduleRow keeps persisted stability_fast", () => {
+    const card = cardFromScheduleRow({
+      due: "2026-03-01T12:00:00.000Z",
+      stability: 12,
+      difficulty: 4,
+      elapsed_days: 3,
+      scheduled_days: 5,
+      learning_steps: 0,
+      reps: 4,
+      lapses: 0,
+      state: State.Review,
+      last_review: "2026-02-20T12:00:00.000Z",
+      stability_fast: 9.5,
+      card_id: "c1",
+    });
+    expect(card.stabilityFast).toBe(9.5);
   });
 
   it("applyCutoverMemory preserves due and counters", () => {
