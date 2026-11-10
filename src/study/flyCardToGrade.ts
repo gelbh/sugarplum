@@ -1,6 +1,7 @@
 /**
  * Mailbox grade feedback: a fixed ghost of the card flies into the chosen
- * grade box (WAAPI). Visual only; callers keep grading / queue advance unblocked.
+ * grade box (WAAPI). Resolves when flight (or reduced-motion pulse) settles;
+ * Study awaits before advancing so the next card does not pop mid-swallow.
  */
 
 import type { StudyRating } from "../api/client";
@@ -146,6 +147,8 @@ export function flyCardToGrade(
 
   const ghost = buildGhost(from, a, rating);
   document.body.appendChild(ghost);
+  // Hide the live face so only the ghost reads as the departing card.
+  from.style.visibility = "hidden";
   bumpGradeMailbox(to, { rating, intensity: "strong" });
 
   const endX = b.left + b.width / 2 - (a.left + a.width / 2);
@@ -169,6 +172,12 @@ export function flyCardToGrade(
     });
   }
 
+  const revealSource = () => {
+    // Flip faces are reused across cards; clear the inline hide so MUI sx
+    // visibility on the next reveal is not stuck behind element.style.
+    from.style.visibility = "";
+  };
+
   let flight: Animation;
   try {
     flight = ghost.animate(frames, {
@@ -177,11 +186,13 @@ export function flyCardToGrade(
       fill: "forwards",
     });
   } catch {
+    revealSource();
     ghost.remove();
     return Promise.resolve();
   }
 
   const cleanup = () => {
+    revealSource();
     ghost.remove();
     if (to.isConnected) bumpGradeMailbox(to, { rating, intensity: "light" });
   };
