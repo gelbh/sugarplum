@@ -22,10 +22,10 @@ self.onmessage = async (ev: MessageEvent<FsrsOptimizeWorkerRequest>) => {
       bytes,
       FSRS_NEXT_DAY_STARTS_AT,
       "UTC",
-      "FSRS-6",
+      "FSRS-7",
     );
     const w = await computeParameters(items, {
-      modelVersion: "FSRS-6",
+      modelVersion: "FSRS-7",
       enableShortTerm: true,
     });
     const response: FsrsOptimizeWorkerResponse = {

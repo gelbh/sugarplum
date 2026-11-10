@@ -42,9 +42,9 @@ function logsByCardId(
  * Replay guest review history under prefs and rewrite schedules + card dues.
  * Leaves reviewLogs untouched. Skips cards with no schedule or no valid logs.
  */
-export function rescheduleGuestSchedules(
+export async function rescheduleGuestSchedules(
   input: GuestRescheduleInput,
-): GuestRescheduleResult {
+): Promise<GuestRescheduleResult> {
   const now = input.now ?? new Date();
   const nowIso = now.toISOString();
   const byCard = logsByCardId(input.reviewLogs);
@@ -58,7 +58,7 @@ export function rescheduleGuestSchedules(
       cardsSkipped += 1;
       continue;
     }
-    const next = replayCardFromLogs(logs, input.prefs);
+    const next = await replayCardFromLogs(logs, input.prefs, cardId);
     if (!next) {
       cardsSkipped += 1;
       continue;
@@ -74,6 +74,7 @@ export function rescheduleGuestSchedules(
       scheduled_days: cols.scheduled_days,
       learning_steps: cols.learning_steps,
       last_review: cols.last_review,
+      stability_fast: cols.stability_fast,
     };
     dueByCardId.set(cardId, cols.due);
     cardsUpdated += 1;

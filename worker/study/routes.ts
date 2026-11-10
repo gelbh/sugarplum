@@ -322,8 +322,8 @@ studyRoutes.post("/review", async (c) => {
   }
   const prefs = await loadStudyPrefs(db, userId);
 
-  const { card: nextCard, log } = reviewWithLog(
-    cardFromScheduleRow(schedule),
+  const { card: nextCard, log } = await reviewWithLog(
+    cardFromScheduleRow({ ...schedule, card_id: cardId }),
     grade,
     now,
     prefs,
@@ -333,7 +333,24 @@ studyRoutes.post("/review", async (c) => {
   const reviewLogId = crypto.randomUUID();
 
   await db.batch([
-    prepareFullScheduleUpdate(db, cols, cardId, userId),
+    prepareFullScheduleUpdate(
+      db,
+      {
+        due: cols.due,
+        stability: cols.stability,
+        difficulty: cols.difficulty,
+        elapsed_days: cols.elapsed_days,
+        scheduled_days: cols.scheduled_days,
+        learning_steps: cols.learning_steps,
+        reps: cols.reps,
+        lapses: cols.lapses,
+        state: cols.state,
+        last_review: cols.last_review,
+        stability_fast: cols.stability_fast,
+      },
+      cardId,
+      userId,
+    ),
     db
       .prepare(
         `INSERT INTO review_logs (

@@ -7,7 +7,7 @@ import { parseFsrsWJson } from "../../src/study/fsrsWeights";
 
 export { clampStudyPrefs, DEFAULT_STUDY_PREFS, type StudyPrefs };
 
-/** Study pacing prefs plus optional personal FSRS-6 weights for scheduling. */
+/** Study pacing prefs plus optional personal FSRS-7 weights for scheduling. */
 export type StudyPrefsLoaded = StudyPrefs & {
   w?: number[];
   fsrsLastOptimizedAt?: string | null;

@@ -21,7 +21,7 @@ vi.mock("../../src/study/fsrsOptimize.worker?worker", () => {
     postMessage(_msg: unknown) {
       queueMicrotask(() => {
         this.onmessage?.({
-          data: { ok: true, w: Array.from({ length: 21 }, () => 0.4) },
+          data: { ok: true, w: Array.from({ length: 34 }, () => 0.4) },
         } as MessageEvent);
       });
     }
@@ -64,7 +64,7 @@ describe("maybeRunFsrsOptimize", () => {
         }),
     );
     getCsv.mockResolvedValue("card_id,review_time,review_rating,review_duration,review_state\n");
-    putWeights.mockResolvedValue({ ok: true, wLength: 21 });
+    putWeights.mockResolvedValue({ ok: true, wLength: 34 });
 
     const { maybeRunFsrsOptimize } = await import(
       "../../src/study/fsrsOptimizeClient"

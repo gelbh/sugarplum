@@ -1,4 +1,4 @@
-import { createEmptyCard, Rating, State, type Grade } from "ts-fsrs";
+import { Rating, State, type Grade } from "ts-fsrs";
 import type {
   CardDraftView,
   CardType,
@@ -13,7 +13,7 @@ import type {
   Subject,
 } from "../api/client";
 import { assertSingleCloze } from "../lib/clozeFormat";
-import { fsrsForPrefs } from "../study/fsrsFactory";
+import { schedulerForPrefs } from "../study/fsrsFactory";
 import {
   buildGuestFsrsPrefs,
   DEFAULT_GUEST_FSRS_OPTIMIZE,
@@ -24,6 +24,7 @@ import {
   type GuestFsrsOptimizeFields,
 } from "../study/guestFsrsOptimize";
 import { rescheduleGuestSchedules } from "../study/guestFsrsReschedule";
+import { normalizeSchedulerCard } from "../study/fsrsReplay";
 import { clientLocalDay } from "../study/localDay";
 import { type StudyPrefs } from "../study/policyQueue";
 import { clampStudyPrefs, DEFAULT_STUDY_PREFS } from "../study/policyPrefs";
@@ -32,6 +33,7 @@ import type { RescheduleSummary } from "../study/fsrsReplay";
 import { validateFsrsW } from "../study/fsrsWeights";
 import {
   cardFromScheduleRow,
+  emptyFsrsCard,
   scheduleColumnsFromCard,
 } from "../study/retrievability";
 import { GUEST_USER_ID } from "./session";
@@ -805,11 +807,11 @@ export function guestGetFsrsRevlogCsv(storage?: Store): string {
   return guestRevlogCsv(readStore(storage).reviewLogs);
 }
 
-function applyGuestReschedule(
+async function applyGuestReschedule(
   store: GuestStore,
   now: Date,
-): RescheduleSummary {
-  const result = rescheduleGuestSchedules({
+): Promise<RescheduleSummary> {
+  const result = await rescheduleGuestSchedules({
     cards: store.cards,
     schedules: store.schedules,
     reviewLogs: store.reviewLogs,
@@ -823,15 +825,15 @@ function applyGuestReschedule(
 }
 
 /** Persist optimize meta, then reschedule; keep meta if reschedule throws. */
-function persistGuestFsrsWeightsAndReschedule(
+async function persistGuestFsrsWeightsAndReschedule(
   store: GuestStore,
   storage: Store | undefined,
   now: Date,
-): RescheduleSummary {
+): Promise<RescheduleSummary> {
   let rescheduled: RescheduleSummary = { cardsUpdated: 0, cardsSkipped: 0 };
   let rescheduleError: unknown = null;
   try {
-    rescheduled = applyGuestReschedule(store, now);
+    rescheduled = await applyGuestReschedule(store, now);
   } catch (err) {
     rescheduleError = err;
   }
@@ -840,30 +842,38 @@ function persistGuestFsrsWeightsAndReschedule(
   return rescheduled;
 }
 
-export function guestSaveFsrsWeights(
+export async function guestSaveFsrsWeights(
   w: number[],
   storage?: Store,
   now: Date = new Date(),
-): { ok: true; wLength: number; rescheduled: RescheduleSummary } {
+): Promise<{ ok: true; wLength: number; rescheduled: RescheduleSummary }> {
   const validated = validateFsrsW(w);
   if (!validated) throw new Error("Invalid FSRS weights");
   const store = readStore(storage);
   store.fsrsW = validated;
   store.fsrsLastOptimizedAt = now.toISOString();
   store.fsrsOptimizePending = false;
-  const rescheduled = persistGuestFsrsWeightsAndReschedule(store, storage, now);
+  const rescheduled = await persistGuestFsrsWeightsAndReschedule(
+    store,
+    storage,
+    now,
+  );
   return { ok: true, wLength: validated.length, rescheduled };
 }
 
-export function guestResetFsrsWeights(
+export async function guestResetFsrsWeights(
   storage?: Store,
   now: Date = new Date(),
-): { ok: true; rescheduled: RescheduleSummary } {
+): Promise<{ ok: true; rescheduled: RescheduleSummary }> {
   const store = readStore(storage);
   store.fsrsW = null;
   store.fsrsLastOptimizedAt = now.toISOString();
   store.fsrsOptimizePending = false;
-  const rescheduled = persistGuestFsrsWeightsAndReschedule(store, storage, now);
+  const rescheduled = await persistGuestFsrsWeightsAndReschedule(
+    store,
+    storage,
+    now,
+  );
   return { ok: true, rescheduled };
 }
 
@@ -959,12 +969,12 @@ function ratingToGrade(rating: StudyRating): Grade {
   }
 }
 
-export function guestReviewCard(
+export async function guestReviewCard(
   cardId: string,
   rating: StudyRating,
   storage?: Store,
   opts?: { localDay?: string },
-): ReviewResult {
+): Promise<ReviewResult> {
   const store = readStore(storage);
   const now = new Date();
   const nowIsoValue = now.toISOString();
@@ -991,12 +1001,19 @@ export function guestReviewCard(
         lapses: existing.lapses,
         state: existing.state,
         last_review: existing.last_review,
+        card_id: cardId,
       })
-    : createEmptyCard(now);
+    : emptyFsrsCard(now, cardId);
 
-  const { card: nextCard, log } = fsrsForPrefs(
+  const scheduler = await schedulerForPrefs(
     buildGuestFsrsPrefs(store.studyPrefs, store.fsrsW),
-  ).next(fsrsCard, now, ratingToGrade(rating));
+  );
+  const { card: rawNext, revlog: log } = scheduler.review({
+    card: fsrsCard as never,
+    grade: ratingToGrade(rating),
+    now,
+  });
+  const nextCard = normalizeSchedulerCard(rawNext);
   const next = scheduleColumnsFromCard(nextCard);
 
   store.schedules[cardId] = {
@@ -1009,6 +1026,7 @@ export function guestReviewCard(
     scheduled_days: next.scheduled_days,
     learning_steps: next.learning_steps,
     last_review: next.last_review,
+    stability_fast: next.stability_fast,
   };
   store.cards = store.cards.map((c) =>
     c.id === cardId ? { ...c, due: next.due, updated_at: nowIsoValue } : c,

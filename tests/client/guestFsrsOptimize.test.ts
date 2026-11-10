@@ -11,7 +11,7 @@ import {
 } from "../../src/study/guestFsrsOptimize";
 import { FSRS_MIN_REVIEWS } from "../../src/study/fsrsOptimizeConstants";
 import { DEFAULT_STUDY_PREFS } from "../../src/study/policyPrefs";
-import { fsrsForPrefs } from "../../src/study/fsrsFactory";
+import { schedulerForPrefs } from "../../src/study/fsrsFactory";
 
 function log(
   partial: Partial<GuestReviewLog> & Pick<GuestReviewLog, "cardId" | "rating" | "at">,
@@ -130,22 +130,24 @@ describe("guestFsrsOptimizeStatus / pending", () => {
 
   it("normalize rejects bad w", () => {
     expect(normalizeGuestFsrsOptimize({ fsrsW: [1, 2] }).fsrsW).toBeNull();
-    const w = Array.from({ length: 21 }, () => 0.5);
+    const w = Array.from({ length: 34 }, () => 0.5);
     expect(normalizeGuestFsrsOptimize({ fsrsW: w }).fsrsW).toEqual(w);
   });
 
-  it("buildGuestFsrsPrefs passes validated w into fsrsForPrefs", async () => {
-    const { default_w } = await import("ts-fsrs");
-    const w = default_w.map((x, i) => (i === 8 ? x * 3 : x));
+  it("buildGuestFsrsPrefs passes validated w into schedulerForPrefs", async () => {
+    const { FSRS7_DEFAULT_WEIGHTS } = await import("ts-fsrs/models/fsrs-7");
+    const w = FSRS7_DEFAULT_WEIGHTS.map((x, i) => (i < 10 ? x * 2 : x));
     const prefs = buildGuestFsrsPrefs(
       { ...DEFAULT_STUDY_PREFS, enableFuzz: false },
       w,
     );
-    const withCustom = fsrsForPrefs(prefs);
-    const withDefault = fsrsForPrefs({
+    const withCustom = await schedulerForPrefs(prefs);
+    const withDefault = await schedulerForPrefs({
       desiredRetention: DEFAULT_STUDY_PREFS.desiredRetention,
       enableFuzz: false,
     });
-    expect(withCustom.parameters.w[8]).not.toBe(withDefault.parameters.w[8]);
+    expect(withCustom.config.weights[2]).not.toBe(
+      withDefault.config.weights[2],
+    );
   });
 });

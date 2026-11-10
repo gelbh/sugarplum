@@ -40,7 +40,7 @@ function formatRescheduleNotice(
   return `${prefix} Rescheduled ${summary.cardsUpdated} card(s); skipped ${summary.cardsSkipped}.`;
 }
 
-/** Settings subsection: personal FSRS-6 weight status, Run now, Reset. */
+/** Settings subsection: personal FSRS-7 weight status, Run now, Reset. */
 export default function FsrsWeightsSettings() {
   const [status, setStatus] = useState<FsrsOptimizeStatus | null>(null);
   const [busy, setBusy] = useState(false);
@@ -79,7 +79,7 @@ export default function FsrsWeightsSettings() {
         Personal FSRS weights
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-        Sugarplum retrains FSRS-6 weights from your review history when you have
+        Sugarplum retrains FSRS-7 weights from your review history when you have
         at least {FSRS_MIN_REVIEWS} reviews. Auto-retrain waits about a month
         after the last train or reset; Run now works whenever you meet the
         review floor. Training runs in this browser after you open Today or
