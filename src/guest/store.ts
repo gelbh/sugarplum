@@ -26,7 +26,9 @@ import {
 } from "../study/guestFsrsOptimize";
 import { rescheduleGuestSchedules } from "../study/guestFsrsReschedule";
 import { normalizeSchedulerCard } from "../study/fsrsReplay";
-import { clientLocalDay } from "../study/localDay";
+import { buildDueHistogramFromDues } from "../study/dueHistogram";
+import { applyLoadBalance } from "../study/loadBalance";
+import { clientLocalDay, resolveLocalDayStartIso } from "../study/localDay";
 import { type StudyPrefs } from "../study/policyQueue";
 import { clampStudyPrefs, DEFAULT_STUDY_PREFS } from "../study/policyPrefs";
 import type { FsrsOptimizeStatus } from "../study/fsrsOptimizeTypes";
@@ -1052,12 +1054,51 @@ export async function guestReviewCard(
         })
       : emptyFsrsCard(now, cardId);
 
-    const { card: rawNext, revlog: log } = scheduler.review({
+    const studyPrefs = prefsSnap.studyPrefs;
+    const useLoadBalance =
+      studyPrefs.enableLoadBalance && studyPrefs.enableFuzz;
+    const gradeScheduler = useLoadBalance
+      ? await schedulerForPrefs({ ...prefs, enableFuzz: false })
+      : scheduler;
+
+    const { card: rawNext, revlog: log } = gradeScheduler.review({
       card: fsrsCard as never,
       grade: ratingToGrade(rating),
       now,
     });
-    const nextCard = normalizeSchedulerCard(rawNext);
+    let nextCard = normalizeSchedulerCard(rawNext);
+
+    if (useLoadBalance) {
+      const tzOffsetMinutes = new Date().getTimezoneOffset();
+      const dues = store.cards
+        .filter((c) => c.status === "accepted" && typeof c.due === "string")
+        .map((c) => c.due as string);
+      const { dueCntPerDay, dueToday } = buildDueHistogramFromDues(
+        dues,
+        now,
+        tzOffsetMinutes,
+      );
+      const dayStart = resolveLocalDayStartIso(now, {
+        localDay: opts?.localDay,
+        tzOffsetMinutes,
+      });
+      const dayEndMs = new Date(dayStart).getTime() + 86_400_000;
+      const reviewedToday = store.reviewLogs.filter((l) => {
+        const t = new Date(l.at).getTime();
+        return t >= new Date(dayStart).getTime() && t < dayEndMs;
+      }).length;
+      nextCard = applyLoadBalance(nextCard, {
+        enableLoadBalance: true,
+        enableFuzz: true,
+        easyDays: studyPrefs.easyDays,
+        now,
+        tzOffsetMinutes,
+        dueCntPerDay,
+        dueToday,
+        reviewedToday,
+      });
+    }
+
     const next = scheduleColumnsFromCard(nextCard);
 
     store.schedules[cardId] = {

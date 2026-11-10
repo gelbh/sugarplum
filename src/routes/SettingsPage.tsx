@@ -132,6 +132,10 @@ export default function SettingsPage() {
     String(DEFAULT_STUDY_FORM.desiredRetention),
   );
   const [enableFuzz, setEnableFuzz] = useState(DEFAULT_STUDY_FORM.enableFuzz);
+  const [enableLoadBalance, setEnableLoadBalance] = useState(
+    DEFAULT_STUDY_FORM.enableLoadBalance,
+  );
+  const [easyDays, setEasyDays] = useState(DEFAULT_STUDY_FORM.easyDays);
   const [googleLinked, setGoogleLinked] = useState(false);
   const [calendarStatus, setCalendarStatus] = useState<CalendarStatus | null>(
     null,
@@ -199,6 +203,8 @@ export default function SettingsPage() {
         setReviewBudgetInput(String(prefs.reviewBudget));
         setDesiredRetentionInput(String(prefs.desiredRetention));
         setEnableFuzz(prefs.enableFuzz);
+        setEnableLoadBalance(prefs.enableLoadBalance);
+        setEasyDays([...prefs.easyDays]);
         if (gam) {
           setGamification(gam);
           setDisplayNameInput(gam.displayName ?? "");
@@ -323,12 +329,16 @@ export default function SettingsPage() {
         rFloor: studyPrefs.rFloor,
         desiredRetention,
         enableFuzz,
+        enableLoadBalance,
+        easyDays,
       });
       setStudyPrefs(saved);
       setIntroBudgetInput(String(saved.introBudget));
       setReviewBudgetInput(String(saved.reviewBudget));
       setDesiredRetentionInput(String(saved.desiredRetention));
       setEnableFuzz(saved.enableFuzz);
+      setEnableLoadBalance(saved.enableLoadBalance);
+      setEasyDays([...saved.easyDays]);
       setStudyNotice("Study settings saved.");
       endStudy();
     } catch (err) {
@@ -720,6 +730,68 @@ export default function SettingsPage() {
                 Fuzz slightly varies due dates so same-interval cards do not all
                 land on one day. Existing dues are unchanged until the next
                 grade.
+              </Typography>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={enableLoadBalance}
+                    onChange={(ev) => setEnableLoadBalance(ev.target.checked)}
+                    name="enableLoadBalance"
+                    disabled={!enableFuzz}
+                  />
+                }
+                label="Load balance (prefer lighter days)"
+              />
+              <Typography variant="body2" color="text.secondary">
+                Within the fuzz window, prefer days with fewer cards due. This
+                is separate from the soft review budget above. Applies on the
+                next grade when fuzz is on.
+              </Typography>
+              <Typography variant="subtitle2" sx={{ pt: 1 }}>
+                Easy days (Mon–Sun)
+              </Typography>
+              <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                {(
+                  [
+                    "Mon",
+                    "Tue",
+                    "Wed",
+                    "Thu",
+                    "Fri",
+                    "Sat",
+                    "Sun",
+                  ] as const
+                ).map((label, i) => (
+                  <TextField
+                    key={label}
+                    select
+                    label={label}
+                    size="small"
+                    value={easyDays[i]}
+                    disabled={!enableLoadBalance || !enableFuzz}
+                    onChange={(ev) => {
+                      const value = ev.target.value as
+                        | "normal"
+                        | "reduced"
+                        | "minimum";
+                      setEasyDays((prev) => {
+                        const next = [...prev] as typeof prev;
+                        next[i] = value;
+                        return next;
+                      });
+                    }}
+                    sx={{ minWidth: 110 }}
+                    SelectProps={{ native: true }}
+                  >
+                    <option value="normal">Normal</option>
+                    <option value="reduced">Reduced</option>
+                    <option value="minimum">Minimum</option>
+                  </TextField>
+                ))}
+              </Stack>
+              <Typography variant="body2" color="text.secondary">
+                Minimum tries to avoid that weekday when another day in the fuzz
+                window is available. Reduced lowers the chance.
               </Typography>
               <Button
                 type="submit"
