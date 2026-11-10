@@ -16,17 +16,22 @@ import {
 import { guestPasteToCards } from "../guest/pasteToCards";
 import { guestAddAcceptedCards } from "../guest/store";
 import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
-import { MAX_IMAGE_BYTES } from "../lib/pdfPageRender";
+import {
+  MAX_FILE_BYTES,
+  MAX_IMAGE_BYTES,
+  fileTooLargeMessage,
+} from "../lib/materialUploadLimits";
+import { splitPdfUnderLimit } from "../lib/splitPdfUnderLimit";
 import type { WorkshopFrame } from "./workshopStack";
 import { openDiyOcclusionFromImageKey } from "./openDiyOcclusion";
 
-const MAX_FILE_BYTES = 25 * 1024 * 1024;
 const IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const ALLOWED_UPLOAD_MIMES = new Set([
   "application/pdf",
   PPTX_MIME,
   ...IMAGE_MIMES,
 ]);
+const FIGURES_SKIPPED_NOTICE = "Figure crops skipped for split uploads";
 
 export type MaterialTab = "upload" | "paste" | "topic" | "diy";
 
@@ -59,6 +64,10 @@ export function useAddMaterialWorkshop({
   const [topicValue, setTopicValue] = useState("");
   const [topicBusy, setTopicBusy] = useState(false);
   const [topicError, setTopicError] = useState<string | null>(null);
+  const [pdfSplitOpen, setPdfSplitOpen] = useState(false);
+  const [pdfSplitProgress, setPdfSplitProgress] = useState<string | null>(
+    null,
+  );
 
   function resetMaterialMessages() {
     setMaterialError(null);
@@ -158,6 +167,114 @@ export function useAddMaterialWorkshop({
     }
   }
 
+  function onPdfSplitCancel() {
+    if (materialBusy) return;
+    setPdfSplitOpen(false);
+    setPdfSplitProgress(null);
+  }
+
+  async function onPdfSplitConfirm() {
+    if (!uploadFile) return;
+    setMaterialError(null);
+    setMaterialNotice(null);
+    setMaterialBusy(true);
+    setPdfSplitProgress("Splitting PDF…");
+    try {
+      const nameStem =
+        uploadFile.name.replace(/\.pdf$/i, "") || "document";
+      const split = await splitPdfUnderLimit(uploadFile, MAX_FILE_BYTES, {
+        nameStem,
+      });
+      if (!split.ok) {
+        setMaterialError(split.message);
+        setPdfSplitOpen(false);
+        setPdfSplitProgress(null);
+        return;
+      }
+
+      const parts = split.files;
+      const skipFigures = figureFiles.length > 0 && parts.length > 1;
+      let lastJobId: string | null = null;
+      let lastStatus = "";
+      let lastManualKey: string | null = null;
+
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        setPdfSplitProgress(`Uploading ${i + 1} of ${parts.length}`);
+        try {
+          const material =
+            parts.length === 1 && figureFiles.length > 0
+              ? await uploadPdfWithFigureCrops(
+                  deckId,
+                  part,
+                  figureFiles,
+                  undefined,
+                  { onScan: () => setReadingScan(true) },
+                )
+              : await uploadMaterialFile(deckId, part, undefined, {
+                  onScan: () => setReadingScan(true),
+                });
+          lastStatus = material.status;
+          if (material.jobId) lastJobId = material.jobId;
+          if (
+            material.manual_occlusion &&
+            material.r2_key &&
+            prepareOcclusionFromImageKey
+          ) {
+            lastManualKey = material.r2_key;
+          }
+        } catch (err) {
+          const detail =
+            err instanceof ApiError ? err.message : "Could not upload file";
+          setMaterialError(
+            `Failed on part ${i + 1} of ${parts.length}: ${detail}`,
+          );
+          setPdfSplitOpen(false);
+          setPdfSplitProgress(null);
+          await Promise.all([refreshDraftJobs(), refreshMaterials()]);
+          return;
+        }
+      }
+
+      setUploadFile(null);
+      setFigureFiles([]);
+      setPdfSplitOpen(false);
+      setPdfSplitProgress(null);
+      const figureNote = skipFigures ? ` ${FIGURES_SKIPPED_NOTICE}.` : "";
+      if (lastJobId) {
+        setMaterialNotice(
+          parts.length > 1
+            ? `Stored ${parts.length} materials (${lastStatus}). Generation started.${figureNote}`
+            : `Stored file (${lastStatus}). Generation started.`,
+        );
+        window.location.assign(
+          `/jobs/${encodeURIComponent(lastJobId)}/drafts`,
+        );
+        return;
+      }
+      if (lastManualKey && prepareOcclusionFromImageKey) {
+        openDiyOcclusion(lastManualKey);
+        await Promise.all([refreshDraftJobs(), refreshMaterials()]);
+        return;
+      }
+      setMaterialNotice(
+        parts.length > 1
+          ? `Stored ${parts.length} materials (${lastStatus}).${figureNote}`
+          : `Stored file (${lastStatus}).`,
+      );
+      await Promise.all([refreshDraftJobs(), refreshMaterials()]);
+    } catch (err) {
+      setMaterialError(
+        err instanceof ApiError ? err.message : "Could not upload file",
+      );
+      setPdfSplitOpen(false);
+      setPdfSplitProgress(null);
+    } finally {
+      setMaterialBusy(false);
+      setReadingScan(false);
+    }
+  }
+
   async function onUploadFile(e?: FormEvent) {
     e?.preventDefault();
     setMaterialError(null);
@@ -171,10 +288,6 @@ export function useAddMaterialWorkshop({
       setMaterialError(
         "Only PDF, PPTX, or image (jpeg/png/webp) files are allowed",
       );
-      return;
-    }
-    if (uploadFile.size > MAX_FILE_BYTES) {
-      setMaterialError("File must be 25MB or smaller");
       return;
     }
     if (IMAGE_MIMES.has(contentType) && uploadFile.size > MAX_IMAGE_BYTES) {
@@ -194,6 +307,18 @@ export function useAddMaterialWorkshop({
         setMaterialError("Figure crops must be 8MB or smaller");
         return;
       }
+    }
+    if (
+      contentType === "application/pdf" &&
+      uploadFile.size > MAX_FILE_BYTES
+    ) {
+      setPdfSplitProgress(null);
+      setPdfSplitOpen(true);
+      return;
+    }
+    if (uploadFile.size > MAX_FILE_BYTES) {
+      setMaterialError(fileTooLargeMessage());
+      return;
     }
     setMaterialBusy(true);
     try {
@@ -282,12 +407,16 @@ export function useAddMaterialWorkshop({
     setTopicValue,
     topicBusy,
     topicError,
+    pdfSplitOpen,
+    pdfSplitProgress,
     resetMaterialMessages,
     onTabChange,
     openDiyOcclusion,
     onGuestPaste,
     onAccountPaste,
     onUploadFile,
+    onPdfSplitConfirm,
+    onPdfSplitCancel,
     onTopicGenerate,
   };
 }
