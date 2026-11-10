@@ -55,7 +55,7 @@ async function trainAndSaveAccount(): Promise<FsrsRescheduleSummary> {
 async function trainAndSaveGuest(): Promise<FsrsRescheduleSummary> {
   const csv = guestGetFsrsRevlogCsv();
   const w = await trainWeightsFromCsv(csv);
-  return guestSaveFsrsWeights(w).rescheduled;
+  return (await guestSaveFsrsWeights(w)).rescheduled;
 }
 
 /**

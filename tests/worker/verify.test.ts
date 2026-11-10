@@ -93,10 +93,10 @@ describe("spec verify: draft gate", () => {
 });
 
 describe("spec verify: fsrs", () => {
-  it("good rating advances due", () => {
+  it("good rating advances due", async () => {
     const now = new Date("2026-01-01T12:00:00.000Z");
-    const after = review(newCard(now), Rating.Good, now);
-    expect(after.due.getTime()).toBeGreaterThan(now.getTime());
+    const after = await review(newCard(now), Rating.Good, now);
+    expect(after.dueAt.getTime()).toBeGreaterThan(now.getTime());
   });
 });
 

@@ -1,41 +1,60 @@
-import { describe, expect, it } from "vitest";
-import { fsrsForPrefs } from "../../src/study/fsrsFactory";
+import { describe, expect, it, beforeEach } from "vitest";
+import {
+  clearSchedulerCache,
+  schedulerForPrefs,
+} from "../../src/study/fsrsFactory";
 
-describe("fsrsForPrefs", () => {
-  it("sets request_retention and enable_fuzz from prefs", () => {
-    const f = fsrsForPrefs({ desiredRetention: 0.85, enableFuzz: false });
-    expect(f.parameters.request_retention).toBe(0.85);
-    expect(f.parameters.enable_fuzz).toBe(false);
+describe("schedulerForPrefs", () => {
+  beforeEach(() => {
+    clearSchedulerCache();
   });
 
-  it("defaults match StudyPrefs defaults when omitted via DEFAULT", () => {
-    const f = fsrsForPrefs();
-    expect(f.parameters.request_retention).toBe(0.9);
-    expect(f.parameters.enable_fuzz).toBe(true);
+  it("sets desiredRetention and enableFuzz from prefs", async () => {
+    const f = await schedulerForPrefs({
+      desiredRetention: 0.85,
+      enableFuzz: false,
+    });
+    expect(f.config.desiredRetention[3]).toBe(0.85);
+    expect(f.config.enableFuzz).toBe(false);
+    expect(f.schedulerDefinition?.model?.name ?? f.model).toBeTruthy();
   });
 
-  it("passes custom w into scheduler parameters", async () => {
-    const { default_w } = await import("ts-fsrs");
-    const w = default_w.map((x, i) => (i === 8 ? x * 3 : x));
-    const withCustom = fsrsForPrefs({
+  it("defaults match StudyPrefs defaults when omitted via DEFAULT", async () => {
+    const f = await schedulerForPrefs();
+    expect(f.config.desiredRetention[3]).toBe(0.9);
+    expect(f.config.enableFuzz).toBe(true);
+  });
+
+  it("passes custom w into scheduler config", async () => {
+    const { FSRS7_DEFAULT_WEIGHTS } = await import("ts-fsrs/models/fsrs-7");
+    const w = FSRS7_DEFAULT_WEIGHTS.map((x, i) => (i < 10 ? x * 2 : x));
+    const withCustom = await schedulerForPrefs({
       desiredRetention: 0.9,
       enableFuzz: false,
       w,
     });
-    const withDefault = fsrsForPrefs({
+    const withDefault = await schedulerForPrefs({
       desiredRetention: 0.9,
       enableFuzz: false,
     });
-    expect(withCustom.parameters.w).toHaveLength(21);
-    expect(withCustom.parameters.w[8]).not.toBe(withDefault.parameters.w[8]);
+    expect(withCustom.config.weights).toHaveLength(34);
+    expect(withCustom.config.weights[2]).not.toBe(withDefault.config.weights[2]);
   });
 
-  it("omits invalid w and keeps library default length 21", () => {
-    const f = fsrsForPrefs({
+  it("omits invalid w and keeps library default length 34", async () => {
+    const f = await schedulerForPrefs({
       desiredRetention: 0.9,
       enableFuzz: false,
       w: [1, 2, 3],
     });
-    expect(f.parameters.w).toHaveLength(21);
+    expect(f.config.weights).toHaveLength(34);
+  });
+
+  it("uses FSRS-7 by default", async () => {
+    const f = await schedulerForPrefs({
+      desiredRetention: 0.9,
+      enableFuzz: false,
+    });
+    expect(f.schedulerDefinition.model.name).toBe("fsrs-7");
   });
 });

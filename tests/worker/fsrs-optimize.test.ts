@@ -9,7 +9,7 @@ import {
 } from "../../worker/study/fsrsOptimize";
 import { getDb } from "../../worker/db/client";
 
-const fixtureW = Array.from({ length: 21 }, (_, i) => 0.1 + i * 0.01);
+const fixtureW = Array.from({ length: 34 }, (_, i) => 0.1 + i * 0.01);
 
 describe("isOptimizeDue", () => {
   const now = new Date("2026-06-01T00:00:00.000Z");
@@ -161,7 +161,7 @@ describe("FSRS optimize API", () => {
     });
   });
 
-  it("PUT weights rejects invalid vectors and accepts 21 finites", async () => {
+  it("PUT weights rejects invalid vectors and accepts 34 finites", async () => {
     const env = createTestEnv();
     seedUser(env);
 
@@ -193,7 +193,7 @@ describe("FSRS optimize API", () => {
     expect(good.status).toBe(200);
     expect(await good.json()).toMatchObject({
       ok: true,
-      wLength: 21,
+      wLength: 34,
       rescheduled: { cardsUpdated: 0, cardsSkipped: 0 },
     });
 

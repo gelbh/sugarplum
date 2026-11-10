@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { createEmptyCard, default_w, fsrs, Rating } from "ts-fsrs";
+import { Rating } from "ts-fsrs";
+import { FSRS7_DEFAULT_WEIGHTS } from "ts-fsrs/models/fsrs-7";
 import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { createTestEnv } from "./test-env";
@@ -15,8 +16,10 @@ import {
   saveFsrsWeights,
 } from "../../worker/study/fsrsOptimize";
 import { applyDeferrals } from "../../worker/study/dueQueue";
+import { emptyFsrsCard } from "../../src/study/retrievability";
+import { schedulerForPrefs } from "../../src/study/fsrsFactory";
 
-const customW = default_w.map((x, i) => (i === 8 ? x * 3 : x));
+const customW = FSRS7_DEFAULT_WEIGHTS.map((x, i) => (i < 10 ? x * 2 : x));
 
 const sampleLogs: ReviewLogReplayRow[] = [
   { reviewed_at: "2026-01-01T12:00:00.000Z", rating: 3 },
@@ -25,56 +28,72 @@ const sampleLogs: ReviewLogReplayRow[] = [
 ];
 
 describe("replayCardFromLogs", () => {
-  it("yields different due/stability for custom w vs default", () => {
-    const withDefault = replayCardFromLogs(sampleLogs, {
+  it("yields different due/stability for custom w vs default", async () => {
+    const withDefault = await replayCardFromLogs(sampleLogs, {
       desiredRetention: 0.9,
       enableFuzz: true,
     });
-    const withCustom = replayCardFromLogs(sampleLogs, {
+    const withCustom = await replayCardFromLogs(sampleLogs, {
       desiredRetention: 0.9,
       enableFuzz: true,
       w: customW,
     });
     expect(withDefault).not.toBeNull();
     expect(withCustom).not.toBeNull();
-    expect(withCustom!.due.getTime()).not.toBe(withDefault!.due.getTime());
+    expect(withCustom!.dueAt.getTime()).not.toBe(withDefault!.dueAt.getTime());
   });
 
-  it("is deterministic with fuzz forced off", () => {
-    const a = replayCardFromLogs(sampleLogs, {
+  it("is deterministic with fuzz forced off", async () => {
+    const a = await replayCardFromLogs(sampleLogs, {
       desiredRetention: 0.9,
       enableFuzz: false,
       w: customW,
     });
-    const b = replayCardFromLogs(sampleLogs, {
+    const b = await replayCardFromLogs(sampleLogs, {
       desiredRetention: 0.9,
       enableFuzz: false,
       w: customW,
     });
     expect(a).not.toBeNull();
     expect(b).not.toBeNull();
-    expect(a!.due.toISOString()).toBe(b!.due.toISOString());
+    expect(a!.dueAt.toISOString()).toBe(b!.dueAt.toISOString());
     expect(a!.stability).toBe(b!.stability);
   });
 
-  it("returns null for empty or all-invalid logs", () => {
-    expect(replayCardFromLogs([], { desiredRetention: 0.9, enableFuzz: false })).toBeNull();
+  it("returns null for empty or all-invalid logs", async () => {
     expect(
-      replayCardFromLogs(
-        [{ reviewed_at: "nope", rating: 3 }, { reviewed_at: "2026-01-01T00:00:00.000Z", rating: 9 }],
+      await replayCardFromLogs([], { desiredRetention: 0.9, enableFuzz: false }),
+    ).toBeNull();
+    expect(
+      await replayCardFromLogs(
+        [
+          { reviewed_at: "nope", rating: 3 },
+          { reviewed_at: "2026-01-01T00:00:00.000Z", rating: 9 },
+        ],
         { desiredRetention: 0.9, enableFuzz: false },
       ),
     ).toBeNull();
   });
 
-  it("accept-time empty seed matches first-log seed after first grade", () => {
+  it("accept-time empty seed matches first-log seed after first grade", async () => {
     const acceptAt = new Date("2026-01-01T10:00:00.000Z");
     const firstAt = new Date("2026-01-03T12:00:00.000Z");
-    const scheduler = fsrs({ enable_fuzz: false });
+    const scheduler = await schedulerForPrefs({
+      desiredRetention: 0.9,
+      enableFuzz: false,
+    });
     for (const grade of [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy]) {
-      const fromAccept = scheduler.next(createEmptyCard(acceptAt), firstAt, grade).card;
-      const fromFirst = scheduler.next(createEmptyCard(firstAt), firstAt, grade).card;
-      expect(fromAccept.due.toISOString()).toBe(fromFirst.due.toISOString());
+      const fromAccept = scheduler.review({
+        card: emptyFsrsCard(acceptAt, "seed"),
+        grade,
+        now: firstAt,
+      }).card;
+      const fromFirst = scheduler.review({
+        card: emptyFsrsCard(firstAt, "seed"),
+        grade,
+        now: firstAt,
+      }).card;
+      expect(fromAccept.dueAt.toISOString()).toBe(fromFirst.dueAt.toISOString());
       expect(fromAccept.stability).toBe(fromFirst.stability);
       expect(fromAccept.difficulty).toBe(fromFirst.difficulty);
       expect(fromAccept.state).toBe(fromFirst.state);
@@ -168,7 +187,7 @@ describe("reschedule on weight save/reset", () => {
     const before = env.getSchedules().find((s) => s.card_id === "card-a")!;
     const db = getDb(env);
     const result = await saveFsrsWeights(db, "user-a", customW);
-    expect(result.w).toHaveLength(21);
+    expect(result.w).toHaveLength(34);
     expect(result.rescheduled.cardsUpdated).toBe(1);
     const after = env.getSchedules().find((s) => s.card_id === "card-a")!;
     expect(after.due).not.toBe(before.due);

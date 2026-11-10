@@ -22,7 +22,7 @@ vi.mock("../../src/study/fsrsOptimize.worker?worker", () => {
     postMessage(_msg: unknown) {
       queueMicrotask(() => {
         this.onmessage?.({
-          data: { ok: true, w: Array.from({ length: 21 }, () => 0.4) },
+          data: { ok: true, w: Array.from({ length: 34 }, () => 0.4) },
         } as MessageEvent);
       });
     }

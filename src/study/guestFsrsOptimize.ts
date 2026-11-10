@@ -100,6 +100,7 @@ export function buildGuestFsrsPrefs(
   return {
     desiredRetention: studyPrefs.desiredRetention,
     enableFuzz: studyPrefs.enableFuzz,
+    modelVersion: "FSRS-7",
     ...(validated ? { w: validated } : {}),
   };
 }

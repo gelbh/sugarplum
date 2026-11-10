@@ -1,4 +1,4 @@
-import { createEmptyCard, Rating, State, type Grade } from "ts-fsrs";
+import { Rating, State, type Grade } from "ts-fsrs";
 import type {
   CardDraftView,
   CardType,
@@ -13,7 +13,8 @@ import type {
   Subject,
 } from "../api/client";
 import { assertSingleCloze } from "../lib/clozeFormat";
-import { fsrsForPrefs } from "../study/fsrsFactory";
+import { replayMemoryFromLogs } from "../study/fsrsCutover";
+import { schedulerForPrefs } from "../study/fsrsFactory";
 import {
   buildGuestFsrsPrefs,
   DEFAULT_GUEST_FSRS_OPTIMIZE,
@@ -24,6 +25,7 @@ import {
   type GuestFsrsOptimizeFields,
 } from "../study/guestFsrsOptimize";
 import { rescheduleGuestSchedules } from "../study/guestFsrsReschedule";
+import { normalizeSchedulerCard } from "../study/fsrsReplay";
 import { clientLocalDay } from "../study/localDay";
 import { type StudyPrefs } from "../study/policyQueue";
 import { clampStudyPrefs, DEFAULT_STUDY_PREFS } from "../study/policyPrefs";
@@ -32,6 +34,7 @@ import type { RescheduleSummary } from "../study/fsrsReplay";
 import { validateFsrsW } from "../study/fsrsWeights";
 import {
   cardFromScheduleRow,
+  emptyFsrsCard,
   scheduleColumnsFromCard,
 } from "../study/retrievability";
 import { GUEST_USER_ID } from "./session";
@@ -44,6 +47,18 @@ import {
 } from "./policyDue";
 
 export type { GuestCardSchedule, GuestReviewLog };
+
+/** Serialize guest store mutations across awaits (review / weight save). */
+let guestMutationChain: Promise<unknown> = Promise.resolve();
+
+function enqueueGuestMutation<T>(fn: () => Promise<T>): Promise<T> {
+  const next = guestMutationChain.then(fn, fn);
+  guestMutationChain = next.then(
+    () => undefined,
+    () => undefined,
+  );
+  return next;
+}
 
 export type GuestHubCardBody = {
   type: "qa" | "cloze" | "mcq";
@@ -805,11 +820,11 @@ export function guestGetFsrsRevlogCsv(storage?: Store): string {
   return guestRevlogCsv(readStore(storage).reviewLogs);
 }
 
-function applyGuestReschedule(
+async function applyGuestReschedule(
   store: GuestStore,
   now: Date,
-): RescheduleSummary {
-  const result = rescheduleGuestSchedules({
+): Promise<RescheduleSummary> {
+  const result = await rescheduleGuestSchedules({
     cards: store.cards,
     schedules: store.schedules,
     reviewLogs: store.reviewLogs,
@@ -823,15 +838,15 @@ function applyGuestReschedule(
 }
 
 /** Persist optimize meta, then reschedule; keep meta if reschedule throws. */
-function persistGuestFsrsWeightsAndReschedule(
+async function persistGuestFsrsWeightsAndReschedule(
   store: GuestStore,
   storage: Store | undefined,
   now: Date,
-): RescheduleSummary {
+): Promise<RescheduleSummary> {
   let rescheduled: RescheduleSummary = { cardsUpdated: 0, cardsSkipped: 0 };
   let rescheduleError: unknown = null;
   try {
-    rescheduled = applyGuestReschedule(store, now);
+    rescheduled = await applyGuestReschedule(store, now);
   } catch (err) {
     rescheduleError = err;
   }
@@ -840,31 +855,43 @@ function persistGuestFsrsWeightsAndReschedule(
   return rescheduled;
 }
 
-export function guestSaveFsrsWeights(
+export async function guestSaveFsrsWeights(
   w: number[],
   storage?: Store,
   now: Date = new Date(),
-): { ok: true; wLength: number; rescheduled: RescheduleSummary } {
-  const validated = validateFsrsW(w);
-  if (!validated) throw new Error("Invalid FSRS weights");
-  const store = readStore(storage);
-  store.fsrsW = validated;
-  store.fsrsLastOptimizedAt = now.toISOString();
-  store.fsrsOptimizePending = false;
-  const rescheduled = persistGuestFsrsWeightsAndReschedule(store, storage, now);
-  return { ok: true, wLength: validated.length, rescheduled };
+): Promise<{ ok: true; wLength: number; rescheduled: RescheduleSummary }> {
+  return enqueueGuestMutation(async () => {
+    const validated = validateFsrsW(w);
+    if (!validated) throw new Error("Invalid FSRS weights");
+    const store = readStore(storage);
+    store.fsrsW = validated;
+    store.fsrsLastOptimizedAt = now.toISOString();
+    store.fsrsOptimizePending = false;
+    const rescheduled = await persistGuestFsrsWeightsAndReschedule(
+      store,
+      storage,
+      now,
+    );
+    return { ok: true, wLength: validated.length, rescheduled };
+  });
 }
 
-export function guestResetFsrsWeights(
+export async function guestResetFsrsWeights(
   storage?: Store,
   now: Date = new Date(),
-): { ok: true; rescheduled: RescheduleSummary } {
-  const store = readStore(storage);
-  store.fsrsW = null;
-  store.fsrsLastOptimizedAt = now.toISOString();
-  store.fsrsOptimizePending = false;
-  const rescheduled = persistGuestFsrsWeightsAndReschedule(store, storage, now);
-  return { ok: true, rescheduled };
+): Promise<{ ok: true; rescheduled: RescheduleSummary }> {
+  return enqueueGuestMutation(async () => {
+    const store = readStore(storage);
+    store.fsrsW = null;
+    store.fsrsLastOptimizedAt = now.toISOString();
+    store.fsrsOptimizePending = false;
+    const rescheduled = await persistGuestFsrsWeightsAndReschedule(
+      store,
+      storage,
+      now,
+    );
+    return { ok: true, rescheduled };
+  });
 }
 
 function policyInput(store: GuestStore): GuestPolicyInput {
@@ -959,76 +986,112 @@ function ratingToGrade(rating: StudyRating): Grade {
   }
 }
 
-export function guestReviewCard(
+export async function guestReviewCard(
   cardId: string,
   rating: StudyRating,
   storage?: Store,
   opts?: { localDay?: string },
-): ReviewResult {
-  const store = readStore(storage);
-  const now = new Date();
-  const nowIsoValue = now.toISOString();
-  const card = store.cards.find((c) => c.id === cardId);
-  if (!card || card.status !== "accepted") {
-    throw new Error("Card not found");
-  }
+): Promise<ReviewResult> {
+  return enqueueGuestMutation(async () => {
+    const prefsSnap = readStore(storage);
+    const prefs = buildGuestFsrsPrefs(prefsSnap.studyPrefs, prefsSnap.fsrsW);
+    const scheduler = await schedulerForPrefs(prefs);
+    const store = readStore(storage);
+    const now = new Date();
+    const nowIsoValue = now.toISOString();
+    const card = store.cards.find((c) => c.id === cardId);
+    if (!card || card.status !== "accepted") {
+      throw new Error("Card not found");
+    }
 
-  const existing = store.schedules[cardId];
-  const wasNew =
-    !existing ||
-    existing.state === State.New ||
-    (existing.reps === 0 && existing.last_review == null);
+    let existing = store.schedules[cardId];
+    const wasNew =
+      !existing ||
+      existing.state === State.New ||
+      (existing.reps === 0 && existing.last_review == null);
 
-  const fsrsCard = existing
-    ? cardFromScheduleRow({
-        due: typeof card.due === "string" ? card.due : nowIsoValue,
-        stability: existing.stability,
-        difficulty: existing.difficulty,
-        elapsed_days: existing.elapsed_days,
-        scheduled_days: existing.scheduled_days,
-        learning_steps: existing.learning_steps,
-        reps: existing.reps,
-        lapses: existing.lapses,
-        state: existing.state,
-        last_review: existing.last_review,
-      })
-    : createEmptyCard(now);
+    if (existing && !wasNew) {
+      const fast = existing.stability_fast;
+      const hasFast =
+        fast != null && Number.isFinite(fast) && fast > 0;
+      if (!hasFast) {
+        const logs = store.reviewLogs
+          .filter((l) => l.cardId === cardId)
+          .map((l) => ({ reviewed_at: l.at, rating: l.rating }));
+        const memory = await replayMemoryFromLogs(logs, {
+          ...prefs,
+          enableFuzz: false,
+          modelVersion: "FSRS-7",
+        });
+        if (memory) {
+          existing = {
+            ...existing,
+            stability: memory.stability,
+            difficulty: memory.difficulty,
+            stability_fast: memory.stabilityFast,
+          };
+          store.schedules[cardId] = existing;
+        }
+      }
+    }
 
-  const { card: nextCard, log } = fsrsForPrefs(
-    buildGuestFsrsPrefs(store.studyPrefs, store.fsrsW),
-  ).next(fsrsCard, now, ratingToGrade(rating));
-  const next = scheduleColumnsFromCard(nextCard);
+    const fsrsCard = existing
+      ? cardFromScheduleRow({
+          due: typeof card.due === "string" ? card.due : nowIsoValue,
+          stability: existing.stability,
+          difficulty: existing.difficulty,
+          elapsed_days: existing.elapsed_days,
+          scheduled_days: existing.scheduled_days,
+          learning_steps: existing.learning_steps,
+          reps: existing.reps,
+          lapses: existing.lapses,
+          state: existing.state,
+          last_review: existing.last_review,
+          stability_fast: existing.stability_fast,
+          card_id: cardId,
+        })
+      : emptyFsrsCard(now, cardId);
 
-  store.schedules[cardId] = {
-    state: next.state,
-    reps: next.reps,
-    lapses: next.lapses,
-    stability: next.stability,
-    difficulty: next.difficulty,
-    elapsed_days: next.elapsed_days,
-    scheduled_days: next.scheduled_days,
-    learning_steps: next.learning_steps,
-    last_review: next.last_review,
-  };
-  store.cards = store.cards.map((c) =>
-    c.id === cardId ? { ...c, due: next.due, updated_at: nowIsoValue } : c,
-  );
-  // Keep dueIds cycling for in-session order when still due today.
-  if (next.due <= nowIsoValue) {
-    store.dueIds = [...store.dueIds.filter((id) => id !== cardId), cardId];
-  } else {
-    store.dueIds = store.dueIds.filter((id) => id !== cardId);
-  }
-  store.reviewLogs = [
-    ...store.reviewLogs,
-    { cardId, rating, at: nowIsoValue, state: log.state },
-  ];
-  if (wasNew) {
-    const day = opts?.localDay ?? clientLocalDay(now);
-    store.introsByDay[day] = (store.introsByDay[day] ?? 0) + 1;
-  }
-  writeStore(store, storage);
-  return { due: next.due, state: next.state };
+    const { card: rawNext, revlog: log } = scheduler.review({
+      card: fsrsCard as never,
+      grade: ratingToGrade(rating),
+      now,
+    });
+    const nextCard = normalizeSchedulerCard(rawNext);
+    const next = scheduleColumnsFromCard(nextCard);
+
+    store.schedules[cardId] = {
+      state: next.state,
+      reps: next.reps,
+      lapses: next.lapses,
+      stability: next.stability,
+      difficulty: next.difficulty,
+      elapsed_days: next.elapsed_days,
+      scheduled_days: next.scheduled_days,
+      learning_steps: next.learning_steps,
+      last_review: next.last_review,
+      stability_fast: next.stability_fast,
+    };
+    store.cards = store.cards.map((c) =>
+      c.id === cardId ? { ...c, due: next.due, updated_at: nowIsoValue } : c,
+    );
+    // Keep dueIds cycling for in-session order when still due today.
+    if (next.due <= nowIsoValue) {
+      store.dueIds = [...store.dueIds.filter((id) => id !== cardId), cardId];
+    } else {
+      store.dueIds = store.dueIds.filter((id) => id !== cardId);
+    }
+    store.reviewLogs = [
+      ...store.reviewLogs,
+      { cardId, rating, at: nowIsoValue, state: log.state },
+    ];
+    if (wasNew) {
+      const day = opts?.localDay ?? clientLocalDay(now);
+      store.introsByDay[day] = (store.introsByDay[day] ?? 0) + 1;
+    }
+    writeStore(store, storage);
+    return { due: next.due, state: next.state };
+  });
 }
 
 /** Put every guest card back in the due queue (manual restudy). */

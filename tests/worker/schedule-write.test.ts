@@ -68,6 +68,7 @@ describe("prepare schedule updates", () => {
       cols.lapses,
       cols.state,
       cols.last_review,
+      null,
       "card-1",
       "user-1",
     ]);
