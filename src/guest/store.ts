@@ -23,10 +23,12 @@ import {
   normalizeGuestFsrsOptimize,
   type GuestFsrsOptimizeFields,
 } from "../study/guestFsrsOptimize";
+import { rescheduleGuestSchedules } from "../study/guestFsrsReschedule";
 import { clientLocalDay } from "../study/localDay";
 import { type StudyPrefs } from "../study/policyQueue";
 import { clampStudyPrefs, DEFAULT_STUDY_PREFS } from "../study/policyPrefs";
 import type { FsrsOptimizeStatus } from "../study/fsrsOptimizeTypes";
+import type { RescheduleSummary } from "../study/fsrsReplay";
 import { validateFsrsW } from "../study/fsrsWeights";
 import {
   cardFromScheduleRow,
@@ -803,31 +805,66 @@ export function guestGetFsrsRevlogCsv(storage?: Store): string {
   return guestRevlogCsv(readStore(storage).reviewLogs);
 }
 
+function applyGuestReschedule(
+  store: GuestStore,
+  now: Date,
+): RescheduleSummary {
+  const result = rescheduleGuestSchedules({
+    cards: store.cards,
+    schedules: store.schedules,
+    reviewLogs: store.reviewLogs,
+    prefs: buildGuestFsrsPrefs(store.studyPrefs, store.fsrsW),
+    now,
+  });
+  store.cards = result.cards;
+  store.schedules = result.schedules;
+  store.dueIds = result.dueIds;
+  return result.summary;
+}
+
+/** Persist optimize meta, then reschedule; keep meta if reschedule throws. */
+function persistGuestFsrsWeightsAndReschedule(
+  store: GuestStore,
+  storage: Store | undefined,
+  now: Date,
+): RescheduleSummary {
+  let rescheduled: RescheduleSummary = { cardsUpdated: 0, cardsSkipped: 0 };
+  let rescheduleError: unknown = null;
+  try {
+    rescheduled = applyGuestReschedule(store, now);
+  } catch (err) {
+    rescheduleError = err;
+  }
+  writeStore(store, storage);
+  if (rescheduleError) throw rescheduleError;
+  return rescheduled;
+}
+
 export function guestSaveFsrsWeights(
   w: number[],
   storage?: Store,
   now: Date = new Date(),
-): { ok: true; wLength: number } {
+): { ok: true; wLength: number; rescheduled: RescheduleSummary } {
   const validated = validateFsrsW(w);
   if (!validated) throw new Error("Invalid FSRS weights");
   const store = readStore(storage);
   store.fsrsW = validated;
   store.fsrsLastOptimizedAt = now.toISOString();
   store.fsrsOptimizePending = false;
-  writeStore(store, storage);
-  return { ok: true, wLength: validated.length };
+  const rescheduled = persistGuestFsrsWeightsAndReschedule(store, storage, now);
+  return { ok: true, wLength: validated.length, rescheduled };
 }
 
 export function guestResetFsrsWeights(
   storage?: Store,
   now: Date = new Date(),
-): { ok: true } {
+): { ok: true; rescheduled: RescheduleSummary } {
   const store = readStore(storage);
   store.fsrsW = null;
   store.fsrsLastOptimizedAt = now.toISOString();
   store.fsrsOptimizePending = false;
-  writeStore(store, storage);
-  return { ok: true };
+  const rescheduled = persistGuestFsrsWeightsAndReschedule(store, storage, now);
+  return { ok: true, rescheduled };
 }
 
 function policyInput(store: GuestStore): GuestPolicyInput {
@@ -847,9 +884,20 @@ export function guestListDueCards(
 ): ListDueResult {
   let store = readStore(storage);
   // Heal emptied queues from older guest builds that dequeued forever.
+  // Only when something is actually due; empty after reschedule-to-future is valid.
   if (store.cards.length > 0 && store.dueIds.length === 0) {
-    guestResetDue(storage);
-    store = readStore(storage);
+    const nowIso = new Date().toISOString();
+    const anyDue = store.cards.some(
+      (c) =>
+        c.status === "accepted" &&
+        typeof c.due === "string" &&
+        c.due.length > 0 &&
+        c.due <= nowIso,
+    );
+    if (anyDue) {
+      guestResetDue(storage);
+      store = readStore(storage);
+    }
   }
 
   const { result, pendingDeferrals } = buildGuestDueResult(

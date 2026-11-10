@@ -2,6 +2,7 @@ import {
   getFsrsOptimizeStatus,
   getFsrsRevlogCsv,
   putFsrsWeights,
+  type FsrsRescheduleSummary,
 } from "../api/client";
 import { isGuest } from "../guest/session";
 import {
@@ -44,16 +45,17 @@ async function trainWeightsFromCsv(csv: string): Promise<number[]> {
   }
 }
 
-async function trainAndSaveAccount(): Promise<void> {
+async function trainAndSaveAccount(): Promise<FsrsRescheduleSummary> {
   const csv = await getFsrsRevlogCsv();
   const w = await trainWeightsFromCsv(csv);
-  await putFsrsWeights(w);
+  const saved = await putFsrsWeights(w);
+  return saved.rescheduled;
 }
 
-async function trainAndSaveGuest(): Promise<void> {
+async function trainAndSaveGuest(): Promise<FsrsRescheduleSummary> {
   const csv = guestGetFsrsRevlogCsv();
   const w = await trainWeightsFromCsv(csv);
-  guestSaveFsrsWeights(w);
+  return guestSaveFsrsWeights(w).rescheduled;
 }
 
 /**
@@ -84,16 +86,15 @@ export async function maybeRunFsrsOptimize(): Promise<"skipped" | "ran" | "faile
 }
 
 /** Manual Run now: force train regardless of pending flag. */
-export async function runFsrsOptimizeTrainNow(): Promise<void> {
+export async function runFsrsOptimizeTrainNow(): Promise<FsrsRescheduleSummary> {
   if (inFlight) throw new Error("Optimize already in progress");
   inFlight = true;
   try {
-    if (isGuest()) {
-      await trainAndSaveGuest();
-    } else {
-      await trainAndSaveAccount();
-    }
+    const summary = isGuest()
+      ? await trainAndSaveGuest()
+      : await trainAndSaveAccount();
     skipAutoThisSession = false;
+    return summary;
   } finally {
     inFlight = false;
   }

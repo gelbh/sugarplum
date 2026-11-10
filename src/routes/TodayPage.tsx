@@ -149,7 +149,24 @@ export default function TodayPage() {
           endLoad();
         }
         if (!cancelled) {
-          void maybeRunFsrsOptimize();
+          const optimizeResult = await maybeRunFsrsOptimize();
+          if (optimizeResult === "ran" && !cancelled) {
+            try {
+              const { cards: dueAfter, meta: metaAfter } = await listDueCards();
+              if (!cancelled) {
+                saveDueCache(user.id, dueAfter);
+                setDueCount(dueAfter.length);
+                const titlesAfter = await loadDeckTitles();
+                if (!cancelled) {
+                  setBreakdown(
+                    buildDueBreakdown(dueAfter, metaAfter, titlesAfter),
+                  );
+                }
+              }
+            } catch {
+              /* keep pre-optimize due snapshot */
+            }
+          }
         }
         try {
           const journey = await getJourney();

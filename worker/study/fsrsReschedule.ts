@@ -1,44 +1,19 @@
-import { createEmptyCard, type Card } from "ts-fsrs";
-import { fsrsForPrefs, type FsrsPrefs } from "../../src/study/fsrsFactory";
-import { scheduleColumnsFromCard } from "../../src/study/retrievability";
+import type { FsrsPrefs } from "../../src/study/fsrsFactory";
 import {
-  prepareFullScheduleUpdate,
-  ratingToGrade,
-} from "./scheduleWrite";
+  replayCardFromLogs,
+  type RescheduleSummary,
+  type ReviewLogReplayRow,
+} from "../../src/study/fsrsReplay";
+import { scheduleColumnsFromCard } from "../../src/study/retrievability";
+import { prepareFullScheduleUpdate } from "./scheduleWrite";
+
+export {
+  replayCardFromLogs,
+  type RescheduleSummary,
+  type ReviewLogReplayRow,
+} from "../../src/study/fsrsReplay";
 
 const D1_BATCH_SIZE = 50;
-
-export type ReviewLogReplayRow = {
-  reviewed_at: string;
-  rating: number;
-};
-
-export type RescheduleSummary = {
-  cardsUpdated: number;
-  cardsSkipped: number;
-};
-
-export function replayCardFromLogs(
-  logs: readonly ReviewLogReplayRow[],
-  prefs: FsrsPrefs,
-): Card | null {
-  const scheduler = fsrsForPrefs({ ...prefs, enableFuzz: false });
-  const ordered = [...logs].sort((a, b) =>
-    a.reviewed_at.localeCompare(b.reviewed_at),
-  );
-  let card: Card | null = null;
-  for (const row of ordered) {
-    const when = Date.parse(row.reviewed_at);
-    if (!Number.isFinite(when)) continue;
-    const grade = ratingToGrade(row.rating);
-    if (grade == null) continue;
-    const now = new Date(when);
-    // Seed at first valid log; FSRS New ignores empty due.
-    const base: Card = card ?? createEmptyCard(now);
-    card = scheduler.next(base, now, grade).card;
-  }
-  return card;
-}
 
 type LogRow = {
   card_id: string;
