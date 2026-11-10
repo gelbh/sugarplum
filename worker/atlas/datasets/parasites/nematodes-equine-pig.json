@@ -596,7 +596,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "strongylus-equinus-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Imes, Schwartz, Wright (USDA); illustration from Looss, 1901",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Parasites_and_parasitic_diseases_of_horses_(Page_20)_BHL41697906.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "strongylus-edentatus",
@@ -737,7 +748,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "strongylus-edentatus-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Imes, Schwartz, Wright (USDA); illustration from Looss, 1901",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Parasites_and_parasitic_diseases_of_horses_(Page_20)_BHL41697906.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "strongylus-vulgaris",

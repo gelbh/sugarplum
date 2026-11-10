@@ -668,7 +668,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "trichostrongylus-spp-hero.webp",
+          "role": "egg_oocyst",
+          "caption": null,
+          "credit": "CDC / DPDx",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Trichostrongylus_egg_wtmt_HB1.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "strongyloides-papillosus",
@@ -1460,7 +1471,18 @@
           "note": "Course spells the order Strongylidia; references spell it Strongylida."
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "chabertia-ovina-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Brayton Howard Ransom / USDA Bureau of Animal Industry Bulletin 127",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:The_nematodes_parasitic_in_the_alimentary_tract_of_cattle,_sheep,_and_other_ruminants_(IA_bullbai127).pdf",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "oesophagostomum-venulosum",
@@ -1675,7 +1697,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "oesophagostomum-venulosum-hero.webp",
+          "role": "adult",
+          "caption": null,
+          "credit": "Brayton Howard Ransom / USDA Bureau of Animal Industry Bulletin 127",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:The_nematodes_parasitic_in_the_alimentary_tract_of_cattle,_sheep,_and_other_ruminants_(IA_bullbai127).pdf",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "trichuris-ovis",
@@ -1871,7 +1904,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "trichuris-ovis-hero.webp",
+          "role": "egg_oocyst",
+          "caption": null,
+          "credit": "Brayton Howard Ransom / USDA Bureau of Animal Industry Bulletin 127 (after Curtice, 1890)",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:The_nematodes_parasitic_in_the_alimentary_tract_of_cattle,_sheep,_and_other_ruminants_(IA_bullbai127).pdf",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "nematodirus-battus",
@@ -2853,7 +2897,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "ostertagia-ostertagi-hero.webp",
+          "role": "larva",
+          "caption": null,
+          "credit": "USDA Agricultural Research Service",
+          "license": "Public domain",
+          "sourceUrl": "https://www.ars.usda.gov/is/graphics/photos/jan98/k7905-13.jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "dictyocaulus-viviparus",
