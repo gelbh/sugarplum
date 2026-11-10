@@ -3,11 +3,24 @@
  */
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { navigate } from "../../src/nav/navigate";
 import TodayDueBreakdown from "../../src/study/TodayDueBreakdown";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true;
+
+vi.mock("../../src/nav/navigate", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/nav/navigate")>();
+  return {
+    ...actual,
+    navigate: vi.fn(),
+  };
+});
+
+afterEach(() => {
+  vi.clearAllMocks();
+});
 
 describe("TodayDueBreakdown", () => {
   it("shows new/review, deck links, remainder; no held copy", () => {
@@ -43,6 +56,12 @@ describe("TodayDueBreakdown", () => {
     );
     const link = host.querySelector('a[href="/study?deckId=a"]');
     expect(link).not.toBeNull();
+    act(() => {
+      link?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true, button: 0 }),
+      );
+    });
+    expect(navigate).toHaveBeenCalledWith("/study?deckId=a");
     host.remove();
   });
 
@@ -63,6 +82,40 @@ describe("TodayDueBreakdown", () => {
     expect(host.querySelector('[role="img"]')).toBeNull();
     expect(host.textContent).toContain("Parasites");
     expect(host.textContent).not.toContain("new ·");
+    host.remove();
+  });
+
+  it("modified click keeps href navigation", () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root: Root = createRoot(host);
+    act(() => {
+      root.render(
+        createElement(TodayDueBreakdown, {
+          introUsed: null,
+          reviewUsed: null,
+          rows: [{ deckId: "a", title: "Parasites", count: 3 }],
+          remainder: null,
+        }),
+      );
+    });
+    const link = host.querySelector('a[href="/study?deckId=a"]');
+    expect(link).not.toBeNull();
+    // Stop jsdom follow-through; assert SPA navigate stayed out of the way.
+    link?.addEventListener("click", (e) => e.preventDefault(), {
+      capture: true,
+    });
+    act(() => {
+      link?.dispatchEvent(
+        new MouseEvent("click", {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          metaKey: true,
+        }),
+      );
+    });
+    expect(navigate).not.toHaveBeenCalled();
     host.remove();
   });
 });
