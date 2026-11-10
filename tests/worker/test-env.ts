@@ -956,6 +956,15 @@ export function createTestEnv(opts?: {
         }
         if (
           normalized.startsWith("SELECT COUNT(*)") &&
+          normalized.includes("FROM cards WHERE job_id =")
+        ) {
+          const jobId = bound[0] as string;
+          const n = [...cards.values()].filter((c) => c.job_id === jobId)
+            .length;
+          return { n } as unknown as T;
+        }
+        if (
+          normalized.startsWith("SELECT COUNT(*)") &&
           normalized.includes("FROM cards") &&
           normalized.includes("INNER JOIN card_schedules")
         ) {
@@ -3425,6 +3434,64 @@ export function createTestEnv(opts?: {
               finished_at: null,
             });
           }
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = ?, finished_at = ?",
+          ) &&
+          normalized.includes(
+            "WHERE id = ? AND status = ? AND progress_json IS NULL",
+          )
+        ) {
+          const [status, coverage_json, finished_at, id, requiredStatus] =
+            bound as [string, string, string, string, string];
+          const row = generationJobs.get(id);
+          if (
+            !row ||
+            row.status !== requiredStatus ||
+            row.progress_json != null
+          ) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          generationJobs.set(id, {
+            ...row,
+            status,
+            error: null,
+            coverage_json,
+            finished_at,
+          });
+          return { success: true, meta: { changes: 1 } } as D1Result;
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = ?, finished_at = ?",
+          ) &&
+          normalized.includes(
+            "WHERE id = ? AND status = ? AND progress_json = ?",
+          )
+        ) {
+          const [
+            status,
+            coverage_json,
+            finished_at,
+            id,
+            requiredStatus,
+            expectedProgress,
+          ] = bound as [string, string, string, string, string, string];
+          const row = generationJobs.get(id);
+          if (
+            !row ||
+            row.status !== requiredStatus ||
+            row.progress_json !== expectedProgress
+          ) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          generationJobs.set(id, {
+            ...row,
+            status,
+            error: null,
+            coverage_json,
+            finished_at,
+          });
+          return { success: true, meta: { changes: 1 } } as D1Result;
         } else if (
           normalized.startsWith(
             "UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = ?, finished_at = ?",

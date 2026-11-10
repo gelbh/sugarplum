@@ -21,10 +21,13 @@ import { handleExportQueue } from "./export/consumer";
 import type { ExportQueueMessage } from "./export/enqueue";
 import { handleGenerateQueue } from "./generation/consumer";
 import type { GenerateQueueMessage } from "./generation/enqueue";
+import { failStaleRunningJobs } from "./generation/staleFail";
 import { isAllowedMutatingOrigin } from "./security/origin";
 import { getDb } from "./db/client";
 import { markOptimizePendingBatch } from "./study/fsrsOptimize";
 import { FSRS_CRON_MARK_LIMIT } from "../src/study/fsrsOptimizeConstants";
+
+const FSRS_CRON = "0 6 * * *";
 
 const EXPORT_QUEUE_NAME = "sugarplum-export";
 
@@ -95,11 +98,18 @@ const worker = {
     );
   },
   async scheduled(
-    _controller: ScheduledController,
+    controller: ScheduledController,
     env: Env,
     _ctx: ExecutionContext,
   ): Promise<void> {
-    await markOptimizePendingBatch(getDb(env), new Date(), FSRS_CRON_MARK_LIMIT);
+    if (controller.cron === FSRS_CRON) {
+      await markOptimizePendingBatch(
+        getDb(env),
+        new Date(),
+        FSRS_CRON_MARK_LIMIT,
+      );
+    }
+    await failStaleRunningJobs(getDb(env));
   },
 };
 
