@@ -132,12 +132,33 @@ describe("flyCardToGrade helpers", () => {
     expect(ghost?.style.backgroundColor).not.toBe("transparent");
     expect(ghost?.style.boxShadow).toContain("--sp-grade-easy-border");
     expect(ghost?.textContent).toContain("card");
+    expect(from.style.visibility).toBe("hidden");
     resolveFlight();
     await flight;
     Element.prototype.animate = origAnimate;
     expect(document.querySelector("[data-grade-flight-ghost]")).toBeNull();
+    // Inline hide must clear: FlipCardPlate reuses faces and sx cannot override it.
+    expect(from.style.visibility).toBe("");
     // Depart strong + arrive light while mailbox stays connected.
     expect(bumpAnimate).toHaveBeenCalledTimes(2);
+  });
+
+  it("clears source visibility if ghost.animate throws", async () => {
+    stubMotion(false);
+    const from = document.createElement("div");
+    from.className = "sp-playing-card";
+    const to = document.createElement("div");
+    to.setAttribute("data-grade-mailbox", "3");
+    document.body.append(from, to);
+    stubRects(from, to);
+    to.animate = vi.fn(() => ({ finished: Promise.resolve() })) as unknown as typeof to.animate;
+    Element.prototype.animate = () => {
+      throw new Error("waapi missing");
+    };
+
+    await flyCardToGrade(from, to, { rating: 3 });
+    expect(from.style.visibility).toBe("");
+    expect(document.querySelector("[data-grade-flight-ghost]")).toBeNull();
   });
 
   it("strong mailbox bump peaks at 1.1 with grade wash and brightness", () => {
