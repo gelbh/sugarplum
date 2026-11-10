@@ -70,6 +70,7 @@ export default function GradeButtons({ disabled, onGrade }: Props) {
             }}
           >
             <Box
+              data-grade-mailbox={g.rating}
               sx={{
                 aspectRatio: "1",
                 position: "relative",
