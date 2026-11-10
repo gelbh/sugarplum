@@ -17,6 +17,7 @@ import {
   type PointerEvent,
 } from "react";
 import { mediaUrl, type OcclusionFrontView } from "../api/client";
+import { shouldAutoSuggestRegions } from "../lib/occlusionAutoSuggest";
 
 export type OcclusionRegion = OcclusionFrontView["regions"][number];
 
@@ -106,6 +107,8 @@ export default function OcclusionRegionEditor({
   const stageRef = useRef<HTMLDivElement>(null);
   const frontRef = useRef(front);
   const suggestGenRef = useRef(0);
+  const suggestAbortRef = useRef<AbortController | null>(null);
+  const autoAttemptedKeyRef = useRef<string | null>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(
     front.regions[0]?.id ?? null,
@@ -120,11 +123,14 @@ export default function OcclusionRegionEditor({
   frontRef.current = front;
   const editLocked = disabled || suggestBusy;
 
-  useEffect(() => {
-    return () => {
-      suggestGenRef.current += 1;
-    };
+  const cancelSuggest = useCallback(() => {
+    suggestGenRef.current += 1;
+    suggestAbortRef.current?.abort();
+    suggestAbortRef.current = null;
+    setSuggestBusy(false);
   }, []);
+
+  useEffect(() => () => cancelSuggest(), [cancelSuggest]);
 
   const emit = useCallback(
     (nextFront: OcclusionFrontView, nextSelectedId: string | null) => {
@@ -149,11 +155,15 @@ export default function OcclusionRegionEditor({
   const runSuggestRegions = useCallback(async () => {
     const gen = ++suggestGenRef.current;
     const startedKey = front.image_key;
+    suggestAbortRef.current?.abort();
+    const abort = new AbortController();
+    suggestAbortRef.current = abort;
     setSuggestBusy(true);
     setSuggestNotice(null);
     try {
       const res = await fetch(mediaUrl(startedKey), {
         credentials: "same-origin",
+        signal: abort.signal,
       });
       if (!res.ok) {
         throw new Error(`Image fetch failed (${res.status})`);
@@ -178,6 +188,7 @@ export default function OcclusionRegionEditor({
       emit({ ...frontRef.current, regions: clamped }, firstId);
     } catch (err) {
       if (gen !== suggestGenRef.current) return;
+      if (err instanceof DOMException && err.name === "AbortError") return;
       setSuggestNotice({
         severity: "error",
         message: suggestErrorMessage(err),
@@ -185,9 +196,40 @@ export default function OcclusionRegionEditor({
     } finally {
       if (gen === suggestGenRef.current) {
         setSuggestBusy(false);
+        suggestAbortRef.current = null;
       }
     }
   }, [emit, front.image_key]);
+
+  const runSuggestRegionsRef = useRef(runSuggestRegions);
+  runSuggestRegionsRef.current = runSuggestRegions;
+
+  useEffect(() => {
+    const key = front.image_key.trim();
+    if (
+      !shouldAutoSuggestRegions({
+        disabled,
+        imageKey: front.image_key,
+        regionCount: front.regions.length,
+        attemptedKey: autoAttemptedKeyRef.current,
+      })
+    ) {
+      return;
+    }
+    autoAttemptedKeyRef.current = key;
+    void runSuggestRegionsRef.current();
+    return () => {
+      // Strict Mode: allow remount to retry while still empty.
+      if (
+        frontRef.current.regions.length === 0 &&
+        frontRef.current.image_key.trim() === key &&
+        autoAttemptedKeyRef.current === key
+      ) {
+        autoAttemptedKeyRef.current = null;
+      }
+      cancelSuggest();
+    };
+  }, [disabled, front.image_key, front.regions.length, cancelSuggest]);
 
   function onSuggestRegionsClick() {
     if (editLocked) return;
@@ -405,6 +447,11 @@ export default function OcclusionRegionEditor({
         >
           {suggestBusy ? "Suggesting…" : "Suggest regions"}
         </Button>
+        {suggestBusy ? (
+          <Button variant="text" size="small" onClick={cancelSuggest}>
+            Cancel
+          </Button>
+        ) : null}
         {suggestBusy ? (
           <Typography variant="caption" color="text.secondary">
             Running OCR on the crop (first run may take a moment).

@@ -338,7 +338,7 @@ describe("POST /api/decks/:id/topic-generate", () => {
     expect(res.status).toBe(422);
     const body = (await res.json()) as { error?: string; message?: string };
     const msg = body.error ?? body.message ?? JSON.stringify(body);
-    expect(msg).toMatch(/Occlusion|Suggest regions|API key/i);
+    expect(msg).toMatch(/Occlusion|suggested automatically|API key/i);
     expect(env.getGenerationJobs()).toHaveLength(0);
   });
 });
