@@ -65,6 +65,7 @@ import { type CardDraft } from "./schema";
 import { mergeTopicHints, parseTopicHintsJson } from "./topic-hints";
 import { recordGenerationUsageEventForJob } from "./usage";
 import { resolveTextLlm } from "./resolve-text-llm";
+import { stampDraftProvenancePages } from "../../src/study/excerptPages";
 
 const IMAGE_BYO_REQUIRED = `Image generation requires an ${BYO_PROVIDERS_PHRASE} API key under Settings.`;
 
@@ -624,6 +625,8 @@ export async function processGenerateJob(
     const prior = await loadPriorResume(db, materialId, jobId);
     const deckFronts = await loadDeckFronts(db, deckId);
     let windowResume: WindowResume | null = null;
+    let stampPageTexts: { page: number; text: string }[] = [];
+    let stampPickedPages: number[] = [];
 
     let drafts: Array<CardDraft & { mediaR2Keys?: string[] | null }>;
     /** Text used for coverage gaps; empty for image-only jobs. */
@@ -744,6 +747,8 @@ export async function processGenerateJob(
         });
         text = focused.text;
         windowResume = focused.resume;
+        stampPageTexts = focused.pageTexts;
+        stampPickedPages = focused.pickedPages;
       } catch (err) {
         textError = err;
         console.warn("PDF text extraction failed; trying figures", err);
@@ -817,6 +822,13 @@ export async function processGenerateJob(
             : "Extracted material text is empty and no usable figures were found. Upload OCR text or figure crops.",
         );
       }
+      if (stampPageTexts.length > 0 || stampPickedPages.length > 0) {
+        drafts = stampDraftProvenancePages(
+          drafts,
+          stampPageTexts,
+          stampPickedPages,
+        );
+      }
       await progress.emit("persist", 0, 1, "Saving drafts");
       await insertDraftCards(db, { deckId, jobId, drafts, atlasProvenance });
       await progress.emit("persist", 1, 1, "Saving drafts");
@@ -850,6 +862,8 @@ export async function processGenerateJob(
         );
         text = focused.text;
         windowResume = focused.resume;
+        stampPageTexts = focused.pageTexts;
+        stampPickedPages = focused.pickedPages;
       } else {
         const raw = await extractMaterialText(env, material);
         const prepared = prepareStudySource({
@@ -863,6 +877,8 @@ export async function processGenerateJob(
         });
         text = prepared.text;
         windowResume = prepared.resume;
+        stampPageTexts = [{ page: 1, text: raw }];
+        stampPickedPages = prepared.pickedPages;
       }
       coverageMaterial = text;
       // Emit an excerpt event after extraction.
@@ -908,6 +924,13 @@ export async function processGenerateJob(
           textQuality.length > 0 && deckFronts.length > 0
             ? "New cards repeated cards already in this deck."
             : "No flashcard drafts could be produced from this material.",
+        );
+      }
+      if (stampPageTexts.length > 0 || stampPickedPages.length > 0) {
+        drafts = stampDraftProvenancePages(
+          drafts,
+          stampPageTexts,
+          stampPickedPages,
         );
       }
       await progress.emit("persist", 0, 1, "Saving drafts");

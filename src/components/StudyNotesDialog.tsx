@@ -22,6 +22,10 @@ import {
   excerptHighlightRects,
   type TextRun,
 } from "../study/excerptHighlight";
+import {
+  normalizeExcerptText,
+  resolveNotesDisplayPage,
+} from "../study/excerptPages";
 
 const PAGE_WIDTH_FALLBACK = 320;
 const FILE_ERROR = "Could not open the file.";
@@ -175,34 +179,78 @@ export default function StudyNotesDialog({
       try {
         const copy = pdfBytes.slice();
         pdf = await loadPdfDocument(copy.buffer as ArrayBuffer);
-        const pdfPage = await pdf.getPage(page);
-        const viewport = pdfPage.getViewport({ scale: 1 });
-        const viewportTransform = matrix6(viewport.transform);
-        if (!viewportTransform || !(viewport.width > 0) || !(viewport.height > 0)) {
-          throw new Error("viewport");
+        const needle = normalizeExcerptText(excerpt);
+
+        async function pagePlainText(pageNum: number): Promise<string> {
+          const pdfPage = await pdf!.getPage(pageNum);
+          const content = await pdfPage.getTextContent();
+          return textRuns(content.items)
+            .map((run) => run.str)
+            .join(" ");
         }
-        const canvas = await renderPdfPageToCanvas(pdf, page - 1, width);
-        const content = await pdfPage.getTextContent();
-        const rects = excerptHighlightRects(
-          textRuns(content.items),
-          excerpt,
-          viewportTransform,
-        );
-        const cssW = Number.parseFloat(canvas.style.width);
-        const cssH = Number.parseFloat(canvas.style.height);
-        const sx = cssW / viewport.width;
-        const sy = cssH / viewport.height;
+
+        async function washOnPage(pageNum: number): Promise<PageView> {
+          const pdfPage = await pdf!.getPage(pageNum);
+          const viewport = pdfPage.getViewport({ scale: 1 });
+          const viewportTransform = matrix6(viewport.transform);
+          if (
+            !viewportTransform ||
+            !(viewport.width > 0) ||
+            !(viewport.height > 0)
+          ) {
+            throw new Error("viewport");
+          }
+          const canvas = await renderPdfPageToCanvas(pdf!, pageNum - 1, width);
+          const content = await pdfPage.getTextContent();
+          const rects = excerptHighlightRects(
+            textRuns(content.items),
+            excerpt,
+            viewportTransform,
+          );
+          const cssW = Number.parseFloat(canvas.style.width);
+          const cssH = Number.parseFloat(canvas.style.height);
+          const sx = cssW / viewport.width;
+          const sy = cssH / viewport.height;
+          return {
+            canvas,
+            rects: rects.map((rect) => ({
+              x: rect.x * sx,
+              y: rect.y * sy,
+              w: rect.w * sx,
+              h: rect.h * sy,
+            })),
+          };
+        }
+
+        let displayPage = page;
+        let view = await washOnPage(displayPage);
+        if (needle && view.rects.length === 0) {
+          const pageCount = pdf.numPages;
+          const scanned: { page: number; text: string }[] = [
+            { page: displayPage, text: await pagePlainText(displayPage) },
+          ];
+          for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
+            if (cancelled) return;
+            if (pageNum === displayPage) continue;
+            scanned.push({
+              page: pageNum,
+              text: await pagePlainText(pageNum),
+            });
+          }
+          const rescued = resolveNotesDisplayPage({
+            claimed: displayPage,
+            excerpt,
+            pages: scanned,
+          });
+          if (rescued !== null && rescued !== displayPage) {
+            displayPage = rescued;
+            view = await washOnPage(displayPage);
+          }
+        }
+
         if (cancelled) return;
         setError(null);
-        setPageView({
-          canvas,
-          rects: rects.map((rect) => ({
-            x: rect.x * sx,
-            y: rect.y * sy,
-            w: rect.w * sx,
-            h: rect.h * sy,
-          })),
-        });
+        setPageView(view);
       } catch {
         if (cancelled) return;
         setPageView(null);
