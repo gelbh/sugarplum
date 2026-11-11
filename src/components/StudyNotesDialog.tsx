@@ -231,31 +231,30 @@ export default function StudyNotesDialog({
         if (needle && view.rects.length === 0) {
           try {
             const pageCount = pdf.numPages;
-            const scanned: { page: number; text: string }[] = [
-              { page: displayPage, text: await pagePlainText(displayPage) },
-            ];
             for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
               if (cancelled) return;
               if (pageNum === displayPage) continue;
+              let text = "";
               try {
-                scanned.push({
-                  page: pageNum,
-                  text: await pagePlainText(pageNum),
-                });
+                text = await pagePlainText(pageNum);
               } catch {
-                /* skip damaged page; keep claimed view */
+                continue;
               }
-            }
-            const rescued = resolveNotesDisplayPage({
-              claimed: displayPage,
-              excerpt,
-              pages: scanned,
-            });
-            if (rescued !== null && rescued !== displayPage) {
-              displayPage = rescued;
-              view = await washOnPage(displayPage);
-              if (cancelled) return;
-              setPageView(view);
+              const rescued = resolveNotesDisplayPage({
+                claimed: displayPage,
+                excerpt,
+                pages: [
+                  { page: displayPage, text: "" },
+                  { page: pageNum, text },
+                ],
+              });
+              if (rescued !== null && rescued !== displayPage) {
+                displayPage = rescued;
+                view = await washOnPage(displayPage);
+                if (cancelled) return;
+                setPageView(view);
+                break;
+              }
             }
           } catch {
             /* keep claimed-page view already shown */

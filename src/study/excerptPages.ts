@@ -57,7 +57,8 @@ export function resolveNotesDisplayPage(args: {
 
 /**
  * Remap draft provenance.pages from study-window page texts.
- * Hit → matching pages; miss → pickedPages when non-empty; else leave pages.
+ * Hit → matching pages; miss → keep valid existing pages; else pickedPages;
+ * else leave pages unchanged.
  */
 export function stampDraftProvenancePages<
   T extends { provenance: ProvenancePages },

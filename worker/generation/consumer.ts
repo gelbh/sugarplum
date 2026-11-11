@@ -917,6 +917,13 @@ export async function processGenerateJob(
         avoidFronts: deckFronts,
         emitRulesStage: true,
       });
+      if (stampPageTexts.length > 0 || stampPickedPages.length > 0) {
+        drafts = stampDraftProvenancePages(
+          drafts,
+          stampPageTexts,
+          stampPickedPages,
+        );
+      }
       const textQuality = filterDraftsByQuality(drafts);
       drafts = filterNovelDrafts(textQuality, deckFronts);
       if (drafts.length === 0) {
@@ -924,13 +931,6 @@ export async function processGenerateJob(
           textQuality.length > 0 && deckFronts.length > 0
             ? "New cards repeated cards already in this deck."
             : "No flashcard drafts could be produced from this material.",
-        );
-      }
-      if (stampPageTexts.length > 0 || stampPickedPages.length > 0) {
-        drafts = stampDraftProvenancePages(
-          drafts,
-          stampPageTexts,
-          stampPickedPages,
         );
       }
       await progress.emit("persist", 0, 1, "Saving drafts");
