@@ -101,10 +101,21 @@ describe("stampDraftProvenancePages", () => {
     ).toEqual([3]);
   });
 
-  it("falls back to pickedPages when excerpt misses", () => {
+  it("keeps existing pages when excerpt misses", () => {
     const drafts = [
       {
-        provenance: { pages: [1], excerpt: "not in window" },
+        provenance: { pages: [3], excerpt: "not in window" },
+      },
+    ];
+    expect(
+      stampDraftProvenancePages(drafts, pageTexts, [1, 2])[0]?.provenance.pages,
+    ).toEqual([3]);
+  });
+
+  it("falls back to pickedPages when excerpt misses and pages empty", () => {
+    const drafts = [
+      {
+        provenance: { pages: [], excerpt: "not in window" },
       },
     ];
     expect(
@@ -112,14 +123,14 @@ describe("stampDraftProvenancePages", () => {
     ).toEqual([2, 3]);
   });
 
-  it("leaves pages when miss and pickedPages empty", () => {
+  it("matches excerpt case-insensitively", () => {
     const drafts = [
       {
-        provenance: { pages: [1], excerpt: "not in window" },
+        provenance: { pages: [1], excerpt: "m cells in peyer" },
       },
     ];
     expect(
-      stampDraftProvenancePages(drafts, pageTexts, [])[0]?.provenance.pages,
-    ).toEqual([1]);
+      stampDraftProvenancePages(drafts, pageTexts, [1])[0]?.provenance.pages,
+    ).toEqual([3]);
   });
 });

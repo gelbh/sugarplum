@@ -23,15 +23,15 @@ describe("stampDraftProvenancePages (worker generation)", () => {
     expect(stamped[0]?.provenance.pages).toEqual([3]);
   });
 
-  it("uses pickedPages when excerpt is missing from page texts", () => {
+  it("keeps existing page when excerpt misses extracted text", () => {
     const drafts = [
       {
-        provenance: { pages: [1], excerpt: "hallucinated line" },
+        provenance: { pages: [3], excerpt: "hallucinated line" },
       },
     ];
     expect(
-      stampDraftProvenancePages(drafts, pageTexts, [2, 3])[0]?.provenance.pages,
-    ).toEqual([2, 3]);
+      stampDraftProvenancePages(drafts, pageTexts, [1, 2])[0]?.provenance.pages,
+    ).toEqual([3]);
   });
 
   it("keeps [1] for plain single-page paste when that is the window", () => {

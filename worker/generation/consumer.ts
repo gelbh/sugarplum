@@ -800,6 +800,13 @@ export async function processGenerateJob(
         });
       }
 
+      if (stampPageTexts.length > 0 || stampPickedPages.length > 0) {
+        textDrafts = stampDraftProvenancePages(
+          textDrafts,
+          stampPageTexts,
+          stampPickedPages,
+        );
+      }
       const pdfQuality = filterDraftsByQuality([
         ...textDrafts,
         ...figureDrafts,
@@ -820,13 +827,6 @@ export async function processGenerateJob(
           text.trim()
             ? "No flashcard drafts could be produced from this material."
             : "Extracted material text is empty and no usable figures were found. Upload OCR text or figure crops.",
-        );
-      }
-      if (stampPageTexts.length > 0 || stampPickedPages.length > 0) {
-        drafts = stampDraftProvenancePages(
-          drafts,
-          stampPageTexts,
-          stampPickedPages,
         );
       }
       await progress.emit("persist", 0, 1, "Saving drafts");

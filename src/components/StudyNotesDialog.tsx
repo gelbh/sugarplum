@@ -224,33 +224,43 @@ export default function StudyNotesDialog({
 
         let displayPage = page;
         let view = await washOnPage(displayPage);
-        if (needle && view.rects.length === 0) {
-          const pageCount = pdf.numPages;
-          const scanned: { page: number; text: string }[] = [
-            { page: displayPage, text: await pagePlainText(displayPage) },
-          ];
-          for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
-            if (cancelled) return;
-            if (pageNum === displayPage) continue;
-            scanned.push({
-              page: pageNum,
-              text: await pagePlainText(pageNum),
-            });
-          }
-          const rescued = resolveNotesDisplayPage({
-            claimed: displayPage,
-            excerpt,
-            pages: scanned,
-          });
-          if (rescued !== null && rescued !== displayPage) {
-            displayPage = rescued;
-            view = await washOnPage(displayPage);
-          }
-        }
-
         if (cancelled) return;
         setError(null);
         setPageView(view);
+
+        if (needle && view.rects.length === 0) {
+          try {
+            const pageCount = pdf.numPages;
+            const scanned: { page: number; text: string }[] = [
+              { page: displayPage, text: await pagePlainText(displayPage) },
+            ];
+            for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
+              if (cancelled) return;
+              if (pageNum === displayPage) continue;
+              try {
+                scanned.push({
+                  page: pageNum,
+                  text: await pagePlainText(pageNum),
+                });
+              } catch {
+                /* skip damaged page; keep claimed view */
+              }
+            }
+            const rescued = resolveNotesDisplayPage({
+              claimed: displayPage,
+              excerpt,
+              pages: scanned,
+            });
+            if (rescued !== null && rescued !== displayPage) {
+              displayPage = rescued;
+              view = await washOnPage(displayPage);
+              if (cancelled) return;
+              setPageView(view);
+            }
+          } catch {
+            /* keep claimed-page view already shown */
+          }
+        }
       } catch {
         if (cancelled) return;
         setPageView(null);

@@ -4,7 +4,17 @@ export type ProvenancePages = { pages: number[]; excerpt: string };
 
 /** Trim + collapse whitespace; shared by wash and page stamp. */
 export function normalizeExcerptText(text: string): string {
-  return text.trim().replace(/\s+/g, " ");
+  return text.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function validPageList(pages: readonly number[]): number[] {
+  return [
+    ...new Set(
+      pages.filter(
+        (page) => typeof page === "number" && Number.isFinite(page) && page >= 1,
+      ),
+    ),
+  ].sort((a, b) => a - b);
 }
 
 /**
@@ -56,19 +66,19 @@ export function stampDraftProvenancePages<
   pageTexts: readonly PageText[],
   pickedPages: readonly number[],
 ): T[] {
-  const fallback = pickedPages.filter(
-    (page) => typeof page === "number" && Number.isFinite(page) && page >= 1,
-  );
-  const uniqueFallback = [...new Set(fallback)].sort((a, b) => a - b);
+  const uniqueFallback = validPageList(pickedPages);
 
   return drafts.map((draft) => {
     const hits = pagesForExcerpt(draft.provenance.excerpt, pageTexts);
+    const existing = validPageList(draft.provenance.pages);
     const pages =
       hits.length > 0
         ? hits
-        : uniqueFallback.length > 0
-          ? uniqueFallback
-          : draft.provenance.pages;
+        : existing.length > 0
+          ? existing
+          : uniqueFallback.length > 0
+            ? uniqueFallback
+            : draft.provenance.pages;
     if (
       pages.length === draft.provenance.pages.length &&
       pages.every((page, index) => page === draft.provenance.pages[index])
