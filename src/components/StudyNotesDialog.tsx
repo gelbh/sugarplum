@@ -364,8 +364,6 @@ export default function StudyNotesDialog({
     return () => {
       cancelled = true;
     };
-    // page is claimed provenance; viewPage drives render/scrubber.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- persistPages closes over cardId
   }, [open, pdfBytes, viewPage, excerpt, width, page, cardId]);
 
   useLayoutEffect(() => {
