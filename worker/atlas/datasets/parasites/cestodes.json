@@ -12,17 +12,10 @@
         "order": "Cyclophyllida",
         "family": "Anoplocephalidae",
         "group": "cestode",
-        "definitiveHosts": [
-          "horse",
-          "donkey"
-        ],
-        "intermediateHosts": [
-          "oribatid mite"
-        ],
+        "definitiveHosts": ["horse", "donkey"],
+        "intermediateHosts": ["oribatid mite"],
         "majorOrgan": "ileum",
-        "onHostStages": [
-          "adult tapeworm"
-        ],
+        "onHostStages": ["adult tapeworm"],
         "distribution": "Horses and donkeys worldwide",
         "zoonotic": "no",
         "significance": "The commonest equine tapeworm; often silent, but infection is a risk factor for ileal impaction and spasmodic colic, with mucosal damage at the attachment site.",
@@ -40,7 +33,10 @@
           {
             "name": "cysticercoid",
             "location": "free-living oribatid mite on pasture",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "horse ingests an oribatid mite carrying the cysticercoid",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult tapeworm",
@@ -153,31 +149,17 @@
       "key": "dipylidium-caninum",
       "canonicalName": "Dipylidium caninum",
       "commonName": "Double-pored tapeworm",
-      "aliases": [
-        "Flea tapeworm",
-        "Cucumber tapeworm"
-      ],
+      "aliases": ["Flea tapeworm", "Cucumber tapeworm"],
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Cyclophyllida",
         "family": "Dipylidiidae",
         "group": "cestode",
-        "definitiveHosts": [
-          "dog",
-          "cat",
-          "fox",
-          "human"
-        ],
-        "intermediateHosts": [
-          "flea",
-          "Trichodectes canis"
-        ],
+        "definitiveHosts": ["dog", "cat", "fox", "human"],
+        "intermediateHosts": ["flea", "Trichodectes canis"],
         "majorOrgan": "small intestine",
-        "onHostStages": [
-          "adult tapeworm",
-          "gravid proglottid"
-        ],
+        "onHostStages": ["adult tapeworm", "gravid proglottid"],
         "distribution": "Worldwide wherever pet dogs and cats carry fleas",
         "zoonotic": "yes",
         "significance": "Rarely causes disease in dogs or cats; mobile segments in faeces worry owners, and children are occasionally infected by swallowing a flea.",
@@ -205,7 +187,10 @@
           {
             "name": "cysticercoid",
             "location": "body cavity of the flea or chewing louse",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "dog or cat ingests a flea or chewing louse carrying the cysticercoid",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult tapeworm",
@@ -281,6 +266,12 @@
           "citation": "WCVM Learn About Parasites: Dipylidium caninum",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/dipylidium-caninum.php",
           "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Dipylidium caninum",
+          "url": "https://www.cdc.gov/dpdx/dipylidium/index.html",
+          "note": null
         }
       ],
       "images": [
@@ -301,25 +292,16 @@
       "canonicalName": "Davainea proglottina",
       "commonName": "Davainea poultry tapeworm",
       "aliases": [],
-      "misspellings": [
-        "Davainae proglottina"
-      ],
+      "misspellings": ["Davainae proglottina"],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Cyclophyllida",
         "family": "Davaineidae",
         "group": "cestode",
-        "definitiveHosts": [
-          "chicken"
-        ],
-        "intermediateHosts": [
-          "slug",
-          "snail"
-        ],
+        "definitiveHosts": ["chicken"],
+        "intermediateHosts": ["slug", "snail"],
         "majorOrgan": "small intestine",
-        "onHostStages": [
-          "adult tapeworm"
-        ],
+        "onHostStages": ["adult tapeworm"],
         "significance": "Very small tapeworm of the chicken duodenum; a single bird can carry thousands, and infection is associated with weight loss.",
         "lifecycleType": "indirect",
         "lifecycleStages": [
@@ -332,7 +314,10 @@
           {
             "name": "cysticercoid",
             "location": "body of slug or snail intermediate host",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "bird ingests a slug or snail carrying the cysticercoid",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult tapeworm",
@@ -424,25 +409,16 @@
       "canonicalName": "Raillietina spp.",
       "commonName": "Raillietina poultry tapeworm",
       "aliases": [],
-      "misspellings": [
-        "Raillientina spp."
-      ],
+      "misspellings": ["Raillientina spp."],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Cyclophyllida",
         "family": "Davaineidae",
         "group": "cestode",
-        "definitiveHosts": [
-          "chicken"
-        ],
-        "intermediateHosts": [
-          "beetle",
-          "ant"
-        ],
+        "definitiveHosts": ["chicken"],
+        "intermediateHosts": ["beetle", "ant"],
         "majorOrgan": "gastrointestinal tract",
-        "onHostStages": [
-          "adult tapeworm"
-        ],
+        "onHostStages": ["adult tapeworm"],
         "significance": "Poultry tapeworms ranging from mild (R. cesticillus) to harmful: R. tetragona cuts weight and egg output, R. echinobothrida forms nodules in the gut wall.",
         "lifecycleType": "indirect",
         "lifecycleStages": [
@@ -455,7 +431,10 @@
           {
             "name": "cysticercoid",
             "location": "body of arthropod intermediate host",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "bird ingests an arthropod intermediate host carrying the cysticercoid",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult tapeworm",
@@ -580,18 +559,10 @@
         "order": "Cyclophyllida",
         "family": "Anoplocephalidae",
         "group": "cestode",
-        "definitiveHosts": [
-          "sheep",
-          "goat",
-          "cattle"
-        ],
-        "intermediateHosts": [
-          "oribatid mite"
-        ],
+        "definitiveHosts": ["sheep", "goat", "cattle"],
+        "intermediateHosts": ["oribatid mite"],
         "majorOrgan": "small intestine",
-        "onHostStages": [
-          "adult tapeworm"
-        ],
+        "onHostStages": ["adult tapeworm"],
         "distribution": "Ruminant-rearing regions in most of the world",
         "zoonotic": "no",
         "significance": "Mostly harmless; very heavy burdens in young lambs and kids may bring mild ill thrift, and segments seen in faeces often worry farmers.",
@@ -609,7 +580,10 @@
           {
             "name": "cysticercoid",
             "location": "oribatid mite on pasture",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "ruminant ingests an oribatid mite carrying the cysticercoid",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult tapeworm",
@@ -673,6 +647,12 @@
           "citation": "WCVM Learn About Parasites: Taenia species",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
           "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "WCVM Learn About Parasites: Moniezia and Thysanosoma",
+          "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/moniezia-and-thysanosoma.php",
+          "note": null
         }
       ],
       "images": [
@@ -692,29 +672,17 @@
       "key": "taenia-hydatigena",
       "canonicalName": "Taenia hydatigena",
       "commonName": "Cysticercus tenuicollis",
-      "aliases": [
-        "Cysticercus tenuicollis"
-      ],
+      "aliases": ["Cysticercus tenuicollis"],
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Cyclophyllida",
         "family": "Taeniidae",
         "group": "cestode",
-        "definitiveHosts": [
-          "dog"
-        ],
-        "intermediateHosts": [
-          "sheep",
-          "goat",
-          "cattle",
-          "pig"
-        ],
+        "definitiveHosts": ["dog"],
+        "intermediateHosts": ["sheep", "goat", "cattle", "pig"],
         "majorOrgan": "small intestine",
-        "onHostStages": [
-          "adult tapeworm",
-          "cysticercus"
-        ],
+        "onHostStages": ["adult tapeworm", "cysticercus"],
         "distribution": "Worldwide",
         "zoonotic": "no",
         "significance": "Adults in dogs do little harm; heavy infections can kill lambs through haemorrhagic liver migration, and cysts in offal are condemned at slaughter.",
@@ -733,7 +701,10 @@
           {
             "name": "cysticercus",
             "location": "liver surface, omentum and mesentery; mature in about 8 weeks",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "dog ingests cysticercus (Cysticercus tenuicollis) in ruminant offal",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult tapeworm",
@@ -850,28 +821,17 @@
       "key": "taenia-ovis",
       "canonicalName": "Taenia ovis",
       "commonName": "Sheep measles",
-      "aliases": [
-        "Cysticercus ovis",
-        "Sheep measles"
-      ],
+      "aliases": ["Cysticercus ovis", "Sheep measles"],
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Cyclophyllida",
         "family": "Taeniidae",
         "group": "cestode",
-        "definitiveHosts": [
-          "dog"
-        ],
-        "intermediateHosts": [
-          "sheep",
-          "goat"
-        ],
+        "definitiveHosts": ["dog"],
+        "intermediateHosts": ["sheep", "goat"],
         "majorOrgan": "small intestine",
-        "onHostStages": [
-          "adult tapeworm",
-          "cysticercus"
-        ],
+        "onHostStages": ["adult tapeworm", "cysticercus"],
         "distribution": "Widespread, including New Zealand, Australia, Canada and parts of Africa",
         "zoonotic": "no",
         "significance": "Harmless to sheep and dogs clinically, but cysts in heart and skeletal muscle of sheep and goats lead to trimmed or condemned carcasses.",
@@ -885,7 +845,10 @@
           {
             "name": "cysticercus",
             "location": "heart muscle, diaphragm, masseter and other skeletal muscle",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "dog ingests cysticercus (Cysticercus ovis) in sheep muscle",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult tapeworm",
@@ -990,20 +953,14 @@
       "key": "taenia-multiceps",
       "canonicalName": "Taenia multiceps",
       "commonName": "Gid tapeworm",
-      "aliases": [
-        "Coenurus cerebralis",
-        "Multiceps multiceps"
-      ],
+      "aliases": ["Coenurus cerebralis", "Multiceps multiceps"],
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Cyclophyllida",
         "family": "Taeniidae",
         "group": "cestode",
-        "definitiveHosts": [
-          "dog",
-          "fox"
-        ],
+        "definitiveHosts": ["dog", "fox"],
         "intermediateHosts": [
           "sheep",
           "goat",
@@ -1013,10 +970,7 @@
           "human"
         ],
         "majorOrgan": "small intestine",
-        "onHostStages": [
-          "adult tapeworm",
-          "coenurus"
-        ],
+        "onHostStages": ["adult tapeworm", "coenurus"],
         "distribution": "Widespread; sheep areas of Europe, Asia, the Middle East and Africa",
         "zoonotic": "yes",
         "significance": "Coenuri in the brain or spinal cord of young sheep and goats cause gid, a neurological and often fatal disease; people are rarely infected.",
@@ -1039,7 +993,10 @@
           {
             "name": "coenurus",
             "location": "mostly brain or spinal cord of the ungulate; mature after some months",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "dog ingests coenurus from intermediate-host tissues",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult tapeworm",
@@ -1157,6 +1114,12 @@
           "citation": "WCVM Learn About Parasites: Taenia species",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/taenia-species.php",
           "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Coenurosis",
+          "url": "https://www.cdc.gov/dpdx/coenurosis/index.html",
+          "note": null
         }
       ],
       "images": [
@@ -1176,26 +1139,17 @@
       "key": "taenia-saginata",
       "canonicalName": "Taenia saginata",
       "commonName": "Beef tapeworm",
-      "aliases": [
-        "Cysticercus bovis"
-      ],
+      "aliases": ["Cysticercus bovis"],
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Cyclophyllida",
         "family": "Taeniidae",
         "group": "cestode",
-        "definitiveHosts": [
-          "human"
-        ],
-        "intermediateHosts": [
-          "cattle"
-        ],
+        "definitiveHosts": ["human"],
+        "intermediateHosts": ["cattle"],
         "majorOrgan": "small intestine",
-        "onHostStages": [
-          "adult tapeworm",
-          "cysticercus"
-        ],
+        "onHostStages": ["adult tapeworm", "cysticercus"],
         "distribution": "Worldwide where beef is eaten raw or undercooked",
         "zoonotic": "yes",
         "significance": "Mild gut upset in people and no signs in cattle, but cysts found at slaughter mean carcass condemnation, farm trace-back and trade costs.",
@@ -1205,7 +1159,6 @@
             "name": "egg",
             "location": "passed in human faeces",
             "hostRole": "environment",
-            "infective": true,
             "transmission": "cattle ingest eggs from contaminated pasture",
             "note": "Infective for cattle (intermediate host)"
           },
@@ -1227,7 +1180,7 @@
             "hostRole": "intermediate",
             "infective": true,
             "transmission": "person eats undercooked beef with cysticerci",
-            "note": "Infective for people (definitive host)"
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult tapeworm",
@@ -1379,27 +1332,17 @@
       "key": "taenia-solium",
       "canonicalName": "Taenia solium",
       "commonName": "Pork tapeworm",
-      "aliases": [
-        "Cysticercus cellulosae"
-      ],
+      "aliases": ["Cysticercus cellulosae"],
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Cyclophyllida",
         "family": "Taeniidae",
         "group": "cestode",
-        "definitiveHosts": [
-          "human"
-        ],
-        "intermediateHosts": [
-          "pig",
-          "human"
-        ],
+        "definitiveHosts": ["human"],
+        "intermediateHosts": ["pig", "human"],
         "majorOrgan": "small intestine",
-        "onHostStages": [
-          "adult tapeworm",
-          "cysticercus"
-        ],
+        "onHostStages": ["adult tapeworm", "cysticercus"],
         "distribution": "Nearly worldwide; most cases in low- and middle-income countries",
         "zoonotic": "yes",
         "significance": "Adults in people and cysts in pigs are mostly silent; eggs swallowed by people cause cysticercosis, and brain cysts bring seizures.",
@@ -1423,7 +1366,10 @@
           {
             "name": "cysticercus",
             "location": "pig muscle; in people also brain, eye, muscle and under the skin",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "person eats undercooked pork with cysticerci",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult tapeworm",
@@ -1565,6 +1511,12 @@
           "citation": "CDC DPDx: Taeniasis",
           "url": "https://www.cdc.gov/dpdx/taeniasis/index.html",
           "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Taeniasis",
+          "url": "https://www.cdc.gov/dpdx/taeniasis/index.html",
+          "note": null
         }
       ],
       "images": [
@@ -1591,10 +1543,7 @@
         "order": "Cyclophyllida",
         "family": "Taeniidae",
         "group": "cestode",
-        "definitiveHosts": [
-          "dog",
-          "canid"
-        ],
+        "definitiveHosts": ["dog", "canid"],
         "intermediateHosts": [
           "sheep",
           "goat",
@@ -1604,10 +1553,7 @@
           "human"
         ],
         "majorOrgan": "small intestine",
-        "onHostStages": [
-          "adult tapeworm",
-          "hydatid cyst"
-        ],
+        "onHostStages": ["adult tapeworm", "hydatid cyst"],
         "distribution": "Almost worldwide, mainly rural grazing areas where dogs eat offal",
         "zoonotic": "yes",
         "significance": "Harmless to dogs, but its hydatid cysts in the liver and lungs of livestock and people cause cystic echinococcosis.",
@@ -1630,7 +1576,10 @@
           {
             "name": "hydatid cyst",
             "location": "mainly liver and lungs of the herbivore or person",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "dog ingests fertile hydatid cyst material from intermediate-host organs",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult tapeworm",
@@ -1744,6 +1693,12 @@
           "citation": "WCVM Learn About Parasites: Echinococcus granulosus",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/echinococcus-granulosus.php",
           "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Echinococcosis",
+          "url": "https://www.cdc.gov/dpdx/echinococcosis/index.html",
+          "note": null
         }
       ],
       "images": [
@@ -1780,19 +1735,10 @@
         "order": "Cyclophyllida",
         "family": "Taeniidae",
         "group": "cestode",
-        "definitiveHosts": [
-          "fox",
-          "dog"
-        ],
-        "intermediateHosts": [
-          "rodent",
-          "human"
-        ],
+        "definitiveHosts": ["fox", "dog"],
+        "intermediateHosts": ["rodent", "human"],
         "majorOrgan": "small intestine",
-        "onHostStages": [
-          "adult tapeworm",
-          "hydatid cyst"
-        ],
+        "onHostStages": ["adult tapeworm", "hydatid cyst"],
         "distribution": "Northern hemisphere: Europe, Asia, Japan and northern North America",
         "zoonotic": "yes",
         "significance": "Its alveolar cyst grows like a tumour in the liver of rodents and people; human alveolar echinococcosis is often fatal untreated.",
@@ -1815,7 +1761,10 @@
           {
             "name": "hydatid cyst",
             "location": "alveolar form, mainly liver; may spread to lungs and brain",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "fox or dog ingests fertile alveolar hydatid material from rodent intermediate hosts",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult tapeworm",
@@ -1935,6 +1884,12 @@
           "citation": "WCVM Learn About Parasites: Echinococcus multilocularis",
           "url": "https://wcvm.usask.ca/learnaboutparasites/parasites/echinococcus-multilocularis.php",
           "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Echinococcosis",
+          "url": "https://www.cdc.gov/dpdx/echinococcosis/index.html",
+          "note": null
         }
       ],
       "images": [
@@ -1954,31 +1909,18 @@
       "key": "diphyllobothrium-latum",
       "canonicalName": "Diphyllobothrium latum",
       "commonName": "Broad fish tapeworm",
-      "aliases": [
-        "Dibothriocephalus latus"
-      ],
+      "aliases": ["Dibothriocephalus latus"],
       "misspellings": [],
       "fields": {
         "phylum": "Platyhelminthes",
         "order": "Diphyllobothriidea",
         "family": "Diphyllobothriidae",
         "group": "cestode",
-        "definitiveHosts": [
-          "human",
-          "dog",
-          "felid"
-        ],
-        "intermediateHosts": [
-          "copepod",
-          "freshwater fish"
-        ],
-        "paratenicHosts": [
-          "freshwater fish"
-        ],
+        "definitiveHosts": ["human", "dog", "felid"],
+        "intermediateHosts": ["copepod", "freshwater fish"],
+        "paratenicHosts": ["freshwater fish"],
         "majorOrgan": "small intestine",
-        "onHostStages": [
-          "adult tapeworm"
-        ],
+        "onHostStages": ["adult tapeworm"],
         "distribution": "Mostly circumpolar northern regions; very rare in South America",
         "zoonotic": "yes",
         "significance": "Fish-borne tapeworm of people and dogs; usually mild gut upset, once tied to vitamin B12-deficiency anaemia in people.",
@@ -2008,7 +1950,10 @@
             "name": "plerocercoid",
             "location": "flesh of a freshwater fish, often a predatory one",
             "hostRole": "intermediate",
-            "host": "freshwater fish"
+            "host": "freshwater fish",
+            "infective": true,
+            "transmission": "person or fish-eating mammal eats undercooked fish with plerocercoids",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult tapeworm",
@@ -2111,6 +2056,12 @@
           "field": "family",
           "citation": "NCBI Taxonomy: Dibothriocephalus latus",
           "url": "https://www.ncbi.nlm.nih.gov/datasets/taxonomy/60516/",
+          "note": null
+        },
+        {
+          "field": "lifecycleStages",
+          "citation": "CDC DPDx: Diphyllobothriasis",
+          "url": "https://www.cdc.gov/dpdx/diphyllobothriasis/index.html",
           "note": null
         }
       ],
