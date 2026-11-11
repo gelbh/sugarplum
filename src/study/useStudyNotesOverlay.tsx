@@ -51,6 +51,7 @@ export function useStudyNotesOverlay(
         excerpt={notesExcerpt}
         page={notesPages[0] ?? null}
         jobId={card.job_id}
+        cardId={card.id}
       />
     ) : null,
   };

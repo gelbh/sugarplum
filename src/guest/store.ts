@@ -33,6 +33,10 @@ import { type StudyPrefs } from "../study/policyQueue";
 import { clampStudyPrefs, DEFAULT_STUDY_PREFS } from "../study/policyPrefs";
 import type { FsrsOptimizeStatus } from "../study/fsrsOptimizeTypes";
 import type { RescheduleSummary } from "../study/fsrsReplay";
+import {
+  mergeProvenancePagesIntoJson,
+  normalizeProvenancePages,
+} from "../study/notesProvenanceWrite";
 import { validateFsrsW } from "../study/fsrsWeights";
 import {
   cardFromScheduleRow,
@@ -74,6 +78,7 @@ type GuestCardPatch = {
   back?: string | { answer: string };
   options?: string[];
   type?: CardType;
+  provenance_pages?: number[];
 };
 
 export const GUEST_STORE_KEY = "sugarplum.guest.store.v1";
@@ -608,7 +613,8 @@ export function guestPatchCard(
     body.front === undefined &&
     body.back === undefined &&
     body.options === undefined &&
-    body.type === undefined
+    body.type === undefined &&
+    body.provenance_pages === undefined
   ) {
     throw new Error("No fields to update");
   }
@@ -643,6 +649,26 @@ export function guestPatchCard(
     updated.options = nextOptions;
   } else {
     delete updated.options;
+  }
+  if (body.provenance_pages !== undefined) {
+    const pages = normalizeProvenancePages(body.provenance_pages);
+    if (pages.length < 1) {
+      throw new Error("provenance_pages must be a non-empty page list");
+    }
+    const priorJson =
+      updated.provenance == null
+        ? null
+        : JSON.stringify(updated.provenance);
+    updated.provenance = JSON.parse(
+      mergeProvenancePagesIntoJson(priorJson, pages),
+    ) as CardDraftView["provenance"];
+  } else if (
+    body.front === undefined &&
+    body.back === undefined &&
+    body.options === undefined &&
+    body.type === undefined
+  ) {
+    throw new Error("No fields to update");
   }
   store.cards[idx] = updated;
   writeStore(store, storage);

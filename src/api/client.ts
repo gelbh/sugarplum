@@ -1348,6 +1348,7 @@ export function patchCard(
     back?: string | { answer: string };
     options?: string[];
     type?: CardType;
+    provenance_pages?: number[];
   },
 ) {
   if (isGuest()) {
@@ -1362,6 +1363,11 @@ export function patchCard(
     method: "PATCH",
     json: body,
   });
+}
+
+/** Pages-only PATCH; keeps excerpt and other provenance keys. */
+export function patchCardProvenancePages(cardId: string, pages: number[]) {
+  return patchCard(cardId, { provenance_pages: pages });
 }
 
 export type AcceptCardResult = CardDraftView & { unlocks?: UnlockView[] };

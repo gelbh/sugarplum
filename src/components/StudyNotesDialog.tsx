@@ -6,12 +6,14 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import type { TextItem, TextMarkedContent } from "pdfjs-dist/types/src/display/api";
 import {
   downloadMaterialUrl,
   getJob,
   listMaterials,
+  patchCardProvenancePages,
 } from "../api/client";
 import { isGuest } from "../guest/session";
 import {
@@ -25,7 +27,13 @@ import {
 import {
   normalizeExcerptText,
   resolveNotesDisplayPage,
+  type PageText,
 } from "../study/excerptPages";
+import {
+  clampNotesPage,
+  pagesToPersistAfterNavigate,
+  pagesToPersistAfterRescue,
+} from "../study/notesProvenanceWrite";
 
 const PAGE_WIDTH_FALLBACK = 320;
 const FILE_ERROR = "Could not open the file.";
@@ -38,6 +46,7 @@ type Props = {
   excerpt: string;
   page: number | null;
   jobId: string | null;
+  cardId?: string | null;
 };
 
 type Matrix6 = TextRun["transform"];
@@ -45,6 +54,7 @@ type Matrix6 = TextRun["transform"];
 type PageView = {
   canvas: HTMLCanvasElement;
   rects: { x: number; y: number; w: number; h: number }[];
+  pageText: string;
 };
 
 function matrix6(raw: unknown): Matrix6 | null {
@@ -91,14 +101,45 @@ export default function StudyNotesDialog({
   excerpt,
   page,
   jobId,
+  cardId = null,
 }: Props) {
   const frameRef = useRef<HTMLDivElement>(null);
   const canvasHostRef = useRef<HTMLDivElement>(null);
+  const userNavRef = useRef(false);
+  const wrotePagesRef = useRef<string>("");
+  const writeSeqRef = useRef(0);
+  const writeChainRef = useRef(Promise.resolve());
+  const lastPersistedFirstRef = useRef<number | null>(null);
   const [title, setTitle] = useState("Notes");
   const [error, setError] = useState<string | null>(null);
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
   const [width, setWidth] = useState(PAGE_WIDTH_FALLBACK);
   const [pageView, setPageView] = useState<PageView | null>(null);
+  const [viewPage, setViewPage] = useState<number | null>(null);
+  const [pageCount, setPageCount] = useState(0);
+  const [pageInput, setPageInput] = useState("");
+
+  function persistPages(pages: number[] | null) {
+    if (!cardId || isGuest() || !pages || pages.length === 0) return;
+    const key = `${cardId}:${pages.join(",")}`;
+    if (wrotePagesRef.current === key) return;
+    wrotePagesRef.current = key;
+    lastPersistedFirstRef.current = pages[0] ?? null;
+    const seq = ++writeSeqRef.current;
+    const id = cardId;
+    writeChainRef.current = writeChainRef.current
+      .catch(() => undefined)
+      .then(async () => {
+        if (writeSeqRef.current !== seq) return;
+        try {
+          await patchCardProvenancePages(id, pages);
+        } catch {
+          if (writeSeqRef.current === seq && wrotePagesRef.current === key) {
+            wrotePagesRef.current = "";
+          }
+        }
+      });
+  }
 
   useLayoutEffect(() => {
     if (!open) {
@@ -116,6 +157,25 @@ export default function StudyNotesDialog({
     observer.observe(node);
     return () => observer.disconnect();
   }, [open]);
+
+  useEffect(() => {
+    if (!open) {
+      setViewPage(null);
+      setPageCount(0);
+      setPageInput("");
+      userNavRef.current = false;
+      wrotePagesRef.current = "";
+      writeSeqRef.current = 0;
+      lastPersistedFirstRef.current = page;
+      return;
+    }
+    userNavRef.current = false;
+    wrotePagesRef.current = "";
+    writeSeqRef.current = 0;
+    lastPersistedFirstRef.current = page;
+    setViewPage(page);
+    setPageInput(page != null ? String(page) : "");
+  }, [open, page, cardId]);
 
   useEffect(() => {
     if (!open || !jobId || isGuest()) {
@@ -168,7 +228,7 @@ export default function StudyNotesDialog({
   }, [open, jobId, page]);
 
   useEffect(() => {
-    if (!open || !pdfBytes || page === null) {
+    if (!open || !pdfBytes || viewPage === null) {
       setPageView(null);
       return;
     }
@@ -180,6 +240,10 @@ export default function StudyNotesDialog({
         const copy = pdfBytes.slice();
         pdf = await loadPdfDocument(copy.buffer as ArrayBuffer);
         const needle = normalizeExcerptText(excerpt);
+        const total = pdf.numPages;
+        if (!cancelled) {
+          setPageCount(total);
+        }
 
         async function pagePlainText(pageNum: number): Promise<string> {
           const pdfPage = await pdf!.getPage(pageNum);
@@ -202,8 +266,9 @@ export default function StudyNotesDialog({
           }
           const canvas = await renderPdfPageToCanvas(pdf!, pageNum - 1, width);
           const content = await pdfPage.getTextContent();
+          const runs = textRuns(content.items);
           const rects = excerptHighlightRects(
-            textRuns(content.items),
+            runs,
             excerpt,
             viewportTransform,
           );
@@ -213,6 +278,7 @@ export default function StudyNotesDialog({
           const sy = cssH / viewport.height;
           return {
             canvas,
+            pageText: runs.map((run) => run.str).join(" "),
             rects: rects.map((rect) => ({
               x: rect.x * sx,
               y: rect.y * sy,
@@ -222,16 +288,20 @@ export default function StudyNotesDialog({
           };
         }
 
-        let displayPage = page;
+        let displayPage = viewPage;
         let view = await washOnPage(displayPage);
         if (cancelled) return;
         setError(null);
         setPageView(view);
 
-        if (needle && view.rects.length === 0) {
+        const allowRescue = !userNavRef.current && page !== null;
+        if (allowRescue && needle && view.rects.length === 0) {
           try {
-            const pageCount = pdf.numPages;
-            for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
+            const scanned: PageText[] = [
+              { page: displayPage, text: view.pageText },
+            ];
+            let rescuedPage: number | null = null;
+            for (let pageNum = 1; pageNum <= total; pageNum++) {
               if (cancelled) return;
               if (pageNum === displayPage) continue;
               let text = "";
@@ -240,25 +310,47 @@ export default function StudyNotesDialog({
               } catch {
                 continue;
               }
-              const rescued = resolveNotesDisplayPage({
-                claimed: displayPage,
-                excerpt,
-                pages: [
-                  { page: displayPage, text: "" },
-                  { page: pageNum, text },
-                ],
-              });
-              if (rescued !== null && rescued !== displayPage) {
-                displayPage = rescued;
-                view = await washOnPage(displayPage);
-                if (cancelled) return;
-                setPageView(view);
-                break;
+              scanned.push({ page: pageNum, text });
+              if (rescuedPage === null) {
+                const rescued = resolveNotesDisplayPage({
+                  claimed: displayPage,
+                  excerpt,
+                  pages: scanned,
+                });
+                if (rescued !== null && rescued !== displayPage) {
+                  rescuedPage = rescued;
+                  displayPage = rescued;
+                  view = await washOnPage(displayPage);
+                  if (cancelled) return;
+                  setPageView(view);
+                  setViewPage(displayPage);
+                  setPageInput(String(displayPage));
+                }
               }
+            }
+            if (rescuedPage !== null) {
+              persistPages(
+                pagesToPersistAfterRescue({
+                  claimed: page!,
+                  rescued: rescuedPage,
+                  excerpt,
+                  scanned,
+                  scanComplete: true,
+                }),
+              );
             }
           } catch {
             /* keep claimed-page view already shown */
           }
+        } else if (userNavRef.current && page !== null) {
+          persistPages(
+            pagesToPersistAfterNavigate({
+              storedFirst: lastPersistedFirstRef.current,
+              displayPage,
+              excerpt,
+              pageTexts: [{ page: displayPage, text: view.pageText }],
+            }),
+          );
         }
       } catch {
         if (cancelled) return;
@@ -272,7 +364,9 @@ export default function StudyNotesDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, pdfBytes, page, excerpt, width]);
+    // page is claimed provenance; viewPage drives render/scrubber.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- persistPages closes over cardId
+  }, [open, pdfBytes, viewPage, excerpt, width, page, cardId]);
 
   useLayoutEffect(() => {
     const host = canvasHostRef.current;
@@ -280,6 +374,23 @@ export default function StudyNotesDialog({
     host.replaceChildren();
     if (pageView) host.append(pageView.canvas);
   }, [pageView, open]);
+
+  function goToPage(next: number) {
+    const clamped = clampNotesPage(next, pageCount);
+    if (clamped === null) {
+      setPageInput(viewPage != null ? String(viewPage) : "");
+      return;
+    }
+    if (clamped === viewPage) {
+      setPageInput(String(viewPage));
+      return;
+    }
+    userNavRef.current = true;
+    setViewPage(clamped);
+    setPageInput(String(clamped));
+  }
+
+  const scrubberReady = pageCount >= 1 && viewPage !== null && pdfBytes;
 
   return (
     <Dialog open={open} onClose={() => onClose()} fullWidth maxWidth="sm">
@@ -318,7 +429,54 @@ export default function StudyNotesDialog({
           </Box>
         </Box>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ flexWrap: "wrap", gap: 1, justifyContent: "space-between" }}>
+        {scrubberReady ? (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Button
+              size="small"
+              disabled={viewPage! <= 1}
+              onClick={() => goToPage(viewPage! - 1)}
+            >
+              Prev
+            </Button>
+            <Typography variant="body2" component="span">
+              Page
+            </Typography>
+            <TextField
+              size="small"
+              value={pageInput}
+              onChange={(e) => setPageInput(e.target.value)}
+              onBlur={() => {
+                const n = Number.parseInt(pageInput, 10);
+                if (Number.isFinite(n)) goToPage(n);
+                else setPageInput(String(viewPage));
+              }}
+              onKeyDown={(e) => {
+                if (e.key !== "Enter") return;
+                const n = Number.parseInt(pageInput, 10);
+                if (Number.isFinite(n)) goToPage(n);
+                else setPageInput(String(viewPage));
+              }}
+              inputProps={{
+                inputMode: "numeric",
+                "aria-label": "Page number",
+                style: { width: "3rem", textAlign: "center" },
+              }}
+            />
+            <Typography variant="body2" component="span">
+              of {pageCount}
+            </Typography>
+            <Button
+              size="small"
+              disabled={viewPage! >= pageCount}
+              onClick={() => goToPage(viewPage! + 1)}
+            >
+              Next
+            </Button>
+          </Box>
+        ) : (
+          <span />
+        )}
         <Button onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>
