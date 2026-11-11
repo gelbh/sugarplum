@@ -371,11 +371,22 @@ export async function focusStudyPages(
     usedKeys: string[];
     backfillPages?: StudyPage[];
   },
-): Promise<{ text: string; resume: WindowResume; pickedPages: number[] }> {
+): Promise<{
+  text: string;
+  resume: WindowResume;
+  pickedPages: number[];
+  pageTexts: StudyPage[];
+}> {
   let start = args.startPage;
   let prepared: PreparedStudySource | null = null;
+  let pageTexts: StudyPage[] = [];
   for (let attempt = 0; attempt < 2; attempt++) {
     const window = await load(start);
+    const byPage = new Map<number, StudyPage>();
+    for (const page of [...window.pages, ...(args.backfillPages ?? [])]) {
+      byPage.set(page.page, page);
+    }
+    pageTexts = [...byPage.values()].sort((a, b) => a.page - b.page);
     prepared = prepareStudySource({
       pages: window.pages,
       backfillPages: args.backfillPages,
@@ -397,5 +408,6 @@ export async function focusStudyPages(
       total_pages: 0,
     },
     pickedPages: prepared?.pickedPages ?? [],
+    pageTexts,
   };
 }

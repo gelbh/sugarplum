@@ -1,3 +1,5 @@
+import { normalizeExcerptText } from "./excerptPages";
+
 type Matrix6 = readonly [number, number, number, number, number, number];
 
 export type TextRun = {
@@ -10,7 +12,7 @@ export type TextRun = {
 type ExcerptRect = { x: number; y: number; w: number; h: number };
 
 function normalize(text: string): string {
-  return text.trim().replace(/\s+/g, " ");
+  return normalizeExcerptText(text);
 }
 
 /** Same product as PDF.js `Util.transform`, with the viewport matrix first. */
