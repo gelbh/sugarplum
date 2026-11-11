@@ -386,27 +386,64 @@ describe("processGenerateJob free path", () => {
     expect(progress.free_gen_charged).toBe(true);
   });
 
-  it("retries queue delivery when process returns busy", async () => {
+  it("acks after creating a workflow instance (thin queue starter)", async () => {
     const env = createTestEnv();
     await seedOwner(env, false);
     const msgBody = await seedPasteJob(
       env,
       "Mitochondria are the powerhouse of the cell.",
     );
-    const jobs = env.getGenerationJobs();
-    const job = jobs.find((j) => j.id === msgBody.jobId)!;
-    env.seedGenerationJob({
-      ...job,
-      status: "running",
-      progress_json: JSON.stringify({
-        updated_at: new Date().toISOString(),
-        stage: "generate",
-        current: 0,
-        total: 1,
-        percent: 25,
-        label: "Generating",
-      }),
-    });
+
+    const ack = vi.fn();
+    const retry = vi.fn();
+    await handleGenerateQueue(
+      {
+        queue: "sugarplum-generate",
+        messages: [
+          {
+            id: "m1",
+            timestamp: new Date(),
+            body: msgBody,
+            attempts: 2,
+            ack,
+            retry,
+          },
+        ],
+        ackAll: vi.fn(),
+        retryAll: vi.fn(),
+        metadata: { metrics: {} as never },
+      },
+      env,
+    );
+
+    expect(ack).toHaveBeenCalled();
+    expect(retry).not.toHaveBeenCalled();
+    expect(env.getWorkflowCreates()).toEqual([
+      {
+        id: msgBody.jobId,
+        params: msgBody,
+      },
+    ]);
+    expect(
+      env.getGenerationJobs().find((j) => j.id === msgBody.jobId)?.status,
+    ).toBe("queued");
+  });
+
+  it("retries queue delivery when workflow create fails", async () => {
+    const env = createTestEnv();
+    await seedOwner(env, false);
+    const msgBody = await seedPasteJob(
+      env,
+      "Mitochondria are the powerhouse of the cell.",
+    );
+    env.GENERATION_WORKFLOW = {
+      create: async () => {
+        throw new Error("workflow unavailable");
+      },
+      get: async () => {
+        throw new Error("not found");
+      },
+    } as unknown as NonNullable<typeof env.GENERATION_WORKFLOW>;
 
     const ack = vi.fn();
     const retry = vi.fn();
