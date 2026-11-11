@@ -19,3 +19,6 @@ services:
       DOCLING_SERVE_API_KEY: "dev-docling-key"
       DOCLING_SERVE_ENABLE_UI: "1"
       # Local may keep UI; prod runbook turns UI/docs off.
+      # Align with Worker MAX_FILE_BYTES / docs/docling-prod.md (50 MiB).
+      DOCLING_SERVE_MAX_FILE_SIZE: "52428800"
+      DOCLING_SERVE_MAX_NUM_PAGES: "50"

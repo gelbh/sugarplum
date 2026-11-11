@@ -60,7 +60,8 @@ export async function extractPdfPages(
   data: ArrayBuffer,
   startPage: number = 1,
 ): Promise<PdfWindow> {
-  const pdf = (await getDocumentProxy(new Uint8Array(data), {
+  // Copy once: pdf.js may detach the buffer handed to getDocumentProxy.
+  const pdf = (await getDocumentProxy(new Uint8Array(data.slice(0)), {
     maxImageSize: PDF_MAX_IMAGE_PIXELS,
   })) as unknown as PdfDoc;
   try {
@@ -186,7 +187,7 @@ export async function extractPdfText(data: ArrayBuffer): Promise<string> {
       `PDF has ${totalPages} pages (max ${REGEN_MAX_PAGES}). Split the file or paste OCR text.`,
     );
   }
-  const window = await extractPdfPages(data.slice(0), 1);
+  const window = await extractPdfPages(data, 1);
   const text = window.pages
     .map((page) => page.text)
     .join("\n\n")
