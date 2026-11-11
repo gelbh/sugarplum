@@ -697,4 +697,41 @@ describe("built-in parasite dataset", () => {
       ).toBe(true);
     }
   });
+
+  it("marks exactly one infective stage on every cestode entry", () => {
+    const expected = {
+      "anoplocephala-perfoliata": "cysticercoid",
+      "dipylidium-caninum": "cysticercoid",
+      "davainea-proglottina": "cysticercoid",
+      "raillietina-spp": "cysticercoid",
+      "moniezia-expansa": "cysticercoid",
+      "taenia-hydatigena": "cysticercus",
+      "taenia-ovis": "cysticercus",
+      "taenia-multiceps": "coenurus",
+      "taenia-saginata": "cysticercus",
+      "taenia-solium": "cysticercus",
+      "echinococcus-granulosus": "hydatid cyst",
+      "echinococcus-multilocularis": "hydatid cyst",
+      "diphyllobothrium-latum": "plerocercoid",
+    } as const;
+    const cestodeKeys = dataset.entries
+      .filter((e) => e.fields.group === "cestode")
+      .map((e) => e.key)
+      .sort();
+    expect(cestodeKeys).toEqual(Object.keys(expected).sort());
+    for (const [key, stageName] of Object.entries(expected)) {
+      const entry = dataset.entries.find((e) => e.key === key);
+      expect(entry, key).toBeDefined();
+      const infective = (entry?.fields.lifecycleStages ?? []).filter(
+        (s) => s.infective,
+      );
+      expect(infective, key).toHaveLength(1);
+      expect(infective[0]?.name, key).toBe(stageName);
+      expect(infective[0]?.transmission, key).toBeTruthy();
+      expect(
+        entry?.refs.some((r) => r.field === "lifecycleStages"),
+        `${key} lifecycleStages ref`,
+      ).toBe(true);
+    }
+  });
 });
