@@ -21,11 +21,14 @@ import { handleExportQueue } from "./export/consumer";
 import type { ExportQueueMessage } from "./export/enqueue";
 import { handleGenerateQueue } from "./generation/consumer";
 import type { GenerateQueueMessage } from "./generation/enqueue";
+import { GenerationWorkflow } from "./generation/workflow";
 import { failStaleRunningJobs } from "./generation/staleFail";
 import { isAllowedMutatingOrigin } from "./security/origin";
 import { getDb } from "./db/client";
 import { markOptimizePendingBatch } from "./study/fsrsOptimize";
 import { FSRS_CRON_MARK_LIMIT } from "../src/study/fsrsOptimizeConstants";
+
+export { GenerationWorkflow };
 
 const FSRS_CRON = "0 6 * * *";
 
