@@ -424,7 +424,6 @@ describe("processGenerateJob free path", () => {
         params: msgBody,
       },
     ]);
-    // Queue no longer runs the pipeline; job stays queued until Workflow pass1.
     expect(
       env.getGenerationJobs().find((j) => j.id === msgBody.jobId)?.status,
     ).toBe("queued");

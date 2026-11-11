@@ -1064,7 +1064,6 @@ async function finalizeAfterPersist(
   }
 
   const finishedAt = new Date().toISOString();
-  // Keep the pre-Workflow finalize SQL shape (test-env + soft-complete share it).
   await db
     .prepare(
       "UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = ?, finished_at = ? WHERE id = ?",
@@ -1150,7 +1149,6 @@ async function runAfterPersistPhase(
         console.warn("afterPersist missing drafts", jobId);
         return "done";
       }
-      // Sidecar lost after persist: soft-finalize without gap-fill material.
       console.warn("afterPersist missing sidecar; soft-finalizing", jobId);
     }
 
@@ -1174,8 +1172,7 @@ async function runAfterPersistPhase(
     const messageText =
       err instanceof Error ? err.message : "Generation failed";
     console.error("generation afterPersist failed", jobId, err);
-    // Drafts already exist from pass-1; soft-complete sweeper heals if we leave running.
-    // Only hard-fail when there are no draft cards.
+    // Soft-complete sweeper heals running jobs that still have drafts.
     const countRow = await db
       .prepare("SELECT COUNT(*) AS n FROM cards WHERE job_id = ?")
       .bind(jobId)

@@ -31,7 +31,7 @@ export async function terminateGenerationWorkflow(
     try {
       await instance.terminate();
     } catch {
-      // Already complete / terminated.
+      // ignore
     }
     try {
       await instance.delete();
@@ -79,7 +79,7 @@ export async function startGenerationWorkflow(
       try {
         await instance.terminate();
       } catch {
-        // complete / terminated
+        // ignore
       }
       try {
         await instance.delete();
