@@ -22,7 +22,12 @@ export async function studyPdfWithOcrSidecar(args: {
   topicHints: string[];
   usedKeys: string[];
   sidecar: OcrSidecar | null;
-}): Promise<{ text: string; resume: WindowResume }> {
+}): Promise<{
+  text: string;
+  resume: WindowResume;
+  pageTexts: { page: number; text: string }[];
+  pickedPages: number[];
+}> {
   const previousUnstudied = args.sidecar?.unstudiedPages ?? [];
   const firstWindow = await extractPdfPages(
     args.pdfBytes.slice(0),
@@ -116,5 +121,10 @@ export async function studyPdfWithOcrSidecar(args: {
     }
   }
 
-  return { text: focused.text, resume: focused.resume };
+  return {
+    text: focused.text,
+    resume: focused.resume,
+    pageTexts: focused.pageTexts,
+    pickedPages: focused.pickedPages,
+  };
 }
