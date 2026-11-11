@@ -59,6 +59,11 @@ import { consumeFreeGenSlot } from "./quota";
 import { parseAtlasJobProvenance } from "../atlas/makeCardsSource";
 import { appendGapFillDrafts, insertDraftCards } from "./gap-fill";
 export { insertDraftCards };
+import {
+  deleteExtractSidecar,
+  getExtractSidecar,
+  putExtractSidecar,
+} from "./extractSidecar";
 import { filterDraftsByQuality } from "./quality";
 import { harvestRuleDrafts } from "./rules";
 import { type CardDraft } from "./schema";
@@ -66,6 +71,11 @@ import { mergeTopicHints, parseTopicHintsJson } from "./topic-hints";
 import { recordGenerationUsageEventForJob } from "./usage";
 import { resolveTextLlm } from "./resolve-text-llm";
 import { stampDraftProvenancePages } from "../../src/study/excerptPages";
+import { startGenerationWorkflow } from "./workflowLifecycle";
+export {
+  startGenerationWorkflow,
+  terminateGenerationWorkflow,
+} from "./workflowLifecycle";
 
 const IMAGE_BYO_REQUIRED = `Image generation requires an ${BYO_PROVIDERS_PHRASE} API key under Settings.`;
 
@@ -236,6 +246,12 @@ export type ProcessGenerateOptions = {
    * Free-path quota still applies when no user_secrets row exists.
    */
   llm?: LlmAdapter;
+  /**
+   * Workflow split: `pass1` stops after persist + R2 sidecar;
+   * `afterPersist` resumes gap-fill + finalize without reclaiming.
+   * Default `all` keeps the Vitest / legacy single-invocation path.
+   */
+  phase?: "all" | "pass1" | "afterPersist";
 };
 
 function normalizeFront(front: string): string {
@@ -514,8 +530,13 @@ export async function processGenerateJob(
   message: GenerateQueueMessage,
   opts?: ProcessGenerateOptions,
 ): Promise<ProcessGenerateResult> {
+  if (opts?.phase === "afterPersist") {
+    return runAfterPersistPhase(env, message, opts);
+  }
+
   const db = getDb(env);
   const { jobId, materialId, deckId } = message;
+  const phase = opts?.phase ?? "all";
 
   const claimHeartbeat = withUpdatedAt(null);
   let reclaimed = false;
@@ -938,48 +959,36 @@ export async function processGenerateJob(
       await progress.emit("persist", 1, 1, "Saving drafts");
     }
 
-    drafts = await appendGapFillDrafts({
-      env,
-      db,
-      deckId,
+    if (phase === "pass1") {
+      try {
+        await putExtractSidecar(env, jobId, {
+          text: coverageMaterial,
+          windowResume,
+          drafts,
+        });
+      } catch (err) {
+        // Drafts are already in D1; leave running so afterPersist / soft-complete
+        // can recover without marking the job failed.
+        console.error("extract sidecar write failed after persist", jobId, err);
+      }
+      return "done";
+    }
+
+    await finalizeAfterPersist(env, db, {
       jobId,
+      deckId,
       userId: deck.user_id,
-      secret: secret ? "byo" : null,
+      secret,
       topicHints,
+      avoidPatterns,
       deckFronts,
       coverageMaterial,
+      windowResume,
       drafts,
       autoFollowup: message.autoFollowup === true,
       atlasProvenance,
-      runPipeline: ({ topicHints: hints, avoidFronts, onUsage, heartbeat }) =>
-        runTextDraftPipeline({
-          text: coverageMaterial,
-          env,
-          userId: deck.user_id,
-          jobId,
-          secret,
-          opts,
-          topicHints: hints,
-          avoidPatterns,
-          avoidFronts,
-          onUsage,
-          heartbeat,
-        }),
+      opts,
     });
-
-    const ledger = buildCoverageLedger(coverageMaterial, drafts);
-    const coverageJson = JSON.stringify(
-      windowResume ? { ...ledger, window_resume: windowResume } : ledger,
-    );
-
-    const finishedAt = new Date().toISOString();
-    await db
-      .prepare(
-        "UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = ?, finished_at = ? WHERE id = ?",
-      )
-      .bind("needs_review", coverageJson, finishedAt, jobId)
-      .run();
-    await recordGenerationUsageEventForJob(db, jobId);
     return "done";
   } catch (err) {
     // Leave last progress_json; only mark status failed.
@@ -991,19 +1000,206 @@ export async function processGenerateJob(
   }
 }
 
-/** Cloudflare Queues consumer entry for sugarplum-generate. */
+type FinalizeAfterPersistArgs = {
+  jobId: string;
+  deckId: string;
+  userId: string;
+  secret: SecretRow | null;
+  topicHints: string[];
+  avoidPatterns: string[];
+  deckFronts: string[];
+  coverageMaterial: string;
+  windowResume: WindowResume | null;
+  drafts: Array<CardDraft & { mediaR2Keys?: string[] | null }>;
+  autoFollowup: boolean;
+  atlasProvenance: ReturnType<typeof parseAtlasJobProvenance>;
+  opts?: ProcessGenerateOptions;
+};
+
+async function finalizeAfterPersist(
+  env: Env,
+  db: D1Database,
+  args: FinalizeAfterPersistArgs,
+): Promise<void> {
+  let drafts = args.drafts;
+  drafts = await appendGapFillDrafts({
+    env,
+    db,
+    deckId: args.deckId,
+    jobId: args.jobId,
+    userId: args.userId,
+    secret: args.secret ? "byo" : null,
+    topicHints: args.topicHints,
+    deckFronts: args.deckFronts,
+    coverageMaterial: args.coverageMaterial,
+    drafts,
+    autoFollowup: args.autoFollowup,
+    atlasProvenance: args.atlasProvenance,
+    runPipeline: ({ topicHints: hints, avoidFronts, onUsage, heartbeat }) =>
+      runTextDraftPipeline({
+        text: args.coverageMaterial,
+        env,
+        userId: args.userId,
+        jobId: args.jobId,
+        secret: args.secret,
+        opts: args.opts,
+        topicHints: hints,
+        avoidPatterns: args.avoidPatterns,
+        avoidFronts,
+        onUsage,
+        heartbeat,
+      }),
+  });
+
+  let coverageJson: string | null = null;
+  try {
+    const ledger = buildCoverageLedger(args.coverageMaterial, drafts);
+    coverageJson = JSON.stringify(
+      args.windowResume
+        ? { ...ledger, window_resume: args.windowResume }
+        : ledger,
+    );
+  } catch (err) {
+    console.error("coverage ledger failed; soft-finalizing", args.jobId, err);
+  }
+
+  const finishedAt = new Date().toISOString();
+  // Keep the pre-Workflow finalize SQL shape (test-env + soft-complete share it).
+  await db
+    .prepare(
+      "UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = ?, finished_at = ? WHERE id = ?",
+    )
+    .bind("needs_review", coverageJson, finishedAt, args.jobId)
+    .run();
+  await recordGenerationUsageEventForJob(db, args.jobId);
+  await deleteExtractSidecar(env, args.jobId);
+}
+
+/** Resume gap-fill + finalize after a durable pass-1 step (Workflow). */
+async function runAfterPersistPhase(
+  env: Env,
+  message: GenerateQueueMessage,
+  opts?: ProcessGenerateOptions,
+): Promise<ProcessGenerateResult> {
+  const db = getDb(env);
+  const { jobId, deckId } = message;
+
+  const statusRow = await db
+    .prepare(
+      "SELECT status, progress_json, created_at FROM generation_jobs WHERE id = ?",
+    )
+    .bind(jobId)
+    .first<{
+      status: string;
+      progress_json: string | null;
+      created_at: string;
+    }>();
+  if (!statusRow || statusRow.status !== "running") {
+    return "done";
+  }
+
+  try {
+    const deck = await db
+      .prepare("SELECT id, user_id FROM decks WHERE id = ?")
+      .bind(deckId)
+      .first<DeckOwnerRow>();
+    if (!deck) throw new Error("Deck not found");
+
+    const secret = await db
+      .prepare(
+        "SELECT provider, ciphertext, model FROM user_secrets WHERE user_id = ?",
+      )
+      .bind(deck.user_id)
+      .first<SecretRow>();
+
+    const progressRow = await db
+      .prepare(
+        "SELECT progress_json, topic_hints_json, avoid_patterns_json, run_topic_hints_json, atlas_provenance_json FROM generation_jobs WHERE id = ?",
+      )
+      .bind(jobId)
+      .first<{
+        progress_json: string | null;
+        topic_hints_json: string | null;
+        avoid_patterns_json: string | null;
+        run_topic_hints_json: string | null;
+        atlas_provenance_json: string | null;
+      }>();
+
+    const topicHints = mergeTopicHints(
+      parseTopicHintsJson(progressRow?.run_topic_hints_json),
+      parseTopicHintsJson(progressRow?.topic_hints_json),
+    );
+    const avoidPatterns = parseTopicHintsJson(
+      progressRow?.avoid_patterns_json,
+    );
+    const atlasProvenance = parseAtlasJobProvenance(
+      progressRow?.atlas_provenance_json,
+    );
+    const deckFronts = await loadDeckFronts(db, deckId);
+    const sidecar = await getExtractSidecar(env, jobId);
+    const coverageMaterial = sidecar?.text ?? "";
+    const windowResume = sidecar?.windowResume ?? null;
+    const drafts = sidecar?.drafts ?? [];
+
+    if (drafts.length === 0) {
+      const countRow = await db
+        .prepare("SELECT COUNT(*) AS n FROM cards WHERE job_id = ?")
+        .bind(jobId)
+        .first<{ n: number }>();
+      if (!countRow || countRow.n < 1) {
+        console.warn("afterPersist missing drafts", jobId);
+        return "done";
+      }
+      // Sidecar lost after persist: soft-finalize without gap-fill material.
+      console.warn("afterPersist missing sidecar; soft-finalizing", jobId);
+    }
+
+    await finalizeAfterPersist(env, db, {
+      jobId,
+      deckId,
+      userId: deck.user_id,
+      secret,
+      topicHints,
+      avoidPatterns,
+      deckFronts,
+      coverageMaterial,
+      windowResume,
+      drafts,
+      autoFollowup: message.autoFollowup === true,
+      atlasProvenance,
+      opts,
+    });
+    return "done";
+  } catch (err) {
+    const messageText =
+      err instanceof Error ? err.message : "Generation failed";
+    console.error("generation afterPersist failed", jobId, err);
+    // Drafts already exist from pass-1; soft-complete sweeper heals if we leave running.
+    // Only hard-fail when there are no draft cards.
+    const countRow = await db
+      .prepare("SELECT COUNT(*) AS n FROM cards WHERE job_id = ?")
+      .bind(jobId)
+      .first<{ n: number }>();
+    if (!countRow || countRow.n < 1) {
+      await markJobFailed(db, jobId, messageText);
+    }
+    return "done";
+  }
+}
+
+/** Cloudflare Queues consumer: create Workflow + ack; sweep stale orphans. */
 export async function handleGenerateQueue(
   batch: MessageBatch<GenerateQueueMessage>,
   env: Env,
 ): Promise<void> {
   for (const msg of batch.messages) {
-    const result = await processGenerateJob(env, msg.body);
-    if (result === "busy") {
-      msg.retry({ delaySeconds: GENERATE_QUEUE_RETRY_DELAY_SEC });
-    } else {
+    try {
+      await startGenerationWorkflow(env, msg.body);
       msg.ack();
+    } catch (err) {
+      console.error("generation workflow create failed", msg.body.jobId, err);
+      msg.retry({ delaySeconds: GENERATE_QUEUE_RETRY_DELAY_SEC });
     }
   }
-  // After reclaim/process: fail orphans whose queue messages are gone.
   await failStaleRunningJobs(getDb(env));
 }

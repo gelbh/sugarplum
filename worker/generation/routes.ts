@@ -4,6 +4,7 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import { requeueGeneration } from "./enqueue";
+import { terminateGenerationWorkflow } from "./workflowLifecycle";
 import { isRejectReason, type RejectReason } from "../../src/lib/rejectReasons";
 import { buildAvoidPatternsFromRejected } from "./feedback-hints";
 import { getFreeGenUsage } from "./quota";
@@ -315,6 +316,7 @@ jobRoutes.post("/:id/regen", async (c) => {
   await db.prepare("DELETE FROM cards WHERE job_id = ?").bind(jobId).run();
 
   try {
+    await terminateGenerationWorkflow(c.env, jobId);
     await requeueGeneration(c.env, {
       jobId: row.id,
       materialId: row.material_id,

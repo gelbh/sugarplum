@@ -9,6 +9,10 @@ export interface Env {
   AI?: Ai;
   /** Optional until queue consumer ships; missing → D1 generation_jobs only. */
   GENERATE_QUEUE?: Queue;
+  /** Generation Workflow binding (create / get / terminate by jobId). */
+  GENERATION_WORKFLOW?: Workflow<
+    import("./generation/workflowParams").GenerationWorkflowParams
+  >;
   /** Dedicated Anki export queue; over-threshold builds must not run in HTTP. */
   EXPORT_QUEUE?: Queue;
   APP_URL: string;
