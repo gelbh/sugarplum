@@ -24,13 +24,15 @@ export type WorkflowEvent<T> = {
 export type WorkflowStep = {
   do: <T>(
     name: string,
-    callback: () => Promise<T>,
-    config?: {
-      retries?: {
-        limit: number;
-        delay: string | number;
-        backoff?: string;
-      };
-    },
+    configOrCallback:
+      | (() => Promise<T>)
+      | {
+          retries?: {
+            limit: number;
+            delay: string | number;
+            backoff?: string;
+          };
+        },
+    callback?: () => Promise<T>,
   ) => Promise<T>;
 };

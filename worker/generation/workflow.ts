@@ -35,6 +35,7 @@ export class GenerationWorkflow extends WorkflowEntrypoint<
 
     await step.do(
       "pass1",
+      { retries: PASS1_BUSY_RETRIES },
       async () => {
         const result = await processGenerateJob(this.env, params, {
           phase: "pass1",
@@ -45,7 +46,6 @@ export class GenerationWorkflow extends WorkflowEntrypoint<
         }
         return { result };
       },
-      { retries: PASS1_BUSY_RETRIES },
     );
 
     await step.do("afterPersist", async () => {
