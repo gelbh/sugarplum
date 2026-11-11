@@ -3975,6 +3975,79 @@ export function createTestEnv(opts?: {
           }
         } else if (
           normalized.startsWith(
+            "UPDATE cards SET type = ?, front_json = ?, back_json = ?, provenance_json = ?, updated_at = ?",
+          )
+        ) {
+          const [type, front_json, back_json, provenance_json, updated_at, id] =
+            bound as [string, string, string, string, string, string];
+          const row = cards.get(id);
+          if (row) {
+            cards.set(id, {
+              ...row,
+              type,
+              front_json,
+              back_json,
+              provenance_json,
+              updated_at,
+            });
+          }
+        } else if (
+          normalized.startsWith(
+            "UPDATE cards SET provenance_json = ?, updated_at = ? WHERE id = ? AND provenance_json = ?",
+          )
+        ) {
+          const [provenance_json, updated_at, id, prior] = bound as [
+            string,
+            string,
+            string,
+            string,
+          ];
+          const row = cards.get(id);
+          if (row && row.provenance_json === prior) {
+            cards.set(id, {
+              ...row,
+              provenance_json,
+              updated_at,
+            });
+          }
+        } else if (
+          normalized.startsWith(
+            "UPDATE cards SET provenance_json = ?, updated_at = ? WHERE id = ? AND provenance_json IS NULL",
+          )
+        ) {
+          const [provenance_json, updated_at, id] = bound as [
+            string,
+            string,
+            string,
+          ];
+          const row = cards.get(id);
+          if (row && row.provenance_json == null) {
+            cards.set(id, {
+              ...row,
+              provenance_json,
+              updated_at,
+            });
+          }
+        } else if (
+          normalized.startsWith(
+            "UPDATE cards SET provenance_json = ?, updated_at = ? WHERE id = ?",
+          )
+        ) {
+          const [provenance_json, updated_at, id] = bound as [
+            string,
+            string,
+            string,
+          ];
+          const row = cards.get(id);
+          if (row) {
+            cards.set(id, {
+              ...row,
+              provenance_json,
+              updated_at,
+            });
+          }
+        } else if (
+          normalized.startsWith(
             "UPDATE cards SET type = ?, front_json = ?, back_json = ?, updated_at = ?",
           )
         ) {

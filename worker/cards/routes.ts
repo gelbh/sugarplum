@@ -23,6 +23,7 @@ import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
 import { onCardAccepted } from "../gamification/onStudyEvent";
 import { REJECT_REASONS } from "../../src/lib/rejectReasons";
 import { parseOptionalJsonBody } from "../optional-json";
+import { mergeProvenancePagesIntoJson } from "../../src/study/notesProvenanceWrite";
 import { acceptOwnedJobDrafts } from "./acceptOwnedJobDrafts";
 
 const STUDY_STRUGGLE_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
@@ -56,22 +57,31 @@ const CardTypeSchema = z.enum([
   "occlusion",
 ]);
 
-/** PATCH body: string faces for text/MCQ; structured faces for occlusion. */
+/** PATCH body: string faces for text/MCQ; structured faces for occlusion; pages-only provenance. */
 const PatchDraftSchema = z
   .object({
     front: z.union([TextFaceSchema, OcclusionFrontSchema]).optional(),
     back: z.union([TextBackPatchSchema, OcclusionBackSchema]).optional(),
     options: z.array(z.string()).optional(),
     type: CardTypeSchema.optional(),
+    provenance_pages: z.array(z.number().int().positive()).min(1).optional(),
   })
   .refine(
     (body) =>
       body.front !== undefined ||
       body.back !== undefined ||
       body.options !== undefined ||
-      body.type !== undefined,
+      body.type !== undefined ||
+      body.provenance_pages !== undefined,
     { message: "No fields to update" },
   );
+
+function mergeProvenancePagesJson(
+  existingJson: string | null,
+  pages: readonly number[],
+): string {
+  return mergeProvenancePagesIntoJson(existingJson, pages);
+}
 
 type McqBackJson = { answer: string; options: string[] };
 
@@ -356,6 +366,33 @@ cardRoutes.patch("/:id", async (c) => {
     });
   }
 
+  const facePatch =
+    parsed.data.front !== undefined ||
+    parsed.data.back !== undefined ||
+    parsed.data.options !== undefined ||
+    parsed.data.type !== undefined;
+
+  if (!facePatch && parsed.data.provenance_pages) {
+    const nextProvenanceJson = mergeProvenancePagesJson(
+      row.provenance_json,
+      parsed.data.provenance_pages,
+    );
+    const updatedAt = new Date().toISOString();
+    await db
+      .prepare(
+        `UPDATE cards SET provenance_json = ?, updated_at = ? WHERE id = ?`,
+      )
+      .bind(nextProvenanceJson, updatedAt, cardId)
+      .run();
+    return c.json(
+      serializeCard({
+        ...row,
+        provenance_json: nextProvenanceJson,
+        updated_at: updatedAt,
+      }),
+    );
+  }
+
   const nextType = parsed.data.type ?? row.type;
   const nextFront =
     parsed.data.front ?? parseJsonField(row.front_json, row.front_json);
@@ -374,16 +411,20 @@ cardRoutes.patch("/:id", async (c) => {
     const persistFront = frontOk.data;
     const persistBack = backOk.data;
     const updatedAt = new Date().toISOString();
+    const nextProvenanceJson = parsed.data.provenance_pages
+      ? mergeProvenancePagesJson(row.provenance_json, parsed.data.provenance_pages)
+      : row.provenance_json;
     await db
       .prepare(
         `UPDATE cards
-         SET type = ?, front_json = ?, back_json = ?, updated_at = ?
+         SET type = ?, front_json = ?, back_json = ?, provenance_json = ?, updated_at = ?
          WHERE id = ?`,
       )
       .bind(
         nextType,
         JSON.stringify(persistFront),
         JSON.stringify(persistBack),
+        nextProvenanceJson,
         updatedAt,
         cardId,
       )
@@ -394,6 +435,7 @@ cardRoutes.patch("/:id", async (c) => {
         type: nextType,
         front_json: JSON.stringify(persistFront),
         back_json: JSON.stringify(persistBack),
+        provenance_json: nextProvenanceJson,
         updated_at: updatedAt,
       }),
     );
@@ -467,13 +509,23 @@ cardRoutes.patch("/:id", async (c) => {
   const nextBackJson = encodeStoredBack(nextType, nextBack, nextOptions);
 
   const updatedAt = new Date().toISOString();
+  const nextProvenanceJson = parsed.data.provenance_pages
+    ? mergeProvenancePagesJson(row.provenance_json, parsed.data.provenance_pages)
+    : row.provenance_json;
   await db
     .prepare(
       `UPDATE cards
-       SET type = ?, front_json = ?, back_json = ?, updated_at = ?
+       SET type = ?, front_json = ?, back_json = ?, provenance_json = ?, updated_at = ?
        WHERE id = ?`,
     )
-    .bind(nextType, JSON.stringify(nextFront), nextBackJson, updatedAt, cardId)
+    .bind(
+      nextType,
+      JSON.stringify(nextFront),
+      nextBackJson,
+      nextProvenanceJson,
+      updatedAt,
+      cardId,
+    )
     .run();
 
   return c.json(
@@ -482,6 +534,7 @@ cardRoutes.patch("/:id", async (c) => {
       type: nextType,
       front_json: JSON.stringify(nextFront),
       back_json: nextBackJson,
+      provenance_json: nextProvenanceJson,
       updated_at: updatedAt,
     }),
   );

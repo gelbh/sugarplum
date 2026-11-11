@@ -91,6 +91,50 @@ export async function extractPdfPages(
   }
 }
 
+/** Backfill/admin full-doc extract; hard caps avoid Worker OOM on huge PDFs. */
+export const BACKFILL_PDF_MAX_PAGES = 200;
+export const BACKFILL_PDF_MAX_CHARS = 800_000;
+
+/** Every page's text layer up to backfill page/char caps. */
+export async function extractAllPdfPageTexts(
+  data: ArrayBuffer,
+  opts?: { maxPages?: number; maxChars?: number },
+): Promise<{ pages: PdfPageText[]; totalPages: number; truncated: boolean }> {
+  const maxPages = opts?.maxPages ?? BACKFILL_PDF_MAX_PAGES;
+  const maxChars = opts?.maxChars ?? BACKFILL_PDF_MAX_CHARS;
+  const pdf = (await getDocumentProxy(new Uint8Array(data.slice(0)), {
+    maxImageSize: PDF_MAX_IMAGE_PIXELS,
+  })) as unknown as PdfDoc;
+  try {
+    const totalPages = pdf.numPages;
+    if (totalPages < 1) return { pages: [], totalPages: 0, truncated: false };
+    const pages: PdfPageText[] = [];
+    let chars = 0;
+    const pageEnd = Math.min(totalPages, maxPages);
+    for (let n = 1; n <= pageEnd; n++) {
+      if (chars >= maxChars && pages.length > 0) {
+        return { pages, totalPages, truncated: true };
+      }
+      const page = await pdf.getPage(n);
+      try {
+        const content = await page.getTextContent();
+        const text = pageText(content.items);
+        pages.push({ page: n, text });
+        chars += text.length;
+      } finally {
+        await page.cleanup?.();
+      }
+    }
+    return {
+      pages,
+      totalPages,
+      truncated: pageEnd < totalPages || chars >= maxChars,
+    };
+  } finally {
+    await pdf.destroy?.();
+  }
+}
+
 export async function extractPdfPageNumbers(
   data: ArrayBuffer,
   pageNumbers: readonly number[],

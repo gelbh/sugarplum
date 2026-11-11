@@ -10,6 +10,7 @@ import {
 } from "../generation/usage";
 import { isAdminEmail, parseAdminEmails } from "./allowlist";
 import { requireAdmin } from "./requireAdmin";
+import { runProvenanceBackfill } from "./provenance-backfill";
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
 
@@ -436,6 +437,31 @@ adminRoutes.post("/usage/backfill", async (c) => {
   await requireAdmin(c);
   const inserted = await backfillUsageEventsFromJobs(getDb(c.env));
   return c.json({ inserted });
+});
+
+adminRoutes.post("/provenance/backfill", async (c) => {
+  await requireAdmin(c);
+  const raw = await c.req.text();
+  let body: unknown = {};
+  if (raw.trim()) {
+    try {
+      body = JSON.parse(raw) as unknown;
+    } catch {
+      throw new HTTPException(400, { message: "Invalid JSON body" });
+    }
+  }
+  if (body === null || typeof body !== "object" || Array.isArray(body)) {
+    throw new HTTPException(400, { message: "Invalid JSON body" });
+  }
+  const record = body as { dry_run?: unknown; limit?: unknown };
+  // Default dry_run; require explicit dry_run:false to mutate.
+  const dry_run = record.dry_run !== false;
+  const limit =
+    typeof record.limit === "number" && Number.isInteger(record.limit)
+      ? record.limit
+      : undefined;
+  const result = await runProvenanceBackfill(c.env, { dry_run, limit });
+  return c.json(result);
 });
 
 adminRoutes.get("/users/:id", async (c) => {

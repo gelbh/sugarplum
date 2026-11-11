@@ -1126,6 +1126,55 @@ describe("draft review / accept gate", () => {
     );
   });
 
+  it("patch provenance_pages only merges pages and keeps excerpt", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedCard({
+      id: "card-prov-pages",
+      deck_id: "deck-a",
+      job_id: "job-1",
+      type: "qa",
+      front_json: JSON.stringify("Q?"),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({
+        pages: [1],
+        excerpt: "keep me",
+        extra: true,
+      }),
+      status: "accepted",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/cards/card-prov-pages",
+      {
+        method: "PATCH",
+        headers: {
+          "content-type": "application/json",
+          cookie: `${SESSION_COOKIE}=sess-a`,
+        },
+        body: JSON.stringify({ provenance_pages: [4, 4, 2] }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { provenance: unknown };
+    expect(body.provenance).toEqual({
+      pages: [2, 4],
+      excerpt: "keep me",
+      extra: true,
+    });
+    const stored = env.getCards().find((c) => c.id === "card-prov-pages");
+    expect(JSON.parse(stored!.provenance_json!)).toEqual({
+      pages: [2, 4],
+      excerpt: "keep me",
+      extra: true,
+    });
+    expect(stored!.front_json).toBe(JSON.stringify("Q?"));
+  });
+
   it("patch qa card keeps string back_json", async () => {
     const env = createTestEnv();
     seedOwner(env);
