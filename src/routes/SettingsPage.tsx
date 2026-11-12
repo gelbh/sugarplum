@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -17,7 +17,6 @@ import Typography from "@mui/material/Typography";
 import { useColorScheme } from "@mui/material/styles";
 import Brightness6Icon from "@mui/icons-material/Brightness6";
 import Switch from "@mui/material/Switch";
-import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import {
   ApiError,
@@ -27,6 +26,7 @@ import {
   getGamification,
   getLlmSettings,
   getStudyPrefs,
+  listDueCards,
   logout,
   me,
   patchGamificationSettings,
@@ -41,13 +41,14 @@ import MagnificCredits from "../achievements/MagnificCredits";
 import { isGuest } from "../guest/session";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
-import { ankiExportFsrsBlurb } from "../settings/ankiExportFsrsBlurb";
 import { freeGenFaqBody, freeGenIntroBlurb } from "../settings/freeGenFaq";
-import FsrsWeightsSettings from "../settings/FsrsWeightsSettings";
+import SettingsSectionNav from "../settings/SettingsSectionNav";
+import StudyPacingSection from "../settings/StudyPacingSection";
 import {
   ZAI_DEFAULT_TEXT_MODEL,
   ZAI_TEXT_MODEL_OPTIONS,
 } from "../settings/zaiModels";
+import type { EasyDay } from "../study/loadBalance";
 
 const DEFAULT_STUDY_FORM: StudyPrefs = {
   introBudget: 20,
@@ -136,6 +137,7 @@ export default function SettingsPage() {
     DEFAULT_STUDY_FORM.enableLoadBalance,
   );
   const [easyDays, setEasyDays] = useState(DEFAULT_STUDY_FORM.easyDays);
+  const [heldIntroCount, setHeldIntroCount] = useState<number | null>(null);
   const [googleLinked, setGoogleLinked] = useState(false);
   const [calendarStatus, setCalendarStatus] = useState<CalendarStatus | null>(
     null,
@@ -186,6 +188,9 @@ export default function SettingsPage() {
         const calendar = guestMode
           ? null
           : await getCalendarStatus().catch(() => null);
+        const due = guestMode
+          ? null
+          : await listDueCards().catch(() => null);
         if (cancelled) return;
         setGuest(guestMode);
         setAccountEmail(user.email);
@@ -205,6 +210,9 @@ export default function SettingsPage() {
         setEnableFuzz(prefs.enableFuzz);
         setEnableLoadBalance(prefs.enableLoadBalance);
         setEasyDays([...prefs.easyDays]);
+        if (due && typeof due.meta?.heldIntroCount === "number") {
+          setHeldIntroCount(due.meta.heldIntroCount);
+        }
         if (gam) {
           setGamification(gam);
           setDisplayNameInput(gam.displayName ?? "");
@@ -349,6 +357,49 @@ export default function SettingsPage() {
     }
   }
 
+  const navSections = useMemo(
+    () => [
+      {
+        id: "study",
+        label: "Study",
+        summary: `${introBudgetInput || "—"} new/day`,
+      },
+      {
+        id: "appearance",
+        label: "Appearance",
+        summary: themeMode,
+      },
+      {
+        id: "account",
+        label: "Account",
+        summary: guest ? "guest" : googleLinked ? "Google" : "signed in",
+      },
+      {
+        id: "achievements",
+        label: "Achievements",
+        summary: gamification
+          ? `L${gamification.level}`
+          : guest
+            ? "sign in"
+            : undefined,
+      },
+      {
+        id: "ai",
+        label: "AI",
+        summary: current?.configured ? "key set" : "free AI",
+      },
+      { id: "legal", label: "Legal" },
+    ],
+    [
+      introBudgetInput,
+      themeMode,
+      guest,
+      googleLinked,
+      gamification,
+      current?.configured,
+    ],
+  );
+
   if (!ready) {
     return (
       <Container maxWidth="sm" sx={{ py: 6 }}>
@@ -372,34 +423,92 @@ export default function SettingsPage() {
           <Typography variant="body2" color="text.secondary">
             {freeGenIntroBlurb()}
           </Typography>
+          {error ? (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {error}
+            </Alert>
+          ) : null}
+          {notice ? (
+            <Alert severity="success" sx={{ mt: 2 }}>
+              {notice}
+            </Alert>
+          ) : null}
         </Box>
 
+        <SettingsSectionNav sections={navSections} />
+
+        <StudyPacingSection
+          guest={guest}
+          studyPrefs={studyPrefs}
+          introBudgetInput={introBudgetInput}
+          reviewBudgetInput={reviewBudgetInput}
+          desiredRetentionInput={desiredRetentionInput}
+          enableFuzz={enableFuzz}
+          enableLoadBalance={enableLoadBalance}
+          easyDays={easyDays}
+          studyError={studyError}
+          studyNotice={studyNotice}
+          studyBusy={studyBusy}
+          heldIntroCount={heldIntroCount}
+          onIntroBudgetInput={setIntroBudgetInput}
+          onReviewBudgetInput={setReviewBudgetInput}
+          onDesiredRetentionInput={setDesiredRetentionInput}
+          onEnableFuzz={setEnableFuzz}
+          onEnableLoadBalance={setEnableLoadBalance}
+          onEasyDays={(days: EasyDay[]) => setEasyDays(days)}
+          onStudyPrefsPatch={setStudyPrefs}
+          onSubmitStudy={onSubmitStudy}
+        />
+
         <Paper
+          id="appearance"
           variant="outlined"
           sx={{
             p: 2.5,
             bgcolor: "background.paper",
             borderColor: "divider",
+            scrollMarginTop: 72,
           }}
         >
-          <Typography
-            variant="subtitle1"
-            component="h2"
-            sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            sx={{ mb: 1.5 }}
           >
-            Free generations
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {freeGenFaqBody()}
-          </Typography>
+            <Brightness6Icon color="primary" fontSize="small" />
+            <Typography
+              variant="subtitle1"
+              component="h2"
+              sx={{ fontWeight: 600, color: "primary.main" }}
+            >
+              Appearance
+            </Typography>
+          </Stack>
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={themeMode}
+            onChange={(_e, value: ThemeMode | null) => {
+              if (value) setMode(value);
+            }}
+            aria-label="Color scheme"
+            color="primary"
+          >
+            <ToggleButton value="system">System</ToggleButton>
+            <ToggleButton value="light">Light</ToggleButton>
+            <ToggleButton value="dark">Dark</ToggleButton>
+          </ToggleButtonGroup>
         </Paper>
 
         <Paper
+          id="account"
           variant="outlined"
           sx={{
             p: 2.5,
             bgcolor: "background.paper",
             borderColor: "divider",
+            scrollMarginTop: 72,
           }}
         >
           <Typography
@@ -407,7 +516,7 @@ export default function SettingsPage() {
             component="h2"
             sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
           >
-            Account
+            Account & connections
           </Typography>
           <Stack spacing={1.5}>
             {guest ? (
@@ -507,11 +616,13 @@ export default function SettingsPage() {
         </Paper>
 
         <Paper
+          id="achievements"
           variant="outlined"
           sx={{
             p: 2.5,
             bgcolor: "background.paper",
             borderColor: "divider",
+            scrollMarginTop: 72,
           }}
         >
           <Typography
@@ -588,11 +699,120 @@ export default function SettingsPage() {
         </Paper>
 
         <Paper
+          id="ai"
           variant="outlined"
           sx={{
             p: 2.5,
             bgcolor: "background.paper",
             borderColor: "divider",
+            scrollMarginTop: 72,
+          }}
+        >
+          <Typography
+            variant="subtitle1"
+            component="h2"
+            sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
+          >
+            AI & generations
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {freeGenFaqBody()}
+          </Typography>
+          {guest ? (
+            <Alert severity="info">
+              Guest mode cannot save API keys or run AI generation. Create an
+              account to upload materials and generate cards.
+            </Alert>
+          ) : (
+            <>
+              {current?.configured ? (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  Configured: {current.provider} · key ending in ···
+                  {current.last4}
+                </Alert>
+              ) : (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  No personal API key yet. Generation still works via free
+                  platform AI.
+                </Alert>
+              )}
+
+              <Box component="form" onSubmit={onSubmit} noValidate>
+                <Stack spacing={2}>
+                  <FormControl fullWidth>
+                    <InputLabel id="provider-label">Provider</InputLabel>
+                    <Select
+                      labelId="provider-label"
+                      label="Provider"
+                      value={provider}
+                      onChange={(ev) => setProvider(ev.target.value)}
+                    >
+                      {PROVIDERS.map((p) => (
+                        <MenuItem key={p.value} value={p.value}>
+                          {p.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  {provider === "zai" ? (
+                    <FormControl fullWidth>
+                      <InputLabel id="zai-model-label">Model</InputLabel>
+                      <Select
+                        labelId="zai-model-label"
+                        label="Model"
+                        value={zaiModel}
+                        onChange={(ev) => setZaiModel(ev.target.value)}
+                      >
+                        {ZAI_TEXT_MODEL_OPTIONS.map((m) => (
+                          <MenuItem key={m.value} value={m.value}>
+                            {m.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  ) : null}
+                  <TextField
+                    label="API key"
+                    type="password"
+                    name="apiKey"
+                    autoComplete="off"
+                    value={apiKey}
+                    onChange={(ev) => setApiKey(ev.target.value)}
+                    required
+                    fullWidth
+                    helperText="Paste a new key to replace the stored one."
+                  />
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    disabled={busy || !apiKey}
+                  >
+                    {busy ? "Saving…" : "Save API key"}
+                  </Button>
+                  {current?.configured ? (
+                    <Button
+                      type="button"
+                      variant="outlined"
+                      onClick={() => void onRemoveKey()}
+                    >
+                      Remove API key
+                    </Button>
+                  ) : null}
+                </Stack>
+              </Box>
+            </>
+          )}
+        </Paper>
+
+        <Paper
+          id="legal"
+          variant="outlined"
+          sx={{
+            p: 2.5,
+            bgcolor: "background.paper",
+            borderColor: "divider",
+            scrollMarginTop: 72,
           }}
         >
           <Typography
@@ -616,313 +836,6 @@ export default function SettingsPage() {
             </Link>
           </Typography>
         </Paper>
-
-        <Paper
-          variant="outlined"
-          sx={{
-            p: 2.5,
-            bgcolor: "background.paper",
-            borderColor: "divider",
-          }}
-        >
-          <Stack
-            direction="row"
-            spacing={1}
-            alignItems="center"
-            sx={{ mb: 1.5 }}
-          >
-            <Brightness6Icon color="primary" fontSize="small" />
-            <Typography
-              variant="subtitle1"
-              component="h2"
-              sx={{ fontWeight: 600, color: "primary.main" }}
-            >
-              Appearance
-            </Typography>
-          </Stack>
-          <ToggleButtonGroup
-            exclusive
-            size="small"
-            value={themeMode}
-            onChange={(_e, value: ThemeMode | null) => {
-              if (value) setMode(value);
-            }}
-            aria-label="Color scheme"
-            color="primary"
-          >
-            <ToggleButton value="system">System</ToggleButton>
-            <ToggleButton value="light">Light</ToggleButton>
-            <ToggleButton value="dark">Dark</ToggleButton>
-          </ToggleButtonGroup>
-        </Paper>
-
-        <Paper
-          variant="outlined"
-          sx={{
-            p: 2.5,
-            bgcolor: "background.paper",
-            borderColor: "divider",
-          }}
-        >
-          <Typography
-            variant="subtitle1"
-            component="h2"
-            sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
-          >
-            Study pacing
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Soft daily budgets for new cards and reviews. Held new cards stay
-            scheduled; use Study more to pull another intro slice today.
-            {guest ? " Saved on this device for guest study." : null}{" "}
-            {ankiExportFsrsBlurb()}
-          </Typography>
-          <Box component="form" onSubmit={onSubmitStudy} noValidate>
-            <Stack spacing={2}>
-              {studyError ? <Alert severity="error">{studyError}</Alert> : null}
-              {studyNotice ? (
-                <Alert severity="success">{studyNotice}</Alert>
-              ) : null}
-              <TextField
-                label="New cards per day"
-                type="number"
-                name="introBudget"
-                value={introBudgetInput}
-                onChange={(ev) => setIntroBudgetInput(ev.target.value)}
-                required
-                fullWidth
-                inputProps={{ min: 1, max: 200, step: 1 }}
-                helperText="Intro budget (1–200). Default 20."
-              />
-              <TextField
-                label="Reviews per day"
-                type="number"
-                name="reviewBudget"
-                value={reviewBudgetInput}
-                onChange={(ev) => setReviewBudgetInput(ev.target.value)}
-                required
-                fullWidth
-                inputProps={{ min: 1, max: 2000, step: 1 }}
-                helperText="Soft review budget (1–2000). Default 200."
-              />
-              <TextField
-                label="Desired retention"
-                type="number"
-                name="desiredRetention"
-                value={desiredRetentionInput}
-                onChange={(ev) => setDesiredRetentionInput(ev.target.value)}
-                required
-                fullWidth
-                inputProps={{ min: 0.7, max: 0.97, step: 0.01 }}
-                helperText="Target recall when due (0.70–0.97). Higher means more reviews. Applies on the next grade."
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={enableFuzz}
-                    onChange={(ev) => setEnableFuzz(ev.target.checked)}
-                    name="enableFuzz"
-                  />
-                }
-                label="Spread intervals (fuzz)"
-              />
-              <Typography variant="body2" color="text.secondary">
-                Fuzz slightly varies due dates so same-interval cards do not all
-                land on one day. Existing dues are unchanged until the next
-                grade.
-              </Typography>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={enableLoadBalance}
-                    onChange={(ev) => setEnableLoadBalance(ev.target.checked)}
-                    name="enableLoadBalance"
-                    disabled={!enableFuzz}
-                  />
-                }
-                label="Load balance (prefer lighter days)"
-              />
-              <Typography variant="body2" color="text.secondary">
-                Within the fuzz window, prefer days with fewer cards due. This
-                is separate from the soft review budget above. Applies on the
-                next grade when fuzz is on.
-              </Typography>
-              <Typography variant="subtitle2" sx={{ pt: 1 }}>
-                Easy days (Mon–Sun)
-              </Typography>
-              <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                {(
-                  [
-                    "Mon",
-                    "Tue",
-                    "Wed",
-                    "Thu",
-                    "Fri",
-                    "Sat",
-                    "Sun",
-                  ] as const
-                ).map((label, i) => (
-                  <TextField
-                    key={label}
-                    select
-                    label={label}
-                    size="small"
-                    value={easyDays[i]}
-                    disabled={!enableLoadBalance || !enableFuzz}
-                    onChange={(ev) => {
-                      const value = ev.target.value as
-                        | "normal"
-                        | "reduced"
-                        | "minimum";
-                      setEasyDays((prev) => {
-                        const next = [...prev] as typeof prev;
-                        next[i] = value;
-                        return next;
-                      });
-                    }}
-                    sx={{ minWidth: 110 }}
-                    SelectProps={{ native: true }}
-                  >
-                    <option value="normal">Normal</option>
-                    <option value="reduced">Reduced</option>
-                    <option value="minimum">Minimum</option>
-                  </TextField>
-                ))}
-              </Stack>
-              <Typography variant="body2" color="text.secondary">
-                Minimum tries to avoid that weekday when another day in the fuzz
-                window is available. Reduced lowers the chance.
-              </Typography>
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                disabled={studyBusy}
-              >
-                {studyBusy ? "Saving…" : "Save study settings"}
-              </Button>
-            </Stack>
-          </Box>
-          <FsrsWeightsSettings />
-        </Paper>
-
-        {guest ? (
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 2.5,
-              bgcolor: "background.paper",
-              borderColor: "divider",
-            }}
-          >
-            <Typography
-              variant="subtitle1"
-              component="h2"
-              sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
-            >
-              Generation
-            </Typography>
-            <Alert severity="info">
-              Guest mode cannot save API keys or run AI generation. Create an
-              account to upload materials and generate cards.
-            </Alert>
-          </Paper>
-        ) : (
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 2.5,
-              bgcolor: "background.paper",
-              borderColor: "divider",
-            }}
-          >
-            <Typography
-              variant="subtitle1"
-              component="h2"
-              sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
-            >
-              API key
-            </Typography>
-            {current?.configured ? (
-              <Alert severity="info" sx={{ mb: 2 }}>
-                Configured: {current.provider} · key ending in ···
-                {current.last4}
-              </Alert>
-            ) : (
-              <Alert severity="info" sx={{ mb: 2 }}>
-                No personal API key yet. Generation still works via free
-                platform AI.
-              </Alert>
-            )}
-
-            <Box component="form" onSubmit={onSubmit} noValidate>
-              <Stack spacing={2}>
-                {error ? <Alert severity="error">{error}</Alert> : null}
-                {notice ? <Alert severity="success">{notice}</Alert> : null}
-                <FormControl fullWidth>
-                  <InputLabel id="provider-label">Provider</InputLabel>
-                  <Select
-                    labelId="provider-label"
-                    label="Provider"
-                    value={provider}
-                    onChange={(ev) => setProvider(ev.target.value)}
-                  >
-                    {PROVIDERS.map((p) => (
-                      <MenuItem key={p.value} value={p.value}>
-                        {p.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                {provider === "zai" ? (
-                  <FormControl fullWidth>
-                    <InputLabel id="zai-model-label">Model</InputLabel>
-                    <Select
-                      labelId="zai-model-label"
-                      label="Model"
-                      value={zaiModel}
-                      onChange={(ev) => setZaiModel(ev.target.value)}
-                    >
-                      {ZAI_TEXT_MODEL_OPTIONS.map((m) => (
-                        <MenuItem key={m.value} value={m.value}>
-                          {m.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                ) : null}
-                <TextField
-                  label="API key"
-                  type="password"
-                  name="apiKey"
-                  autoComplete="off"
-                  value={apiKey}
-                  onChange={(ev) => setApiKey(ev.target.value)}
-                  required
-                  fullWidth
-                  helperText="Paste a new key to replace the stored one."
-                />
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  disabled={busy || !apiKey}
-                >
-                  {busy ? "Saving…" : "Save API key"}
-                </Button>
-                {current?.configured ? (
-                  <Button
-                    type="button"
-                    variant="outlined"
-                    onClick={() => void onRemoveKey()}
-                  >
-                    Remove API key
-                  </Button>
-                ) : null}
-              </Stack>
-            </Box>
-          </Paper>
-        )}
 
         <Typography variant="body2">
           <Link href="/library" underline="hover" color="primary">
