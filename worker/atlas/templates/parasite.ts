@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  CLIMATE_BAND_TERM_KEYS,
+  DISTRIBUTION_REGION_TERM_KEYS,
+} from "../datasets/vocab";
 
 export const PARASITE_GROUPS = [
   "protozoan",
@@ -14,6 +18,8 @@ const text = z.string().trim().min(1);
 const optionalText = text.nullable().default(null);
 const textList = z.array(text).default([]);
 const week = z.number().min(0).nullable().default(null);
+const regionList = z.array(z.enum(DISTRIBUTION_REGION_TERM_KEYS)).default([]);
+const climateList = z.array(z.enum(CLIMATE_BAND_TERM_KEYS)).default([]);
 
 export const diagnosticTestSchema = z
   .object({
@@ -69,6 +75,9 @@ export const parasiteFieldsSchema = z.object({
   majorOrgan: optionalText,
   onHostStages: textList,
   distribution: optionalText,
+  distributionWorldwide: z.boolean().default(false),
+  distributionRegions: regionList,
+  climateBands: climateList,
   zoonotic: z.enum(ZOONOTIC_VALUES).nullable().default(null),
   significance: optionalText,
   lifecycleType: z.enum(["direct", "indirect"]).nullable().default(null),

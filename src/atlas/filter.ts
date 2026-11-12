@@ -9,6 +9,13 @@ import { entryTitles } from "./entryTitles";
 import { entryNameForms, searchable } from "./nameMatch";
 import type { AtlasEntryView, AtlasTier, ParasiteGroup } from "./types";
 
+export type TaxonomyRank = "phylum" | "order" | "family";
+
+export type TaxonomyFilter = {
+  rank: TaxonomyRank;
+  value: string;
+};
+
 export type AtlasFilters = {
   groups: ParasiteGroup[];
   host: string | null;
@@ -51,6 +58,15 @@ export function matchesSearch(entry: AtlasEntryView, q: string): boolean {
   const needle = searchable(q);
   if (needle === "") return true;
   return entryNameForms(entry).some((n) => n.includes(needle));
+}
+
+/** Exact rank match for browsing related parasites from the taxonomy glance. */
+export function matchesTaxonomy(
+  entry: AtlasEntryView,
+  filter: TaxonomyFilter | null,
+): boolean {
+  if (filter === null) return true;
+  return entry.fields[filter.rank] === filter.value;
 }
 
 export const entryHosts = (e: AtlasEntryView) => [

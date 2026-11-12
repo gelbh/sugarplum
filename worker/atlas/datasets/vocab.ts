@@ -119,15 +119,47 @@ export const ORGAN_TERMS = {
   "urinary bladder": { broader: [] },
 } as const satisfies Vocabulary;
 
+/** Coarse land regions for atlas distribution maps (not ISO countries). */
+export const DISTRIBUTION_REGION_TERMS = {
+  "north-america": { broader: [] },
+  "south-america": { broader: [] },
+  europe: { broader: [] },
+  africa: { broader: [] },
+  asia: { broader: [] },
+  oceania: { broader: [] },
+  antarctica: { broader: [] },
+} as const satisfies Vocabulary;
+
+/** Climate intensity bands for distribution heatmaps. */
+export const CLIMATE_BAND_TERMS = {
+  tropical: { broader: [] },
+  subtropical: { broader: [] },
+  "warm-humid": { broader: ["tropical", "subtropical"] },
+  temperate: { broader: [] },
+  arid: { broader: [] },
+  arctic: { broader: [] },
+  antarctic: { broader: [] },
+} as const satisfies Vocabulary;
+
 export type HostTerm = keyof typeof HOST_TERMS;
 export type OrganTerm = keyof typeof ORGAN_TERMS;
+export type DistributionRegionTerm = keyof typeof DISTRIBUTION_REGION_TERMS;
+export type ClimateBandTerm = keyof typeof CLIMATE_BAND_TERMS;
 
 // Every broader entry must name a term in the same vocabulary.
 HOST_TERMS satisfies Vocabulary<HostTerm>;
 ORGAN_TERMS satisfies Vocabulary<OrganTerm>;
+DISTRIBUTION_REGION_TERMS satisfies Vocabulary<DistributionRegionTerm>;
+CLIMATE_BAND_TERMS satisfies Vocabulary<ClimateBandTerm>;
 
 export const HOST_TERM_KEYS = Object.keys(HOST_TERMS) as HostTerm[];
 export const ORGAN_TERM_KEYS = Object.keys(ORGAN_TERMS) as OrganTerm[];
+export const DISTRIBUTION_REGION_TERM_KEYS = Object.keys(
+  DISTRIBUTION_REGION_TERMS,
+) as DistributionRegionTerm[];
+export const CLIMATE_BAND_TERM_KEYS = Object.keys(
+  CLIMATE_BAND_TERMS,
+) as ClimateBandTerm[];
 
 function covers(
   terms: Vocabulary,

@@ -9,6 +9,7 @@ import {
   groupRows,
   hostOptions,
   matchesSearch,
+  matchesTaxonomy,
   organOptions,
   railSections,
   sortTable,
@@ -76,6 +77,23 @@ describe("applyFilters", () => {
     ];
     const hits = applyFilters(mixed, { ...NO_FILTERS, tier: "key" });
     expect(ids(hits)).toEqual(["fasciola-hepatica"]);
+  });
+});
+
+describe("matchesTaxonomy", () => {
+  it("keeps family mates and drops other families", () => {
+    const family = byId("toxocara-cati").fields.family!;
+    const hits = entries.filter((e) =>
+      matchesTaxonomy(e, { rank: "family", value: family }),
+    );
+    expect(hits.length).toBeGreaterThan(1);
+    expect(hits.every((e) => e.fields.family === family)).toBe(true);
+    expect(ids(hits)).toContain("toxocara-cati");
+    expect(ids(hits)).not.toContain("fasciola-hepatica");
+  });
+
+  it("passes everything when the filter is null", () => {
+    expect(entries.every((e) => matchesTaxonomy(e, null))).toBe(true);
   });
 });
 

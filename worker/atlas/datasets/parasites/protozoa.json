@@ -69,7 +69,10 @@
         "pppDays": {
           "min": 2,
           "max": 28
-        }
+        },
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -230,7 +233,10 @@
             "name": "PCR",
             "sample": "faeces"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -387,7 +393,12 @@
         "pppDays": {
           "min": 4,
           "max": 5
-        }
+        },
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": [
+          "warm-humid"
+        ]
       },
       "refs": [
         {
@@ -548,7 +559,10 @@
         "pppDays": {
           "min": 4,
           "max": 14
-        }
+        },
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -721,7 +735,10 @@
             "name": "faecal flotation",
             "sample": "faeces"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -913,7 +930,10 @@
         "pppDays": {
           "min": 7,
           "max": 14
-        }
+        },
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -1075,7 +1095,10 @@
           "min": 7,
           "max": 12
         },
-        "diagnosticStage": "flagellate form"
+        "diagnosticStage": "flagellate form",
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -1265,7 +1288,10 @@
         "pppDays": {
           "min": 30,
           "max": 70
-        }
+        },
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -1448,7 +1474,10 @@
             "name": "histopathology",
             "sample": "tissue"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -1650,7 +1679,10 @@
             "sample": "faeces"
           }
         ],
-        "diagnosticStage": "unsporulated oocyst"
+        "diagnosticStage": "unsporulated oocyst",
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -1833,7 +1865,10 @@
         "pppDays": {
           "min": 7,
           "max": 21
-        }
+        },
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -2032,7 +2067,14 @@
         "pppDays": {
           "min": 11,
           "max": 16
-        }
+        },
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "europe",
+          "africa",
+          "asia"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -2211,7 +2253,10 @@
         "pppDays": {
           "min": 7,
           "max": 21
-        }
+        },
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -2447,7 +2492,13 @@
         "pppDays": {
           "min": 7,
           "max": 21
-        }
+        },
+        "distributionWorldwide": false,
+        "distributionRegions": [],
+        "climateBands": [
+          "tropical",
+          "subtropical"
+        ]
       },
       "refs": [
         {
@@ -2640,7 +2691,16 @@
         "pppDays": {
           "min": 60,
           "max": 365
-        }
+        },
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "north-america",
+          "south-america",
+          "europe",
+          "asia",
+          "africa"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -2875,7 +2935,14 @@
         "pppDays": {
           "min": 7,
           "max": 21
-        }
+        },
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "south-america",
+          "africa",
+          "asia"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -3097,7 +3164,14 @@
         "pppDays": {
           "min": 7,
           "max": 30
-        }
+        },
+        "distributionWorldwide": true,
+        "distributionRegions": [
+          "south-america",
+          "africa",
+          "asia"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -3284,7 +3358,16 @@
         "pppDays": {
           "min": 28,
           "max": 35
-        }
+        },
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "north-america",
+          "south-america",
+          "europe",
+          "africa",
+          "asia"
+        ],
+        "climateBands": []
       },
       "refs": [
         {

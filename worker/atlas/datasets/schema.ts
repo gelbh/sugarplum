@@ -11,7 +11,13 @@ import {
   parasiteFieldsSchema,
   pppDaysSchema,
 } from "../templates/parasite";
-import { HOST_TERM_KEYS, ORGAN_TERM_KEYS, hostCovers } from "./vocab";
+import {
+  CLIMATE_BAND_TERM_KEYS,
+  DISTRIBUTION_REGION_TERM_KEYS,
+  HOST_TERM_KEYS,
+  ORGAN_TERM_KEYS,
+  hostCovers,
+} from "./vocab";
 
 export const IMAGE_ROLES = [
   "adult",
@@ -26,6 +32,10 @@ export const IMAGE_ROLES = [
 const capped = (max: number) => z.string().trim().min(1).max(max);
 const name = capped(80);
 const hostList = z.array(z.enum(HOST_TERM_KEYS)).default([]);
+const distributionRegionList = z
+  .array(z.enum(DISTRIBUTION_REGION_TERM_KEYS))
+  .default([]);
+const climateBandList = z.array(z.enum(CLIMATE_BAND_TERM_KEYS)).default([]);
 
 export function datasetKeyFor(canonicalName: string): string {
   return canonicalName
@@ -68,6 +78,9 @@ const datasetFieldsSchema = z.strictObject({
   majorOrgan: z.enum(ORGAN_TERM_KEYS).nullable().default(null),
   significance: capped(160).nullable().default(null),
   distribution: capped(80).nullable().default(null),
+  distributionWorldwide: z.boolean().default(false),
+  distributionRegions: distributionRegionList,
+  climateBands: climateBandList,
   pppDays: pppDaysSchema.strict().nullable().default(null),
   lifecycleStages: z.array(datasetStageSchema).default([]),
   diagnosticTests: z.array(diagnosticTestSchema.strict()).default([]),

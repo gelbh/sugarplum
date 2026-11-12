@@ -5,9 +5,22 @@ import {
   entryLead,
   entryMetaLine,
   glanceRows,
+  glanceSections,
   infectiveStageLabel,
-  moreFactKeys,
+  significanceFullRow,
+  taxonomyTree,
 } from "../../src/atlas/entryGlance";
+import { glanceIconFor } from "../../src/atlas/glanceIcons";
+import { resolveHostPortrait } from "../../src/atlas/hostPortraits";
+import { resolveSitePortrait } from "../../src/atlas/sitePortraits";
+import { resolveStagePortrait } from "../../src/atlas/stagePortraits";
+import { countryHeatWeight } from "../../src/atlas/distributionHeat";
+import {
+  distributionChipLabels,
+  distributionTags,
+  litRegions,
+  tagsToMeta,
+} from "../../src/atlas/distributionTags";
 import { entryTitles } from "../../src/atlas/entryTitles";
 import { isShortcutTarget } from "../../src/atlas/keys";
 import { isAtlasToAtlas } from "../../src/atlas/paths";
@@ -121,16 +134,190 @@ describe("entryGlance", () => {
     expect(infectiveStageLabel(f.lifecycleStages)).toBeTruthy();
   });
 
-  it("keeps catalog keys out of glance and in moreFactKeys", () => {
-    const glance = new Set(glanceRows(fasciola.fields).map((r) => r.key));
-    for (const k of [
+  it("folds catalog into categorized glance bands and omits empties", () => {
+    const sections = glanceSections(fasciola.fields);
+    const titles = sections.map((s) => s.id);
+    expect(titles).toEqual(
+      expect.arrayContaining([
+        "taxonomy",
+        "hosts",
+        "body",
+        "detection",
+        "range",
+      ]),
+    );
+    const rows = glanceRows(fasciola.fields);
+    const keys = new Set(rows.map((r) => r.key));
+    expect(keys.has("taxonomy")).toBe(true);
+    expect(keys.has("distribution")).toBe(true);
+    expect(keys.has("onHostStages")).toBe(true);
+    expect(keys.has("paratenicHosts")).toBe(false);
+    expect(keys.has("vectorRole")).toBe(false);
+    const tax = rows.find((r) => r.key === "taxonomy")!;
+    expect(tax.text).toMatch(/Platyhelminthes/);
+    expect(tax.iconCue).toBe("trematode");
+    expect(taxonomyTree(fasciola.fields).map((n) => n.field)).toEqual([
       "phylum",
       "order",
-      "distribution",
-      "paratenicHosts",
-    ] as const) {
-      expect(glance.has(k as never)).toBe(false);
-      expect(moreFactKeys()).toContain(k);
-    }
+      "family",
+    ]);
+    expect(significanceFullRow(fasciola.fields, false)).toBeNull();
+    expect(significanceFullRow(fasciola.fields, true)?.key).toBe(
+      "significance",
+    );
+  });
+
+  it("picks value-specific icons for fasciola cues", () => {
+    const rows = glanceRows(fasciola.fields);
+    const site = rows.find((r) => r.key === "majorOrgan")!;
+    const infective = rows.find((r) => r.key === "infective")!;
+    const tax = rows.find((r) => r.key === "taxonomy")!;
+    expect(glanceIconFor(site).displayName).toMatch(/Liver/i);
+    expect(glanceIconFor(infective).displayName).toMatch(/Cyst/i);
+    expect(glanceIconFor(tax).displayName).toMatch(/Flatworm/i);
+  });
+
+  it("resolves host portraits via broader chain", () => {
+    expect(resolveHostPortrait("sheep")?.archetype).toBe("sheep");
+    expect(resolveHostPortrait("Galba truncatula")?.archetype).toBe(
+      "lymnaeid snail",
+    );
+    expect(resolveHostPortrait("lymnaeid snail")?.src).toMatch(
+      /lymnaeid-snail\.webp$/,
+    );
+    expect(resolveHostPortrait("human")?.src).toMatch(/human\.webp$/);
+    expect(resolveHostPortrait("non-human primate")?.archetype).toBe(
+      "non-human primate",
+    );
+    expect(resolveHostPortrait("rodent")?.archetype).toBe("rodent");
+    expect(resolveHostPortrait("earthworm")?.src).toMatch(/earthworm\.webp$/);
+    expect(resolveHostPortrait("Formica")?.archetype).toBe("ant");
+  });
+
+  it("resolves site portraits via broader chain", () => {
+    expect(resolveSitePortrait("bile ducts")?.archetype).toBe("bile ducts");
+    expect(resolveSitePortrait("ileum")?.src).toMatch(/ileum\.webp$/);
+    expect(resolveSitePortrait("abomasum")?.archetype).toBe("abomasum");
+    expect(resolveSitePortrait("skin")?.src).toMatch(/skin\.webp$/);
+  });
+
+  it("passes PPP min/max for the glance timeline", () => {
+    const ppp = glanceRows(fasciola.fields).find((r) => r.key === "pppDays");
+    expect(ppp?.pppMin).toBeTypeOf("number");
+    expect(ppp?.pppMax).toBeTypeOf("number");
+    expect(ppp?.pppMax).toBeGreaterThanOrEqual(ppp?.pppMin ?? 0);
+  });
+
+  it("resolves on-host stage portraits via aliases", () => {
+    expect(resolveStagePortrait("adult")?.src).toMatch(/adult\.webp$/);
+    expect(resolveStagePortrait("migrating L3")?.archetype).toBe("L3");
+    expect(resolveStagePortrait("adult fluke")?.src).toMatch(
+      /adult-fluke\.webp$/,
+    );
+    expect(resolveStagePortrait("schizont")?.archetype).toBe("meront");
+  });
+
+  it("tags distribution prose into structured meta", () => {
+    const world = distributionTags(
+      "Warm, humid regions worldwide; uncommon in Canada",
+    );
+    expect(world.worldwide).toBe(true);
+    expect(world.bands).toContain("warm-humid");
+    expect(world.regions).not.toContain("na");
+    expect(litRegions(world).has("eu")).toBe(true);
+    expect(distributionChipLabels(tagsToMeta(world))).toContain("Worldwide");
+    expect(distributionChipLabels(tagsToMeta(world))).toContain("Warm humid");
+
+    const regional = distributionTags(
+      "Southern Europe, Africa, Asia, the Middle East, Latin America",
+    );
+    expect(regional.worldwide).toBe(false);
+    expect(regional.regions).toEqual(
+      expect.arrayContaining(["eu", "af", "as", "sa"]),
+    );
+
+    const climate = distributionTags(
+      "Tropical and subtropical regions, limited by the tick vectors",
+    );
+    expect(climate.bands).toEqual(
+      expect.arrayContaining(["tropical", "subtropical"]),
+    );
+  });
+
+  it("ignores negated continents and reads circumpolar north", () => {
+    const fish = distributionTags(
+      "Mostly circumpolar northern regions; very rare in South America",
+    );
+    expect(fish.regions).toEqual(
+      expect.arrayContaining(["na", "eu", "as"]),
+    );
+    expect(fish.regions).not.toContain("sa");
+    expect(fish.bands).toContain("arctic");
+
+    const flea = distributionTags(
+      "Found in Europe; rare on dogs in North America",
+    );
+    expect(flea.regions).toEqual(["eu"]);
+
+    const except = distributionTags("Worldwide except Antarctica");
+    expect(except.worldwide).toBe(true);
+    expect(except.regions).not.toContain("an");
+    expect(except.bands).not.toContain("antarctic");
+  });
+
+  it("parses Eurasia, African, Atlantic, and warm-moist cues", () => {
+    const lancet = distributionTags(
+      "Widespread across Eurasia and North Africa; patchy in North America",
+    );
+    expect(lancet.worldwide).toBe(false);
+    expect(lancet.regions).toEqual(
+      expect.arrayContaining(["eu", "as", "af", "na"]),
+    );
+
+    const face = distributionTags(
+      "Europe, Asia, North America and some African regions",
+    );
+    expect(face.regions).toEqual(
+      expect.arrayContaining(["eu", "as", "na", "af"]),
+    );
+
+    const seal = distributionTags(
+      "Colder seas, including the North Atlantic and the Baltic Sea",
+    );
+    expect(seal.regions).toEqual(expect.arrayContaining(["na", "eu"]));
+    expect(seal.bands).toContain("arctic");
+
+    const hook = distributionTags("Sheep and goats in warm, moist climates");
+    expect(hook.bands).toContain("warm-humid");
+  });
+
+  it("heats warm-humid worldwide stronger in low latitudes", () => {
+    const meta = {
+      worldwide: true,
+      regions: [] as const,
+      bands: ["warm-humid" as const],
+    };
+    // Brazil 076, Canada 124 (ISO numeric as in world-atlas)
+    expect(countryHeatWeight("076", meta)).toBeGreaterThan(
+      countryHeatWeight("124", meta),
+    );
+    expect(countryHeatWeight("124", meta)).toBeGreaterThan(0.1);
+  });
+
+  it("lights only structured regions (Eyeworm-style)", () => {
+    const meta = {
+      worldwide: false,
+      regions: [
+        "north-america",
+        "south-america",
+        "europe",
+        "asia",
+      ] as const,
+      bands: [] as const,
+    };
+    // USA 840, Nigeria 566, Australia 036
+    expect(countryHeatWeight("840", meta)).toBeGreaterThan(0.5);
+    expect(countryHeatWeight("566", meta)).toBe(0);
+    expect(countryHeatWeight("036", meta)).toBe(0);
   });
 });
