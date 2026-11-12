@@ -1,4 +1,5 @@
 import type { StudyRating } from "../api/client";
+import { GRADE_LABELS } from "./gradeLabels";
 
 export const DRAG_SLOP_PX = 8;
 export const SWIPE_THRESHOLD_PX = 96;
@@ -88,4 +89,61 @@ export function reviewSwipeVisual(input: {
       : Math.min(1, Math.abs(dx) / SWIPE_THRESHOLD_PX),
     dimmed: leaving !== null && reduceMotion,
   };
+}
+
+export const STUDY_REVEAL_STAMP = "Show";
+
+/** Live study drag paint only; mailbox owns the leave after grade. */
+export function studySwipeVisual(input: {
+  dx: number;
+  dy: number;
+  revealed: boolean;
+  reduceMotion: boolean;
+}): {
+  transform: string;
+  stampLabel: string | null;
+  stampRating: StudyRating | null;
+  stampOpacity: number;
+} {
+  const { dx, dy, revealed, reduceMotion } = input;
+  const ax = Math.abs(dx);
+  const ay = Math.abs(dy);
+  const transform = reduceMotion
+    ? `translate(${dx}px, ${dy}px)`
+    : `translate(${dx}px, ${dy}px) rotate(${dx / 20}deg)`;
+
+  if (!gesturePassedSlop({ dx, dy })) {
+    return {
+      transform,
+      stampLabel: null,
+      stampRating: null,
+      stampOpacity: 0,
+    };
+  }
+
+  if (!revealed) {
+    return {
+      transform,
+      stampLabel: STUDY_REVEAL_STAMP,
+      stampRating: null,
+      stampOpacity: Math.min(1, Math.max(ax, ay) / SWIPE_THRESHOLD_PX),
+    };
+  }
+
+  const rating: StudyRating =
+    ax >= ay ? (dx < 0 ? 1 : 3) : dy > 0 ? 2 : 4;
+  return {
+    transform,
+    stampLabel: GRADE_LABELS[rating],
+    stampRating: rating,
+    stampOpacity: Math.min(1, Math.max(ax, ay) / SWIPE_THRESHOLD_PX),
+  };
+}
+
+/** Notes mute + portal containment (React portals bubble through the tree). */
+export function studyPointerAllowed(input: {
+  blocked: boolean;
+  targetInHost: boolean;
+}): boolean {
+  return !input.blocked && input.targetInHost;
 }

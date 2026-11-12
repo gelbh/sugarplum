@@ -25,6 +25,7 @@ import {
 import type { UnlockView } from "../achievements/wire";
 import CardFace, { type OcclusionStudyFace } from "../components/CardFace";
 import GradeButtons from "../components/GradeButtons";
+import { FACE_SANS } from "../components/studyFaceSx";
 import { useStudyCardGesture } from "../components/useStudyCardGesture";
 import {
   ApiError,
@@ -588,12 +589,15 @@ export default function StudyPage() {
     toggleZen,
   ]);
 
+  const canCommitStudyGesture = () =>
+    !busyRef.current &&
+    !flightBusyRef.current &&
+    !!current &&
+    !isMcqCard(current);
   const cardGesture = useStudyCardGesture({
-    canCommit: () =>
-      !busyRef.current &&
-      !flightBusyRef.current &&
-      !!current &&
-      !isMcqCard(current),
+    canCommit: canCommitStudyGesture,
+    blocked: () =>
+      notes.notesOpenRef.current || !canCommitStudyGesture(),
     revealed,
     onReveal: reveal,
     onGrade: (rating) => {
@@ -899,7 +903,7 @@ export default function StudyPage() {
 
               <Box
                 ref={cardHostRef}
-                {...cardGesture}
+                {...cardGesture.handlers}
                 sx={{
                   touchAction: "manipulation",
                   display: "flex",
@@ -913,27 +917,62 @@ export default function StudyPage() {
                     : { flex: "0 0 auto", height: "min(68dvh, 520px)" }),
                 }}
               >
-                <CardFace
-                  cardId={current.id}
-                  front={studyFrontText(current)}
-                  back={occlusionParts.answer}
-                  type={current.type}
-                  mediaR2Keys={current.media_r2_keys}
-                  occlusion={occlusionParts.face}
-                  options={current.options}
-                  revealed={revealed}
-                  onReveal={reveal}
-                  onFlipBack={flipBack}
-                  disabled={busy}
-                  answerFocusRef={answerFocusRef}
-                  notesAvailable={notes.notesAvailable}
-                  onOpenNotes={notes.openNotes}
-                  onGrade={
-                    mcqMode ? (rating) => onGrade(rating, true) : undefined
-                  }
-                />
-                {notes.dialog}
+                <Box
+                  ref={cardGesture.plateRef}
+                  sx={{
+                    position: "relative",
+                    display: "flex",
+                    alignItems: "inherit",
+                    justifyContent: "center",
+                    width: "100%",
+                    height: "100%",
+                    minHeight: 0,
+                  }}
+                >
+                  <Box
+                    ref={cardGesture.stampRef}
+                    aria-hidden
+                    sx={{
+                      position: "absolute",
+                      top: 28,
+                      left: "50%",
+                      zIndex: 2,
+                      pointerEvents: "none",
+                      px: 1.5,
+                      py: 0.5,
+                      border: "2px solid",
+                      bgcolor: "var(--sp-card-face)",
+                      borderRadius: 1,
+                      fontFamily: FACE_SANS,
+                      fontWeight: 600,
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      whiteSpace: "nowrap",
+                      transform: "translateX(-50%) rotate(-8deg)",
+                    }}
+                  />
+                  <CardFace
+                    cardId={current.id}
+                    front={studyFrontText(current)}
+                    back={occlusionParts.answer}
+                    type={current.type}
+                    mediaR2Keys={current.media_r2_keys}
+                    occlusion={occlusionParts.face}
+                    options={current.options}
+                    revealed={revealed}
+                    onReveal={reveal}
+                    onFlipBack={flipBack}
+                    disabled={busy}
+                    answerFocusRef={answerFocusRef}
+                    notesAvailable={notes.notesAvailable}
+                    onOpenNotes={notes.openNotes}
+                    onGrade={
+                      mcqMode ? (rating) => onGrade(rating, true) : undefined
+                    }
+                  />
+                </Box>
               </Box>
+              {notes.dialog}
 
               {mcqMode ? (
                 <Box
