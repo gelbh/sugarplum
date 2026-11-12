@@ -181,7 +181,6 @@ export default function StudyPage() {
     introBonusRef.current = getIntroBonus();
   }
   const { enqueueUnlocks } = useUnlockToasts();
-  // Immersion hook needs hasCard; queue[0] is wired below after leaveStudy uses exitZen.
   const queueHead = queue[0] ?? null;
   const { stage, mobile, toggleZen, exitZen } = useStudyImmersion(
     queueHead != null,
