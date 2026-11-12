@@ -3,6 +3,7 @@ import {
   clampNotesPage,
   pagesToPersistAfterNavigate,
   pagesToPersistAfterRescue,
+  pagesToPersistAfterSearchHits,
 } from "../../src/study/notesProvenanceWrite";
 
 describe("pagesToPersistAfterRescue", () => {
@@ -60,6 +61,38 @@ describe("pagesToPersistAfterRescue", () => {
         scanComplete: false,
       }),
     ).toEqual([2]);
+  });
+});
+
+describe("pagesToPersistAfterSearchHits", () => {
+  it("returns null when rescued equals claimed", () => {
+    expect(
+      pagesToPersistAfterSearchHits({
+        claimed: 4,
+        rescued: 4,
+        hitPages: [4],
+      }),
+    ).toBeNull();
+  });
+
+  it("returns sorted unique hit pages when rescue finds another page", () => {
+    expect(
+      pagesToPersistAfterSearchHits({
+        claimed: 1,
+        rescued: 4,
+        hitPages: [4, 9, 4],
+      }),
+    ).toEqual([4, 9]);
+  });
+
+  it("falls back to rescued page when hit list is empty", () => {
+    expect(
+      pagesToPersistAfterSearchHits({
+        claimed: 1,
+        rescued: 7,
+        hitPages: [],
+      }),
+    ).toEqual([7]);
   });
 });
 
