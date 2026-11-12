@@ -646,174 +646,170 @@ describe("built-in parasite dataset", () => {
     expect(diagrams.filter((d) => d.isHero)).toEqual([]);
   });
 
+  function expectInfectiveStageLocks(
+    expected: Record<string, string>,
+    group?: string,
+  ) {
+    if (group) {
+      const groupKeys = dataset.entries
+        .filter((e) => e.fields.group === group)
+        .map((e) => e.key)
+        .sort();
+      expect(groupKeys).toEqual(Object.keys(expected).sort());
+    }
+    for (const [key, stageName] of Object.entries(expected)) {
+      const entry = dataset.entries.find((e) => e.key === key);
+      expect(entry, key).toBeDefined();
+      const infective = (entry?.fields.lifecycleStages ?? []).filter(
+        (s) => s.infective,
+      );
+      expect(infective, key).toHaveLength(1);
+      expect(infective[0]?.name, key).toBe(stageName);
+      expect(infective[0]?.transmission, key).toBeTruthy();
+      expect(
+        entry?.refs.some((r) => r.field === "lifecycleStages"),
+        `${key} lifecycleStages ref`,
+      ).toBe(true);
+    }
+  }
+
   it("marks exactly one infective stage on phase-1 enrichment pilots", () => {
-    const pilots = {
+    expectInfectiveStageLocks({
       "fasciola-hepatica": "metacercaria",
       "haemonchus-contortus": "L3",
       "giardia-duodenalis": "cyst",
       "strongylus-vulgaris": "L3",
-    } as const;
-    for (const [key, stageName] of Object.entries(pilots)) {
-      const entry = dataset.entries.find((e) => e.key === key);
-      expect(entry, key).toBeDefined();
-      const infective = (entry?.fields.lifecycleStages ?? []).filter(
-        (s) => s.infective,
-      );
-      expect(infective, key).toHaveLength(1);
-      expect(infective[0]?.name, key).toBe(stageName);
-      expect(infective[0]?.transmission, key).toBeTruthy();
-      expect(
-        entry?.refs.some((r) => r.field === "lifecycleStages"),
-        `${key} lifecycleStages ref`,
-      ).toBe(true);
-    }
+    });
   });
 
   it("marks exactly one infective stage on every trematode entry", () => {
-    const expected = {
-      "fasciola-hepatica": "metacercaria",
-      "fasciola-gigantica": "metacercaria",
-      "fascioloides-magna": "metacercaria",
-      "dicrocoelium-dendriticum": "metacercaria",
-      "calicophoron-daubneyi": "metacercaria",
-      "paramphistomum-cervi": "metacercaria",
-      "fasciolopsis-buski": "metacercaria",
-      "clonorchis-sinensis": "metacercaria",
-      "opisthorchis-felineus": "metacercaria",
-      "schistosoma-spp": "cercaria",
-    } as const;
-    for (const [key, stageName] of Object.entries(expected)) {
-      const entry = dataset.entries.find((e) => e.key === key);
-      expect(entry, key).toBeDefined();
-      const infective = (entry?.fields.lifecycleStages ?? []).filter(
-        (s) => s.infective,
-      );
-      expect(infective, key).toHaveLength(1);
-      expect(infective[0]?.name, key).toBe(stageName);
-      expect(infective[0]?.transmission, key).toBeTruthy();
-      expect(
-        entry?.refs.some((r) => r.field === "lifecycleStages"),
-        `${key} lifecycleStages ref`,
-      ).toBe(true);
-    }
+    expectInfectiveStageLocks(
+      {
+        "fasciola-hepatica": "metacercaria",
+        "fasciola-gigantica": "metacercaria",
+        "fascioloides-magna": "metacercaria",
+        "dicrocoelium-dendriticum": "metacercaria",
+        "calicophoron-daubneyi": "metacercaria",
+        "paramphistomum-cervi": "metacercaria",
+        "fasciolopsis-buski": "metacercaria",
+        "clonorchis-sinensis": "metacercaria",
+        "opisthorchis-felineus": "metacercaria",
+        "schistosoma-spp": "cercaria",
+      },
+      "trematode",
+    );
   });
 
   it("marks exactly one infective stage on every cestode entry", () => {
-    const expected = {
-      "anoplocephala-perfoliata": "cysticercoid",
-      "dipylidium-caninum": "cysticercoid",
-      "davainea-proglottina": "cysticercoid",
-      "raillietina-spp": "cysticercoid",
-      "moniezia-expansa": "cysticercoid",
-      "taenia-hydatigena": "cysticercus",
-      "taenia-ovis": "cysticercus",
-      "taenia-multiceps": "coenurus",
-      "taenia-saginata": "cysticercus",
-      "taenia-solium": "cysticercus",
-      "echinococcus-granulosus": "hydatid cyst",
-      "echinococcus-multilocularis": "hydatid cyst",
-      "diphyllobothrium-latum": "plerocercoid",
-    } as const;
-    const cestodeKeys = dataset.entries
-      .filter((e) => e.fields.group === "cestode")
-      .map((e) => e.key)
-      .sort();
-    expect(cestodeKeys).toEqual(Object.keys(expected).sort());
-    for (const [key, stageName] of Object.entries(expected)) {
-      const entry = dataset.entries.find((e) => e.key === key);
-      expect(entry, key).toBeDefined();
-      const infective = (entry?.fields.lifecycleStages ?? []).filter(
-        (s) => s.infective,
-      );
-      expect(infective, key).toHaveLength(1);
-      expect(infective[0]?.name, key).toBe(stageName);
-      expect(infective[0]?.transmission, key).toBeTruthy();
-      expect(
-        entry?.refs.some((r) => r.field === "lifecycleStages"),
-        `${key} lifecycleStages ref`,
-      ).toBe(true);
-    }
+    expectInfectiveStageLocks(
+      {
+        "anoplocephala-perfoliata": "cysticercoid",
+        "dipylidium-caninum": "cysticercoid",
+        "davainea-proglottina": "cysticercoid",
+        "raillietina-spp": "cysticercoid",
+        "moniezia-expansa": "cysticercoid",
+        "taenia-hydatigena": "cysticercus",
+        "taenia-ovis": "cysticercus",
+        "taenia-multiceps": "coenurus",
+        "taenia-saginata": "cysticercus",
+        "taenia-solium": "cysticercus",
+        "echinococcus-granulosus": "hydatid cyst",
+        "echinococcus-multilocularis": "hydatid cyst",
+        "diphyllobothrium-latum": "plerocercoid",
+      },
+      "cestode",
+    );
   });
 
   it("marks exactly one infective stage on every nematode entry", () => {
-    const expected = {
-      "toxocara-canis": "larvated egg",
-      "toxocara-cati": "larvated egg",
-      "toxascaris-leonina": "larvated egg",
-      "ancylostoma-caninum": "L3",
-      "uncinaria-stenocephala": "L3",
-      "strongyloides-stercoralis": "L3",
-      "trichuris-vulpis": "larvated egg",
-      "crenosoma-vulpis": "L3",
-      "oslerus-osleri": "L1",
-      "filaroides-hirthi": "L1",
-      "aelurostrongylus-abstrusus": "L3",
-      "angiostrongylus-vasorum": "L3",
-      "dirofilaria-immitis": "L3",
-      "dirofilaria-repens": "L3",
-      "capillaria-aerophila": "egg",
-      "capillaria-plica": "L1",
-      "spirocerca-lupi": "L3",
-      "ascaridia-galli": "larvated egg",
-      "heterakis-gallinarum": "larvated egg",
-      "syngamus-trachea": "larvated egg",
-      "anisakis-simplex": "L3 in marine fish",
-      "contracaecum-osculatum": "L3 in marine fish",
-      "pseudoterranova-decipiens": "L3 in marine fish",
-      "parascaris-equorum": "larvated egg",
-      "strongyloides-westeri": "L3",
-      "cylicostephanus-longibursatus": "L3",
-      "strongylus-equinus": "L3",
-      "strongylus-edentatus": "L3",
-      "strongylus-vulgaris": "L3",
-      "oxyuris-equi": "larvated egg",
-      "habronema-spp": "L3",
-      "draschia-megastoma": "L3",
-      "parafilaria-multipapillosa": "larva",
-      "onchocerca-cervicalis": "L3",
-      "thelazia-lacrymalis": "L3",
-      "dictyocaulus-arnfieldi": "L3",
-      "metastrongylus-apri": "L3",
-      "hyostrongylus-rubidus": "L3",
-      "ascaris-suum": "egg",
-      "strongyloides-ransomi": "L3",
-      "trichuris-suis": "egg",
-      "trichinella-spiralis": "nurse cell larva",
-      "teladorsagia-circumcincta": "L3",
-      "haemonchus-contortus": "L3",
-      "trichostrongylus-spp": "L3",
-      "strongyloides-papillosus": "L3",
-      "bunostomum-trigonocephalum": "L3",
-      "capillaria-longipes": "infective larva in egg",
-      "chabertia-ovina": "L3",
-      "oesophagostomum-venulosum": "L3",
-      "trichuris-ovis": "egg",
-      "nematodirus-battus": "L3",
-      "muellerius-capillaris": "L3",
-      "protostrongylus-rufescens": "L3",
-      "dictyocaulus-filaria": "L3",
-      "ostertagia-ostertagi": "L3",
-      "dictyocaulus-viviparus": "L3",
-      "onchocerca-ochengi": "L3",
-    } as const;
-    const nematodeKeys = dataset.entries
-      .filter((e) => e.fields.group === "nematode")
-      .map((e) => e.key)
-      .sort();
-    expect(nematodeKeys).toEqual(Object.keys(expected).sort());
-    for (const [key, stageName] of Object.entries(expected)) {
-      const entry = dataset.entries.find((e) => e.key === key);
-      expect(entry, key).toBeDefined();
-      const infective = (entry?.fields.lifecycleStages ?? []).filter(
-        (s) => s.infective,
-      );
-      expect(infective, key).toHaveLength(1);
-      expect(infective[0]?.name, key).toBe(stageName);
-      expect(infective[0]?.transmission, key).toBeTruthy();
-      expect(
-        entry?.refs.some((r) => r.field === "lifecycleStages"),
-        `${key} lifecycleStages ref`,
-      ).toBe(true);
-    }
+    expectInfectiveStageLocks(
+      {
+        "toxocara-canis": "larvated egg",
+        "toxocara-cati": "larvated egg",
+        "toxascaris-leonina": "larvated egg",
+        "ancylostoma-caninum": "L3",
+        "uncinaria-stenocephala": "L3",
+        "strongyloides-stercoralis": "L3",
+        "trichuris-vulpis": "larvated egg",
+        "crenosoma-vulpis": "L3",
+        "oslerus-osleri": "L1",
+        "filaroides-hirthi": "L1",
+        "aelurostrongylus-abstrusus": "L3",
+        "angiostrongylus-vasorum": "L3",
+        "dirofilaria-immitis": "L3",
+        "dirofilaria-repens": "L3",
+        "capillaria-aerophila": "egg",
+        "capillaria-plica": "L1",
+        "spirocerca-lupi": "L3",
+        "ascaridia-galli": "larvated egg",
+        "heterakis-gallinarum": "larvated egg",
+        "syngamus-trachea": "larvated egg",
+        "anisakis-simplex": "L3 in marine fish",
+        "contracaecum-osculatum": "L3 in marine fish",
+        "pseudoterranova-decipiens": "L3 in marine fish",
+        "parascaris-equorum": "larvated egg",
+        "strongyloides-westeri": "L3",
+        "cylicostephanus-longibursatus": "L3",
+        "strongylus-equinus": "L3",
+        "strongylus-edentatus": "L3",
+        "strongylus-vulgaris": "L3",
+        "oxyuris-equi": "larvated egg",
+        "habronema-spp": "L3",
+        "draschia-megastoma": "L3",
+        "parafilaria-multipapillosa": "larva",
+        "onchocerca-cervicalis": "L3",
+        "thelazia-lacrymalis": "L3",
+        "dictyocaulus-arnfieldi": "L3",
+        "metastrongylus-apri": "L3",
+        "hyostrongylus-rubidus": "L3",
+        "ascaris-suum": "egg",
+        "strongyloides-ransomi": "L3",
+        "trichuris-suis": "egg",
+        "trichinella-spiralis": "nurse cell larva",
+        "teladorsagia-circumcincta": "L3",
+        "haemonchus-contortus": "L3",
+        "trichostrongylus-spp": "L3",
+        "strongyloides-papillosus": "L3",
+        "bunostomum-trigonocephalum": "L3",
+        "capillaria-longipes": "infective larva in egg",
+        "chabertia-ovina": "L3",
+        "oesophagostomum-venulosum": "L3",
+        "trichuris-ovis": "egg",
+        "nematodirus-battus": "L3",
+        "muellerius-capillaris": "L3",
+        "protostrongylus-rufescens": "L3",
+        "dictyocaulus-filaria": "L3",
+        "ostertagia-ostertagi": "L3",
+        "dictyocaulus-viviparus": "L3",
+        "onchocerca-ochengi": "L3",
+      },
+      "nematode",
+    );
+  });
+
+  it("marks exactly one infective stage on every protozoan entry", () => {
+    expectInfectiveStageLocks(
+      {
+        "entamoeba-histolytica": "cyst",
+        "giardia-duodenalis": "cyst",
+        "balantidium-coli": "cyst",
+        "eimeria-spp": "oocyst",
+        "cryptosporidium-spp": "oocyst",
+        "tritrichomonas-foetus": "trophozoite",
+        "histomonas-meleagridis": "stage in Heterakis egg",
+        "encephalitozoon-cuniculi": "spore",
+        "toxoplasma-gondii": "tissue cyst with bradyzoites",
+        "neospora-caninum": "tissue cyst with bradyzoites",
+        "sarcocystis-spp": "sarcocyst with bradyzoites",
+        "besnoitia-besnoiti": "tissue cyst with bradyzoites",
+        "babesia-spp": "gametocyte",
+        "theileria-spp": "merozoite and piroplasm",
+        "leishmania-infantum": "promastigote",
+        "trypanosoma-spp": "metacyclic trypomastigote",
+        "plasmodium-spp": "gametocyte",
+        "hepatozoon-canis": "gamont",
+      },
+      "protozoan",
+    );
   });
 });
