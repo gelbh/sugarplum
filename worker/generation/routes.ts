@@ -158,7 +158,7 @@ jobRoutes.get("/:id", async (c) => {
 
   if (row.status === "running") {
     const healed = await failRunningJobIfStale(
-      db,
+      c.env,
       {
         id: jobId,
         progress_json: row.progress_json,

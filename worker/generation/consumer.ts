@@ -1,5 +1,4 @@
 import type { Env } from "../env";
-import { getDb } from "../db/client";
 import type { GenerateQueueMessage } from "./enqueue";
 import { failStaleRunningJobs } from "./staleFail";
 import { GENERATE_QUEUE_RETRY_DELAY_SEC } from "./progress";
@@ -49,5 +48,5 @@ export async function handleGenerateQueue(
       msg.retry({ delaySeconds: GENERATE_QUEUE_RETRY_DELAY_SEC });
     }
   }
-  await failStaleRunningJobs(getDb(env));
+  await failStaleRunningJobs(env);
 }

@@ -1,5 +1,7 @@
+import type { Env } from "../env";
+import { getDb } from "../db/client";
+import { afterRunningJobTerminal } from "./jobTerminal";
 import { isRunningJobStale } from "./progress";
-import { recordGenerationUsageEventForJob } from "./usage";
 
 export const STALE_RUNNING_FAIL_ERROR =
   "Generation stalled and was stopped. Try generating again.";
@@ -112,15 +114,17 @@ async function casFail(
  * Soft-complete (`needs_review`) when draft/persisted cards already exist.
  * CAS matches reclaim: only succeeds if `progress_json` is still the snapshot
  * used for the stale check (reclaim that refreshed the heartbeat wins).
+ * Deletes the R2 extract sidecar after a successful terminal transition.
  */
 export async function failRunningJobIfStale(
-  db: D1Database,
+  env: Env,
   row: RunningJobStaleRow,
   nowMs: number = Date.now(),
 ): Promise<boolean> {
   if (!isRunningJobStale(row.progress_json, row.created_at, nowMs)) {
     return false;
   }
+  const db = getDb(env);
   const finishedAt = new Date(nowMs).toISOString();
   const cardCount = await countJobCards(db, row.id);
   const ok =
@@ -133,7 +137,7 @@ export async function failRunningJobIfStale(
         )
       : await casFail(db, row, finishedAt);
   if (!ok) return false;
-  await recordGenerationUsageEventForJob(db, row.id);
+  await afterRunningJobTerminal(env, row.id);
   return true;
 }
 
@@ -143,9 +147,10 @@ export async function failRunningJobIfStale(
  * Does not reclaim or requeue; reclaim stays on queue redelivery in the consumer.
  */
 export async function failStaleRunningJobs(
-  db: D1Database,
+  env: Env,
   opts?: { jobId?: string; nowMs?: number; limit?: number },
 ): Promise<number> {
+  const db = getDb(env);
   const nowMs = opts?.nowMs ?? Date.now();
   const limit = opts?.limit ?? 50;
   const rows = opts?.jobId
@@ -168,7 +173,7 @@ export async function failStaleRunningJobs(
 
   let failed = 0;
   for (const row of rows.results ?? []) {
-    if (await failRunningJobIfStale(db, row, nowMs)) failed += 1;
+    if (await failRunningJobIfStale(env, row, nowMs)) failed += 1;
   }
   return failed;
 }
