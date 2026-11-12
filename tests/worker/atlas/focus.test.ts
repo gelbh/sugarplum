@@ -103,6 +103,77 @@ describe("atlas focus persistence helpers", () => {
     });
   });
 
+  it("heals partial null focus when materials exist", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedDeck({
+      id: "deck-1",
+      user_id: "user-a",
+      title: "Parasitology deck",
+      subject_hint: null,
+      subject_id: "sub-1",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const created = await app.request(
+      "/api/atlas",
+      { method: "POST", headers: authHeaders() },
+      env,
+    );
+    expect(created.status).toBe(201);
+    const atlas = (await created.json()) as { id: string };
+
+    const paste = await app.request(
+      "/api/decks/deck-1/materials/paste",
+      {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          text: "Intro to flukes",
+          filename: "Week2_Fasciola_hepatica_TUTORIAL.pdf",
+        }),
+      },
+      env,
+    );
+    expect(paste.status).toBe(201);
+
+    // Leave a partial map: one missing row while others remain (legacy sparse).
+    await env.DB.prepare(
+      `DELETE FROM atlas_entry_focus WHERE atlas_id = ? AND entry_key = ?`,
+    )
+      .bind(atlas.id, "giardia-duodenalis")
+      .run();
+
+    const focusBefore = await env.DB.prepare(
+      `SELECT entry_key FROM atlas_entry_focus WHERE atlas_id = ?`,
+    )
+      .bind(atlas.id)
+      .all<{ entry_key: string }>();
+    const keysBefore = new Set(
+      (focusBefore.results ?? []).map((r) => r.entry_key),
+    );
+    expect(keysBefore.size).toBeGreaterThan(0);
+    expect(keysBefore.has("giardia-duodenalis")).toBe(false);
+
+    const list = await app.request(
+      `/api/atlas/${atlas.id}/entries`,
+      { headers: authHeaders() },
+      env,
+    );
+    expect(list.status).toBe(200);
+    const body = (await list.json()) as { entries: AtlasEntryView[] };
+    const giardia = body.entries.find((e) => e.id === "giardia-duodenalis");
+    expect(giardia?.tier).not.toBeNull();
+    expect(body.entries.every((e) => e.tier !== null)).toBe(true);
+
+    const healedRow = await env.DB.prepare(
+      `SELECT tier FROM atlas_entry_focus WHERE atlas_id = ? AND entry_key = ?`,
+    )
+      .bind(atlas.id, "giardia-duodenalis")
+      .first<{ tier: string }>();
+    expect(healedRow?.tier).toBeTruthy();
+  });
+
   it("refresh upserts before deleting stale keys (no wipe-first blank window)", async () => {
     const statements: string[] = [];
     const focus = new Map<
