@@ -2,6 +2,8 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import type { Theme } from "@mui/material/styles";
 import type { SvgIconComponent } from "@mui/icons-material";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import ArrowDownwardRoundedIcon from "@mui/icons-material/ArrowDownwardRounded";
@@ -28,6 +30,8 @@ type Props = {
 };
 
 export default function GradeButtons({ disabled, onGrade }: Props) {
+  const mobile = useMediaQuery((t: Theme) => t.breakpoints.down("md"));
+
   return (
     <Stack
       direction="row"
@@ -36,7 +40,7 @@ export default function GradeButtons({ disabled, onGrade }: Props) {
       sx={{
         ...CARD_COLUMN_SX,
         justifyContent: "space-between",
-        pb: `${KEY_TAB / 2}px`,
+        pb: mobile ? 0 : `${KEY_TAB / 2}px`,
       }}
     >
       {GRADE_BINDINGS.map((g) => {
@@ -77,40 +81,48 @@ export default function GradeButtons({ disabled, onGrade }: Props) {
                 borderRadius: 1,
                 border: "1px solid",
                 borderColor: colors.border,
-                borderBottom: "none",
+                borderBottom: mobile ? "1px solid" : "none",
                 bgcolor: colors.wash,
               }}
             >
-              {/* Bottom border as two stubs with a gap for the key tab. */}
-              <Box
-                aria-hidden
-                sx={{
-                  position: "absolute",
-                  left: 0,
-                  right: `calc(50% + ${KEY_TAB / 2}px)`,
-                  bottom: 0,
-                  height: "1px",
-                  bgcolor: colors.border,
-                }}
-              />
-              <Box
-                aria-hidden
-                sx={{
-                  position: "absolute",
-                  left: `calc(50% + ${KEY_TAB / 2}px)`,
-                  right: 0,
-                  bottom: 0,
-                  height: "1px",
-                  bgcolor: colors.border,
-                }}
-              />
+              {mobile ? null : (
+                <>
+                  {/* Bottom border as two segments with a gap for the key tab. */}
+                  <Box
+                    aria-hidden
+                    sx={{
+                      position: "absolute",
+                      left: 0,
+                      right: `calc(50% + ${KEY_TAB / 2}px)`,
+                      bottom: 0,
+                      height: "1px",
+                      bgcolor: colors.border,
+                    }}
+                  />
+                  <Box
+                    aria-hidden
+                    sx={{
+                      position: "absolute",
+                      left: `calc(50% + ${KEY_TAB / 2}px)`,
+                      right: 0,
+                      bottom: 0,
+                      height: "1px",
+                      bgcolor: colors.border,
+                    }}
+                  />
+                </>
+              )}
               <Button
                 fullWidth
                 disableElevation
                 disabled={disabled}
                 onClick={() => onGrade(g.rating)}
                 aria-keyshortcuts={`${g.digit} ${g.arrow}`}
-                aria-label={`${label} (key ${g.digit} or ${g.arrowName})`}
+                aria-label={
+                  mobile
+                    ? `${label} (${g.arrowName})`
+                    : `${label} (key ${g.digit} or ${g.arrowName})`
+                }
                 sx={{
                   height: "100%",
                   minWidth: 0,
@@ -139,7 +151,7 @@ export default function GradeButtons({ disabled, onGrade }: Props) {
                     justifyContent: "center",
                     gap: 0.35,
                     width: "100%",
-                    pb: `${KEY_TAB / 2 + 2}px`,
+                    pb: mobile ? 0 : `${KEY_TAB / 2 + 2}px`,
                   }}
                 >
                   <Icon
@@ -164,37 +176,40 @@ export default function GradeButtons({ disabled, onGrade }: Props) {
                 </Box>
               </Button>
             </Box>
-            <Box
-              aria-hidden
-              sx={{
-                position: "absolute",
-                left: "50%",
-                bottom: 0,
-                transform: "translate(-50%, 50%)",
-                width: KEY_TAB,
-                height: KEY_TAB,
-                zIndex: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: "0 0 3px 3px",
-                border: "1px solid",
-                borderTop: "none",
-                borderColor: colors.border,
-                bgcolor: "var(--sp-stage-bg, #1e0d1b)",
-                backgroundImage: `linear-gradient(${colors.wash}, ${colors.wash})`,
-                color: colors.fg,
-                fontFamily: FACE_SANS,
-                fontSize: "0.625rem",
-                fontWeight: 600,
-                fontVariantNumeric: "tabular-nums",
-                lineHeight: 1,
-                letterSpacing: "0.04em",
-                pointerEvents: "none",
-              }}
-            >
-              {g.digit}
-            </Box>
+            {mobile ? null : (
+              <Box
+                aria-hidden
+                data-grade-digit={g.rating}
+                sx={{
+                  position: "absolute",
+                  left: "50%",
+                  bottom: 0,
+                  transform: "translate(-50%, 50%)",
+                  width: KEY_TAB,
+                  height: KEY_TAB,
+                  zIndex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: "0 0 3px 3px",
+                  border: "1px solid",
+                  borderTop: "none",
+                  borderColor: colors.border,
+                  bgcolor: "var(--sp-stage-bg, #1e0d1b)",
+                  backgroundImage: `linear-gradient(${colors.wash}, ${colors.wash})`,
+                  color: colors.fg,
+                  fontFamily: FACE_SANS,
+                  fontSize: "0.625rem",
+                  fontWeight: 600,
+                  fontVariantNumeric: "tabular-nums",
+                  lineHeight: 1,
+                  letterSpacing: "0.04em",
+                  pointerEvents: "none",
+                }}
+              >
+                {g.digit}
+              </Box>
+            )}
           </Box>
         );
       })}
