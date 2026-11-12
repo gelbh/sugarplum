@@ -423,6 +423,16 @@ export default function SettingsPage() {
           <Typography variant="body2" color="text.secondary">
             {freeGenIntroBlurb()}
           </Typography>
+          {error ? (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {error}
+            </Alert>
+          ) : null}
+          {notice ? (
+            <Alert severity="success" sx={{ mt: 2 }}>
+              {notice}
+            </Alert>
+          ) : null}
         </Box>
 
         <SettingsSectionNav sections={navSections} />
@@ -602,8 +612,6 @@ export default function SettingsPage() {
                 )}
               </>
             )}
-            {error ? <Alert severity="error">{error}</Alert> : null}
-            {notice ? <Alert severity="success">{notice}</Alert> : null}
           </Stack>
         </Paper>
 
