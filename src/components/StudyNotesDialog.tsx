@@ -1,4 +1,11 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -15,17 +22,18 @@ import {
   patchCardProvenancePages,
 } from "../api/client";
 import { isGuest } from "../guest/session";
-import { loadPdfDocument } from "../lib/pdfPageRender";
 import {
   normalizeExcerptText,
   pagesForExcerpt,
   resolveNotesDisplayPage,
   type PageText,
 } from "../study/excerptPages";
+import type { NotesEmbedRescue } from "../study/notesEmbedPdf";
 import {
   clampNotesPage,
   pagesToPersistAfterNavigate,
   pagesToPersistAfterRescue,
+  pagesToPersistAfterSearchHits,
 } from "../study/notesProvenanceWrite";
 import { extractPptxSlides } from "../study/pptxSlideText";
 
@@ -56,21 +64,6 @@ type Props = {
 
 function isAbort(err: unknown): boolean {
   return err instanceof DOMException && err.name === "AbortError";
-}
-
-async function pdfPagePlainText(
-  pdf: Awaited<ReturnType<typeof loadPdfDocument>>,
-  pageNum: number,
-): Promise<string> {
-  const pdfPage = await pdf.getPage(pageNum);
-  const content = await pdfPage.getTextContent();
-  const parts: string[] = [];
-  for (const item of content.items) {
-    if ("str" in item && typeof item.str === "string" && item.str) {
-      parts.push(item.str);
-    }
-  }
-  return parts.join(" ");
 }
 
 export default function StudyNotesDialog({
@@ -201,106 +194,26 @@ export default function StudyNotesDialog({
     };
   }, [open, jobId, page]);
 
-  // pdfjs rescue + navigate write-back (Approach C); EmbedPDF is display-only.
+  // PDF scrubber navigate write-back (thin inventory → [displayPage]).
   useEffect(() => {
-    if (!open || !materialBytes || materialKind !== "pdf" || viewPage === null) {
+    if (
+      !open ||
+      materialKind !== "pdf" ||
+      viewPage === null ||
+      page === null ||
+      !userNavRef.current
+    ) {
       return;
     }
-
-    let cancelled = false;
-    void (async () => {
-      let pdf: Awaited<ReturnType<typeof loadPdfDocument>> | null = null;
-      try {
-        const copy = materialBytes.slice();
-        pdf = await loadPdfDocument(copy.buffer as ArrayBuffer);
-        const needle = normalizeExcerptText(excerpt);
-        const total = pdf.numPages;
-
-        let displayPage = viewPage;
-        let pageText = "";
-        try {
-          pageText = await pdfPagePlainText(pdf, displayPage);
-        } catch {
-          pageText = "";
-        }
-        if (cancelled) return;
-
-        const allowRescue = !userNavRef.current && page !== null;
-        const claimedMiss =
-          Boolean(needle) &&
-          pagesForExcerpt(excerpt, [{ page: displayPage, text: pageText }])
-            .length === 0;
-
-        if (allowRescue && claimedMiss) {
-          try {
-            const scanned: PageText[] = [{ page: displayPage, text: pageText }];
-            let rescuedPage: number | null = null;
-            for (let pageNum = 1; pageNum <= total; pageNum++) {
-              if (cancelled) return;
-              if (pageNum === displayPage) continue;
-              let text = "";
-              try {
-                text = await pdfPagePlainText(pdf, pageNum);
-              } catch {
-                continue;
-              }
-              scanned.push({ page: pageNum, text });
-              if (rescuedPage === null) {
-                const rescued = resolveNotesDisplayPage({
-                  claimed: displayPage,
-                  excerpt,
-                  pages: scanned,
-                });
-                if (rescued !== null && rescued !== displayPage) {
-                  rescuedPage = rescued;
-                  displayPage = rescued;
-                  try {
-                    pageText = await pdfPagePlainText(pdf, displayPage);
-                  } catch {
-                    pageText = "";
-                  }
-                  if (cancelled) return;
-                  setViewPage(displayPage);
-                  setPageInput(String(displayPage));
-                }
-              }
-            }
-            if (rescuedPage !== null) {
-              persistPages(
-                pagesToPersistAfterRescue({
-                  claimed: page!,
-                  rescued: rescuedPage,
-                  excerpt,
-                  scanned,
-                  scanComplete: true,
-                }),
-              );
-            }
-          } catch {
-          }
-        } else if (userNavRef.current && page !== null) {
-          persistPages(
-            pagesToPersistAfterNavigate({
-              storedFirst: lastPersistedFirstRef.current,
-              displayPage,
-              excerpt,
-              pageTexts: [{ page: displayPage, text: pageText }],
-            }),
-          );
-        }
-        if (cancelled) return;
-        setError(null);
-      } catch {
-        if (!cancelled) setError(null);
-      } finally {
-        await pdf?.cleanup()?.catch(() => undefined);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [open, materialBytes, materialKind, viewPage, excerpt, page, cardId]);
+    persistPages(
+      pagesToPersistAfterNavigate({
+        storedFirst: lastPersistedFirstRef.current,
+        displayPage: viewPage,
+        excerpt,
+        pageTexts: [],
+      }),
+    );
+  }, [open, materialKind, viewPage, excerpt, page, cardId]);
 
   // PPTX slide-text rescue + excerpt hit for hide chrome.
   useEffect(() => {
@@ -373,8 +286,7 @@ export default function StudyNotesDialog({
               pageTexts: [
                 {
                   page: displayPage,
-                  text:
-                    scanned.find((s) => s.page === displayPage)?.text ?? "",
+                  text: scanned.find((s) => s.page === displayPage)?.text ?? "",
                 },
               ],
             }),
@@ -410,6 +322,22 @@ export default function StudyNotesDialog({
   const onSearchHits = useCallback((hits: boolean) => {
     setWashHits(hits);
   }, []);
+
+  const onRescue = useCallback(
+    ({ rescuedPage, hitPages }: NotesEmbedRescue) => {
+      if (userNavRef.current || page === null) return;
+      setViewPage(rescuedPage);
+      setPageInput(String(rescuedPage));
+      persistPages(
+        pagesToPersistAfterSearchHits({
+          claimed: page,
+          rescued: rescuedPage,
+          hitPages,
+        }),
+      );
+    },
+    [page],
+  );
 
   const onStagePage = useCallback((next: number) => {
     setViewPage((prev) => {
@@ -495,20 +423,9 @@ export default function StudyNotesDialog({
                 onPageCount={onPageCount}
                 onSearchHits={onSearchHits}
                 onStagePage={onStagePage}
+                onRescue={onRescue}
                 onCanCopyChange={onCanCopyChange}
                 copyRef={copyRef}
-              />
-            </Suspense>
-          ) : null}
-          {showStage && materialKind === "pptx" ? (
-            <Suspense
-              fallback={<Typography sx={{ p: 2 }}>Loading slides…</Typography>}
-            >
-              <NotesPptxStage
-                bytes={materialBytes!}
-                page={viewPage!}
-                onPageCount={onPageCount}
-                onStagePage={onStagePage}
               />
             </Suspense>
           ) : null}

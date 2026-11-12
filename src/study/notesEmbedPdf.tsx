@@ -1,9 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import {
-  DocumentGate,
-  Viewer,
-  useDocument,
-} from "@embedpdf/react/runtime";
+import { DocumentGate, Viewer, useDocument } from "@embedpdf/react/runtime";
 import { RenderLayer, renderPlugin } from "@embedpdf/react/render";
 import {
   SearchLayer,
@@ -31,6 +27,7 @@ import { localEngine } from "@embedpdf/engine/portable";
 import type { OpenInput } from "@embedpdf/react/runtime";
 import Button from "@mui/material/Button";
 import { normalizeExcerptText } from "./excerptPages";
+import { normalizeProvenancePages } from "./notesProvenanceWrite";
 
 /** Grade-good wash (brand.css --sp-grade-good-wash) for search matches. */
 const WASH = "rgba(91, 44, 111, 0.35)";
@@ -53,6 +50,13 @@ const notesEmbedPlugins = [
 /** Portable engine: Vite's default worker URL fails to boot. */
 const notesEngine = localEngine();
 
+export type NotesEmbedRescue = {
+  /** 1-based first hit page when claimed missed. */
+  rescuedPage: number;
+  /** Unique sorted 1-based pages with findAll hits. */
+  hitPages: number[];
+};
+
 export type NotesEmbedPdfStageProps = {
   bytes: Uint8Array;
   /** 1-based provenance / scrubber page. */
@@ -62,6 +66,11 @@ export type NotesEmbedPdfStageProps = {
   onSearchHits?: (hits: boolean) => void;
   /** 1-based page when the stage scrolls. */
   onStagePage?: (page: number) => void;
+  /**
+   * Fired once per open key when findAll hits miss the claimed page.
+   * Dialog owns userNav gate + persist.
+   */
+  onRescue?: (args: NotesEmbedRescue) => void;
   /** Whether a copyable text selection exists (for dialog Copy). */
   onCanCopyChange?: (canCopy: boolean) => void;
   /** Ref filled with copy handler while the stage is mounted. */
@@ -115,6 +124,7 @@ function NotesEmbedController({
   onPageCount,
   onSearchHits,
   onStagePage,
+  onRescue,
 }: Omit<NotesEmbedPdfStageProps, "bytes" | "onCanCopyChange" | "copyRef">) {
   const stage = useStage();
   const search = useSearch();
@@ -123,6 +133,7 @@ function NotesEmbedController({
   const docStatus = useDocument((doc) => doc.status);
   const jumpedKeyRef = useRef("");
   const searchedKeyRef = useRef("");
+  const rescuedKeyRef = useRef("");
   const skipStageSyncUntilRef = useRef(0);
 
   useEffect(() => {
@@ -136,14 +147,7 @@ function NotesEmbedController({
     }
     const pageHits = search.getHitCount(currentPageIndex);
     onSearchHits?.(pageHits > 0);
-  }, [
-    currentPageIndex,
-    docStatus,
-    hitCount,
-    onSearchHits,
-    pageCount,
-    search,
-  ]);
+  }, [currentPageIndex, docStatus, hitCount, onSearchHits, pageCount, search]);
 
   useEffect(() => {
     if (docStatus !== "ready" || pageCount < 1) return;
@@ -162,6 +166,40 @@ function NotesEmbedController({
     skipStageSyncUntilRef.current = Date.now() + 400;
     stage.goToPage(target, { behavior: "instant" });
   }, [docStatus, page, pageCount, stage]);
+
+  useEffect(() => {
+    if (docStatus !== "ready" || pageCount < 1) return;
+    const needle = normalizeExcerptText(excerpt);
+    const claimed = Math.min(Math.max(page, 1), pageCount);
+    const key = `${pageCount}:${claimed}:${needle}`;
+    if (rescuedKeyRef.current === key) return;
+    if (!needle || !onRescue) {
+      rescuedKeyRef.current = key;
+      return;
+    }
+    let cancelled = false;
+    void search
+      .findAll(
+        { text: needle, matchCase: false, wholeWord: false },
+        { snippets: false },
+      )
+      .then((hits) => {
+        if (cancelled) return;
+        rescuedKeyRef.current = key;
+        const hitPages = normalizeProvenancePages(
+          hits.map((hit) => hit.pageIndex + 1),
+        );
+        if (hitPages.length === 0 || hitPages.includes(claimed)) return;
+        const rescuedPage = hitPages[0]!;
+        onRescue({ rescuedPage, hitPages });
+      })
+      .catch(() => {
+        if (!cancelled) rescuedKeyRef.current = key;
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [docStatus, excerpt, onRescue, page, pageCount, search]);
 
   useEffect(() => {
     if (docStatus !== "ready" || pageCount < 1) return;
@@ -198,6 +236,7 @@ export function NotesEmbedPdfStage({
   onPageCount,
   onSearchHits,
   onStagePage,
+  onRescue,
   onCanCopyChange,
   copyRef,
 }: NotesEmbedPdfStageProps) {
@@ -232,6 +271,7 @@ export function NotesEmbedPdfStage({
           onPageCount={onPageCount}
           onSearchHits={onSearchHits}
           onStagePage={onStagePage}
+          onRescue={onRescue}
         />
         <SelectionClipboard />
         <NotesSelectionBridge
