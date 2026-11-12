@@ -35,7 +35,10 @@
             "durationDays": {
               "min": 21,
               "max": 21
-            }
+            },
+            "infective": true,
+            "transmission": "horse swallows larvated eggs from the environment",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "migrating larva",
@@ -189,7 +192,10 @@
           {
             "name": "L3",
             "location": "environment; infective by skin penetration or ingestion",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "L3 penetrates the foal's skin or is swallowed",
+            "note": "Infective (filariform) stage for the definitive host"
           },
           {
             "name": "migrating L3",
@@ -339,7 +345,10 @@
           {
             "name": "L3",
             "location": "pasture; infective stage reached from about 7 days after hatching",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "horse ingests L3 on pasture",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "encysted L3",
@@ -495,7 +504,10 @@
           {
             "name": "L3",
             "location": "pasture; infective stage reached in about a week",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "horse ingests L3 on pasture",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "migrating larva",
@@ -647,7 +659,10 @@
           {
             "name": "L3",
             "location": "pasture; infective stage reached in about a week",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "horse ingests L3 on pasture",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "migrating larva",
@@ -951,7 +966,10 @@
           {
             "name": "larvated egg",
             "location": "environment, bedding, feed and water; infective L3 forms inside the egg",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "horse swallows larvated eggs from the environment or peri-anal region",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "larva",
@@ -1110,7 +1128,10 @@
           {
             "name": "L3",
             "location": "inside the fly; deposited around the horse's lips or on wounds",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "fly deposits L3 on the horse's lips, nostrils or wounds",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult",
@@ -1306,7 +1327,10 @@
           {
             "name": "L3",
             "location": "forms after two moults inside the fly; released around the horse's lips",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "fly deposits L3 on the horse's lips or nostrils",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult",
@@ -1470,7 +1494,10 @@
           {
             "name": "larva",
             "location": "develops in the horn fly",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "haematophagous fly deposits infective larvae while feeding on the horse",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult",
@@ -1639,7 +1666,10 @@
           {
             "name": "L3",
             "location": "inside Culicoides midge after it feeds on a carrier horse; enters the horse at a later bite",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "Culicoides midge deposits L3 while feeding on the horse",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult",
@@ -1783,7 +1813,10 @@
           {
             "name": "L3",
             "location": "inside a Musca fly; passed to the conjunctival sac when the fly feeds",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "face fly deposits L3 in the horse's eye while feeding on tears",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult",
@@ -1950,7 +1983,10 @@
           {
             "name": "L3",
             "location": "pasture; infective stage, swallowed by the equid",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "donkey or horse ingests L3 on pasture",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "pre-adult larva",
@@ -2083,7 +2119,10 @@
           {
             "name": "L3",
             "location": "earthworm tissues, reached after two moults",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "pig eats an earthworm carrying L3",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult",
@@ -2209,7 +2248,10 @@
           {
             "name": "L3",
             "location": "pasture; free-living infective stage",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "pig ingests L3 from the environment",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "larva",
@@ -2369,7 +2411,10 @@
             "durationDays": {
               "min": 21,
               "max": 28
-            }
+            },
+            "infective": true,
+            "transmission": "pig swallows larvated eggs from the environment",
+            "note": "Infective stage for the definitive host (L3 inside the egg)"
           },
           {
             "name": "L3",
@@ -2549,7 +2594,10 @@
           {
             "name": "L3",
             "location": "soil or bedding; enters the pig through the skin",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "L3 penetrates the piglet's skin or is swallowed",
+            "note": "Infective (filariform) stage for the definitive host"
           },
           {
             "name": "migrating L3",
@@ -2682,7 +2730,10 @@
           {
             "name": "egg",
             "location": "passed in faeces; L1 forms inside the shell and eggs stay infective for years",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "pig swallows larvated eggs from the environment",
+            "note": "Infective stage for the definitive host (L1 inside the egg)"
           },
           {
             "name": "larva",
@@ -2854,7 +2905,10 @@
           {
             "name": "nurse cell larva",
             "location": "striated muscle cell (tongue, diaphragm and other predilection sites); waits for the host to be eaten",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "host eats undercooked meat containing nurse-cell larvae",
+            "note": "Infective stage for the next host"
           }
         ],
         "diagnosticStage": "nurse cell larva",

@@ -734,4 +734,86 @@ describe("built-in parasite dataset", () => {
       ).toBe(true);
     }
   });
+
+  it("marks exactly one infective stage on every nematode entry", () => {
+    const expected = {
+      "toxocara-canis": "larvated egg",
+      "toxocara-cati": "larvated egg",
+      "toxascaris-leonina": "larvated egg",
+      "ancylostoma-caninum": "L3",
+      "uncinaria-stenocephala": "L3",
+      "strongyloides-stercoralis": "L3",
+      "trichuris-vulpis": "larvated egg",
+      "crenosoma-vulpis": "L3",
+      "oslerus-osleri": "L1",
+      "filaroides-hirthi": "L1",
+      "aelurostrongylus-abstrusus": "L3",
+      "angiostrongylus-vasorum": "L3",
+      "dirofilaria-immitis": "L3",
+      "dirofilaria-repens": "L3",
+      "capillaria-aerophila": "egg",
+      "capillaria-plica": "L1",
+      "spirocerca-lupi": "L3",
+      "ascaridia-galli": "larvated egg",
+      "heterakis-gallinarum": "larvated egg",
+      "syngamus-trachea": "larvated egg",
+      "anisakis-simplex": "L3 in marine fish",
+      "contracaecum-osculatum": "L3 in marine fish",
+      "pseudoterranova-decipiens": "L3 in marine fish",
+      "parascaris-equorum": "larvated egg",
+      "strongyloides-westeri": "L3",
+      "cylicostephanus-longibursatus": "L3",
+      "strongylus-equinus": "L3",
+      "strongylus-edentatus": "L3",
+      "strongylus-vulgaris": "L3",
+      "oxyuris-equi": "larvated egg",
+      "habronema-spp": "L3",
+      "draschia-megastoma": "L3",
+      "parafilaria-multipapillosa": "larva",
+      "onchocerca-cervicalis": "L3",
+      "thelazia-lacrymalis": "L3",
+      "dictyocaulus-arnfieldi": "L3",
+      "metastrongylus-apri": "L3",
+      "hyostrongylus-rubidus": "L3",
+      "ascaris-suum": "egg",
+      "strongyloides-ransomi": "L3",
+      "trichuris-suis": "egg",
+      "trichinella-spiralis": "nurse cell larva",
+      "teladorsagia-circumcincta": "L3",
+      "haemonchus-contortus": "L3",
+      "trichostrongylus-spp": "L3",
+      "strongyloides-papillosus": "L3",
+      "bunostomum-trigonocephalum": "L3",
+      "capillaria-longipes": "infective larva in egg",
+      "chabertia-ovina": "L3",
+      "oesophagostomum-venulosum": "L3",
+      "trichuris-ovis": "egg",
+      "nematodirus-battus": "L3",
+      "muellerius-capillaris": "L3",
+      "protostrongylus-rufescens": "L3",
+      "dictyocaulus-filaria": "L3",
+      "ostertagia-ostertagi": "L3",
+      "dictyocaulus-viviparus": "L3",
+      "onchocerca-ochengi": "L3",
+    } as const;
+    const nematodeKeys = dataset.entries
+      .filter((e) => e.fields.group === "nematode")
+      .map((e) => e.key)
+      .sort();
+    expect(nematodeKeys).toEqual(Object.keys(expected).sort());
+    for (const [key, stageName] of Object.entries(expected)) {
+      const entry = dataset.entries.find((e) => e.key === key);
+      expect(entry, key).toBeDefined();
+      const infective = (entry?.fields.lifecycleStages ?? []).filter(
+        (s) => s.infective,
+      );
+      expect(infective, key).toHaveLength(1);
+      expect(infective[0]?.name, key).toBe(stageName);
+      expect(infective[0]?.transmission, key).toBeTruthy();
+      expect(
+        entry?.refs.some((r) => r.field === "lifecycleStages"),
+        `${key} lifecycleStages ref`,
+      ).toBe(true);
+    }
+  });
 });

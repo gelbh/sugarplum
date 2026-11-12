@@ -44,10 +44,10 @@
               "min": 21,
               "max": 28
             },
-            "infective": true,
             "diagnostic": true,
             "transmission": "dog or person swallows larvated eggs from the environment",
-            "note": "Infective and usual faecal diagnostic form (egg)"
+            "note": "Infective and usual faecal diagnostic form (egg)",
+            "infective": true
           },
           {
             "name": "migrating L3",
@@ -63,7 +63,6 @@
             "name": "encysted L3",
             "location": "tissues of paratenic hosts such as rodents and birds; infective when eaten by a dog",
             "hostRole": "paratenic",
-            "infective": true,
             "transmission": "dog eats a paratenic host carrying L3",
             "note": "Alternate infective route via prey"
           },
@@ -265,7 +264,10 @@
             "durationDays": {
               "min": 14,
               "max": 28
-            }
+            },
+            "infective": true,
+            "transmission": "cat or person swallows larvated eggs from the environment",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "migrating L3",
@@ -479,7 +481,10 @@
             "durationDays": {
               "min": 7,
               "max": 28
-            }
+            },
+            "infective": true,
+            "transmission": "dog or cat swallows larvated eggs from the environment",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "migrating L3",
@@ -668,7 +673,10 @@
           {
             "name": "L3",
             "location": "soil and grass; infective by skin penetration or ingestion",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "dog ingests or is penetrated by L3 from the environment",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "migrating L3",
@@ -909,7 +917,10 @@
           {
             "name": "L3",
             "location": "soil; infective, mostly by ingestion",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "dog or fox ingests L3 from contaminated ground",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "migrating L3",
@@ -1093,7 +1104,10 @@
           {
             "name": "L3",
             "location": "soil; filariform, infective by skin penetration or ingestion",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "L3 penetrates skin or mucosa of the host",
+            "note": "Infective (filariform) stage for the definitive host"
           },
           {
             "name": "migrating L3",
@@ -1271,7 +1285,10 @@
           {
             "name": "larvated egg",
             "location": "soil; very hardy and infective for a long time, with an L1 inside",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "dog swallows larvated eggs from the environment",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "L1",
@@ -1466,7 +1483,10 @@
           {
             "name": "L3",
             "location": "slug or snail; infective stage for the canid",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "fox or dog eats a snail or slug carrying L3",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult",
@@ -1613,7 +1633,10 @@
             "name": "L1",
             "location": "coughed up in mucus or saliva, or passed in faeces; infective when swallowed, often by pups from the dam",
             "hostRole": "environment",
-            "diagnostic": true
+            "diagnostic": true,
+            "infective": true,
+            "transmission": "dog swallows L1 from sputum, saliva or fresh faeces",
+            "note": "Infective stage for the definitive host (L1 is immediately infective)"
           },
           {
             "name": "L2–L3",
@@ -1774,7 +1797,10 @@
             "name": "L1",
             "location": "coughed up and passed in sputum, saliva or very fresh faeces; infective straight away",
             "hostRole": "environment",
-            "diagnostic": true
+            "diagnostic": true,
+            "infective": true,
+            "transmission": "dog swallows L1 from sputum, saliva or fresh faeces",
+            "note": "Infective stage for the definitive host (L1 is immediately infective)"
           },
           {
             "name": "migrating larvae",
@@ -1945,7 +1971,10 @@
           {
             "name": "L3",
             "location": "slug or snail; infective for the cat, which may also eat it via a paratenic host",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "cat eats a snail, slug or paratenic prey carrying L3",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult",
@@ -2120,7 +2149,10 @@
           {
             "name": "L3",
             "location": "slug or snail (also held by frogs and birds); infective when eaten by a canid",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "dog eats a snail, slug or paratenic prey carrying L3",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult",
@@ -2303,7 +2335,10 @@
           {
             "name": "L3",
             "location": "mosquito mouthparts; enters the dog through the bite wound",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "mosquito deposits L3 on the skin while feeding; larva enters the bite wound",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "L4",
@@ -2489,7 +2524,10 @@
           {
             "name": "L3",
             "location": "mosquito proboscis; deposited on skin and enters the bite wound",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "mosquito deposits L3 on the skin while feeding; larva enters the bite wound",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "L4",
@@ -2685,7 +2723,10 @@
             "durationDays": {
               "min": 35,
               "max": 42
-            }
+            },
+            "infective": true,
+            "transmission": "host swallows larvated eggs from the environment",
+            "note": "Infective stage for the definitive host (L1 inside the egg)"
           },
           {
             "name": "L1 in earthworm",
@@ -2872,7 +2913,10 @@
           {
             "name": "L1",
             "location": "hatches in an earthworm, which the carnivore then eats",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "dog or cat eats an earthworm carrying L1",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "migrating L1",
@@ -3032,7 +3076,10 @@
           {
             "name": "L3",
             "location": "encysted in a coprophagous beetle or in a paratenic host; freed in the dog's stomach",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "dog eats a dung beetle or paratenic prey carrying L3",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "migrating L3",
@@ -3222,7 +3269,10 @@
           {
             "name": "larvated egg",
             "location": "infective egg holding an L3; resists the environment for long periods",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "bird swallows larvated eggs from litter or soil",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "larvated egg in earthworm",
@@ -3400,7 +3450,10 @@
           {
             "name": "larvated egg",
             "location": "infective egg; stays viable for over a year and can carry Histomonas meleagridis",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "bird swallows larvated eggs from litter or soil",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "larvated egg in earthworm",
@@ -3582,7 +3635,10 @@
           {
             "name": "larvated egg",
             "location": "infective egg or hatched free-living L3 on soil",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "bird swallows larvated eggs from the environment",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "L3 in paratenic host",
@@ -3795,7 +3851,10 @@
             "name": "L3 in marine fish",
             "location": "body cavity, viscera and muscle; passes from fish to fish by predation, building up in large predators",
             "hostRole": "paratenic",
-            "host": "marine fish"
+            "host": "marine fish",
+            "infective": true,
+            "transmission": "cetacean eats fish carrying L3",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult",
@@ -3983,7 +4042,10 @@
           {
             "name": "L3 in marine fish",
             "location": "migrates from the gut to a site such as the cod liver, where the host encapsulates it",
-            "hostRole": "paratenic"
+            "hostRole": "paratenic",
+            "infective": true,
+            "transmission": "pinniped eats fish carrying L3",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult",
@@ -4172,7 +4234,10 @@
           {
             "name": "L3 in marine fish",
             "location": "small bottom-living fish eat the invertebrates; larvae build up in large cod and other predators, mostly in the muscle",
-            "hostRole": "paratenic"
+            "hostRole": "paratenic",
+            "infective": true,
+            "transmission": "seal eats fish carrying L3",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult",
