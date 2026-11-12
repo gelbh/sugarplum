@@ -32,6 +32,9 @@ function stubValue(partial: Partial<SessionValue> = {}): SessionValue {
     login: async () => {
       throw new Error("login stub");
     },
+    register: async () => {
+      throw new Error("register stub");
+    },
     logout: async () => {},
     ...partial,
   };
@@ -125,8 +128,9 @@ describe("SessionContext", () => {
     expect(host.querySelector("[data-testid=auth]")?.textContent).toBe("u1");
   });
 
-  it("exposes login logout refreshSession on value", async () => {
+  it("exposes login logout register refreshSession on value", async () => {
     const login = vi.fn(async () => ({ id: "u1", email: "a@b.c" }));
+    const register = vi.fn(async () => ({ id: "u2", email: "c@d.e" }));
     const logout = vi.fn(async () => {});
     const refreshSession = vi.fn(async () => {});
     function MethodsProbe() {
@@ -136,6 +140,7 @@ describe("SessionContext", () => {
         "data-testid": "go",
         onClick: () => {
           void s.login("a", "b", "t");
+          void s.register("c", "d", "t");
           void s.logout();
           void s.refreshSession();
         },
@@ -149,7 +154,7 @@ describe("SessionContext", () => {
       root.render(
         createElement(
           SessionProvider,
-          { value: stubValue({ login, logout, refreshSession }) },
+          { value: stubValue({ login, logout, register, refreshSession }) },
           createElement(MethodsProbe),
         ),
       );
@@ -160,6 +165,7 @@ describe("SessionContext", () => {
       );
     });
     expect(login).toHaveBeenCalled();
+    expect(register).toHaveBeenCalled();
     expect(logout).toHaveBeenCalled();
     expect(refreshSession).toHaveBeenCalled();
   });

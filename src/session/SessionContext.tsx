@@ -9,6 +9,11 @@ export type SessionValue = {
     password: string,
     turnstileToken: string,
   ) => Promise<SessionUser>;
+  register: (
+    email: string,
+    password: string,
+    turnstileToken: string,
+  ) => Promise<SessionUser>;
   logout: () => Promise<void>;
 };
 
