@@ -11,6 +11,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import type { EasyDay } from "../study/loadBalance";
 import type { StudyPrefs } from "../study/policyQueue";
+import { maybeRunFsrsOptimize } from "../study/fsrsOptimizeClient";
 import { ankiExportFsrsBlurb } from "./ankiExportFsrsBlurb";
 import FsrsWeightsSettings from "./FsrsWeightsSettings";
 import {
@@ -60,6 +61,11 @@ export default function StudyPacingSection(props: StudyPacingSectionProps) {
   useEffect(() => {
     if (matched === "custom") setCustomizeOpen(true);
   }, [matched]);
+
+  // Retrain on Settings load even when Advanced (and FsrsWeightsSettings) stays closed.
+  useEffect(() => {
+    void maybeRunFsrsOptimize();
+  }, []);
 
   function selectPreset(id: StudyLoadPresetId) {
     const next = applyStudyPreset(props.studyPrefs, id);

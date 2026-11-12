@@ -188,9 +188,6 @@ export default function SettingsPage() {
         const calendar = guestMode
           ? null
           : await getCalendarStatus().catch(() => null);
-        const due = guestMode
-          ? null
-          : await listDueCards().catch(() => null);
         if (cancelled) return;
         setGuest(guestMode);
         setAccountEmail(user.email);
@@ -210,9 +207,6 @@ export default function SettingsPage() {
         setEnableFuzz(prefs.enableFuzz);
         setEnableLoadBalance(prefs.enableLoadBalance);
         setEasyDays([...prefs.easyDays]);
-        if (due && typeof due.meta?.heldIntroCount === "number") {
-          setHeldIntroCount(due.meta.heldIntroCount);
-        }
         if (gam) {
           setGamification(gam);
           setDisplayNameInput(gam.displayName ?? "");
@@ -220,6 +214,15 @@ export default function SettingsPage() {
         }
         setReady(true);
         endLoad();
+        // Waiting count is informative; don't block Settings paint on the due queue.
+        void listDueCards()
+          .then((due) => {
+            if (cancelled) return;
+            if (typeof due.meta?.heldIntroCount === "number") {
+              setHeldIntroCount(due.meta.heldIntroCount);
+            }
+          })
+          .catch(() => {});
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
@@ -349,6 +352,13 @@ export default function SettingsPage() {
       setEasyDays([...saved.easyDays]);
       setStudyNotice("Study settings saved.");
       endStudy();
+      void listDueCards()
+        .then((due) => {
+          if (typeof due.meta?.heldIntroCount === "number") {
+            setHeldIntroCount(due.meta.heldIntroCount);
+          }
+        })
+        .catch(() => {});
     } catch (err) {
       setStudyError(
         err instanceof ApiError ? err.message : "Could not save study prefs",
