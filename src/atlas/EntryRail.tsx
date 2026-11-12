@@ -145,11 +145,11 @@ function RailItem({
         py: 0.625,
         borderRadius: 1.5,
         bgcolor: (t) =>
-          current ? alpha(t.palette.primary.main, 0.1) : "transparent",
+          current ? alpha(t.palette.primary.main, 0.06) : "transparent",
         boxShadow: (t) =>
           current ? `inset 3px 0 0 ${t.palette.primary.main}` : "none",
         "&:hover": {
-          bgcolor: (t) => alpha(t.palette.primary.main, current ? 0.12 : 0.05),
+          bgcolor: (t) => alpha(t.palette.primary.main, current ? 0.08 : 0.04),
         },
       }}
     >

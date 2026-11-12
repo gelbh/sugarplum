@@ -52,11 +52,8 @@ const LABEL_COL = { xs: "120px", sm: "148px" };
 const STAGE_MIN_PX = { xs: 112, sm: 96 };
 
 const laneWash = (role: HostRole | null, primary: string) => {
-  if (role === "definitive") return alpha(primary, 0.12);
-  if (role === "intermediate") return alpha(primary, 0.07);
-  if (role === "paratenic") return alpha(primary, 0.09);
-  if (role === "environment") return alpha(primary, 0.03);
-  return "transparent";
+  if (role === null) return "transparent";
+  return alpha(primary, 0.04);
 };
 
 const motion = (props: string) => ({

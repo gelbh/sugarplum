@@ -512,6 +512,18 @@ export default function StudyNotesDialog({
               />
             </Suspense>
           ) : null}
+          {showStage && materialKind === "pptx" ? (
+            <Suspense
+              fallback={<Typography sx={{ p: 2 }}>Loading slides…</Typography>}
+            >
+              <NotesPptxStage
+                bytes={materialBytes!}
+                page={viewPage!}
+                onPageCount={onPageCount}
+                onStagePage={onStagePage}
+              />
+            </Suspense>
+          ) : null}
         </Box>
       </DialogContent>
       <DialogActions
