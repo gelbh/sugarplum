@@ -55,7 +55,6 @@ import {
   listDecks,
   listJobsWithDrafts,
   listSubjects,
-  me,
   moveCard,
   patchCard,
   patchDeck,
@@ -289,7 +288,6 @@ export default function DeckHubPage({ deckId }: Props) {
     let cancelled = false;
     (async () => {
       try {
-        await me();
         const found = await load();
         if (cancelled) return;
         if (!found) setError("Deck not found");

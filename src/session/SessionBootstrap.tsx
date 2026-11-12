@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -10,6 +10,7 @@ import {
 } from "./resolveSession";
 import { sessionRouteDecision } from "./routePolicy";
 import { GUEST_USER_ID } from "../guest/session";
+import { SessionProvider } from "./SessionContext";
 
 type Phase =
   | { kind: "loading" }
@@ -113,6 +114,16 @@ export default function SessionBootstrap({
     }
   }, [phase, pathname, assign]);
 
+  const sessionValue = useMemo(
+    () => ({
+      user:
+        phase.kind === "ready" && phase.status === "authenticated"
+          ? phase.user
+          : null,
+    }),
+    [phase],
+  );
+
   if (phase.kind === "loading") {
     return <NeutralPending />;
   }
@@ -130,5 +141,5 @@ export default function SessionBootstrap({
     return <NeutralPending />;
   }
 
-  return <>{children}</>;
+  return <SessionProvider value={sessionValue}>{children}</SessionProvider>;
 }

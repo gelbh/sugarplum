@@ -4,12 +4,12 @@ import {
   getAchievements,
   getGamification,
   getWeeklyLeaderboard,
-  me,
   type GamificationResponse,
   type LeaderboardResponse,
 } from "../api/client";
 import { isGuest } from "../guest/session";
 import { useTrackedOp } from "../progress/useTrackedOp";
+import { useSession } from "../session/SessionContext";
 import type { AchievementItem } from "./wire";
 
 export type AchievementsData =
@@ -24,16 +24,17 @@ export type AchievementsData =
     };
 
 export function useAchievementsData(): AchievementsData {
+  const { user } = useSession();
   const [data, setData] = useState<AchievementsData>({ status: "loading" });
   const { end: endLoad } = useTrackedOp("Loading achievements…", {
     trackOnMount: true,
   });
 
   useEffect(() => {
+    if (!user) return;
     let cancelled = false;
     (async () => {
       try {
-        await me();
         if (isGuest()) {
           if (!cancelled) {
             setData({ status: "guest" });
@@ -74,7 +75,7 @@ export function useAchievementsData(): AchievementsData {
     return () => {
       cancelled = true;
     };
-  }, [endLoad]);
+  }, [endLoad, user]);
 
   return data;
 }
