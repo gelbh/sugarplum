@@ -49,6 +49,15 @@ import {
   ZAI_TEXT_MODEL_OPTIONS,
 } from "../settings/zaiModels";
 import type { EasyDay } from "../study/loadBalance";
+import type { SvgIconComponent } from "@mui/icons-material";
+import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
+import BoltOutlinedIcon from "@mui/icons-material/BoltOutlined";
+import CloudOutlinedIcon from "@mui/icons-material/CloudOutlined";
+import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
+import {
+  SelectEnumItem,
+  renderSelectEnumValue,
+} from "../components/SelectEnumItem";
 
 const DEFAULT_STUDY_FORM: StudyPrefs = {
   introBudget: 20,
@@ -70,12 +79,16 @@ const DEFAULT_STUDY_FORM: StudyPrefs = {
 
 type ThemeMode = "system" | "light" | "dark";
 
-const PROVIDERS = [
-  { value: "openai", label: "OpenAI" },
-  { value: "anthropic", label: "Anthropic" },
-  { value: "google", label: "Google" },
-  { value: "zai", label: "Z.ai" },
-] as const;
+const PROVIDERS: ReadonlyArray<{
+  value: string;
+  label: string;
+  icon: SvgIconComponent;
+}> = [
+  { value: "openai", label: "OpenAI", icon: AutoAwesomeOutlinedIcon },
+  { value: "anthropic", label: "Anthropic", icon: SmartToyOutlinedIcon },
+  { value: "google", label: "Google", icon: CloudOutlinedIcon },
+  { value: "zai", label: "Z.ai", icon: BoltOutlinedIcon },
+];
 
 function settingsQueryMessage(): {
   error: string | null;
@@ -756,10 +769,17 @@ export default function SettingsPage() {
                       label="Provider"
                       value={provider}
                       onChange={(ev) => setProvider(ev.target.value)}
+                      renderValue={(value) => {
+                        const p = PROVIDERS.find((x) => x.value === value);
+                        return renderSelectEnumValue({
+                          icon: p?.icon ?? AutoAwesomeOutlinedIcon,
+                          label: p?.label ?? String(value),
+                        });
+                      }}
                     >
                       {PROVIDERS.map((p) => (
                         <MenuItem key={p.value} value={p.value}>
-                          {p.label}
+                          <SelectEnumItem icon={p.icon} label={p.label} />
                         </MenuItem>
                       ))}
                     </Select>

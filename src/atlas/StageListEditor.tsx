@@ -6,14 +6,29 @@ import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import type { SvgIconComponent } from "@mui/icons-material";
+import PetsOutlinedIcon from "@mui/icons-material/PetsOutlined";
+import PublicOutlinedIcon from "@mui/icons-material/PublicOutlined";
+import SwapHorizOutlinedIcon from "@mui/icons-material/SwapHorizOutlined";
+import TransferWithinAStationOutlinedIcon from "@mui/icons-material/TransferWithinAStationOutlined";
 import {
   STAGE_HOST_ROLES,
   lifecycleStageSchema,
   type ParasiteFields,
 } from "../../worker/atlas/templates/parasite";
+import { SelectEnumItem, renderSelectEnumValue } from "../components/SelectEnumItem";
 
 /** Learner drafts use the loose template stage (free-text host). */
 export type StageDraft = ParasiteFields["lifecycleStages"][number];
+
+type HostRole = (typeof STAGE_HOST_ROLES)[number];
+
+const HOST_ROLE_ICONS: Record<HostRole, SvgIconComponent> = {
+  definitive: PetsOutlinedIcon,
+  intermediate: SwapHorizOutlinedIcon,
+  paratenic: TransferWithinAStationOutlinedIcon,
+  environment: PublicOutlinedIcon,
+};
 
 type Props = {
   stages: StageDraft[];
@@ -143,11 +158,25 @@ export default function StageListEditor({
               update(i, { hostRole: parseHostRole(ev.target.value) })
             }
             fullWidth
+            slotProps={{
+              select: {
+                displayEmpty: true,
+                renderValue: (value) => {
+                  const raw = String(value);
+                  if (!raw) return "None";
+                  const role = raw as HostRole;
+                  return renderSelectEnumValue({
+                    icon: HOST_ROLE_ICONS[role],
+                    label: role,
+                  });
+                },
+              },
+            }}
           >
             <MenuItem value="">None</MenuItem>
             {STAGE_HOST_ROLES.map((r) => (
               <MenuItem key={r} value={r}>
-                {r}
+                <SelectEnumItem icon={HOST_ROLE_ICONS[r]} label={r} />
               </MenuItem>
             ))}
           </TextField>
