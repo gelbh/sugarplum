@@ -5,7 +5,6 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import type { PDFDocumentProxy } from "pdfjs-dist";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -25,10 +24,13 @@ import {
   detectFigureBoxesOnCanvas,
 } from "../lib/layoutOnnx";
 import {
-  cropCanvasToPngFile,
-  loadPdfDocument,
-  renderPdfPageToCanvas,
-} from "../lib/pdfPageRender";
+  listPdfPages,
+  openPdfDocument,
+  renderPageToCanvas,
+  type EmbedPdfDocument,
+  type EmbedPdfPageLayout,
+} from "../lib/embedPdfEngine";
+import { cropCanvasToPngFile } from "../lib/pdfPageRender";
 
 export type FigureSuggestPanelProps = {
   pdfFile: File;
@@ -87,7 +89,8 @@ export function FigureSuggestPanel({
   const [cropNotice, setCropNotice] = useState<string | null>(null);
   const [pageSize, setPageSize] = useState({ w: 0, h: 0 });
 
-  const pdfRef = useRef<PDFDocumentProxy | null>(null);
+  const pdfRef = useRef<EmbedPdfDocument | null>(null);
+  const pagesRef = useRef<EmbedPdfPageLayout[]>([]);
   const canvasesRef = useRef<Map<number, HTMLCanvasElement>>(new Map());
   const pageViewRef = useRef<HTMLDivElement | null>(null);
   const displayCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -112,10 +115,11 @@ export function FigureSuggestPanel({
   const ensurePageCanvas = useCallback(
     async (pageIndex: number): Promise<HTMLCanvasElement | null> => {
       const pdf = pdfRef.current;
-      if (!pdf) return null;
+      const layout = pagesRef.current[pageIndex];
+      if (!pdf || !layout) return null;
       const cached = canvasesRef.current.get(pageIndex);
       if (cached) return cached;
-      const canvas = await renderPdfPageToCanvas(pdf, pageIndex, PAGE_CSS_WIDTH);
+      const canvas = await renderPageToCanvas(pdf, layout, PAGE_CSS_WIDTH);
       canvasesRef.current.set(pageIndex, canvas);
       return canvas;
     },
@@ -137,26 +141,34 @@ export function FigureSuggestPanel({
       setPageSize({ w: 0, h: 0 });
       canvasesRef.current.clear();
       pdfRef.current = null;
+      pagesRef.current = [];
       cropSeqRef.current = 0;
       pushCrops([]);
 
       try {
         const buf = await pdfFile.arrayBuffer();
         if (cancelled) return;
-        const pdf = await loadPdfDocument(buf);
+        const pdf = await openPdfDocument(buf);
         if (cancelled) {
-          await pdf.cleanup();
+          await pdf.close();
+          return;
+        }
+        const { pageCount: n, pages } = await listPdfPages(pdf);
+        if (cancelled) {
+          await pdf.close();
           return;
         }
         pdfRef.current = pdf;
-        const n = pdf.numPages;
+        pagesRef.current = pages;
         setPageCount(n);
         const scan = Math.min(n, MAX_PAGES_TO_SCAN);
         setThumbUrls(Array.from({ length: scan }, () => null));
 
         for (let i = 0; i < scan; i++) {
           if (cancelled) return;
-          const canvas = await renderPdfPageToCanvas(pdf, i, PAGE_CSS_WIDTH);
+          const layout = pages[i];
+          if (!layout) continue;
+          const canvas = await renderPageToCanvas(pdf, layout, PAGE_CSS_WIDTH);
           if (cancelled) return;
           canvasesRef.current.set(i, canvas);
           const url = canvas.toDataURL("image/png");
@@ -185,8 +197,8 @@ export function FigureSuggestPanel({
       cancelled = true;
       const pdf = pdfRef.current;
       pdfRef.current = null;
-      // PDFDocumentProxy exposes cleanup(); destroy() lives on the loading task.
-      void pdf?.cleanup();
+      pagesRef.current = [];
+      void pdf?.close();
       canvasesRef.current.clear();
     };
   }, [pdfFile, pushCrops]);
