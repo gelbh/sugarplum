@@ -38,6 +38,7 @@ import {
   isFigureMaterial,
   materialDisplayName,
 } from "../materials/materialActions";
+import { partitionSplitSiblings } from "../materials/splitSiblingGroups";
 import {
   SOURCE_ROLES,
   SOURCE_ROLE_LABELS,
@@ -111,7 +112,147 @@ export default function MaterialsList({
   const [roleBusyId, setRoleBusyId] = useState<string | null>(null);
   const [roleError, setRoleError] = useState<string | null>(null);
 
-  const groups = useMemo(() => groupMaterials(materials), [materials]);
+  const groups = useMemo(
+    () =>
+      groupMaterials(materials).map(({ kind, rows }) => ({
+        kind,
+        sections: partitionSplitSiblings(rows),
+      })),
+    [materials],
+  );
+
+  function renderMaterialRow(material: MaterialListItem) {
+    const name = materialDisplayName(material.filename);
+    const deckHref = `/library/decks/${encodeURIComponent(material.deck_id)}`;
+    const canGenerate = canGenerateMoreFromMaterial(material);
+    const canOcclusion =
+      Boolean(onCreateOcclusion) &&
+      canCreateOcclusionFromMaterial(material);
+    const roleValue = material.source_role ?? "lecture";
+    const roleBusy = roleBusyId === material.id;
+    return (
+      <Box
+        component="li"
+        key={material.id}
+        sx={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 1,
+          py: 1.25,
+          flexWrap: "wrap",
+        }}
+      >
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Stack
+            direction="row"
+            spacing={0.75}
+            alignItems="center"
+            flexWrap="wrap"
+            useFlexGap
+          >
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              {name}
+            </Typography>
+            {isFigureMaterial(material.r2_key) ? (
+              <Chip size="small" label="Figure" variant="outlined" />
+            ) : null}
+          </Stack>
+          <Typography variant="caption" color="text.secondary">
+            {material.status}
+            {" · "}
+            {formatMaterialDate(material.created_at)}
+          </Typography>
+          {showDeckTitle ? (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              component="div"
+            >
+              <Link
+                href={deckHref}
+                underline="hover"
+                color="primary"
+                onClick={(ev) => {
+                  ev.preventDefault();
+                  navigate(deckHref);
+                }}
+              >
+                {material.deck_title?.trim() || "Untitled deck"}
+              </Link>
+            </Typography>
+          ) : null}
+        </Box>
+        <FormControl size="small" sx={{ minWidth: 132 }}>
+          <InputLabel id={`source-role-${material.id}`}>Role</InputLabel>
+          <Select
+            labelId={`source-role-${material.id}`}
+            label="Role"
+            value={roleValue}
+            disabled={roleBusy}
+            onChange={(ev) => {
+              void onSourceRoleChange(
+                material,
+                ev.target.value as SourceRole,
+              );
+            }}
+          >
+            {SOURCE_ROLES.map((role) => (
+              <MenuItem key={role} value={role}>
+                {SOURCE_ROLE_LABELS[role]}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Stack direction="row" spacing={0.25}>
+          <Tooltip title={`Download ${name}`}>
+            <IconButton
+              size="small"
+              component="a"
+              href={downloadMaterialUrl(material.id)}
+              aria-label={`Download ${name}`}
+            >
+              <DownloadOutlinedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          {canOcclusion ? (
+            <Tooltip title={`Create occlusion from ${name}`}>
+              <IconButton
+                size="small"
+                aria-label={`Create occlusion from ${name}`}
+                onClick={() => onCreateOcclusion?.(material)}
+              >
+                <CropOutlinedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          ) : null}
+          {canGenerate ? (
+            <Tooltip title={`Generate more from ${name}`}>
+              <IconButton
+                size="small"
+                aria-label={`Generate more from ${name}`}
+                onClick={() => openGenerate(material)}
+              >
+                <AddCircleOutlineIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          ) : null}
+          <Tooltip title={`Delete ${name}`}>
+            <IconButton
+              size="small"
+              color="error"
+              aria-label={`Delete ${name}`}
+              onClick={() => {
+                setDeleteError(null);
+                setDeleteTarget(material);
+              }}
+            >
+              <DeleteOutlineIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+      </Box>
+    );
+  }
 
   async function confirmDelete() {
     if (!deleteTarget) return;
@@ -205,7 +346,7 @@ export default function MaterialsList({
         </Alert>
       ) : null}
       <Stack spacing={2}>
-        {groups.map(({ kind, rows }) => (
+        {groups.map(({ kind, sections }) => (
           <Box key={kind}>
             <Typography
               variant="caption"
@@ -226,140 +367,41 @@ export default function MaterialsList({
               divider={<Divider flexItem />}
               sx={{ m: 0, p: 0, listStyle: "none" }}
             >
-              {rows.map((material) => {
-                const name = materialDisplayName(material.filename);
-                const deckHref = `/library/decks/${encodeURIComponent(material.deck_id)}`;
-                const canGenerate = canGenerateMoreFromMaterial(material);
-                const canOcclusion =
-                  Boolean(onCreateOcclusion) &&
-                  canCreateOcclusionFromMaterial(material);
-                const roleValue = material.source_role ?? "lecture";
-                const roleBusy = roleBusyId === material.id;
+              {sections.map((entry) => {
+                if (entry.type === "flat") {
+                  return renderMaterialRow(entry.material);
+                }
+                const deckId = entry.members[0]?.deck_id ?? "deck";
+                const anchorId = entry.members[0]?.id ?? entry.stem;
+                const stemLabelId = `split-stem-${kind}-${deckId}-${anchorId}`;
                 return (
                   <Box
                     component="li"
-                    key={material.id}
-                    sx={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 1,
-                      py: 1.25,
-                      flexWrap: "wrap",
-                    }}
+                    key={`${kind}-${deckId}-${entry.stem}-${anchorId}`}
+                    sx={{ listStyle: "none", py: 0.5 }}
                   >
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Stack
-                        direction="row"
-                        spacing={0.75}
-                        alignItems="center"
-                        flexWrap="wrap"
-                        useFlexGap
-                      >
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          {name}
-                        </Typography>
-                        {isFigureMaterial(material.r2_key) ? (
-                          <Chip
-                            size="small"
-                            label="Figure"
-                            variant="outlined"
-                          />
-                        ) : null}
-                      </Stack>
-                      <Typography variant="caption" color="text.secondary">
-                        {material.status}
-                        {" · "}
-                        {formatMaterialDate(material.created_at)}
-                      </Typography>
-                      {showDeckTitle ? (
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          component="div"
-                        >
-                          <Link
-                            href={deckHref}
-                            underline="hover"
-                            color="primary"
-                            onClick={(ev) => {
-                              ev.preventDefault();
-                              navigate(deckHref);
-                            }}
-                          >
-                            {material.deck_title?.trim() || "Untitled deck"}
-                          </Link>
-                        </Typography>
-                      ) : null}
-                    </Box>
-                    <FormControl size="small" sx={{ minWidth: 132 }}>
-                      <InputLabel id={`source-role-${material.id}`}>
-                        Role
-                      </InputLabel>
-                      <Select
-                        labelId={`source-role-${material.id}`}
-                        label="Role"
-                        value={roleValue}
-                        disabled={roleBusy}
-                        onChange={(ev) => {
-                          void onSourceRoleChange(
-                            material,
-                            ev.target.value as SourceRole,
-                          );
-                        }}
-                      >
-                        {SOURCE_ROLES.map((role) => (
-                          <MenuItem key={role} value={role}>
-                            {SOURCE_ROLE_LABELS[role]}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <Stack direction="row" spacing={0.25}>
-                      <Tooltip title={`Download ${name}`}>
-                        <IconButton
-                          size="small"
-                          component="a"
-                          href={downloadMaterialUrl(material.id)}
-                          aria-label={`Download ${name}`}
-                        >
-                          <DownloadOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      {canOcclusion ? (
-                        <Tooltip title={`Create occlusion from ${name}`}>
-                          <IconButton
-                            size="small"
-                            aria-label={`Create occlusion from ${name}`}
-                            onClick={() => onCreateOcclusion?.(material)}
-                          >
-                            <CropOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      ) : null}
-                      {canGenerate ? (
-                        <Tooltip title={`Generate more from ${name}`}>
-                          <IconButton
-                            size="small"
-                            aria-label={`Generate more from ${name}`}
-                            onClick={() => openGenerate(material)}
-                          >
-                            <AddCircleOutlineIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      ) : null}
-                      <Tooltip title={`Delete ${name}`}>
-                        <IconButton
-                          size="small"
-                          color="error"
-                          aria-label={`Delete ${name}`}
-                          onClick={() => {
-                            setDeleteError(null);
-                            setDeleteTarget(material);
-                          }}
-                        >
-                          <DeleteOutlineIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                    <Typography
+                      id={stemLabelId}
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{
+                        display: "block",
+                        fontWeight: 600,
+                        mb: 0.25,
+                      }}
+                    >
+                      {entry.stem}
+                    </Typography>
+                    <Stack
+                      component="ul"
+                      spacing={0}
+                      divider={<Divider flexItem />}
+                      aria-labelledby={stemLabelId}
+                      sx={{ m: 0, p: 0, listStyle: "none" }}
+                    >
+                      {entry.members.map((material) =>
+                        renderMaterialRow(material),
+                      )}
                     </Stack>
                   </Box>
                 );
