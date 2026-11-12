@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type FormEvent,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -39,17 +33,14 @@ import {
 import { useCreateCardController } from "../deckHub/useCreateCardController";
 import { useAddMaterialWorkshop } from "../deckHub/useAddMaterialWorkshop";
 import { useCardsWorkshop } from "../deckHub/useCardsWorkshop";
+import { useDeckHubDeckLifecycle } from "../deckHub/useDeckHubDeckLifecycle";
 import { useStudyReadySheet } from "../deckHub/useStudyReadySheet";
 import "../deckHub/deckHubMotion.css";
 import {
   ApiError,
   apkgFilenameForDeckTitle,
-  clearCover,
   createDeckExport,
-  deckStats,
-  deleteDeck,
   getDeckComposition,
-  listCovers,
   listDeckCards,
   listDeckMaterials,
   listDecks,
@@ -57,17 +48,14 @@ import {
   listSubjects,
   moveCard,
   patchCard,
-  patchDeck,
   asRegenType,
   cardHasRegenSource,
   regenCard,
   resetCardSchedule,
   type CardDraftView,
   type Deck,
-  type DeckStats,
   type JobListItem,
   type MaterialListItem,
-  type StoredCoverRow,
   type Subject,
   type SubjectKnowledge,
 } from "../api/client";
@@ -77,7 +65,6 @@ import DraftCardEditor, {
 } from "../components/DraftCardEditor";
 import { isGuest } from "../guest/session";
 import { collectDeckImageKeys, hubDiyTypes } from "../lib/hubDiyCreate";
-import { navigate } from "../nav/navigate";
 import {
   formatExportWarnings,
   ANKI_EXPORT_BUSY_LABEL,
@@ -99,21 +86,10 @@ export default function DeckHubPage({ deckId }: Props) {
   const [composition, setComposition] = useState<SubjectKnowledge | null>(null);
   const [draftJobs, setDraftJobs] = useState<JobListItem[]>([]);
   const [materials, setMaterials] = useState<MaterialListItem[]>([]);
-  const [deckCover, setDeckCover] = useState<StoredCoverRow | null>(null);
-  const [coverPickerOpen, setCoverPickerOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [exportWarning, setExportWarning] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
-
-  const [renameOpen, setRenameOpen] = useState(false);
-  const [renameValue, setRenameValue] = useState("");
-  const [renameBusy, setRenameBusy] = useState(false);
-  const [renameError, setRenameError] = useState<string | null>(null);
-
-  const [deleteStats, setDeleteStats] = useState<DeckStats | null>(null);
-  const [deleteBusy, setDeleteBusy] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const [editCard, setEditCard] = useState<CardDraftView | null>(null);
   const [editBusy, setEditBusy] = useState(false);
@@ -238,22 +214,36 @@ export default function DeckHubPage({ deckId }: Props) {
 
   const study = useStudyReadySheet();
 
-  const refreshDeckCover = useCallback(async () => {
-    if (guest) {
-      setDeckCover(null);
-      return;
-    }
-    try {
-      const covers = await listCovers();
-      setDeckCover(
-        covers.find(
-          (cover) => cover.ownerKind === "deck" && cover.ownerId === deckId,
-        ) ?? null,
-      );
-    } catch {
-      setDeckCover(null);
-    }
-  }, [deckId, guest]);
+  const {
+    deckCover,
+    refreshDeckCover,
+    coverPickerOpen,
+    openCoverPicker,
+    closeCoverPicker,
+    onCoverSaved,
+    onCoverClear,
+    renameOpen,
+    setRenameOpen,
+    renameValue,
+    setRenameValue,
+    renameBusy,
+    renameError,
+    openRename,
+    onRenameSubmit,
+    deleteStats,
+    deleteBusy,
+    confirmDelete,
+    setConfirmDelete,
+    openDelete,
+    confirmDeleteDeck,
+  } = useDeckHubDeckLifecycle({
+    deckId,
+    guest,
+    deck,
+    setDeck,
+    subject,
+    setError,
+  });
 
   const load = useCallback(async () => {
     const [deckList, subjects] = await Promise.all([
@@ -370,56 +360,6 @@ export default function DeckHubPage({ deckId }: Props) {
 
   function jumpWorkshop(frame: WorkshopFrame) {
     setWorkshopStack((prev) => replaceWorkshop(prev, frame));
-  }
-
-  async function onRenameSubmit(e?: FormEvent) {
-    e?.preventDefault();
-    if (!deck || !renameValue.trim()) return;
-    setRenameBusy(true);
-    setRenameError(null);
-    try {
-      const updated = await patchDeck(deck.id, renameValue.trim());
-      setDeck(updated);
-      setRenameOpen(false);
-    } catch (err) {
-      setRenameError(
-        err instanceof ApiError ? err.message : "Could not rename",
-      );
-    } finally {
-      setRenameBusy(false);
-    }
-  }
-
-  async function openDelete() {
-    if (!deck) return;
-    setError(null);
-    setConfirmDelete(true);
-    setDeleteStats(null);
-    try {
-      setDeleteStats(await deckStats(deck.id));
-    } catch (err) {
-      setConfirmDelete(false);
-      setError(
-        err instanceof ApiError ? err.message : "Could not load deck stats",
-      );
-    }
-  }
-
-  async function confirmDeleteDeck() {
-    if (!deck) return;
-    setDeleteBusy(true);
-    setError(null);
-    try {
-      await deleteDeck(deck.id);
-      const subjectPath = subject
-        ? `/library/subjects/${encodeURIComponent(subject.id)}`
-        : "/library";
-      navigate(subjectPath);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not delete deck");
-    } finally {
-      setDeleteBusy(false);
-    }
   }
 
   function openEdit(card: CardDraftView) {
@@ -678,13 +618,9 @@ export default function DeckHubPage({ deckId }: Props) {
               onExportAnki={() => {
                 void onExportAnki();
               }}
-              onRename={() => {
-                setRenameError(null);
-                setRenameValue(deck.title);
-                setRenameOpen(true);
-              }}
+              onRename={openRename}
               onDelete={openDelete}
-              onChangeCover={() => setCoverPickerOpen(true)}
+              onChangeCover={openCoverPicker}
             />
           ) : (
             <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
@@ -1137,16 +1073,9 @@ export default function DeckHubPage({ deckId }: Props) {
           title={deck.title}
           ownerKind="deck"
           ownerId={deck.id}
-          onClose={() => setCoverPickerOpen(false)}
-          onSaved={(row) => {
-            setDeckCover(row);
-            setCoverPickerOpen(false);
-          }}
-          onClear={async () => {
-            await clearCover("deck", deck.id);
-            setDeckCover(null);
-            setCoverPickerOpen(false);
-          }}
+          onClose={closeCoverPicker}
+          onSaved={onCoverSaved}
+          onClear={onCoverClear}
         />
       ) : null}
     </Container>
