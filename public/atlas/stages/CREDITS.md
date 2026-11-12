@@ -40,6 +40,13 @@ Replace-only policy: mapped keys keep a real webp. Licence-ok plates overwrite A
 | metacercaria                 | `metacercaria.webp`        | Fasciola metacercaria encysted on vegetation                | Alan R Walker                   | CC BY-SA 3.0  | [https://commons.wikimedia.org/wiki/File:Fasciola-metacercaria.jpg](https://commons.wikimedia.org/wiki/File:Fasciola-metacercaria.jpg)                                                                                                                               |
 | adult                        | `adult.webp`               | Ascaris adult female (histological cross-section)           | Maya Tomasik                    | CC BY 4.0     | [https://commons.wikimedia.org/wiki/File:Ascaris.jpg](https://commons.wikimedia.org/wiki/File:Ascaris.jpg)                                                                                                                                                           |
 | larvated egg                 | `larvated-egg.webp`        | Enterobius vermicularis larvated eggs                       | CDC / PHIL                      | Public domain | [https://commons.wikimedia.org/wiki/File:Enterobius_vermicularis.jpg](https://commons.wikimedia.org/wiki/File:Enterobius_vermicularis.jpg)                                                                                                                           |
+| cysticercus                  | `cysticercus.webp`         | Taenia pisiformis cysticercus                               | The Other 95%                   | CC BY-SA 4.0  | [https://commons.wikimedia.org/wiki/File:Taenia_pisiformis_cysticercus.jpg](https://commons.wikimedia.org/wiki/File:Taenia_pisiformis_cysticercus.jpg)                                                                                                               |
+| cysticercoid                 | `cysticercoid.webp`        | Hymenolepis cysticercoids                                   | The Other 95%                   | CC BY-SA 4.0  | [https://commons.wikimedia.org/wiki/File:Hymenolepis_cestircoids_2.jpg](https://commons.wikimedia.org/wiki/File:Hymenolepis_cestircoids_2.jpg)                                                                                                                       |
+| coenurus                     | `coenurus.webp`            | Taenia multiceps coenurus in sheep brain                    | Alan R Walker                   | CC BY-SA 3.0  | [https://commons.wikimedia.org/wiki/File:Taenia-multiceps-sheepbrain.jpg](https://commons.wikimedia.org/wiki/File:Taenia-multiceps-sheepbrain.jpg)                                                                                                                   |
+| plerocercoid                 | `plerocercoid.webp`        | Sparganum proliferum (plerocercoid / sparganum)             | CDC                             | Public domain | [https://commons.wikimedia.org/wiki/File:Sparganum_proliferum.jpg](https://commons.wikimedia.org/wiki/File:Sparganum_proliferum.jpg)                                                                                                                                 |
+| gamont                       | `gamont.webp`              | Haemoproteus columbae gamonts                               | PlasmodiumLady                  | CC BY-SA 4.0  | [https://commons.wikimedia.org/wiki/File:Male_and_female_haem_columbae.jpg](https://commons.wikimedia.org/wiki/File:Male_and_female_haem_columbae.jpg)                                                                                                               |
+| meront                       | `meront.webp`              | Eimeria stiedae schizogony stages (meronts)                 | Danny S.                        | CC BY-SA 4.0  | [https://commons.wikimedia.org/wiki/File:Eimeria_stiedae_(Kokzidose_Kaninchen).jpg](<https://commons.wikimedia.org/wiki/File:Eimeria_stiedae_(Kokzidose_Kaninchen).jpg>)                                                                                             |
+| sporocyst                    | `sporocyst.webp`           | Fasciola sporocysts in snail intermediate host              | Alan R Walker                   | CC BY-SA 3.0  | [https://commons.wikimedia.org/wiki/File:Fasciola-sporocysts.jpg](https://commons.wikimedia.org/wiki/File:Fasciola-sporocysts.jpg)                                                                                                                                   |
 
 ## Still AI (mapped; replace later)
 
@@ -50,14 +57,7 @@ These keys still resolve to AI-generated webps. Leave mapped until a licence-ok 
 | immature fluke | `immature-fluke.webp` |
 | L2             | `l2.webp`             |
 | L4             | `l4.webp`             |
-| meront         | `meront.webp`         |
-| gamont         | `gamont.webp`         |
-| cysticercus    | `cysticercus.webp`    |
 | sporont        | `sporont.webp`        |
-| coenurus       | `coenurus.webp`       |
-| cysticercoid   | `cysticercoid.webp`   |
-| sporocyst      | `sporocyst.webp`      |
-| plerocercoid   | `plerocercoid.webp`   |
 
 ## Missing
 
