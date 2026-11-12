@@ -363,7 +363,8 @@ export async function listEntriesWithFocus(
   },
 ): Promise<AtlasEntryView[]> {
   let focus = await loadFocusMap(db, opts.atlasId);
-  if (focus.size === 0) {
+  const missing = opts.entries.some((e) => !focus.has(focusEntryKey(e)));
+  if (missing) {
     const materials = await loadUserMaterials(db, opts.userId);
     if (materials.length > 0) {
       await refreshFocusBestEffort(db, env, { atlasId: opts.atlasId });
