@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
   DRAG_SLOP_PX,
+  STUDY_REVEAL_STAMP,
   SWIPE_THRESHOLD_PX,
   armGesture,
   gesturePassedSlop,
   resolveCardGesture,
+  studyPointerAllowed,
+  studySwipeVisual,
 } from "../../src/study/cardGestures";
+import { GRADE_LABELS } from "../../src/study/gradeLabels";
 
 describe("gesturePassedSlop", () => {
   it("is false under slop and true at/above", () => {
@@ -74,5 +78,75 @@ describe("resolveCardGesture", () => {
     expect(
       resolveCardGesture({ revealed: true, dx: -100, dy: 20 }),
     ).toEqual({ type: "grade", rating: 1 });
+  });
+});
+
+describe("studySwipeVisual", () => {
+  const motion = { reduceMotion: false };
+
+  it("hides the stamp under slop", () => {
+    expect(
+      studySwipeVisual({ dx: 3, dy: 2, revealed: true, ...motion }),
+    ).toMatchObject({ stampLabel: null, stampOpacity: 0 });
+  });
+
+  it("shows reveal cue when front is up", () => {
+    expect(
+      studySwipeVisual({ dx: 48, dy: 0, revealed: false, ...motion }),
+    ).toMatchObject({
+      stampLabel: STUDY_REVEAL_STAMP,
+      stampRating: null,
+    });
+  });
+
+  it("maps dominant directions to grade labels when revealed", () => {
+    expect(
+      studySwipeVisual({ dx: -48, dy: 0, revealed: true, ...motion }).stampLabel,
+    ).toBe(GRADE_LABELS[1]);
+    expect(
+      studySwipeVisual({ dx: 0, dy: 48, revealed: true, ...motion }).stampLabel,
+    ).toBe(GRADE_LABELS[2]);
+    expect(
+      studySwipeVisual({ dx: 48, dy: 0, revealed: true, ...motion }).stampLabel,
+    ).toBe(GRADE_LABELS[3]);
+    expect(
+      studySwipeVisual({ dx: 0, dy: -48, revealed: true, ...motion }).stampLabel,
+    ).toBe(GRADE_LABELS[4]);
+  });
+
+  it("ramps opacity to 1 at the commit threshold", () => {
+    expect(
+      studySwipeVisual({
+        dx: SWIPE_THRESHOLD_PX,
+        dy: 0,
+        revealed: true,
+        ...motion,
+      }).stampOpacity,
+    ).toBe(1);
+  });
+
+  it("skips tilt under reduced motion", () => {
+    expect(
+      studySwipeVisual({
+        dx: 40,
+        dy: 12,
+        revealed: true,
+        reduceMotion: true,
+      }).transform,
+    ).toBe("translate(40px, 12px)");
+  });
+});
+
+describe("studyPointerAllowed", () => {
+  it("blocks when notes/busy gate is on or target is outside the host", () => {
+    expect(
+      studyPointerAllowed({ blocked: true, targetInHost: true }),
+    ).toBe(false);
+    expect(
+      studyPointerAllowed({ blocked: false, targetInHost: false }),
+    ).toBe(false);
+    expect(
+      studyPointerAllowed({ blocked: false, targetInHost: true }),
+    ).toBe(true);
   });
 });
