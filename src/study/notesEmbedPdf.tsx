@@ -17,8 +17,19 @@ import {
   useStage,
   useStageState,
 } from "@embedpdf/react/stage";
+import { interactionPlugin } from "@embedpdf/react/interaction";
+import {
+  SelectionClipboard,
+  SelectionLayer,
+  SelectionMenu,
+  copySelection,
+  selectionPlugin,
+  useSelection,
+  useSelectionState,
+} from "@embedpdf/react/selection";
 import { localEngine } from "@embedpdf/engine/portable";
 import type { OpenInput } from "@embedpdf/react/runtime";
+import Button from "@mui/material/Button";
 import { normalizeExcerptText } from "./excerptPages";
 
 /** Grade-good wash (brand.css --sp-grade-good-wash) for search matches. */
@@ -35,6 +46,8 @@ const notesEmbedPlugins = [
       blendMode: "normal",
     },
   }),
+  interactionPlugin(),
+  selectionPlugin(),
 ];
 
 /** Portable engine: Vite's default worker URL fails to boot. */
@@ -49,7 +62,52 @@ export type NotesEmbedPdfStageProps = {
   onSearchHits?: (hits: boolean) => void;
   /** 1-based page when the stage scrolls. */
   onStagePage?: (page: number) => void;
+  /** Whether a copyable text selection exists (for dialog Copy). */
+  onCanCopyChange?: (canCopy: boolean) => void;
+  /** Ref filled with copy handler while the stage is mounted. */
+  copyRef?: React.MutableRefObject<(() => void) | null>;
 };
+
+function NotesSelectionBridge({
+  onCanCopyChange,
+  copyRef,
+}: {
+  onCanCopyChange?: (canCopy: boolean) => void;
+  copyRef?: React.MutableRefObject<(() => void) | null>;
+}) {
+  const selection = useSelection();
+  const { hasSelection } = useSelectionState();
+  const canCopy = hasSelection && selection.canCopy();
+
+  useEffect(() => {
+    onCanCopyChange?.(canCopy);
+  }, [canCopy, onCanCopyChange]);
+
+  useEffect(() => {
+    if (!copyRef) return;
+    copyRef.current = () => {
+      void copySelection(selection).catch(() => undefined);
+    };
+    return () => {
+      copyRef.current = null;
+    };
+  }, [copyRef, selection]);
+
+  return (
+    <SelectionMenu>
+      <Button
+        size="small"
+        variant="contained"
+        disabled={!canCopy}
+        onClick={() => {
+          void copySelection(selection).catch(() => undefined);
+        }}
+      >
+        Copy
+      </Button>
+    </SelectionMenu>
+  );
+}
 
 function NotesEmbedController({
   page,
@@ -57,7 +115,7 @@ function NotesEmbedController({
   onPageCount,
   onSearchHits,
   onStagePage,
-}: Omit<NotesEmbedPdfStageProps, "bytes">) {
+}: Omit<NotesEmbedPdfStageProps, "bytes" | "onCanCopyChange" | "copyRef">) {
   const stage = useStage();
   const search = useSearch();
   const { pageCount, currentPageIndex } = useStageState();
@@ -140,6 +198,8 @@ export function NotesEmbedPdfStage({
   onPageCount,
   onSearchHits,
   onStagePage,
+  onCanCopyChange,
+  copyRef,
 }: NotesEmbedPdfStageProps) {
   const source = useMemo((): OpenInput => {
     const copy = bytes.slice();
@@ -173,6 +233,11 @@ export function NotesEmbedPdfStage({
           onSearchHits={onSearchHits}
           onStagePage={onStagePage}
         />
+        <SelectionClipboard />
+        <NotesSelectionBridge
+          onCanCopyChange={onCanCopyChange}
+          copyRef={copyRef}
+        />
         <Stage
           style={{
             height: "100%",
@@ -186,6 +251,7 @@ export function NotesEmbedPdfStage({
             <>
               <RenderLayer />
               <SearchLayer />
+              <SelectionLayer />
             </>
           )}
         </Stage>
