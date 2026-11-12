@@ -1,4 +1,5 @@
 import { PDFDocument } from "pdf-lib";
+import { formatSplitPartFilename } from "../materials/splitPartFilename";
 
 export type SplitPdfOk = { ok: true; files: File[] };
 export type SplitPdfErr =
@@ -106,9 +107,18 @@ export async function splitPdfUnderLimit(
   const files = partBytes.map((bytes, i) => {
     const copy = new Uint8Array(bytes.byteLength);
     copy.set(bytes);
-    return new File([copy], `${stem} (${i + 1}/${n}).pdf`, {
-      type: "application/pdf",
-    });
+    return new File(
+      [copy],
+      formatSplitPartFilename({
+        stem,
+        index: i + 1,
+        total: n,
+        ext: "pdf",
+      }),
+      {
+        type: "application/pdf",
+      },
+    );
   });
 
   return { ok: true, files };

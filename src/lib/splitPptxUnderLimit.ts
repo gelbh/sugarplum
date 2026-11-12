@@ -1,4 +1,5 @@
 import JSZip from "jszip";
+import { formatSplitPartFilename } from "../materials/splitPartFilename";
 
 const PPTX_MIME =
   "application/vnd.openxmlformats-officedocument.presentationml.presentation";
@@ -386,9 +387,18 @@ export async function splitPptxUnderLimit(
   const files = partBytes.map((bytes, i) => {
     const copy = new Uint8Array(bytes.byteLength);
     copy.set(bytes);
-    return new File([copy], `${stem} (${i + 1}/${n}).pptx`, {
-      type: PPTX_MIME,
-    });
+    return new File(
+      [copy],
+      formatSplitPartFilename({
+        stem,
+        index: i + 1,
+        total: n,
+        ext: "pptx",
+      }),
+      {
+        type: PPTX_MIME,
+      },
+    );
   });
 
   return { ok: true, files };

@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  parseSplitPartFilename,
-  partitionSplitSiblings,
-} from "../../src/materials/splitSiblingGroups";
+import { partitionSplitSiblings } from "../../src/materials/splitSiblingGroups";
 
 type Row = {
   id: string;
@@ -20,31 +17,6 @@ function row(
     ...overrides,
   };
 }
-
-describe("parseSplitPartFilename", () => {
-  it("parses product pdf and pptx part names", () => {
-    expect(parseSplitPartFilename("Lecture notes (1/3).pdf")).toEqual({
-      stem: "Lecture notes",
-      index: 1,
-      total: 3,
-      ext: "pdf",
-    });
-    expect(parseSplitPartFilename("Deck (2/2).PPTX")).toEqual({
-      stem: "Deck",
-      index: 2,
-      total: 2,
-      ext: "pptx",
-    });
-  });
-
-  it("rejects non-matching names", () => {
-    expect(parseSplitPartFilename("notes.pdf")).toBeNull();
-    expect(parseSplitPartFilename("notes (1).pdf")).toBeNull();
-    expect(parseSplitPartFilename("notes (1/2).png")).toBeNull();
-    expect(parseSplitPartFilename(null)).toBeNull();
-    expect(parseSplitPartFilename("")).toBeNull();
-  });
-});
 
 describe("partitionSplitSiblings", () => {
   it("groups two-plus siblings under shared stem and sorts by index", () => {
