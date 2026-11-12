@@ -8,8 +8,9 @@ import {
   type RefObject,
 } from "react";
 import {
-  REVIEW_DRAG_SLOP_PX,
+  DRAG_SLOP_PX,
   REVIEW_FLY_MS,
+  gesturePassedSlop,
   resolveReviewSwipe,
   reviewSwipeVisual,
   type ReviewSwipeDecision,
@@ -208,13 +209,13 @@ export function useReviewSwipe({
     const moveDy = e.clientY - tracked.y;
     if (!tracked.dragging) {
       if (
-        Math.abs(moveDy) >= REVIEW_DRAG_SLOP_PX &&
+        Math.abs(moveDy) >= DRAG_SLOP_PX &&
         Math.abs(moveDy) >= Math.abs(moveDx)
       ) {
         pointerRef.current = null;
         return;
       }
-      if (Math.abs(moveDx) < REVIEW_DRAG_SLOP_PX) return;
+      if (!gesturePassedSlop({ dx: moveDx, dy: 0 })) return;
       tracked.dragging = true;
       e.currentTarget.setPointerCapture(e.pointerId);
     }
