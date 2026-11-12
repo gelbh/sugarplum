@@ -7,7 +7,11 @@ export type SessionRouteDecision =
   | { action: "redirect"; to: string }
   | { action: "pending" };
 
-export type SessionRouteStatus = "authenticated" | "unauthenticated" | "error";
+export type SessionRouteStatus =
+  | "loading"
+  | "authenticated"
+  | "unauthenticated"
+  | "error";
 
 export type SessionRouteOpts = {
   /** Guest sessions stay authenticated for app routes but must reach login/register to upgrade. */
@@ -19,6 +23,11 @@ export function sessionRouteDecision(
   status: SessionRouteStatus,
   opts: SessionRouteOpts = {},
 ): SessionRouteDecision {
+  if (status === "loading") {
+    // LEGAL paints during cold resolve; everything else waits.
+    return LEGAL.has(pathname) ? { action: "allow" } : { action: "pending" };
+  }
+
   if (status === "error") {
     // Public entry + legal stay reachable when /me is down; app shell waits for Retry.
     if (LEGAL.has(pathname) || AUTH_ENTRY.has(pathname)) {

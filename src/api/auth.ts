@@ -66,10 +66,15 @@ export async function logout() {
   return result;
 }
 
+/** Account cookie probe only (no guest localStorage short-circuit). */
+export function probeAccount() {
+  return api<AuthUser>("/api/auth/me");
+}
+
 export function me() {
   if (isGuest()) {
     ensureGuestStore();
     return Promise.resolve({ ...GUEST_USER });
   }
-  return api<AuthUser>("/api/auth/me");
+  return probeAccount();
 }
