@@ -14,6 +14,10 @@ import { glanceIconFor } from "../../src/atlas/glanceIcons";
 import { resolveHostPortrait } from "../../src/atlas/hostPortraits";
 import { resolveSitePortrait } from "../../src/atlas/sitePortraits";
 import { resolveStagePortrait } from "../../src/atlas/stagePortraits";
+import {
+  resolveZoonoticGlyph,
+  zoonoticPortraitLabel,
+} from "../../src/atlas/zoonoticPortraits";
 import { countryHeatWeight } from "../../src/atlas/distributionHeat";
 import {
   distributionChipLabels,
@@ -177,28 +181,17 @@ describe("entryGlance", () => {
     expect(glanceIconFor(tax).displayName).toMatch(/Flatworm/i);
   });
 
-  it("resolves host portraits via broader chain", () => {
-    expect(resolveHostPortrait("sheep")?.archetype).toBe("sheep");
-    expect(resolveHostPortrait("Galba truncatula")?.archetype).toBe(
-      "lymnaeid snail",
-    );
-    expect(resolveHostPortrait("lymnaeid snail")?.src).toMatch(
-      /lymnaeid-snail\.webp$/,
-    );
-    expect(resolveHostPortrait("human")?.src).toMatch(/human\.webp$/);
-    expect(resolveHostPortrait("non-human primate")?.archetype).toBe(
-      "non-human primate",
-    );
-    expect(resolveHostPortrait("rodent")?.archetype).toBe("rodent");
-    expect(resolveHostPortrait("earthworm")?.src).toMatch(/earthworm\.webp$/);
-    expect(resolveHostPortrait("Formica")?.archetype).toBe("ant");
+  it("leaves host portraits empty until open-licence photos ship", () => {
+    expect(resolveHostPortrait("sheep")).toBeNull();
+    expect(resolveHostPortrait("Galba truncatula")).toBeNull();
+    expect(resolveHostPortrait("human")).toBeNull();
+    expect(resolveHostPortrait("Formica")).toBeNull();
   });
 
-  it("resolves site portraits via broader chain", () => {
-    expect(resolveSitePortrait("bile ducts")?.archetype).toBe("bile ducts");
-    expect(resolveSitePortrait("ileum")?.src).toMatch(/ileum\.webp$/);
-    expect(resolveSitePortrait("abomasum")?.archetype).toBe("abomasum");
-    expect(resolveSitePortrait("skin")?.src).toMatch(/skin\.webp$/);
+  it("leaves site portraits empty until anatomy assets ship", () => {
+    expect(resolveSitePortrait("bile ducts")).toBeNull();
+    expect(resolveSitePortrait("ileum")).toBeNull();
+    expect(resolveSitePortrait("skin")).toBeNull();
   });
 
   it("passes PPP min/max for the glance timeline", () => {
@@ -208,13 +201,21 @@ describe("entryGlance", () => {
     expect(ppp?.pppMax).toBeGreaterThanOrEqual(ppp?.pppMin ?? 0);
   });
 
-  it("resolves on-host stage portraits via aliases", () => {
-    expect(resolveStagePortrait("adult")?.src).toMatch(/adult\.webp$/);
-    expect(resolveStagePortrait("migrating L3")?.archetype).toBe("L3");
-    expect(resolveStagePortrait("adult fluke")?.src).toMatch(
-      /adult-fluke\.webp$/,
-    );
-    expect(resolveStagePortrait("schizont")?.archetype).toBe("meront");
+  it("leaves stage portraits empty until CDC archetypes ship", () => {
+    expect(resolveStagePortrait("adult")).toBeNull();
+    expect(resolveStagePortrait("migrating L3")).toBeNull();
+    expect(resolveStagePortrait("adult fluke")).toBeNull();
+    expect(resolveStagePortrait("schizont")).toBeNull();
+  });
+
+  it("maps zoonotic values to MUI glyphs without webp paths", () => {
+    for (const term of ["yes", "no", "potential", "foodborne"] as const) {
+      const g = resolveZoonoticGlyph(term);
+      expect(g).not.toBeNull();
+      expect(g?.Icon).toBeTruthy();
+      expect(zoonoticPortraitLabel(term).length).toBeGreaterThan(0);
+    }
+    expect(resolveZoonoticGlyph("yes")?.archetype).toBe("yes");
   });
 
   it("tags distribution prose into structured meta", () => {

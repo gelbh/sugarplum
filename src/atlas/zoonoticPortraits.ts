@@ -1,13 +1,19 @@
-export type ZoonoticPortrait = {
-  src: string;
+import type { SvgIconComponent } from "@mui/icons-material";
+import CheckCircleOutline from "@mui/icons-material/CheckCircleOutline";
+import HighlightOff from "@mui/icons-material/HighlightOff";
+import HelpOutline from "@mui/icons-material/HelpOutline";
+import Restaurant from "@mui/icons-material/Restaurant";
+
+export type ZoonoticGlyph = {
+  Icon: SvgIconComponent;
   archetype: string;
 };
 
-const PORTRAITS: Record<string, string> = {
-  yes: "/atlas/zoonotic/yes.webp",
-  no: "/atlas/zoonotic/no.webp",
-  potential: "/atlas/zoonotic/potential.webp",
-  foodborne: "/atlas/zoonotic/foodborne.webp",
+const GLYPHS: Record<string, SvgIconComponent> = {
+  yes: CheckCircleOutline,
+  no: HighlightOff,
+  potential: HelpOutline,
+  foodborne: Restaurant,
 };
 
 const LABELS: Record<string, string> = {
@@ -17,13 +23,11 @@ const LABELS: Record<string, string> = {
   foodborne: "Foodborne",
 };
 
-/**
- * Resolve a zoonotic portrait term (`yes` | `no` | `potential` | `foodborne`).
- */
-export function resolveZoonoticPortrait(term: string): ZoonoticPortrait | null {
-  const src = PORTRAITS[term];
-  if (src) return { src, archetype: term };
-  return null;
+/** Resolve a zoonotic term to an MUI glyph (no photo strip). */
+export function resolveZoonoticGlyph(term: string): ZoonoticGlyph | null {
+  const Icon = GLYPHS[term];
+  if (!Icon) return null;
+  return { Icon, archetype: term };
 }
 
 export function zoonoticPortraitLabel(term: string): string {

@@ -11,7 +11,7 @@ import { resolveHostPortrait } from "./hostPortraits";
 import { resolveSitePortrait } from "./sitePortraits";
 import { resolveStagePortrait } from "./stagePortraits";
 import {
-  resolveZoonoticPortrait,
+  resolveZoonoticGlyph,
   zoonoticPortraitLabel,
 } from "./zoonoticPortraits";
 import TermList from "./TermList";
@@ -73,6 +73,83 @@ export function CiteSup({
     >
       {cited.join(",")}
     </Link>
+  );
+}
+
+function ZoonoticStrip({
+  terms,
+  tileMax = 140,
+  fill,
+}: {
+  terms: string[];
+  tileMax?: number;
+  fill?: boolean;
+}) {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 1,
+        mt: 0.75,
+        width: fill ? "100%" : undefined,
+      }}
+    >
+      {terms.map((term) => {
+        const glyph = resolveZoonoticGlyph(term);
+        const label = zoonoticPortraitLabel(term);
+        const Icon = glyph?.Icon;
+        return (
+          <Box
+            key={term}
+            sx={{
+              flex: fill ? "1 1 96px" : `0 0 ${Math.min(tileMax, 120)}px`,
+              maxWidth: fill ? undefined : Math.min(tileMax, 120),
+              minWidth: fill ? 88 : undefined,
+              width: fill ? undefined : Math.min(tileMax, 120),
+              borderRadius: 1.25,
+              overflow: "hidden",
+              border: 1,
+              borderColor: "divider",
+              bgcolor: "background.default",
+            }}
+          >
+            <Box
+              sx={{
+                position: "relative",
+                aspectRatio: "1 / 1",
+                bgcolor: "action.hover",
+                display: "grid",
+                placeItems: "center",
+              }}
+            >
+              {Icon ? (
+                <Icon
+                  aria-hidden
+                  sx={{ fontSize: "2.25rem", color: "text.secondary" }}
+                />
+              ) : (
+                <Typography sx={{ fontWeight: 700, color: "text.secondary" }}>
+                  {label.slice(0, 1).toUpperCase()}
+                </Typography>
+              )}
+            </Box>
+            <Typography
+              sx={{
+                px: 0.75,
+                py: 0.65,
+                fontSize: "0.8rem",
+                lineHeight: 1.25,
+                textAlign: "center",
+                fontWeight: 600,
+              }}
+            >
+              {label}
+            </Typography>
+          </Box>
+        );
+      })}
+    </Box>
   );
 }
 
@@ -226,13 +303,7 @@ function GlanceValue({
       );
     if (row.key === ZOONOTIC_KEY)
       return (
-        <PortraitStrip
-          terms={row.terms}
-          resolve={resolveZoonoticPortrait}
-          labelFor={zoonoticPortraitLabel}
-          fill={fillPortraits}
-          tileMax={150}
-        />
+        <ZoonoticStrip terms={row.terms} fill={fillPortraits} tileMax={150} />
       );
     return <TermList terms={row.terms} />;
   }
