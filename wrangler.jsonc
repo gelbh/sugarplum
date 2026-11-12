@@ -69,6 +69,20 @@
       "class_name": "GenerationWorkflow",
     },
   ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "GENERATION_SLOTS",
+        "class_name": "GenerationSlotDO",
+      },
+    ],
+  },
+  "migrations": [
+    {
+      "tag": "v1-generation-slots",
+      "new_sqlite_classes": ["GenerationSlotDO"],
+    },
+  ],
   "queues": {
     "producers": [
       {

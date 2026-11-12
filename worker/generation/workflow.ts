@@ -4,7 +4,12 @@ import {
   type WorkflowStep,
 } from "cloudflare:workers";
 import type { Env } from "../env";
+import { getDb } from "../db/client";
 import { processGenerateJob } from "./consumer";
+import {
+  acquireGenerationSlot,
+  releaseGenerationSlot,
+} from "./slots";
 import type { GenerationWorkflowParams } from "./workflowParams";
 
 export type { GenerationWorkflowParams } from "./workflowParams";
@@ -16,10 +21,17 @@ const PASS1_BUSY_RETRIES = {
   backoff: "constant" as const,
 };
 
+/** Sleep between slot acquire attempts while D1 stays queued. */
+const SLOT_WAIT_SLEEP = "30 seconds" as const;
+
+/** ~6h at 30s intervals before treating the free pool as overloaded. */
+const SLOT_WAIT_MAX_ATTEMPTS = 720;
+
 /**
- * Durable generation pipeline. Phase 2 uses no-op slot steps; Phase 3 fills them.
+ * Durable generation pipeline. Cap-2 slot lease before claim/pass1.
  * Gap-fill runs in afterPersist so a Queues wall-clock kill after persist can
- * resume without wiping drafts.
+ * resume without wiping drafts. Lease TTL + soft-complete sweeper cover orphans
+ * if the Workflow dies before releaseSlot.
  */
 export class GenerationWorkflow extends WorkflowEntrypoint<
   Env,
@@ -31,7 +43,33 @@ export class GenerationWorkflow extends WorkflowEntrypoint<
   ): Promise<void> {
     const params = event.payload;
 
-    await step.do("acquireSlot", async () => ({ ok: true as const }));
+    let acquired = false;
+    for (let attempt = 0; attempt < SLOT_WAIT_MAX_ATTEMPTS; attempt++) {
+      const result = await step.do(`acquireSlot-${attempt}`, async () =>
+        acquireGenerationSlot(this.env, params.jobId),
+      );
+      if (result.ok) {
+        acquired = true;
+        break;
+      }
+
+      const stillQueued = await step.do(`slotWaitQueued-${attempt}`, async () => {
+        const row = await getDb(this.env)
+          .prepare("SELECT status FROM generation_jobs WHERE id = ?")
+          .bind(params.jobId)
+          .first<{ status: string }>();
+        return row?.status === "queued";
+      });
+      if (!stillQueued) {
+        return;
+      }
+
+      await step.sleep(`slotWait-${attempt}`, SLOT_WAIT_SLEEP);
+    }
+
+    if (!acquired) {
+      throw new Error("GENERATION_SLOTS_OVERLOADED");
+    }
 
     await step.do(
       "pass1",
@@ -55,6 +93,9 @@ export class GenerationWorkflow extends WorkflowEntrypoint<
       return { ok: true as const };
     });
 
-    await step.do("releaseSlot", async () => ({}));
+    await step.do("releaseSlot", async () => {
+      await releaseGenerationSlot(this.env, params.jobId);
+      return { ok: true as const };
+    });
   }
 }
