@@ -111,7 +111,7 @@ function PortraitStrip({
             key={term}
             sx={{
               flex: fill ? "1 1 96px" : `0 0 ${Math.min(tileMax, 120)}px`,
-              maxWidth: fill ? undefined : Math.min(tileMax, 120),
+              maxWidth: fill ? tileMax : Math.min(tileMax, 120),
               minWidth: fill ? 88 : undefined,
               width: fill ? undefined : Math.min(tileMax, 120),
               borderRadius: 1.25,
