@@ -5,9 +5,19 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { ThemeProvider } from "@mui/material/styles";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import MaterialsList from "../../src/components/MaterialsList";
 import type { MaterialListItem } from "../../src/api/client";
 import { theme } from "../../src/theme";
+
+vi.mock("../../src/api/client", () => ({
+  ApiError: class ApiError extends Error {},
+  deleteMaterial: vi.fn(),
+  downloadMaterialUrl: (id: string) => `/api/materials/${id}/download`,
+  patchMaterialSourceRole: vi.fn(),
+  refillPdfOcr: vi.fn(),
+  topicGenerate: vi.fn(),
+}));
+
+import MaterialsList from "../../src/components/MaterialsList";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true;
@@ -101,5 +111,66 @@ describe("MaterialsList residual A", () => {
       (btn as HTMLButtonElement).click();
     });
     expect(onCreateOcclusion).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows a stem group for two-plus split siblings", async () => {
+    await render(
+      createElement(MaterialsList, {
+        showDeckTitle: false,
+        onChanged: vi.fn(),
+        materials: [
+          material({
+            id: "p2",
+            kind: "pdf",
+            filename: "Lecture notes (2/2).pdf",
+          }),
+          material({
+            id: "p1",
+            kind: "pdf",
+            filename: "Lecture notes (1/2).pdf",
+          }),
+        ],
+      }),
+    );
+
+    const stem = document.getElementById("split-stem-pdf-d1-p1");
+    expect(stem?.textContent).toBe("Lecture notes");
+    const grouped = stem?.parentElement?.querySelector("ul");
+    expect(grouped?.getAttribute("aria-labelledby")).toBe(
+      "split-stem-pdf-d1-p1",
+    );
+    expect(
+      document.querySelector(
+        '[aria-label="Download Lecture notes (1/2).pdf"]',
+      ),
+    ).toBeTruthy();
+    expect(
+      document.querySelector(
+        '[aria-label="Download Lecture notes (2/2).pdf"]',
+      ),
+    ).toBeTruthy();
+  });
+
+  it("keeps a lone part-shaped name flat without a stem group", async () => {
+    await render(
+      createElement(MaterialsList, {
+        showDeckTitle: false,
+        onChanged: vi.fn(),
+        materials: [
+          material({
+            id: "solo",
+            kind: "pdf",
+            filename: "Lecture notes (1/2).pdf",
+          }),
+        ],
+      }),
+    );
+
+    expect(document.getElementById("split-stem-pdf-d1-solo")).toBeNull();
+    expect(
+      document.querySelector(
+        '[aria-label="Download Lecture notes (1/2).pdf"]',
+      ),
+    ).toBeTruthy();
   });
 });
