@@ -19,7 +19,12 @@ export type RunConsentedPdfSplitUploadArgs<T extends ConsentedPdfSplitPartResult
 export type RunConsentedPdfSplitUploadResult<
   T extends ConsentedPdfSplitPartResult,
 > =
-  | { ok: false; message: string }
+  | {
+      ok: false;
+      message: string;
+      reason?: "invalid_pdf" | "page_too_large" | "empty";
+      pageCount?: number;
+    }
   | {
       ok: true;
       parts: File[];
@@ -44,7 +49,12 @@ export async function runConsentedPdfSplitUpload<
   onProgress("Splitting PDF…");
   const split = await splitPdfUnderLimit(file, maxBytes, { nameStem });
   if (!split.ok) {
-    return { ok: false, message: split.message };
+    return {
+      ok: false,
+      message: split.message,
+      reason: split.reason,
+      pageCount: split.pageCount,
+    };
   }
 
   const parts = split.files;

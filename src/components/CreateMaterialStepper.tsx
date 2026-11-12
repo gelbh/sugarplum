@@ -46,6 +46,7 @@ import {
   fileTooLargeMessage,
   splitSourceTooLargeMessage,
 } from "../lib/materialUploadLimits";
+import { compressPdfUnderLimit } from "../lib/compressPdfUnderLimit";
 import { runConsentedPdfSplitUpload } from "../lib/runConsentedPdfSplitUpload";
 import {
   SOURCE_ROLES,
@@ -54,6 +55,7 @@ import {
   type SourceRole,
 } from "../lib/sourceRole";
 import { FigureSuggestPanel } from "./FigureSuggestPanel";
+import PdfCompressConsent from "./PdfCompressConsent";
 import PdfSplitConsent from "./PdfSplitConsent";
 import { stepperSx } from "./stepperSx";
 
@@ -117,6 +119,10 @@ export default function CreateMaterialStepper({
   const [showNewDeckForm, setShowNewDeckForm] = useState(false);
   const [pdfSplitOpen, setPdfSplitOpen] = useState(false);
   const [pdfSplitProgress, setPdfSplitProgress] = useState<string | null>(null);
+  const [pdfCompressOpen, setPdfCompressOpen] = useState(false);
+  const [pdfCompressProgress, setPdfCompressProgress] = useState<string | null>(
+    null,
+  );
 
   const titleRef = useRef<HTMLInputElement | null>(null);
 
@@ -376,9 +382,15 @@ export default function CreateMaterialStepper({
               }),
       });
       if (!result.ok) {
-        setError(result.message);
         setPdfSplitOpen(false);
         setPdfSplitProgress(null);
+        if (result.reason === "page_too_large" && result.pageCount === 1) {
+          setError(null);
+          setPdfCompressProgress(null);
+          setPdfCompressOpen(true);
+          return;
+        }
+        setError(result.message);
         return;
       }
 
@@ -409,6 +421,78 @@ export default function CreateMaterialStepper({
       setError(err instanceof ApiError ? err.message : "Could not upload file");
       setPdfSplitOpen(false);
       setPdfSplitProgress(null);
+    } finally {
+      setBusy(false);
+      setReadingScan(false);
+    }
+  }
+
+  function onPdfCompressCancel() {
+    if (busy) return;
+    setPdfCompressOpen(false);
+    setPdfCompressProgress(null);
+  }
+
+  async function onPdfCompressConfirm() {
+    if (busy) return;
+    if (!selectedDeckId || !uploadFile) return;
+    setError(null);
+    setNotice(null);
+    setBusy(true);
+    setPdfCompressProgress("Compressing…");
+    try {
+      const nameStem = uploadFile.name.replace(/\.pdf$/i, "") || "document";
+      const compressed = await compressPdfUnderLimit(
+        uploadFile,
+        MAX_FILE_BYTES,
+        { nameStem, onProgress: setPdfCompressProgress },
+      );
+      if (!compressed.ok) {
+        setError(compressed.message);
+        setPdfCompressOpen(false);
+        setPdfCompressProgress(null);
+        return;
+      }
+
+      setPdfCompressProgress("Uploading…");
+      const topicHints = topicHintsFromLines(alsoCover);
+      const pdfOpts = {
+        figureExtractMode,
+        source_role: sourceRole,
+        ...(topicHints ? { topicHints } : {}),
+      };
+      const material =
+        figureFiles.length > 0
+          ? await uploadPdfWithFigureCrops(
+              selectedDeckId,
+              compressed.file,
+              figureFiles,
+              undefined,
+              { ...pdfOpts, onScan: () => setReadingScan(true) },
+            )
+          : await uploadMaterialFile(selectedDeckId, compressed.file, undefined, {
+              ...pdfOpts,
+              onScan: () => setReadingScan(true),
+            });
+      setUploadFile(null);
+      setFigureFiles([]);
+      setSourceRole("lecture");
+      setAlsoCover("");
+      setPdfCompressOpen(false);
+      setPdfCompressProgress(null);
+      if (material.jobId) {
+        setJobId(material.jobId);
+        setNotice(`Stored file (${material.status}). Generation started.`);
+        setActiveStep(2);
+      } else {
+        setNotice(
+          `Stored file (${material.status}). Open drafts from a prior generate, or upload a new file.`,
+        );
+      }
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not upload file");
+      setPdfCompressOpen(false);
+      setPdfCompressProgress(null);
     } finally {
       setBusy(false);
       setReadingScan(false);
@@ -861,6 +945,18 @@ export default function CreateMaterialStepper({
             void onPdfSplitConfirm();
           }}
           onCancel={onPdfSplitCancel}
+        />
+
+        <PdfCompressConsent
+          open={pdfCompressOpen}
+          fileName={uploadFile?.name ?? "PDF"}
+          maxMb={fileSizeCapMb()}
+          progressLabel={pdfCompressProgress}
+          busy={busy}
+          onConfirm={() => {
+            void onPdfCompressConfirm();
+          }}
+          onCancel={onPdfCompressCancel}
         />
 
         {activeStep === 2 && (

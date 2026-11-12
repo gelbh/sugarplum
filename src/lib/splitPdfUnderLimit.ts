@@ -5,6 +5,8 @@ export type SplitPdfErr = {
   ok: false;
   reason: "invalid_pdf" | "page_too_large" | "empty";
   message: string;
+  /** Present when reason is page_too_large. */
+  pageCount?: number;
 };
 
 function resolveStem(
@@ -88,6 +90,7 @@ export async function splitPdfUnderLimit(
     return {
       ok: false,
       reason: "page_too_large",
+      pageCount,
       message:
         "A single page is larger than the upload limit. Compress the PDF externally and try again.",
     };

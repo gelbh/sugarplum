@@ -23,6 +23,7 @@ import {
   fileTooLargeMessage,
   splitSourceTooLargeMessage,
 } from "../lib/materialUploadLimits";
+import { compressPdfUnderLimit } from "../lib/compressPdfUnderLimit";
 import { runConsentedPdfSplitUpload } from "../lib/runConsentedPdfSplitUpload";
 import type { WorkshopFrame } from "./workshopStack";
 import { openDiyOcclusionFromImageKey } from "./openDiyOcclusion";
@@ -68,6 +69,10 @@ export function useAddMaterialWorkshop({
   const [topicError, setTopicError] = useState<string | null>(null);
   const [pdfSplitOpen, setPdfSplitOpen] = useState(false);
   const [pdfSplitProgress, setPdfSplitProgress] = useState<string | null>(
+    null,
+  );
+  const [pdfCompressOpen, setPdfCompressOpen] = useState(false);
+  const [pdfCompressProgress, setPdfCompressProgress] = useState<string | null>(
     null,
   );
 
@@ -202,9 +207,15 @@ export function useAddMaterialWorkshop({
               }),
       });
       if (!result.ok) {
-        setMaterialError(result.message);
         setPdfSplitOpen(false);
         setPdfSplitProgress(null);
+        if (result.reason === "page_too_large" && result.pageCount === 1) {
+          setMaterialError(null);
+          setPdfCompressProgress(null);
+          setPdfCompressOpen(true);
+          return;
+        }
+        setMaterialError(result.message);
         await Promise.all([refreshDraftJobs(), refreshMaterials()]);
         return;
       }
@@ -255,6 +266,80 @@ export function useAddMaterialWorkshop({
       );
       setPdfSplitOpen(false);
       setPdfSplitProgress(null);
+    } finally {
+      setMaterialBusy(false);
+      setReadingScan(false);
+    }
+  }
+
+  function onPdfCompressCancel() {
+    if (materialBusy) return;
+    setPdfCompressOpen(false);
+    setPdfCompressProgress(null);
+  }
+
+  async function onPdfCompressConfirm() {
+    if (materialBusy) return;
+    if (!uploadFile) return;
+    setMaterialError(null);
+    setMaterialNotice(null);
+    setMaterialBusy(true);
+    setPdfCompressProgress("Compressing…");
+    try {
+      const nameStem = uploadFile.name.replace(/\.pdf$/i, "") || "document";
+      const compressed = await compressPdfUnderLimit(
+        uploadFile,
+        MAX_FILE_BYTES,
+        { nameStem, onProgress: setPdfCompressProgress },
+      );
+      if (!compressed.ok) {
+        setMaterialError(compressed.message);
+        setPdfCompressOpen(false);
+        setPdfCompressProgress(null);
+        return;
+      }
+
+      setPdfCompressProgress("Uploading…");
+      const material =
+        figureFiles.length > 0
+          ? await uploadPdfWithFigureCrops(
+              deckId,
+              compressed.file,
+              figureFiles,
+              undefined,
+              { onScan: () => setReadingScan(true) },
+            )
+          : await uploadMaterialFile(deckId, compressed.file, undefined, {
+              onScan: () => setReadingScan(true),
+            });
+
+      setUploadFile(null);
+      setFigureFiles([]);
+      setPdfCompressOpen(false);
+      setPdfCompressProgress(null);
+
+      if (material.manual_occlusion && material.r2_key && prepareOcclusionFromImageKey) {
+        openDiyOcclusion(material.r2_key);
+        await Promise.all([refreshDraftJobs(), refreshMaterials()]);
+        return;
+      }
+      if (material.jobId) {
+        setMaterialNotice(
+          `Stored file (${material.status}). Generation started.`,
+        );
+        window.location.assign(
+          `/jobs/${encodeURIComponent(material.jobId)}/drafts`,
+        );
+        return;
+      }
+      setMaterialNotice(`Stored file (${material.status}).`);
+      await Promise.all([refreshDraftJobs(), refreshMaterials()]);
+    } catch (err) {
+      setMaterialError(
+        err instanceof ApiError ? err.message : "Could not upload file",
+      );
+      setPdfCompressOpen(false);
+      setPdfCompressProgress(null);
     } finally {
       setMaterialBusy(false);
       setReadingScan(false);
@@ -399,6 +484,8 @@ export function useAddMaterialWorkshop({
     topicError,
     pdfSplitOpen,
     pdfSplitProgress,
+    pdfCompressOpen,
+    pdfCompressProgress,
     resetMaterialMessages,
     onTabChange,
     openDiyOcclusion,
@@ -407,6 +494,8 @@ export function useAddMaterialWorkshop({
     onUploadFile,
     onPdfSplitConfirm,
     onPdfSplitCancel,
+    onPdfCompressConfirm,
+    onPdfCompressCancel,
     onTopicGenerate,
   };
 }
