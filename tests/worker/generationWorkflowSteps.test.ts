@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { processGenerateJob } from "../../worker/generation/consumer";
+import { runAfterPersistPhase } from "../../worker/generation/afterPersist";
 import { enqueueGeneration } from "../../worker/generation/enqueue";
 import {
   extractSidecarKey,
   getExtractSidecar,
 } from "../../worker/generation/extractSidecar";
 import { mockLlmAdapter, type LlmAdapter } from "../../worker/generation/llm";
+import { runPass1Phase } from "../../worker/generation/pass1";
 import { createTestEnv } from "./test-env";
 
 function seedOwner(env: ReturnType<typeof createTestEnv>) {
@@ -68,10 +69,7 @@ describe("generation workflow step helpers", () => {
     );
     const llm = mockLlmAdapter();
 
-    const pass1 = await processGenerateJob(env, msg, {
-      llm,
-      phase: "pass1",
-    });
+    const pass1 = await runPass1Phase(env, msg, { llm });
     expect(pass1).toBe("done");
     expect(env.getCards().length).toBeGreaterThan(0);
     expect(
@@ -81,10 +79,7 @@ describe("generation workflow step helpers", () => {
     const sidecar = await getExtractSidecar(env, msg.jobId);
     expect(sidecar?.drafts.length).toBeGreaterThan(0);
 
-    const after = await processGenerateJob(env, msg, {
-      llm,
-      phase: "afterPersist",
-    });
+    const after = await runAfterPersistPhase(env, msg, { llm });
     expect(after).toBe("done");
     expect(
       env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
@@ -117,21 +112,17 @@ describe("generation workflow step helpers", () => {
       },
     });
 
-    await processGenerateJob(
-      env,
-      { ...msg, autoFollowup: true },
-      { llm, phase: "pass1" },
-    );
+    await runPass1Phase(env, { ...msg, autoFollowup: true }, { llm });
     expect(
       env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
     ).toBe("running");
     const pass1Cards = env.getCards().length;
     expect(pass1Cards).toBeGreaterThan(0);
 
-    const after = await processGenerateJob(
+    const after = await runAfterPersistPhase(
       env,
       { ...msg, autoFollowup: true },
-      { llm, phase: "afterPersist" },
+      { llm },
     );
     expect(after).toBe("done");
     expect(env.getCards()).toHaveLength(pass1Cards);
@@ -149,16 +140,13 @@ describe("generation workflow step helpers", () => {
     );
     const llm = mockLlmAdapter();
 
-    await processGenerateJob(env, msg, { llm, phase: "pass1" });
+    await runPass1Phase(env, msg, { llm });
     expect(
       env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
     ).toBe("running");
     await env.MATERIALS.delete(extractSidecarKey(msg.jobId));
 
-    const after = await processGenerateJob(env, msg, {
-      llm,
-      phase: "afterPersist",
-    });
+    const after = await runAfterPersistPhase(env, msg, { llm });
     expect(after).toBe("done");
     expect(
       env.getGenerationJobs().find((j) => j.id === msg.jobId)?.status,
