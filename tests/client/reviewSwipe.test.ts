@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { applyReviewSwipeFrame } from "../../src/components/useReviewSwipe";
 import {
-  REVIEW_SWIPE_THRESHOLD_PX,
+  SWIPE_THRESHOLD_PX,
   resolveReviewSwipe,
   reviewSwipeVisual,
 } from "../../src/study/cardGestures";
@@ -17,15 +17,15 @@ describe("resolveReviewSwipe", () => {
   });
 
   it("commits exactly at the threshold", () => {
-    expect(resolveReviewSwipe({ dx: REVIEW_SWIPE_THRESHOLD_PX, dy: 0 })).toBe(
+    expect(resolveReviewSwipe({ dx: SWIPE_THRESHOLD_PX, dy: 0 })).toBe(
       "accept",
     );
   });
 
   it("ignores a short swipe", () => {
-    expect(
-      resolveReviewSwipe({ dx: REVIEW_SWIPE_THRESHOLD_PX - 1, dy: 0 }),
-    ).toBe("none");
+    expect(resolveReviewSwipe({ dx: SWIPE_THRESHOLD_PX - 1, dy: 0 })).toBe(
+      "none",
+    );
   });
 
   it("ignores a mostly vertical drag", () => {

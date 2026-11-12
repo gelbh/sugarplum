@@ -1,11 +1,25 @@
 import type { StudyRating } from "../api/client";
 
-export const SWIPE_THRESHOLD_PX = 64;
+export const DRAG_SLOP_PX = 8;
+export const SWIPE_THRESHOLD_PX = 96;
+export const REVIEW_FLY_MS = 200;
 
 export type CardGestureResult =
   | { type: "reveal" }
   | { type: "grade"; rating: StudyRating }
   | { type: "none" };
+
+export function gesturePassedSlop(input: {
+  dx: number;
+  dy: number;
+}): boolean {
+  return Math.hypot(input.dx, input.dy) >= DRAG_SLOP_PX;
+}
+
+/** Sticky arm: once past slop, stays armed for the rest of the gesture. */
+export function armGesture(armed: boolean, dx: number, dy: number): boolean {
+  return armed || gesturePassedSlop({ dx, dy });
+}
 
 export function resolveCardGesture(input: {
   revealed: boolean;
@@ -28,10 +42,6 @@ export function resolveCardGesture(input: {
   return { type: "grade", rating };
 }
 
-export const REVIEW_SWIPE_THRESHOLD_PX = 96;
-export const REVIEW_DRAG_SLOP_PX = 8;
-export const REVIEW_FLY_MS = 200;
-
 export type ReviewSwipeResult = "accept" | "reject" | "none";
 export type ReviewSwipeDecision = Exclude<ReviewSwipeResult, "none">;
 
@@ -41,7 +51,7 @@ export function resolveReviewSwipe(input: {
   dy: number;
 }): ReviewSwipeResult {
   const ax = Math.abs(input.dx);
-  if (ax < REVIEW_SWIPE_THRESHOLD_PX || ax <= Math.abs(input.dy)) return "none";
+  if (ax < SWIPE_THRESHOLD_PX || ax <= Math.abs(input.dy)) return "none";
   return input.dx > 0 ? "accept" : "reject";
 }
 
@@ -65,9 +75,9 @@ export function reviewSwipeVisual(input: {
         : `translateX(${dx}px) rotate(${dx / 20}deg)`;
   const stamp =
     leaving ??
-    (dx >= REVIEW_DRAG_SLOP_PX
+    (dx >= DRAG_SLOP_PX
       ? "accept"
-      : dx <= -REVIEW_DRAG_SLOP_PX
+      : dx <= -DRAG_SLOP_PX
         ? "reject"
         : null);
   return {
@@ -75,7 +85,7 @@ export function reviewSwipeVisual(input: {
     stamp,
     stampOpacity: leaving
       ? 1
-      : Math.min(1, Math.abs(dx) / REVIEW_SWIPE_THRESHOLD_PX),
+      : Math.min(1, Math.abs(dx) / SWIPE_THRESHOLD_PX),
     dimmed: leaving !== null && reduceMotion,
   };
 }
