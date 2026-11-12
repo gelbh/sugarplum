@@ -25,6 +25,7 @@ import {
 } from "../lib/materialUploadLimits";
 import { runConsentedPdfCompressUpload } from "../lib/runConsentedPdfCompressUpload";
 import { runConsentedPdfSplitUpload } from "../lib/runConsentedPdfSplitUpload";
+import { runConsentedPptxSplitUpload } from "../lib/runConsentedPptxSplitUpload";
 import type { WorkshopFrame } from "./workshopStack";
 import { openDiyOcclusionFromImageKey } from "./openDiyOcclusion";
 
@@ -69,6 +70,10 @@ export function useAddMaterialWorkshop({
   const [topicError, setTopicError] = useState<string | null>(null);
   const [pdfSplitOpen, setPdfSplitOpen] = useState(false);
   const [pdfSplitProgress, setPdfSplitProgress] = useState<string | null>(
+    null,
+  );
+  const [pptxSplitOpen, setPptxSplitOpen] = useState(false);
+  const [pptxSplitProgress, setPptxSplitProgress] = useState<string | null>(
     null,
   );
   const [pdfCompressOpen, setPdfCompressOpen] = useState(false);
@@ -180,6 +185,12 @@ export function useAddMaterialWorkshop({
     setPdfSplitProgress(null);
   }
 
+  function onPptxSplitCancel() {
+    if (materialBusy) return;
+    setPptxSplitOpen(false);
+    setPptxSplitProgress(null);
+  }
+
   async function onPdfSplitConfirm() {
     if (materialBusy) return;
     if (!uploadFile) return;
@@ -266,6 +277,81 @@ export function useAddMaterialWorkshop({
       );
       setPdfSplitOpen(false);
       setPdfSplitProgress(null);
+    } finally {
+      setMaterialBusy(false);
+      setReadingScan(false);
+    }
+  }
+
+  async function onPptxSplitConfirm() {
+    if (materialBusy) return;
+    if (!uploadFile) return;
+    setMaterialError(null);
+    setMaterialNotice(null);
+    setMaterialBusy(true);
+    setPptxSplitProgress("Splitting PPTX…");
+    try {
+      const result = await runConsentedPptxSplitUpload({
+        file: uploadFile,
+        maxBytes: MAX_FILE_BYTES,
+        onProgress: setPptxSplitProgress,
+        uploadPart: (part) =>
+          uploadMaterialFile(deckId, part, undefined, {
+            onScan: () => setReadingScan(true),
+          }),
+      });
+      if (!result.ok) {
+        setPptxSplitOpen(false);
+        setPptxSplitProgress(null);
+        setMaterialError(result.message);
+        await Promise.all([refreshDraftJobs(), refreshMaterials()]);
+        return;
+      }
+
+      const { parts, lastJobId, lastStatus, materials } = result;
+      let lastManualKey: string | null = null;
+      for (const material of materials) {
+        if (
+          material.manual_occlusion &&
+          material.r2_key &&
+          prepareOcclusionFromImageKey
+        ) {
+          lastManualKey = material.r2_key;
+        }
+      }
+
+      setUploadFile(null);
+      setFigureFiles([]);
+      setPptxSplitOpen(false);
+      setPptxSplitProgress(null);
+      if (lastJobId) {
+        setMaterialNotice(
+          parts.length > 1
+            ? `Stored ${parts.length} materials (${lastStatus}). Generation started.`
+            : `Stored file (${lastStatus}). Generation started.`,
+        );
+        window.location.assign(
+          `/jobs/${encodeURIComponent(lastJobId)}/drafts`,
+        );
+        return;
+      }
+      if (lastManualKey && prepareOcclusionFromImageKey) {
+        openDiyOcclusion(lastManualKey);
+        await Promise.all([refreshDraftJobs(), refreshMaterials()]);
+        return;
+      }
+      setMaterialNotice(
+        parts.length > 1
+          ? `Stored ${parts.length} materials (${lastStatus}).`
+          : `Stored file (${lastStatus}).`,
+      );
+      await Promise.all([refreshDraftJobs(), refreshMaterials()]);
+    } catch (err) {
+      setMaterialError(
+        err instanceof ApiError ? err.message : "Could not upload file",
+      );
+      setPptxSplitOpen(false);
+      setPptxSplitProgress(null);
     } finally {
       setMaterialBusy(false);
       setReadingScan(false);
@@ -387,11 +473,20 @@ export function useAddMaterialWorkshop({
       uploadFile.size > MAX_FILE_BYTES
     ) {
       if (uploadFile.size > MAX_SPLIT_SOURCE_BYTES) {
-        setMaterialError(splitSourceTooLargeMessage());
+        setMaterialError(splitSourceTooLargeMessage(undefined, "pdf"));
         return;
       }
       setPdfSplitProgress(null);
       setPdfSplitOpen(true);
+      return;
+    }
+    if (contentType === PPTX_MIME && uploadFile.size > MAX_FILE_BYTES) {
+      if (uploadFile.size > MAX_SPLIT_SOURCE_BYTES) {
+        setMaterialError(splitSourceTooLargeMessage(undefined, "pptx"));
+        return;
+      }
+      setPptxSplitProgress(null);
+      setPptxSplitOpen(true);
       return;
     }
     if (uploadFile.size > MAX_FILE_BYTES) {
@@ -487,6 +582,8 @@ export function useAddMaterialWorkshop({
     topicError,
     pdfSplitOpen,
     pdfSplitProgress,
+    pptxSplitOpen,
+    pptxSplitProgress,
     pdfCompressOpen,
     pdfCompressProgress,
     resetMaterialMessages,
@@ -497,6 +594,8 @@ export function useAddMaterialWorkshop({
     onUploadFile,
     onPdfSplitConfirm,
     onPdfSplitCancel,
+    onPptxSplitConfirm,
+    onPptxSplitCancel,
     onPdfCompressConfirm,
     onPdfCompressCancel,
     onTopicGenerate,

@@ -18,5 +18,8 @@ describe("materialUploadLimits", () => {
     expect(MAX_SPLIT_SOURCE_BYTES).toBe(200 * 1024 * 1024);
     expect(fileSizeCapMb(MAX_SPLIT_SOURCE_BYTES)).toBe(200);
     expect(splitSourceTooLargeMessage()).toMatch(/200MB/);
+    expect(splitSourceTooLargeMessage()).toMatch(/PDF/);
+    expect(splitSourceTooLargeMessage(undefined, "pptx")).toMatch(/PPTX/);
+    expect(splitSourceTooLargeMessage(undefined, "pptx")).toMatch(/200MB/);
   });
 });

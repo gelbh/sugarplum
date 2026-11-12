@@ -19,7 +19,9 @@ import { FigureSuggestPanel } from "../components/FigureSuggestPanel";
 import MaterialsList from "../components/MaterialsList";
 import PdfCompressConsent from "../components/PdfCompressConsent";
 import PdfSplitConsent from "../components/PdfSplitConsent";
+import PptxSplitConsent from "../components/PptxSplitConsent";
 import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
+import { fileSizeCapMb } from "../lib/materialUploadLimits";
 import {
   PPTX_MIME,
   resolveUploadContentType,
@@ -68,6 +70,10 @@ type Props = {
   pdfSplitProgress: string | null;
   onPdfSplitConfirm: () => void;
   onPdfSplitCancel: () => void;
+  pptxSplitOpen: boolean;
+  pptxSplitProgress: string | null;
+  onPptxSplitConfirm: () => void;
+  onPptxSplitCancel: () => void;
   pdfCompressOpen: boolean;
   pdfCompressProgress: string | null;
   onPdfCompressConfirm: () => void;
@@ -120,6 +126,10 @@ export default function AddMaterialWorkshop({
   pdfSplitProgress,
   onPdfSplitConfirm,
   onPdfSplitCancel,
+  pptxSplitOpen,
+  pptxSplitProgress,
+  onPptxSplitConfirm,
+  onPptxSplitCancel,
   pdfCompressOpen,
   pdfCompressProgress,
   onPdfCompressConfirm,
@@ -319,6 +329,16 @@ export default function AddMaterialWorkshop({
         busy={materialBusy}
         onConfirm={onPdfSplitConfirm}
         onCancel={onPdfSplitCancel}
+      />
+
+      <PptxSplitConsent
+        open={pptxSplitOpen}
+        fileName={uploadFile?.name ?? "PPTX"}
+        maxMb={fileSizeCapMb()}
+        progressLabel={pptxSplitProgress}
+        busy={materialBusy}
+        onConfirm={onPptxSplitConfirm}
+        onCancel={onPptxSplitCancel}
       />
 
       <PdfCompressConsent
