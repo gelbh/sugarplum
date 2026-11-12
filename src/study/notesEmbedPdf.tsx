@@ -37,7 +37,7 @@ const notesEmbedPlugins = [
   }),
 ];
 
-/** One shared local engine for Notes (lazy PDFium boot). */
+/** Portable engine: Vite's default worker URL fails to boot. */
 const notesEngine = localEngine();
 
 export type NotesEmbedPdfStageProps = {
@@ -46,9 +46,8 @@ export type NotesEmbedPdfStageProps = {
   page: number;
   excerpt: string;
   onPageCount?: (count: number) => void;
-  /** True when the current page has at least one search wash hit. */
   onSearchHits?: (hits: boolean) => void;
-  /** Fired when the user changes page in the stage (1-based). */
+  /** 1-based page when the stage scrolls. */
   onStagePage?: (page: number) => void;
 };
 

@@ -49,7 +49,6 @@ function isAbort(err: unknown): boolean {
   return err instanceof DOMException && err.name === "AbortError";
 }
 
-/** Plain page text for Approach C rescue/write-back (no glyph geometry). */
 async function pdfPagePlainText(
   pdf: Awaited<ReturnType<typeof loadPdfDocument>>,
   pageNum: number,
@@ -255,7 +254,6 @@ export default function StudyNotesDialog({
               );
             }
           } catch {
-            /* keep claimed page */
           }
         } else if (userNavRef.current && page !== null) {
           persistPages(
