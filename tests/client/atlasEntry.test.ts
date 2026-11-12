@@ -276,6 +276,8 @@ describe("entryGlance", () => {
     expect(credits).toMatch(/Ascaris lumbricoides/);
     expect(credits).toMatch(/`microfilaria\.webp`/);
     expect(credits).toMatch(/Wuchereria bancrofti/);
+    expect(credits).toMatch(/`cysticercus\.webp`/);
+    expect(credits).toMatch(/Taenia pisiformis/);
     expect(credits).toMatch(/Public domain/);
     expect(
       existsSync(
@@ -285,6 +287,11 @@ describe("entryGlance", () => {
     expect(
       existsSync(
         new URL("../../public/atlas/stages/microfilaria.webp", import.meta.url),
+      ),
+    ).toBe(true);
+    expect(
+      existsSync(
+        new URL("../../public/atlas/stages/cysticercus.webp", import.meta.url),
       ),
     ).toBe(true);
   });
