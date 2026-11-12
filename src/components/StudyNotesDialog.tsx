@@ -27,6 +27,7 @@ import {
   pagesToPersistAfterNavigate,
   pagesToPersistAfterRescue,
 } from "../study/notesProvenanceWrite";
+import { extractPptxSlides } from "../study/pptxSlideText";
 
 const NotesEmbedPdfStage = lazy(() =>
   import("../study/notesEmbedPdf").then((mod) => ({
@@ -34,7 +35,15 @@ const NotesEmbedPdfStage = lazy(() =>
   })),
 );
 
+const NotesPptxStage = lazy(() =>
+  import("../study/notesPptx").then((mod) => ({
+    default: mod.NotesPptxStage,
+  })),
+);
+
 const FILE_ERROR = "Could not open the file.";
+
+type MaterialKind = "pdf" | "pptx";
 
 type Props = {
   open: boolean;
@@ -79,7 +88,8 @@ export default function StudyNotesDialog({
   const lastPersistedFirstRef = useRef<number | null>(null);
   const [title, setTitle] = useState("Notes");
   const [error, setError] = useState<string | null>(null);
-  const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
+  const [materialKind, setMaterialKind] = useState<MaterialKind | null>(null);
+  const [materialBytes, setMaterialBytes] = useState<Uint8Array | null>(null);
   const [viewPage, setViewPage] = useState<number | null>(null);
   const [pageCount, setPageCount] = useState(0);
   const [pageInput, setPageInput] = useState("");
@@ -132,7 +142,8 @@ export default function StudyNotesDialog({
     if (!open || !jobId || isGuest()) {
       setTitle("Notes");
       setError(null);
-      setPdfBytes(null);
+      setMaterialKind(null);
+      setMaterialBytes(null);
       return;
     }
 
@@ -140,7 +151,8 @@ export default function StudyNotesDialog({
     const ac = new AbortController();
     setTitle("Notes");
     setError(null);
-    setPdfBytes(null);
+    setMaterialKind(null);
+    setMaterialBytes(null);
 
     void (async () => {
       try {
@@ -156,7 +168,11 @@ export default function StudyNotesDialog({
           return;
         }
         setTitle(material.filename || "Notes");
-        if (material.kind !== "pdf" || page === null) return;
+        const kind =
+          material.kind === "pdf" || material.kind === "pptx"
+            ? material.kind
+            : null;
+        if (!kind || page === null) return;
         const response = await fetch(downloadMaterialUrl(material.id), {
           credentials: "include",
           cache: "no-store",
@@ -165,11 +181,13 @@ export default function StudyNotesDialog({
         if (!response.ok) throw new Error(String(response.status));
         const bytes = new Uint8Array(await response.arrayBuffer());
         if (cancelled) return;
-        setPdfBytes(bytes);
+        setMaterialKind(kind);
+        setMaterialBytes(bytes);
       } catch (err) {
         if (cancelled || isAbort(err)) return;
         setError(FILE_ERROR);
-        setPdfBytes(null);
+        setMaterialKind(null);
+        setMaterialBytes(null);
       }
     })();
 
@@ -181,16 +199,17 @@ export default function StudyNotesDialog({
 
   // pdfjs rescue + navigate write-back (Approach C); EmbedPDF is display-only.
   useEffect(() => {
-    if (!open || !pdfBytes || viewPage === null) return;
+    if (!open || !materialBytes || materialKind !== "pdf" || viewPage === null) {
+      return;
+    }
 
     let cancelled = false;
     void (async () => {
       let pdf: Awaited<ReturnType<typeof loadPdfDocument>> | null = null;
       try {
-        const copy = pdfBytes.slice();
+        const copy = materialBytes.slice();
         pdf = await loadPdfDocument(copy.buffer as ArrayBuffer);
         const needle = normalizeExcerptText(excerpt);
-        // pageCount owned by EmbedPDF (onPageCount); pdfjs only for rescue text.
         const total = pdf.numPages;
 
         let displayPage = viewPage;
@@ -268,7 +287,6 @@ export default function StudyNotesDialog({
         if (cancelled) return;
         setError(null);
       } catch {
-        // Provenance scan failed; EmbedPDF may still render the bytes.
         if (!cancelled) setError(null);
       } finally {
         await pdf?.cleanup()?.catch(() => undefined);
@@ -278,7 +296,108 @@ export default function StudyNotesDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, pdfBytes, viewPage, excerpt, page, cardId]);
+  }, [open, materialBytes, materialKind, viewPage, excerpt, page, cardId]);
+
+  // PPTX slide-text rescue + excerpt hit for hide chrome.
+  useEffect(() => {
+    if (
+      !open ||
+      !materialBytes ||
+      materialKind !== "pptx" ||
+      viewPage === null
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const copy = materialBytes.slice();
+        const extracted = await extractPptxSlides(
+          copy.buffer.slice(
+            copy.byteOffset,
+            copy.byteOffset + copy.byteLength,
+          ) as ArrayBuffer,
+        );
+        if (cancelled) return;
+        if (extracted.totalPages >= 1) {
+          setPageCount((prev) =>
+            prev === extracted.totalPages ? prev : extracted.totalPages,
+          );
+        }
+        const scanned: PageText[] = extracted.pages.map((slide) => ({
+          page: slide.page,
+          text: slide.text,
+        }));
+        const needle = normalizeExcerptText(excerpt);
+        let displayPage = viewPage;
+        const current = scanned.find((s) => s.page === displayPage);
+        const pageText = current?.text ?? "";
+
+        const allowRescue = !userNavRef.current && page !== null;
+        const claimedMiss =
+          Boolean(needle) &&
+          pagesForExcerpt(excerpt, [{ page: displayPage, text: pageText }])
+            .length === 0;
+
+        if (allowRescue && claimedMiss && scanned.length > 0) {
+          const rescued = resolveNotesDisplayPage({
+            claimed: displayPage,
+            excerpt,
+            pages: scanned,
+          });
+          if (rescued !== null && rescued !== displayPage) {
+            displayPage = rescued;
+            setViewPage(displayPage);
+            setPageInput(String(displayPage));
+            persistPages(
+              pagesToPersistAfterRescue({
+                claimed: page!,
+                rescued,
+                excerpt,
+                scanned,
+                scanComplete: true,
+              }),
+            );
+          }
+        } else if (userNavRef.current && page !== null) {
+          persistPages(
+            pagesToPersistAfterNavigate({
+              storedFirst: lastPersistedFirstRef.current,
+              displayPage,
+              excerpt,
+              pageTexts: [
+                {
+                  page: displayPage,
+                  text:
+                    scanned.find((s) => s.page === displayPage)?.text ?? "",
+                },
+              ],
+            }),
+          );
+        }
+
+        if (cancelled) return;
+        const hitText =
+          scanned.find((s) => s.page === displayPage)?.text ?? pageText;
+        const hits =
+          Boolean(needle) &&
+          pagesForExcerpt(excerpt, [{ page: displayPage, text: hitText }])
+            .length > 0;
+        setWashHits(hits);
+        setError(null);
+      } catch {
+        if (!cancelled) {
+          setWashHits(false);
+          setError(null);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, materialBytes, materialKind, viewPage, excerpt, page, cardId]);
 
   const onPageCount = useCallback((count: number) => {
     if (count >= 1) setPageCount((prev) => (prev === count ? prev : count));
@@ -312,8 +431,9 @@ export default function StudyNotesDialog({
     setPageInput(String(clamped));
   }
 
-  const scrubberReady = pageCount >= 1 && viewPage !== null && pdfBytes;
-  const showEmbed = Boolean(pdfBytes && viewPage !== null);
+  const scrubberReady =
+    pageCount >= 1 && viewPage !== null && materialBytes != null;
+  const showStage = Boolean(materialBytes && viewPage !== null && materialKind);
 
   return (
     <Dialog open={open} onClose={() => onClose()} fullWidth maxWidth="md">
@@ -356,14 +476,28 @@ export default function StudyNotesDialog({
             overflow: "hidden",
           }}
         >
-          {showEmbed ? (
-            <Suspense fallback={<Typography sx={{ p: 2 }}>Loading viewer…</Typography>}>
+          {showStage && materialKind === "pdf" ? (
+            <Suspense
+              fallback={<Typography sx={{ p: 2 }}>Loading viewer…</Typography>}
+            >
               <NotesEmbedPdfStage
-                bytes={pdfBytes!}
+                bytes={materialBytes!}
                 page={viewPage!}
                 excerpt={excerpt}
                 onPageCount={onPageCount}
                 onSearchHits={onSearchHits}
+                onStagePage={onStagePage}
+              />
+            </Suspense>
+          ) : null}
+          {showStage && materialKind === "pptx" ? (
+            <Suspense
+              fallback={<Typography sx={{ p: 2 }}>Loading slides…</Typography>}
+            >
+              <NotesPptxStage
+                bytes={materialBytes!}
+                page={viewPage!}
+                onPageCount={onPageCount}
                 onStagePage={onStagePage}
               />
             </Suspense>
@@ -396,7 +530,7 @@ export default function StudyNotesDialog({
                 Prev
               </Button>
               <Typography variant="body2" component="span">
-                Page
+                {materialKind === "pptx" ? "Slide" : "Page"}
               </Typography>
               <TextField
                 size="small"
@@ -415,7 +549,8 @@ export default function StudyNotesDialog({
                 }}
                 inputProps={{
                   inputMode: "numeric",
-                  "aria-label": "Page number",
+                  "aria-label":
+                    materialKind === "pptx" ? "Slide number" : "Page number",
                   style: { width: "3rem", textAlign: "center" },
                 }}
               />
