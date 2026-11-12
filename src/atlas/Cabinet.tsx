@@ -28,13 +28,12 @@ import AtlasTable from "./AtlasTable";
 import ComparePicker from "./ComparePicker";
 import SpecimenTile from "./SpecimenTile";
 import {
-  GROUP_LABELS,
   NO_FILTERS,
   applyFilters,
+  browseSections,
   byName,
   filtersActive,
   focusActive as isFocusActive,
-  groupRows,
   hostOptions,
   matchesSearch,
   organOptions,
@@ -107,15 +106,13 @@ export default function Cabinet({
   );
   const keyEntries = useMemo(
     () =>
-      focusActive
-        ? visible.filter((e) => e.tier === "key").sort(byName)
-        : [],
+      focusActive ? visible.filter((e) => e.tier === "key").sort(byName) : [],
     [focusActive, visible],
   );
   const showKeyRow = keyEntries.length > 0;
   const rows = useMemo(
     () =>
-      groupRows(
+      browseSections(
         showKeyRow ? visible.filter((e) => e.tier !== "key") : visible,
       ),
     [showKeyRow, visible],
@@ -134,22 +131,13 @@ export default function Cabinet({
             },
           ]
         : []),
-      ...rows.map((row) => ({
-        id: row.group,
-        title: GROUP_LABELS[row.group].plural,
-        subtitle: `${GROUP_LABELS[row.group].common}, ${row.entries.length} ${
-          row.entries.length === 1 ? "entry" : "entries"
-        }`,
-        entries: row.entries,
-      })),
+      ...rows,
     ],
     [showKeyRow, keyEntries, rows],
   );
   const tileIndex = useMemo(
     () =>
-      new Map(
-        gridSections.flatMap((s) => s.entries).map((e, i) => [e.id, i]),
-      ),
+      new Map(gridSections.flatMap((s) => s.entries).map((e, i) => [e.id, i])),
     [gridSections],
   );
   const expanded =
@@ -225,9 +213,7 @@ export default function Cabinet({
             <Button
               variant="contained"
               onClick={() =>
-                onMakeCardsFromKey(
-                  keyEntries.map((e) => e.originKey ?? e.id),
-                )
+                onMakeCardsFromKey(keyEntries.map((e) => e.originKey ?? e.id))
               }
               aria-label="Make cards from Key"
               sx={{
@@ -306,7 +292,11 @@ export default function Cabinet({
               <IconButton
                 aria-label="Atlas menu"
                 onClick={(ev) => setMenuAnchor(ev.currentTarget)}
-                sx={{ bgcolor: "background.paper", border: 1, borderColor: "divider" }}
+                sx={{
+                  bgcolor: "background.paper",
+                  border: 1,
+                  borderColor: "divider",
+                }}
               >
                 <MoreVertIcon fontSize="small" />
               </IconButton>
@@ -412,9 +402,7 @@ export default function Cabinet({
                         setExpandedId((cur) => (cur === e.id ? null : e.id))
                       }
                       onOpen={() => onOpenEntry(e.id)}
-                      onEdit={
-                        onEditEntry ? () => onEditEntry(e) : undefined
-                      }
+                      onEdit={onEditEntry ? () => onEditEntry(e) : undefined}
                     />
                   </ViewTransition>
                 ))}

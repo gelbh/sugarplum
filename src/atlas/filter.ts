@@ -114,6 +114,85 @@ export function groupRows(
   })).filter((row) => row.entries.length > 0);
 }
 
+export type BrowseSection = {
+  id: string;
+  title: string;
+  subtitle: string;
+  entries: AtlasEntryView[];
+};
+
+const PROTOZOA_BANDS: {
+  id: string;
+  title: string;
+  lifecycleType: "direct" | "indirect" | null;
+}[] = [
+  {
+    id: "protozoan-direct",
+    title: "Protozoa · Direct",
+    lifecycleType: "direct",
+  },
+  {
+    id: "protozoan-indirect",
+    title: "Protozoa · Indirect",
+    lifecycleType: "indirect",
+  },
+  {
+    id: "protozoan-unspecified",
+    title: "Protozoa · Unspecified",
+    lifecycleType: null,
+  },
+];
+
+function sectionSubtitle(group: ParasiteGroup, count: number): string {
+  const noun = count === 1 ? "entry" : "entries";
+  return `${GROUP_LABELS[group].common}, ${count} ${noun}`;
+}
+
+/** Missing or unexpected values bucket with Unspecified (overlay JSON may omit the field). */
+function protozoaBandType(
+  lifecycleType: string | null | undefined,
+): "direct" | "indirect" | null {
+  if (lifecycleType === "direct" || lifecycleType === "indirect") {
+    return lifecycleType;
+  }
+  return null;
+}
+
+/** Browse bands: Protozoa splits by lifecycleType; other groups stay whole. */
+export function browseSections(entries: AtlasEntryView[]): BrowseSection[] {
+  const sections: BrowseSection[] = [];
+  for (const group of PARASITE_GROUPS) {
+    const inGroup = entries.filter((e) => e.fields.group === group);
+    if (inGroup.length === 0) continue;
+    if (group === "protozoan") {
+      for (const band of PROTOZOA_BANDS) {
+        const bandEntries = inGroup
+          .filter(
+            (e) =>
+              protozoaBandType(e.fields.lifecycleType) === band.lifecycleType,
+          )
+          .sort(byName);
+        if (bandEntries.length === 0) continue;
+        sections.push({
+          id: band.id,
+          title: band.title,
+          subtitle: sectionSubtitle("protozoan", bandEntries.length),
+          entries: bandEntries,
+        });
+      }
+      continue;
+    }
+    const sorted = [...inGroup].sort(byName);
+    sections.push({
+      id: group,
+      title: GROUP_LABELS[group].plural,
+      subtitle: sectionSubtitle(group, sorted.length),
+      entries: sorted,
+    });
+  }
+  return sections;
+}
+
 export type RailSection = {
   heading: string;
   entries: AtlasEntryView[];
@@ -136,8 +215,8 @@ export function railSections(
   useFocus: boolean,
 ): RailSection[] {
   if (useFocus) return focusGroupRows(entries);
-  return groupRows(entries).map((row) => ({
-    heading: GROUP_LABELS[row.group].plural,
+  return browseSections(entries).map((row) => ({
+    heading: row.title,
     entries: row.entries,
   }));
 }
@@ -157,9 +236,7 @@ function sortValue(
     case "name":
       return entryTitles(e).primary;
     case "group":
-      return e.fields.group
-        ? PARASITE_GROUPS.indexOf(e.fields.group)
-        : -1;
+      return e.fields.group ? PARASITE_GROUPS.indexOf(e.fields.group) : -1;
     case "host":
       return e.fields.definitiveHosts[0] ?? null;
     case "site":
