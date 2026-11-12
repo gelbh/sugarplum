@@ -77,7 +77,7 @@ export type NotesEmbedPdfStageProps = {
   copyRef?: React.MutableRefObject<(() => void) | null>;
 };
 
-function NotesSelectionBridge({
+function NotesSelectionMenu({
   onCanCopyChange,
   copyRef,
 }: {
@@ -274,10 +274,6 @@ export function NotesEmbedPdfStage({
           onRescue={onRescue}
         />
         <SelectionClipboard />
-        <NotesSelectionBridge
-          onCanCopyChange={onCanCopyChange}
-          copyRef={copyRef}
-        />
         <Stage
           style={{
             height: "100%",
@@ -286,6 +282,12 @@ export function NotesEmbedPdfStage({
             ["--epdf-search-highlight-active" as string]: WASH_ACTIVE,
             ["--epdf-search-blend-mode" as string]: "normal",
           }}
+          overlay={
+            <NotesSelectionMenu
+              onCanCopyChange={onCanCopyChange}
+              copyRef={copyRef}
+            />
+          }
         >
           {() => (
             <>
