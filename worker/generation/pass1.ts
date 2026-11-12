@@ -57,11 +57,11 @@ import { consumeFreeGenSlot } from "./quota";
 import { parseAtlasJobProvenance } from "../atlas/makeCardsSource";
 import { insertDraftCards } from "./gap-fill";
 import { putExtractSidecar } from "./extractSidecar";
+import { afterRunningJobTerminal } from "./jobTerminal";
 import { filterDraftsByQuality } from "./quality";
 import { harvestRuleDrafts } from "./rules";
 import { type CardDraft } from "./schema";
 import { mergeTopicHints, parseTopicHintsJson } from "./topic-hints";
-import { recordGenerationUsageEventForJob } from "./usage";
 import { resolveTextLlm } from "./resolve-text-llm";
 import { stampDraftProvenancePages } from "../../src/study/excerptPages";
 
@@ -339,10 +339,11 @@ async function rememberExhaustedWindow(
 }
 
 export async function markJobFailed(
-  db: D1Database,
+  env: Env,
   jobId: string,
   error: string,
 ): Promise<void> {
+  const db = getDb(env);
   const finishedAt = new Date().toISOString();
   const result = await db
     .prepare(
@@ -352,7 +353,7 @@ export async function markJobFailed(
     .run();
   // Soft-complete (or another healer) may have already left `running`.
   if ((result.meta.changes ?? 0) > 0) {
-    await recordGenerationUsageEventForJob(db, jobId);
+    await afterRunningJobTerminal(env, jobId);
   }
 }
 
@@ -943,7 +944,7 @@ export async function runPass1Phase(
     const messageText =
       err instanceof Error ? err.message : "Generation failed";
     console.error("generation job failed", jobId, err);
-    await markJobFailed(db, jobId, messageText);
+    await markJobFailed(env, jobId, messageText);
     return "done";
   }
 }

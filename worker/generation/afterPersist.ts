@@ -2,14 +2,11 @@ import type { Env } from "../env";
 import { getDb } from "../db/client";
 import type { GenerateQueueMessage } from "./enqueue";
 import { appendGapFillDrafts } from "./gap-fill";
-import {
-  deleteExtractSidecar,
-  getExtractSidecar,
-} from "./extractSidecar";
+import { getExtractSidecar } from "./extractSidecar";
 import { buildCoverageLedger } from "./coverage";
 import { parseAtlasJobProvenance } from "../atlas/makeCardsSource";
+import { afterRunningJobTerminal } from "./jobTerminal";
 import { mergeTopicHints, parseTopicHintsJson } from "./topic-hints";
-import { recordGenerationUsageEventForJob } from "./usage";
 import {
   loadDeckFronts,
   markJobFailed,
@@ -96,8 +93,7 @@ async function finalizeAfterPersist(
     )
     .bind("needs_review", coverageJson, finishedAt, args.jobId)
     .run();
-  await recordGenerationUsageEventForJob(db, args.jobId);
-  await deleteExtractSidecar(env, args.jobId);
+  await afterRunningJobTerminal(env, args.jobId);
 }
 
 /** Resume gap-fill + finalize after a durable pass-1 step (Workflow). */
@@ -204,7 +200,7 @@ export async function runAfterPersistPhase(
       .bind(jobId)
       .first<{ n: number }>();
     if (!countRow || countRow.n < 1) {
-      await markJobFailed(db, jobId, messageText);
+      await markJobFailed(env, jobId, messageText);
     }
     return "done";
   }
