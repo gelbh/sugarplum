@@ -44,7 +44,7 @@ export async function listPdfPages(
   return { pageCount: snap.pageCount, pages: snap.pages };
 }
 
-/** 1-based page number → layout (display index + 1). */
+/** `pageNumber` is 1-based; layout.index is 0-based. */
 export function pageLayoutForNumber(
   pages: readonly EmbedPdfPageLayout[],
   pageNumber: number,
@@ -76,6 +76,7 @@ function rasterToCanvas(
   canvas.height = raster.height;
   canvas.style.width = `${cssW}px`;
   canvas.style.height = `${cssH}px`;
+  // Off-DOM canvases report clientWidth 0; pin CSS box for canvasSourceScale.
   Object.defineProperty(canvas, "clientWidth", {
     configurable: true,
     get: () => cssW,
@@ -96,6 +97,7 @@ function rasterToCanvas(
   if (raster.stride === rowBytes) {
     imageData.data.set(new Uint8ClampedArray(raster.data));
   } else {
+    // PDFium stride can exceed width*4; pack tightly for ImageData.
     for (let y = 0; y < raster.height; y++) {
       const start = y * raster.stride;
       imageData.data.set(
@@ -108,9 +110,6 @@ function rasterToCanvas(
   return canvas;
 }
 
-/**
- * Render a page to canvas at a CSS width (DPR-aware), matching prior pdfjs helper.
- */
 export async function renderPageToCanvas(
   doc: EmbedPdfDocument,
   page: EmbedPdfPageLayout,
