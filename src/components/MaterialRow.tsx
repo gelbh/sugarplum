@@ -28,7 +28,12 @@ import {
   SOURCE_ROLE_LABELS,
   type SourceRole,
 } from "../lib/sourceRole";
+import { SOURCE_ROLE_ICONS } from "../lib/sourceRoleIcons";
 import { navigate } from "../nav/navigate";
+import {
+  SelectEnumItem,
+  renderSelectEnumValue,
+} from "./SelectEnumItem";
 
 export type MaterialRowProps = {
   material: MaterialListItem;
@@ -126,10 +131,19 @@ export default function MaterialRow({
           onChange={(ev) => {
             onSourceRoleChange(material, ev.target.value as SourceRole);
           }}
+          renderValue={(value) =>
+            renderSelectEnumValue({
+              icon: SOURCE_ROLE_ICONS[value as SourceRole],
+              label: SOURCE_ROLE_LABELS[value as SourceRole],
+            })
+          }
         >
           {SOURCE_ROLES.map((role) => (
             <MenuItem key={role} value={role}>
-              {SOURCE_ROLE_LABELS[role]}
+              <SelectEnumItem
+                icon={SOURCE_ROLE_ICONS[role]}
+                label={SOURCE_ROLE_LABELS[role]}
+              />
             </MenuItem>
           ))}
         </Select>

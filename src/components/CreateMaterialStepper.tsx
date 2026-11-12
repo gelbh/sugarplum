@@ -55,10 +55,15 @@ import {
   suggestSourceRole,
   type SourceRole,
 } from "../lib/sourceRole";
+import { SOURCE_ROLE_ICONS } from "../lib/sourceRoleIcons";
 import { FigureSuggestPanel } from "./FigureSuggestPanel";
 import PdfCompressConsent from "./PdfCompressConsent";
 import PdfSplitConsent from "./PdfSplitConsent";
 import PptxSplitConsent from "./PptxSplitConsent";
+import {
+  SelectEnumItem,
+  renderSelectEnumValue,
+} from "./SelectEnumItem";
 import { stepperSx } from "./stepperSx";
 
 type Props = {
@@ -683,10 +688,19 @@ export default function CreateMaterialStepper({
         label="Source role"
         value={sourceRole}
         onChange={(ev) => setSourceRole(ev.target.value as SourceRole)}
+        renderValue={(value) =>
+          renderSelectEnumValue({
+            icon: SOURCE_ROLE_ICONS[value as SourceRole],
+            label: SOURCE_ROLE_LABELS[value as SourceRole],
+          })
+        }
       >
         {SOURCE_ROLES.map((role) => (
           <MenuItem key={role} value={role}>
-            {SOURCE_ROLE_LABELS[role]}
+            <SelectEnumItem
+              icon={SOURCE_ROLE_ICONS[role]}
+              label={SOURCE_ROLE_LABELS[role]}
+            />
           </MenuItem>
         ))}
       </Select>

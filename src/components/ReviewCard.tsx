@@ -13,6 +13,7 @@ import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { CardDraftView, CardType, StudyRating } from "../api/client";
+import { CARD_TYPE_ICONS } from "../lib/cardTypeIcons";
 import {
   draftFaceKind,
   draftForType,
@@ -20,6 +21,10 @@ import {
   typeSelectModel,
   type DraftEditorChange,
 } from "../lib/draftCardModel";
+import {
+  SelectEnumItem,
+  renderSelectEnumValue,
+} from "./SelectEnumItem";
 import {
   REJECT_REASONS,
   REJECT_REASON_LABELS,
@@ -91,10 +96,33 @@ function StageTypeSelect({
       onChange={(e) => onChange(draftForType(card, e.target.value as CardType))}
       SelectDisplayProps={{ "aria-label": "Card type" }}
       sx={STAGE_SELECT_SX}
+      renderValue={(value) =>
+        renderSelectEnumValue({
+          icon: CARD_TYPE_ICONS[value as CardType],
+          label: TYPE_LABELS[value as CardType],
+        })
+      }
+      MenuProps={{
+        slotProps: {
+          paper: {
+            sx: {
+              bgcolor: "var(--sp-stage-deep, #180816)",
+              color: "var(--sp-ivory)",
+              borderColor: "color-mix(in srgb, var(--sp-ivory) 24%, transparent)",
+              "& .MuiMenuItem-root.Mui-selected": {
+                bgcolor: "rgba(206, 147, 216, 0.16)",
+              },
+              "& .MuiMenuItem-root.Mui-selected:hover": {
+                bgcolor: "rgba(206, 147, 216, 0.24)",
+              },
+            },
+          },
+        },
+      }}
     >
       {model.options.map((t) => (
         <MenuItem key={t} value={t}>
-          {TYPE_LABELS[t]}
+          <SelectEnumItem icon={CARD_TYPE_ICONS[t]} label={TYPE_LABELS[t]} />
         </MenuItem>
       ))}
     </Select>

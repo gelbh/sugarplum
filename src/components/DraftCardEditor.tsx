@@ -19,6 +19,7 @@ import {
   CLOZE_EXTRA_LABEL,
   extractClozeAnswer,
 } from "../lib/clozeFormat";
+import { CARD_TYPE_ICONS } from "../lib/cardTypeIcons";
 import {
   backAnswer,
   draftForType,
@@ -29,6 +30,10 @@ import {
   TYPE_LABELS,
   type DraftEditorChange,
 } from "../lib/draftCardModel";
+import {
+  SelectEnumItem,
+  renderSelectEnumValue,
+} from "./SelectEnumItem";
 import {
   MCQ_MAX,
   MCQ_MIN,
@@ -163,15 +168,27 @@ export default function DraftCardEditor({
             onChange={(e) =>
               onChange(draftForType(card, e.target.value as CardType))
             }
+            renderValue={(value) =>
+              renderSelectEnumValue({
+                icon: CARD_TYPE_ICONS[value as CardType],
+                label: TYPE_LABELS[value as CardType] ?? String(value),
+              })
+            }
           >
             {typeSelectLocked ? (
               <MenuItem value={typeValue}>
-                {TYPE_LABELS[typeValue] ?? typeValue}
+                <SelectEnumItem
+                  icon={CARD_TYPE_ICONS[typeValue]}
+                  label={TYPE_LABELS[typeValue] ?? typeValue}
+                />
               </MenuItem>
             ) : (
               typeOptions.map((t) => (
                 <MenuItem key={t} value={t}>
-                  {TYPE_LABELS[t] ?? t}
+                  <SelectEnumItem
+                    icon={CARD_TYPE_ICONS[t]}
+                    label={TYPE_LABELS[t] ?? t}
+                  />
                 </MenuItem>
               ))
             )}
