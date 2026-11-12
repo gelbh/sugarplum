@@ -252,10 +252,17 @@ describe("entryGlance", () => {
     );
     expect(credits).toMatch(/`egg\.webp`/);
     expect(credits).toMatch(/Ascaris lumbricoides/);
+    expect(credits).toMatch(/`microfilaria\.webp`/);
+    expect(credits).toMatch(/Wuchereria bancrofti/);
     expect(credits).toMatch(/Public domain/);
     expect(
       existsSync(
         new URL("../../public/atlas/stages/egg.webp", import.meta.url),
+      ),
+    ).toBe(true);
+    expect(
+      existsSync(
+        new URL("../../public/atlas/stages/microfilaria.webp", import.meta.url),
       ),
     ).toBe(true);
   });
