@@ -47,6 +47,7 @@ Replace-only policy: mapped keys keep a real webp. Licence-ok plates overwrite A
 | gamont                       | `gamont.webp`              | Haemoproteus columbae gamonts                               | PlasmodiumLady                  | CC BY-SA 4.0  | [https://commons.wikimedia.org/wiki/File:Male_and_female_haem_columbae.jpg](https://commons.wikimedia.org/wiki/File:Male_and_female_haem_columbae.jpg)                                                                                                               |
 | meront                       | `meront.webp`              | Eimeria stiedae schizogony stages (meronts)                 | Danny S.                        | CC BY-SA 4.0  | [https://commons.wikimedia.org/wiki/File:Eimeria_stiedae_(Kokzidose_Kaninchen).jpg](<https://commons.wikimedia.org/wiki/File:Eimeria_stiedae_(Kokzidose_Kaninchen).jpg>)                                                                                             |
 | sporocyst                    | `sporocyst.webp`           | Fasciola sporocysts in snail intermediate host              | Alan R Walker                   | CC BY-SA 3.0  | [https://commons.wikimedia.org/wiki/File:Fasciola-sporocysts.jpg](https://commons.wikimedia.org/wiki/File:Fasciola-sporocysts.jpg)                                                                                                                                   |
+| L4                           | `l4.webp`                  | Strongyloides stercoralis autoinfective L4 (sputum, Giemsa) | CDC / DPDx                      | Public domain | [https://www.cdc.gov/dpdx/strongyloidiasis/index.html](https://www.cdc.gov/dpdx/strongyloidiasis/index.html)                                                                                                                                                         |
 
 ## Still AI (mapped; replace later)
 
@@ -56,7 +57,6 @@ These keys still resolve to AI-generated webps. Leave mapped until a licence-ok 
 | -------------- | --------------------- |
 | immature fluke | `immature-fluke.webp` |
 | L2             | `l2.webp`             |
-| L4             | `l4.webp`             |
 | sporont        | `sporont.webp`        |
 
 ## Missing

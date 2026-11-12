@@ -278,6 +278,8 @@ describe("entryGlance", () => {
     expect(credits).toMatch(/Wuchereria bancrofti/);
     expect(credits).toMatch(/`cysticercus\.webp`/);
     expect(credits).toMatch(/Taenia pisiformis/);
+    expect(credits).toMatch(/`l4\.webp`/);
+    expect(credits).toMatch(/Strongyloides stercoralis/);
     expect(credits).toMatch(/Public domain/);
     expect(
       existsSync(
@@ -293,6 +295,9 @@ describe("entryGlance", () => {
       existsSync(
         new URL("../../public/atlas/stages/cysticercus.webp", import.meta.url),
       ),
+    ).toBe(true);
+    expect(
+      existsSync(new URL("../../public/atlas/stages/l4.webp", import.meta.url)),
     ).toBe(true);
   });
 
