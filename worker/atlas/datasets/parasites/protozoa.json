@@ -30,7 +30,10 @@
             "name": "cyst",
             "location": "passed in faeces; stays infective for days to weeks and is swallowed with contaminated food or water",
             "hostRole": "environment",
-            "diagnostic": true
+            "diagnostic": true,
+            "infective": true,
+            "transmission": "human, dog or non-human primate swallows cysts in contaminated food or water",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "metacystic trophozoite",
@@ -349,7 +352,10 @@
             "name": "cyst",
             "location": "passed in faeces and swallowed with contaminated food or water",
             "hostRole": "environment",
-            "diagnostic": false
+            "diagnostic": false,
+            "infective": true,
+            "transmission": "pig, human, rodent or non-human primate swallows cysts in contaminated food or water",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "excystation",
@@ -507,7 +513,10 @@
           {
             "name": "oocyst",
             "location": "passed unsporulated in faeces; sporulates in the environment within a few days and is then infective",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "chicken, turkey, cattle or sheep swallows sporulated oocysts from the environment",
+            "note": "Infective stage for the definitive host after sporulation"
           },
           {
             "name": "meront",
@@ -678,7 +687,10 @@
           {
             "name": "oocyst",
             "location": "passed already sporulated and infective in faeces; thick-walled and survives for months in cool damp conditions",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "cattle, sheep, goat, pig, horse, deer, dog, cat, human or bird swallows already-sporulated oocysts from faeces-contaminated feed or water",
+            "note": "Infective stage for the definitive host (oocysts are infective when shed)"
           },
           {
             "name": "meront",
@@ -859,7 +871,10 @@
             "name": "trophozoite",
             "location": "preputial crypts of bulls and reproductive tract of cows, spread at mating; ileum, caecum and colon of cats",
             "hostRole": "definitive",
-            "diagnostic": true
+            "diagnostic": true,
+            "infective": true,
+            "transmission": "cattle transfer trophozoites at mating; cats pass them faecal–oral",
+            "note": "Infective form for the definitive host (no cyst stage)"
           },
           {
             "name": "binary fission",
@@ -1034,7 +1049,10 @@
           {
             "name": "stage in Heterakis egg",
             "location": "carried inside Heterakis gallinarum eggs on litter",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "turkey or chicken swallows Heterakis eggs that carry histomonads",
+            "note": "Infective stage for the definitive host via Heterakis eggs"
           }
         ],
         "diagnosticTests": [
@@ -1207,7 +1225,10 @@
           {
             "name": "spore",
             "location": "shed on and off in urine and faeces; swallowed with contaminated food or water, rarely inhaled",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "rabbit, rodent, dog, cat, fox or person swallows spores from urine or faeces",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "meront",
@@ -1382,9 +1403,8 @@
             "name": "sporulated oocyst",
             "location": "matures in soil, water or feed and becomes infective",
             "hostRole": "environment",
-            "infective": true,
             "transmission": "swallowed with contaminated food, water or soil",
-            "note": "Infective for intermediate hosts and cats"
+            "note": "Also infects intermediate hosts when swallowed; cats can acquire this way too"
           },
           {
             "name": "tachyzoite",
@@ -1396,8 +1416,8 @@
             "location": "mainly brain, eye and skeletal or heart muscle of the intermediate host",
             "hostRole": "intermediate",
             "infective": true,
-            "transmission": "cat or person eats undercooked tissue with cysts",
-            "note": "Tissue route of infection"
+            "transmission": "cat or other felid eats tissue cysts in prey or undercooked meat",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "meront",
@@ -1596,7 +1616,10 @@
           {
             "name": "tissue cyst with bradyzoites",
             "location": "nervous tissue and skeletal muscle of the intermediate host",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "dog or other canid eats tissue cysts in intermediate-host tissues",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "meront",
@@ -1777,7 +1800,10 @@
           {
             "name": "sarcocyst with bradyzoites",
             "location": "skeletal and heart muscle of the intermediate host",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "dog, cat, fox or person eats muscle sarcocysts in an intermediate host",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "gamont",
@@ -1978,7 +2004,10 @@
             "name": "tissue cyst with bradyzoites",
             "location": "skin, subcutis, mucous membranes, sclera and testes of the bovine",
             "hostRole": "intermediate",
-            "diagnostic": true
+            "diagnostic": true,
+            "infective": true,
+            "transmission": "cat eats tissue cysts in bovine or deer tissues when that route occurs",
+            "note": "Putative infective stage for the cat definitive host; cat role still debated"
           }
         ],
         "diagnosticStage": "tissue cyst with bradyzoites",
@@ -2148,7 +2177,10 @@
           {
             "name": "gametocyte",
             "location": "red blood cells, taken up by a feeding tick",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "tick takes up gametocytes while feeding on infected blood",
+            "note": "Infective stage for the tick definitive host"
           },
           {
             "name": "gamete and zygote",
@@ -2372,7 +2404,10 @@
           {
             "name": "merozoite and piroplasm",
             "location": "red blood cells, taken up by a feeding tick",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "tick takes up piroplasms while feeding on infected blood",
+            "note": "Infective blood stage for the tick definitive host"
           },
           {
             "name": "gamete and zygote",
@@ -2559,7 +2594,10 @@
           {
             "name": "promastigote",
             "location": "deposited in the skin by a feeding sand fly",
-            "hostRole": "definitive"
+            "hostRole": "definitive",
+            "infective": true,
+            "transmission": "sand fly deposits promastigotes in the skin of a dog, canid or person while feeding",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "amastigote",
@@ -2795,7 +2833,10 @@
           {
             "name": "metacyclic trypomastigote",
             "location": "inoculated into the skin by a feeding tsetse fly",
-            "hostRole": "definitive"
+            "hostRole": "definitive",
+            "infective": true,
+            "transmission": "tsetse fly inoculates metacyclic trypomastigotes into cattle, sheep, goat, pig, horse, dog, cat, camelid or human skin while feeding",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "bloodstream trypomastigote",
@@ -3013,7 +3054,10 @@
           {
             "name": "gametocyte",
             "location": "red blood cells, taken up by a feeding mosquito",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "mosquito takes up gametocytes while feeding on infected bird blood",
+            "note": "Infective stage for the mosquito definitive host"
           },
           {
             "name": "zygote and ookinete",
@@ -3218,7 +3262,10 @@
           {
             "name": "gamont",
             "location": "inside circulating leucocytes, taken up by a feeding tick",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "Rhipicephalus sanguineus or other tick takes up gamonts while feeding on infected blood",
+            "note": "Infective stage for the tick definitive host"
           }
         ],
         "diagnosticStage": "gamont",
