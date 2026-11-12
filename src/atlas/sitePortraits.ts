@@ -5,11 +5,39 @@ export type SitePortrait = {
   archetype: string;
 };
 
-/**
- * Bundled Anatomography / Commons site portraits (public/atlas/sites/*.webp).
- * Empty until CREDITS hunt ships files; AI placeholders removed.
- */
-const PORTRAITS: Record<string, string> = {};
+/** Bundled educational site portraits (public/atlas/sites/*.webp). */
+const PORTRAITS: Record<string, string> = {
+  "gastrointestinal tract": "/atlas/sites/gastrointestinal-tract.webp",
+  stomach: "/atlas/sites/stomach.webp",
+  abomasum: "/atlas/sites/abomasum.webp",
+  rumen: "/atlas/sites/rumen.webp",
+  "small intestine": "/atlas/sites/small-intestine.webp",
+  ileum: "/atlas/sites/ileum.webp",
+  "large intestine": "/atlas/sites/large-intestine.webp",
+  caecum: "/atlas/sites/caecum.webp",
+  liver: "/atlas/sites/liver.webp",
+  "bile ducts": "/atlas/sites/bile-ducts.webp",
+  lungs: "/atlas/sites/lungs.webp",
+  "pulmonary arteries": "/atlas/sites/pulmonary-arteries.webp",
+  "central nervous system": "/atlas/sites/central-nervous-system.webp",
+  muscle: "/atlas/sites/muscle.webp",
+  skin: "/atlas/sites/skin.webp",
+  blood: "/atlas/sites/blood.webp",
+  "blood vessels": "/atlas/sites/blood-vessels.webp",
+  "red blood cells": "/atlas/sites/red-blood-cells.webp",
+  "reproductive tract": "/atlas/sites/reproductive-tract.webp",
+  "haemolymphatic organs": "/atlas/sites/haemolymphatic-organs.webp",
+  "lymph nodes": "/atlas/sites/lymph-nodes.webp",
+  "bone marrow": "/atlas/sites/bone-marrow.webp",
+  eye: "/atlas/sites/eye.webp",
+  "ear canal": "/atlas/sites/ear-canal.webp",
+  "nasal cavity": "/atlas/sites/nasal-cavity.webp",
+  "connective tissue": "/atlas/sites/connective-tissue.webp",
+  "nuchal ligament": "/atlas/sites/nuchal-ligament.webp",
+  oesophagus: "/atlas/sites/oesophagus.webp",
+  trachea: "/atlas/sites/trachea.webp",
+  "urinary bladder": "/atlas/sites/urinary-bladder.webp",
+};
 
 /**
  * Resolve an organ vocabulary term to a bundled portrait by walking
