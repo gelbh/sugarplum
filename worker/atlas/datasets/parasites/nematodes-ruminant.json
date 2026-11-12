@@ -53,7 +53,10 @@
           {
             "name": "L3",
             "location": "ensheathed infective larva on herbage",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "sheep or goat ingests L3 on herbage",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "L4",
@@ -518,7 +521,10 @@
           {
             "name": "L3",
             "location": "ensheathed infective larva on herbage",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "ruminant ingests L3 on herbage",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "L4",
@@ -728,7 +734,10 @@
           {
             "name": "L3",
             "location": "infective larva in soil or bedding; enters via skin or mouth, or is swallowed",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "L3 penetrates skin or is ingested by the ruminant",
+            "note": "Infective (filariform) stage for the definitive host"
           },
           {
             "name": "parasitic adult female",
@@ -929,7 +938,10 @@
           {
             "name": "L3",
             "location": "infective larva that penetrates skin or is swallowed",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "L3 penetrates skin or is ingested by the ruminant",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "migrating larva",
@@ -1137,7 +1149,10 @@
           {
             "name": "infective larva in egg",
             "location": "embryonated egg on pasture",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "ruminant swallows eggs containing infective larvae",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult",
@@ -1325,7 +1340,10 @@
           {
             "name": "L3",
             "location": "ensheathed infective larva on herbage",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "sheep or goat ingests L3 on herbage",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "L4",
@@ -1527,7 +1545,10 @@
           {
             "name": "L3",
             "location": "infective larva on pasture herbage",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "ruminant ingests L3 on herbage",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "L4",
@@ -1746,7 +1767,10 @@
           {
             "name": "egg",
             "location": "passed in faeces; lemon-shaped with a plug at each pole",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "ruminant swallows larvated eggs from the environment",
+            "note": "Infective stage for the definitive host (L1 inside the egg)"
           },
           {
             "name": "larva",
@@ -1958,7 +1982,10 @@
           {
             "name": "L3",
             "location": "hatches after chill then warmth (about 10 C for 10 days), then free on herbage",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "lamb ingests L3 that hatched from the egg on pasture",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "L4",
@@ -2155,7 +2182,10 @@
           {
             "name": "L3",
             "location": "develops from L1 inside a snail or slug; can also leave the mollusc",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "sheep or goat eats a snail or slug carrying L3",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult",
@@ -2351,7 +2381,10 @@
           {
             "name": "L3",
             "location": "develops from L1 inside a snail or slug; can also leave the mollusc",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "sheep or goat eats a snail or slug carrying L3",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult",
@@ -2542,7 +2575,10 @@
           {
             "name": "L3",
             "location": "infective larva on pasture",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "sheep or goat ingests L3 on pasture",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "adult",
@@ -2731,7 +2767,10 @@
           {
             "name": "L3",
             "location": "ensheathed infective larva on herbage",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "cattle ingest L3 on herbage",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "L4",
@@ -2953,7 +2992,10 @@
           {
             "name": "L3",
             "location": "infective larva on pasture; spread onto Pilobolus sporangia that fling it up to 3 m",
-            "hostRole": "environment"
+            "hostRole": "environment",
+            "infective": true,
+            "transmission": "cattle ingest L3 on pasture",
+            "note": "Infective stage for the definitive host"
           },
           {
             "name": "migrating L3",
@@ -3138,7 +3180,10 @@
           {
             "name": "L3",
             "location": "infective larva that develops in the blackfly",
-            "hostRole": "intermediate"
+            "hostRole": "intermediate",
+            "infective": true,
+            "transmission": "Simulium blackfly deposits L3 while feeding on cattle",
+            "note": "Infective stage for the definitive host"
           }
         ],
         "diagnosticStage": "microfilaria",
