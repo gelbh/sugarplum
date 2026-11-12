@@ -18,6 +18,10 @@ vi.mock("../../src/settings/FsrsWeightsSettings", () => ({
   },
 }));
 
+vi.mock("../../src/study/fsrsOptimizeClient", () => ({
+  maybeRunFsrsOptimize: vi.fn(async () => "skipped" as const),
+}));
+
 const roots: Root[] = [];
 
 afterEach(() => {
