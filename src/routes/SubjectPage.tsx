@@ -32,7 +32,6 @@ import {
   listCovers,
   listDecks,
   listSubjects,
-  me,
   patchDeck,
   patchSubject,
   subjectComposition,
@@ -137,7 +136,6 @@ export default function SubjectPage({ subjectId }: Props) {
     let cancelled = false;
     (async () => {
       try {
-        await me();
         const found = await load();
         if (cancelled) return;
         if (!found) {

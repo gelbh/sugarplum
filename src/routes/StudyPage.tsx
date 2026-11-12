@@ -33,7 +33,6 @@ import {
   listDecks,
   listDueCards,
   listSubjects,
-  me,
   reviewCard,
   type CardDraftView,
   type StudyQueueMeta,
@@ -41,6 +40,7 @@ import {
 } from "../api/client";
 import { isGuest } from "../guest/session";
 import { navigate } from "../nav/navigate";
+import { useSession } from "../session/SessionContext";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { backAnswer, isOcclusionFront } from "../lib/draftCardModel";
 import { useGradeMailboxFlight } from "../study/useGradeMailboxFlight";
@@ -127,6 +127,7 @@ function occlusionStudyParts(card: CardDraftView): OcclusionStudyParts {
 
 /** Study session: reveal answer, grade with FSRS (keys 1-4 or arrows; Space flips). Code-led MUI. */
 export default function StudyPage() {
+  const { user } = useSession();
   const [queue, setQueue] = useState<CardDraftView[]>([]);
   const [queueTotal, setQueueTotal] = useState(0);
   const [revealed, setRevealed] = useState(false);
@@ -329,11 +330,10 @@ export default function StudyPage() {
   }, [scopeOpts]);
 
   useEffect(() => {
+    if (!user) return;
     let cancelled = false;
     (async () => {
       try {
-        const user = await me();
-        if (cancelled) return;
         setUserId(user.id);
         refreshPendingCount(user.id);
         await flushOnMount(user.id);
@@ -360,7 +360,7 @@ export default function StudyPage() {
     return () => {
       cancelled = true;
     };
-  }, [endLoad, flushOnMount, load, refreshPendingCount, setUserId]);
+  }, [endLoad, flushOnMount, load, refreshPendingCount, setUserId, user]);
 
   const current = queueHead;
   const notes = useStudyNotesOverlay(current);

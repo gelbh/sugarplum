@@ -43,7 +43,6 @@ import {
   listMaterials,
   listSubjectCompositionSummaries,
   listSubjects,
-  me,
   patchSubject,
   type Deck,
   type JobListItem,
@@ -187,7 +186,6 @@ export default function LibraryPage() {
     let cancelled = false;
     (async () => {
       try {
-        await me();
         const [subjectList, deckList, jobs, materialList, coverList, summaries] =
           await Promise.all([
             listSubjects(),
