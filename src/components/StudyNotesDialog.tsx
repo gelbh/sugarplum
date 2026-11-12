@@ -86,6 +86,7 @@ export default function StudyNotesDialog({
   const writeSeqRef = useRef(0);
   const writeChainRef = useRef(Promise.resolve());
   const lastPersistedFirstRef = useRef<number | null>(null);
+  const copyRef = useRef<(() => void) | null>(null);
   const [title, setTitle] = useState("Notes");
   const [error, setError] = useState<string | null>(null);
   const [materialKind, setMaterialKind] = useState<MaterialKind | null>(null);
@@ -94,6 +95,7 @@ export default function StudyNotesDialog({
   const [pageCount, setPageCount] = useState(0);
   const [pageInput, setPageInput] = useState("");
   const [washHits, setWashHits] = useState(false);
+  const [canCopy, setCanCopy] = useState(false);
 
   function persistPages(pages: number[] | null) {
     if (!cardId || isGuest() || !pages || pages.length === 0) return;
@@ -123,6 +125,7 @@ export default function StudyNotesDialog({
       setPageCount(0);
       setPageInput("");
       setWashHits(false);
+      setCanCopy(false);
       userNavRef.current = false;
       wrotePagesRef.current = "";
       writeSeqRef.current = 0;
@@ -134,6 +137,7 @@ export default function StudyNotesDialog({
     writeSeqRef.current = 0;
     lastPersistedFirstRef.current = page;
     setWashHits(false);
+    setCanCopy(false);
     setViewPage(page);
     setPageInput(page != null ? String(page) : "");
   }, [open, page, cardId]);
@@ -416,6 +420,10 @@ export default function StudyNotesDialog({
     });
   }, []);
 
+  const onCanCopyChange = useCallback((next: boolean) => {
+    setCanCopy(next);
+  }, []);
+
   function goToPage(next: number) {
     const clamped = clampNotesPage(next, pageCount);
     if (clamped === null) {
@@ -487,6 +495,8 @@ export default function StudyNotesDialog({
                 onPageCount={onPageCount}
                 onSearchHits={onSearchHits}
                 onStagePage={onStagePage}
+                onCanCopyChange={onCanCopyChange}
+                copyRef={copyRef}
               />
             </Suspense>
           ) : null}
@@ -567,7 +577,18 @@ export default function StudyNotesDialog({
             </>
           ) : null}
         </Box>
-        <Button onClick={onClose}>Close</Button>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+          {materialKind === "pdf" ? (
+            <Button
+              size="small"
+              disabled={!canCopy}
+              onClick={() => copyRef.current?.()}
+            >
+              Copy
+            </Button>
+          ) : null}
+          <Button onClick={onClose}>Close</Button>
+        </Box>
       </DialogActions>
     </Dialog>
   );
