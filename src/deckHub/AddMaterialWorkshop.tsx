@@ -17,6 +17,7 @@ import DraftCardEditor, {
 } from "../components/DraftCardEditor";
 import { FigureSuggestPanel } from "../components/FigureSuggestPanel";
 import MaterialsList from "../components/MaterialsList";
+import PdfCompressConsent from "../components/PdfCompressConsent";
 import PdfSplitConsent from "../components/PdfSplitConsent";
 import { MAX_CLIENT_FIGURES } from "../lib/figureGeometry";
 import {
@@ -67,6 +68,10 @@ type Props = {
   pdfSplitProgress: string | null;
   onPdfSplitConfirm: () => void;
   onPdfSplitCancel: () => void;
+  pdfCompressOpen: boolean;
+  pdfCompressProgress: string | null;
+  onPdfCompressConfirm: () => void;
+  onPdfCompressCancel: () => void;
   topicValue: string;
   onTopicValueChange: (value: string) => void;
   topicBusy: boolean;
@@ -115,6 +120,10 @@ export default function AddMaterialWorkshop({
   pdfSplitProgress,
   onPdfSplitConfirm,
   onPdfSplitCancel,
+  pdfCompressOpen,
+  pdfCompressProgress,
+  onPdfCompressConfirm,
+  onPdfCompressCancel,
   topicValue,
   onTopicValueChange,
   topicBusy,
@@ -310,6 +319,15 @@ export default function AddMaterialWorkshop({
         busy={materialBusy}
         onConfirm={onPdfSplitConfirm}
         onCancel={onPdfSplitCancel}
+      />
+
+      <PdfCompressConsent
+        open={pdfCompressOpen}
+        fileName={uploadFile?.name ?? "PDF"}
+        progressLabel={pdfCompressProgress}
+        busy={materialBusy}
+        onConfirm={onPdfCompressConfirm}
+        onCancel={onPdfCompressCancel}
       />
 
       {activeTab === "paste" ? (

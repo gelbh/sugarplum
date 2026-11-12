@@ -46,6 +46,7 @@ import {
   fileTooLargeMessage,
   splitSourceTooLargeMessage,
 } from "../lib/materialUploadLimits";
+import { runConsentedPdfCompressUpload } from "../lib/runConsentedPdfCompressUpload";
 import { runConsentedPdfSplitUpload } from "../lib/runConsentedPdfSplitUpload";
 import {
   SOURCE_ROLES,
@@ -54,6 +55,7 @@ import {
   type SourceRole,
 } from "../lib/sourceRole";
 import { FigureSuggestPanel } from "./FigureSuggestPanel";
+import PdfCompressConsent from "./PdfCompressConsent";
 import PdfSplitConsent from "./PdfSplitConsent";
 import { stepperSx } from "./stepperSx";
 
@@ -117,6 +119,10 @@ export default function CreateMaterialStepper({
   const [showNewDeckForm, setShowNewDeckForm] = useState(false);
   const [pdfSplitOpen, setPdfSplitOpen] = useState(false);
   const [pdfSplitProgress, setPdfSplitProgress] = useState<string | null>(null);
+  const [pdfCompressOpen, setPdfCompressOpen] = useState(false);
+  const [pdfCompressProgress, setPdfCompressProgress] = useState<string | null>(
+    null,
+  );
 
   const titleRef = useRef<HTMLInputElement | null>(null);
 
@@ -342,6 +348,35 @@ export default function CreateMaterialStepper({
     setPdfSplitProgress(null);
   }
 
+  function clearUploadForm() {
+    setUploadFile(null);
+    setFigureFiles([]);
+    setSourceRole("lecture");
+    setAlsoCover("");
+  }
+
+  function uploadPdfPart(part: File, figuresForThisPart: File[]) {
+    if (!selectedDeckId) {
+      return Promise.reject(new Error("Select a deck first"));
+    }
+    const topicHints = topicHintsFromLines(alsoCover);
+    const pdfOpts = {
+      figureExtractMode,
+      source_role: sourceRole,
+      ...(topicHints ? { topicHints } : {}),
+      onScan: () => setReadingScan(true),
+    };
+    return figuresForThisPart.length > 0
+      ? uploadPdfWithFigureCrops(
+          selectedDeckId,
+          part,
+          figuresForThisPart,
+          undefined,
+          pdfOpts,
+        )
+      : uploadMaterialFile(selectedDeckId, part, undefined, pdfOpts);
+  }
+
   async function onPdfSplitConfirm() {
     if (busy) return;
     if (!selectedDeckId || !uploadFile) return;
@@ -350,43 +385,28 @@ export default function CreateMaterialStepper({
     setBusy(true);
     setPdfSplitProgress("Splitting PDF…");
     try {
-      const topicHints = topicHintsFromLines(alsoCover);
-      const pdfOpts = {
-        figureExtractMode,
-        source_role: sourceRole,
-        ...(topicHints ? { topicHints } : {}),
-      };
       const result = await runConsentedPdfSplitUpload({
         file: uploadFile,
         maxBytes: MAX_FILE_BYTES,
         figureFiles,
         onProgress: setPdfSplitProgress,
-        uploadPart: (part, figuresForThisPart) =>
-          figuresForThisPart.length > 0
-            ? uploadPdfWithFigureCrops(
-                selectedDeckId,
-                part,
-                figuresForThisPart,
-                undefined,
-                { ...pdfOpts, onScan: () => setReadingScan(true) },
-              )
-            : uploadMaterialFile(selectedDeckId, part, undefined, {
-                ...pdfOpts,
-                onScan: () => setReadingScan(true),
-              }),
+        uploadPart: uploadPdfPart,
       });
       if (!result.ok) {
-        setError(result.message);
         setPdfSplitOpen(false);
         setPdfSplitProgress(null);
+        if (result.next === "compress") {
+          setError(null);
+          setPdfCompressProgress(null);
+          setPdfCompressOpen(true);
+          return;
+        }
+        setError(result.message);
         return;
       }
 
       const { parts, lastJobId, lastStatus, skippedFigures } = result;
-      setUploadFile(null);
-      setFigureFiles([]);
-      setSourceRole("lecture");
-      setAlsoCover("");
+      clearUploadForm();
       setPdfSplitOpen(false);
       setPdfSplitProgress(null);
       const figureNote = skippedFigures ? ` ${FIGURES_SKIPPED_NOTICE}.` : "";
@@ -409,6 +429,55 @@ export default function CreateMaterialStepper({
       setError(err instanceof ApiError ? err.message : "Could not upload file");
       setPdfSplitOpen(false);
       setPdfSplitProgress(null);
+    } finally {
+      setBusy(false);
+      setReadingScan(false);
+    }
+  }
+
+  function onPdfCompressCancel() {
+    if (busy) return;
+    setPdfCompressOpen(false);
+    setPdfCompressProgress(null);
+  }
+
+  async function onPdfCompressConfirm() {
+    if (busy) return;
+    if (!selectedDeckId || !uploadFile) return;
+    setError(null);
+    setNotice(null);
+    setBusy(true);
+    setPdfCompressProgress("Compressing…");
+    try {
+      const result = await runConsentedPdfCompressUpload({
+        file: uploadFile,
+        maxBytes: MAX_FILE_BYTES,
+        figureFiles,
+        onProgress: setPdfCompressProgress,
+        uploadPart: uploadPdfPart,
+      });
+      if (!result.ok) {
+        setError(result.message);
+        setPdfCompressOpen(false);
+        setPdfCompressProgress(null);
+        return;
+      }
+      clearUploadForm();
+      setPdfCompressOpen(false);
+      setPdfCompressProgress(null);
+      if (result.lastJobId) {
+        setJobId(result.lastJobId);
+        setNotice(`Stored file (${result.lastStatus}). Generation started.`);
+        setActiveStep(2);
+      } else {
+        setNotice(
+          `Stored file (${result.lastStatus}). Open drafts from a prior generate, or upload a new file.`,
+        );
+      }
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not upload file");
+      setPdfCompressOpen(false);
+      setPdfCompressProgress(null);
     } finally {
       setBusy(false);
       setReadingScan(false);
@@ -861,6 +930,18 @@ export default function CreateMaterialStepper({
             void onPdfSplitConfirm();
           }}
           onCancel={onPdfSplitCancel}
+        />
+
+        <PdfCompressConsent
+          open={pdfCompressOpen}
+          fileName={uploadFile?.name ?? "PDF"}
+          maxMb={fileSizeCapMb()}
+          progressLabel={pdfCompressProgress}
+          busy={busy}
+          onConfirm={() => {
+            void onPdfCompressConfirm();
+          }}
+          onCancel={onPdfCompressCancel}
         />
 
         {activeStep === 2 && (
