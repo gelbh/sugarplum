@@ -528,7 +528,7 @@ export default function StudyPage() {
       }
       if (key === "z" || key === "Z") {
         e.preventDefault();
-        toggleZen();
+        if (!mobile) toggleZen();
         return;
       }
       if (
@@ -577,6 +577,7 @@ export default function StudyPage() {
     current,
     flipBack,
     leaveStudy,
+    mobile,
     notes.notesAvailable,
     notes.openNotes,
     onGrade,

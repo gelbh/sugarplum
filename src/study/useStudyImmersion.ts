@@ -1,4 +1,4 @@
-import { useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
 import { studyStage } from "./studyStage";
@@ -22,6 +22,11 @@ export function useStudyImmersion(hasCard: boolean): {
     setHideChrome(stage);
     return () => setHideChrome(false);
   }, [stage, setHideChrome]);
+
+  // Mobile immersion is card-scoped; drop FS so empty/complete restore chrome.
+  useEffect(() => {
+    if (mobile && !hasCard && fullscreenZen) exitZen();
+  }, [mobile, hasCard, fullscreenZen, exitZen]);
 
   return { stage, mobile, toggleZen, exitZen };
 }

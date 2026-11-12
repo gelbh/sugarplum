@@ -22,4 +22,11 @@ describe("studyStage", () => {
       studyStage({ mobile: false, hasCard: true, fullscreenZen: false }),
     ).toBe(false);
   });
+
+  it("stays true on mobile without a card if fullscreen is still on", () => {
+    // Callers must exit FS when the mobile queue empties (useStudyImmersion).
+    expect(
+      studyStage({ mobile: true, hasCard: false, fullscreenZen: true }),
+    ).toBe(true);
+  });
 });
