@@ -22,7 +22,7 @@ export type FsrsSchedulerCard = {
   stability: number;
   difficulty: number;
   state: number;
-  scheduleStatus: "new" | "learning" | "review" | "relearning" | string;
+  scheduleStatus: "new" | "learning" | "review" | string;
   dueAt: Date;
   lastReviewAt: Date | null;
   cardId: string;
@@ -42,7 +42,7 @@ function scheduleStatusForState(state: number): string {
     case State.Review:
       return "review";
     case State.Relearning:
-      return "relearning";
+      return "learning";
     default:
       return "new";
   }
