@@ -250,6 +250,28 @@ describe("entryGlance", () => {
     expect(resolveSitePortrait("skin")?.src).toMatch(/skin\.webp$/);
   });
 
+  it("credits the open-licence liver site plate", () => {
+    expect(resolveSitePortrait("liver")).toEqual({
+      src: "/atlas/sites/liver.webp",
+      archetype: "liver",
+    });
+    const credits = readFileSync(
+      new URL("../../public/atlas/sites/CREDITS.md", import.meta.url),
+      "utf8",
+    );
+    expect(credits).toMatch(/`liver\.webp`/);
+    expect(credits).toMatch(/BodyParts3D/);
+    expect(credits).toMatch(/CC BY-SA 2\.1 JP/);
+    expect(resolveSitePortrait("lungs")?.src).toMatch(/lungs\.webp$/);
+    expect(credits).toMatch(/`lungs\.webp`/);
+    expect(credits).toMatch(/Gray973/);
+    expect(
+      existsSync(
+        new URL("../../public/atlas/sites/liver.webp", import.meta.url),
+      ),
+    ).toBe(true);
+  });
+
   it("passes PPP min/max for the glance timeline", () => {
     const ppp = glanceRows(fasciola.fields).find((r) => r.key === "pppDays");
     expect(ppp?.pppMin).toBeTypeOf("number");
