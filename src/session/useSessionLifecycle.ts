@@ -2,15 +2,20 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   login as loginApi,
   logout as logoutApi,
+  register as registerApi,
 } from "../api/client";
+import { GUEST_USER_ID } from "../guest/session";
 import {
   resolveSession,
   type ResolveSessionResult,
   type SessionUser,
 } from "./resolveSession";
 import type { SessionValue } from "./SessionContext";
+import { postSessionHint, subscribeSessionSync } from "./sessionSync";
 
 const REFRESH_THROTTLE_MS = 60_000;
+/** Collapse BC+storage double-fire (login clears guest then posts hint). */
+const SYNC_HINT_COALESCE_MS = 1_000;
 
 export type SessionPhase =
   | { kind: "loading" }
@@ -40,7 +45,15 @@ function applyResolveResult(
   return { kind: "ready", status: "unauthenticated", user: null };
 }
 
-/** Resolve, visibility refresh, and auth mutations for SessionBootstrap. */
+function isReadyGuest(phase: SessionPhase): boolean {
+  return (
+    phase.kind === "ready" &&
+    phase.status === "authenticated" &&
+    phase.user?.id === GUEST_USER_ID
+  );
+}
+
+/** Resolve, visibility refresh, cross-tab sync, and auth mutations for SessionBootstrap. */
 export function useSessionLifecycle(
   resolve: () => Promise<ResolveSessionResult> = resolveSession,
 ): {
@@ -53,6 +66,7 @@ export function useSessionLifecycle(
   const phaseRef = useRef<SessionPhase>(phase);
   const genRef = useRef(0);
   const lastSyncRef = useRef(0);
+  const lastHintAtRef = useRef(0);
   const loggingOutRef = useRef(false);
 
   useEffect(() => {
@@ -89,6 +103,7 @@ export function useSessionLifecycle(
     const onVis = () => {
       if (document.visibilityState !== "visible") return;
       if (phaseRef.current.kind !== "ready") return;
+      if (isReadyGuest(phaseRef.current)) return;
       void runResolve({ silent: true });
     };
     document.addEventListener("visibilitychange", onVis);
@@ -99,13 +114,35 @@ export function useSessionLifecycle(
     await runResolve({ silent: true, force: true });
   }, [runResolve]);
 
-  const login = useCallback(
-    async (email: string, password: string, turnstileToken: string) => {
-      const user = await loginApi(email, password, turnstileToken);
+  useEffect(() => {
+    return subscribeSessionSync(() => {
+      const now = Date.now();
+      if (now - lastHintAtRef.current < SYNC_HINT_COALESCE_MS) return;
+      lastHintAtRef.current = now;
+      void runResolve({ silent: true, force: true });
+    });
+  }, [runResolve]);
+
+  const completeAuthMutation = useCallback(
+    async (mutate: () => Promise<SessionUser>) => {
+      const user = await mutate();
       await refreshSession();
+      postSessionHint();
       return user;
     },
     [refreshSession],
+  );
+
+  const login = useCallback(
+    (email: string, password: string, turnstileToken: string) =>
+      completeAuthMutation(() => loginApi(email, password, turnstileToken)),
+    [completeAuthMutation],
+  );
+
+  const register = useCallback(
+    (email: string, password: string, turnstileToken: string) =>
+      completeAuthMutation(() => registerApi(email, password, turnstileToken)),
+    [completeAuthMutation],
   );
 
   const logout = useCallback(async () => {
@@ -121,6 +158,7 @@ export function useSessionLifecycle(
       };
       phaseRef.current = next;
       setPhase(next);
+      postSessionHint();
     } finally {
       loggingOutRef.current = false;
     }
@@ -131,8 +169,8 @@ export function useSessionLifecycle(
       phase.kind === "ready" && phase.status === "authenticated"
         ? phase.user
         : null;
-    return { user, refreshSession, login, logout };
-  }, [phase, refreshSession, login, logout]);
+    return { user, refreshSession, login, logout, register };
+  }, [phase, refreshSession, login, logout, register]);
 
   const retry = useCallback(() => setTicket((n) => n + 1), []);
 
