@@ -812,4 +812,41 @@ describe("built-in parasite dataset", () => {
       "protozoan",
     );
   });
+
+  it("marks exactly one infective stage on every arthropod entry", () => {
+    expectInfectiveStageLocks(
+      {
+        "linguatula-serrata": "nymph",
+        "ctenocephalides-felis": "adult",
+        "ctenocephalides-canis": "adult",
+        "pulex-irritans": "adult",
+        "ixodes-ricinus": "larva",
+        "ixodes-hexagonus": "larva",
+        "dermacentor-reticulatus": "larva",
+        "rhipicephalus-sanguineus": "larva",
+        "haemaphysalis-punctata": "larva",
+        "sarcoptes-scabiei": "adult",
+        "psoroptes-ovis": "adult",
+        "otodectes-cynotis": "adult",
+        "demodex-canis": "adult",
+        "cheyletiella-spp": "adult",
+        "chorioptes-bovis": "adult",
+        "dermanyssus-gallinae": "nymph",
+        "trichodectes-canis": "adult",
+        "felicola-subrostratus": "adult",
+        "bovicola-ovis": "adult",
+        "bovicola-bovis": "adult",
+        "linognathus-vituli": "adult",
+        "lucilia-sericata": "larva",
+        "hypoderma-bovis": "L1",
+        "oestrus-ovis": "L1",
+        "gasterophilus-intestinalis": "L1",
+        "culicoides-spp": "adult",
+        "stomoxys-calcitrans": "adult",
+        "haematobia-irritans": "adult",
+        "musca-autumnalis": "adult",
+      },
+      "arthropod",
+    );
+  });
 });
