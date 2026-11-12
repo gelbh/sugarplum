@@ -1,14 +1,7 @@
-import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
-import type { PDFDocumentProxy } from "pdfjs-dist";
 import { canvasSourceScale } from "./figureGeometry";
 
 /** Match server generate/figure crop limit (worker/materials/limits.ts). */
 export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
-
-GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url,
-).toString();
 
 export function cssRectToSourceRect(
   css: { x: number; y: number; w: number; h: number },
@@ -29,53 +22,6 @@ export function assertWithinImageByteLimit(byteSize: number): void {
       `Figure crop exceeds ${MAX_IMAGE_BYTES / (1024 * 1024)}MB limit`,
     );
   }
-}
-
-export async function loadPdfDocument(
-  data: ArrayBuffer,
-): Promise<PDFDocumentProxy> {
-  const task = getDocument({ data, useSystemFonts: true });
-  return task.promise;
-}
-
-export async function renderPdfPageToCanvas(
-  pdf: PDFDocumentProxy,
-  pageIndex: number,
-  targetCssWidth: number,
-): Promise<HTMLCanvasElement> {
-  const page = await pdf.getPage(pageIndex + 1);
-  const baseViewport = page.getViewport({ scale: 1 });
-  const cssScale = targetCssWidth / baseViewport.width;
-  const cssViewport = page.getViewport({ scale: cssScale });
-  const outputScale =
-    typeof devicePixelRatio === "number" && devicePixelRatio > 0
-      ? devicePixelRatio
-      : 1;
-  const viewport = page.getViewport({ scale: cssScale * outputScale });
-
-  const canvas = document.createElement("canvas");
-  const cssW = Math.floor(cssViewport.width);
-  const cssH = Math.floor(cssViewport.height);
-  canvas.width = Math.floor(viewport.width);
-  canvas.height = Math.floor(viewport.height);
-  canvas.style.width = `${cssW}px`;
-  canvas.style.height = `${cssH}px`;
-  // Off-DOM canvases report clientWidth 0; pin CSS box for canvasSourceScale.
-  Object.defineProperty(canvas, "clientWidth", {
-    configurable: true,
-    get: () => cssW,
-  });
-  Object.defineProperty(canvas, "clientHeight", {
-    configurable: true,
-    get: () => cssH,
-  });
-
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    throw new Error("2d canvas context unavailable");
-  }
-  await page.render({ canvasContext: ctx, viewport, canvas }).promise;
-  return canvas;
 }
 
 /** Crop using CSS rect; source pixels use canvasSourceScale. */

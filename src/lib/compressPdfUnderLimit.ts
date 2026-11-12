@@ -4,8 +4,12 @@ import {
   PDFRawStream,
   type PDFRef,
 } from "pdf-lib";
+import {
+  listPdfPages,
+  openPdfDocument,
+  renderPageToCanvasAtScale,
+} from "./embedPdfEngine";
 import { fileSizeCapMb } from "./materialUploadLimits";
-import { loadPdfDocument } from "./pdfPageRender";
 
 export type CompressPdfOk = { ok: true; file: File };
 export type CompressPdfErr = {
@@ -235,37 +239,24 @@ async function stageRasterPage(
   onProgress?.("Re-encoding page…");
   let pdf;
   try {
-    const copy = new ArrayBuffer(bytes.byteLength);
-    new Uint8Array(copy).set(bytes);
-    pdf = await loadPdfDocument(copy);
+    pdf = await openPdfDocument(bytes);
   } catch {
     return null;
   }
 
   try {
-    if (pdf.numPages !== 1) return null;
-    const page = await pdf.getPage(1);
-    const base = page.getViewport({ scale: 1 });
+    const { pageCount, pages } = await listPdfPages(pdf);
+    if (pageCount !== 1 || !pages[0]) return null;
+    const layout = pages[0];
+    const baseWidth = layout.size.width;
+    const baseHeight = layout.size.height;
 
     for (const scale of RASTER_SCALES) {
-      const clamped = clampScaleForPage(base.width, base.height, scale);
-      const viewport = page.getViewport({ scale: clamped });
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.floor(viewport.width));
-      canvas.height = Math.max(1, Math.floor(viewport.height));
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        canvas.width = 0;
-        canvas.height = 0;
-        continue;
-      }
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const clamped = clampScaleForPage(baseWidth, baseHeight, scale);
+      let canvas: HTMLCanvasElement;
       try {
-        await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+        canvas = await renderPageToCanvasAtScale(pdf, layout, clamped);
       } catch {
-        canvas.width = 0;
-        canvas.height = 0;
         continue;
       }
 
@@ -274,12 +265,12 @@ async function stageRasterPage(
         if (!jpeg) continue;
         const outDoc = await PDFDocument.create();
         const embedded = await outDoc.embedJpg(jpeg);
-        const outPage = outDoc.addPage([base.width, base.height]);
+        const outPage = outDoc.addPage([baseWidth, baseHeight]);
         outPage.drawImage(embedded, {
           x: 0,
           y: 0,
-          width: base.width,
-          height: base.height,
+          width: baseWidth,
+          height: baseHeight,
         });
         const saved = await outDoc.save({ useObjectStreams: true });
         if (saved.byteLength <= maxBytes) {
@@ -293,7 +284,7 @@ async function stageRasterPage(
     }
     return null;
   } finally {
-    await pdf.cleanup();
+    await pdf.close();
   }
 }
 
