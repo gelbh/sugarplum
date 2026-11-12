@@ -113,7 +113,7 @@ const worker = {
         FSRS_CRON_MARK_LIMIT,
       );
     }
-    await failStaleRunningJobs(getDb(env));
+    await failStaleRunningJobs(env);
   },
 };
 

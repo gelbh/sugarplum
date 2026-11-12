@@ -12,7 +12,7 @@ import nematodesRuminant from "./nematodes-ruminant.json";
 import protozoa from "./protozoa.json";
 import trematodes from "./trematodes.json";
 
-export const PARASITE_DATASET_VERSION = 7;
+export const PARASITE_DATASET_VERSION = 8;
 
 const GROUP_FILES: Record<string, unknown> = {
   trematodes,
