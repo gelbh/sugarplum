@@ -59,8 +59,19 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // ORT / DocLayout / Tesseract cores are multi-MB; never precache them.
-        globIgnores: ["**/*.wasm", "**/models/**", "**/ort/**", "**/ocr/**"],
+        // ORT / DocLayout / Tesseract / EmbedPDF portable cores are multi-MB.
+        globIgnores: [
+          "**/*.wasm",
+          "**/models/**",
+          "**/ort/**",
+          "**/ocr/**",
+          "**/wasm-inline*.js",
+          "**/inline-transport*.js",
+          "**/embedpdf-worker*.js",
+          "**/embedpdf-worker.source*.js",
+        ],
+        // Fail soft if another large asset slips past ignores (default 2 MiB).
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {
