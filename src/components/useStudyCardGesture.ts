@@ -1,5 +1,6 @@
 import useMediaQuery from "@mui/material/useMediaQuery";
 import {
+  useCallback,
   useEffect,
   useRef,
   type PointerEvent as ReactPointerEvent,
@@ -33,17 +34,27 @@ export function applyStudySwipeFrame(
 ): void {
   plate.style.transform = visual.transform;
   if (!stamp) return;
+
+  const label = visual.stampLabel ?? "";
+  const ratingKey =
+    visual.stampRating == null ? "" : String(visual.stampRating);
+  const chromeKey = `${label}|${ratingKey}`;
   stamp.style.opacity = String(visual.stampOpacity);
-  stamp.textContent = visual.stampLabel ?? "";
   stamp.hidden = visual.stampLabel === null;
-  if (visual.stampRating != null) {
-    const tone = gradeColorVars(visual.stampRating);
-    stamp.style.color = tone.border;
-    stamp.style.borderColor = tone.border;
-  } else {
-    stamp.style.color = "var(--sp-ivory)";
-    stamp.style.borderColor =
-      "color-mix(in srgb, var(--sp-ivory) 55%, transparent)";
+  stamp.style.visibility = visual.stampLabel === null ? "hidden" : "visible";
+
+  if (stamp.dataset.stampChrome !== chromeKey) {
+    stamp.dataset.stampChrome = chromeKey;
+    stamp.textContent = label;
+    if (visual.stampRating != null) {
+      const tone = gradeColorVars(visual.stampRating);
+      stamp.style.color = tone.border;
+      stamp.style.borderColor = tone.border;
+    } else {
+      stamp.style.color = "var(--sp-ivory)";
+      stamp.style.borderColor =
+        "color-mix(in srgb, var(--sp-ivory) 55%, transparent)";
+    }
   }
 }
 
@@ -59,13 +70,11 @@ export function useStudyCardGesture({
   canCommit,
   blocked,
   revealed,
-  onReveal,
   onGrade,
 }: {
   canCommit: () => boolean;
   blocked: () => boolean;
   revealed: boolean;
-  onReveal: () => void;
   onGrade: (rating: StudyRating) => void;
 }) {
   const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
@@ -74,30 +83,45 @@ export function useStudyCardGesture({
   const pointerRef = useRef<PointerStart | null>(null);
   const plateRef = useRef<HTMLDivElement>(null);
   const stampRef = useRef<HTMLDivElement>(null);
+  const latestDeltaRef = useRef({ dx: 0, dy: 0 });
+  const rafRef = useRef<number | null>(null);
+
+  // Sync during render so flipBack / queue flush cannot leave a stale true
+  // for a frame of post-reveal-only paint gates.
+  revealedRef.current = revealed;
 
   useEffect(() => {
     reduceMotionRef.current = reduceMotion;
   }, [reduceMotion]);
 
-  useEffect(() => {
-    revealedRef.current = revealed;
-  }, [revealed]);
-
-  useEffect(() => {
-    const stamp = stampRef.current;
-    if (stamp) {
-      stamp.hidden = true;
-      stamp.style.opacity = "0";
-    }
-  }, []);
+  const cancelPaintRaf = () => {
+    if (rafRef.current == null) return;
+    cancelAnimationFrame(rafRef.current);
+    rafRef.current = null;
+  };
 
   const resetStamp = () => {
     const stamp = stampRef.current;
     if (!stamp) return;
     stamp.hidden = true;
     stamp.style.opacity = "0";
+    stamp.style.visibility = "hidden";
     stamp.textContent = "";
+    delete stamp.dataset.stampChrome;
   };
+
+  // Attach after StudyPage leaves Loading so idle hide cannot race ready.
+  const stampCallbackRef = useCallback((node: HTMLDivElement | null) => {
+    stampRef.current = node;
+    if (!node) return;
+    node.hidden = true;
+    node.style.opacity = "0";
+    node.style.visibility = "hidden";
+    node.textContent = "";
+    delete node.dataset.stampChrome;
+  }, []);
+
+  useEffect(() => () => cancelPaintRaf(), []);
 
   const paint = (dx: number, dy: number) => {
     const plate = plateRef.current;
@@ -114,22 +138,36 @@ export function useStudyCardGesture({
     );
   };
 
+  const schedulePaint = (dx: number, dy: number) => {
+    latestDeltaRef.current = { dx, dy };
+    if (rafRef.current != null) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      const { dx: latestDx, dy: latestDy } = latestDeltaRef.current;
+      paint(latestDx, latestDy);
+    });
+  };
+
   const clearPaint = () => {
+    cancelPaintRaf();
     const plate = plateRef.current;
     if (plate) {
       plate.style.transition = "";
       plate.style.transform = "";
+      plate.style.willChange = "";
     }
     resetStamp();
   };
 
   const springBack = () => {
+    cancelPaintRaf();
     const plate = plateRef.current;
     if (plate) {
       plate.style.transition = reduceMotionRef.current
         ? "none"
         : `transform ${REVIEW_FLY_MS}ms ease-out`;
       plate.style.transform = "";
+      plate.style.willChange = "";
     }
     resetStamp();
   };
@@ -147,6 +185,8 @@ export function useStudyCardGesture({
     ) {
       return;
     }
+    // 1A: no drag until answer is showing.
+    if (!revealedRef.current) return;
     const scrollEl = scrollableCardFace(e.target);
     pointerRef.current = {
       id: e.pointerId,
@@ -161,7 +201,7 @@ export function useStudyCardGesture({
   const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     const start = pointerRef.current;
     if (!start || start.id !== e.pointerId) return;
-    if (blocked()) {
+    if (!revealedRef.current || blocked()) {
       pointerRef.current = null;
       springBack();
       return;
@@ -180,18 +220,19 @@ export function useStudyCardGesture({
       } catch {
         /* no active pointer id */
       }
+      if (plateRef.current) plateRef.current.style.willChange = "transform";
     }
     pointerRef.current = { ...start, armed };
     if (!armed) return;
     if (plateRef.current) plateRef.current.style.transition = "none";
-    paint(dx, dy);
+    schedulePaint(dx, dy);
   };
 
   const onPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
     const start = pointerRef.current;
     pointerRef.current = null;
     if (!start || start.id !== e.pointerId) return;
-    if (blocked() || !canCommit()) {
+    if (!revealedRef.current || blocked() || !canCommit()) {
       springBack();
       return;
     }
@@ -219,10 +260,6 @@ export function useStudyCardGesture({
       return;
     }
     clearPaint();
-    if (result.type === "reveal") {
-      onReveal();
-      return;
-    }
     void onGrade(result.rating);
   };
 
@@ -239,6 +276,6 @@ export function useStudyCardGesture({
       onPointerCancel,
     },
     plateRef,
-    stampRef,
+    stampRef: stampCallbackRef,
   };
 }
