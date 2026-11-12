@@ -26,6 +26,12 @@ import { entryTitles } from "../../src/atlas/entryTitles";
 import { isShortcutTarget } from "../../src/atlas/keys";
 import { isAtlasToAtlas } from "../../src/atlas/paths";
 
+function hostBytes(name: string): Buffer {
+  return readFileSync(
+    new URL(`../../public/atlas/hosts/${name}.webp`, import.meta.url),
+  );
+}
+
 const entries = await bundledAtlasSource.list("subj_1");
 const fasciola = entries.find((e) => e.id === "fasciola-hepatica")!;
 
@@ -193,6 +199,26 @@ describe("entryGlance", () => {
     expect(resolveHostPortrait("rodent")?.archetype).toBe("rodent");
     expect(resolveHostPortrait("earthworm")?.src).toMatch(/earthworm\.webp$/);
     expect(resolveHostPortrait("Formica")?.archetype).toBe("ant");
+  });
+
+  it("maps donkey and turkey to dedicated portraits", () => {
+    expect(resolveHostPortrait("donkey")).toEqual({
+      src: "/atlas/hosts/donkey.webp",
+      archetype: "donkey",
+    });
+    expect(resolveHostPortrait("turkey")).toEqual({
+      src: "/atlas/hosts/turkey.webp",
+      archetype: "turkey",
+    });
+  });
+
+  it("ships unique donkey and turkey host webp bytes", () => {
+    const donkey = hostBytes("donkey");
+    const turkey = hostBytes("turkey");
+    expect(donkey.equals(hostBytes("horse"))).toBe(false);
+    expect(donkey.equals(hostBytes("equid"))).toBe(false);
+    expect(turkey.equals(hostBytes("chicken"))).toBe(false);
+    expect(turkey.equals(hostBytes("bird"))).toBe(false);
   });
 
   it("resolves site portraits via broader chain", () => {
