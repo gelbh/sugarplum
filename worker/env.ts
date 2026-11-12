@@ -13,6 +13,8 @@ export interface Env {
   GENERATION_WORKFLOW?: Workflow<
     import("./generation/workflowParams").GenerationWorkflowParams
   >;
+  /** Cap-2 generation slot leases (Durable Object). */
+  GENERATION_SLOTS?: DurableObjectNamespace;
   /** Dedicated Anki export queue; over-threshold builds must not run in HTTP. */
   EXPORT_QUEUE?: Queue;
   APP_URL: string;

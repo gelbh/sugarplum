@@ -1,4 +1,13 @@
-/** Vitest stub for `cloudflare:workers` (WorkflowEntrypoint only). */
+/** Vitest stub for `cloudflare:workers` (WorkflowEntrypoint + DurableObject). */
+export abstract class DurableObject<Env = unknown, Props = {}> {
+  protected ctx: DurableObjectState;
+  protected env: Env;
+  constructor(ctx: DurableObjectState, env: Env) {
+    this.ctx = ctx;
+    this.env = env;
+  }
+}
+
 export abstract class WorkflowEntrypoint<
   Env = unknown,
   T = unknown,
@@ -35,4 +44,5 @@ export type WorkflowStep = {
         },
     callback?: () => Promise<T>,
   ) => Promise<T>;
+  sleep: (name: string, duration: string | number) => Promise<void>;
 };

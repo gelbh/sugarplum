@@ -1,5 +1,10 @@
 import type { Env } from "../../worker/env";
 import {
+  releaseSlotHolder,
+  tryAcquireSlot,
+  type SlotHolder,
+} from "../../worker/generation/GenerationSlotDO";
+import {
   gamificationAll,
   gamificationFirst,
   gamificationRun,
@@ -295,6 +300,25 @@ export function createTestEnv(opts?: {
     string,
     { status: string; params?: unknown }
   >();
+  let generationSlotHolders: SlotHolder[] = [];
+  const generationSlotsStub = {
+    async acquire(jobId: string) {
+      const result = tryAcquireSlot(
+        generationSlotHolders,
+        jobId,
+        Date.now(),
+      );
+      generationSlotHolders = result.holders;
+      return result.ok ? ({ ok: true } as const) : ({ ok: false } as const);
+    },
+    async release(jobId: string) {
+      generationSlotHolders = releaseSlotHolder(
+        generationSlotHolders,
+        jobId,
+      );
+      return { ok: true as const };
+    },
+  };
   const freeGenUsage = new Map<string, FreeGenUsageRow>();
   const userSecrets = new Map<string, UserSecretRow>();
   const userStudyPrefs = new Map<string, UserStudyPrefsRow>();
@@ -4564,6 +4588,14 @@ export function createTestEnv(opts?: {
         };
       },
     } as unknown as NonNullable<Env["GENERATION_WORKFLOW"]>,
+    GENERATION_SLOTS: {
+      idFromName(name: string) {
+        return { name, toString: () => name };
+      },
+      get() {
+        return generationSlotsStub;
+      },
+    } as unknown as DurableObjectNamespace,
     ...(opts?.exportQueue === false
       ? {}
       : {
