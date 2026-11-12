@@ -9,7 +9,6 @@ import {
   ApiError,
   listDecks,
   listDueCards,
-  me,
   getJourney,
   type CardDraftView,
   type StudyQueueMeta,
@@ -19,6 +18,7 @@ import {
   tryMergeGuestAfterAuth,
 } from "../guest/mergeOnAuth";
 import { isGuest } from "../guest/session";
+import { useSession } from "../session/SessionContext";
 import { deriveJourney } from "../journey/derive";
 import type { JourneyView } from "../journey/types";
 import JourneyNextButton from "../components/JourneyNextButton";
@@ -50,6 +50,7 @@ async function loadDeckTitles(): Promise<Record<string, string>> {
 
 /** Home: giant due proof + Start study (today-dash-b). */
 export default function TodayPage() {
+  const { user } = useSession();
   const [dueCount, setDueCount] = useState(0);
   const [breakdown, setBreakdown] = useState<DueBreakdown | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -105,11 +106,10 @@ export default function TodayPage() {
   });
 
   useEffect(() => {
+    if (!user) return;
     let cancelled = false;
     (async () => {
       try {
-        const user = await me();
-        if (cancelled) return;
         // OAuth land: merge guest paste snapshot once session exists (email auth merges in register/login).
         if (!isGuest()) await tryMergeGuestAfterAuth();
         if (cancelled) return;
@@ -188,7 +188,7 @@ export default function TodayPage() {
     return () => {
       cancelled = true;
     };
-  }, [endLoad, flushOnMount, refreshPendingCount, setUserId]);
+  }, [endLoad, flushOnMount, refreshPendingCount, setUserId, user]);
 
   if (!ready) {
     return (

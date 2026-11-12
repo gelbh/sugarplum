@@ -18,7 +18,17 @@ vi.mock("../../src/api/client", () => {
 });
 
 import SessionBootstrap from "../../src/session/SessionBootstrap";
+import { useSession } from "../../src/session/SessionContext";
 import { theme } from "../../src/theme";
+
+function SessionProbe() {
+  const { user } = useSession();
+  return createElement(
+    "div",
+    { "data-testid": "session-user" },
+    user?.id ?? "none",
+  );
+}
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true;
@@ -110,5 +120,24 @@ describe("SessionBootstrap", () => {
     );
     expect(assign).toHaveBeenCalledWith("/login");
     expect(host!.querySelector("[data-testid=child]")).toBeNull();
+  });
+
+  it("provides session user to allowed children", async () => {
+    await mount(
+      createElement(
+        SessionBootstrap,
+        {
+          pathname: "/today",
+          resolve: async () => ({
+            status: "authenticated" as const,
+            user: { id: "u1", email: "a@b.c" },
+          }),
+        },
+        createElement(SessionProbe),
+      ),
+    );
+    expect(host!.querySelector("[data-testid=session-user]")?.textContent).toBe(
+      "u1",
+    );
   });
 });

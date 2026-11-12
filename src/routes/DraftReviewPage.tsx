@@ -24,7 +24,6 @@ import {
   getJob,
   getJourney,
   listJobDrafts,
-  me,
   patchCard,
   asRegenType,
   cardHasRegenSource,
@@ -46,6 +45,7 @@ import type { RejectReason } from "../lib/rejectReasons";
 import JobProgressPanel from "../progress/JobProgressPanel";
 import { useJobProgress } from "../progress/useJobProgress";
 import { useTrackedOp } from "../progress/useTrackedOp";
+import { useSession } from "../session/SessionContext";
 
 function jobIdFromPath(): string | null {
   const match = window.location.pathname.match(/^\/jobs\/([^/]+)\/drafts\/?$/);
@@ -90,7 +90,8 @@ export default function DraftReviewPage() {
     draft_count?: number;
   } | null>(null);
   const [selectedGaps, setSelectedGaps] = useState<string[]>([]);
-  const [authReady, setAuthReady] = useState(false);
+  const { user } = useSession();
+  const authReady = Boolean(user);
   const jobProgress = useJobProgress(authReady && progressGate ? jobId : null);
   const { begin: beginLoad, end: endLoad } = useTrackedOp("Loading drafts…");
   const { busy, begin, end } = useTrackedOp("Working…");
@@ -165,32 +166,10 @@ export default function DraftReviewPage() {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      if (!jobId) {
-        setError("Missing job id in URL");
-        setReady(true);
-        return;
-      }
-      try {
-        await me();
-        if (cancelled) return;
-        setAuthReady(true);
-      } catch (err) {
-        if (cancelled) return;
-        if (err instanceof ApiError && err.status === 401) {
-          window.location.assign("/login");
-          return;
-        }
-        setError(
-          err instanceof ApiError ? err.message : "Failed to load drafts",
-        );
-        setReady(true);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    if (!jobId) {
+      setError("Missing job id in URL");
+      setReady(true);
+    }
   }, [jobId]);
 
   useEffect(() => {
@@ -213,6 +192,10 @@ export default function DraftReviewPage() {
         endLoad();
       } catch (err) {
         if (cancelled) return;
+        if (err instanceof ApiError && err.status === 401) {
+          window.location.assign("/login");
+          return;
+        }
         setError(
           err instanceof ApiError ? err.message : "Failed to load drafts",
         );

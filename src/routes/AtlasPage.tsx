@@ -11,7 +11,7 @@ import Box from "@mui/material/Box";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-import { ApiError, me } from "../api/client";
+import { ApiError } from "../api/client";
 import {
   AddEntryDialog,
   EditEntryDialog,
@@ -34,6 +34,7 @@ import {
 import type { AtlasEntryView, AtlasSource } from "../atlas/types";
 import { isGuest } from "../guest/session";
 import { isPlainClick, navigate, navigateReplace } from "../nav/navigate";
+import { useSession } from "../session/SessionContext";
 
 function entryMakeCardsKey(entry: AtlasEntryView): string {
   return entry.originKey ?? entry.id;
@@ -100,6 +101,7 @@ export default function AtlasPage({
   route,
   source = apiAtlasSource,
 }: Props) {
+  const { user } = useSession();
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
@@ -128,10 +130,10 @@ export default function AtlasPage({
   }, [source, atlasId]);
 
   useEffect(() => {
+    if (!user) return;
     let cancelled = false;
     (async () => {
       try {
-        const user = await me();
         const entries = await source.list(atlasId);
         if (cancelled) return;
         setLoaded({
@@ -152,7 +154,7 @@ export default function AtlasPage({
     return () => {
       cancelled = true;
     };
-  }, [source, atlasId]);
+  }, [source, atlasId, user]);
 
   const home = atlasHref(atlasId);
   const crumb =

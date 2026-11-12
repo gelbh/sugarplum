@@ -28,7 +28,6 @@ import {
   getStudyPrefs,
   listDueCards,
   logout,
-  me,
   patchGamificationSettings,
   putLlmSettings,
   putStudyPrefs,
@@ -41,6 +40,7 @@ import MagnificCredits from "../achievements/MagnificCredits";
 import { isGuest } from "../guest/session";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
+import { useSession } from "../session/SessionContext";
 import { freeGenFaqBody, freeGenIntroBlurb } from "../settings/freeGenFaq";
 import SettingsSectionNav from "../settings/SettingsSectionNav";
 import StudyPacingSection from "../settings/StudyPacingSection";
@@ -130,6 +130,7 @@ function settingsQueryMessage(): {
 }
 
 export default function SettingsPage() {
+  const { user } = useSession();
   const { mode, setMode } = useColorScheme();
   const [provider, setProvider] = useState<string>("openai");
   const [zaiModel, setZaiModel] = useState<string>(ZAI_DEFAULT_TEXT_MODEL);
@@ -188,10 +189,10 @@ export default function SettingsPage() {
     mode === "light" || mode === "dark" || mode === "system" ? mode : "system";
 
   useEffect(() => {
+    if (!user) return;
     let cancelled = false;
     (async () => {
       try {
-        const user = await me();
         const guestMode = isGuest();
         const settings = await getLlmSettings();
         const prefs = await getStudyPrefs();
@@ -252,7 +253,7 @@ export default function SettingsPage() {
     return () => {
       cancelled = true;
     };
-  }, [endLoad]);
+  }, [endLoad, user]);
 
   async function endGuestSession() {
     await logout();
