@@ -5,7 +5,8 @@ import {
 } from "cloudflare:workers";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
-import { processGenerateJob } from "./consumer";
+import { runAfterPersistPhase } from "./afterPersist";
+import { runPass1Phase } from "./pass1";
 import {
   acquireGenerationSlot,
   releaseGenerationSlot,
@@ -100,9 +101,7 @@ export class GenerationWorkflow extends WorkflowEntrypoint<
           if (!hold.ok) {
             throw new Error("GENERATION_SLOT_LOST");
           }
-          const result = await processGenerateJob(this.env, params, {
-            phase: "pass1",
-          });
+          const result = await runPass1Phase(this.env, params);
           // Throw so Workflow retries until stale reclaim succeeds (or job finishes).
           if (result === "busy") {
             throw new Error("PASS1_BUSY");
@@ -116,9 +115,7 @@ export class GenerationWorkflow extends WorkflowEntrypoint<
         if (!hold.ok) {
           throw new Error("GENERATION_SLOT_LOST");
         }
-        await processGenerateJob(this.env, params, {
-          phase: "afterPersist",
-        });
+        await runAfterPersistPhase(this.env, params);
         return { ok: true as const };
       });
     } finally {
