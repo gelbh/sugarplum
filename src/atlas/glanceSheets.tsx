@@ -2,7 +2,7 @@ import Box from "@mui/material/Box";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-import { FIELD_LABELS, type EntryRefs } from "./entryFields";
+import { type EntryRefs } from "./entryFields";
 import type { GlanceRow, TaxonomyNode } from "./entryGlance";
 import DistributionSilhouette from "./DistributionSilhouette";
 import PppGlance from "./PppGlance";

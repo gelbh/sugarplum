@@ -91,7 +91,8 @@ export default function DistributionSilhouette({
           height={380}
           style={{ width: "100%", height: "auto" }}
         >
-          <Geographies geography={geography}>
+          {/* world-atlas JSON is TopoJSON; library accepts it at runtime. */}
+          <Geographies geography={geography as never}>
             {({ geographies }) =>
               geographies.map((geo) => {
                 const id = String(geo.id ?? "");
@@ -105,23 +106,8 @@ export default function DistributionSilhouette({
                     fill={heatFill(weight, mute, soft, hot)}
                     stroke={stroke}
                     strokeWidth={0.4}
-                    style={{
-                      default: {
-                        outline: "none",
-                        opacity: heatOpacity(weight),
-                        pointerEvents: "none",
-                      },
-                      hover: {
-                        outline: "none",
-                        opacity: heatOpacity(weight),
-                        pointerEvents: "none",
-                      },
-                      pressed: {
-                        outline: "none",
-                        opacity: heatOpacity(weight),
-                        pointerEvents: "none",
-                      },
-                    }}
+                    opacity={heatOpacity(weight)}
+                    style={{ outline: "none", pointerEvents: "none" }}
                   />
                 );
               })
