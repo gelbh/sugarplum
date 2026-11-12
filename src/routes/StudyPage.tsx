@@ -599,7 +599,6 @@ export default function StudyPage() {
     blocked: () =>
       notes.notesOpenRef.current || !canCommitStudyGesture(),
     revealed,
-    onReveal: reveal,
     onGrade: (rating) => {
       void onGrade(rating);
     },
@@ -949,6 +948,10 @@ export default function StudyPage() {
                       textTransform: "uppercase",
                       whiteSpace: "nowrap",
                       transform: "translateX(-50%) rotate(-8deg)",
+                      // Idle hide via sx + callback ref. Do not set React `hidden`
+                      // here: re-renders would re-apply it over imperative show.
+                      opacity: 0,
+                      visibility: "hidden",
                     }}
                   />
                   <CardFace
