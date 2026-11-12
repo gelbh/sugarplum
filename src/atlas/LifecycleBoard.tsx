@@ -72,10 +72,9 @@ function SelectedStagePanel({
     <Box
       sx={{
         mt: 2,
-        p: 1.75,
-        border: 1,
+        pt: 1.75,
+        borderTop: 1,
         borderColor: "divider",
-        borderRadius: 1.5,
         display: "grid",
         gridTemplateColumns: image
           ? { xs: "1fr", sm: diagram ? "1fr 200px" : "1fr 112px" }
@@ -113,7 +112,7 @@ function SelectedStagePanel({
         ) : null}
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1 }}>
           {stage.infective ? (
-            <Chip size="small" label="Infective" color="primary" />
+            <Chip size="small" label="Infective" variant="outlined" color="primary" />
           ) : null}
           {diagnostic ? (
             <Chip
@@ -187,11 +186,9 @@ function StepList({
               display: "block",
               position: "relative",
               textAlign: "left",
-              px: 1.5,
-              py: 1.25,
-              borderRadius: 1.5,
-              border: 1,
-              borderColor: "divider",
+              px: 1.25,
+              py: 1,
+              borderRadius: 1,
               color: "text.secondary",
               fontSize: "0.84rem",
               lineHeight: 1.35,
@@ -201,11 +198,11 @@ function StepList({
               aria-hidden
               sx={{
                 position: "absolute",
-                inset: -1,
-                borderRadius: 1.5,
-                border: 1,
+                inset: 0,
+                borderRadius: 1,
+                borderBottom: 1,
                 borderColor: "primary.main",
-                bgcolor: (t) => alpha(t.palette.primary.main, 0.08),
+                bgcolor: (t) => alpha(t.palette.primary.main, 0.05),
                 opacity: i === index ? 1 : 0,
                 transition: "opacity 180ms ease",
                 pointerEvents: "none",

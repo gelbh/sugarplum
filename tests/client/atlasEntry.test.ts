@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { bundledAtlasSource } from "../../src/atlas/bundledSource";
 import { entryRefs, windowLabel } from "../../src/atlas/entryFields";
+import {
+  entryLead,
+  entryMetaLine,
+  glanceRows,
+  infectiveStageLabel,
+  moreFactKeys,
+} from "../../src/atlas/entryGlance";
 import { entryTitles } from "../../src/atlas/entryTitles";
 import { isShortcutTarget } from "../../src/atlas/keys";
 import { isAtlasToAtlas } from "../../src/atlas/paths";
@@ -79,5 +86,51 @@ describe("isShortcutTarget", () => {
       target: null,
     } as unknown as KeyboardEvent;
     expect(isShortcutTarget(ev)).toBe(false);
+  });
+});
+
+describe("entryGlance", () => {
+  it("builds a muted meta line from group · family · lifecycle type", () => {
+    const line = entryMetaLine(fasciola.fields);
+    expect(line).toMatch(/Trematode/i);
+    expect(line).toContain("·");
+    expect(line?.toLowerCase()).not.toContain("ppp");
+  });
+
+  it("omits empty optional glance rows and never invents significance", () => {
+    const rows = glanceRows(fasciola.fields);
+    const keys = rows.map((r) => r.key);
+    expect(keys).toContain("definitiveHosts");
+    expect(keys).toContain("pppDays");
+    expect(keys).toContain("diagnosticStage");
+    expect(entryLead(null)).toBeNull();
+    expect(entryLead("")).toBeNull();
+  });
+
+  it("truncates long significance and flags truncated", () => {
+    const long = "x".repeat(400);
+    const lead = entryLead(long, 160);
+    expect(lead).not.toBeNull();
+    expect(lead!.truncated).toBe(true);
+    expect(lead!.preview.length).toBeLessThanOrEqual(160);
+  });
+
+  it("lists infective stage names when flagged", () => {
+    const f = structuredClone(fasciola.fields);
+    f.lifecycleStages[0].infective = true;
+    expect(infectiveStageLabel(f.lifecycleStages)).toBeTruthy();
+  });
+
+  it("keeps catalog keys out of glance and in moreFactKeys", () => {
+    const glance = new Set(glanceRows(fasciola.fields).map((r) => r.key));
+    for (const k of [
+      "phylum",
+      "order",
+      "distribution",
+      "paratenicHosts",
+    ] as const) {
+      expect(glance.has(k as never)).toBe(false);
+      expect(moreFactKeys()).toContain(k);
+    }
   });
 });

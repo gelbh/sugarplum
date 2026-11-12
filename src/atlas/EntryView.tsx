@@ -7,7 +7,6 @@ import {
 } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
 import Drawer from "@mui/material/Drawer";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
@@ -19,6 +18,7 @@ import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import AtlasImage, { heroImage } from "./AtlasImage";
 import EntryFacts from "./EntryFacts";
 import EntryRail from "./EntryRail";
+import { entryMetaLine } from "./entryGlance";
 import { entryTitles } from "./entryTitles";
 import LifecycleBoard from "./LifecycleBoard";
 import {
@@ -30,7 +30,6 @@ import {
 import {
   focusActive as isFocusActive,
   matchesSearch,
-  pppLabel,
   railSections,
   termLabel,
 } from "./filter";
@@ -93,6 +92,7 @@ export default function EntryView({
   );
   const refs = useMemo(() => entryRefs(entry.refs), [entry.refs]);
   const titles = entryTitles(entry);
+  const meta = entryMetaLine(entry.fields);
 
   const onKey = useEffectEvent((ev: KeyboardEvent) => {
     if (!isShortcutTarget(ev) || (ev.key !== "j" && ev.key !== "k")) return;
@@ -137,12 +137,11 @@ export default function EntryView({
   );
 
   const { fields } = entry;
-  const chips = [
-    fields.group && termLabel(fields.group),
-    fields.family,
-    fields.lifecycleType && `${termLabel(fields.lifecycleType)} lifecycle`,
-    fields.pppDays && `PPP ${pppLabel(fields.pppDays)}`,
-  ].filter((c): c is string => Boolean(c));
+  const hero = heroImage(entry);
+  const onCite = (field: FieldKey) => {
+    setCite({ field });
+    setTab("references");
+  };
 
   return (
     <Box
@@ -153,13 +152,11 @@ export default function EntryView({
           xs: "minmax(0, 1fr)",
           lg: "240px minmax(0, 1fr)",
         },
-        // The lane board needs the width, so the facts sit below it at every size.
         gridTemplateAreas: {
-          xs: '"head" "board" "side"',
-          lg: '"rail head" "rail board" "rail side"',
+          xs: '"head" "glance" "board" "more"',
+          lg: '"rail head" "rail glance" "rail board" "rail more"',
         },
-        // The tall sticky rail spans every row; leftover height goes to the last row, not between sections.
-        gridTemplateRows: { lg: "auto auto 1fr" },
+        gridTemplateRows: { lg: "auto auto auto 1fr" },
         alignItems: "start",
       }}
     >
@@ -183,20 +180,37 @@ export default function EntryView({
         alignItems="flex-start"
         sx={{ gridArea: "head", minWidth: 0 }}
       >
-        <ViewTransition name={atlasHeroName(entry.id)} share="atlas-morph">
-          <AtlasImage
-            image={heroImage(entry)}
-            ratio="6 / 5"
-            sx={{
-              width: { xs: 84, sm: 120 },
-              flex: "none",
-              borderRadius: 1.5,
-              border: 1,
-              borderColor: "divider",
-              "& > span": { fontSize: "0.68rem", textAlign: "center" },
-            }}
-          />
-        </ViewTransition>
+        <Box sx={{ flex: "none", width: { xs: 84, sm: 120 } }}>
+          <ViewTransition name={atlasHeroName(entry.id)} share="atlas-morph">
+            <AtlasImage
+              image={hero}
+              ratio="6 / 5"
+              sx={{
+                width: "100%",
+                borderRadius: 1.5,
+                border: 1,
+                borderColor: "divider",
+                "& > span": { fontSize: "0.68rem", textAlign: "center" },
+              }}
+            />
+          </ViewTransition>
+          {hero ? (
+            <Typography
+              color="text.secondary"
+              sx={{ mt: 0.5, fontSize: "0.68rem", lineHeight: 1.3 }}
+            >
+              <Link
+                href={hero.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                color="inherit"
+              >
+                {hero.credit}
+              </Link>
+              , {hero.license}
+            </Typography>
+          ) : null}
+        </Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography
             component="h1"
@@ -217,17 +231,14 @@ export default function EntryView({
               {titles.scientific}
             </Typography>
           ) : null}
-          <Stack direction="row" gap={0.75} flexWrap="wrap" sx={{ mt: 1.25 }}>
-            {chips.map((c) => (
-              <Chip
-                key={c}
-                label={c}
-                size="small"
-                variant="outlined"
-                sx={{ bgcolor: "background.paper", color: "text.secondary" }}
-              />
-            ))}
-          </Stack>
+          {meta ? (
+            <Typography
+              color="text.secondary"
+              sx={{ mt: 1, fontSize: "0.86rem", lineHeight: 1.4 }}
+            >
+              {meta}
+            </Typography>
+          ) : null}
         </Box>
         <Button
           variant="outlined"
@@ -250,6 +261,18 @@ export default function EntryView({
         </Button>
       </Stack>
 
+      <Box sx={{ gridArea: "glance", minWidth: 0 }}>
+        <EntryFacts
+          entry={entry}
+          refs={refs}
+          glanceOnly
+          onCite={onCite}
+          onEdit={onEdit}
+          onReset={onReset}
+          onMakeCards={onMakeCards}
+        />
+      </Box>
+
       <Paper
         variant="outlined"
         sx={{
@@ -271,7 +294,6 @@ export default function EntryView({
               value={t.key}
               label={t.label}
               id={`atlas-tab-${t.key}`}
-              // Only the selected panel is rendered, so only its tab points at one.
               aria-controls={t.key === tab ? `atlas-panel-${t.key}` : undefined}
               sx={{
                 textTransform: "none",
@@ -306,18 +328,8 @@ export default function EntryView({
         </Box>
       </Paper>
 
-      <Box sx={{ gridArea: "side", minWidth: 0 }}>
-        <EntryFacts
-          entry={entry}
-          refs={refs}
-          onCite={(field) => {
-            setCite({ field });
-            setTab("references");
-          }}
-          onEdit={onEdit}
-          onReset={onReset}
-          onMakeCards={onMakeCards}
-        />
+      <Box sx={{ gridArea: "more", minWidth: 0 }}>
+        <EntryFacts entry={entry} refs={refs} moreOnly onCite={onCite} />
       </Box>
 
       <Drawer
@@ -337,30 +349,6 @@ function Diagnosis({ fields }: { fields: DatasetFields }) {
   const tests = fields.diagnosticTests;
   return (
     <Stack spacing={2.5}>
-      <Box component="dl" sx={{ m: 0, display: "grid", gap: 1.25 }}>
-        {(
-          [
-            [
-              "Diagnostic stage",
-              fields.diagnosticStage && termLabel(fields.diagnosticStage),
-            ],
-            ["Prepatent period", pppLabel(fields.pppDays)],
-          ] as const
-        ).map(([label, value]) => (
-          <Box key={label}>
-            <Typography
-              component="dt"
-              color="text.secondary"
-              sx={{ fontSize: "0.76rem", fontWeight: 600 }}
-            >
-              {label}
-            </Typography>
-            <Typography component="dd" sx={{ m: 0 }}>
-              {value ?? "Not recorded"}
-            </Typography>
-          </Box>
-        ))}
-      </Box>
       <Box>
         <Typography component="h2" sx={{ fontWeight: 700, mb: 1 }}>
           Tests
@@ -379,10 +367,9 @@ function Diagnosis({ fields }: { fields: DatasetFields }) {
                   component="li"
                   key={`${t.name}-${i}`}
                   sx={{
-                    border: 1,
+                    borderBottom: 1,
                     borderColor: "divider",
-                    borderRadius: 1.5,
-                    px: 1.75,
+                    px: 0.25,
                     py: 1.25,
                   }}
                 >
