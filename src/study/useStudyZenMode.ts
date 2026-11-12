@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
-import { useStudyChrome } from "./StudyChromeContext";
 
 function requestStudyFullscreen(): Promise<void> {
   const el = document.documentElement;
@@ -26,42 +25,32 @@ export type StudyZenMode = {
 };
 
 /**
- * Zen matches browser fullscreen. Shell chrome stays visible until fullscreen
- * starts, and returns when fullscreen ends. The card stays mounted.
+ * Tracks browser fullscreen for desktop zen. Shell chrome is owned by
+ * useStudyImmersion via studyStage + setHideChrome (mobile immersion needs no FS).
  */
 export function useStudyZenMode(): StudyZenMode {
   const [zen, setZen] = useState(documentIsFullscreen);
-  const { setHideChrome } = useStudyChrome();
-
-  const applyZen = useCallback(
-    (on: boolean) => {
-      setZen(on);
-      setHideChrome(on);
-    },
-    [setHideChrome],
-  );
 
   useLayoutEffect(() => {
-    applyZen(documentIsFullscreen());
+    setZen(documentIsFullscreen());
     return () => {
-      setHideChrome(false);
       exitStudyFullscreen();
     };
-  }, [applyZen, setHideChrome]);
+  }, []);
 
   useEffect(() => {
     function onFullscreenChange() {
-      applyZen(documentIsFullscreen());
+      setZen(documentIsFullscreen());
     }
     document.addEventListener("fullscreenchange", onFullscreenChange);
     return () =>
       document.removeEventListener("fullscreenchange", onFullscreenChange);
-  }, [applyZen]);
+  }, []);
 
   const exitZen = useCallback(() => {
-    applyZen(false);
+    setZen(false);
     exitStudyFullscreen();
-  }, [applyZen]);
+  }, []);
 
   const toggleZen = useCallback(() => {
     if (documentIsFullscreen()) {
@@ -69,9 +58,9 @@ export function useStudyZenMode(): StudyZenMode {
       return;
     }
     void requestStudyFullscreen().catch(() => {
-      applyZen(false);
+      setZen(false);
     });
-  }, [applyZen]);
+  }, []);
 
   return {
     zen,
