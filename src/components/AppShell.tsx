@@ -16,13 +16,14 @@ import { ATLAS_LEGACY_PATH } from "../atlas/paths";
 import Box from "@mui/material/Box";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { GAMIFICATION_CHANGED_EVENT, getGamification, me } from "../api/client";
+import { GAMIFICATION_CHANGED_EVENT, getGamification } from "../api/client";
 import StreakXpChip from "../achievements/StreakXpChip";
 import { isGuest } from "../guest/session";
 import { navigateReplace } from "../nav/navigate";
 import { useMainScrollRestore } from "../nav/scrollRestore";
 import GlobalProgressBar from "../progress/GlobalProgressBar";
 import { ProgressProvider } from "../progress/ProgressProvider";
+import { useSession } from "../session/SessionContext";
 import { useShellGenerationStatus } from "../shell/useShellGenerationStatus";
 import { useStudyChrome } from "../study/StudyChromeContext";
 import BottomChrome from "./shell/BottomChrome";
@@ -114,11 +115,12 @@ type AppShellProps = {
 };
 
 function AppShellChrome({ children }: AppShellProps) {
+  const { user } = useSession();
   const { hideChrome } = useStudyChrome();
   const theme = useTheme();
   const mobile = useMediaQuery(theme.breakpoints.down("md"));
   const path = window.location.pathname;
-  const [isAdmin, setIsAdmin] = useState(false);
+  const isAdmin = !isGuest() && user?.is_admin === true;
   const [streak, setStreak] = useState<number | null>(null);
   const [level, setLevel] = useState<number | null>(null);
   const drawerNav = isAdmin ? [...LEARNER_NAV, ADMIN_NAV] : LEARNER_NAV;
@@ -130,24 +132,6 @@ function AppShellChrome({ children }: AppShellProps) {
   const [mobileHeaderPx, setMobileHeaderPx] = useState(TOP_BAR_HEIGHT);
   const mainRef = useRef<HTMLElement>(null);
   useMainScrollRestore(mainRef);
-
-  useEffect(() => {
-    if (isGuest()) {
-      setIsAdmin(false);
-      return;
-    }
-    let cancelled = false;
-    void me()
-      .then((user) => {
-        if (!cancelled) setIsAdmin(user.is_admin === true);
-      })
-      .catch(() => {
-        if (!cancelled) setIsAdmin(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // Zen hides the chip, so refetch on leaving zen instead of after every grade.
   useEffect(() => {

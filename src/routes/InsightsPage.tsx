@@ -7,7 +7,6 @@ import Typography from "@mui/material/Typography";
 import {
   ApiError,
   listStrugglingCards,
-  me,
   type StrugglingRow,
 } from "../api/client";
 import StrugglingList from "../components/StrugglingList";
@@ -26,7 +25,6 @@ export default function InsightsPage() {
     let cancelled = false;
     (async () => {
       try {
-        await me();
         const list = await listStrugglingCards();
         if (cancelled) return;
         setRows(list);
