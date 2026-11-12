@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { bundledAtlasSource } from "../../src/atlas/bundledSource";
 import { entryRefs, windowLabel } from "../../src/atlas/entryFields";
@@ -215,6 +216,22 @@ describe("entryGlance", () => {
       /adult-fluke\.webp$/,
     );
     expect(resolveStagePortrait("schizont")?.archetype).toBe("meront");
+    expect(resolveStagePortrait("egg")?.src).toMatch(/egg\.webp$/);
+  });
+
+  it("credits CDC stage heroes for shipped open-licence plates", () => {
+    const credits = readFileSync(
+      new URL("../../public/atlas/stages/CREDITS.md", import.meta.url),
+      "utf8",
+    );
+    expect(credits).toMatch(/`egg\.webp`/);
+    expect(credits).toMatch(/Ascaris lumbricoides/);
+    expect(credits).toMatch(/Public domain/);
+    expect(
+      existsSync(
+        new URL("../../public/atlas/stages/egg.webp", import.meta.url),
+      ),
+    ).toBe(true);
   });
 
   it("tags distribution prose into structured meta", () => {
@@ -248,9 +265,7 @@ describe("entryGlance", () => {
     const fish = distributionTags(
       "Mostly circumpolar northern regions; very rare in South America",
     );
-    expect(fish.regions).toEqual(
-      expect.arrayContaining(["na", "eu", "as"]),
-    );
+    expect(fish.regions).toEqual(expect.arrayContaining(["na", "eu", "as"]));
     expect(fish.regions).not.toContain("sa");
     expect(fish.bands).toContain("arctic");
 
@@ -307,12 +322,7 @@ describe("entryGlance", () => {
   it("lights only structured regions (Eyeworm-style)", () => {
     const meta = {
       worldwide: false,
-      regions: [
-        "north-america",
-        "south-america",
-        "europe",
-        "asia",
-      ] as const,
+      regions: ["north-america", "south-america", "europe", "asia"] as const,
       bands: [] as const,
     };
     // USA 840, Nigeria 566, Australia 036
