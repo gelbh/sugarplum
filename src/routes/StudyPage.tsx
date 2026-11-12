@@ -14,6 +14,7 @@ import LinearProgress from "@mui/material/LinearProgress";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CloseIcon from "@mui/icons-material/Close";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import { useUnlockToasts } from "../achievements/UnlockToastProvider";
@@ -82,7 +83,7 @@ import {
 } from "../study/prioritizeDueCard";
 import { isNetworkGradeError } from "../study/runPendingFlush";
 import { usePendingGradeSync } from "../study/usePendingGradeSync";
-import { useStudyZenMode } from "../study/useStudyZenMode";
+import { useStudyImmersion } from "../study/useStudyImmersion";
 import { warmDueMedia } from "../study/warmDueMedia";
 
 function isMcqCard(card: CardDraftView | null): boolean {
@@ -162,8 +163,11 @@ export default function StudyPage() {
   if (introBonusRef.current === undefined) {
     introBonusRef.current = getIntroBonus();
   }
-  const { zen, toggleZen, exitZen } = useStudyZenMode();
   const { enqueueUnlocks } = useUnlockToasts();
+  const queueHead = queue[0] ?? null;
+  const { stage, mobile, toggleZen, exitZen } = useStudyImmersion(
+    queueHead != null,
+  );
 
   const leaveStudy = useCallback(() => {
     exitZen();
@@ -357,7 +361,7 @@ export default function StudyPage() {
     };
   }, [endLoad, flushOnMount, load, refreshPendingCount, setUserId]);
 
-  const current = queue[0] ?? null;
+  const current = queueHead;
   const notes = useStudyNotesOverlay(current);
   const queueFraction = studyQueueProgress(queueTotal, queue.length);
   const cardHostRef = useRef<HTMLDivElement>(null);
@@ -391,7 +395,7 @@ export default function StudyPage() {
     const observer = new ResizeObserver(sync);
     observer.observe(plate);
     return () => observer.disconnect();
-  }, [current?.id, zen]);
+  }, [current?.id, stage]);
 
   const reveal = useCallback(() => {
     setRevealed(true);
@@ -619,7 +623,6 @@ export default function StudyPage() {
     );
   }
 
-  const stage = zen;
   const finish = !current && surface === "complete";
   const fillColumn = finish
     ? ({
@@ -679,7 +682,11 @@ export default function StudyPage() {
               color="primary"
               size="small"
             >
-              <CloseIcon fontSize="small" />
+              {mobile ? (
+                <ArrowBackIcon fontSize="small" />
+              ) : (
+                <CloseIcon fontSize="small" />
+              )}
             </IconButton>
             <Typography
               variant="h6"
@@ -698,14 +705,18 @@ export default function StudyPage() {
             >
               Sugarplum
             </Typography>
-            <IconButton
-              aria-label="Fullscreen"
-              onClick={toggleZen}
-              color="primary"
-              size="small"
-            >
-              <FullscreenIcon fontSize="small" />
-            </IconButton>
+            {mobile ? (
+              <Box sx={{ width: 34, height: 34, flexShrink: 0 }} aria-hidden />
+            ) : (
+              <IconButton
+                aria-label="Fullscreen"
+                onClick={toggleZen}
+                color="primary"
+                size="small"
+              >
+                <FullscreenIcon fontSize="small" />
+              </IconButton>
+            )}
           </Stack>
 
           {error ? <Alert severity="error">{error}</Alert> : null}
