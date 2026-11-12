@@ -402,7 +402,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "davainea-proglottina-hero.webp",
+          "role": "larva",
+          "caption": "Davainea proglottina developmental figure (1897 plate fig. 199)",
+          "credit": "Pearson, Leonard; Warren, Benjamin Harry",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Diseases_and_enemies_of_poultry_(1897)_(14564508557).jpg",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "raillietina-spp",
