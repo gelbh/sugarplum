@@ -115,9 +115,12 @@ export function runFsrsOptimizeNow() {
     guestMarkFsrsOptimizePendingIfDue();
     return Promise.resolve({ ok: true as const, pending: true as const });
   }
-  return api<{ ok: true; pending: true }>("/api/settings/study/fsrs-optimize/run", {
-    method: "POST",
-  });
+  return api<{ ok: true; pending: true }>(
+    "/api/settings/study/fsrs-optimize/run",
+    {
+      method: "POST",
+    },
+  );
 }
 export function listDueCards(opts?: ListDueOpts): Promise<ListDueResult> {
   if (isGuest()) {
