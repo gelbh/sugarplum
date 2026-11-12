@@ -1,24 +1,31 @@
-import type { ReactNode } from "react";
-import Accordion from "@mui/material/Accordion";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import AccordionSummary from "@mui/material/AccordionSummary";
+import { useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import Link from "@mui/material/Link";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import IconButton from "@mui/material/IconButton";
+import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import CloseIcon from "@mui/icons-material/Close";
 import AtlasImage from "./AtlasImage";
 import { FIELD_LABELS, type EntryRefs } from "./entryFields";
 import {
   entryLead,
-  glanceRows,
-  moreFactKeys,
-  type GlanceRow,
+  glanceSections,
+  significanceFullRow,
+  taxonomyTree,
 } from "./entryGlance";
-import TermList from "./TermList";
-import type { AtlasEntryView, DatasetFields } from "./types";
+import {
+  BandSheetPanel,
+  BodyCoursePanel,
+  CiteSup,
+  GlanceFact,
+  TaxonomyTreeCard,
+} from "./glanceSheets";
+import { type TaxonomyFilter } from "./filter";
+import type { AtlasEntryView, AtlasImageView, DatasetFields } from "./types";
 
 type FieldKey = keyof DatasetFields;
 
@@ -26,13 +33,12 @@ type Props = {
   entry: AtlasEntryView;
   refs: EntryRefs;
   onCite: (field: FieldKey) => void;
+  /** Browse related parasites by taxonomy rank in the entry rail. */
+  onTaxonomyBrowse?: (filter: TaxonomyFilter) => void;
+  taxonomyActive?: TaxonomyFilter | null;
   onEdit?: () => void;
   onReset?: () => void;
   onMakeCards?: () => void;
-  /** When true, only the More accordion (facts + gallery). */
-  moreOnly?: boolean;
-  /** When true, only glance + actions (no More). */
-  glanceOnly?: boolean;
 };
 
 const IMAGE_ROLE_LABELS: Record<
@@ -48,98 +54,28 @@ const IMAGE_ROLE_LABELS: Record<
   other: "Image",
 };
 
-function moreRows(
-  f: DatasetFields,
-  leadTruncated: boolean,
-): [FieldKey, ReactNode][] {
-  const terms = (list: string[]) =>
-    list.length > 0 ? <TermList terms={list} /> : null;
-  const out: [FieldKey, ReactNode][] = [];
-  for (const key of moreFactKeys()) {
-    if (key === "significance") {
-      if (!f.significance) continue;
-      if (!leadTruncated) continue;
-      out.push(["significance", f.significance]);
-      continue;
-    }
-    if (key === "paratenicHosts") {
-      const v = terms(f.paratenicHosts);
-      if (v) out.push([key, v]);
-      continue;
-    }
-    if (key === "onHostStages") {
-      const v = terms(f.onHostStages);
-      if (v) out.push([key, v]);
-      continue;
-    }
-    if (key === "vectorRole" && f.vectorRole) out.push([key, f.vectorRole]);
-    else if (key === "distribution" && f.distribution)
-      out.push([key, f.distribution]);
-    else if (key === "phylum" && f.phylum) out.push([key, f.phylum]);
-    else if (key === "order" && f.order) out.push([key, f.order]);
-  }
-  return out;
-}
-
-function CiteSup({
-  field,
-  label,
-  refs,
-  onCite,
-}: {
-  field: FieldKey;
-  label: string;
-  refs: EntryRefs;
-  onCite: (field: FieldKey) => void;
-}) {
-  const cited = refs.byField.get(field) ?? [];
-  if (cited.length === 0) return null;
-  return (
-    <Link
-      component="button"
-      type="button"
-      onClick={() => onCite(field)}
-      underline="hover"
-      aria-label={`Sources for ${label}: ${cited.join(", ")}`}
-      sx={{
-        ml: 0.25,
-        px: 0.25,
-        fontSize: "0.68rem",
-        verticalAlign: "super",
-        lineHeight: 1,
-        my: "-0.5em",
-        fontWeight: 700,
-      }}
-    >
-      {cited.join(",")}
-    </Link>
-  );
-}
-
-function GlanceValue({ row }: { row: GlanceRow }) {
-  if (row.kind === "terms" && row.terms)
-    return <TermList terms={row.terms} />;
-  return <>{row.text}</>;
-}
-
 export default function EntryFacts({
   entry,
   refs,
   onCite,
+  onTaxonomyBrowse,
+  taxonomyActive,
   onEdit,
   onReset,
   onMakeCards,
-  moreOnly = false,
-  glanceOnly = false,
 }: Props) {
   const lead = entryLead(entry.fields.significance);
-  const rows = glanceRows(entry.fields);
-  const extras = moreRows(entry.fields, Boolean(lead?.truncated));
+  const sections = glanceSections(entry.fields);
+  const fullSig = significanceFullRow(
+    entry.fields,
+    Boolean(lead?.truncated),
+  );
   const heroId = entry.images.find((i) => i.isHero)?.id;
   const gallery = entry.images.filter((i) => i.id !== heroId);
   const showActions = Boolean(onEdit || onReset || onMakeCards);
+  const [lightbox, setLightbox] = useState<AtlasImageView | null>(null);
 
-  const glance = (
+  return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
       {showActions || entry.editedAt ? (
         <Stack direction="row" gap={1} flexWrap="wrap" alignItems="center">
@@ -164,7 +100,7 @@ export default function EntryFacts({
         </Stack>
       ) : null}
       {lead ? (
-        <Typography sx={{ fontSize: "1rem", lineHeight: 1.55 }}>
+        <Typography sx={{ fontSize: "1.12rem", lineHeight: 1.55 }}>
           {lead.preview}
           <CiteSup
             field="significance"
@@ -174,114 +110,144 @@ export default function EntryFacts({
           />
         </Typography>
       ) : null}
-      {rows.length > 0 ? (
-        <Box
-          component="dl"
-          sx={{
-            m: 0,
-            display: "grid",
-            gap: 1.25,
-            maxWidth: 560,
-          }}
-        >
-          {rows.map((row) => (
-            <div key={row.key}>
-              <Typography
-                component="dt"
-                color="text.secondary"
-                sx={{ fontSize: "0.76rem", fontWeight: 600 }}
+      {sections.map((section) => {
+        const tree =
+          section.id === "taxonomy"
+            ? taxonomyTree(entry.fields)
+            : null;
+        return (
+          <Box key={section.id} component="section" aria-label={section.title}>
+            <Typography
+              color="text.secondary"
+              sx={{
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                mb: 1,
+              }}
+            >
+              {section.title}
+            </Typography>
+            {tree && tree.length > 0 ? (
+              <TaxonomyTreeCard
+                nodes={tree}
+                groupCue={entry.fields.group}
+                refs={refs}
+                onCite={onCite}
+                onTaxonomyBrowse={onTaxonomyBrowse}
+                taxonomyActive={taxonomyActive}
+              />
+            ) : section.id === "hosts" || section.id === "detection" ? (
+              <Box component="dl" sx={{ m: 0 }}>
+                <BandSheetPanel
+                  rows={section.rows}
+                  refs={refs}
+                  onCite={onCite}
+                />
+              </Box>
+            ) : section.id === "body" ? (
+              <Box component="dl" sx={{ m: 0 }}>
+                <BodyCoursePanel
+                  rows={section.rows}
+                  refs={refs}
+                  onCite={onCite}
+                />
+              </Box>
+            ) : (
+              <Box
+                component="dl"
+                sx={{
+                  m: 0,
+                  display: "grid",
+                  gridTemplateColumns: {
+                    xs: "minmax(0, 1fr)",
+                    sm: "repeat(2, minmax(0, 1fr))",
+                  },
+                  gap: 1.25,
+                }}
               >
-                {row.label}
-                {row.citeField ? (
-                  <CiteSup
-                    field={row.citeField}
-                    label={row.label}
+                {section.rows.map((row) => (
+                  <GlanceFact
+                    key={row.key}
+                    row={row}
                     refs={refs}
                     onCite={onCite}
                   />
-                ) : null}
-              </Typography>
-              <Typography
-                component="dd"
-                sx={{ m: 0, fontSize: "0.92rem", lineHeight: 1.4 }}
-              >
-                <GlanceValue row={row} />
-              </Typography>
-            </div>
-          ))}
-        </Box>
-      ) : null}
-    </Box>
-  );
-
-  const more = (
-    <Accordion
-      disableGutters
-      elevation={0}
-      sx={{
-        bgcolor: "transparent",
-        "&:before": { display: "none" },
-        borderTop: 1,
-        borderColor: "divider",
-      }}
-    >
-      <AccordionSummary
-        expandIcon={<ExpandMoreIcon />}
-        sx={{ px: 0, minHeight: 44 }}
-      >
-        <Typography sx={{ fontWeight: 600, fontSize: "0.9rem" }}>
-          More
-        </Typography>
-      </AccordionSummary>
-      <AccordionDetails sx={{ px: 0, pt: 0 }}>
-        {extras.length > 0 ? (
-          <Box
-            component="dl"
-            sx={{ m: 0, mb: 2, display: "grid", gap: 1.25, maxWidth: 560 }}
-          >
-            {extras.map(([key, value]) => (
-              <div key={key}>
-                <Typography
-                  component="dt"
-                  color="text.secondary"
-                  sx={{ fontSize: "0.76rem", fontWeight: 600 }}
-                >
-                  {FIELD_LABELS[key]}
-                  <CiteSup
-                    field={key}
-                    label={FIELD_LABELS[key]}
-                    refs={refs}
-                    onCite={onCite}
-                  />
-                </Typography>
-                <Typography
-                  component="dd"
-                  sx={{ m: 0, fontSize: "0.92rem", lineHeight: 1.4 }}
-                >
-                  {value}
-                </Typography>
-              </div>
-            ))}
+                ))}
+              </Box>
+            )}
           </Box>
-        ) : null}
-        {gallery.length > 0 ? (
-          <Box
+        );
+      })}
+      {fullSig ? (
+        <Box component="section" aria-label="Notes">
+          <Typography
+            color="text.secondary"
             sx={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-              gap: 1.5,
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              mb: 1,
             }}
           >
-            {gallery.map((img) => (
+            Notes
+          </Typography>
+          <Box component="dl" sx={{ m: 0 }}>
+            <GlanceFact row={fullSig} refs={refs} onCite={onCite} />
+          </Box>
+        </Box>
+      ) : null}
+      {gallery.length > 0 ? (
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+            gap: 1.5,
+            pt: 0.5,
+          }}
+        >
+          {gallery.map((img) => {
+            const caption = img.caption ?? IMAGE_ROLE_LABELS[img.role];
+            return (
               <Box key={img.id} component="figure" sx={{ m: 0 }}>
-                <AtlasImage
-                  image={img}
-                  ratio="4 / 3"
-                  sx={{ borderRadius: 1, border: 1, borderColor: "divider" }}
-                />
+                <Box
+                  component="button"
+                  type="button"
+                  onClick={() => setLightbox(img)}
+                  aria-label={`Enlarge ${caption}`}
+                  sx={{
+                    display: "block",
+                    width: "100%",
+                    p: 0,
+                    m: 0,
+                    border: 0,
+                    bgcolor: "transparent",
+                    cursor: "zoom-in",
+                    borderRadius: 1,
+                    textAlign: "left",
+                    "&:focus-visible": {
+                      outline: 2,
+                      outlineOffset: 2,
+                      outlineColor: "primary.main",
+                    },
+                  }}
+                >
+                  <AtlasImage
+                    image={img}
+                    ratio="4 / 3"
+                    fit="contain"
+                    sx={{
+                      borderRadius: 1,
+                      border: 1,
+                      borderColor: "divider",
+                    }}
+                  />
+                </Box>
                 <Box component="figcaption" sx={{ px: 0.25, py: 0.75 }}>
                   <Typography sx={{ fontSize: "0.78rem", fontWeight: 600 }}>
-                    {img.caption ?? IMAGE_ROLE_LABELS[img.role]}
+                    {caption}
                   </Typography>
                   <Typography
                     color="text.secondary"
@@ -299,23 +265,62 @@ export default function EntryFacts({
                   </Typography>
                 </Box>
               </Box>
-            ))}
-          </Box>
-        ) : (
-          <Typography color="text.secondary" sx={{ fontSize: "0.84rem" }}>
-            No additional images yet.
-          </Typography>
-        )}
-      </AccordionDetails>
-    </Accordion>
-  );
+            );
+          })}
+        </Box>
+      ) : null}
 
-  if (moreOnly) return more;
-  if (glanceOnly) return glance;
-  return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.75 }}>
-      {glance}
-      {more}
+      <Dialog
+        open={Boolean(lightbox)}
+        onClose={() => setLightbox(null)}
+        maxWidth="lg"
+        fullWidth
+        aria-label={
+          lightbox
+            ? `Enlarged ${lightbox.caption ?? IMAGE_ROLE_LABELS[lightbox.role]}`
+            : undefined
+        }
+      >
+        <IconButton
+          aria-label="Close"
+          onClick={() => setLightbox(null)}
+          sx={{ position: "absolute", right: 8, top: 8, zIndex: 1 }}
+        >
+          <CloseIcon />
+        </IconButton>
+        <DialogContent sx={{ pt: 5 }}>
+          {lightbox ? (
+            <>
+              <AtlasImage
+                image={lightbox}
+                fit="contain"
+                sx={{
+                  width: "100%",
+                  height: { xs: "min(55vh, 420px)", sm: "min(70vh, 640px)" },
+                  aspectRatio: "unset",
+                  borderRadius: 1,
+                  border: 1,
+                  borderColor: "divider",
+                }}
+              />
+              <Typography sx={{ mt: 1.5, fontWeight: 600, fontSize: "0.95rem" }}>
+                {lightbox.caption ?? IMAGE_ROLE_LABELS[lightbox.role]}
+              </Typography>
+              <Typography color="text.secondary" sx={{ fontSize: "0.82rem" }}>
+                <Link
+                  href={lightbox.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  color="inherit"
+                >
+                  {lightbox.credit}
+                </Link>
+                , {lightbox.license}
+              </Typography>
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 }

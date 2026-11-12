@@ -1,6 +1,8 @@
 import { useLayoutEffect, useRef, type MouseEvent } from "react";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
+import Chip from "@mui/material/Chip";
 import InputAdornment from "@mui/material/InputAdornment";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -14,9 +16,13 @@ import type { AtlasEntryView } from "./types";
 type Props = {
   rows: RailSection[];
   total: number;
+  /** Count after taxonomy (+ search) filter; defaults to total. */
+  matched?: number;
   currentId: string;
   query: string;
   onQuery: (q: string) => void;
+  taxonomyChip?: { label: string; count: number } | null;
+  onClearTaxonomy?: () => void;
   entryHref: (id: string) => string;
   onOpen: (id: string) => void;
 };
@@ -24,13 +30,17 @@ type Props = {
 export default function EntryRail({
   rows,
   total,
+  matched,
   currentId,
   query,
   onQuery,
+  taxonomyChip,
+  onClearTaxonomy,
   entryHref,
   onOpen,
 }: Props) {
   const listRef = useRef<HTMLDivElement>(null);
+  const shown = matched ?? total;
 
   // Keep the current entry in view inside the rail without scrolling the page.
   useLayoutEffect(() => {
@@ -43,7 +53,7 @@ export default function EntryRail({
       top + item.offsetHeight > list.scrollTop + list.clientHeight
     )
       list.scrollTop = top - list.clientHeight / 3;
-  }, [currentId]);
+  }, [currentId, taxonomyChip?.label]);
 
   const open = (ev: MouseEvent<HTMLAnchorElement>, id: string) => {
     if (ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey)
@@ -55,7 +65,11 @@ export default function EntryRail({
   return (
     <Box
       component="nav"
-      aria-label="All parasites"
+      aria-label={
+        taxonomyChip
+          ? `Parasites in ${taxonomyChip.label}`
+          : "All parasites"
+      }
       sx={{
         display: "flex",
         flexDirection: "column",
@@ -66,7 +80,11 @@ export default function EntryRail({
       <TextField
         type="search"
         size="small"
-        placeholder={`Search ${total} parasites`}
+        placeholder={
+          taxonomyChip
+            ? `Search ${shown} in filter`
+            : `Search ${total} parasites`
+        }
         value={query}
         onChange={(ev) => onQuery(ev.target.value)}
         slotProps={{
@@ -81,6 +99,13 @@ export default function EntryRail({
         }}
         sx={{ "& .MuiInputBase-root": { bgcolor: "background.paper" } }}
       />
+      {taxonomyChip && onClearTaxonomy ? (
+        <StackChip
+          label={taxonomyChip.label}
+          count={taxonomyChip.count}
+          onClear={onClearTaxonomy}
+        />
+      ) : null}
       <Box
         ref={listRef}
         sx={{ mt: 1, overflowY: "auto", minHeight: 0, flex: 1, pr: 0.5 }}
@@ -111,6 +136,39 @@ export default function EntryRail({
           </Box>
         ))}
       </Box>
+    </Box>
+  );
+}
+
+function StackChip({
+  label,
+  count,
+  onClear,
+}: {
+  label: string;
+  count: number;
+  onClear: () => void;
+}) {
+  return (
+    <Box
+      sx={{
+        mt: 1,
+        display: "flex",
+        alignItems: "center",
+        gap: 0.75,
+        flexWrap: "wrap",
+      }}
+    >
+      <Chip
+        size="small"
+        color="primary"
+        variant="outlined"
+        label={`${label} · ${count}`}
+        sx={{ fontWeight: 600, maxWidth: "100%" }}
+      />
+      <Button size="small" onClick={onClear} sx={{ minWidth: 0, px: 0.75 }}>
+        Clear
+      </Button>
     </Box>
   );
 }

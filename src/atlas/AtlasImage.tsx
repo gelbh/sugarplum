@@ -11,11 +11,19 @@ export function heroImage(entry: AtlasEntryView): AtlasImageView | null {
 type Props = {
   image: AtlasImageView | null;
   ratio?: string;
+  /** `cover` crops to fill (tiles). `contain` shows the full image. */
+  fit?: "cover" | "contain";
   compact?: boolean;
   sx?: SxProps<Theme>;
 };
 
-export default function AtlasImage({ image, ratio, compact, sx }: Props) {
+export default function AtlasImage({
+  image,
+  ratio,
+  fit = "cover",
+  compact,
+  sx,
+}: Props) {
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     setLoaded(false);
@@ -51,9 +59,9 @@ export default function AtlasImage({ image, ratio, compact, sx }: Props) {
                 inset: 0,
                 width: "100%",
                 height: "100%",
-                objectFit: "cover",
+                objectFit: fit,
                 filter: "blur(12px)",
-                transform: "scale(1.08)",
+                transform: fit === "cover" ? "scale(1.08)" : "none",
                 opacity: loaded ? 0 : 1,
                 transition: "opacity 180ms ease",
               }}
@@ -71,7 +79,8 @@ export default function AtlasImage({ image, ratio, compact, sx }: Props) {
               inset: 0,
               width: "100%",
               height: "100%",
-              objectFit: "cover",
+              objectFit: fit,
+              objectPosition: "center",
               opacity: loaded || !image.placeholderSrc ? 1 : 0,
               transition: "opacity 180ms ease",
             }}

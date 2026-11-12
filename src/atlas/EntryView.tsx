@@ -27,11 +27,14 @@ import {
   windowLabel,
   type EntryRefs,
 } from "./entryFields";
+import { FIELD_LABELS } from "./entryFields";
 import {
   focusActive as isFocusActive,
   matchesSearch,
+  matchesTaxonomy,
   railSections,
   termLabel,
+  type TaxonomyFilter,
 } from "./filter";
 import { isShortcutTarget } from "./keys";
 import { atlasHeroName } from "./paths";
@@ -75,16 +78,20 @@ export default function EntryView({
   // An object per click, so citing the same field twice still scrolls.
   const [cite, setCite] = useState<{ field: FieldKey } | null>(null);
   const [query, setQuery] = useState("");
+  const [taxonomy, setTaxonomy] = useState<TaxonomyFilter | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const useFocus = isFocusActive(entries);
-  const rows = useMemo(
+  const railEntries = useMemo(
     () =>
-      railSections(
-        entries.filter((e) => matchesSearch(e, query)),
-        useFocus,
+      entries.filter(
+        (e) => matchesTaxonomy(e, taxonomy) && matchesSearch(e, query),
       ),
-    [entries, query, useFocus],
+    [entries, taxonomy, query],
+  );
+  const rows = useMemo(
+    () => railSections(railEntries, useFocus),
+    [railEntries, useFocus],
   );
   const order = useMemo(
     () => rows.flatMap((r) => r.entries.map((e) => e.id)),
@@ -124,13 +131,28 @@ export default function EntryView({
     setDrawerOpen(false);
     onOpen(id);
   };
+  const onTaxonomyBrowse = (next: TaxonomyFilter) => {
+    setTaxonomy((cur) =>
+      cur && cur.rank === next.rank && cur.value === next.value ? null : next,
+    );
+    setDrawerOpen(true);
+  };
+  const taxonomyChip = taxonomy
+    ? {
+        label: `${FIELD_LABELS[taxonomy.rank]}: ${taxonomy.value}`,
+        count: railEntries.length,
+      }
+    : null;
   const rail = (
     <EntryRail
       rows={rows}
       total={entries.length}
+      matched={railEntries.length}
       currentId={entry.id}
       query={query}
       onQuery={setQuery}
+      taxonomyChip={taxonomyChip}
+      onClearTaxonomy={taxonomy ? () => setTaxonomy(null) : undefined}
       entryHref={entryHref}
       onOpen={openFromRail}
     />
@@ -153,10 +175,10 @@ export default function EntryView({
           lg: "240px minmax(0, 1fr)",
         },
         gridTemplateAreas: {
-          xs: '"head" "glance" "board" "more"',
-          lg: '"rail head" "rail glance" "rail board" "rail more"',
+          xs: '"head" "glance" "board"',
+          lg: '"rail head" "rail glance" "rail board"',
         },
-        gridTemplateRows: { lg: "auto auto auto 1fr" },
+        gridTemplateRows: { lg: "auto auto 1fr" },
         alignItems: "start",
       }}
     >
@@ -265,8 +287,9 @@ export default function EntryView({
         <EntryFacts
           entry={entry}
           refs={refs}
-          glanceOnly
           onCite={onCite}
+          onTaxonomyBrowse={onTaxonomyBrowse}
+          taxonomyActive={taxonomy}
           onEdit={onEdit}
           onReset={onReset}
           onMakeCards={onMakeCards}
@@ -327,10 +350,6 @@ export default function EntryView({
           )}
         </Box>
       </Paper>
-
-      <Box sx={{ gridArea: "more", minWidth: 0 }}>
-        <EntryFacts entry={entry} refs={refs} moreOnly onCite={onCite} />
-      </Box>
 
       <Drawer
         open={drawerOpen}
