@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { getDb } from "../../worker/db/client";
+import {
+  getExtractSidecar,
+  putExtractSidecar,
+} from "../../worker/generation/extractSidecar";
 import { RUNNING_JOB_STALE_MS } from "../../worker/generation/progress";
 import {
   STALE_RUNNING_FAIL_ERROR,
@@ -78,12 +82,19 @@ describe("failStaleRunningJobs", () => {
       finished_at: null,
     });
 
-    const n = await failStaleRunningJobs(getDb(env));
+    await putExtractSidecar(env, "job-stale", {
+      text: "stale extract",
+      windowResume: null,
+      drafts: [],
+    });
+
+    const n = await failStaleRunningJobs(env);
     expect(n).toBe(1);
     const row = env.getGenerationJobs().find((j) => j.id === "job-stale");
     expect(row?.status).toBe("failed");
     expect(row?.error).toBe(STALE_RUNNING_FAIL_ERROR);
     expect(row?.finished_at).toBeTruthy();
+    expect(await getExtractSidecar(env, "job-stale")).toBeNull();
   });
 
   it("preserves coverage_json when failing a stale job with no cards", async () => {
@@ -109,7 +120,7 @@ describe("failStaleRunningJobs", () => {
       finished_at: null,
     });
 
-    const n = await failStaleRunningJobs(getDb(env));
+    const n = await failStaleRunningJobs(env);
     expect(n).toBe(1);
     const row = env.getGenerationJobs().find((j) => j.id === "job-cov");
     expect(row?.status).toBe("failed");
@@ -137,8 +148,13 @@ describe("failStaleRunningJobs", () => {
       finished_at: null,
     });
     seedDraftCard(env, "job-drafts");
+    await putExtractSidecar(env, "job-drafts", {
+      text: "draft extract",
+      windowResume: null,
+      drafts: [],
+    });
 
-    const n = await failStaleRunningJobs(getDb(env));
+    const n = await failStaleRunningJobs(env);
     expect(n).toBe(1);
     const row = env.getGenerationJobs().find((j) => j.id === "job-drafts");
     expect(row?.status).toBe("needs_review");
@@ -149,6 +165,7 @@ describe("failStaleRunningJobs", () => {
       gaps: [],
       draft_count: 1,
     });
+    expect(await getExtractSidecar(env, "job-drafts")).toBeNull();
   });
 
   it("leaves a fresh running job alone", async () => {
@@ -166,7 +183,7 @@ describe("failStaleRunningJobs", () => {
       finished_at: null,
     });
 
-    const n = await failStaleRunningJobs(getDb(env));
+    const n = await failStaleRunningJobs(env);
     expect(n).toBe(0);
     expect(
       env.getGenerationJobs().find((j) => j.id === "job-fresh")?.status,
@@ -190,7 +207,7 @@ describe("failStaleRunningJobs", () => {
       finished_at: staleAt,
     });
 
-    const n = await failStaleRunningJobs(getDb(env), { jobId: "job-done" });
+    const n = await failStaleRunningJobs(env, { jobId: "job-done" });
     expect(n).toBe(0);
   });
 
@@ -236,7 +253,13 @@ describe("failStaleRunningJobs", () => {
       .bind(freshProgress, "job-race", "running", staleProgress)
       .run();
 
-    const failed = await failRunningJobIfStale(db, staleSnapshot);
+    await putExtractSidecar(env, "job-race", {
+      text: "race extract",
+      windowResume: null,
+      drafts: [],
+    });
+
+    const failed = await failRunningJobIfStale(env, staleSnapshot);
     expect(failed).toBe(false);
     expect(
       env.getGenerationJobs().find((j) => j.id === "job-race")?.status,
@@ -244,5 +267,6 @@ describe("failStaleRunningJobs", () => {
     expect(
       env.getGenerationJobs().find((j) => j.id === "job-race")?.progress_json,
     ).toBe(freshProgress);
+    expect(await getExtractSidecar(env, "job-race")).not.toBeNull();
   });
 });
