@@ -15,7 +15,7 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import type { Theme } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
 import { entryTitles } from "./entryTitles";
-import { GROUP_LABELS, groupRows, matchesSearch } from "./filter";
+import { browseSections, matchesSearch } from "./filter";
 import type { AtlasEntryView } from "./types";
 
 type Props = {
@@ -42,7 +42,9 @@ export default function ComparePicker({
 
   const rows = useMemo(
     () =>
-      groupRows(entries.filter((e) => e.id !== a && matchesSearch(e, query))),
+      browseSections(
+        entries.filter((e) => e.id !== a && matchesSearch(e, query)),
+      ),
     [entries, a, query],
   );
 
@@ -76,9 +78,7 @@ export default function ComparePicker({
       <Box sx={{ px: 3, pb: 1.5 }}>
         <Typography variant="body2" color="text.secondary" aria-live="polite">
           {first ? (
-            <>
-              Step 2 of 2: compare {entryTitles(first).primary} with
-            </>
+            <>Step 2 of 2: compare {entryTitles(first).primary} with</>
           ) : (
             "Step 1 of 2: pick the first parasite"
           )}
@@ -116,12 +116,12 @@ export default function ComparePicker({
         ) : (
           <List dense disablePadding>
             {rows.map((row) => (
-              <li key={row.group}>
+              <li key={row.id}>
                 <Box component="ul" sx={{ p: 0 }}>
                   <ListSubheader
                     sx={{ px: 3, lineHeight: "36px", fontWeight: 700 }}
                   >
-                    {GROUP_LABELS[row.group].plural}
+                    {row.title}
                   </ListSubheader>
                   {row.entries.map((e) => {
                     const titles = entryTitles(e);
