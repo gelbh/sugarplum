@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -8,10 +8,6 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import type {
-  TextItem,
-  TextMarkedContent,
-} from "pdfjs-dist/types/src/display/api";
 import {
   downloadMaterialUrl,
   getJob,
@@ -19,10 +15,10 @@ import {
   patchCardProvenancePages,
 } from "../api/client";
 import { isGuest } from "../guest/session";
-import { loadPdfDocument, renderPdfPageToCanvas } from "../lib/pdfPageRender";
-import { excerptHighlightRects, type TextRun } from "../study/excerptHighlight";
+import { loadPdfDocument } from "../lib/pdfPageRender";
 import {
   normalizeExcerptText,
+  pagesForExcerpt,
   resolveNotesDisplayPage,
   type PageText,
 } from "../study/excerptPages";
@@ -31,19 +27,14 @@ import {
   pagesToPersistAfterNavigate,
   pagesToPersistAfterRescue,
 } from "../study/notesProvenanceWrite";
-import {
-  NOTES_ZOOM_FIT,
-  NOTES_ZOOM_MAX,
-  NOTES_ZOOM_MIN,
-  notesRenderCssWidth,
-  stepNotesZoom,
-} from "../study/notesViewerZoom";
 
-const PAGE_WIDTH_FALLBACK = 320;
-const ZOOM_DEBOUNCE_MS = 120;
+const NotesEmbedPdfStage = lazy(() =>
+  import("../study/notesEmbedPdf").then((mod) => ({
+    default: mod.NotesEmbedPdfStage,
+  })),
+);
+
 const FILE_ERROR = "Could not open the file.";
-const HIGHLIGHT =
-  "color-mix(in srgb, var(--sp-grade-good-wash) 70%, transparent)";
 
 type Props = {
   open: boolean;
@@ -54,48 +45,24 @@ type Props = {
   cardId?: string | null;
 };
 
-type Matrix6 = TextRun["transform"];
-
-type PageView = {
-  canvas: HTMLCanvasElement;
-  rects: { x: number; y: number; w: number; h: number }[];
-  pageText: string;
-};
-
-function matrix6(raw: unknown): Matrix6 | null {
-  if (!Array.isArray(raw) || raw.length < 6) return null;
-  const nums = raw.slice(0, 6);
-  if (!nums.every((n) => typeof n === "number" && Number.isFinite(n))) {
-    return null;
-  }
-  return [nums[0], nums[1], nums[2], nums[3], nums[4], nums[5]];
-}
-
-function isTextItem(item: TextItem | TextMarkedContent): item is TextItem {
-  return "str" in item && typeof (item as TextItem).str === "string";
-}
-
-function textRuns(items: readonly (TextItem | TextMarkedContent)[]): TextRun[] {
-  const runs: TextRun[] = [];
-  for (const item of items) {
-    if (!isTextItem(item)) continue;
-    if (typeof item.width !== "number" || typeof item.height !== "number") {
-      continue;
-    }
-    const transform = matrix6(item.transform);
-    if (!transform) continue;
-    runs.push({
-      str: item.str,
-      width: item.width,
-      height: item.height,
-      transform,
-    });
-  }
-  return runs;
-}
-
 function isAbort(err: unknown): boolean {
   return err instanceof DOMException && err.name === "AbortError";
+}
+
+/** Plain page text for Approach C rescue/write-back (no glyph geometry). */
+async function pdfPagePlainText(
+  pdf: Awaited<ReturnType<typeof loadPdfDocument>>,
+  pageNum: number,
+): Promise<string> {
+  const pdfPage = await pdf.getPage(pageNum);
+  const content = await pdfPage.getTextContent();
+  const parts: string[] = [];
+  for (const item of content.items) {
+    if ("str" in item && typeof item.str === "string" && item.str) {
+      parts.push(item.str);
+    }
+  }
+  return parts.join(" ");
 }
 
 export default function StudyNotesDialog({
@@ -106,10 +73,6 @@ export default function StudyNotesDialog({
   jobId,
   cardId = null,
 }: Props) {
-  const frameRef = useRef<HTMLDivElement>(null);
-  const canvasHostRef = useRef<HTMLDivElement>(null);
-  const washAnchorRef = useRef<HTMLDivElement>(null);
-  const washFocusKeyRef = useRef<string>("");
   const userNavRef = useRef(false);
   const wrotePagesRef = useRef<string>("");
   const writeSeqRef = useRef(0);
@@ -118,13 +81,10 @@ export default function StudyNotesDialog({
   const [title, setTitle] = useState("Notes");
   const [error, setError] = useState<string | null>(null);
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
-  const [fitWidth, setFitWidth] = useState(PAGE_WIDTH_FALLBACK);
-  const [zoom, setZoom] = useState(NOTES_ZOOM_FIT);
-  const [renderWidth, setRenderWidth] = useState(PAGE_WIDTH_FALLBACK);
-  const [pageView, setPageView] = useState<PageView | null>(null);
   const [viewPage, setViewPage] = useState<number | null>(null);
   const [pageCount, setPageCount] = useState(0);
   const [pageInput, setPageInput] = useState("");
+  const [washHits, setWashHits] = useState(false);
 
   function persistPages(pages: number[] | null) {
     if (!cardId || isGuest() || !pages || pages.length === 0) return;
@@ -148,50 +108,23 @@ export default function StudyNotesDialog({
       });
   }
 
-  useLayoutEffect(() => {
-    if (!open) {
-      setFitWidth(PAGE_WIDTH_FALLBACK);
-      return;
-    }
-    const node = frameRef.current;
-    if (!node) return;
-    const apply = () => {
-      const next = Math.floor(node.clientWidth);
-      if (next >= 1) setFitWidth((prev) => (prev === next ? prev : next));
-    };
-    apply();
-    const observer = new ResizeObserver(apply);
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [open]);
-
-  useEffect(() => {
-    const next = notesRenderCssWidth(fitWidth, zoom);
-    const timer = window.setTimeout(() => {
-      setRenderWidth((prev) => (prev === next ? prev : next));
-    }, ZOOM_DEBOUNCE_MS);
-    return () => window.clearTimeout(timer);
-  }, [fitWidth, zoom]);
-
   useEffect(() => {
     if (!open) {
       setViewPage(null);
       setPageCount(0);
       setPageInput("");
-      setZoom(NOTES_ZOOM_FIT);
+      setWashHits(false);
       userNavRef.current = false;
       wrotePagesRef.current = "";
       writeSeqRef.current = 0;
-      washFocusKeyRef.current = "";
       lastPersistedFirstRef.current = page;
       return;
     }
     userNavRef.current = false;
     wrotePagesRef.current = "";
     writeSeqRef.current = 0;
-    washFocusKeyRef.current = "";
     lastPersistedFirstRef.current = page;
-    setZoom(NOTES_ZOOM_FIT);
+    setWashHits(false);
     setViewPage(page);
     setPageInput(page != null ? String(page) : "");
   }, [open, page, cardId]);
@@ -227,6 +160,7 @@ export default function StudyNotesDialog({
         if (material.kind !== "pdf" || page === null) return;
         const response = await fetch(downloadMaterialUrl(material.id), {
           credentials: "include",
+          cache: "no-store",
           signal: ac.signal,
         });
         if (!response.ok) throw new Error(String(response.status));
@@ -246,11 +180,9 @@ export default function StudyNotesDialog({
     };
   }, [open, jobId, page]);
 
+  // pdfjs rescue + navigate write-back (Approach C); EmbedPDF is display-only.
   useEffect(() => {
-    if (!open || !pdfBytes || viewPage === null) {
-      setPageView(null);
-      return;
-    }
+    if (!open || !pdfBytes || viewPage === null) return;
 
     let cancelled = false;
     void (async () => {
@@ -259,73 +191,34 @@ export default function StudyNotesDialog({
         const copy = pdfBytes.slice();
         pdf = await loadPdfDocument(copy.buffer as ArrayBuffer);
         const needle = normalizeExcerptText(excerpt);
+        // pageCount owned by EmbedPDF (onPageCount); pdfjs only for rescue text.
         const total = pdf.numPages;
-        if (!cancelled) {
-          setPageCount(total);
-        }
-
-        async function pagePlainText(pageNum: number): Promise<string> {
-          const pdfPage = await pdf!.getPage(pageNum);
-          const content = await pdfPage.getTextContent();
-          return textRuns(content.items)
-            .map((run) => run.str)
-            .join(" ");
-        }
-
-        async function washOnPage(pageNum: number): Promise<PageView> {
-          const pdfPage = await pdf!.getPage(pageNum);
-          const viewport = pdfPage.getViewport({ scale: 1 });
-          const viewportTransform = matrix6(viewport.transform);
-          if (
-            !viewportTransform ||
-            !(viewport.width > 0) ||
-            !(viewport.height > 0)
-          ) {
-            throw new Error("viewport");
-          }
-          const canvas = await renderPdfPageToCanvas(
-            pdf!,
-            pageNum - 1,
-            renderWidth,
-          );
-          const content = await pdfPage.getTextContent();
-          const runs = textRuns(content.items);
-          const rects = excerptHighlightRects(runs, excerpt, viewportTransform);
-          const cssW = Number.parseFloat(canvas.style.width);
-          const cssH = Number.parseFloat(canvas.style.height);
-          const sx = cssW / viewport.width;
-          const sy = cssH / viewport.height;
-          return {
-            canvas,
-            pageText: runs.map((run) => run.str).join(" "),
-            rects: rects.map((rect) => ({
-              x: rect.x * sx,
-              y: rect.y * sy,
-              w: rect.w * sx,
-              h: rect.h * sy,
-            })),
-          };
-        }
 
         let displayPage = viewPage;
-        let view = await washOnPage(displayPage);
+        let pageText = "";
+        try {
+          pageText = await pdfPagePlainText(pdf, displayPage);
+        } catch {
+          pageText = "";
+        }
         if (cancelled) return;
-        setError(null);
-        setPageView(view);
 
         const allowRescue = !userNavRef.current && page !== null;
-        if (allowRescue && needle && view.rects.length === 0) {
+        const claimedMiss =
+          Boolean(needle) &&
+          pagesForExcerpt(excerpt, [{ page: displayPage, text: pageText }])
+            .length === 0;
+
+        if (allowRescue && claimedMiss) {
           try {
-            const scanned: PageText[] = [
-              { page: displayPage, text: view.pageText },
-            ];
+            const scanned: PageText[] = [{ page: displayPage, text: pageText }];
             let rescuedPage: number | null = null;
             for (let pageNum = 1; pageNum <= total; pageNum++) {
               if (cancelled) return;
               if (pageNum === displayPage) continue;
               let text = "";
               try {
-                text = await pagePlainText(pageNum);
+                text = await pdfPagePlainText(pdf, pageNum);
               } catch {
                 continue;
               }
@@ -339,9 +232,12 @@ export default function StudyNotesDialog({
                 if (rescued !== null && rescued !== displayPage) {
                   rescuedPage = rescued;
                   displayPage = rescued;
-                  view = await washOnPage(displayPage);
+                  try {
+                    pageText = await pdfPagePlainText(pdf, displayPage);
+                  } catch {
+                    pageText = "";
+                  }
                   if (cancelled) return;
-                  setPageView(view);
                   setViewPage(displayPage);
                   setPageInput(String(displayPage));
                 }
@@ -359,7 +255,7 @@ export default function StudyNotesDialog({
               );
             }
           } catch {
-            /* keep claimed-page view already shown */
+            /* keep claimed page */
           }
         } else if (userNavRef.current && page !== null) {
           persistPages(
@@ -367,14 +263,15 @@ export default function StudyNotesDialog({
               storedFirst: lastPersistedFirstRef.current,
               displayPage,
               excerpt,
-              pageTexts: [{ page: displayPage, text: view.pageText }],
+              pageTexts: [{ page: displayPage, text: pageText }],
             }),
           );
         }
-      } catch {
         if (cancelled) return;
-        setPageView(null);
-        setError(FILE_ERROR);
+        setError(null);
+      } catch {
+        // Provenance scan failed; EmbedPDF may still render the bytes.
+        if (!cancelled) setError(null);
       } finally {
         await pdf?.cleanup()?.catch(() => undefined);
       }
@@ -383,26 +280,24 @@ export default function StudyNotesDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, pdfBytes, viewPage, excerpt, renderWidth, page, cardId]);
+  }, [open, pdfBytes, viewPage, excerpt, page, cardId]);
 
-  useLayoutEffect(() => {
-    const host = canvasHostRef.current;
-    if (!host) return;
-    host.replaceChildren();
-    if (pageView) host.append(pageView.canvas);
-  }, [pageView, open]);
+  const onPageCount = useCallback((count: number) => {
+    if (count >= 1) setPageCount((prev) => (prev === count ? prev : count));
+  }, []);
 
-  useLayoutEffect(() => {
-    if (!pageView || pageView.rects.length === 0 || viewPage === null) return;
-    // Zoom re-rasters rebuild pageView; only re-focus wash on page/excerpt change.
-    const key = `${viewPage}:${excerpt}`;
-    if (washFocusKeyRef.current === key) return;
-    washFocusKeyRef.current = key;
-    washAnchorRef.current?.scrollIntoView({
-      block: "nearest",
-      inline: "nearest",
+  const onSearchHits = useCallback((hits: boolean) => {
+    setWashHits(hits);
+  }, []);
+
+  const onStagePage = useCallback((next: number) => {
+    setViewPage((prev) => {
+      if (prev === next) return prev;
+      userNavRef.current = true;
+      setPageInput(String(next));
+      return next;
     });
-  }, [pageView, viewPage, excerpt]);
+  }, []);
 
   function goToPage(next: number) {
     const clamped = clampNotesPage(next, pageCount);
@@ -420,7 +315,7 @@ export default function StudyNotesDialog({
   }
 
   const scrubberReady = pageCount >= 1 && viewPage !== null && pdfBytes;
-  const washHits = (pageView?.rects.length ?? 0) > 0;
+  const showEmbed = Boolean(pdfBytes && viewPage !== null);
 
   return (
     <Dialog open={open} onClose={() => onClose()} fullWidth maxWidth="md">
@@ -453,40 +348,28 @@ export default function StudyNotesDialog({
           </Alert>
         ) : null}
         <Box
-          ref={frameRef}
           sx={{
             width: "100%",
-            maxHeight: { xs: "55vh", sm: "65vh" },
-            overflow: "auto",
+            height: { xs: "55vh", sm: "65vh" },
             border: 1,
             borderColor: "divider",
             borderRadius: 1,
             bgcolor: "background.paper",
+            overflow: "hidden",
           }}
         >
-          <Box sx={{ position: "relative", width: "fit-content" }}>
-            <Box
-              ref={canvasHostRef}
-              sx={{ "& canvas": { display: "block" } }}
-            />
-            {pageView
-              ? pageView.rects.map((rect, index) => (
-                  <Box
-                    key={`${index}:${rect.x}:${rect.y}`}
-                    ref={index === 0 ? washAnchorRef : undefined}
-                    sx={{
-                      position: "absolute",
-                      left: rect.x,
-                      top: rect.y,
-                      width: rect.w,
-                      height: rect.h,
-                      backgroundColor: HIGHLIGHT,
-                      pointerEvents: "none",
-                    }}
-                  />
-                ))
-              : null}
-          </Box>
+          {showEmbed ? (
+            <Suspense fallback={<Typography sx={{ p: 2 }}>Loading viewer…</Typography>}>
+              <NotesEmbedPdfStage
+                bytes={pdfBytes!}
+                page={viewPage!}
+                excerpt={excerpt}
+                onPageCount={onPageCount}
+                onSearchHits={onSearchHits}
+                onStagePage={onStagePage}
+              />
+            </Suspense>
+          ) : null}
         </Box>
       </DialogContent>
       <DialogActions
@@ -547,37 +430,6 @@ export default function StudyNotesDialog({
                 onClick={() => goToPage(viewPage! + 1)}
               >
                 Next
-              </Button>
-            </>
-          ) : null}
-          {pdfBytes ? (
-            <>
-              <Button
-                size="small"
-                aria-label="Zoom out"
-                disabled={zoom <= NOTES_ZOOM_MIN}
-                onClick={() => setZoom((prev) => stepNotesZoom(prev, -1))}
-              >
-                −
-              </Button>
-              <Typography variant="body2" component="span" aria-live="polite">
-                {Math.round(zoom * 100)}%
-              </Typography>
-              <Button
-                size="small"
-                aria-label="Zoom in"
-                disabled={zoom >= NOTES_ZOOM_MAX}
-                onClick={() => setZoom((prev) => stepNotesZoom(prev, 1))}
-              >
-                +
-              </Button>
-              <Button
-                size="small"
-                aria-label="Fit width"
-                disabled={zoom === NOTES_ZOOM_FIT}
-                onClick={() => setZoom(NOTES_ZOOM_FIT)}
-              >
-                Fit
               </Button>
             </>
           ) : null}
