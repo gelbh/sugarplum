@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   DRAG_SLOP_PX,
-  STUDY_REVEAL_STAMP,
   SWIPE_THRESHOLD_PX,
   armGesture,
   gesturePassedSlop,
@@ -43,20 +42,20 @@ describe("resolveCardGesture", () => {
   it("defaults to 96px commit threshold", () => {
     expect(SWIPE_THRESHOLD_PX).toBe(96);
     expect(
-      resolveCardGesture({ revealed: false, dx: 95, dy: 0 }),
+      resolveCardGesture({ revealed: true, dx: 95, dy: 0 }),
     ).toEqual({ type: "none" });
     expect(
-      resolveCardGesture({ revealed: false, dx: 96, dy: 0 }),
-    ).toEqual({ type: "reveal" });
+      resolveCardGesture({ revealed: true, dx: 96, dy: 0 }),
+    ).toEqual({ type: "grade", rating: 3 });
   });
 
-  it("reveals on any direction past threshold when front", () => {
+  it("does not reveal from swipe when front is showing", () => {
     expect(
       resolveCardGesture({ revealed: false, dx: 100, dy: 0 }),
-    ).toEqual({ type: "reveal" });
+    ).toEqual({ type: "none" });
     expect(
       resolveCardGesture({ revealed: false, dx: 0, dy: -100 }),
-    ).toEqual({ type: "reveal" });
+    ).toEqual({ type: "none" });
   });
 
   it("maps swipes to FSRS ratings when revealed", () => {
@@ -90,13 +89,26 @@ describe("studySwipeVisual", () => {
     ).toMatchObject({ stampLabel: null, stampOpacity: 0 });
   });
 
-  it("shows reveal cue when front is up", () => {
+  it("keeps stamp idle when not revealed past slop", () => {
     expect(
-      studySwipeVisual({ dx: 48, dy: 0, revealed: false, ...motion }),
-    ).toMatchObject({
-      stampLabel: STUDY_REVEAL_STAMP,
-      stampRating: null,
+      studySwipeVisual({
+        dx: 48,
+        dy: 0,
+        revealed: false,
+        reduceMotion: false,
+      }),
+    ).toMatchObject({ stampLabel: null, stampOpacity: 0 });
+  });
+
+  it("tracks with translate3d and no rotate when revealed", () => {
+    const v = studySwipeVisual({
+      dx: 40,
+      dy: -20,
+      revealed: true,
+      reduceMotion: false,
     });
+    expect(v.transform).toBe("translate3d(40px, -20px, 0)");
+    expect(v.transform).not.toMatch(/rotate/);
   });
 
   it("maps dominant directions to grade labels when revealed", () => {
@@ -125,7 +137,7 @@ describe("studySwipeVisual", () => {
     ).toBe(1);
   });
 
-  it("skips tilt under reduced motion", () => {
+  it("uses translate3d under reduced motion too", () => {
     expect(
       studySwipeVisual({
         dx: 40,
@@ -133,7 +145,7 @@ describe("studySwipeVisual", () => {
         revealed: true,
         reduceMotion: true,
       }).transform,
-    ).toBe("translate(40px, 12px)");
+    ).toBe("translate3d(40px, 12px, 0)");
   });
 });
 
