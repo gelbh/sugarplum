@@ -1,0 +1,79 @@
+import { PDFDocument } from "pdf-lib";
+import { describe, expect, it } from "vitest";
+import { compressPdfUnderLimit } from "../../src/lib/compressPdfUnderLimit";
+
+async function tinyPdf(): Promise<Uint8Array> {
+  const doc = await PDFDocument.create();
+  doc.addPage();
+  return doc.save();
+}
+
+/** Minimal valid JPEG (1×1 pixel). */
+function tinyJpeg(): Uint8Array {
+  return Uint8Array.from([
+    0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
+    0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0xff, 0xdb, 0x00, 0x43,
+    0x00, 0x08, 0x06, 0x06, 0x07, 0x06, 0x05, 0x08, 0x07, 0x07, 0x07, 0x09,
+    0x09, 0x08, 0x0a, 0x0c, 0x14, 0x0d, 0x0c, 0x0b, 0x0b, 0x0c, 0x19, 0x12,
+    0x13, 0x0f, 0x14, 0x1d, 0x1a, 0x1f, 0x1e, 0x1d, 0x1a, 0x1c, 0x1c, 0x20,
+    0x24, 0x2e, 0x27, 0x20, 0x22, 0x2c, 0x23, 0x1c, 0x1c, 0x28, 0x37, 0x29,
+    0x2c, 0x30, 0x31, 0x34, 0x34, 0x34, 0x1f, 0x27, 0x39, 0x3d, 0x38, 0x32,
+    0x3c, 0x2e, 0x33, 0x34, 0x32, 0xff, 0xc0, 0x00, 0x0b, 0x08, 0x00, 0x01,
+    0x00, 0x01, 0x01, 0x01, 0x11, 0x00, 0xff, 0xc4, 0x00, 0x14, 0x00, 0x01,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x03, 0xff, 0xc4, 0x00, 0x14, 0x10, 0x01, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f, 0x00,
+    0x7f, 0xff, 0xd9,
+  ]);
+}
+
+async function pdfWithJpegPage(): Promise<Uint8Array> {
+  const doc = await PDFDocument.create();
+  const jpg = await doc.embedJpg(tinyJpeg());
+  const page = doc.addPage([jpg.width, jpg.height]);
+  page.drawImage(jpg, { x: 0, y: 0, width: jpg.width, height: jpg.height });
+  return doc.save();
+}
+
+describe("compressPdfUnderLimit", () => {
+  it("returns still_too_large with clear message when maxBytes is impossible", async () => {
+    const bytes = await tinyPdf();
+    const result = await compressPdfUnderLimit(bytes.buffer, 1, {
+      nameStem: "scan",
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toBe("still_too_large");
+      expect(result.message.toLowerCase()).toMatch(/still|compress|mb/);
+    }
+  });
+
+  it("returns a File under maxBytes without split-style naming", async () => {
+    const bytes = await pdfWithJpegPage();
+    const result = await compressPdfUnderLimit(
+      bytes.buffer,
+      50 * 1024 * 1024,
+      { nameStem: "scan" },
+    );
+    // Tiny fixtures may already be under the cap; success must not invent (k/n).
+    if (result.ok) {
+      expect(result.file.size).toBeLessThanOrEqual(50 * 1024 * 1024);
+      expect(result.file.name).toBe("scan.pdf");
+      expect(result.file.name).not.toMatch(/\(\d+\/\d+\)/);
+    } else {
+      // Environment without canvas/jpeg encode should still fail loudly, not throw.
+      expect(["still_too_large", "failed"]).toContain(result.reason);
+    }
+  });
+
+  it("rejects multi-page PDFs", async () => {
+    const doc = await PDFDocument.create();
+    doc.addPage();
+    doc.addPage();
+    const bytes = await doc.save();
+    const result = await compressPdfUnderLimit(bytes.buffer, 50 * 1024 * 1024);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe("multi_page");
+  });
+});

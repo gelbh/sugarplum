@@ -75,6 +75,21 @@ startxref
       nameStem: "scan",
     });
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.reason).toBe("page_too_large");
+    if (!result.ok) {
+      expect(result.reason).toBe("page_too_large");
+      expect(result.pageCount).toBe(1);
+    }
+  });
+
+  it("includes pageCount on page_too_large for multi-page PDFs", async () => {
+    const bytes = await pdfWithPages(3);
+    const result = await splitPdfUnderLimit(bytes.buffer, 1, {
+      nameStem: "deck",
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toBe("page_too_large");
+      expect(result.pageCount).toBe(3);
+    }
   });
 });
