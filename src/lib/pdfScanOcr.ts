@@ -1,5 +1,13 @@
 import { createWorker, OEM } from "tesseract.js";
-import { loadPdfDocument, renderPdfPageToCanvas } from "./pdfPageRender";
+import {
+  listPdfPages,
+  openPdfDocument,
+  pageLayoutForNumber,
+  pagePlainText,
+  renderPageToCanvas,
+  type EmbedPdfDocument,
+  type EmbedPdfPageLayout,
+} from "./embedPdfEngine";
 
 /** Match the worker sidecar cap. Upload text-layer scan stays at 120 pages. */
 export const OCR_EMPTY_PAGE_LIMIT = 8;
@@ -128,6 +136,37 @@ function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   });
 }
 
+async function readTextLayerPage(
+  doc: EmbedPdfDocument,
+  pages: readonly EmbedPdfPageLayout[],
+  pageNumber: number,
+): Promise<PageText | null> {
+  const layout = pageLayoutForNumber(pages, pageNumber);
+  if (!layout) return null;
+  const text = await pagePlainText(doc, layout);
+  return { page: pageNumber, text };
+}
+
+async function ocrEmptyRow(
+  worker: ScanWorker,
+  doc: EmbedPdfDocument,
+  pages: readonly EmbedPdfPageLayout[],
+  row: PageText,
+): Promise<PageText | null> {
+  const layout = pageLayoutForNumber(pages, row.page);
+  if (!layout) return null;
+  const canvas = await renderPageToCanvas(
+    doc,
+    layout,
+    OCR_RENDER_CSS_WIDTH,
+  );
+  const recognized = await worker.recognize(await canvasToBlob(canvas));
+  const text = capOcrPageText(
+    typeof recognized.data.text === "string" ? recognized.data.text : "",
+  );
+  return text ? { page: row.page, text } : null;
+}
+
 export async function ocrEmptyPdfPages(
   data: ArrayBuffer,
 ): Promise<PageText[] | undefined> {
@@ -139,40 +178,27 @@ export async function ocrEmptyPdfPages(
     return undefined;
   }
 
-  const pdf = await loadPdfDocument(data);
+  const doc = await openPdfDocument(data);
   try {
-    const limit = Math.min(pdf.numPages, OCR_TEXT_LAYER_SCAN_LIMIT);
+    const { pageCount, pages } = await listPdfPages(doc);
+    const limit = Math.min(pageCount, OCR_TEXT_LAYER_SCAN_LIMIT);
     const rows: PageText[] = [];
     for (let n = 1; n <= limit; n++) {
-      const page = await pdf.getPage(n);
-      const content = await page.getTextContent();
-      const text = content.items
-        .map((item) =>
-          "str" in item && typeof item.str === "string" ? item.str : "",
-        )
-        .join(" ");
-      rows.push({ page: n, text });
+      const row = await readTextLayerPage(doc, pages, n);
+      if (row) rows.push(row);
     }
     const out: PageText[] = [];
     for (const row of selectEmptyPages(rows)) {
       try {
-        const canvas = await renderPdfPageToCanvas(
-          pdf,
-          row.page - 1,
-          OCR_RENDER_CSS_WIDTH,
-        );
-        const recognized = await worker.recognize(await canvasToBlob(canvas));
-        const text = capOcrPageText(
-          typeof recognized.data.text === "string" ? recognized.data.text : "",
-        );
-        if (text) out.push({ page: row.page, text });
+        const hit = await ocrEmptyRow(worker, doc, pages, row);
+        if (hit) out.push(hit);
       } catch (err) {
         console.warn(`PDF scan OCR skipped page ${row.page}`, err);
       }
     }
     return out.length > 0 ? out : undefined;
   } finally {
-    await pdf.cleanup();
+    await doc.close();
   }
 }
 
@@ -188,55 +214,41 @@ export async function ocrEmptyPdfPagesInWindow(
     return undefined;
   }
 
-  const pdf = await loadPdfDocument(data);
+  const doc = await openPdfDocument(data);
   try {
     const startPage = args.startPage;
     if (!Number.isInteger(startPage) || startPage < 1) return undefined;
-    const numPages = pdf.numPages;
+    const { pageCount, pages } = await listPdfPages(doc);
     const rows: PageText[] = [];
     const readTextLayer = async (pageNumber: number): Promise<void> => {
-      const page = await pdf.getPage(pageNumber);
-      const content = await page.getTextContent();
-      const text = content.items
-        .map((item) =>
-          "str" in item && typeof item.str === "string" ? item.str : "",
-        )
-        .join(" ");
-      rows.push({ page: pageNumber, text });
+      const row = await readTextLayerPage(doc, pages, pageNumber);
+      if (row) rows.push(row);
     };
-    if (startPage <= OCR_REFILL_PAGE_MAX && startPage <= numPages) {
+    if (startPage <= OCR_REFILL_PAGE_MAX && startPage <= pageCount) {
       const end = Math.min(
         OCR_REFILL_PAGE_MAX,
         startPage + OCR_TEXT_LAYER_SCAN_LIMIT - 1,
-        numPages,
+        pageCount,
       );
       for (let n = startPage; n <= end; n++) await readTextLayer(n);
     }
     let selected = selectEmptyPagesInWindow(rows, args);
     if (selected.length < OCR_EMPTY_PAGE_LIMIT) {
-      const scanEnd = refillLookbehindScanEnd(startPage, numPages);
+      const scanEnd = refillLookbehindScanEnd(startPage, pageCount);
       for (let n = 1; n <= scanEnd; n++) await readTextLayer(n);
       selected = selectEmptyPagesInWindow(rows, args);
     }
     const out: PageText[] = [];
     for (const row of selected) {
       try {
-        const canvas = await renderPdfPageToCanvas(
-          pdf,
-          row.page - 1,
-          OCR_RENDER_CSS_WIDTH,
-        );
-        const recognized = await worker.recognize(await canvasToBlob(canvas));
-        const text = capOcrPageText(
-          typeof recognized.data.text === "string" ? recognized.data.text : "",
-        );
-        if (text) out.push({ page: row.page, text });
+        const hit = await ocrEmptyRow(worker, doc, pages, row);
+        if (hit) out.push(hit);
       } catch (err) {
         console.warn(`PDF scan OCR skipped page ${row.page}`, err);
       }
     }
     return out.length > 0 ? out : undefined;
   } finally {
-    await pdf.cleanup();
+    await doc.close();
   }
 }
