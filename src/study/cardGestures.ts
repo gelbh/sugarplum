@@ -6,7 +6,6 @@ export const SWIPE_THRESHOLD_PX = 96;
 export const REVIEW_FLY_MS = 200;
 
 export type CardGestureResult =
-  | { type: "reveal" }
   | { type: "grade"; rating: StudyRating }
   | { type: "none" };
 
@@ -28,12 +27,13 @@ export function resolveCardGesture(input: {
   dy: number;
   threshold?: number;
 }): CardGestureResult {
+  // 1A: plate stays still until Show Answer / Space; swipe never reveals.
+  if (!input.revealed) return { type: "none" };
+
   const threshold = input.threshold ?? SWIPE_THRESHOLD_PX;
   const ax = Math.abs(input.dx);
   const ay = Math.abs(input.dy);
   if (ax < threshold && ay < threshold) return { type: "none" };
-
-  if (!input.revealed) return { type: "reveal" };
 
   if (ax >= ay) {
     const rating: StudyRating = input.dx < 0 ? 1 : 3;
@@ -91,8 +91,6 @@ export function reviewSwipeVisual(input: {
   };
 }
 
-export const STUDY_REVEAL_STAMP = "Show";
-
 /** Live study drag paint only; mailbox owns the leave after grade. */
 export function studySwipeVisual(input: {
   dx: number;
@@ -105,28 +103,20 @@ export function studySwipeVisual(input: {
   stampRating: StudyRating | null;
   stampOpacity: number;
 } {
-  const { dx, dy, revealed, reduceMotion } = input;
+  const { dx, dy, revealed } = input;
   const ax = Math.abs(dx);
   const ay = Math.abs(dy);
-  const transform = reduceMotion
-    ? `translate(${dx}px, ${dy}px)`
-    : `translate(${dx}px, ${dy}px) rotate(${dx / 20}deg)`;
+  // reduceMotion kept in the signature for call-site stability; track paint is
+  // translate3d either way (no live rotate).
+  void input.reduceMotion;
+  const transform = `translate3d(${dx}px, ${dy}px, 0)`;
 
-  if (!gesturePassedSlop({ dx, dy })) {
+  if (!revealed || !gesturePassedSlop({ dx, dy })) {
     return {
       transform,
       stampLabel: null,
       stampRating: null,
       stampOpacity: 0,
-    };
-  }
-
-  if (!revealed) {
-    return {
-      transform,
-      stampLabel: STUDY_REVEAL_STAMP,
-      stampRating: null,
-      stampOpacity: Math.min(1, Math.max(ax, ay) / SWIPE_THRESHOLD_PX),
     };
   }
 
