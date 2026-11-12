@@ -8,7 +8,10 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import type { TextItem, TextMarkedContent } from "pdfjs-dist/types/src/display/api";
+import type {
+  TextItem,
+  TextMarkedContent,
+} from "pdfjs-dist/types/src/display/api";
 import {
   downloadMaterialUrl,
   getJob,
@@ -16,14 +19,8 @@ import {
   patchCardProvenancePages,
 } from "../api/client";
 import { isGuest } from "../guest/session";
-import {
-  loadPdfDocument,
-  renderPdfPageToCanvas,
-} from "../lib/pdfPageRender";
-import {
-  excerptHighlightRects,
-  type TextRun,
-} from "../study/excerptHighlight";
+import { loadPdfDocument, renderPdfPageToCanvas } from "../lib/pdfPageRender";
+import { excerptHighlightRects, type TextRun } from "../study/excerptHighlight";
 import {
   normalizeExcerptText,
   resolveNotesDisplayPage,
@@ -34,8 +31,16 @@ import {
   pagesToPersistAfterNavigate,
   pagesToPersistAfterRescue,
 } from "../study/notesProvenanceWrite";
+import {
+  NOTES_ZOOM_FIT,
+  NOTES_ZOOM_MAX,
+  NOTES_ZOOM_MIN,
+  notesRenderCssWidth,
+  stepNotesZoom,
+} from "../study/notesViewerZoom";
 
 const PAGE_WIDTH_FALLBACK = 320;
+const ZOOM_DEBOUNCE_MS = 120;
 const FILE_ERROR = "Could not open the file.";
 const HIGHLIGHT =
   "color-mix(in srgb, var(--sp-grade-good-wash) 70%, transparent)";
@@ -66,9 +71,7 @@ function matrix6(raw: unknown): Matrix6 | null {
   return [nums[0], nums[1], nums[2], nums[3], nums[4], nums[5]];
 }
 
-function isTextItem(
-  item: TextItem | TextMarkedContent,
-): item is TextItem {
+function isTextItem(item: TextItem | TextMarkedContent): item is TextItem {
   return "str" in item && typeof (item as TextItem).str === "string";
 }
 
@@ -105,6 +108,8 @@ export default function StudyNotesDialog({
 }: Props) {
   const frameRef = useRef<HTMLDivElement>(null);
   const canvasHostRef = useRef<HTMLDivElement>(null);
+  const washAnchorRef = useRef<HTMLDivElement>(null);
+  const washFocusKeyRef = useRef<string>("");
   const userNavRef = useRef(false);
   const wrotePagesRef = useRef<string>("");
   const writeSeqRef = useRef(0);
@@ -113,7 +118,9 @@ export default function StudyNotesDialog({
   const [title, setTitle] = useState("Notes");
   const [error, setError] = useState<string | null>(null);
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
-  const [width, setWidth] = useState(PAGE_WIDTH_FALLBACK);
+  const [fitWidth, setFitWidth] = useState(PAGE_WIDTH_FALLBACK);
+  const [zoom, setZoom] = useState(NOTES_ZOOM_FIT);
+  const [renderWidth, setRenderWidth] = useState(PAGE_WIDTH_FALLBACK);
   const [pageView, setPageView] = useState<PageView | null>(null);
   const [viewPage, setViewPage] = useState<number | null>(null);
   const [pageCount, setPageCount] = useState(0);
@@ -143,14 +150,14 @@ export default function StudyNotesDialog({
 
   useLayoutEffect(() => {
     if (!open) {
-      setWidth(PAGE_WIDTH_FALLBACK);
+      setFitWidth(PAGE_WIDTH_FALLBACK);
       return;
     }
     const node = frameRef.current;
     if (!node) return;
     const apply = () => {
       const next = Math.floor(node.clientWidth);
-      if (next >= 1) setWidth((prev) => (prev === next ? prev : next));
+      if (next >= 1) setFitWidth((prev) => (prev === next ? prev : next));
     };
     apply();
     const observer = new ResizeObserver(apply);
@@ -159,20 +166,32 @@ export default function StudyNotesDialog({
   }, [open]);
 
   useEffect(() => {
+    const next = notesRenderCssWidth(fitWidth, zoom);
+    const timer = window.setTimeout(() => {
+      setRenderWidth((prev) => (prev === next ? prev : next));
+    }, ZOOM_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [fitWidth, zoom]);
+
+  useEffect(() => {
     if (!open) {
       setViewPage(null);
       setPageCount(0);
       setPageInput("");
+      setZoom(NOTES_ZOOM_FIT);
       userNavRef.current = false;
       wrotePagesRef.current = "";
       writeSeqRef.current = 0;
+      washFocusKeyRef.current = "";
       lastPersistedFirstRef.current = page;
       return;
     }
     userNavRef.current = false;
     wrotePagesRef.current = "";
     writeSeqRef.current = 0;
+    washFocusKeyRef.current = "";
     lastPersistedFirstRef.current = page;
+    setZoom(NOTES_ZOOM_FIT);
     setViewPage(page);
     setPageInput(page != null ? String(page) : "");
   }, [open, page, cardId]);
@@ -264,14 +283,14 @@ export default function StudyNotesDialog({
           ) {
             throw new Error("viewport");
           }
-          const canvas = await renderPdfPageToCanvas(pdf!, pageNum - 1, width);
+          const canvas = await renderPdfPageToCanvas(
+            pdf!,
+            pageNum - 1,
+            renderWidth,
+          );
           const content = await pdfPage.getTextContent();
           const runs = textRuns(content.items);
-          const rects = excerptHighlightRects(
-            runs,
-            excerpt,
-            viewportTransform,
-          );
+          const rects = excerptHighlightRects(runs, excerpt, viewportTransform);
           const cssW = Number.parseFloat(canvas.style.width);
           const cssH = Number.parseFloat(canvas.style.height);
           const sx = cssW / viewport.width;
@@ -364,7 +383,7 @@ export default function StudyNotesDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, pdfBytes, viewPage, excerpt, width, page, cardId]);
+  }, [open, pdfBytes, viewPage, excerpt, renderWidth, page, cardId]);
 
   useLayoutEffect(() => {
     const host = canvasHostRef.current;
@@ -372,6 +391,18 @@ export default function StudyNotesDialog({
     host.replaceChildren();
     if (pageView) host.append(pageView.canvas);
   }, [pageView, open]);
+
+  useLayoutEffect(() => {
+    if (!pageView || pageView.rects.length === 0 || viewPage === null) return;
+    // Zoom re-rasters rebuild pageView; only re-focus wash on page/excerpt change.
+    const key = `${viewPage}:${excerpt}`;
+    if (washFocusKeyRef.current === key) return;
+    washFocusKeyRef.current = key;
+    washAnchorRef.current?.scrollIntoView({
+      block: "nearest",
+      inline: "nearest",
+    });
+  }, [pageView, viewPage, excerpt]);
 
   function goToPage(next: number) {
     const clamped = clampNotesPage(next, pageCount);
@@ -389,21 +420,51 @@ export default function StudyNotesDialog({
   }
 
   const scrubberReady = pageCount >= 1 && viewPage !== null && pdfBytes;
+  const washHits = (pageView?.rects.length ?? 0) > 0;
 
   return (
-    <Dialog open={open} onClose={() => onClose()} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={() => onClose()} fullWidth maxWidth="md">
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         {excerpt ? (
-          <Typography sx={{ whiteSpace: "pre-wrap", mb: 2 }}>{excerpt}</Typography>
+          <Typography
+            sx={
+              washHits
+                ? {
+                    position: "absolute",
+                    width: 1,
+                    height: 1,
+                    padding: 0,
+                    margin: -1,
+                    overflow: "hidden",
+                    clip: "rect(0, 0, 0, 0)",
+                    whiteSpace: "nowrap",
+                    border: 0,
+                  }
+                : { whiteSpace: "pre-wrap", mb: 2 }
+            }
+          >
+            {excerpt}
+          </Typography>
         ) : null}
         {error ? (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         ) : null}
-        <Box ref={frameRef} sx={{ width: "100%" }}>
-          <Box sx={{ position: "relative", width: "fit-content", maxWidth: "100%" }}>
+        <Box
+          ref={frameRef}
+          sx={{
+            width: "100%",
+            maxHeight: { xs: "55vh", sm: "65vh" },
+            overflow: "auto",
+            border: 1,
+            borderColor: "divider",
+            borderRadius: 1,
+            bgcolor: "background.paper",
+          }}
+        >
+          <Box sx={{ position: "relative", width: "fit-content" }}>
             <Box
               ref={canvasHostRef}
               sx={{ "& canvas": { display: "block" } }}
@@ -412,6 +473,7 @@ export default function StudyNotesDialog({
               ? pageView.rects.map((rect, index) => (
                   <Box
                     key={`${index}:${rect.x}:${rect.y}`}
+                    ref={index === 0 ? washAnchorRef : undefined}
                     sx={{
                       position: "absolute",
                       left: rect.x,
@@ -427,54 +489,99 @@ export default function StudyNotesDialog({
           </Box>
         </Box>
       </DialogContent>
-      <DialogActions sx={{ flexWrap: "wrap", gap: 1, justifyContent: "space-between" }}>
-        {scrubberReady ? (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Button
-              size="small"
-              disabled={viewPage! <= 1}
-              onClick={() => goToPage(viewPage! - 1)}
-            >
-              Prev
-            </Button>
-            <Typography variant="body2" component="span">
-              Page
-            </Typography>
-            <TextField
-              size="small"
-              value={pageInput}
-              onChange={(e) => setPageInput(e.target.value)}
-              onBlur={() => {
-                const n = Number.parseInt(pageInput, 10);
-                if (Number.isFinite(n)) goToPage(n);
-                else setPageInput(String(viewPage));
-              }}
-              onKeyDown={(e) => {
-                if (e.key !== "Enter") return;
-                const n = Number.parseInt(pageInput, 10);
-                if (Number.isFinite(n)) goToPage(n);
-                else setPageInput(String(viewPage));
-              }}
-              inputProps={{
-                inputMode: "numeric",
-                "aria-label": "Page number",
-                style: { width: "3rem", textAlign: "center" },
-              }}
-            />
-            <Typography variant="body2" component="span">
-              of {pageCount}
-            </Typography>
-            <Button
-              size="small"
-              disabled={viewPage! >= pageCount}
-              onClick={() => goToPage(viewPage! + 1)}
-            >
-              Next
-            </Button>
-          </Box>
-        ) : (
-          <span />
-        )}
+      <DialogActions
+        sx={{
+          flexWrap: "wrap",
+          gap: 1,
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: 1,
+          }}
+        >
+          {scrubberReady ? (
+            <>
+              <Button
+                size="small"
+                disabled={viewPage! <= 1}
+                onClick={() => goToPage(viewPage! - 1)}
+              >
+                Prev
+              </Button>
+              <Typography variant="body2" component="span">
+                Page
+              </Typography>
+              <TextField
+                size="small"
+                value={pageInput}
+                onChange={(e) => setPageInput(e.target.value)}
+                onBlur={() => {
+                  const n = Number.parseInt(pageInput, 10);
+                  if (Number.isFinite(n)) goToPage(n);
+                  else setPageInput(String(viewPage));
+                }}
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter") return;
+                  const n = Number.parseInt(pageInput, 10);
+                  if (Number.isFinite(n)) goToPage(n);
+                  else setPageInput(String(viewPage));
+                }}
+                inputProps={{
+                  inputMode: "numeric",
+                  "aria-label": "Page number",
+                  style: { width: "3rem", textAlign: "center" },
+                }}
+              />
+              <Typography variant="body2" component="span">
+                of {pageCount}
+              </Typography>
+              <Button
+                size="small"
+                disabled={viewPage! >= pageCount}
+                onClick={() => goToPage(viewPage! + 1)}
+              >
+                Next
+              </Button>
+            </>
+          ) : null}
+          {pdfBytes ? (
+            <>
+              <Button
+                size="small"
+                aria-label="Zoom out"
+                disabled={zoom <= NOTES_ZOOM_MIN}
+                onClick={() => setZoom((prev) => stepNotesZoom(prev, -1))}
+              >
+                −
+              </Button>
+              <Typography variant="body2" component="span" aria-live="polite">
+                {Math.round(zoom * 100)}%
+              </Typography>
+              <Button
+                size="small"
+                aria-label="Zoom in"
+                disabled={zoom >= NOTES_ZOOM_MAX}
+                onClick={() => setZoom((prev) => stepNotesZoom(prev, 1))}
+              >
+                +
+              </Button>
+              <Button
+                size="small"
+                aria-label="Fit width"
+                disabled={zoom === NOTES_ZOOM_FIT}
+                onClick={() => setZoom(NOTES_ZOOM_FIT)}
+              >
+                Fit
+              </Button>
+            </>
+          ) : null}
+        </Box>
         <Button onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>
