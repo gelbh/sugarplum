@@ -173,4 +173,56 @@ describe("MaterialsList residual A", () => {
       ),
     ).toBeTruthy();
   });
+
+  it("prefixes stem captions with deck title when showDeckTitle", async () => {
+    await render(
+      createElement(MaterialsList, {
+        showDeckTitle: true,
+        onChanged: vi.fn(),
+        materials: [
+          material({
+            id: "a1",
+            deck_id: "deck-a",
+            deck_title: "Deck A",
+            kind: "pdf",
+            filename: "Lecture (1/2).pdf",
+          }),
+          material({
+            id: "a2",
+            deck_id: "deck-a",
+            deck_title: "Deck A",
+            kind: "pdf",
+            filename: "Lecture (2/2).pdf",
+          }),
+          material({
+            id: "b1",
+            deck_id: "deck-b",
+            deck_title: "Deck B",
+            kind: "pdf",
+            filename: "Lecture (1/2).pdf",
+          }),
+          material({
+            id: "b2",
+            deck_id: "deck-b",
+            deck_title: "Deck B",
+            kind: "pdf",
+            filename: "Lecture (2/2).pdf",
+          }),
+        ],
+      }),
+    );
+
+    expect(document.getElementById("split-stem-pdf-deck-a-a1")?.textContent).toBe(
+      "Deck A · Lecture",
+    );
+    expect(document.getElementById("split-stem-pdf-deck-b-b1")?.textContent).toBe(
+      "Deck B · Lecture",
+    );
+    expect(
+      document.querySelectorAll('a[href="/library/decks/deck-a"]').length,
+    ).toBe(0);
+    expect(
+      document.querySelectorAll('a[href="/library/decks/deck-b"]').length,
+    ).toBe(0);
+  });
 });
