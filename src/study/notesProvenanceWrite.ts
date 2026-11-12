@@ -1,19 +1,12 @@
-import {
-  pagesForExcerpt,
-  type PageText,
-} from "./excerptPages";
+import { pagesForExcerpt, type PageText } from "./excerptPages";
 
 /** Unique sorted positive page numbers; empty input → []. */
-export function normalizeProvenancePages(
-  pages: readonly number[],
-): number[] {
+export function normalizeProvenancePages(pages: readonly number[]): number[] {
   return [
     ...new Set(
       pages.filter(
         (page) =>
-          typeof page === "number" &&
-          Number.isInteger(page) &&
-          page >= 1,
+          typeof page === "number" && Number.isInteger(page) && page >= 1,
       ),
     ),
   ].sort((a, b) => a - b);
@@ -59,6 +52,22 @@ export function pagesToPersistAfterRescue(args: {
 }
 
 /**
+ * After EmbedPDF findAll rescue: pages to PATCH, or null when nothing should be written.
+ * Prefer the complete hit page list; else `[rescued]`.
+ */
+export function pagesToPersistAfterSearchHits(args: {
+  claimed: number;
+  rescued: number;
+  hitPages: readonly number[];
+}): number[] | null {
+  const { claimed, rescued, hitPages } = args;
+  if (rescued === claimed) return null;
+  const hits = normalizeProvenancePages(hitPages);
+  if (hits.length > 0) return hits;
+  return normalizeProvenancePages([rescued]);
+}
+
+/**
  * After scrubber settle: pages to PATCH when display differs from last persisted first page.
  * When pageTexts has enough inventory for multi-hit excerpt matches, keep full hits;
  * otherwise `[displayPage]` (user chose a source page).
@@ -77,15 +86,8 @@ export function pagesToPersistAfterNavigate(args: {
 }
 
 /** Clamp 1-based page into [1, pageCount]; empty count → null. */
-export function clampNotesPage(
-  page: number,
-  pageCount: number,
-): number | null {
-  if (
-    !Number.isInteger(pageCount) ||
-    pageCount < 1 ||
-    !Number.isFinite(page)
-  ) {
+export function clampNotesPage(page: number, pageCount: number): number | null {
+  if (!Number.isInteger(pageCount) || pageCount < 1 || !Number.isFinite(page)) {
     return null;
   }
   const n = Math.trunc(page);
