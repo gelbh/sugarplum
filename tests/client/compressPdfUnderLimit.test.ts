@@ -66,4 +66,14 @@ describe("compressPdfUnderLimit", () => {
       expect(["still_too_large", "failed"]).toContain(result.reason);
     }
   });
+
+  it("rejects multi-page PDFs", async () => {
+    const doc = await PDFDocument.create();
+    doc.addPage();
+    doc.addPage();
+    const bytes = await doc.save();
+    const result = await compressPdfUnderLimit(bytes.buffer, 50 * 1024 * 1024);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe("multi_page");
+  });
 });

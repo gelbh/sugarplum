@@ -10,9 +10,16 @@ import { loadPdfDocument } from "./pdfPageRender";
 export type CompressPdfOk = { ok: true; file: File };
 export type CompressPdfErr = {
   ok: false;
-  reason: "invalid_pdf" | "still_too_large" | "empty" | "failed";
+  reason:
+    | "invalid_pdf"
+    | "still_too_large"
+    | "empty"
+    | "failed"
+    | "multi_page";
   message: string;
 };
+
+type EncodedJpeg = { bytes: Uint8Array; width: number; height: number };
 
 const JPEG_QUALITIES = [0.85, 0.7, 0.55, 0.45] as const;
 const RASTER_SCALES = [2, 1.5, 1.25, 1] as const;
@@ -53,7 +60,10 @@ function canvasToJpeg(
           resolve(null);
           return;
         }
-        void blob.arrayBuffer().then((buf) => resolve(new Uint8Array(buf)));
+        void blob
+          .arrayBuffer()
+          .then((buf) => resolve(new Uint8Array(buf)))
+          .catch(() => resolve(null));
       },
       "image/jpeg",
       quality,
@@ -67,7 +77,7 @@ async function reencodeRasterToJpeg(
   height: number,
   quality: number,
   maxSide: number = MAX_IMAGE_SIDE,
-): Promise<Uint8Array | null> {
+): Promise<EncodedJpeg | null> {
   const scale = Math.min(1, maxSide / Math.max(width, height, 1));
   const w = Math.max(1, Math.round(width * scale));
   const h = Math.max(1, Math.round(height * scale));
@@ -82,19 +92,27 @@ async function reencodeRasterToJpeg(
   const out = await canvasToJpeg(canvas, quality);
   canvas.width = 0;
   canvas.height = 0;
-  return out;
+  if (!out) return null;
+  return { bytes: out, width: w, height: h };
 }
 
 async function reencodeJpegBytes(
   jpeg: Uint8Array,
   quality: number,
-): Promise<Uint8Array | null> {
-  const blob = new Blob([jpeg.slice()], { type: "image/jpeg" });
+): Promise<EncodedJpeg | null> {
+  const copy = new Uint8Array(jpeg.byteLength);
+  copy.set(jpeg);
+  const blob = new Blob([copy], { type: "image/jpeg" });
   let bitmap: ImageBitmap;
   try {
-    bitmap = await createImageBitmap(blob);
+    // Avoid EXIF orientation flipping PDF placement transforms.
+    bitmap = await createImageBitmap(blob, { imageOrientation: "none" });
   } catch {
-    return null;
+    try {
+      bitmap = await createImageBitmap(blob);
+    } catch {
+      return null;
+    }
   }
   try {
     return await reencodeRasterToJpeg(
@@ -108,6 +126,23 @@ async function reencodeJpegBytes(
   }
 }
 
+function isDctDecodeFilter(filter: unknown): boolean {
+  if (filter === PDFName.of("DCTDecode")) return true;
+  if (
+    filter &&
+    typeof filter === "object" &&
+    "size" in filter &&
+    typeof (filter as { size: () => number }).size === "function"
+  ) {
+    const arr = filter as {
+      size: () => number;
+      get: (i: number) => unknown;
+    };
+    return arr.size() === 1 && arr.get(0) === PDFName.of("DCTDecode");
+  }
+  return false;
+}
+
 function isSafeImageStream(stream: PDFRawStream): boolean {
   const dict = stream.dict;
   if (dict.get(PDFName.of("Subtype")) !== PDFName.of("Image")) return false;
@@ -115,12 +150,20 @@ function isSafeImageStream(stream: PDFRawStream): boolean {
   if (dict.has(PDFName.of("Mask"))) return false;
   if (dict.has(PDFName.of("Decode"))) return false;
   if (dict.has(PDFName.of("ImageMask"))) return false;
-  const filter = dict.get(PDFName.of("Filter"));
-  if (filter === PDFName.of("DCTDecode")) return true;
-  if (Array.isArray(filter)) {
-    return filter.length === 1 && filter[0] === PDFName.of("DCTDecode");
+  return isDctDecodeFilter(dict.get(PDFName.of("Filter")));
+}
+
+function collectSoftMaskRefs(doc: PDFDocument): Set<string> {
+  const refs = new Set<string>();
+  for (const [, obj] of doc.context.enumerateIndirectObjects()) {
+    if (!(obj instanceof PDFRawStream)) continue;
+    if (obj.dict.get(PDFName.of("Subtype")) !== PDFName.of("Image")) continue;
+    const smask = obj.dict.get(PDFName.of("SMask"));
+    if (smask && typeof smask === "object" && "tag" in smask) {
+      refs.add(String((smask as PDFRef).tag));
+    }
   }
-  return false;
+  return refs;
 }
 
 async function stageInPlaceImages(
@@ -136,45 +179,36 @@ async function stageInPlaceImages(
     return null;
   }
 
+  const softMaskRefs = collectSoftMaskRefs(doc);
   let swapped = 0;
   for (const [ref, obj] of doc.context.enumerateIndirectObjects()) {
     if (!(obj instanceof PDFRawStream)) continue;
     if (!isSafeImageStream(obj)) continue;
+    if (softMaskRefs.has(String(ref.tag))) continue;
     const original = obj.getContents();
     if (original.byteLength === 0) continue;
 
-    let best: Uint8Array | null = null;
+    let best: EncodedJpeg | null = null;
     for (const q of JPEG_QUALITIES) {
       const next = await reencodeJpegBytes(original, q);
       if (!next) continue;
-      if (next.byteLength >= original.byteLength) continue;
-      if (!best || next.byteLength < best.byteLength) best = next;
-      if (best.byteLength < maxBytes * 0.5) break;
+      if (next.bytes.byteLength >= original.byteLength) continue;
+      if (!best || next.bytes.byteLength < best.bytes.byteLength) best = next;
+      if (best.bytes.byteLength < maxBytes * 0.5) break;
     }
     if (!best) continue;
-
-    const width = obj.dict.lookup(PDFName.of("Width"));
-    const height = obj.dict.lookup(PDFName.of("Height"));
-    const wNum =
-      width && "asNumber" in width && typeof width.asNumber === "function"
-        ? width.asNumber()
-        : undefined;
-    const hNum =
-      height && "asNumber" in height && typeof height.asNumber === "function"
-        ? height.asNumber()
-        : undefined;
 
     const newDict = doc.context.obj({
       Type: "XObject",
       Subtype: "Image",
-      Width: wNum ?? 1,
-      Height: hNum ?? 1,
+      Width: best.width,
+      Height: best.height,
       ColorSpace: "DeviceRGB",
       BitsPerComponent: 8,
       Filter: "DCTDecode",
-      Length: best.byteLength,
+      Length: best.bytes.byteLength,
     });
-    doc.context.assign(ref as PDFRef, PDFRawStream.of(newDict, best));
+    doc.context.assign(ref as PDFRef, PDFRawStream.of(newDict, best.bytes));
     swapped += 1;
   }
 
@@ -185,14 +219,11 @@ async function stageInPlaceImages(
 }
 
 function clampScaleForPage(widthPt: number, heightPt: number, scale: number): number {
-  const w = widthPt * scale;
-  const h = heightPt * scale;
   return Math.min(
     scale,
     MAX_CANVAS_SIDE / Math.max(widthPt, 1),
     MAX_CANVAS_SIDE / Math.max(heightPt, 1),
     Math.sqrt(MAX_CANVAS_PIXELS / Math.max(widthPt * heightPt, 1)),
-    w > 0 && h > 0 ? scale : 1,
   );
 }
 
@@ -212,7 +243,7 @@ async function stageRasterPage(
   }
 
   try {
-    if (pdf.numPages < 1) return null;
+    if (pdf.numPages !== 1) return null;
     const page = await pdf.getPage(1);
     const base = page.getViewport({ scale: 1 });
 
@@ -304,6 +335,15 @@ export async function compressPdfUnderLimit(
     };
   }
 
+  if (pageCount !== 1) {
+    return {
+      ok: false,
+      reason: "multi_page",
+      message:
+        "In-browser compress only supports a single-page PDF. Split or compress externally.",
+    };
+  }
+
   const stem = resolveStem(source, opts);
   const asFile = (out: Uint8Array) => {
     const copy = new Uint8Array(out.byteLength);
@@ -311,7 +351,6 @@ export async function compressPdfUnderLimit(
     return new File([copy], `${stem}.pdf`, { type: "application/pdf" });
   };
 
-  // Already under the cap: return a single-stem File (no (k/n) rename).
   if (bytes.byteLength <= maxBytes) {
     return { ok: true, file: asFile(bytes) };
   }
