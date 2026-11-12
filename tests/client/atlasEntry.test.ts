@@ -221,6 +221,28 @@ describe("entryGlance", () => {
     expect(turkey.equals(hostBytes("bird"))).toBe(false);
   });
 
+  it("maps equid and bird to dedicated portraits", () => {
+    expect(resolveHostPortrait("equid")).toEqual({
+      src: "/atlas/hosts/equid.webp",
+      archetype: "equid",
+    });
+    expect(resolveHostPortrait("bird")).toEqual({
+      src: "/atlas/hosts/bird.webp",
+      archetype: "bird",
+    });
+  });
+
+  it("ships unique equid and bird host webp bytes", () => {
+    const equid = hostBytes("equid");
+    const bird = hostBytes("bird");
+    expect(equid.equals(hostBytes("horse"))).toBe(false);
+    expect(equid.equals(hostBytes("donkey"))).toBe(false);
+    expect(bird.equals(hostBytes("chicken"))).toBe(false);
+    expect(bird.equals(hostBytes("turkey"))).toBe(false);
+    expect(bird.equals(hostBytes("pheasant"))).toBe(false);
+    expect(bird.equals(hostBytes("gamebird"))).toBe(false);
+  });
+
   it("resolves site portraits via broader chain", () => {
     expect(resolveSitePortrait("bile ducts")?.archetype).toBe("bile ducts");
     expect(resolveSitePortrait("ileum")?.src).toMatch(/ileum\.webp$/);
