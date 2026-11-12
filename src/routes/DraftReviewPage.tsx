@@ -91,17 +91,16 @@ export default function DraftReviewPage() {
   } | null>(null);
   const [selectedGaps, setSelectedGaps] = useState<string[]>([]);
   const { user } = useSession();
-  const authReady = Boolean(user);
-  const jobProgress = useJobProgress(authReady && progressGate ? jobId : null);
+  const jobProgress = useJobProgress(user && progressGate ? jobId : null);
   const { begin: beginLoad, end: endLoad } = useTrackedOp("Loading drafts…");
   const { busy, begin, end } = useTrackedOp("Working…");
   const { enqueueUnlocks } = useUnlockToasts();
 
   useEffect(() => {
-    if (!progressGate && authReady && jobId) {
+    if (!progressGate && jobId) {
       setProgressGate(true);
     }
-  }, [progressGate, authReady, jobId]);
+  }, [progressGate, jobId]);
 
   const load = useCallback(async (id: string) => {
     const [list, job] = await Promise.all([listJobDrafts(id), getJob(id)]);
@@ -407,7 +406,7 @@ export default function DraftReviewPage() {
   if (!ready) {
     return (
       <Container maxWidth="sm" sx={{ py: 6 }}>
-        {jobId && authReady && !jobProgress.error ? (
+        {jobId && !jobProgress.error ? (
           <JobProgressPanel snapshot={jobProgress.snapshot} />
         ) : (
           <Typography color="text.secondary">Loading drafts…</Typography>
