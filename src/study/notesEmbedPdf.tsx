@@ -23,9 +23,9 @@ import {
   useSelection,
   useSelectionState,
 } from "@embedpdf/react/selection";
-import { localEngine } from "@embedpdf/engine/portable";
 import type { OpenInput } from "@embedpdf/react/runtime";
 import Button from "@mui/material/Button";
+import { getEmbedPdfEngine } from "../lib/embedPdfEngine";
 import { normalizeExcerptText } from "./excerptPages";
 import { normalizeProvenancePages } from "./notesProvenanceWrite";
 
@@ -46,9 +46,6 @@ const notesEmbedPlugins = [
   interactionPlugin(),
   selectionPlugin(),
 ];
-
-/** Portable engine: Vite's default worker URL fails to boot. */
-const notesEngine = localEngine();
 
 export type NotesEmbedRescue = {
   /** 1-based first hit page when claimed missed. */
@@ -256,7 +253,7 @@ export function NotesEmbedPdfStage({
 
   return (
     <Viewer
-      engine={notesEngine}
+      engine={getEmbedPdfEngine()}
       plugins={notesEmbedPlugins}
       initialDocuments={initialDocuments}
       renderError={() => <p>Could not start the PDF engine.</p>}
