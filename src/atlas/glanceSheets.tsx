@@ -1,4 +1,3 @@
-/** Glance fact sheets / portrait strips (split from EntryFacts). */
 import Box from "@mui/material/Box";
 import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
@@ -428,7 +427,6 @@ export function BodyCoursePanel({
               onCite={onCite}
               dense
               fill
-              // 1 share per portrait so Site matches Stages tile size
               flexGrow={1}
             />
           ) : null}
