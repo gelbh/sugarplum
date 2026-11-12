@@ -27,7 +27,6 @@ import {
   getLlmSettings,
   getStudyPrefs,
   listDueCards,
-  logout,
   patchGamificationSettings,
   putLlmSettings,
   putStudyPrefs,
@@ -130,7 +129,7 @@ function settingsQueryMessage(): {
 }
 
 export default function SettingsPage() {
-  const { user } = useSession();
+  const { user, logout } = useSession();
   const { mode, setMode } = useColorScheme();
   const [provider, setProvider] = useState<string>("openai");
   const [zaiModel, setZaiModel] = useState<string>(ZAI_DEFAULT_TEXT_MODEL);
