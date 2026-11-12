@@ -3,6 +3,7 @@ import { bundledAtlasSource } from "../../src/atlas/bundledSource";
 import {
   NO_FILTERS,
   applyFilters,
+  browseSections,
   entryHosts,
   focusActive,
   focusGroupRows,
@@ -69,6 +70,16 @@ describe("applyFilters", () => {
     expect(hits.every((e) => e.fields.group === "cestode")).toBe(true);
   });
 
+  it("Protozoa group filter includes both lifecycle types", () => {
+    const hits = applyFilters(entries, {
+      ...NO_FILTERS,
+      groups: ["protozoan"],
+    });
+    expect(ids(hits)).toContain("giardia-duodenalis");
+    expect(ids(hits)).toContain("toxoplasma-gondii");
+    expect(hits.every((e) => e.fields.group === "protozoan")).toBe(true);
+  });
+
   it("limits to the selected Focus tier", () => {
     const mixed = [
       withTier(byId("fasciola-hepatica"), "key"),
@@ -100,8 +111,8 @@ describe("matchesTaxonomy", () => {
 describe("Focus helpers", () => {
   it("hides Focus when every tier is null", () => {
     expect(focusActive(entries)).toBe(false);
-    expect(railSections(entries, false).map((r) => r.heading)[0]).toMatch(
-      /Protozoa|Nematodes|Cestodes|Trematodes|Arthropods/,
+    expect(railSections(entries, false).map((r) => r.heading)[0]).toBe(
+      "Protozoa · Direct",
     );
   });
 
@@ -148,9 +159,12 @@ describe("Focus helpers", () => {
       "toxocara-canis",
       "dipylidium-caninum",
     ]);
-    expect(rows.flatMap((r) => r.entries).map((e) => e.id).sort()).toEqual(
-      mixed.map((e) => e.id).sort(),
-    );
+    expect(
+      rows
+        .flatMap((r) => r.entries)
+        .map((e) => e.id)
+        .sort(),
+    ).toEqual(mixed.map((e) => e.id).sort());
   });
 
   it("sorts Focus column Key before Frequent before Standard", () => {
@@ -218,6 +232,77 @@ describe("groupRows", () => {
     );
     expect(present.length).toBeGreaterThan(1);
     expect(rows.map((r) => r.group)).toEqual(present);
+  });
+});
+
+describe("browseSections", () => {
+  it("splits Protozoa by lifecycleType and keeps other groups whole", () => {
+    const sections = browseSections(entries);
+    const titles = sections.map((s) => s.title);
+    expect(titles).toContain("Protozoa · Direct");
+    expect(titles).toContain("Protozoa · Indirect");
+    expect(titles).not.toContain("Protozoa · Unspecified");
+    expect(titles.indexOf("Protozoa · Direct")).toBeLessThan(
+      titles.indexOf("Protozoa · Indirect"),
+    );
+    expect(titles).toContain("Nematodes");
+    expect(titles.filter((t) => t === "Protozoa").length).toBe(0);
+
+    const direct = sections.find((s) => s.id === "protozoan-direct")!;
+    const indirect = sections.find((s) => s.id === "protozoan-indirect")!;
+    expect(ids(direct.entries)).toContain("giardia-duodenalis");
+    expect(ids(indirect.entries)).toContain("toxoplasma-gondii");
+    expect(
+      direct.entries.every((e) => e.fields.lifecycleType === "direct"),
+    ).toBe(true);
+    expect(
+      indirect.entries.every((e) => e.fields.lifecycleType === "indirect"),
+    ).toBe(true);
+
+    const protozoaIds = entries
+      .filter((e) => e.fields.group === "protozoan")
+      .map((e) => e.id)
+      .sort();
+    expect([...ids(direct.entries), ...ids(indirect.entries)].sort()).toEqual(
+      protozoaIds,
+    );
+  });
+
+  it("adds Protozoa · Unspecified only when lifecycleType is null", () => {
+    const base = byId("giardia-duodenalis");
+    const orphan: AtlasEntryView = {
+      ...base,
+      id: "protozoa-orphan-test",
+      fields: { ...base.fields, lifecycleType: null },
+    };
+    const sections = browseSections([base, orphan, byId("toxoplasma-gondii")]);
+    expect(sections.map((s) => s.title)).toEqual([
+      "Protozoa · Direct",
+      "Protozoa · Indirect",
+      "Protozoa · Unspecified",
+    ]);
+    expect(ids(sections[2].entries)).toEqual(["protozoa-orphan-test"]);
+  });
+
+  it("buckets missing lifecycleType with Unspecified", () => {
+    const base = byId("giardia-duodenalis");
+    const missing = {
+      ...base,
+      id: "protozoa-missing-lifecycle",
+      fields: { ...base.fields, lifecycleType: undefined as unknown as null },
+    };
+    const sections = browseSections([base, missing]);
+    const unspecified = sections.find((s) => s.id === "protozoan-unspecified")!;
+    expect(ids(unspecified.entries)).toEqual(["protozoa-missing-lifecycle"]);
+  });
+});
+
+describe("railSections browse split", () => {
+  it("uses Protozoa lifecycle headings when Focus is off", () => {
+    const headings = railSections(entries, false).map((r) => r.heading);
+    expect(headings).toContain("Protozoa · Direct");
+    expect(headings).toContain("Protozoa · Indirect");
+    expect(headings[0]).toBe("Protozoa · Direct");
   });
 });
 
