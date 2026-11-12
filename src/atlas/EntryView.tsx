@@ -14,6 +14,8 @@ import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import Typography from "@mui/material/Typography";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import type { Theme } from "@mui/material/styles";
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import AtlasImage, { heroImage } from "./AtlasImage";
 import EntryFacts from "./EntryFacts";
@@ -80,6 +82,8 @@ export default function EntryView({
   const [query, setQuery] = useState("");
   const [taxonomy, setTaxonomy] = useState<TaxonomyFilter | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // Sticky rail is lg+; only open the mobile drawer below that.
+  const isLgUp = useMediaQuery((t: Theme) => t.breakpoints.up("lg"));
 
   const useFocus = isFocusActive(entries);
   const railEntries = useMemo(
@@ -135,7 +139,7 @@ export default function EntryView({
     setTaxonomy((cur) =>
       cur && cur.rank === next.rank && cur.value === next.value ? null : next,
     );
-    setDrawerOpen(true);
+    if (!isLgUp) setDrawerOpen(true);
   };
   const taxonomyChip = taxonomy
     ? {
