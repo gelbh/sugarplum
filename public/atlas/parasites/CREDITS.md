@@ -27,6 +27,7 @@ Rejected: all-rights-reserved, unclear, NC/ND, iNaturalist, random publisher sit
 | Ctenocephalides canis | `ctenocephalides-canis-hero.webp` | Herms, William Brodbeck (1876-1949) | Public domain | [https://commons.wikimedia.org/wiki/File:CtenecephalusCanis.jpg](https://commons.wikimedia.org/wiki/File:CtenecephalusCanis.jpg) |
 | Ctenocephalides felis | `ctenocephalides-felis-hero.webp` | Andybrookestar at English Wikipedia | Public domain | [https://commons.wikimedia.org/wiki/File:Catflea2.jpg](https://commons.wikimedia.org/wiki/File:Catflea2.jpg) |
 | Culicoides spp. | `culicoides-spp-hero.webp` | Alan R Walker | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Culicoides-imicola.jpg](https://commons.wikimedia.org/wiki/File:Culicoides-imicola.jpg) |
+| Davainea proglottina | `davainea-proglottina-hero.webp` | Pearson, Leonard; Warren, Benjamin Harry | Public domain | [https://commons.wikimedia.org/wiki/File:Diseases_and_enemies_of_poultry_(1897)_(14564508557).jpg](https://commons.wikimedia.org/wiki/File:Diseases_and_enemies_of_poultry_(1897)_(14564508557).jpg) |
 | Demodex canis | `demodex-canis-hero.webp` | Stanley Hirst (1883–1930) | Public domain | [https://commons.wikimedia.org/wiki/File:Demodex_canis.png](https://commons.wikimedia.org/wiki/File:Demodex_canis.png) |
 | Dermacentor reticulatus | `dermacentor-reticulatus-hero.webp` | NobbiP | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Auwaldzecke_Dermacentor_reticulatus_0723.jpg](https://commons.wikimedia.org/wiki/File:Auwaldzecke_Dermacentor_reticulatus_0723.jpg) |
 | Dermanyssus gallinae | `dermanyssus-gallinae-hero.webp` | Daktaridudu | CC BY-SA 3.0 | [https://commons.wikimedia.org/wiki/File:Dermanyssus-bird-mite.jpg](https://commons.wikimedia.org/wiki/File:Dermanyssus-bird-mite.jpg) |
@@ -51,6 +52,7 @@ Rejected: all-rights-reserved, unclear, NC/ND, iNaturalist, random publisher sit
 | Felicola subrostratus | `felicola-subrostratus-hero.webp` | Jana Bulantová | CC BY-SA 4.0 | [https://commons.wikimedia.org/wiki/File:14_Felicola_subrostratus.tif](https://commons.wikimedia.org/wiki/File:14_Felicola_subrostratus.tif) |
 | Gasterophilus intestinalis | `gasterophilus-intestinalis-hero.webp` | Janet Graham | CC BY 2.0 | [https://commons.wikimedia.org/wiki/File:Gasterophilus_intestinalis,_Trawscoed,_North_Wales,_Aug_2015_(20134961243).jpg](https://commons.wikimedia.org/wiki/File:Gasterophilus_intestinalis,_Trawscoed,_North_Wales,_Aug_2015_(20134961243).jpg) |
 | Giardia duodenalis | `giardia-duodenalis-hero.webp` | CDC / PHIL or DPDx (via Wikimedia Commons) | Public domain | [https://commons.wikimedia.org/wiki/File:Giardia_lamblia_SEM_8698_lores.jpg](https://commons.wikimedia.org/wiki/File:Giardia_lamblia_SEM_8698_lores.jpg) |
+| Habronema spp. | `habronema-spp-hero.webp` | Brayton Howard Ransom / USDA Bureau of Animal Industry Bulletin 163 | Public domain | [https://commons.wikimedia.org/wiki/File:The_life_history_of_Habronema_musc%3F_(Carter)_-_a_parasite_of_the_horse_transmitted_by_the_house_fly_(IA_bullbai163).pdf](https://commons.wikimedia.org/wiki/File:The_life_history_of_Habronema_musc%3F_(Carter)_-_a_parasite_of_the_horse_transmitted_by_the_house_fly_(IA_bullbai163).pdf) |
 | Haemaphysalis punctata | `haemaphysalis-punctata-hero.webp` | Laura Carrera-Faja | CC BY 4.0 | [https://commons.wikimedia.org/wiki/File:Haemaphysalis_punctata_(male).jpg](https://commons.wikimedia.org/wiki/File:Haemaphysalis_punctata_(male).jpg) |
 | Haematobia irritans | `haematobia-irritans-hero.webp` | Scott Bauer / USDA ARS | Public domain | [https://commons.wikimedia.org/wiki/File:Horn_flies.jpg](https://commons.wikimedia.org/wiki/File:Horn_flies.jpg) |
 | Haemonchus contortus | `haemonchus-contortus-hero.webp` | division, CSIRO | CC BY 3.0 | [https://commons.wikimedia.org/wiki/File:CSIRO_ScienceImage_10819_The_tail_ends_of_11_Haemonchus_contortus_barbers_pole_worm_adult_females_The_worms_are_all_taken_from_one_sheep_infected_with_a_single_strain_of_this_worm_species.jpg](https://commons.wikimedia.org/wiki/File:CSIRO_ScienceImage_10819_The_tail_ends_of_11_Haemonchus_contortus_barbers_pole_worm_adult_females_The_worms_are_all_taken_from_one_sheep_infected_with_a_single_strain_of_this_worm_species.jpg) |
@@ -87,7 +89,7 @@ Rejected: all-rights-reserved, unclear, NC/ND, iNaturalist, random publisher sit
 | Spirocerca lupi | `spirocerca-lupi-hero.webp` | Stefan Walkowski | CC BY-SA 4.0 | [https://commons.wikimedia.org/wiki/File:Spirocerca_lupi.jpg](https://commons.wikimedia.org/wiki/File:Spirocerca_lupi.jpg) |
 | Stomoxys calcitrans | `stomoxys-calcitrans-hero.webp` | Frédéric Baldacchino, Coline Tramut, Ali Salem, Emmanuel Liénard, Émilie Delétré, Michel Franc, Thibaud Martin, Gérard D | CC BY 4.0 | [https://commons.wikimedia.org/wiki/File:Repellency_of_lemongrass_oil_against_stable_flies_-_Figure_1.tif](https://commons.wikimedia.org/wiki/File:Repellency_of_lemongrass_oil_against_stable_flies_-_Figure_1.tif) |
 | Strongyloides stercoralis | `strongyloides-stercoralis-hero.webp` | Ajay Kumar Chaurasiya | CC BY-SA 4.0 | [https://commons.wikimedia.org/wiki/File:Larva_of_Strongyloides_in_Saline_wet_mount_of_stool_microscopy.jpg](https://commons.wikimedia.org/wiki/File:Larva_of_Strongyloides_in_Saline_wet_mount_of_stool_microscopy.jpg) |
-| Strongyloides westeri | `strongyloides-westeri-lifecycle.webp` | LeChFr | CC BY-SA 4.0 | [https://commons.wikimedia.org/wiki/File:Strongyloides_westeri_lifecycle.png](https://commons.wikimedia.org/wiki/File:Strongyloides_westeri_lifecycle.png) |
+| Strongyloides westeri | Lifecycle diagram retained; catalog hero cleared; no licence-ok adult/egg hero in Phase 3 hunt |
 | Strongylus edentatus | `strongylus-edentatus-hero.webp` | Imes, Schwartz, Wright (USDA); illustration from Looss, 1901 | Public domain | [https://commons.wikimedia.org/wiki/File:Parasites_and_parasitic_diseases_of_horses_(Page_20)_BHL41697906.jpg](https://commons.wikimedia.org/wiki/File:Parasites_and_parasitic_diseases_of_horses_(Page_20)_BHL41697906.jpg) |
 | Strongylus equinus | `strongylus-equinus-hero.webp` | Imes, Schwartz, Wright (USDA); illustration from Looss, 1901 | Public domain | [https://commons.wikimedia.org/wiki/File:Parasites_and_parasitic_diseases_of_horses_(Page_20)_BHL41697906.jpg](https://commons.wikimedia.org/wiki/File:Parasites_and_parasitic_diseases_of_horses_(Page_20)_BHL41697906.jpg) |
 | Strongylus vulgaris | `strongylus-vulgaris-hero.webp` | Vitaliy Kharchenko | CC BY-SA 4.0 | [https://commons.wikimedia.org/wiki/File:Strongylus_vulgaris_-_parasite_of_horses_01.jpg](https://commons.wikimedia.org/wiki/File:Strongylus_vulgaris_-_parasite_of_horses_01.jpg) |
@@ -121,21 +123,19 @@ No catalog hero until a taxon-correct, study-useful, licence-ok asset exists (sp
 | --- | --- |
 | Aelurostrongylus abstrusus | No hero yet |
 | Besnoitia besnoiti | No hero yet |
-| Bovicola bovis | No hero yet |
+| Bovicola bovis | Commons Bovicola-louse.JPG is genus-level on cow; species not confirmed as B. bovis |
 | Calicophoron daubneyi | No hero yet |
 | Capillaria longipes | No hero yet |
 | Capillaria plica | No hero yet |
 | Contracaecum osculatum | No hero yet |
 | Crenosoma vulpis | No hero yet |
 | Cylicostephanus longibursatus | No hero yet |
-| Davainea proglottina | No hero yet |
 | Dictyocaulus arnfieldi | No hero yet |
-| Dictyocaulus filaria | Removed: source was D. viviparus |
+| Dictyocaulus filaria | Removed: source was D. viviparus; no licence-ok D. filaria asset in Phase 3 hunt |
 | Draschia megastoma | No hero yet |
-| Encephalitozoon cuniculi | Removed: pet photo, not organism |
+| Encephalitozoon cuniculi | Removed: pet/clinical host photos only; no organism morphology licence-ok asset |
 | Filaroides hirthi | No hero yet |
-| Habronema spp. | No hero yet |
-| Histomonas meleagridis | No hero yet |
+| Histomonas meleagridis | Commons Histomoniasis.jpg is liver pathology (USGS PD), not organism morphology |
 | Hyostrongylus rubidus | No hero yet |
 | Metastrongylus apri | No hero yet |
 | Muellerius capillaris | No hero yet |
@@ -148,6 +148,6 @@ No catalog hero until a taxon-correct, study-useful, licence-ok asset exists (sp
 | Protostrongylus rufescens | No hero yet |
 | Strongyloides papillosus | No hero yet |
 | Strongyloides ransomi | No hero yet |
-| Strongyloides westeri | Lifecycle diagram retained; catalog hero cleared |
+| Strongyloides westeri | Lifecycle diagram retained; catalog hero cleared; no licence-ok adult/egg hero in Phase 3 hunt |
 | Thelazia lacrymalis | No hero yet |
 | Uncinaria stenocephala | No hero yet |

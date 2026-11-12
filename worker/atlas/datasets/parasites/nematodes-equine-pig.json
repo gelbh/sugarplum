@@ -1286,7 +1286,18 @@
           "note": null
         }
       ],
-      "images": []
+      "images": [
+        {
+          "id": "hero",
+          "file": "habronema-spp-hero.webp",
+          "role": "adult",
+          "caption": "Habronema muscae adult males and females (USDA BAI Bulletin 163 fig. 24)",
+          "credit": "Brayton Howard Ransom / USDA Bureau of Animal Industry Bulletin 163",
+          "license": "Public domain",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:The_life_history_of_Habronema_musc%3F_(Carter)_-_a_parasite_of_the_horse_transmitted_by_the_house_fly_(IA_bullbai163).pdf",
+          "isHero": true
+        }
+      ]
     },
     {
       "key": "draschia-megastoma",
