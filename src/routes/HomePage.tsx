@@ -5,9 +5,7 @@ import Container from "@mui/material/Container";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { me } from "../api/client";
 import { continueAsGuest } from "../guest/enterGuest";
-import { isGuest } from "../guest/session";
 import { HOME_BRAND, HOME_PURPOSE, HOME_TAGLINE } from "../home/homeCopy";
 
 /** Public logged-out homepage for Google brand verification (no AppShell). */
@@ -16,25 +14,6 @@ export default function HomePage() {
     document.title = `${HOME_BRAND} · Spaced repetition study`;
     return () => {
       document.title = "Sugarplum";
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      if (isGuest()) {
-        if (!cancelled) window.location.assign("/today");
-        return;
-      }
-      try {
-        await me();
-        if (!cancelled) window.location.assign("/today");
-      } catch {
-        // 401 or network: stay on the public homepage.
-      }
-    })();
-    return () => {
-      cancelled = true;
     };
   }, []);
 

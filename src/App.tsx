@@ -34,6 +34,7 @@ import { StudyChromeProvider } from "./study/StudyChromeContext";
 import AtlasLoading from "./atlas/AtlasLoading";
 import { isAtlasToAtlas, matchAtlasPath } from "./atlas/paths";
 import AtlasHub from "./routes/AtlasHub";
+import SessionBootstrap from "./session/SessionBootstrap";
 
 // Keeps the dataset and its schemas out of the main chunk.
 const AtlasPage = lazy(() => import("./routes/AtlasPage"));
@@ -48,6 +49,89 @@ function shell(page: ReactNode) {
 
 function bare(page: ReactNode) {
   return <BareScroll>{page}</BareScroll>;
+}
+
+function matchPage(path: string, search: string): ReactNode {
+  if (path === "/" || path === "") return bare(<HomePage />);
+  if (path === "/login") return bare(<LoginPage />);
+  if (path === "/register") return bare(<RegisterPage />);
+  if (path === "/privacy") return bare(<PrivacyPage />);
+  if (path === "/terms") return bare(<TermsPage />);
+  if (path === "/data-deletion") return bare(<DataDeletionPage />);
+
+  const atlasMatch = matchAtlasPath(path);
+  if (atlasMatch?.kind === "hub" || atlasMatch?.kind === "legacy") {
+    return shell(<AtlasHub />);
+  }
+  if (atlasMatch?.kind === "atlas") {
+    return shell(
+      <Suspense fallback={<AtlasLoading />}>
+        <AtlasPage
+          key={atlasMatch.atlasId}
+          atlasId={atlasMatch.atlasId}
+          route={atlasMatch.route}
+        />
+      </Suspense>,
+    );
+  }
+
+  const subjectMatch = path.match(SUBJECT_PATH);
+  if (subjectMatch) {
+    return shell(
+      <SubjectPage subjectId={decodeURIComponent(subjectMatch[1])} />,
+    );
+  }
+
+  const deckMatch = path.match(DECK_PATH);
+  if (deckMatch) {
+    const deckId = decodeURIComponent(deckMatch[1]);
+    return shell(<DeckHubPage key={deckId} deckId={deckId} />);
+  }
+
+  if (path === "/library") return shell(<LibraryPage />);
+  if (path === "/settings") return shell(<SettingsPage />);
+  if (path === "/achievements") return shell(<AchievementsPage />);
+  // Remount when search changes so scoped study does not freeze the old filter.
+  if (path === "/study") {
+    return shell(<StudyPage key={search || "global"} />);
+  }
+  if (path === "/today") return shell(<TodayPage />);
+  if (path === "/insights") return shell(<InsightsPage />);
+
+  // Local preview for grade button chrome (not shipped in production builds).
+  if (import.meta.env.MODE !== "production" && path === "/dev/grades") {
+    return (
+      <Box
+        sx={{
+          minHeight: "100dvh",
+          bgcolor: "var(--sp-stage-bg, #1e0d1b)",
+          color: "var(--sp-ivory, #e8d8c7)",
+          display: "grid",
+          placeItems: "center",
+          p: 2,
+        }}
+      >
+        <GradeButtons onGrade={() => undefined} />
+      </Box>
+    );
+  }
+
+  if (/^\/jobs\/[^/]+\/drafts\/?$/.test(path)) {
+    return shell(<DraftReviewPage />);
+  }
+  if (path === "/admin") return shell(<AdminPage />);
+
+  const adminUserMatch = path.match(ADMIN_USER_PATH);
+  if (adminUserMatch) {
+    return shell(
+      <AdminUserPage
+        key={adminUserMatch[1]}
+        userId={decodeURIComponent(adminUserMatch[1])}
+      />,
+    );
+  }
+
+  return shell(<TodayPage />);
 }
 
 export default function App() {
@@ -85,77 +169,9 @@ function AppInner() {
   );
 
   const path = loc.pathname;
-
-  if (path === "/" || path === "") return bare(<HomePage />);
-  if (path === "/login") return bare(<LoginPage />);
-  if (path === "/register") return bare(<RegisterPage />);
-  if (path === "/privacy") return bare(<PrivacyPage />);
-  if (path === "/terms") return bare(<TermsPage />);
-  if (path === "/data-deletion") return bare(<DataDeletionPage />);
-  const atlasMatch = matchAtlasPath(path);
-  if (atlasMatch?.kind === "hub" || atlasMatch?.kind === "legacy") {
-    return shell(<AtlasHub />);
-  }
-  if (atlasMatch?.kind === "atlas") {
-    return shell(
-      <Suspense fallback={<AtlasLoading />}>
-        <AtlasPage
-          key={atlasMatch.atlasId}
-          atlasId={atlasMatch.atlasId}
-          route={atlasMatch.route}
-        />
-      </Suspense>,
-    );
-  }
-  const subjectMatch = path.match(SUBJECT_PATH);
-  if (subjectMatch) {
-    return shell(
-      <SubjectPage subjectId={decodeURIComponent(subjectMatch[1])} />,
-    );
-  }
-  const deckMatch = path.match(DECK_PATH);
-  if (deckMatch) {
-    const deckId = decodeURIComponent(deckMatch[1]);
-    return shell(<DeckHubPage key={deckId} deckId={deckId} />);
-  }
-  if (path === "/library") return shell(<LibraryPage />);
-  if (path === "/settings") return shell(<SettingsPage />);
-  if (path === "/achievements") return shell(<AchievementsPage />);
-  // Remount when search changes so scoped study does not freeze the old filter.
-  if (path === "/study") {
-    return shell(<StudyPage key={loc.search || "global"} />);
-  }
-  if (path === "/today") return shell(<TodayPage />);
-  if (path === "/insights") return shell(<InsightsPage />);
-  // Local preview for grade button chrome (not shipped in production builds).
-  if (import.meta.env.MODE !== "production" && path === "/dev/grades") {
-    return (
-      <Box
-        sx={{
-          minHeight: "100dvh",
-          bgcolor: "var(--sp-stage-bg, #1e0d1b)",
-          color: "var(--sp-ivory, #e8d8c7)",
-          display: "grid",
-          placeItems: "center",
-          p: 2,
-        }}
-      >
-        <GradeButtons onGrade={() => undefined} />
-      </Box>
-    );
-  }
-  if (/^\/jobs\/[^/]+\/drafts\/?$/.test(path))
-    return shell(<DraftReviewPage />);
-  if (path === "/admin") return shell(<AdminPage />);
-  const adminUserMatch = path.match(ADMIN_USER_PATH);
-  if (adminUserMatch) {
-    return shell(
-      <AdminUserPage
-        key={adminUserMatch[1]}
-        userId={decodeURIComponent(adminUserMatch[1])}
-      />,
-    );
-  }
-
-  return shell(<TodayPage />);
+  return (
+    <SessionBootstrap pathname={path}>
+      {matchPage(path, loc.search)}
+    </SessionBootstrap>
+  );
 }
