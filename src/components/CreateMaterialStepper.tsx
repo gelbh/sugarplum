@@ -46,7 +46,7 @@ import {
   fileTooLargeMessage,
   splitSourceTooLargeMessage,
 } from "../lib/materialUploadLimits";
-import { compressPdfUnderLimit } from "../lib/compressPdfUnderLimit";
+import { runConsentedPdfCompressUpload } from "../lib/runConsentedPdfCompressUpload";
 import { runConsentedPdfSplitUpload } from "../lib/runConsentedPdfSplitUpload";
 import {
   SOURCE_ROLES,
@@ -348,6 +348,35 @@ export default function CreateMaterialStepper({
     setPdfSplitProgress(null);
   }
 
+  function clearUploadForm() {
+    setUploadFile(null);
+    setFigureFiles([]);
+    setSourceRole("lecture");
+    setAlsoCover("");
+  }
+
+  function uploadPdfPart(part: File, figuresForThisPart: File[]) {
+    if (!selectedDeckId) {
+      return Promise.reject(new Error("Select a deck first"));
+    }
+    const topicHints = topicHintsFromLines(alsoCover);
+    const pdfOpts = {
+      figureExtractMode,
+      source_role: sourceRole,
+      ...(topicHints ? { topicHints } : {}),
+      onScan: () => setReadingScan(true),
+    };
+    return figuresForThisPart.length > 0
+      ? uploadPdfWithFigureCrops(
+          selectedDeckId,
+          part,
+          figuresForThisPart,
+          undefined,
+          pdfOpts,
+        )
+      : uploadMaterialFile(selectedDeckId, part, undefined, pdfOpts);
+  }
+
   async function onPdfSplitConfirm() {
     if (busy) return;
     if (!selectedDeckId || !uploadFile) return;
@@ -356,35 +385,17 @@ export default function CreateMaterialStepper({
     setBusy(true);
     setPdfSplitProgress("Splitting PDF…");
     try {
-      const topicHints = topicHintsFromLines(alsoCover);
-      const pdfOpts = {
-        figureExtractMode,
-        source_role: sourceRole,
-        ...(topicHints ? { topicHints } : {}),
-      };
       const result = await runConsentedPdfSplitUpload({
         file: uploadFile,
         maxBytes: MAX_FILE_BYTES,
         figureFiles,
         onProgress: setPdfSplitProgress,
-        uploadPart: (part, figuresForThisPart) =>
-          figuresForThisPart.length > 0
-            ? uploadPdfWithFigureCrops(
-                selectedDeckId,
-                part,
-                figuresForThisPart,
-                undefined,
-                { ...pdfOpts, onScan: () => setReadingScan(true) },
-              )
-            : uploadMaterialFile(selectedDeckId, part, undefined, {
-                ...pdfOpts,
-                onScan: () => setReadingScan(true),
-              }),
+        uploadPart: uploadPdfPart,
       });
       if (!result.ok) {
         setPdfSplitOpen(false);
         setPdfSplitProgress(null);
-        if (result.reason === "page_too_large" && result.pageCount === 1) {
+        if (result.next === "compress") {
           setError(null);
           setPdfCompressProgress(null);
           setPdfCompressOpen(true);
@@ -395,10 +406,7 @@ export default function CreateMaterialStepper({
       }
 
       const { parts, lastJobId, lastStatus, skippedFigures } = result;
-      setUploadFile(null);
-      setFigureFiles([]);
-      setSourceRole("lecture");
-      setAlsoCover("");
+      clearUploadForm();
       setPdfSplitOpen(false);
       setPdfSplitProgress(null);
       const figureNote = skippedFigures ? ` ${FIGURES_SKIPPED_NOTICE}.` : "";
@@ -441,52 +449,29 @@ export default function CreateMaterialStepper({
     setBusy(true);
     setPdfCompressProgress("Compressing…");
     try {
-      const nameStem = uploadFile.name.replace(/\.pdf$/i, "") || "document";
-      const compressed = await compressPdfUnderLimit(
-        uploadFile,
-        MAX_FILE_BYTES,
-        { nameStem, onProgress: setPdfCompressProgress },
-      );
-      if (!compressed.ok) {
-        setError(compressed.message);
+      const result = await runConsentedPdfCompressUpload({
+        file: uploadFile,
+        maxBytes: MAX_FILE_BYTES,
+        figureFiles,
+        onProgress: setPdfCompressProgress,
+        uploadPart: uploadPdfPart,
+      });
+      if (!result.ok) {
+        setError(result.message);
         setPdfCompressOpen(false);
         setPdfCompressProgress(null);
         return;
       }
-
-      setPdfCompressProgress("Uploading…");
-      const topicHints = topicHintsFromLines(alsoCover);
-      const pdfOpts = {
-        figureExtractMode,
-        source_role: sourceRole,
-        ...(topicHints ? { topicHints } : {}),
-      };
-      const material =
-        figureFiles.length > 0
-          ? await uploadPdfWithFigureCrops(
-              selectedDeckId,
-              compressed.file,
-              figureFiles,
-              undefined,
-              { ...pdfOpts, onScan: () => setReadingScan(true) },
-            )
-          : await uploadMaterialFile(selectedDeckId, compressed.file, undefined, {
-              ...pdfOpts,
-              onScan: () => setReadingScan(true),
-            });
-      setUploadFile(null);
-      setFigureFiles([]);
-      setSourceRole("lecture");
-      setAlsoCover("");
+      clearUploadForm();
       setPdfCompressOpen(false);
       setPdfCompressProgress(null);
-      if (material.jobId) {
-        setJobId(material.jobId);
-        setNotice(`Stored file (${material.status}). Generation started.`);
+      if (result.lastJobId) {
+        setJobId(result.lastJobId);
+        setNotice(`Stored file (${result.lastStatus}). Generation started.`);
         setActiveStep(2);
       } else {
         setNotice(
-          `Stored file (${material.status}). Open drafts from a prior generate, or upload a new file.`,
+          `Stored file (${result.lastStatus}). Open drafts from a prior generate, or upload a new file.`,
         );
       }
     } catch (err) {

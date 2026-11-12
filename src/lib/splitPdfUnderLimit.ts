@@ -1,13 +1,14 @@
 import { PDFDocument } from "pdf-lib";
 
 export type SplitPdfOk = { ok: true; files: File[] };
-export type SplitPdfErr = {
-  ok: false;
-  reason: "invalid_pdf" | "page_too_large" | "empty";
-  message: string;
-  /** Present when reason is page_too_large. */
-  pageCount?: number;
-};
+export type SplitPdfErr =
+  | { ok: false; reason: "invalid_pdf" | "empty"; message: string }
+  | {
+      ok: false;
+      reason: "page_too_large";
+      message: string;
+      pageCount: number;
+    };
 
 function resolveStem(
   source: File | ArrayBuffer,

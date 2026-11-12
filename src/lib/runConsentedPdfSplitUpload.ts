@@ -22,6 +22,7 @@ export type RunConsentedPdfSplitUploadResult<
   | {
       ok: false;
       message: string;
+      next: "compress" | "error";
       reason?: "invalid_pdf" | "page_too_large" | "empty";
       pageCount?: number;
     }
@@ -49,11 +50,16 @@ export async function runConsentedPdfSplitUpload<
   onProgress("Splitting PDF…");
   const split = await splitPdfUnderLimit(file, maxBytes, { nameStem });
   if (!split.ok) {
+    const next =
+      split.reason === "page_too_large" && split.pageCount === 1
+        ? "compress"
+        : "error";
     return {
       ok: false,
       message: split.message,
+      next,
       reason: split.reason,
-      pageCount: split.pageCount,
+      pageCount: split.reason === "page_too_large" ? split.pageCount : undefined,
     };
   }
 
@@ -81,6 +87,7 @@ export async function runConsentedPdfSplitUpload<
           : "";
       return {
         ok: false,
+        next: "error",
         message: `Failed on part ${i + 1} of ${parts.length}: ${detail}${stored}`,
       };
     }

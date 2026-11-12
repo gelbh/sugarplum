@@ -23,7 +23,7 @@ import {
   fileTooLargeMessage,
   splitSourceTooLargeMessage,
 } from "../lib/materialUploadLimits";
-import { compressPdfUnderLimit } from "../lib/compressPdfUnderLimit";
+import { runConsentedPdfCompressUpload } from "../lib/runConsentedPdfCompressUpload";
 import { runConsentedPdfSplitUpload } from "../lib/runConsentedPdfSplitUpload";
 import type { WorkshopFrame } from "./workshopStack";
 import { openDiyOcclusionFromImageKey } from "./openDiyOcclusion";
@@ -209,7 +209,7 @@ export function useAddMaterialWorkshop({
       if (!result.ok) {
         setPdfSplitOpen(false);
         setPdfSplitProgress(null);
-        if (result.reason === "page_too_large" && result.pageCount === 1) {
+        if (result.next === "compress") {
           setMaterialError(null);
           setPdfCompressProgress(null);
           setPdfCompressOpen(true);
@@ -286,53 +286,56 @@ export function useAddMaterialWorkshop({
     setMaterialBusy(true);
     setPdfCompressProgress("Compressing…");
     try {
-      const nameStem = uploadFile.name.replace(/\.pdf$/i, "") || "document";
-      const compressed = await compressPdfUnderLimit(
-        uploadFile,
-        MAX_FILE_BYTES,
-        { nameStem, onProgress: setPdfCompressProgress },
-      );
-      if (!compressed.ok) {
-        setMaterialError(compressed.message);
+      const result = await runConsentedPdfCompressUpload({
+        file: uploadFile,
+        maxBytes: MAX_FILE_BYTES,
+        figureFiles,
+        onProgress: setPdfCompressProgress,
+        uploadPart: (part, figuresForThisPart) =>
+          figuresForThisPart.length > 0
+            ? uploadPdfWithFigureCrops(
+                deckId,
+                part,
+                figuresForThisPart,
+                undefined,
+                { onScan: () => setReadingScan(true) },
+              )
+            : uploadMaterialFile(deckId, part, undefined, {
+                onScan: () => setReadingScan(true),
+              }),
+      });
+      if (!result.ok) {
+        setMaterialError(result.message);
         setPdfCompressOpen(false);
         setPdfCompressProgress(null);
         return;
       }
-
-      setPdfCompressProgress("Uploading…");
-      const material =
-        figureFiles.length > 0
-          ? await uploadPdfWithFigureCrops(
-              deckId,
-              compressed.file,
-              figureFiles,
-              undefined,
-              { onScan: () => setReadingScan(true) },
-            )
-          : await uploadMaterialFile(deckId, compressed.file, undefined, {
-              onScan: () => setReadingScan(true),
-            });
 
       setUploadFile(null);
       setFigureFiles([]);
       setPdfCompressOpen(false);
       setPdfCompressProgress(null);
 
-      if (material.manual_occlusion && material.r2_key && prepareOcclusionFromImageKey) {
+      const { material } = result;
+      if (
+        material.manual_occlusion &&
+        material.r2_key &&
+        prepareOcclusionFromImageKey
+      ) {
         openDiyOcclusion(material.r2_key);
         await Promise.all([refreshDraftJobs(), refreshMaterials()]);
         return;
       }
-      if (material.jobId) {
+      if (result.lastJobId) {
         setMaterialNotice(
-          `Stored file (${material.status}). Generation started.`,
+          `Stored file (${result.lastStatus}). Generation started.`,
         );
         window.location.assign(
-          `/jobs/${encodeURIComponent(material.jobId)}/drafts`,
+          `/jobs/${encodeURIComponent(result.lastJobId)}/drafts`,
         );
         return;
       }
-      setMaterialNotice(`Stored file (${material.status}).`);
+      setMaterialNotice(`Stored file (${result.lastStatus}).`);
       await Promise.all([refreshDraftJobs(), refreshMaterials()]);
     } catch (err) {
       setMaterialError(
