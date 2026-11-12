@@ -93,12 +93,15 @@ export default function MaterialsList({
     [materials],
   );
 
-  function renderMaterialRow(material: MaterialListItem) {
+  function renderMaterialRow(
+    material: MaterialListItem,
+    rowShowDeckTitle = showDeckTitle,
+  ) {
     return (
       <MaterialRow
         key={material.id}
         material={material}
-        showDeckTitle={showDeckTitle}
+        showDeckTitle={rowShowDeckTitle}
         roleBusy={roleBusyId === material.id}
         onSourceRoleChange={(m, next) => {
           void onSourceRoleChange(m, next);
@@ -265,7 +268,7 @@ export default function MaterialsList({
                       sx={{ m: 0, p: 0, listStyle: "none" }}
                     >
                       {entry.members.map((material) =>
-                        renderMaterialRow(material),
+                        renderMaterialRow(material, false),
                       )}
                     </Stack>
                   </Box>

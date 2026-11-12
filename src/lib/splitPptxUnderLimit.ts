@@ -1,5 +1,5 @@
 import JSZip from "jszip";
-import { formatSplitPartFilename } from "../materials/splitPartFilename";
+import { formatSplitPartFilename } from "./splitPartFilename";
 
 const PPTX_MIME =
   "application/vnd.openxmlformats-officedocument.presentationml.presentation";

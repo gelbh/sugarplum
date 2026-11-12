@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   formatSplitPartFilename,
   parseSplitPartFilename,
-} from "../../src/materials/splitPartFilename";
+} from "../../src/lib/splitPartFilename";
 
 describe("formatSplitPartFilename", () => {
   it("formats pdf and pptx product part names", () => {

@@ -1,5 +1,5 @@
 import { PDFDocument } from "pdf-lib";
-import { formatSplitPartFilename } from "../materials/splitPartFilename";
+import { formatSplitPartFilename } from "./splitPartFilename";
 
 export type SplitPdfOk = { ok: true; files: File[] };
 export type SplitPdfErr =

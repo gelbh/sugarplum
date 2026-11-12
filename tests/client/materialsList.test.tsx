@@ -218,5 +218,12 @@ describe("MaterialsList residual A", () => {
     expect(document.getElementById("split-stem-pdf-deck-b-b1")?.textContent).toBe(
       "Deck B · Lecture",
     );
+    // Stem caption owns deck disambiguation; nested rows omit per-row deck links.
+    expect(
+      document.querySelectorAll('a[href="/library/decks/deck-a"]').length,
+    ).toBe(0);
+    expect(
+      document.querySelectorAll('a[href="/library/decks/deck-b"]').length,
+    ).toBe(0);
   });
 });

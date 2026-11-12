@@ -1,10 +1,4 @@
-import {
-  parseSplitPartFilename,
-  type SplitPartName,
-} from "./splitPartFilename";
-
-export type { SplitPartName };
-export { parseSplitPartFilename };
+import { parseSplitPartFilename } from "../lib/splitPartFilename";
 
 export type SplitSiblingMaterial = {
   id: string;
