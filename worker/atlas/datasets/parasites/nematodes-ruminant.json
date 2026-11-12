@@ -79,6 +79,11 @@
             "name": "larval culture",
             "sample": "faeces"
           }
+        ],
+        "distributionWorldwide": false,
+        "distributionRegions": [],
+        "climateBands": [
+          "temperate"
         ]
       },
       "refs": [
@@ -305,6 +310,11 @@
             "name": "larval culture",
             "sample": "faeces"
           }
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": [
+          "warm-humid"
         ]
       },
       "refs": [
@@ -547,7 +557,10 @@
             "name": "larval culture",
             "sample": "faeces"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -756,7 +769,10 @@
             "sample": "small intestine"
           }
         ],
-        "zoonotic": "potential"
+        "zoonotic": "potential",
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -960,6 +976,11 @@
             "name": "faecal flotation",
             "sample": "faeces"
           }
+        ],
+        "distributionWorldwide": false,
+        "distributionRegions": [],
+        "climateBands": [
+          "warm-humid"
         ]
       },
       "refs": [
@@ -1172,7 +1193,12 @@
         "pppDays": {
           "min": 21,
           "max": 35
-        }
+        },
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "europe"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -1313,7 +1339,7 @@
           "L4",
           "adult"
         ],
-        "distribution": "Small ruminants; reported in Canada and Australia",
+        "distribution": "Worldwide in temperate sheep regions; reported in Canada and Australia",
         "zoonotic": "no",
         "significance": "Heavy burdens damage the colon, giving soft, mucus-streaked or bloody faeces and ill-thrift in young or stressed animals; immunity builds quickly.",
         "lifecycleType": "direct",
@@ -1362,6 +1388,14 @@
             "name": "faecal egg count",
             "sample": "faeces"
           }
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [
+          "north-america",
+          "oceania"
+        ],
+        "climateBands": [
+          "temperate"
         ]
       },
       "refs": [
@@ -1567,7 +1601,14 @@
             "name": "faecal egg count",
             "sample": "faeces"
           }
-        ]
+        ],
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "north-america",
+          "europe",
+          "oceania"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -1789,7 +1830,13 @@
             "name": "faecal egg count",
             "sample": "faeces"
           }
-        ]
+        ],
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "europe",
+          "asia"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -2004,6 +2051,14 @@
             "name": "faecal egg count",
             "sample": "faeces"
           }
+        ],
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "north-america",
+          "europe"
+        ],
+        "climateBands": [
+          "temperate"
         ]
       },
       "refs": [
@@ -2203,7 +2258,12 @@
             "name": "post-mortem examination",
             "sample": "lungs"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [
+          "north-america"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -2402,7 +2462,10 @@
             "name": "post-mortem examination",
             "sample": "lungs"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -2600,7 +2663,12 @@
         "pppDays": {
           "min": 28,
           "max": 35
-        }
+        },
+        "distributionWorldwide": true,
+        "distributionRegions": [
+          "north-america"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -2797,7 +2865,10 @@
             "name": "antibody detection",
             "sample": "milk"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -3022,7 +3093,12 @@
             "name": "antibody detection",
             "sample": "bulk milk"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [
+          "north-america"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -3197,7 +3273,12 @@
         "pppDays": {
           "min": 180,
           "max": 365
-        }
+        },
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "africa"
+        ],
+        "climateBands": []
       },
       "refs": [
         {

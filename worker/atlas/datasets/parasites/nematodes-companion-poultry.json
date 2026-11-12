@@ -86,7 +86,10 @@
             "name": "PCR",
             "sample": "faeces"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -304,7 +307,10 @@
             "name": "PCR",
             "sample": "faeces"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -516,7 +522,10 @@
             "name": "PCR",
             "sample": "faeces"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -713,6 +722,11 @@
             "name": "PCR",
             "sample": "faeces"
           }
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": [
+          "warm-humid"
         ]
       },
       "refs": [
@@ -952,6 +966,15 @@
             "name": "PCR",
             "sample": "faeces"
           }
+        ],
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "north-america",
+          "europe",
+          "asia"
+        ],
+        "climateBands": [
+          "temperate"
         ]
       },
       "refs": [
@@ -1130,6 +1153,12 @@
             "name": "antibody detection",
             "sample": "serum"
           }
+        ],
+        "distributionWorldwide": false,
+        "distributionRegions": [],
+        "climateBands": [
+          "tropical",
+          "subtropical"
         ]
       },
       "refs": [
@@ -1311,7 +1340,10 @@
             "name": "antigen detection",
             "sample": "faeces"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -1504,7 +1536,14 @@
             "name": "endoscopy",
             "sample": null
           }
-        ]
+        ],
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "north-america",
+          "europe",
+          "asia"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -1665,7 +1704,10 @@
             "sample": null
           }
         ],
-        "zoonotic": "no"
+        "zoonotic": "no",
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -1829,7 +1871,15 @@
             "sample": "faeces"
           }
         ],
-        "zoonotic": "no"
+        "zoonotic": "no",
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "north-america",
+          "europe",
+          "asia",
+          "oceania"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -1996,7 +2046,10 @@
             "name": "radiography",
             "sample": null
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -2174,7 +2227,15 @@
             "name": "antigen detection",
             "sample": "serum"
           }
-        ]
+        ],
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "north-america",
+          "south-america",
+          "europe",
+          "africa"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -2366,6 +2427,12 @@
             "name": "radiography",
             "sample": null
           }
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": [
+          "tropical",
+          "temperate"
         ]
       },
       "refs": [
@@ -2558,7 +2625,14 @@
             "name": "surgical removal and morphology",
             "sample": "subcutaneous nodule"
           }
-        ]
+        ],
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "europe",
+          "africa",
+          "asia"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -2754,7 +2828,10 @@
             "name": "bronchoalveolar lavage cytology",
             "sample": null
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -2939,7 +3016,10 @@
             "name": "endoscopy",
             "sample": null
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -3111,7 +3191,13 @@
             "sample": "faeces"
           }
         ],
-        "zoonotic": "no"
+        "zoonotic": "no",
+        "distributionWorldwide": false,
+        "distributionRegions": [],
+        "climateBands": [
+          "tropical",
+          "subtropical"
+        ]
       },
       "refs": [
         {
@@ -3301,7 +3387,10 @@
             "sample": "tissue"
           }
         ],
-        "zoonotic": "no"
+        "zoonotic": "no",
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -3481,7 +3570,10 @@
         "pppDays": {
           "min": 24,
           "max": 30
-        }
+        },
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -3675,7 +3767,10 @@
             "sample": null
           }
         ],
-        "zoonotic": "no"
+        "zoonotic": "no",
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -3880,7 +3975,14 @@
         "pppDays": {
           "min": 7,
           "max": 14
-        }
+        },
+        "distributionWorldwide": true,
+        "distributionRegions": [
+          "north-america",
+          "europe",
+          "asia"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -4071,7 +4173,15 @@
         "pppDays": {
           "min": 7,
           "max": 14
-        }
+        },
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "north-america",
+          "europe"
+        ],
+        "climateBands": [
+          "arctic"
+        ]
       },
       "refs": [
         {
@@ -4263,7 +4373,19 @@
         "pppDays": {
           "min": 7,
           "max": 14
-        }
+        },
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "north-america",
+          "europe",
+          "south-america",
+          "asia",
+          "antarctica"
+        ],
+        "climateBands": [
+          "arctic",
+          "antarctic"
+        ]
       },
       "refs": [
         {

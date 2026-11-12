@@ -57,7 +57,10 @@
             "name": "faecal flotation",
             "sample": "faeces"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -214,6 +217,11 @@
             "name": "faecal flotation",
             "sample": "faeces"
           }
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": [
+          "warm-humid"
         ]
       },
       "refs": [
@@ -372,7 +380,10 @@
             "name": "faecal flotation",
             "sample": "faeces"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -526,7 +537,10 @@
             "name": "faecal flotation",
             "sample": "faeces"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -681,7 +695,10 @@
             "name": "faecal flotation",
             "sample": "faeces"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -836,7 +853,10 @@
             "name": "faecal flotation",
             "sample": "faeces"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -992,7 +1012,10 @@
             "name": "faecal flotation",
             "sample": "faeces"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -1162,7 +1185,14 @@
         "pppDays": {
           "min": 56,
           "max": 70
-        }
+        },
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": [
+          "tropical",
+          "subtropical",
+          "temperate"
+        ]
       },
       "refs": [
         {
@@ -1363,7 +1393,13 @@
         "pppDays": {
           "min": 56,
           "max": 70
-        }
+        },
+        "distributionWorldwide": true,
+        "distributionRegions": [
+          "north-america",
+          "oceania"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -1527,7 +1563,15 @@
         "pppDays": {
           "min": 270,
           "max": 365
-        }
+        },
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "europe",
+          "asia",
+          "south-america",
+          "africa"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -1698,7 +1742,10 @@
         "pppDays": {
           "min": 120,
           "max": 240
-        }
+        },
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -1854,7 +1901,15 @@
         "pppDays": {
           "min": 70,
           "max": 90
-        }
+        },
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "north-america",
+          "south-america",
+          "europe",
+          "asia"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -2020,7 +2075,10 @@
             "name": "faecal flotation",
             "sample": "faeces"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -2151,7 +2209,10 @@
             "name": "Baermann technique",
             "sample": "faeces"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -2286,7 +2347,10 @@
             "sample": "stomach"
           }
         ],
-        "zoonotic": "no"
+        "zoonotic": "no",
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -2451,7 +2515,10 @@
             "name": "post-mortem examination",
             "sample": "liver"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -2632,7 +2699,13 @@
             "sample": "intestine"
           }
         ],
-        "zoonotic": "potential"
+        "zoonotic": "potential",
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": [
+          "tropical",
+          "subtropical"
+        ]
       },
       "refs": [
         {
@@ -2772,7 +2845,10 @@
             "sample": "intestine"
           }
         ],
-        "zoonotic": "potential"
+        "zoonotic": "potential",
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -2940,7 +3016,10 @@
         "pppDays": {
           "min": 5,
           "max": 7
-        }
+        },
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {

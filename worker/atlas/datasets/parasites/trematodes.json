@@ -103,7 +103,10 @@
             "sample": "serum",
             "windowStartWeek": 2
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -294,7 +297,12 @@
         "pppDays": {
           "min": 70,
           "max": 90
-        }
+        },
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": [
+          "tropical"
+        ]
       },
       "refs": [
         {
@@ -454,7 +462,13 @@
             "name": "post-mortem examination",
             "sample": "liver"
           }
-        ]
+        ],
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "north-america",
+          "europe"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -609,7 +623,15 @@
             "name": "post-mortem examination",
             "sample": "liver"
           }
-        ]
+        ],
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "europe",
+          "asia",
+          "north-america",
+          "africa"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -749,7 +771,12 @@
             "sample": "faeces"
           }
         ],
-        "zoonotic": "no"
+        "zoonotic": "no",
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "europe"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -877,7 +904,10 @@
             "name": "post-mortem examination",
             "sample": "rumen"
           }
-        ]
+        ],
+        "distributionWorldwide": true,
+        "distributionRegions": [],
+        "climateBands": []
       },
       "refs": [
         {
@@ -1015,7 +1045,12 @@
             "name": "faecal egg microscopy",
             "sample": "faeces"
           }
-        ]
+        ],
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "asia"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -1149,7 +1184,12 @@
             "name": "antibody detection",
             "sample": "serum"
           }
-        ]
+        ],
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "asia"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -1284,7 +1324,13 @@
             "name": "faecal egg microscopy",
             "sample": "faeces"
           }
-        ]
+        ],
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "europe",
+          "asia"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
@@ -1438,7 +1484,15 @@
         "pppDays": {
           "min": 28,
           "max": 56
-        }
+        },
+        "distributionWorldwide": false,
+        "distributionRegions": [
+          "south-america",
+          "europe",
+          "asia",
+          "africa"
+        ],
+        "climateBands": []
       },
       "refs": [
         {
