@@ -48,6 +48,7 @@ import {
 } from "../lib/materialUploadLimits";
 import { runConsentedPdfCompressUpload } from "../lib/runConsentedPdfCompressUpload";
 import { runConsentedPdfSplitUpload } from "../lib/runConsentedPdfSplitUpload";
+import { runConsentedPptxSplitUpload } from "../lib/runConsentedPptxSplitUpload";
 import {
   SOURCE_ROLES,
   SOURCE_ROLE_LABELS,
@@ -57,6 +58,7 @@ import {
 import { FigureSuggestPanel } from "./FigureSuggestPanel";
 import PdfCompressConsent from "./PdfCompressConsent";
 import PdfSplitConsent from "./PdfSplitConsent";
+import PptxSplitConsent from "./PptxSplitConsent";
 import { stepperSx } from "./stepperSx";
 
 type Props = {
@@ -119,6 +121,10 @@ export default function CreateMaterialStepper({
   const [showNewDeckForm, setShowNewDeckForm] = useState(false);
   const [pdfSplitOpen, setPdfSplitOpen] = useState(false);
   const [pdfSplitProgress, setPdfSplitProgress] = useState<string | null>(null);
+  const [pptxSplitOpen, setPptxSplitOpen] = useState(false);
+  const [pptxSplitProgress, setPptxSplitProgress] = useState<string | null>(
+    null,
+  );
   const [pdfCompressOpen, setPdfCompressOpen] = useState(false);
   const [pdfCompressProgress, setPdfCompressProgress] = useState<string | null>(
     null,
@@ -348,6 +354,12 @@ export default function CreateMaterialStepper({
     setPdfSplitProgress(null);
   }
 
+  function onPptxSplitCancel() {
+    if (busy) return;
+    setPptxSplitOpen(false);
+    setPptxSplitProgress(null);
+  }
+
   function clearUploadForm() {
     setUploadFile(null);
     setFigureFiles([]);
@@ -429,6 +441,61 @@ export default function CreateMaterialStepper({
       setError(err instanceof ApiError ? err.message : "Could not upload file");
       setPdfSplitOpen(false);
       setPdfSplitProgress(null);
+    } finally {
+      setBusy(false);
+      setReadingScan(false);
+    }
+  }
+
+  async function onPptxSplitConfirm() {
+    if (busy) return;
+    if (!selectedDeckId || !uploadFile) return;
+    setError(null);
+    setNotice(null);
+    setBusy(true);
+    setPptxSplitProgress("Splitting PPTX…");
+    try {
+      const topicHints = topicHintsFromLines(alsoCover);
+      const result = await runConsentedPptxSplitUpload({
+        file: uploadFile,
+        maxBytes: MAX_FILE_BYTES,
+        onProgress: setPptxSplitProgress,
+        uploadPart: (part) =>
+          uploadMaterialFile(selectedDeckId, part, undefined, {
+            ...(topicHints ? { topicHints } : {}),
+            onScan: () => setReadingScan(true),
+          }),
+      });
+      if (!result.ok) {
+        setPptxSplitOpen(false);
+        setPptxSplitProgress(null);
+        setError(result.message);
+        return;
+      }
+
+      const { parts, lastJobId, lastStatus } = result;
+      clearUploadForm();
+      setPptxSplitOpen(false);
+      setPptxSplitProgress(null);
+      if (lastJobId) {
+        setJobId(lastJobId);
+        setNotice(
+          parts.length > 1
+            ? `Stored ${parts.length} materials (${lastStatus}). Generation started.`
+            : `Stored file (${lastStatus}). Generation started.`,
+        );
+        setActiveStep(2);
+      } else {
+        setNotice(
+          parts.length > 1
+            ? `Stored ${parts.length} materials (${lastStatus}).`
+            : `Stored file (${lastStatus}). Open drafts from a prior generate, or upload a new file.`,
+        );
+      }
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not upload file");
+      setPptxSplitOpen(false);
+      setPptxSplitProgress(null);
     } finally {
       setBusy(false);
       setReadingScan(false);
@@ -525,11 +592,20 @@ export default function CreateMaterialStepper({
       uploadFile.size > MAX_FILE_BYTES
     ) {
       if (uploadFile.size > MAX_SPLIT_SOURCE_BYTES) {
-        setError(splitSourceTooLargeMessage());
+        setError(splitSourceTooLargeMessage(undefined, "pdf"));
         return;
       }
       setPdfSplitProgress(null);
       setPdfSplitOpen(true);
+      return;
+    }
+    if (contentType === PPTX_MIME && uploadFile.size > MAX_FILE_BYTES) {
+      if (uploadFile.size > MAX_SPLIT_SOURCE_BYTES) {
+        setError(splitSourceTooLargeMessage(undefined, "pptx"));
+        return;
+      }
+      setPptxSplitProgress(null);
+      setPptxSplitOpen(true);
       return;
     }
     if (uploadFile.size > MAX_FILE_BYTES) {
@@ -930,6 +1006,18 @@ export default function CreateMaterialStepper({
             void onPdfSplitConfirm();
           }}
           onCancel={onPdfSplitCancel}
+        />
+
+        <PptxSplitConsent
+          open={pptxSplitOpen}
+          fileName={uploadFile?.name ?? "PPTX"}
+          maxMb={fileSizeCapMb()}
+          progressLabel={pptxSplitProgress}
+          busy={busy}
+          onConfirm={() => {
+            void onPptxSplitConfirm();
+          }}
+          onCancel={onPptxSplitCancel}
         />
 
         <PdfCompressConsent

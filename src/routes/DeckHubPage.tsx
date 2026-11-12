@@ -750,6 +750,12 @@ export default function DeckHubPage({ deckId }: Props) {
               void material.onPdfSplitConfirm();
             }}
             onPdfSplitCancel={material.onPdfSplitCancel}
+            pptxSplitOpen={material.pptxSplitOpen}
+            pptxSplitProgress={material.pptxSplitProgress}
+            onPptxSplitConfirm={() => {
+              void material.onPptxSplitConfirm();
+            }}
+            onPptxSplitCancel={material.onPptxSplitCancel}
             pdfCompressOpen={material.pdfCompressOpen}
             pdfCompressProgress={material.pdfCompressProgress}
             onPdfCompressConfirm={() => {
