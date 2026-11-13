@@ -26,7 +26,7 @@ export default function AnatomyHub() {
             Anatomy
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Interactive 3D scenes. Stand-in packages are for engineering only.
+            Interactive 3D osteology scenes.
           </Typography>
         </Box>
         <List>
