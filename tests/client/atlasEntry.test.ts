@@ -269,6 +269,18 @@ describe("entryGlance", () => {
         file: "central-nervous-system.webp",
         marker: "Gray724",
       },
+      {
+        archetype: "small intestine",
+        file: "small-intestine.webp",
+        marker: "Gray1065",
+      },
+      { archetype: "trachea", file: "trachea.webp", marker: "Gray963" },
+      { archetype: "skin", file: "skin.webp", marker: "Gray940" },
+      {
+        archetype: "urinary bladder",
+        file: "urinary-bladder.webp",
+        marker: "Gray1140",
+      },
     ];
     expect(credits).toMatch(/CC BY-SA 2\.1 JP/);
     for (const h of heroes) {
