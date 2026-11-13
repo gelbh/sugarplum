@@ -3,7 +3,7 @@
  * Copy VT-ARIES Production GLBs into public/anatomy/{species}
  * and generate scene.json + CREDITS.md. Expects a local checkout of
  * VT-ARIES/Anatomy with Production models under --src (default /tmp/vt-anatomy).
- * Optional: --only=Daniel (or Canine|Equine|Bovine) to ingest one species.
+ * Optional: --only=Canine (or Equine|Bovine) to ingest one species.
  */
 import { createHash } from "node:crypto";
 import {
@@ -21,7 +21,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = join(ROOT, "public", "anatomy");
-const SPECIES = ["Canine", "Equine", "Bovine", "Daniel"];
+const SPECIES = ["Canine", "Equine", "Bovine"];
 const DEFAULT_SRC = "/tmp/vt-anatomy/models";
 
 const srcRoot = process.argv
