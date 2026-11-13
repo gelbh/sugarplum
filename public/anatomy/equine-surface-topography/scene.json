@@ -1,0 +1,321 @@
+{
+  "id": "equine-surface-topography",
+  "title": "Equine surface topography",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-eq-ankles",
+      "label": "eq ankles",
+      "node": "eq_ankles",
+      "asset": "./eq_ankles.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-back",
+      "label": "eq back",
+      "node": "eq_back",
+      "asset": "./eq_back.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-barrel",
+      "label": "eq barrel",
+      "node": "eq_barrel",
+      "asset": "./eq_barrel.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-belly",
+      "label": "eq belly",
+      "node": "eq_belly",
+      "asset": "./eq_belly.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-body-shell",
+      "label": "eq body shell",
+      "node": "eq_body_shell",
+      "asset": "./eq_body_shell.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-breast",
+      "label": "eq breast",
+      "node": "eq_breast",
+      "asset": "./eq_breast.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-bridle-path",
+      "label": "eq bridle path",
+      "node": "eq_bridle_path",
+      "asset": "./eq_bridle_path.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-cannons",
+      "label": "eq cannons",
+      "node": "eq_cannons",
+      "asset": "./eq_cannons.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-carpus-knees",
+      "label": "eq carpus knees",
+      "node": "eq_carpus_knees",
+      "asset": "./eq_carpus_knees.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-cheek",
+      "label": "eq cheek",
+      "node": "eq_cheek",
+      "asset": "./eq_cheek.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-coronets",
+      "label": "eq coronets",
+      "node": "eq_coronets",
+      "asset": "./eq_coronets.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-crest",
+      "label": "eq crest",
+      "node": "eq_crest",
+      "asset": "./eq_crest.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-croup",
+      "label": "eq croup",
+      "node": "eq_croup",
+      "asset": "./eq_croup.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-flank",
+      "label": "eq flank",
+      "node": "eq_flank",
+      "asset": "./eq_flank.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-forearm",
+      "label": "eq forearm",
+      "node": "eq_forearm",
+      "asset": "./eq_forearm.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-forehead",
+      "label": "eq forehead",
+      "node": "eq_forehead",
+      "asset": "./eq_forehead.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-gaskin",
+      "label": "eq gaskin",
+      "node": "eq_gaskin",
+      "asset": "./eq_gaskin.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-girth",
+      "label": "eq girth",
+      "node": "eq_girth",
+      "asset": "./eq_girth.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-haunch",
+      "label": "eq haunch",
+      "node": "eq_haunch",
+      "asset": "./eq_haunch.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-hip-point",
+      "label": "eq hip point",
+      "node": "eq_hip_point",
+      "asset": "./eq_hip_point.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-hock",
+      "label": "eq hock",
+      "node": "eq_hock",
+      "asset": "./eq_hock.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-hock-point",
+      "label": "eq hock point",
+      "node": "eq_hock_point",
+      "asset": "./eq_hock_point.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-jugular-groove",
+      "label": "eq jugular groove",
+      "node": "eq_jugular_groove",
+      "asset": "./eq_jugular_groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-loin",
+      "label": "eq loin",
+      "node": "eq_loin",
+      "asset": "./eq_loin.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-muzzle",
+      "label": "eq muzzle",
+      "node": "eq_muzzle",
+      "asset": "./eq_muzzle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-nose-bridge",
+      "label": "eq nose bridge",
+      "node": "eq_nose_bridge",
+      "asset": "./eq_nose_bridge.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-pasterns",
+      "label": "eq pasterns",
+      "node": "eq_pasterns",
+      "asset": "./eq_pasterns.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-point-elbow",
+      "label": "eq point elbow",
+      "node": "eq_point_elbow",
+      "asset": "./eq_point_elbow.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-poll",
+      "label": "eq poll",
+      "node": "eq_poll",
+      "asset": "./eq_poll.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-quarters",
+      "label": "eq quarters",
+      "node": "eq_quarters",
+      "asset": "./eq_quarters.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-shoulder",
+      "label": "eq shoulder",
+      "node": "eq_shoulder",
+      "asset": "./eq_shoulder.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-shoulder-point",
+      "label": "eq shoulder point",
+      "node": "eq_shoulder_point",
+      "asset": "./eq_shoulder_point.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-stifle-point",
+      "label": "eq stifle point",
+      "node": "eq_stifle_point",
+      "asset": "./eq_stifle_point.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-tail-base",
+      "label": "eq tail base",
+      "node": "eq_tail_base",
+      "asset": "./eq_tail_base.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-thighs",
+      "label": "eq thighs",
+      "node": "eq_thighs",
+      "asset": "./eq_thighs.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-withers",
+      "label": "eq withers",
+      "node": "eq_withers",
+      "asset": "./eq_withers.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eye-glass",
+      "label": "eye glass",
+      "node": "eye_glass",
+      "asset": "./eye_glass.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eye-in",
+      "label": "eye in",
+      "node": "eye_in",
+      "asset": "./eye_in.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-horse-body",
+      "label": "horse BODY",
+      "node": "horse_BODY",
+      "asset": "./horse_BODY.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-horse-hooves",
+      "label": "horse HOOVES",
+      "node": "horse_HOOVES",
+      "asset": "./horse_HOOVES.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mane",
+      "label": "Mane",
+      "node": "Mane",
+      "asset": "./Mane.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tail",
+      "label": "Tail",
+      "node": "Tail",
+      "asset": "./Tail.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tear-fluid-1",
+      "label": "tear fluid 1",
+      "node": "tear_fluid_1",
+      "asset": "./tear_fluid_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tear-fluid-2",
+      "label": "tear fluid 2",
+      "node": "tear_fluid_2",
+      "asset": "./tear_fluid_2.glb",
+      "region": "root"
+    }
+  ]
+}

@@ -1,0 +1,202 @@
+{
+  "id": "equine-male-repro-scan",
+  "title": "Equine male repro scan",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-a-pudenda-interna",
+      "label": "a pudenda interna",
+      "node": "a_pudenda_interna",
+      "asset": "./a_pudenda_interna.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-bladder",
+      "label": "bladder",
+      "node": "bladder",
+      "asset": "./bladder.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-collum-glandis",
+      "label": "collum glandis",
+      "node": "collum_glandis",
+      "asset": "./collum_glandis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-corpus-cavernosum",
+      "label": "corpus cavernosum",
+      "node": "corpus_cavernosum",
+      "asset": "./corpus_cavernosum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ductus-deferens",
+      "label": "ductus deferens",
+      "node": "ductus_deferens",
+      "asset": "./ductus_deferens.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ductus-deferens-ampulla",
+      "label": "ductus deferens ampulla",
+      "node": "ductus_deferens_ampulla",
+      "asset": "./ductus_deferens_ampulla.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-male-repro-blocker-meshoriginal26",
+      "label": "eq male repro blocker meshoriginal26",
+      "node": "eq_male_repro_blocker_meshoriginal26",
+      "asset": "./eq_male_repro_blocker_meshoriginal26.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-genital-fold",
+      "label": "genital fold",
+      "node": "genital_fold",
+      "asset": "./genital_fold.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gland-bulbourethral",
+      "label": "gland bulbourethral",
+      "node": "gland_bulbourethral",
+      "asset": "./gland_bulbourethral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gland-prostae",
+      "label": "gland prostae",
+      "node": "gland_prostae",
+      "asset": "./gland_prostae.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gland-vesicular",
+      "label": "gland vesicular",
+      "node": "gland_vesicular",
+      "asset": "./gland_vesicular.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-glans",
+      "label": "glans",
+      "node": "glans",
+      "asset": "./glans.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-bulbospongiosus",
+      "label": "m bulbospongiosus",
+      "node": "m_bulbospongiosus",
+      "asset": "./m_bulbospongiosus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-int-obturator",
+      "label": "m int obturator",
+      "node": "m_int_obturator",
+      "asset": "./m_int_obturator.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-int-obturator-iliac",
+      "label": "m int obturator iliac",
+      "node": "m_int_obturator_iliac",
+      "asset": "./m_int_obturator_iliac.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-int-obturator-ischiopubiana",
+      "label": "m int obturator ischiopubiana",
+      "node": "m_int_obturator_ischiopubiana",
+      "asset": "./m_int_obturator_ischiopubiana.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-ischiocavernosus",
+      "label": "m ischiocavernosus",
+      "node": "m_ischiocavernosus",
+      "asset": "./m_ischiocavernosus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-retractor-penis",
+      "label": "m retractor penis",
+      "node": "m_retractor_penis",
+      "asset": "./m_retractor_penis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-prepuce-external-lamina",
+      "label": "prepuce external lamina",
+      "node": "prepuce_external_lamina",
+      "asset": "./prepuce_external_lamina.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-preputial-cavity",
+      "label": "preputial cavity",
+      "node": "preputial_cavity",
+      "asset": "./preputial_cavity.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-preputial-orifice",
+      "label": "preputial orifice",
+      "node": "preputial_orifice",
+      "asset": "./preputial_orifice.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-preputialis-plica",
+      "label": "preputialis plica",
+      "node": "preputialis_plica",
+      "asset": "./preputialis_plica.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-projected",
+      "label": "projected",
+      "node": "projected",
+      "asset": "./projected.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ureters",
+      "label": "ureters",
+      "node": "ureters",
+      "asset": "./ureters.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-urethral-process",
+      "label": "urethral process",
+      "node": "urethral_process",
+      "asset": "./urethral_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-urethral-sinus",
+      "label": "urethral sinus",
+      "node": "urethral_sinus",
+      "asset": "./urethral_sinus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vvs-dorsal-penis",
+      "label": "vvs dorsal penis",
+      "node": "vvs_dorsal_penis",
+      "asset": "./vvs_dorsal_penis.glb",
+      "region": "root"
+    }
+  ]
+}
