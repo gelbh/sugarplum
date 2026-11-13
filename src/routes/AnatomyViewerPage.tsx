@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import CenterFocusStrongOutlinedIcon from "@mui/icons-material/CenterFocusStrongOutlined";
+import CropFreeOutlinedIcon from "@mui/icons-material/CropFreeOutlined";
+import FilterCenterFocusOutlinedIcon from "@mui/icons-material/FilterCenterFocusOutlined";
+import FullscreenExitOutlinedIcon from "@mui/icons-material/FullscreenExitOutlined";
+import FullscreenOutlinedIcon from "@mui/icons-material/FullscreenOutlined";
 import GridOnOutlinedIcon from "@mui/icons-material/GridOnOutlined";
+import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import ThreeSixtyOutlinedIcon from "@mui/icons-material/ThreeSixtyOutlined";
 import ZoomInOutlinedIcon from "@mui/icons-material/ZoomInOutlined";
 import ZoomOutOutlinedIcon from "@mui/icons-material/ZoomOutOutlined";
@@ -16,10 +21,12 @@ import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/material/styles";
 import type { MouseEvent } from "react";
 import AnatomyCanvas, {
+  type AnatomyCameraMode,
   type AnatomyCanvasBackground,
   type AnatomyCanvasHandle,
   type AnatomyLoadSpec,
 } from "../anatomy/AnatomyCanvas";
+import AnatomyHelpOverlay from "../anatomy/AnatomyHelpOverlay";
 import {
   defaultActiveRegionIds,
   parseAnatomySceneManifest,
@@ -33,6 +40,13 @@ import {
 } from "../anatomy/structureState";
 import type { AnatomySceneManifest } from "../anatomy/types";
 import { isPlainClick, navigate } from "../nav/navigate";
+
+function isTypingTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  const tag = target.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
+  return target.isContentEditable;
+}
 
 type Props = { sceneId: string };
 
@@ -85,6 +99,7 @@ function buildLoads(
 export default function AnatomyViewerPage({ sceneId }: Props) {
   const theme = useTheme();
   const canvasRef = useRef<AnatomyCanvasHandle>(null);
+  const stageRef = useRef<HTMLDivElement | null>(null);
   const [manifest, setManifest] = useState<AnatomySceneManifest | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeRegions, setActiveRegions] = useState<Set<string>>(
@@ -97,6 +112,11 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
   );
   const [autoRotate, setAutoRotate] = useState(false);
   const [wireframe, setWireframe] = useState(false);
+  const [autoFocus, setAutoFocus] = useState(true);
+  const [cameraMode, setCameraMode] =
+    useState<AnatomyCameraMode>("perspective");
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
   const [bgId, setBgId] = useState<BgChoiceId>("page");
 
   const bgChoices = useMemo<BgChoice[]>(
@@ -141,8 +161,19 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
     dispatch({ type: "reset" });
     setAutoRotate(false);
     setWireframe(false);
+    setAutoFocus(true);
+    setCameraMode("perspective");
+    setHelpOpen(false);
     setBgId("page");
   }, [sceneId]);
+
+  useEffect(() => {
+    const onFs = () => {
+      setFullscreen(document.fullscreenElement === stageRef.current);
+    };
+    document.addEventListener("fullscreenchange", onFs);
+    return () => document.removeEventListener("fullscreenchange", onFs);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -182,6 +213,52 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
 
   const selectedLabel =
     manifest?.structures.find((s) => s.id === ui.selectedId)?.label ?? null;
+
+  useEffect(() => {
+    const onKey = (ev: KeyboardEvent) => {
+      if (isTypingTarget(ev.target)) return;
+      if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+      const key = ev.key.toLowerCase();
+      if (key === "h") {
+        if (!ui.selectedId) return;
+        ev.preventDefault();
+        dispatch({ type: "toggleHidden", id: ui.selectedId });
+        return;
+      }
+      if (key === "i") {
+        if (!ui.selectedId) return;
+        ev.preventDefault();
+        dispatch(
+          ui.isolatedId === ui.selectedId
+            ? { type: "clearIsolate" }
+            : { type: "isolate", id: ui.selectedId },
+        );
+        return;
+      }
+      if (key === "r") {
+        ev.preventDefault();
+        canvasRef.current?.resetView();
+        return;
+      }
+      if (key === "?" || (ev.shiftKey && key === "/")) {
+        ev.preventDefault();
+        setHelpOpen((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [ui.selectedId, ui.isolatedId]);
+
+  const toggleFullscreen = async () => {
+    const el = stageRef.current;
+    if (!el) return;
+    try {
+      if (document.fullscreenElement === el) await document.exitFullscreen();
+      else await el.requestFullscreen();
+    } catch {
+      /* ignore fullscreen rejection */
+    }
+  };
 
   const changeRegions = (regionIds: string[]) => {
     setActiveRegions(new Set(regionIds));
@@ -364,6 +441,76 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
                   </IconButton>
                 </span>
               </Tooltip>
+              <Tooltip title={autoFocus ? "Auto-focus on" : "Auto-focus off"}>
+                <span>
+                  <IconButton
+                    size="small"
+                    disabled={!canvasReady}
+                    color={autoFocus ? "primary" : "default"}
+                    aria-pressed={autoFocus}
+                    aria-label="Auto-focus selection"
+                    onClick={() => setAutoFocus((v) => !v)}
+                  >
+                    <FilterCenterFocusOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip
+                title={
+                  cameraMode === "orthographic"
+                    ? "Perspective camera"
+                    : "Orthographic camera"
+                }
+              >
+                <span>
+                  <IconButton
+                    size="small"
+                    disabled={!canvasReady}
+                    color={
+                      cameraMode === "orthographic" ? "primary" : "default"
+                    }
+                    aria-pressed={cameraMode === "orthographic"}
+                    aria-label="Toggle orthographic camera"
+                    onClick={() => {
+                      setCameraMode((mode) =>
+                        mode === "perspective"
+                          ? "orthographic"
+                          : "perspective",
+                      );
+                    }}
+                  >
+                    <CropFreeOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title={fullscreen ? "Exit fullscreen" : "Fullscreen"}>
+                <span>
+                  <IconButton
+                    size="small"
+                    disabled={!canvasReady}
+                    aria-pressed={fullscreen}
+                    aria-label={fullscreen ? "Exit fullscreen" : "Fullscreen"}
+                    onClick={() => void toggleFullscreen()}
+                  >
+                    {fullscreen ? (
+                      <FullscreenExitOutlinedIcon fontSize="small" />
+                    ) : (
+                      <FullscreenOutlinedIcon fontSize="small" />
+                    )}
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title="Controls help">
+                <IconButton
+                  size="small"
+                  color={helpOpen ? "primary" : "default"}
+                  aria-pressed={helpOpen}
+                  aria-label="Controls help"
+                  onClick={() => setHelpOpen((v) => !v)}
+                >
+                  <HelpOutlineOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
               <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
               <Typography
                 variant="caption"
@@ -415,7 +562,15 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
                 );
               })}
             </Stack>
-            <Box sx={{ flex: 1, minHeight: 0, position: "relative" }}>
+            <Box
+              ref={stageRef}
+              sx={{
+                flex: 1,
+                minHeight: 0,
+                position: "relative",
+                bgcolor: "background.default",
+              }}
+            >
               {loads.length === 0 ? (
                 <Typography color="text.secondary" sx={{ py: 6, px: 2 }}>
                   Enable a region to load 3D models.
@@ -429,9 +584,15 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
                   background={canvasBackground}
                   autoRotate={autoRotate}
                   wireframe={wireframe}
+                  autoFocus={autoFocus}
+                  cameraMode={cameraMode}
                   onSelect={(id) => dispatch({ type: "select", id })}
                 />
               )}
+              <AnatomyHelpOverlay
+                open={helpOpen}
+                onClose={() => setHelpOpen(false)}
+              />
             </Box>
           </Box>
         </Stack>

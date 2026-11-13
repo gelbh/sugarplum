@@ -17,12 +17,14 @@ import {
   DirectionalLight,
   Group,
   Mesh,
+  OrthographicCamera,
   PerspectiveCamera,
   Raycaster,
   Scene,
   Vector2,
   Vector3,
   WebGLRenderer,
+  type Camera,
   type Material,
   type Object3D,
   type Texture,
@@ -37,9 +39,12 @@ export type AnatomyLoadSpec = {
   node: string;
 };
 
+export type AnatomyCameraMode = "perspective" | "orthographic";
+
 export type AnatomyCanvasHandle = {
   resetView: () => void;
   zoomBy: (factor: number) => void;
+  focusStructure: (id: string) => void;
 };
 
 /** CSS hex (`#rrggbb`) or `null` for transparent (page shows through). */
@@ -53,6 +58,14 @@ type Props = {
   background?: AnatomyCanvasBackground;
   autoRotate?: boolean;
   wireframe?: boolean;
+  /** When true, selection recenters the orbit target. Default true. */
+  autoFocus?: boolean;
+  cameraMode?: AnatomyCameraMode;
+};
+
+type EmissiveMat = Material & {
+  emissive?: Color;
+  emissiveIntensity?: number;
 };
 
 const LOAD_CONCURRENCY = 6;
@@ -150,6 +163,112 @@ function applySceneBackground(
   renderer.setClearColor(color, 1);
 }
 
+function clearHoverHighlight(
+  mats: EmissiveMat[],
+  saved: { mat: EmissiveMat; color: Color; intensity: number }[],
+) {
+  for (const entry of saved) {
+    if (entry.mat.emissive) entry.mat.emissive.copy(entry.color);
+    if (entry.mat.emissiveIntensity != null) {
+      entry.mat.emissiveIntensity = entry.intensity;
+    }
+    entry.mat.needsUpdate = true;
+  }
+  mats.length = 0;
+  saved.length = 0;
+}
+
+function applyHoverHighlight(
+  root: Object3D,
+  mats: EmissiveMat[],
+  saved: { mat: EmissiveMat; color: Color; intensity: number }[],
+) {
+  clearHoverHighlight(mats, saved);
+  const seen = new Set<EmissiveMat>();
+  root.traverse((obj) => {
+    if (!(obj instanceof Mesh)) return;
+    const list = Array.isArray(obj.material) ? obj.material : [obj.material];
+    for (const mat of list) {
+      const m = mat as EmissiveMat;
+      if (!m?.emissive || seen.has(m)) continue;
+      seen.add(m);
+      saved.push({
+        mat: m,
+        color: m.emissive.clone(),
+        intensity: m.emissiveIntensity ?? 1,
+      });
+      m.emissive.setHex(0xffffff);
+      m.emissiveIntensity = Math.max(m.emissiveIntensity ?? 1, 0.55);
+      m.needsUpdate = true;
+      mats.push(m);
+    }
+  });
+}
+
+function fitCameraToUnion(
+  camera: Camera,
+  controls: OrbitControls,
+  nodeMap: Map<string, Object3D>,
+  aspect: number,
+) {
+  if (nodeMap.size === 0) return;
+  const box = new Box3();
+  for (const obj of nodeMap.values()) box.expandByObject(obj);
+  if (box.isEmpty()) return;
+  const sizeVec = box.getSize(new Vector3());
+  const size = sizeVec.length() || 1;
+  const center = box.getCenter(new Vector3());
+  controls.target.copy(center);
+  if (camera instanceof OrthographicCamera) {
+    const half = Math.max(sizeVec.x, sizeVec.y, sizeVec.z) * 0.55 || 1;
+    camera.left = -half * aspect;
+    camera.right = half * aspect;
+    camera.top = half;
+    camera.bottom = -half;
+    camera.near = size / 100;
+    camera.far = size * 10;
+    camera.position.copy(center).add(new Vector3(0, size * 0.2, size));
+    camera.updateProjectionMatrix();
+  } else if (camera instanceof PerspectiveCamera) {
+    camera.position
+      .copy(center)
+      .add(new Vector3(size * 0.7, size * 0.45, size * 0.9));
+    camera.near = size / 100;
+    camera.far = size * 10;
+    camera.updateProjectionMatrix();
+  }
+  controls.update();
+}
+
+function focusObject(
+  camera: Camera,
+  controls: OrbitControls,
+  obj: Object3D,
+  aspect: number,
+) {
+  const box = new Box3().setFromObject(obj);
+  if (box.isEmpty()) return;
+  const sizeVec = box.getSize(new Vector3());
+  const size = sizeVec.length() || 1;
+  const center = box.getCenter(new Vector3());
+  controls.target.copy(center);
+  if (camera instanceof OrthographicCamera) {
+    const half = Math.max(sizeVec.x, sizeVec.y, sizeVec.z) * 0.7 || 1;
+    camera.left = -half * aspect;
+    camera.right = half * aspect;
+    camera.top = half;
+    camera.bottom = -half;
+    camera.position.copy(center).add(new Vector3(0, size * 0.15, size * 1.1));
+    camera.updateProjectionMatrix();
+  } else {
+    const offset = camera.position.clone().sub(controls.target);
+    if (offset.lengthSq() < 1e-6) offset.set(size, size * 0.5, size);
+    offset.setLength(Math.max(size * 1.4, 0.5));
+    camera.position.copy(center).add(offset);
+  }
+  controls.update();
+}
+
 const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
   function AnatomyCanvas(
     {
@@ -159,6 +278,8 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       background = null,
       autoRotate = false,
       wireframe = false,
+      autoFocus = true,
+      cameraMode = "perspective",
     },
     ref,
   ) {
@@ -170,14 +291,21 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
     const idByNodeRef = useRef<Map<string, string>>(new Map());
     const applyVisibilityRef = useRef<() => void>(() => {});
     const fitCameraRef = useRef<() => void>(() => {});
+    const focusStructureRef = useRef<(id: string) => void>(() => {});
+    const setCameraModeRef = useRef<(mode: AnatomyCameraMode) => void>(
+      () => {},
+    );
     const controlsRef = useRef<OrbitControls | null>(null);
-    const cameraRef = useRef<PerspectiveCamera | null>(null);
+    const cameraRef = useRef<Camera | null>(null);
     const sceneRef = useRef<Scene | null>(null);
     const rendererRef = useRef<WebGLRenderer | null>(null);
     const rootGroupRef = useRef<Group | null>(null);
     const autoRotateRef = useRef(autoRotate);
     const wireframeRef = useRef(wireframe);
     const backgroundRef = useRef(background);
+    const autoFocusRef = useRef(autoFocus);
+    const cameraModeRef = useRef(cameraMode);
+    const aspectRef = useRef(1);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [retryToken, setRetryToken] = useState(0);
     const [progress, setProgress] = useState<{ loaded: number; total: number }>(
@@ -196,6 +324,9 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
     useEffect(() => {
       loadsRef.current = loads;
     }, [loads]);
+    useEffect(() => {
+      autoFocusRef.current = autoFocus;
+    }, [autoFocus]);
     useEffect(() => {
       backgroundRef.current = background;
       const scene = sceneRef.current;
@@ -218,6 +349,10 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       const root = rootGroupRef.current;
       if (root) setTreeWireframe(root, wireframe);
     }, [wireframe]);
+    useEffect(() => {
+      cameraModeRef.current = cameraMode;
+      setCameraModeRef.current(cameraMode);
+    }, [cameraMode]);
 
     useImperativeHandle(ref, () => ({
       resetView: () => fitCameraRef.current(),
@@ -225,6 +360,15 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         const camera = cameraRef.current;
         const controls = controlsRef.current;
         if (!camera || !controls) return;
+        if (camera instanceof OrthographicCamera) {
+          camera.zoom = Math.min(
+            8,
+            Math.max(0.2, camera.zoom / factor),
+          );
+          camera.updateProjectionMatrix();
+          controls.update();
+          return;
+        }
         const offset = camera.position.clone().sub(controls.target);
         offset.multiplyScalar(factor);
         const minD = controls.minDistance || 0.35;
@@ -235,6 +379,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         camera.position.copy(controls.target).add(offset);
         controls.update();
       },
+      focusStructure: (id: string) => focusStructureRef.current(id),
     }));
 
     const loadsKey = loads.map((l) => `${l.structureId}:${l.url}`).join("|");
@@ -252,7 +397,10 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       rootGroupRef.current = rootGroup;
       scene.add(rootGroup);
 
-      const camera = new PerspectiveCamera(45, 1, 0.01, 100);
+      let camera: Camera =
+        cameraModeRef.current === "orthographic"
+          ? new OrthographicCamera(-1, 1, 1, -1, 0.01, 100)
+          : new PerspectiveCamera(45, 1, 0.01, 100);
       camera.position.set(2.2, 1.6, 2.8);
       cameraRef.current = camera;
 
@@ -269,10 +417,10 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
 
       const controls = new OrbitControls(camera, canvas);
       controls.enableDamping = true;
-      controls.minDistance = 0.35;
-      controls.maxDistance = 80;
       controls.autoRotate = autoRotateRef.current;
       controls.autoRotateSpeed = 1.2;
+      controls.minDistance = 0.35;
+      controls.maxDistance = 80;
       controlsRef.current = controls;
 
       scene.add(new AmbientLight(0xffffff, 0.7));
@@ -282,6 +430,10 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
 
       const raycaster = new Raycaster();
       const pointer = new Vector2();
+      const hoverMats: EmissiveMat[] = [];
+      const hoverSaved: { mat: EmissiveMat; color: Color; intensity: number }[] =
+        [];
+      let hoveredId: string | null = null;
 
       let disposed = false;
 
@@ -294,6 +446,18 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         return true;
       };
 
+      const resolveHitId = (hitObj: Object3D): string | null => {
+        let obj: Object3D | null = hitObj;
+        while (obj) {
+          const id = idByNodeRef.current.get(obj.uuid);
+          if (id) return id;
+          const byName = idByNodeRef.current.get(obj.name);
+          if (byName) return byName;
+          obj = obj.parent;
+        }
+        return null;
+      };
+
       const applyVisibility = () => {
         const state = uiRef.current;
         for (const [id, obj] of nodeMapRef.current) {
@@ -303,24 +467,44 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       applyVisibilityRef.current = applyVisibility;
 
       const fitCamera = () => {
-        if (nodeMapRef.current.size === 0) return;
-        const box = new Box3();
-        for (const obj of nodeMapRef.current.values()) {
-          box.expandByObject(obj);
-        }
-        if (box.isEmpty()) return;
-        const size = box.getSize(new Vector3()).length() || 1;
-        const center = box.getCenter(new Vector3());
-        controls.target.copy(center);
-        camera.position
-          .copy(center)
-          .add(new Vector3(size * 0.7, size * 0.45, size * 0.9));
-        camera.near = size / 100;
-        camera.far = size * 10;
-        camera.updateProjectionMatrix();
-        controls.update();
+        const cam = cameraRef.current;
+        if (!cam) return;
+        fitCameraToUnion(cam, controls, nodeMapRef.current, aspectRef.current);
       };
       fitCameraRef.current = fitCamera;
+
+      focusStructureRef.current = (id: string) => {
+        const cam = cameraRef.current;
+        const obj = nodeMapRef.current.get(id);
+        if (!cam || !obj) return;
+        focusObject(cam, controls, obj, aspectRef.current);
+      };
+
+      setCameraModeRef.current = (mode: AnatomyCameraMode) => {
+        cameraModeRef.current = mode;
+        const prev = cameraRef.current;
+        if (!prev) return;
+        const alreadyOrtho = prev instanceof OrthographicCamera;
+        if (
+          (mode === "orthographic" && alreadyOrtho) ||
+          (mode === "perspective" && !alreadyOrtho)
+        ) {
+          return;
+        }
+        const pos = prev.position.clone();
+        const target = controls.target.clone();
+        const next: Camera =
+          mode === "orthographic"
+            ? new OrthographicCamera(-1, 1, 1, -1, 0.01, 100)
+            : new PerspectiveCamera(45, aspectRef.current, 0.01, 100);
+        next.position.copy(pos);
+        cameraRef.current = next;
+        camera = next;
+        controls.object = next;
+        fitCamera();
+        controls.target.copy(target);
+        controls.update();
+      };
 
       const resize = () => {
         const w = Math.max(1, Math.floor(host.clientWidth));
@@ -328,42 +512,65 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         const maxEdge = 4096;
         const bw = Math.min(w, maxEdge);
         const bh = Math.min(h, maxEdge);
-        camera.aspect = bw / bh;
-        camera.updateProjectionMatrix();
+        const aspect = bw / Math.max(bh, 1);
+        aspectRef.current = aspect;
+        const cam = cameraRef.current;
+        if (cam instanceof PerspectiveCamera) {
+          cam.aspect = aspect;
+          cam.updateProjectionMatrix();
+        } else if (cam instanceof OrthographicCamera) {
+          const half = (cam.top - cam.bottom) / 2 || 1;
+          cam.left = -half * aspect;
+          cam.right = half * aspect;
+          cam.updateProjectionMatrix();
+        }
         renderer.setSize(bw, bh, true);
         canvas.style.width = "100%";
         canvas.style.height = "100%";
       };
 
-      const onPointerDown = (ev: PointerEvent) => {
+      const pickIdAtEvent = (ev: PointerEvent): string | null => {
+        const cam = cameraRef.current;
+        if (!cam) return null;
         const rect = canvas.getBoundingClientRect();
         pointer.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
         pointer.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
-        raycaster.setFromCamera(pointer, camera);
+        raycaster.setFromCamera(pointer, cam);
         const targets = [...nodeMapRef.current.values()].filter(
           isEffectivelyVisible,
         );
         const hits = raycaster
           .intersectObjects(targets, true)
           .filter((hit) => isEffectivelyVisible(hit.object));
-        if (hits.length === 0) return;
-        let obj: Object3D | null = hits[0].object;
-        while (obj) {
-          const id = idByNodeRef.current.get(obj.uuid);
-          if (id) {
-            onSelectRef.current(id);
-            return;
-          }
-          const byName = idByNodeRef.current.get(obj.name);
-          if (byName) {
-            onSelectRef.current(byName);
-            return;
-          }
-          obj = obj.parent;
-        }
+        if (hits.length === 0) return null;
+        return resolveHitId(hits[0].object);
+      };
+
+      const onPointerDown = (ev: PointerEvent) => {
+        const id = pickIdAtEvent(ev);
+        if (id) onSelectRef.current(id);
+      };
+
+      const onPointerMove = (ev: PointerEvent) => {
+        const id = pickIdAtEvent(ev);
+        canvas.style.cursor = id ? "pointer" : "";
+        if (id === hoveredId) return;
+        hoveredId = id;
+        clearHoverHighlight(hoverMats, hoverSaved);
+        if (!id) return;
+        const root = nodeMapRef.current.get(id);
+        if (root) applyHoverHighlight(root, hoverMats, hoverSaved);
+      };
+
+      const onPointerLeave = () => {
+        hoveredId = null;
+        canvas.style.cursor = "";
+        clearHoverHighlight(hoverMats, hoverSaved);
       };
 
       canvas.addEventListener("pointerdown", onPointerDown);
+      canvas.addEventListener("pointermove", onPointerMove);
+      canvas.addEventListener("pointerleave", onPointerLeave);
       const ro = new ResizeObserver(resize);
       ro.observe(host);
       resize();
@@ -371,7 +578,8 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       renderer.setAnimationLoop(() => {
         if (disposed) return;
         controls.update();
-        renderer.render(scene, camera);
+        const cam = cameraRef.current;
+        if (cam) renderer.render(scene, cam);
       });
 
       const loader = new GLTFLoader();
@@ -444,6 +652,8 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         disposed = true;
         applyVisibilityRef.current = () => {};
         fitCameraRef.current = () => {};
+        focusStructureRef.current = () => {};
+        setCameraModeRef.current = () => {};
         controlsRef.current = null;
         cameraRef.current = null;
         sceneRef.current = null;
@@ -452,6 +662,9 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         renderer.setAnimationLoop(null);
         ro.disconnect();
         canvas.removeEventListener("pointerdown", onPointerDown);
+        canvas.removeEventListener("pointermove", onPointerMove);
+        canvas.removeEventListener("pointerleave", onPointerLeave);
+        clearHoverHighlight(hoverMats, hoverSaved);
         controls.dispose();
         disposeObjectTree(rootGroup);
         renderer.dispose();
@@ -467,6 +680,12 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
     useEffect(() => {
       applyVisibilityRef.current();
     }, [ui, loadsKey]);
+
+    useEffect(() => {
+      if (!autoFocus || !ui.selectedId) return;
+      if (!nodeMapRef.current.has(ui.selectedId)) return;
+      focusStructureRef.current(ui.selectedId);
+    }, [ui.selectedId, autoFocus, loadsKey, progress.loaded, progress.total]);
 
     const showProgress = progress.total > 0 && progress.loaded < progress.total;
 
