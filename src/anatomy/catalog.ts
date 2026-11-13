@@ -535,4 +535,58 @@ export const ANATOMY_CATALOG: AnatomyCatalogEntry[] = [
     standIn: false,
     blurb: "IVALA teaching pack · surface topography",
   },
+  {
+    id: "bovine-repro-tract-female",
+    title: "Bovine repro tract female",
+    standIn: false,
+    blurb: "IVALA teaching pack · bovine repro tract female",
+  },
+  {
+    id: "bovine-skeleton",
+    title: "Bovine skeleton",
+    standIn: false,
+    blurb: "IVALA teaching pack · bovine skeleton",
+  },
+  {
+    id: "bovine-skull-nerve-blocks",
+    title: "Bovine skull nerve blocks",
+    standIn: false,
+    blurb: "IVALA teaching pack · bovine skull nerve blocks",
+  },
+  {
+    id: "bovine-stifle-joint-flexed",
+    title: "Bovine stifle joint flexed",
+    standIn: false,
+    blurb: "IVALA teaching pack · bovine stifle joint flexed",
+  },
+  {
+    id: "bovine-surface-anatomy",
+    title: "Bovine surface anatomy",
+    standIn: false,
+    blurb: "IVALA teaching pack · bovine surface anatomy",
+  },
+  {
+    id: "calf-forelimb-bones",
+    title: "Calf forelimb bones",
+    standIn: false,
+    blurb: "IVALA teaching pack · calf forelimb bones",
+  },
+  {
+    id: "goat-stomachs-individual",
+    title: "Goat stomachs individual",
+    standIn: false,
+    blurb: "IVALA teaching pack · goat stomachs individual",
+  },
+  {
+    id: "goat-stomachs-opened",
+    title: "Goat stomachs opened",
+    standIn: false,
+    blurb: "IVALA teaching pack · goat stomachs opened",
+  },
+  {
+    id: "ruminant-stomachs-scan",
+    title: "Ruminant stomachs scan",
+    standIn: false,
+    blurb: "IVALA teaching pack · ruminant stomachs scan",
+  },
 ];

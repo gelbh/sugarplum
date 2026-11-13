@@ -1,0 +1,104 @@
+{
+  "id": "bovine-skull-nerve-blocks",
+  "title": "Bovine skull nerve blocks",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-cow-skull-main",
+      "label": "cow skull main",
+      "node": "cow_skull_main",
+      "asset": "./cow_skull_main.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eye-3rd-eyelid",
+      "label": "eye 3rd eyelid",
+      "node": "eye_3rd_eyelid",
+      "asset": "./eye_3rd_eyelid.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eye-inner",
+      "label": "eye inner",
+      "node": "eye_inner",
+      "asset": "./eye_inner.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eye-outer",
+      "label": "eye outer",
+      "node": "eye_outer",
+      "asset": "./eye_outer.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eye-pupil",
+      "label": "eye pupil",
+      "node": "eye_pupil",
+      "asset": "./eye_pupil.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-ii-optic",
+      "label": "n II optic",
+      "node": "n_II_optic",
+      "asset": "./n_II_optic.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-v-infraorbital",
+      "label": "n V infraorbital",
+      "node": "n_V_infraorbital",
+      "asset": "./n_V_infraorbital.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-v-v1-cornual-infratrochlear",
+      "label": "n V V1 cornual infratrochlear",
+      "node": "n_V_V1_cornual_infratrochlear",
+      "asset": "./n_V_V1_cornual_infratrochlear.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-v-v1-frontal-supraorbital",
+      "label": "n V V1 frontal supraorbital",
+      "node": "n_V_V1_frontal_supraorbital",
+      "asset": "./n_V_V1_frontal_supraorbital.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-v-v2-maxillarydiv-cornual-zygomaticopalpebral",
+      "label": "n V V2 maxillarydiv cornual zygomaticopalpebral",
+      "node": "n_V_V2_maxillarydiv_cornual_zygomaticopalpebral",
+      "asset": "./n_V_V2_maxillarydiv_cornual_zygomaticopalpebral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-vii-auriculopalpebral",
+      "label": "n VII auriculopalpebral",
+      "node": "n_VII_auriculopalpebral",
+      "asset": "./n_VII_auriculopalpebral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-vii-auriculopalpebral-rostral-auricular",
+      "label": "n VII auriculopalpebral rostral auricular",
+      "node": "n_VII_auriculopalpebral_rostral_auricular",
+      "asset": "./n_VII_auriculopalpebral_rostral_auricular.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-vii-auriculopalpebral-zygomatic-br",
+      "label": "n VII auriculopalpebral zygomatic br",
+      "node": "n_VII_auriculopalpebral_zygomatic_br",
+      "asset": "./n_VII_auriculopalpebral_zygomatic_br.glb",
+      "region": "root"
+    }
+  ]
+}

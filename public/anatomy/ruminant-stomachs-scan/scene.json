@@ -1,0 +1,174 @@
+{
+  "id": "ruminant-stomachs-scan",
+  "title": "Ruminant stomachs scan",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-rum-stomachs-abomasum",
+      "label": "rum stomachs abomasum",
+      "node": "rum_stomachs_abomasum",
+      "asset": "./rum_stomachs_abomasum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-oesophagus",
+      "label": "rum stomachs oesophagus",
+      "node": "rum_stomachs_oesophagus",
+      "asset": "./rum_stomachs_oesophagus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-omasum",
+      "label": "rum stomachs omasum",
+      "node": "rum_stomachs_omasum",
+      "asset": "./rum_stomachs_omasum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-reticulum",
+      "label": "rum stomachs reticulum",
+      "node": "rum_stomachs_reticulum",
+      "asset": "./rum_stomachs_reticulum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-rumen",
+      "label": "rum stomachs rumen",
+      "node": "rum_stomachs_rumen",
+      "asset": "./rum_stomachs_rumen.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-rumen-cardia",
+      "label": "rum stomachs rumen cardia",
+      "node": "rum_stomachs_rumen_cardia",
+      "asset": "./rum_stomachs_rumen_cardia.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-rumen-caudal-groove",
+      "label": "rum stomachs rumen caudal groove",
+      "node": "rum_stomachs_rumen_caudal_groove",
+      "asset": "./rum_stomachs_rumen_caudal_groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-rumen-caudodorsal-blind-sac",
+      "label": "rum stomachs rumen caudodorsal blind sac",
+      "node": "rum_stomachs_rumen_caudodorsal_blind_sac",
+      "asset": "./rum_stomachs_rumen_caudodorsal_blind_sac.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-rumen-caudovent-blind-sac",
+      "label": "rum stomachs rumen caudovent blind sac",
+      "node": "rum_stomachs_rumen_caudovent_blind_sac",
+      "asset": "./rum_stomachs_rumen_caudovent_blind_sac.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-rumen-cranial-groove",
+      "label": "rum stomachs rumen cranial groove",
+      "node": "rum_stomachs_rumen_cranial_groove",
+      "asset": "./rum_stomachs_rumen_cranial_groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-rumen-cranial-sac",
+      "label": "rum stomachs rumen cranial sac",
+      "node": "rum_stomachs_rumen_cranial_sac",
+      "asset": "./rum_stomachs_rumen_cranial_sac.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-rumen-dorsal-coronary-groove",
+      "label": "rum stomachs rumen dorsal coronary groove",
+      "node": "rum_stomachs_rumen_dorsal_coronary_groove",
+      "asset": "./rum_stomachs_rumen_dorsal_coronary_groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-rumen-dorsal-sac",
+      "label": "rum stomachs rumen dorsal sac",
+      "node": "rum_stomachs_rumen_dorsal_sac",
+      "asset": "./rum_stomachs_rumen_dorsal_sac.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-rumen-lt-accessory-groove",
+      "label": "rum stomachs rumen lt accessory groove",
+      "node": "rum_stomachs_rumen_lt_accessory_groove",
+      "asset": "./rum_stomachs_rumen_lt_accessory_groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-rumen-lt-insula-ruminis",
+      "label": "rum stomachs rumen lt insula ruminis",
+      "node": "rum_stomachs_rumen_lt_insula_ruminis",
+      "asset": "./rum_stomachs_rumen_lt_insula_ruminis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-rumen-lt-longitudinal-groove",
+      "label": "rum stomachs rumen lt longitudinal groove",
+      "node": "rum_stomachs_rumen_lt_longitudinal_groove",
+      "asset": "./rum_stomachs_rumen_lt_longitudinal_groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-rumen-rt-accessory-groove",
+      "label": "rum stomachs rumen rt accessory groove",
+      "node": "rum_stomachs_rumen_rt_accessory_groove",
+      "asset": "./rum_stomachs_rumen_rt_accessory_groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-rumen-rt-insula-ruminis",
+      "label": "rum stomachs rumen rt insula ruminis",
+      "node": "rum_stomachs_rumen_rt_insula_ruminis",
+      "asset": "./rum_stomachs_rumen_rt_insula_ruminis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-rumen-rt-longitudinal-groove",
+      "label": "rum stomachs rumen rt longitudinal groove",
+      "node": "rum_stomachs_rumen_rt_longitudinal_groove",
+      "asset": "./rum_stomachs_rumen_rt_longitudinal_groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-rumen-ventral-coronary-groove",
+      "label": "rum stomachs rumen ventral coronary groove",
+      "node": "rum_stomachs_rumen_ventral_coronary_groove",
+      "asset": "./rum_stomachs_rumen_ventral_coronary_groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-rumen-ventral-sac",
+      "label": "rum stomachs rumen ventral sac",
+      "node": "rum_stomachs_rumen_ventral_sac",
+      "asset": "./rum_stomachs_rumen_ventral_sac.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-ruminoreticular-groove",
+      "label": "rum stomachs ruminoreticular groove",
+      "node": "rum_stomachs_ruminoreticular_groove",
+      "asset": "./rum_stomachs_ruminoreticular_groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rum-stomachs-spleen",
+      "label": "rum stomachs spleen",
+      "node": "rum_stomachs_spleen",
+      "asset": "./rum_stomachs_spleen.glb",
+      "region": "root"
+    }
+  ]
+}

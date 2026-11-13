@@ -1,0 +1,125 @@
+{
+  "id": "calf-forelimb-bones",
+  "title": "Calf forelimb bones",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-c-2-3-bone-c-2-3-bone",
+      "label": "C 2 3 bone C 2 3 bone",
+      "node": "C_2_3_bone_C_2_3_bone",
+      "asset": "./C_2_3_bone_C_2_3_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c-4-bone-c-4-bone",
+      "label": "C 4 bone C 4 bone",
+      "node": "C_4_bone_C_4_bone",
+      "asset": "./C_4_bone_C_4_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c-accessory-bone-c-accessory-bone",
+      "label": "C accessory bone C accessory bone",
+      "node": "C_accessory_bone_C_accessory_bone",
+      "asset": "./C_accessory_bone_C_accessory_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c-intermediate-bone-c-intermediate-bone",
+      "label": "C intermediate bone C intermediate bone",
+      "node": "C_intermediate_bone_C_intermediate_bone",
+      "asset": "./C_intermediate_bone_C_intermediate_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c-radial-bone-c-radial-bone",
+      "label": "C radial bone C radial bone",
+      "node": "C_radial_bone_C_radial_bone",
+      "asset": "./C_radial_bone_C_radial_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c-ulna-bone-c-ulna-bone",
+      "label": "C ulna bone C ulna bone",
+      "node": "C_ulna_bone_C_ulna_bone",
+      "asset": "./C_ulna_bone_C_ulna_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cannon-bone-cannon-bone",
+      "label": "Cannon bone Cannon bone",
+      "node": "Cannon_bone_Cannon_bone",
+      "asset": "./Cannon_bone_Cannon_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-sesamoids-sesamoids-005",
+      "label": "Distal sesamoids Sesamoids 005",
+      "node": "Distal_sesamoids_Sesamoids_005",
+      "asset": "./Distal_sesamoids_Sesamoids_005.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hooves",
+      "label": "Hooves",
+      "node": "Hooves",
+      "asset": "./Hooves.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-humerus",
+      "label": "Humerus Humerus",
+      "node": "Humerus_Humerus",
+      "asset": "./Humerus_Humerus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-p1s-bone-p1s-bone",
+      "label": "P1s bone P1s bone",
+      "node": "P1s_bone_P1s_bone",
+      "asset": "./P1s_bone_P1s_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-p2s-bone-p2s-bone",
+      "label": "P2s bone P2s bone",
+      "node": "P2s_bone_P2s_bone",
+      "asset": "./P2s_bone_P2s_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-p3s-bone-p3s-bone",
+      "label": "P3s bone P3s bone",
+      "node": "P3s_bone_P3s_bone",
+      "asset": "./P3s_bone_P3s_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-sesamoids-sesamoids-001",
+      "label": "Proximal Sesamoids Sesamoids 001",
+      "node": "Proximal_Sesamoids_Sesamoids_001",
+      "asset": "./Proximal_Sesamoids_Sesamoids_001.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radial-bone-radial-bone",
+      "label": "Radial bone Radial bone",
+      "node": "Radial_bone_Radial_bone",
+      "asset": "./Radial_bone_Radial_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna-bone-ulna-bone",
+      "label": "Ulna bone Ulna bone",
+      "node": "Ulna_bone_Ulna_bone",
+      "asset": "./Ulna_bone_Ulna_bone.glb",
+      "region": "root"
+    }
+  ]
+}
