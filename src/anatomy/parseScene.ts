@@ -1,12 +1,18 @@
 import { z } from "zod";
 import type { AnatomySceneManifest } from "./types";
 
+const StructureInfoSchema = z.object({
+  summary: z.string().optional(),
+  alsoKnownAs: z.array(z.string().min(1)).optional(),
+});
+
 const StructureSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
   node: z.string().min(1),
   asset: z.string().min(1).optional(),
   region: z.string().min(1).optional(),
+  info: StructureInfoSchema.optional(),
 });
 
 const RegionSchema = z.object({

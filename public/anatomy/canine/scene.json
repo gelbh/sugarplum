@@ -4,20 +4,20 @@
   "regions": [
     {
       "id": "legs-left-back",
-      "label": "Legs · Left Back"
+      "label": "Legs \u00b7 Left Back"
     },
     {
       "id": "legs-left-front",
-      "label": "Legs · Left Front"
+      "label": "Legs \u00b7 Left Front"
     },
     {
       "id": "legs-right-back",
-      "label": "Legs · Right Back",
+      "label": "Legs \u00b7 Right Back",
       "defaultActive": true
     },
     {
       "id": "legs-right-front",
-      "label": "Legs · Right Front"
+      "label": "Legs \u00b7 Right Front"
     },
     {
       "id": "neck",
@@ -330,140 +330,213 @@
       "label": "Calcaneus",
       "node": "Calcaneus",
       "asset": "./Legs/Right_Back/Calcaneus.glb",
-      "region": "legs-right-back"
+      "region": "legs-right-back",
+      "info": {
+        "summary": "Largest tarsal bone; forms the point of the hock.",
+        "alsoKnownAs": [
+          "heel bone",
+          "fibular tarsal"
+        ]
+      }
     },
     {
       "id": "legs-right-back-central-tarsal",
       "label": "Central Tarsal",
       "node": "Central_Tarsal",
       "asset": "./Legs/Right_Back/Central_Tarsal.glb",
-      "region": "legs-right-back"
+      "region": "legs-right-back",
+      "info": {
+        "summary": "Intermediate tarsal bone between the proximal and distal tarsal rows."
+      }
     },
     {
       "id": "legs-right-back-distal-phalanges",
       "label": "Distal Phalanges",
       "node": "Distal_Phalanges",
       "asset": "./Legs/Right_Back/Distal_Phalanges.glb",
-      "region": "legs-right-back"
+      "region": "legs-right-back",
+      "info": {
+        "summary": "Distal phalanges of the hind digits; support the claws."
+      }
     },
     {
       "id": "legs-right-back-femur",
       "label": "Femur",
       "node": "Femur",
       "asset": "./Legs/Right_Back/Femur.glb",
-      "region": "legs-right-back"
+      "region": "legs-right-back",
+      "info": {
+        "summary": "Long bone of the thigh; articulates with the pelvis proximally and the tibia distally.",
+        "alsoKnownAs": [
+          "thigh bone"
+        ]
+      }
     },
     {
       "id": "legs-right-back-fibula",
       "label": "Fibula",
       "node": "Fibula",
       "asset": "./Legs/Right_Back/Fibula.glb",
-      "region": "legs-right-back"
+      "region": "legs-right-back",
+      "info": {
+        "summary": "Slender lateral bone of the crus; pairs with the tibia."
+      }
     },
     {
       "id": "legs-right-back-metatarsal-i",
       "label": "Metatarsal I",
       "node": "Metatarsal_I",
       "asset": "./Legs/Right_Back/Metatarsal_I.glb",
-      "region": "legs-right-back"
+      "region": "legs-right-back",
+      "info": {
+        "summary": "First metatarsal bone of the hind paw."
+      }
     },
     {
       "id": "legs-right-back-metatarsal-ii",
       "label": "Metatarsal II",
       "node": "Metatarsal_II",
       "asset": "./Legs/Right_Back/Metatarsal_II.glb",
-      "region": "legs-right-back"
+      "region": "legs-right-back",
+      "info": {
+        "summary": "Second metatarsal bone of the hind paw."
+      }
     },
     {
       "id": "legs-right-back-metatarsal-iii",
       "label": "Metatarsal III",
       "node": "Metatarsal_III",
       "asset": "./Legs/Right_Back/Metatarsal_III.glb",
-      "region": "legs-right-back"
+      "region": "legs-right-back",
+      "info": {
+        "summary": "Third metatarsal bone of the hind paw."
+      }
     },
     {
       "id": "legs-right-back-metatarsal-iv",
       "label": "Metatarsal IV",
       "node": "Metatarsal_IV",
       "asset": "./Legs/Right_Back/Metatarsal_IV.glb",
-      "region": "legs-right-back"
+      "region": "legs-right-back",
+      "info": {
+        "summary": "Fourth metatarsal bone of the hind paw."
+      }
     },
     {
       "id": "legs-right-back-metatarsal-v",
       "label": "Metatarsal V",
       "node": "Metatarsal_V",
       "asset": "./Legs/Right_Back/Metatarsal_V.glb",
-      "region": "legs-right-back"
+      "region": "legs-right-back",
+      "info": {
+        "summary": "Fifth metatarsal bone of the hind paw."
+      }
     },
     {
       "id": "legs-right-back-middle-phalanges",
       "label": "Middle Phalanges",
       "node": "Middle_Phalanges",
       "asset": "./Legs/Right_Back/Middle_Phalanges.glb",
-      "region": "legs-right-back"
+      "region": "legs-right-back",
+      "info": {
+        "summary": "Middle phalanges of the hind digits."
+      }
     },
     {
       "id": "legs-right-back-patella",
       "label": "Patella",
       "node": "Patella",
       "asset": "./Legs/Right_Back/Patella.glb",
-      "region": "legs-right-back"
+      "region": "legs-right-back",
+      "info": {
+        "summary": "Sesamoid bone in the quadriceps tendon at the stifle.",
+        "alsoKnownAs": [
+          "kneecap"
+        ]
+      }
     },
     {
       "id": "legs-right-back-proximal-phalanges",
       "label": "Proximal Phalanges",
       "node": "Proximal_Phalanges",
       "asset": "./Legs/Right_Back/Proximal_Phalanges.glb",
-      "region": "legs-right-back"
+      "region": "legs-right-back",
+      "info": {
+        "summary": "Proximal phalanges of the hind digits."
+      }
     },
     {
       "id": "legs-right-back-proximal-sesamoid",
       "label": "Proximal Sesamoid",
       "node": "Proximal_Sesamoid",
       "asset": "./Legs/Right_Back/Proximal_Sesamoid.glb",
-      "region": "legs-right-back"
+      "region": "legs-right-back",
+      "info": {
+        "summary": "Small sesamoid bones at the metatarsophalangeal joints."
+      }
     },
     {
       "id": "legs-right-back-tarsal-i",
       "label": "Tarsal I",
       "node": "Tarsal_I",
       "asset": "./Legs/Right_Back/Tarsal_I.glb",
-      "region": "legs-right-back"
+      "region": "legs-right-back",
+      "info": {
+        "summary": "Medial distal-row tarsal bone of the hind paw."
+      }
     },
     {
       "id": "legs-right-back-tarsal-ii",
       "label": "Tarsal II",
       "node": "Tarsal_II",
       "asset": "./Legs/Right_Back/Tarsal_II.glb",
-      "region": "legs-right-back"
+      "region": "legs-right-back",
+      "info": {
+        "summary": "Second distal-row tarsal bone of the hind paw."
+      }
     },
     {
       "id": "legs-right-back-tarsal-iii",
       "label": "Tarsal III",
       "node": "Tarsal_III",
       "asset": "./Legs/Right_Back/Tarsal_III.glb",
-      "region": "legs-right-back"
+      "region": "legs-right-back",
+      "info": {
+        "summary": "Third distal-row tarsal bone of the hind paw."
+      }
     },
     {
       "id": "legs-right-back-tarsal-iv",
       "label": "Tarsal IV",
       "node": "Tarsal_IV",
       "asset": "./Legs/Right_Back/Tarsal_IV.glb",
-      "region": "legs-right-back"
+      "region": "legs-right-back",
+      "info": {
+        "summary": "Lateral distal-row tarsal bone of the hind paw."
+      }
     },
     {
       "id": "legs-right-back-tibia",
       "label": "Tibia",
       "node": "Tibia",
       "asset": "./Legs/Right_Back/Tibia.glb",
-      "region": "legs-right-back"
+      "region": "legs-right-back",
+      "info": {
+        "summary": "Primary weight-bearing bone of the crus (lower hind limb).",
+        "alsoKnownAs": [
+          "shin bone"
+        ]
+      }
     },
     {
       "id": "legs-right-back-trochlea",
       "label": "Trochlea",
       "node": "Trochlea",
       "asset": "./Legs/Right_Back/Trochlea.glb",
-      "region": "legs-right-back"
+      "region": "legs-right-back",
+      "info": {
+        "summary": "Pulley-shaped articular surface of the tarsus that guides tibial motion at the hock."
+      }
     },
     {
       "id": "legs-right-front-accessory-carpal",
