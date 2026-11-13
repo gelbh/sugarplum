@@ -6,16 +6,24 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import {
   ApiError,
+  getInsightsSummary,
   listStrugglingCards,
+  type InsightsSummary,
   type StrugglingRow,
 } from "../api/client";
+import CompositionSpark from "../components/CompositionSpark";
 import StrugglingList from "../components/StrugglingList";
+import GradeMixChart from "../insights/GradeMixChart";
+import KpiStrip from "../insights/KpiStrip";
+import ReviewsPerDayChart from "../insights/ReviewsPerDayChart";
 import { useTrackedOp } from "../progress/useTrackedOp";
 
-/** Full ranked struggling list (API or guest local review logs). */
+/** Study health dashboard: KPIs, charts, and struggling cards. */
 export default function InsightsPage() {
+  const [summary, setSummary] = useState<InsightsSummary | null>(null);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
   const [rows, setRows] = useState<StrugglingRow[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [strugglingError, setStrugglingError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const { end: endLoad } = useTrackedOp("Loading insights…", {
     trackOnMount: true,
@@ -24,24 +32,45 @@ export default function InsightsPage() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      try {
-        const list = await listStrugglingCards();
-        if (cancelled) return;
-        setRows(list);
-        setReady(true);
-        endLoad();
-      } catch (err) {
-        if (cancelled) return;
+      const [summaryResult, strugglingResult] = await Promise.allSettled([
+        getInsightsSummary(),
+        listStrugglingCards(),
+      ]);
+      if (cancelled) return;
+
+      if (summaryResult.status === "fulfilled") {
+        setSummary(summaryResult.value);
+      } else {
+        const err = summaryResult.reason;
         if (err instanceof ApiError && err.status === 401) {
           window.location.assign("/login");
           return;
         }
-        setError(
-          err instanceof ApiError ? err.message : "Failed to load insights",
+        setSummaryError(
+          err instanceof ApiError ? err.message : "Failed to load study summary",
         );
-        setReady(true);
-        endLoad(false);
       }
+
+      if (strugglingResult.status === "fulfilled") {
+        setRows(strugglingResult.value);
+      } else {
+        const err = strugglingResult.reason;
+        if (err instanceof ApiError && err.status === 401) {
+          window.location.assign("/login");
+          return;
+        }
+        setStrugglingError(
+          err instanceof ApiError
+            ? err.message
+            : "Failed to load struggling cards",
+        );
+      }
+
+      setReady(true);
+      endLoad(
+        summaryResult.status === "fulfilled" ||
+          strugglingResult.status === "fulfilled",
+      );
     })();
     return () => {
       cancelled = true;
@@ -49,7 +78,7 @@ export default function InsightsPage() {
   }, [endLoad]);
 
   return (
-    <Container maxWidth="sm" sx={{ py: { xs: 4, md: 5 } }}>
+    <Container maxWidth="md" sx={{ py: { xs: 4, md: 5 } }}>
       {!ready ? (
         <Typography color="text.secondary">Loading insights…</Typography>
       ) : (
@@ -64,14 +93,65 @@ export default function InsightsPage() {
               Insights
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Cards that recently felt hard (No Idea or Tough Cookie) or are at
-              risk of slipping.
+              Study health, recent activity, and cards that need attention.
             </Typography>
           </Box>
 
-          {error ? <Alert severity="error">{error}</Alert> : null}
+          {summaryError ? <Alert severity="error">{summaryError}</Alert> : null}
 
-          {!error ? <StrugglingList rows={rows} /> : null}
+          {summary ? (
+            <Stack spacing={3}>
+              <KpiStrip summary={summary} />
+              <ReviewsPerDayChart series={summary.reviewsPerDay} />
+              <GradeMixChart counts={summary.gradeCounts} />
+              <Stack spacing={1}>
+                <Typography variant="subtitle2" component="h2">
+                  Knowledge mix
+                </Typography>
+                {summary.kpis.composition.total === 0 ? (
+                  <Typography variant="caption" color="text.secondary">
+                    No accepted cards yet.
+                  </Typography>
+                ) : (
+                  <>
+                    <CompositionSpark
+                      new={summary.kpis.composition.new}
+                      learning={summary.kpis.composition.learning}
+                      young={summary.kpis.composition.young}
+                      mature={summary.kpis.composition.mature}
+                      total={summary.kpis.composition.total}
+                      height={10}
+                      maxWidth="100%"
+                    />
+                    <Typography variant="caption" color="text.secondary">
+                      {summary.kpis.composition.mature} mature ·{" "}
+                      {summary.kpis.composition.young} young ·{" "}
+                      {summary.kpis.composition.learning} learning ·{" "}
+                      {summary.kpis.composition.new} new
+                      {summary.kpis.composition.graduatedPct != null
+                        ? ` · ${summary.kpis.composition.graduatedPct}% graduated`
+                        : ""}
+                    </Typography>
+                  </>
+                )}
+              </Stack>
+            </Stack>
+          ) : null}
+
+          <Box>
+            <Typography variant="subtitle2" component="h2" gutterBottom>
+              Struggling cards
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+              Cards that recently felt hard (No Idea or Tough Cookie) or are at
+              risk of slipping.
+            </Typography>
+            {strugglingError ? (
+              <Alert severity="error">{strugglingError}</Alert>
+            ) : (
+              <StrugglingList rows={rows} />
+            )}
+          </Box>
         </Stack>
       )}
     </Container>

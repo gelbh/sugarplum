@@ -1345,13 +1345,20 @@ export function createTestEnv(opts?: {
           normalized.includes("WHERE d.user_id =")
         ) {
           const userId = bound[0] as string;
+          const since =
+            normalized.includes("rl.reviewed_at >=") &&
+            typeof bound[1] === "string"
+              ? (bound[1] as string)
+              : null;
           const withScheduleJoin = normalized.includes("LEFT JOIN card_schedules");
           const rows = reviewLogs
             .filter((rl) => {
               const card = cards.get(rl.card_id);
               if (!card) return false;
               const deck = decks.get(card.deck_id);
-              return deck?.user_id === userId;
+              if (deck?.user_id !== userId) return false;
+              if (since != null && rl.reviewed_at < since) return false;
+              return true;
             })
             .sort((a, b) => a.reviewed_at.localeCompare(b.reviewed_at))
             .map((rl) => ({
@@ -1907,6 +1914,31 @@ export function createTestEnv(opts?: {
               const schedule = schedules.get(card.id);
               return {
                 subject_id: deck.subject_id,
+                state: schedule?.state ?? null,
+                scheduled_days: schedule?.scheduled_days ?? null,
+                due: schedule?.due ?? null,
+                stability: schedule?.stability ?? null,
+                difficulty: schedule?.difficulty ?? null,
+                elapsed_days: schedule?.elapsed_days ?? null,
+                learning_steps: schedule?.learning_steps ?? null,
+                reps: schedule?.reps ?? null,
+                lapses: schedule?.lapses ?? null,
+                last_review: schedule?.last_review ?? null,
+              };
+            });
+          return { results: rows as T[] };
+        }
+        if (normalized.includes("sugarplum:insights-composition")) {
+          const userId = bound[0] as string;
+          const rows = [...cards.values()]
+            .filter((card) => {
+              if (card.status !== "accepted") return false;
+              const deck = decks.get(card.deck_id);
+              return deck?.user_id === userId;
+            })
+            .map((card) => {
+              const schedule = schedules.get(card.id);
+              return {
                 state: schedule?.state ?? null,
                 scheduled_days: schedule?.scheduled_days ?? null,
                 due: schedule?.due ?? null,
