@@ -1,0 +1,104 @@
+{
+  "id": "canine-eye-schematic",
+  "title": "Canine eye schematic",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-aas",
+      "label": "AAs",
+      "node": "AAs",
+      "asset": "./AAs.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-choroid-stroma",
+      "label": "Choroid stroma",
+      "node": "Choroid_stroma",
+      "asset": "./Choroid_stroma.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ciliary-body",
+      "label": "Ciliary body",
+      "node": "Ciliary_body",
+      "asset": "./Ciliary_body.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ciliary-processes",
+      "label": "Ciliary processes",
+      "node": "Ciliary_processes",
+      "asset": "./Ciliary_processes.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cornea",
+      "label": "Cornea",
+      "node": "Cornea",
+      "asset": "./Cornea.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-iris",
+      "label": "Iris",
+      "node": "Iris",
+      "asset": "./Iris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lens",
+      "label": "Lens",
+      "node": "Lens",
+      "asset": "./Lens.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-optic-nn",
+      "label": "Optic nn",
+      "node": "Optic_nn",
+      "asset": "./Optic_nn.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pre",
+      "label": "PRE",
+      "node": "PRE",
+      "asset": "./PRE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-retina",
+      "label": "Retina",
+      "node": "Retina",
+      "asset": "./Retina.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sclera",
+      "label": "Sclera",
+      "node": "Sclera",
+      "asset": "./Sclera.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tapetum",
+      "label": "Tapetum",
+      "node": "Tapetum",
+      "asset": "./Tapetum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vvs",
+      "label": "VVs",
+      "node": "VVs",
+      "asset": "./VVs.glb",
+      "region": "root"
+    }
+  ]
+}
