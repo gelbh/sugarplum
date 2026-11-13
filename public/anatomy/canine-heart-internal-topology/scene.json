@@ -1,0 +1,202 @@
+{
+  "id": "canine-heart-internal-topology",
+  "title": "Canine heart internal topology",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-interatrial-septum",
+      "label": "INTERATRIAL SEPTUM",
+      "node": "INTERATRIAL_SEPTUM",
+      "asset": "./INTERATRIAL_SEPTUM.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-auricle",
+      "label": "L AURICLE",
+      "node": "L_AURICLE",
+      "asset": "./L_AURICLE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-av-valve",
+      "label": "L AV VALVE",
+      "node": "L_AV_VALVE",
+      "asset": "./L_AV_VALVE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-sided-aorta",
+      "label": "L sided AORTA",
+      "node": "L_sided_AORTA",
+      "asset": "./L_sided_AORTA.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-sided-aorta-arch",
+      "label": "L sided AORTA ARCH",
+      "node": "L_sided_AORTA_ARCH",
+      "asset": "./L_sided_AORTA_ARCH.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-sided-aortic",
+      "label": "L sided AORTIC",
+      "node": "L_sided_AORTIC",
+      "asset": "./L_sided_AORTIC.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-sided-ascending-aorta",
+      "label": "L sided ASCENDING AORTA",
+      "node": "L_sided_ASCENDING_AORTA",
+      "asset": "./L_sided_ASCENDING_AORTA.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-sided-atria",
+      "label": "L sided ATRIA",
+      "node": "L_sided_ATRIA",
+      "asset": "./L_sided_ATRIA.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-sided-brachicephalic-trunk",
+      "label": "L sided BRACHICEPHALIC TRUNK",
+      "node": "L_sided_BRACHICEPHALIC_TRUNK",
+      "asset": "./L_sided_BRACHICEPHALIC_TRUNK.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-sided-coronary-artery",
+      "label": "L sided CORONARY ARTERY",
+      "node": "L_sided_CORONARY_ARTERY",
+      "asset": "./L_sided_CORONARY_ARTERY.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-sided-descending-aorta",
+      "label": "L sided DESCENDING AORTA",
+      "node": "L_sided_DESCENDING_AORTA",
+      "asset": "./L_sided_DESCENDING_AORTA.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-sided-l-subclavian-artery",
+      "label": "L sided L SUBCLAVIAN ARTERY",
+      "node": "L_sided_L_SUBCLAVIAN_ARTERY",
+      "asset": "./L_sided_L_SUBCLAVIAN_ARTERY.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-sided-pulmonary-veins-left",
+      "label": "L sided PULMONARY VEINS LEFT",
+      "node": "L_sided_PULMONARY_VEINS_LEFT",
+      "asset": "./L_sided_PULMONARY_VEINS_LEFT.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-sided-pulmonary-veins-right",
+      "label": "L sided PULMONARY VEINS RIGHT",
+      "node": "L_sided_PULMONARY_VEINS_RIGHT",
+      "asset": "./L_sided_PULMONARY_VEINS_RIGHT.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-sided-ventricle",
+      "label": "L sided VENTRICLE",
+      "node": "L_sided_VENTRICLE",
+      "asset": "./L_sided_VENTRICLE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mesh-canine-cardiac-low",
+      "label": "mesh canine cardiac low",
+      "node": "mesh_canine_cardiac_low",
+      "asset": "./mesh_canine_cardiac_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-sided-atria",
+      "label": "R sided ATRIA",
+      "node": "R_sided_ATRIA",
+      "asset": "./R_sided_ATRIA.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-sided-auricle",
+      "label": "R sided AURICLE",
+      "node": "R_sided_AURICLE",
+      "asset": "./R_sided_AURICLE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-sided-av-valve",
+      "label": "R sided AV VALVE",
+      "node": "R_sided_AV_VALVE",
+      "asset": "./R_sided_AV_VALVE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-sided-caud-ven-cava",
+      "label": "R sided CAUD VEN CAVA",
+      "node": "R_sided_CAUD_VEN_CAVA",
+      "asset": "./R_sided_CAUD_VEN_CAVA.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-sided-coronary-sinus",
+      "label": "R sided CORONARY SINUS",
+      "node": "R_sided_CORONARY_SINUS",
+      "asset": "./R_sided_CORONARY_SINUS.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-sided-cran-ven-cava",
+      "label": "R sided CRAN VEN CAVA",
+      "node": "R_sided_CRAN_VEN_CAVA",
+      "asset": "./R_sided_CRAN_VEN_CAVA.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-sided-pulm-artery-left",
+      "label": "R sided PULM ARTERY LEFT",
+      "node": "R_sided_PULM_ARTERY_LEFT",
+      "asset": "./R_sided_PULM_ARTERY_LEFT.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-sided-pulm-artery-right",
+      "label": "R sided PULM ARTERY RIGHT",
+      "node": "R_sided_PULM_ARTERY_RIGHT",
+      "asset": "./R_sided_PULM_ARTERY_RIGHT.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-sided-pulm-trunk",
+      "label": "R sided PULM TRUNK",
+      "node": "R_sided_PULM_TRUNK",
+      "asset": "./R_sided_PULM_TRUNK.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-sided-pulmonary-valve",
+      "label": "R sided PULMONARY VALVE",
+      "node": "R_sided_PULMONARY_VALVE",
+      "asset": "./R_sided_PULMONARY_VALVE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-sided-ventricle",
+      "label": "R sided VENTRICLE",
+      "node": "R_sided_VENTRICLE",
+      "asset": "./R_sided_VENTRICLE.glb",
+      "region": "root"
+    }
+  ]
+}

@@ -1,0 +1,223 @@
+{
+  "id": "canine-larynx",
+  "title": "Canine larynx",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-cart-arytenoid-lo-l",
+      "label": "cart arytenoid LO L",
+      "node": "cart_arytenoid_LO_L",
+      "asset": "./cart_arytenoid_LO_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cart-arytenoid-lo-r",
+      "label": "cart arytenoid LO R",
+      "node": "cart_arytenoid_LO_R",
+      "asset": "./cart_arytenoid_LO_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cart-cricoid-lo",
+      "label": "cart cricoid LO",
+      "node": "cart_cricoid_LO",
+      "asset": "./cart_cricoid_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cart-epiglottis-lo",
+      "label": "cart epiglottis LO",
+      "node": "cart_epiglottis_LO",
+      "asset": "./cart_epiglottis_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cart-sesamoid-lo",
+      "label": "cart sesamoid LO",
+      "node": "cart_sesamoid_LO",
+      "asset": "./cart_sesamoid_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cart-thyroid-lo",
+      "label": "cart thyroid LO",
+      "node": "cart_thyroid_LO",
+      "asset": "./cart_thyroid_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hyoid-basihyoid-lo",
+      "label": "hyoid basihyoid LO",
+      "node": "hyoid_basihyoid_LO",
+      "asset": "./hyoid_basihyoid_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hyoid-epiyoid-lo",
+      "label": "hyoid epiyoid LO",
+      "node": "hyoid_epiyoid_LO",
+      "asset": "./hyoid_epiyoid_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hyoid-keratohyoid-lo",
+      "label": "hyoid keratohyoid LO",
+      "node": "hyoid_keratohyoid_LO",
+      "asset": "./hyoid_keratohyoid_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hyoid-stylohyoid-lo",
+      "label": "hyoid stylohyoid LO",
+      "node": "hyoid_stylohyoid_LO",
+      "asset": "./hyoid_stylohyoid_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hyoid-thyrohyoid-lo",
+      "label": "hyoid thyrohyoid LO",
+      "node": "hyoid_thyrohyoid_LO",
+      "asset": "./hyoid_thyrohyoid_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-cricothyroid-lo",
+      "label": "lig cricothyroid LO",
+      "node": "lig_cricothyroid_LO",
+      "asset": "./lig_cricothyroid_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-vestibular-lo-l",
+      "label": "lig vestibular LO L",
+      "node": "lig_vestibular_LO_L",
+      "asset": "./lig_vestibular_LO_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-vestibular-lo-r",
+      "label": "lig vestibular LO R",
+      "node": "lig_vestibular_LO_R",
+      "asset": "./lig_vestibular_LO_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-arytenoideus-transversus-lo-l",
+      "label": "m arytenoideus transversus LO L",
+      "node": "m_arytenoideus_transversus_LO_L",
+      "asset": "./m_arytenoideus_transversus_LO_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-arytenoideus-transversus-lo-r",
+      "label": "m arytenoideus transversus LO R",
+      "node": "m_arytenoideus_transversus_LO_R",
+      "asset": "./m_arytenoideus_transversus_LO_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-cricoarytenoideus-dorsalis-lo-l",
+      "label": "m cricoarytenoideus dorsalis LO L",
+      "node": "m_cricoarytenoideus_dorsalis_LO_L",
+      "asset": "./m_cricoarytenoideus_dorsalis_LO_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-cricoarytenoideus-dorsalis-lo-r",
+      "label": "m cricoarytenoideus dorsalis LO R",
+      "node": "m_cricoarytenoideus_dorsalis_LO_R",
+      "asset": "./m_cricoarytenoideus_dorsalis_LO_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-cricoarytenoideus-lat-lo-l",
+      "label": "m cricoarytenoideus lat LO L",
+      "node": "m_cricoarytenoideus_lat_LO_L",
+      "asset": "./m_cricoarytenoideus_lat_LO_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-cricoarytenoideus-lat-lo-r",
+      "label": "m cricoarytenoideus lat LO R",
+      "node": "m_cricoarytenoideus_lat_LO_R",
+      "asset": "./m_cricoarytenoideus_lat_LO_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-cricothyroideus-lo",
+      "label": "m cricothyroideus LO",
+      "node": "m_cricothyroideus_LO",
+      "asset": "./m_cricothyroideus_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-thyroarytenoideus-lo-l",
+      "label": "m thyroarytenoideus LO L",
+      "node": "m_thyroarytenoideus_LO_L",
+      "asset": "./m_thyroarytenoideus_LO_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-thyroarytenoideus-lo-r",
+      "label": "m thyroarytenoideus LO R",
+      "node": "m_thyroarytenoideus_LO_R",
+      "asset": "./m_thyroarytenoideus_LO_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-ventricularis-lo",
+      "label": "m ventricularis LO",
+      "node": "m_ventricularis_LO",
+      "asset": "./m_ventricularis_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-vocalis-lo-l",
+      "label": "m vocalis LO L",
+      "node": "m_vocalis_LO_L",
+      "asset": "./m_vocalis_LO_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-vocalis-lo-r",
+      "label": "m vocalis LO R",
+      "node": "m_vocalis_LO_R",
+      "asset": "./m_vocalis_LO_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerves-lo",
+      "label": "nerves LO",
+      "node": "nerves_LO",
+      "asset": "./nerves_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-trachea-lo",
+      "label": "trachea LO",
+      "node": "trachea_LO",
+      "asset": "./trachea_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vocal-folds-lo-l",
+      "label": "vocal folds LO L",
+      "node": "vocal_folds_LO_L",
+      "asset": "./vocal_folds_LO_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vocal-folds-lo-r",
+      "label": "vocal folds LO R",
+      "node": "vocal_folds_LO_R",
+      "asset": "./vocal_folds_LO_R.glb",
+      "region": "root"
+    }
+  ]
+}

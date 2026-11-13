@@ -1,0 +1,132 @@
+{
+  "id": "canine-skull-landmarks",
+  "title": "Canine skull landmarks",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-110tooth-004",
+      "label": "110tooth 004",
+      "node": "110tooth_004",
+      "asset": "./110tooth_004.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-401tooth-004",
+      "label": "401tooth 004",
+      "node": "401tooth_004",
+      "asset": "./401tooth_004.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-basihyoid",
+      "label": "basihyoid",
+      "node": "basihyoid",
+      "asset": "./basihyoid.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ceratohyoid-l",
+      "label": "ceratohyoid L",
+      "node": "ceratohyoid_L",
+      "asset": "./ceratohyoid_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ceratohyoid-r",
+      "label": "ceratohyoid R",
+      "node": "ceratohyoid_R",
+      "asset": "./ceratohyoid_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-epihyoid-l",
+      "label": "epihyoid L",
+      "node": "epihyoid_L",
+      "asset": "./epihyoid_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-epihyooid-r",
+      "label": "epihyooid R",
+      "node": "epihyooid_R",
+      "asset": "./epihyooid_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-004",
+      "label": "MANDIBLE 004",
+      "node": "MANDIBLE_004",
+      "asset": "./MANDIBLE_004.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-maxilla-004",
+      "label": "MAXILLA 004",
+      "node": "MAXILLA_004",
+      "asset": "./MAXILLA_004.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-stylohyoid-l",
+      "label": "stylohyoid L",
+      "node": "stylohyoid_L",
+      "asset": "./stylohyoid_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-stylohyoid-r",
+      "label": "stylohyoid R",
+      "node": "stylohyoid_R",
+      "asset": "./stylohyoid_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-thyrohyoid-l",
+      "label": "thyrohyoid L",
+      "node": "thyrohyoid_L",
+      "asset": "./thyrohyoid_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-thyrohyoid-l-copy000",
+      "label": "thyrohyoid L copy000",
+      "node": "thyrohyoid_L_copy000",
+      "asset": "./thyrohyoid_L_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-thyrohyoid-r",
+      "label": "thyrohyoid R",
+      "node": "thyrohyoid_R",
+      "asset": "./thyrohyoid_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-thyrohyoid-r-copy000",
+      "label": "thyrohyoid R copy000",
+      "node": "thyrohyoid_R_copy000",
+      "asset": "./thyrohyoid_R_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tymp-car-l",
+      "label": "tymp car L",
+      "node": "tymp_car_L",
+      "asset": "./tymp_car_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tymp-cart-r",
+      "label": "tymp cart R",
+      "node": "tymp_cart_R",
+      "asset": "./tymp_cart_R.glb",
+      "region": "root"
+    }
+  ]
+}

@@ -1,0 +1,615 @@
+{
+  "id": "canine-skull-scan-landmarks",
+  "title": "Canine skull scan landmarks",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-cranium-palatine-sulcus",
+      "label": "cranium  palatine sulcus",
+      "node": "cranium__palatine_sulcus",
+      "asset": "./cranium__palatine_sulcus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-pharyngeal-tubercle",
+      "label": "cranium  pharyngeal tubercle",
+      "node": "cranium__pharyngeal_tubercle",
+      "asset": "./cranium__pharyngeal_tubercle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-retroartic-process",
+      "label": "cranium  retroartic process",
+      "node": "cranium__retroartic_process",
+      "asset": "./cranium__retroartic_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-alveolar-juga",
+      "label": "cranium alveolar juga",
+      "node": "cranium_alveolar_juga",
+      "asset": "./cranium_alveolar_juga.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-caudal-nasal-spine",
+      "label": "cranium caudal nasal spine",
+      "node": "cranium_caudal_nasal_spine",
+      "asset": "./cranium_caudal_nasal_spine.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-dorsal-condyloid-fossa",
+      "label": "cranium dorsal condyloid fossa",
+      "node": "cranium_dorsal_condyloid_fossa",
+      "asset": "./cranium_dorsal_condyloid_fossa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-ext-occip-protuberance",
+      "label": "cranium ext occip protuberance",
+      "node": "cranium_ext_occip_protuberance",
+      "asset": "./cranium_ext_occip_protuberance.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-external-saggital-crest",
+      "label": "cranium external saggital crest",
+      "node": "cranium_external_saggital_crest",
+      "asset": "./cranium_external_saggital_crest.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-frontal-process",
+      "label": "cranium frontal process",
+      "node": "cranium_frontal_process",
+      "asset": "./cranium_frontal_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-hard-palate-caudal-border",
+      "label": "cranium hard  palate caudal border",
+      "node": "cranium_hard__palate_caudal_border",
+      "asset": "./cranium_hard__palate_caudal_border.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-infraorbital-margin",
+      "label": "cranium infraorbital margin",
+      "node": "cranium_infraorbital_margin",
+      "asset": "./cranium_infraorbital_margin.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-intercondyloid-notch",
+      "label": "cranium intercondyloid notch",
+      "node": "cranium_intercondyloid_notch",
+      "asset": "./cranium_intercondyloid_notch.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-lo",
+      "label": "cranium LO",
+      "node": "cranium_LO",
+      "asset": "./cranium_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-mandibular-fossa",
+      "label": "cranium mandibular fossa",
+      "node": "cranium_mandibular_fossa",
+      "asset": "./cranium_mandibular_fossa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-masseteric-line",
+      "label": "cranium masseteric line",
+      "node": "cranium_masseteric_line",
+      "asset": "./cranium_masseteric_line.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-mastoid-process",
+      "label": "cranium mastoid process",
+      "node": "cranium_mastoid_process",
+      "asset": "./cranium_mastoid_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-muscular-tubercle",
+      "label": "cranium muscular tubercle",
+      "node": "cranium_muscular_tubercle",
+      "asset": "./cranium_muscular_tubercle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-nuchal-crest",
+      "label": "cranium nuchal crest",
+      "node": "cranium_nuchal_crest",
+      "asset": "./cranium_nuchal_crest.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-nuchal-surface",
+      "label": "cranium nuchal surface",
+      "node": "cranium_nuchal_surface",
+      "asset": "./cranium_nuchal_surface.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-nuchal-tubercle",
+      "label": "cranium nuchal tubercle",
+      "node": "cranium_nuchal_tubercle",
+      "asset": "./cranium_nuchal_tubercle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-occipital-condyle",
+      "label": "cranium occipital condyle",
+      "node": "cranium_occipital_condyle",
+      "asset": "./cranium_occipital_condyle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-paracondylar-process",
+      "label": "cranium paracondylar process",
+      "node": "cranium_paracondylar_process",
+      "asset": "./cranium_paracondylar_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-pterygoid-hamulus",
+      "label": "cranium pterygoid hamulus",
+      "node": "cranium_pterygoid_hamulus",
+      "asset": "./cranium_pterygoid_hamulus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-supraorbital-margin",
+      "label": "cranium supraorbital margin",
+      "node": "cranium_supraorbital_margin",
+      "asset": "./cranium_supraorbital_margin.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-temporal-fossa",
+      "label": "cranium temporal fossa",
+      "node": "cranium_temporal_fossa",
+      "asset": "./cranium_temporal_fossa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-temporal-line",
+      "label": "cranium temporal line",
+      "node": "cranium_temporal_line",
+      "asset": "./cranium_temporal_line.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth101",
+      "label": "cranium tooth101",
+      "node": "cranium_tooth101",
+      "asset": "./cranium_tooth101.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth102",
+      "label": "cranium tooth102",
+      "node": "cranium_tooth102",
+      "asset": "./cranium_tooth102.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth103",
+      "label": "cranium tooth103",
+      "node": "cranium_tooth103",
+      "asset": "./cranium_tooth103.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth104",
+      "label": "cranium tooth104",
+      "node": "cranium_tooth104",
+      "asset": "./cranium_tooth104.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth105",
+      "label": "cranium tooth105",
+      "node": "cranium_tooth105",
+      "asset": "./cranium_tooth105.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth106",
+      "label": "cranium tooth106",
+      "node": "cranium_tooth106",
+      "asset": "./cranium_tooth106.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth108",
+      "label": "cranium tooth108",
+      "node": "cranium_tooth108",
+      "asset": "./cranium_tooth108.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth109",
+      "label": "cranium tooth109",
+      "node": "cranium_tooth109",
+      "asset": "./cranium_tooth109.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth110",
+      "label": "cranium tooth110",
+      "node": "cranium_tooth110",
+      "asset": "./cranium_tooth110.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth201",
+      "label": "cranium tooth201",
+      "node": "cranium_tooth201",
+      "asset": "./cranium_tooth201.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth202",
+      "label": "cranium tooth202",
+      "node": "cranium_tooth202",
+      "asset": "./cranium_tooth202.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth203",
+      "label": "cranium tooth203",
+      "node": "cranium_tooth203",
+      "asset": "./cranium_tooth203.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth204",
+      "label": "cranium tooth204",
+      "node": "cranium_tooth204",
+      "asset": "./cranium_tooth204.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth205",
+      "label": "cranium tooth205",
+      "node": "cranium_tooth205",
+      "asset": "./cranium_tooth205.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth206",
+      "label": "cranium tooth206",
+      "node": "cranium_tooth206",
+      "asset": "./cranium_tooth206.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth207",
+      "label": "cranium tooth207",
+      "node": "cranium_tooth207",
+      "asset": "./cranium_tooth207.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth208",
+      "label": "cranium tooth208",
+      "node": "cranium_tooth208",
+      "asset": "./cranium_tooth208.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth209",
+      "label": "cranium tooth209",
+      "node": "cranium_tooth209",
+      "asset": "./cranium_tooth209.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth210",
+      "label": "cranium tooth210",
+      "node": "cranium_tooth210",
+      "asset": "./cranium_tooth210.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tympanic-bulla",
+      "label": "cranium tympanic bulla",
+      "node": "cranium_tympanic_bulla",
+      "asset": "./cranium_tympanic_bulla.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-ventral-condyloid-fossa",
+      "label": "cranium ventral condyloid fossa",
+      "node": "cranium_ventral_condyloid_fossa",
+      "asset": "./cranium_ventral_condyloid_fossa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-zygomatic-arch",
+      "label": "cranium zygomatic arch",
+      "node": "cranium_zygomatic_arch",
+      "asset": "./cranium_zygomatic_arch.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-zygomatic-process",
+      "label": "cranium zygomatic process",
+      "node": "cranium_zygomatic_process",
+      "asset": "./cranium_zygomatic_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-group3536",
+      "label": "Group3536",
+      "node": "Group3536",
+      "asset": "./Group3536.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-group3565",
+      "label": "Group3565",
+      "node": "Group3565",
+      "asset": "./Group3565.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-group37170",
+      "label": "Group37170",
+      "node": "Group37170",
+      "asset": "./Group37170.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-group64810",
+      "label": "Group64810",
+      "node": "Group64810",
+      "asset": "./Group64810.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-group897",
+      "label": "Group897",
+      "node": "Group897",
+      "asset": "./Group897.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-angle",
+      "label": "mand angle",
+      "node": "mand_angle",
+      "asset": "./mand_angle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-angular-process",
+      "label": "mand angular process",
+      "node": "mand_angular_process",
+      "asset": "./mand_angular_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-articular-process",
+      "label": "mand articular process",
+      "node": "mand_articular_process",
+      "asset": "./mand_articular_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-body",
+      "label": "mand body",
+      "node": "mand_body",
+      "asset": "./mand_body.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-coronoid-process",
+      "label": "mand coronoid process",
+      "node": "mand_coronoid_process",
+      "asset": "./mand_coronoid_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-masseteric-fossa",
+      "label": "mand masseteric fossa",
+      "node": "mand_masseteric_fossa",
+      "asset": "./mand_masseteric_fossa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-masseteric-line",
+      "label": "mand masseteric line",
+      "node": "mand_masseteric_line",
+      "asset": "./mand_masseteric_line.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-masseteric-notch",
+      "label": "mand masseteric notch",
+      "node": "mand_masseteric_notch",
+      "asset": "./mand_masseteric_notch.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-ramus",
+      "label": "mand ramus",
+      "node": "mand_ramus",
+      "asset": "./mand_ramus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-symphysis",
+      "label": "mand symphysis",
+      "node": "mand_symphysis",
+      "asset": "./mand_symphysis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth301",
+      "label": "mand tooth301",
+      "node": "mand_tooth301",
+      "asset": "./mand_tooth301.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth302",
+      "label": "mand tooth302",
+      "node": "mand_tooth302",
+      "asset": "./mand_tooth302.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth303",
+      "label": "mand tooth303",
+      "node": "mand_tooth303",
+      "asset": "./mand_tooth303.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth304",
+      "label": "mand tooth304",
+      "node": "mand_tooth304",
+      "asset": "./mand_tooth304.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth305",
+      "label": "mand tooth305",
+      "node": "mand_tooth305",
+      "asset": "./mand_tooth305.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth307",
+      "label": "mand tooth307",
+      "node": "mand_tooth307",
+      "asset": "./mand_tooth307.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth308",
+      "label": "mand tooth308",
+      "node": "mand_tooth308",
+      "asset": "./mand_tooth308.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth309",
+      "label": "mand tooth309",
+      "node": "mand_tooth309",
+      "asset": "./mand_tooth309.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth310",
+      "label": "mand tooth310",
+      "node": "mand_tooth310",
+      "asset": "./mand_tooth310.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth311",
+      "label": "mand tooth311",
+      "node": "mand_tooth311",
+      "asset": "./mand_tooth311.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth401",
+      "label": "mand tooth401",
+      "node": "mand_tooth401",
+      "asset": "./mand_tooth401.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth402",
+      "label": "mand tooth402",
+      "node": "mand_tooth402",
+      "asset": "./mand_tooth402.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth403",
+      "label": "mand tooth403",
+      "node": "mand_tooth403",
+      "asset": "./mand_tooth403.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth404",
+      "label": "mand tooth404",
+      "node": "mand_tooth404",
+      "asset": "./mand_tooth404.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth405",
+      "label": "mand tooth405",
+      "node": "mand_tooth405",
+      "asset": "./mand_tooth405.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth406",
+      "label": "mand tooth406",
+      "node": "mand_tooth406",
+      "asset": "./mand_tooth406.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth407",
+      "label": "mand tooth407",
+      "node": "mand_tooth407",
+      "asset": "./mand_tooth407.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth408",
+      "label": "mand tooth408",
+      "node": "mand_tooth408",
+      "asset": "./mand_tooth408.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth409",
+      "label": "mand tooth409",
+      "node": "mand_tooth409",
+      "asset": "./mand_tooth409.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth410",
+      "label": "mand tooth410",
+      "node": "mand_tooth410",
+      "asset": "./mand_tooth410.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mand-tooth411",
+      "label": "mand tooth411",
+      "node": "mand_tooth411",
+      "asset": "./mand_tooth411.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-zbrush-defualt-group",
+      "label": "ZBrush defualt group",
+      "node": "ZBrush_defualt_group",
+      "asset": "./ZBrush_defualt_group.glb",
+      "region": "root"
+    }
+  ]
+}

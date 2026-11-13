@@ -1,0 +1,517 @@
+{
+  "id": "canine-cranial-nerves",
+  "title": "Canine cranial nerves",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-101tooth",
+      "label": "101tooth",
+      "node": "101tooth",
+      "asset": "./101tooth.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-410tooth",
+      "label": "410tooth",
+      "node": "410tooth",
+      "asset": "./410tooth.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-brainstem-lo",
+      "label": "Brainstem LO",
+      "node": "Brainstem_LO",
+      "asset": "./Brainstem_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cerebellum-lo",
+      "label": "Cerebellum LO",
+      "node": "Cerebellum_LO",
+      "asset": "./Cerebellum_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cerebrum-lo",
+      "label": "Cerebrum LO",
+      "node": "Cerebrum_LO",
+      "asset": "./Cerebrum_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible",
+      "label": "MANDIBLE",
+      "node": "MANDIBLE",
+      "asset": "./MANDIBLE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-maxilla",
+      "label": "MAXILLA",
+      "node": "MAXILLA",
+      "asset": "./MAXILLA.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-1-olfactory",
+      "label": "N 1 olfactory",
+      "node": "N_1_olfactory",
+      "asset": "./N_1_olfactory.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-1-olfactory-vomeronasal",
+      "label": "N 1 olfactory vomeronasal",
+      "node": "N_1_olfactory_vomeronasal",
+      "asset": "./N_1_olfactory_vomeronasal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-10-vagus",
+      "label": "N 10 vagus",
+      "node": "N_10_vagus",
+      "asset": "./N_10_vagus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-10-vagus-auricular",
+      "label": "N 10 vagus auricular",
+      "node": "N_10_vagus_auricular",
+      "asset": "./N_10_vagus_auricular.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-10-vagus-cardiac",
+      "label": "N 10 vagus cardiac",
+      "node": "N_10_vagus_cardiac",
+      "asset": "./N_10_vagus_cardiac.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-10-vagus-cranial-laryngeal",
+      "label": "N 10 vagus cranial laryngeal",
+      "node": "N_10_vagus_cranial_laryngeal",
+      "asset": "./N_10_vagus_cranial_laryngeal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-10-vagus-pharyngeal",
+      "label": "N 10 vagus pharyngeal",
+      "node": "N_10_vagus_pharyngeal",
+      "asset": "./N_10_vagus_pharyngeal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-10-vagus-recurrent",
+      "label": "N 10 vagus recurrent",
+      "node": "N_10_vagus_recurrent",
+      "asset": "./N_10_vagus_recurrent.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-11-accessory",
+      "label": "N 11 accessory",
+      "node": "N_11_accessory",
+      "asset": "./N_11_accessory.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-12-hypoglossal",
+      "label": "N 12 hypoglossal",
+      "node": "N_12_hypoglossal",
+      "asset": "./N_12_hypoglossal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-2-optic",
+      "label": "N 2 optic",
+      "node": "N_2_optic",
+      "asset": "./N_2_optic.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-3-oculomotor",
+      "label": "N 3 oculomotor",
+      "node": "N_3_oculomotor",
+      "asset": "./N_3_oculomotor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-3-oculomotor-ciliary-ganglion",
+      "label": "N 3 oculomotor ciliary ganglion",
+      "node": "N_3_oculomotor_ciliary_ganglion",
+      "asset": "./N_3_oculomotor_ciliary_ganglion.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-3-oculomotor-dorsal-ramus",
+      "label": "N 3 oculomotor dorsal ramus",
+      "node": "N_3_oculomotor_dorsal_ramus",
+      "asset": "./N_3_oculomotor_dorsal_ramus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-3-oculomotor-ventral-ramus",
+      "label": "N 3 oculomotor ventral ramus",
+      "node": "N_3_oculomotor_ventral_ramus",
+      "asset": "./N_3_oculomotor_ventral_ramus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-4-trochlear",
+      "label": "N 4 trochlear",
+      "node": "N_4_trochlear",
+      "asset": "./N_4_trochlear.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-pterygopalatine-ganglion",
+      "label": "N 5 Pterygopalatine ganglion",
+      "node": "N_5_Pterygopalatine_ganglion",
+      "asset": "./N_5_Pterygopalatine_ganglion.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus",
+      "label": "N 5 trigeminus",
+      "node": "N_5_trigeminus",
+      "asset": "./N_5_trigeminus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-mandibular",
+      "label": "N 5 trigeminus mandibular",
+      "node": "N_5_trigeminus_mandibular",
+      "asset": "./N_5_trigeminus_mandibular.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-mandibular-auriculotemporal",
+      "label": "N 5 trigeminus mandibular auriculotemporal",
+      "node": "N_5_trigeminus_mandibular_auriculotemporal",
+      "asset": "./N_5_trigeminus_mandibular_auriculotemporal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-mandibular-buccal",
+      "label": "N 5 trigeminus mandibular buccal",
+      "node": "N_5_trigeminus_mandibular_buccal",
+      "asset": "./N_5_trigeminus_mandibular_buccal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-mandibular-inferior-alveolar",
+      "label": "N 5 trigeminus mandibular inferior alveolar",
+      "node": "N_5_trigeminus_mandibular_inferior_alveolar",
+      "asset": "./N_5_trigeminus_mandibular_inferior_alveolar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-mandibular-lingual",
+      "label": "N 5 trigeminus mandibular lingual",
+      "node": "N_5_trigeminus_mandibular_lingual",
+      "asset": "./N_5_trigeminus_mandibular_lingual.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-mandibular-masticator",
+      "label": "N 5 trigeminus mandibular masticator",
+      "node": "N_5_trigeminus_mandibular_masticator",
+      "asset": "./N_5_trigeminus_mandibular_masticator.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-mandibular-mylohyoid",
+      "label": "N 5 trigeminus mandibular mylohyoid",
+      "node": "N_5_trigeminus_mandibular_mylohyoid",
+      "asset": "./N_5_trigeminus_mandibular_mylohyoid.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-mandibular-pterygoid",
+      "label": "N 5 trigeminus mandibular pterygoid",
+      "node": "N_5_trigeminus_mandibular_pterygoid",
+      "asset": "./N_5_trigeminus_mandibular_pterygoid.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-mandibular-tensor-tympani",
+      "label": "N 5 trigeminus mandibular tensor tympani",
+      "node": "N_5_trigeminus_mandibular_tensor_tympani",
+      "asset": "./N_5_trigeminus_mandibular_tensor_tympani.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-mandibular-tensor-veli-palatini",
+      "label": "N 5 trigeminus mandibular tensor veli palatini",
+      "node": "N_5_trigeminus_mandibular_tensor_veli_palatini",
+      "asset": "./N_5_trigeminus_mandibular_tensor_veli_palatini.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-maxillary",
+      "label": "N 5 trigeminus maxillary",
+      "node": "N_5_trigeminus_maxillary",
+      "asset": "./N_5_trigeminus_maxillary.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-maxillary-infraorbital",
+      "label": "N 5 trigeminus maxillary infraorbital",
+      "node": "N_5_trigeminus_maxillary_infraorbital",
+      "asset": "./N_5_trigeminus_maxillary_infraorbital.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-maxillary-pterygopalatine",
+      "label": "N 5 trigeminus maxillary pterygopalatine",
+      "node": "N_5_trigeminus_maxillary_pterygopalatine",
+      "asset": "./N_5_trigeminus_maxillary_pterygopalatine.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-maxillary-pterygopalatine-caudalnasal",
+      "label": "N 5 trigeminus maxillary pterygopalatine caudalnasal",
+      "node": "N_5_trigeminus_maxillary_pterygopalatine_caudalnasal",
+      "asset": "./N_5_trigeminus_maxillary_pterygopalatine_caudalnasal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-maxillary-pterygopalatine-majorpalatine",
+      "label": "N 5 trigeminus maxillary pterygopalatine majorpalatine",
+      "node": "N_5_trigeminus_maxillary_pterygopalatine_majorpalatine",
+      "asset": "./N_5_trigeminus_maxillary_pterygopalatine_majorpalatine.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-maxillary-pterygopalatine-minorpalatine",
+      "label": "N 5 trigeminus maxillary pterygopalatine minorpalatine",
+      "node": "N_5_trigeminus_maxillary_pterygopalatine_minorpalatine",
+      "asset": "./N_5_trigeminus_maxillary_pterygopalatine_minorpalatine.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-maxillary-zygomatic",
+      "label": "N 5 trigeminus maxillary zygomatic",
+      "node": "N_5_trigeminus_maxillary_zygomatic",
+      "asset": "./N_5_trigeminus_maxillary_zygomatic.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-maxillary-zygomatic-zygomaticofacial",
+      "label": "N 5 trigeminus maxillary zygomatic zygomaticofacial",
+      "node": "N_5_trigeminus_maxillary_zygomatic_zygomaticofacial",
+      "asset": "./N_5_trigeminus_maxillary_zygomatic_zygomaticofacial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-maxillary-zygomatic-zygomaticotemporal",
+      "label": "N 5 trigeminus maxillary zygomatic zygomaticotemporal",
+      "node": "N_5_trigeminus_maxillary_zygomatic_zygomaticotemporal",
+      "asset": "./N_5_trigeminus_maxillary_zygomatic_zygomaticotemporal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-ophthalmic",
+      "label": "N 5 trigeminus ophthalmic",
+      "node": "N_5_trigeminus_ophthalmic",
+      "asset": "./N_5_trigeminus_ophthalmic.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-ophthalmic-frontal",
+      "label": "N 5 trigeminus ophthalmic frontal",
+      "node": "N_5_trigeminus_ophthalmic_frontal",
+      "asset": "./N_5_trigeminus_ophthalmic_frontal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-ophthalmic-lacrimal",
+      "label": "N 5 trigeminus ophthalmic lacrimal",
+      "node": "N_5_trigeminus_ophthalmic_lacrimal",
+      "asset": "./N_5_trigeminus_ophthalmic_lacrimal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-ophthalmic-nasociliary",
+      "label": "N 5 trigeminus ophthalmic nasociliary",
+      "node": "N_5_trigeminus_ophthalmic_nasociliary",
+      "asset": "./N_5_trigeminus_ophthalmic_nasociliary.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-ophthalmic-nasociliary-ethmoidal",
+      "label": "N 5 trigeminus ophthalmic nasociliary ethmoidal",
+      "node": "N_5_trigeminus_ophthalmic_nasociliary_ethmoidal",
+      "asset": "./N_5_trigeminus_ophthalmic_nasociliary_ethmoidal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-ophthalmic-nasociliary-infratrochlear",
+      "label": "N 5 trigeminus ophthalmic nasociliary infratrochlear",
+      "node": "N_5_trigeminus_ophthalmic_nasociliary_infratrochlear",
+      "asset": "./N_5_trigeminus_ophthalmic_nasociliary_infratrochlear.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-5-trigeminus-ophthalmic-nasociliary-longciliary",
+      "label": "N 5 trigeminus ophthalmic nasociliary longciliary",
+      "node": "N_5_trigeminus_ophthalmic_nasociliary_longciliary",
+      "asset": "./N_5_trigeminus_ophthalmic_nasociliary_longciliary.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-6-abducens",
+      "label": "N 6 abducens",
+      "node": "N_6_abducens",
+      "asset": "./N_6_abducens.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-7-facial",
+      "label": "N 7 facial",
+      "node": "N_7_facial",
+      "asset": "./N_7_facial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-7-facial-auriculopalpebral",
+      "label": "N 7 facial auriculopalpebral",
+      "node": "N_7_facial_auriculopalpebral",
+      "asset": "./N_7_facial_auriculopalpebral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-7-facial-buccal-branches",
+      "label": "N 7 facial buccal branches",
+      "node": "N_7_facial_buccal_branches",
+      "asset": "./N_7_facial_buccal_branches.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-7-facial-caudal-auricular",
+      "label": "N 7 facial caudal auricular",
+      "node": "N_7_facial_caudal_auricular",
+      "asset": "./N_7_facial_caudal_auricular.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-7-facial-cervical",
+      "label": "N 7 facial cervical",
+      "node": "N_7_facial_cervical",
+      "asset": "./N_7_facial_cervical.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-7-facial-chorda-tympani",
+      "label": "N 7 facial chorda tympani",
+      "node": "N_7_facial_chorda_tympani",
+      "asset": "./N_7_facial_chorda_tympani.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-7-facial-internal-auricular",
+      "label": "N 7 facial internal auricular",
+      "node": "N_7_facial_internal_auricular",
+      "asset": "./N_7_facial_internal_auricular.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-7-facial-major-petrosal",
+      "label": "N 7 facial major petrosal",
+      "node": "N_7_facial_major_petrosal",
+      "asset": "./N_7_facial_major_petrosal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-7-facial-ramus-digastricus",
+      "label": "N 7 facial ramus digastricus",
+      "node": "N_7_facial_ramus_digastricus",
+      "asset": "./N_7_facial_ramus_digastricus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-7-facial-ramus-stylohyoideus",
+      "label": "N 7 facial ramus stylohyoideus",
+      "node": "N_7_facial_ramus_stylohyoideus",
+      "asset": "./N_7_facial_ramus_stylohyoideus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-7-facial-stapedius",
+      "label": "N 7 facial stapedius",
+      "node": "N_7_facial_stapedius",
+      "asset": "./N_7_facial_stapedius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-8-vestibulocochlear",
+      "label": "N 8 vestibulocochlear",
+      "node": "N_8_vestibulocochlear",
+      "asset": "./N_8_vestibulocochlear.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-9-glossopharnygeal",
+      "label": "N 9 glossopharnygeal",
+      "node": "N_9_glossopharnygeal",
+      "asset": "./N_9_glossopharnygeal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-9-glossopharnygeal-carotid",
+      "label": "N 9 glossopharnygeal carotid",
+      "node": "N_9_glossopharnygeal_carotid",
+      "asset": "./N_9_glossopharnygeal_carotid.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-9-glossopharnygeal-lingual",
+      "label": "N 9 glossopharnygeal lingual",
+      "node": "N_9_glossopharnygeal_lingual",
+      "asset": "./N_9_glossopharnygeal_lingual.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-9-glossopharnygeal-minor-petrosal",
+      "label": "N 9 glossopharnygeal minor petrosal",
+      "node": "N_9_glossopharnygeal_minor_petrosal",
+      "asset": "./N_9_glossopharnygeal_minor_petrosal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-9-glossopharnygeal-otic-ganglion",
+      "label": "N 9 glossopharnygeal otic ganglion",
+      "node": "N_9_glossopharnygeal_otic_ganglion",
+      "asset": "./N_9_glossopharnygeal_otic_ganglion.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-9-glossopharnygeal-pharyngeal",
+      "label": "N 9 glossopharnygeal pharyngeal",
+      "node": "N_9_glossopharnygeal_pharyngeal",
+      "asset": "./N_9_glossopharnygeal_pharyngeal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-9-glossopharnygeal-stylopharyngei",
+      "label": "N 9 glossopharnygeal stylopharyngei",
+      "node": "N_9_glossopharnygeal_stylopharyngei",
+      "asset": "./N_9_glossopharnygeal_stylopharyngei.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-9-glossopharnygeal-tympanic",
+      "label": "N 9 glossopharnygeal tympanic",
+      "node": "N_9_glossopharnygeal_tympanic",
+      "asset": "./N_9_glossopharnygeal_tympanic.glb",
+      "region": "root"
+    }
+  ]
+}
