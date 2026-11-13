@@ -60,7 +60,6 @@ function labelFromParts(parts) {
 }
 
 function regionKeyFromRel(relDir) {
-  // Legs/Right_Back → legs-right-back; Back Legs → back-legs
   const parts = relDir.split(/[/\\]/).filter(Boolean);
   if (parts.length === 0) return "root";
   return slugify(parts);
@@ -82,8 +81,7 @@ function humanLabel(fileBase) {
 
 function structureId(regionId, fileBase) {
   const base = fileBase.replace(/\.glb$/i, "");
-  const id = slugify([regionId, base]);
-  // Keep ids short-ish but unique
+    const id = slugify([regionId, base]);
   if (id.length <= 80) return id;
   const h = createHash("sha1").update(id).digest("hex").slice(0, 8);
   return `${id.slice(0, 70)}-${h}`;
