@@ -39,6 +39,9 @@ import {
   createStructureUiState,
   structureUiReducer,
 } from "../anatomy/structureState";
+import TestYourself, {
+  type AnatomyStudyMode,
+} from "../anatomy/TestYourself";
 import type { AnatomySceneManifest } from "../anatomy/types";
 import { isPlainClick, navigate } from "../nav/navigate";
 
@@ -122,6 +125,8 @@ export default function AnatomyViewerPage({
   const [helpOpen, setHelpOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [bgId, setBgId] = useState<BgChoiceId>("page");
+  const [studyMode, setStudyMode] = useState<AnatomyStudyMode>("explore");
+  const [revealedIds, setRevealedIds] = useState<Set<string>>(() => new Set());
 
   const bgChoices = useMemo<BgChoice[]>(
     () => [
@@ -169,6 +174,8 @@ export default function AnatomyViewerPage({
     setCameraMode("perspective");
     setHelpOpen(false);
     setBgId("page");
+    setStudyMode("explore");
+    setRevealedIds(new Set());
   }, [sceneId]);
 
   useEffect(() => {
@@ -220,7 +227,19 @@ export default function AnatomyViewerPage({
 
   const selectedStructure =
     manifest?.structures.find((s) => s.id === ui.selectedId) ?? null;
-  const selectedLabel = selectedStructure?.label ?? null;
+  const regionStructures = useMemo(() => {
+    if (!manifest) return [];
+    if (!manifest.regions?.length) return manifest.structures;
+    return manifest.structures.filter(
+      (s) => s.region != null && activeRegions.has(s.region),
+    );
+  }, [manifest, activeRegions]);
+  const maskNames = studyMode === "type" || studyMode === "mcq";
+  const selectedLabel = selectedStructure
+    ? maskNames && !revealedIds.has(selectedStructure.id)
+      ? "Hidden"
+      : selectedStructure.label
+    : null;
 
   useEffect(() => {
     const onKey = (ev: KeyboardEvent) => {
@@ -376,9 +395,28 @@ export default function AnatomyViewerPage({
                 onChangeRegions={changeRegions}
                 ui={ui}
                 dispatch={dispatch}
+                maskNames={maskNames}
+                revealedIds={revealedIds}
               />
             </Box>
-            <InfoPanel structure={selectedStructure} />
+            <TestYourself
+              mode={studyMode}
+              onModeChange={setStudyMode}
+              structure={selectedStructure}
+              regionStructures={regionStructures}
+              revealedIds={revealedIds}
+              onCorrect={(id) => {
+                setRevealedIds((prev) => {
+                  if (prev.has(id)) return prev;
+                  const next = new Set(prev);
+                  next.add(id);
+                  return next;
+                });
+              }}
+            />
+            {studyMode === "explore" ? (
+              <InfoPanel structure={selectedStructure} />
+            ) : null}
           </Stack>
           <Box
             sx={{
