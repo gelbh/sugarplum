@@ -11,4 +11,5 @@ export * from "./materials";
 export * from "./jobs";
 export * from "./cards";
 export * from "./study";
+export * from "./insights";
 export * from "./peripheral";
