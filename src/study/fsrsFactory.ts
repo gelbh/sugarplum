@@ -21,6 +21,20 @@ export type StudyScheduler = Awaited<ReturnType<typeof DefaultScheduler>>;
 
 const schedulerCache = new Map<string, StudyScheduler>();
 
+/** Product default: single same-day step (FSRS/Anki guidance; not library 1m+10m). */
+export const STUDY_LEARNING_STEPS = ["10m"] as const;
+export const STUDY_RELEARNING_STEPS = ["10m"] as const;
+
+/** Clamp persisted step index after steps shrink (e.g. 1m+10m → 10m). */
+export function clampLearningStep(
+  step: number,
+  stepCount: number = STUDY_LEARNING_STEPS.length,
+): number {
+  if (!Number.isFinite(step) || step < 0) return 0;
+  const max = Math.max(0, stepCount - 1);
+  return Math.min(Math.floor(step), max);
+}
+
 function cacheKey(prefs: FsrsPrefs, validated: number[] | null): string {
   const version = prefs.modelVersion ?? "FSRS-7";
   return JSON.stringify({
@@ -28,6 +42,8 @@ function cacheKey(prefs: FsrsPrefs, validated: number[] | null): string {
     r: prefs.desiredRetention,
     f: prefs.enableFuzz,
     w: validated,
+    ls: STUDY_LEARNING_STEPS,
+    rs: STUDY_RELEARNING_STEPS,
   });
 }
 
@@ -44,6 +60,8 @@ export async function schedulerForPrefs(
     version,
     desiredRetention: prefs.desiredRetention,
     enableFuzz: prefs.enableFuzz,
+    learningSteps: [...STUDY_LEARNING_STEPS],
+    relearningSteps: [...STUDY_RELEARNING_STEPS],
     ...(validated ? { weights: validated } : {}),
   });
   schedulerCache.set(key, scheduler);
