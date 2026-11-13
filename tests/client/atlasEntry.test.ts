@@ -281,6 +281,18 @@ describe("entryGlance", () => {
         file: "urinary-bladder.webp",
         marker: "Gray1140",
       },
+      {
+        archetype: "oesophagus",
+        file: "oesophagus.webp",
+        marker: "Wellcome",
+      },
+      { archetype: "muscle", file: "muscle.webp", marker: "Gray373" },
+      { archetype: "caecum", file: "caecum.webp", marker: "Gray1075" },
+      {
+        archetype: "large intestine",
+        file: "large-intestine.webp",
+        marker: "Gray1078",
+      },
     ];
     expect(credits).toMatch(/CC BY-SA 2\.1 JP/);
     for (const h of heroes) {
