@@ -1,0 +1,174 @@
+{
+  "id": "canine-foramina-and-teeth",
+  "title": "Canine foramina and teeth",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-101tooth-002",
+      "label": "101tooth 002",
+      "node": "101tooth_002",
+      "asset": "./101tooth_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-102tooth-002",
+      "label": "102tooth 002",
+      "node": "102tooth_002",
+      "asset": "./102tooth_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-103tooth-002",
+      "label": "103tooth 002",
+      "node": "103tooth_002",
+      "asset": "./103tooth_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-104tooth-002",
+      "label": "104tooth 002",
+      "node": "104tooth_002",
+      "asset": "./104tooth_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-105tooth-002",
+      "label": "105tooth 002",
+      "node": "105tooth_002",
+      "asset": "./105tooth_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-106tooth-002",
+      "label": "106tooth 002",
+      "node": "106tooth_002",
+      "asset": "./106tooth_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-107tooth-002",
+      "label": "107tooth 002",
+      "node": "107tooth_002",
+      "asset": "./107tooth_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-108tooth-002",
+      "label": "108tooth 002",
+      "node": "108tooth_002",
+      "asset": "./108tooth_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-109tooth-002",
+      "label": "109tooth 002",
+      "node": "109tooth_002",
+      "asset": "./109tooth_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-110tooth-002",
+      "label": "110tooth 002",
+      "node": "110tooth_002",
+      "asset": "./110tooth_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-401tooth-002",
+      "label": "401tooth 002",
+      "node": "401tooth_002",
+      "asset": "./401tooth_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-402tooth-002",
+      "label": "402tooth 002",
+      "node": "402tooth_002",
+      "asset": "./402tooth_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-403tooth-002",
+      "label": "403tooth 002",
+      "node": "403tooth_002",
+      "asset": "./403tooth_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-404tooth-002",
+      "label": "404tooth 002",
+      "node": "404tooth_002",
+      "asset": "./404tooth_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-405tooth-002",
+      "label": "405tooth 002",
+      "node": "405tooth_002",
+      "asset": "./405tooth_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-406tooth-002",
+      "label": "406tooth 002",
+      "node": "406tooth_002",
+      "asset": "./406tooth_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-407tooth-002",
+      "label": "407tooth 002",
+      "node": "407tooth_002",
+      "asset": "./407tooth_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-408tooth-002",
+      "label": "408tooth 002",
+      "node": "408tooth_002",
+      "asset": "./408tooth_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-409tooth-002",
+      "label": "409tooth 002",
+      "node": "409tooth_002",
+      "asset": "./409tooth_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-410tooth-002",
+      "label": "410tooth 002",
+      "node": "410tooth_002",
+      "asset": "./410tooth_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-411tooth-004",
+      "label": "411tooth 004",
+      "node": "411tooth_004",
+      "asset": "./411tooth_004.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-002",
+      "label": "MANDIBLE 002",
+      "node": "MANDIBLE_002",
+      "asset": "./MANDIBLE_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-maxilla-002",
+      "label": "MAXILLA 002",
+      "node": "MAXILLA_002",
+      "asset": "./MAXILLA_002.glb",
+      "region": "root"
+    }
+  ]
+}

@@ -1,0 +1,146 @@
+{
+  "id": "canine-brain-key-structures",
+  "title": "Canine brain key structures",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-brain-low-brain-low",
+      "label": "Brain low Brain low",
+      "node": "Brain_low_Brain_low",
+      "asset": "./Brain_low_Brain_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-brainstem-low-brainstem-low",
+      "label": "Brainstem low Brainstem low",
+      "node": "Brainstem_low_Brainstem_low",
+      "asset": "./Brainstem_low_Brainstem_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cerebellum-low-cerebellum-low",
+      "label": "Cerebellum low Cerebellum low",
+      "node": "Cerebellum_low_Cerebellum_low",
+      "asset": "./Cerebellum_low_Cerebellum_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cn1-low-cn1-low",
+      "label": "CN1 low CN1 low",
+      "node": "CN1_low_CN1_low",
+      "asset": "./CN1_low_CN1_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cn10-low-cn10-low",
+      "label": "CN10 low CN10 low",
+      "node": "CN10_low_CN10_low",
+      "asset": "./CN10_low_CN10_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cn11-low-cn11-low",
+      "label": "CN11 low CN11 low",
+      "node": "CN11_low_CN11_low",
+      "asset": "./CN11_low_CN11_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cn12-low-cn12-low",
+      "label": "CN12 low CN12 low",
+      "node": "CN12_low_CN12_low",
+      "asset": "./CN12_low_CN12_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cn2-low-cn2-low",
+      "label": "CN2 low CN2 low",
+      "node": "CN2_low_CN2_low",
+      "asset": "./CN2_low_CN2_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cn3-low-cn3-low",
+      "label": "CN3 low CN3 low",
+      "node": "CN3_low_CN3_low",
+      "asset": "./CN3_low_CN3_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cn4-low-cn4-low",
+      "label": "CN4 low CN4 low",
+      "node": "CN4_low_CN4_low",
+      "asset": "./CN4_low_CN4_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cn5-low-cn5-low",
+      "label": "CN5 low CN5 low",
+      "node": "CN5_low_CN5_low",
+      "asset": "./CN5_low_CN5_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cn6-low-cn6-low",
+      "label": "CN6 low CN6 low",
+      "node": "CN6_low_CN6_low",
+      "asset": "./CN6_low_CN6_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cn7-low-cn7-low",
+      "label": "CN7 low CN7 low",
+      "node": "CN7_low_CN7_low",
+      "asset": "./CN7_low_CN7_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cn8-low-cn8-low",
+      "label": "CN8 low CN8 low",
+      "node": "CN8_low_CN8_low",
+      "asset": "./CN8_low_CN8_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cn9-low-cn9-low",
+      "label": "CN9 low CN9 low",
+      "node": "CN9_low_CN9_low",
+      "asset": "./CN9_low_CN9_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-peduncles-caudal-low-peduncles-caudal-low",
+      "label": "Peduncles caudal low Peduncles caudal low",
+      "node": "Peduncles_caudal_low_Peduncles_caudal_low",
+      "asset": "./Peduncles_caudal_low_Peduncles_caudal_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-peduncles-middle-low-peduncles-middle-low",
+      "label": "Peduncles middle low Peduncles middle low",
+      "node": "Peduncles_middle_low_Peduncles_middle_low",
+      "asset": "./Peduncles_middle_low_Peduncles_middle_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-peduncles-rostral-low-peduncles-rostral-low",
+      "label": "Peduncles rostral low Peduncles rostral low",
+      "node": "Peduncles_rostral_low_Peduncles_rostral_low",
+      "asset": "./Peduncles_rostral_low_Peduncles_rostral_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ventricles-low-ventricles-low",
+      "label": "Ventricles low Ventricles low",
+      "node": "Ventricles_low_Ventricles_low",
+      "asset": "./Ventricles_low_Ventricles_low.glb",
+      "region": "root"
+    }
+  ]
+}

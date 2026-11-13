@@ -1,0 +1,258 @@
+{
+  "id": "canine-heart-vasculature",
+  "title": "Canine heart vasculature",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-aorta",
+      "label": "Aorta",
+      "node": "Aorta",
+      "asset": "./Aorta.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-axillary-aa-l",
+      "label": "Axillary aa L",
+      "node": "Axillary_aa_L",
+      "asset": "./Axillary_aa_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-axillary-aa-r",
+      "label": "Axillary aa R",
+      "node": "Axillary_aa_R",
+      "asset": "./Axillary_aa_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-azygous-vv",
+      "label": "Azygous vv",
+      "node": "Azygous_vv",
+      "asset": "./Azygous_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-base",
+      "label": "Base",
+      "node": "Base",
+      "asset": "./Base.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-brachiocephalic-trunk",
+      "label": "Brachiocephalic trunk",
+      "node": "Brachiocephalic_trunk",
+      "asset": "./Brachiocephalic_trunk.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-brachiocephalic-vv-l",
+      "label": "Brachiocephalic vv L",
+      "node": "Brachiocephalic_vv_L",
+      "asset": "./Brachiocephalic_vv_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-braciocephalic-vv-r",
+      "label": "Braciocephalic vv R",
+      "node": "Braciocephalic_vv_R",
+      "asset": "./Braciocephalic_vv_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-caudal-vena-cava",
+      "label": "Caudal vena cava",
+      "node": "Caudal_vena_cava",
+      "asset": "./Caudal_vena_cava.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-common-carotid-l",
+      "label": "Common carotid L",
+      "node": "Common_carotid_L",
+      "asset": "./Common_carotid_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-common-carotid-r",
+      "label": "Common carotid R",
+      "node": "Common_carotid_R",
+      "asset": "./Common_carotid_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-costocervical-trunk-l",
+      "label": "Costocervical trunk L",
+      "node": "Costocervical_trunk_L",
+      "asset": "./Costocervical_trunk_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-costocervical-trunk-r",
+      "label": "Costocervical trunk R",
+      "node": "Costocervical_trunk_R",
+      "asset": "./Costocervical_trunk_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-costocervical-vv-l",
+      "label": "Costocervical vv L",
+      "node": "Costocervical_vv_L",
+      "asset": "./Costocervical_vv_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-costocervical-vv-r",
+      "label": "Costocervical vv R",
+      "node": "Costocervical_vv_R",
+      "asset": "./Costocervical_vv_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranvenacava",
+      "label": "CranVenaCava",
+      "node": "CranVenaCava",
+      "asset": "./CranVenaCava.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-external-jugular-l",
+      "label": "External jugular L",
+      "node": "External_jugular_L",
+      "asset": "./External_jugular_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-external-jugular-r",
+      "label": "External jugular R",
+      "node": "External_jugular_R",
+      "asset": "./External_jugular_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-internal-thoracic-aa-l",
+      "label": "Internal thoracic aa L",
+      "node": "Internal_thoracic_aa_L",
+      "asset": "./Internal_thoracic_aa_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-internal-thoracic-aa-r",
+      "label": "Internal thoracic aa R",
+      "node": "Internal_thoracic_aa_R",
+      "asset": "./Internal_thoracic_aa_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-internal-thoracic-veins",
+      "label": "Internal thoracic veins",
+      "node": "Internal_thoracic_veins",
+      "asset": "./Internal_thoracic_veins.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pulmonary-aa-l",
+      "label": "Pulmonary aa L",
+      "node": "Pulmonary_aa_L",
+      "asset": "./Pulmonary_aa_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pulmonary-aa-r",
+      "label": "Pulmonary aa R",
+      "node": "Pulmonary_aa_R",
+      "asset": "./Pulmonary_aa_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pulmonary-trunk",
+      "label": "Pulmonary trunk",
+      "node": "Pulmonary_trunk",
+      "asset": "./Pulmonary_trunk.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pulmonary-venous-vasc-l",
+      "label": "Pulmonary venous vasc L",
+      "node": "Pulmonary_venous_vasc_L",
+      "asset": "./Pulmonary_venous_vasc_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pulmonary-venous-vasc-r",
+      "label": "Pulmonary venous vasc R",
+      "node": "Pulmonary_venous_vasc_R",
+      "asset": "./Pulmonary_venous_vasc_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-subclavian-aa-l",
+      "label": "Subclavian aa L",
+      "node": "Subclavian_aa_L",
+      "asset": "./Subclavian_aa_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-subclavian-aa-r",
+      "label": "Subclavian aa R",
+      "node": "Subclavian_aa_R",
+      "asset": "./Subclavian_aa_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-subclavian-vv-l",
+      "label": "Subclavian vv L",
+      "node": "Subclavian_vv_L",
+      "asset": "./Subclavian_vv_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-subclavian-vv-r",
+      "label": "Subclavian vv R",
+      "node": "Subclavian_vv_R",
+      "asset": "./Subclavian_vv_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-superficial-cervical-aa-l",
+      "label": "Superficial cervical aa L",
+      "node": "Superficial_cervical_aa_L",
+      "asset": "./Superficial_cervical_aa_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-superficial-cervical-aa-r",
+      "label": "Superficial cervical aa R",
+      "node": "Superficial_cervical_aa_R",
+      "asset": "./Superficial_cervical_aa_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-toberenamed2",
+      "label": "TOBERENAMED2",
+      "node": "TOBERENAMED2",
+      "asset": "./TOBERENAMED2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vertebral-aa-l",
+      "label": "Vertebral aa L",
+      "node": "Vertebral_aa_L",
+      "asset": "./Vertebral_aa_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vertebral-aa-r",
+      "label": "Vertebral aa R",
+      "node": "Vertebral_aa_R",
+      "asset": "./Vertebral_aa_R.glb",
+      "region": "root"
+    }
+  ]
+}

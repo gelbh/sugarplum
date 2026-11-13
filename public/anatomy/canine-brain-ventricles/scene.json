@@ -1,0 +1,104 @@
+{
+  "id": "canine-brain-ventricles",
+  "title": "Canine brain ventricles",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-4dmax-specimens-canine-brain-dec25",
+      "label": "4DMax Specimens Canine Brain Dec25",
+      "node": "4DMax_Specimens_Canine_Brain_Dec25",
+      "asset": "./4DMax_Specimens_Canine_Brain_Dec25.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-central-canal",
+      "label": "Central canal",
+      "node": "Central_canal",
+      "asset": "./Central_canal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mesencephalic-aqueduct",
+      "label": "Mesencephalic aqueduct",
+      "node": "Mesencephalic_aqueduct",
+      "asset": "./Mesencephalic_aqueduct.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ventricle-1-l-caud-horn",
+      "label": "Ventricle 1 L caud horn",
+      "node": "Ventricle_1_L_caud_horn",
+      "asset": "./Ventricle_1_L_caud_horn.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ventricle-1-l-rost-horn",
+      "label": "Ventricle 1 L rost horn",
+      "node": "Ventricle_1_L_rost_horn",
+      "asset": "./Ventricle_1_L_rost_horn.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ventricle-1-l-vent-horn",
+      "label": "Ventricle 1 L vent horn",
+      "node": "Ventricle_1_L_vent_horn",
+      "asset": "./Ventricle_1_L_vent_horn.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ventricle-1-r-caud-horn",
+      "label": "Ventricle 1 R caud horn",
+      "node": "Ventricle_1_R_caud_horn",
+      "asset": "./Ventricle_1_R_caud_horn.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ventricle-1-r-rost-horn",
+      "label": "Ventricle 1 R rost horn",
+      "node": "Ventricle_1_R_rost_horn",
+      "asset": "./Ventricle_1_R_rost_horn.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ventricle-1-r-vent-horn",
+      "label": "Ventricle 1 R vent horn",
+      "node": "Ventricle_1_R_vent_horn",
+      "asset": "./Ventricle_1_R_vent_horn.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ventricle-3",
+      "label": "Ventricle 3",
+      "node": "Ventricle_3",
+      "asset": "./Ventricle_3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ventricle-4",
+      "label": "Ventricle 4",
+      "node": "Ventricle_4",
+      "asset": "./Ventricle_4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ventricle-4-lat-recess-l",
+      "label": "Ventricle 4 lat recess L",
+      "node": "Ventricle_4_lat_recess_L",
+      "asset": "./Ventricle_4_lat_recess_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ventricle-4-lat-recess-r",
+      "label": "Ventricle 4 lat recess R",
+      "node": "Ventricle_4_lat_recess_R",
+      "asset": "./Ventricle_4_lat_recess_R.glb",
+      "region": "root"
+    }
+  ]
+}

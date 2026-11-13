@@ -1,0 +1,230 @@
+{
+  "id": "canine-skull-bones",
+  "title": "Canine skull bones",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-basioccipital",
+      "label": "Basioccipital",
+      "node": "Basioccipital",
+      "asset": "./Basioccipital.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-basisphenoid",
+      "label": "Basisphenoid",
+      "node": "Basisphenoid",
+      "asset": "./Basisphenoid.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ethmoid-close-holes-filled-main",
+      "label": "Ethmoid close holes filled MAIN",
+      "node": "Ethmoid_close_holes_filled_MAIN",
+      "asset": "./Ethmoid_close_holes_filled_MAIN.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-exoccipital-l",
+      "label": "Exoccipital L",
+      "node": "Exoccipital_L",
+      "asset": "./Exoccipital_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-exoccipital-r",
+      "label": "Exoccipital R",
+      "node": "Exoccipital_R",
+      "asset": "./Exoccipital_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-frontal-l",
+      "label": "Frontal L",
+      "node": "Frontal_L",
+      "asset": "./Frontal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-frontal-r",
+      "label": "Frontal R",
+      "node": "Frontal_R",
+      "asset": "./Frontal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-incisive-l",
+      "label": "Incisive L",
+      "node": "Incisive_L",
+      "asset": "./Incisive_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-incisive-r",
+      "label": "Incisive R",
+      "node": "Incisive_R",
+      "asset": "./Incisive_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-interparietal",
+      "label": "Interparietal",
+      "node": "Interparietal",
+      "asset": "./Interparietal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lacrimal-l",
+      "label": "Lacrimal L",
+      "node": "Lacrimal_L",
+      "asset": "./Lacrimal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lacrimal-r",
+      "label": "Lacrimal R",
+      "node": "Lacrimal_R",
+      "asset": "./Lacrimal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-l",
+      "label": "Mandible L",
+      "node": "Mandible_L",
+      "asset": "./Mandible_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-r",
+      "label": "Mandible R",
+      "node": "Mandible_R",
+      "asset": "./Mandible_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-maxilla-l",
+      "label": "Maxilla L",
+      "node": "Maxilla_L",
+      "asset": "./Maxilla_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-maxilla-r",
+      "label": "Maxilla R",
+      "node": "Maxilla_R",
+      "asset": "./Maxilla_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nasal-bone-l",
+      "label": "Nasal bone L",
+      "node": "Nasal_bone_L",
+      "asset": "./Nasal_bone_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nasal-bone-r",
+      "label": "Nasal bone R",
+      "node": "Nasal_bone_R",
+      "asset": "./Nasal_bone_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-occipital-dorsal",
+      "label": "Occipital dorsal",
+      "node": "Occipital_dorsal",
+      "asset": "./Occipital_dorsal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-palatine-l",
+      "label": "Palatine L",
+      "node": "Palatine_L",
+      "asset": "./Palatine_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-palatine-r",
+      "label": "Palatine R",
+      "node": "Palatine_R",
+      "asset": "./Palatine_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-parietal-l",
+      "label": "Parietal L",
+      "node": "Parietal_L",
+      "asset": "./Parietal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-parietal-r",
+      "label": "Parietal R",
+      "node": "Parietal_R",
+      "asset": "./Parietal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-presphenoid",
+      "label": "Presphenoid",
+      "node": "Presphenoid",
+      "asset": "./Presphenoid.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pterygoid-l",
+      "label": "Pterygoid L",
+      "node": "Pterygoid_L",
+      "asset": "./Pterygoid_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pterygoid-r",
+      "label": "Pterygoid R",
+      "node": "Pterygoid_R",
+      "asset": "./Pterygoid_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-temporal-l",
+      "label": "Temporal L",
+      "node": "Temporal_L",
+      "asset": "./Temporal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-temporal-r",
+      "label": "Temporal R",
+      "node": "Temporal_R",
+      "asset": "./Temporal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vomer",
+      "label": "Vomer",
+      "node": "Vomer",
+      "asset": "./Vomer.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-zygomatic-l",
+      "label": "Zygomatic L",
+      "node": "Zygomatic_L",
+      "asset": "./Zygomatic_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-zygomatic-r",
+      "label": "Zygomatic R",
+      "node": "Zygomatic_R",
+      "asset": "./Zygomatic_R.glb",
+      "region": "root"
+    }
+  ]
+}
