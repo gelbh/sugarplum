@@ -51,7 +51,7 @@ export default function AnatomyHub() {
             Anatomy
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Interactive 3D osteology scenes.
+            Interactive 3D anatomy scenes.
           </Typography>
         </Box>
         <Stack spacing={1.5}>
@@ -59,7 +59,7 @@ export default function AnatomyHub() {
             <HubNavCard
               key={entry.id}
               title={entry.title}
-              blurb="Region-staged whole-animal osteology"
+              blurb={entry.blurb ?? "Region-staged whole-animal osteology"}
               icon={
                 SPECIES_ICON[entry.id] ?? (
                   <ViewInArOutlinedIcon aria-hidden />

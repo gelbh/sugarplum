@@ -1,0 +1,160 @@
+{
+  "id": "canine-eye-muscles",
+  "title": "Canine eye muscles",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-aas",
+      "label": "AAs",
+      "node": "AAs",
+      "asset": "./AAs.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-choroid-stroma",
+      "label": "Choroid stroma",
+      "node": "Choroid_stroma",
+      "asset": "./Choroid_stroma.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ciliary-body",
+      "label": "Ciliary body",
+      "node": "Ciliary_body",
+      "asset": "./Ciliary_body.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ciliary-processes",
+      "label": "Ciliary processes",
+      "node": "Ciliary_processes",
+      "asset": "./Ciliary_processes.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cornea",
+      "label": "Cornea",
+      "node": "Cornea",
+      "asset": "./Cornea.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-iris",
+      "label": "Iris",
+      "node": "Iris",
+      "asset": "./Iris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lens",
+      "label": "Lens",
+      "node": "Lens",
+      "asset": "./Lens.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-maxilla-lo",
+      "label": "Maxilla LO",
+      "node": "Maxilla_LO",
+      "asset": "./Maxilla_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-obliq-dors",
+      "label": "Obliq dors",
+      "node": "Obliq_dors",
+      "asset": "./Obliq_dors.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-obliq-vent",
+      "label": "Obliq vent",
+      "node": "Obliq_vent",
+      "asset": "./Obliq_vent.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-optic-nn",
+      "label": "Optic nn",
+      "node": "Optic_nn",
+      "asset": "./Optic_nn.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pre",
+      "label": "PRE",
+      "node": "PRE",
+      "asset": "./PRE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rect-dorsalis",
+      "label": "Rect dorsalis",
+      "node": "Rect_dorsalis",
+      "asset": "./Rect_dorsalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rect-lateralis",
+      "label": "Rect lateralis",
+      "node": "Rect_lateralis",
+      "asset": "./Rect_lateralis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rect-medialis",
+      "label": "Rect medialis",
+      "node": "Rect_medialis",
+      "asset": "./Rect_medialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rect-ventralis",
+      "label": "Rect ventralis",
+      "node": "Rect_ventralis",
+      "asset": "./Rect_ventralis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-retina",
+      "label": "Retina",
+      "node": "Retina",
+      "asset": "./Retina.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-retractor-bulbi",
+      "label": "Retractor bulbi",
+      "node": "Retractor_bulbi",
+      "asset": "./Retractor_bulbi.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sclera",
+      "label": "Sclera",
+      "node": "Sclera",
+      "asset": "./Sclera.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tapetum",
+      "label": "Tapetum",
+      "node": "Tapetum",
+      "asset": "./Tapetum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vvs",
+      "label": "VVs",
+      "node": "VVs",
+      "asset": "./VVs.glb",
+      "region": "root"
+    }
+  ]
+}

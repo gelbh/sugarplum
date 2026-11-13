@@ -1,0 +1,83 @@
+{
+  "id": "canine-heart-right-ventricle-removed",
+  "title": "Canine heart (RV removed)",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-canine-cardiac-chordae-tendinae-valve-leaflet",
+      "label": "canine cardiac chordae tendinae valve leaflet",
+      "node": "canine_cardiac_chordae_tendinae_valve_leaflet",
+      "asset": "./canine_cardiac_chordae_tendinae_valve_leaflet.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canine-cardiac-crista-terminalis",
+      "label": "canine cardiac crista terminalis",
+      "node": "canine_cardiac_crista_terminalis",
+      "asset": "./canine_cardiac_crista_terminalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canine-cardiac-fossa-ovalis",
+      "label": "canine cardiac fossa ovalis",
+      "node": "canine_cardiac_fossa_ovalis",
+      "asset": "./canine_cardiac_fossa_ovalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canine-cardiac-intervenous-tubercle",
+      "label": "canine cardiac intervenous tubercle",
+      "node": "canine_cardiac_intervenous_tubercle",
+      "asset": "./canine_cardiac_intervenous_tubercle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canine-cardiac-myocardium",
+      "label": "canine cardiac myocardium",
+      "node": "canine_cardiac_myocardium",
+      "asset": "./canine_cardiac_myocardium.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canine-cardiac-papillary-muscles",
+      "label": "canine cardiac papillary muscles",
+      "node": "canine_cardiac_papillary_muscles",
+      "asset": "./canine_cardiac_papillary_muscles.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canine-cardiac-pectinate-muscles",
+      "label": "canine cardiac pectinate muscles",
+      "node": "canine_cardiac_pectinate_muscles",
+      "asset": "./canine_cardiac_pectinate_muscles.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canine-cardiac-trabeculae",
+      "label": "canine cardiac trabeculae",
+      "node": "canine_cardiac_trabeculae",
+      "asset": "./canine_cardiac_trabeculae.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canine-cardiac-trabeculae-septomarginalis",
+      "label": "canine cardiac trabeculae septomarginalis",
+      "node": "canine_cardiac_trabeculae_septomarginalis",
+      "asset": "./canine_cardiac_trabeculae_septomarginalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canine-cardiac-valve-leaflet",
+      "label": "canine cardiac valve leaflet",
+      "node": "canine_cardiac_valve_leaflet",
+      "asset": "./canine_cardiac_valve_leaflet.glb",
+      "region": "root"
+    }
+  ]
+}
