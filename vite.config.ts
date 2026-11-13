@@ -63,6 +63,7 @@ export default defineConfig({
         globIgnores: [
           "**/*.wasm",
           "**/models/**",
+          "**/anatomy/**",
           "**/ort/**",
           "**/ocr/**",
           "**/wasm-inline*.js",

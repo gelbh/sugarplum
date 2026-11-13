@@ -7,6 +7,7 @@ import {
   Box3,
   Color,
   DirectionalLight,
+  Group,
   PerspectiveCamera,
   Raycaster,
   Scene,
@@ -17,26 +18,36 @@ import {
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import type { AnatomyStructure } from "./types";
 import { isStructureVisible, type StructureUiState } from "./structureState";
 
+export type AnatomyLoadSpec = {
+  structureId: string;
+  url: string;
+  node: string;
+};
+
 type Props = {
-  assetUrl: string;
-  structures: AnatomyStructure[];
+  loads: AnatomyLoadSpec[];
   ui: StructureUiState;
   onSelect: (id: string) => void;
 };
 
-export default function AnatomyCanvas({
-  assetUrl,
-  structures,
-  ui,
-  onSelect,
-}: Props) {
+function loadGltf(loader: GLTFLoader, url: string): Promise<Object3D> {
+  return new Promise((resolve, reject) => {
+    loader.load(
+      url,
+      (gltf) => resolve(gltf.scene),
+      undefined,
+      (err) => reject(err instanceof Error ? err : new Error(String(err))),
+    );
+  });
+}
+
+export default function AnatomyCanvas({ loads, ui, onSelect }: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const uiRef = useRef(ui);
   const onSelectRef = useRef(onSelect);
-  const structuresRef = useRef(structures);
+  const loadsRef = useRef(loads);
   const nodeMapRef = useRef<Map<string, Object3D>>(new Map());
   const idByNodeRef = useRef<Map<string, string>>(new Map());
   const applyVisibilityRef = useRef<() => void>(() => {});
@@ -50,8 +61,10 @@ export default function AnatomyCanvas({
     onSelectRef.current = onSelect;
   }, [onSelect]);
   useEffect(() => {
-    structuresRef.current = structures;
-  }, [structures]);
+    loadsRef.current = loads;
+  }, [loads]);
+
+  const loadsKey = loads.map((l) => `${l.structureId}:${l.url}`).join("|");
 
   useEffect(() => {
     const host = hostRef.current;
@@ -61,6 +74,8 @@ export default function AnatomyCanvas({
 
     const scene = new Scene();
     scene.background = new Color(0xf0f0f0);
+    const rootGroup = new Group();
+    scene.add(rootGroup);
 
     const camera = new PerspectiveCamera(45, 1, 0.01, 100);
     camera.position.set(2.2, 1.6, 2.8);
@@ -85,7 +100,6 @@ export default function AnatomyCanvas({
     const pointer = new Vector2();
 
     let disposed = false;
-    const root = { current: null as Object3D | null };
 
     const isEffectivelyVisible = (obj: Object3D) => {
       let cur: Object3D | null = obj;
@@ -98,17 +112,34 @@ export default function AnatomyCanvas({
 
     const applyVisibility = () => {
       const state = uiRef.current;
-      for (const s of structuresRef.current) {
-        const obj = nodeMapRef.current.get(s.node);
-        if (obj) obj.visible = isStructureVisible(state, s.id);
+      for (const [id, obj] of nodeMapRef.current) {
+        obj.visible = isStructureVisible(state, id);
       }
     };
     applyVisibilityRef.current = applyVisibility;
 
+    const fitCamera = () => {
+      if (nodeMapRef.current.size === 0) return;
+      const box = new Box3();
+      for (const obj of nodeMapRef.current.values()) {
+        box.expandByObject(obj);
+      }
+      if (box.isEmpty()) return;
+      const size = box.getSize(new Vector3()).length() || 1;
+      const center = box.getCenter(new Vector3());
+      controls.target.copy(center);
+      camera.position
+        .copy(center)
+        .add(new Vector3(size * 0.7, size * 0.45, size * 0.9));
+      camera.near = size / 100;
+      camera.far = size * 10;
+      camera.updateProjectionMatrix();
+      controls.update();
+    };
+
     const resize = () => {
       const w = Math.max(1, Math.floor(host.clientWidth));
       const h = Math.max(1, Math.floor(host.clientHeight));
-      // Cap buffer so a bad layout cannot explode the GPU canvas.
       const maxEdge = 4096;
       const bw = Math.min(w, maxEdge);
       const bh = Math.min(h, maxEdge);
@@ -133,9 +164,14 @@ export default function AnatomyCanvas({
       if (hits.length === 0) return;
       let obj: Object3D | null = hits[0].object;
       while (obj) {
-        const id = idByNodeRef.current.get(obj.name);
+        const id = idByNodeRef.current.get(obj.uuid);
         if (id) {
           onSelectRef.current(id);
+          return;
+        }
+        const byName = idByNodeRef.current.get(obj.name);
+        if (byName) {
+          onSelectRef.current(byName);
           return;
         }
         obj = obj.parent;
@@ -154,48 +190,54 @@ export default function AnatomyCanvas({
     });
 
     const loader = new GLTFLoader();
-    loader.load(
-      assetUrl,
-      (gltf) => {
-        if (disposed) return;
-        const model = gltf.scene;
-        root.current = model;
-        scene.add(model);
+    const specs = loadsRef.current;
+    const byUrl = new Map<string, AnatomyLoadSpec[]>();
+    for (const spec of specs) {
+      const list = byUrl.get(spec.url) ?? [];
+      list.push(spec);
+      byUrl.set(spec.url, list);
+    }
 
-        const map = new Map<string, Object3D>();
-        const idByNode = new Map<string, string>();
-        for (const s of structuresRef.current) {
-          idByNode.set(s.node, s.id);
-        }
-        model.traverse((obj) => {
-          if (idByNode.has(obj.name)) {
-            map.set(obj.name, obj);
+    void (async () => {
+      const results = await Promise.allSettled(
+        [...byUrl.entries()].map(async ([url, urlSpecs]) => {
+          const model = await loadGltf(loader, url);
+          if (disposed) return;
+          rootGroup.add(model);
+          for (const spec of urlSpecs) {
+            let root: Object3D = model;
+            let found: Object3D | null = null;
+            model.traverse((obj) => {
+              if (!found && obj.name === spec.node) found = obj;
+            });
+            if (found) root = found;
+            else if (urlSpecs.length === 1) {
+              model.name = spec.node || spec.structureId;
+              root = model;
+            } else {
+              throw new Error(`Missing node ${spec.node} in ${url}`);
+            }
+            nodeMapRef.current.set(spec.structureId, root);
+            idByNodeRef.current.set(root.uuid, spec.structureId);
+            if (root.name) {
+              idByNodeRef.current.set(root.name, spec.structureId);
+            }
           }
-        });
-        nodeMapRef.current = map;
-        idByNodeRef.current = idByNode;
-
-        const box = new Box3().setFromObject(model);
-        const size = box.getSize(new Vector3()).length() || 1;
-        const center = box.getCenter(new Vector3());
-        controls.target.copy(center);
-        camera.position
-          .copy(center)
-          .add(new Vector3(size * 0.7, size * 0.45, size * 0.9));
-        camera.near = size / 100;
-        camera.far = size * 10;
-        camera.updateProjectionMatrix();
-        controls.update();
-        applyVisibility();
-      },
-      undefined,
-      (err) => {
-        console.error("Anatomy glTF load failed", err);
-        if (!disposed) {
-          setLoadError("Could not load the 3D model.");
-        }
-      },
-    );
+          applyVisibility();
+        }),
+      );
+      if (disposed) return;
+      const failed = results.filter((r) => r.status === "rejected").length;
+      if (failed > 0) {
+        setLoadError(
+          failed === results.length
+            ? "Could not load the 3D models."
+            : `Loaded with ${failed} missing part${failed === 1 ? "" : "s"}.`,
+        );
+      }
+      applyVisibility();
+      fitCamera();
+    })();
 
     return () => {
       disposed = true;
@@ -204,19 +246,29 @@ export default function AnatomyCanvas({
       ro.disconnect();
       canvas.removeEventListener("pointerdown", onPointerDown);
       controls.dispose();
+      rootGroup.traverse((obj) => {
+        const mesh = obj as Object3D & {
+          geometry?: { dispose: () => void };
+          material?: { dispose: () => void } | Array<{ dispose: () => void }>;
+        };
+        mesh.geometry?.dispose();
+        const mat = mesh.material;
+        if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
+        else mat?.dispose();
+      });
       renderer.dispose();
       if (canvas.parentElement === host) {
         host.removeChild(canvas);
       }
-      if (root.current) scene.remove(root.current);
+      scene.remove(rootGroup);
       nodeMapRef.current = new Map();
       idByNodeRef.current = new Map();
     };
-  }, [assetUrl, retryToken]);
+  }, [loadsKey, retryToken]);
 
   useEffect(() => {
     applyVisibilityRef.current();
-  }, [ui, structures]);
+  }, [ui, loadsKey]);
 
   return (
     <Box
