@@ -1,0 +1,615 @@
+{
+  "id": "bovine-skeleton",
+  "title": "Bovine skeleton",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-b-c1-lo",
+      "label": "b C1 LO",
+      "node": "b_C1_LO",
+      "asset": "./b_C1_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-c2-lo",
+      "label": "b C2 LO",
+      "node": "b_C2_LO",
+      "asset": "./b_C2_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-c3-lo",
+      "label": "b C3 LO",
+      "node": "b_C3_LO",
+      "asset": "./b_C3_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-c4-lo",
+      "label": "b C4 LO",
+      "node": "b_C4_LO",
+      "asset": "./b_C4_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-c5-lo",
+      "label": "b C5 LO",
+      "node": "b_C5_LO",
+      "asset": "./b_C5_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-c6-lo",
+      "label": "b C6 LO",
+      "node": "b_C6_LO",
+      "asset": "./b_C6_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-c7-lo",
+      "label": "b C7 LO",
+      "node": "b_C7_LO",
+      "asset": "./b_C7_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-calcaneus-l-lo",
+      "label": "b calcaneus L LO",
+      "node": "b_calcaneus_L_LO",
+      "asset": "./b_calcaneus_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-carpals-2-3-l-lo",
+      "label": "b carpals 2 3 L LO",
+      "node": "b_carpals_2_3_L_LO",
+      "asset": "./b_carpals_2_3_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-carpals-4-l-lo",
+      "label": "b carpals 4 L LO",
+      "node": "b_carpals_4_L_LO",
+      "asset": "./b_carpals_4_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-carpals-accessory-l-lo",
+      "label": "b carpals accessory L LO",
+      "node": "b_carpals_accessory_L_LO",
+      "asset": "./b_carpals_accessory_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-carpals-intermediate-l-lo",
+      "label": "b carpals intermediate L LO",
+      "node": "b_carpals_intermediate_L_LO",
+      "asset": "./b_carpals_intermediate_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-carpals-radial-l-lo",
+      "label": "b carpals radial L LO",
+      "node": "b_carpals_radial_L_LO",
+      "asset": "./b_carpals_radial_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-carpals-ulnar-l-lo",
+      "label": "b carpals ulnar L LO",
+      "node": "b_carpals_ulnar_L_LO",
+      "asset": "./b_carpals_ulnar_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-cartilage-costal-lo",
+      "label": "b cartilage costal LO",
+      "node": "b_cartilage_costal_LO",
+      "asset": "./b_cartilage_costal_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-cranium-lo",
+      "label": "b cranium LO",
+      "node": "b_cranium_LO",
+      "asset": "./b_cranium_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-femur-l-lo",
+      "label": "b femur L LO",
+      "node": "b_femur_L_LO",
+      "asset": "./b_femur_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-fibula-hl-l-lo",
+      "label": "b fibula HL L LO",
+      "node": "b_fibula_HL_L_LO",
+      "asset": "./b_fibula_HL_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-fl-p1-l-lo",
+      "label": "b FL P1 L LO",
+      "node": "b_FL_P1_L_LO",
+      "asset": "./b_FL_P1_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-fl-p2-l-lo",
+      "label": "b FL P2 L LO",
+      "node": "b_FL_P2_L_LO",
+      "asset": "./b_FL_P2_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-fl-p3-l-lo",
+      "label": "b FL P3 L LO",
+      "node": "b_FL_P3_L_LO",
+      "asset": "./b_FL_P3_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-hl-p1-l-lo",
+      "label": "b HL P1 L LO",
+      "node": "b_HL_P1_L_LO",
+      "asset": "./b_HL_P1_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-hl-p2-l-lo",
+      "label": "b HL P2 L LO",
+      "node": "b_HL_P2_L_LO",
+      "asset": "./b_HL_P2_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-hl-p3-l-lo",
+      "label": "b HL P3 L LO",
+      "node": "b_HL_P3_L_LO",
+      "asset": "./b_HL_P3_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-hl-sesamoid-distal-l-lo",
+      "label": "b HL sesamoid distal L LO",
+      "node": "b_HL_sesamoid_distal_L_LO",
+      "asset": "./b_HL_sesamoid_distal_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-hl-sesamoid-proximal-l-lo",
+      "label": "b HL sesamoid proximal L LO",
+      "node": "b_HL_sesamoid_proximal_L_LO",
+      "asset": "./b_HL_sesamoid_proximal_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-humerus-l-lo",
+      "label": "b humerus L LO",
+      "node": "b_humerus_L_LO",
+      "asset": "./b_humerus_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-l1-lo",
+      "label": "b L1 LO",
+      "node": "b_L1_LO",
+      "asset": "./b_L1_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-l2-lo",
+      "label": "b L2 LO",
+      "node": "b_L2_LO",
+      "asset": "./b_L2_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-l3-lo",
+      "label": "b L3 LO",
+      "node": "b_L3_LO",
+      "asset": "./b_L3_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-l4-lo",
+      "label": "b L4 LO",
+      "node": "b_L4_LO",
+      "asset": "./b_L4_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-l5-lo",
+      "label": "b L5 LO",
+      "node": "b_L5_LO",
+      "asset": "./b_L5_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-l6-lo",
+      "label": "b L6 LO",
+      "node": "b_L6_LO",
+      "asset": "./b_L6_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-mandible-lo",
+      "label": "b mandible LO",
+      "node": "b_mandible_LO",
+      "asset": "./b_mandible_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-metacarpal-l-lo",
+      "label": "b metacarpal L LO",
+      "node": "b_metacarpal_L_LO",
+      "asset": "./b_metacarpal_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-metatarsal-l-lo",
+      "label": "b metatarsal L LO",
+      "node": "b_metatarsal_L_LO",
+      "asset": "./b_metatarsal_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-patella-l-lo",
+      "label": "b patella L LO",
+      "node": "b_patella_L_LO",
+      "asset": "./b_patella_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-pelvis-lo",
+      "label": "b pelvis LO",
+      "node": "b_pelvis_LO",
+      "asset": "./b_pelvis_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-radius-ulna-l-lo",
+      "label": "b radius ulna L LO",
+      "node": "b_radius_ulna_L_LO",
+      "asset": "./b_radius_ulna_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-ribcage-lo",
+      "label": "b ribcage LO",
+      "node": "b_ribcage_LO",
+      "asset": "./b_ribcage_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-sacrum-lo",
+      "label": "b sacrum LO",
+      "node": "b_sacrum_LO",
+      "asset": "./b_sacrum_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-scapula-l-lo",
+      "label": "b scapula L LO",
+      "node": "b_scapula_L_LO",
+      "asset": "./b_scapula_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-sesamoid-fl-navicular-l-lo",
+      "label": "b sesamoid FL navicular L LO",
+      "node": "b_sesamoid_FL_navicular_L_LO",
+      "asset": "./b_sesamoid_FL_navicular_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-sesamoid-fl-proximal-l-lo",
+      "label": "b sesamoid FL proximal L LO",
+      "node": "b_sesamoid_FL_proximal_L_LO",
+      "asset": "./b_sesamoid_FL_proximal_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-sternum-lo",
+      "label": "b sternum LO",
+      "node": "b_sternum_LO",
+      "asset": "./b_sternum_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-t1-lo",
+      "label": "b T1 LO",
+      "node": "b_T1_LO",
+      "asset": "./b_T1_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-t10-lo",
+      "label": "b T10 LO",
+      "node": "b_T10_LO",
+      "asset": "./b_T10_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-t11-lo",
+      "label": "b T11 LO",
+      "node": "b_T11_LO",
+      "asset": "./b_T11_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-t12-lo",
+      "label": "b T12 LO",
+      "node": "b_T12_LO",
+      "asset": "./b_T12_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-t13-lo",
+      "label": "b T13 LO",
+      "node": "b_T13_LO",
+      "asset": "./b_T13_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-t2-lo",
+      "label": "b T2 LO",
+      "node": "b_T2_LO",
+      "asset": "./b_T2_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-t3-lo",
+      "label": "b T3 LO",
+      "node": "b_T3_LO",
+      "asset": "./b_T3_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-t4-lo",
+      "label": "b T4 LO",
+      "node": "b_T4_LO",
+      "asset": "./b_T4_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-t5-lo",
+      "label": "b T5 LO",
+      "node": "b_T5_LO",
+      "asset": "./b_T5_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-t6-lo",
+      "label": "b T6 LO",
+      "node": "b_T6_LO",
+      "asset": "./b_T6_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-t7-lo",
+      "label": "b T7 LO",
+      "node": "b_T7_LO",
+      "asset": "./b_T7_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-t8-lo",
+      "label": "b T8 LO",
+      "node": "b_T8_LO",
+      "asset": "./b_T8_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-t9-lo",
+      "label": "b T9 LO",
+      "node": "b_T9_LO",
+      "asset": "./b_T9_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-talus-l-lo",
+      "label": "b talus L LO",
+      "node": "b_talus_L_LO",
+      "asset": "./b_talus_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-tarsal-1-l-lo",
+      "label": "b tarsal 1 L LO",
+      "node": "b_tarsal_1_L_LO",
+      "asset": "./b_tarsal_1_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-tarsal-2-3-l-lo",
+      "label": "b tarsal 2 3 L LO",
+      "node": "b_tarsal_2_3_L_LO",
+      "asset": "./b_tarsal_2_3_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-tarsal-central-4-l-lo",
+      "label": "b tarsal central 4 L LO",
+      "node": "b_tarsal_central_4_L_LO",
+      "asset": "./b_tarsal_central_4_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-tibia-l-lo",
+      "label": "b tibia L LO",
+      "node": "b_tibia_L_LO",
+      "asset": "./b_tibia_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-vertebrae-caud-lo",
+      "label": "b vertebrae caud LO",
+      "node": "b_vertebrae_caud_LO",
+      "asset": "./b_vertebrae_caud_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-bovine-skeleton-cow-repro-tract",
+      "label": "bovine skeleton cow repro tract",
+      "node": "bovine_skeleton_cow_repro_tract",
+      "asset": "./bovine_skeleton_cow_repro_tract.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cart-scapular-l-lo",
+      "label": "cart scapular L LO",
+      "node": "cart_scapular_L_LO",
+      "asset": "./cart_scapular_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hooves-fl-001-lo",
+      "label": "hooves FL 001 LO",
+      "node": "hooves_FL_001_LO",
+      "asset": "./hooves_FL_001_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hooves-fl-lo",
+      "label": "hooves FL LO",
+      "node": "hooves_FL_LO",
+      "asset": "./hooves_FL_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-canine-lo",
+      "label": "L mand canine LO",
+      "node": "L_mand_canine_LO",
+      "asset": "./L_mand_canine_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-i1-lo",
+      "label": "L mand I1 LO",
+      "node": "L_mand_I1_LO",
+      "asset": "./L_mand_I1_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-i2-lo",
+      "label": "L mand I2 LO",
+      "node": "L_mand_I2_LO",
+      "asset": "./L_mand_I2_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-i3-lo",
+      "label": "L mand I3 LO",
+      "node": "L_mand_I3_LO",
+      "asset": "./L_mand_I3_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-m1-lo",
+      "label": "L mand M1 LO",
+      "node": "L_mand_M1_LO",
+      "asset": "./L_mand_M1_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-m2-lo",
+      "label": "L mand M2 LO",
+      "node": "L_mand_M2_LO",
+      "asset": "./L_mand_M2_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-m3-lo",
+      "label": "L mand M3 LO",
+      "node": "L_mand_M3_LO",
+      "asset": "./L_mand_M3_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-p2-lo",
+      "label": "L mand P2 LO",
+      "node": "L_mand_P2_LO",
+      "asset": "./L_mand_P2_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-p3-lo",
+      "label": "L mand P3 LO",
+      "node": "L_mand_P3_LO",
+      "asset": "./L_mand_P3_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-p4-lo",
+      "label": "L mand P4 LO",
+      "node": "L_mand_P4_LO",
+      "asset": "./L_mand_P4_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-nuchal-lo",
+      "label": "lig nuchal LO",
+      "node": "lig_nuchal_LO",
+      "asset": "./lig_nuchal_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-sacrosciatic-l-lo",
+      "label": "lig sacrosciatic L LO",
+      "node": "lig_sacrosciatic_L_LO",
+      "asset": "./lig_sacrosciatic_L_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-m1-lo",
+      "label": "R max M1 LO",
+      "node": "R_max_M1_LO",
+      "asset": "./R_max_M1_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-m2-lo",
+      "label": "R max M2 LO",
+      "node": "R_max_M2_LO",
+      "asset": "./R_max_M2_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-m3-lo",
+      "label": "R max M3 LO",
+      "node": "R_max_M3_LO",
+      "asset": "./R_max_M3_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-pm2-lo",
+      "label": "R max PM2 LO",
+      "node": "R_max_PM2_LO",
+      "asset": "./R_max_PM2_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-pm3-lo",
+      "label": "R max PM3 LO",
+      "node": "R_max_PM3_LO",
+      "asset": "./R_max_PM3_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-pm4-lo",
+      "label": "R max PM4 LO",
+      "node": "R_max_PM4_LO",
+      "asset": "./R_max_PM4_LO.glb",
+      "region": "root"
+    }
+  ]
+}

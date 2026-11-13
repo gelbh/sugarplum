@@ -1,0 +1,48 @@
+{
+  "id": "goat-stomachs-individual",
+  "title": "Goat stomachs individual",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-goat",
+      "label": "goat",
+      "node": "goat",
+      "asset": "./goat.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-goat-abomasum-low",
+      "label": "Goat abomasum low",
+      "node": "Goat_abomasum_low",
+      "asset": "./Goat_abomasum_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-goat-omasum-low",
+      "label": "Goat omasum low",
+      "node": "Goat_omasum_low",
+      "asset": "./Goat_omasum_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-goat-reticulum-low",
+      "label": "Goat reticulum low",
+      "node": "Goat_reticulum_low",
+      "asset": "./Goat_reticulum_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-goat-rumen-low",
+      "label": "Goat rumen low",
+      "node": "Goat_rumen_low",
+      "asset": "./Goat_rumen_low.glb",
+      "region": "root"
+    }
+  ]
+}

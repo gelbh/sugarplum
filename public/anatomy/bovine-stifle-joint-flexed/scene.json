@@ -1,0 +1,181 @@
+{
+  "id": "bovine-stifle-joint-flexed",
+  "title": "Bovine stifle joint flexed",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-eq-stifle-filler",
+      "label": "eq stifle filler",
+      "node": "eq_stifle_filler",
+      "asset": "./eq_stifle_filler.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-lat-condyle",
+      "label": "femur lat condyle",
+      "node": "femur_lat_condyle",
+      "asset": "./femur_lat_condyle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-lateral-ridge-trochlea",
+      "label": "femur lateral ridge trochlea",
+      "node": "femur_lateral_ridge_trochlea",
+      "asset": "./femur_lateral_ridge_trochlea.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-med-condyle",
+      "label": "femur med condyle",
+      "node": "femur_med_condyle",
+      "asset": "./femur_med_condyle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-medial-ridge-trochlea",
+      "label": "femur medial ridge trochlea",
+      "node": "femur_medial_ridge_trochlea",
+      "asset": "./femur_medial_ridge_trochlea.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-group26139",
+      "label": "Group26139",
+      "node": "Group26139",
+      "asset": "./Group26139.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-group38351",
+      "label": "Group38351",
+      "node": "Group38351",
+      "asset": "./Group38351.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-group53824",
+      "label": "Group53824",
+      "node": "Group53824",
+      "asset": "./Group53824.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-group65484",
+      "label": "Group65484",
+      "node": "Group65484",
+      "asset": "./Group65484.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-caudal-cruciate",
+      "label": "lig caudal cruciate",
+      "node": "lig_caudal_cruciate",
+      "asset": "./lig_caudal_cruciate.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-caudolateral-meniscotibial",
+      "label": "lig caudolateral meniscotibial",
+      "node": "lig_caudolateral_meniscotibial",
+      "asset": "./lig_caudolateral_meniscotibial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-cranial-cruciate",
+      "label": "lig cranial cruciate",
+      "node": "lig_cranial_cruciate",
+      "asset": "./lig_cranial_cruciate.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-craniolateral-meniscotibial",
+      "label": "lig craniolateral meniscotibial",
+      "node": "lig_craniolateral_meniscotibial",
+      "asset": "./lig_craniolateral_meniscotibial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-craniomedial-meniscotibiscal",
+      "label": "lig craniomedial meniscotibiscal",
+      "node": "lig_craniomedial_meniscotibiscal",
+      "asset": "./lig_craniomedial_meniscotibiscal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-intermediate-patellar",
+      "label": "lig intermediate patellar",
+      "node": "lig_intermediate_patellar",
+      "asset": "./lig_intermediate_patellar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-lat-collateral",
+      "label": "lig lat collateral",
+      "node": "lig_lat_collateral",
+      "asset": "./lig_lat_collateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-lateral-patellar",
+      "label": "lig lateral patellar",
+      "node": "lig_lateral_patellar",
+      "asset": "./lig_lateral_patellar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-medial-collateral",
+      "label": "lig medial collateral",
+      "node": "lig_medial_collateral",
+      "asset": "./lig_medial_collateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-meniscofemoral",
+      "label": "ligament meniscofemoral",
+      "node": "ligament_meniscofemoral",
+      "asset": "./ligament_meniscofemoral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-meniscus-lateral",
+      "label": "meniscus lateral",
+      "node": "meniscus_lateral",
+      "asset": "./meniscus_lateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-meniscus-medial",
+      "label": "meniscus medial",
+      "node": "meniscus_medial",
+      "asset": "./meniscus_medial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tib-lat-condyle",
+      "label": "tib lat condyle",
+      "node": "tib_lat_condyle",
+      "asset": "./tib_lat_condyle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tib-tibial-tuberosity",
+      "label": "tib tibial tuberosity",
+      "node": "tib_tibial_tuberosity",
+      "asset": "./tib_tibial_tuberosity.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-med-condyle",
+      "label": "tibia med condyle",
+      "node": "tibia_med_condyle",
+      "asset": "./tibia_med_condyle.glb",
+      "region": "root"
+    }
+  ]
+}

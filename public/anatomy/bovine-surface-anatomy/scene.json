@@ -1,0 +1,286 @@
+{
+  "id": "bovine-surface-anatomy",
+  "title": "Bovine surface anatomy",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-bodi003",
+      "label": "bodi003",
+      "node": "bodi003",
+      "asset": "./bodi003.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-bridge-of-nose",
+      "label": "bridge of nose",
+      "node": "bridge_of_nose",
+      "asset": "./bridge_of_nose.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-brisket",
+      "label": "brisket",
+      "node": "brisket",
+      "asset": "./brisket.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cow-body",
+      "label": "cow body",
+      "node": "cow_body",
+      "asset": "./cow_body.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cow-shells-split",
+      "label": "cow shells split",
+      "node": "cow_shells_split",
+      "asset": "./cow_shells_split.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-details-eye",
+      "label": "details eye",
+      "node": "details_eye",
+      "asset": "./details_eye.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-details-eye2",
+      "label": "details eye2",
+      "node": "details_eye2",
+      "asset": "./details_eye2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dewlap",
+      "label": "dewlap",
+      "node": "dewlap",
+      "asset": "./dewlap.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eye",
+      "label": "eye",
+      "node": "eye",
+      "asset": "./eye.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eye-glass",
+      "label": "eye glass",
+      "node": "eye_glass",
+      "asset": "./eye_glass.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-greater-trochanter",
+      "label": "femur greater trochanter",
+      "node": "femur_greater_trochanter",
+      "asset": "./femur_greater_trochanter.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-flank",
+      "label": "flank",
+      "node": "flank",
+      "asset": "./flank.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fore-teats",
+      "label": "fore teats",
+      "node": "fore_teats",
+      "asset": "./fore_teats.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fore-udder",
+      "label": "fore udder",
+      "node": "fore_udder",
+      "asset": "./fore_udder.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-forearm",
+      "label": "forearm",
+      "node": "forearm",
+      "asset": "./forearm.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-forehead",
+      "label": "forehead",
+      "node": "forehead",
+      "asset": "./forehead.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-foreshank-metacarpus",
+      "label": "foreshank metacarpus",
+      "node": "foreshank_metacarpus",
+      "asset": "./foreshank_metacarpus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hind-teats",
+      "label": "hind teats",
+      "node": "hind_teats",
+      "asset": "./hind_teats.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hind-udder",
+      "label": "hind udder",
+      "node": "hind_udder",
+      "asset": "./hind_udder.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hindshank-metatarsus",
+      "label": "hindshank metatarsus",
+      "node": "hindshank_metatarsus",
+      "asset": "./hindshank_metatarsus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hip-hook",
+      "label": "hip hook",
+      "node": "hip_hook",
+      "asset": "./hip_hook.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hooves",
+      "label": "hooves",
+      "node": "hooves",
+      "asset": "./hooves.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hooves-1",
+      "label": "hooves 1",
+      "node": "hooves_1",
+      "asset": "./hooves_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-jugular-groove",
+      "label": "jugular groove",
+      "node": "jugular_groove",
+      "asset": "./jugular_groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-knees-carpus",
+      "label": "knees carpus",
+      "node": "knees_carpus",
+      "asset": "./knees_carpus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lung-fields",
+      "label": "lung fields",
+      "node": "lung_fields",
+      "asset": "./lung_fields.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-muzzle",
+      "label": "muzzle",
+      "node": "muzzle",
+      "asset": "./muzzle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-paralumbar-fossa",
+      "label": "paralumbar fossa",
+      "node": "paralumbar_fossa",
+      "asset": "./paralumbar_fossa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pasterns",
+      "label": "pasterns",
+      "node": "pasterns",
+      "asset": "./pasterns.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pin-bone",
+      "label": "pin bone",
+      "node": "pin_bone",
+      "asset": "./pin_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pinna",
+      "label": "pinna",
+      "node": "pinna",
+      "asset": "./pinna.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-point-of-hock",
+      "label": "point of hock",
+      "node": "point_of_hock",
+      "asset": "./point_of_hock.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-point-of-shoulder",
+      "label": "point of shoulder",
+      "node": "point_of_shoulder",
+      "asset": "./point_of_shoulder.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-poll",
+      "label": "poll",
+      "node": "poll",
+      "asset": "./poll.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-stifle",
+      "label": "stifle",
+      "node": "stifle",
+      "asset": "./stifle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tail-head",
+      "label": "tail head",
+      "node": "tail_head",
+      "asset": "./tail_head.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-thurl",
+      "label": "thurl",
+      "node": "thurl",
+      "asset": "./thurl.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-water-drops",
+      "label": "water drops",
+      "node": "water_drops",
+      "asset": "./water_drops.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-withers",
+      "label": "withers",
+      "node": "withers",
+      "asset": "./withers.glb",
+      "region": "root"
+    }
+  ]
+}
