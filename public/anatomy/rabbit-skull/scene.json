@@ -1,0 +1,237 @@
+{
+  "id": "rabbit-skull",
+  "title": "Rabbit skull",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-mandible-l-low",
+      "label": "MANDIBLE L low",
+      "node": "MANDIBLE_L_low",
+      "asset": "./MANDIBLE_L_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-r-low",
+      "label": "MANDIBLE R low",
+      "node": "MANDIBLE_R_low",
+      "asset": "./MANDIBLE_R_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-skull-l-low",
+      "label": "SKULL L low",
+      "node": "SKULL_L_low",
+      "asset": "./SKULL_L_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-skull-r-low",
+      "label": "SKULL R low",
+      "node": "SKULL_R_low",
+      "asset": "./SKULL_R_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-101-low",
+      "label": "tooth rabbit 101 low",
+      "node": "tooth_rabbit_101_low",
+      "asset": "./tooth_rabbit_101_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-102-low",
+      "label": "tooth rabbit 102 low",
+      "node": "tooth_rabbit_102_low",
+      "asset": "./tooth_rabbit_102_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-106-low",
+      "label": "tooth rabbit 106 low",
+      "node": "tooth_rabbit_106_low",
+      "asset": "./tooth_rabbit_106_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-107-low",
+      "label": "tooth rabbit 107 low",
+      "node": "tooth_rabbit_107_low",
+      "asset": "./tooth_rabbit_107_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-108-low",
+      "label": "tooth rabbit 108 low",
+      "node": "tooth_rabbit_108_low",
+      "asset": "./tooth_rabbit_108_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-109-low",
+      "label": "tooth rabbit 109 low",
+      "node": "tooth_rabbit_109_low",
+      "asset": "./tooth_rabbit_109_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-110-low",
+      "label": "tooth rabbit 110 low",
+      "node": "tooth_rabbit_110_low",
+      "asset": "./tooth_rabbit_110_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-111-low",
+      "label": "tooth rabbit 111 low",
+      "node": "tooth_rabbit_111_low",
+      "asset": "./tooth_rabbit_111_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-201-low",
+      "label": "tooth rabbit 201 low",
+      "node": "tooth_rabbit_201_low",
+      "asset": "./tooth_rabbit_201_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-202-low",
+      "label": "tooth rabbit 202 low",
+      "node": "tooth_rabbit_202_low",
+      "asset": "./tooth_rabbit_202_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-206-low",
+      "label": "tooth rabbit 206 low",
+      "node": "tooth_rabbit_206_low",
+      "asset": "./tooth_rabbit_206_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-207-low",
+      "label": "tooth rabbit 207 low",
+      "node": "tooth_rabbit_207_low",
+      "asset": "./tooth_rabbit_207_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-208-low",
+      "label": "tooth rabbit 208 low",
+      "node": "tooth_rabbit_208_low",
+      "asset": "./tooth_rabbit_208_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-209-low",
+      "label": "tooth rabbit 209 low",
+      "node": "tooth_rabbit_209_low",
+      "asset": "./tooth_rabbit_209_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-210-low",
+      "label": "tooth rabbit 210 low",
+      "node": "tooth_rabbit_210_low",
+      "asset": "./tooth_rabbit_210_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-211-low",
+      "label": "tooth rabbit 211 low",
+      "node": "tooth_rabbit_211_low",
+      "asset": "./tooth_rabbit_211_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-301-low",
+      "label": "tooth rabbit 301 low",
+      "node": "tooth_rabbit_301_low",
+      "asset": "./tooth_rabbit_301_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-307-low",
+      "label": "tooth rabbit 307 low",
+      "node": "tooth_rabbit_307_low",
+      "asset": "./tooth_rabbit_307_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-308-low",
+      "label": "tooth rabbit 308 low",
+      "node": "tooth_rabbit_308_low",
+      "asset": "./tooth_rabbit_308_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-309-low",
+      "label": "tooth rabbit 309 low",
+      "node": "tooth_rabbit_309_low",
+      "asset": "./tooth_rabbit_309_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-310-low",
+      "label": "tooth rabbit 310 low",
+      "node": "tooth_rabbit_310_low",
+      "asset": "./tooth_rabbit_310_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-311-low",
+      "label": "tooth rabbit 311 low",
+      "node": "tooth_rabbit_311_low",
+      "asset": "./tooth_rabbit_311_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-401-low",
+      "label": "tooth rabbit 401 low",
+      "node": "tooth_rabbit_401_low",
+      "asset": "./tooth_rabbit_401_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-407-low",
+      "label": "tooth rabbit 407 low",
+      "node": "tooth_rabbit_407_low",
+      "asset": "./tooth_rabbit_407_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-408-low",
+      "label": "tooth rabbit 408 low",
+      "node": "tooth_rabbit_408_low",
+      "asset": "./tooth_rabbit_408_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-409-low",
+      "label": "tooth rabbit 409 low",
+      "node": "tooth_rabbit_409_low",
+      "asset": "./tooth_rabbit_409_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-410-low",
+      "label": "tooth rabbit 410 low",
+      "node": "tooth_rabbit_410_low",
+      "asset": "./tooth_rabbit_410_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tooth-rabbit-411-low",
+      "label": "tooth rabbit 411 low",
+      "node": "tooth_rabbit_411_low",
+      "asset": "./tooth_rabbit_411_low.glb",
+      "region": "root"
+    }
+  ]
+}
