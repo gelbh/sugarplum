@@ -1,0 +1,174 @@
+{
+  "id": "canine-hindlimb-musculature-scan",
+  "title": "Canine hindlimb musculature scan",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-adductor-longus",
+      "label": "Adductor longus",
+      "node": "Adductor_longus",
+      "asset": "./Adductor_longus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-adductor-magnus-et-brevis",
+      "label": "Adductor magnus et brevis",
+      "node": "Adductor_magnus_et_brevis",
+      "asset": "./Adductor_magnus_et_brevis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-biceps-femoris",
+      "label": "Biceps femoris",
+      "node": "Biceps_femoris",
+      "asset": "./Biceps_femoris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-common-calcaneal-tendon",
+      "label": "Common calcaneal tendon",
+      "node": "Common_calcaneal_tendon",
+      "asset": "./Common_calcaneal_tendon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranial-tibial",
+      "label": "Cranial tibial",
+      "node": "Cranial_tibial",
+      "asset": "./Cranial_tibial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-epaxials",
+      "label": "Epaxials",
+      "node": "Epaxials",
+      "asset": "./Epaxials.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fibularis-longus",
+      "label": "Fibularis longus",
+      "node": "Fibularis_longus",
+      "asset": "./Fibularis_longus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gastrocnemius",
+      "label": "Gastrocnemius",
+      "node": "Gastrocnemius",
+      "asset": "./Gastrocnemius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gracilis",
+      "label": "Gracilis",
+      "node": "Gracilis",
+      "asset": "./Gracilis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-internal-obturator",
+      "label": "Internal obturator",
+      "node": "Internal_obturator",
+      "asset": "./Internal_obturator.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lateral-digital-flexor",
+      "label": "Lateral digital flexor",
+      "node": "Lateral_digital_flexor",
+      "asset": "./Lateral_digital_flexor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-long-digital-extensor",
+      "label": "Long digital extensor",
+      "node": "Long_digital_extensor",
+      "asset": "./Long_digital_extensor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-longissimus-dorsi",
+      "label": "Longissimus dorsi",
+      "node": "Longissimus_dorsi",
+      "asset": "./Longissimus_dorsi.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-gluteal-muscle",
+      "label": "Middle gluteal muscle",
+      "node": "Middle_gluteal_muscle",
+      "asset": "./Middle_gluteal_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-psoas-major-start",
+      "label": "Psoas major start",
+      "node": "Psoas_major_start",
+      "asset": "./Psoas_major_start.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sartorius-caudal",
+      "label": "Sartorius caudal",
+      "node": "Sartorius_caudal",
+      "asset": "./Sartorius_caudal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sartorius-cranial",
+      "label": "Sartorius cranial",
+      "node": "Sartorius_cranial",
+      "asset": "./Sartorius_cranial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-semimembranosus",
+      "label": "Semimembranosus",
+      "node": "Semimembranosus",
+      "asset": "./Semimembranosus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-semitendinosus",
+      "label": "Semitendinosus",
+      "node": "Semitendinosus",
+      "asset": "./Semitendinosus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-superficial-gluteal",
+      "label": "Superficial gluteal",
+      "node": "Superficial_gluteal",
+      "asset": "./Superficial_gluteal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tensor-fascia-latae",
+      "label": "Tensor fascia latae",
+      "node": "Tensor_fascia_latae",
+      "asset": "./Tensor_fascia_latae.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vastus-lateralis",
+      "label": "Vastus lateralis",
+      "node": "Vastus_lateralis",
+      "asset": "./Vastus_lateralis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-zbrushpolymesh3d",
+      "label": "ZBrushPolyMesh3D",
+      "node": "ZBrushPolyMesh3D",
+      "asset": "./ZBrushPolyMesh3D.glb",
+      "region": "root"
+    }
+  ]
+}

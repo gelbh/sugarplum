@@ -1,0 +1,755 @@
+{
+  "id": "canine-hindlimb-bony-landmarks",
+  "title": "Canine hindlimb bony landmarks",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-calcaneus-articular-surfaces",
+      "label": "Calcaneus articular surfaces",
+      "node": "Calcaneus_articular_surfaces",
+      "asset": "./Calcaneus_articular_surfaces.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-calcaneus-l",
+      "label": "calcaneus L",
+      "node": "calcaneus_L",
+      "asset": "./calcaneus_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-calcaneus-lateral-process",
+      "label": "Calcaneus lateral process",
+      "node": "Calcaneus_lateral_process",
+      "asset": "./Calcaneus_lateral_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-calcaneus-medial-process",
+      "label": "Calcaneus medial process",
+      "node": "Calcaneus_medial_process",
+      "asset": "./Calcaneus_medial_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-calcaneus-sustentaculum-tali",
+      "label": "Calcaneus sustentaculum tali",
+      "node": "Calcaneus_sustentaculum_tali",
+      "asset": "./Calcaneus_sustentaculum_tali.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-phalanx-ii-l",
+      "label": "distal phalanx II L",
+      "node": "distal_phalanx_II_L",
+      "asset": "./distal_phalanx_II_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-phalanx-iii-l",
+      "label": "distal phalanx III L",
+      "node": "distal_phalanx_III_L",
+      "asset": "./distal_phalanx_III_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-phalanx-iv-l",
+      "label": "distal phalanx IV L",
+      "node": "distal_phalanx_IV_L",
+      "asset": "./distal_phalanx_IV_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-phalanx-v-l",
+      "label": "distal phalanx V L",
+      "node": "distal_phalanx_V_L",
+      "asset": "./distal_phalanx_V_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-ii-l",
+      "label": "dorsal sesamoid II L",
+      "node": "dorsal_sesamoid_II_L",
+      "asset": "./dorsal_sesamoid_II_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-iii-l",
+      "label": "dorsal sesamoid III L",
+      "node": "dorsal_sesamoid_III_L",
+      "asset": "./dorsal_sesamoid_III_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-iv-l",
+      "label": "dorsal sesamoid IV L",
+      "node": "dorsal_sesamoid_IV_L",
+      "asset": "./dorsal_sesamoid_IV_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-middle-ii-l",
+      "label": "dorsal sesamoid middle II L",
+      "node": "dorsal_sesamoid_middle_II_L",
+      "asset": "./dorsal_sesamoid_middle_II_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-middle-iii-l",
+      "label": "dorsal sesamoid middle III L",
+      "node": "dorsal_sesamoid_middle_III_L",
+      "asset": "./dorsal_sesamoid_middle_III_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-middle-iv-l",
+      "label": "dorsal sesamoid middle IV L",
+      "node": "dorsal_sesamoid_middle_IV_L",
+      "asset": "./dorsal_sesamoid_middle_IV_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-middle-v-l",
+      "label": "dorsal sesamoid middle V L",
+      "node": "dorsal_sesamoid_middle_V_L",
+      "asset": "./dorsal_sesamoid_middle_V_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-v-l",
+      "label": "dorsal sesamoid V L",
+      "node": "dorsal_sesamoid_V_L",
+      "asset": "./dorsal_sesamoid_V_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femoris-l",
+      "label": "femoris L",
+      "node": "femoris_L",
+      "asset": "./femoris_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-body",
+      "label": "Femur body",
+      "node": "Femur_body",
+      "asset": "./Femur_body.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-extensor-fossa",
+      "label": "Femur extensor fossa",
+      "node": "Femur_extensor_fossa",
+      "asset": "./Femur_extensor_fossa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-greater-trochanter",
+      "label": "Femur greater trochanter",
+      "node": "Femur_greater_trochanter",
+      "asset": "./Femur_greater_trochanter.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-head",
+      "label": "Femur head",
+      "node": "Femur_head",
+      "asset": "./Femur_head.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-intercondyloid-fossa",
+      "label": "Femur intercondyloid fossa",
+      "node": "Femur_intercondyloid_fossa",
+      "asset": "./Femur_intercondyloid_fossa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-intertrochanteric-crest",
+      "label": "Femur intertrochanteric crest",
+      "node": "Femur_intertrochanteric_crest",
+      "asset": "./Femur_intertrochanteric_crest.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-lateral-condyle",
+      "label": "Femur lateral condyle",
+      "node": "Femur_lateral_condyle",
+      "asset": "./Femur_lateral_condyle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-lateral-epicondyle",
+      "label": "Femur lateral epicondyle",
+      "node": "Femur_lateral_epicondyle",
+      "asset": "./Femur_lateral_epicondyle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-lesser-trochanter",
+      "label": "Femur lesser trochanter",
+      "node": "Femur_lesser_trochanter",
+      "asset": "./Femur_lesser_trochanter.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-medial-condyle",
+      "label": "Femur medial condyle",
+      "node": "Femur_medial_condyle",
+      "asset": "./Femur_medial_condyle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-medial-epicondyle",
+      "label": "Femur medial epicondyle",
+      "node": "Femur_medial_epicondyle",
+      "asset": "./Femur_medial_epicondyle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-medial-lip",
+      "label": "Femur medial lip",
+      "node": "Femur_medial_lip",
+      "asset": "./Femur_medial_lip.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-medial-supracondylar-tuberosity",
+      "label": "Femur medial supracondylar tuberosity",
+      "node": "Femur_medial_supracondylar_tuberosity",
+      "asset": "./Femur_medial_supracondylar_tuberosity.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-neck",
+      "label": "Femur neck",
+      "node": "Femur_neck",
+      "asset": "./Femur_neck.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-supracondylar-tuberosity",
+      "label": "Femur supracondylar tuberosity",
+      "node": "Femur_supracondylar_tuberosity",
+      "asset": "./Femur_supracondylar_tuberosity.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-third-trochanter",
+      "label": "Femur third trochanter",
+      "node": "Femur_third_trochanter",
+      "asset": "./Femur_third_trochanter.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-trochanteric-fossa",
+      "label": "Femur trochanteric fossa",
+      "node": "Femur_trochanteric_fossa",
+      "asset": "./Femur_trochanteric_fossa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-trochlea",
+      "label": "Femur trochlea",
+      "node": "Femur_trochlea",
+      "asset": "./Femur_trochlea.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-trochlea-lateral-ridge",
+      "label": "Femur trochlea lateral ridge",
+      "node": "Femur_trochlea_lateral_ridge",
+      "asset": "./Femur_trochlea_lateral_ridge.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-trochlea-medial-ridge",
+      "label": "Femur trochlea medial ridge",
+      "node": "Femur_trochlea_medial_ridge",
+      "asset": "./Femur_trochlea_medial_ridge.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fibula-head",
+      "label": "Fibula head",
+      "node": "Fibula_head",
+      "asset": "./Fibula_head.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lateral-fabellar-l",
+      "label": "lateral fabellar L",
+      "node": "lateral_fabellar_L",
+      "asset": "./lateral_fabellar_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metatarsus-ii-iii-iv-v-002-l",
+      "label": "Metatarsus II III IV V 002 L",
+      "node": "Metatarsus_II_III_IV_V_002_L",
+      "asset": "./Metatarsus_II_III_IV_V_002_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metatarsus-ii-iii-iv-v-003-l",
+      "label": "Metatarsus II III IV V 003 L",
+      "node": "Metatarsus_II_III_IV_V_003_L",
+      "asset": "./Metatarsus_II_III_IV_V_003_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metatarsus-modified1-l",
+      "label": "Metatarsus modified1 L",
+      "node": "Metatarsus_modified1_L",
+      "asset": "./Metatarsus_modified1_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metatarsus-modified2-l",
+      "label": "Metatarsus modified2 L",
+      "node": "Metatarsus_modified2_L",
+      "asset": "./Metatarsus_modified2_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metatarsus-modified3-l",
+      "label": "Metatarsus modified3 L",
+      "node": "Metatarsus_modified3_L",
+      "asset": "./Metatarsus_modified3_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-phalanx-ii-l",
+      "label": "middle phalanx II L",
+      "node": "middle_phalanx_II_L",
+      "asset": "./middle_phalanx_II_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-phalanx-iii-l",
+      "label": "middle phalanx III L",
+      "node": "middle_phalanx_III_L",
+      "asset": "./middle_phalanx_III_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-phalanx-iv-l",
+      "label": "middle phalanx IV L",
+      "node": "middle_phalanx_IV_L",
+      "asset": "./middle_phalanx_IV_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-phalanx-v-l",
+      "label": "middle phalanx V L",
+      "node": "middle_phalanx_V_L",
+      "asset": "./middle_phalanx_V_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patella-apex",
+      "label": "Patella apex",
+      "node": "Patella_apex",
+      "asset": "./Patella_apex.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patella-base",
+      "label": "Patella base",
+      "node": "Patella_base",
+      "asset": "./Patella_base.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patella-l",
+      "label": "patella L",
+      "node": "patella_L",
+      "asset": "./patella_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-acetabulam",
+      "label": "Pelvis acetabulam",
+      "node": "Pelvis_acetabulam",
+      "asset": "./Pelvis_acetabulam.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-arcuate-line",
+      "label": "Pelvis arcuate line",
+      "node": "Pelvis_arcuate_line",
+      "asset": "./Pelvis_arcuate_line.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-auricular-surface",
+      "label": "Pelvis auricular surface",
+      "node": "Pelvis_auricular_surface",
+      "asset": "./Pelvis_auricular_surface.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-caudal-dorsal-iliac-spine",
+      "label": "Pelvis caudal dorsal iliac spine",
+      "node": "Pelvis_caudal_dorsal_iliac_spine",
+      "asset": "./Pelvis_caudal_dorsal_iliac_spine.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-cranial-dorsal-iliac-spine",
+      "label": "Pelvis cranial dorsal iliac spine",
+      "node": "Pelvis_cranial_dorsal_iliac_spine",
+      "asset": "./Pelvis_cranial_dorsal_iliac_spine.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-gluteal-surface",
+      "label": "Pelvis gluteal surface",
+      "node": "Pelvis_gluteal_surface",
+      "asset": "./Pelvis_gluteal_surface.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-greater-sciatic-notch",
+      "label": "Pelvis greater sciatic notch",
+      "node": "Pelvis_greater_sciatic_notch",
+      "asset": "./Pelvis_greater_sciatic_notch.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-iliac-crest",
+      "label": "Pelvis iliac crest",
+      "node": "Pelvis_iliac_crest",
+      "asset": "./Pelvis_iliac_crest.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-iliac-surface",
+      "label": "Pelvis iliac surface",
+      "node": "Pelvis_iliac_surface",
+      "asset": "./Pelvis_iliac_surface.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-iliopubic-eminence",
+      "label": "Pelvis iliopubic eminence",
+      "node": "Pelvis_iliopubic_eminence",
+      "asset": "./Pelvis_iliopubic_eminence.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-ischiatic-arch",
+      "label": "Pelvis ischiatic arch",
+      "node": "Pelvis_ischiatic_arch",
+      "asset": "./Pelvis_ischiatic_arch.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-ischiatic-tuberosity",
+      "label": "Pelvis ischiatic tuberosity",
+      "node": "Pelvis_ischiatic_tuberosity",
+      "asset": "./Pelvis_ischiatic_tuberosity.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-l",
+      "label": "Pelvis L",
+      "node": "Pelvis_L",
+      "asset": "./Pelvis_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-lesser-sciatic-notch",
+      "label": "Pelvis lesser sciatic notch",
+      "node": "Pelvis_lesser_sciatic_notch",
+      "asset": "./Pelvis_lesser_sciatic_notch.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-lunate-surface",
+      "label": "Pelvis lunate surface",
+      "node": "Pelvis_lunate_surface",
+      "asset": "./Pelvis_lunate_surface.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-obturator-foramen",
+      "label": "Pelvis obturator foramen",
+      "node": "Pelvis_obturator_foramen",
+      "asset": "./Pelvis_obturator_foramen.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-pelvic-symphysis",
+      "label": "Pelvis pelvic symphysis",
+      "node": "Pelvis_pelvic_symphysis",
+      "asset": "./Pelvis_pelvic_symphysis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-sciatic-spine",
+      "label": "Pelvis sciatic spine",
+      "node": "Pelvis_sciatic_spine",
+      "asset": "./Pelvis_sciatic_spine.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-tuber-coxae",
+      "label": "Pelvis tuber coxae",
+      "node": "Pelvis_tuber_coxae",
+      "asset": "./Pelvis_tuber_coxae.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-ventral-iliac-spine",
+      "label": "Pelvis ventral iliac spine",
+      "node": "Pelvis_ventral_iliac_spine",
+      "asset": "./Pelvis_ventral_iliac_spine.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-ventral-pelvic-tubercle",
+      "label": "Pelvis ventral pelvic tubercle",
+      "node": "Pelvis_ventral_pelvic_tubercle",
+      "asset": "./Pelvis_ventral_pelvic_tubercle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-phalanx-ii-l",
+      "label": "proximal phalanx II L",
+      "node": "proximal_phalanx_II_L",
+      "asset": "./proximal_phalanx_II_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-phalanx-iii-l",
+      "label": "proximal phalanx III L",
+      "node": "proximal_phalanx_III_L",
+      "asset": "./proximal_phalanx_III_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-phalanx-iv-l",
+      "label": "proximal phalanx IV L",
+      "node": "proximal_phalanx_IV_L",
+      "asset": "./proximal_phalanx_IV_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-phalanx-v-l",
+      "label": "proximal phalanx V L",
+      "node": "proximal_phalanx_V_L",
+      "asset": "./proximal_phalanx_V_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-sesamoid-ii-l",
+      "label": "proximal sesamoid II L",
+      "node": "proximal_sesamoid_II_L",
+      "asset": "./proximal_sesamoid_II_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-sesamoid-iii-l",
+      "label": "proximal sesamoid III L",
+      "node": "proximal_sesamoid_III_L",
+      "asset": "./proximal_sesamoid_III_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-sesamoid-iv-l",
+      "label": "proximal sesamoid IV L",
+      "node": "proximal_sesamoid_IV_L",
+      "asset": "./proximal_sesamoid_IV_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-sesamoid-v-l",
+      "label": "proximal sesamoid V L",
+      "node": "proximal_sesamoid_V_L",
+      "asset": "./proximal_sesamoid_V_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-talus-head",
+      "label": "Talus head",
+      "node": "Talus_head",
+      "asset": "./Talus_head.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-talus-l",
+      "label": "talus L",
+      "node": "talus_L",
+      "asset": "./talus_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-talus-lateral-process",
+      "label": "Talus lateral process",
+      "node": "Talus_lateral_process",
+      "asset": "./Talus_lateral_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-talus-neck",
+      "label": "Talus neck",
+      "node": "Talus_neck",
+      "asset": "./Talus_neck.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-talus-trochlea",
+      "label": "Talus trochlea",
+      "node": "Talus_trochlea",
+      "asset": "./Talus_trochlea.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-central-l",
+      "label": "tarsal central L",
+      "node": "tarsal_central_L",
+      "asset": "./tarsal_central_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-i-l",
+      "label": "tarsal I L",
+      "node": "tarsal_I_L",
+      "asset": "./tarsal_I_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-ii-l",
+      "label": "tarsal II L",
+      "node": "tarsal_II_L",
+      "asset": "./tarsal_II_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-iii-l",
+      "label": "tarsal III L",
+      "node": "tarsal_III_L",
+      "asset": "./tarsal_III_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-iv-l",
+      "label": "tarsal IV L",
+      "node": "tarsal_IV_L",
+      "asset": "./tarsal_IV_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-iv-medial-process",
+      "label": "Tarsal IV medial process",
+      "node": "Tarsal_IV_medial_process",
+      "asset": "./Tarsal_IV_medial_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-iv-sulcus-tendon-fibularis",
+      "label": "Tarsal IV sulcus tendon fibularis",
+      "node": "Tarsal_IV_sulcus_tendon_fibularis",
+      "asset": "./Tarsal_IV_sulcus_tendon_fibularis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-and-fibula-l",
+      "label": "tibia and fibula L",
+      "node": "tibia_and_fibula_L",
+      "asset": "./tibia_and_fibula_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-and-fibula2-l",
+      "label": "Tibia and fibula2 L",
+      "node": "Tibia_and_fibula2_L",
+      "asset": "./Tibia_and_fibula2_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-articular-surface",
+      "label": "Tibia articular surface",
+      "node": "Tibia_articular_surface",
+      "asset": "./Tibia_articular_surface.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-cranial-border",
+      "label": "Tibia cranial border",
+      "node": "Tibia_cranial_border",
+      "asset": "./Tibia_cranial_border.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-cranial-intercondyloid-area",
+      "label": "Tibia cranial intercondyloid area",
+      "node": "Tibia_cranial_intercondyloid_area",
+      "asset": "./Tibia_cranial_intercondyloid_area.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-extensor-groove",
+      "label": "Tibia extensor groove",
+      "node": "Tibia_extensor_groove",
+      "asset": "./Tibia_extensor_groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-groove-lat-malleolus",
+      "label": "Tibia groove lat malleolus",
+      "node": "Tibia_groove_lat_malleolus",
+      "asset": "./Tibia_groove_lat_malleolus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-intercondyloid-eminence",
+      "label": "Tibia intercondyloid eminence",
+      "node": "Tibia_intercondyloid_eminence",
+      "asset": "./Tibia_intercondyloid_eminence.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-lateral-condyle",
+      "label": "Tibia lateral condyle",
+      "node": "Tibia_lateral_condyle",
+      "asset": "./Tibia_lateral_condyle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-lateral-malleolus",
+      "label": "Tibia lateral malleolus",
+      "node": "Tibia_lateral_malleolus",
+      "asset": "./Tibia_lateral_malleolus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-medial-condyle",
+      "label": "Tibia medial condyle",
+      "node": "Tibia_medial_condyle",
+      "asset": "./Tibia_medial_condyle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-medial-malleolus",
+      "label": "Tibia medial malleolus",
+      "node": "Tibia_medial_malleolus",
+      "asset": "./Tibia_medial_malleolus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-tibial-tuberosity",
+      "label": "Tibia tibial tuberosity",
+      "node": "Tibia_tibial_tuberosity",
+      "asset": "./Tibia_tibial_tuberosity.glb",
+      "region": "root"
+    }
+  ]
+}

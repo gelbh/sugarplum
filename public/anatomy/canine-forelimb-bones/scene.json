@@ -1,0 +1,293 @@
+{
+  "id": "canine-forelimb-bones",
+  "title": "Canine forelimb bones",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-carpal-bone-1st",
+      "label": "Carpal bone 1st",
+      "node": "Carpal_bone_1st",
+      "asset": "./Carpal_bone_1st.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-bone-2nd",
+      "label": "Carpal bone 2nd",
+      "node": "Carpal_bone_2nd",
+      "asset": "./Carpal_bone_2nd.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-bone-3rd",
+      "label": "Carpal bone 3rd",
+      "node": "Carpal_bone_3rd",
+      "asset": "./Carpal_bone_3rd.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-bone-4th",
+      "label": "Carpal bone 4th",
+      "node": "Carpal_bone_4th",
+      "asset": "./Carpal_bone_4th.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-bone-accessory",
+      "label": "Carpal bone accessory",
+      "node": "Carpal_bone_accessory",
+      "asset": "./Carpal_bone_accessory.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-bone-ulnar",
+      "label": "Carpal bone ulnar",
+      "node": "Carpal_bone_ulnar",
+      "asset": "./Carpal_bone_ulnar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-phalange-1",
+      "label": "Distal phalange 1",
+      "node": "Distal_phalange_1",
+      "asset": "./Distal_phalange_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-phalange-2",
+      "label": "Distal phalange 2",
+      "node": "Distal_phalange_2",
+      "asset": "./Distal_phalange_2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-phalange-3",
+      "label": "Distal phalange 3",
+      "node": "Distal_phalange_3",
+      "asset": "./Distal_phalange_3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-phalange-4",
+      "label": "Distal phalange 4",
+      "node": "Distal_phalange_4",
+      "asset": "./Distal_phalange_4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-phalange-5",
+      "label": "Distal phalange 5",
+      "node": "Distal_phalange_5",
+      "asset": "./Distal_phalange_5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-2",
+      "label": "Dorsal sesamoid 2",
+      "node": "Dorsal_sesamoid_2",
+      "asset": "./Dorsal_sesamoid_2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-3",
+      "label": "Dorsal sesamoid 3",
+      "node": "Dorsal_sesamoid_3",
+      "asset": "./Dorsal_sesamoid_3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-4",
+      "label": "Dorsal sesamoid 4",
+      "node": "Dorsal_sesamoid_4",
+      "asset": "./Dorsal_sesamoid_4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-5",
+      "label": "Dorsal sesamoid 5",
+      "node": "Dorsal_sesamoid_5",
+      "asset": "./Dorsal_sesamoid_5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus",
+      "label": "Humerus",
+      "node": "Humerus",
+      "asset": "./Humerus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-intermedioradial-carpal-bone",
+      "label": "Intermedioradial carpal bone",
+      "node": "Intermedioradial_carpal_bone",
+      "asset": "./Intermedioradial_carpal_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpal-i",
+      "label": "Metacarpal I",
+      "node": "Metacarpal_I",
+      "asset": "./Metacarpal_I.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpal-ii",
+      "label": "Metacarpal II",
+      "node": "Metacarpal_II",
+      "asset": "./Metacarpal_II.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpal-iii",
+      "label": "Metacarpal III",
+      "node": "Metacarpal_III",
+      "asset": "./Metacarpal_III.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpal-iv",
+      "label": "Metacarpal IV",
+      "node": "Metacarpal_IV",
+      "asset": "./Metacarpal_IV.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpal-v",
+      "label": "Metacarpal V",
+      "node": "Metacarpal_V",
+      "asset": "./Metacarpal_V.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-phalange-2",
+      "label": "Middle phalange 2",
+      "node": "Middle_phalange_2",
+      "asset": "./Middle_phalange_2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-phalange-3",
+      "label": "Middle phalange 3",
+      "node": "Middle_phalange_3",
+      "asset": "./Middle_phalange_3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-phalange-4",
+      "label": "Middle phalange 4",
+      "node": "Middle_phalange_4",
+      "asset": "./Middle_phalange_4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-phalange-5",
+      "label": "Middle phalange 5",
+      "node": "Middle_phalange_5",
+      "asset": "./Middle_phalange_5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-palmar-sesamoid-1",
+      "label": "Palmar sesamoid 1",
+      "node": "Palmar_sesamoid_1",
+      "asset": "./Palmar_sesamoid_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-palmar-sesamoid-2",
+      "label": "Palmar sesamoid 2",
+      "node": "Palmar_sesamoid_2",
+      "asset": "./Palmar_sesamoid_2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-palmar-sesamoid-3",
+      "label": "Palmar sesamoid 3",
+      "node": "Palmar_sesamoid_3",
+      "asset": "./Palmar_sesamoid_3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-palmar-sesamoid-4",
+      "label": "Palmar sesamoid 4",
+      "node": "Palmar_sesamoid_4",
+      "asset": "./Palmar_sesamoid_4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-palmar-sesamoid-5",
+      "label": "Palmar sesamoid 5",
+      "node": "Palmar_sesamoid_5",
+      "asset": "./Palmar_sesamoid_5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-phalange-1",
+      "label": "Proximal phalange 1",
+      "node": "Proximal_phalange_1",
+      "asset": "./Proximal_phalange_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-phalange-2",
+      "label": "Proximal phalange 2",
+      "node": "Proximal_phalange_2",
+      "asset": "./Proximal_phalange_2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-phalange-3",
+      "label": "Proximal phalange 3",
+      "node": "Proximal_phalange_3",
+      "asset": "./Proximal_phalange_3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-phalange-4",
+      "label": "Proximal phalange 4",
+      "node": "Proximal_phalange_4",
+      "asset": "./Proximal_phalange_4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-phalange-5",
+      "label": "Proximal phalange 5",
+      "node": "Proximal_phalange_5",
+      "asset": "./Proximal_phalange_5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius",
+      "label": "Radius",
+      "node": "Radius",
+      "asset": "./Radius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula",
+      "label": "Scapula",
+      "node": "Scapula",
+      "asset": "./Scapula.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sesamoid-adductor",
+      "label": "Sesamoid adductor",
+      "node": "Sesamoid_adductor",
+      "asset": "./Sesamoid_adductor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna",
+      "label": "Ulna",
+      "node": "Ulna",
+      "asset": "./Ulna.glb",
+      "region": "root"
+    }
+  ]
+}

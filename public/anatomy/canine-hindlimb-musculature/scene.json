@@ -1,0 +1,846 @@
+{
+  "id": "canine-hindlimb-musculature",
+  "title": "Canine hindlimb musculature",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-adductorlongus",
+      "label": "AdductorLongus",
+      "node": "AdductorLongus",
+      "asset": "./AdductorLongus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-adductorlongus-1",
+      "label": "AdductorLongus 1",
+      "node": "AdductorLongus_1",
+      "asset": "./AdductorLongus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-adductormagnusetbrevis",
+      "label": "AdductorMagnusEtBrevis",
+      "node": "AdductorMagnusEtBrevis",
+      "asset": "./AdductorMagnusEtBrevis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-adductormagnusetbrevis-1",
+      "label": "AdductorMagnusEtBrevis 1",
+      "node": "AdductorMagnusEtBrevis_1",
+      "asset": "./AdductorMagnusEtBrevis_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-articularis",
+      "label": "Articularis",
+      "node": "Articularis",
+      "asset": "./Articularis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-articularis-1",
+      "label": "Articularis 1",
+      "node": "Articularis_1",
+      "asset": "./Articularis_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-bicepsfemoris",
+      "label": "BicepsFemoris",
+      "node": "BicepsFemoris",
+      "asset": "./BicepsFemoris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-bicepsfemoris-1",
+      "label": "BicepsFemoris 1",
+      "node": "BicepsFemoris_1",
+      "asset": "./BicepsFemoris_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-calcanealtendon",
+      "label": "CalcanealTendon",
+      "node": "CalcanealTendon",
+      "asset": "./CalcanealTendon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-calcanealtendon-1",
+      "label": "CalcanealTendon 1",
+      "node": "CalcanealTendon_1",
+      "asset": "./CalcanealTendon_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-coccygeals",
+      "label": "Coccygeals",
+      "node": "Coccygeals",
+      "asset": "./Coccygeals.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-coccygeals-1",
+      "label": "Coccygeals 1",
+      "node": "Coccygeals_1",
+      "asset": "./Coccygeals_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ddf",
+      "label": "DDF",
+      "node": "DDF",
+      "asset": "./DDF.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ddf-1",
+      "label": "DDF 1",
+      "node": "DDF_1",
+      "asset": "./DDF_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-externobturator",
+      "label": "ExternObturator",
+      "node": "ExternObturator",
+      "asset": "./ExternObturator.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-externobturator-1",
+      "label": "ExternObturator 1",
+      "node": "ExternObturator_1",
+      "asset": "./ExternObturator_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femoral",
+      "label": "Femoral",
+      "node": "Femoral",
+      "asset": "./Femoral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femoral-1",
+      "label": "Femoral 1",
+      "node": "Femoral_1",
+      "asset": "./Femoral_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur",
+      "label": "Femur",
+      "node": "Femur",
+      "asset": "./Femur.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-1",
+      "label": "Femur 1",
+      "node": "Femur_1",
+      "asset": "./Femur_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fibula",
+      "label": "Fibula",
+      "node": "Fibula",
+      "asset": "./Fibula.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fibula-1",
+      "label": "Fibula 1",
+      "node": "Fibula_1",
+      "asset": "./Fibula_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gastrocnemius",
+      "label": "Gastrocnemius",
+      "node": "Gastrocnemius",
+      "asset": "./Gastrocnemius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gastrocnemius-1",
+      "label": "Gastrocnemius 1",
+      "node": "Gastrocnemius_1",
+      "asset": "./Gastrocnemius_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gemellus",
+      "label": "Gemellus",
+      "node": "Gemellus",
+      "asset": "./Gemellus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gemellus-1",
+      "label": "Gemellus 1",
+      "node": "Gemellus_1",
+      "asset": "./Gemellus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gluteusdeep",
+      "label": "GluteusDeep",
+      "node": "GluteusDeep",
+      "asset": "./GluteusDeep.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gluteusdeep-1",
+      "label": "GluteusDeep 1",
+      "node": "GluteusDeep_1",
+      "asset": "./GluteusDeep_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gluteusmed",
+      "label": "GluteusMed",
+      "node": "GluteusMed",
+      "asset": "./GluteusMed.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gluteusmed-1",
+      "label": "GluteusMed 1",
+      "node": "GluteusMed_1",
+      "asset": "./GluteusMed_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gluteussuperf",
+      "label": "GluteusSuperf",
+      "node": "GluteusSuperf",
+      "asset": "./GluteusSuperf.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gluteussuperf-1",
+      "label": "GluteusSuperf 1",
+      "node": "GluteusSuperf_1",
+      "asset": "./GluteusSuperf_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gracilis",
+      "label": "Gracilis",
+      "node": "Gracilis",
+      "asset": "./Gracilis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gracilis-1",
+      "label": "Gracilis 1",
+      "node": "Gracilis_1",
+      "asset": "./Gracilis_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-iliacus",
+      "label": "Iliacus",
+      "node": "Iliacus",
+      "asset": "./Iliacus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-iliacus-1",
+      "label": "Iliacus 1",
+      "node": "Iliacus_1",
+      "asset": "./Iliacus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-internobturator",
+      "label": "InternObturator",
+      "node": "InternObturator",
+      "asset": "./InternObturator.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-internobturator-1",
+      "label": "InternObturator 1",
+      "node": "InternObturator_1",
+      "asset": "./InternObturator_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l1",
+      "label": "L1",
+      "node": "L1",
+      "asset": "./L1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l1-1",
+      "label": "L1 1",
+      "node": "L1_1",
+      "asset": "./L1_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-latdigextensor",
+      "label": "LatDigExtensor",
+      "node": "LatDigExtensor",
+      "asset": "./LatDigExtensor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-latdigextensor-1",
+      "label": "LatDigExtensor 1",
+      "node": "LatDigExtensor_1",
+      "asset": "./LatDigExtensor_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-latdigexttendon",
+      "label": "LatDigExtTendon",
+      "node": "LatDigExtTendon",
+      "asset": "./LatDigExtTendon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-latdigexttendon-1",
+      "label": "LatDigExtTendon 1",
+      "node": "LatDigExtTendon_1",
+      "asset": "./LatDigExtTendon_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-latdigflexo",
+      "label": "LatDigFlexo",
+      "node": "LatDigFlexo",
+      "asset": "./LatDigFlexo.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-latdigflexo-1",
+      "label": "LatDigFlexo 1",
+      "node": "LatDigFlexo_1",
+      "asset": "./LatDigFlexo_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ldeproxtendon",
+      "label": "LDEProxTendon",
+      "node": "LDEProxTendon",
+      "asset": "./LDEProxTendon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ldeproxtendon-1",
+      "label": "LDEProxTendon 1",
+      "node": "LDEProxTendon_1",
+      "asset": "./LDEProxTendon_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ldetendon",
+      "label": "LDEtendon",
+      "node": "LDEtendon",
+      "asset": "./LDEtendon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ldetendon-1",
+      "label": "LDEtendon 1",
+      "node": "LDEtendon_1",
+      "asset": "./LDEtendon_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-longdigextensor",
+      "label": "LongDigExtensor",
+      "node": "LongDigExtensor",
+      "asset": "./LongDigExtensor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-longdigextensor-1",
+      "label": "LongDigExtensor 1",
+      "node": "LongDigExtensor_1",
+      "asset": "./LongDigExtensor_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-meddigitalflexor",
+      "label": "MedDigitalFlexor",
+      "node": "MedDigitalFlexor",
+      "asset": "./MedDigitalFlexor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-meddigitalflexor-1",
+      "label": "MedDigitalFlexor 1",
+      "node": "MedDigitalFlexor_1",
+      "asset": "./MedDigitalFlexor_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-obturator",
+      "label": "Obturator",
+      "node": "Obturator",
+      "asset": "./Obturator.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-obturator-1",
+      "label": "Obturator 1",
+      "node": "Obturator_1",
+      "asset": "./Obturator_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patellafabellae",
+      "label": "PatellaFabellae",
+      "node": "PatellaFabellae",
+      "asset": "./PatellaFabellae.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patellafabellae-1",
+      "label": "PatellaFabellae 1",
+      "node": "PatellaFabellae_1",
+      "asset": "./PatellaFabellae_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patellar-tendon",
+      "label": "Patellar tendon",
+      "node": "Patellar_tendon",
+      "asset": "./Patellar_tendon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patellar-tendon-1",
+      "label": "Patellar tendon 1",
+      "node": "Patellar_tendon_1",
+      "asset": "./Patellar_tendon_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pectineus",
+      "label": "Pectineus",
+      "node": "Pectineus",
+      "asset": "./Pectineus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pectineus-1",
+      "label": "Pectineus 1",
+      "node": "Pectineus_1",
+      "asset": "./Pectineus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis",
+      "label": "Pelvis",
+      "node": "Pelvis",
+      "asset": "./Pelvis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-1",
+      "label": "Pelvis 1",
+      "node": "Pelvis_1",
+      "asset": "./Pelvis_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-peroneusbrevis",
+      "label": "PeroneusBrevis",
+      "node": "PeroneusBrevis",
+      "asset": "./PeroneusBrevis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-peroneusbrevis-1",
+      "label": "PeroneusBrevis 1",
+      "node": "PeroneusBrevis_1",
+      "asset": "./PeroneusBrevis_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-peroneusbrevistendon",
+      "label": "PeroneusBrevisTendon",
+      "node": "PeroneusBrevisTendon",
+      "asset": "./PeroneusBrevisTendon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-peroneusbrevistendon-1",
+      "label": "PeroneusBrevisTendon 1",
+      "node": "PeroneusBrevisTendon_1",
+      "asset": "./PeroneusBrevisTendon_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-peroneuslongus",
+      "label": "PeroneusLongus",
+      "node": "PeroneusLongus",
+      "asset": "./PeroneusLongus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-peroneuslongus-1",
+      "label": "PeroneusLongus 1",
+      "node": "PeroneusLongus_1",
+      "asset": "./PeroneusLongus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-peroneuslongustendon",
+      "label": "PeroneusLongusTendon",
+      "node": "PeroneusLongusTendon",
+      "asset": "./PeroneusLongusTendon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-peroneuslongustendon-1",
+      "label": "PeroneusLongusTendon 1",
+      "node": "PeroneusLongusTendon_1",
+      "asset": "./PeroneusLongusTendon_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-piriformis",
+      "label": "Piriformis",
+      "node": "Piriformis",
+      "asset": "./Piriformis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-piriformis-1",
+      "label": "Piriformis 1",
+      "node": "Piriformis_1",
+      "asset": "./Piriformis_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-popliteus",
+      "label": "Popliteus",
+      "node": "Popliteus",
+      "asset": "./Popliteus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-popliteus-1",
+      "label": "Popliteus 1",
+      "node": "Popliteus_1",
+      "asset": "./Popliteus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-psoasmajor",
+      "label": "PsoasMajor",
+      "node": "PsoasMajor",
+      "asset": "./PsoasMajor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-psoasmajor-1",
+      "label": "PsoasMajor 1",
+      "node": "PsoasMajor_1",
+      "asset": "./PsoasMajor_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-quadratusfemoris",
+      "label": "QuadratusFemoris",
+      "node": "QuadratusFemoris",
+      "asset": "./QuadratusFemoris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-quadratusfemoris-1",
+      "label": "QuadratusFemoris 1",
+      "node": "QuadratusFemoris_1",
+      "asset": "./QuadratusFemoris_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rectusfemoris",
+      "label": "RectusFemoris",
+      "node": "RectusFemoris",
+      "asset": "./RectusFemoris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rectusfemoris-1",
+      "label": "RectusFemoris 1",
+      "node": "RectusFemoris_1",
+      "asset": "./RectusFemoris_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sacrotuberous-ligament",
+      "label": "Sacrotuberous ligament",
+      "node": "Sacrotuberous_ligament",
+      "asset": "./Sacrotuberous_ligament.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sacrotuberous-ligament-1",
+      "label": "Sacrotuberous ligament 1",
+      "node": "Sacrotuberous_ligament_1",
+      "asset": "./Sacrotuberous_ligament_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sacrum",
+      "label": "Sacrum",
+      "node": "Sacrum",
+      "asset": "./Sacrum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sacrum-1",
+      "label": "Sacrum 1",
+      "node": "Sacrum_1",
+      "asset": "./Sacrum_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sartorius",
+      "label": "Sartorius",
+      "node": "Sartorius",
+      "asset": "./Sartorius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sartorius-1",
+      "label": "Sartorius 1",
+      "node": "Sartorius_1",
+      "asset": "./Sartorius_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sciatic",
+      "label": "Sciatic",
+      "node": "Sciatic",
+      "asset": "./Sciatic.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sciatic-1",
+      "label": "Sciatic 1",
+      "node": "Sciatic_1",
+      "asset": "./Sciatic_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sdf",
+      "label": "SDF",
+      "node": "SDF",
+      "asset": "./SDF.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sdf-1",
+      "label": "SDF 1",
+      "node": "SDF_1",
+      "asset": "./SDF_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sdftendon",
+      "label": "SDFtendon",
+      "node": "SDFtendon",
+      "asset": "./SDFtendon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-semimembranosuscaud",
+      "label": "SemimembranosusCaud",
+      "node": "SemimembranosusCaud",
+      "asset": "./SemimembranosusCaud.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-semimembranosuscaud-1",
+      "label": "SemimembranosusCaud 1",
+      "node": "SemimembranosusCaud_1",
+      "asset": "./SemimembranosusCaud_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-semimembranosuscranial",
+      "label": "SemimembranosusCranial",
+      "node": "SemimembranosusCranial",
+      "asset": "./SemimembranosusCranial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-semimembranosuscranial-1",
+      "label": "SemimembranosusCranial 1",
+      "node": "SemimembranosusCranial_1",
+      "asset": "./SemimembranosusCranial_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-semitendinosus",
+      "label": "SemiTendinosus",
+      "node": "SemiTendinosus",
+      "asset": "./SemiTendinosus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-semitendinosus-1",
+      "label": "SemiTendinosus 1",
+      "node": "SemiTendinosus_1",
+      "asset": "./SemiTendinosus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsusdown",
+      "label": "TarsusDown",
+      "node": "TarsusDown",
+      "asset": "./TarsusDown.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsusdown-1",
+      "label": "TarsusDown 1",
+      "node": "TarsusDown_1",
+      "asset": "./TarsusDown_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tensorfascialatae",
+      "label": "TensorFasciaLatae",
+      "node": "TensorFasciaLatae",
+      "asset": "./TensorFasciaLatae.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tensorfascialatae-1",
+      "label": "TensorFasciaLatae 1",
+      "node": "TensorFasciaLatae_1",
+      "asset": "./TensorFasciaLatae_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia",
+      "label": "Tibia",
+      "node": "Tibia",
+      "asset": "./Tibia.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-1",
+      "label": "Tibia 1",
+      "node": "Tibia_1",
+      "asset": "./Tibia_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibialiscaudalis",
+      "label": "TibialisCaudalis",
+      "node": "TibialisCaudalis",
+      "asset": "./TibialisCaudalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibialiscaudalis-1",
+      "label": "TibialisCaudalis 1",
+      "node": "TibialisCaudalis_1",
+      "asset": "./TibialisCaudalis_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibialiscaudalistend",
+      "label": "TibialisCaudalisTend",
+      "node": "TibialisCaudalisTend",
+      "asset": "./TibialisCaudalisTend.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibialiscaudalistend-1",
+      "label": "TibialisCaudalisTend 1",
+      "node": "TibialisCaudalisTend_1",
+      "asset": "./TibialisCaudalisTend_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibialiscranialis",
+      "label": "TibialisCranialis",
+      "node": "TibialisCranialis",
+      "asset": "./TibialisCranialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibialiscranialis-1",
+      "label": "TibialisCranialis 1",
+      "node": "TibialisCranialis_1",
+      "asset": "./TibialisCranialis_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibialiscrantendon",
+      "label": "TibialisCranTendon",
+      "node": "TibialisCranTendon",
+      "asset": "./TibialisCranTendon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibialiscrantendon-1",
+      "label": "TibialisCranTendon 1",
+      "node": "TibialisCranTendon_1",
+      "asset": "./TibialisCranTendon_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vastusintermedius",
+      "label": "VastusIntermedius",
+      "node": "VastusIntermedius",
+      "asset": "./VastusIntermedius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vastusintermedius-1",
+      "label": "VastusIntermedius 1",
+      "node": "VastusIntermedius_1",
+      "asset": "./VastusIntermedius_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vastuslateralis",
+      "label": "VastusLateralis",
+      "node": "VastusLateralis",
+      "asset": "./VastusLateralis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vastuslateralis-1",
+      "label": "VastusLateralis 1",
+      "node": "VastusLateralis_1",
+      "asset": "./VastusLateralis_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vastusmedius",
+      "label": "VastusMedius",
+      "node": "VastusMedius",
+      "asset": "./VastusMedius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vastusmedius-1",
+      "label": "VastusMedius 1",
+      "node": "VastusMedius_1",
+      "asset": "./VastusMedius_1.glb",
+      "region": "root"
+    }
+  ]
+}

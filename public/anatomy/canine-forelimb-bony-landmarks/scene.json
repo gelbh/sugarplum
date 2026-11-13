@@ -1,0 +1,699 @@
+{
+  "id": "canine-forelimb-bony-landmarks",
+  "title": "Canine forelimb bony landmarks",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-carpal-bone-1st",
+      "label": "Carpal bone 1st",
+      "node": "Carpal_bone_1st",
+      "asset": "./Carpal_bone_1st.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-bone-2nd",
+      "label": "Carpal bone 2nd",
+      "node": "Carpal_bone_2nd",
+      "asset": "./Carpal_bone_2nd.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-bone-3rd",
+      "label": "Carpal bone 3rd",
+      "node": "Carpal_bone_3rd",
+      "asset": "./Carpal_bone_3rd.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-bone-4th",
+      "label": "Carpal bone 4th",
+      "node": "Carpal_bone_4th",
+      "asset": "./Carpal_bone_4th.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-bone-accessory",
+      "label": "Carpal bone accessory",
+      "node": "Carpal_bone_accessory",
+      "asset": "./Carpal_bone_accessory.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-bone-ulnar",
+      "label": "Carpal bone ulnar",
+      "node": "Carpal_bone_ulnar",
+      "asset": "./Carpal_bone_ulnar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-phalange-1",
+      "label": "Distal phalange 1",
+      "node": "Distal_phalange_1",
+      "asset": "./Distal_phalange_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-phalange-2",
+      "label": "Distal phalange 2",
+      "node": "Distal_phalange_2",
+      "asset": "./Distal_phalange_2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-phalange-3",
+      "label": "Distal phalange 3",
+      "node": "Distal_phalange_3",
+      "asset": "./Distal_phalange_3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-phalange-4",
+      "label": "Distal phalange 4",
+      "node": "Distal_phalange_4",
+      "asset": "./Distal_phalange_4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-phalange-5",
+      "label": "Distal phalange 5",
+      "node": "Distal_phalange_5",
+      "asset": "./Distal_phalange_5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-2",
+      "label": "Dorsal sesamoid 2",
+      "node": "Dorsal_sesamoid_2",
+      "asset": "./Dorsal_sesamoid_2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-3",
+      "label": "Dorsal sesamoid 3",
+      "node": "Dorsal_sesamoid_3",
+      "asset": "./Dorsal_sesamoid_3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-4",
+      "label": "Dorsal sesamoid 4",
+      "node": "Dorsal_sesamoid_4",
+      "asset": "./Dorsal_sesamoid_4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-5",
+      "label": "Dorsal sesamoid 5",
+      "node": "Dorsal_sesamoid_5",
+      "asset": "./Dorsal_sesamoid_5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus",
+      "label": "Humerus",
+      "node": "Humerus",
+      "asset": "./Humerus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-brachialis-groove",
+      "label": "Humerus brachialis groove",
+      "node": "Humerus_brachialis_groove",
+      "asset": "./Humerus_brachialis_groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-capitulum",
+      "label": "Humerus capitulum",
+      "node": "Humerus_capitulum",
+      "asset": "./Humerus_capitulum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-condyle",
+      "label": "Humerus condyle",
+      "node": "Humerus_condyle",
+      "asset": "./Humerus_condyle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-crest-of-greater-tubercle",
+      "label": "Humerus crest of greater tubercle",
+      "node": "Humerus_crest_of_greater_tubercle",
+      "asset": "./Humerus_crest_of_greater_tubercle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-crest-of-lesser-tubercle",
+      "label": "Humerus crest of lesser tubercle",
+      "node": "Humerus_crest_of_lesser_tubercle",
+      "asset": "./Humerus_crest_of_lesser_tubercle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-deltoid-tuberosity",
+      "label": "Humerus deltoid tuberosity",
+      "node": "Humerus_deltoid_tuberosity",
+      "asset": "./Humerus_deltoid_tuberosity.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-epicondyle-lateral",
+      "label": "Humerus epicondyle lateral",
+      "node": "Humerus_epicondyle_lateral",
+      "asset": "./Humerus_epicondyle_lateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-epicondyle-medial",
+      "label": "Humerus epicondyle medial",
+      "node": "Humerus_epicondyle_medial",
+      "asset": "./Humerus_epicondyle_medial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-fossa-olecranon",
+      "label": "Humerus fossa olecranon",
+      "node": "Humerus_fossa_olecranon",
+      "asset": "./Humerus_fossa_olecranon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-fossa-radius",
+      "label": "Humerus fossa radius",
+      "node": "Humerus_fossa_radius",
+      "asset": "./Humerus_fossa_radius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-greater-tubercle",
+      "label": "Humerus greater tubercle",
+      "node": "Humerus_greater_tubercle",
+      "asset": "./Humerus_greater_tubercle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-head",
+      "label": "Humerus head",
+      "node": "Humerus_head",
+      "asset": "./Humerus_head.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-intertubercular-groove",
+      "label": "Humerus intertubercular groove",
+      "node": "Humerus_intertubercular_groove",
+      "asset": "./Humerus_intertubercular_groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-lesser-tubercle",
+      "label": "Humerus lesser tubercle",
+      "node": "Humerus_lesser_tubercle",
+      "asset": "./Humerus_lesser_tubercle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-neck",
+      "label": "Humerus neck",
+      "node": "Humerus_neck",
+      "asset": "./Humerus_neck.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-supracondylar-crest-lateral",
+      "label": "Humerus supracondylar crest lateral",
+      "node": "Humerus_supracondylar_crest_lateral",
+      "asset": "./Humerus_supracondylar_crest_lateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-supracondylar-crest-medial",
+      "label": "Humerus supracondylar crest medial",
+      "node": "Humerus_supracondylar_crest_medial",
+      "asset": "./Humerus_supracondylar_crest_medial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-supratrochlear-foramen",
+      "label": "Humerus supratrochlear foramen",
+      "node": "Humerus_supratrochlear_foramen",
+      "asset": "./Humerus_supratrochlear_foramen.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-tricipital-line",
+      "label": "Humerus tricipital line",
+      "node": "Humerus_tricipital_line",
+      "asset": "./Humerus_tricipital_line.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-trochlea",
+      "label": "Humerus trochlea",
+      "node": "Humerus_trochlea",
+      "asset": "./Humerus_trochlea.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-tuberosity-teres-major",
+      "label": "Humerus tuberosity teres major",
+      "node": "Humerus_tuberosity_teres_major",
+      "asset": "./Humerus_tuberosity_teres_major.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-tuberosity-teres-minor",
+      "label": "Humerus tuberosity teres minor",
+      "node": "Humerus_tuberosity_teres_minor",
+      "asset": "./Humerus_tuberosity_teres_minor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-intermedioradial-carpal-bone",
+      "label": "Intermedioradial carpal bone",
+      "node": "Intermedioradial_carpal_bone",
+      "asset": "./Intermedioradial_carpal_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpal-i",
+      "label": "Metacarpal I",
+      "node": "Metacarpal_I",
+      "asset": "./Metacarpal_I.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpal-ii",
+      "label": "Metacarpal II",
+      "node": "Metacarpal_II",
+      "asset": "./Metacarpal_II.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpal-iii",
+      "label": "Metacarpal III",
+      "node": "Metacarpal_III",
+      "asset": "./Metacarpal_III.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpal-iv",
+      "label": "Metacarpal IV",
+      "node": "Metacarpal_IV",
+      "asset": "./Metacarpal_IV.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpal-v",
+      "label": "Metacarpal V",
+      "node": "Metacarpal_V",
+      "asset": "./Metacarpal_V.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-phalange-2",
+      "label": "Middle phalange 2",
+      "node": "Middle_phalange_2",
+      "asset": "./Middle_phalange_2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-phalange-3",
+      "label": "Middle phalange 3",
+      "node": "Middle_phalange_3",
+      "asset": "./Middle_phalange_3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-phalange-4",
+      "label": "Middle phalange 4",
+      "node": "Middle_phalange_4",
+      "asset": "./Middle_phalange_4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-phalange-5",
+      "label": "Middle phalange 5",
+      "node": "Middle_phalange_5",
+      "asset": "./Middle_phalange_5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-palmar-sesamoid-1",
+      "label": "Palmar sesamoid 1",
+      "node": "Palmar_sesamoid_1",
+      "asset": "./Palmar_sesamoid_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-palmar-sesamoid-2",
+      "label": "Palmar sesamoid 2",
+      "node": "Palmar_sesamoid_2",
+      "asset": "./Palmar_sesamoid_2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-palmar-sesamoid-3",
+      "label": "Palmar sesamoid 3",
+      "node": "Palmar_sesamoid_3",
+      "asset": "./Palmar_sesamoid_3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-palmar-sesamoid-4",
+      "label": "Palmar sesamoid 4",
+      "node": "Palmar_sesamoid_4",
+      "asset": "./Palmar_sesamoid_4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-palmar-sesamoid-5",
+      "label": "Palmar sesamoid 5",
+      "node": "Palmar_sesamoid_5",
+      "asset": "./Palmar_sesamoid_5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-phalange-1",
+      "label": "Proximal phalange 1",
+      "node": "Proximal_phalange_1",
+      "asset": "./Proximal_phalange_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-phalange-2",
+      "label": "Proximal phalange 2",
+      "node": "Proximal_phalange_2",
+      "asset": "./Proximal_phalange_2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-phalange-3",
+      "label": "Proximal phalange 3",
+      "node": "Proximal_phalange_3",
+      "asset": "./Proximal_phalange_3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-phalange-4",
+      "label": "Proximal phalange 4",
+      "node": "Proximal_phalange_4",
+      "asset": "./Proximal_phalange_4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-phalange-5",
+      "label": "Proximal phalange 5",
+      "node": "Proximal_phalange_5",
+      "asset": "./Proximal_phalange_5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius",
+      "label": "Radius",
+      "node": "Radius",
+      "asset": "./Radius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius-border-lateral",
+      "label": "Radius border lateral",
+      "node": "Radius_border_lateral",
+      "asset": "./Radius_border_lateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius-border-medial",
+      "label": "Radius border medial",
+      "node": "Radius_border_medial",
+      "asset": "./Radius_border_medial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius-circumference-articular",
+      "label": "Radius circumference articular",
+      "node": "Radius_circumference_articular",
+      "asset": "./Radius_circumference_articular.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius-fovea-articular",
+      "label": "Radius fovea articular",
+      "node": "Radius_fovea_articular",
+      "asset": "./Radius_fovea_articular.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius-head",
+      "label": "Radius head",
+      "node": "Radius_head",
+      "asset": "./Radius_head.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius-neck",
+      "label": "Radius neck",
+      "node": "Radius_neck",
+      "asset": "./Radius_neck.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius-radial-tuberosity",
+      "label": "Radius radial tuberosity",
+      "node": "Radius_radial_tuberosity",
+      "asset": "./Radius_radial_tuberosity.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius-styloid-process",
+      "label": "Radius styloid process",
+      "node": "Radius_styloid_process",
+      "asset": "./Radius_styloid_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius-surface-articular-carpal",
+      "label": "Radius surface articular carpal",
+      "node": "Radius_surface_articular_carpal",
+      "asset": "./Radius_surface_articular_carpal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius-ulna-notch",
+      "label": "Radius ulna notch",
+      "node": "Radius_ulna_notch",
+      "asset": "./Radius_ulna_notch.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula",
+      "label": "Scapula",
+      "node": "Scapula",
+      "asset": "./Scapula.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-acromion",
+      "label": "Scapula acromion",
+      "node": "Scapula_acromion",
+      "asset": "./Scapula_acromion.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-caudal-angle",
+      "label": "Scapula caudal angle",
+      "node": "Scapula_caudal_angle",
+      "asset": "./Scapula_caudal_angle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-caudal-border",
+      "label": "Scapula caudal border",
+      "node": "Scapula_caudal_border",
+      "asset": "./Scapula_caudal_border.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-coracoid-process",
+      "label": "Scapula coracoid process",
+      "node": "Scapula_coracoid_process",
+      "asset": "./Scapula_coracoid_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-cranial-angle",
+      "label": "Scapula cranial angle",
+      "node": "Scapula_cranial_angle",
+      "asset": "./Scapula_cranial_angle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-cranial-border",
+      "label": "Scapula cranial border",
+      "node": "Scapula_cranial_border",
+      "asset": "./Scapula_cranial_border.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-dorsal-border",
+      "label": "Scapula dorsal border",
+      "node": "Scapula_dorsal_border",
+      "asset": "./Scapula_dorsal_border.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-facies-serrata",
+      "label": "Scapula facies serrata",
+      "node": "Scapula_facies_serrata",
+      "asset": "./Scapula_facies_serrata.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-fossa-infraspinous",
+      "label": "Scapula fossa infraspinous",
+      "node": "Scapula_fossa_infraspinous",
+      "asset": "./Scapula_fossa_infraspinous.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-fossa-supraspinous",
+      "label": "Scapula fossa supraspinous",
+      "node": "Scapula_fossa_supraspinous",
+      "asset": "./Scapula_fossa_supraspinous.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-glenoid-cavity",
+      "label": "Scapula glenoid cavity",
+      "node": "Scapula_glenoid_cavity",
+      "asset": "./Scapula_glenoid_cavity.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-infraglenoid-tubercle",
+      "label": "Scapula infraglenoid tubercle",
+      "node": "Scapula_infraglenoid_tubercle",
+      "asset": "./Scapula_infraglenoid_tubercle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-notch",
+      "label": "Scapula notch",
+      "node": "Scapula_notch",
+      "asset": "./Scapula_notch.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-spine",
+      "label": "Scapula spine",
+      "node": "Scapula_spine",
+      "asset": "./Scapula_spine.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-subscapular-fossa",
+      "label": "Scapula subscapular fossa",
+      "node": "Scapula_subscapular_fossa",
+      "asset": "./Scapula_subscapular_fossa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-supraglenoid-tubercle",
+      "label": "Scapula supraglenoid tubercle",
+      "node": "Scapula_supraglenoid_tubercle",
+      "asset": "./Scapula_supraglenoid_tubercle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sesamoid-adductor",
+      "label": "Sesamoid adductor",
+      "node": "Sesamoid_adductor",
+      "asset": "./Sesamoid_adductor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna",
+      "label": "Ulna",
+      "node": "Ulna",
+      "asset": "./Ulna.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna-circumference-articular",
+      "label": "Ulna circumference articular",
+      "node": "Ulna_circumference_articular",
+      "asset": "./Ulna_circumference_articular.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna-notch-radial",
+      "label": "Ulna notch radial",
+      "node": "Ulna_notch_radial",
+      "asset": "./Ulna_notch_radial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna-notch-trochlea",
+      "label": "Ulna notch trochlea",
+      "node": "Ulna_notch_trochlea",
+      "asset": "./Ulna_notch_trochlea.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna-olecranon",
+      "label": "Ulna olecranon",
+      "node": "Ulna_olecranon",
+      "asset": "./Ulna_olecranon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna-process-anconeal",
+      "label": "Ulna process anconeal",
+      "node": "Ulna_process_anconeal",
+      "asset": "./Ulna_process_anconeal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna-process-coronoid-lateral",
+      "label": "Ulna process coronoid lateral",
+      "node": "Ulna_process_coronoid_lateral",
+      "asset": "./Ulna_process_coronoid_lateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna-process-coronoid-medial",
+      "label": "Ulna process coronoid medial",
+      "node": "Ulna_process_coronoid_medial",
+      "asset": "./Ulna_process_coronoid_medial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna-styloid-process",
+      "label": "Ulna styloid process",
+      "node": "Ulna_styloid_process",
+      "asset": "./Ulna_styloid_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna-tuber-olecranon",
+      "label": "Ulna tuber olecranon",
+      "node": "Ulna_tuber_olecranon",
+      "asset": "./Ulna_tuber_olecranon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna-tuberosity-ulna",
+      "label": "Ulna tuberosity ulna",
+      "node": "Ulna_tuberosity_ulna",
+      "asset": "./Ulna_tuberosity_ulna.glb",
+      "region": "root"
+    }
+  ]
+}

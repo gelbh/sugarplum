@@ -1,0 +1,174 @@
+{
+  "id": "canine-forelimb-musculature-scan",
+  "title": "Canine forelimb musculature scan",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-22-4-4-k9-fl-musc-scan2-shells-4",
+      "label": "22 4 4 k9 fl musc scan2 shells 4",
+      "node": "22_4_4_k9_fl_musc_scan2_shells_4",
+      "asset": "./22_4_4_k9_fl_musc_scan2_shells_4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-anconeus",
+      "label": "Anconeus",
+      "node": "Anconeus",
+      "asset": "./Anconeus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-biceps-brachii",
+      "label": "Biceps brachii",
+      "node": "Biceps_brachii",
+      "asset": "./Biceps_brachii.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-blocker-mesh",
+      "label": "Blocker mesh",
+      "node": "Blocker_mesh",
+      "asset": "./Blocker_mesh.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-brachialis",
+      "label": "Brachialis",
+      "node": "Brachialis",
+      "asset": "./Brachialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cde",
+      "label": "CDE",
+      "node": "CDE",
+      "asset": "./CDE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-deltoid-acromial",
+      "label": "Deltoid acromial",
+      "node": "Deltoid_acromial",
+      "asset": "./Deltoid_acromial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-deltoid-main",
+      "label": "Deltoid main",
+      "node": "Deltoid_main",
+      "asset": "./Deltoid_main.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ecr",
+      "label": "ECR",
+      "node": "ECR",
+      "asset": "./ECR.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fcr",
+      "label": "FCR",
+      "node": "FCR",
+      "asset": "./FCR.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fcu-ulnare",
+      "label": "FCU ulnare",
+      "node": "FCU_ulnare",
+      "asset": "./FCU_ulnare.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-infraspinatus",
+      "label": "Infraspinatus",
+      "node": "Infraspinatus",
+      "asset": "./Infraspinatus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lateral-dig-extensor",
+      "label": "Lateral dig extensor",
+      "node": "Lateral_dig_extensor",
+      "asset": "./Lateral_dig_extensor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pronator-teres",
+      "label": "Pronator teres",
+      "node": "Pronator_teres",
+      "asset": "./Pronator_teres.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sdf",
+      "label": "SDF",
+      "node": "SDF",
+      "asset": "./SDF.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-subscapularis",
+      "label": "Subscapularis",
+      "node": "Subscapularis",
+      "asset": "./Subscapularis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-supraspinatus",
+      "label": "Supraspinatus",
+      "node": "Supraspinatus",
+      "asset": "./Supraspinatus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-teres-major",
+      "label": "Teres major",
+      "node": "Teres_major",
+      "asset": "./Teres_major.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-trapezius-cut-section",
+      "label": "Trapezius cut section",
+      "node": "Trapezius_cut_section",
+      "asset": "./Trapezius_cut_section.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-triceps-lateral",
+      "label": "Triceps lateral",
+      "node": "Triceps_lateral",
+      "asset": "./Triceps_lateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-triceps-long",
+      "label": "Triceps long",
+      "node": "Triceps_long",
+      "asset": "./Triceps_long.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-triceps-medial",
+      "label": "Triceps medial",
+      "node": "Triceps_medial",
+      "asset": "./Triceps_medial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulnaris-lateralis",
+      "label": "Ulnaris lateralis",
+      "node": "Ulnaris_lateralis",
+      "asset": "./Ulnaris_lateralis.glb",
+      "region": "root"
+    }
+  ]
+}

@@ -1,0 +1,349 @@
+{
+  "id": "canine-hindlimb-arteries",
+  "title": "Canine hindlimb arteries",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-ascending-branch-med-circumflex-femoral",
+      "label": "Ascending branch med circumflex femoral",
+      "node": "Ascending_branch_med_circumflex_femoral",
+      "asset": "./Ascending_branch_med_circumflex_femoral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-caudal-aorta",
+      "label": "Caudal aorta",
+      "node": "Caudal_aorta",
+      "asset": "./Caudal_aorta.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-caudal-gluteal-aa",
+      "label": "Caudal gluteal aa",
+      "node": "Caudal_gluteal_aa",
+      "asset": "./Caudal_gluteal_aa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-caudal-tibial",
+      "label": "Caudal tibial",
+      "node": "Caudal_tibial",
+      "asset": "./Caudal_tibial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-co1",
+      "label": "Co1",
+      "node": "Co1",
+      "asset": "./Co1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-co2",
+      "label": "Co2",
+      "node": "Co2",
+      "asset": "./Co2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-co3",
+      "label": "Co3",
+      "node": "Co3",
+      "asset": "./Co3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-co4",
+      "label": "Co4",
+      "node": "Co4",
+      "asset": "./Co4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-co5",
+      "label": "Co5",
+      "node": "Co5",
+      "asset": "./Co5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranial-gluteal",
+      "label": "Cranial gluteal",
+      "node": "Cranial_gluteal",
+      "asset": "./Cranial_gluteal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranial-tibial",
+      "label": "Cranial tibial",
+      "node": "Cranial_tibial",
+      "asset": "./Cranial_tibial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-deep-branch",
+      "label": "Deep branch",
+      "node": "Deep_branch",
+      "asset": "./Deep_branch.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-deep-circumflex-iliac",
+      "label": "Deep circumflex iliac",
+      "node": "Deep_circumflex_iliac",
+      "asset": "./Deep_circumflex_iliac.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-deep-femoral",
+      "label": "Deep femoral",
+      "node": "Deep_femoral",
+      "asset": "./Deep_femoral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-desc-br",
+      "label": "Desc br",
+      "node": "Desc_br",
+      "asset": "./Desc_br.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-descending-genicular",
+      "label": "Descending genicular",
+      "node": "Descending_genicular",
+      "asset": "./Descending_genicular.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-caudal-femoral",
+      "label": "Distal caudal femoral",
+      "node": "Distal_caudal_femoral",
+      "asset": "./Distal_caudal_femoral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-r",
+      "label": "Dorsal R",
+      "node": "Dorsal_R",
+      "asset": "./Dorsal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-external-iliac-aas",
+      "label": "External iliac aas",
+      "node": "External_iliac_aas",
+      "asset": "./External_iliac_aas.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femoral",
+      "label": "Femoral",
+      "node": "Femoral",
+      "asset": "./Femoral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-r",
+      "label": "Femur R",
+      "node": "Femur_R",
+      "asset": "./Femur_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fibula-r",
+      "label": "Fibula R",
+      "node": "Fibula_R",
+      "asset": "./Fibula_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-iliolumbar",
+      "label": "Iliolumbar",
+      "node": "Iliolumbar",
+      "asset": "./Iliolumbar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-internal-iliac-aas",
+      "label": "Internal iliac aas",
+      "node": "Internal_iliac_aas",
+      "asset": "./Internal_iliac_aas.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-internal-obturator-br",
+      "label": "Internal obturator br",
+      "node": "Internal_obturator_br",
+      "asset": "./Internal_obturator_br.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l3",
+      "label": "L3",
+      "node": "L3",
+      "asset": "./L3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l4",
+      "label": "L4",
+      "node": "L4",
+      "asset": "./L4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l5",
+      "label": "L5",
+      "node": "L5",
+      "asset": "./L5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l6",
+      "label": "L6",
+      "node": "L6",
+      "asset": "./L6.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l7",
+      "label": "L7",
+      "node": "L7",
+      "asset": "./L7.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lat-circumflex-femoral",
+      "label": "Lat circumflex femoral",
+      "node": "Lat_circumflex_femoral",
+      "asset": "./Lat_circumflex_femoral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-medial-genicular",
+      "label": "Medial genicular",
+      "node": "Medial_genicular",
+      "asset": "./Medial_genicular.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-median-sacral",
+      "label": "Median sacral",
+      "node": "Median_sacral",
+      "asset": "./Median_sacral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-caudal-femoral",
+      "label": "Middle caudal femoral",
+      "node": "Middle_caudal_femoral",
+      "asset": "./Middle_caudal_femoral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-p1s-r",
+      "label": "P1s R",
+      "node": "P1s_R",
+      "asset": "./P1s_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-p2s-r",
+      "label": "P2s R",
+      "node": "P2s_R",
+      "asset": "./P2s_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-p3s-r",
+      "label": "P3s R",
+      "node": "P3s_R",
+      "asset": "./P3s_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patella-r",
+      "label": "Patella R",
+      "node": "Patella_R",
+      "asset": "./Patella_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis",
+      "label": "Pelvis",
+      "node": "Pelvis",
+      "asset": "./Pelvis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-popliteal",
+      "label": "Popliteal",
+      "node": "Popliteal",
+      "asset": "./Popliteal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-caudal-femoral",
+      "label": "Proximal caudal femoral",
+      "node": "Proximal_caudal_femoral",
+      "asset": "./Proximal_caudal_femoral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-r",
+      "label": "Proximal R",
+      "node": "Proximal_R",
+      "asset": "./Proximal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sacrum",
+      "label": "Sacrum",
+      "node": "Sacrum",
+      "asset": "./Sacrum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-saphenous",
+      "label": "Saphenous",
+      "node": "Saphenous",
+      "asset": "./Saphenous.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sculpt-arteries",
+      "label": "SCULPT ARTERIES",
+      "node": "SCULPT_ARTERIES",
+      "asset": "./SCULPT_ARTERIES.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-superficial-circumflex-iliac",
+      "label": "Superficial circumflex iliac",
+      "node": "Superficial_circumflex_iliac",
+      "asset": "./Superficial_circumflex_iliac.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-talus-r",
+      "label": "Talus R",
+      "node": "Talus_R",
+      "asset": "./Talus_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-r",
+      "label": "Tibia R",
+      "node": "Tibia_R",
+      "asset": "./Tibia_R.glb",
+      "region": "root"
+    }
+  ]
+}

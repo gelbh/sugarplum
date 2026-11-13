@@ -1,0 +1,111 @@
+{
+  "id": "canine-stifle",
+  "title": "Canine stifle",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-caudal-cruciate-ligament",
+      "label": "Caudal cruciate ligament",
+      "node": "Caudal_cruciate_ligament",
+      "asset": "./Caudal_cruciate_ligament.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-caudal-tibial-ligament-medial-meniscus",
+      "label": "Caudal tibial ligament medial meniscus",
+      "node": "Caudal_tibial_ligament_medial_meniscus",
+      "asset": "./Caudal_tibial_ligament_medial_meniscus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranial-cruciate-ligament",
+      "label": "Cranial cruciate ligament",
+      "node": "Cranial_cruciate_ligament",
+      "asset": "./Cranial_cruciate_ligament.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranial-ligament-of-fibular-head",
+      "label": "Cranial ligament of fibular head",
+      "node": "Cranial_ligament_of_fibular_head",
+      "asset": "./Cranial_ligament_of_fibular_head.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranial-tibial-ligament",
+      "label": "Cranial tibial ligament",
+      "node": "Cranial_tibial_ligament",
+      "asset": "./Cranial_tibial_ligament.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur",
+      "label": "Femur",
+      "node": "Femur",
+      "asset": "./Femur.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fibula",
+      "label": "Fibula",
+      "node": "Fibula",
+      "asset": "./Fibula.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-intermeniscal-ligament",
+      "label": "Intermeniscal ligament",
+      "node": "Intermeniscal_ligament",
+      "asset": "./Intermeniscal_ligament.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lateral-collateral-ligament",
+      "label": "Lateral collateral ligament",
+      "node": "Lateral_collateral_ligament",
+      "asset": "./Lateral_collateral_ligament.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lateral-meniscus",
+      "label": "Lateral meniscus",
+      "node": "Lateral_meniscus",
+      "asset": "./Lateral_meniscus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-medial-collateral-ligament",
+      "label": "Medial collateral ligament",
+      "node": "Medial_collateral_ligament",
+      "asset": "./Medial_collateral_ligament.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-medial-meniscus",
+      "label": "Medial meniscus",
+      "node": "Medial_meniscus",
+      "asset": "./Medial_meniscus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-meniscofemoral-ligament",
+      "label": "Meniscofemoral ligament",
+      "node": "Meniscofemoral_ligament",
+      "asset": "./Meniscofemoral_ligament.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia",
+      "label": "Tibia",
+      "node": "Tibia",
+      "asset": "./Tibia.glb",
+      "region": "root"
+    }
+  ]
+}

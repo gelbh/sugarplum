@@ -1,0 +1,160 @@
+{
+  "id": "canine-forelimb-veins",
+  "title": "Canine forelimb veins",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-accessory-cephalic-v",
+      "label": "accessory cephalic v",
+      "node": "accessory_cephalic_v",
+      "asset": "./accessory_cephalic_v.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-axillary-v",
+      "label": "axillary v",
+      "node": "axillary_v",
+      "asset": "./axillary_v.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-axillobrachial-v",
+      "label": "axillobrachial v",
+      "node": "axillobrachial_v",
+      "asset": "./axillobrachial_v.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-bicipital-v",
+      "label": "bicipital v",
+      "node": "bicipital_v",
+      "asset": "./bicipital_v.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-brachial-v-copy000",
+      "label": "brachial v copy000",
+      "node": "brachial_v_copy000",
+      "asset": "./brachial_v_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpals-r",
+      "label": "Carpals R",
+      "node": "Carpals_R",
+      "asset": "./Carpals_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cephalic-v",
+      "label": "cephalic v",
+      "node": "cephalic_v",
+      "asset": "./cephalic_v.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cran-circumflex-v",
+      "label": "cran circumflex v",
+      "node": "cran_circumflex_v",
+      "asset": "./cran_circumflex_v.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cran-supfl-antebrach-v",
+      "label": "cran supfl antebrach v",
+      "node": "cran_supfl_antebrach_v",
+      "asset": "./cran_supfl_antebrach_v.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-r",
+      "label": "Humerus R",
+      "node": "Humerus_R",
+      "asset": "./Humerus_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lat-thoracic-v",
+      "label": "lat thoracic v",
+      "node": "lat_thoracic_v",
+      "asset": "./lat_thoracic_v.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mc-r",
+      "label": "MC R",
+      "node": "MC_R",
+      "asset": "./MC_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-median-cubital-v",
+      "label": "median cubital v",
+      "node": "median_cubital_v",
+      "asset": "./median_cubital_v.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-median-v",
+      "label": "median v",
+      "node": "median_v",
+      "asset": "./median_v.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-omobrachial-v",
+      "label": "omobrachial v",
+      "node": "omobrachial_v",
+      "asset": "./omobrachial_v.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius-r",
+      "label": "Radius R",
+      "node": "Radius_R",
+      "asset": "./Radius_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-r",
+      "label": "Scapula R",
+      "node": "Scapula_R",
+      "asset": "./Scapula_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-subscapular-v",
+      "label": "subscapular v",
+      "node": "subscapular_v",
+      "asset": "./subscapular_v.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-thoracodorsal-v",
+      "label": "thoracodorsal v",
+      "node": "thoracodorsal_v",
+      "asset": "./thoracodorsal_v.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna-r",
+      "label": "Ulna R",
+      "node": "Ulna_R",
+      "asset": "./Ulna_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulnar-v",
+      "label": "ulnar v",
+      "node": "ulnar_v",
+      "asset": "./ulnar_v.glb",
+      "region": "root"
+    }
+  ]
+}

@@ -1,0 +1,664 @@
+{
+  "id": "canine-forelimb-musculature",
+  "title": "Canine forelimb musculature",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-anconeus",
+      "label": "Anconeus",
+      "node": "Anconeus",
+      "asset": "./Anconeus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-anconeus-1",
+      "label": "Anconeus 1",
+      "node": "Anconeus_1",
+      "asset": "./Anconeus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-axillary-nn",
+      "label": "Axillary nn",
+      "node": "Axillary_nn",
+      "asset": "./Axillary_nn.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-axillary-nn-1",
+      "label": "Axillary nn 1",
+      "node": "Axillary_nn_1",
+      "asset": "./Axillary_nn_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-bicepsbrachii",
+      "label": "BicepsBrachii",
+      "node": "BicepsBrachii",
+      "asset": "./BicepsBrachii.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-bicepsbrachii-1",
+      "label": "BicepsBrachii 1",
+      "node": "BicepsBrachii_1",
+      "asset": "./BicepsBrachii_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-brachialis",
+      "label": "Brachialis",
+      "node": "Brachialis",
+      "asset": "./Brachialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-brachialis-1",
+      "label": "Brachialis 1",
+      "node": "Brachialis_1",
+      "asset": "./Brachialis_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-commondigext",
+      "label": "CommonDigExt",
+      "node": "CommonDigExt",
+      "asset": "./CommonDigExt.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-commondigext-1",
+      "label": "CommonDigExt 1",
+      "node": "CommonDigExt_1",
+      "asset": "./CommonDigExt_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-coracobrachialis",
+      "label": "Coracobrachialis",
+      "node": "Coracobrachialis",
+      "asset": "./Coracobrachialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-coracobrachialis-1",
+      "label": "Coracobrachialis 1",
+      "node": "Coracobrachialis_1",
+      "asset": "./Coracobrachialis_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-deepdigflexor",
+      "label": "DeepDigFlexor",
+      "node": "DeepDigFlexor",
+      "asset": "./DeepDigFlexor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-deepdigflexor-1",
+      "label": "DeepDigFlexor 1",
+      "node": "DeepDigFlexor_1",
+      "asset": "./DeepDigFlexor_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-deltoidacro",
+      "label": "DeltoidAcro",
+      "node": "DeltoidAcro",
+      "asset": "./DeltoidAcro.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-deltoidacro-1",
+      "label": "DeltoidAcro 1",
+      "node": "DeltoidAcro_1",
+      "asset": "./DeltoidAcro_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-deltoidmain",
+      "label": "DeltoidMain",
+      "node": "DeltoidMain",
+      "asset": "./DeltoidMain.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-deltoidmain-1",
+      "label": "DeltoidMain 1",
+      "node": "DeltoidMain_1",
+      "asset": "./DeltoidMain_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-extencarpradialis",
+      "label": "ExtenCarpRadialis",
+      "node": "ExtenCarpRadialis",
+      "asset": "./ExtenCarpRadialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-extencarpradialis-1",
+      "label": "ExtenCarpRadialis 1",
+      "node": "ExtenCarpRadialis_1",
+      "asset": "./ExtenCarpRadialis_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-flexcarprad",
+      "label": "FlexCarpRad",
+      "node": "FlexCarpRad",
+      "asset": "./FlexCarpRad.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-flexcarprad-1",
+      "label": "FlexCarpRad 1",
+      "node": "FlexCarpRad_1",
+      "asset": "./FlexCarpRad_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus",
+      "label": "Humerus",
+      "node": "Humerus",
+      "asset": "./Humerus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-1",
+      "label": "Humerus 1",
+      "node": "Humerus_1",
+      "asset": "./Humerus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humflexorcarpiulnaris",
+      "label": "HumFlexorCarpiUlnaris",
+      "node": "HumFlexorCarpiUlnaris",
+      "asset": "./HumFlexorCarpiUlnaris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humflexorcarpiulnaris-1",
+      "label": "HumFlexorCarpiUlnaris 1",
+      "node": "HumFlexorCarpiUlnaris_1",
+      "asset": "./HumFlexorCarpiUlnaris_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-infraspinatus",
+      "label": "Infraspinatus",
+      "node": "Infraspinatus",
+      "asset": "./Infraspinatus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-infraspinatus-1",
+      "label": "Infraspinatus 1",
+      "node": "Infraspinatus_1",
+      "asset": "./Infraspinatus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-latdigext",
+      "label": "LatDigExt",
+      "node": "LatDigExt",
+      "asset": "./LatDigExt.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-latdigext-1",
+      "label": "LatDigExt 1",
+      "node": "LatDigExt_1",
+      "asset": "./LatDigExt_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-median-nn",
+      "label": "Median nn",
+      "node": "Median_nn",
+      "asset": "./Median_nn.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-median-nn-1",
+      "label": "Median nn 1",
+      "node": "Median_nn_1",
+      "asset": "./Median_nn_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpus",
+      "label": "Metacarpus",
+      "node": "Metacarpus",
+      "asset": "./Metacarpus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpus-1",
+      "label": "Metacarpus 1",
+      "node": "Metacarpus_1",
+      "asset": "./Metacarpus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-musculocutaneous-nn",
+      "label": "Musculocutaneous nn",
+      "node": "Musculocutaneous_nn",
+      "asset": "./Musculocutaneous_nn.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-musculocutaneous-nn-1",
+      "label": "Musculocutaneous nn 1",
+      "node": "Musculocutaneous_nn_1",
+      "asset": "./Musculocutaneous_nn_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pronatteres",
+      "label": "PronatTeres",
+      "node": "PronatTeres",
+      "asset": "./PronatTeres.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pronatteres-1",
+      "label": "PronatTeres 1",
+      "node": "PronatTeres_1",
+      "asset": "./PronatTeres_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radial-n",
+      "label": "Radial n",
+      "node": "Radial_n",
+      "asset": "./Radial_n.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radial-n-1",
+      "label": "Radial n 1",
+      "node": "Radial_n_1",
+      "asset": "./Radial_n_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius",
+      "label": "Radius",
+      "node": "Radius",
+      "asset": "./Radius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius-1",
+      "label": "Radius 1",
+      "node": "Radius_1",
+      "asset": "./Radius_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula",
+      "label": "Scapula",
+      "node": "Scapula",
+      "asset": "./Scapula.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-1",
+      "label": "Scapula 1",
+      "node": "Scapula_1",
+      "asset": "./Scapula_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-subscapular-nn",
+      "label": "Subscapular nn",
+      "node": "Subscapular_nn",
+      "asset": "./Subscapular_nn.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-subscapular-nn-1",
+      "label": "Subscapular nn 1",
+      "node": "Subscapular_nn_1",
+      "asset": "./Subscapular_nn_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-subscapularis",
+      "label": "Subscapularis",
+      "node": "Subscapularis",
+      "asset": "./Subscapularis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-subscapularis-1",
+      "label": "Subscapularis 1",
+      "node": "Subscapularis_1",
+      "asset": "./Subscapularis_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-supdigflex",
+      "label": "SupDigFlex",
+      "node": "SupDigFlex",
+      "asset": "./SupDigFlex.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-supdigflex-1",
+      "label": "SupDigFlex 1",
+      "node": "SupDigFlex_1",
+      "asset": "./SupDigFlex_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-supinator",
+      "label": "Supinator",
+      "node": "Supinator",
+      "asset": "./Supinator.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-supinator-1",
+      "label": "Supinator 1",
+      "node": "Supinator_1",
+      "asset": "./Supinator_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-suprascapular-nn",
+      "label": "Suprascapular nn",
+      "node": "Suprascapular_nn",
+      "asset": "./Suprascapular_nn.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-suprascapular-nn-1",
+      "label": "Suprascapular nn 1",
+      "node": "Suprascapular_nn_1",
+      "asset": "./Suprascapular_nn_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-supraspinatus",
+      "label": "Supraspinatus",
+      "node": "Supraspinatus",
+      "asset": "./Supraspinatus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-supraspinatus-1",
+      "label": "Supraspinatus 1",
+      "node": "Supraspinatus_1",
+      "asset": "./Supraspinatus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ten-ecradialis",
+      "label": "TEN ECRadialis",
+      "node": "TEN_ECRadialis",
+      "asset": "./TEN_ECRadialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ten-ecradialis-1",
+      "label": "TEN ECRadialis 1",
+      "node": "TEN_ECRadialis_1",
+      "asset": "./TEN_ECRadialis_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tend-commdigext",
+      "label": "Tend CommDigExt",
+      "node": "Tend_CommDigExt",
+      "asset": "./Tend_CommDigExt.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tend-commdigext-1",
+      "label": "Tend CommDigExt 1",
+      "node": "Tend_CommDigExt_1",
+      "asset": "./Tend_CommDigExt_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tend-ddflex",
+      "label": "Tend DDFlex",
+      "node": "Tend_DDFlex",
+      "asset": "./Tend_DDFlex.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tend-ddflex-1",
+      "label": "Tend DDFlex 1",
+      "node": "Tend_DDFlex_1",
+      "asset": "./Tend_DDFlex_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tend-flexcarprad",
+      "label": "Tend FlexCarpRad",
+      "node": "Tend_FlexCarpRad",
+      "asset": "./Tend_FlexCarpRad.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tend-flexcarprad-1",
+      "label": "Tend FlexCarpRad 1",
+      "node": "Tend_FlexCarpRad_1",
+      "asset": "./Tend_FlexCarpRad_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tend-latdigextensor",
+      "label": "Tend LatDigExtensor",
+      "node": "Tend_LatDigExtensor",
+      "asset": "./Tend_LatDigExtensor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tend-latdigextensor-1",
+      "label": "Tend LatDigExtensor 1",
+      "node": "Tend_LatDigExtensor_1",
+      "asset": "./Tend_LatDigExtensor_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tend-supdigflex",
+      "label": "Tend SupDigFlex",
+      "node": "Tend_SupDigFlex",
+      "asset": "./Tend_SupDigFlex.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tend-ulnaflexorcarpulnaris",
+      "label": "Tend UlnaFlexorCarpUlnaris",
+      "node": "Tend_UlnaFlexorCarpUlnaris",
+      "asset": "./Tend_UlnaFlexorCarpUlnaris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tend-ulnaflexorcarpulnaris-1",
+      "label": "Tend UlnaFlexorCarpUlnaris 1",
+      "node": "Tend_UlnaFlexorCarpUlnaris_1",
+      "asset": "./Tend_UlnaFlexorCarpUlnaris_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tend-ulnarislateralis",
+      "label": "Tend UlnarisLateralis",
+      "node": "Tend_UlnarisLateralis",
+      "asset": "./Tend_UlnarisLateralis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tend-ulnarislateralis-1",
+      "label": "Tend UlnarisLateralis 1",
+      "node": "Tend_UlnarisLateralis_1",
+      "asset": "./Tend_UlnarisLateralis_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tensorfasc",
+      "label": "TensorFasc",
+      "node": "TensorFasc",
+      "asset": "./TensorFasc.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tensorfasc-1",
+      "label": "TensorFasc 1",
+      "node": "TensorFasc_1",
+      "asset": "./TensorFasc_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-teresmajor",
+      "label": "TeresMajor",
+      "node": "TeresMajor",
+      "asset": "./TeresMajor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-teresmajor-1",
+      "label": "TeresMajor 1",
+      "node": "TeresMajor_1",
+      "asset": "./TeresMajor_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-teresminor",
+      "label": "TeresMinor",
+      "node": "TeresMinor",
+      "asset": "./TeresMinor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-teresminor-1",
+      "label": "TeresMinor 1",
+      "node": "TeresMinor_1",
+      "asset": "./TeresMinor_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-triceps",
+      "label": "Triceps",
+      "node": "Triceps",
+      "asset": "./Triceps.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-triceps-1",
+      "label": "Triceps 1",
+      "node": "Triceps_1",
+      "asset": "./Triceps_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tricepsaccessory",
+      "label": "TricepsAccessory",
+      "node": "TricepsAccessory",
+      "asset": "./TricepsAccessory.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tricepsaccessory-1",
+      "label": "TricepsAccessory 1",
+      "node": "TricepsAccessory_1",
+      "asset": "./TricepsAccessory_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tricepslateral",
+      "label": "TricepsLateral",
+      "node": "TricepsLateral",
+      "asset": "./TricepsLateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tricepslateral-1",
+      "label": "TricepsLateral 1",
+      "node": "TricepsLateral_1",
+      "asset": "./TricepsLateral_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tricepsmedial",
+      "label": "TricepsMedial",
+      "node": "TricepsMedial",
+      "asset": "./TricepsMedial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tricepsmedial-1",
+      "label": "TricepsMedial 1",
+      "node": "TricepsMedial_1",
+      "asset": "./TricepsMedial_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna",
+      "label": "Ulna",
+      "node": "Ulna",
+      "asset": "./Ulna.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna-1",
+      "label": "Ulna 1",
+      "node": "Ulna_1",
+      "asset": "./Ulna_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulnaflexorcarpiulnaris",
+      "label": "UlnaFlexorCarpiUlnaris",
+      "node": "UlnaFlexorCarpiUlnaris",
+      "asset": "./UlnaFlexorCarpiUlnaris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulnaflexorcarpiulnaris-1",
+      "label": "UlnaFlexorCarpiUlnaris 1",
+      "node": "UlnaFlexorCarpiUlnaris_1",
+      "asset": "./UlnaFlexorCarpiUlnaris_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulnar-nn",
+      "label": "Ulnar nn",
+      "node": "Ulnar_nn",
+      "asset": "./Ulnar_nn.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulnar-nn-1",
+      "label": "Ulnar nn 1",
+      "node": "Ulnar_nn_1",
+      "asset": "./Ulnar_nn_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulnarislateralis",
+      "label": "UlnarisLateralis",
+      "node": "UlnarisLateralis",
+      "asset": "./UlnarisLateralis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulnarislateralis-1",
+      "label": "UlnarisLateralis 1",
+      "node": "UlnarisLateralis_1",
+      "asset": "./UlnarisLateralis_1.glb",
+      "region": "root"
+    }
+  ]
+}

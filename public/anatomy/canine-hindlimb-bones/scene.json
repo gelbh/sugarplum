@@ -1,0 +1,307 @@
+{
+  "id": "canine-hindlimb-bones",
+  "title": "Canine hindlimb bones",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-calcaneus-l",
+      "label": "calcaneus L",
+      "node": "calcaneus_L",
+      "asset": "./calcaneus_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-phalanx-ii-l",
+      "label": "distal phalanx II L",
+      "node": "distal_phalanx_II_L",
+      "asset": "./distal_phalanx_II_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-phalanx-iii-l",
+      "label": "distal phalanx III L",
+      "node": "distal_phalanx_III_L",
+      "asset": "./distal_phalanx_III_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-phalanx-iv-l",
+      "label": "distal phalanx IV L",
+      "node": "distal_phalanx_IV_L",
+      "asset": "./distal_phalanx_IV_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-phalanx-v-l",
+      "label": "distal phalanx V L",
+      "node": "distal_phalanx_V_L",
+      "asset": "./distal_phalanx_V_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-ii-l",
+      "label": "dorsal sesamoid II L",
+      "node": "dorsal_sesamoid_II_L",
+      "asset": "./dorsal_sesamoid_II_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-iii-l",
+      "label": "dorsal sesamoid III L",
+      "node": "dorsal_sesamoid_III_L",
+      "asset": "./dorsal_sesamoid_III_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-iv-l",
+      "label": "dorsal sesamoid IV L",
+      "node": "dorsal_sesamoid_IV_L",
+      "asset": "./dorsal_sesamoid_IV_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-middle-ii-l",
+      "label": "dorsal sesamoid middle II L",
+      "node": "dorsal_sesamoid_middle_II_L",
+      "asset": "./dorsal_sesamoid_middle_II_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-middle-iii-l",
+      "label": "dorsal sesamoid middle III L",
+      "node": "dorsal_sesamoid_middle_III_L",
+      "asset": "./dorsal_sesamoid_middle_III_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-middle-iv-l",
+      "label": "dorsal sesamoid middle IV L",
+      "node": "dorsal_sesamoid_middle_IV_L",
+      "asset": "./dorsal_sesamoid_middle_IV_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-middle-v-l",
+      "label": "dorsal sesamoid middle V L",
+      "node": "dorsal_sesamoid_middle_V_L",
+      "asset": "./dorsal_sesamoid_middle_V_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sesamoid-v-l",
+      "label": "dorsal sesamoid V L",
+      "node": "dorsal_sesamoid_V_L",
+      "asset": "./dorsal_sesamoid_V_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femoris-l",
+      "label": "femoris L",
+      "node": "femoris_L",
+      "asset": "./femoris_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lateral-fabellar-l",
+      "label": "lateral fabellar L",
+      "node": "lateral_fabellar_L",
+      "asset": "./lateral_fabellar_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metatarsus-ii-iii-iv-v-002-l",
+      "label": "Metatarsus II III IV V 002 L",
+      "node": "Metatarsus_II_III_IV_V_002_L",
+      "asset": "./Metatarsus_II_III_IV_V_002_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metatarsus-ii-iii-iv-v-003-l",
+      "label": "Metatarsus II III IV V 003 L",
+      "node": "Metatarsus_II_III_IV_V_003_L",
+      "asset": "./Metatarsus_II_III_IV_V_003_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metatarsus-modified1-l",
+      "label": "Metatarsus modified1 L",
+      "node": "Metatarsus_modified1_L",
+      "asset": "./Metatarsus_modified1_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metatarsus-modified2-l",
+      "label": "Metatarsus modified2 L",
+      "node": "Metatarsus_modified2_L",
+      "asset": "./Metatarsus_modified2_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metatarsus-modified3-l",
+      "label": "Metatarsus modified3 L",
+      "node": "Metatarsus_modified3_L",
+      "asset": "./Metatarsus_modified3_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-phalanx-ii-l",
+      "label": "middle phalanx II L",
+      "node": "middle_phalanx_II_L",
+      "asset": "./middle_phalanx_II_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-phalanx-iii-l",
+      "label": "middle phalanx III L",
+      "node": "middle_phalanx_III_L",
+      "asset": "./middle_phalanx_III_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-phalanx-iv-l",
+      "label": "middle phalanx IV L",
+      "node": "middle_phalanx_IV_L",
+      "asset": "./middle_phalanx_IV_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-phalanx-v-l",
+      "label": "middle phalanx V L",
+      "node": "middle_phalanx_V_L",
+      "asset": "./middle_phalanx_V_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patella-l",
+      "label": "patella L",
+      "node": "patella_L",
+      "asset": "./patella_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-l",
+      "label": "Pelvis L",
+      "node": "Pelvis_L",
+      "asset": "./Pelvis_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-phalanx-ii-l",
+      "label": "proximal phalanx II L",
+      "node": "proximal_phalanx_II_L",
+      "asset": "./proximal_phalanx_II_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-phalanx-iii-l",
+      "label": "proximal phalanx III L",
+      "node": "proximal_phalanx_III_L",
+      "asset": "./proximal_phalanx_III_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-phalanx-iv-l",
+      "label": "proximal phalanx IV L",
+      "node": "proximal_phalanx_IV_L",
+      "asset": "./proximal_phalanx_IV_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-phalanx-v-l",
+      "label": "proximal phalanx V L",
+      "node": "proximal_phalanx_V_L",
+      "asset": "./proximal_phalanx_V_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-sesamoid-ii-l",
+      "label": "proximal sesamoid II L",
+      "node": "proximal_sesamoid_II_L",
+      "asset": "./proximal_sesamoid_II_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-sesamoid-iii-l",
+      "label": "proximal sesamoid III L",
+      "node": "proximal_sesamoid_III_L",
+      "asset": "./proximal_sesamoid_III_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-sesamoid-iv-l",
+      "label": "proximal sesamoid IV L",
+      "node": "proximal_sesamoid_IV_L",
+      "asset": "./proximal_sesamoid_IV_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-sesamoid-v-l",
+      "label": "proximal sesamoid V L",
+      "node": "proximal_sesamoid_V_L",
+      "asset": "./proximal_sesamoid_V_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-talus-l",
+      "label": "talus L",
+      "node": "talus_L",
+      "asset": "./talus_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-central-l",
+      "label": "tarsal central L",
+      "node": "tarsal_central_L",
+      "asset": "./tarsal_central_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-i-l",
+      "label": "tarsal I L",
+      "node": "tarsal_I_L",
+      "asset": "./tarsal_I_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-ii-l",
+      "label": "tarsal II L",
+      "node": "tarsal_II_L",
+      "asset": "./tarsal_II_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-iii-l",
+      "label": "tarsal III L",
+      "node": "tarsal_III_L",
+      "asset": "./tarsal_III_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-iv-l",
+      "label": "tarsal IV L",
+      "node": "tarsal_IV_L",
+      "asset": "./tarsal_IV_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-and-fibula-l",
+      "label": "tibia and fibula L",
+      "node": "tibia_and_fibula_L",
+      "asset": "./tibia_and_fibula_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-and-fibula2-l",
+      "label": "Tibia and fibula2 L",
+      "node": "Tibia_and_fibula2_L",
+      "asset": "./Tibia_and_fibula2_L.glb",
+      "region": "root"
+    }
+  ]
+}
