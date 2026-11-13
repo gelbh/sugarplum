@@ -1,0 +1,410 @@
+{
+  "id": "bovine",
+  "title": "Bovine",
+  "regions": [
+    {
+      "id": "back-legs",
+      "label": "Back Legs",
+      "defaultActive": true
+    },
+    {
+      "id": "front-legs",
+      "label": "Front Legs"
+    },
+    {
+      "id": "ribs-spine",
+      "label": "Ribs Spine"
+    },
+    {
+      "id": "skull-cervical",
+      "label": "Skull Cervical"
+    }
+  ],
+  "structures": [
+    {
+      "id": "back-legs-body-of-illium",
+      "label": "Body of Illium",
+      "node": "Body of Illium",
+      "asset": "./Back Legs/Body of Illium.glb",
+      "region": "back-legs"
+    },
+    {
+      "id": "back-legs-calcaneus",
+      "label": "Calcaneus",
+      "node": "Calcaneus",
+      "asset": "./Back Legs/Calcaneus.glb",
+      "region": "back-legs"
+    },
+    {
+      "id": "back-legs-distal-phalanges",
+      "label": "Distal Phalanges",
+      "node": "Distal Phalanges",
+      "asset": "./Back Legs/Distal Phalanges.glb",
+      "region": "back-legs"
+    },
+    {
+      "id": "back-legs-distal-sesamoids",
+      "label": "Distal Sesamoids",
+      "node": "Distal Sesamoids",
+      "asset": "./Back Legs/Distal Sesamoids.glb",
+      "region": "back-legs"
+    },
+    {
+      "id": "back-legs-femur",
+      "label": "Femur",
+      "node": "Femur",
+      "asset": "./Back Legs/Femur.glb",
+      "region": "back-legs"
+    },
+    {
+      "id": "back-legs-fused-3rd-4th-metatarsals",
+      "label": "Fused 3rd-4th Metatarsals",
+      "node": "Fused 3rd-4th Metatarsals",
+      "asset": "./Back Legs/Fused 3rd-4th Metatarsals.glb",
+      "region": "back-legs"
+    },
+    {
+      "id": "back-legs-middle-phalanges",
+      "label": "Middle Phalanges",
+      "node": "Middle_Phalanges",
+      "asset": "./Back Legs/Middle_Phalanges.glb",
+      "region": "back-legs"
+    },
+    {
+      "id": "back-legs-patella",
+      "label": "Patella",
+      "node": "Patella",
+      "asset": "./Back Legs/Patella.glb",
+      "region": "back-legs"
+    },
+    {
+      "id": "back-legs-proximal-phalanges",
+      "label": "Proximal Phalanges",
+      "node": "Proximal Phalanges",
+      "asset": "./Back Legs/Proximal Phalanges.glb",
+      "region": "back-legs"
+    },
+    {
+      "id": "back-legs-proximal-sesamoids",
+      "label": "Proximal Sesamoids",
+      "node": "Proximal_Sesamoids",
+      "asset": "./Back Legs/Proximal_Sesamoids.glb",
+      "region": "back-legs"
+    },
+    {
+      "id": "back-legs-talus",
+      "label": "Talus",
+      "node": "Talus",
+      "asset": "./Back Legs/Talus.glb",
+      "region": "back-legs"
+    },
+    {
+      "id": "back-legs-tarsals",
+      "label": "Tarsals",
+      "node": "Tarsals",
+      "asset": "./Back Legs/Tarsals.glb",
+      "region": "back-legs"
+    },
+    {
+      "id": "back-legs-tibia",
+      "label": "Tibia",
+      "node": "Tibia",
+      "asset": "./Back Legs/Tibia.glb",
+      "region": "back-legs"
+    },
+    {
+      "id": "back-legs-unknown-tibia",
+      "label": "Unknown Tibia",
+      "node": "Unknown_Tibia",
+      "asset": "./Back Legs/Unknown_Tibia.glb",
+      "region": "back-legs"
+    },
+    {
+      "id": "front-legs-carpals",
+      "label": "Carpals",
+      "node": "Carpals",
+      "asset": "./Front_Legs/Carpals.glb",
+      "region": "front-legs"
+    },
+    {
+      "id": "front-legs-empty",
+      "label": "empty",
+      "node": "empty",
+      "asset": "./Front_Legs/empty.glb",
+      "region": "front-legs"
+    },
+    {
+      "id": "front-legs-fifth-metacarpals",
+      "label": "Fifth Metacarpals",
+      "node": "Fifth Metacarpals",
+      "asset": "./Front_Legs/Fifth Metacarpals.glb",
+      "region": "front-legs"
+    },
+    {
+      "id": "front-legs-fused-third-fourth-metacarpals",
+      "label": "Fused third fourth metacarpals",
+      "node": "Fused third fourth metacarpals",
+      "asset": "./Front_Legs/Fused third fourth metacarpals.glb",
+      "region": "front-legs"
+    },
+    {
+      "id": "front-legs-humerus",
+      "label": "Humerus",
+      "node": "Humerus",
+      "asset": "./Front_Legs/Humerus.glb",
+      "region": "front-legs"
+    },
+    {
+      "id": "front-legs-phalanges",
+      "label": "Phalanges",
+      "node": "Phalanges",
+      "asset": "./Front_Legs/Phalanges.glb",
+      "region": "front-legs"
+    },
+    {
+      "id": "front-legs-radius",
+      "label": "Radius",
+      "node": "Radius",
+      "asset": "./Front_Legs/Radius.glb",
+      "region": "front-legs"
+    },
+    {
+      "id": "front-legs-scalpula",
+      "label": "Scalpula",
+      "node": "Scalpula",
+      "asset": "./Front_Legs/Scalpula.glb",
+      "region": "front-legs"
+    },
+    {
+      "id": "front-legs-sesamoids",
+      "label": "Sesamoids",
+      "node": "Sesamoids",
+      "asset": "./Front_Legs/Sesamoids.glb",
+      "region": "front-legs"
+    },
+    {
+      "id": "front-legs-ulna",
+      "label": "Ulna",
+      "node": "Ulna",
+      "asset": "./Front_Legs/Ulna.glb",
+      "region": "front-legs"
+    },
+    {
+      "id": "ribs-spine-caudal-vertebrae",
+      "label": "Caudal Vertebrae",
+      "node": "Caudal Vertebrae",
+      "asset": "./Ribs_Spine/Caudal Vertebrae.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "ribs-spine-l1",
+      "label": "L1",
+      "node": "L1",
+      "asset": "./Ribs_Spine/L1.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "ribs-spine-l2",
+      "label": "L2",
+      "node": "L2",
+      "asset": "./Ribs_Spine/L2.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "ribs-spine-l3",
+      "label": "L3",
+      "node": "L3",
+      "asset": "./Ribs_Spine/L3.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "ribs-spine-l4",
+      "label": "L4",
+      "node": "L4",
+      "asset": "./Ribs_Spine/L4.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "ribs-spine-l5",
+      "label": "L5",
+      "node": "L5",
+      "asset": "./Ribs_Spine/L5.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "ribs-spine-l6",
+      "label": "L6",
+      "node": "L6",
+      "asset": "./Ribs_Spine/L6.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "ribs-spine-ribs",
+      "label": "Ribs",
+      "node": "Ribs",
+      "asset": "./Ribs_Spine/Ribs.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "ribs-spine-t1",
+      "label": "T1",
+      "node": "T1",
+      "asset": "./Ribs_Spine/T1.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "ribs-spine-t10",
+      "label": "T10",
+      "node": "T10",
+      "asset": "./Ribs_Spine/T10.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "ribs-spine-t11",
+      "label": "T11",
+      "node": "T11",
+      "asset": "./Ribs_Spine/T11.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "ribs-spine-t12",
+      "label": "T12",
+      "node": "T12",
+      "asset": "./Ribs_Spine/T12.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "ribs-spine-t13",
+      "label": "T13",
+      "node": "T13",
+      "asset": "./Ribs_Spine/T13.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "ribs-spine-t2",
+      "label": "T2",
+      "node": "T2",
+      "asset": "./Ribs_Spine/T2.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "ribs-spine-t3",
+      "label": "T3",
+      "node": "T3",
+      "asset": "./Ribs_Spine/T3.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "ribs-spine-t4",
+      "label": "T4",
+      "node": "T4",
+      "asset": "./Ribs_Spine/T4.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "ribs-spine-t5",
+      "label": "T5",
+      "node": "T5",
+      "asset": "./Ribs_Spine/T5.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "ribs-spine-t6",
+      "label": "T6",
+      "node": "T6",
+      "asset": "./Ribs_Spine/T6.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "ribs-spine-t7",
+      "label": "T7",
+      "node": "T7",
+      "asset": "./Ribs_Spine/T7.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "ribs-spine-t8",
+      "label": "T8",
+      "node": "T8",
+      "asset": "./Ribs_Spine/T8.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "ribs-spine-t9",
+      "label": "T9",
+      "node": "T9",
+      "asset": "./Ribs_Spine/T9.glb",
+      "region": "ribs-spine"
+    },
+    {
+      "id": "skull-cervical-atlas-c1",
+      "label": "Atlas C1",
+      "node": "Atlas C1",
+      "asset": "./Skull_Cervical/Atlas C1.glb",
+      "region": "skull-cervical"
+    },
+    {
+      "id": "skull-cervical-c2",
+      "label": "C2",
+      "node": "C2",
+      "asset": "./Skull_Cervical/C2.glb",
+      "region": "skull-cervical"
+    },
+    {
+      "id": "skull-cervical-c3",
+      "label": "C3",
+      "node": "C3",
+      "asset": "./Skull_Cervical/C3.glb",
+      "region": "skull-cervical"
+    },
+    {
+      "id": "skull-cervical-c4",
+      "label": "C4",
+      "node": "C4",
+      "asset": "./Skull_Cervical/C4.glb",
+      "region": "skull-cervical"
+    },
+    {
+      "id": "skull-cervical-c5",
+      "label": "C5",
+      "node": "C5",
+      "asset": "./Skull_Cervical/C5.glb",
+      "region": "skull-cervical"
+    },
+    {
+      "id": "skull-cervical-c6",
+      "label": "C6",
+      "node": "C6",
+      "asset": "./Skull_Cervical/C6.glb",
+      "region": "skull-cervical"
+    },
+    {
+      "id": "skull-cervical-c7",
+      "label": "C7",
+      "node": "C7",
+      "asset": "./Skull_Cervical/C7.glb",
+      "region": "skull-cervical"
+    },
+    {
+      "id": "skull-cervical-mandible",
+      "label": "Mandible",
+      "node": "Mandible",
+      "asset": "./Skull_Cervical/Mandible.glb",
+      "region": "skull-cervical"
+    },
+    {
+      "id": "skull-cervical-mandible-bits",
+      "label": "Mandible Bits",
+      "node": "Mandible Bits",
+      "asset": "./Skull_Cervical/Mandible Bits.glb",
+      "region": "skull-cervical"
+    },
+    {
+      "id": "skull-cervical-skull",
+      "label": "Skull",
+      "node": "Skull",
+      "asset": "./Skull_Cervical/Skull.glb",
+      "region": "skull-cervical"
+    }
+  ]
+}

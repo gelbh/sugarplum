@@ -28,13 +28,17 @@ import StudyPage from "./routes/StudyPage";
 import TodayPage from "./routes/TodayPage";
 import AdminPage from "./routes/AdminPage";
 import AdminUserPage from "./routes/AdminUserPage";
-import { subscribeLocation } from "./nav/navigate";
+import { navigateReplace, subscribeLocation } from "./nav/navigate";
 import { UnlockToastProvider } from "./achievements/UnlockToastProvider";
 import AchievementsPage from "./routes/AchievementsPage";
 import { StudyChromeProvider } from "./study/StudyChromeContext";
 import AtlasLoading from "./atlas/AtlasLoading";
 import { isAtlasToAtlas, matchAtlasPath } from "./atlas/paths";
-import { matchAnatomyPath } from "./anatomy/paths";
+import {
+  anatomySceneHref,
+  canonicalAnatomySceneId,
+  matchAnatomyPath,
+} from "./anatomy/paths";
 import AtlasHub from "./routes/AtlasHub";
 import AnatomyHub from "./routes/AnatomyHub";
 import SessionBootstrap from "./session/SessionBootstrap";
@@ -53,6 +57,25 @@ function shell(page: ReactNode) {
 
 function bare(page: ReactNode) {
   return <BareScroll>{page}</BareScroll>;
+}
+
+/** Legacy ids (e.g. canine-limb) resolve to the species mega-scene and replace the URL. */
+function AnatomySceneRoute({ rawSceneId }: { rawSceneId: string }) {
+  const sceneId = canonicalAnatomySceneId(rawSceneId);
+  useEffect(() => {
+    if (sceneId !== rawSceneId) {
+      navigateReplace(anatomySceneHref(sceneId));
+    }
+  }, [rawSceneId, sceneId]);
+  return (
+    <Suspense
+      fallback={
+        <Typography color="text.secondary">Loading anatomy…</Typography>
+      }
+    >
+      <AnatomyViewerPage key={sceneId} sceneId={sceneId} />
+    </Suspense>
+  );
 }
 
 function matchPage(path: string, search: string): ReactNode {
@@ -100,16 +123,7 @@ function matchPage(path: string, search: string): ReactNode {
   }
   if (anatomyMatch?.kind === "scene") {
     return shell(
-      <Suspense
-        fallback={
-          <Typography color="text.secondary">Loading anatomy…</Typography>
-        }
-      >
-        <AnatomyViewerPage
-          key={anatomyMatch.sceneId}
-          sceneId={anatomyMatch.sceneId}
-        />
-      </Suspense>,
+      <AnatomySceneRoute rawSceneId={anatomyMatch.sceneId} />,
     );
   }
 

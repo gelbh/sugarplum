@@ -29,3 +29,9 @@ export const anatomyHubHref = () => "/anatomy";
 
 export const anatomySceneHref = (sceneId: string) =>
   `/anatomy/${encodeURIComponent(sceneId)}`;
+
+/** Legacy limb pack → species mega-scene. */
+export function canonicalAnatomySceneId(sceneId: string): string {
+  if (sceneId === "canine-limb") return "canine";
+  return sceneId;
+}

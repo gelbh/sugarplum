@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
@@ -11,22 +12,41 @@ import Typography from "@mui/material/Typography";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import FilterCenterFocusIcon from "@mui/icons-material/FilterCenterFocus";
-import type { AnatomyStructure } from "./types";
+import type { AnatomyRegion, AnatomyStructure } from "./types";
 import type { StructureUiAction, StructureUiState } from "./structureState";
 
 type Props = {
   structures: AnatomyStructure[];
+  regions?: AnatomyRegion[];
+  activeRegions: Set<string>;
+  onToggleRegion: (regionId: string) => void;
   ui: StructureUiState;
   dispatch: (action: StructureUiAction) => void;
 };
 
-export default function StructurePanel({ structures, ui, dispatch }: Props) {
+export default function StructurePanel({
+  structures,
+  regions,
+  activeRegions,
+  onToggleRegion,
+  ui,
+  dispatch,
+}: Props) {
   const [q, setQ] = useState("");
+  const visibleStructures = useMemo(() => {
+    if (!regions?.length) return structures;
+    return structures.filter(
+      (s) => s.region != null && activeRegions.has(s.region),
+    );
+  }, [structures, regions, activeRegions]);
+
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    if (!needle) return structures;
-    return structures.filter((s) => s.label.toLowerCase().includes(needle));
-  }, [structures, q]);
+    if (!needle) return visibleStructures;
+    return visibleStructures.filter((s) =>
+      s.label.toLowerCase().includes(needle),
+    );
+  }, [visibleStructures, q]);
 
   return (
     <Box
@@ -39,6 +59,29 @@ export default function StructurePanel({ structures, ui, dispatch }: Props) {
         width: "100%",
       }}
     >
+      {regions && regions.length > 0 ? (
+        <Box>
+          <Typography variant="subtitle2" component="h2" sx={{ mb: 0.5 }}>
+            Regions
+          </Typography>
+          <Stack direction="row" flexWrap="wrap" useFlexGap spacing={0.5}>
+            {regions.map((r) => {
+              const on = activeRegions.has(r.id);
+              return (
+                <Chip
+                  key={r.id}
+                  size="small"
+                  label={r.label}
+                  color={on ? "primary" : "default"}
+                  variant={on ? "filled" : "outlined"}
+                  onClick={() => onToggleRegion(r.id)}
+                  aria-pressed={on}
+                />
+              );
+            })}
+          </Stack>
+        </Box>
+      ) : null}
       <Typography variant="subtitle2" component="h2">
         Structures
       </Typography>
@@ -55,6 +98,11 @@ export default function StructurePanel({ structures, ui, dispatch }: Props) {
       >
         Show all
       </Button>
+      {regions && regions.length > 0 && visibleStructures.length === 0 ? (
+        <Typography variant="body2" color="text.secondary">
+          Enable a region to load structures.
+        </Typography>
+      ) : null}
       <List dense disablePadding sx={{ overflow: "auto", flex: 1 }}>
         {filtered.map((s) => {
           const hidden = ui.hidden.has(s.id);

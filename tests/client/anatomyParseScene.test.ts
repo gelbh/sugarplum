@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  defaultActiveRegionIds,
   parseAnatomySceneManifest,
   safeAnatomyRelativeAsset,
 } from "../../src/anatomy/parseScene";
@@ -80,11 +81,93 @@ describe("parseAnatomySceneManifest", () => {
       }),
     ).toThrow(/structures/i);
   });
+
+  it("accepts regions with matching structure.region and nested assets", () => {
+    const m = parseAnatomySceneManifest({
+      id: "canine",
+      title: "Canine",
+      regions: [
+        {
+          id: "legs-right-back",
+          label: "Legs · Right back",
+          defaultActive: true,
+        },
+      ],
+      structures: [
+        {
+          id: "femur",
+          label: "Femur",
+          node: "Femur",
+          asset: "./Legs/Right_Back/Femur.glb",
+          region: "legs-right-back",
+        },
+      ],
+    });
+    expect(m.regions).toHaveLength(1);
+    expect(m.structures[0].region).toBe("legs-right-back");
+    expect(defaultActiveRegionIds(m)).toEqual(["legs-right-back"]);
+  });
+
+  it("rejects structures missing region when regions are listed", () => {
+    expect(() =>
+      parseAnatomySceneManifest({
+        id: "x",
+        title: "X",
+        regions: [{ id: "legs", label: "Legs" }],
+        structures: [
+          { id: "a", label: "A", node: "A", asset: "./A.glb" },
+        ],
+      }),
+    ).toThrow(/require region/i);
+  });
+
+  it("rejects unknown structure.region", () => {
+    expect(() =>
+      parseAnatomySceneManifest({
+        id: "x",
+        title: "X",
+        regions: [{ id: "legs", label: "Legs" }],
+        structures: [
+          {
+            id: "a",
+            label: "A",
+            node: "A",
+            asset: "./A.glb",
+            region: "organs",
+          },
+        ],
+      }),
+    ).toThrow(/unknown region/i);
+  });
+
+  it("defaults active region to the first when none marked", () => {
+    const m = parseAnatomySceneManifest({
+      id: "x",
+      title: "X",
+      regions: [
+        { id: "a", label: "A" },
+        { id: "b", label: "B" },
+      ],
+      structures: [
+        {
+          id: "s1",
+          label: "S1",
+          node: "S1",
+          asset: "./a.glb",
+          region: "a",
+        },
+      ],
+    });
+    expect(defaultActiveRegionIds(m)).toEqual(["a"]);
+  });
 });
 
 describe("safeAnatomyRelativeAsset", () => {
   it("strips ./ and rejects traversal", () => {
     expect(safeAnatomyRelativeAsset("./Femur.glb")).toBe("Femur.glb");
+    expect(safeAnatomyRelativeAsset("./Legs/Right_Back/Femur.glb")).toBe(
+      "Legs/Right_Back/Femur.glb",
+    );
     expect(safeAnatomyRelativeAsset("../x.glb")).toBeNull();
     expect(safeAnatomyRelativeAsset("/abs.glb")).toBeNull();
   });
