@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  activeRegionIdsForOpen,
   defaultActiveRegionIds,
   parseAnatomySceneManifest,
   safeAnatomyRelativeAsset,
@@ -157,6 +158,36 @@ describe("parseAnatomySceneManifest", () => {
       ],
     });
     expect(defaultActiveRegionIds(m)).toEqual(["a"]);
+  });
+
+  it("activeRegionIdsForOpen prefers known ?region= ids", () => {
+    const m = parseAnatomySceneManifest({
+      id: "x",
+      title: "X",
+      regions: [
+        { id: "a", label: "A", defaultActive: true },
+        { id: "b", label: "B" },
+      ],
+      structures: [
+        {
+          id: "s1",
+          label: "S1",
+          node: "S1",
+          asset: "./a.glb",
+          region: "a",
+        },
+        {
+          id: "s2",
+          label: "S2",
+          node: "S2",
+          asset: "./b.glb",
+          region: "b",
+        },
+      ],
+    });
+    expect(activeRegionIdsForOpen(m, ["b", "nope"])).toEqual(["b"]);
+    expect(activeRegionIdsForOpen(m, ["nope"])).toEqual(["a"]);
+    expect(activeRegionIdsForOpen(m, [])).toEqual(["a"]);
   });
 
   it("accepts optional structure info summary and alsoKnownAs", () => {
