@@ -1,0 +1,335 @@
+{
+  "id": "canine-hindlimb-veins",
+  "title": "Canine hindlimb veins",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-caudal-gluteal-vv",
+      "label": "Caudal gluteal vv",
+      "node": "Caudal_gluteal_vv",
+      "asset": "./Caudal_gluteal_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-caudal-rami-lat-saphenous-vv",
+      "label": "Caudal rami lat saphenous vv",
+      "node": "Caudal_rami_lat_saphenous_vv",
+      "asset": "./Caudal_rami_lat_saphenous_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-caudal-rami-med-saphenous-vv",
+      "label": "Caudal rami med saphenous vv",
+      "node": "Caudal_rami_med_saphenous_vv",
+      "asset": "./Caudal_rami_med_saphenous_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-caudal-vena-cava",
+      "label": "Caudal vena cava",
+      "node": "Caudal_vena_cava",
+      "asset": "./Caudal_vena_cava.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-co1",
+      "label": "Co1",
+      "node": "Co1",
+      "asset": "./Co1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-co2",
+      "label": "Co2",
+      "node": "Co2",
+      "asset": "./Co2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-co3",
+      "label": "Co3",
+      "node": "Co3",
+      "asset": "./Co3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-co4",
+      "label": "Co4",
+      "node": "Co4",
+      "asset": "./Co4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-co5",
+      "label": "Co5",
+      "node": "Co5",
+      "asset": "./Co5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranial-gluteal-vv",
+      "label": "Cranial gluteal vv",
+      "node": "Cranial_gluteal_vv",
+      "asset": "./Cranial_gluteal_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranial-rami-lat-saphenous-vv",
+      "label": "Cranial rami lat saphenous vv",
+      "node": "Cranial_rami_lat_saphenous_vv",
+      "asset": "./Cranial_rami_lat_saphenous_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranial-rami-med-saphenous-vv",
+      "label": "Cranial rami med saphenous vv",
+      "node": "Cranial_rami_med_saphenous_vv",
+      "asset": "./Cranial_rami_med_saphenous_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranial-tibial-vv",
+      "label": "Cranial tibial vv",
+      "node": "Cranial_tibial_vv",
+      "asset": "./Cranial_tibial_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-deep-femoral-vv",
+      "label": "Deep femoral vv",
+      "node": "Deep_femoral_vv",
+      "asset": "./Deep_femoral_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-descending-genic-vv",
+      "label": "Descending genic vv",
+      "node": "Descending_genic_vv",
+      "asset": "./Descending_genic_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-caudal-femoral-vv",
+      "label": "Distal caudal femoral vv",
+      "node": "Distal_caudal_femoral_vv",
+      "asset": "./Distal_caudal_femoral_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-r",
+      "label": "Dorsal R",
+      "node": "Dorsal_R",
+      "asset": "./Dorsal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-external-iliac-vv",
+      "label": "External iliac vv",
+      "node": "External_iliac_vv",
+      "asset": "./External_iliac_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femoral-vv",
+      "label": "Femoral vv",
+      "node": "Femoral_vv",
+      "asset": "./Femoral_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-r",
+      "label": "Femur R",
+      "node": "Femur_R",
+      "asset": "./Femur_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fibula-r",
+      "label": "Fibula R",
+      "node": "Fibula_R",
+      "asset": "./Fibula_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-iliolumbar-vv",
+      "label": "Iliolumbar vv",
+      "node": "Iliolumbar_vv",
+      "asset": "./Iliolumbar_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-internal-iliac-vv",
+      "label": "Internal iliac vv",
+      "node": "Internal_iliac_vv",
+      "asset": "./Internal_iliac_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-internal-pudendal-vv",
+      "label": "Internal pudendal vv",
+      "node": "Internal_pudendal_vv",
+      "asset": "./Internal_pudendal_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l3",
+      "label": "L3",
+      "node": "L3",
+      "asset": "./L3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l4",
+      "label": "L4",
+      "node": "L4",
+      "asset": "./L4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l5",
+      "label": "L5",
+      "node": "L5",
+      "asset": "./L5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l6",
+      "label": "L6",
+      "node": "L6",
+      "asset": "./L6.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l7",
+      "label": "L7",
+      "node": "L7",
+      "asset": "./L7.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lateral-caudal-vv",
+      "label": "Lateral caudal vv",
+      "node": "Lateral_caudal_vv",
+      "asset": "./Lateral_caudal_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lateral-saphenous-vv",
+      "label": "Lateral saphenous vv",
+      "node": "Lateral_saphenous_vv",
+      "asset": "./Lateral_saphenous_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-medial-saphenous-vv",
+      "label": "Medial saphenous vv",
+      "node": "Medial_saphenous_vv",
+      "asset": "./Medial_saphenous_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-median-sacral-vv",
+      "label": "Median sacral vv",
+      "node": "Median_sacral_vv",
+      "asset": "./Median_sacral_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-caud-femoral-vv",
+      "label": "Middle caud femoral vv",
+      "node": "Middle_caud_femoral_vv",
+      "asset": "./Middle_caud_femoral_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-p1s-r",
+      "label": "P1s R",
+      "node": "P1s_R",
+      "asset": "./P1s_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-p2s-r",
+      "label": "P2s R",
+      "node": "P2s_R",
+      "asset": "./P2s_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-p3s-r",
+      "label": "P3s R",
+      "node": "P3s_R",
+      "asset": "./P3s_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patella-r",
+      "label": "Patella R",
+      "node": "Patella_R",
+      "asset": "./Patella_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis",
+      "label": "Pelvis",
+      "node": "Pelvis",
+      "asset": "./Pelvis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-popliteal-vv",
+      "label": "Popliteal vv",
+      "node": "Popliteal_vv",
+      "asset": "./Popliteal_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-prostratic-vaginal-vv",
+      "label": "Prostratic vaginal vv",
+      "node": "Prostratic_vaginal_vv",
+      "asset": "./Prostratic_vaginal_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-r",
+      "label": "Proximal R",
+      "node": "Proximal_R",
+      "asset": "./Proximal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pudendoepigastric-trunk-vv",
+      "label": "Pudendoepigastric trunk vv",
+      "node": "Pudendoepigastric_trunk_vv",
+      "asset": "./Pudendoepigastric_trunk_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sacrum",
+      "label": "Sacrum",
+      "node": "Sacrum",
+      "asset": "./Sacrum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-talus-r",
+      "label": "Talus R",
+      "node": "Talus_R",
+      "asset": "./Talus_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-r",
+      "label": "Tibia R",
+      "node": "Tibia_R",
+      "asset": "./Tibia_R.glb",
+      "region": "root"
+    }
+  ]
+}

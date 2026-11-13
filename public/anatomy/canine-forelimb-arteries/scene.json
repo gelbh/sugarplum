@@ -1,0 +1,244 @@
+{
+  "id": "canine-forelimb-arteries",
+  "title": "Canine forelimb arteries",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-axillary-aa",
+      "label": "axillary aa",
+      "node": "axillary_aa",
+      "asset": "./axillary_aa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-bicipital-aa",
+      "label": "bicipital aa",
+      "node": "bicipital_aa",
+      "asset": "./bicipital_aa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-brachial-aa",
+      "label": "brachial aa",
+      "node": "brachial_aa",
+      "asset": "./brachial_aa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpals-r",
+      "label": "Carpals R",
+      "node": "Carpals_R",
+      "asset": "./Carpals_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-caud-interosseus",
+      "label": "caud interosseus",
+      "node": "caud_interosseus",
+      "asset": "./caud_interosseus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-circumflex-scap-aa",
+      "label": "circumflex scap aa",
+      "node": "circumflex_scap_aa",
+      "asset": "./circumflex_scap_aa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-coll-ulna-cutan-br-aa-copy000",
+      "label": "coll ulna cutan br aa copy000",
+      "node": "coll_ulna_cutan_br_aa_copy000",
+      "asset": "./coll_ulna_cutan_br_aa_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-collateral-radial-aa2",
+      "label": "collateral radial aa2",
+      "node": "collateral_radial_aa2",
+      "asset": "./collateral_radial_aa2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-collateral-ulnar-aa",
+      "label": "collateral ulnar aa",
+      "node": "collateral_ulnar_aa",
+      "asset": "./collateral_ulnar_aa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cran-circum-hum-aa",
+      "label": "cran circum hum aa",
+      "node": "cran_circum_hum_aa",
+      "asset": "./cran_circum_hum_aa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cran-interosseus",
+      "label": "cran interosseus",
+      "node": "cran_interosseus",
+      "asset": "./cran_interosseus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cran-superficial-antebrachial",
+      "label": "cran superficial antebrachial",
+      "node": "cran_superficial_antebrachial",
+      "asset": "./cran_superficial_antebrachial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cran-supfl-antebrach-med",
+      "label": "cran supfl antebrach med",
+      "node": "cran_supfl_antebrach_med",
+      "asset": "./cran_supfl_antebrach_med.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-deep-antebrach",
+      "label": "deep antebrach",
+      "node": "deep_antebrach",
+      "asset": "./deep_antebrach.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-deep-brachial-aa",
+      "label": "deep brachial aa",
+      "node": "deep_brachial_aa",
+      "asset": "./deep_brachial_aa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-evans-vasc",
+      "label": "EVANS VASC",
+      "node": "EVANS_VASC",
+      "asset": "./EVANS_VASC.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-r",
+      "label": "Humerus R",
+      "node": "Humerus_R",
+      "asset": "./Humerus_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lat-thoracic-aa",
+      "label": "lat thoracic aa",
+      "node": "lat_thoracic_aa",
+      "asset": "./lat_thoracic_aa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mc-r",
+      "label": "MC R",
+      "node": "MC_R",
+      "asset": "./MC_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-median-aa",
+      "label": "median aa",
+      "node": "median_aa",
+      "asset": "./median_aa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rad-aa-dors-carp",
+      "label": "rad aa dors carp",
+      "node": "rad_aa_dors_carp",
+      "asset": "./rad_aa_dors_carp.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radial-aa",
+      "label": "radial aa",
+      "node": "radial_aa",
+      "asset": "./radial_aa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radial-palm-aa",
+      "label": "radial palm aa",
+      "node": "radial_palm_aa",
+      "asset": "./radial_palm_aa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius-r",
+      "label": "Radius R",
+      "node": "Radius_R",
+      "asset": "./Radius_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-recurrent-ulnar-aa",
+      "label": "recurrent ulnar aa",
+      "node": "recurrent_ulnar_aa",
+      "asset": "./recurrent_ulnar_aa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-r",
+      "label": "Scapula R",
+      "node": "Scapula_R",
+      "asset": "./Scapula_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-subscap-aa",
+      "label": "subscap aa",
+      "node": "subscap_aa",
+      "asset": "./subscap_aa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-superficial-cervical-aa",
+      "label": "superficial cervical aa",
+      "node": "superficial_cervical_aa",
+      "asset": "./superficial_cervical_aa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-supfl-brach-aa",
+      "label": "supfl brach aa",
+      "node": "supfl_brach_aa",
+      "asset": "./supfl_brach_aa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-suprascap-aa",
+      "label": "suprascap aa",
+      "node": "suprascap_aa",
+      "asset": "./suprascap_aa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-thoracodorsal-aa",
+      "label": "thoracodorsal aa",
+      "node": "thoracodorsal_aa",
+      "asset": "./thoracodorsal_aa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-transverse-cubital-aa",
+      "label": "transverse cubital aa",
+      "node": "transverse_cubital_aa",
+      "asset": "./transverse_cubital_aa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna-r",
+      "label": "Ulna R",
+      "node": "Ulna_R",
+      "asset": "./Ulna_R.glb",
+      "region": "root"
+    }
+  ]
+}
