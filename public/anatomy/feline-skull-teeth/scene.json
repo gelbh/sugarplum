@@ -1,0 +1,202 @@
+{
+  "id": "feline-skull-teeth",
+  "title": "Feline skull teeth",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-201",
+      "label": "201",
+      "node": "201",
+      "asset": "./201.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-202",
+      "label": "202",
+      "node": "202",
+      "asset": "./202.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-203",
+      "label": "203",
+      "node": "203",
+      "asset": "./203.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-204",
+      "label": "204",
+      "node": "204",
+      "asset": "./204.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-206",
+      "label": "206",
+      "node": "206",
+      "asset": "./206.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-207",
+      "label": "207",
+      "node": "207",
+      "asset": "./207.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-208",
+      "label": "208",
+      "node": "208",
+      "asset": "./208.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-209",
+      "label": "209",
+      "node": "209",
+      "asset": "./209.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-301",
+      "label": "301",
+      "node": "301",
+      "asset": "./301.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-302",
+      "label": "302",
+      "node": "302",
+      "asset": "./302.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-303",
+      "label": "303",
+      "node": "303",
+      "asset": "./303.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-304",
+      "label": "304",
+      "node": "304",
+      "asset": "./304.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-307",
+      "label": "307",
+      "node": "307",
+      "asset": "./307.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-308",
+      "label": "308",
+      "node": "308",
+      "asset": "./308.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-309",
+      "label": "309",
+      "node": "309",
+      "asset": "./309.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-inferior-alveolar-nn",
+      "label": "Inferior alveolar nn",
+      "node": "Inferior_alveolar_nn",
+      "asset": "./Inferior_alveolar_nn.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-inferior-alveolar-nn-001",
+      "label": "Inferior alveolar nn 001",
+      "node": "Inferior_alveolar_nn_001",
+      "asset": "./Inferior_alveolar_nn_001.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-infraorbital-l",
+      "label": "Infraorbital L",
+      "node": "Infraorbital_L",
+      "asset": "./Infraorbital_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-infraorbital-nn",
+      "label": "Infraorbital nn",
+      "node": "Infraorbital_nn",
+      "asset": "./Infraorbital_nn.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible",
+      "label": "Mandible",
+      "node": "Mandible",
+      "asset": "./Mandible.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-1",
+      "label": "Mandible 1",
+      "node": "Mandible_1",
+      "asset": "./Mandible_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-maxilla-clean-voids-fill-fine",
+      "label": "Maxilla clean voids fill fine",
+      "node": "Maxilla_clean_voids_fill_fine",
+      "asset": "./Maxilla_clean_voids_fill_fine.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-maxilla-clean-voids-fill-fine-1",
+      "label": "Maxilla clean voids fill fine 1",
+      "node": "Maxilla_clean_voids_fill_fine_1",
+      "asset": "./Maxilla_clean_voids_fill_fine_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-teeth-bottom",
+      "label": "Teeth bottom",
+      "node": "Teeth_bottom",
+      "asset": "./Teeth_bottom.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-teeth-bottom-1",
+      "label": "Teeth bottom 1",
+      "node": "Teeth_bottom_1",
+      "asset": "./Teeth_bottom_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-teeth-top",
+      "label": "Teeth top",
+      "node": "Teeth_top",
+      "asset": "./Teeth_top.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-teeth-top-1",
+      "label": "Teeth top 1",
+      "node": "Teeth_top_1",
+      "asset": "./Teeth_top_1.glb",
+      "region": "root"
+    }
+  ]
+}
