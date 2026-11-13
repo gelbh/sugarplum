@@ -18,10 +18,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import type { AnatomyRegion, AnatomyStructure } from "./types";
 import type { StructureUiAction, StructureUiState } from "./structureState";
-import {
-  groupRegionsByFamily,
-  type RegionDisplay,
-} from "./regionDisplay";
+import { groupRegionsByFamily, type RegionDisplay } from "./regionDisplay";
 
 type Props = {
   structures: AnatomyStructure[];
@@ -321,12 +318,11 @@ export default function StructurePanel({
         display: "flex",
         flexDirection: "column",
         gap: 1,
-        width: { xs: "100%", md: 280 },
-        flex: { xs: "0 1 auto", md: "0 0 auto" },
-        flexShrink: { xs: 1, md: 0 },
+        width: "100%",
+        flex: 1,
+        flexShrink: 1,
         minHeight: 0,
-        height: { xs: "auto", md: "100%" },
-        maxHeight: { xs: "42%", md: "none" },
+        height: "100%",
         borderRadius: 1,
         border: 1,
         borderColor: "divider",
@@ -354,9 +350,7 @@ export default function StructurePanel({
               <Button
                 size="small"
                 disabled={allRegionsOn}
-                onClick={() =>
-                  onChangeRegions(regions?.map((r) => r.id) ?? [])
-                }
+                onClick={() => onChangeRegions(regions?.map((r) => r.id) ?? [])}
                 sx={{ minWidth: 0, px: 0.75, fontSize: "0.7rem" }}
               >
                 All

@@ -114,9 +114,7 @@ describe("parseAnatomySceneManifest", () => {
         id: "x",
         title: "X",
         regions: [{ id: "legs", label: "Legs" }],
-        structures: [
-          { id: "a", label: "A", node: "A", asset: "./A.glb" },
-        ],
+        structures: [{ id: "a", label: "A", node: "A", asset: "./A.glb" }],
       }),
     ).toThrow(/require region/i);
   });
@@ -159,6 +157,95 @@ describe("parseAnatomySceneManifest", () => {
       ],
     });
     expect(defaultActiveRegionIds(m)).toEqual(["a"]);
+  });
+
+  it("accepts optional structure info summary and alsoKnownAs", () => {
+    const m = parseAnatomySceneManifest({
+      id: "x",
+      title: "X",
+      asset: "./model.gltf",
+      structures: [
+        {
+          id: "femur",
+          label: "Femur",
+          node: "Femur",
+          info: {
+            summary: "Long bone of the thigh.",
+            alsoKnownAs: ["thigh bone"],
+          },
+        },
+        {
+          id: "tibia",
+          label: "Tibia",
+          node: "Tibia",
+          info: { summary: "Primary crus bone." },
+        },
+        {
+          id: "fibula",
+          label: "Fibula",
+          node: "Fibula",
+        },
+      ],
+    });
+    expect(m.structures[0].info).toEqual({
+      summary: "Long bone of the thigh.",
+      alsoKnownAs: ["thigh bone"],
+    });
+    expect(m.structures[1].info).toEqual({ summary: "Primary crus bone." });
+    expect(m.structures[2].info).toBeUndefined();
+  });
+
+  it("accepts info with only alsoKnownAs", () => {
+    const m = parseAnatomySceneManifest({
+      id: "x",
+      title: "X",
+      asset: "./model.gltf",
+      structures: [
+        {
+          id: "patella",
+          label: "Patella",
+          node: "Patella",
+          info: { alsoKnownAs: ["kneecap"] },
+        },
+      ],
+    });
+    expect(m.structures[0].info).toEqual({ alsoKnownAs: ["kneecap"] });
+  });
+
+  it("rejects non-object structure info", () => {
+    expect(() =>
+      parseAnatomySceneManifest({
+        id: "x",
+        title: "X",
+        asset: "./model.gltf",
+        structures: [
+          {
+            id: "a",
+            label: "A",
+            node: "A",
+            info: "not-an-object",
+          },
+        ],
+      }),
+    ).toThrow(/info/i);
+  });
+
+  it("rejects alsoKnownAs that is not an array of strings", () => {
+    expect(() =>
+      parseAnatomySceneManifest({
+        id: "x",
+        title: "X",
+        asset: "./model.gltf",
+        structures: [
+          {
+            id: "a",
+            label: "A",
+            node: "A",
+            info: { alsoKnownAs: "kneecap" },
+          },
+        ],
+      }),
+    ).toThrow(/alsoKnownAs|info/i);
   });
 });
 
