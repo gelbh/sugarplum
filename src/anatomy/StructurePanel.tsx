@@ -27,7 +27,6 @@ type Props = {
   onChangeRegions: (regionIds: string[]) => void;
   ui: StructureUiState;
   dispatch: (action: StructureUiAction) => void;
-  /** When true, hide structure names until revealed (Test Yourself). */
   maskNames?: boolean;
   revealedIds?: ReadonlySet<string>;
 };

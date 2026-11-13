@@ -13,10 +13,7 @@ function sameRegionPool(
   });
 }
 
-/**
- * Sample up to `count` distractors from other structures in the target's region.
- * `rng` returns [0, 1) for deterministic tests (default Math.random).
- */
+/** Sample up to `count` same-region distractors; inject `rng` for tests. */
 export function pickMcqDistractors(
   structures: AnatomyStructure[],
   targetId: string,

@@ -3,12 +3,10 @@ export type GradeableStructure = {
   info?: { alsoKnownAs?: string[] };
 };
 
-/** Case-insensitive ASCII normalize: trim + collapse whitespace. */
 export function normalizeAnswer(input: string): string {
   return input.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-/** True when input matches the structure label or any alsoKnownAs synonym. */
 export function gradeAnswer(
   input: string,
   structure: GradeableStructure,

@@ -61,7 +61,6 @@ export default function TestYourself({
       MCQ_DISTRACTOR_COUNT,
     );
     const options = [structure, ...distractors];
-    // Shuffle with Math.random for live UI (unit tests cover the picker).
     for (let i = options.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       const tmp = options[i]!;
