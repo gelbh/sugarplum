@@ -8,15 +8,17 @@ import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { ApiError, register } from "../api/client";
+import { ApiError } from "../api/client";
 import GoogleSignInButton from "../components/GoogleSignInButton";
 import TurnstileWidget, {
   type TurnstileWidgetHandle,
 } from "../components/TurnstileWidget";
+import { useSession } from "../session/SessionContext";
 
 const MIN_PASSWORD = 12;
 
 export default function RegisterPage() {
+  const { register } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);

@@ -14,11 +14,24 @@ vi.mock("../../src/api/client", () => {
       this.status = status;
     }
   }
-  return { ApiError, me: vi.fn() };
+  return {
+    ApiError,
+    me: vi.fn(),
+    api: vi.fn(),
+    login: vi.fn(),
+    logout: vi.fn(async () => ({ ok: true })),
+    register: vi.fn(),
+  };
 });
 
+import { GUEST_FLAG_KEY, GUEST_USER_ID } from "../../src/guest/session";
 import SessionBootstrap from "../../src/session/SessionBootstrap";
 import { useSession } from "../../src/session/SessionContext";
+import * as sessionSync from "../../src/session/sessionSync";
+import {
+  resetSessionSyncForTests,
+  SESSION_SYNC_CHANNEL,
+} from "../../src/session/sessionSync";
 import { theme } from "../../src/theme";
 
 function SessionProbe() {
@@ -45,7 +58,9 @@ afterEach(() => {
   host?.remove();
   host = null;
   document.body.replaceChildren();
+  resetSessionSyncForTests();
   vi.clearAllMocks();
+  vi.useRealTimers();
 });
 
 async function mount(node: React.ReactNode) {
@@ -82,6 +97,33 @@ describe("SessionBootstrap", () => {
     });
     expect(host!.querySelector("[data-testid=child]")?.textContent).toBe(
       "HOME",
+    );
+  });
+
+  it("paints legal children during loading before resolve settles", async () => {
+    let finish!: (v: { status: "unauthenticated" }) => void;
+    const pending = new Promise<{ status: "unauthenticated" }>((r) => {
+      finish = r;
+    });
+    await mount(
+      createElement(
+        SessionBootstrap,
+        {
+          pathname: "/privacy",
+          resolve: () => pending,
+        },
+        createElement("div", { "data-testid": "legal" }, "PRIVACY"),
+      ),
+    );
+    expect(host!.querySelector("[data-testid=legal]")?.textContent).toBe(
+      "PRIVACY",
+    );
+    await act(async () => {
+      finish({ status: "unauthenticated" });
+      await pending;
+    });
+    expect(host!.querySelector("[data-testid=legal]")?.textContent).toBe(
+      "PRIVACY",
     );
   });
 
@@ -139,5 +181,259 @@ describe("SessionBootstrap", () => {
     expect(host!.querySelector("[data-testid=session-user]")?.textContent).toBe(
       "u1",
     );
+  });
+
+  it("does not unmount children during silent refresh", async () => {
+    let calls = 0;
+    let finishSecond!: (v: {
+      status: "authenticated";
+      user: { id: string; email: string };
+    }) => void;
+    const second = new Promise<{
+      status: "authenticated";
+      user: { id: string; email: string };
+    }>((r) => {
+      finishSecond = r;
+    });
+    const resolve = vi.fn(() => {
+      calls += 1;
+      if (calls === 1) {
+        return Promise.resolve({
+          status: "authenticated" as const,
+          user: { id: "u1", email: "a@b.c" },
+        });
+      }
+      return second;
+    });
+    function RefreshButton() {
+      const s = useSession();
+      return createElement("button", {
+        type: "button",
+        "data-testid": "refresh",
+        onClick: () => {
+          void s.refreshSession();
+        },
+      });
+    }
+    await mount(
+      createElement(
+        SessionBootstrap,
+        { pathname: "/today", resolve },
+        createElement(
+          "div",
+          null,
+          createElement(SessionProbe),
+          createElement(RefreshButton),
+        ),
+      ),
+    );
+    expect(host!.querySelector("[data-testid=session-user]")?.textContent).toBe(
+      "u1",
+    );
+    await act(async () => {
+      host!.querySelector("[data-testid=refresh]")?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true }),
+      );
+    });
+    expect(host!.textContent).not.toMatch(/Loading/i);
+    expect(host!.querySelector("[data-testid=session-user]")).not.toBeNull();
+    await act(async () => {
+      finishSecond({
+        status: "authenticated",
+        user: { id: "u2", email: "b@c.d" },
+      });
+      await second;
+    });
+    expect(host!.querySelector("[data-testid=session-user]")?.textContent).toBe(
+      "u2",
+    );
+  });
+
+  it("refetches when document becomes visible after throttle window", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const resolve = vi
+      .fn()
+      .mockResolvedValueOnce({
+        status: "authenticated" as const,
+        user: { id: "u1", email: "a@b.c" },
+      })
+      .mockResolvedValueOnce({
+        status: "authenticated" as const,
+        user: { id: "u2", email: "b@c.d" },
+      });
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => "visible",
+    });
+    await mount(
+      createElement(
+        SessionBootstrap,
+        { pathname: "/today", resolve },
+        createElement(SessionProbe),
+      ),
+    );
+    expect(resolve).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      vi.advanceTimersByTime(60_001);
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    expect(resolve).toHaveBeenCalledTimes(2);
+    expect(host!.querySelector("[data-testid=session-user]")?.textContent).toBe(
+      "u2",
+    );
+  });
+
+  it("skips visibility refetch inside 60s throttle", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const resolve = vi.fn().mockResolvedValue({
+      status: "authenticated" as const,
+      user: { id: "u1", email: "a@b.c" },
+    });
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => "visible",
+    });
+    await mount(
+      createElement(
+        SessionBootstrap,
+        { pathname: "/today", resolve },
+        createElement(SessionProbe),
+      ),
+    );
+    expect(resolve).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      vi.advanceTimersByTime(10_000);
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    expect(resolve).toHaveBeenCalledTimes(1);
+  });
+
+  it("skips visibility refetch for ready guest", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const resolve = vi.fn().mockResolvedValue({
+      status: "authenticated" as const,
+      user: {
+        id: GUEST_USER_ID,
+        email: "guest@local",
+        google_linked: false,
+        is_admin: false,
+      },
+    });
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => "visible",
+    });
+    await mount(
+      createElement(
+        SessionBootstrap,
+        { pathname: "/today", resolve },
+        createElement(SessionProbe),
+      ),
+    );
+    expect(resolve).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      vi.advanceTimersByTime(60_001);
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    expect(resolve).toHaveBeenCalledTimes(1);
+  });
+
+  it("force-refreshes on BroadcastChannel session hint", async () => {
+    if (typeof BroadcastChannel === "undefined") return;
+    const resolve = vi
+      .fn()
+      .mockResolvedValueOnce({
+        status: "authenticated" as const,
+        user: { id: "u1", email: "a@b.c" },
+      })
+      .mockResolvedValueOnce({
+        status: "authenticated" as const,
+        user: { id: "u2", email: "b@c.d" },
+      });
+    await mount(
+      createElement(
+        SessionBootstrap,
+        { pathname: "/today", resolve },
+        createElement(SessionProbe),
+      ),
+    );
+    expect(resolve).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      const peer = new BroadcastChannel(SESSION_SYNC_CHANNEL);
+      peer.postMessage({ type: "session", ts: Date.now() });
+      peer.close();
+    });
+    expect(resolve).toHaveBeenCalledTimes(2);
+    expect(host!.querySelector("[data-testid=session-user]")?.textContent).toBe(
+      "u2",
+    );
+    expect(host!.textContent).not.toMatch(/Loading/i);
+  });
+
+  it("force-refreshes on guest flag storage event", async () => {
+    const resolve = vi
+      .fn()
+      .mockResolvedValueOnce({
+        status: "authenticated" as const,
+        user: { id: "u1", email: "a@b.c" },
+      })
+      .mockResolvedValueOnce({
+        status: "authenticated" as const,
+        user: {
+          id: GUEST_USER_ID,
+          email: "guest@local",
+          google_linked: false,
+          is_admin: false,
+        },
+      });
+    await mount(
+      createElement(
+        SessionBootstrap,
+        { pathname: "/today", resolve },
+        createElement(SessionProbe),
+      ),
+    );
+    expect(resolve).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: GUEST_FLAG_KEY,
+          newValue: "1",
+          oldValue: null,
+        }),
+      );
+    });
+    expect(resolve).toHaveBeenCalledTimes(2);
+    expect(host!.querySelector("[data-testid=session-user]")?.textContent).toBe(
+      GUEST_USER_ID,
+    );
+  });
+
+  it("does not post session hint on visibility refresh", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const postSpy = vi.spyOn(sessionSync, "postSessionHint");
+    const resolve = vi.fn().mockResolvedValue({
+      status: "authenticated" as const,
+      user: { id: "u1", email: "a@b.c" },
+    });
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => "visible",
+    });
+    await mount(
+      createElement(
+        SessionBootstrap,
+        { pathname: "/today", resolve },
+        createElement(SessionProbe),
+      ),
+    );
+    postSpy.mockClear();
+    await act(async () => {
+      vi.advanceTimersByTime(60_001);
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    expect(resolve).toHaveBeenCalledTimes(2);
+    expect(postSpy).not.toHaveBeenCalled();
+    postSpy.mockRestore();
   });
 });

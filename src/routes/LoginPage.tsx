@@ -8,12 +8,13 @@ import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { ApiError, login } from "../api/client";
+import { ApiError } from "../api/client";
 import GoogleSignInButton from "../components/GoogleSignInButton";
 import TurnstileWidget, {
   type TurnstileWidgetHandle,
 } from "../components/TurnstileWidget";
 import { continueAsGuest } from "../guest/enterGuest";
+import { useSession } from "../session/SessionContext";
 
 function oauthErrorMessage(code: string | null): string | null {
   if (!code) return null;
@@ -33,6 +34,7 @@ function oauthErrorMessage(code: string | null): string | null {
 }
 
 export default function LoginPage() {
+  const { login } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(() => {

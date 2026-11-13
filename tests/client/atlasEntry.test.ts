@@ -250,6 +250,42 @@ describe("entryGlance", () => {
     expect(resolveSitePortrait("skin")?.src).toMatch(/skin\.webp$/);
   });
 
+  it("credits open-licence site Heroes plates", () => {
+    const credits = readFileSync(
+      new URL("../../public/atlas/sites/CREDITS.md", import.meta.url),
+      "utf8",
+    );
+    const heroes: Array<{
+      archetype: string;
+      file: string;
+      marker: string;
+    }> = [
+      { archetype: "liver", file: "liver.webp", marker: "BodyParts3D" },
+      { archetype: "lungs", file: "lungs.webp", marker: "Gray973" },
+      { archetype: "stomach", file: "stomach.webp", marker: "Gray1046" },
+      { archetype: "eye", file: "eye.webp", marker: "Gray878" },
+      {
+        archetype: "central nervous system",
+        file: "central-nervous-system.webp",
+        marker: "Gray724",
+      },
+    ];
+    expect(credits).toMatch(/CC BY-SA 2\.1 JP/);
+    for (const h of heroes) {
+      expect(resolveSitePortrait(h.archetype)).toEqual({
+        src: `/atlas/sites/${h.file}`,
+        archetype: h.archetype,
+      });
+      expect(credits).toContain(`\`${h.file}\``);
+      expect(credits).toContain(h.marker);
+      expect(
+        existsSync(
+          new URL(`../../public/atlas/sites/${h.file}`, import.meta.url),
+        ),
+      ).toBe(true);
+    }
+  });
+
   it("passes PPP min/max for the glance timeline", () => {
     const ppp = glanceRows(fasciola.fields).find((r) => r.key === "pppDays");
     expect(ppp?.pppMin).toBeTypeOf("number");

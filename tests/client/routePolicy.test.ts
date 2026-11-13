@@ -71,4 +71,16 @@ describe("sessionRouteDecision", () => {
       action: "pending",
     });
   });
+
+  it("during loading allows legal and pending elsewhere", () => {
+    expect(sessionRouteDecision("/privacy", "loading")).toEqual({
+      action: "allow",
+    });
+    expect(sessionRouteDecision("/today", "loading")).toEqual({
+      action: "pending",
+    });
+    expect(sessionRouteDecision("/", "loading")).toEqual({
+      action: "pending",
+    });
+  });
 });
