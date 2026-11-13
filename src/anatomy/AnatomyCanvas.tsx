@@ -40,8 +40,6 @@ export type AnatomyLoadSpec = {
 export type AnatomyCanvasHandle = {
   resetView: () => void;
   zoomBy: (factor: number) => void;
-  setAutoRotate: (on: boolean) => void;
-  setWireframe: (on: boolean) => void;
 };
 
 /** CSS hex (`#rrggbb`) or `null` for transparent (page shows through). */
@@ -53,6 +51,8 @@ type Props = {
   onSelect: (id: string) => void;
   /** Default `null`: transparent clear so the page background shows. */
   background?: AnatomyCanvasBackground;
+  autoRotate?: boolean;
+  wireframe?: boolean;
 };
 
 const LOAD_CONCURRENCY = 6;
@@ -151,7 +151,17 @@ function applySceneBackground(
 }
 
 const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
-  function AnatomyCanvas({ loads, ui, onSelect, background = null }, ref) {
+  function AnatomyCanvas(
+    {
+      loads,
+      ui,
+      onSelect,
+      background = null,
+      autoRotate = false,
+      wireframe = false,
+    },
+    ref,
+  ) {
     const hostRef = useRef<HTMLDivElement | null>(null);
     const uiRef = useRef(ui);
     const onSelectRef = useRef(onSelect);
@@ -165,7 +175,8 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
     const sceneRef = useRef<Scene | null>(null);
     const rendererRef = useRef<WebGLRenderer | null>(null);
     const rootGroupRef = useRef<Group | null>(null);
-    const wireframeRef = useRef(false);
+    const autoRotateRef = useRef(autoRotate);
+    const wireframeRef = useRef(wireframe);
     const backgroundRef = useRef(background);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [retryToken, setRetryToken] = useState(0);
@@ -194,6 +205,20 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       }
     }, [background]);
 
+    useEffect(() => {
+      autoRotateRef.current = autoRotate;
+      const controls = controlsRef.current;
+      if (!controls) return;
+      controls.autoRotate = autoRotate;
+      controls.autoRotateSpeed = 1.2;
+    }, [autoRotate]);
+
+    useEffect(() => {
+      wireframeRef.current = wireframe;
+      const root = rootGroupRef.current;
+      if (root) setTreeWireframe(root, wireframe);
+    }, [wireframe]);
+
     useImperativeHandle(ref, () => ({
       resetView: () => fitCameraRef.current(),
       zoomBy: (factor: number) => {
@@ -209,17 +234,6 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         else if (len > maxD) offset.setLength(maxD);
         camera.position.copy(controls.target).add(offset);
         controls.update();
-      },
-      setAutoRotate: (on: boolean) => {
-        const controls = controlsRef.current;
-        if (!controls) return;
-        controls.autoRotate = on;
-        controls.autoRotateSpeed = 1.2;
-      },
-      setWireframe: (on: boolean) => {
-        wireframeRef.current = on;
-        const root = rootGroupRef.current;
-        if (root) setTreeWireframe(root, on);
       },
     }));
 
@@ -257,6 +271,8 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       controls.enableDamping = true;
       controls.minDistance = 0.35;
       controls.maxDistance = 80;
+      controls.autoRotate = autoRotateRef.current;
+      controls.autoRotateSpeed = 1.2;
       controlsRef.current = controls;
 
       scene.add(new AmbientLight(0xffffff, 0.7));
