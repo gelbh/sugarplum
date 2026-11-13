@@ -40,6 +40,7 @@ import {
   matchAnatomyPath,
 } from "./anatomy/paths";
 import AtlasHub from "./routes/AtlasHub";
+import ParasitologyAtlasBounce from "./routes/ParasitologyAtlasBounce";
 import AnatomyHub from "./routes/AnatomyHub";
 import SessionBootstrap from "./session/SessionBootstrap";
 
@@ -87,8 +88,11 @@ function matchPage(path: string, search: string): ReactNode {
   if (path === "/data-deletion") return bare(<DataDeletionPage />);
 
   const atlasMatch = matchAtlasPath(path);
-  if (atlasMatch?.kind === "hub" || atlasMatch?.kind === "legacy") {
+  if (atlasMatch?.kind === "hub") {
     return shell(<AtlasHub />);
+  }
+  if (atlasMatch?.kind === "legacy") {
+    return shell(<ParasitologyAtlasBounce />);
   }
   if (atlasMatch?.kind === "atlas") {
     return shell(
