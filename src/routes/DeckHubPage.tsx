@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type FormEvent,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -39,45 +33,32 @@ import {
 import { useCreateCardController } from "../deckHub/useCreateCardController";
 import { useAddMaterialWorkshop } from "../deckHub/useAddMaterialWorkshop";
 import { useCardsWorkshop } from "../deckHub/useCardsWorkshop";
+import { useDeckHubCardMutations } from "../deckHub/useDeckHubCardMutations";
+import { useDeckHubDeckLifecycle } from "../deckHub/useDeckHubDeckLifecycle";
 import { useStudyReadySheet } from "../deckHub/useStudyReadySheet";
 import "../deckHub/deckHubMotion.css";
 import {
   ApiError,
   apkgFilenameForDeckTitle,
-  clearCover,
   createDeckExport,
-  deckStats,
-  deleteDeck,
   getDeckComposition,
-  listCovers,
   listDeckCards,
   listDeckMaterials,
   listDecks,
   listJobsWithDrafts,
   listSubjects,
-  moveCard,
-  patchCard,
-  patchDeck,
   asRegenType,
   cardHasRegenSource,
-  regenCard,
-  resetCardSchedule,
   type CardDraftView,
   type Deck,
-  type DeckStats,
   type JobListItem,
   type MaterialListItem,
-  type StoredCoverRow,
   type Subject,
   type SubjectKnowledge,
 } from "../api/client";
-import { cardPatchBody } from "../cards/cardPatchBody";
-import DraftCardEditor, {
-  type DraftEditorChange,
-} from "../components/DraftCardEditor";
+import DraftCardEditor from "../components/DraftCardEditor";
 import { isGuest } from "../guest/session";
 import { collectDeckImageKeys, hubDiyTypes } from "../lib/hubDiyCreate";
-import { navigate } from "../nav/navigate";
 import {
   formatExportWarnings,
   ANKI_EXPORT_BUSY_LABEL,
@@ -99,38 +80,10 @@ export default function DeckHubPage({ deckId }: Props) {
   const [composition, setComposition] = useState<SubjectKnowledge | null>(null);
   const [draftJobs, setDraftJobs] = useState<JobListItem[]>([]);
   const [materials, setMaterials] = useState<MaterialListItem[]>([]);
-  const [deckCover, setDeckCover] = useState<StoredCoverRow | null>(null);
-  const [coverPickerOpen, setCoverPickerOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [exportWarning, setExportWarning] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
-
-  const [renameOpen, setRenameOpen] = useState(false);
-  const [renameValue, setRenameValue] = useState("");
-  const [renameBusy, setRenameBusy] = useState(false);
-  const [renameError, setRenameError] = useState<string | null>(null);
-
-  const [deleteStats, setDeleteStats] = useState<DeckStats | null>(null);
-  const [deleteBusy, setDeleteBusy] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-
-  const [editCard, setEditCard] = useState<CardDraftView | null>(null);
-  const [editBusy, setEditBusy] = useState(false);
-  const [editError, setEditError] = useState<string | null>(null);
-  const [cardRegenBusy, setCardRegenBusy] = useState(false);
-  const [confirmReset, setConfirmReset] = useState(false);
-  const [resetBusy, setResetBusy] = useState(false);
-  const editDialogBusy = editBusy || resetBusy || cardRegenBusy;
-
-  const [moveTarget, setMoveTarget] = useState<CardDraftView | null>(null);
-  const [moveAsBatch, setMoveAsBatch] = useState(false);
-  const [moveSubjects, setMoveSubjects] = useState<Subject[]>([]);
-  const [moveDecks, setMoveDecks] = useState<Deck[]>([]);
-  const [moveSubjectId, setMoveSubjectId] = useState("");
-  const [moveDeckId, setMoveDeckId] = useState("");
-  const [moveBusy, setMoveBusy] = useState(false);
-  const [moveError, setMoveError] = useState<string | null>(null);
 
   const [workshopStack, setWorkshopStack] = useState<WorkshopFrame[]>([]);
   const [overflowAnchor, setOverflowAnchor] = useState<null | HTMLElement>(
@@ -138,6 +91,47 @@ export default function DeckHubPage({ deckId }: Props) {
   );
 
   const deckImageKeys = useMemo(() => collectDeckImageKeys(cards), [cards]);
+
+  const {
+    editCard,
+    setEditCard,
+    editBusy,
+    editError,
+    cardRegenBusy,
+    editDialogBusy,
+    openEdit,
+    onEditChange,
+    saveEdit,
+    onRegenEditCard,
+    confirmReset,
+    setConfirmReset,
+    resetBusy,
+    confirmResetSchedule,
+    moveTarget,
+    setMoveTarget,
+    moveAsBatch,
+    setMoveAsBatch,
+    moveSubjects,
+    moveDecks,
+    moveSubjectId,
+    moveDeckId,
+    setMoveDeckId,
+    moveBusy,
+    moveError,
+    moveDeckChoices,
+    openMove,
+    onMoveSubjectChange,
+    openBatchMove,
+    confirmMoveCard,
+  } = useDeckHubCardMutations({
+    deckId,
+    guest,
+    subject,
+    cards,
+    setCards,
+    setAcceptedCount,
+    setNotice,
+  });
 
   const cardsWorkshop = useCardsWorkshop({
     setCards,
@@ -152,7 +146,6 @@ export default function DeckHubPage({ deckId }: Props) {
     setShowArchived,
     archiveBusyId,
     selectedCardIds,
-    setSelectedCardIds,
     batchBusy,
     clearSelection,
     onToggleSelect,
@@ -238,22 +231,36 @@ export default function DeckHubPage({ deckId }: Props) {
 
   const study = useStudyReadySheet();
 
-  const refreshDeckCover = useCallback(async () => {
-    if (guest) {
-      setDeckCover(null);
-      return;
-    }
-    try {
-      const covers = await listCovers();
-      setDeckCover(
-        covers.find(
-          (cover) => cover.ownerKind === "deck" && cover.ownerId === deckId,
-        ) ?? null,
-      );
-    } catch {
-      setDeckCover(null);
-    }
-  }, [deckId, guest]);
+  const {
+    deckCover,
+    refreshDeckCover,
+    coverPickerOpen,
+    openCoverPicker,
+    closeCoverPicker,
+    onCoverSaved,
+    onCoverClear,
+    renameOpen,
+    setRenameOpen,
+    renameValue,
+    setRenameValue,
+    renameBusy,
+    renameError,
+    openRename,
+    onRenameSubmit,
+    deleteStats,
+    deleteBusy,
+    confirmDelete,
+    setConfirmDelete,
+    openDelete,
+    confirmDeleteDeck,
+  } = useDeckHubDeckLifecycle({
+    deckId,
+    guest,
+    deck,
+    setDeck,
+    subject,
+    setError,
+  });
 
   const load = useCallback(async () => {
     const [deckList, subjects] = await Promise.all([
@@ -372,234 +379,6 @@ export default function DeckHubPage({ deckId }: Props) {
     setWorkshopStack((prev) => replaceWorkshop(prev, frame));
   }
 
-  async function onRenameSubmit(e?: FormEvent) {
-    e?.preventDefault();
-    if (!deck || !renameValue.trim()) return;
-    setRenameBusy(true);
-    setRenameError(null);
-    try {
-      const updated = await patchDeck(deck.id, renameValue.trim());
-      setDeck(updated);
-      setRenameOpen(false);
-    } catch (err) {
-      setRenameError(
-        err instanceof ApiError ? err.message : "Could not rename",
-      );
-    } finally {
-      setRenameBusy(false);
-    }
-  }
-
-  async function openDelete() {
-    if (!deck) return;
-    setError(null);
-    setConfirmDelete(true);
-    setDeleteStats(null);
-    try {
-      setDeleteStats(await deckStats(deck.id));
-    } catch (err) {
-      setConfirmDelete(false);
-      setError(
-        err instanceof ApiError ? err.message : "Could not load deck stats",
-      );
-    }
-  }
-
-  async function confirmDeleteDeck() {
-    if (!deck) return;
-    setDeleteBusy(true);
-    setError(null);
-    try {
-      await deleteDeck(deck.id);
-      const subjectPath = subject
-        ? `/library/subjects/${encodeURIComponent(subject.id)}`
-        : "/library";
-      navigate(subjectPath);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not delete deck");
-    } finally {
-      setDeleteBusy(false);
-    }
-  }
-
-  function openEdit(card: CardDraftView) {
-    if (card.status === "archived") return;
-    setEditError(null);
-    setEditCard({
-      ...card,
-      options: card.options ? [...card.options] : undefined,
-    });
-  }
-
-  function onEditChange(next: DraftEditorChange) {
-    setEditCard((prev) =>
-      prev
-        ? {
-            ...prev,
-            front: next.front,
-            back: next.back,
-            type: next.type,
-            ...(next.options !== undefined ? { options: next.options } : {}),
-          }
-        : prev,
-    );
-  }
-
-  async function saveEdit() {
-    if (!editCard) return;
-    setEditBusy(true);
-    setEditError(null);
-    try {
-      const updated = await patchCard(editCard.id, cardPatchBody(editCard));
-      setCards((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
-      setEditCard(null);
-      setNotice("Card saved");
-    } catch (err) {
-      setEditError(
-        err instanceof ApiError ? err.message : "Could not save card",
-      );
-    } finally {
-      setEditBusy(false);
-    }
-  }
-
-  async function confirmResetSchedule() {
-    if (!editCard) return;
-    setResetBusy(true);
-    setEditError(null);
-    try {
-      const updated = await resetCardSchedule(editCard.id);
-      setCards((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
-      setEditCard(updated);
-      setConfirmReset(false);
-      setNotice("Schedule reset");
-    } catch (err) {
-      setEditError(
-        err instanceof ApiError ? err.message : "Could not reset schedule",
-      );
-    } finally {
-      setResetBusy(false);
-    }
-  }
-
-  const moveDeckChoices = moveDecks.filter(
-    (d) => d.subject_id === moveSubjectId && d.id !== deckId,
-  );
-
-  async function openMove(card: CardDraftView, opts?: { batch?: boolean }) {
-    setMoveError(null);
-    setMoveAsBatch(Boolean(opts?.batch));
-    setMoveTarget(card);
-    setMoveBusy(true);
-    try {
-      const [subjects, decks] = await Promise.all([
-        listSubjects(),
-        listDecks(),
-      ]);
-      setMoveSubjects(subjects);
-      setMoveDecks(decks);
-      const defaultSubjectId =
-        subject?.id ??
-        decks.find((d) => d.id === deckId)?.subject_id ??
-        subjects[0]?.id ??
-        "";
-      setMoveSubjectId(defaultSubjectId);
-      const firstDeck = decks.find(
-        (d) => d.subject_id === defaultSubjectId && d.id !== deckId,
-      );
-      setMoveDeckId(firstDeck?.id ?? "");
-    } catch (err) {
-      setMoveError(
-        err instanceof ApiError ? err.message : "Could not load decks",
-      );
-    } finally {
-      setMoveBusy(false);
-    }
-  }
-
-  function onMoveSubjectChange(nextSubjectId: string) {
-    setMoveSubjectId(nextSubjectId);
-    const first = moveDecks.find(
-      (d) => d.subject_id === nextSubjectId && d.id !== deckId,
-    );
-    setMoveDeckId(first?.id ?? "");
-  }
-
-  async function confirmMoveCard() {
-    if (!moveTarget || !moveDeckId) return;
-    setMoveBusy(true);
-    setMoveError(null);
-    try {
-      const batchIds =
-        moveAsBatch && selectedCardIds.size > 0
-          ? [...selectedCardIds]
-          : [moveTarget.id];
-      for (const id of batchIds) {
-        await moveCard(id, moveDeckId);
-      }
-      const moved = new Set(batchIds);
-      setCards((prev) => prev.filter((c) => !moved.has(c.id)));
-      if (!showArchived) {
-        setAcceptedCount((n) => Math.max(0, n - batchIds.length));
-      }
-      if (editCard && moved.has(editCard.id)) {
-        setEditCard(null);
-      }
-      setSelectedCardIds(new Set());
-      const destTitle =
-        moveDecks.find((d) => d.id === moveDeckId)?.title ?? "deck";
-      setMoveTarget(null);
-      setMoveAsBatch(false);
-      setNotice(
-        batchIds.length === 1
-          ? `Moved card to "${destTitle}"`
-          : `Moved ${batchIds.length} cards to "${destTitle}"`,
-      );
-    } catch (err) {
-      setMoveError(
-        err instanceof ApiError ? err.message : "Could not move card",
-      );
-    } finally {
-      setMoveBusy(false);
-    }
-  }
-
-  async function onRegenEditCard() {
-    if (!editCard || guest) return;
-    const type = asRegenType(editCard.type);
-    if (!type) {
-      setEditError("Choose Q&A, cloze, or multiple choice before regenerating");
-      return;
-    }
-    if (!cardHasRegenSource(editCard)) {
-      setEditError(
-        "No source text for this card. Edit manually or regenerate from a job with material.",
-      );
-      return;
-    }
-    setCardRegenBusy(true);
-    setEditError(null);
-    try {
-      const updated = await regenCard(editCard.id, { type });
-      setCards((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
-      setEditCard(updated);
-      setNotice("Card regenerated");
-    } catch (err) {
-      setEditError(
-        err instanceof ApiError ? err.message : "Could not regenerate card",
-      );
-    } finally {
-      setCardRegenBusy(false);
-    }
-  }
-
-  async function onBatchMoveOpen() {
-    if (selectedCardIds.size === 0) return;
-    const first = cards.find((c) => selectedCardIds.has(c.id));
-    if (!first) return;
-    await openMove(first, { batch: true });
-  }
-
   async function onExportAnki() {
     if (!deck || guest) return;
     setError(null);
@@ -678,13 +457,9 @@ export default function DeckHubPage({ deckId }: Props) {
               onExportAnki={() => {
                 void onExportAnki();
               }}
-              onRename={() => {
-                setRenameError(null);
-                setRenameValue(deck.title);
-                setRenameOpen(true);
-              }}
+              onRename={openRename}
               onDelete={openDelete}
-              onChangeCover={() => setCoverPickerOpen(true)}
+              onChangeCover={openCoverPicker}
             />
           ) : (
             <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
@@ -833,7 +608,7 @@ export default function DeckHubPage({ deckId }: Props) {
               void onBatchArchive();
             }}
             onBatchMove={() => {
-              void onBatchMoveOpen();
+              void openBatchMove(selectedCardIds);
             }}
             onEdit={openEdit}
             onMove={(card) => {
@@ -1096,7 +871,11 @@ export default function DeckHubPage({ deckId }: Props) {
             variant="contained"
             disabled={moveBusy || !moveDeckId}
             onClick={() => {
-              void confirmMoveCard();
+              void confirmMoveCard({
+                selectedCardIds,
+                showArchived,
+                clearSelection,
+              });
             }}
           >
             {moveBusy ? "Moving…" : "Move"}
@@ -1137,16 +916,9 @@ export default function DeckHubPage({ deckId }: Props) {
           title={deck.title}
           ownerKind="deck"
           ownerId={deck.id}
-          onClose={() => setCoverPickerOpen(false)}
-          onSaved={(row) => {
-            setDeckCover(row);
-            setCoverPickerOpen(false);
-          }}
-          onClear={async () => {
-            await clearCover("deck", deck.id);
-            setDeckCover(null);
-            setCoverPickerOpen(false);
-          }}
+          onClose={closeCoverPicker}
+          onSaved={onCoverSaved}
+          onClear={onCoverClear}
         />
       ) : null}
     </Container>
