@@ -253,4 +253,46 @@ export const ANATOMY_CATALOG: AnatomyCatalogEntry[] = [
     standIn: false,
     blurb: "IVALA teaching pack · brachial plexus",
   },
+  {
+    id: "canine-cervical-spine",
+    title: "Canine cervical spine",
+    standIn: false,
+    blurb: "IVALA teaching pack · cervical spine",
+  },
+  {
+    id: "canine-thoracic-spine",
+    title: "Canine thoracic spine",
+    standIn: false,
+    blurb: "IVALA teaching pack · thoracic spine",
+  },
+  {
+    id: "canine-lumbar-spine",
+    title: "Canine lumbar spine",
+    standIn: false,
+    blurb: "IVALA teaching pack · lumbar spine",
+  },
+  {
+    id: "canine-entire-spine",
+    title: "Canine entire spine",
+    standIn: false,
+    blurb: "IVALA teaching pack · full spine",
+  },
+  {
+    id: "canine-skeleton",
+    title: "Canine skeleton",
+    standIn: false,
+    blurb: "IVALA teaching pack · whole skeleton",
+  },
+  {
+    id: "canine-full-body-ecorche",
+    title: "Canine full body ecorche",
+    standIn: false,
+    blurb: "IVALA teaching pack · ecorche musculature",
+  },
+  {
+    id: "canine-surface-topography",
+    title: "Canine surface topography",
+    standIn: false,
+    blurb: "IVALA teaching pack · surface landmarks",
+  },
 ];

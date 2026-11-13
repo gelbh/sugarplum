@@ -1,0 +1,608 @@
+{
+  "id": "canine-cervical-spine",
+  "title": "Canine cervical spine",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-c1-alar-foramen",
+      "label": "c1 alar foramen",
+      "node": "c1_alar_foramen",
+      "asset": "./c1_alar_foramen.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c1-arch",
+      "label": "c1 arch",
+      "node": "c1_arch",
+      "asset": "./c1_arch.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c1-caudal-articular-faces",
+      "label": "c1 caudal articular faces",
+      "node": "c1_caudal_articular_faces",
+      "asset": "./c1_caudal_articular_faces.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c1-cranial-articular-faces",
+      "label": "c1 cranial articular faces",
+      "node": "c1_cranial_articular_faces",
+      "asset": "./c1_cranial_articular_faces.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c1-dorsal-tubercle",
+      "label": "c1 dorsal tubercle",
+      "node": "c1_dorsal_tubercle",
+      "asset": "./c1_dorsal_tubercle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c1-fovea-for-dens",
+      "label": "c1 fovea for dens",
+      "node": "c1_fovea_for_dens",
+      "asset": "./c1_fovea_for_dens.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c1-lateral-foramen",
+      "label": "c1 lateral foramen",
+      "node": "c1_lateral_foramen",
+      "asset": "./c1_lateral_foramen.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c1-low",
+      "label": "c1 low",
+      "node": "c1_low",
+      "asset": "./c1_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c1-ventral-arch",
+      "label": "c1 ventral arch",
+      "node": "c1_ventral_arch",
+      "asset": "./c1_ventral_arch.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c1-ventral-tubercle",
+      "label": "c1 ventral tubercle",
+      "node": "c1_ventral_tubercle",
+      "asset": "./c1_ventral_tubercle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c1-wings-of-atlas",
+      "label": "c1 wings of atlas",
+      "node": "c1_wings_of_atlas",
+      "asset": "./c1_wings_of_atlas.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c2-arch",
+      "label": "c2 arch",
+      "node": "c2_arch",
+      "asset": "./c2_arch.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c2-caudal-articular-process",
+      "label": "c2 caudal articular process",
+      "node": "c2_caudal_articular_process",
+      "asset": "./c2_caudal_articular_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c2-cranial-articular-faces",
+      "label": "c2 cranial articular faces",
+      "node": "c2_cranial_articular_faces",
+      "asset": "./c2_cranial_articular_faces.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c2-dens",
+      "label": "c2 dens",
+      "node": "c2_dens",
+      "asset": "./c2_dens.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c2-low",
+      "label": "c2 low",
+      "node": "c2_low",
+      "asset": "./c2_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c2-spinous-process",
+      "label": "c2 spinous process",
+      "node": "c2_spinous_process",
+      "asset": "./c2_spinous_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c2-transverse-foramen",
+      "label": "c2 transverse foramen",
+      "node": "c2_transverse_foramen",
+      "asset": "./c2_transverse_foramen.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c2-transverse-process",
+      "label": "c2 transverse process",
+      "node": "c2_transverse_process",
+      "asset": "./c2_transverse_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c3-low",
+      "label": "c3 low",
+      "node": "c3_low",
+      "asset": "./c3_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c4-low",
+      "label": "c4 low",
+      "node": "c4_low",
+      "asset": "./c4_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c5-body",
+      "label": "c5 body",
+      "node": "c5_body",
+      "asset": "./c5_body.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c5-caudal-articular-surfaces",
+      "label": "c5 caudal articular surfaces",
+      "node": "c5_caudal_articular_surfaces",
+      "asset": "./c5_caudal_articular_surfaces.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c5-cranial-articular-surfaces",
+      "label": "c5 cranial articular surfaces",
+      "node": "c5_cranial_articular_surfaces",
+      "asset": "./c5_cranial_articular_surfaces.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c5-low",
+      "label": "c5 low",
+      "node": "c5_low",
+      "asset": "./c5_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c5-spinous-process",
+      "label": "c5 spinous process",
+      "node": "c5_spinous_process",
+      "asset": "./c5_spinous_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c5-transverse-foramen",
+      "label": "c5 transverse foramen",
+      "node": "c5_transverse_foramen",
+      "asset": "./c5_transverse_foramen.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c5-transverse-processes",
+      "label": "c5 transverse processes",
+      "node": "c5_transverse_processes",
+      "asset": "./c5_transverse_processes.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c5-vertebral-canal",
+      "label": "c5 vertebral canal",
+      "node": "c5_vertebral_canal",
+      "asset": "./c5_vertebral_canal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c6-body",
+      "label": "c6 body",
+      "node": "c6_body",
+      "asset": "./c6_body.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c6-caudal-articular-surface",
+      "label": "c6 caudal articular surface",
+      "node": "c6_caudal_articular_surface",
+      "asset": "./c6_caudal_articular_surface.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c6-cranial-articular-surface",
+      "label": "c6 cranial articular surface",
+      "node": "c6_cranial_articular_surface",
+      "asset": "./c6_cranial_articular_surface.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c6-expanded-plate",
+      "label": "c6 expanded plate",
+      "node": "c6_expanded_plate",
+      "asset": "./c6_expanded_plate.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c6-low",
+      "label": "c6 low",
+      "node": "c6_low",
+      "asset": "./c6_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c6-spinous-process",
+      "label": "c6 spinous process",
+      "node": "c6_spinous_process",
+      "asset": "./c6_spinous_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c6-transverse-foramen",
+      "label": "c6 transverse foramen",
+      "node": "c6_transverse_foramen",
+      "asset": "./c6_transverse_foramen.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c6-transverse-process",
+      "label": "c6 transverse process",
+      "node": "c6_transverse_process",
+      "asset": "./c6_transverse_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c6-vertebral-foramen",
+      "label": "c6 vertebral foramen",
+      "node": "c6_vertebral_foramen",
+      "asset": "./c6_vertebral_foramen.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c7-body",
+      "label": "c7 body",
+      "node": "c7_body",
+      "asset": "./c7_body.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c7-caudal-articular-process",
+      "label": "c7 caudal articular process",
+      "node": "c7_caudal_articular_process",
+      "asset": "./c7_caudal_articular_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c7-caudal-costal-fovea",
+      "label": "c7 caudal costal fovea",
+      "node": "c7_caudal_costal_fovea",
+      "asset": "./c7_caudal_costal_fovea.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c7-cranial-articular-surface",
+      "label": "c7 cranial articular surface",
+      "node": "c7_cranial_articular_surface",
+      "asset": "./c7_cranial_articular_surface.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c7-laminae",
+      "label": "c7 laminae",
+      "node": "c7_laminae",
+      "asset": "./c7_laminae.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c7-low",
+      "label": "c7 low",
+      "node": "c7_low",
+      "asset": "./c7_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c7-spinous-process",
+      "label": "c7 spinous process",
+      "node": "c7_spinous_process",
+      "asset": "./c7_spinous_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c7-transverse-process",
+      "label": "c7 transverse process",
+      "node": "c7_transverse_process",
+      "asset": "./c7_transverse_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l1-accessory-process",
+      "label": "l1 accessory process",
+      "node": "l1_accessory_process",
+      "asset": "./l1_accessory_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l1-body",
+      "label": "l1 body",
+      "node": "l1_body",
+      "asset": "./l1_body.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l1-caudal-articular-process",
+      "label": "l1 caudal articular process",
+      "node": "l1_caudal_articular_process",
+      "asset": "./l1_caudal_articular_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l1-caudal-articular-surface",
+      "label": "l1 caudal articular surface",
+      "node": "l1_caudal_articular_surface",
+      "asset": "./l1_caudal_articular_surface.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l1-cranial-articular-process",
+      "label": "l1 cranial articular process",
+      "node": "l1_cranial_articular_process",
+      "asset": "./l1_cranial_articular_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l1-cranial-articular-surface",
+      "label": "l1 cranial articular surface",
+      "node": "l1_cranial_articular_surface",
+      "asset": "./l1_cranial_articular_surface.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l1-low",
+      "label": "l1 low",
+      "node": "l1_low",
+      "asset": "./l1_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l1-mamillary-process",
+      "label": "l1 mamillary process",
+      "node": "l1_mamillary_process",
+      "asset": "./l1_mamillary_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l1-spinous-process",
+      "label": "l1 spinous process",
+      "node": "l1_spinous_process",
+      "asset": "./l1_spinous_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l1-transverse-process",
+      "label": "l1 transverse process",
+      "node": "l1_transverse_process",
+      "asset": "./l1_transverse_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l1-vertebral-foramen",
+      "label": "l1 vertebral foramen",
+      "node": "l1_vertebral_foramen",
+      "asset": "./l1_vertebral_foramen.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l2-low",
+      "label": "l2 low",
+      "node": "l2_low",
+      "asset": "./l2_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l3-low",
+      "label": "l3 low",
+      "node": "l3_low",
+      "asset": "./l3_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l4-low",
+      "label": "l4 low",
+      "node": "l4_low",
+      "asset": "./l4_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l5-low",
+      "label": "l5 low",
+      "node": "l5_low",
+      "asset": "./l5_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l6-low",
+      "label": "l6 low",
+      "node": "l6_low",
+      "asset": "./l6_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l7-low",
+      "label": "l7 low",
+      "node": "l7_low",
+      "asset": "./l7_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t1-low",
+      "label": "t1 low",
+      "node": "t1_low",
+      "asset": "./t1_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t10-low",
+      "label": "t10 low",
+      "node": "t10_low",
+      "asset": "./t10_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t11-low",
+      "label": "t11 low",
+      "node": "t11_low",
+      "asset": "./t11_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t12-low",
+      "label": "t12 low",
+      "node": "t12_low",
+      "asset": "./t12_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t13-low",
+      "label": "t13 low",
+      "node": "t13_low",
+      "asset": "./t13_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t2-low",
+      "label": "t2 low",
+      "node": "t2_low",
+      "asset": "./t2_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t3-low",
+      "label": "t3 low",
+      "node": "t3_low",
+      "asset": "./t3_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t4-low",
+      "label": "t4 low",
+      "node": "t4_low",
+      "asset": "./t4_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t5-low",
+      "label": "t5 low",
+      "node": "t5_low",
+      "asset": "./t5_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t6-body",
+      "label": "t6 body",
+      "node": "t6_body",
+      "asset": "./t6_body.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t6-caudal-articular-process",
+      "label": "t6 caudal articular process",
+      "node": "t6_caudal_articular_process",
+      "asset": "./t6_caudal_articular_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t6-caudal-costal-fovea",
+      "label": "t6 caudal costal fovea",
+      "node": "t6_caudal_costal_fovea",
+      "asset": "./t6_caudal_costal_fovea.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t6-costal-fovea-transverse-process",
+      "label": "t6 costal fovea transverse process",
+      "node": "t6_costal_fovea_transverse_process",
+      "asset": "./t6_costal_fovea_transverse_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t6-cranial-articular-surface",
+      "label": "t6 cranial articular surface",
+      "node": "t6_cranial_articular_surface",
+      "asset": "./t6_cranial_articular_surface.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t6-cranial-costal-fovea",
+      "label": "t6 cranial costal fovea",
+      "node": "t6_cranial_costal_fovea",
+      "asset": "./t6_cranial_costal_fovea.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t6-low",
+      "label": "t6 low",
+      "node": "t6_low",
+      "asset": "./t6_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t6-mamillary-process",
+      "label": "t6 mamillary process",
+      "node": "t6_mamillary_process",
+      "asset": "./t6_mamillary_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t6-spinous-process",
+      "label": "t6 spinous process",
+      "node": "t6_spinous_process",
+      "asset": "./t6_spinous_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t6-transverse-process",
+      "label": "t6 transverse process",
+      "node": "t6_transverse_process",
+      "asset": "./t6_transverse_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t7-low",
+      "label": "t7 low",
+      "node": "t7_low",
+      "asset": "./t7_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t8-low",
+      "label": "t8 low",
+      "node": "t8_low",
+      "asset": "./t8_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t9-low",
+      "label": "t9 low",
+      "node": "t9_low",
+      "asset": "./t9_low.glb",
+      "region": "root"
+    }
+  ]
+}
