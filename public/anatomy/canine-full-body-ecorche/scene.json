@@ -1,0 +1,1623 @@
+{
+  "id": "canine-full-body-ecorche",
+  "title": "Canine full body ecorche",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-b-carpals",
+      "label": "b carpals",
+      "node": "b_carpals",
+      "asset": "./b_carpals.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-caudal-vertebra",
+      "label": "b caudal vertebra",
+      "node": "b_caudal_vertebra",
+      "asset": "./b_caudal_vertebra.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-cervical-vertebra",
+      "label": "b cervical vertebra",
+      "node": "b_cervical_vertebra",
+      "asset": "./b_cervical_vertebra.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-cranium",
+      "label": "b cranium",
+      "node": "b_cranium",
+      "asset": "./b_cranium.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-femur-tibia-fibula",
+      "label": "b femur tibia fibula",
+      "node": "b_femur_tibia_fibula",
+      "asset": "./b_femur_tibia_fibula.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-fl-digits",
+      "label": "b FL digits",
+      "node": "b_FL_digits",
+      "asset": "./b_FL_digits.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-hl-digits",
+      "label": "b HL digits",
+      "node": "b_HL_digits",
+      "asset": "./b_HL_digits.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-hock",
+      "label": "b hock",
+      "node": "b_hock",
+      "asset": "./b_hock.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-lumbar-vertebra-sacrum",
+      "label": "b lumbar vertebra sacrum",
+      "node": "b_lumbar_vertebra_sacrum",
+      "asset": "./b_lumbar_vertebra_sacrum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-mandible",
+      "label": "b mandible",
+      "node": "b_mandible",
+      "asset": "./b_mandible.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-metacarpals",
+      "label": "b metacarpals",
+      "node": "b_metacarpals",
+      "asset": "./b_metacarpals.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-metatarsals",
+      "label": "b metatarsals",
+      "node": "b_metatarsals",
+      "asset": "./b_metatarsals.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-patella",
+      "label": "b patella",
+      "node": "b_patella",
+      "asset": "./b_patella.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-pelvis",
+      "label": "b pelvis",
+      "node": "b_pelvis",
+      "asset": "./b_pelvis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-radius-ulna",
+      "label": "b radius ulna",
+      "node": "b_radius_ulna",
+      "asset": "./b_radius_ulna.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-rib-cage-original",
+      "label": "b rib cage original",
+      "node": "b_rib_cage_original",
+      "asset": "./b_rib_cage_original.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-scapula-humerus",
+      "label": "b scapula humerus",
+      "node": "b_scapula_humerus",
+      "asset": "./b_scapula_humerus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-sternum",
+      "label": "b sternum",
+      "node": "b_sternum",
+      "asset": "./b_sternum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-thoracic-vertebra",
+      "label": "b thoracic vertebra",
+      "node": "b_thoracic_vertebra",
+      "asset": "./b_thoracic_vertebra.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cartilage-scutiform",
+      "label": "cartilage scutiform",
+      "node": "cartilage_scutiform",
+      "asset": "./cartilage_scutiform.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-details-eye-area",
+      "label": "details eye area",
+      "node": "details_eye_area",
+      "asset": "./details_eye_area.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-details-eyes",
+      "label": "details eyes",
+      "node": "details_eyes",
+      "asset": "./details_eyes.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-details-hl-greyhound-toes",
+      "label": "details HL greyhound toes",
+      "node": "details_HL_greyhound_toes",
+      "asset": "./details_HL_greyhound_toes.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-details-hl-stifle",
+      "label": "details HL stifle",
+      "node": "details_HL_stifle",
+      "asset": "./details_HL_stifle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-details-hl-tarsus",
+      "label": "details HL tarsus",
+      "node": "details_HL_tarsus",
+      "asset": "./details_HL_tarsus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-details-inguinal-fold",
+      "label": "details inguinal fold",
+      "node": "details_inguinal_fold",
+      "asset": "./details_inguinal_fold.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-details-nose-area",
+      "label": "details nose area",
+      "node": "details_nose_area",
+      "asset": "./details_nose_area.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-details-nose-mouth-area",
+      "label": "details nose mouth area",
+      "node": "details_nose_mouth_area",
+      "asset": "./details_nose_mouth_area.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-details-tail-overlay",
+      "label": "details tail overlay",
+      "node": "details_tail_overlay",
+      "asset": "./details_tail_overlay.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-diaphragm",
+      "label": "diaphragm",
+      "node": "diaphragm",
+      "asset": "./diaphragm.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ear",
+      "label": "ear",
+      "node": "ear",
+      "asset": "./ear.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fascia-lata",
+      "label": "fascia lata",
+      "node": "fascia_lata",
+      "asset": "./fascia_lata.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-details-elbow",
+      "label": "FL details elbow",
+      "node": "FL_details_elbow",
+      "asset": "./FL_details_elbow.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-details-toes",
+      "label": "FL details toes",
+      "node": "FL_details_toes",
+      "asset": "./FL_details_toes.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-paw-ligaments",
+      "label": "HL paw ligaments",
+      "node": "HL_paw_ligaments",
+      "asset": "./HL_paw_ligaments.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-retinaculi",
+      "label": "HL retinaculi",
+      "node": "HL_retinaculi",
+      "asset": "./HL_retinaculi.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-sacrotuberous",
+      "label": "lig sacrotuberous",
+      "node": "lig_sacrotuberous",
+      "asset": "./lig_sacrotuberous.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-abductor-cruris-caudalis",
+      "label": "m abductor cruris caudalis",
+      "node": "m_abductor_cruris_caudalis",
+      "asset": "./m_abductor_cruris_caudalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-abductor-digiti-i",
+      "label": "m abductor digiti I",
+      "node": "m_abductor_digiti_I",
+      "asset": "./m_abductor_digiti_I.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-abductor-digiti-i-pollicis-longus",
+      "label": "m abductor digiti I pollicis longus",
+      "node": "m_abductor_digiti_I_pollicis_longus",
+      "asset": "./m_abductor_digiti_I_pollicis_longus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-abductor-digiti-v",
+      "label": "m abductor digiti V",
+      "node": "m_abductor_digiti_V",
+      "asset": "./m_abductor_digiti_V.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-adductor-digit-ii",
+      "label": "m adductor digit II",
+      "node": "m_adductor_digit_II",
+      "asset": "./m_adductor_digit_II.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-adductor-digit-ii-et-v",
+      "label": "m adductor digit II et V",
+      "node": "m_adductor_digit_II_et_V",
+      "asset": "./m_adductor_digit_II_et_V.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-adductor-digit-v",
+      "label": "m adductor digit V",
+      "node": "m_adductor_digit_V",
+      "asset": "./m_adductor_digit_V.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-adductor-digiti-i",
+      "label": "m adductor digiti I",
+      "node": "m_adductor_digiti_I",
+      "asset": "./m_adductor_digiti_I.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-adductor-longus",
+      "label": "m adductor longus",
+      "node": "m_adductor_longus",
+      "asset": "./m_adductor_longus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-adductor-magnus-et-brevis",
+      "label": "m adductor magnus et brevis",
+      "node": "m_adductor_magnus_et_brevis",
+      "asset": "./m_adductor_magnus_et_brevis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-anconeus",
+      "label": "m anconeus",
+      "node": "m_anconeus",
+      "asset": "./m_anconeus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-articularis-coxae",
+      "label": "m articularis coxae",
+      "node": "m_articularis_coxae",
+      "asset": "./m_articularis_coxae.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-biceps-brachii",
+      "label": "m biceps brachii",
+      "node": "m_biceps_brachii",
+      "asset": "./m_biceps_brachii.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-biceps-femoris",
+      "label": "m biceps femoris",
+      "node": "m_biceps_femoris",
+      "asset": "./m_biceps_femoris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-brachialis",
+      "label": "m brachialis",
+      "node": "m_brachialis",
+      "asset": "./m_brachialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-brachoradialis",
+      "label": "m brachoradialis",
+      "node": "m_brachoradialis",
+      "asset": "./m_brachoradialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-buccinator-buccal-part",
+      "label": "m buccinator buccal part",
+      "node": "m_buccinator_buccal_part",
+      "asset": "./m_buccinator_buccal_part.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-buccinator-molar-part",
+      "label": "m buccinator molar part",
+      "node": "m_buccinator_molar_part",
+      "asset": "./m_buccinator_molar_part.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-caninus",
+      "label": "m caninus",
+      "node": "m_caninus",
+      "asset": "./m_caninus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-caudalis-tibialis",
+      "label": "m caudalis tibialis",
+      "node": "m_caudalis_tibialis",
+      "asset": "./m_caudalis_tibialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-cervicoauricularis-medius",
+      "label": "m cervicoauricularis medius",
+      "node": "m_cervicoauricularis_medius",
+      "asset": "./m_cervicoauricularis_medius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-cervicoauricularis-profundus",
+      "label": "m cervicoauricularis profundus",
+      "node": "m_cervicoauricularis_profundus",
+      "asset": "./m_cervicoauricularis_profundus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-cervicoauricularis-superficialis",
+      "label": "m cervicoauricularis superficialis",
+      "node": "m_cervicoauricularis_superficialis",
+      "asset": "./m_cervicoauricularis_superficialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-cervicoscutularis",
+      "label": "m cervicoscutularis",
+      "node": "m_cervicoscutularis",
+      "asset": "./m_cervicoscutularis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-cleidobrachialis",
+      "label": "m cleidobrachialis",
+      "node": "m_cleidobrachialis",
+      "asset": "./m_cleidobrachialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-cleidocephalicus-pars-cervicalis",
+      "label": "m cleidocephalicus pars cervicalis",
+      "node": "m_cleidocephalicus_pars_cervicalis",
+      "asset": "./m_cleidocephalicus_pars_cervicalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-cleidocephalicus-pars-mastoideus",
+      "label": "m cleidocephalicus pars mastoideus",
+      "node": "m_cleidocephalicus_pars_mastoideus",
+      "asset": "./m_cleidocephalicus_pars_mastoideus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-coccygeus",
+      "label": "m coccygeus",
+      "node": "m_coccygeus",
+      "asset": "./m_coccygeus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-coracobrachialis",
+      "label": "m coracobrachialis",
+      "node": "m_coracobrachialis",
+      "asset": "./m_coracobrachialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-deltoid-pars-acromialis",
+      "label": "m deltoid pars acromialis",
+      "node": "m_deltoid_pars_acromialis",
+      "asset": "./m_deltoid_pars_acromialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-deltoid-pars-scapularis",
+      "label": "m deltoid pars scapularis",
+      "node": "m_deltoid_pars_scapularis",
+      "asset": "./m_deltoid_pars_scapularis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-digastricus",
+      "label": "m digastricus",
+      "node": "m_digastricus",
+      "asset": "./m_digastricus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-eao",
+      "label": "m EAO",
+      "node": "m_EAO",
+      "asset": "./m_EAO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-extensor-carpi-radialis",
+      "label": "m extensor carpi radialis",
+      "node": "m_extensor_carpi_radialis",
+      "asset": "./m_extensor_carpi_radialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-extensor-carpi-ulnaris",
+      "label": "m extensor carpi ulnaris",
+      "node": "m_extensor_carpi_ulnaris",
+      "asset": "./m_extensor_carpi_ulnaris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-extensor-digit-i-et-ii",
+      "label": "m extensor digit I et II",
+      "node": "m_extensor_digit_I_et_II",
+      "asset": "./m_extensor_digit_I_et_II.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-extensor-digitorum-brevis",
+      "label": "m extensor digitorum brevis",
+      "node": "m_extensor_digitorum_brevis",
+      "asset": "./m_extensor_digitorum_brevis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-extensor-digitorum-communis",
+      "label": "m extensor digitorum communis",
+      "node": "m_extensor_digitorum_communis",
+      "asset": "./m_extensor_digitorum_communis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-extensor-digitorum-lateralis-fl",
+      "label": "m extensor digitorum lateralis FL",
+      "node": "m_extensor_digitorum_lateralis_FL",
+      "asset": "./m_extensor_digitorum_lateralis_FL.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-extensor-digitorum-lateralis-hl",
+      "label": "m extensor digitorum lateralis HL",
+      "node": "m_extensor_digitorum_lateralis_HL",
+      "asset": "./m_extensor_digitorum_lateralis_HL.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-extensor-digitorum-longus",
+      "label": "m extensor digitorum longus",
+      "node": "m_extensor_digitorum_longus",
+      "asset": "./m_extensor_digitorum_longus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-fibularis-peroneus-brevis",
+      "label": "m fibularis peroneus brevis",
+      "node": "m_fibularis_peroneus_brevis",
+      "asset": "./m_fibularis_peroneus_brevis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-flexor-carpi-radialis",
+      "label": "m flexor carpi radialis",
+      "node": "m_flexor_carpi_radialis",
+      "asset": "./m_flexor_carpi_radialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-flexor-carpi-ulnaris-humeral",
+      "label": "m flexor carpi ulnaris humeral",
+      "node": "m_flexor_carpi_ulnaris_humeral",
+      "asset": "./m_flexor_carpi_ulnaris_humeral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-flexor-carpi-ulnaris-ulna",
+      "label": "m flexor carpi ulnaris ulna",
+      "node": "m_flexor_carpi_ulnaris_ulna",
+      "asset": "./m_flexor_carpi_ulnaris_ulna.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-flexor-digiti-i-brevis",
+      "label": "m flexor digiti I brevis",
+      "node": "m_flexor_digiti_I_brevis",
+      "asset": "./m_flexor_digiti_I_brevis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-flexor-digiti-v",
+      "label": "m flexor digiti V",
+      "node": "m_flexor_digiti_V",
+      "asset": "./m_flexor_digiti_V.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-flexor-digitorum-lateralis",
+      "label": "m flexor digitorum lateralis",
+      "node": "m_flexor_digitorum_lateralis",
+      "asset": "./m_flexor_digitorum_lateralis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-flexor-digitorum-medialis",
+      "label": "m flexor digitorum medialis",
+      "node": "m_flexor_digitorum_medialis",
+      "asset": "./m_flexor_digitorum_medialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-flexor-digitorum-profundus",
+      "label": "m flexor digitorum profundus",
+      "node": "m_flexor_digitorum_profundus",
+      "asset": "./m_flexor_digitorum_profundus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-flexor-digitorum-superficialis",
+      "label": "m flexor digitorum superficialis",
+      "node": "m_flexor_digitorum_superficialis",
+      "asset": "./m_flexor_digitorum_superficialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-frontalis",
+      "label": "m frontalis",
+      "node": "m_frontalis",
+      "asset": "./m_frontalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-frontoscutularis",
+      "label": "m frontoscutularis",
+      "node": "m_frontoscutularis",
+      "asset": "./m_frontoscutularis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-gastrocnemius",
+      "label": "m gastrocnemius",
+      "node": "m_gastrocnemius",
+      "asset": "./m_gastrocnemius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-gemellus",
+      "label": "m gemellus",
+      "node": "m_gemellus",
+      "asset": "./m_gemellus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-gluteus-medius",
+      "label": "m gluteus medius",
+      "node": "m_gluteus_medius",
+      "asset": "./m_gluteus_medius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-gluteus-profundus",
+      "label": "m gluteus profundus",
+      "node": "m_gluteus_profundus",
+      "asset": "./m_gluteus_profundus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-gluteus-superficialis",
+      "label": "m gluteus superficialis",
+      "node": "m_gluteus_superficialis",
+      "asset": "./m_gluteus_superficialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-gracilis",
+      "label": "m gracilis",
+      "node": "m_gracilis",
+      "asset": "./m_gracilis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-iao",
+      "label": "m IAO",
+      "node": "m_IAO",
+      "asset": "./m_IAO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-iliacus",
+      "label": "m iliacus",
+      "node": "m_iliacus",
+      "asset": "./m_iliacus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-iliocostalis-cervicis-thoracis",
+      "label": "m iliocostalis cervicis thoracis",
+      "node": "m_iliocostalis_cervicis_thoracis",
+      "asset": "./m_iliocostalis_cervicis_thoracis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-iliocostalis-lumborum",
+      "label": "m iliocostalis lumborum",
+      "node": "m_iliocostalis_lumborum",
+      "asset": "./m_iliocostalis_lumborum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-infraspinatus",
+      "label": "m infraspinatus",
+      "node": "m_infraspinatus",
+      "asset": "./m_infraspinatus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-intercostales-externi",
+      "label": "m intercostales externi",
+      "node": "m_intercostales_externi",
+      "asset": "./m_intercostales_externi.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-intercostales-interni",
+      "label": "m intercostales interni",
+      "node": "m_intercostales_interni",
+      "asset": "./m_intercostales_interni.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-interossei-fl",
+      "label": "m interossei FL",
+      "node": "m_interossei_FL",
+      "asset": "./m_interossei_FL.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-interscutularis",
+      "label": "m interscutularis",
+      "node": "m_interscutularis",
+      "asset": "./m_interscutularis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-interspinales",
+      "label": "m interspinales",
+      "node": "m_interspinales",
+      "asset": "./m_interspinales.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-intertransversarii-dorsales-cauda",
+      "label": "m intertransversarii dorsales cauda",
+      "node": "m_intertransversarii_dorsales_cauda",
+      "asset": "./m_intertransversarii_dorsales_cauda.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-intertransversarii-dorsales-cervicis",
+      "label": "m intertransversarii dorsales cervicis",
+      "node": "m_intertransversarii_dorsales_cervicis",
+      "asset": "./m_intertransversarii_dorsales_cervicis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-intertransversarii-lumborum",
+      "label": "m intertransversarii lumborum",
+      "node": "m_intertransversarii_lumborum",
+      "asset": "./m_intertransversarii_lumborum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-intertransversarii-medii-cervicis",
+      "label": "m intertransversarii medii cervicis",
+      "node": "m_intertransversarii_medii_cervicis",
+      "asset": "./m_intertransversarii_medii_cervicis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-intertransversarii-thoracis",
+      "label": "m intertransversarii thoracis",
+      "node": "m_intertransversarii_thoracis",
+      "asset": "./m_intertransversarii_thoracis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-intertransversarii-vent-cauda",
+      "label": "m intertransversarii vent cauda",
+      "node": "m_intertransversarii_vent_cauda",
+      "asset": "./m_intertransversarii_vent_cauda.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-intertransversarii-ventrales-cervicis",
+      "label": "m intertransversarii ventrales cervicis",
+      "node": "m_intertransversarii_ventrales_cervicis",
+      "asset": "./m_intertransversarii_ventrales_cervicis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-latissimus-dorsi",
+      "label": "m latissimus dorsi",
+      "node": "m_latissimus_dorsi",
+      "asset": "./m_latissimus_dorsi.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-levator-anguli-oculi-medialis",
+      "label": "m levator anguli oculi medialis",
+      "node": "m_levator_anguli_oculi_medialis",
+      "asset": "./m_levator_anguli_oculi_medialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-levator-ani",
+      "label": "m levator ani",
+      "node": "m_levator_ani",
+      "asset": "./m_levator_ani.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-levator-labii-superioris",
+      "label": "m levator labii superioris",
+      "node": "m_levator_labii_superioris",
+      "asset": "./m_levator_labii_superioris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-levator-nasolabialis",
+      "label": "m levator nasolabialis",
+      "node": "m_levator_nasolabialis",
+      "asset": "./m_levator_nasolabialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-longissimus-atlantis",
+      "label": "m longissimus atlantis",
+      "node": "m_longissimus_atlantis",
+      "asset": "./m_longissimus_atlantis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-longissimus-capitis",
+      "label": "m longissimus capitis",
+      "node": "m_longissimus_capitis",
+      "asset": "./m_longissimus_capitis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-longissimus-cervicis",
+      "label": "m longissimus cervicis",
+      "node": "m_longissimus_cervicis",
+      "asset": "./m_longissimus_cervicis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-longissimus-thoracis-lumborum",
+      "label": "m longissimus thoracis lumborum",
+      "node": "m_longissimus_thoracis_lumborum",
+      "asset": "./m_longissimus_thoracis_lumborum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-longus-capitis",
+      "label": "m longus capitis",
+      "node": "m_longus_capitis",
+      "asset": "./m_longus_capitis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-longus-colli",
+      "label": "m longus colli",
+      "node": "m_longus_colli",
+      "asset": "./m_longus_colli.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-malaris",
+      "label": "m malaris",
+      "node": "m_malaris",
+      "asset": "./m_malaris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-masseter-medius",
+      "label": "m masseter medius",
+      "node": "m_masseter_medius",
+      "asset": "./m_masseter_medius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-masseter-profundus",
+      "label": "m masseter profundus",
+      "node": "m_masseter_profundus",
+      "asset": "./m_masseter_profundus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-masseter-superficialis",
+      "label": "m masseter superficialis",
+      "node": "m_masseter_superficialis",
+      "asset": "./m_masseter_superficialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-mentalis",
+      "label": "m mentalis",
+      "node": "m_mentalis",
+      "asset": "./m_mentalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-mylohyoideus",
+      "label": "m mylohyoideus",
+      "node": "m_mylohyoideus",
+      "asset": "./m_mylohyoideus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-obliquus-capitis-caudalis",
+      "label": "m obliquus capitis caudalis",
+      "node": "m_obliquus_capitis_caudalis",
+      "asset": "./m_obliquus_capitis_caudalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-obliquus-capitis-cranialis",
+      "label": "m obliquus capitis cranialis",
+      "node": "m_obliquus_capitis_cranialis",
+      "asset": "./m_obliquus_capitis_cranialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-obturator-externus",
+      "label": "m obturator externus",
+      "node": "m_obturator_externus",
+      "asset": "./m_obturator_externus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-obturator-internus",
+      "label": "m obturator internus",
+      "node": "m_obturator_internus",
+      "asset": "./m_obturator_internus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-occipitalis",
+      "label": "m occipitalis",
+      "node": "m_occipitalis",
+      "asset": "./m_occipitalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-omotransversarius",
+      "label": "m omotransversarius",
+      "node": "m_omotransversarius",
+      "asset": "./m_omotransversarius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-orbicularis-oculi",
+      "label": "m orbicularis oculi",
+      "node": "m_orbicularis_oculi",
+      "asset": "./m_orbicularis_oculi.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-orbicularis-oris",
+      "label": "m orbicularis oris",
+      "node": "m_orbicularis_oris",
+      "asset": "./m_orbicularis_oris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-parietoauricularis",
+      "label": "m parietoauricularis",
+      "node": "m_parietoauricularis",
+      "asset": "./m_parietoauricularis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-parotidoauricularis",
+      "label": "m parotidoauricularis",
+      "node": "m_parotidoauricularis",
+      "asset": "./m_parotidoauricularis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-pectineus",
+      "label": "m pectineus",
+      "node": "m_pectineus",
+      "asset": "./m_pectineus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-pectoralis-descendens",
+      "label": "m pectoralis descendens",
+      "node": "m_pectoralis_descendens",
+      "asset": "./m_pectoralis_descendens.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-pectoralis-profundus",
+      "label": "m pectoralis profundus",
+      "node": "m_pectoralis_profundus",
+      "asset": "./m_pectoralis_profundus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-pectoralis-transversus",
+      "label": "m pectoralis transversus",
+      "node": "m_pectoralis_transversus",
+      "asset": "./m_pectoralis_transversus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-peroneus-longus",
+      "label": "m peroneus longus",
+      "node": "m_peroneus_longus",
+      "asset": "./m_peroneus_longus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-piriformis",
+      "label": "m piriformis",
+      "node": "m_piriformis",
+      "asset": "./m_piriformis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-platysma",
+      "label": "m platysma",
+      "node": "m_platysma",
+      "asset": "./m_platysma.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-popliteus",
+      "label": "m popliteus",
+      "node": "m_popliteus",
+      "asset": "./m_popliteus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-pronator-quadratus",
+      "label": "m pronator quadratus",
+      "node": "m_pronator_quadratus",
+      "asset": "./m_pronator_quadratus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-pronator-teres",
+      "label": "m pronator teres",
+      "node": "m_pronator_teres",
+      "asset": "./m_pronator_teres.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-psoas-major",
+      "label": "m psoas major",
+      "node": "m_psoas_major",
+      "asset": "./m_psoas_major.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-psoas-minor",
+      "label": "m psoas minor",
+      "node": "m_psoas_minor",
+      "asset": "./m_psoas_minor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-pterygoid-lat",
+      "label": "m pterygoid lat",
+      "node": "m_pterygoid_lat",
+      "asset": "./m_pterygoid_lat.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-pterygoid-med",
+      "label": "m pterygoid med",
+      "node": "m_pterygoid_med",
+      "asset": "./m_pterygoid_med.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-quadratus-femoris",
+      "label": "m quadratus femoris",
+      "node": "m_quadratus_femoris",
+      "asset": "./m_quadratus_femoris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-quadratus-lumborum",
+      "label": "m quadratus lumborum",
+      "node": "m_quadratus_lumborum",
+      "asset": "./m_quadratus_lumborum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-quadriceps-rectus-femoris",
+      "label": "m quadriceps rectus femoris",
+      "node": "m_quadriceps_rectus_femoris",
+      "asset": "./m_quadriceps_rectus_femoris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-quadriceps-vastus-intermedius",
+      "label": "m quadriceps vastus intermedius",
+      "node": "m_quadriceps_vastus_intermedius",
+      "asset": "./m_quadriceps_vastus_intermedius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-quadriceps-vastus-lateralis",
+      "label": "m quadriceps vastus lateralis",
+      "node": "m_quadriceps_vastus_lateralis",
+      "asset": "./m_quadriceps_vastus_lateralis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-quadriceps-vastus-medialis",
+      "label": "m quadriceps vastus medialis",
+      "node": "m_quadriceps_vastus_medialis",
+      "asset": "./m_quadriceps_vastus_medialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-rectus-abdominis",
+      "label": "m rectus abdominis",
+      "node": "m_rectus_abdominis",
+      "asset": "./m_rectus_abdominis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-rectus-capitis-dorsalis-major",
+      "label": "m rectus capitis dorsalis major",
+      "node": "m_rectus_capitis_dorsalis_major",
+      "asset": "./m_rectus_capitis_dorsalis_major.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-rectus-capitis-dorsalis-minor",
+      "label": "m rectus capitis dorsalis minor",
+      "node": "m_rectus_capitis_dorsalis_minor",
+      "asset": "./m_rectus_capitis_dorsalis_minor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-rectus-capitis-lateralis",
+      "label": "m rectus capitis lateralis",
+      "node": "m_rectus_capitis_lateralis",
+      "asset": "./m_rectus_capitis_lateralis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-rectus-capitis-ventralis",
+      "label": "m rectus capitis ventralis",
+      "node": "m_rectus_capitis_ventralis",
+      "asset": "./m_rectus_capitis_ventralis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-rectus-thoracis",
+      "label": "m rectus thoracis",
+      "node": "m_rectus_thoracis",
+      "asset": "./m_rectus_thoracis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-retractor-anguli-oculi-lateralis",
+      "label": "m retractor anguli oculi lateralis",
+      "node": "m_retractor_anguli_oculi_lateralis",
+      "asset": "./m_retractor_anguli_oculi_lateralis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-rhomboideus",
+      "label": "m rhomboideus",
+      "node": "m_rhomboideus",
+      "asset": "./m_rhomboideus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-sacrocadudalis-dorsalis-lat",
+      "label": "m sacrocadudalis dorsalis lat",
+      "node": "m_sacrocadudalis_dorsalis_lat",
+      "asset": "./m_sacrocadudalis_dorsalis_lat.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-sacrocadudalis-dorsalis-med",
+      "label": "m sacrocadudalis dorsalis med",
+      "node": "m_sacrocadudalis_dorsalis_med",
+      "asset": "./m_sacrocadudalis_dorsalis_med.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-sacrocaud-vent-lat",
+      "label": "m sacrocaud vent lat",
+      "node": "m_sacrocaud_vent_lat",
+      "asset": "./m_sacrocaud_vent_lat.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-sacrocaud-vent-med",
+      "label": "m sacrocaud vent med",
+      "node": "m_sacrocaud_vent_med",
+      "asset": "./m_sacrocaud_vent_med.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-sartorius-caudalis",
+      "label": "m sartorius caudalis",
+      "node": "m_sartorius_caudalis",
+      "asset": "./m_sartorius_caudalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-sartorius-cranialis",
+      "label": "m sartorius cranialis",
+      "node": "m_sartorius_cranialis",
+      "asset": "./m_sartorius_cranialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-scalenus-dorsalis",
+      "label": "m scalenus dorsalis",
+      "node": "m_scalenus_dorsalis",
+      "asset": "./m_scalenus_dorsalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-scalenus-medius",
+      "label": "m scalenus medius",
+      "node": "m_scalenus_medius",
+      "asset": "./m_scalenus_medius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-scalenus-ventralis",
+      "label": "m scalenus ventralis",
+      "node": "m_scalenus_ventralis",
+      "asset": "./m_scalenus_ventralis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-scutuloaruicularis-superficialis",
+      "label": "m scutuloaruicularis superficialis",
+      "node": "m_scutuloaruicularis_superficialis",
+      "asset": "./m_scutuloaruicularis_superficialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-scutuloauricularis-profundus",
+      "label": "m scutuloauricularis profundus",
+      "node": "m_scutuloauricularis_profundus",
+      "asset": "./m_scutuloauricularis_profundus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-sdf",
+      "label": "m SDF",
+      "node": "m_SDF",
+      "asset": "./m_SDF.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-semimembranosus-caud",
+      "label": "m semimembranosus caud",
+      "node": "m_semimembranosus_caud",
+      "asset": "./m_semimembranosus_caud.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-semimembranosus-cran",
+      "label": "m semimembranosus cran",
+      "node": "m_semimembranosus_cran",
+      "asset": "./m_semimembranosus_cran.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-semispinalis-capitis",
+      "label": "m semispinalis capitis",
+      "node": "m_semispinalis_capitis",
+      "asset": "./m_semispinalis_capitis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-semispinalis-cervicis",
+      "label": "m semispinalis cervicis",
+      "node": "m_semispinalis_cervicis",
+      "asset": "./m_semispinalis_cervicis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-semispinalis-thoracis",
+      "label": "m semispinalis thoracis",
+      "node": "m_semispinalis_thoracis",
+      "asset": "./m_semispinalis_thoracis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-semitendinosus",
+      "label": "m semitendinosus",
+      "node": "m_semitendinosus",
+      "asset": "./m_semitendinosus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-serratus-dorsalis-caudalis",
+      "label": "m serratus dorsalis caudalis",
+      "node": "m_serratus_dorsalis_caudalis",
+      "asset": "./m_serratus_dorsalis_caudalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-serratus-dorsalis-cranialis",
+      "label": "m serratus dorsalis cranialis",
+      "node": "m_serratus_dorsalis_cranialis",
+      "asset": "./m_serratus_dorsalis_cranialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-serratus-ventralis-cervicis",
+      "label": "m serratus ventralis cervicis",
+      "node": "m_serratus_ventralis_cervicis",
+      "asset": "./m_serratus_ventralis_cervicis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-serratus-ventralis-thoracis",
+      "label": "m serratus ventralis thoracis",
+      "node": "m_serratus_ventralis_thoracis",
+      "asset": "./m_serratus_ventralis_thoracis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-sphincter-coli-profundus-intermediate",
+      "label": "m sphincter coli profundus intermediate",
+      "node": "m_sphincter_coli_profundus_intermediate",
+      "asset": "./m_sphincter_coli_profundus_intermediate.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-sphincter-coli-profundus-palpebralis",
+      "label": "m sphincter coli profundus palpebralis",
+      "node": "m_sphincter_coli_profundus_palpebralis",
+      "asset": "./m_sphincter_coli_profundus_palpebralis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-spinalis-cervicis",
+      "label": "m spinalis cervicis",
+      "node": "m_spinalis_cervicis",
+      "asset": "./m_spinalis_cervicis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-spinalis-thoracis",
+      "label": "m spinalis thoracis",
+      "node": "m_spinalis_thoracis",
+      "asset": "./m_spinalis_thoracis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-splenius-capitis",
+      "label": "m splenius capitis",
+      "node": "m_splenius_capitis",
+      "asset": "./m_splenius_capitis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-sternocephalicus-pars-mastoideus",
+      "label": "m sternocephalicus pars mastoideus",
+      "node": "m_sternocephalicus_pars_mastoideus",
+      "asset": "./m_sternocephalicus_pars_mastoideus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-sternocephalicus-pars-occipitalis",
+      "label": "m sternocephalicus pars occipitalis",
+      "node": "m_sternocephalicus_pars_occipitalis",
+      "asset": "./m_sternocephalicus_pars_occipitalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-sternohyoideus",
+      "label": "m sternohyoideus",
+      "node": "m_sternohyoideus",
+      "asset": "./m_sternohyoideus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-sternothyroideus",
+      "label": "m sternothyroideus",
+      "node": "m_sternothyroideus",
+      "asset": "./m_sternothyroideus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-subscapularis",
+      "label": "m subscapularis",
+      "node": "m_subscapularis",
+      "asset": "./m_subscapularis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-superficial-sphincter-colli",
+      "label": "m superficial sphincter colli",
+      "node": "m_superficial_sphincter_colli",
+      "asset": "./m_superficial_sphincter_colli.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-supinator",
+      "label": "m supinator",
+      "node": "m_supinator",
+      "asset": "./m_supinator.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-supraspinatus",
+      "label": "m supraspinatus",
+      "node": "m_supraspinatus",
+      "asset": "./m_supraspinatus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-temporalis",
+      "label": "m temporalis",
+      "node": "m_temporalis",
+      "asset": "./m_temporalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-tensor-fascia-antebrachii",
+      "label": "m tensor fascia antebrachii",
+      "node": "m_tensor_fascia_antebrachii",
+      "asset": "./m_tensor_fascia_antebrachii.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-tensor-fasciae-latae",
+      "label": "m tensor fasciae latae",
+      "node": "m_tensor_fasciae_latae",
+      "asset": "./m_tensor_fasciae_latae.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-teres-major",
+      "label": "m teres major",
+      "node": "m_teres_major",
+      "asset": "./m_teres_major.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-teres-minor",
+      "label": "m teres minor",
+      "node": "m_teres_minor",
+      "asset": "./m_teres_minor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-tibialis-cranialis",
+      "label": "m tibialis cranialis",
+      "node": "m_tibialis_cranialis",
+      "asset": "./m_tibialis_cranialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-transversus-abdominis",
+      "label": "m transversus abdominis",
+      "node": "m_transversus_abdominis",
+      "asset": "./m_transversus_abdominis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-trapezius-pars-cervicalis",
+      "label": "m trapezius pars cervicalis",
+      "node": "m_trapezius_pars_cervicalis",
+      "asset": "./m_trapezius_pars_cervicalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-trapezius-thoracis",
+      "label": "m trapezius thoracis",
+      "node": "m_trapezius_thoracis",
+      "asset": "./m_trapezius_thoracis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-triceps-brach-access",
+      "label": "m triceps brach access",
+      "node": "m_triceps_brach_access",
+      "asset": "./m_triceps_brach_access.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-triceps-brach-lat",
+      "label": "m triceps brach lat",
+      "node": "m_triceps_brach_lat",
+      "asset": "./m_triceps_brach_lat.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-triceps-brach-long",
+      "label": "m triceps brach long",
+      "node": "m_triceps_brach_long",
+      "asset": "./m_triceps_brach_long.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-triceps-brach-med",
+      "label": "m triceps brach med",
+      "node": "m_triceps_brach_med",
+      "asset": "./m_triceps_brach_med.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-zygomaticoauricularis",
+      "label": "m zygomaticoauricularis",
+      "node": "m_zygomaticoauricularis",
+      "asset": "./m_zygomaticoauricularis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-zygomaticus",
+      "label": "m zygomaticus",
+      "node": "m_zygomaticus",
+      "asset": "./m_zygomaticus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandibular-gland",
+      "label": "mandibular gland",
+      "node": "mandibular_gland",
+      "asset": "./mandibular_gland.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mm-interossei-hl",
+      "label": "mm interossei HL",
+      "node": "mm_interossei_HL",
+      "asset": "./mm_interossei_HL.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-multifidus-cervicis",
+      "label": "multifidus cervicis",
+      "node": "multifidus_cervicis",
+      "asset": "./multifidus_cervicis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-multifidus-lumborum",
+      "label": "multifidus lumborum",
+      "node": "multifidus_lumborum",
+      "asset": "./multifidus_lumborum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-multifidus-thoracis",
+      "label": "multifidus thoracis",
+      "node": "multifidus_thoracis",
+      "asset": "./multifidus_thoracis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-parotid-gland",
+      "label": "parotid gland",
+      "node": "parotid_gland",
+      "asset": "./parotid_gland.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-retinac-carpal-extensor",
+      "label": "retinac carpal extensor",
+      "node": "retinac_carpal_extensor",
+      "asset": "./retinac_carpal_extensor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-retinac-transv-humeral",
+      "label": "retinac transv humeral",
+      "node": "retinac_transv_humeral",
+      "asset": "./retinac_transv_humeral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tend-ddf",
+      "label": "tend DDF",
+      "node": "tend_DDF",
+      "asset": "./tend_DDF.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tend-interosseus",
+      "label": "tend interosseus",
+      "node": "tend_interosseus",
+      "asset": "./tend_interosseus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tend-patellar",
+      "label": "tend patellar",
+      "node": "tend_patellar",
+      "asset": "./tend_patellar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-thoracolumbar-fascia",
+      "label": "thoracolumbar fascia",
+      "node": "thoracolumbar_fascia",
+      "asset": "./thoracolumbar_fascia.glb",
+      "region": "root"
+    }
+  ]
+}

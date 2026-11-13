@@ -1,0 +1,272 @@
+{
+  "id": "canine-surface-topography",
+  "title": "Canine surface topography",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-k9-surf-angle-jaw",
+      "label": "k9 surf angle jaw",
+      "node": "k9_surf_angle_jaw",
+      "asset": "./k9_surf_angle_jaw.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-antebrachium",
+      "label": "k9 surf antebrachium",
+      "node": "k9_surf_antebrachium",
+      "asset": "./k9_surf_antebrachium.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-belly",
+      "label": "k9 surf belly",
+      "node": "k9_surf_belly",
+      "asset": "./k9_surf_belly.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-brachium",
+      "label": "k9 surf brachium",
+      "node": "k9_surf_brachium",
+      "asset": "./k9_surf_brachium.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-carpals",
+      "label": "k9 surf carpals",
+      "node": "k9_surf_carpals",
+      "asset": "./k9_surf_carpals.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-cheeks",
+      "label": "k9 surf cheeks",
+      "node": "k9_surf_cheeks",
+      "asset": "./k9_surf_cheeks.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-croup",
+      "label": "k9 surf croup",
+      "node": "k9_surf_croup",
+      "asset": "./k9_surf_croup.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-dew-claw",
+      "label": "k9 surf dew claw",
+      "node": "k9_surf_dew_claw",
+      "asset": "./k9_surf_dew_claw.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-digits",
+      "label": "k9 surf digits",
+      "node": "k9_surf_digits",
+      "asset": "./k9_surf_digits.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-ears",
+      "label": "k9 surf ears",
+      "node": "k9_surf_ears",
+      "asset": "./k9_surf_ears.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-elbow-point",
+      "label": "k9 surf elbow point",
+      "node": "k9_surf_elbow_point",
+      "asset": "./k9_surf_elbow_point.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-flank",
+      "label": "k9 surf flank",
+      "node": "k9_surf_flank",
+      "asset": "./k9_surf_flank.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-hock-point",
+      "label": "k9 surf hock point",
+      "node": "k9_surf_hock_point",
+      "asset": "./k9_surf_hock_point.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-iliac-crest",
+      "label": "k9 surf iliac crest",
+      "node": "k9_surf_iliac_crest",
+      "asset": "./k9_surf_iliac_crest.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-jugular-groove",
+      "label": "k9 surf jugular groove",
+      "node": "k9_surf_jugular_groove",
+      "asset": "./k9_surf_jugular_groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-loin",
+      "label": "k9 surf loin",
+      "node": "k9_surf_loin",
+      "asset": "./k9_surf_loin.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-metacarpals",
+      "label": "k9 surf metacarpals",
+      "node": "k9_surf_metacarpals",
+      "asset": "./k9_surf_metacarpals.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-metatarsals",
+      "label": "k9 surf metatarsals",
+      "node": "k9_surf_metatarsals",
+      "asset": "./k9_surf_metatarsals.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-muzzle",
+      "label": "k9 surf muzzle",
+      "node": "k9_surf_muzzle",
+      "asset": "./k9_surf_muzzle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-neck",
+      "label": "k9 surf neck",
+      "node": "k9_surf_neck",
+      "asset": "./k9_surf_neck.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-nose",
+      "label": "k9 surf nose",
+      "node": "k9_surf_nose",
+      "asset": "./k9_surf_nose.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-occipital-point",
+      "label": "k9 surf occipital point",
+      "node": "k9_surf_occipital_point",
+      "asset": "./k9_surf_occipital_point.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-pectorals",
+      "label": "k9 surf pectorals",
+      "node": "k9_surf_pectorals",
+      "asset": "./k9_surf_pectorals.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-pin-bones",
+      "label": "k9 surf pin bones",
+      "node": "k9_surf_pin_bones",
+      "asset": "./k9_surf_pin_bones.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-ribs",
+      "label": "k9 surf ribs",
+      "node": "k9_surf_ribs",
+      "asset": "./k9_surf_ribs.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-scapular-region",
+      "label": "k9 surf scapular region",
+      "node": "k9_surf_scapular_region",
+      "asset": "./k9_surf_scapular_region.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-shoulder-point",
+      "label": "k9 surf shoulder point",
+      "node": "k9_surf_shoulder_point",
+      "asset": "./k9_surf_shoulder_point.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-spot",
+      "label": "k9 surf spot",
+      "node": "k9_surf_spot",
+      "asset": "./k9_surf_spot.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-sternum-brisket",
+      "label": "k9 surf sternum brisket",
+      "node": "k9_surf_sternum_brisket",
+      "asset": "./k9_surf_sternum_brisket.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-stifle-point",
+      "label": "k9 surf stifle point",
+      "node": "k9_surf_stifle_point",
+      "asset": "./k9_surf_stifle_point.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-tail",
+      "label": "k9 surf tail",
+      "node": "k9_surf_tail",
+      "asset": "./k9_surf_tail.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-tarsal-region",
+      "label": "k9 surf tarsal region",
+      "node": "k9_surf_tarsal_region",
+      "asset": "./k9_surf_tarsal_region.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-thighs",
+      "label": "k9 surf thighs",
+      "node": "k9_surf_thighs",
+      "asset": "./k9_surf_thighs.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-tib-fib-region",
+      "label": "k9 surf tib fib region",
+      "node": "k9_surf_tib_fib_region",
+      "asset": "./k9_surf_tib_fib_region.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surf-withers",
+      "label": "k9 surf withers",
+      "node": "k9_surf_withers",
+      "asset": "./k9_surf_withers.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-surface-remainder",
+      "label": "k9 surface remainder",
+      "node": "k9_surface_remainder",
+      "asset": "./k9_surface_remainder.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-zbrush-defualt-group",
+      "label": "ZBrush defualt group",
+      "node": "ZBrush_defualt_group",
+      "asset": "./ZBrush_defualt_group.glb",
+      "region": "root"
+    }
+  ]
+}

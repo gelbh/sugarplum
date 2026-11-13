@@ -1,0 +1,727 @@
+{
+  "id": "canine-skeleton",
+  "title": "Canine skeleton",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-calcaneus",
+      "label": "Calcaneus",
+      "node": "Calcaneus",
+      "asset": "./Calcaneus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-calcaneus-1",
+      "label": "Calcaneus 1",
+      "node": "Calcaneus_1",
+      "asset": "./Calcaneus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-accessory",
+      "label": "Carpal accessory",
+      "node": "Carpal_accessory",
+      "asset": "./Carpal_accessory.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-accessory-1",
+      "label": "Carpal accessory 1",
+      "node": "Carpal_accessory_1",
+      "asset": "./Carpal_accessory_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-first",
+      "label": "Carpal first",
+      "node": "Carpal_first",
+      "asset": "./Carpal_first.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-first-1",
+      "label": "Carpal first 1",
+      "node": "Carpal_first_1",
+      "asset": "./Carpal_first_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-fourth",
+      "label": "Carpal fourth",
+      "node": "Carpal_fourth",
+      "asset": "./Carpal_fourth.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-fourth-1",
+      "label": "Carpal fourth 1",
+      "node": "Carpal_fourth_1",
+      "asset": "./Carpal_fourth_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-intermedioradial",
+      "label": "Carpal intermedioradial",
+      "node": "Carpal_intermedioradial",
+      "asset": "./Carpal_intermedioradial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-intermedioradial-1",
+      "label": "Carpal intermedioradial 1",
+      "node": "Carpal_intermedioradial_1",
+      "asset": "./Carpal_intermedioradial_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-second",
+      "label": "Carpal second",
+      "node": "Carpal_second",
+      "asset": "./Carpal_second.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-second-1",
+      "label": "Carpal second 1",
+      "node": "Carpal_second_1",
+      "asset": "./Carpal_second_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-third",
+      "label": "Carpal third",
+      "node": "Carpal_third",
+      "asset": "./Carpal_third.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpal-third-1",
+      "label": "Carpal third 1",
+      "node": "Carpal_third_1",
+      "asset": "./Carpal_third_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-costal-cartilages",
+      "label": "Costal cartilages",
+      "node": "Costal_cartilages",
+      "asset": "./Costal_cartilages.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-costal-cartilages-1",
+      "label": "Costal cartilages 1",
+      "node": "Costal_cartilages_1",
+      "asset": "./Costal_cartilages_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium",
+      "label": "Cranium",
+      "node": "Cranium",
+      "asset": "./Cranium.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-1",
+      "label": "Cranium 1",
+      "node": "Cranium_1",
+      "asset": "./Cranium_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur",
+      "label": "Femur",
+      "node": "Femur",
+      "asset": "./Femur.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-1",
+      "label": "Femur 1",
+      "node": "Femur_1",
+      "asset": "./Femur_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fibula",
+      "label": "Fibula",
+      "node": "Fibula",
+      "asset": "./Fibula.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fibula-1",
+      "label": "Fibula 1",
+      "node": "Fibula_1",
+      "asset": "./Fibula_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-nails",
+      "label": "FL nails",
+      "node": "FL_nails",
+      "asset": "./FL_nails.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-nails-1",
+      "label": "FL nails 1",
+      "node": "FL_nails_1",
+      "asset": "./FL_nails_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-p1",
+      "label": "FL P1",
+      "node": "FL_P1",
+      "asset": "./FL_P1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-p1-1",
+      "label": "FL P1 1",
+      "node": "FL_P1_1",
+      "asset": "./FL_P1_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-p2",
+      "label": "FL P2",
+      "node": "FL_P2",
+      "asset": "./FL_P2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-p2-1",
+      "label": "FL P2 1",
+      "node": "FL_P2_1",
+      "asset": "./FL_P2_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-p3",
+      "label": "FL P3",
+      "node": "FL_P3",
+      "asset": "./FL_P3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-p3-1",
+      "label": "FL P3 1",
+      "node": "FL_P3_1",
+      "asset": "./FL_P3_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-sesamoids-dorsal",
+      "label": "FL sesamoids dorsal",
+      "node": "FL_sesamoids_dorsal",
+      "asset": "./FL_sesamoids_dorsal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-sesamoids-dorsal-1",
+      "label": "FL sesamoids dorsal 1",
+      "node": "FL_sesamoids_dorsal_1",
+      "asset": "./FL_sesamoids_dorsal_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-sesamoids-proximal",
+      "label": "FL sesamoids proximal",
+      "node": "FL_sesamoids_proximal",
+      "asset": "./FL_sesamoids_proximal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-sesamoids-proximal-1",
+      "label": "FL sesamoids proximal 1",
+      "node": "FL_sesamoids_proximal_1",
+      "asset": "./FL_sesamoids_proximal_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-nails",
+      "label": "HL nails",
+      "node": "HL_nails",
+      "asset": "./HL_nails.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-nails-1",
+      "label": "HL nails 1",
+      "node": "HL_nails_1",
+      "asset": "./HL_nails_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-p1",
+      "label": "HL P1",
+      "node": "HL_P1",
+      "asset": "./HL_P1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-p1-1",
+      "label": "HL P1 1",
+      "node": "HL_P1_1",
+      "asset": "./HL_P1_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-p2",
+      "label": "HL P2",
+      "node": "HL_P2",
+      "asset": "./HL_P2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-p2-1",
+      "label": "HL P2 1",
+      "node": "HL_P2_1",
+      "asset": "./HL_P2_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-p3",
+      "label": "HL P3",
+      "node": "HL_P3",
+      "asset": "./HL_P3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-p3-1",
+      "label": "HL P3 1",
+      "node": "HL_P3_1",
+      "asset": "./HL_P3_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-sesamoids-dorsal",
+      "label": "HL sesamoids dorsal",
+      "node": "HL_sesamoids_dorsal",
+      "asset": "./HL_sesamoids_dorsal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-sesamoids-dorsal-1",
+      "label": "HL sesamoids dorsal 1",
+      "node": "HL_sesamoids_dorsal_1",
+      "asset": "./HL_sesamoids_dorsal_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-sesamoids-proximal",
+      "label": "HL sesamoids proximal",
+      "node": "HL_sesamoids_proximal",
+      "asset": "./HL_sesamoids_proximal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-sesamoids-proximal-1",
+      "label": "HL sesamoids proximal 1",
+      "node": "HL_sesamoids_proximal_1",
+      "asset": "./HL_sesamoids_proximal_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus",
+      "label": "Humerus",
+      "node": "Humerus",
+      "asset": "./Humerus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-1",
+      "label": "Humerus 1",
+      "node": "Humerus_1",
+      "asset": "./Humerus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible",
+      "label": "Mandible",
+      "node": "Mandible",
+      "asset": "./Mandible.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-1",
+      "label": "Mandible 1",
+      "node": "Mandible_1",
+      "asset": "./Mandible_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpals",
+      "label": "Metacarpals",
+      "node": "Metacarpals",
+      "asset": "./Metacarpals.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpals-1",
+      "label": "Metacarpals 1",
+      "node": "Metacarpals_1",
+      "asset": "./Metacarpals_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metatarsal-first",
+      "label": "Metatarsal first",
+      "node": "Metatarsal_first",
+      "asset": "./Metatarsal_first.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metatarsal-first-1",
+      "label": "Metatarsal first 1",
+      "node": "Metatarsal_first_1",
+      "asset": "./Metatarsal_first_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metatarsals",
+      "label": "Metatarsals",
+      "node": "Metatarsals",
+      "asset": "./Metatarsals.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metatarsals-1",
+      "label": "Metatarsals 1",
+      "node": "Metatarsals_1",
+      "asset": "./Metatarsals_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patella",
+      "label": "Patella",
+      "node": "Patella",
+      "asset": "./Patella.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patella-1",
+      "label": "Patella 1",
+      "node": "Patella_1",
+      "asset": "./Patella_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis",
+      "label": "Pelvis",
+      "node": "Pelvis",
+      "asset": "./Pelvis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-1",
+      "label": "Pelvis 1",
+      "node": "Pelvis_1",
+      "asset": "./Pelvis_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius",
+      "label": "Radius",
+      "node": "Radius",
+      "asset": "./Radius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius-1",
+      "label": "Radius 1",
+      "node": "Radius_1",
+      "asset": "./Radius_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ribs",
+      "label": "Ribs",
+      "node": "Ribs",
+      "asset": "./Ribs.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ribs-1",
+      "label": "Ribs 1",
+      "node": "Ribs_1",
+      "asset": "./Ribs_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula",
+      "label": "Scapula",
+      "node": "Scapula",
+      "asset": "./Scapula.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-1",
+      "label": "Scapula 1",
+      "node": "Scapula_1",
+      "asset": "./Scapula_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-cartilage",
+      "label": "Scapula cartilage",
+      "node": "Scapula_cartilage",
+      "asset": "./Scapula_cartilage.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-cartilage-1",
+      "label": "Scapula cartilage 1",
+      "node": "Scapula_cartilage_1",
+      "asset": "./Scapula_cartilage_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sesamoid-bone-carpals",
+      "label": "Sesamoid bone carpals",
+      "node": "Sesamoid_bone_carpals",
+      "asset": "./Sesamoid_bone_carpals.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sesamoid-bone-carpals-1",
+      "label": "Sesamoid bone carpals 1",
+      "node": "Sesamoid_bone_carpals_1",
+      "asset": "./Sesamoid_bone_carpals_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sesamoids-fabellae",
+      "label": "Sesamoids fabellae",
+      "node": "Sesamoids_fabellae",
+      "asset": "./Sesamoids_fabellae.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sesamoids-fabellae-1",
+      "label": "Sesamoids fabellae 1",
+      "node": "Sesamoids_fabellae_1",
+      "asset": "./Sesamoids_fabellae_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-spine-cervical",
+      "label": "Spine cervical",
+      "node": "Spine_cervical",
+      "asset": "./Spine_cervical.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-spine-cervical-1",
+      "label": "Spine cervical 1",
+      "node": "Spine_cervical_1",
+      "asset": "./Spine_cervical_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-spine-coccygeals",
+      "label": "Spine coccygeals",
+      "node": "Spine_coccygeals",
+      "asset": "./Spine_coccygeals.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-spine-coccygeals-1",
+      "label": "Spine coccygeals 1",
+      "node": "Spine_coccygeals_1",
+      "asset": "./Spine_coccygeals_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-spine-lumbar",
+      "label": "Spine lumbar",
+      "node": "Spine_lumbar",
+      "asset": "./Spine_lumbar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-spine-lumbar-1",
+      "label": "Spine lumbar 1",
+      "node": "Spine_lumbar_1",
+      "asset": "./Spine_lumbar_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-spine-sacrum",
+      "label": "Spine sacrum",
+      "node": "Spine_sacrum",
+      "asset": "./Spine_sacrum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-spine-sacrum-1",
+      "label": "Spine sacrum 1",
+      "node": "Spine_sacrum_1",
+      "asset": "./Spine_sacrum_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-spine-thoracic",
+      "label": "Spine thoracic",
+      "node": "Spine_thoracic",
+      "asset": "./Spine_thoracic.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-spine-thoracic-1",
+      "label": "Spine thoracic 1",
+      "node": "Spine_thoracic_1",
+      "asset": "./Spine_thoracic_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-central",
+      "label": "Tarsal central",
+      "node": "Tarsal_central",
+      "asset": "./Tarsal_central.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-central-1",
+      "label": "Tarsal central 1",
+      "node": "Tarsal_central_1",
+      "asset": "./Tarsal_central_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-first",
+      "label": "Tarsal first",
+      "node": "Tarsal_first",
+      "asset": "./Tarsal_first.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-first-1",
+      "label": "Tarsal first 1",
+      "node": "Tarsal_first_1",
+      "asset": "./Tarsal_first_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-fourth",
+      "label": "Tarsal fourth",
+      "node": "Tarsal_fourth",
+      "asset": "./Tarsal_fourth.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-fourth-1",
+      "label": "Tarsal fourth 1",
+      "node": "Tarsal_fourth_1",
+      "asset": "./Tarsal_fourth_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-second",
+      "label": "Tarsal second",
+      "node": "Tarsal_second",
+      "asset": "./Tarsal_second.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-second-1",
+      "label": "Tarsal second 1",
+      "node": "Tarsal_second_1",
+      "asset": "./Tarsal_second_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-talus",
+      "label": "Tarsal talus",
+      "node": "Tarsal_talus",
+      "asset": "./Tarsal_talus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-talus-1",
+      "label": "Tarsal talus 1",
+      "node": "Tarsal_talus_1",
+      "asset": "./Tarsal_talus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-third",
+      "label": "Tarsal third",
+      "node": "Tarsal_third",
+      "asset": "./Tarsal_third.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tarsal-third-1",
+      "label": "Tarsal third 1",
+      "node": "Tarsal_third_1",
+      "asset": "./Tarsal_third_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia",
+      "label": "Tibia",
+      "node": "Tibia",
+      "asset": "./Tibia.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-1",
+      "label": "Tibia 1",
+      "node": "Tibia_1",
+      "asset": "./Tibia_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna",
+      "label": "Ulna",
+      "node": "Ulna",
+      "asset": "./Ulna.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna-1",
+      "label": "Ulna 1",
+      "node": "Ulna_1",
+      "asset": "./Ulna_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulnar-carpal",
+      "label": "Ulnar carpal",
+      "node": "Ulnar_carpal",
+      "asset": "./Ulnar_carpal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulnar-carpal-1",
+      "label": "Ulnar carpal 1",
+      "node": "Ulnar_carpal_1",
+      "asset": "./Ulnar_carpal_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-unknown-sesamoid",
+      "label": "Unknown sesamoid",
+      "node": "Unknown_sesamoid",
+      "asset": "./Unknown_sesamoid.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-unknown-sesamoid-1",
+      "label": "Unknown sesamoid 1",
+      "node": "Unknown_sesamoid_1",
+      "asset": "./Unknown_sesamoid_1.glb",
+      "region": "root"
+    }
+  ]
+}
