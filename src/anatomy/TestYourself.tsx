@@ -7,7 +7,7 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import { gradeAnswer } from "./gradeAnswer";
-import { pickMcqDistractors } from "./mcqDistractors";
+import { buildMcqOptions, pickMcqDistractors } from "./mcqDistractors";
 import type { AnatomyStructure } from "./types";
 
 export type AnatomyStudyMode = "explore" | "type" | "mcq";
@@ -55,22 +55,18 @@ export default function TestYourself({
       setMcqChoices([]);
       return;
     }
-    const distractors = pickMcqDistractors(
-      regionStructures,
-      structure.id,
-      MCQ_DISTRACTOR_COUNT,
+    setMcqChoices(
+      buildMcqOptions(regionStructures, structure.id, MCQ_DISTRACTOR_COUNT),
     );
-    const options = [structure, ...distractors];
-    for (let i = options.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      const tmp = options[i]!;
-      options[i] = options[j]!;
-      options[j] = tmp;
-    }
-    setMcqChoices(options);
   }, [structure?.id, mode, regionStructures, revealedIds]);
 
   const revealed = structure ? revealedIds.has(structure.id) : false;
+  const mcqInsufficient = useMemo(() => {
+    if (mode !== "mcq" || !structure || revealed) return false;
+    return (
+      pickMcqDistractors(regionStructures, structure.id, 1).length === 0
+    );
+  }, [mode, structure, revealed, regionStructures]);
 
   const submitType = () => {
     if (!structure || revealed) return;
@@ -93,8 +89,11 @@ export default function TestYourself({
     if (!structure) return "Select a structure on the model or in the list.";
     if (revealed) return `Correct: ${structure.label}`;
     if (mode === "type") return "Type the name, then press Enter.";
+    if (mcqInsufficient) {
+      return "Not enough structures in this region for multiple choice. Enable more regions or use Type.";
+    }
     return "Choose the correct name.";
-  }, [mode, structure, revealed]);
+  }, [mode, structure, revealed, mcqInsufficient]);
 
   return (
     <Box
@@ -156,7 +155,7 @@ export default function TestYourself({
               }}
               error={typeFeedback === "wrong"}
               helperText={
-                typeFeedback === "wrong" ? "Not quite — try again." : " "
+                typeFeedback === "wrong" ? "Not quite. Try again." : " "
               }
               autoComplete="off"
               fullWidth

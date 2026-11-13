@@ -38,3 +38,33 @@ export function pickMcqDistractors(
   }
   return copy.slice(0, n);
 }
+
+/**
+ * Target + same-region distractors, shuffled.
+ * Empty when the region has no distractors (avoids a one-button answer leak).
+ */
+export function buildMcqOptions(
+  structures: AnatomyStructure[],
+  targetId: string,
+  distractorCount: number,
+  rng: () => number = Math.random,
+): AnatomyStructure[] {
+  const target = structures.find((s) => s.id === targetId);
+  if (!target) return [];
+  const distractors = pickMcqDistractors(
+    structures,
+    targetId,
+    distractorCount,
+    rng,
+  );
+  if (distractors.length === 0) return [];
+
+  const options = [target, ...distractors];
+  for (let i = options.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    const tmp = options[i]!;
+    options[i] = options[j]!;
+    options[j] = tmp;
+  }
+  return options;
+}

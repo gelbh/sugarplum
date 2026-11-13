@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { pickMcqDistractors } from "../../src/anatomy/mcqDistractors";
+import {
+  buildMcqOptions,
+  pickMcqDistractors,
+} from "../../src/anatomy/mcqDistractors";
 import type { AnatomyStructure } from "../../src/anatomy/types";
 
 const structures: AnatomyStructure[] = [
@@ -45,5 +48,18 @@ describe("pickMcqDistractors", () => {
     ];
     const picks = pickMcqDistractors(loose, "a", 2, () => 0);
     expect(picks.map((s) => s.id)).toEqual(["b"]);
+  });
+});
+
+describe("buildMcqOptions", () => {
+  it("returns empty when the region has no distractors", () => {
+    expect(buildMcqOptions(structures, "skull", 3, () => 0)).toEqual([]);
+  });
+
+  it("includes the target plus distractors when the pool is large enough", () => {
+    const options = buildMcqOptions(structures, "femur", 2, () => 0);
+    expect(options).toHaveLength(3);
+    expect(options.some((s) => s.id === "femur")).toBe(true);
+    expect(options.every((s) => s.region === "Right_Back")).toBe(true);
   });
 });
