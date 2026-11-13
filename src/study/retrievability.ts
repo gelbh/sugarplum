@@ -1,4 +1,5 @@
 import { fsrs, State } from "ts-fsrs";
+import { clampLearningStep } from "./fsrsFactory";
 
 export type ScheduleRowLike = {
   due: string;
@@ -81,7 +82,7 @@ export function cardFromScheduleRow(row: ScheduleRowLike): FsrsSchedulerCard {
     // Missing fast → 0 until cutover rebuild (do not invent Sf = S).
     stabilityFast: hasFast ? row.stability_fast! : 0,
     scheduledDays: row.scheduled_days,
-    learningStep: row.learning_steps,
+    learningStep: clampLearningStep(row.learning_steps),
     reps: row.reps,
     lapses: row.lapses,
     state: row.state,
