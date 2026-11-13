@@ -7,8 +7,11 @@ import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { MouseEvent } from "react";
-import AnatomyCanvas from "../anatomy/AnatomyCanvas";
-import { parseAnatomySceneManifest } from "../anatomy/parseScene";
+import AnatomyCanvas, { type AnatomyLoadSpec } from "../anatomy/AnatomyCanvas";
+import {
+  parseAnatomySceneManifest,
+  safeAnatomyRelativeAsset,
+} from "../anatomy/parseScene";
 import { anatomyHubHref } from "../anatomy/paths";
 import StructurePanel from "../anatomy/StructurePanel";
 import {
@@ -19,6 +22,35 @@ import type { AnatomySceneManifest } from "../anatomy/types";
 import { isPlainClick, navigate } from "../nav/navigate";
 
 type Props = { sceneId: string };
+
+function buildLoads(
+  sceneId: string,
+  manifest: AnatomySceneManifest,
+): AnatomyLoadSpec[] | null {
+  const base = `/anatomy/${encodeURIComponent(sceneId)}/`;
+  if (manifest.asset) {
+    const rel = safeAnatomyRelativeAsset(manifest.asset);
+    if (!rel) return null;
+    const url = `${base}${rel}`;
+    return manifest.structures.map((s) => ({
+      structureId: s.id,
+      url,
+      node: s.node,
+    }));
+  }
+  const loads: AnatomyLoadSpec[] = [];
+  for (const s of manifest.structures) {
+    if (!s.asset) return null;
+    const rel = safeAnatomyRelativeAsset(s.asset);
+    if (!rel) return null;
+    loads.push({
+      structureId: s.id,
+      url: `${base}${rel}`,
+      node: s.node,
+    });
+  }
+  return loads;
+}
 
 export default function AnatomyViewerPage({ sceneId }: Props) {
   const [manifest, setManifest] = useState<AnatomySceneManifest | null>(null);
@@ -61,18 +93,9 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
     };
   }, [sceneId]);
 
-  const assetUrl = useMemo(() => {
+  const loads = useMemo(() => {
     if (!manifest) return null;
-    const asset = manifest.asset.replace(/^\.\//, "");
-    if (
-      !asset ||
-      asset.includes("..") ||
-      asset.startsWith("/") ||
-      asset.includes("\\")
-    ) {
-      return null;
-    }
-    return `/anatomy/${encodeURIComponent(sceneId)}/${asset}`;
+    return buildLoads(sceneId, manifest);
   }, [manifest, sceneId]);
 
   const selectedLabel =
@@ -122,8 +145,11 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
         </Box>
 
         {error ? <Alert severity="error">{error}</Alert> : null}
+        {manifest && !loads ? (
+          <Alert severity="error">Invalid asset paths in scene manifest.</Alert>
+        ) : null}
 
-        {manifest && assetUrl ? (
+        {manifest && loads ? (
           <Stack
             direction={{ xs: "column", md: "row" }}
             spacing={2}
@@ -137,9 +163,8 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
             />
             <Box sx={{ flex: 1, minHeight: 360 }}>
               <AnatomyCanvas
-                key={`${assetUrl}:${viewEpoch}`}
-                assetUrl={assetUrl}
-                structures={manifest.structures}
+                key={`${loads.map((l) => l.url).join("|")}:${viewEpoch}`}
+                loads={loads}
                 ui={ui}
                 onSelect={(id) => dispatch({ type: "select", id })}
               />

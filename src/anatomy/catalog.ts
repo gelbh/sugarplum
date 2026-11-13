@@ -6,8 +6,8 @@ export type AnatomyCatalogEntry = {
 
 export const ANATOMY_CATALOG: AnatomyCatalogEntry[] = [
   {
-    id: "spike-limb",
-    title: "Spike limb (stand-in)",
-    standIn: true,
+    id: "canine-limb",
+    title: "Canine pelvic limb (right)",
+    standIn: false,
   },
 ];
