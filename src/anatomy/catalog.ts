@@ -12,7 +12,6 @@ export const ANATOMY_CATALOG: AnatomyCatalogEntry[] = [
   { id: "canine", title: "Canine", standIn: false, blurb: OSTEOLOGY_BLURB },
   { id: "equine", title: "Equine", standIn: false, blurb: OSTEOLOGY_BLURB },
   { id: "bovine", title: "Bovine", standIn: false, blurb: OSTEOLOGY_BLURB },
-  { id: "daniel", title: "Daniel", standIn: false, blurb: OSTEOLOGY_BLURB },
   {
     id: "canine-heart-surface-topology",
     title: "Canine heart surface",

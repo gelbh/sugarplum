@@ -9,10 +9,6 @@ import Typography from "@mui/material/Typography";
 import type { MouseEvent, ReactNode } from "react";
 import { ANATOMY_CATALOG } from "../anatomy/catalog";
 import { anatomySceneHref } from "../anatomy/paths";
-import {
-  ANATOMY_TEACHING_ENTRIES,
-  teachingEntryHref,
-} from "../anatomy/teachingEntries";
 import { atlasHubHref } from "../atlas/paths";
 import HubNavCard from "../components/HubNavCard";
 import { isPlainClick, navigate } from "../nav/navigate";
@@ -75,42 +71,6 @@ export default function AnatomyHub() {
             />
           ))}
         </Stack>
-        <Box>
-          <Typography
-            variant="h6"
-            component="h2"
-            sx={{ fontWeight: 600, mb: 0.5 }}
-          >
-            Teaching entries
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-            Jump into useful regions on packs you already have. No new meshes.
-          </Typography>
-          <Stack spacing={1.5}>
-            {ANATOMY_TEACHING_ENTRIES.map((entry) => {
-              const href = teachingEntryHref(entry);
-              return (
-                <HubNavCard
-                  key={entry.id}
-                  title={entry.title}
-                  blurb={entry.blurb}
-                  icon={
-                    SPECIES_ICON[entry.sceneId] ?? (
-                      <ViewInArOutlinedIcon aria-hidden />
-                    )
-                  }
-                  href={href}
-                  onClick={(ev: MouseEvent) => {
-                    if (!isPlainClick(ev)) return;
-                    ev.preventDefault();
-                    navigate(href);
-                  }}
-                  layout="list"
-                />
-              );
-            })}
-          </Stack>
-        </Box>
       </Stack>
     </Container>
   );
