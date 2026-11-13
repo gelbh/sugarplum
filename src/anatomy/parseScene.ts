@@ -111,3 +111,17 @@ export function defaultActiveRegionIds(
   if (marked.length > 0) return marked;
   return [regions[0].id];
 }
+
+/**
+ * Prefer `?region=` ids that exist on the manifest; otherwise default actives.
+ * Unknown query ids are dropped (no inventing regions).
+ */
+export function activeRegionIdsForOpen(
+  manifest: AnatomySceneManifest,
+  requested: string[],
+): string[] {
+  const known = new Set((manifest.regions ?? []).map((r) => r.id));
+  const matched = requested.filter((id) => known.has(id));
+  if (matched.length > 0) return matched;
+  return defaultActiveRegionIds(manifest);
+}
