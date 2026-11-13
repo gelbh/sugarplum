@@ -1,0 +1,20 @@
+{
+  "id": "terminology-forelimb-movements",
+  "title": "Terminology forelimb movements",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-humerus",
+      "label": "Humerus",
+      "node": "Humerus",
+      "asset": "./Humerus.glb",
+      "region": "root"
+    }
+  ]
+}

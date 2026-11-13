@@ -589,4 +589,28 @@ export const ANATOMY_CATALOG: AnatomyCatalogEntry[] = [
     standIn: false,
     blurb: "IVALA teaching pack · ruminant stomachs scan",
   },
+  {
+    id: "terminology-language-of-anatomy",
+    title: "Terminology language of anatomy",
+    standIn: false,
+    blurb: "IVALA teaching pack · terminology language of anatomy",
+  },
+  {
+    id: "terminology-forelimb-movements",
+    title: "Terminology forelimb movements",
+    standIn: false,
+    blurb: "IVALA teaching pack · terminology forelimb movements",
+  },
+  {
+    id: "terminology-hindlimb-movements",
+    title: "Terminology hindlimb movements",
+    standIn: false,
+    blurb: "IVALA teaching pack · terminology hindlimb movements",
+  },
+  {
+    id: "echo-simulator-canine-heart",
+    title: "Echo simulator canine heart",
+    standIn: false,
+    blurb: "IVALA teaching pack · echo simulator canine heart",
+  },
 ];

@@ -1,0 +1,76 @@
+{
+  "id": "echo-simulator-canine-heart",
+  "title": "Echo simulator canine heart",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-23-2-24-rib-cage-skin-resized-lp",
+      "label": "23 2 24 rib cage skin resized LP",
+      "node": "23_2_24_rib_cage_skin_resized_LP",
+      "asset": "./23_2_24_rib_cage_skin_resized_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-23-2-24-rib-cage-skin-resized-lp-1",
+      "label": "23 2 24 rib cage skin resized LP 1",
+      "node": "23_2_24_rib_cage_skin_resized_LP_1",
+      "asset": "./23_2_24_rib_cage_skin_resized_LP_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-23-2-24-rib-cage-skin-resized-lp-2",
+      "label": "23 2 24 rib cage skin resized LP 2",
+      "node": "23_2_24_rib_cage_skin_resized_LP_2",
+      "asset": "./23_2_24_rib_cage_skin_resized_LP_2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-heart-lp",
+      "label": "heart LP",
+      "node": "heart_LP",
+      "asset": "./heart_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-plane",
+      "label": "Plane",
+      "node": "Plane",
+      "asset": "./Plane.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-skeleton-15-lp",
+      "label": "Skeleton 15 LP",
+      "node": "Skeleton_15_LP",
+      "asset": "./Skeleton_15_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-skeleton-17-lp",
+      "label": "Skeleton 17 LP",
+      "node": "Skeleton_17_LP",
+      "asset": "./Skeleton_17_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-skeleton-18-lp",
+      "label": "Skeleton 18 LP",
+      "node": "Skeleton_18_LP",
+      "asset": "./Skeleton_18_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ultrasound-beam",
+      "label": "Ultrasound beam",
+      "node": "Ultrasound_beam",
+      "asset": "./Ultrasound_beam.glb",
+      "region": "root"
+    }
+  ]
+}
