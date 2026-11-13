@@ -246,6 +246,16 @@ export default function AnatomyCanvas({ loads, ui, onSelect }: Props) {
       ro.disconnect();
       canvas.removeEventListener("pointerdown", onPointerDown);
       controls.dispose();
+      rootGroup.traverse((obj) => {
+        const mesh = obj as Object3D & {
+          geometry?: { dispose: () => void };
+          material?: { dispose: () => void } | Array<{ dispose: () => void }>;
+        };
+        mesh.geometry?.dispose();
+        const mat = mesh.material;
+        if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
+        else mat?.dispose();
+      });
       renderer.dispose();
       if (canvas.parentElement === host) {
         host.removeChild(canvas);

@@ -170,7 +170,7 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
               />
             </Box>
           </Stack>
-        ) : !error ? (
+        ) : !error && !manifest ? (
           <Typography color="text.secondary">Loading scene…</Typography>
         ) : null}
       </Stack>
