@@ -191,26 +191,39 @@ export default function AnatomyCanvas({ loads, ui, onSelect }: Props) {
 
     const loader = new GLTFLoader();
     const specs = loadsRef.current;
+    const byUrl = new Map<string, AnatomyLoadSpec[]>();
+    for (const spec of specs) {
+      const list = byUrl.get(spec.url) ?? [];
+      list.push(spec);
+      byUrl.set(spec.url, list);
+    }
 
     void (async () => {
       const results = await Promise.allSettled(
-        specs.map(async (spec) => {
-          const model = await loadGltf(loader, spec.url);
+        [...byUrl.entries()].map(async ([url, urlSpecs]) => {
+          const model = await loadGltf(loader, url);
           if (disposed) return;
-          let root: Object3D = model;
-          let found: Object3D | null = null;
-          model.traverse((obj) => {
-            if (!found && obj.name === spec.node) found = obj;
-          });
-          if (found) root = found;
-          else {
-            model.name = spec.node || spec.structureId;
-            root = model;
-          }
           rootGroup.add(model);
-          nodeMapRef.current.set(spec.structureId, root);
-          idByNodeRef.current.set(root.uuid, spec.structureId);
-          if (root.name) idByNodeRef.current.set(root.name, spec.structureId);
+          for (const spec of urlSpecs) {
+            let root: Object3D = model;
+            let found: Object3D | null = null;
+            model.traverse((obj) => {
+              if (!found && obj.name === spec.node) found = obj;
+            });
+            if (found) root = found;
+            else if (urlSpecs.length === 1) {
+              model.name = spec.node || spec.structureId;
+              root = model;
+            } else {
+              throw new Error(`Missing node ${spec.node} in ${url}`);
+            }
+            nodeMapRef.current.set(spec.structureId, root);
+            idByNodeRef.current.set(root.uuid, spec.structureId);
+            if (root.name) {
+              idByNodeRef.current.set(root.name, spec.structureId);
+            }
+          }
+          applyVisibility();
         }),
       );
       if (disposed) return;
