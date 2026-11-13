@@ -23,7 +23,6 @@ import PrivacyPage from "./routes/PrivacyPage";
 import TermsPage from "./routes/TermsPage";
 import DataDeletionPage from "./routes/DataDeletionPage";
 import SettingsPage from "./routes/SettingsPage";
-import InsightsPage from "./routes/InsightsPage";
 import StudyPage from "./routes/StudyPage";
 import TodayPage from "./routes/TodayPage";
 import AdminPage from "./routes/AdminPage";
@@ -47,6 +46,8 @@ import SessionBootstrap from "./session/SessionBootstrap";
 // Keeps the dataset and its schemas out of the main chunk.
 const AtlasPage = lazy(() => import("./routes/AtlasPage"));
 const AnatomyViewerPage = lazy(() => import("./routes/AnatomyViewerPage"));
+// Recharts lives under Insights; keep it off other routes.
+const InsightsPage = lazy(() => import("./routes/InsightsPage"));
 
 const SUBJECT_PATH = /^\/library\/subjects\/([^/]+)\/?$/;
 const DECK_PATH = /^\/library\/decks\/([^/]+)\/?$/;
@@ -138,7 +139,17 @@ function matchPage(path: string, search: string): ReactNode {
     return shell(<StudyPage key={search || "global"} />);
   }
   if (path === "/today") return shell(<TodayPage />);
-  if (path === "/insights") return shell(<InsightsPage />);
+  if (path === "/insights") {
+    return shell(
+      <Suspense
+        fallback={
+          <Typography color="text.secondary">Loading insights…</Typography>
+        }
+      >
+        <InsightsPage />
+      </Suspense>,
+    );
+  }
 
   // Local preview for grade button chrome (not shipped in production builds).
   if (import.meta.env.MODE !== "production" && path === "/dev/grades") {
