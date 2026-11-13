@@ -1,9 +1,10 @@
 import { Rating, type Grade } from "ts-fsrs";
-import { schedulerForPrefs, type FsrsPrefs } from "./fsrsFactory";
 import {
-  emptyFsrsCard,
-  type FsrsSchedulerCard,
-} from "./retrievability";
+  clampLearningStep,
+  schedulerForPrefs,
+  type FsrsPrefs,
+} from "./fsrsFactory";
+import { emptyFsrsCard, type FsrsSchedulerCard } from "./retrievability";
 
 export type ReviewLogReplayRow = {
   reviewed_at: string;
@@ -56,7 +57,7 @@ function normalizeSchedulerCard(card: {
     reps: card.reps,
     lapses: card.lapses,
     scheduledDays: card.scheduledDays,
-    learningStep: card.learningStep ?? 0,
+    learningStep: clampLearningStep(card.learningStep ?? 0),
     ...(card.stabilityFast != null
       ? { stabilityFast: card.stabilityFast }
       : {}),
