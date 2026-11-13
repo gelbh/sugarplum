@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -10,6 +16,7 @@ import {
   Color,
   DirectionalLight,
   Group,
+  Mesh,
   PerspectiveCamera,
   Raycaster,
   Scene,
@@ -30,10 +37,22 @@ export type AnatomyLoadSpec = {
   node: string;
 };
 
+export type AnatomyCanvasHandle = {
+  resetView: () => void;
+  zoomBy: (factor: number) => void;
+  setAutoRotate: (on: boolean) => void;
+  setWireframe: (on: boolean) => void;
+};
+
+/** CSS hex (`#rrggbb`) or `null` for transparent (page shows through). */
+export type AnatomyCanvasBackground = string | null;
+
 type Props = {
   loads: AnatomyLoadSpec[];
   ui: StructureUiState;
   onSelect: (id: string) => void;
+  /** Default `null`: transparent clear so the page background shows. */
+  background?: AnatomyCanvasBackground;
 };
 
 const LOAD_CONCURRENCY = 6;
@@ -64,7 +83,12 @@ function disposeObjectTree(root: Object3D) {
     for (const mat of mats) {
       for (const value of Object.values(mat)) {
         const tex = value as Texture | undefined;
-        if (tex && typeof tex === "object" && "isTexture" in tex && tex.isTexture) {
+        if (
+          tex &&
+          typeof tex === "object" &&
+          "isTexture" in tex &&
+          tex.isTexture
+        ) {
           tex.dispose();
         }
       }
@@ -98,307 +122,402 @@ async function mapPoolSettled<T, R>(
   return results;
 }
 
-export default function AnatomyCanvas({ loads, ui, onSelect }: Props) {
-  const hostRef = useRef<HTMLDivElement | null>(null);
-  const uiRef = useRef(ui);
-  const onSelectRef = useRef(onSelect);
-  const loadsRef = useRef(loads);
-  const nodeMapRef = useRef<Map<string, Object3D>>(new Map());
-  const idByNodeRef = useRef<Map<string, string>>(new Map());
-  const applyVisibilityRef = useRef<() => void>(() => {});
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [retryToken, setRetryToken] = useState(0);
-  const [progress, setProgress] = useState<{ loaded: number; total: number }>({
-    loaded: 0,
-    total: 0,
+function setTreeWireframe(root: Object3D, wireframe: boolean) {
+  root.traverse((obj) => {
+    if (!(obj instanceof Mesh)) return;
+    const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+    for (const mat of mats) {
+      if (mat && "wireframe" in mat) {
+        (mat as Material & { wireframe: boolean }).wireframe = wireframe;
+        mat.needsUpdate = true;
+      }
+    }
   });
+}
 
-  useEffect(() => {
-    uiRef.current = ui;
-  }, [ui]);
-  useEffect(() => {
-    onSelectRef.current = onSelect;
-  }, [onSelect]);
-  useEffect(() => {
-    loadsRef.current = loads;
-  }, [loads]);
+function applySceneBackground(
+  scene: Scene,
+  renderer: WebGLRenderer,
+  background: AnatomyCanvasBackground,
+) {
+  if (background == null) {
+    scene.background = null;
+    renderer.setClearColor(0x000000, 0);
+    return;
+  }
+  const color = new Color(background);
+  scene.background = color;
+  renderer.setClearColor(color, 1);
+}
 
-  const loadsKey = loads.map((l) => `${l.structureId}:${l.url}`).join("|");
+const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
+  function AnatomyCanvas({ loads, ui, onSelect, background = null }, ref) {
+    const hostRef = useRef<HTMLDivElement | null>(null);
+    const uiRef = useRef(ui);
+    const onSelectRef = useRef(onSelect);
+    const loadsRef = useRef(loads);
+    const nodeMapRef = useRef<Map<string, Object3D>>(new Map());
+    const idByNodeRef = useRef<Map<string, string>>(new Map());
+    const applyVisibilityRef = useRef<() => void>(() => {});
+    const fitCameraRef = useRef<() => void>(() => {});
+    const controlsRef = useRef<OrbitControls | null>(null);
+    const cameraRef = useRef<PerspectiveCamera | null>(null);
+    const sceneRef = useRef<Scene | null>(null);
+    const rendererRef = useRef<WebGLRenderer | null>(null);
+    const rootGroupRef = useRef<Group | null>(null);
+    const wireframeRef = useRef(false);
+    const backgroundRef = useRef(background);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const [retryToken, setRetryToken] = useState(0);
+    const [progress, setProgress] = useState<{ loaded: number; total: number }>(
+      {
+        loaded: 0,
+        total: 0,
+      },
+    );
 
-  useEffect(() => {
-    const host = hostRef.current;
-    if (!host) return;
-
-    setLoadError(null);
-    setProgress({ loaded: 0, total: 0 });
-
-    const scene = new Scene();
-    scene.background = new Color(0xf0f0f0);
-    const rootGroup = new Group();
-    scene.add(rootGroup);
-
-    const camera = new PerspectiveCamera(45, 1, 0.01, 100);
-    camera.position.set(2.2, 1.6, 2.8);
-
-    const renderer = new WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    const canvas = renderer.domElement;
-    canvas.style.display = "block";
-    canvas.style.width = "100%";
-    canvas.style.height = "100%";
-    host.appendChild(canvas);
-
-    const controls = new OrbitControls(camera, canvas);
-    controls.enableDamping = true;
-
-    scene.add(new AmbientLight(0xffffff, 0.7));
-    const key = new DirectionalLight(0xffffff, 0.9);
-    key.position.set(3, 5, 2);
-    scene.add(key);
-
-    const raycaster = new Raycaster();
-    const pointer = new Vector2();
-
-    let disposed = false;
-
-    const isEffectivelyVisible = (obj: Object3D) => {
-      let cur: Object3D | null = obj;
-      while (cur) {
-        if (!cur.visible) return false;
-        cur = cur.parent;
+    useEffect(() => {
+      uiRef.current = ui;
+    }, [ui]);
+    useEffect(() => {
+      onSelectRef.current = onSelect;
+    }, [onSelect]);
+    useEffect(() => {
+      loadsRef.current = loads;
+    }, [loads]);
+    useEffect(() => {
+      backgroundRef.current = background;
+      const scene = sceneRef.current;
+      const renderer = rendererRef.current;
+      if (scene && renderer) {
+        applySceneBackground(scene, renderer, background);
       }
-      return true;
-    };
+    }, [background]);
 
-    const applyVisibility = () => {
-      const state = uiRef.current;
-      for (const [id, obj] of nodeMapRef.current) {
-        obj.visible = isStructureVisible(state, id);
-      }
-    };
-    applyVisibilityRef.current = applyVisibility;
+    useImperativeHandle(ref, () => ({
+      resetView: () => fitCameraRef.current(),
+      zoomBy: (factor: number) => {
+        const camera = cameraRef.current;
+        const controls = controlsRef.current;
+        if (!camera || !controls) return;
+        const offset = camera.position.clone().sub(controls.target);
+        offset.multiplyScalar(factor);
+        const minD = controls.minDistance || 0.35;
+        const maxD = controls.maxDistance || 80;
+        const len = offset.length();
+        if (len < minD) offset.setLength(minD);
+        else if (len > maxD) offset.setLength(maxD);
+        camera.position.copy(controls.target).add(offset);
+        controls.update();
+      },
+      setAutoRotate: (on: boolean) => {
+        const controls = controlsRef.current;
+        if (!controls) return;
+        controls.autoRotate = on;
+        controls.autoRotateSpeed = 1.2;
+      },
+      setWireframe: (on: boolean) => {
+        wireframeRef.current = on;
+        const root = rootGroupRef.current;
+        if (root) setTreeWireframe(root, on);
+      },
+    }));
 
-    const fitCamera = () => {
-      if (nodeMapRef.current.size === 0) return;
-      const box = new Box3();
-      for (const obj of nodeMapRef.current.values()) {
-        box.expandByObject(obj);
-      }
-      if (box.isEmpty()) return;
-      const size = box.getSize(new Vector3()).length() || 1;
-      const center = box.getCenter(new Vector3());
-      controls.target.copy(center);
-      camera.position
-        .copy(center)
-        .add(new Vector3(size * 0.7, size * 0.45, size * 0.9));
-      camera.near = size / 100;
-      camera.far = size * 10;
-      camera.updateProjectionMatrix();
-      controls.update();
-    };
+    const loadsKey = loads.map((l) => `${l.structureId}:${l.url}`).join("|");
 
-    const resize = () => {
-      const w = Math.max(1, Math.floor(host.clientWidth));
-      const h = Math.max(1, Math.floor(host.clientHeight));
-      const maxEdge = 4096;
-      const bw = Math.min(w, maxEdge);
-      const bh = Math.min(h, maxEdge);
-      camera.aspect = bw / bh;
-      camera.updateProjectionMatrix();
-      renderer.setSize(bw, bh, true);
+    useEffect(() => {
+      const host = hostRef.current;
+      if (!host) return;
+
+      setLoadError(null);
+      setProgress({ loaded: 0, total: 0 });
+
+      const scene = new Scene();
+      sceneRef.current = scene;
+      const rootGroup = new Group();
+      rootGroupRef.current = rootGroup;
+      scene.add(rootGroup);
+
+      const camera = new PerspectiveCamera(45, 1, 0.01, 100);
+      camera.position.set(2.2, 1.6, 2.8);
+      cameraRef.current = camera;
+
+      const renderer = new WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      applySceneBackground(scene, renderer, backgroundRef.current);
+      rendererRef.current = renderer;
+      const canvas = renderer.domElement;
+      canvas.style.display = "block";
       canvas.style.width = "100%";
       canvas.style.height = "100%";
-    };
+      canvas.style.background = "transparent";
+      host.appendChild(canvas);
 
-    const onPointerDown = (ev: PointerEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      pointer.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
-      pointer.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
-      raycaster.setFromCamera(pointer, camera);
-      const targets = [...nodeMapRef.current.values()].filter(
-        isEffectivelyVisible,
-      );
-      const hits = raycaster
-        .intersectObjects(targets, true)
-        .filter((hit) => isEffectivelyVisible(hit.object));
-      if (hits.length === 0) return;
-      let obj: Object3D | null = hits[0].object;
-      while (obj) {
-        const id = idByNodeRef.current.get(obj.uuid);
-        if (id) {
-          onSelectRef.current(id);
-          return;
+      const controls = new OrbitControls(camera, canvas);
+      controls.enableDamping = true;
+      controls.minDistance = 0.35;
+      controls.maxDistance = 80;
+      controlsRef.current = controls;
+
+      scene.add(new AmbientLight(0xffffff, 0.7));
+      const key = new DirectionalLight(0xffffff, 0.9);
+      key.position.set(3, 5, 2);
+      scene.add(key);
+
+      const raycaster = new Raycaster();
+      const pointer = new Vector2();
+
+      let disposed = false;
+
+      const isEffectivelyVisible = (obj: Object3D) => {
+        let cur: Object3D | null = obj;
+        while (cur) {
+          if (!cur.visible) return false;
+          cur = cur.parent;
         }
-        const byName = idByNodeRef.current.get(obj.name);
-        if (byName) {
-          onSelectRef.current(byName);
-          return;
+        return true;
+      };
+
+      const applyVisibility = () => {
+        const state = uiRef.current;
+        for (const [id, obj] of nodeMapRef.current) {
+          obj.visible = isStructureVisible(state, id);
         }
-        obj = obj.parent;
-      }
-    };
+      };
+      applyVisibilityRef.current = applyVisibility;
 
-    canvas.addEventListener("pointerdown", onPointerDown);
-    const ro = new ResizeObserver(resize);
-    ro.observe(host);
-    resize();
+      const fitCamera = () => {
+        if (nodeMapRef.current.size === 0) return;
+        const box = new Box3();
+        for (const obj of nodeMapRef.current.values()) {
+          box.expandByObject(obj);
+        }
+        if (box.isEmpty()) return;
+        const size = box.getSize(new Vector3()).length() || 1;
+        const center = box.getCenter(new Vector3());
+        controls.target.copy(center);
+        camera.position
+          .copy(center)
+          .add(new Vector3(size * 0.7, size * 0.45, size * 0.9));
+        camera.near = size / 100;
+        camera.far = size * 10;
+        camera.updateProjectionMatrix();
+        controls.update();
+      };
+      fitCameraRef.current = fitCamera;
 
-    renderer.setAnimationLoop(() => {
-      if (disposed) return;
-      controls.update();
-      renderer.render(scene, camera);
-    });
+      const resize = () => {
+        const w = Math.max(1, Math.floor(host.clientWidth));
+        const h = Math.max(1, Math.floor(host.clientHeight));
+        const maxEdge = 4096;
+        const bw = Math.min(w, maxEdge);
+        const bh = Math.min(h, maxEdge);
+        camera.aspect = bw / bh;
+        camera.updateProjectionMatrix();
+        renderer.setSize(bw, bh, true);
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
+      };
 
-    const loader = new GLTFLoader();
-    const specs = loadsRef.current;
-    const byUrl = new Map<string, AnatomyLoadSpec[]>();
-    for (const spec of specs) {
-      const list = byUrl.get(spec.url) ?? [];
-      list.push(spec);
-      byUrl.set(spec.url, list);
-    }
-    const urlEntries = [...byUrl.entries()];
-    const total = urlEntries.length;
-    let loadedCount = 0;
-    setProgress({ loaded: 0, total });
-
-    void (async () => {
-      if (total === 0) {
-        setProgress({ loaded: 0, total: 0 });
-        return;
-      }
-      const results = await mapPoolSettled(
-        urlEntries,
-        LOAD_CONCURRENCY,
-        async ([url, urlSpecs]) => {
-          const model = await loadGltf(loader, url);
-          if (disposed) return;
-          rootGroup.add(model);
-          for (const spec of urlSpecs) {
-            let root: Object3D = model;
-            let found: Object3D | null = null;
-            model.traverse((obj) => {
-              if (!found && obj.name === spec.node) found = obj;
-            });
-            if (found) root = found;
-            else if (urlSpecs.length === 1) {
-              model.name = spec.node || spec.structureId;
-              root = model;
-            } else {
-              throw new Error(`Missing node ${spec.node} in ${url}`);
-            }
-            nodeMapRef.current.set(spec.structureId, root);
-            idByNodeRef.current.set(root.uuid, spec.structureId);
-            if (root.name) {
-              idByNodeRef.current.set(root.name, spec.structureId);
-            }
-          }
-          applyVisibility();
-        },
-        () => {
-          if (disposed) return;
-          loadedCount += 1;
-          setProgress({ loaded: loadedCount, total });
-        },
-      );
-      if (disposed) return;
-      const failed = results.filter((r) => r.status === "rejected").length;
-      if (failed > 0) {
-        setLoadError(
-          failed === results.length
-            ? "Could not load the 3D models."
-            : `Loaded with ${failed} missing part${failed === 1 ? "" : "s"}.`,
+      const onPointerDown = (ev: PointerEvent) => {
+        const rect = canvas.getBoundingClientRect();
+        pointer.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(pointer, camera);
+        const targets = [...nodeMapRef.current.values()].filter(
+          isEffectivelyVisible,
         );
+        const hits = raycaster
+          .intersectObjects(targets, true)
+          .filter((hit) => isEffectivelyVisible(hit.object));
+        if (hits.length === 0) return;
+        let obj: Object3D | null = hits[0].object;
+        while (obj) {
+          const id = idByNodeRef.current.get(obj.uuid);
+          if (id) {
+            onSelectRef.current(id);
+            return;
+          }
+          const byName = idByNodeRef.current.get(obj.name);
+          if (byName) {
+            onSelectRef.current(byName);
+            return;
+          }
+          obj = obj.parent;
+        }
+      };
+
+      canvas.addEventListener("pointerdown", onPointerDown);
+      const ro = new ResizeObserver(resize);
+      ro.observe(host);
+      resize();
+
+      renderer.setAnimationLoop(() => {
+        if (disposed) return;
+        controls.update();
+        renderer.render(scene, camera);
+      });
+
+      const loader = new GLTFLoader();
+      const specs = loadsRef.current;
+      const byUrl = new Map<string, AnatomyLoadSpec[]>();
+      for (const spec of specs) {
+        const list = byUrl.get(spec.url) ?? [];
+        list.push(spec);
+        byUrl.set(spec.url, list);
       }
-      applyVisibility();
-      fitCamera();
-    })();
+      const urlEntries = [...byUrl.entries()];
+      const total = urlEntries.length;
+      let loadedCount = 0;
+      setProgress({ loaded: 0, total });
 
-    return () => {
-      disposed = true;
-      applyVisibilityRef.current = () => {};
-      renderer.setAnimationLoop(null);
-      ro.disconnect();
-      canvas.removeEventListener("pointerdown", onPointerDown);
-      controls.dispose();
-      disposeObjectTree(rootGroup);
-      renderer.dispose();
-      if (canvas.parentElement === host) {
-        host.removeChild(canvas);
-      }
-      scene.remove(rootGroup);
-      nodeMapRef.current = new Map();
-      idByNodeRef.current = new Map();
-    };
-  }, [loadsKey, retryToken]);
+      void (async () => {
+        if (total === 0) {
+          setProgress({ loaded: 0, total: 0 });
+          return;
+        }
+        const results = await mapPoolSettled(
+          urlEntries,
+          LOAD_CONCURRENCY,
+          async ([url, urlSpecs]) => {
+            const model = await loadGltf(loader, url);
+            if (disposed) return;
+            rootGroup.add(model);
+            for (const spec of urlSpecs) {
+              let root: Object3D = model;
+              let found: Object3D | null = null;
+              model.traverse((obj) => {
+                if (!found && obj.name === spec.node) found = obj;
+              });
+              if (found) root = found;
+              else if (urlSpecs.length === 1) {
+                model.name = spec.node || spec.structureId;
+                root = model;
+              } else {
+                throw new Error(`Missing node ${spec.node} in ${url}`);
+              }
+              nodeMapRef.current.set(spec.structureId, root);
+              idByNodeRef.current.set(root.uuid, spec.structureId);
+              if (root.name) {
+                idByNodeRef.current.set(root.name, spec.structureId);
+              }
+            }
+            if (wireframeRef.current) setTreeWireframe(model, true);
+            applyVisibility();
+          },
+          () => {
+            if (disposed) return;
+            loadedCount += 1;
+            setProgress({ loaded: loadedCount, total });
+          },
+        );
+        if (disposed) return;
+        const failed = results.filter((r) => r.status === "rejected").length;
+        if (failed > 0) {
+          setLoadError(
+            failed === results.length
+              ? "Could not load the 3D models."
+              : `Loaded with ${failed} missing part${failed === 1 ? "" : "s"}.`,
+          );
+        }
+        applyVisibility();
+        fitCamera();
+      })();
 
-  useEffect(() => {
-    applyVisibilityRef.current();
-  }, [ui, loadsKey]);
+      return () => {
+        disposed = true;
+        applyVisibilityRef.current = () => {};
+        fitCameraRef.current = () => {};
+        controlsRef.current = null;
+        cameraRef.current = null;
+        sceneRef.current = null;
+        rendererRef.current = null;
+        rootGroupRef.current = null;
+        renderer.setAnimationLoop(null);
+        ro.disconnect();
+        canvas.removeEventListener("pointerdown", onPointerDown);
+        controls.dispose();
+        disposeObjectTree(rootGroup);
+        renderer.dispose();
+        if (canvas.parentElement === host) {
+          host.removeChild(canvas);
+        }
+        scene.remove(rootGroup);
+        nodeMapRef.current = new Map();
+        idByNodeRef.current = new Map();
+      };
+    }, [loadsKey, retryToken]);
 
-  const showProgress = progress.total > 0 && progress.loaded < progress.total;
+    useEffect(() => {
+      applyVisibilityRef.current();
+    }, [ui, loadsKey]);
 
-  return (
-    <Box
-      sx={{
-        position: "relative",
-        width: "100%",
-        height: "100%",
-        minHeight: 360,
-        minWidth: 0,
-      }}
-    >
-      <div
-        ref={hostRef}
-        style={{
+    const showProgress = progress.total > 0 && progress.loaded < progress.total;
+
+    return (
+      <Box
+        sx={{
+          position: "relative",
           width: "100%",
           height: "100%",
-          minHeight: 360,
-          borderRadius: 8,
-          overflow: "hidden",
-          background: "#f0f0f0",
+          minHeight: 0,
+          minWidth: 0,
         }}
-      />
-      {showProgress ? (
-        <Box
-          sx={{
-            position: "absolute",
-            left: 12,
-            right: 12,
-            top: 12,
-            bgcolor: "background.paper",
-            borderRadius: 1,
-            p: 1,
-            boxShadow: 1,
+      >
+        <div
+          ref={hostRef}
+          style={{
+            width: "100%",
+            height: "100%",
+            minHeight: 0,
+            borderRadius: 0,
+            overflow: "hidden",
+            background: background ?? "transparent",
           }}
-        >
-          <Typography variant="caption" color="text.secondary">
-            Loading models {progress.loaded}/{progress.total}
-          </Typography>
-          <LinearProgress
-            variant="determinate"
-            value={(progress.loaded / progress.total) * 100}
-            sx={{ mt: 0.5 }}
-          />
-        </Box>
-      ) : null}
-      {loadError ? (
-        <Alert
-          severity="error"
-          sx={{ position: "absolute", left: 12, right: 12, bottom: 12 }}
-          action={
-            <Button
-              color="inherit"
-              size="small"
-              onClick={() => setRetryToken((n) => n + 1)}
-            >
-              Retry
-            </Button>
-          }
-        >
-          {loadError}
-        </Alert>
-      ) : null}
-    </Box>
-  );
-}
+        />
+        {showProgress ? (
+          <Box
+            sx={{
+              position: "absolute",
+              left: 12,
+              right: 12,
+              top: 12,
+              bgcolor: "background.paper",
+              borderRadius: 1,
+              p: 1,
+              boxShadow: 1,
+            }}
+          >
+            <Typography variant="caption" color="text.secondary">
+              Loading models {progress.loaded}/{progress.total}
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={(progress.loaded / progress.total) * 100}
+              sx={{ mt: 0.5 }}
+            />
+          </Box>
+        ) : null}
+        {loadError ? (
+          <Alert
+            severity="error"
+            sx={{ position: "absolute", left: 12, right: 12, bottom: 12 }}
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                onClick={() => setRetryToken((n) => n + 1)}
+              >
+                Retry
+              </Button>
+            }
+          >
+            {loadError}
+          </Alert>
+        ) : null}
+      </Box>
+    );
+  },
+);
+
+export default AnatomyCanvas;

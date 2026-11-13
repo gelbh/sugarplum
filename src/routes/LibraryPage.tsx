@@ -64,7 +64,6 @@ import {
 import { isGuest } from "../guest/session";
 import { libraryShowsCreateFlow } from "../library/libraryCreateFlow";
 import { useCalendarSuggestions } from "../library/useCalendarSuggestions";
-import { anatomyHubHref } from "../anatomy/paths";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import {
@@ -437,16 +436,6 @@ export default function LibraryPage() {
                 ? "Tick the decks you want, then download them for Anki."
                 : "Choose a subject. Each one holds decks of flashcards."}
             </Typography>
-            {!selectMode ? (
-              <Button
-                size="small"
-                variant="outlined"
-                sx={{ mt: 1.5 }}
-                onClick={() => navigate(anatomyHubHref())}
-              >
-                Anatomy
-              </Button>
-            ) : null}
             <Stack
               direction="row"
               spacing={1}
