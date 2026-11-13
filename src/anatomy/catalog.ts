@@ -43,4 +43,40 @@ export const ANATOMY_CATALOG: AnatomyCatalogEntry[] = [
     standIn: false,
     blurb: "IVALA teaching pack · extraocular muscles",
   },
+  {
+    id: "feline-skull-foramina",
+    title: "Feline skull foramina",
+    standIn: false,
+    blurb: "IVALA breadth pack · feline skull",
+  },
+  {
+    id: "feline-skull-landmarks",
+    title: "Feline skull landmarks",
+    standIn: false,
+    blurb: "IVALA breadth pack · feline skull",
+  },
+  {
+    id: "feline-skull-teeth",
+    title: "Feline skull teeth",
+    standIn: false,
+    blurb: "IVALA breadth pack · feline dentition",
+  },
+  {
+    id: "chinchilla-skull",
+    title: "Chinchilla skull",
+    standIn: false,
+    blurb: "IVALA breadth pack · small mammal",
+  },
+  {
+    id: "guinea-pig-skull",
+    title: "Guinea pig skull",
+    standIn: false,
+    blurb: "IVALA breadth pack · small mammal",
+  },
+  {
+    id: "rabbit-skull",
+    title: "Rabbit skull",
+    standIn: false,
+    blurb: "IVALA breadth pack · small mammal",
+  },
 ];

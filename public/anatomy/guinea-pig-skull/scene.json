@@ -1,0 +1,181 @@
+{
+  "id": "guinea-pig-skull",
+  "title": "Guinea pig skull",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-incisor-bottom",
+      "label": "Incisor bottom",
+      "node": "Incisor_bottom",
+      "asset": "./Incisor_bottom.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-incisor-bottom-1",
+      "label": "Incisor bottom 1",
+      "node": "Incisor_bottom_1",
+      "asset": "./Incisor_bottom_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-incisor-top",
+      "label": "Incisor top",
+      "node": "Incisor_top",
+      "asset": "./Incisor_top.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-incisor-top-1",
+      "label": "Incisor top 1",
+      "node": "Incisor_top_1",
+      "asset": "./Incisor_top_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-jaw",
+      "label": "Jaw",
+      "node": "Jaw",
+      "asset": "./Jaw.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-jaw-1",
+      "label": "Jaw 1",
+      "node": "Jaw_1",
+      "asset": "./Jaw_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lower-m1",
+      "label": "Lower M1",
+      "node": "Lower_M1",
+      "asset": "./Lower_M1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lower-m1-1",
+      "label": "Lower M1 1",
+      "node": "Lower_M1_1",
+      "asset": "./Lower_M1_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lower-m2",
+      "label": "Lower M2",
+      "node": "Lower_M2",
+      "asset": "./Lower_M2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lower-m2-1",
+      "label": "Lower M2 1",
+      "node": "Lower_M2_1",
+      "asset": "./Lower_M2_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lower-m3",
+      "label": "Lower M3",
+      "node": "Lower_M3",
+      "asset": "./Lower_M3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lower-m3-1",
+      "label": "Lower M3 1",
+      "node": "Lower_M3_1",
+      "asset": "./Lower_M3_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lower-pm",
+      "label": "Lower PM",
+      "node": "Lower_PM",
+      "asset": "./Lower_PM.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lower-pm-1",
+      "label": "Lower PM 1",
+      "node": "Lower_PM_1",
+      "asset": "./Lower_PM_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-top-skull",
+      "label": "Top Skull",
+      "node": "Top_Skull",
+      "asset": "./Top_Skull.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-top-skull-1",
+      "label": "Top Skull 1",
+      "node": "Top_Skull_1",
+      "asset": "./Top_Skull_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-upper-m1",
+      "label": "Upper M1",
+      "node": "Upper_M1",
+      "asset": "./Upper_M1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-upper-m1-1",
+      "label": "Upper M1 1",
+      "node": "Upper_M1_1",
+      "asset": "./Upper_M1_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-upper-m2",
+      "label": "Upper M2",
+      "node": "Upper_M2",
+      "asset": "./Upper_M2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-upper-m2-1",
+      "label": "Upper M2 1",
+      "node": "Upper_M2_1",
+      "asset": "./Upper_M2_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-upper-m3",
+      "label": "Upper M3",
+      "node": "Upper_M3",
+      "asset": "./Upper_M3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-upper-m3-1",
+      "label": "Upper M3 1",
+      "node": "Upper_M3_1",
+      "asset": "./Upper_M3_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-upper-pm",
+      "label": "Upper PM",
+      "node": "Upper_PM",
+      "asset": "./Upper_PM.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-upper-pm-1",
+      "label": "Upper PM 1",
+      "node": "Upper_PM_1",
+      "asset": "./Upper_PM_1.glb",
+      "region": "root"
+    }
+  ]
+}
