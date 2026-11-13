@@ -1,0 +1,741 @@
+{
+  "id": "terminology-language-of-anatomy",
+  "title": "Terminology language of anatomy",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-c1",
+      "label": "C1",
+      "node": "C1",
+      "asset": "./C1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c2",
+      "label": "C2",
+      "node": "C2",
+      "asset": "./C2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c3",
+      "label": "C3",
+      "node": "C3",
+      "asset": "./C3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c4",
+      "label": "C4",
+      "node": "C4",
+      "asset": "./C4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c5",
+      "label": "C5",
+      "node": "C5",
+      "asset": "./C5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c6",
+      "label": "C6",
+      "node": "C6",
+      "asset": "./C6.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c7",
+      "label": "C7",
+      "node": "C7",
+      "asset": "./C7.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpals",
+      "label": "Carpals",
+      "node": "Carpals",
+      "asset": "./Carpals.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-carpals-r",
+      "label": "Carpals R",
+      "node": "Carpals_R",
+      "asset": "./Carpals_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-co1",
+      "label": "Co1",
+      "node": "Co1",
+      "asset": "./Co1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-co2",
+      "label": "Co2",
+      "node": "Co2",
+      "asset": "./Co2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-co3",
+      "label": "Co3",
+      "node": "Co3",
+      "asset": "./Co3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-co4",
+      "label": "Co4",
+      "node": "Co4",
+      "asset": "./Co4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-co5",
+      "label": "Co5",
+      "node": "Co5",
+      "asset": "./Co5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal",
+      "label": "Dorsal",
+      "node": "Dorsal",
+      "asset": "./Dorsal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-r",
+      "label": "Dorsal R",
+      "node": "Dorsal_R",
+      "asset": "./Dorsal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur",
+      "label": "Femur",
+      "node": "Femur",
+      "asset": "./Femur.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-r",
+      "label": "Femur R",
+      "node": "Femur_R",
+      "asset": "./Femur_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fibula",
+      "label": "Fibula",
+      "node": "Fibula",
+      "asset": "./Fibula.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fibula-r",
+      "label": "Fibula R",
+      "node": "Fibula_R",
+      "asset": "./Fibula_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus",
+      "label": "Humerus",
+      "node": "Humerus",
+      "asset": "./Humerus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-r",
+      "label": "Humerus R",
+      "node": "Humerus_R",
+      "asset": "./Humerus_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-tibia",
+      "label": "L tibia",
+      "node": "L_tibia",
+      "asset": "./L_tibia.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l1",
+      "label": "L1",
+      "node": "L1",
+      "asset": "./L1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l2",
+      "label": "L2",
+      "node": "L2",
+      "asset": "./L2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l3",
+      "label": "L3",
+      "node": "L3",
+      "asset": "./L3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l4",
+      "label": "L4",
+      "node": "L4",
+      "asset": "./L4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l5",
+      "label": "L5",
+      "node": "L5",
+      "asset": "./L5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l6",
+      "label": "L6",
+      "node": "L6",
+      "asset": "./L6.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l7",
+      "label": "L7",
+      "node": "L7",
+      "asset": "./L7.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible",
+      "label": "Mandible",
+      "node": "Mandible",
+      "asset": "./Mandible.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandibular-teeth",
+      "label": "Mandibular teeth",
+      "node": "Mandibular_teeth",
+      "asset": "./Mandibular_teeth.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-maxilla",
+      "label": "Maxilla",
+      "node": "Maxilla",
+      "asset": "./Maxilla.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-maxillary-teeth",
+      "label": "Maxillary teeth",
+      "node": "Maxillary_teeth",
+      "asset": "./Maxillary_teeth.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mc-down",
+      "label": "MC down",
+      "node": "MC_down",
+      "asset": "./MC_down.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mc-down-r",
+      "label": "MC down R",
+      "node": "MC_down_R",
+      "asset": "./MC_down_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-p1s",
+      "label": "P1s",
+      "node": "P1s",
+      "asset": "./P1s.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-p1s-r",
+      "label": "P1s R",
+      "node": "P1s_R",
+      "asset": "./P1s_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-p2s",
+      "label": "P2s",
+      "node": "P2s",
+      "asset": "./P2s.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-p2s-r",
+      "label": "P2s R",
+      "node": "P2s_R",
+      "asset": "./P2s_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-p3s",
+      "label": "P3s",
+      "node": "P3s",
+      "asset": "./P3s.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-p3s-r",
+      "label": "P3s R",
+      "node": "P3s_R",
+      "asset": "./P3s_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patella",
+      "label": "Patella",
+      "node": "Patella",
+      "asset": "./Patella.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patella-r",
+      "label": "Patella R",
+      "node": "Patella_R",
+      "asset": "./Patella_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis",
+      "label": "Pelvis",
+      "node": "Pelvis",
+      "asset": "./Pelvis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal",
+      "label": "Proximal",
+      "node": "Proximal",
+      "asset": "./Proximal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-r",
+      "label": "Proximal R",
+      "node": "Proximal_R",
+      "asset": "./Proximal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius",
+      "label": "Radius",
+      "node": "Radius",
+      "asset": "./Radius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius-r",
+      "label": "Radius R",
+      "node": "Radius_R",
+      "asset": "./Radius_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-1",
+      "label": "Rib 1",
+      "node": "Rib_1",
+      "asset": "./Rib_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-1-r",
+      "label": "Rib 1 R",
+      "node": "Rib_1_R",
+      "asset": "./Rib_1_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-10",
+      "label": "Rib 10",
+      "node": "Rib_10",
+      "asset": "./Rib_10.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-10-r",
+      "label": "Rib 10 R",
+      "node": "Rib_10_R",
+      "asset": "./Rib_10_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-11",
+      "label": "Rib 11",
+      "node": "Rib_11",
+      "asset": "./Rib_11.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-11-r",
+      "label": "Rib 11 R",
+      "node": "Rib_11_R",
+      "asset": "./Rib_11_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-12",
+      "label": "Rib 12",
+      "node": "Rib_12",
+      "asset": "./Rib_12.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-12-r",
+      "label": "Rib 12 R",
+      "node": "Rib_12_R",
+      "asset": "./Rib_12_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-13",
+      "label": "Rib 13",
+      "node": "Rib_13",
+      "asset": "./Rib_13.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-13-r",
+      "label": "Rib 13 R",
+      "node": "Rib_13_R",
+      "asset": "./Rib_13_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-2",
+      "label": "Rib 2",
+      "node": "Rib_2",
+      "asset": "./Rib_2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-2-r",
+      "label": "Rib 2 R",
+      "node": "Rib_2_R",
+      "asset": "./Rib_2_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-3",
+      "label": "Rib 3",
+      "node": "Rib_3",
+      "asset": "./Rib_3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-3-r",
+      "label": "Rib 3 R",
+      "node": "Rib_3_R",
+      "asset": "./Rib_3_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-4",
+      "label": "Rib 4",
+      "node": "Rib_4",
+      "asset": "./Rib_4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-4-r",
+      "label": "Rib 4 R",
+      "node": "Rib_4_R",
+      "asset": "./Rib_4_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-5",
+      "label": "Rib 5",
+      "node": "Rib_5",
+      "asset": "./Rib_5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-5-r",
+      "label": "Rib 5 R",
+      "node": "Rib_5_R",
+      "asset": "./Rib_5_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-6",
+      "label": "Rib 6",
+      "node": "Rib_6",
+      "asset": "./Rib_6.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-6-r",
+      "label": "Rib 6 R",
+      "node": "Rib_6_R",
+      "asset": "./Rib_6_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-7",
+      "label": "Rib 7",
+      "node": "Rib_7",
+      "asset": "./Rib_7.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-7-r",
+      "label": "Rib 7 R",
+      "node": "Rib_7_R",
+      "asset": "./Rib_7_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-8",
+      "label": "Rib 8",
+      "node": "Rib_8",
+      "asset": "./Rib_8.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-8-r",
+      "label": "Rib 8 R",
+      "node": "Rib_8_R",
+      "asset": "./Rib_8_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-9",
+      "label": "Rib 9",
+      "node": "Rib_9",
+      "asset": "./Rib_9.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rib-9-r",
+      "label": "Rib 9 R",
+      "node": "Rib_9_R",
+      "asset": "./Rib_9_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sacrum",
+      "label": "Sacrum",
+      "node": "Sacrum",
+      "asset": "./Sacrum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sb-1",
+      "label": "SB 1",
+      "node": "SB_1",
+      "asset": "./SB_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sb-2",
+      "label": "SB 2",
+      "node": "SB_2",
+      "asset": "./SB_2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sb-3",
+      "label": "SB 3",
+      "node": "SB_3",
+      "asset": "./SB_3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sb-4",
+      "label": "SB 4",
+      "node": "SB_4",
+      "asset": "./SB_4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sb-5",
+      "label": "SB 5",
+      "node": "SB_5",
+      "asset": "./SB_5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sb-6",
+      "label": "SB 6",
+      "node": "SB_6",
+      "asset": "./SB_6.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sb-7",
+      "label": "SB 7",
+      "node": "SB_7",
+      "asset": "./SB_7.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sb-8",
+      "label": "SB 8",
+      "node": "SB_8",
+      "asset": "./SB_8.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula",
+      "label": "Scapula",
+      "node": "Scapula",
+      "asset": "./Scapula.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-r",
+      "label": "Scapula R",
+      "node": "Scapula_R",
+      "asset": "./Scapula_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t1",
+      "label": "T1",
+      "node": "T1",
+      "asset": "./T1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t10",
+      "label": "T10",
+      "node": "T10",
+      "asset": "./T10.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t11",
+      "label": "T11",
+      "node": "T11",
+      "asset": "./T11.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t12",
+      "label": "T12",
+      "node": "T12",
+      "asset": "./T12.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t13",
+      "label": "T13",
+      "node": "T13",
+      "asset": "./T13.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t2",
+      "label": "T2",
+      "node": "T2",
+      "asset": "./T2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t3",
+      "label": "T3",
+      "node": "T3",
+      "asset": "./T3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t4",
+      "label": "T4",
+      "node": "T4",
+      "asset": "./T4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t5",
+      "label": "T5",
+      "node": "T5",
+      "asset": "./T5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t6",
+      "label": "T6",
+      "node": "T6",
+      "asset": "./T6.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t7",
+      "label": "T7",
+      "node": "T7",
+      "asset": "./T7.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t8",
+      "label": "T8",
+      "node": "T8",
+      "asset": "./T8.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t9",
+      "label": "T9",
+      "node": "T9",
+      "asset": "./T9.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-talus",
+      "label": "Talus",
+      "node": "Talus",
+      "asset": "./Talus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-talus-r",
+      "label": "Talus R",
+      "node": "Talus_R",
+      "asset": "./Talus_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-r",
+      "label": "Tibia R",
+      "node": "Tibia_R",
+      "asset": "./Tibia_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna",
+      "label": "Ulna",
+      "node": "Ulna",
+      "asset": "./Ulna.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulna-r",
+      "label": "Ulna R",
+      "node": "Ulna_R",
+      "asset": "./Ulna_R.glb",
+      "region": "root"
+    }
+  ]
+}
