@@ -16,6 +16,10 @@ Replace-only policy: mapped keys keep a real webp. A licence-ok single-organ pla
 | stomach                | `stomach.webp`                  | Human stomach outline with anatomical landmarks (stands for the stomach site)     | Henry Vandyke Carter (Gray's Anatomy) | Public domain   | [https://commons.wikimedia.org/wiki/File:Gray1046.png](https://commons.wikimedia.org/wiki/File:Gray1046.png)                                         |
 | eye                    | `eye.webp`                      | Human iris and pupil with ciliary arteries (stands for the eye site)              | Henry Vandyke Carter (Gray's Anatomy) | Public domain   | [https://commons.wikimedia.org/wiki/File:Gray878.png](https://commons.wikimedia.org/wiki/File:Gray878.png)                                           |
 | central nervous system | `central-nervous-system.webp`   | Human brain, base view (stands for the central nervous system site)               | Henry Vandyke Carter (Gray's Anatomy) | Public domain   | [https://commons.wikimedia.org/wiki/File:Gray724.png](https://commons.wikimedia.org/wiki/File:Gray724.png)                                           |
+| small intestine        | `small-intestine.webp`          | Human jejunal loop with mesenteric arterial arcades (stands for the small intestine site) | Henry Vandyke Carter (Gray's Anatomy) | Public domain   | [https://commons.wikimedia.org/wiki/File:Gray1065.png](https://commons.wikimedia.org/wiki/File:Gray1065.png)                                         |
+| trachea                | `trachea.webp`                  | Human tracheal bifurcation / carina segment (stands for the trachea site)         | Henry Vandyke Carter (Gray's Anatomy) | Public domain   | [https://commons.wikimedia.org/wiki/File:Gray963.png](https://commons.wikimedia.org/wiki/File:Gray963.png)                                           |
+| skin                   | `skin.webp`                     | Human skin layers in vertical section (stands for the skin site)                  | Henry Vandyke Carter (Gray's Anatomy) | Public domain   | [https://commons.wikimedia.org/wiki/File:Gray940.png](https://commons.wikimedia.org/wiki/File:Gray940.png)                                           |
+| urinary bladder        | `urinary-bladder.webp`          | Human urinary bladder interior (stands for the urinary bladder site)              | Henry Vandyke Carter (Gray's Anatomy) | Public domain   | [https://commons.wikimedia.org/wiki/File:Gray1140.png](https://commons.wikimedia.org/wiki/File:Gray1140.png)                                         |
 
 ## Still AI (mapped; replace later)
 
@@ -26,14 +30,12 @@ These keys still resolve to AI-generated webps. Leave mapped until a licence-ok 
 | gastrointestinal tract | `gastrointestinal-tract.webp` |
 | abomasum               | `abomasum.webp`               |
 | rumen                  | `rumen.webp`                  |
-| small intestine        | `small-intestine.webp`        |
 | ileum                  | `ileum.webp`                  |
 | large intestine        | `large-intestine.webp`        |
 | caecum                 | `caecum.webp`                 |
 | bile ducts             | `bile-ducts.webp`             |
 | pulmonary arteries     | `pulmonary-arteries.webp`     |
 | muscle                 | `muscle.webp`                 |
-| skin                   | `skin.webp`                   |
 | blood                  | `blood.webp`                  |
 | blood vessels          | `blood-vessels.webp`          |
 | red blood cells        | `red-blood-cells.webp`        |
@@ -46,5 +48,3 @@ These keys still resolve to AI-generated webps. Leave mapped until a licence-ok 
 | connective tissue      | `connective-tissue.webp`      |
 | nuchal ligament        | `nuchal-ligament.webp`        |
 | oesophagus             | `oesophagus.webp`             |
-| trachea                | `trachea.webp`                |
-| urinary bladder        | `urinary-bladder.webp`        |
