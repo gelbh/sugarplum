@@ -3,6 +3,7 @@ import {
   startTransition,
   Suspense,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -38,6 +39,7 @@ import {
   anatomySceneHref,
   canonicalAnatomySceneId,
   matchAnatomyPath,
+  regionsFromSearch,
 } from "./anatomy/paths";
 import AtlasHub from "./routes/AtlasHub";
 import ParasitologyAtlasBounce from "./routes/ParasitologyAtlasBounce";
@@ -61,20 +63,36 @@ function bare(page: ReactNode) {
 }
 
 /** Legacy ids (e.g. canine-limb) resolve to the species mega-scene and replace the URL. */
-function AnatomySceneRoute({ rawSceneId }: { rawSceneId: string }) {
+function AnatomySceneRoute({
+  rawSceneId,
+  search,
+}: {
+  rawSceneId: string;
+  search: string;
+}) {
   const sceneId = canonicalAnatomySceneId(rawSceneId);
+  const initialRegions = useMemo(() => regionsFromSearch(search), [search]);
   useEffect(() => {
     if (sceneId !== rawSceneId) {
-      navigateReplace(anatomySceneHref(sceneId));
+      navigateReplace(
+        anatomySceneHref(
+          sceneId,
+          initialRegions.length > 0 ? { regions: initialRegions } : undefined,
+        ),
+      );
     }
-  }, [rawSceneId, sceneId]);
+  }, [rawSceneId, sceneId, initialRegions]);
   return (
     <Suspense
       fallback={
         <Typography color="text.secondary">Loading anatomy…</Typography>
       }
     >
-      <AnatomyViewerPage key={sceneId} sceneId={sceneId} />
+      <AnatomyViewerPage
+        key={`${sceneId}|${initialRegions.join(",")}`}
+        sceneId={sceneId}
+        initialRegions={initialRegions}
+      />
     </Suspense>
   );
 }
@@ -127,7 +145,10 @@ function matchPage(path: string, search: string): ReactNode {
   }
   if (anatomyMatch?.kind === "scene") {
     return shell(
-      <AnatomySceneRoute rawSceneId={anatomyMatch.sceneId} />,
+      <AnatomySceneRoute
+        rawSceneId={anatomyMatch.sceneId}
+        search={search}
+      />,
     );
   }
 

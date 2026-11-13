@@ -29,7 +29,7 @@ import AnatomyCanvas, {
 import AnatomyHelpOverlay from "../anatomy/AnatomyHelpOverlay";
 import InfoPanel from "../anatomy/InfoPanel";
 import {
-  defaultActiveRegionIds,
+  activeRegionIdsForOpen,
   parseAnatomySceneManifest,
   safeAnatomyRelativeAsset,
 } from "../anatomy/parseScene";
@@ -49,7 +49,7 @@ function isTypingTarget(target: EventTarget | null): boolean {
   return target.isContentEditable;
 }
 
-type Props = { sceneId: string };
+type Props = { sceneId: string; initialRegions?: string[] };
 
 type BgChoiceId = "page" | "paper" | "studio" | "white" | "stage";
 
@@ -97,7 +97,10 @@ function buildLoads(
   return loads;
 }
 
-export default function AnatomyViewerPage({ sceneId }: Props) {
+export default function AnatomyViewerPage({
+  sceneId,
+  initialRegions = [],
+}: Props) {
   const theme = useTheme();
   const canvasRef = useRef<AnatomyCanvasHandle>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
@@ -194,7 +197,9 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
         }
         if (!cancelled) {
           setManifest(parsed);
-          setActiveRegions(new Set(defaultActiveRegionIds(parsed)));
+          setActiveRegions(
+            new Set(activeRegionIdsForOpen(parsed, initialRegions)),
+          );
         }
       } catch (err) {
         if (!cancelled) {
@@ -205,6 +210,7 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
     return () => {
       cancelled = true;
     };
+    // initialRegions applied on mount; parent remounts when the region key changes.
   }, [sceneId]);
 
   const loads = useMemo(() => {
