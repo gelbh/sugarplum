@@ -10,6 +10,7 @@ export type StructureUiAction =
   | { type: "isolate"; id: string }
   | { type: "clearIsolate" }
   | { type: "showAll" }
+  | { type: "hideAll"; ids: string[] }
   | { type: "reset" };
 
 export function createStructureUiState(): StructureUiState {
@@ -35,6 +36,8 @@ export function structureUiReducer(
       return { ...state, isolatedId: null };
     case "showAll":
       return { ...state, hidden: new Set(), isolatedId: null };
+    case "hideAll":
+      return { ...state, hidden: new Set(action.ids), isolatedId: null };
     case "reset":
       return createStructureUiState();
     default:

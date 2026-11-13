@@ -30,4 +30,15 @@ describe("structureUiReducer", () => {
     s = structureUiReducer(s, { type: "reset" });
     expect(s).toEqual(createStructureUiState());
   });
+
+  it("hideAll marks every id and clears isolate", () => {
+    let s = createStructureUiState();
+    s = structureUiReducer(s, { type: "isolate", id: "bone-a" });
+    s = structureUiReducer(s, {
+      type: "hideAll",
+      ids: ["bone-a", "bone-b"],
+    });
+    expect(s.isolatedId).toBeNull();
+    expect([...s.hidden].sort()).toEqual(["bone-a", "bone-b"]);
+  });
 });

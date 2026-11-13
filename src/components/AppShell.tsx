@@ -66,8 +66,6 @@ const LEARNER_NAV: NavItem[] = [
     match: (path) =>
       (path === "/library" ||
         path.startsWith("/library/") ||
-        path === "/anatomy" ||
-        path.startsWith("/anatomy/") ||
         /^\/jobs\/[^/]+\/drafts\/?$/.test(path)) &&
       !ATLAS_LEGACY_PATH.test(path),
   },
@@ -79,6 +77,8 @@ const LEARNER_NAV: NavItem[] = [
     match: (path) =>
       path === "/atlas" ||
       path.startsWith("/atlas/") ||
+      path === "/anatomy" ||
+      path.startsWith("/anatomy/") ||
       ATLAS_LEGACY_PATH.test(path),
   },
   {
