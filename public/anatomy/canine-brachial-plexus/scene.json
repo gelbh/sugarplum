@@ -1,0 +1,335 @@
+{
+  "id": "canine-brachial-plexus",
+  "title": "Canine brachial plexus",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-b-c1",
+      "label": "B C1",
+      "node": "B_C1",
+      "asset": "./B_C1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-c2",
+      "label": "B C2",
+      "node": "B_C2",
+      "asset": "./B_C2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-c3",
+      "label": "B C3",
+      "node": "B_C3",
+      "asset": "./B_C3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-c4",
+      "label": "B C4",
+      "node": "B_C4",
+      "asset": "./B_C4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-c5",
+      "label": "B C5",
+      "node": "B_C5",
+      "asset": "./B_C5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-c6",
+      "label": "B C6",
+      "node": "B_C6",
+      "asset": "./B_C6.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-c7",
+      "label": "B C7",
+      "node": "B_C7",
+      "asset": "./B_C7.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-carpals-down",
+      "label": "B Carpals down",
+      "node": "B_Carpals_down",
+      "asset": "./B_Carpals_down.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-costal-cartilages",
+      "label": "B Costal cartilages",
+      "node": "B_Costal_cartilages",
+      "asset": "./B_Costal_cartilages.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-humerus",
+      "label": "B Humerus",
+      "node": "B_Humerus",
+      "asset": "./B_Humerus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-radius",
+      "label": "B Radius",
+      "node": "B_Radius",
+      "asset": "./B_Radius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-ribs",
+      "label": "B Ribs",
+      "node": "B_Ribs",
+      "asset": "./B_Ribs.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-scapula",
+      "label": "B Scapula",
+      "node": "B_Scapula",
+      "asset": "./B_Scapula.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-scapular-cartilage",
+      "label": "B Scapular cartilage",
+      "node": "B_Scapular_cartilage",
+      "asset": "./B_Scapular_cartilage.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-skull",
+      "label": "B Skull",
+      "node": "B_Skull",
+      "asset": "./B_Skull.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-t1",
+      "label": "B T1",
+      "node": "B_T1",
+      "asset": "./B_T1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-t2",
+      "label": "B T2",
+      "node": "B_T2",
+      "asset": "./B_T2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-t3",
+      "label": "B T3",
+      "node": "B_T3",
+      "asset": "./B_T3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-t4",
+      "label": "B T4",
+      "node": "B_T4",
+      "asset": "./B_T4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-t5",
+      "label": "B T5",
+      "node": "B_T5",
+      "asset": "./B_T5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-teeth",
+      "label": "B Teeth",
+      "node": "B_Teeth",
+      "asset": "./B_Teeth.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-ulna",
+      "label": "B Ulna",
+      "node": "B_Ulna",
+      "asset": "./B_Ulna.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-biceps",
+      "label": "M biceps",
+      "node": "M_biceps",
+      "asset": "./M_biceps.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-coracobrachialis",
+      "label": "M coracobrachialis",
+      "node": "M_coracobrachialis",
+      "asset": "./M_coracobrachialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-deep-pectoral",
+      "label": "M deep pectoral",
+      "node": "M_deep_pectoral",
+      "asset": "./M_deep_pectoral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-superficial-pectoral-major",
+      "label": "M superficial pectoral major",
+      "node": "M_superficial_pectoral_major",
+      "asset": "./M_superficial_pectoral_major.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-superficial-pectoral-minor",
+      "label": "M superficial pectoral minor",
+      "node": "M_superficial_pectoral_minor",
+      "asset": "./M_superficial_pectoral_minor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-triceps-medial",
+      "label": "M triceps medial",
+      "node": "M_triceps_medial",
+      "asset": "./M_triceps_medial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-axillary",
+      "label": "N axillary",
+      "node": "N_axillary",
+      "asset": "./N_axillary.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-brachiocephalic",
+      "label": "N brachiocephalic",
+      "node": "N_brachiocephalic",
+      "asset": "./N_brachiocephalic.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-c1",
+      "label": "N C1",
+      "node": "N_C1",
+      "asset": "./N_C1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-c2",
+      "label": "N C2",
+      "node": "N_C2",
+      "asset": "./N_C2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-c3",
+      "label": "N C3",
+      "node": "N_C3",
+      "asset": "./N_C3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-c4",
+      "label": "N C4",
+      "node": "N_C4",
+      "asset": "./N_C4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-c5",
+      "label": "N C5",
+      "node": "N_C5",
+      "asset": "./N_C5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-c6",
+      "label": "N C6",
+      "node": "N_C6",
+      "asset": "./N_C6.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-c7",
+      "label": "N C7",
+      "node": "N_C7",
+      "asset": "./N_C7.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-c8",
+      "label": "N C8",
+      "node": "N_C8",
+      "asset": "./N_C8.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-median",
+      "label": "N median",
+      "node": "N_median",
+      "asset": "./N_median.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-musculocutaneous-l",
+      "label": "N musculocutaneous L",
+      "node": "N_musculocutaneous_L",
+      "asset": "./N_musculocutaneous_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-phrenic",
+      "label": "N phrenic",
+      "node": "N_phrenic",
+      "asset": "./N_phrenic.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-radial",
+      "label": "N radial",
+      "node": "N_radial",
+      "asset": "./N_radial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-suprascapular",
+      "label": "N suprascapular",
+      "node": "N_suprascapular",
+      "asset": "./N_suprascapular.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-t1",
+      "label": "N T1",
+      "node": "N_T1",
+      "asset": "./N_T1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-t2",
+      "label": "N T2",
+      "node": "N_T2",
+      "asset": "./N_T2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-ulnar",
+      "label": "N ulnar",
+      "node": "N_ulnar",
+      "asset": "./N_ulnar.glb",
+      "region": "root"
+    }
+  ]
+}
