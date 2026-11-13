@@ -1,0 +1,20 @@
+{
+  "id": "daniel",
+  "title": "Daniel",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-daniel",
+      "label": "Daniel",
+      "node": "Daniel",
+      "asset": "./Daniel.glb",
+      "region": "root"
+    }
+  ]
+}
