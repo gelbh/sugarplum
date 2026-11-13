@@ -28,6 +28,7 @@ import Button from "@mui/material/Button";
 import { getEmbedPdfEngine } from "../lib/embedPdfEngine";
 import { normalizeExcerptText } from "./excerptPages";
 import { normalizeProvenancePages } from "./notesProvenanceWrite";
+import { shouldReportStagePage, stageJumpKey } from "./notesStagePageSync";
 
 /** Grade-good wash (brand.css --sp-grade-good-wash) for search matches. */
 const WASH = "rgba(91, 44, 111, 0.35)";
@@ -146,23 +147,35 @@ function NotesEmbedController({
     onSearchHits?.(pageHits > 0);
   }, [currentPageIndex, docStatus, hitCount, onSearchHits, pageCount, search]);
 
-  useEffect(() => {
-    if (docStatus !== "ready" || pageCount < 1) return;
-    if (Date.now() < skipStageSyncUntilRef.current) return;
-    const oneBased = currentPageIndex + 1;
-    if (oneBased === page) return;
-    onStagePage?.(oneBased);
-  }, [currentPageIndex, docStatus, onStagePage, page, pageCount]);
-
+  // Provenance jump before stage→parent sync so index 0 never looks like user nav.
   useEffect(() => {
     if (docStatus !== "ready" || pageCount < 1) return;
     const target = Math.min(Math.max(page, 1), pageCount) - 1;
-    const key = `${pageCount}:${target}`;
+    const key = stageJumpKey(pageCount, target);
     if (jumpedKeyRef.current === key) return;
     jumpedKeyRef.current = key;
     skipStageSyncUntilRef.current = Date.now() + 400;
     stage.goToPage(target, { behavior: "instant" });
   }, [docStatus, page, pageCount, stage]);
+
+  useEffect(() => {
+    if (docStatus !== "ready" || pageCount < 1) return;
+    const target = Math.min(Math.max(page, 1), pageCount) - 1;
+    const oneBased = currentPageIndex + 1;
+    if (
+      !shouldReportStagePage({
+        claimedOneBased: page,
+        stageOneBased: oneBased,
+        jumpAppliedKey: jumpedKeyRef.current,
+        targetJumpKey: stageJumpKey(pageCount, target),
+        skipUntilMs: skipStageSyncUntilRef.current,
+        nowMs: Date.now(),
+      })
+    ) {
+      return;
+    }
+    onStagePage?.(oneBased);
+  }, [currentPageIndex, docStatus, onStagePage, page, pageCount]);
 
   useEffect(() => {
     if (docStatus !== "ready" || pageCount < 1) return;
