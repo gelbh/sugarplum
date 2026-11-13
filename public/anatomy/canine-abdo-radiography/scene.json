@@ -1,0 +1,139 @@
+{
+  "id": "canine-abdo-radiography",
+  "title": "Canine abdominal radiography",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-adrenal-l",
+      "label": "Adrenal L",
+      "node": "Adrenal_L",
+      "asset": "./Adrenal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-adrenal-r",
+      "label": "Adrenal R",
+      "node": "Adrenal_R",
+      "asset": "./Adrenal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-bile-duct",
+      "label": "Bile duct",
+      "node": "Bile_duct",
+      "asset": "./Bile_duct.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-bladder",
+      "label": "Bladder",
+      "node": "Bladder",
+      "asset": "./Bladder.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-colon",
+      "label": "Colon",
+      "node": "Colon",
+      "asset": "./Colon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gall-bladder",
+      "label": "Gall bladder",
+      "node": "Gall_bladder",
+      "asset": "./Gall_bladder.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-kidney-l",
+      "label": "Kidney L",
+      "node": "Kidney_L",
+      "asset": "./Kidney_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-kidney-r",
+      "label": "Kidney R",
+      "node": "Kidney_R",
+      "asset": "./Kidney_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-liver",
+      "label": "Liver",
+      "node": "Liver",
+      "asset": "./Liver.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ovary-l",
+      "label": "Ovary L",
+      "node": "Ovary_L",
+      "asset": "./Ovary_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ovary-r",
+      "label": "Ovary R",
+      "node": "Ovary_R",
+      "asset": "./Ovary_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pancreas-new-copy000",
+      "label": "Pancreas new copy000",
+      "node": "Pancreas_new_copy000",
+      "asset": "./Pancreas_new_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sit",
+      "label": "SIT",
+      "node": "SIT",
+      "asset": "./SIT.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-spleen",
+      "label": "Spleen",
+      "node": "Spleen",
+      "asset": "./Spleen.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-stomach",
+      "label": "Stomach",
+      "node": "Stomach",
+      "asset": "./Stomach.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ureter-l",
+      "label": "Ureter L",
+      "node": "Ureter_L",
+      "asset": "./Ureter_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ureter-r",
+      "label": "Ureter R",
+      "node": "Ureter_R",
+      "asset": "./Ureter_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-uterus",
+      "label": "Uterus",
+      "node": "Uterus",
+      "asset": "./Uterus.glb",
+      "region": "root"
+    }
+  ]
+}

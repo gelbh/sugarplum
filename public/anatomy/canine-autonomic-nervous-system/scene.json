@@ -1,0 +1,419 @@
+{
+  "id": "canine-autonomic-nervous-system",
+  "title": "Canine autonomic nervous system",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-adrenal-l",
+      "label": "Adrenal L",
+      "node": "Adrenal_L",
+      "asset": "./Adrenal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-adrenal-r",
+      "label": "Adrenal R",
+      "node": "Adrenal_R",
+      "asset": "./Adrenal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ansa-sub",
+      "label": "Ansa sub",
+      "node": "Ansa_sub",
+      "asset": "./Ansa_sub.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-bladder",
+      "label": "Bladder",
+      "node": "Bladder",
+      "asset": "./Bladder.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-brainstem",
+      "label": "Brainstem",
+      "node": "Brainstem",
+      "asset": "./Brainstem.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c1-atlas",
+      "label": "C1 Atlas",
+      "node": "C1_Atlas",
+      "asset": "./C1_Atlas.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c2-axis",
+      "label": "C2 Axis",
+      "node": "C2_Axis",
+      "asset": "./C2_Axis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c3",
+      "label": "C3",
+      "node": "C3",
+      "asset": "./C3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c4",
+      "label": "C4",
+      "node": "C4",
+      "asset": "./C4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c5",
+      "label": "C5",
+      "node": "C5",
+      "asset": "./C5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c6",
+      "label": "C6",
+      "node": "C6",
+      "asset": "./C6.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c7",
+      "label": "C7",
+      "node": "C7",
+      "asset": "./C7.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cd-mesenteric-g",
+      "label": "Cd mesenteric g",
+      "node": "Cd_mesenteric_g",
+      "asset": "./Cd_mesenteric_g.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cervicothoracic-g",
+      "label": "Cervicothoracic g",
+      "node": "Cervicothoracic_g",
+      "asset": "./Cervicothoracic_g.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-colon",
+      "label": "Colon",
+      "node": "Colon",
+      "asset": "./Colon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cr-cerv-g",
+      "label": "Cr cerv g",
+      "node": "Cr_cerv_g",
+      "asset": "./Cr_cerv_g.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cr-mesenteric-g",
+      "label": "Cr mesenteric g",
+      "node": "Cr_mesenteric_g",
+      "asset": "./Cr_mesenteric_g.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-vag",
+      "label": "Dorsal Vag",
+      "node": "Dorsal_Vag",
+      "asset": "./Dorsal_Vag.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ganglia",
+      "label": "Ganglia",
+      "node": "Ganglia",
+      "asset": "./Ganglia.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hypogastric-nn-l",
+      "label": "Hypogastric nn L",
+      "node": "Hypogastric_nn_L",
+      "asset": "./Hypogastric_nn_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-interganglionic",
+      "label": "Interganglionic",
+      "node": "Interganglionic",
+      "asset": "./Interganglionic.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-coeliac-g",
+      "label": "L coeliac g",
+      "node": "L_coeliac_g",
+      "asset": "./L_coeliac_g.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-recurrent-ln",
+      "label": "L recurrent ln",
+      "node": "L_recurrent_ln",
+      "asset": "./L_recurrent_ln.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l1",
+      "label": "L1",
+      "node": "L1",
+      "asset": "./L1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l2",
+      "label": "L2",
+      "node": "L2",
+      "asset": "./L2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l3",
+      "label": "L3",
+      "node": "L3",
+      "asset": "./L3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l4",
+      "label": "L4",
+      "node": "L4",
+      "asset": "./L4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l5",
+      "label": "L5",
+      "node": "L5",
+      "asset": "./L5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l6",
+      "label": "L6",
+      "node": "L6",
+      "asset": "./L6.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l7",
+      "label": "L7",
+      "node": "L7",
+      "asset": "./L7.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-c-gang",
+      "label": "Middle c gang",
+      "node": "Middle_c_gang",
+      "asset": "./Middle_c_gang.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mj-splanch-nn",
+      "label": "Mj splanch nn",
+      "node": "Mj_splanch_nn",
+      "asset": "./Mj_splanch_nn.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-oesophagus",
+      "label": "OESOPHAGUS",
+      "node": "OESOPHAGUS",
+      "asset": "./OESOPHAGUS.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-parasymp",
+      "label": "PARASYMP",
+      "node": "PARASYMP",
+      "asset": "./PARASYMP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvic-n-l",
+      "label": "Pelvic n L",
+      "node": "Pelvic_n_L",
+      "asset": "./Pelvic_n_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis",
+      "label": "Pelvis",
+      "node": "Pelvis",
+      "asset": "./Pelvis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ramus-comms",
+      "label": "Ramus comms",
+      "node": "Ramus_comms",
+      "asset": "./Ramus_comms.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sacrum",
+      "label": "Sacrum",
+      "node": "Sacrum",
+      "asset": "./Sacrum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-spinal-cord",
+      "label": "SPINAL CORD",
+      "node": "SPINAL_CORD",
+      "asset": "./SPINAL_CORD.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-stomach",
+      "label": "Stomach",
+      "node": "Stomach",
+      "asset": "./Stomach.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-symp",
+      "label": "SYMP",
+      "node": "SYMP",
+      "asset": "./SYMP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t1",
+      "label": "T1",
+      "node": "T1",
+      "asset": "./T1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t10",
+      "label": "T10",
+      "node": "T10",
+      "asset": "./T10.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t11",
+      "label": "T11",
+      "node": "T11",
+      "asset": "./T11.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t12",
+      "label": "T12",
+      "node": "T12",
+      "asset": "./T12.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t13",
+      "label": "T13",
+      "node": "T13",
+      "asset": "./T13.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t2",
+      "label": "T2",
+      "node": "T2",
+      "asset": "./T2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t3",
+      "label": "T3",
+      "node": "T3",
+      "asset": "./T3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t4",
+      "label": "T4",
+      "node": "T4",
+      "asset": "./T4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t5",
+      "label": "T5",
+      "node": "T5",
+      "asset": "./T5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t6",
+      "label": "T6",
+      "node": "T6",
+      "asset": "./T6.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t7",
+      "label": "T7",
+      "node": "T7",
+      "asset": "./T7.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t8",
+      "label": "T8",
+      "node": "T8",
+      "asset": "./T8.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-t9",
+      "label": "T9",
+      "node": "T9",
+      "asset": "./T9.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-thoracic-splanch",
+      "label": "Thoracic splanch",
+      "node": "Thoracic_splanch",
+      "asset": "./Thoracic_splanch.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vagus",
+      "label": "Vagus",
+      "node": "Vagus",
+      "asset": "./Vagus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ventral-vagu",
+      "label": "Ventral vagu",
+      "node": "Ventral_vagu",
+      "asset": "./Ventral_vagu.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vert-nn",
+      "label": "Vert nn",
+      "node": "Vert_nn",
+      "asset": "./Vert_nn.glb",
+      "region": "root"
+    }
+  ]
+}

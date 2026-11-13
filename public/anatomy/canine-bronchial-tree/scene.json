@@ -1,0 +1,153 @@
+{
+  "id": "canine-bronchial-tree",
+  "title": "Canine bronchial tree",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-left-caudal-lobe-bronchus",
+      "label": "Left caudal lobe bronchus",
+      "node": "Left_caudal_lobe_bronchus",
+      "asset": "./Left_caudal_lobe_bronchus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-left-caudal-lobe-bronchus-1",
+      "label": "Left caudal lobe bronchus 1",
+      "node": "Left_caudal_lobe_bronchus_1",
+      "asset": "./Left_caudal_lobe_bronchus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-left-caudal-part-cranial-lobe-bronchus",
+      "label": "Left caudal part cranial lobe bronchus",
+      "node": "Left_caudal_part_cranial_lobe_bronchus",
+      "asset": "./Left_caudal_part_cranial_lobe_bronchus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-left-caudal-part-cranial-lobe-bronchus-1",
+      "label": "Left caudal part cranial lobe bronchus 1",
+      "node": "Left_caudal_part_cranial_lobe_bronchus_1",
+      "asset": "./Left_caudal_part_cranial_lobe_bronchus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-left-cranial-part-cranial-lobe-bronchus",
+      "label": "Left cranial part cranial lobe bronchus",
+      "node": "Left_cranial_part_cranial_lobe_bronchus",
+      "asset": "./Left_cranial_part_cranial_lobe_bronchus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-left-cranial-part-cranial-lobe-bronchus-1",
+      "label": "Left cranial part cranial lobe bronchus 1",
+      "node": "Left_cranial_part_cranial_lobe_bronchus_1",
+      "asset": "./Left_cranial_part_cranial_lobe_bronchus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-left-principal-bronchus",
+      "label": "Left principal bronchus",
+      "node": "Left_principal_bronchus",
+      "asset": "./Left_principal_bronchus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-left-principal-bronchus-1",
+      "label": "Left principal bronchus 1",
+      "node": "Left_principal_bronchus_1",
+      "asset": "./Left_principal_bronchus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-right-accessory-lobe-bronchus",
+      "label": "Right accessory lobe bronchus",
+      "node": "Right_accessory_lobe_bronchus",
+      "asset": "./Right_accessory_lobe_bronchus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-right-accessory-lobe-bronchus-1",
+      "label": "Right accessory lobe bronchus 1",
+      "node": "Right_accessory_lobe_bronchus_1",
+      "asset": "./Right_accessory_lobe_bronchus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-right-caudal-lobe-bronchus",
+      "label": "Right caudal lobe bronchus",
+      "node": "Right_caudal_lobe_bronchus",
+      "asset": "./Right_caudal_lobe_bronchus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-right-caudal-lobe-bronchus-1",
+      "label": "Right caudal lobe bronchus 1",
+      "node": "Right_caudal_lobe_bronchus_1",
+      "asset": "./Right_caudal_lobe_bronchus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-right-cranial-lobe-bronchus",
+      "label": "Right cranial lobe bronchus",
+      "node": "Right_cranial_lobe_bronchus",
+      "asset": "./Right_cranial_lobe_bronchus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-right-cranial-lobe-bronchus-1",
+      "label": "Right cranial lobe bronchus 1",
+      "node": "Right_cranial_lobe_bronchus_1",
+      "asset": "./Right_cranial_lobe_bronchus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-right-middle-lobe-bronchus",
+      "label": "Right middle lobe bronchus",
+      "node": "Right_middle_lobe_bronchus",
+      "asset": "./Right_middle_lobe_bronchus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-right-middle-lobe-bronchus-1",
+      "label": "Right middle lobe bronchus 1",
+      "node": "Right_middle_lobe_bronchus_1",
+      "asset": "./Right_middle_lobe_bronchus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-right-principal-bronchus",
+      "label": "Right principal bronchus",
+      "node": "Right_principal_bronchus",
+      "asset": "./Right_principal_bronchus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-right-principal-bronchus-1",
+      "label": "Right principal bronchus 1",
+      "node": "Right_principal_bronchus_1",
+      "asset": "./Right_principal_bronchus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-trachea",
+      "label": "Trachea",
+      "node": "Trachea",
+      "asset": "./Trachea.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-trachea-1",
+      "label": "Trachea 1",
+      "node": "Trachea_1",
+      "asset": "./Trachea_1.glb",
+      "region": "root"
+    }
+  ]
+}

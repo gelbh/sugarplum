@@ -1,0 +1,97 @@
+{
+  "id": "canine-lung-fields-transparent",
+  "title": "Canine lung fields transparent",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-accessory-lobe",
+      "label": "Accessory lobe",
+      "node": "Accessory_lobe",
+      "asset": "./Accessory_lobe.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-caudal",
+      "label": "Caudal",
+      "node": "Caudal",
+      "asset": "./Caudal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-caudal-001",
+      "label": "Caudal 001",
+      "node": "Caudal_001",
+      "asset": "./Caudal_001.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-caudal-002",
+      "label": "Caudal 002",
+      "node": "Caudal_002",
+      "asset": "./Caudal_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-caudal-lobe-r-lung",
+      "label": "Caudal lobe R lung",
+      "node": "Caudal_lobe_R_lung",
+      "asset": "./Caudal_lobe_R_lung.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-coronary-veins",
+      "label": "Coronary veins",
+      "node": "Coronary_veins",
+      "asset": "./Coronary_veins.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranial-lobe-r-lung",
+      "label": "Cranial lobe R lung",
+      "node": "Cranial_lobe_R_lung",
+      "asset": "./Cranial_lobe_R_lung.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-left-coronary-artery",
+      "label": "Left coronary artery",
+      "node": "Left_coronary_artery",
+      "asset": "./Left_coronary_artery.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-lobe-r-lung",
+      "label": "Middle lobe R lung",
+      "node": "Middle_lobe_R_lung",
+      "asset": "./Middle_lobe_R_lung.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-right-coronary-artery",
+      "label": "Right coronary artery",
+      "node": "Right_coronary_artery",
+      "asset": "./Right_coronary_artery.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-trachea",
+      "label": "Trachea",
+      "node": "Trachea",
+      "asset": "./Trachea.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vasculature-decimate",
+      "label": "Vasculature decimate",
+      "node": "Vasculature_decimate",
+      "asset": "./Vasculature_decimate.glb",
+      "region": "root"
+    }
+  ]
+}

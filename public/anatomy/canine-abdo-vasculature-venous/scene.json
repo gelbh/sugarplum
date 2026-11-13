@@ -1,0 +1,293 @@
+{
+  "id": "canine-abdo-vasculature-venous",
+  "title": "Canine abdominal venous vasculature",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-adrenal-l",
+      "label": "Adrenal L",
+      "node": "Adrenal_L",
+      "asset": "./Adrenal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-adrenal-r",
+      "label": "Adrenal R",
+      "node": "Adrenal_R",
+      "asset": "./Adrenal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-azygous",
+      "label": "Azygous",
+      "node": "Azygous",
+      "asset": "./Azygous.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cd-pancreaticoduodenal-vv",
+      "label": "Cd pancreaticoduodenal vv",
+      "node": "Cd_pancreaticoduodenal_vv",
+      "asset": "./Cd_pancreaticoduodenal_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-colon",
+      "label": "Colon",
+      "node": "Colon",
+      "asset": "./Colon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-common-iliac-vv-l",
+      "label": "Common iliac vv L",
+      "node": "Common_iliac_vv_L",
+      "asset": "./Common_iliac_vv_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-common-iliac-vv-r",
+      "label": "Common iliac vv R",
+      "node": "Common_iliac_vv_R",
+      "asset": "./Common_iliac_vv_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cr-pancreaticoduodenal-vv",
+      "label": "Cr pancreaticoduodenal vv",
+      "node": "Cr_pancreaticoduodenal_vv",
+      "asset": "./Cr_pancreaticoduodenal_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cran-mesenteric-others",
+      "label": "Cran mesenteric others",
+      "node": "Cran_mesenteric_others",
+      "asset": "./Cran_mesenteric_others.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-deep-circumflex-vv-l",
+      "label": "Deep circumflex vv L",
+      "node": "Deep_circumflex_vv_L",
+      "asset": "./Deep_circumflex_vv_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-deep-circumflex-vv-r",
+      "label": "Deep circumflex vv R",
+      "node": "Deep_circumflex_vv_R",
+      "asset": "./Deep_circumflex_vv_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ext-iliac-vv-l",
+      "label": "Ext iliac vv L",
+      "node": "Ext_iliac_vv_L",
+      "asset": "./Ext_iliac_vv_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ext-iliac-vv-r",
+      "label": "Ext iliac vv R",
+      "node": "Ext_iliac_vv_R",
+      "asset": "./Ext_iliac_vv_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gastric-vv-l",
+      "label": "Gastric vv L",
+      "node": "Gastric_vv_L",
+      "asset": "./Gastric_vv_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gastric-vv-r",
+      "label": "Gastric vv R",
+      "node": "Gastric_vv_R",
+      "asset": "./Gastric_vv_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gastroduoedenal-vv",
+      "label": "Gastroduoedenal vv",
+      "node": "Gastroduoedenal_vv",
+      "asset": "./Gastroduoedenal_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gastroepiploic-vv-l",
+      "label": "Gastroepiploic vv L",
+      "node": "Gastroepiploic_vv_L",
+      "asset": "./Gastroepiploic_vv_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gastroepiploic-vv-r",
+      "label": "Gastroepiploic vv R",
+      "node": "Gastroepiploic_vv_R",
+      "asset": "./Gastroepiploic_vv_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gonadal-vv-l",
+      "label": "Gonadal vv L",
+      "node": "Gonadal_vv_L",
+      "asset": "./Gonadal_vv_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gonadal-vv-r",
+      "label": "Gonadal vv R",
+      "node": "Gonadal_vv_R",
+      "asset": "./Gonadal_vv_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hepatic-vvs-l",
+      "label": "Hepatic vvs L",
+      "node": "Hepatic_vvs_L",
+      "asset": "./Hepatic_vvs_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hepatic-vvs-r",
+      "label": "Hepatic vvs R",
+      "node": "Hepatic_vvs_R",
+      "asset": "./Hepatic_vvs_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-int-iliac-vv-l",
+      "label": "Int iliac vv L",
+      "node": "Int_iliac_vv_L",
+      "asset": "./Int_iliac_vv_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-int-iliac-vv-r",
+      "label": "Int iliac vv R",
+      "node": "Int_iliac_vv_R",
+      "asset": "./Int_iliac_vv_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-kidney-l",
+      "label": "Kidney L",
+      "node": "Kidney_L",
+      "asset": "./Kidney_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-kidney-r",
+      "label": "Kidney R",
+      "node": "Kidney_R",
+      "asset": "./Kidney_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-liver",
+      "label": "Liver",
+      "node": "Liver",
+      "asset": "./Liver.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-liver-portal-circulation",
+      "label": "Liver portal circulation",
+      "node": "Liver_portal_circulation",
+      "asset": "./Liver_portal_circulation.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-liver-vena-cava",
+      "label": "Liver vena cava",
+      "node": "Liver_vena_cava",
+      "asset": "./Liver_vena_cava.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-model-copy000",
+      "label": "Model copy000",
+      "node": "Model_copy000",
+      "asset": "./Model_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pancreas",
+      "label": "Pancreas",
+      "node": "Pancreas",
+      "asset": "./Pancreas.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-phrenicoabd-vv-l",
+      "label": "Phrenicoabd vv L",
+      "node": "Phrenicoabd_vv_L",
+      "asset": "./Phrenicoabd_vv_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-phrenicoabd-vv-r",
+      "label": "Phrenicoabd vv R",
+      "node": "Phrenicoabd_vv_R",
+      "asset": "./Phrenicoabd_vv_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-portal-vv",
+      "label": "Portal vv",
+      "node": "Portal_vv",
+      "asset": "./Portal_vv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-renal-vv-l",
+      "label": "Renal vv L",
+      "node": "Renal_vv_L",
+      "asset": "./Renal_vv_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-renal-vv-r",
+      "label": "Renal vv R",
+      "node": "Renal_vv_R",
+      "asset": "./Renal_vv_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-short-gastric-vvs",
+      "label": "Short gastric vvs",
+      "node": "Short_gastric_vvs",
+      "asset": "./Short_gastric_vvs.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-spleen",
+      "label": "Spleen",
+      "node": "Spleen",
+      "asset": "./Spleen.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-splenic-vvs",
+      "label": "Splenic vvs",
+      "node": "Splenic_vvs",
+      "asset": "./Splenic_vvs.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-stomach",
+      "label": "Stomach",
+      "node": "Stomach",
+      "asset": "./Stomach.glb",
+      "region": "root"
+    }
+  ]
+}
