@@ -1,0 +1,27 @@
+{
+  "id": "terminology-hindlimb-movements",
+  "title": "Terminology hindlimb movements",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-femur",
+      "label": "Femur",
+      "node": "Femur",
+      "asset": "./Femur.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis",
+      "label": "Pelvis",
+      "node": "Pelvis",
+      "asset": "./Pelvis.glb",
+      "region": "root"
+    }
+  ]
+}
