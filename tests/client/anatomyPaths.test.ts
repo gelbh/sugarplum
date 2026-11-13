@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   anatomyHubHref,
   anatomySceneHref,
+  canonicalAnatomySceneId,
   matchAnatomyPath,
 } from "../../src/anatomy/paths";
 
@@ -37,5 +38,13 @@ describe("anatomy hrefs", () => {
   it("builds hub and scene hrefs", () => {
     expect(anatomyHubHref()).toBe("/anatomy");
     expect(anatomySceneHref("spike-limb")).toBe("/anatomy/spike-limb");
+  });
+});
+
+describe("canonicalAnatomySceneId", () => {
+  it("maps legacy canine-limb to canine", () => {
+    expect(canonicalAnatomySceneId("canine-limb")).toBe("canine");
+    expect(canonicalAnatomySceneId("canine")).toBe("canine");
+    expect(canonicalAnatomySceneId("equine")).toBe("equine");
   });
 });

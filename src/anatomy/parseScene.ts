@@ -6,6 +6,13 @@ const StructureSchema = z.object({
   label: z.string().min(1),
   node: z.string().min(1),
   asset: z.string().min(1).optional(),
+  region: z.string().min(1).optional(),
+});
+
+const RegionSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  defaultActive: z.boolean().optional(),
 });
 
 const ManifestSchema = z
@@ -13,6 +20,7 @@ const ManifestSchema = z
     id: z.string().min(1),
     title: z.string().min(1),
     asset: z.string().min(1).optional(),
+    regions: z.array(RegionSchema).min(1).optional(),
     structures: z.array(StructureSchema).min(1),
   })
   .superRefine((data, ctx) => {
@@ -27,9 +35,7 @@ const ManifestSchema = z
           path: ["asset"],
         });
       }
-      return;
-    }
-    if (withoutAsset.length > 0) {
+    } else if (withoutAsset.length > 0) {
       ctx.addIssue({
         code: "custom",
         message:
@@ -37,6 +43,28 @@ const ManifestSchema = z
         path: ["structures"],
       });
     }
+
+    if (!data.regions) {
+      return;
+    }
+    const regionIds = new Set(data.regions.map((r) => r.id));
+    data.structures.forEach((s, i) => {
+      if (!s.region) {
+        ctx.addIssue({
+          code: "custom",
+          message: "structures require region when regions are listed",
+          path: ["structures", i, "region"],
+        });
+        return;
+      }
+      if (!regionIds.has(s.region)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `unknown region "${s.region}"`,
+          path: ["structures", i, "region"],
+        });
+      }
+    });
   });
 
 export function parseAnatomySceneManifest(
@@ -65,4 +93,15 @@ export function safeAnatomyRelativeAsset(raw: string): string | null {
     return null;
   }
   return asset;
+}
+
+/** Region ids that should load on first open. */
+export function defaultActiveRegionIds(
+  manifest: AnatomySceneManifest,
+): string[] {
+  const regions = manifest.regions;
+  if (!regions?.length) return [];
+  const marked = regions.filter((r) => r.defaultActive).map((r) => r.id);
+  if (marked.length > 0) return marked;
+  return [regions[0].id];
 }

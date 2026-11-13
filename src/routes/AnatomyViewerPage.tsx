@@ -9,6 +9,7 @@ import Typography from "@mui/material/Typography";
 import type { MouseEvent } from "react";
 import AnatomyCanvas, { type AnatomyLoadSpec } from "../anatomy/AnatomyCanvas";
 import {
+  defaultActiveRegionIds,
   parseAnatomySceneManifest,
   safeAnatomyRelativeAsset,
 } from "../anatomy/parseScene";
@@ -26,20 +27,28 @@ type Props = { sceneId: string };
 function buildLoads(
   sceneId: string,
   manifest: AnatomySceneManifest,
+  activeRegions: Set<string>,
 ): AnatomyLoadSpec[] | null {
   const base = `/anatomy/${encodeURIComponent(sceneId)}/`;
+  const structures =
+    manifest.regions && manifest.regions.length > 0
+      ? manifest.structures.filter(
+          (s) => s.region != null && activeRegions.has(s.region),
+        )
+      : manifest.structures;
+
   if (manifest.asset) {
     const rel = safeAnatomyRelativeAsset(manifest.asset);
     if (!rel) return null;
     const url = `${base}${rel}`;
-    return manifest.structures.map((s) => ({
+    return structures.map((s) => ({
       structureId: s.id,
       url,
       node: s.node,
     }));
   }
   const loads: AnatomyLoadSpec[] = [];
-  for (const s of manifest.structures) {
+  for (const s of structures) {
     if (!s.asset) return null;
     const rel = safeAnatomyRelativeAsset(s.asset);
     if (!rel) return null;
@@ -55,6 +64,9 @@ function buildLoads(
 export default function AnatomyViewerPage({ sceneId }: Props) {
   const [manifest, setManifest] = useState<AnatomySceneManifest | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activeRegions, setActiveRegions] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [ui, dispatch] = useReducer(
     structureUiReducer,
     undefined,
@@ -70,6 +82,7 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
     let cancelled = false;
     setManifest(null);
     setError(null);
+    setActiveRegions(new Set());
     void (async () => {
       try {
         const res = await fetch(
@@ -81,7 +94,10 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
         if (parsed.id !== sceneId) {
           throw new Error("Scene id mismatch");
         }
-        if (!cancelled) setManifest(parsed);
+        if (!cancelled) {
+          setManifest(parsed);
+          setActiveRegions(new Set(defaultActiveRegionIds(parsed)));
+        }
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : "Failed to load scene");
@@ -95,11 +111,21 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
 
   const loads = useMemo(() => {
     if (!manifest) return null;
-    return buildLoads(sceneId, manifest);
-  }, [manifest, sceneId]);
+    return buildLoads(sceneId, manifest, activeRegions);
+  }, [manifest, sceneId, activeRegions]);
 
   const selectedLabel =
     manifest?.structures.find((s) => s.id === ui.selectedId)?.label ?? null;
+
+  const toggleRegion = (regionId: string) => {
+    setActiveRegions((prev) => {
+      const next = new Set(prev);
+      if (next.has(regionId)) next.delete(regionId);
+      else next.add(regionId);
+      return next;
+    });
+    dispatch({ type: "reset" });
+  };
 
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 2, md: 3 } }}>
@@ -145,7 +171,7 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
         </Box>
 
         {error ? <Alert severity="error">{error}</Alert> : null}
-        {manifest && !loads ? (
+        {manifest && loads === null ? (
           <Alert severity="error">Invalid asset paths in scene manifest.</Alert>
         ) : null}
 
@@ -158,16 +184,25 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
           >
             <StructurePanel
               structures={manifest.structures}
+              regions={manifest.regions}
+              activeRegions={activeRegions}
+              onToggleRegion={toggleRegion}
               ui={ui}
               dispatch={dispatch}
             />
             <Box sx={{ flex: 1, minHeight: 360 }}>
-              <AnatomyCanvas
-                key={`${loads.map((l) => l.url).join("|")}:${viewEpoch}`}
-                loads={loads}
-                ui={ui}
-                onSelect={(id) => dispatch({ type: "select", id })}
-              />
+              {loads.length === 0 ? (
+                <Typography color="text.secondary" sx={{ py: 4 }}>
+                  Enable a region to load 3D models.
+                </Typography>
+              ) : (
+                <AnatomyCanvas
+                  key={`${loads.map((l) => `${l.structureId}:${l.url}`).join("|")}:${viewEpoch}`}
+                  loads={loads}
+                  ui={ui}
+                  onSelect={(id) => dispatch({ type: "select", id })}
+                />
+              )}
             </Box>
           </Stack>
         ) : !error && !manifest ? (
