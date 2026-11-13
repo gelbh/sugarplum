@@ -1,0 +1,111 @@
+{
+  "id": "canine-hemithorax",
+  "title": "Canine hemithorax",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-heart",
+      "label": "Heart",
+      "node": "Heart",
+      "asset": "./Heart.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-heart-brachiocephalic-trunk-others",
+      "label": "Heart brachiocephalic trunk others",
+      "node": "Heart_brachiocephalic_trunk_others",
+      "asset": "./Heart_brachiocephalic_trunk_others.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-heart-cran-vena-cava",
+      "label": "Heart cran vena cava",
+      "node": "Heart_cran_vena_cava",
+      "asset": "./Heart_cran_vena_cava.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-heart-l-subclavian-a",
+      "label": "Heart L subclavian a",
+      "node": "Heart_L_subclavian_a",
+      "asset": "./Heart_L_subclavian_a.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-heart-pulmonary-venous-vasculature",
+      "label": "Heart pulmonary venous vasculature",
+      "node": "Heart_pulmonary_venous_vasculature",
+      "asset": "./Heart_pulmonary_venous_vasculature.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lung-r-accessory-lobe",
+      "label": "Lung R accessory lobe",
+      "node": "Lung_R_accessory_lobe",
+      "asset": "./Lung_R_accessory_lobe.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lung-r-caudal-lobe",
+      "label": "Lung R caudal lobe",
+      "node": "Lung_R_caudal_lobe",
+      "asset": "./Lung_R_caudal_lobe.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lung-r-cranial-lobe",
+      "label": "Lung R cranial lobe",
+      "node": "Lung_R_cranial_lobe",
+      "asset": "./Lung_R_cranial_lobe.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lung-r-middle-lobe",
+      "label": "Lung R middle lobe",
+      "node": "Lung_R_middle_lobe",
+      "asset": "./Lung_R_middle_lobe.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mesh-canine-hemithorax-heart",
+      "label": "mesh canine hemithorax heart",
+      "node": "mesh_canine_hemithorax_heart",
+      "asset": "./mesh_canine_hemithorax_heart.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mesh-canine-hemithorax-pipes",
+      "label": "mesh canine hemithorax pipes",
+      "node": "mesh_canine_hemithorax_pipes",
+      "asset": "./mesh_canine_hemithorax_pipes.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pipes-aorta",
+      "label": "Pipes aorta",
+      "node": "Pipes_aorta",
+      "asset": "./Pipes_aorta.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pipes-oesophagus",
+      "label": "Pipes oesophagus",
+      "node": "Pipes_oesophagus",
+      "asset": "./Pipes_oesophagus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pipes-trachea",
+      "label": "Pipes trachea",
+      "node": "Pipes_trachea",
+      "asset": "./Pipes_trachea.glb",
+      "region": "root"
+    }
+  ]
+}

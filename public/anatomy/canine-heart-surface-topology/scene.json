@@ -1,0 +1,146 @@
+{
+  "id": "canine-heart-surface-topology",
+  "title": "Canine heart surface",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-aorta",
+      "label": "AORTA",
+      "node": "AORTA",
+      "asset": "./AORTA.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-apex",
+      "label": "APEX",
+      "node": "APEX",
+      "asset": "./APEX.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-atrium-l",
+      "label": "ATRIUM L",
+      "node": "ATRIUM_L",
+      "asset": "./ATRIUM_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-atrium-r",
+      "label": "ATRIUM R",
+      "node": "ATRIUM_R",
+      "asset": "./ATRIUM_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-auricle-l",
+      "label": "AURICLE L",
+      "node": "AURICLE_L",
+      "asset": "./AURICLE_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-auricle-r",
+      "label": "AURICLE R",
+      "node": "AURICLE_R",
+      "asset": "./AURICLE_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-brachiocephalic-trunk",
+      "label": "BRACHIOCEPHALIC TRUNK",
+      "node": "BRACHIOCEPHALIC_TRUNK",
+      "asset": "./BRACHIOCEPHALIC_TRUNK.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-coronary-groove",
+      "label": "CORONARY GROOVE",
+      "node": "CORONARY_GROOVE",
+      "asset": "./CORONARY_GROOVE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-left-subclavian-artery",
+      "label": "LEFT SUBCLAVIAN ARTERY",
+      "node": "LEFT_SUBCLAVIAN_ARTERY",
+      "asset": "./LEFT_SUBCLAVIAN_ARTERY.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mesh-canine-cardiac-low",
+      "label": "mesh canine cardiac low",
+      "node": "mesh_canine_cardiac_low",
+      "asset": "./mesh_canine_cardiac_low.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-paraconal-iv-groove",
+      "label": "PARACONAL IV GROOVE",
+      "node": "PARACONAL_IV_GROOVE",
+      "asset": "./PARACONAL_IV_GROOVE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pulmonary-artery",
+      "label": "PULMONARY ARTERY",
+      "node": "PULMONARY_ARTERY",
+      "asset": "./PULMONARY_ARTERY.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pulmonary-veins-l",
+      "label": "PULMONARY VEINS L",
+      "node": "PULMONARY_VEINS_L",
+      "asset": "./PULMONARY_VEINS_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pulmonary-veins-r",
+      "label": "PULMONARY VEINS R",
+      "node": "PULMONARY_VEINS_R",
+      "asset": "./PULMONARY_VEINS_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-subsinuosal-groove",
+      "label": "SUBSINUOSAL GROOVE",
+      "node": "SUBSINUOSAL_GROOVE",
+      "asset": "./SUBSINUOSAL_GROOVE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vena-cava-caudal",
+      "label": "VENA CAVA CAUDAL",
+      "node": "VENA_CAVA_CAUDAL",
+      "asset": "./VENA_CAVA_CAUDAL.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vena-cava-cranial",
+      "label": "VENA CAVA CRANIAL",
+      "node": "VENA_CAVA_CRANIAL",
+      "asset": "./VENA_CAVA_CRANIAL.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ventricle-l",
+      "label": "VENTRICLE L",
+      "node": "VENTRICLE_L",
+      "asset": "./VENTRICLE_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ventricle-r",
+      "label": "VENTRICLE R",
+      "node": "VENTRICLE_R",
+      "asset": "./VENTRICLE_R.glb",
+      "region": "root"
+    }
+  ]
+}
