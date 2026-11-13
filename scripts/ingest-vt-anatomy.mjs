@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
- * Copy VT-ARIES Production GLBs into public/anatomy/{canine,equine,bovine}
+ * Copy VT-ARIES Production GLBs into public/anatomy/{species}
  * and generate scene.json + CREDITS.md. Expects a local checkout of
  * VT-ARIES/Anatomy with Production models under --src (default /tmp/vt-anatomy).
+ * Optional: --only=Daniel (or Canine|Equine|Bovine) to ingest one species.
  */
 import { createHash } from "node:crypto";
 import {
@@ -20,12 +21,16 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = join(ROOT, "public", "anatomy");
-const SPECIES = ["Canine", "Equine", "Bovine"];
+const SPECIES = ["Canine", "Equine", "Bovine", "Daniel"];
 const DEFAULT_SRC = "/tmp/vt-anatomy/models";
 
 const srcRoot = process.argv
   .find((a) => a.startsWith("--src="))
   ?.slice("--src=".length) || DEFAULT_SRC;
+
+const onlyArg = process.argv
+  .find((a) => a.startsWith("--only="))
+  ?.slice("--only=".length);
 
 const CREDITS = (species) => `# ${species} anatomy — credits
 
@@ -171,7 +176,18 @@ function main() {
     console.error(`Source missing: ${srcRoot}`);
     process.exit(1);
   }
-  for (const sp of SPECIES) ingestSpecies(sp);
+  if (onlyArg !== undefined && onlyArg.trim() === "") {
+    console.error(`Empty --only=; expected one of ${SPECIES.join(", ")}`);
+    process.exit(1);
+  }
+  const targets = onlyArg
+    ? SPECIES.filter((s) => s.toLowerCase() === onlyArg.toLowerCase())
+    : SPECIES;
+  if (onlyArg && targets.length === 0) {
+    console.error(`Unknown --only=${onlyArg}; expected one of ${SPECIES.join(", ")}`);
+    process.exit(1);
+  }
+  for (const sp of targets) ingestSpecies(sp);
   const limb = join(OUT, "canine-limb");
   if (existsSync(limb)) {
     rmSync(limb, { recursive: true, force: true });
