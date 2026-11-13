@@ -1,0 +1,41 @@
+{
+  "id": "feline-skull-landmarks",
+  "title": "Feline skull landmarks",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-mandible",
+      "label": "Mandible",
+      "node": "Mandible",
+      "asset": "./Mandible.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-maxilla-clean-voids-fill-fine",
+      "label": "Maxilla clean voids fill fine",
+      "node": "Maxilla_clean_voids_fill_fine",
+      "asset": "./Maxilla_clean_voids_fill_fine.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-teeth-bottom",
+      "label": "Teeth bottom",
+      "node": "Teeth_bottom",
+      "asset": "./Teeth_bottom.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-teeth-top",
+      "label": "Teeth top",
+      "node": "Teeth_top",
+      "asset": "./Teeth_top.glb",
+      "region": "root"
+    }
+  ]
+}

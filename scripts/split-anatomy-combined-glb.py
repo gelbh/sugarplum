@@ -43,23 +43,27 @@ def split_glb(glb_path: Path, out_dir: Path) -> tuple[int, int]:
 
     kept = 0
     skipped = 0
+    used: set[str] = set()
     # Prefer geometry names (mesh identities from REA export).
+    # Keep dots as underscores so "chin_skull_L.014" does not collapse to "chin_skull_L".
     for name, geom in scene.geometry.items():
         if is_junk(name):
             skipped += 1
             print(f"skip {name}")
             continue
-        stem = Path(name).stem
-        # URL-safe filename; THREE node name stays the geometry stem via Scene key.
-        safe = "".join(c if c.isalnum() or c in "-_" else "_" for c in stem)
+        safe = "".join(c if c.isalnum() or c in "-_" else "_" for c in name)
         safe = safe.strip("_") or "mesh"
+        base = safe
+        n = 2
+        while safe in used:
+            safe = f"{base}_{n}"
+            n += 1
+        used.add(safe)
         out_path = out_dir / f"{safe}.glb"
-        if out_path.exists():
-            raise SystemExit(f"Duplicate mesh stem after filter: {safe}")
         single = trimesh.Scene({safe: geom})
         single.export(str(out_path))
         kept += 1
-        print(f"keep {stem} -> {out_path.name}")
+        print(f"keep {name} -> {out_path.name}")
 
     return kept, skipped
 

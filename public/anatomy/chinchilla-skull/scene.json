@@ -1,0 +1,279 @@
+{
+  "id": "chinchilla-skull",
+  "title": "Chinchilla skull",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-chin-skull-l-014",
+      "label": "chin skull L 014",
+      "node": "chin_skull_L_014",
+      "asset": "./chin_skull_L_014.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-chin-skull-l-014-1",
+      "label": "chin skull L 014 1",
+      "node": "chin_skull_L_014_1",
+      "asset": "./chin_skull_L_014_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-chin-skull-l-018",
+      "label": "chin skull L 018",
+      "node": "chin_skull_L_018",
+      "asset": "./chin_skull_L_018.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-chin-skull-l-018-1",
+      "label": "chin skull L 018 1",
+      "node": "chin_skull_L_018_1",
+      "asset": "./chin_skull_L_018_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-chin-skull-l-020",
+      "label": "chin skull L 020",
+      "node": "chin_skull_L_020",
+      "asset": "./chin_skull_L_020.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-chin-skull-l-020-1",
+      "label": "chin skull L 020 1",
+      "node": "chin_skull_L_020_1",
+      "asset": "./chin_skull_L_020_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-chin-skull-l-023",
+      "label": "chin skull L 023",
+      "node": "chin_skull_L_023",
+      "asset": "./chin_skull_L_023.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-chin-skull-l-023-1",
+      "label": "chin skull L 023 1",
+      "node": "chin_skull_L_023_1",
+      "asset": "./chin_skull_L_023_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-r-decimated",
+      "label": "CRANIUM R DECIMATED",
+      "node": "CRANIUM_R_DECIMATED",
+      "asset": "./CRANIUM_R_DECIMATED.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-r-decimated",
+      "label": "MANDIBLE R DECIMATED",
+      "node": "MANDIBLE_R_DECIMATED",
+      "asset": "./MANDIBLE_R_DECIMATED.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object002",
+      "label": "Object002",
+      "node": "Object002",
+      "asset": "./Object002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object002-1",
+      "label": "Object002 1",
+      "node": "Object002_1",
+      "asset": "./Object002_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object003-001",
+      "label": "Object003 001",
+      "node": "Object003_001",
+      "asset": "./Object003_001.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object003-001-1",
+      "label": "Object003 001 1",
+      "node": "Object003_001_1",
+      "asset": "./Object003_001_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object009",
+      "label": "Object009",
+      "node": "Object009",
+      "asset": "./Object009.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object009-1",
+      "label": "Object009 1",
+      "node": "Object009_1",
+      "asset": "./Object009_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object010",
+      "label": "Object010",
+      "node": "Object010",
+      "asset": "./Object010.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object010-1",
+      "label": "Object010 1",
+      "node": "Object010_1",
+      "asset": "./Object010_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object011",
+      "label": "Object011",
+      "node": "Object011",
+      "asset": "./Object011.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object011-1",
+      "label": "Object011 1",
+      "node": "Object011_1",
+      "asset": "./Object011_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object012",
+      "label": "Object012",
+      "node": "Object012",
+      "asset": "./Object012.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object012-1",
+      "label": "Object012 1",
+      "node": "Object012_1",
+      "asset": "./Object012_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object013",
+      "label": "Object013",
+      "node": "Object013",
+      "asset": "./Object013.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object013-1",
+      "label": "Object013 1",
+      "node": "Object013_1",
+      "asset": "./Object013_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object014",
+      "label": "Object014",
+      "node": "Object014",
+      "asset": "./Object014.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object014-1",
+      "label": "Object014 1",
+      "node": "Object014_1",
+      "asset": "./Object014_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object015",
+      "label": "Object015",
+      "node": "Object015",
+      "asset": "./Object015.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object015-1",
+      "label": "Object015 1",
+      "node": "Object015_1",
+      "asset": "./Object015_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object016",
+      "label": "Object016",
+      "node": "Object016",
+      "asset": "./Object016.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object016-1",
+      "label": "Object016 1",
+      "node": "Object016_1",
+      "asset": "./Object016_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object017-001",
+      "label": "Object017 001",
+      "node": "Object017_001",
+      "asset": "./Object017_001.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object017-001-1",
+      "label": "Object017 001 1",
+      "node": "Object017_001_1",
+      "asset": "./Object017_001_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object018-001",
+      "label": "Object018 001",
+      "node": "Object018_001",
+      "asset": "./Object018_001.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object018-001-1",
+      "label": "Object018 001 1",
+      "node": "Object018_001_1",
+      "asset": "./Object018_001_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object019-001",
+      "label": "Object019 001",
+      "node": "Object019_001",
+      "asset": "./Object019_001.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object019-001-1",
+      "label": "Object019 001 1",
+      "node": "Object019_001_1",
+      "asset": "./Object019_001_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object020-001",
+      "label": "Object020 001",
+      "node": "Object020_001",
+      "asset": "./Object020_001.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-object020-001-1",
+      "label": "Object020 001 1",
+      "node": "Object020_001_1",
+      "asset": "./Object020_001_1.glb",
+      "region": "root"
+    }
+  ]
+}
