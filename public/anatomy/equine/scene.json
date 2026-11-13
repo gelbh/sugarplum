@@ -1,0 +1,1541 @@
+{
+  "id": "equine",
+  "title": "Equine",
+  "regions": [
+    {
+      "id": "cartilage",
+      "label": "Cartilage"
+    },
+    {
+      "id": "cavities",
+      "label": "Cavities"
+    },
+    {
+      "id": "legs-left-back",
+      "label": "Legs · Left Back"
+    },
+    {
+      "id": "legs-left-front",
+      "label": "Legs · Left Front"
+    },
+    {
+      "id": "legs-right-back",
+      "label": "Legs · Right Back",
+      "defaultActive": true
+    },
+    {
+      "id": "legs-right-front",
+      "label": "Legs · Right Front"
+    },
+    {
+      "id": "muscles",
+      "label": "Muscles"
+    },
+    {
+      "id": "muscles-cranial-muscles",
+      "label": "Muscles · Cranial Muscles"
+    },
+    {
+      "id": "muscles-leg-muscles-right-front",
+      "label": "Muscles · Leg Muscles · Right Front"
+    },
+    {
+      "id": "neck",
+      "label": "Neck"
+    },
+    {
+      "id": "nervous-system-cranial-nerves",
+      "label": "Nervous System · Cranial Nerves"
+    },
+    {
+      "id": "nervous-system-leg-nerves-right-front",
+      "label": "Nervous System · Leg Nerves · Right Front"
+    },
+    {
+      "id": "organs",
+      "label": "Organs"
+    },
+    {
+      "id": "pelvis-tail",
+      "label": "Pelvis Tail"
+    },
+    {
+      "id": "ribs",
+      "label": "Ribs"
+    },
+    {
+      "id": "skull",
+      "label": "Skull"
+    },
+    {
+      "id": "spine",
+      "label": "Spine"
+    },
+    {
+      "id": "teeth",
+      "label": "Teeth"
+    },
+    {
+      "id": "vascular-system-legs-right-front",
+      "label": "Vascular System · Legs · Right Front"
+    }
+  ],
+  "structures": [
+    {
+      "id": "cartilage-ears",
+      "label": "Ears",
+      "node": "Ears",
+      "asset": "./Cartilage/Ears.glb",
+      "region": "cartilage"
+    },
+    {
+      "id": "cartilage-laryngeal-cartilages-arytenoids",
+      "label": "Laryngeal Cartilages Arytenoids",
+      "node": "Laryngeal_Cartilages_Arytenoids",
+      "asset": "./Cartilage/Laryngeal_Cartilages_Arytenoids.glb",
+      "region": "cartilage"
+    },
+    {
+      "id": "cartilage-laryngeal-cartilages-circoid",
+      "label": "Laryngeal Cartilages Circoid",
+      "node": "Laryngeal_Cartilages_Circoid",
+      "asset": "./Cartilage/Laryngeal_Cartilages_Circoid.glb",
+      "region": "cartilage"
+    },
+    {
+      "id": "cartilage-laryngeal-cartilages-epiglottis",
+      "label": "Laryngeal Cartilages Epiglottis",
+      "node": "Laryngeal_Cartilages_Epiglottis",
+      "asset": "./Cartilage/Laryngeal_Cartilages_Epiglottis.glb",
+      "region": "cartilage"
+    },
+    {
+      "id": "cartilage-laryngeal-cartilages-thyroid",
+      "label": "Laryngeal Cartilages Thyroid",
+      "node": "Laryngeal_Cartilages_Thyroid",
+      "asset": "./Cartilage/Laryngeal_Cartilages_Thyroid.glb",
+      "region": "cartilage"
+    },
+    {
+      "id": "cartilage-nares",
+      "label": "Nares",
+      "node": "Nares",
+      "asset": "./Cartilage/Nares.glb",
+      "region": "cartilage"
+    },
+    {
+      "id": "cavities-dorsal-nasal-concha",
+      "label": "Dorsal Nasal Concha",
+      "node": "Dorsal_Nasal_Concha",
+      "asset": "./Cavities/Dorsal_Nasal_Concha.glb",
+      "region": "cavities"
+    },
+    {
+      "id": "cavities-ventral-nasal-concha",
+      "label": "Ventral Nasal Concha",
+      "node": "Ventral_Nasal_Concha",
+      "asset": "./Cavities/Ventral_Nasal_Concha.glb",
+      "region": "cavities"
+    },
+    {
+      "id": "legs-left-back-calcaneus",
+      "label": "Calcaneus",
+      "node": "Calcaneus",
+      "asset": "./Legs/Left_Back/Calcaneus.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-cannon",
+      "label": "Cannon",
+      "node": "Cannon",
+      "asset": "./Legs/Left_Back/Cannon.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-central-tarsal",
+      "label": "Central Tarsal",
+      "node": "Central_Tarsal",
+      "asset": "./Legs/Left_Back/Central_Tarsal.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-coffin",
+      "label": "Coffin",
+      "node": "Coffin",
+      "asset": "./Legs/Left_Back/Coffin.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-femur",
+      "label": "Femur",
+      "node": "Femur",
+      "asset": "./Legs/Left_Back/Femur.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-fibula",
+      "label": "Fibula",
+      "node": "Fibula",
+      "asset": "./Legs/Left_Back/Fibula.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-fourth-tarsal",
+      "label": "Fourth Tarsal",
+      "node": "Fourth_Tarsal",
+      "asset": "./Legs/Left_Back/Fourth_Tarsal.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-long-pastern",
+      "label": "Long Pastern",
+      "node": "Long_Pastern",
+      "asset": "./Legs/Left_Back/Long_Pastern.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-navicular",
+      "label": "Navicular",
+      "node": "Navicular",
+      "asset": "./Legs/Left_Back/Navicular.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-patella",
+      "label": "Patella",
+      "node": "Patella",
+      "asset": "./Legs/Left_Back/Patella.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-sesamoids",
+      "label": "Sesamoids",
+      "node": "Sesamoids",
+      "asset": "./Legs/Left_Back/Sesamoids.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-short-pastern",
+      "label": "Short Pastern",
+      "node": "Short_Pastern",
+      "asset": "./Legs/Left_Back/Short_Pastern.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-splint-fourth-metatarsal",
+      "label": "Splint Fourth Metatarsal",
+      "node": "Splint_Fourth_Metatarsal",
+      "asset": "./Legs/Left_Back/Splint_Fourth_Metatarsal.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-splint-second-metatarsal",
+      "label": "Splint Second Metatarsal",
+      "node": "Splint_Second_Metatarsal",
+      "asset": "./Legs/Left_Back/Splint_Second_Metatarsal.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-talus",
+      "label": "Talus",
+      "node": "Talus",
+      "asset": "./Legs/Left_Back/Talus.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-third-tarsal",
+      "label": "Third Tarsal",
+      "node": "Third_Tarsal",
+      "asset": "./Legs/Left_Back/Third_Tarsal.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-tibia",
+      "label": "Tibia",
+      "node": "Tibia",
+      "asset": "./Legs/Left_Back/Tibia.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-front-cannon",
+      "label": "Cannon",
+      "node": "Cannon",
+      "asset": "./Legs/Left_Front/Cannon.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-coffin",
+      "label": "Coffin",
+      "node": "Coffin",
+      "asset": "./Legs/Left_Front/Coffin.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-fourth-carpal",
+      "label": "Fourth Carpal",
+      "node": "Fourth_Carpal",
+      "asset": "./Legs/Left_Front/Fourth_Carpal.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-humerus",
+      "label": "Humerus",
+      "node": "Humerus",
+      "asset": "./Legs/Left_Front/Humerus.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-intermediate-carpal",
+      "label": "Intermediate Carpal",
+      "node": "Intermediate_Carpal",
+      "asset": "./Legs/Left_Front/Intermediate_Carpal.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-long-pastern",
+      "label": "Long Pastern",
+      "node": "Long_Pastern",
+      "asset": "./Legs/Left_Front/Long_Pastern.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-navicular",
+      "label": "Navicular",
+      "node": "Navicular",
+      "asset": "./Legs/Left_Front/Navicular.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-radial-carpal",
+      "label": "Radial Carpal",
+      "node": "Radial_Carpal",
+      "asset": "./Legs/Left_Front/Radial_Carpal.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-radius",
+      "label": "Radius",
+      "node": "Radius",
+      "asset": "./Legs/Left_Front/Radius.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-scapula",
+      "label": "Scapula",
+      "node": "Scapula",
+      "asset": "./Legs/Left_Front/Scapula.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-second-carpal",
+      "label": "Second Carpal",
+      "node": "Second_Carpal",
+      "asset": "./Legs/Left_Front/Second_Carpal.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-sesamoids",
+      "label": "Sesamoids",
+      "node": "Sesamoids",
+      "asset": "./Legs/Left_Front/Sesamoids.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-short-pastern",
+      "label": "Short Pastern",
+      "node": "Short_Pastern",
+      "asset": "./Legs/Left_Front/Short_Pastern.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-splints",
+      "label": "Splints",
+      "node": "Splints",
+      "asset": "./Legs/Left_Front/Splints.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-third-carpal",
+      "label": "Third Carpal",
+      "node": "Third_Carpal",
+      "asset": "./Legs/Left_Front/Third_Carpal.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-ulnar-accessory-carpal",
+      "label": "Ulnar Accessory Carpal",
+      "node": "Ulnar_Accessory_Carpal",
+      "asset": "./Legs/Left_Front/Ulnar_Accessory_Carpal.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-right-back-calcaneus",
+      "label": "Calcaneus",
+      "node": "Calcaneus",
+      "asset": "./Legs/Right_Back/Calcaneus.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-cannon",
+      "label": "Cannon",
+      "node": "Cannon",
+      "asset": "./Legs/Right_Back/Cannon.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-central-tarsal",
+      "label": "Central Tarsal",
+      "node": "Central_Tarsal",
+      "asset": "./Legs/Right_Back/Central_Tarsal.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-coffin",
+      "label": "Coffin",
+      "node": "Coffin",
+      "asset": "./Legs/Right_Back/Coffin.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-femur",
+      "label": "Femur",
+      "node": "Femur",
+      "asset": "./Legs/Right_Back/Femur.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-fibula",
+      "label": "Fibula",
+      "node": "Fibula",
+      "asset": "./Legs/Right_Back/Fibula.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-fourth-tarsal",
+      "label": "Fourth Tarsal",
+      "node": "Fourth_Tarsal",
+      "asset": "./Legs/Right_Back/Fourth_Tarsal.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-long-pastern",
+      "label": "Long Pastern",
+      "node": "Long_Pastern",
+      "asset": "./Legs/Right_Back/Long_Pastern.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-navicular",
+      "label": "Navicular",
+      "node": "Navicular",
+      "asset": "./Legs/Right_Back/Navicular.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-patella",
+      "label": "Patella",
+      "node": "Patella",
+      "asset": "./Legs/Right_Back/Patella.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-sesamoids",
+      "label": "Sesamoids",
+      "node": "Sesamoids",
+      "asset": "./Legs/Right_Back/Sesamoids.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-short-pastern",
+      "label": "Short Pastern",
+      "node": "Short_Pastern",
+      "asset": "./Legs/Right_Back/Short_Pastern.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-splint-fourth-metatarsal",
+      "label": "Splint Fourth Metatarsal",
+      "node": "Splint_Fourth_Metatarsal",
+      "asset": "./Legs/Right_Back/Splint_Fourth_Metatarsal.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-splint-second-metatarsal",
+      "label": "Splint Second Metatarsal",
+      "node": "Splint_Second_Metatarsal",
+      "asset": "./Legs/Right_Back/Splint_Second_Metatarsal.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-talus",
+      "label": "Talus",
+      "node": "Talus",
+      "asset": "./Legs/Right_Back/Talus.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-third-tarsal",
+      "label": "Third Tarsal",
+      "node": "Third_Tarsal",
+      "asset": "./Legs/Right_Back/Third_Tarsal.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-tibia",
+      "label": "Tibia",
+      "node": "Tibia",
+      "asset": "./Legs/Right_Back/Tibia.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-front-cannon",
+      "label": "Cannon",
+      "node": "Cannon",
+      "asset": "./Legs/Right_Front/Cannon.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-coffin",
+      "label": "Coffin",
+      "node": "Coffin",
+      "asset": "./Legs/Right_Front/Coffin.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-fourth-carpal",
+      "label": "Fourth Carpal",
+      "node": "Fourth_Carpal",
+      "asset": "./Legs/Right_Front/Fourth_Carpal.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-humerus",
+      "label": "Humerus",
+      "node": "Humerus",
+      "asset": "./Legs/Right_Front/Humerus.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-intermediate-carpal",
+      "label": "Intermediate Carpal",
+      "node": "Intermediate_Carpal",
+      "asset": "./Legs/Right_Front/Intermediate_Carpal.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-long-pastern",
+      "label": "Long Pastern",
+      "node": "Long_Pastern",
+      "asset": "./Legs/Right_Front/Long_Pastern.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-navicular",
+      "label": "Navicular",
+      "node": "Navicular",
+      "asset": "./Legs/Right_Front/Navicular.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-radial-carpal",
+      "label": "Radial Carpal",
+      "node": "Radial_Carpal",
+      "asset": "./Legs/Right_Front/Radial_Carpal.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-radius",
+      "label": "Radius",
+      "node": "Radius",
+      "asset": "./Legs/Right_Front/Radius.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-scapula",
+      "label": "Scapula",
+      "node": "Scapula",
+      "asset": "./Legs/Right_Front/Scapula.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-second-carpal",
+      "label": "Second Carpal",
+      "node": "Second_Carpal",
+      "asset": "./Legs/Right_Front/Second_Carpal.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-sesamoids",
+      "label": "Sesamoids",
+      "node": "Sesamoids",
+      "asset": "./Legs/Right_Front/Sesamoids.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-short-pastern",
+      "label": "Short Pastern",
+      "node": "Short_Pastern",
+      "asset": "./Legs/Right_Front/Short_Pastern.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-splints",
+      "label": "Splints",
+      "node": "Splints",
+      "asset": "./Legs/Right_Front/Splints.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-third-carpal",
+      "label": "Third Carpal",
+      "node": "Third_Carpal",
+      "asset": "./Legs/Right_Front/Third_Carpal.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-ulnar-accessory-carpal",
+      "label": "Ulnar Accessory Carpal",
+      "node": "Ulnar_Accessory_Carpal",
+      "asset": "./Legs/Right_Front/Ulnar_Accessory_Carpal.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "muscles-soft-palate",
+      "label": "Soft Palate",
+      "node": "Soft_Palate",
+      "asset": "./Muscles/Soft_Palate.glb",
+      "region": "muscles"
+    },
+    {
+      "id": "muscles-tongue",
+      "label": "Tongue",
+      "node": "Tongue",
+      "asset": "./Muscles/Tongue.glb",
+      "region": "muscles"
+    },
+    {
+      "id": "muscles-cranial-muscles-auricular",
+      "label": "Auricular",
+      "node": "Auricular",
+      "asset": "./Muscles/Cranial_Muscles/Auricular.glb",
+      "region": "muscles-cranial-muscles"
+    },
+    {
+      "id": "muscles-cranial-muscles-auricular-2",
+      "label": "Auricular 2",
+      "node": "Auricular 2",
+      "asset": "./Muscles/Cranial_Muscles/Auricular 2.glb",
+      "region": "muscles-cranial-muscles"
+    },
+    {
+      "id": "muscles-cranial-muscles-buccinator",
+      "label": "Buccinator",
+      "node": "Buccinator",
+      "asset": "./Muscles/Cranial_Muscles/Buccinator.glb",
+      "region": "muscles-cranial-muscles"
+    },
+    {
+      "id": "muscles-cranial-muscles-levator-annuli-oris-fascialis",
+      "label": "Levator Annuli Oris Fascialis",
+      "node": "Levator Annuli Oris Fascialis",
+      "asset": "./Muscles/Cranial_Muscles/Levator Annuli Oris Fascialis.glb",
+      "region": "muscles-cranial-muscles"
+    },
+    {
+      "id": "muscles-cranial-muscles-levator-labii",
+      "label": "Levator Labii",
+      "node": "Levator Labii",
+      "asset": "./Muscles/Cranial_Muscles/Levator Labii.glb",
+      "region": "muscles-cranial-muscles"
+    },
+    {
+      "id": "muscles-cranial-muscles-levator-nasolabialis",
+      "label": "Levator Nasolabialis",
+      "node": "Levator Nasolabialis",
+      "asset": "./Muscles/Cranial_Muscles/Levator Nasolabialis.glb",
+      "region": "muscles-cranial-muscles"
+    },
+    {
+      "id": "muscles-cranial-muscles-masseter",
+      "label": "Masseter",
+      "node": "Masseter",
+      "asset": "./Muscles/Cranial_Muscles/Masseter.glb",
+      "region": "muscles-cranial-muscles"
+    },
+    {
+      "id": "muscles-cranial-muscles-orbicularis",
+      "label": "Orbicularis",
+      "node": "Orbicularis",
+      "asset": "./Muscles/Cranial_Muscles/Orbicularis.glb",
+      "region": "muscles-cranial-muscles"
+    },
+    {
+      "id": "muscles-cranial-muscles-orbicularis-occuli",
+      "label": "Orbicularis Occuli",
+      "node": "Orbicularis Occuli",
+      "asset": "./Muscles/Cranial_Muscles/Orbicularis Occuli.glb",
+      "region": "muscles-cranial-muscles"
+    },
+    {
+      "id": "muscles-cranial-muscles-orbital-muscles",
+      "label": "Orbital Muscles",
+      "node": "Orbital Muscles",
+      "asset": "./Muscles/Cranial_Muscles/Orbital Muscles.glb",
+      "region": "muscles-cranial-muscles"
+    },
+    {
+      "id": "muscles-cranial-muscles-temporal",
+      "label": "Temporal",
+      "node": "Temporal",
+      "asset": "./Muscles/Cranial_Muscles/Temporal.glb",
+      "region": "muscles-cranial-muscles"
+    },
+    {
+      "id": "muscles-cranial-muscles-temporal-2",
+      "label": "Temporal 2",
+      "node": "Temporal 2",
+      "asset": "./Muscles/Cranial_Muscles/Temporal 2.glb",
+      "region": "muscles-cranial-muscles"
+    },
+    {
+      "id": "muscles-cranial-muscles-zygomaticus",
+      "label": "Zygomaticus",
+      "node": "Zygomaticus",
+      "asset": "./Muscles/Cranial_Muscles/Zygomaticus.glb",
+      "region": "muscles-cranial-muscles"
+    },
+    {
+      "id": "muscles-cranial-muscles-zygomaticus-2",
+      "label": "Zygomaticus 2",
+      "node": "Zygomaticus 2",
+      "asset": "./Muscles/Cranial_Muscles/Zygomaticus 2.glb",
+      "region": "muscles-cranial-muscles"
+    },
+    {
+      "id": "muscles-leg-muscles-right-front-bicep-brachii",
+      "label": "Bicep Brachii",
+      "node": "Bicep_Brachii",
+      "asset": "./Muscles/Leg_Muscles/Right_Front/Bicep_Brachii.glb",
+      "region": "muscles-leg-muscles-right-front"
+    },
+    {
+      "id": "muscles-leg-muscles-right-front-common-digital-extensor",
+      "label": "Common Digital Extensor",
+      "node": "Common_Digital_Extensor",
+      "asset": "./Muscles/Leg_Muscles/Right_Front/Common_Digital_Extensor.glb",
+      "region": "muscles-leg-muscles-right-front"
+    },
+    {
+      "id": "muscles-leg-muscles-right-front-deltoid",
+      "label": "Deltoid",
+      "node": "Deltoid",
+      "asset": "./Muscles/Leg_Muscles/Right_Front/Deltoid.glb",
+      "region": "muscles-leg-muscles-right-front"
+    },
+    {
+      "id": "muscles-leg-muscles-right-front-extensor-carpi-radialis",
+      "label": "Extensor Carpi Radialis",
+      "node": "Extensor_Carpi_Radialis",
+      "asset": "./Muscles/Leg_Muscles/Right_Front/Extensor_Carpi_Radialis.glb",
+      "region": "muscles-leg-muscles-right-front"
+    },
+    {
+      "id": "muscles-leg-muscles-right-front-flexor-carpi-radialis",
+      "label": "Flexor Carpi Radialis",
+      "node": "Flexor_Carpi_Radialis",
+      "asset": "./Muscles/Leg_Muscles/Right_Front/Flexor_Carpi_Radialis.glb",
+      "region": "muscles-leg-muscles-right-front"
+    },
+    {
+      "id": "muscles-leg-muscles-right-front-flexor-carpi-ulnaris",
+      "label": "Flexor Carpi Ulnaris",
+      "node": "Flexor_Carpi_Ulnaris",
+      "asset": "./Muscles/Leg_Muscles/Right_Front/Flexor_Carpi_Ulnaris.glb",
+      "region": "muscles-leg-muscles-right-front"
+    },
+    {
+      "id": "muscles-leg-muscles-right-front-splenius",
+      "label": "splenius",
+      "node": "splenius",
+      "asset": "./Muscles/Leg_Muscles/Right_Front/splenius.glb",
+      "region": "muscles-leg-muscles-right-front"
+    },
+    {
+      "id": "muscles-leg-muscles-right-front-superficial-digital-flexor",
+      "label": "Superficial Digital Flexor",
+      "node": "Superficial_Digital_Flexor",
+      "asset": "./Muscles/Leg_Muscles/Right_Front/Superficial_Digital_Flexor.glb",
+      "region": "muscles-leg-muscles-right-front"
+    },
+    {
+      "id": "muscles-leg-muscles-right-front-supraspinatus",
+      "label": "Supraspinatus",
+      "node": "Supraspinatus",
+      "asset": "./Muscles/Leg_Muscles/Right_Front/Supraspinatus.glb",
+      "region": "muscles-leg-muscles-right-front"
+    },
+    {
+      "id": "muscles-leg-muscles-right-front-trapezius",
+      "label": "Trapezius",
+      "node": "Trapezius",
+      "asset": "./Muscles/Leg_Muscles/Right_Front/Trapezius.glb",
+      "region": "muscles-leg-muscles-right-front"
+    },
+    {
+      "id": "muscles-leg-muscles-right-front-tricep",
+      "label": "Tricep",
+      "node": "Tricep",
+      "asset": "./Muscles/Leg_Muscles/Right_Front/Tricep.glb",
+      "region": "muscles-leg-muscles-right-front"
+    },
+    {
+      "id": "muscles-leg-muscles-right-front-tricep-2",
+      "label": "Tricep 2",
+      "node": "Tricep_2",
+      "asset": "./Muscles/Leg_Muscles/Right_Front/Tricep_2.glb",
+      "region": "muscles-leg-muscles-right-front"
+    },
+    {
+      "id": "neck-cervical-vertebrae",
+      "label": "Cervical Vertebrae",
+      "node": "Cervical_Vertebrae",
+      "asset": "./Neck/Cervical_Vertebrae.glb",
+      "region": "neck"
+    },
+    {
+      "id": "neck-cervical-vertebrae1",
+      "label": "Cervical Vertebrae1",
+      "node": "Cervical_Vertebrae1",
+      "asset": "./Neck/Cervical_Vertebrae1.glb",
+      "region": "neck"
+    },
+    {
+      "id": "neck-cervical-vertebrae2",
+      "label": "Cervical Vertebrae2",
+      "node": "Cervical_Vertebrae2",
+      "asset": "./Neck/Cervical_Vertebrae2.glb",
+      "region": "neck"
+    },
+    {
+      "id": "neck-cervical-vertebrae3",
+      "label": "Cervical Vertebrae3",
+      "node": "Cervical_Vertebrae3",
+      "asset": "./Neck/Cervical_Vertebrae3.glb",
+      "region": "neck"
+    },
+    {
+      "id": "neck-cervical-vertebrae4",
+      "label": "Cervical Vertebrae4",
+      "node": "Cervical_Vertebrae4",
+      "asset": "./Neck/Cervical_Vertebrae4.glb",
+      "region": "neck"
+    },
+    {
+      "id": "neck-cervical-vertebrae5",
+      "label": "Cervical Vertebrae5",
+      "node": "Cervical_Vertebrae5",
+      "asset": "./Neck/Cervical_Vertebrae5.glb",
+      "region": "neck"
+    },
+    {
+      "id": "neck-cervical-vertebrae6",
+      "label": "Cervical Vertebrae6",
+      "node": "Cervical_Vertebrae6",
+      "asset": "./Neck/Cervical_Vertebrae6.glb",
+      "region": "neck"
+    },
+    {
+      "id": "nervous-system-cranial-nerves-cn-i-olfactory-nerve",
+      "label": "CN I - Olfactory Nerve",
+      "node": "CN I - Olfactory Nerve",
+      "asset": "./Nervous_System/Cranial_Nerves/CN I - Olfactory Nerve.glb",
+      "region": "nervous-system-cranial-nerves"
+    },
+    {
+      "id": "nervous-system-cranial-nerves-cn-ii-optic-nerve",
+      "label": "CN II - Optic Nerve",
+      "node": "CN II - Optic Nerve",
+      "asset": "./Nervous_System/Cranial_Nerves/CN II - Optic Nerve.glb",
+      "region": "nervous-system-cranial-nerves"
+    },
+    {
+      "id": "nervous-system-cranial-nerves-cn-iii-oculomotor-nerve",
+      "label": "CN III - Oculomotor Nerve",
+      "node": "CN III - Oculomotor Nerve",
+      "asset": "./Nervous_System/Cranial_Nerves/CN III - Oculomotor Nerve.glb",
+      "region": "nervous-system-cranial-nerves"
+    },
+    {
+      "id": "nervous-system-cranial-nerves-cn-iv-trochlear-nerve",
+      "label": "CN IV - Trochlear Nerve",
+      "node": "CN IV - Trochlear Nerve",
+      "asset": "./Nervous_System/Cranial_Nerves/CN IV - Trochlear Nerve.glb",
+      "region": "nervous-system-cranial-nerves"
+    },
+    {
+      "id": "nervous-system-cranial-nerves-cn-ix-glossopharyngeal-nerve",
+      "label": "CN IX - Glossopharyngeal Nerve",
+      "node": "CN IX - Glossopharyngeal Nerve",
+      "asset": "./Nervous_System/Cranial_Nerves/CN IX - Glossopharyngeal Nerve.glb",
+      "region": "nervous-system-cranial-nerves"
+    },
+    {
+      "id": "nervous-system-cranial-nerves-cn-v-trigeminal-nerve",
+      "label": "CN V - Trigeminal Nerve",
+      "node": "CN V - Trigeminal Nerve",
+      "asset": "./Nervous_System/Cranial_Nerves/CN V - Trigeminal Nerve.glb",
+      "region": "nervous-system-cranial-nerves"
+    },
+    {
+      "id": "nervous-system-cranial-nerves-cn-vi-abducens-nerve",
+      "label": "CN VI - Abducens Nerve",
+      "node": "CN VI - Abducens Nerve",
+      "asset": "./Nervous_System/Cranial_Nerves/CN VI - Abducens Nerve.glb",
+      "region": "nervous-system-cranial-nerves"
+    },
+    {
+      "id": "nervous-system-cranial-nerves-cn-vii-facial-nerve",
+      "label": "CN VII - Facial Nerve",
+      "node": "CN VII - Facial Nerve",
+      "asset": "./Nervous_System/Cranial_Nerves/CN VII - Facial Nerve.glb",
+      "region": "nervous-system-cranial-nerves"
+    },
+    {
+      "id": "nervous-system-cranial-nerves-cn-viii-vestibulocochlear-nerve",
+      "label": "CN VIII - Vestibulocochlear Nerve",
+      "node": "CN VIII - Vestibulocochlear Nerve",
+      "asset": "./Nervous_System/Cranial_Nerves/CN VIII - Vestibulocochlear Nerve.glb",
+      "region": "nervous-system-cranial-nerves"
+    },
+    {
+      "id": "nervous-system-cranial-nerves-cn-x-vagus-nerve",
+      "label": "CN X - Vagus nerve",
+      "node": "CN X - Vagus nerve",
+      "asset": "./Nervous_System/Cranial_Nerves/CN X - Vagus nerve.glb",
+      "region": "nervous-system-cranial-nerves"
+    },
+    {
+      "id": "nervous-system-cranial-nerves-cn-xi-accessory-nerve",
+      "label": "CN XI - Accessory Nerve",
+      "node": "CN XI - Accessory Nerve",
+      "asset": "./Nervous_System/Cranial_Nerves/CN XI - Accessory Nerve.glb",
+      "region": "nervous-system-cranial-nerves"
+    },
+    {
+      "id": "nervous-system-cranial-nerves-cn-xii-hypoglossal-nerve",
+      "label": "CN XII - Hypoglossal Nerve",
+      "node": "CN XII - Hypoglossal Nerve",
+      "asset": "./Nervous_System/Cranial_Nerves/CN XII - Hypoglossal Nerve.glb",
+      "region": "nervous-system-cranial-nerves"
+    },
+    {
+      "id": "nervous-system-leg-nerves-right-front-nerves",
+      "label": "Nerves",
+      "node": "Nerves",
+      "asset": "./Nervous_System/Leg_Nerves/Right_Front/Nerves.glb",
+      "region": "nervous-system-leg-nerves-right-front"
+    },
+    {
+      "id": "organs-brain",
+      "label": "Brain",
+      "node": "Brain",
+      "asset": "./Organs/Brain.glb",
+      "region": "organs"
+    },
+    {
+      "id": "organs-eyes",
+      "label": "Eyes",
+      "node": "Eyes",
+      "asset": "./Organs/Eyes.glb",
+      "region": "organs"
+    },
+    {
+      "id": "organs-gutteral-pouches",
+      "label": "Gutteral Pouches",
+      "node": "Gutteral_Pouches",
+      "asset": "./Organs/Gutteral_Pouches.glb",
+      "region": "organs"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae",
+      "label": "Caudal Vertebrae",
+      "node": "Caudal_Vertebrae",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae1",
+      "label": "Caudal Vertebrae1",
+      "node": "Caudal_Vertebrae1",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae1.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae2",
+      "label": "Caudal Vertebrae2",
+      "node": "Caudal_Vertebrae2",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae2.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae3",
+      "label": "Caudal Vertebrae3",
+      "node": "Caudal_Vertebrae3",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae3.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae4",
+      "label": "Caudal Vertebrae4",
+      "node": "Caudal_Vertebrae4",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae4.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae5",
+      "label": "Caudal Vertebrae5",
+      "node": "Caudal_Vertebrae5",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae5.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae6",
+      "label": "Caudal Vertebrae6",
+      "node": "Caudal_Vertebrae6",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae6.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-pelvis",
+      "label": "Pelvis",
+      "node": "Pelvis",
+      "asset": "./Pelvis_Tail/Pelvis.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-sacral-vertebrae",
+      "label": "Sacral Vertebrae",
+      "node": "Sacral_Vertebrae",
+      "asset": "./Pelvis_Tail/Sacral_Vertebrae.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "ribs-rib-cartilage",
+      "label": "Rib Cartilage",
+      "node": "Rib_Cartilage",
+      "asset": "./Ribs/Rib_Cartilage.glb",
+      "region": "ribs"
+    },
+    {
+      "id": "ribs-rib-cartilage1",
+      "label": "Rib Cartilage1",
+      "node": "Rib_Cartilage1",
+      "asset": "./Ribs/Rib_Cartilage1.glb",
+      "region": "ribs"
+    },
+    {
+      "id": "ribs-rib-cartilage2",
+      "label": "Rib Cartilage2",
+      "node": "Rib_Cartilage2",
+      "asset": "./Ribs/Rib_Cartilage2.glb",
+      "region": "ribs"
+    },
+    {
+      "id": "ribs-sternum",
+      "label": "Sternum",
+      "node": "Sternum",
+      "asset": "./Ribs/Sternum.glb",
+      "region": "ribs"
+    },
+    {
+      "id": "skull-cranium",
+      "label": "Cranium",
+      "node": "Cranium",
+      "asset": "./Skull/Cranium.glb",
+      "region": "skull"
+    },
+    {
+      "id": "skull-ethmoid-turbinates",
+      "label": "Ethmoid Turbinates",
+      "node": "Ethmoid_Turbinates",
+      "asset": "./Skull/Ethmoid_Turbinates.glb",
+      "region": "skull"
+    },
+    {
+      "id": "skull-mandible",
+      "label": "Mandible",
+      "node": "Mandible",
+      "asset": "./Skull/Mandible.glb",
+      "region": "skull"
+    },
+    {
+      "id": "skull-nasal-septum",
+      "label": "Nasal Septum",
+      "node": "Nasal_Septum",
+      "asset": "./Skull/Nasal_Septum.glb",
+      "region": "skull"
+    },
+    {
+      "id": "spine-lumbar-vertebrae",
+      "label": "Lumbar Vertebrae",
+      "node": "Lumbar_Vertebrae",
+      "asset": "./Spine/Lumbar_Vertebrae.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-lumbar-vertebrae1",
+      "label": "Lumbar Vertebrae1",
+      "node": "Lumbar_Vertebrae1",
+      "asset": "./Spine/Lumbar_Vertebrae1.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-lumbar-vertebrae2",
+      "label": "Lumbar Vertebrae2",
+      "node": "Lumbar_Vertebrae2",
+      "asset": "./Spine/Lumbar_Vertebrae2.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-lumbar-vertebrae3",
+      "label": "Lumbar Vertebrae3",
+      "node": "Lumbar_Vertebrae3",
+      "asset": "./Spine/Lumbar_Vertebrae3.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-lumbar-vertebrae4",
+      "label": "Lumbar Vertebrae4",
+      "node": "Lumbar_Vertebrae4",
+      "asset": "./Spine/Lumbar_Vertebrae4.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-lumbar-vertebrae5",
+      "label": "Lumbar Vertebrae5",
+      "node": "Lumbar_Vertebrae5",
+      "asset": "./Spine/Lumbar_Vertebrae5.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-thoracic-vertebrae",
+      "label": "Thoracic Vertebrae",
+      "node": "Thoracic_Vertebrae",
+      "asset": "./Spine/Thoracic_Vertebrae.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-thoracic-vertebrae1",
+      "label": "Thoracic Vertebrae1",
+      "node": "Thoracic_Vertebrae1",
+      "asset": "./Spine/Thoracic_Vertebrae1.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-thoracic-vertebrae10",
+      "label": "Thoracic Vertebrae10",
+      "node": "Thoracic_Vertebrae10",
+      "asset": "./Spine/Thoracic_Vertebrae10.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-thoracic-vertebrae11",
+      "label": "Thoracic Vertebrae11",
+      "node": "Thoracic_Vertebrae11",
+      "asset": "./Spine/Thoracic_Vertebrae11.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-thoracic-vertebrae12",
+      "label": "Thoracic Vertebrae12",
+      "node": "Thoracic_Vertebrae12",
+      "asset": "./Spine/Thoracic_Vertebrae12.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-thoracic-vertebrae13",
+      "label": "Thoracic Vertebrae13",
+      "node": "Thoracic_Vertebrae13",
+      "asset": "./Spine/Thoracic_Vertebrae13.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-thoracic-vertebrae14",
+      "label": "Thoracic Vertebrae14",
+      "node": "Thoracic_Vertebrae14",
+      "asset": "./Spine/Thoracic_Vertebrae14.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-thoracic-vertebrae15",
+      "label": "Thoracic Vertebrae15",
+      "node": "Thoracic_Vertebrae15",
+      "asset": "./Spine/Thoracic_Vertebrae15.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-thoracic-vertebrae16",
+      "label": "Thoracic Vertebrae16",
+      "node": "Thoracic_Vertebrae16",
+      "asset": "./Spine/Thoracic_Vertebrae16.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-thoracic-vertebrae17",
+      "label": "Thoracic Vertebrae17",
+      "node": "Thoracic_Vertebrae17",
+      "asset": "./Spine/Thoracic_Vertebrae17.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-thoracic-vertebrae2",
+      "label": "Thoracic Vertebrae2",
+      "node": "Thoracic_Vertebrae2",
+      "asset": "./Spine/Thoracic_Vertebrae2.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-thoracic-vertebrae3",
+      "label": "Thoracic Vertebrae3",
+      "node": "Thoracic_Vertebrae3",
+      "asset": "./Spine/Thoracic_Vertebrae3.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-thoracic-vertebrae4",
+      "label": "Thoracic Vertebrae4",
+      "node": "Thoracic_Vertebrae4",
+      "asset": "./Spine/Thoracic_Vertebrae4.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-thoracic-vertebrae5",
+      "label": "Thoracic Vertebrae5",
+      "node": "Thoracic_Vertebrae5",
+      "asset": "./Spine/Thoracic_Vertebrae5.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-thoracic-vertebrae6",
+      "label": "Thoracic Vertebrae6",
+      "node": "Thoracic_Vertebrae6",
+      "asset": "./Spine/Thoracic_Vertebrae6.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-thoracic-vertebrae7",
+      "label": "Thoracic Vertebrae7",
+      "node": "Thoracic_Vertebrae7",
+      "asset": "./Spine/Thoracic_Vertebrae7.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-thoracic-vertebrae8",
+      "label": "Thoracic Vertebrae8",
+      "node": "Thoracic_Vertebrae8",
+      "asset": "./Spine/Thoracic_Vertebrae8.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-thoracic-vertebrae9",
+      "label": "Thoracic Vertebrae9",
+      "node": "Thoracic_Vertebrae9",
+      "asset": "./Spine/Thoracic_Vertebrae9.glb",
+      "region": "spine"
+    },
+    {
+      "id": "teeth-lower-canine",
+      "label": "Lower Canine",
+      "node": "Lower_Canine",
+      "asset": "./Teeth/Lower_Canine.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-lower-canine1",
+      "label": "Lower Canine1",
+      "node": "Lower_Canine1",
+      "asset": "./Teeth/Lower_Canine1.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-lower-incisor",
+      "label": "Lower Incisor",
+      "node": "Lower_Incisor",
+      "asset": "./Teeth/Lower_Incisor.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-lower-incisor1",
+      "label": "Lower Incisor1",
+      "node": "Lower_Incisor1",
+      "asset": "./Teeth/Lower_Incisor1.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-lower-incisor2",
+      "label": "Lower Incisor2",
+      "node": "Lower_Incisor2",
+      "asset": "./Teeth/Lower_Incisor2.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-lower-incisor3",
+      "label": "Lower Incisor3",
+      "node": "Lower_Incisor3",
+      "asset": "./Teeth/Lower_Incisor3.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-lower-incisor4",
+      "label": "Lower Incisor4",
+      "node": "Lower_Incisor4",
+      "asset": "./Teeth/Lower_Incisor4.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-lower-incisor5",
+      "label": "Lower Incisor5",
+      "node": "Lower_Incisor5",
+      "asset": "./Teeth/Lower_Incisor5.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-mandibular-molar",
+      "label": "Mandibular Molar",
+      "node": "Mandibular_Molar",
+      "asset": "./Teeth/Mandibular_Molar.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-mandibular-molar1",
+      "label": "Mandibular Molar1",
+      "node": "Mandibular_Molar1",
+      "asset": "./Teeth/Mandibular_Molar1.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-mandibular-molar2",
+      "label": "Mandibular Molar2",
+      "node": "Mandibular_Molar2",
+      "asset": "./Teeth/Mandibular_Molar2.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-mandibular-molar3",
+      "label": "Mandibular Molar3",
+      "node": "Mandibular_Molar3",
+      "asset": "./Teeth/Mandibular_Molar3.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-mandibular-molar4",
+      "label": "Mandibular Molar4",
+      "node": "Mandibular_Molar4",
+      "asset": "./Teeth/Mandibular_Molar4.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-mandibular-molar5",
+      "label": "Mandibular Molar5",
+      "node": "Mandibular_Molar5",
+      "asset": "./Teeth/Mandibular_Molar5.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-mandibular-premolar",
+      "label": "Mandibular Premolar",
+      "node": "Mandibular_Premolar",
+      "asset": "./Teeth/Mandibular_Premolar.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-mandibular-premolar1",
+      "label": "Mandibular Premolar1",
+      "node": "Mandibular_Premolar1",
+      "asset": "./Teeth/Mandibular_Premolar1.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-mandibular-premolar2",
+      "label": "Mandibular Premolar2",
+      "node": "Mandibular_Premolar2",
+      "asset": "./Teeth/Mandibular_Premolar2.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-mandibular-premolar3",
+      "label": "Mandibular Premolar3",
+      "node": "Mandibular_Premolar3",
+      "asset": "./Teeth/Mandibular_Premolar3.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-mandibular-premolar4",
+      "label": "Mandibular Premolar4",
+      "node": "Mandibular_Premolar4",
+      "asset": "./Teeth/Mandibular_Premolar4.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-mandibular-premolar5",
+      "label": "Mandibular Premolar5",
+      "node": "Mandibular_Premolar5",
+      "asset": "./Teeth/Mandibular_Premolar5.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-maxilary-molar",
+      "label": "Maxilary Molar",
+      "node": "Maxilary_Molar",
+      "asset": "./Teeth/Maxilary_Molar.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-maxilary-molar1",
+      "label": "Maxilary Molar1",
+      "node": "Maxilary_Molar1",
+      "asset": "./Teeth/Maxilary_Molar1.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-maxilary-molar2",
+      "label": "Maxilary Molar2",
+      "node": "Maxilary_Molar2",
+      "asset": "./Teeth/Maxilary_Molar2.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-maxilary-molar3",
+      "label": "Maxilary Molar3",
+      "node": "Maxilary_Molar3",
+      "asset": "./Teeth/Maxilary_Molar3.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-maxilary-molar4",
+      "label": "Maxilary Molar4",
+      "node": "Maxilary_Molar4",
+      "asset": "./Teeth/Maxilary_Molar4.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-maxilary-molar5",
+      "label": "Maxilary Molar5",
+      "node": "Maxilary_Molar5",
+      "asset": "./Teeth/Maxilary_Molar5.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-maxilary-premolar",
+      "label": "Maxilary Premolar",
+      "node": "Maxilary_Premolar",
+      "asset": "./Teeth/Maxilary_Premolar.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-maxilary-premolar1",
+      "label": "Maxilary Premolar1",
+      "node": "Maxilary_Premolar1",
+      "asset": "./Teeth/Maxilary_Premolar1.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-maxilary-premolar2",
+      "label": "Maxilary Premolar2",
+      "node": "Maxilary_Premolar2",
+      "asset": "./Teeth/Maxilary_Premolar2.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-maxilary-premolar3",
+      "label": "Maxilary Premolar3",
+      "node": "Maxilary_Premolar3",
+      "asset": "./Teeth/Maxilary_Premolar3.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-maxilary-premolar4",
+      "label": "Maxilary Premolar4",
+      "node": "Maxilary_Premolar4",
+      "asset": "./Teeth/Maxilary_Premolar4.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-maxilary-premolar5",
+      "label": "Maxilary Premolar5",
+      "node": "Maxilary_Premolar5",
+      "asset": "./Teeth/Maxilary_Premolar5.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-upper-canine",
+      "label": "Upper Canine",
+      "node": "Upper_Canine",
+      "asset": "./Teeth/Upper_Canine.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-upper-canine1",
+      "label": "Upper Canine1",
+      "node": "Upper_Canine1",
+      "asset": "./Teeth/Upper_Canine1.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-upper-incisor",
+      "label": "Upper Incisor",
+      "node": "Upper_Incisor",
+      "asset": "./Teeth/Upper_Incisor.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-upper-incisor1",
+      "label": "Upper Incisor1",
+      "node": "Upper_Incisor1",
+      "asset": "./Teeth/Upper_Incisor1.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-upper-incisor2",
+      "label": "Upper Incisor2",
+      "node": "Upper_Incisor2",
+      "asset": "./Teeth/Upper_Incisor2.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-upper-incisor3",
+      "label": "Upper Incisor3",
+      "node": "Upper_Incisor3",
+      "asset": "./Teeth/Upper_Incisor3.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-upper-incisor4",
+      "label": "Upper Incisor4",
+      "node": "Upper_Incisor4",
+      "asset": "./Teeth/Upper_Incisor4.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "teeth-upper-incisor5",
+      "label": "Upper Incisor5",
+      "node": "Upper_Incisor5",
+      "asset": "./Teeth/Upper_Incisor5.glb",
+      "region": "teeth"
+    },
+    {
+      "id": "vascular-system-legs-right-front-arteries",
+      "label": "Arteries",
+      "node": "Arteries",
+      "asset": "./Vascular_System/Legs/Right_Front/Arteries.glb",
+      "region": "vascular-system-legs-right-front"
+    },
+    {
+      "id": "vascular-system-legs-right-front-veins",
+      "label": "Veins",
+      "node": "Veins",
+      "asset": "./Vascular_System/Legs/Right_Front/Veins.glb",
+      "region": "vascular-system-legs-right-front"
+    }
+  ]
+}

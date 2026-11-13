@@ -5,9 +5,7 @@ export type AnatomyCatalogEntry = {
 };
 
 export const ANATOMY_CATALOG: AnatomyCatalogEntry[] = [
-  {
-    id: "canine-limb",
-    title: "Canine pelvic limb (right)",
-    standIn: false,
-  },
+  { id: "canine", title: "Canine", standIn: false },
+  { id: "equine", title: "Equine", standIn: false },
+  { id: "bovine", title: "Bovine", standIn: false },
 ];

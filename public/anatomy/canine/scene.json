@@ -1,0 +1,994 @@
+{
+  "id": "canine",
+  "title": "Canine",
+  "regions": [
+    {
+      "id": "legs-left-back",
+      "label": "Legs · Left Back"
+    },
+    {
+      "id": "legs-left-front",
+      "label": "Legs · Left Front"
+    },
+    {
+      "id": "legs-right-back",
+      "label": "Legs · Right Back",
+      "defaultActive": true
+    },
+    {
+      "id": "legs-right-front",
+      "label": "Legs · Right Front"
+    },
+    {
+      "id": "neck",
+      "label": "Neck"
+    },
+    {
+      "id": "organs",
+      "label": "Organs"
+    },
+    {
+      "id": "pelvis-tail",
+      "label": "Pelvis Tail"
+    },
+    {
+      "id": "ribs",
+      "label": "Ribs"
+    },
+    {
+      "id": "skull",
+      "label": "Skull"
+    },
+    {
+      "id": "spine",
+      "label": "Spine"
+    }
+  ],
+  "structures": [
+    {
+      "id": "legs-left-back-calcaneus",
+      "label": "Calcaneus",
+      "node": "Calcaneus",
+      "asset": "./Legs/Left_Back/Calcaneus.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-central-tarsal",
+      "label": "Central Tarsal",
+      "node": "Central_Tarsal",
+      "asset": "./Legs/Left_Back/Central_Tarsal.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-distal-phalanges",
+      "label": "Distal Phalanges",
+      "node": "Distal_Phalanges",
+      "asset": "./Legs/Left_Back/Distal_Phalanges.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-femur",
+      "label": "Femur",
+      "node": "Femur",
+      "asset": "./Legs/Left_Back/Femur.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-fibula",
+      "label": "Fibula",
+      "node": "Fibula",
+      "asset": "./Legs/Left_Back/Fibula.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-metatarsal-i",
+      "label": "Metatarsal I",
+      "node": "Metatarsal_I",
+      "asset": "./Legs/Left_Back/Metatarsal_I.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-metatarsal-ii",
+      "label": "Metatarsal II",
+      "node": "Metatarsal_II",
+      "asset": "./Legs/Left_Back/Metatarsal_II.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-metatarsal-iii",
+      "label": "Metatarsal III",
+      "node": "Metatarsal_III",
+      "asset": "./Legs/Left_Back/Metatarsal_III.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-metatarsal-iv",
+      "label": "Metatarsal IV",
+      "node": "Metatarsal_IV",
+      "asset": "./Legs/Left_Back/Metatarsal_IV.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-metatarsal-v",
+      "label": "Metatarsal V",
+      "node": "Metatarsal_V",
+      "asset": "./Legs/Left_Back/Metatarsal_V.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-middle-phalanges",
+      "label": "Middle Phalanges",
+      "node": "Middle_Phalanges",
+      "asset": "./Legs/Left_Back/Middle_Phalanges.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-patella",
+      "label": "Patella",
+      "node": "Patella",
+      "asset": "./Legs/Left_Back/Patella.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-proximal-phalanges",
+      "label": "Proximal Phalanges",
+      "node": "Proximal_Phalanges",
+      "asset": "./Legs/Left_Back/Proximal_Phalanges.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-proximal-sesamoid",
+      "label": "Proximal Sesamoid",
+      "node": "Proximal_Sesamoid",
+      "asset": "./Legs/Left_Back/Proximal_Sesamoid.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-tarsal-i",
+      "label": "Tarsal I",
+      "node": "Tarsal_I",
+      "asset": "./Legs/Left_Back/Tarsal_I.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-tarsal-ii",
+      "label": "Tarsal II",
+      "node": "Tarsal_II",
+      "asset": "./Legs/Left_Back/Tarsal_II.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-tarsal-iii",
+      "label": "Tarsal III",
+      "node": "Tarsal_III",
+      "asset": "./Legs/Left_Back/Tarsal_III.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-tarsal-iv",
+      "label": "Tarsal IV",
+      "node": "Tarsal_IV",
+      "asset": "./Legs/Left_Back/Tarsal_IV.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-tibia",
+      "label": "Tibia",
+      "node": "Tibia",
+      "asset": "./Legs/Left_Back/Tibia.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-back-trochlea",
+      "label": "Trochlea",
+      "node": "Trochlea",
+      "asset": "./Legs/Left_Back/Trochlea.glb",
+      "region": "legs-left-back"
+    },
+    {
+      "id": "legs-left-front-accessory-carpal",
+      "label": "Accessory Carpal",
+      "node": "Accessory_Carpal",
+      "asset": "./Legs/Left_Front/Accessory_Carpal.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-distal-carpal-i",
+      "label": "Distal Carpal I",
+      "node": "Distal_Carpal_I",
+      "asset": "./Legs/Left_Front/Distal_Carpal_I.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-distal-carpal-ii",
+      "label": "Distal Carpal II",
+      "node": "Distal_Carpal_II",
+      "asset": "./Legs/Left_Front/Distal_Carpal_II.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-distal-carpal-iii",
+      "label": "Distal Carpal III",
+      "node": "Distal_Carpal_III",
+      "asset": "./Legs/Left_Front/Distal_Carpal_III.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-distal-carpal-iv",
+      "label": "Distal Carpal IV",
+      "node": "Distal_Carpal_IV",
+      "asset": "./Legs/Left_Front/Distal_Carpal_IV.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-distal-phalanges",
+      "label": "Distal Phalanges",
+      "node": "Distal_Phalanges",
+      "asset": "./Legs/Left_Front/Distal_Phalanges.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-humerus",
+      "label": "Humerus",
+      "node": "Humerus",
+      "asset": "./Legs/Left_Front/Humerus.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-metacarpal-i",
+      "label": "Metacarpal I",
+      "node": "Metacarpal_I",
+      "asset": "./Legs/Left_Front/Metacarpal_I.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-metacarpal-ii",
+      "label": "Metacarpal II",
+      "node": "Metacarpal_II",
+      "asset": "./Legs/Left_Front/Metacarpal_II.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-metacarpal-iii",
+      "label": "Metacarpal III",
+      "node": "Metacarpal_III",
+      "asset": "./Legs/Left_Front/Metacarpal_III.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-metacarpal-iv",
+      "label": "Metacarpal IV",
+      "node": "Metacarpal_IV",
+      "asset": "./Legs/Left_Front/Metacarpal_IV.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-metacarpal-v",
+      "label": "Metacarpal V",
+      "node": "Metacarpal_V",
+      "asset": "./Legs/Left_Front/Metacarpal_V.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-middle-phalanges",
+      "label": "Middle Phalanges",
+      "node": "Middle_Phalanges",
+      "asset": "./Legs/Left_Front/Middle_Phalanges.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-proximal-phalanges",
+      "label": "Proximal Phalanges",
+      "node": "Proximal_Phalanges",
+      "asset": "./Legs/Left_Front/Proximal_Phalanges.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-proximal-sesamoid",
+      "label": "Proximal Sesamoid",
+      "node": "Proximal_Sesamoid",
+      "asset": "./Legs/Left_Front/Proximal_Sesamoid.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-radial",
+      "label": "Radial",
+      "node": "Radial",
+      "asset": "./Legs/Left_Front/Radial.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-radius",
+      "label": "Radius",
+      "node": "Radius",
+      "asset": "./Legs/Left_Front/Radius.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-scapula",
+      "label": "Scapula",
+      "node": "Scapula",
+      "asset": "./Legs/Left_Front/Scapula.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-ulna",
+      "label": "Ulna",
+      "node": "Ulna",
+      "asset": "./Legs/Left_Front/Ulna.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-left-front-ulnar",
+      "label": "Ulnar",
+      "node": "Ulnar",
+      "asset": "./Legs/Left_Front/Ulnar.glb",
+      "region": "legs-left-front"
+    },
+    {
+      "id": "legs-right-back-calcaneus",
+      "label": "Calcaneus",
+      "node": "Calcaneus",
+      "asset": "./Legs/Right_Back/Calcaneus.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-central-tarsal",
+      "label": "Central Tarsal",
+      "node": "Central_Tarsal",
+      "asset": "./Legs/Right_Back/Central_Tarsal.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-distal-phalanges",
+      "label": "Distal Phalanges",
+      "node": "Distal_Phalanges",
+      "asset": "./Legs/Right_Back/Distal_Phalanges.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-femur",
+      "label": "Femur",
+      "node": "Femur",
+      "asset": "./Legs/Right_Back/Femur.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-fibula",
+      "label": "Fibula",
+      "node": "Fibula",
+      "asset": "./Legs/Right_Back/Fibula.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-metatarsal-i",
+      "label": "Metatarsal I",
+      "node": "Metatarsal_I",
+      "asset": "./Legs/Right_Back/Metatarsal_I.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-metatarsal-ii",
+      "label": "Metatarsal II",
+      "node": "Metatarsal_II",
+      "asset": "./Legs/Right_Back/Metatarsal_II.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-metatarsal-iii",
+      "label": "Metatarsal III",
+      "node": "Metatarsal_III",
+      "asset": "./Legs/Right_Back/Metatarsal_III.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-metatarsal-iv",
+      "label": "Metatarsal IV",
+      "node": "Metatarsal_IV",
+      "asset": "./Legs/Right_Back/Metatarsal_IV.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-metatarsal-v",
+      "label": "Metatarsal V",
+      "node": "Metatarsal_V",
+      "asset": "./Legs/Right_Back/Metatarsal_V.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-middle-phalanges",
+      "label": "Middle Phalanges",
+      "node": "Middle_Phalanges",
+      "asset": "./Legs/Right_Back/Middle_Phalanges.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-patella",
+      "label": "Patella",
+      "node": "Patella",
+      "asset": "./Legs/Right_Back/Patella.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-proximal-phalanges",
+      "label": "Proximal Phalanges",
+      "node": "Proximal_Phalanges",
+      "asset": "./Legs/Right_Back/Proximal_Phalanges.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-proximal-sesamoid",
+      "label": "Proximal Sesamoid",
+      "node": "Proximal_Sesamoid",
+      "asset": "./Legs/Right_Back/Proximal_Sesamoid.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-tarsal-i",
+      "label": "Tarsal I",
+      "node": "Tarsal_I",
+      "asset": "./Legs/Right_Back/Tarsal_I.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-tarsal-ii",
+      "label": "Tarsal II",
+      "node": "Tarsal_II",
+      "asset": "./Legs/Right_Back/Tarsal_II.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-tarsal-iii",
+      "label": "Tarsal III",
+      "node": "Tarsal_III",
+      "asset": "./Legs/Right_Back/Tarsal_III.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-tarsal-iv",
+      "label": "Tarsal IV",
+      "node": "Tarsal_IV",
+      "asset": "./Legs/Right_Back/Tarsal_IV.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-tibia",
+      "label": "Tibia",
+      "node": "Tibia",
+      "asset": "./Legs/Right_Back/Tibia.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-back-trochlea",
+      "label": "Trochlea",
+      "node": "Trochlea",
+      "asset": "./Legs/Right_Back/Trochlea.glb",
+      "region": "legs-right-back"
+    },
+    {
+      "id": "legs-right-front-accessory-carpal",
+      "label": "Accessory Carpal",
+      "node": "Accessory_Carpal",
+      "asset": "./Legs/Right_Front/Accessory_Carpal.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-distal-carpal-i",
+      "label": "Distal Carpal I",
+      "node": "Distal_Carpal_I",
+      "asset": "./Legs/Right_Front/Distal_Carpal_I.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-distal-carpal-ii",
+      "label": "Distal Carpal II",
+      "node": "Distal_Carpal_II",
+      "asset": "./Legs/Right_Front/Distal_Carpal_II.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-distal-carpal-iii",
+      "label": "Distal Carpal III",
+      "node": "Distal_Carpal_III",
+      "asset": "./Legs/Right_Front/Distal_Carpal_III.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-distal-carpal-iv",
+      "label": "Distal Carpal IV",
+      "node": "Distal_Carpal_IV",
+      "asset": "./Legs/Right_Front/Distal_Carpal_IV.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-distal-phalanges",
+      "label": "Distal Phalanges",
+      "node": "Distal_Phalanges",
+      "asset": "./Legs/Right_Front/Distal_Phalanges.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-humerus",
+      "label": "Humerus",
+      "node": "Humerus",
+      "asset": "./Legs/Right_Front/Humerus.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-metacarpal-i",
+      "label": "Metacarpal I",
+      "node": "Metacarpal_I",
+      "asset": "./Legs/Right_Front/Metacarpal_I.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-metacarpal-ii",
+      "label": "Metacarpal II",
+      "node": "Metacarpal_II",
+      "asset": "./Legs/Right_Front/Metacarpal_II.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-metacarpal-iii",
+      "label": "Metacarpal III",
+      "node": "Metacarpal_III",
+      "asset": "./Legs/Right_Front/Metacarpal_III.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-metacarpal-iv",
+      "label": "Metacarpal IV",
+      "node": "Metacarpal_IV",
+      "asset": "./Legs/Right_Front/Metacarpal_IV.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-metacarpal-v",
+      "label": "Metacarpal V",
+      "node": "Metacarpal_V",
+      "asset": "./Legs/Right_Front/Metacarpal_V.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-middle-phalanges",
+      "label": "Middle Phalanges",
+      "node": "Middle_Phalanges",
+      "asset": "./Legs/Right_Front/Middle_Phalanges.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-proximal-phalanges",
+      "label": "Proximal Phalanges",
+      "node": "Proximal_Phalanges",
+      "asset": "./Legs/Right_Front/Proximal_Phalanges.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-proximal-sesamoid",
+      "label": "Proximal Sesamoid",
+      "node": "Proximal_Sesamoid",
+      "asset": "./Legs/Right_Front/Proximal_Sesamoid.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-radial",
+      "label": "Radial",
+      "node": "Radial",
+      "asset": "./Legs/Right_Front/Radial.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-radius",
+      "label": "Radius",
+      "node": "Radius",
+      "asset": "./Legs/Right_Front/Radius.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-scapula",
+      "label": "Scapula",
+      "node": "Scapula",
+      "asset": "./Legs/Right_Front/Scapula.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-ulna",
+      "label": "Ulna",
+      "node": "Ulna",
+      "asset": "./Legs/Right_Front/Ulna.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "legs-right-front-ulnar",
+      "label": "Ulnar",
+      "node": "Ulnar",
+      "asset": "./Legs/Right_Front/Ulnar.glb",
+      "region": "legs-right-front"
+    },
+    {
+      "id": "neck-basihyoid",
+      "label": "Basihyoid",
+      "node": "Basihyoid",
+      "asset": "./Neck/Basihyoid.glb",
+      "region": "neck"
+    },
+    {
+      "id": "neck-c1-atlas",
+      "label": "C1 Atlas",
+      "node": "C1_Atlas",
+      "asset": "./Neck/C1_Atlas.glb",
+      "region": "neck"
+    },
+    {
+      "id": "neck-c2-axis",
+      "label": "C2 Axis",
+      "node": "C2_Axis",
+      "asset": "./Neck/C2_Axis.glb",
+      "region": "neck"
+    },
+    {
+      "id": "neck-c3",
+      "label": "C3",
+      "node": "C3",
+      "asset": "./Neck/C3.glb",
+      "region": "neck"
+    },
+    {
+      "id": "neck-c4",
+      "label": "C4",
+      "node": "C4",
+      "asset": "./Neck/C4.glb",
+      "region": "neck"
+    },
+    {
+      "id": "neck-c5",
+      "label": "C5",
+      "node": "C5",
+      "asset": "./Neck/C5.glb",
+      "region": "neck"
+    },
+    {
+      "id": "neck-c6",
+      "label": "C6",
+      "node": "C6",
+      "asset": "./Neck/C6.glb",
+      "region": "neck"
+    },
+    {
+      "id": "neck-c7",
+      "label": "C7",
+      "node": "C7",
+      "asset": "./Neck/C7.glb",
+      "region": "neck"
+    },
+    {
+      "id": "neck-ceratohyoid",
+      "label": "Ceratohyoid",
+      "node": "Ceratohyoid",
+      "asset": "./Neck/Ceratohyoid.glb",
+      "region": "neck"
+    },
+    {
+      "id": "neck-epihyoid",
+      "label": "Epihyoid",
+      "node": "Epihyoid",
+      "asset": "./Neck/Epihyoid.glb",
+      "region": "neck"
+    },
+    {
+      "id": "neck-stylohyoid",
+      "label": "Stylohyoid",
+      "node": "Stylohyoid",
+      "asset": "./Neck/Stylohyoid.glb",
+      "region": "neck"
+    },
+    {
+      "id": "neck-thyrohyoid",
+      "label": "Thyrohyoid",
+      "node": "Thyrohyoid",
+      "asset": "./Neck/Thyrohyoid.glb",
+      "region": "neck"
+    },
+    {
+      "id": "organs-bladder",
+      "label": "Bladder",
+      "node": "Bladder",
+      "asset": "./Organs/Bladder.glb",
+      "region": "organs"
+    },
+    {
+      "id": "organs-duodenom",
+      "label": "Duodenom",
+      "node": "Duodenom",
+      "asset": "./Organs/Duodenom.glb",
+      "region": "organs"
+    },
+    {
+      "id": "organs-heart",
+      "label": "Heart",
+      "node": "Heart",
+      "asset": "./Organs/Heart.glb",
+      "region": "organs"
+    },
+    {
+      "id": "organs-large-intestine",
+      "label": "Large Intestine",
+      "node": "Large_Intestine",
+      "asset": "./Organs/Large_Intestine.glb",
+      "region": "organs"
+    },
+    {
+      "id": "organs-liver",
+      "label": "Liver",
+      "node": "Liver",
+      "asset": "./Organs/Liver.glb",
+      "region": "organs"
+    },
+    {
+      "id": "organs-lungs",
+      "label": "Lungs",
+      "node": "Lungs",
+      "asset": "./Organs/Lungs.glb",
+      "region": "organs"
+    },
+    {
+      "id": "organs-renal-artery",
+      "label": "Renal Artery",
+      "node": "Renal_Artery",
+      "asset": "./Organs/Renal_Artery.glb",
+      "region": "organs"
+    },
+    {
+      "id": "organs-renal-artery1",
+      "label": "Renal Artery1",
+      "node": "Renal_Artery1",
+      "asset": "./Organs/Renal_Artery1.glb",
+      "region": "organs"
+    },
+    {
+      "id": "organs-renal-vein",
+      "label": "Renal Vein",
+      "node": "Renal_Vein",
+      "asset": "./Organs/Renal_Vein.glb",
+      "region": "organs"
+    },
+    {
+      "id": "organs-renal-vein1",
+      "label": "Renal Vein1",
+      "node": "Renal_Vein1",
+      "asset": "./Organs/Renal_Vein1.glb",
+      "region": "organs"
+    },
+    {
+      "id": "organs-spleen",
+      "label": "Spleen",
+      "node": "Spleen",
+      "asset": "./Organs/Spleen.glb",
+      "region": "organs"
+    },
+    {
+      "id": "organs-stomach",
+      "label": "Stomach",
+      "node": "Stomach",
+      "asset": "./Organs/Stomach.glb",
+      "region": "organs"
+    },
+    {
+      "id": "organs-ureter",
+      "label": "Ureter",
+      "node": "Ureter",
+      "asset": "./Organs/Ureter.glb",
+      "region": "organs"
+    },
+    {
+      "id": "organs-ureter1",
+      "label": "Ureter1",
+      "node": "Ureter1",
+      "asset": "./Organs/Ureter1.glb",
+      "region": "organs"
+    },
+    {
+      "id": "organs-vena-cava",
+      "label": "Vena Cava",
+      "node": "Vena_Cava",
+      "asset": "./Organs/Vena_Cava.glb",
+      "region": "organs"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae",
+      "label": "Caudal Vertebrae",
+      "node": "Caudal_Vertebrae",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae1",
+      "label": "Caudal Vertebrae1",
+      "node": "Caudal_Vertebrae1",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae1.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae10",
+      "label": "Caudal Vertebrae10",
+      "node": "Caudal_Vertebrae10",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae10.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae11",
+      "label": "Caudal Vertebrae11",
+      "node": "Caudal_Vertebrae11",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae11.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae12",
+      "label": "Caudal Vertebrae12",
+      "node": "Caudal_Vertebrae12",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae12.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae13",
+      "label": "Caudal Vertebrae13",
+      "node": "Caudal_Vertebrae13",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae13.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae14",
+      "label": "Caudal Vertebrae14",
+      "node": "Caudal_Vertebrae14",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae14.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae15",
+      "label": "Caudal Vertebrae15",
+      "node": "Caudal_Vertebrae15",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae15.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae16",
+      "label": "Caudal Vertebrae16",
+      "node": "Caudal_Vertebrae16",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae16.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae17",
+      "label": "Caudal Vertebrae17",
+      "node": "Caudal_Vertebrae17",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae17.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae18",
+      "label": "Caudal Vertebrae18",
+      "node": "Caudal_Vertebrae18",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae18.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae2",
+      "label": "Caudal Vertebrae2",
+      "node": "Caudal_Vertebrae2",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae2.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae3",
+      "label": "Caudal Vertebrae3",
+      "node": "Caudal_Vertebrae3",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae3.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae4",
+      "label": "Caudal Vertebrae4",
+      "node": "Caudal_Vertebrae4",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae4.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae5",
+      "label": "Caudal Vertebrae5",
+      "node": "Caudal_Vertebrae5",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae5.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae6",
+      "label": "Caudal Vertebrae6",
+      "node": "Caudal_Vertebrae6",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae6.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae7",
+      "label": "Caudal Vertebrae7",
+      "node": "Caudal_Vertebrae7",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae7.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae8",
+      "label": "Caudal Vertebrae8",
+      "node": "Caudal_Vertebrae8",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae8.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-caudal-vertebrae9",
+      "label": "Caudal Vertebrae9",
+      "node": "Caudal_Vertebrae9",
+      "asset": "./Pelvis_Tail/Caudal_Vertebrae9.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-os-coxae",
+      "label": "Os Coxae",
+      "node": "Os_Coxae",
+      "asset": "./Pelvis_Tail/Os_Coxae.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "pelvis-tail-sacrum",
+      "label": "Sacrum",
+      "node": "Sacrum",
+      "asset": "./Pelvis_Tail/Sacrum.glb",
+      "region": "pelvis-tail"
+    },
+    {
+      "id": "ribs-ribs",
+      "label": "Ribs",
+      "node": "Ribs",
+      "asset": "./Ribs/Ribs.glb",
+      "region": "ribs"
+    },
+    {
+      "id": "ribs-sternebrae",
+      "label": "Sternebrae",
+      "node": "Sternebrae",
+      "asset": "./Ribs/Sternebrae.glb",
+      "region": "ribs"
+    },
+    {
+      "id": "ribs-xiphoid-process",
+      "label": "Xiphoid Process",
+      "node": "Xiphoid_Process",
+      "asset": "./Ribs/Xiphoid_Process.glb",
+      "region": "ribs"
+    },
+    {
+      "id": "skull-mandible",
+      "label": "Mandible",
+      "node": "Mandible",
+      "asset": "./Skull/Mandible.glb",
+      "region": "skull"
+    },
+    {
+      "id": "spine-anticlinical-vertebra",
+      "label": "Anticlinical Vertebra",
+      "node": "Anticlinical_Vertebra",
+      "asset": "./Spine/Anticlinical_Vertebra.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-lumbar-vertebrae",
+      "label": "Lumbar Vertebrae",
+      "node": "Lumbar_Vertebrae",
+      "asset": "./Spine/Lumbar_Vertebrae.glb",
+      "region": "spine"
+    },
+    {
+      "id": "spine-thoracic-vertebrae",
+      "label": "Thoracic Vertebrae",
+      "node": "Thoracic_Vertebrae",
+      "asset": "./Spine/Thoracic_Vertebrae.glb",
+      "region": "spine"
+    }
+  ]
+}

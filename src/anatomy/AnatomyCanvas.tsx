@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import LinearProgress from "@mui/material/LinearProgress";
+import Typography from "@mui/material/Typography";
 import {
   AmbientLight,
   Box3,
@@ -14,7 +16,9 @@ import {
   Vector2,
   Vector3,
   WebGLRenderer,
+  type Material,
   type Object3D,
+  type Texture,
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -32,6 +36,8 @@ type Props = {
   onSelect: (id: string) => void;
 };
 
+const LOAD_CONCURRENCY = 6;
+
 function loadGltf(loader: GLTFLoader, url: string): Promise<Object3D> {
   return new Promise((resolve, reject) => {
     loader.load(
@@ -41,6 +47,55 @@ function loadGltf(loader: GLTFLoader, url: string): Promise<Object3D> {
       (err) => reject(err instanceof Error ? err : new Error(String(err))),
     );
   });
+}
+
+function disposeObjectTree(root: Object3D) {
+  root.traverse((obj) => {
+    const mesh = obj as Object3D & {
+      geometry?: { dispose: () => void };
+      material?: Material | Material[];
+    };
+    mesh.geometry?.dispose();
+    const mats = mesh.material
+      ? Array.isArray(mesh.material)
+        ? mesh.material
+        : [mesh.material]
+      : [];
+    for (const mat of mats) {
+      for (const value of Object.values(mat)) {
+        const tex = value as Texture | undefined;
+        if (tex && typeof tex === "object" && "isTexture" in tex && tex.isTexture) {
+          tex.dispose();
+        }
+      }
+      mat.dispose();
+    }
+  });
+}
+
+async function mapPoolSettled<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+  onItemDone: () => void,
+): Promise<PromiseSettledResult<R>[]> {
+  const results: PromiseSettledResult<R>[] = new Array(items.length);
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const idx = next;
+      next += 1;
+      try {
+        results[idx] = { status: "fulfilled", value: await fn(items[idx]) };
+      } catch (reason) {
+        results[idx] = { status: "rejected", reason };
+      }
+      onItemDone();
+    }
+  }
+  const n = Math.min(Math.max(1, limit), Math.max(1, items.length));
+  await Promise.all(Array.from({ length: n }, () => worker()));
+  return results;
 }
 
 export default function AnatomyCanvas({ loads, ui, onSelect }: Props) {
@@ -53,6 +108,10 @@ export default function AnatomyCanvas({ loads, ui, onSelect }: Props) {
   const applyVisibilityRef = useRef<() => void>(() => {});
   const [loadError, setLoadError] = useState<string | null>(null);
   const [retryToken, setRetryToken] = useState(0);
+  const [progress, setProgress] = useState<{ loaded: number; total: number }>({
+    loaded: 0,
+    total: 0,
+  });
 
   useEffect(() => {
     uiRef.current = ui;
@@ -71,6 +130,7 @@ export default function AnatomyCanvas({ loads, ui, onSelect }: Props) {
     if (!host) return;
 
     setLoadError(null);
+    setProgress({ loaded: 0, total: 0 });
 
     const scene = new Scene();
     scene.background = new Color(0xf0f0f0);
@@ -197,10 +257,20 @@ export default function AnatomyCanvas({ loads, ui, onSelect }: Props) {
       list.push(spec);
       byUrl.set(spec.url, list);
     }
+    const urlEntries = [...byUrl.entries()];
+    const total = urlEntries.length;
+    let loadedCount = 0;
+    setProgress({ loaded: 0, total });
 
     void (async () => {
-      const results = await Promise.allSettled(
-        [...byUrl.entries()].map(async ([url, urlSpecs]) => {
+      if (total === 0) {
+        setProgress({ loaded: 0, total: 0 });
+        return;
+      }
+      const results = await mapPoolSettled(
+        urlEntries,
+        LOAD_CONCURRENCY,
+        async ([url, urlSpecs]) => {
           const model = await loadGltf(loader, url);
           if (disposed) return;
           rootGroup.add(model);
@@ -224,7 +294,12 @@ export default function AnatomyCanvas({ loads, ui, onSelect }: Props) {
             }
           }
           applyVisibility();
-        }),
+        },
+        () => {
+          if (disposed) return;
+          loadedCount += 1;
+          setProgress({ loaded: loadedCount, total });
+        },
       );
       if (disposed) return;
       const failed = results.filter((r) => r.status === "rejected").length;
@@ -246,16 +321,7 @@ export default function AnatomyCanvas({ loads, ui, onSelect }: Props) {
       ro.disconnect();
       canvas.removeEventListener("pointerdown", onPointerDown);
       controls.dispose();
-      rootGroup.traverse((obj) => {
-        const mesh = obj as Object3D & {
-          geometry?: { dispose: () => void };
-          material?: { dispose: () => void } | Array<{ dispose: () => void }>;
-        };
-        mesh.geometry?.dispose();
-        const mat = mesh.material;
-        if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
-        else mat?.dispose();
-      });
+      disposeObjectTree(rootGroup);
       renderer.dispose();
       if (canvas.parentElement === host) {
         host.removeChild(canvas);
@@ -269,6 +335,8 @@ export default function AnatomyCanvas({ loads, ui, onSelect }: Props) {
   useEffect(() => {
     applyVisibilityRef.current();
   }, [ui, loadsKey]);
+
+  const showProgress = progress.total > 0 && progress.loaded < progress.total;
 
   return (
     <Box
@@ -291,6 +359,29 @@ export default function AnatomyCanvas({ loads, ui, onSelect }: Props) {
           background: "#f0f0f0",
         }}
       />
+      {showProgress ? (
+        <Box
+          sx={{
+            position: "absolute",
+            left: 12,
+            right: 12,
+            top: 12,
+            bgcolor: "background.paper",
+            borderRadius: 1,
+            p: 1,
+            boxShadow: 1,
+          }}
+        >
+          <Typography variant="caption" color="text.secondary">
+            Loading models {progress.loaded}/{progress.total}
+          </Typography>
+          <LinearProgress
+            variant="determinate"
+            value={(progress.loaded / progress.total) * 100}
+            sx={{ mt: 0.5 }}
+          />
+        </Box>
+      ) : null}
       {loadError ? (
         <Alert
           severity="error"
