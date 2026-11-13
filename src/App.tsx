@@ -100,7 +100,11 @@ function matchPage(path: string, search: string): ReactNode {
   }
   if (anatomyMatch?.kind === "scene") {
     return shell(
-      <Suspense fallback={<Typography color="text.secondary">Loading anatomy…</Typography>}>
+      <Suspense
+        fallback={
+          <Typography color="text.secondary">Loading anatomy…</Typography>
+        }
+      >
         <AnatomyViewerPage
           key={anatomyMatch.sceneId}
           sceneId={anatomyMatch.sceneId}

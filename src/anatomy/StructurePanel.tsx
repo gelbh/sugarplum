@@ -20,11 +20,7 @@ type Props = {
   dispatch: (action: StructureUiAction) => void;
 };
 
-export default function StructurePanel({
-  structures,
-  ui,
-  dispatch,
-}: Props) {
+export default function StructurePanel({ structures, ui, dispatch }: Props) {
   const [q, setQ] = useState("");
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -72,7 +68,9 @@ export default function StructurePanel({
             >
               <ListItemText
                 primary={s.label}
-                secondary={isolated ? "isolated" : hidden ? "hidden" : undefined}
+                secondary={
+                  isolated ? "isolated" : hidden ? "hidden" : undefined
+                }
               />
               <Stack direction="row" spacing={0}>
                 <IconButton

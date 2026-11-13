@@ -15,10 +15,7 @@ import {
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import type { AnatomyStructure } from "./types";
-import {
-  isStructureVisible,
-  type StructureUiState,
-} from "./structureState";
+import { isStructureVisible, type StructureUiState } from "./structureState";
 
 type Props = {
   assetUrl: string;
@@ -149,7 +146,9 @@ export default function AnatomyCanvas({
         const size = box.getSize(new Vector3()).length() || 1;
         const center = box.getCenter(new Vector3());
         controls.target.copy(center);
-        camera.position.copy(center).add(new Vector3(size * 0.7, size * 0.45, size * 0.9));
+        camera.position
+          .copy(center)
+          .add(new Vector3(size * 0.7, size * 0.45, size * 0.9));
         camera.near = size / 100;
         camera.far = size * 10;
         camera.updateProjectionMatrix();

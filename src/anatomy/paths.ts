@@ -1,6 +1,5 @@
 export type AnatomyPathMatch =
-  | { kind: "hub" }
-  | { kind: "scene"; sceneId: string };
+  { kind: "hub" } | { kind: "scene"; sceneId: string };
 
 const HUB = /^\/anatomy\/?$/;
 const SCENE = /^\/anatomy\/([^/]+)\/?$/;

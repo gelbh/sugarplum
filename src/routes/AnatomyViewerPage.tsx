@@ -36,7 +36,9 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
     setError(null);
     void (async () => {
       try {
-        const res = await fetch(`/anatomy/${encodeURIComponent(sceneId)}/scene.json`);
+        const res = await fetch(
+          `/anatomy/${encodeURIComponent(sceneId)}/scene.json`,
+        );
         if (!res.ok) throw new Error(`Could not load scene (${res.status})`);
         const json: unknown = await res.json();
         const parsed = parseAnatomySceneManifest(json);
@@ -80,7 +82,11 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
           >
             Back to Anatomy
           </Link>
-          <Typography variant="h5" component="h1" sx={{ mt: 1, fontWeight: 600 }}>
+          <Typography
+            variant="h5"
+            component="h1"
+            sx={{ mt: 1, fontWeight: 600 }}
+          >
             {manifest?.title ?? sceneId}
           </Typography>
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1 }}>
