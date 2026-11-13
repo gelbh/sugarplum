@@ -83,13 +83,12 @@ export default function AtlasHub() {
         >
           {CARDS.map((card) => {
             const isAnatomy = card.id === "anatomy";
+            const href = isAnatomy ? anatomyHubHref() : guest ? "/login" : null;
             return (
               <ButtonBase
                 key={card.id}
                 focusRipple
-                href={
-                  isAnatomy ? anatomyHubHref() : guest ? "/login" : undefined
-                }
+                {...(href ? { href } : {})}
                 onClick={(ev) => {
                   if (isAnatomy) {
                     onAnatomy(ev);
