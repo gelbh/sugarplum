@@ -27,6 +27,9 @@ type Props = {
   onChangeRegions: (regionIds: string[]) => void;
   ui: StructureUiState;
   dispatch: (action: StructureUiAction) => void;
+  /** When true, hide structure names until revealed (Test Yourself). */
+  maskNames?: boolean;
+  revealedIds?: ReadonlySet<string>;
 };
 
 function toggleRegionId(active: Set<string>, id: string): string[] {
@@ -141,14 +144,19 @@ function StructureRow({
   structure: s,
   ui,
   dispatch,
+  displayLabel,
+  labelMasked,
 }: {
   structure: AnatomyStructure;
   ui: StructureUiState;
   dispatch: (action: StructureUiAction) => void;
+  displayLabel: string;
+  labelMasked: boolean;
 }) {
   const hidden = ui.hidden.has(s.id);
   const isolated = ui.isolatedId === s.id;
   const selected = ui.selectedId === s.id;
+  const nameForAria = labelMasked ? "structure" : s.label;
   return (
     <Box
       role="button"
@@ -197,9 +205,11 @@ function StructureRow({
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
+          fontStyle: labelMasked ? "italic" : "normal",
+          color: labelMasked ? "text.secondary" : "text.primary",
         }}
       >
-        {s.label}
+        {displayLabel}
       </Typography>
       {isolated ? (
         <Typography
@@ -212,7 +222,7 @@ function StructureRow({
       ) : null}
       <IconButton
         size="small"
-        aria-label={hidden ? `Show ${s.label}` : `Hide ${s.label}`}
+        aria-label={hidden ? `Show ${nameForAria}` : `Hide ${nameForAria}`}
         onClick={(ev) => {
           ev.stopPropagation();
           dispatch({ type: "toggleHidden", id: s.id });
@@ -227,7 +237,7 @@ function StructureRow({
       </IconButton>
       <IconButton
         size="small"
-        aria-label={`Isolate ${s.label}`}
+        aria-label={`Isolate ${nameForAria}`}
         color={isolated ? "primary" : "default"}
         onClick={(ev) => {
           ev.stopPropagation();
@@ -250,6 +260,8 @@ export default function StructurePanel({
   onChangeRegions,
   ui,
   dispatch,
+  maskNames = false,
+  revealedIds,
 }: Props) {
   const [q, setQ] = useState("");
   const visibleStructures = useMemo(() => {
@@ -260,12 +272,14 @@ export default function StructurePanel({
   }, [structures, regions, activeRegions]);
 
   const filtered = useMemo(() => {
+    // Searching by label would leak answers while names are masked.
+    if (maskNames) return visibleStructures;
     const needle = q.trim().toLowerCase();
     if (!needle) return visibleStructures;
     return visibleStructures.filter((s) =>
       s.label.toLowerCase().includes(needle),
     );
-  }, [visibleStructures, q]);
+  }, [visibleStructures, q, maskNames]);
 
   const regionGroups = useMemo(() => {
     if (!regions?.length) return [];
@@ -482,8 +496,9 @@ export default function StructurePanel({
 
       <TextField
         size="small"
-        placeholder="Search"
-        value={q}
+        placeholder={maskNames ? "Search disabled in test mode" : "Search"}
+        value={maskNames ? "" : q}
+        disabled={maskNames}
         onChange={(e) => setQ(e.target.value)}
         slotProps={{
           input: {
@@ -548,14 +563,20 @@ export default function StructurePanel({
                 </Typography>
               ) : null}
               <Stack spacing={0.2}>
-                {group.items.map((s) => (
-                  <StructureRow
-                    key={s.id}
-                    structure={s}
-                    ui={ui}
-                    dispatch={dispatch}
-                  />
-                ))}
+                {group.items.map((s) => {
+                  const labelMasked =
+                    maskNames && !(revealedIds?.has(s.id) ?? false);
+                  return (
+                    <StructureRow
+                      key={s.id}
+                      structure={s}
+                      ui={ui}
+                      dispatch={dispatch}
+                      displayLabel={labelMasked ? "Hidden" : s.label}
+                      labelMasked={labelMasked}
+                    />
+                  );
+                })}
               </Stack>
             </Box>
           ))}
