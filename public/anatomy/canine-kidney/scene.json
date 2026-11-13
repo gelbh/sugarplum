@@ -1,0 +1,62 @@
+{
+  "id": "canine-kidney",
+  "title": "Canine kidney",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-canine-kidney-capsule",
+      "label": "canine kidney capsule",
+      "node": "canine_kidney_capsule",
+      "asset": "./canine_kidney_capsule.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canine-kidney-cortex",
+      "label": "canine kidney cortex",
+      "node": "canine_kidney_cortex",
+      "asset": "./canine_kidney_cortex.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canine-kidney-medulla",
+      "label": "canine kidney medulla",
+      "node": "canine_kidney_medulla",
+      "asset": "./canine_kidney_medulla.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canine-kidney-pelvic-recesses",
+      "label": "canine kidney pelvic recesses",
+      "node": "canine_kidney_pelvic_recesses",
+      "asset": "./canine_kidney_pelvic_recesses.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canine-kidney-renal-pelvis",
+      "label": "canine kidney renal pelvis",
+      "node": "canine_kidney_renal_pelvis",
+      "asset": "./canine_kidney_renal_pelvis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canine-kidney-ureter",
+      "label": "canine kidney ureter",
+      "node": "canine_kidney_ureter",
+      "asset": "./canine_kidney_ureter.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sagittally-sectioned-canine-kidney-sdiv1-group2",
+      "label": "Sagittally Sectioned Canine Kidney sdiv1 Group2",
+      "node": "Sagittally_Sectioned_Canine_Kidney_sdiv1_Group2",
+      "asset": "./Sagittally_Sectioned_Canine_Kidney_sdiv1_Group2.glb",
+      "region": "root"
+    }
+  ]
+}

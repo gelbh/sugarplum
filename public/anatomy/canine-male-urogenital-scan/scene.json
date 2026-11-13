@@ -1,0 +1,496 @@
+{
+  "id": "canine-male-urogenital-scan",
+  "title": "Canine male urogenital scan",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-k9-urogenital-male",
+      "label": "k9 urogenital male",
+      "node": "k9_urogenital_male",
+      "asset": "./k9_urogenital_male.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-aorta",
+      "label": "k9 urogenital male aorta",
+      "node": "k9_urogenital_male_aorta",
+      "asset": "./k9_urogenital_male_aorta.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-biceps-femoris",
+      "label": "k9 urogenital male biceps femoris",
+      "node": "k9_urogenital_male_biceps_femoris",
+      "asset": "./k9_urogenital_male_biceps_femoris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-bulbospongiosus",
+      "label": "k9 urogenital male bulbospongiosus",
+      "node": "k9_urogenital_male_bulbospongiosus",
+      "asset": "./k9_urogenital_male_bulbospongiosus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-bulbus-glandis",
+      "label": "k9 urogenital male bulbus glandis",
+      "node": "k9_urogenital_male_bulbus_glandis",
+      "asset": "./k9_urogenital_male_bulbus_glandis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-calcaneal-tendon",
+      "label": "k9 urogenital male calcaneal tendon",
+      "node": "k9_urogenital_male_calcaneal_tendon",
+      "asset": "./k9_urogenital_male_calcaneal_tendon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-caudal-epigastric",
+      "label": "k9 urogenital male caudal epigastric",
+      "node": "k9_urogenital_male_caudal_epigastric",
+      "asset": "./k9_urogenital_male_caudal_epigastric.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-coccygeus",
+      "label": "k9 urogenital male coccygeus",
+      "node": "k9_urogenital_male_coccygeus",
+      "asset": "./k9_urogenital_male_coccygeus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-colon",
+      "label": "k9 urogenital male colon",
+      "node": "k9_urogenital_male_colon",
+      "asset": "./k9_urogenital_male_colon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-cranial-tibial",
+      "label": "k9 urogenital male cranial tibial",
+      "node": "k9_urogenital_male_cranial_tibial",
+      "asset": "./k9_urogenital_male_cranial_tibial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-cremaster",
+      "label": "k9 urogenital male cremaster",
+      "node": "k9_urogenital_male_cremaster",
+      "asset": "./k9_urogenital_male_cremaster.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-dorsal-artery-vein",
+      "label": "k9 urogenital male dorsal artery vein",
+      "node": "k9_urogenital_male_dorsal_artery_vein",
+      "asset": "./k9_urogenital_male_dorsal_artery_vein.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-ductus-deferens",
+      "label": "k9 urogenital male ductus deferens",
+      "node": "k9_urogenital_male_ductus_deferens",
+      "asset": "./k9_urogenital_male_ductus_deferens.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-epididymis",
+      "label": "k9 urogenital male epididymis",
+      "node": "k9_urogenital_male_epididymis",
+      "asset": "./k9_urogenital_male_epididymis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-femoral-artery-vein",
+      "label": "k9 urogenital male femoral artery vein",
+      "node": "k9_urogenital_male_femoral_artery_vein",
+      "asset": "./k9_urogenital_male_femoral_artery_vein.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-fibularis-longus",
+      "label": "k9 urogenital male fibularis longus",
+      "node": "k9_urogenital_male_fibularis_longus",
+      "asset": "./k9_urogenital_male_fibularis_longus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-gastrocnemius",
+      "label": "k9 urogenital male gastrocnemius",
+      "node": "k9_urogenital_male_gastrocnemius",
+      "asset": "./k9_urogenital_male_gastrocnemius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-gracilis",
+      "label": "k9 urogenital male gracilis",
+      "node": "k9_urogenital_male_gracilis",
+      "asset": "./k9_urogenital_male_gracilis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-iliocostalis-lumborum",
+      "label": "k9 urogenital male iliocostalis lumborum",
+      "node": "k9_urogenital_male_iliocostalis_lumborum",
+      "asset": "./k9_urogenital_male_iliocostalis_lumborum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-ilium-wing",
+      "label": "k9 urogenital male ilium wing",
+      "node": "k9_urogenital_male_ilium_wing",
+      "asset": "./k9_urogenital_male_ilium_wing.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-ischiocavernosus",
+      "label": "k9 urogenital male ischiocavernosus",
+      "node": "k9_urogenital_male_ischiocavernosus",
+      "asset": "./k9_urogenital_male_ischiocavernosus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-ischium",
+      "label": "k9 urogenital male ischium",
+      "node": "k9_urogenital_male_ischium",
+      "asset": "./k9_urogenital_male_ischium.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-kidney-l",
+      "label": "k9 urogenital male kidney L",
+      "node": "k9_urogenital_male_kidney_L",
+      "asset": "./k9_urogenital_male_kidney_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-kidney-r",
+      "label": "k9 urogenital male kidney R",
+      "node": "k9_urogenital_male_kidney_R",
+      "asset": "./k9_urogenital_male_kidney_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-lateral-digital-flexor",
+      "label": "k9 urogenital male lateral digital flexor",
+      "node": "k9_urogenital_male_lateral_digital_flexor",
+      "asset": "./k9_urogenital_male_lateral_digital_flexor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-lateral-saphenous-v",
+      "label": "k9 urogenital male lateral saphenous v",
+      "node": "k9_urogenital_male_lateral_saphenous_v",
+      "asset": "./k9_urogenital_male_lateral_saphenous_v.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-long-digital-extensor",
+      "label": "k9 urogenital male long digital extensor",
+      "node": "k9_urogenital_male_long_digital_extensor",
+      "asset": "./k9_urogenital_male_long_digital_extensor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-longissimus-lumborum",
+      "label": "k9 urogenital male longissimus lumborum",
+      "node": "k9_urogenital_male_longissimus_lumborum",
+      "asset": "./k9_urogenital_male_longissimus_lumborum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-medial-saphenous-v",
+      "label": "k9 urogenital male medial saphenous v",
+      "node": "k9_urogenital_male_medial_saphenous_v",
+      "asset": "./k9_urogenital_male_medial_saphenous_v.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-middle-gluteal",
+      "label": "k9 urogenital male middle gluteal",
+      "node": "k9_urogenital_male_middle_gluteal",
+      "asset": "./k9_urogenital_male_middle_gluteal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-oblique-external",
+      "label": "k9 urogenital male oblique external",
+      "node": "k9_urogenital_male_oblique_external",
+      "asset": "./k9_urogenital_male_oblique_external.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-pampiniform-plexus",
+      "label": "k9 urogenital male pampiniform plexus",
+      "node": "k9_urogenital_male_pampiniform_plexus",
+      "asset": "./k9_urogenital_male_pampiniform_plexus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-penis-body",
+      "label": "k9 urogenital male penis body",
+      "node": "k9_urogenital_male_penis_body",
+      "asset": "./k9_urogenital_male_penis_body.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-penis-glans",
+      "label": "k9 urogenital male penis glans",
+      "node": "k9_urogenital_male_penis_glans",
+      "asset": "./k9_urogenital_male_penis_glans.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-penis-root",
+      "label": "k9 urogenital male penis root",
+      "node": "k9_urogenital_male_penis_root",
+      "asset": "./k9_urogenital_male_penis_root.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-popliteal-lymph-node",
+      "label": "k9 urogenital male popliteal lymph node",
+      "node": "k9_urogenital_male_popliteal_lymph_node",
+      "asset": "./k9_urogenital_male_popliteal_lymph_node.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-prepuce",
+      "label": "k9 urogenital male prepuce",
+      "node": "k9_urogenital_male_prepuce",
+      "asset": "./k9_urogenital_male_prepuce.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-prostate",
+      "label": "k9 urogenital male prostate",
+      "node": "k9_urogenital_male_prostate",
+      "asset": "./k9_urogenital_male_prostate.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-psoas-major",
+      "label": "k9 urogenital male psoas major",
+      "node": "k9_urogenital_male_psoas_major",
+      "asset": "./k9_urogenital_male_psoas_major.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-psoas-minor",
+      "label": "k9 urogenital male psoas minor",
+      "node": "k9_urogenital_male_psoas_minor",
+      "asset": "./k9_urogenital_male_psoas_minor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-pubis",
+      "label": "k9 urogenital male pubis",
+      "node": "k9_urogenital_male_pubis",
+      "asset": "./k9_urogenital_male_pubis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-pudenda-interna",
+      "label": "k9 urogenital male pudenda interna",
+      "node": "k9_urogenital_male_pudenda_interna",
+      "asset": "./k9_urogenital_male_pudenda_interna.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-quadratus-lumborum",
+      "label": "k9 urogenital male quadratus lumborum",
+      "node": "k9_urogenital_male_quadratus_lumborum",
+      "asset": "./k9_urogenital_male_quadratus_lumborum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-rectum",
+      "label": "k9 urogenital male rectum",
+      "node": "k9_urogenital_male_rectum",
+      "asset": "./k9_urogenital_male_rectum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-retractor-penis",
+      "label": "k9 urogenital male retractor penis",
+      "node": "k9_urogenital_male_retractor_penis",
+      "asset": "./k9_urogenital_male_retractor_penis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-sartorius-caudal",
+      "label": "k9 urogenital male sartorius caudal",
+      "node": "k9_urogenital_male_sartorius_caudal",
+      "asset": "./k9_urogenital_male_sartorius_caudal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-sartorius-cranial",
+      "label": "k9 urogenital male sartorius cranial",
+      "node": "k9_urogenital_male_sartorius_cranial",
+      "asset": "./k9_urogenital_male_sartorius_cranial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-scrotum",
+      "label": "k9 urogenital male scrotum",
+      "node": "k9_urogenital_male_scrotum",
+      "asset": "./k9_urogenital_male_scrotum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-semimembranosus",
+      "label": "k9 urogenital male semimembranosus",
+      "node": "k9_urogenital_male_semimembranosus",
+      "asset": "./k9_urogenital_male_semimembranosus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-semitendinosus",
+      "label": "k9 urogenital male semitendinosus",
+      "node": "k9_urogenital_male_semitendinosus",
+      "asset": "./k9_urogenital_male_semitendinosus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-spermatic-cord",
+      "label": "k9 urogenital male spermatic cord",
+      "node": "k9_urogenital_male_spermatic_cord",
+      "asset": "./k9_urogenital_male_spermatic_cord.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-spermatic-fascia",
+      "label": "k9 urogenital male spermatic fascia",
+      "node": "k9_urogenital_male_spermatic_fascia",
+      "asset": "./k9_urogenital_male_spermatic_fascia.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-spinal-cord",
+      "label": "k9 urogenital male spinal cord",
+      "node": "k9_urogenital_male_spinal_cord",
+      "asset": "./k9_urogenital_male_spinal_cord.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-superficial-gluteal",
+      "label": "k9 urogenital male superficial gluteal",
+      "node": "k9_urogenital_male_superficial_gluteal",
+      "asset": "./k9_urogenital_male_superficial_gluteal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-tensor-fasciae-late",
+      "label": "k9 urogenital male tensor fasciae late",
+      "node": "k9_urogenital_male_tensor_fasciae_late",
+      "asset": "./k9_urogenital_male_tensor_fasciae_late.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-testis-l",
+      "label": "k9 urogenital male testis L",
+      "node": "k9_urogenital_male_testis_L",
+      "asset": "./k9_urogenital_male_testis_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-testis-r",
+      "label": "k9 urogenital male testis R",
+      "node": "k9_urogenital_male_testis_R",
+      "asset": "./k9_urogenital_male_testis_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-thoracolumbar-fascia",
+      "label": "k9 urogenital male thoracolumbar fascia",
+      "node": "k9_urogenital_male_thoracolumbar_fascia",
+      "asset": "./k9_urogenital_male_thoracolumbar_fascia.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-transverse",
+      "label": "k9 urogenital male transverse",
+      "node": "k9_urogenital_male_transverse",
+      "asset": "./k9_urogenital_male_transverse.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-transversospinalis",
+      "label": "k9 urogenital male transversospinalis",
+      "node": "k9_urogenital_male_transversospinalis",
+      "asset": "./k9_urogenital_male_transversospinalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-urether-r",
+      "label": "k9 urogenital male urether R",
+      "node": "k9_urogenital_male_urether_R",
+      "asset": "./k9_urogenital_male_urether_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-urethra",
+      "label": "k9 urogenital male urethra",
+      "node": "k9_urogenital_male_urethra",
+      "asset": "./k9_urogenital_male_urethra.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-urethral-opening",
+      "label": "k9 urogenital male urethral opening",
+      "node": "k9_urogenital_male_urethral_opening",
+      "asset": "./k9_urogenital_male_urethral_opening.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-urinary-bladder",
+      "label": "k9 urogenital male urinary bladder",
+      "node": "k9_urogenital_male_urinary_bladder",
+      "asset": "./k9_urogenital_male_urinary_bladder.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-vastus-lateralis",
+      "label": "k9 urogenital male vastus lateralis",
+      "node": "k9_urogenital_male_vastus_lateralis",
+      "asset": "./k9_urogenital_male_vastus_lateralis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-vertebra-arch",
+      "label": "k9 urogenital male vertebra arch",
+      "node": "k9_urogenital_male_vertebra_arch",
+      "asset": "./k9_urogenital_male_vertebra_arch.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-vertebra-body",
+      "label": "k9 urogenital male vertebra body",
+      "node": "k9_urogenital_male_vertebra_body",
+      "asset": "./k9_urogenital_male_vertebra_body.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-vertebra-spinous-process",
+      "label": "k9 urogenital male vertebra spinous process",
+      "node": "k9_urogenital_male_vertebra_spinous_process",
+      "asset": "./k9_urogenital_male_vertebra_spinous_process.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-urogenital-male-vertebra-transverse-process",
+      "label": "k9 urogenital male vertebra transverse process",
+      "node": "k9_urogenital_male_vertebra_transverse_process",
+      "asset": "./k9_urogenital_male_vertebra_transverse_process.glb",
+      "region": "root"
+    }
+  ]
+}

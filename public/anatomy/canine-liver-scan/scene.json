@@ -1,0 +1,90 @@
+{
+  "id": "canine-liver-scan",
+  "title": "Canine liver scan",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-k9-liv-diaphragm-decim",
+      "label": "k9 liv diaphragm decim",
+      "node": "k9_liv_diaphragm_decim",
+      "asset": "./k9_liv_diaphragm_decim.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-liv-quadrate-lob-decim",
+      "label": "k9 liv quadrate lob decim",
+      "node": "k9_liv_quadrate_lob_decim",
+      "asset": "./k9_liv_quadrate_lob_decim.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-liver-caudatepro-caudate-lob-decim",
+      "label": "k9 liver caudatepro caudate lob decim",
+      "node": "k9_liver_caudatepro_caudate_lob_decim",
+      "asset": "./k9_liver_caudatepro_caudate_lob_decim.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-liver-gall-bladd-decim",
+      "label": "k9 liver gall bladd decim",
+      "node": "k9_liver_gall_bladd_decim",
+      "asset": "./k9_liver_gall_bladd_decim.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-liver-hep-port-v-decim",
+      "label": "k9 liver hep port v decim",
+      "node": "k9_liver_hep_port_v_decim",
+      "asset": "./k9_liver_hep_port_v_decim.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-liver-l-lat-lob-decim",
+      "label": "k9 liver L lat lob decim",
+      "node": "k9_liver_L_lat_lob_decim",
+      "asset": "./k9_liver_L_lat_lob_decim.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-liver-l-med-lob",
+      "label": "k9 liver L med lob",
+      "node": "k9_liver_L_med_lob",
+      "asset": "./k9_liver_L_med_lob.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-liver-pappro-caudate-lob-decim",
+      "label": "k9 liver pappro caudate lob decim",
+      "node": "k9_liver_pappro_caudate_lob_decim",
+      "asset": "./k9_liver_pappro_caudate_lob_decim.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-liver-r-lat-lob-decim",
+      "label": "k9 liver R lat lob decim",
+      "node": "k9_liver_R_lat_lob_decim",
+      "asset": "./k9_liver_R_lat_lob_decim.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-liver-r-med-lob-decim",
+      "label": "k9 liver R med lob decim",
+      "node": "k9_liver_R_med_lob_decim",
+      "asset": "./k9_liver_R_med_lob_decim.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-volume4",
+      "label": "Volume4",
+      "node": "Volume4",
+      "asset": "./Volume4.glb",
+      "region": "root"
+    }
+  ]
+}
