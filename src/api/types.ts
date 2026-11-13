@@ -2,9 +2,16 @@ import type { GuestHubCardBody } from "../guest/store";
 import type { AchievementItem, UnlockView } from "../achievements/wire";
 import type { SourceRole } from "../lib/sourceRole";
 
-export type { SubjectKnowledge } from "../study/subjectKnowledge";
+export type {
+  SubjectKnowledge,
+  SubjectKnowledgeBucketsAggregate,
+} from "../study/subjectKnowledge";
 export type { SubjectCompositionSummary } from "../guest/composition";
 export type { FsrsOptimizeStatus } from "../study/fsrsOptimizeTypes";
+export type {
+  InsightsGradeCounts,
+  InsightsSummary,
+} from "../insights/types";
 
 export type AuthUser = {
   id: string;
