@@ -5,6 +5,11 @@ export type AnatomyRegion = {
   defaultActive?: boolean;
 };
 
+export type AnatomyStructureInfo = {
+  summary?: string;
+  alsoKnownAs?: string[];
+};
+
 export type AnatomyStructure = {
   id: string;
   label: string;
@@ -14,6 +19,8 @@ export type AnatomyStructure = {
   asset?: string;
   /** Required when the manifest lists `regions`. */
   region?: string;
+  /** Optional textbook-safe facts for the info panel / Test Yourself synonyms. */
+  info?: AnatomyStructureInfo;
 };
 
 export type AnatomySceneManifest = {

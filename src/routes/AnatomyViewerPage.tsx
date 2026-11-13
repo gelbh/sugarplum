@@ -27,6 +27,7 @@ import AnatomyCanvas, {
   type AnatomyLoadSpec,
 } from "../anatomy/AnatomyCanvas";
 import AnatomyHelpOverlay from "../anatomy/AnatomyHelpOverlay";
+import InfoPanel from "../anatomy/InfoPanel";
 import {
   defaultActiveRegionIds,
   parseAnatomySceneManifest,
@@ -211,8 +212,9 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
     return buildLoads(sceneId, manifest, activeRegions);
   }, [manifest, sceneId, activeRegions]);
 
-  const selectedLabel =
-    manifest?.structures.find((s) => s.id === ui.selectedId)?.label ?? null;
+  const selectedStructure =
+    manifest?.structures.find((s) => s.id === ui.selectedId) ?? null;
+  const selectedLabel = selectedStructure?.label ?? null;
 
   useEffect(() => {
     const onKey = (ev: KeyboardEvent) => {
@@ -339,14 +341,39 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
           alignItems="stretch"
           sx={{ flex: 1, minHeight: 0 }}
         >
-          <StructurePanel
-            structures={manifest.structures}
-            regions={manifest.regions}
-            activeRegions={activeRegions}
-            onChangeRegions={changeRegions}
-            ui={ui}
-            dispatch={dispatch}
-          />
+          <Stack
+            spacing={1.25}
+            sx={{
+              width: { xs: "100%", md: 280 },
+              flex: { xs: "0 1 auto", md: "0 0 auto" },
+              flexShrink: { xs: 1, md: 0 },
+              minHeight: 0,
+              height: { xs: "auto", md: "100%" },
+              // Mobile height budget used to live on StructurePanel; keep it on
+              // this outer rail so nested % maxHeight still resolves.
+              maxHeight: { xs: "42%", md: "none" },
+              overflow: "hidden",
+            }}
+          >
+            <Box
+              sx={{
+                flex: 1,
+                minHeight: 0,
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <StructurePanel
+                structures={manifest.structures}
+                regions={manifest.regions}
+                activeRegions={activeRegions}
+                onChangeRegions={changeRegions}
+                ui={ui}
+                dispatch={dispatch}
+              />
+            </Box>
+            <InfoPanel structure={selectedStructure} />
+          </Stack>
           <Box
             sx={{
               flex: 1,
@@ -473,9 +500,7 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
                     aria-label="Toggle orthographic camera"
                     onClick={() => {
                       setCameraMode((mode) =>
-                        mode === "perspective"
-                          ? "orthographic"
-                          : "perspective",
+                        mode === "perspective" ? "orthographic" : "perspective",
                       );
                     }}
                   >
