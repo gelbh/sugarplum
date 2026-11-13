@@ -18,56 +18,33 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import type { AnatomyRegion, AnatomyStructure } from "./types";
 import type { StructureUiAction, StructureUiState } from "./structureState";
+import {
+  groupRegionsByFamily,
+  type RegionDisplay,
+} from "./regionDisplay";
 
 type Props = {
   structures: AnatomyStructure[];
   regions?: AnatomyRegion[];
   activeRegions: Set<string>;
-  onToggleRegion: (regionId: string) => void;
-  onSelectAllRegions: () => void;
-  onClearRegions: () => void;
-  onSetRegions: (regionIds: string[]) => void;
+  onChangeRegions: (regionIds: string[]) => void;
   ui: StructureUiState;
   dispatch: (action: StructureUiAction) => void;
 };
 
-type RegionDisplay = {
-  region: AnatomyRegion;
-  family: string;
-  short: string;
-};
-
-const FAMILY_ORDER = ["Legs", "Head", "Trunk", "Other"] as const;
-
-function regionFamilyKey(id: string): string {
-  if (id.startsWith("legs-")) return "Legs";
-  if (id === "skull" || id === "neck") return "Head";
-  if (
-    id === "spine" ||
-    id === "ribs" ||
-    id === "organs" ||
-    id === "pelvis-tail"
-  ) {
-    return "Trunk";
-  }
-  return "Other";
+function toggleRegionId(active: Set<string>, id: string): string[] {
+  const next = new Set(active);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  return [...next];
 }
 
-function parseRegionDisplay(region: AnatomyRegion): RegionDisplay {
-  const sep = " · ";
-  const i = region.label.indexOf(sep);
-  if (i !== -1) {
-    return {
-      region,
-      family: region.label.slice(0, i),
-      short: region.label.slice(i + sep.length),
-    };
-  }
-  return {
-    region,
-    family: regionFamilyKey(region.id),
-    short: region.label,
-  };
+function addRegionIds(active: Set<string>, ids: string[]): string[] {
+  return [...new Set([...active, ...ids])];
+}
+
+function removeRegionIds(active: Set<string>, ids: string[]): string[] {
+  return [...active].filter((id) => !ids.includes(id));
 }
 
 function regionIcon(id: string): ReactNode {
@@ -273,10 +250,7 @@ export default function StructurePanel({
   structures,
   regions,
   activeRegions,
-  onToggleRegion,
-  onSelectAllRegions,
-  onClearRegions,
-  onSetRegions,
+  onChangeRegions,
   ui,
   dispatch,
 }: Props) {
@@ -298,23 +272,7 @@ export default function StructurePanel({
 
   const regionGroups = useMemo(() => {
     if (!regions?.length) return [];
-    const displays = regions.map(parseRegionDisplay);
-    const byFamily = new Map<string, RegionDisplay[]>();
-    for (const d of displays) {
-      const list = byFamily.get(d.family) ?? [];
-      list.push(d);
-      byFamily.set(d.family, list);
-    }
-    const ordered: string[] = FAMILY_ORDER.filter((f) => byFamily.has(f));
-    for (const key of byFamily.keys()) {
-      if (!ordered.includes(key)) {
-        ordered.push(key);
-      }
-    }
-    return ordered.map((family) => ({
-      family,
-      items: byFamily.get(family)!,
-    }));
+    return groupRegionsByFamily(regions);
   }, [regions]);
 
   const structureGroups = useMemo(() => {
@@ -396,7 +354,9 @@ export default function StructurePanel({
               <Button
                 size="small"
                 disabled={allRegionsOn}
-                onClick={onSelectAllRegions}
+                onClick={() =>
+                  onChangeRegions(regions?.map((r) => r.id) ?? [])
+                }
                 sx={{ minWidth: 0, px: 0.75, fontSize: "0.7rem" }}
               >
                 All
@@ -404,7 +364,7 @@ export default function StructurePanel({
               <Button
                 size="small"
                 disabled={noRegionsOn}
-                onClick={onClearRegions}
+                onClick={() => onChangeRegions([])}
                 sx={{ minWidth: 0, px: 0.75, fontSize: "0.7rem" }}
               >
                 None
@@ -445,18 +405,13 @@ export default function StructurePanel({
                     </Typography>
                     <Button
                       size="small"
-                      onClick={() => {
-                        if (familyAllOn) {
-                          const next = [...activeRegions].filter(
-                            (id) => !ids.includes(id),
-                          );
-                          onSetRegions(next);
-                        } else {
-                          onSetRegions([
-                            ...new Set([...activeRegions, ...ids]),
-                          ]);
-                        }
-                      }}
+                      onClick={() =>
+                        onChangeRegions(
+                          familyAllOn
+                            ? removeRegionIds(activeRegions, ids)
+                            : addRegionIds(activeRegions, ids),
+                        )
+                      }
                       sx={{ minWidth: 0, px: 0.5, fontSize: "0.65rem", py: 0 }}
                     >
                       {familyAllOn ? "Clear" : "All"}
@@ -474,7 +429,11 @@ export default function StructurePanel({
                         key={d.region.id}
                         display={d}
                         active={activeRegions.has(d.region.id)}
-                        onToggle={() => onToggleRegion(d.region.id)}
+                        onToggle={() =>
+                          onChangeRegions(
+                            toggleRegionId(activeRegions, d.region.id),
+                          )
+                        }
                       />
                     ))}
                   </Box>

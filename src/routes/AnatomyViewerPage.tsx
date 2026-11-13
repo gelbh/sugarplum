@@ -180,43 +180,10 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
     return buildLoads(sceneId, manifest, activeRegions);
   }, [manifest, sceneId, activeRegions]);
 
-  const loadsKey =
-    loads?.map((l) => `${l.structureId}:${l.url}`).join("|") ?? "";
-
-  useEffect(() => {
-    if (!loadsKey) return;
-    const id = window.setTimeout(() => {
-      canvasRef.current?.setAutoRotate(autoRotate);
-      canvasRef.current?.setWireframe(wireframe);
-    }, 0);
-    return () => window.clearTimeout(id);
-  }, [loadsKey, autoRotate, wireframe]);
-
   const selectedLabel =
     manifest?.structures.find((s) => s.id === ui.selectedId)?.label ?? null;
 
-  const toggleRegion = (regionId: string) => {
-    setActiveRegions((prev) => {
-      const next = new Set(prev);
-      if (next.has(regionId)) next.delete(regionId);
-      else next.add(regionId);
-      return next;
-    });
-    dispatch({ type: "reset" });
-  };
-
-  const selectAllRegions = () => {
-    if (!manifest?.regions) return;
-    setActiveRegions(new Set(manifest.regions.map((r) => r.id)));
-    dispatch({ type: "reset" });
-  };
-
-  const clearRegions = () => {
-    setActiveRegions(new Set());
-    dispatch({ type: "reset" });
-  };
-
-  const setRegions = (regionIds: string[]) => {
+  const changeRegions = (regionIds: string[]) => {
     setActiveRegions(new Set(regionIds));
     dispatch({ type: "reset" });
   };
@@ -299,10 +266,7 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
             structures={manifest.structures}
             regions={manifest.regions}
             activeRegions={activeRegions}
-            onToggleRegion={toggleRegion}
-            onSelectAllRegions={selectAllRegions}
-            onClearRegions={clearRegions}
-            onSetRegions={setRegions}
+            onChangeRegions={changeRegions}
             ui={ui}
             dispatch={dispatch}
           />
@@ -380,11 +344,7 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
                     color={autoRotate ? "primary" : "default"}
                     aria-pressed={autoRotate}
                     aria-label="Auto-rotate"
-                    onClick={() => {
-                      const next = !autoRotate;
-                      setAutoRotate(next);
-                      canvasRef.current?.setAutoRotate(next);
-                    }}
+                    onClick={() => setAutoRotate((on) => !on)}
                   >
                     <ThreeSixtyOutlinedIcon fontSize="small" />
                   </IconButton>
@@ -398,11 +358,7 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
                     color={wireframe ? "primary" : "default"}
                     aria-pressed={wireframe}
                     aria-label="Wireframe"
-                    onClick={() => {
-                      const next = !wireframe;
-                      setWireframe(next);
-                      canvasRef.current?.setWireframe(next);
-                    }}
+                    onClick={() => setWireframe((on) => !on)}
                   >
                     <GridOnOutlinedIcon fontSize="small" />
                   </IconButton>
@@ -471,6 +427,8 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
                   loads={loads}
                   ui={ui}
                   background={canvasBackground}
+                  autoRotate={autoRotate}
+                  wireframe={wireframe}
                   onSelect={(id) => dispatch({ type: "select", id })}
                 />
               )}
