@@ -22,6 +22,15 @@ describe("matchAnatomyPath", () => {
     expect(matchAnatomyPath("/library")).toBeNull();
     expect(matchAnatomyPath("/anatomy/a/b")).toBeNull();
   });
+
+  it("rejects malformed percent-encoding", () => {
+    expect(matchAnatomyPath("/anatomy/%")).toBeNull();
+  });
+
+  it("rejects path traversal scene ids", () => {
+    expect(matchAnatomyPath("/anatomy/..")).toBeNull();
+    expect(matchAnatomyPath("/anatomy/%2e%2e")).toBeNull();
+  });
 });
 
 describe("anatomy hrefs", () => {

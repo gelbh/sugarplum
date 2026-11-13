@@ -5,11 +5,12 @@ export type StructureUiState = {
 };
 
 export type StructureUiAction =
-  | { type: "select"; id: string }
+  | { type: "select"; id: string | null }
   | { type: "toggleHidden"; id: string }
   | { type: "isolate"; id: string }
   | { type: "clearIsolate" }
-  | { type: "showAll" };
+  | { type: "showAll" }
+  | { type: "reset" };
 
 export function createStructureUiState(): StructureUiState {
   return { selectedId: null, hidden: new Set(), isolatedId: null };
@@ -34,6 +35,8 @@ export function structureUiReducer(
       return { ...state, isolatedId: null };
     case "showAll":
       return { ...state, hidden: new Set(), isolatedId: null };
+    case "reset":
+      return createStructureUiState();
     default:
       return state;
   }

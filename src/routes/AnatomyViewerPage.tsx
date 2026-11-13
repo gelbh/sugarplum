@@ -31,6 +31,10 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
   const [viewEpoch, setViewEpoch] = useState(0);
 
   useEffect(() => {
+    dispatch({ type: "reset" });
+  }, [sceneId]);
+
+  useEffect(() => {
     let cancelled = false;
     setManifest(null);
     setError(null);
@@ -59,9 +63,16 @@ export default function AnatomyViewerPage({ sceneId }: Props) {
 
   const assetUrl = useMemo(() => {
     if (!manifest) return null;
-    const base = `/anatomy/${encodeURIComponent(sceneId)}/`;
     const asset = manifest.asset.replace(/^\.\//, "");
-    return `${base}${asset}`;
+    if (
+      !asset ||
+      asset.includes("..") ||
+      asset.startsWith("/") ||
+      asset.includes("\\")
+    ) {
+      return null;
+    }
+    return `/anatomy/${encodeURIComponent(sceneId)}/${asset}`;
   }, [manifest, sceneId]);
 
   const selectedLabel =

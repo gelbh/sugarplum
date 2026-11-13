@@ -1,4 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import {
   AmbientLight,
   Box3,
@@ -36,14 +39,25 @@ export default function AnatomyCanvas({
   const structuresRef = useRef(structures);
   const nodeMapRef = useRef<Map<string, Object3D>>(new Map());
   const idByNodeRef = useRef<Map<string, string>>(new Map());
+  const applyVisibilityRef = useRef<() => void>(() => {});
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [retryToken, setRetryToken] = useState(0);
 
-  uiRef.current = ui;
-  onSelectRef.current = onSelect;
-  structuresRef.current = structures;
+  useEffect(() => {
+    uiRef.current = ui;
+  }, [ui]);
+  useEffect(() => {
+    onSelectRef.current = onSelect;
+  }, [onSelect]);
+  useEffect(() => {
+    structuresRef.current = structures;
+  }, [structures]);
 
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
+
+    setLoadError(null);
 
     const scene = new Scene();
     scene.background = new Color(0xf0f0f0);
@@ -53,9 +67,13 @@ export default function AnatomyCanvas({
 
     const renderer = new WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    host.appendChild(renderer.domElement);
+    const canvas = renderer.domElement;
+    canvas.style.display = "block";
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
+    host.appendChild(canvas);
 
-    const controls = new OrbitControls(camera, renderer.domElement);
+    const controls = new OrbitControls(camera, canvas);
     controls.enableDamping = true;
 
     scene.add(new AmbientLight(0xffffff, 0.7));
@@ -66,9 +84,17 @@ export default function AnatomyCanvas({
     const raycaster = new Raycaster();
     const pointer = new Vector2();
 
-    let frame = 0;
     let disposed = false;
     const root = { current: null as Object3D | null };
+
+    const isEffectivelyVisible = (obj: Object3D) => {
+      let cur: Object3D | null = obj;
+      while (cur) {
+        if (!cur.visible) return false;
+        cur = cur.parent;
+      }
+      return true;
+    };
 
     const applyVisibility = () => {
       const state = uiRef.current;
@@ -77,24 +103,33 @@ export default function AnatomyCanvas({
         if (obj) obj.visible = isStructureVisible(state, s.id);
       }
     };
+    applyVisibilityRef.current = applyVisibility;
 
     const resize = () => {
-      const w = host.clientWidth || 1;
-      const h = host.clientHeight || 1;
-      camera.aspect = w / h;
+      const w = Math.max(1, Math.floor(host.clientWidth));
+      const h = Math.max(1, Math.floor(host.clientHeight));
+      // Cap buffer so a bad layout cannot explode the GPU canvas.
+      const maxEdge = 4096;
+      const bw = Math.min(w, maxEdge);
+      const bh = Math.min(h, maxEdge);
+      camera.aspect = bw / bh;
       camera.updateProjectionMatrix();
-      renderer.setSize(w, h, false);
+      renderer.setSize(bw, bh, true);
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
     };
 
     const onPointerDown = (ev: PointerEvent) => {
-      const rect = renderer.domElement.getBoundingClientRect();
+      const rect = canvas.getBoundingClientRect();
       pointer.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
       pointer.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
       raycaster.setFromCamera(pointer, camera);
-      const hits = raycaster.intersectObjects(
-        [...nodeMapRef.current.values()],
-        true,
+      const targets = [...nodeMapRef.current.values()].filter(
+        isEffectivelyVisible,
       );
+      const hits = raycaster
+        .intersectObjects(targets, true)
+        .filter((hit) => isEffectivelyVisible(hit.object));
       if (hits.length === 0) return;
       let obj: Object3D | null = hits[0].object;
       while (obj) {
@@ -107,18 +142,16 @@ export default function AnatomyCanvas({
       }
     };
 
-    renderer.domElement.addEventListener("pointerdown", onPointerDown);
+    canvas.addEventListener("pointerdown", onPointerDown);
     const ro = new ResizeObserver(resize);
     ro.observe(host);
     resize();
 
-    const tick = () => {
+    renderer.setAnimationLoop(() => {
       if (disposed) return;
-      frame = requestAnimationFrame(tick);
-      applyVisibility();
       controls.update();
       renderer.render(scene, camera);
-    };
+    });
 
     const loader = new GLTFLoader();
     loader.load(
@@ -158,38 +191,71 @@ export default function AnatomyCanvas({
       undefined,
       (err) => {
         console.error("Anatomy glTF load failed", err);
+        if (!disposed) {
+          setLoadError("Could not load the 3D model.");
+        }
       },
     );
 
-    tick();
-
     return () => {
       disposed = true;
-      cancelAnimationFrame(frame);
+      applyVisibilityRef.current = () => {};
+      renderer.setAnimationLoop(null);
       ro.disconnect();
-      renderer.domElement.removeEventListener("pointerdown", onPointerDown);
+      canvas.removeEventListener("pointerdown", onPointerDown);
       controls.dispose();
       renderer.dispose();
-      if (renderer.domElement.parentElement === host) {
-        host.removeChild(renderer.domElement);
+      if (canvas.parentElement === host) {
+        host.removeChild(canvas);
       }
       if (root.current) scene.remove(root.current);
       nodeMapRef.current = new Map();
       idByNodeRef.current = new Map();
     };
-  }, [assetUrl]);
+  }, [assetUrl, retryToken]);
+
+  useEffect(() => {
+    applyVisibilityRef.current();
+  }, [ui, structures]);
 
   return (
-    <div
-      ref={hostRef}
-      style={{
+    <Box
+      sx={{
+        position: "relative",
         width: "100%",
         height: "100%",
         minHeight: 360,
-        borderRadius: 8,
-        overflow: "hidden",
-        background: "#f0f0f0",
+        minWidth: 0,
       }}
-    />
+    >
+      <div
+        ref={hostRef}
+        style={{
+          width: "100%",
+          height: "100%",
+          minHeight: 360,
+          borderRadius: 8,
+          overflow: "hidden",
+          background: "#f0f0f0",
+        }}
+      />
+      {loadError ? (
+        <Alert
+          severity="error"
+          sx={{ position: "absolute", left: 12, right: 12, bottom: 12 }}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={() => setRetryToken((n) => n + 1)}
+            >
+              Retry
+            </Button>
+          }
+        >
+          {loadError}
+        </Alert>
+      ) : null}
+    </Box>
   );
 }

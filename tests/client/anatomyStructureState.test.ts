@@ -21,4 +21,13 @@ describe("structureUiReducer", () => {
     expect(s.selectedId).toBe("bone-a");
     expect(s.hidden.has("bone-a")).toBe(true);
   });
+
+  it("reset clears selection hide and isolate", () => {
+    let s = createStructureUiState();
+    s = structureUiReducer(s, { type: "select", id: "bone-a" });
+    s = structureUiReducer(s, { type: "toggleHidden", id: "bone-b" });
+    s = structureUiReducer(s, { type: "isolate", id: "bone-a" });
+    s = structureUiReducer(s, { type: "reset" });
+    expect(s).toEqual(createStructureUiState());
+  });
 });

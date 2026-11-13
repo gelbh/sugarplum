@@ -8,7 +8,21 @@ export function matchAnatomyPath(pathname: string): AnatomyPathMatch | null {
   if (HUB.test(pathname)) return { kind: "hub" };
   const m = pathname.match(SCENE);
   if (!m) return null;
-  return { kind: "scene", sceneId: decodeURIComponent(m[1]) };
+  try {
+    const sceneId = decodeURIComponent(m[1]);
+    // Reject traversal / nested segments that would escape /anatomy/<id>/.
+    if (
+      !sceneId ||
+      sceneId.includes("/") ||
+      sceneId.includes("\\") ||
+      sceneId.includes("..")
+    ) {
+      return null;
+    }
+    return { kind: "scene", sceneId };
+  } catch {
+    return null;
+  }
 }
 
 export const anatomyHubHref = () => "/anatomy";
