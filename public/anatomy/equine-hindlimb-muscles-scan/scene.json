@@ -1,0 +1,230 @@
+{
+  "id": "equine-hindlimb-muscles-scan",
+  "title": "Equine hindlimb muscles scan",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-deep-digital-flexor-tendon",
+      "label": "Deep digital flexor tendon",
+      "node": "Deep_digital_flexor_tendon",
+      "asset": "./Deep_digital_flexor_tendon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-digital-annular-ligament",
+      "label": "Distal digital annular ligament",
+      "node": "Distal_digital_annular_ligament",
+      "asset": "./Distal_digital_annular_ligament.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-extensor-retinaculum",
+      "label": "Distal extensor retinaculum",
+      "node": "Distal_extensor_retinaculum",
+      "asset": "./Distal_extensor_retinaculum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gastrocnemius-muscle",
+      "label": "Gastrocnemius muscle",
+      "node": "Gastrocnemius_muscle",
+      "asset": "./Gastrocnemius_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-insertion-of-semimembranosus",
+      "label": "Insertion of semimembranosus",
+      "node": "Insertion_of_semimembranosus",
+      "asset": "./Insertion_of_semimembranosus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lateral-collateral-ligament",
+      "label": "Lateral collateral ligament",
+      "node": "Lateral_collateral_ligament",
+      "asset": "./Lateral_collateral_ligament.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lateral-deep-digital-flexor-muscle",
+      "label": "Lateral deep digital flexor muscle",
+      "node": "Lateral_deep_digital_flexor_muscle",
+      "asset": "./Lateral_deep_digital_flexor_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lateral-digital-extensor-muscle",
+      "label": "Lateral digital extensor muscle",
+      "node": "Lateral_digital_extensor_muscle",
+      "asset": "./Lateral_digital_extensor_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lateral-meniscus",
+      "label": "Lateral meniscus",
+      "node": "Lateral_meniscus",
+      "asset": "./Lateral_meniscus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-long-digital-extensor-muscle",
+      "label": "Long digital extensor muscle",
+      "node": "Long_digital_extensor_muscle",
+      "asset": "./Long_digital_extensor_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-long-digital-extensor-tendon",
+      "label": "Long digital extensor tendon",
+      "node": "Long_digital_extensor_tendon",
+      "asset": "./Long_digital_extensor_tendon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-med-collat-ligament",
+      "label": "Med collat ligament",
+      "node": "Med_collat_ligament",
+      "asset": "./Med_collat_ligament.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-medial-collateral-ligament-hock",
+      "label": "Medial collateral ligament hock",
+      "node": "Medial_collateral_ligament_hock",
+      "asset": "./Medial_collateral_ligament_hock.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-medial-deep-digital-flexor-muscle",
+      "label": "Medial deep digital flexor muscle",
+      "node": "Medial_deep_digital_flexor_muscle",
+      "asset": "./Medial_deep_digital_flexor_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-medial-meniscus",
+      "label": "Medial meniscus",
+      "node": "Medial_meniscus",
+      "asset": "./Medial_meniscus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-middle-extensor-retinaculum",
+      "label": "Middle extensor retinaculum",
+      "node": "Middle_extensor_retinaculum",
+      "asset": "./Middle_extensor_retinaculum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patellar-lig-intermediate",
+      "label": "Patellar lig intermediate",
+      "node": "Patellar_lig_intermediate",
+      "asset": "./Patellar_lig_intermediate.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patellar-lig-lateral",
+      "label": "Patellar lig lateral",
+      "node": "Patellar_lig_lateral",
+      "asset": "./Patellar_lig_lateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patellar-lig-medial",
+      "label": "Patellar lig medial",
+      "node": "Patellar_lig_medial",
+      "asset": "./Patellar_lig_medial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patellar-medial-femoropatellar-ligament",
+      "label": "Patellar medial femoropatellar ligament",
+      "node": "Patellar_medial_femoropatellar_ligament",
+      "asset": "./Patellar_medial_femoropatellar_ligament.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-peroneus-tertius-muscle",
+      "label": "Peroneus tertius muscle",
+      "node": "Peroneus_tertius_muscle",
+      "asset": "./Peroneus_tertius_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-plantar-annular-ligament",
+      "label": "Plantar annular ligament",
+      "node": "Plantar_annular_ligament",
+      "asset": "./Plantar_annular_ligament.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-popliteus-muscle",
+      "label": "Popliteus muscle",
+      "node": "Popliteus_muscle",
+      "asset": "./Popliteus_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-digital-annular-ligament",
+      "label": "Proximal digital annular ligament",
+      "node": "Proximal_digital_annular_ligament",
+      "asset": "./Proximal_digital_annular_ligament.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-proximal-extensor-retinaculum",
+      "label": "Proximal extensor retinaculum",
+      "node": "Proximal_extensor_retinaculum",
+      "asset": "./Proximal_extensor_retinaculum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-superficial-digital-flexor-m-t",
+      "label": "Superficial digital flexor m t",
+      "node": "Superficial_digital_flexor_m_t",
+      "asset": "./Superficial_digital_flexor_m_t.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-suspensory-ligament",
+      "label": "Suspensory ligament",
+      "node": "Suspensory_ligament",
+      "asset": "./Suspensory_ligament.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibialis-caudalis-muscle",
+      "label": "Tibialis caudalis muscle",
+      "node": "Tibialis_caudalis_muscle",
+      "asset": "./Tibialis_caudalis_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibialis-cranialis-muscle",
+      "label": "Tibialis cranialis muscle",
+      "node": "Tibialis_cranialis_muscle",
+      "asset": "./Tibialis_cranialis_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-unknown-ligament-1",
+      "label": "Unknown ligament 1",
+      "node": "Unknown_ligament_1",
+      "asset": "./Unknown_ligament_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-zbrushpolymesh3d",
+      "label": "ZBrushPolyMesh3D",
+      "node": "ZBrushPolyMesh3D",
+      "asset": "./ZBrushPolyMesh3D.glb",
+      "region": "root"
+    }
+  ]
+}

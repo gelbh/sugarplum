@@ -1,0 +1,132 @@
+{
+  "id": "equine-bovine-tibia-proximal",
+  "title": "Equine bovine tibia proximal",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-eminence-intercondylar-e",
+      "label": "eminence intercondylar e",
+      "node": "eminence_intercondylar_e",
+      "asset": "./eminence_intercondylar_e.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-extensor-groove-e",
+      "label": "extensor groove e",
+      "node": "extensor_groove_e",
+      "asset": "./extensor_groove_e.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-caudal-cruciate-e",
+      "label": "ligament caudal cruciate e",
+      "node": "ligament_caudal_cruciate_e",
+      "asset": "./ligament_caudal_cruciate_e.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-caudolateral-meniscotibial-e",
+      "label": "ligament caudolateral meniscotibial e",
+      "node": "ligament_caudolateral_meniscotibial_e",
+      "asset": "./ligament_caudolateral_meniscotibial_e.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-caudomedial-meniscotibial-e",
+      "label": "ligament caudomedial meniscotibial e",
+      "node": "ligament_caudomedial_meniscotibial_e",
+      "asset": "./ligament_caudomedial_meniscotibial_e.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-cranial-cruciate-e",
+      "label": "ligament cranial cruciate e",
+      "node": "ligament_cranial_cruciate_e",
+      "asset": "./ligament_cranial_cruciate_e.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-craniolateral-meniscotibial-e",
+      "label": "ligament craniolateral meniscotibial e",
+      "node": "ligament_craniolateral_meniscotibial_e",
+      "asset": "./ligament_craniolateral_meniscotibial_e.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-craniomedial-meniscotibial-e",
+      "label": "ligament craniomedial meniscotibial e",
+      "node": "ligament_craniomedial_meniscotibial_e",
+      "asset": "./ligament_craniomedial_meniscotibial_e.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-intermediate-patellar-cut-e",
+      "label": "ligament intermediate patellar cut e",
+      "node": "ligament_intermediate_patellar_cut_e",
+      "asset": "./ligament_intermediate_patellar_cut_e.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-lateral-patellar-cut-e",
+      "label": "ligament lateral patellar cut e",
+      "node": "ligament_lateral_patellar_cut_e",
+      "asset": "./ligament_lateral_patellar_cut_e.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-medial-collateral-e",
+      "label": "ligament medial collateral e",
+      "node": "ligament_medial_collateral_e",
+      "asset": "./ligament_medial_collateral_e.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-meniscofemoral-e",
+      "label": "ligament meniscofemoral e",
+      "node": "ligament_meniscofemoral_e",
+      "asset": "./ligament_meniscofemoral_e.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-meniscus-lateral-e",
+      "label": "meniscus lateral e",
+      "node": "meniscus_lateral_e",
+      "asset": "./meniscus_lateral_e.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-meniscus-medial-e",
+      "label": "meniscus medial e",
+      "node": "meniscus_medial_e",
+      "asset": "./meniscus_medial_e.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-menisci-cow",
+      "label": "tibia menisci cow",
+      "node": "tibia_menisci_cow",
+      "asset": "./tibia_menisci_cow.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibial-crest-e",
+      "label": "tibial crest e",
+      "node": "tibial_crest_e",
+      "asset": "./tibial_crest_e.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tuberosity-tibial-e",
+      "label": "tuberosity tibial e",
+      "node": "tuberosity_tibial_e",
+      "asset": "./tuberosity_tibial_e.glb",
+      "region": "root"
+    }
+  ]
+}

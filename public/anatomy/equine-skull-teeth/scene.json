@@ -1,0 +1,370 @@
+{
+  "id": "equine-skull-teeth",
+  "title": "Equine skull teeth",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-basihyoid",
+      "label": "Basihyoid",
+      "node": "Basihyoid",
+      "asset": "./Basihyoid.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-ceratohyoid",
+      "label": "L ceratohyoid",
+      "node": "L_ceratohyoid",
+      "asset": "./L_ceratohyoid.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-hemimandible",
+      "label": "L hemimandible",
+      "node": "L_hemimandible",
+      "asset": "./L_hemimandible.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-canine",
+      "label": "L mand canine",
+      "node": "L_mand_canine",
+      "asset": "./L_mand_canine.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-canine-copy000",
+      "label": "L mand canine copy000",
+      "node": "L_mand_canine_copy000",
+      "asset": "./L_mand_canine_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-i1",
+      "label": "L mand I1",
+      "node": "L_mand_I1",
+      "asset": "./L_mand_I1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-i1-copy000",
+      "label": "L mand I1 copy000",
+      "node": "L_mand_I1_copy000",
+      "asset": "./L_mand_I1_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-i2",
+      "label": "L mand I2",
+      "node": "L_mand_I2",
+      "asset": "./L_mand_I2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-i2-copy000",
+      "label": "L mand I2 copy000",
+      "node": "L_mand_I2_copy000",
+      "asset": "./L_mand_I2_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-i3",
+      "label": "L mand I3",
+      "node": "L_mand_I3",
+      "asset": "./L_mand_I3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-i3-copy000",
+      "label": "L mand I3 copy000",
+      "node": "L_mand_I3_copy000",
+      "asset": "./L_mand_I3_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-m1",
+      "label": "L mand M1",
+      "node": "L_mand_M1",
+      "asset": "./L_mand_M1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-m1-copy000",
+      "label": "L mand M1 copy000",
+      "node": "L_mand_M1_copy000",
+      "asset": "./L_mand_M1_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-m2",
+      "label": "L mand M2",
+      "node": "L_mand_M2",
+      "asset": "./L_mand_M2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-m2-copy000",
+      "label": "L mand M2 copy000",
+      "node": "L_mand_M2_copy000",
+      "asset": "./L_mand_M2_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-m3",
+      "label": "L mand M3",
+      "node": "L_mand_M3",
+      "asset": "./L_mand_M3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-m3-copy000",
+      "label": "L mand M3 copy000",
+      "node": "L_mand_M3_copy000",
+      "asset": "./L_mand_M3_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-p2",
+      "label": "L mand P2",
+      "node": "L_mand_P2",
+      "asset": "./L_mand_P2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-p2-copy000",
+      "label": "L mand P2 copy000",
+      "node": "L_mand_P2_copy000",
+      "asset": "./L_mand_P2_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-p3",
+      "label": "L mand P3",
+      "node": "L_mand_P3",
+      "asset": "./L_mand_P3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-p3-copy000",
+      "label": "L mand P3 copy000",
+      "node": "L_mand_P3_copy000",
+      "asset": "./L_mand_P3_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-p4",
+      "label": "L mand P4",
+      "node": "L_mand_P4",
+      "asset": "./L_mand_P4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-mand-p4-copy000",
+      "label": "L mand P4 copy000",
+      "node": "L_mand_P4_copy000",
+      "asset": "./L_mand_P4_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-maxilla-clone",
+      "label": "L maxilla clone",
+      "node": "L_maxilla_clone",
+      "asset": "./L_maxilla_clone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-stylohyoid",
+      "label": "L stylohyoid",
+      "node": "L_stylohyoid",
+      "asset": "./L_stylohyoid.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-thyrohyoid",
+      "label": "L thyrohyoid",
+      "node": "L_thyrohyoid",
+      "asset": "./L_thyrohyoid.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-ceratohyoid",
+      "label": "R ceratohyoid",
+      "node": "R_ceratohyoid",
+      "asset": "./R_ceratohyoid.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-hemimandible",
+      "label": "R hemimandible",
+      "node": "R_hemimandible",
+      "asset": "./R_hemimandible.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-canine",
+      "label": "R max canine",
+      "node": "R_max_canine",
+      "asset": "./R_max_canine.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-canine-copy000",
+      "label": "R max canine copy000",
+      "node": "R_max_canine_copy000",
+      "asset": "./R_max_canine_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-i1",
+      "label": "R max I1",
+      "node": "R_max_I1",
+      "asset": "./R_max_I1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-i1-copy000",
+      "label": "R max I1 copy000",
+      "node": "R_max_I1_copy000",
+      "asset": "./R_max_I1_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-i2",
+      "label": "R max I2",
+      "node": "R_max_I2",
+      "asset": "./R_max_I2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-i2-copy000",
+      "label": "R max I2 copy000",
+      "node": "R_max_I2_copy000",
+      "asset": "./R_max_I2_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-i3",
+      "label": "R max I3",
+      "node": "R_max_I3",
+      "asset": "./R_max_I3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-i3-copy000",
+      "label": "R max I3 copy000",
+      "node": "R_max_I3_copy000",
+      "asset": "./R_max_I3_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-m1",
+      "label": "R max M1",
+      "node": "R_max_M1",
+      "asset": "./R_max_M1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-m1-copy000",
+      "label": "R max M1 copy000",
+      "node": "R_max_M1_copy000",
+      "asset": "./R_max_M1_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-m2",
+      "label": "R max M2",
+      "node": "R_max_M2",
+      "asset": "./R_max_M2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-m2-copy000",
+      "label": "R max M2 copy000",
+      "node": "R_max_M2_copy000",
+      "asset": "./R_max_M2_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-m3",
+      "label": "R max M3",
+      "node": "R_max_M3",
+      "asset": "./R_max_M3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-m3-copy000",
+      "label": "R max M3 copy000",
+      "node": "R_max_M3_copy000",
+      "asset": "./R_max_M3_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-pm2",
+      "label": "R max PM2",
+      "node": "R_max_PM2",
+      "asset": "./R_max_PM2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-pm2-copy000",
+      "label": "R max PM2 copy000",
+      "node": "R_max_PM2_copy000",
+      "asset": "./R_max_PM2_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-pm3",
+      "label": "R max PM3",
+      "node": "R_max_PM3",
+      "asset": "./R_max_PM3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-pm3-copy000",
+      "label": "R max PM3 copy000",
+      "node": "R_max_PM3_copy000",
+      "asset": "./R_max_PM3_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-pm4",
+      "label": "R max PM4",
+      "node": "R_max_PM4",
+      "asset": "./R_max_PM4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-max-pm4-copy000",
+      "label": "R max PM4 copy000",
+      "node": "R_max_PM4_copy000",
+      "asset": "./R_max_PM4_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-maxilla",
+      "label": "R maxilla",
+      "node": "R_maxilla",
+      "asset": "./R_maxilla.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-stylohyoid",
+      "label": "R stylohyoid",
+      "node": "R_stylohyoid",
+      "asset": "./R_stylohyoid.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-thyroihyoid",
+      "label": "R thyroihyoid",
+      "node": "R_thyroihyoid",
+      "asset": "./R_thyroihyoid.glb",
+      "region": "root"
+    }
+  ]
+}

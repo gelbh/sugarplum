@@ -1,0 +1,202 @@
+{
+  "id": "equine-forelimb-muscles-scan",
+  "title": "Equine forelimb muscles scan",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-biceps-muscle",
+      "label": "Biceps muscle",
+      "node": "Biceps_muscle",
+      "asset": "./Biceps_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-brachialis-muscle",
+      "label": "Brachialis muscle",
+      "node": "Brachialis_muscle",
+      "asset": "./Brachialis_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-common-digital-extensor-muscle",
+      "label": "Common digital extensor muscle",
+      "node": "Common_digital_extensor_muscle",
+      "asset": "./Common_digital_extensor_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-coracobracialis-muscle",
+      "label": "Coracobracialis muscle",
+      "node": "Coracobracialis_muscle",
+      "asset": "./Coracobracialis_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ddf-muscle-ulnar-head",
+      "label": "DDF muscle ulnar head",
+      "node": "DDF_muscle_ulnar_head",
+      "asset": "./DDF_muscle_ulnar_head.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-deltoideus-muscle",
+      "label": "Deltoideus muscle",
+      "node": "Deltoideus_muscle",
+      "asset": "./Deltoideus_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-extensor-carpi-radialis",
+      "label": "Extensor carpi radialis",
+      "node": "Extensor_carpi_radialis",
+      "asset": "./Extensor_carpi_radialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-flexor-carpi-radialis-muscle",
+      "label": "Flexor carpi radialis muscle",
+      "node": "Flexor_carpi_radialis_muscle",
+      "asset": "./Flexor_carpi_radialis_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humeral-head-flexor-carpi-ulnaris",
+      "label": "Humeral head flexor carpi ulnaris",
+      "node": "Humeral_head_flexor_carpi_ulnaris",
+      "asset": "./Humeral_head_flexor_carpi_ulnaris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lateral-digital-extensor-muscle",
+      "label": "Lateral digital extensor muscle",
+      "node": "Lateral_digital_extensor_muscle",
+      "asset": "./Lateral_digital_extensor_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-latissimus-dorsi-muscle",
+      "label": "Latissimus dorsi muscle",
+      "node": "Latissimus_dorsi_muscle",
+      "asset": "./Latissimus_dorsi_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pectoralis-profundens-muscle",
+      "label": "Pectoralis profundens muscle",
+      "node": "Pectoralis_profundens_muscle",
+      "asset": "./Pectoralis_profundens_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sdf-muscle",
+      "label": "SDF muscle",
+      "node": "SDF_muscle",
+      "asset": "./SDF_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-subclavius-muscle",
+      "label": "Subclavius muscle",
+      "node": "Subclavius_muscle",
+      "asset": "./Subclavius_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-subscapularis-muscle",
+      "label": "Subscapularis muscle",
+      "node": "Subscapularis_muscle",
+      "asset": "./Subscapularis_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-supraspinatus-muscle",
+      "label": "Supraspinatus muscle",
+      "node": "Supraspinatus_muscle",
+      "asset": "./Supraspinatus_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tendon-cde",
+      "label": "Tendon CDE",
+      "node": "Tendon_CDE",
+      "asset": "./Tendon_CDE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tendon-lde",
+      "label": "Tendon LDE",
+      "node": "Tendon_LDE",
+      "asset": "./Tendon_LDE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tendon-sdf",
+      "label": "Tendon SDF",
+      "node": "Tendon_SDF",
+      "asset": "./Tendon_SDF.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tensor-fascia-antebrachii",
+      "label": "Tensor fascia antebrachii",
+      "node": "Tensor_fascia_antebrachii",
+      "asset": "./Tensor_fascia_antebrachii.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-teres-major-muscle",
+      "label": "Teres major muscle",
+      "node": "Teres_major_muscle",
+      "asset": "./Teres_major_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-triceps-lateral-head-cut",
+      "label": "Triceps lateral head cut",
+      "node": "Triceps_lateral_head_cut",
+      "asset": "./Triceps_lateral_head_cut.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-triceps-long-head",
+      "label": "Triceps long head",
+      "node": "Triceps_long_head",
+      "asset": "./Triceps_long_head.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-triceps-medial-head",
+      "label": "Triceps medial head",
+      "node": "Triceps_medial_head",
+      "asset": "./Triceps_medial_head.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulnar-head-flexor-carpi-ulnaris",
+      "label": "Ulnar head flexor carpi ulnaris",
+      "node": "Ulnar_head_flexor_carpi_ulnaris",
+      "asset": "./Ulnar_head_flexor_carpi_ulnaris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulnaris-lateralis-muscle",
+      "label": "Ulnaris lateralis muscle",
+      "node": "Ulnaris_lateralis_muscle",
+      "asset": "./Ulnaris_lateralis_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-zbrushpolymesh3d",
+      "label": "ZBrushPolyMesh3D",
+      "node": "ZBrushPolyMesh3D",
+      "asset": "./ZBrushPolyMesh3D.glb",
+      "region": "root"
+    }
+  ]
+}

@@ -1,0 +1,790 @@
+{
+  "id": "equine-hindlimb-stay-apparatus",
+  "title": "Equine hindlimb stay apparatus",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-abaxial-ligaments",
+      "label": "Abaxial ligaments",
+      "node": "Abaxial_ligaments",
+      "asset": "./Abaxial_ligaments.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-axial-ligaments",
+      "label": "Axial ligaments",
+      "node": "Axial_ligaments",
+      "asset": "./Axial_ligaments.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-biceps",
+      "label": "Biceps",
+      "node": "Biceps",
+      "asset": "./Biceps.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ddf-lateral",
+      "label": "DDF lateral",
+      "node": "DDF_lateral",
+      "asset": "./DDF_lateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ddf-medial",
+      "label": "DDF medial",
+      "node": "DDF_medial",
+      "asset": "./DDF_medial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ddf-tib-caud",
+      "label": "DDF tib caud",
+      "node": "DDF_tib_caud",
+      "asset": "./DDF_tib_caud.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fhl-p3",
+      "label": "FHL P3",
+      "node": "FHL_P3",
+      "asset": "./FHL_P3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gastrocnemius",
+      "label": "Gastrocnemius",
+      "node": "Gastrocnemius",
+      "asset": "./Gastrocnemius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gastrocnemius2",
+      "label": "Gastrocnemius2",
+      "node": "Gastrocnemius2",
+      "asset": "./Gastrocnemius2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-interosseus",
+      "label": "Interosseus",
+      "node": "Interosseus",
+      "asset": "./Interosseus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-cannon",
+      "label": "LFL cannon",
+      "node": "LFL_cannon",
+      "asset": "./LFL_cannon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-carpal1",
+      "label": "LFL carpal1",
+      "node": "LFL_carpal1",
+      "asset": "./LFL_carpal1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-carpal2",
+      "label": "LFL carpal2",
+      "node": "LFL_carpal2",
+      "asset": "./LFL_carpal2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-carpal3",
+      "label": "LFL carpal3",
+      "node": "LFL_carpal3",
+      "asset": "./LFL_carpal3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-carpal4",
+      "label": "LFL carpal4",
+      "node": "LFL_carpal4",
+      "asset": "./LFL_carpal4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-carpal5",
+      "label": "LFL carpal5",
+      "node": "LFL_carpal5",
+      "asset": "./LFL_carpal5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-carpal6",
+      "label": "LFL carpal6",
+      "node": "LFL_carpal6",
+      "asset": "./LFL_carpal6.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-carpal7",
+      "label": "LFL carpal7",
+      "node": "LFL_carpal7",
+      "asset": "./LFL_carpal7.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-carpal8",
+      "label": "LFL carpal8",
+      "node": "LFL_carpal8",
+      "asset": "./LFL_carpal8.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-humerus-main",
+      "label": "LFL humerus main",
+      "node": "LFL_humerus_main",
+      "asset": "./LFL_humerus_main.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-humerus1",
+      "label": "LFL humerus1",
+      "node": "LFL_humerus1",
+      "asset": "./LFL_humerus1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-humerus2",
+      "label": "LFL humerus2",
+      "node": "LFL_humerus2",
+      "asset": "./LFL_humerus2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-humerus4",
+      "label": "LFL humerus4",
+      "node": "LFL_humerus4",
+      "asset": "./LFL_humerus4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-humerus5",
+      "label": "LFL humerus5",
+      "node": "LFL_humerus5",
+      "asset": "./LFL_humerus5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-main",
+      "label": "LFL main",
+      "node": "LFL_main",
+      "asset": "./LFL_main.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-navicular-bone",
+      "label": "LFL Navicular bone",
+      "node": "LFL_Navicular_bone",
+      "asset": "./LFL_Navicular_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-olceranon",
+      "label": "LFL olceranon",
+      "node": "LFL_olceranon",
+      "asset": "./LFL_olceranon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-p1",
+      "label": "LFL P1",
+      "node": "LFL_P1",
+      "asset": "./LFL_P1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-p2",
+      "label": "LFL P2",
+      "node": "LFL_P2",
+      "asset": "./LFL_P2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-radius-distal",
+      "label": "LFL radius distal",
+      "node": "LFL_radius_distal",
+      "asset": "./LFL_radius_distal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-radius1",
+      "label": "LFL radius1",
+      "node": "LFL_radius1",
+      "asset": "./LFL_radius1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-scapula-2",
+      "label": "LFL scapula 2",
+      "node": "LFL_scapula_2",
+      "asset": "./LFL_scapula_2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-scapula-3",
+      "label": "LFL scapula 3",
+      "node": "LFL_scapula_3",
+      "asset": "./LFL_scapula_3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-scapula-cartilage",
+      "label": "LFL scapula cartilage",
+      "node": "LFL_scapula_cartilage",
+      "asset": "./LFL_scapula_cartilage.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-scapula-main",
+      "label": "LFL scapula main",
+      "node": "LFL_scapula_main",
+      "asset": "./LFL_scapula_main.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-splints",
+      "label": "LFL splints",
+      "node": "LFL_splints",
+      "asset": "./LFL_splints.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lfl-ulna",
+      "label": "LFL ulna",
+      "node": "LFL_ulna",
+      "asset": "./LFL_ulna.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lhl-base1",
+      "label": "LHL base1",
+      "node": "LHL_base1",
+      "asset": "./LHL_base1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lhl-base2",
+      "label": "LHL base2",
+      "node": "LHL_base2",
+      "asset": "./LHL_base2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lhl-base3",
+      "label": "LHL base3",
+      "node": "LHL_base3",
+      "asset": "./LHL_base3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lhl-cannon",
+      "label": "LHL cannon",
+      "node": "LHL_cannon",
+      "asset": "./LHL_cannon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lhl-femur-main",
+      "label": "LHL femur main",
+      "node": "LHL_femur_main",
+      "asset": "./LHL_femur_main.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lhl-femur1",
+      "label": "LHL femur1",
+      "node": "LHL_femur1",
+      "asset": "./LHL_femur1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lhl-femur2",
+      "label": "LHL femur2",
+      "node": "LHL_femur2",
+      "asset": "./LHL_femur2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lhl-femur3",
+      "label": "LHL femur3",
+      "node": "LHL_femur3",
+      "asset": "./LHL_femur3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lhl-navicular-bone",
+      "label": "LHL navicular bone",
+      "node": "LHL_navicular_bone",
+      "asset": "./LHL_navicular_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lhl-p1",
+      "label": "LHL P1",
+      "node": "LHL_P1",
+      "asset": "./LHL_P1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lhl-p2",
+      "label": "LHL P2",
+      "node": "LHL_P2",
+      "asset": "./LHL_P2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lhl-patella",
+      "label": "LHL patella",
+      "node": "LHL_patella",
+      "asset": "./LHL_patella.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lhl-splint1",
+      "label": "LHL splint1",
+      "node": "LHL_splint1",
+      "asset": "./LHL_splint1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lhl-splint2",
+      "label": "LHL splint2",
+      "node": "LHL_splint2",
+      "asset": "./LHL_splint2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lhl-tibia-main",
+      "label": "LHL tibia main",
+      "node": "LHL_tibia_main",
+      "asset": "./LHL_tibia_main.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lhl-tibia1",
+      "label": "LHL tibia1",
+      "node": "LHL_tibia1",
+      "asset": "./LHL_tibia1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lhl-tibia2",
+      "label": "LHL tibia2",
+      "node": "LHL_tibia2",
+      "asset": "./LHL_tibia2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lhl-tibia3",
+      "label": "LHL tibia3",
+      "node": "LHL_tibia3",
+      "asset": "./LHL_tibia3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-long-plantar-lig",
+      "label": "Long plantar lig",
+      "node": "Long_plantar_lig",
+      "asset": "./Long_plantar_lig.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-longde",
+      "label": "LongDE",
+      "node": "LongDE",
+      "asset": "./LongDE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis",
+      "label": "PELVIS",
+      "node": "PELVIS",
+      "asset": "./PELVIS.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-peroneus-tertius",
+      "label": "Peroneus tertius",
+      "node": "Peroneus_tertius",
+      "asset": "./Peroneus_tertius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-cannon",
+      "label": "RFL cannon",
+      "node": "RFL_cannon",
+      "asset": "./RFL_cannon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-carpal1",
+      "label": "RFL carpal1",
+      "node": "RFL_carpal1",
+      "asset": "./RFL_carpal1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-carpal2",
+      "label": "RFL carpal2",
+      "node": "RFL_carpal2",
+      "asset": "./RFL_carpal2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-carpal3",
+      "label": "RFL carpal3",
+      "node": "RFL_carpal3",
+      "asset": "./RFL_carpal3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-carpal4",
+      "label": "RFL carpal4",
+      "node": "RFL_carpal4",
+      "asset": "./RFL_carpal4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-carpal5",
+      "label": "RFL carpal5",
+      "node": "RFL_carpal5",
+      "asset": "./RFL_carpal5.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-carpal6",
+      "label": "RFL carpal6",
+      "node": "RFL_carpal6",
+      "asset": "./RFL_carpal6.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-carpal7",
+      "label": "RFL carpal7",
+      "node": "RFL_carpal7",
+      "asset": "./RFL_carpal7.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-carpal8",
+      "label": "RFL carpal8",
+      "node": "RFL_carpal8",
+      "asset": "./RFL_carpal8.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-distal-radius",
+      "label": "RFL distal radius",
+      "node": "RFL_distal_radius",
+      "asset": "./RFL_distal_radius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-humerus-main",
+      "label": "RFL humerus main",
+      "node": "RFL_humerus_main",
+      "asset": "./RFL_humerus_main.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-humerus1",
+      "label": "RFL humerus1",
+      "node": "RFL_humerus1",
+      "asset": "./RFL_humerus1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-humerus2",
+      "label": "RFL humerus2",
+      "node": "RFL_humerus2",
+      "asset": "./RFL_humerus2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-humerus3",
+      "label": "RFL humerus3",
+      "node": "RFL_humerus3",
+      "asset": "./RFL_humerus3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-humerus4",
+      "label": "RFL humerus4",
+      "node": "RFL_humerus4",
+      "asset": "./RFL_humerus4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-navicular-bone",
+      "label": "RFL Navicular bone",
+      "node": "RFL_Navicular_bone",
+      "asset": "./RFL_Navicular_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-p1",
+      "label": "RFL P1",
+      "node": "RFL_P1",
+      "asset": "./RFL_P1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-p2",
+      "label": "RFL P2",
+      "node": "RFL_P2",
+      "asset": "./RFL_P2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-p3",
+      "label": "RFL P3",
+      "node": "RFL_P3",
+      "asset": "./RFL_P3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-prox-radius",
+      "label": "RFL prox radius",
+      "node": "RFL_prox_radius",
+      "asset": "./RFL_prox_radius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-radius",
+      "label": "RFL radius",
+      "node": "RFL_radius",
+      "asset": "./RFL_radius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-scapula-cartilage",
+      "label": "RFL scapula cartilage",
+      "node": "RFL_scapula_cartilage",
+      "asset": "./RFL_scapula_cartilage.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-scapula-main",
+      "label": "RFL scapula main",
+      "node": "RFL_scapula_main",
+      "asset": "./RFL_scapula_main.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-scapula-main2",
+      "label": "RFL scapula main2",
+      "node": "RFL_scapula_main2",
+      "asset": "./RFL_scapula_main2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-scapula-main3",
+      "label": "RFL scapula main3",
+      "node": "RFL_scapula_main3",
+      "asset": "./RFL_scapula_main3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-splints",
+      "label": "RFL splints",
+      "node": "RFL_splints",
+      "asset": "./RFL_splints.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-ulna",
+      "label": "RFL ulna",
+      "node": "RFL_ulna",
+      "asset": "./RFL_ulna.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rfl-ulna-olecranon",
+      "label": "RFL ulna olecranon",
+      "node": "RFL_ulna_olecranon",
+      "asset": "./RFL_ulna_olecranon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rhl-femur-main",
+      "label": "RHL femur main",
+      "node": "RHL_femur_main",
+      "asset": "./RHL_femur_main.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rhl-femur1",
+      "label": "RHL femur1",
+      "node": "RHL_femur1",
+      "asset": "./RHL_femur1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rhl-femur2",
+      "label": "RHL femur2",
+      "node": "RHL_femur2",
+      "asset": "./RHL_femur2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rhl-mt-cannon",
+      "label": "RHL MT cannon",
+      "node": "RHL_MT_cannon",
+      "asset": "./RHL_MT_cannon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rhl-mt-splint1",
+      "label": "RHL MT splint1",
+      "node": "RHL_MT_splint1",
+      "asset": "./RHL_MT_splint1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rhl-mt-splint2",
+      "label": "RHL MT splint2",
+      "node": "RHL_MT_splint2",
+      "asset": "./RHL_MT_splint2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rhl-navic-bone",
+      "label": "RHL navic bone",
+      "node": "RHL_navic_bone",
+      "asset": "./RHL_navic_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rhl-p1",
+      "label": "RHL P1",
+      "node": "RHL_P1",
+      "asset": "./RHL_P1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rhl-p2",
+      "label": "RHL P2",
+      "node": "RHL_P2",
+      "asset": "./RHL_P2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rhl-p3",
+      "label": "RHL P3",
+      "node": "RHL_P3",
+      "asset": "./RHL_P3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rhl-patella",
+      "label": "RHL patella",
+      "node": "RHL_patella",
+      "asset": "./RHL_patella.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rhl-tarsus1",
+      "label": "RHL tarsus1",
+      "node": "RHL_tarsus1",
+      "asset": "./RHL_tarsus1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rhl-tarsus2",
+      "label": "RHL tarsus2",
+      "node": "RHL_tarsus2",
+      "asset": "./RHL_tarsus2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rhl-tarsus3",
+      "label": "RHL tarsus3",
+      "node": "RHL_tarsus3",
+      "asset": "./RHL_tarsus3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rhl-tibia1",
+      "label": "RHL tibia1",
+      "node": "RHL_tibia1",
+      "asset": "./RHL_tibia1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rhl-tibia2",
+      "label": "RHL tibia2",
+      "node": "RHL_tibia2",
+      "asset": "./RHL_tibia2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rhl-tibia3",
+      "label": "RHL tibia3",
+      "node": "RHL_tibia3",
+      "asset": "./RHL_tibia3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rhl-tibia4",
+      "label": "RHL tibia4",
+      "node": "RHL_tibia4",
+      "asset": "./RHL_tibia4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rhlfemur3",
+      "label": "RHLfemur3",
+      "node": "RHLfemur3",
+      "asset": "./RHLfemur3.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ribs",
+      "label": "RIBS",
+      "node": "RIBS",
+      "asset": "./RIBS.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sdf",
+      "label": "SDF",
+      "node": "SDF",
+      "asset": "./SDF.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-semitendinosus",
+      "label": "Semitendinosus",
+      "node": "Semitendinosus",
+      "asset": "./Semitendinosus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-spine-only",
+      "label": "SPINE only",
+      "node": "SPINE_only",
+      "asset": "./SPINE_only.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-straight-ligament",
+      "label": "Straight ligament",
+      "node": "Straight_ligament",
+      "asset": "./Straight_ligament.glb",
+      "region": "root"
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "id": "equine-gi-tract",
+  "title": "Equine gi tract",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-adrenal-l",
+      "label": "Adrenal L",
+      "node": "Adrenal_L",
+      "asset": "./Adrenal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-adrenal-r",
+      "label": "Adrenal R",
+      "node": "Adrenal_R",
+      "asset": "./Adrenal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-caecum",
+      "label": "Caecum",
+      "node": "Caecum",
+      "asset": "./Caecum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-duodenum",
+      "label": "Duodenum",
+      "node": "Duodenum",
+      "asset": "./Duodenum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-kidney-l",
+      "label": "Kidney L",
+      "node": "Kidney_L",
+      "asset": "./Kidney_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-kidney-r",
+      "label": "Kidney R",
+      "node": "Kidney_R",
+      "asset": "./Kidney_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-dorsal-colon",
+      "label": "L dorsal colon",
+      "node": "L_dorsal_colon",
+      "asset": "./L_dorsal_colon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-ventral-colon",
+      "label": "L ventral colon",
+      "node": "L_ventral_colon",
+      "asset": "./L_ventral_colon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-liver",
+      "label": "Liver",
+      "node": "Liver",
+      "asset": "./Liver.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pancreas",
+      "label": "Pancreas",
+      "node": "Pancreas",
+      "asset": "./Pancreas.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-dorsal-colon",
+      "label": "R dorsal colon",
+      "node": "R_dorsal_colon",
+      "asset": "./R_dorsal_colon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-ventral-colon",
+      "label": "R ventral colon",
+      "node": "R_ventral_colon",
+      "asset": "./R_ventral_colon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-si",
+      "label": "SI",
+      "node": "SI",
+      "asset": "./SI.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-small-colon",
+      "label": "Small colon",
+      "node": "Small_colon",
+      "asset": "./Small_colon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-spleen",
+      "label": "Spleen",
+      "node": "Spleen",
+      "asset": "./Spleen.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-stomach",
+      "label": "Stomach",
+      "node": "Stomach",
+      "asset": "./Stomach.glb",
+      "region": "root"
+    }
+  ]
+}

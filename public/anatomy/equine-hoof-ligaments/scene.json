@@ -1,0 +1,202 @@
+{
+  "id": "equine-hoof-ligaments",
+  "title": "Equine hoof ligaments",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-abaxial-palm-lig-r",
+      "label": "Abaxial palm lig R",
+      "node": "Abaxial_palm_lig_R",
+      "asset": "./Abaxial_palm_lig_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-axial-palm-lig-l",
+      "label": "Axial palm lig L",
+      "node": "Axial_palm_lig_L",
+      "asset": "./Axial_palm_lig_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cde",
+      "label": "CDE",
+      "node": "CDE",
+      "asset": "./CDE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cde-bursa",
+      "label": "CDE bursa",
+      "node": "CDE_bursa",
+      "asset": "./CDE_bursa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-collat-ses-fetlock-l",
+      "label": "Collat ses fetlock L",
+      "node": "Collat_ses_fetlock_L",
+      "asset": "./Collat_ses_fetlock_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ddf",
+      "label": "DDF",
+      "node": "DDF",
+      "asset": "./DDF.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dip-coll",
+      "label": "DIP coll",
+      "node": "DIP_coll",
+      "asset": "./DIP_coll.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-distal-navic-lig",
+      "label": "Distal navic lig",
+      "node": "Distal_navic_lig",
+      "asset": "./Distal_navic_lig.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fetlock-colls",
+      "label": "Fetlock colls",
+      "node": "Fetlock_colls",
+      "asset": "./Fetlock_colls.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fibrocartilage",
+      "label": "fibrocartilage",
+      "node": "fibrocartilage",
+      "asset": "./fibrocartilage.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-interosseus-l",
+      "label": "Interosseus L",
+      "node": "Interosseus_L",
+      "asset": "./Interosseus_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-interses-cruci",
+      "label": "Interses cruci",
+      "node": "Interses_cruci",
+      "asset": "./Interses_cruci.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-intersesamoidean-lig",
+      "label": "Intersesamoidean lig",
+      "node": "Intersesamoidean_lig",
+      "asset": "./Intersesamoidean_lig.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lde",
+      "label": "LDE",
+      "node": "LDE",
+      "asset": "./LDE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpus-iii",
+      "label": "metacarpus III",
+      "node": "metacarpus_III",
+      "asset": "./metacarpus_III.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-navic-bursa",
+      "label": "Navic bursa",
+      "node": "Navic_bursa",
+      "asset": "./Navic_bursa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-navic-coll-l",
+      "label": "Navic coll L",
+      "node": "Navic_coll_L",
+      "asset": "./Navic_coll_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-obliq-ses-l",
+      "label": "Obliq ses L",
+      "node": "Obliq_ses_L",
+      "asset": "./Obliq_ses_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-phal-dist",
+      "label": "phal dist",
+      "node": "phal_dist",
+      "asset": "./phal_dist.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-phal-mid",
+      "label": "phal mid",
+      "node": "phal_mid",
+      "asset": "./phal_mid.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-phal-prox",
+      "label": "phal prox",
+      "node": "phal_prox",
+      "asset": "./phal_prox.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pip-coll",
+      "label": "PIP coll",
+      "node": "PIP_coll",
+      "asset": "./PIP_coll.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sdf",
+      "label": "SDF",
+      "node": "SDF",
+      "asset": "./SDF.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sesamoid-dist",
+      "label": "sesamoid dist",
+      "node": "sesamoid_dist",
+      "asset": "./sesamoid_dist.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sesamoids-prox",
+      "label": "sesamoids prox",
+      "node": "sesamoids_prox",
+      "asset": "./sesamoids_prox.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-shor-ses-l",
+      "label": "Shor ses L",
+      "node": "Shor_ses_L",
+      "asset": "./Shor_ses_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-straight-ses",
+      "label": "Straight ses",
+      "node": "Straight_ses",
+      "asset": "./Straight_ses.glb",
+      "region": "root"
+    }
+  ]
+}

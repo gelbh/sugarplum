@@ -1,0 +1,223 @@
+{
+  "id": "equine-stifle-extended-scan",
+  "title": "Equine stifle extended scan",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-blocker-mesh",
+      "label": "blocker mesh",
+      "node": "blocker_mesh",
+      "asset": "./blocker_mesh.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-condyle-femoral-lateral",
+      "label": "condyle femoral lateral",
+      "node": "condyle_femoral_lateral",
+      "asset": "./condyle_femoral_lateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-condyle-femoral-medial",
+      "label": "condyle femoral medial",
+      "node": "condyle_femoral_medial",
+      "asset": "./condyle_femoral_medial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-condyle-tibia-lateral",
+      "label": "condyle tibia lateral",
+      "node": "condyle_tibia_lateral",
+      "asset": "./condyle_tibia_lateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-extensor-groove",
+      "label": "extensor groove",
+      "node": "extensor_groove",
+      "asset": "./extensor_groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fibula",
+      "label": "fibula",
+      "node": "fibula",
+      "asset": "./fibula.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fossa-supracondylar",
+      "label": "fossa supracondylar",
+      "node": "fossa_supracondylar",
+      "asset": "./fossa_supracondylar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-collateral-lateral",
+      "label": "ligament collateral lateral",
+      "node": "ligament_collateral_lateral",
+      "asset": "./ligament_collateral_lateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-collateral-medial",
+      "label": "ligament collateral medial",
+      "node": "ligament_collateral_medial",
+      "asset": "./ligament_collateral_medial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-cruciate-caudal",
+      "label": "ligament cruciate caudal",
+      "node": "ligament_cruciate_caudal",
+      "asset": "./ligament_cruciate_caudal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-femoropatellar-lateral",
+      "label": "ligament femoropatellar lateral",
+      "node": "ligament_femoropatellar_lateral",
+      "asset": "./ligament_femoropatellar_lateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-femoropatellar-medial",
+      "label": "ligament femoropatellar medial",
+      "node": "ligament_femoropatellar_medial",
+      "asset": "./ligament_femoropatellar_medial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-meniscofemoral",
+      "label": "ligament meniscofemoral",
+      "node": "ligament_meniscofemoral",
+      "asset": "./ligament_meniscofemoral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-meniscotibial-caudolateral",
+      "label": "ligament meniscotibial caudolateral",
+      "node": "ligament_meniscotibial_caudolateral",
+      "asset": "./ligament_meniscotibial_caudolateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-patellar-intermediate",
+      "label": "ligament patellar intermediate",
+      "node": "ligament_patellar_intermediate",
+      "asset": "./ligament_patellar_intermediate.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-patellar-lateral",
+      "label": "ligament patellar lateral",
+      "node": "ligament_patellar_lateral",
+      "asset": "./ligament_patellar_lateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-patellar-medial",
+      "label": "ligament patellar medial",
+      "node": "ligament_patellar_medial",
+      "asset": "./ligament_patellar_medial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-meniscus-lateral",
+      "label": "meniscus lateral",
+      "node": "meniscus_lateral",
+      "asset": "./meniscus_lateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-meniscus-medial",
+      "label": "meniscus medial",
+      "node": "meniscus_medial",
+      "asset": "./meniscus_medial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patella",
+      "label": "patella",
+      "node": "patella",
+      "asset": "./patella.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patellar-cartilage",
+      "label": "patellar cartilage",
+      "node": "patellar_cartilage",
+      "asset": "./patellar_cartilage.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-supraconylar-tuberosity-lateral",
+      "label": "supraconylar tuberosity lateral",
+      "node": "supraconylar_tuberosity_lateral",
+      "asset": "./supraconylar_tuberosity_lateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-supraconylar-tuberosity-medial",
+      "label": "supraconylar tuberosity medial",
+      "node": "supraconylar_tuberosity_medial",
+      "asset": "./supraconylar_tuberosity_medial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-trochlae-lateral-ridge",
+      "label": "trochlae lateral ridge",
+      "node": "trochlae_lateral_ridge",
+      "asset": "./trochlae_lateral_ridge.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-trochlea-groove",
+      "label": "trochlea groove",
+      "node": "trochlea_groove",
+      "asset": "./trochlea_groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-trochlea-medial-ridge",
+      "label": "trochlea medial ridge",
+      "node": "trochlea_medial_ridge",
+      "asset": "./trochlea_medial_ridge.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tuberosity-tibial",
+      "label": "tuberosity tibial",
+      "node": "tuberosity_tibial",
+      "asset": "./tuberosity_tibial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-unknown",
+      "label": "UNKNOWN",
+      "node": "UNKNOWN",
+      "asset": "./UNKNOWN.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-unknown-tendon",
+      "label": "UNKNOWN tendon",
+      "node": "UNKNOWN_tendon",
+      "asset": "./UNKNOWN_tendon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-unkown-tibia-unknown",
+      "label": "UNKOWN tibia unknown",
+      "node": "UNKOWN_tibia_unknown",
+      "asset": "./UNKOWN_tibia_unknown.glb",
+      "region": "root"
+    }
+  ]
+}

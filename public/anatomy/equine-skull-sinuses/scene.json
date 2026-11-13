@@ -1,0 +1,62 @@
+{
+  "id": "equine-skull-sinuses",
+  "title": "Equine skull sinuses",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-l-dorsal-conchal-sinus",
+      "label": "L dorsal conchal sinus",
+      "node": "L_dorsal_conchal_sinus",
+      "asset": "./L_dorsal_conchal_sinus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-frontal-sinus",
+      "label": "L frontal sinus",
+      "node": "L_frontal_sinus",
+      "asset": "./L_frontal_sinus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-maxilla-clone",
+      "label": "L maxilla clone",
+      "node": "L_maxilla_clone",
+      "asset": "./L_maxilla_clone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-maxillary-sinus-caudal",
+      "label": "L maxillary sinus caudal",
+      "node": "L_maxillary_sinus_caudal",
+      "asset": "./L_maxillary_sinus_caudal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-maxillary-sinus-rostral",
+      "label": "L maxillary sinus rostral",
+      "node": "L_maxillary_sinus_rostral",
+      "asset": "./L_maxillary_sinus_rostral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-sphenopalatine-sinus",
+      "label": "L sphenopalatine sinus",
+      "node": "L_sphenopalatine_sinus",
+      "asset": "./L_sphenopalatine_sinus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-ventral-conchal-sinus",
+      "label": "L ventral conchal sinus",
+      "node": "L_ventral_conchal_sinus",
+      "asset": "./L_ventral_conchal_sinus.glb",
+      "region": "root"
+    }
+  ]
+}

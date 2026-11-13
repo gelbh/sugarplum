@@ -1,0 +1,97 @@
+{
+  "id": "equine-carpus-joint",
+  "title": "Equine carpus joint",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-accessory-carpal",
+      "label": "Accessory carpal",
+      "node": "Accessory_carpal",
+      "asset": "./Accessory_carpal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-first-carpal",
+      "label": "First carpal",
+      "node": "First_carpal",
+      "asset": "./First_carpal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fourth-carpal",
+      "label": "Fourth carpal",
+      "node": "Fourth_carpal",
+      "asset": "./Fourth_carpal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-intermediate-carpal",
+      "label": "Intermediate carpal",
+      "node": "Intermediate_carpal",
+      "asset": "./Intermediate_carpal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpal-bone",
+      "label": "Metacarpal bone",
+      "node": "Metacarpal_bone",
+      "asset": "./Metacarpal_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpal-bone-ii",
+      "label": "Metacarpal bone II",
+      "node": "Metacarpal_bone_II",
+      "asset": "./Metacarpal_bone_II.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpal-bone-iv",
+      "label": "Metacarpal bone IV",
+      "node": "Metacarpal_bone_IV",
+      "asset": "./Metacarpal_bone_IV.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radial-carpal",
+      "label": "Radial carpal",
+      "node": "Radial_carpal",
+      "asset": "./Radial_carpal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius",
+      "label": "Radius",
+      "node": "Radius",
+      "asset": "./Radius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-second-carpal",
+      "label": "Second carpal",
+      "node": "Second_carpal",
+      "asset": "./Second_carpal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-third-carpal",
+      "label": "Third carpal",
+      "node": "Third_carpal",
+      "asset": "./Third_carpal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulnar-carpal",
+      "label": "Ulnar carpal",
+      "node": "Ulnar_carpal",
+      "asset": "./Ulnar_carpal.glb",
+      "region": "root"
+    }
+  ]
+}
