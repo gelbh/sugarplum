@@ -1,0 +1,62 @@
+{
+  "id": "equine-distal-limb-bones",
+  "title": "Equine distal limb bones",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-cone",
+      "label": "Cone",
+      "node": "Cone",
+      "asset": "./Cone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpus-iii",
+      "label": "metacarpus III",
+      "node": "metacarpus_III",
+      "asset": "./metacarpus_III.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-phal-dist",
+      "label": "phal dist",
+      "node": "phal_dist",
+      "asset": "./phal_dist.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-phal-mid",
+      "label": "phal mid",
+      "node": "phal_mid",
+      "asset": "./phal_mid.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-phal-prox",
+      "label": "phal prox",
+      "node": "phal_prox",
+      "asset": "./phal_prox.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sesamoid-dist",
+      "label": "sesamoid dist",
+      "node": "sesamoid_dist",
+      "asset": "./sesamoid_dist.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sesamoids-prox",
+      "label": "sesamoids prox",
+      "node": "sesamoids_prox",
+      "asset": "./sesamoids_prox.glb",
+      "region": "root"
+    }
+  ]
+}

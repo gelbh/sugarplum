@@ -1,0 +1,125 @@
+{
+  "id": "equine-large-intestine-scan",
+  "title": "Equine large intestine scan",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-eq-li-caecum",
+      "label": "eq LI Caecum",
+      "node": "eq_LI_Caecum",
+      "asset": "./eq_LI_Caecum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-li-caecum-haustra",
+      "label": "eq LI Caecum Haustra",
+      "node": "eq_LI_Caecum_Haustra",
+      "asset": "./eq_LI_Caecum_Haustra.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-li-caecum-taenia",
+      "label": "eq LI Caecum Taenia",
+      "node": "eq_LI_Caecum_Taenia",
+      "asset": "./eq_LI_Caecum_Taenia.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-li-descending-colon",
+      "label": "eq LI Descending Colon",
+      "node": "eq_LI_Descending_Colon",
+      "asset": "./eq_LI_Descending_Colon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-li-diaphragmatic-flexure",
+      "label": "eq LI Diaphragmatic Flexure",
+      "node": "eq_LI_Diaphragmatic_Flexure",
+      "asset": "./eq_LI_Diaphragmatic_Flexure.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-li-ileum",
+      "label": "eq LI Ileum",
+      "node": "eq_LI_Ileum",
+      "asset": "./eq_LI_Ileum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-li-left-dorsal-colon",
+      "label": "eq LI Left Dorsal Colon",
+      "node": "eq_LI_Left_Dorsal_Colon",
+      "asset": "./eq_LI_Left_Dorsal_Colon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-li-left-ventral-colon",
+      "label": "eq LI Left Ventral Colon",
+      "node": "eq_LI_Left_Ventral_Colon",
+      "asset": "./eq_LI_Left_Ventral_Colon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-li-pelvic-flexure",
+      "label": "eq LI Pelvic Flexure",
+      "node": "eq_LI_Pelvic_Flexure",
+      "asset": "./eq_LI_Pelvic_Flexure.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-li-remanining-tissue-mesocolon",
+      "label": "eq LI Remanining Tissue Mesocolon",
+      "node": "eq_LI_Remanining_Tissue_Mesocolon",
+      "asset": "./eq_LI_Remanining_Tissue_Mesocolon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-li-right-dorsal-colon",
+      "label": "eq LI Right Dorsal Colon",
+      "node": "eq_LI_Right_Dorsal_Colon",
+      "asset": "./eq_LI_Right_Dorsal_Colon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-li-right-ventral-colon",
+      "label": "eq LI Right Ventral Colon",
+      "node": "eq_LI_Right_Ventral_Colon",
+      "asset": "./eq_LI_Right_Ventral_Colon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-li-sternal-flexure",
+      "label": "eq LI Sternal Flexure",
+      "node": "eq_LI_Sternal_Flexure",
+      "asset": "./eq_LI_Sternal_Flexure.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-li-taenia-ventral-colon",
+      "label": "eq LI Taenia Ventral Colon",
+      "node": "eq_LI_Taenia_Ventral_Colon",
+      "asset": "./eq_LI_Taenia_Ventral_Colon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-li-transverse-colon",
+      "label": "eq LI Transverse Colon",
+      "node": "eq_LI_Transverse_Colon",
+      "asset": "./eq_LI_Transverse_Colon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-li-ventral-colon-haustra",
+      "label": "eq LI Ventral Colon Haustra",
+      "node": "eq_LI_Ventral_Colon_Haustra",
+      "asset": "./eq_LI_Ventral_Colon_Haustra.glb",
+      "region": "root"
+    }
+  ]
+}

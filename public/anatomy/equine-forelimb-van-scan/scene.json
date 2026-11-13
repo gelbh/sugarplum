@@ -1,0 +1,398 @@
+{
+  "id": "equine-forelimb-van-scan",
+  "title": "Equine forelimb van scan",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-a-brachial",
+      "label": "a brachial",
+      "node": "a_brachial",
+      "asset": "./a_brachial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-medial-palmar",
+      "label": "a medial palmar",
+      "node": "a_medial_palmar",
+      "asset": "./a_medial_palmar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-median",
+      "label": "a median",
+      "node": "a_median",
+      "asset": "./a_median.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-median-palmar-br",
+      "label": "a median palmar br",
+      "node": "a_median_palmar_br",
+      "asset": "./a_median_palmar_br.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-palmar-digital-lateral",
+      "label": "a palmar digital lateral",
+      "node": "a_palmar_digital_lateral",
+      "asset": "./a_palmar_digital_lateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-palmar-digital-medial",
+      "label": "a palmar digital medial",
+      "node": "a_palmar_digital_medial",
+      "asset": "./a_palmar_digital_medial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-radial",
+      "label": "a radial",
+      "node": "a_radial",
+      "asset": "./a_radial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-bone-olecranon-tuberosity",
+      "label": "bone olecranon tuberosity",
+      "node": "bone_olecranon_tuberosity",
+      "asset": "./bone_olecranon_tuberosity.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-bone-splint",
+      "label": "bone splint",
+      "node": "bone_splint",
+      "asset": "./bone_splint.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ergot",
+      "label": "ergot",
+      "node": "ergot",
+      "asset": "./ergot.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-group10526-group10526-group10526-default-obj-group10526-group1052-ba4230a1",
+      "label": "Group10526 Group10526 Group10526 Default OBJ Group10526 Group10526 Group10526 Default OBJ Default OBJ",
+      "node": "Group10526_Group10526_Group10526_Default_OBJ_Group10526_Group10526_Group10526_Default_OBJ_Default_OBJ",
+      "asset": "./Group10526_Group10526_Group10526_Default_OBJ_Group10526_Group10526_Group10526_Default_OBJ_Default_OBJ.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-group36996-group36996-group36996-default-obj-group36996-group3699-1b498ae6",
+      "label": "Group36996 Group36996 Group36996 Default OBJ Group36996 Group36996 Group36996 Default OBJ Default OBJ",
+      "node": "Group36996_Group36996_Group36996_Default_OBJ_Group36996_Group36996_Group36996_Default_OBJ_Default_OBJ",
+      "asset": "./Group36996_Group36996_Group36996_Default_OBJ_Group36996_Group36996_Group36996_Default_OBJ_Default_OBJ.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-group46747-group46747-group46747-default-obj-group46747-group4674-6233b5cf",
+      "label": "Group46747 Group46747 Group46747 Default OBJ Group46747 Group46747 Group46747 Default OBJ Default OBJ",
+      "node": "Group46747_Group46747_Group46747_Default_OBJ_Group46747_Group46747_Group46747_Default_OBJ_Default_OBJ",
+      "asset": "./Group46747_Group46747_Group46747_Default_OBJ_Group46747_Group46747_Group46747_Default_OBJ_Default_OBJ.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-group4913-group4913-group4913-default-obj-group4913-group4913-gro-e7c53c1c",
+      "label": "Group4913 Group4913 Group4913 Default OBJ Group4913 Group4913 Group4913 Default OBJ Default OBJ",
+      "node": "Group4913_Group4913_Group4913_Default_OBJ_Group4913_Group4913_Group4913_Default_OBJ_Default_OBJ",
+      "asset": "./Group4913_Group4913_Group4913_Default_OBJ_Group4913_Group4913_Group4913_Default_OBJ_Default_OBJ.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-interosseus",
+      "label": "interosseus",
+      "node": "interosseus",
+      "asset": "./interosseus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-lat-coll-prox-interphalang",
+      "label": "lig lat coll prox interphalang",
+      "node": "lig_lat_coll_prox_interphalang",
+      "asset": "./lig_lat_coll_prox_interphalang.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-lat-collat-carpus",
+      "label": "lig lat collat carpus",
+      "node": "lig_lat_collat_carpus",
+      "asset": "./lig_lat_collat_carpus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-lat-collat-elbow",
+      "label": "lig lat collat elbow",
+      "node": "lig_lat_collat_elbow",
+      "asset": "./lig_lat_collat_elbow.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-med-coll-prox-interphalang",
+      "label": "lig med coll prox interphalang",
+      "node": "lig_med_coll_prox_interphalang",
+      "asset": "./lig_med_coll_prox_interphalang.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-med-collat-elbow",
+      "label": "lig med collat elbow",
+      "node": "lig_med_collat_elbow",
+      "asset": "./lig_med_collat_elbow.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligs-ergot",
+      "label": "ligs ergot",
+      "node": "ligs_ergot",
+      "asset": "./ligs_ergot.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-musc-biceps-brachii",
+      "label": "musc biceps brachii",
+      "node": "musc_biceps_brachii",
+      "asset": "./musc_biceps_brachii.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-musc-brachialis",
+      "label": "musc brachialis",
+      "node": "musc_brachialis",
+      "asset": "./musc_brachialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-musc-cde",
+      "label": "musc CDE",
+      "node": "musc_CDE",
+      "asset": "./musc_CDE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-musc-exten-carpi-radialis",
+      "label": "musc exten carpi radialis",
+      "node": "musc_exten_carpi_radialis",
+      "asset": "./musc_exten_carpi_radialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-musc-extensor-carpi-obliquus1",
+      "label": "musc extensor carpi obliquus1",
+      "node": "musc_extensor_carpi_obliquus1",
+      "asset": "./musc_extensor_carpi_obliquus1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-musc-flex-carp-ulnaris-ulnar-hd",
+      "label": "musc flex carp ulnaris ulnar hd",
+      "node": "musc_flex_carp_ulnaris_ulnar_hd",
+      "asset": "./musc_flex_carp_ulnaris_ulnar_hd.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-musc-flex-carpi-radialis",
+      "label": "musc flex carpi radialis",
+      "node": "musc_flex_carpi_radialis",
+      "asset": "./musc_flex_carpi_radialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-musc-flexor-carpi-ulnaris",
+      "label": "musc flexor carpi ulnaris",
+      "node": "musc_flexor_carpi_ulnaris",
+      "asset": "./musc_flexor_carpi_ulnaris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-musc-ldf",
+      "label": "musc LDF",
+      "node": "musc_LDF",
+      "asset": "./musc_LDF.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-musc-ulnaris-lateralis",
+      "label": "musc ulnaris lateralis",
+      "node": "musc_ulnaris_lateralis",
+      "asset": "./musc_ulnaris_lateralis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-muscle-ddf-humeral-head1",
+      "label": "muscle DDF humeral head1",
+      "node": "muscle_DDF_humeral_head1",
+      "asset": "./muscle_DDF_humeral_head1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-muscle-ddf-ulnar-head1",
+      "label": "muscle DDF ulnar head1",
+      "node": "muscle_DDF_ulnar_head1",
+      "asset": "./muscle_DDF_ulnar_head1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-lat-palm-dig-dorsal",
+      "label": "nerve lat palm dig dorsal",
+      "node": "nerve_lat_palm_dig_dorsal",
+      "asset": "./nerve_lat_palm_dig_dorsal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-lat-palm-dig-palmar",
+      "label": "nerve lat palm dig palmar",
+      "node": "nerve_lat_palm_dig_palmar",
+      "asset": "./nerve_lat_palm_dig_palmar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-lateral-palmar",
+      "label": "nerve lateral palmar",
+      "node": "nerve_lateral_palmar",
+      "asset": "./nerve_lateral_palmar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-med-palm-dig-dorsal",
+      "label": "nerve med palm dig dorsal",
+      "node": "nerve_med_palm_dig_dorsal",
+      "asset": "./nerve_med_palm_dig_dorsal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-med-palm-dig-palmar",
+      "label": "nerve med palm dig palmar",
+      "node": "nerve_med_palm_dig_palmar",
+      "asset": "./nerve_med_palm_dig_palmar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-medial-palm",
+      "label": "nerve medial palm",
+      "node": "nerve_medial_palm",
+      "asset": "./nerve_medial_palm.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-medial-palmar-comms-br",
+      "label": "nerve medial palmar comms br",
+      "node": "nerve_medial_palmar_comms_br",
+      "asset": "./nerve_medial_palmar_comms_br.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-median",
+      "label": "nerve median",
+      "node": "nerve_median",
+      "asset": "./nerve_median.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-ulnar",
+      "label": "nerve ulnar",
+      "node": "nerve_ulnar",
+      "asset": "./nerve_ulnar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tend-comm-dig-exten",
+      "label": "tend comm dig exten",
+      "node": "tend_comm_dig_exten",
+      "asset": "./tend_comm_dig_exten.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tend-ddf",
+      "label": "tend DDF",
+      "node": "tend_DDF",
+      "asset": "./tend_DDF.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tend-lat-dig-extensor",
+      "label": "tend lat dig extensor",
+      "node": "tend_lat_dig_extensor",
+      "asset": "./tend_lat_dig_extensor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tend-sdf",
+      "label": "tend SDF",
+      "node": "tend_SDF",
+      "asset": "./tend_SDF.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tendon-ext-branch-interosseus",
+      "label": "tendon ext branch interosseus",
+      "node": "tendon_ext_branch_interosseus",
+      "asset": "./tendon_ext_branch_interosseus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vein-accessory-cephalic",
+      "label": "vein accessory cephalic",
+      "node": "vein_accessory_cephalic",
+      "asset": "./vein_accessory_cephalic.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vein-brachial",
+      "label": "vein brachial",
+      "node": "vein_brachial",
+      "asset": "./vein_brachial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vein-cephalic",
+      "label": "vein cephalic",
+      "node": "vein_cephalic",
+      "asset": "./vein_cephalic.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vein-lat-dig-palmar",
+      "label": "vein lat dig palmar",
+      "node": "vein_lat_dig_palmar",
+      "asset": "./vein_lat_dig_palmar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vein-lat-palmar",
+      "label": "vein lat palmar",
+      "node": "vein_lat_palmar",
+      "asset": "./vein_lat_palmar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vein-med-dig-palmar",
+      "label": "vein med dig palmar",
+      "node": "vein_med_dig_palmar",
+      "asset": "./vein_med_dig_palmar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vein-med-palmar",
+      "label": "vein med palmar",
+      "node": "vein_med_palmar",
+      "asset": "./vein_med_palmar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vein-median-cubital",
+      "label": "vein median cubital",
+      "node": "vein_median_cubital",
+      "asset": "./vein_median_cubital.glb",
+      "region": "root"
+    }
+  ]
+}

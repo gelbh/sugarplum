@@ -1,0 +1,566 @@
+{
+  "id": "equine-skeleton",
+  "title": "Equine skeleton",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-1st-tarsal-r",
+      "label": "1st tarsal R",
+      "node": "1st_tarsal_R",
+      "asset": "./1st_tarsal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-2nd-carpal-l",
+      "label": "2nd carpal L",
+      "node": "2nd_carpal_L",
+      "asset": "./2nd_carpal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-2nd-carpal-r",
+      "label": "2nd carpal R",
+      "node": "2nd_carpal_R",
+      "asset": "./2nd_carpal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-3rd-carpal-l",
+      "label": "3rd carpal L",
+      "node": "3rd_carpal_L",
+      "asset": "./3rd_carpal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-3rd-carpal-r",
+      "label": "3rd carpal R",
+      "node": "3rd_carpal_R",
+      "asset": "./3rd_carpal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-3rd-tarsal-r",
+      "label": "3rd tarsal R",
+      "node": "3rd_tarsal_R",
+      "asset": "./3rd_tarsal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-4th-carpal-l",
+      "label": "4th carpal L",
+      "node": "4th_carpal_L",
+      "asset": "./4th_carpal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-4th-carpal-r",
+      "label": "4th carpal R",
+      "node": "4th_carpal_R",
+      "asset": "./4th_carpal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-4th-tarsal-rhl",
+      "label": "4th tarsal RHL",
+      "node": "4th_tarsal_RHL",
+      "asset": "./4th_tarsal_RHL.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-acc-carp-l",
+      "label": "Acc carp L",
+      "node": "Acc_carp_L",
+      "asset": "./Acc_carp_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-acc-carp-r",
+      "label": "Acc carp R",
+      "node": "Acc_carp_R",
+      "asset": "./Acc_carp_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-calcaneus-l",
+      "label": "Calcaneus L",
+      "node": "Calcaneus_L",
+      "asset": "./Calcaneus_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-calcaneus-r",
+      "label": "Calcaneus R",
+      "node": "Calcaneus_R",
+      "asset": "./Calcaneus_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-central-tarsal-l",
+      "label": "Central tarsal L",
+      "node": "Central_tarsal_L",
+      "asset": "./Central_tarsal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-central-tarsal-r",
+      "label": "Central tarsal R",
+      "node": "Central_tarsal_R",
+      "asset": "./Central_tarsal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cervical-vertebrae",
+      "label": "CERVICAL VERTEBRAE",
+      "node": "CERVICAL_VERTEBRAE",
+      "asset": "./CERVICAL_VERTEBRAE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-coccyg-vertebrae",
+      "label": "COCCYG VERTEBRAE",
+      "node": "COCCYG_VERTEBRAE",
+      "asset": "./COCCYG_VERTEBRAE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-costal-cartilages-l",
+      "label": "Costal Cartilages L",
+      "node": "Costal_Cartilages_L",
+      "asset": "./Costal_Cartilages_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-costal-cartilages-r",
+      "label": "Costal Cartilages R",
+      "node": "Costal_Cartilages_R",
+      "asset": "./Costal_Cartilages_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-l",
+      "label": "Femur L",
+      "node": "Femur_L",
+      "asset": "./Femur_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur-r",
+      "label": "Femur R",
+      "node": "Femur_R",
+      "asset": "./Femur_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-first-tarsal-l",
+      "label": "First tarsal L",
+      "node": "First_tarsal_L",
+      "asset": "./First_tarsal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-navicular-l",
+      "label": "FL Navicular L",
+      "node": "FL_Navicular_L",
+      "asset": "./FL_Navicular_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-navicular-r",
+      "label": "FL Navicular R",
+      "node": "FL_Navicular_R",
+      "asset": "./FL_Navicular_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-p1-l",
+      "label": "FL P1 L",
+      "node": "FL_P1_L",
+      "asset": "./FL_P1_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-p1-r",
+      "label": "FL P1 R",
+      "node": "FL_P1_R",
+      "asset": "./FL_P1_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-p2-l",
+      "label": "FL P2 L",
+      "node": "FL_P2_L",
+      "asset": "./FL_P2_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-p2-r",
+      "label": "FL P2 R",
+      "node": "FL_P2_R",
+      "asset": "./FL_P2_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-p3-l",
+      "label": "FL P3 L",
+      "node": "FL_P3_L",
+      "asset": "./FL_P3_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-p3-r",
+      "label": "FL P3 R",
+      "node": "FL_P3_R",
+      "asset": "./FL_P3_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-sesamoids-l",
+      "label": "FL sesamoids L",
+      "node": "FL_sesamoids_L",
+      "asset": "./FL_sesamoids_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fl-sesamoids-r",
+      "label": "FL Sesamoids R",
+      "node": "FL_Sesamoids_R",
+      "asset": "./FL_Sesamoids_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fourth-tarsal-l",
+      "label": "Fourth tarsal L",
+      "node": "Fourth_tarsal_L",
+      "asset": "./Fourth_tarsal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hindlimb-sesamoids-r",
+      "label": "Hindlimb Sesamoids R",
+      "node": "Hindlimb_Sesamoids_R",
+      "asset": "./Hindlimb_Sesamoids_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-navicular-l",
+      "label": "HL Navicular L",
+      "node": "HL_Navicular_L",
+      "asset": "./HL_Navicular_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-navicular-r",
+      "label": "HL Navicular R",
+      "node": "HL_Navicular_R",
+      "asset": "./HL_Navicular_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-p1-l",
+      "label": "HL P1 L",
+      "node": "HL_P1_L",
+      "asset": "./HL_P1_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-p1-r",
+      "label": "HL P1 R",
+      "node": "HL_P1_R",
+      "asset": "./HL_P1_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-p2-l",
+      "label": "HL P2 L",
+      "node": "HL_P2_L",
+      "asset": "./HL_P2_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-p2-r",
+      "label": "HL P2 R",
+      "node": "HL_P2_R",
+      "asset": "./HL_P2_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-p3-l",
+      "label": "HL P3 L",
+      "node": "HL_P3_L",
+      "asset": "./HL_P3_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-p3-r",
+      "label": "HL P3 R",
+      "node": "HL_P3_R",
+      "asset": "./HL_P3_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hl-sesamoids-l",
+      "label": "HL Sesamoids L",
+      "node": "HL_Sesamoids_L",
+      "asset": "./HL_Sesamoids_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hoof-lfl",
+      "label": "Hoof LFL",
+      "node": "Hoof_LFL",
+      "asset": "./Hoof_LFL.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hoof-lhl",
+      "label": "Hoof LHL",
+      "node": "Hoof_LHL",
+      "asset": "./Hoof_LHL.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hoof-rfl",
+      "label": "Hoof RFL",
+      "node": "Hoof_RFL",
+      "asset": "./Hoof_RFL.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-hoof-rhl",
+      "label": "Hoof RHL",
+      "node": "Hoof_RHL",
+      "asset": "./Hoof_RHL.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-l-equine-skeleton-separated-005",
+      "label": "Humerus L Equine skeleton separated 005",
+      "node": "Humerus_L_Equine_skeleton_separated_005",
+      "asset": "./Humerus_L_Equine_skeleton_separated_005.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-humerus-r-equine-skeleton-separated-004",
+      "label": "Humerus R Equine skeleton separated 004",
+      "node": "Humerus_R_Equine_skeleton_separated_004",
+      "asset": "./Humerus_R_Equine_skeleton_separated_004.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-intermediate-carpal-l",
+      "label": "Intermediate carpal L",
+      "node": "Intermediate_carpal_L",
+      "asset": "./Intermediate_carpal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-intermediate-carpal-r",
+      "label": "Intermediate carpal R",
+      "node": "Intermediate_carpal_R",
+      "asset": "./Intermediate_carpal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lumbar-vertebrae",
+      "label": "LUMBAR VERTEBRAE",
+      "node": "LUMBAR_VERTEBRAE",
+      "asset": "./LUMBAR_VERTEBRAE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible",
+      "label": "Mandible",
+      "node": "Mandible",
+      "asset": "./Mandible.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpal-l",
+      "label": "Metacarpal L",
+      "node": "Metacarpal_L",
+      "asset": "./Metacarpal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metacarpal-r",
+      "label": "Metacarpal R",
+      "node": "Metacarpal_R",
+      "asset": "./Metacarpal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metatarsal-l",
+      "label": "Metatarsal L",
+      "node": "Metatarsal_L",
+      "asset": "./Metatarsal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-metatarsal-r",
+      "label": "Metatarsal R",
+      "node": "Metatarsal_R",
+      "asset": "./Metatarsal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patella-l",
+      "label": "Patella L",
+      "node": "Patella_L",
+      "asset": "./Patella_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patella-r",
+      "label": "Patella R",
+      "node": "Patella_R",
+      "asset": "./Patella_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis",
+      "label": "Pelvis",
+      "node": "Pelvis",
+      "asset": "./Pelvis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radial-carpal-l",
+      "label": "Radial carpal L",
+      "node": "Radial_carpal_L",
+      "asset": "./Radial_carpal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radial-carpal-r",
+      "label": "Radial carpal R",
+      "node": "Radial_carpal_R",
+      "asset": "./Radial_carpal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius-l",
+      "label": "Radius L",
+      "node": "Radius_L",
+      "asset": "./Radius_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-radius-r",
+      "label": "Radius R",
+      "node": "Radius_R",
+      "asset": "./Radius_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ribs-l",
+      "label": "Ribs L",
+      "node": "Ribs_L",
+      "asset": "./Ribs_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ribs-r",
+      "label": "Ribs R",
+      "node": "Ribs_R",
+      "asset": "./Ribs_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sacrum",
+      "label": "Sacrum",
+      "node": "Sacrum",
+      "asset": "./Sacrum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-l",
+      "label": "Scapula L",
+      "node": "Scapula_L",
+      "asset": "./Scapula_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scapula-r",
+      "label": "Scapula R",
+      "node": "Scapula_R",
+      "asset": "./Scapula_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-skull",
+      "label": "Skull",
+      "node": "Skull",
+      "asset": "./Skull.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sternum",
+      "label": "Sternum",
+      "node": "Sternum",
+      "asset": "./Sternum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-talus-l",
+      "label": "Talus L",
+      "node": "Talus_L",
+      "asset": "./Talus_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-talus-r",
+      "label": "Talus R",
+      "node": "Talus_R",
+      "asset": "./Talus_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-third-tarsal-l",
+      "label": "Third tarsal L",
+      "node": "Third_tarsal_L",
+      "asset": "./Third_tarsal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-thoracic-vertebrae-fill-gaps",
+      "label": "THORACIC VERTEBRAE fill gaps",
+      "node": "THORACIC_VERTEBRAE_fill_gaps",
+      "asset": "./THORACIC_VERTEBRAE_fill_gaps.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-l",
+      "label": "Tibia L",
+      "node": "Tibia_L",
+      "asset": "./Tibia_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia-r",
+      "label": "Tibia R",
+      "node": "Tibia_R",
+      "asset": "./Tibia_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulnar-carpal-l",
+      "label": "Ulnar carpal L",
+      "node": "Ulnar_carpal_L",
+      "asset": "./Ulnar_carpal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ulnar-carpal-r",
+      "label": "Ulnar carpal R",
+      "node": "Ulnar_carpal_R",
+      "asset": "./Ulnar_carpal_R.glb",
+      "region": "root"
+    }
+  ]
+}

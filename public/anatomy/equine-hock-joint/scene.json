@@ -1,0 +1,83 @@
+{
+  "id": "equine-hock-joint",
+  "title": "Equine hock joint",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-calcaneus",
+      "label": "Calcaneus",
+      "node": "Calcaneus",
+      "asset": "./Calcaneus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-central-tarsal",
+      "label": "Central tarsal",
+      "node": "Central_tarsal",
+      "asset": "./Central_tarsal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-first-tarsal",
+      "label": "First tarsal",
+      "node": "First_tarsal",
+      "asset": "./First_tarsal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fourth-metatarsal",
+      "label": "Fourth metatarsal",
+      "node": "Fourth_metatarsal",
+      "asset": "./Fourth_metatarsal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fourth-tarsal",
+      "label": "Fourth tarsal",
+      "node": "Fourth_tarsal",
+      "asset": "./Fourth_tarsal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-second-metatarsal",
+      "label": "Second metatarsal",
+      "node": "Second_metatarsal",
+      "asset": "./Second_metatarsal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-talus",
+      "label": "Talus",
+      "node": "Talus",
+      "asset": "./Talus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-third-metatarsal",
+      "label": "Third metatarsal",
+      "node": "Third_metatarsal",
+      "asset": "./Third_metatarsal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-third-tarsal",
+      "label": "Third tarsal",
+      "node": "Third_tarsal",
+      "asset": "./Third_tarsal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia",
+      "label": "Tibia",
+      "node": "Tibia",
+      "asset": "./Tibia.glb",
+      "region": "root"
+    }
+  ]
+}

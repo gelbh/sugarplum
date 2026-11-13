@@ -1,0 +1,349 @@
+{
+  "id": "equine-distal-limb-dissection-scan",
+  "title": "Equine distal limb dissection scan",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-eq-dist-limb-abaxial-palmar-ligg",
+      "label": "eq dist limb Abaxial Palmar Ligg",
+      "node": "eq_dist_limb_Abaxial_Palmar_Ligg",
+      "asset": "./eq_dist_limb_Abaxial_Palmar_Ligg.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-axial-palmar-ligg",
+      "label": "eq dist limb Axial Palmar Ligg",
+      "node": "eq_dist_limb_Axial_Palmar_Ligg",
+      "asset": "./eq_dist_limb_Axial_Palmar_Ligg.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-bar",
+      "label": "eq dist limb Bar",
+      "node": "eq_dist_limb_Bar",
+      "asset": "./eq_dist_limb_Bar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-bulb-heel",
+      "label": "eq dist limb Bulb Heel",
+      "node": "eq_dist_limb_Bulb_Heel",
+      "asset": "./eq_dist_limb_Bulb_Heel.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-cannon-bone",
+      "label": "eq dist limb Cannon Bone",
+      "node": "eq_dist_limb_Cannon_Bone",
+      "asset": "./eq_dist_limb_Cannon_Bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-clean-lo",
+      "label": "eq dist limb clean LO",
+      "node": "eq_dist_limb_clean_LO",
+      "asset": "./eq_dist_limb_clean_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-coffin-bone",
+      "label": "eq dist limb Coffin Bone",
+      "node": "eq_dist_limb_Coffin_Bone",
+      "asset": "./eq_dist_limb_Coffin_Bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-collatelar-lig-navicular",
+      "label": "eq dist limb Collatelar Lig Navicular",
+      "node": "eq_dist_limb_Collatelar_Lig_Navicular",
+      "asset": "./eq_dist_limb_Collatelar_Lig_Navicular.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-collateral-lig-fetlock",
+      "label": "eq dist limb Collateral Lig Fetlock",
+      "node": "eq_dist_limb_Collateral_Lig_Fetlock",
+      "asset": "./eq_dist_limb_Collateral_Lig_Fetlock.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-collateral-lig-pastern",
+      "label": "eq dist limb Collateral Lig Pastern",
+      "node": "eq_dist_limb_Collateral_Lig_Pastern",
+      "asset": "./eq_dist_limb_Collateral_Lig_Pastern.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-common-digital-ext-tendon",
+      "label": "eq dist limb Common Digital Ext Tendon",
+      "node": "eq_dist_limb_Common_Digital_Ext_Tendon",
+      "asset": "./eq_dist_limb_Common_Digital_Ext_Tendon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-ddf-tendon",
+      "label": "eq dist limb DDF Tendon",
+      "node": "eq_dist_limb_DDF_Tendon",
+      "asset": "./eq_dist_limb_DDF_Tendon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-digital-vein",
+      "label": "eq dist limb Digital Vein",
+      "node": "eq_dist_limb_Digital_Vein",
+      "asset": "./eq_dist_limb_Digital_Vein.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-distal-cruciate-sesamoidean-lig",
+      "label": "eq dist limb Distal Cruciate Sesamoidean Lig",
+      "node": "eq_dist_limb_Distal_Cruciate_Sesamoidean_Lig",
+      "asset": "./eq_dist_limb_Distal_Cruciate_Sesamoidean_Lig.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-ext-branch-interosseus",
+      "label": "eq dist limb Ext Branch Interosseus",
+      "node": "eq_dist_limb_Ext_Branch_Interosseus",
+      "asset": "./eq_dist_limb_Ext_Branch_Interosseus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-extensor-retinaculum-complex",
+      "label": "eq dist limb Extensor Retinaculum Complex",
+      "node": "eq_dist_limb_Extensor_Retinaculum_Complex",
+      "asset": "./eq_dist_limb_Extensor_Retinaculum_Complex.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-frog",
+      "label": "eq dist limb Frog",
+      "node": "eq_dist_limb_Frog",
+      "asset": "./eq_dist_limb_Frog.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-hoof-cartilage",
+      "label": "eq dist limb Hoof Cartilage",
+      "node": "eq_dist_limb_Hoof_Cartilage",
+      "asset": "./eq_dist_limb_Hoof_Cartilage.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-hoof-coronary-corium",
+      "label": "eq dist limb Hoof Coronary Corium",
+      "node": "eq_dist_limb_Hoof_Coronary_Corium",
+      "asset": "./eq_dist_limb_Hoof_Coronary_Corium.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-hoof-digital-cushion",
+      "label": "eq dist limb Hoof Digital Cushion",
+      "node": "eq_dist_limb_Hoof_Digital_Cushion",
+      "asset": "./eq_dist_limb_Hoof_Digital_Cushion.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-hoof-laminar-corium",
+      "label": "eq dist limb Hoof Laminar Corium",
+      "node": "eq_dist_limb_Hoof_Laminar_Corium",
+      "asset": "./eq_dist_limb_Hoof_Laminar_Corium.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-hoof-wall",
+      "label": "eq dist limb Hoof Wall",
+      "node": "eq_dist_limb_Hoof_Wall",
+      "asset": "./eq_dist_limb_Hoof_Wall.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-interosseus",
+      "label": "eq dist limb Interosseus",
+      "node": "eq_dist_limb_Interosseus",
+      "asset": "./eq_dist_limb_Interosseus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-intersesamoidean-lig",
+      "label": "eq dist limb Intersesamoidean Lig",
+      "node": "eq_dist_limb_Intersesamoidean_Lig",
+      "asset": "./eq_dist_limb_Intersesamoidean_Lig.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-lat-digital-artery",
+      "label": "eq dist limb Lat digital artery",
+      "node": "eq_dist_limb_Lat_digital_artery",
+      "asset": "./eq_dist_limb_Lat_digital_artery.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-lat-digital-dorsal-rm",
+      "label": "eq dist limb Lat Digital Dorsal Rm",
+      "node": "eq_dist_limb_Lat_Digital_Dorsal_Rm",
+      "asset": "./eq_dist_limb_Lat_Digital_Dorsal_Rm.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-lat-digital-nerve",
+      "label": "eq dist limb Lat Digital Nerve",
+      "node": "eq_dist_limb_Lat_Digital_Nerve",
+      "asset": "./eq_dist_limb_Lat_Digital_Nerve.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-lat-palmar-nerve",
+      "label": "eq dist limb Lat Palmar Nerve",
+      "node": "eq_dist_limb_Lat_Palmar_Nerve",
+      "asset": "./eq_dist_limb_Lat_Palmar_Nerve.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-lateral-digital-ext-tendon",
+      "label": "eq dist limb Lateral Digital Ext Tendon",
+      "node": "eq_dist_limb_Lateral_Digital_Ext_Tendon",
+      "asset": "./eq_dist_limb_Lateral_Digital_Ext_Tendon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-long-pastern-bone",
+      "label": "eq dist limb Long Pastern Bone",
+      "node": "eq_dist_limb_Long_Pastern_Bone",
+      "asset": "./eq_dist_limb_Long_Pastern_Bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-med-digital-artery",
+      "label": "eq dist limb Med Digital Artery",
+      "node": "eq_dist_limb_Med_Digital_Artery",
+      "asset": "./eq_dist_limb_Med_Digital_Artery.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-med-palmar-artery",
+      "label": "eq dist limb Med Palmar Artery",
+      "node": "eq_dist_limb_Med_Palmar_Artery",
+      "asset": "./eq_dist_limb_Med_Palmar_Artery.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-medial-palmar-nerve",
+      "label": "eq dist limb Medial Palmar Nerve",
+      "node": "eq_dist_limb_Medial_Palmar_Nerve",
+      "asset": "./eq_dist_limb_Medial_Palmar_Nerve.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-metacarpal-2",
+      "label": "eq dist limb Metacarpal 2",
+      "node": "eq_dist_limb_Metacarpal_2",
+      "asset": "./eq_dist_limb_Metacarpal_2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-metacarpal-4",
+      "label": "eq dist limb Metacarpal 4",
+      "node": "eq_dist_limb_Metacarpal_4",
+      "asset": "./eq_dist_limb_Metacarpal_4.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-middle-scutum",
+      "label": "eq dist limb Middle Scutum",
+      "node": "eq_dist_limb_Middle_Scutum",
+      "asset": "./eq_dist_limb_Middle_Scutum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-navicular-bursa",
+      "label": "eq dist limb Navicular Bursa",
+      "node": "eq_dist_limb_Navicular_Bursa",
+      "asset": "./eq_dist_limb_Navicular_Bursa.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-oblique-sesamoidean-ligg",
+      "label": "eq dist limb Oblique Sesamoidean Ligg",
+      "node": "eq_dist_limb_Oblique_Sesamoidean_Ligg",
+      "asset": "./eq_dist_limb_Oblique_Sesamoidean_Ligg.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-palmar-anular-lig",
+      "label": "eq dist limb Palmar Anular Lig",
+      "node": "eq_dist_limb_Palmar_Anular_Lig",
+      "asset": "./eq_dist_limb_Palmar_Anular_Lig.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-palmar-vein",
+      "label": "eq dist limb Palmar Vein",
+      "node": "eq_dist_limb_Palmar_Vein",
+      "asset": "./eq_dist_limb_Palmar_Vein.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-paracuneal-groove",
+      "label": "eq dist limb Paracuneal Groove",
+      "node": "eq_dist_limb_Paracuneal_Groove",
+      "asset": "./eq_dist_limb_Paracuneal_Groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-proximal-sesamoids",
+      "label": "eq dist limb Proximal Sesamoids",
+      "node": "eq_dist_limb_Proximal_Sesamoids",
+      "asset": "./eq_dist_limb_Proximal_Sesamoids.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-sdf-tendon",
+      "label": "eq dist limb SDF Tendon",
+      "node": "eq_dist_limb_SDF_Tendon",
+      "asset": "./eq_dist_limb_SDF_Tendon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-short-pastern-bone",
+      "label": "eq dist limb Short Pastern Bone",
+      "node": "eq_dist_limb_Short_Pastern_Bone",
+      "asset": "./eq_dist_limb_Short_Pastern_Bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-short-sesamoidean-ligg",
+      "label": "eq dist limb Short Sesamoidean Ligg",
+      "node": "eq_dist_limb_Short_Sesamoidean_Ligg",
+      "asset": "./eq_dist_limb_Short_Sesamoidean_Ligg.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-sole",
+      "label": "eq dist limb Sole",
+      "node": "eq_dist_limb_Sole",
+      "asset": "./eq_dist_limb_Sole.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-straight-sesamoidean-lig",
+      "label": "eq dist limb Straight Sesamoidean Lig",
+      "node": "eq_dist_limb_Straight_Sesamoidean_Lig",
+      "asset": "./eq_dist_limb_Straight_Sesamoidean_Lig.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eq-dist-limb-white-zone",
+      "label": "eq dist limb White Zone",
+      "node": "eq_dist_limb_White_Zone",
+      "asset": "./eq_dist_limb_White_Zone.glb",
+      "region": "root"
+    }
+  ]
+}

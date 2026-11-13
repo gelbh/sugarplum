@@ -1,0 +1,139 @@
+{
+  "id": "equine-head-section",
+  "title": "Equine head section",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-airway",
+      "label": "Airway",
+      "node": "Airway",
+      "asset": "./Airway.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-atlas-bone",
+      "label": "Atlas bone",
+      "node": "Atlas_bone",
+      "asset": "./Atlas_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-axis",
+      "label": "Axis",
+      "node": "Axis",
+      "asset": "./Axis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-basihyoid-bone",
+      "label": "Basihyoid bone",
+      "node": "Basihyoid_bone",
+      "asset": "./Basihyoid_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium",
+      "label": "Cranium",
+      "node": "Cranium",
+      "asset": "./Cranium.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-nasal-concha",
+      "label": "Dorsal nasal concha",
+      "node": "Dorsal_nasal_concha",
+      "asset": "./Dorsal_nasal_concha.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-entrance-guttural-pouch",
+      "label": "Entrance guttural pouch",
+      "node": "Entrance_guttural_pouch",
+      "asset": "./Entrance_guttural_pouch.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-geniohyoideus-muscle",
+      "label": "Geniohyoideus muscle",
+      "node": "Geniohyoideus_muscle",
+      "asset": "./Geniohyoideus_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-guttural-pouch",
+      "label": "Guttural pouch",
+      "node": "Guttural_pouch",
+      "asset": "./Guttural_pouch.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nasopharynx",
+      "label": "Nasopharynx",
+      "node": "Nasopharynx",
+      "asset": "./Nasopharynx.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-oesophagus",
+      "label": "Oesophagus",
+      "node": "Oesophagus",
+      "asset": "./Oesophagus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-oropharynx",
+      "label": "Oropharynx",
+      "node": "Oropharynx",
+      "asset": "./Oropharynx.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-reference-base-mesh",
+      "label": "Reference base mesh",
+      "node": "Reference_base_mesh",
+      "asset": "./Reference_base_mesh.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-right-choana",
+      "label": "Right choana",
+      "node": "Right_choana",
+      "asset": "./Right_choana.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sinus-1",
+      "label": "Sinus 1",
+      "node": "Sinus_1",
+      "asset": "./Sinus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sinus-2",
+      "label": "Sinus 2",
+      "node": "Sinus_2",
+      "asset": "./Sinus_2.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ventral-nasal-concha",
+      "label": "Ventral nasal concha",
+      "node": "Ventral_nasal_concha",
+      "asset": "./Ventral_nasal_concha.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-zbrushpolymesh3d",
+      "label": "ZBrushPolyMesh3D",
+      "node": "ZBrushPolyMesh3D",
+      "asset": "./ZBrushPolyMesh3D.glb",
+      "region": "root"
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "id": "equine-normal-stifle-locking",
+  "title": "Equine normal stifle locking",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-caud-cruc-lig",
+      "label": "Caud cruc lig",
+      "node": "Caud_cruc_lig",
+      "asset": "./Caud_cruc_lig.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-coll-lat-lig",
+      "label": "Coll lat lig",
+      "node": "Coll_lat_lig",
+      "asset": "./Coll_lat_lig.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-coll-med-lig",
+      "label": "Coll med lig",
+      "node": "Coll_med_lig",
+      "asset": "./Coll_med_lig.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cran-cruc-lig",
+      "label": "Cran cruc lig",
+      "node": "Cran_cruc_lig",
+      "asset": "./Cran_cruc_lig.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-femur",
+      "label": "Femur",
+      "node": "Femur",
+      "asset": "./Femur.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fibula",
+      "label": "Fibula",
+      "node": "Fibula",
+      "asset": "./Fibula.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-intermediate-pat-lig",
+      "label": "Intermediate pat lig",
+      "node": "Intermediate_pat_lig",
+      "asset": "./Intermediate_pat_lig.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lat-femoropatella-lig",
+      "label": "Lat femoropatella lig",
+      "node": "Lat_femoropatella_lig",
+      "asset": "./Lat_femoropatella_lig.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lateral-meniscus",
+      "label": "Lateral meniscus",
+      "node": "Lateral_meniscus",
+      "asset": "./Lateral_meniscus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lateral-pat-lig",
+      "label": "Lateral pat lig",
+      "node": "Lateral_pat_lig",
+      "asset": "./Lateral_pat_lig.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-med-femorpatella-lig",
+      "label": "Med femorpatella lig",
+      "node": "Med_femorpatella_lig",
+      "asset": "./Med_femorpatella_lig.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-medial-meniscus",
+      "label": "Medial meniscus",
+      "node": "Medial_meniscus",
+      "asset": "./Medial_meniscus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-medial-pat-lig",
+      "label": "Medial pat lig",
+      "node": "Medial_pat_lig",
+      "asset": "./Medial_pat_lig.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-meniscofemoral-lig",
+      "label": "Meniscofemoral lig",
+      "node": "Meniscofemoral_lig",
+      "asset": "./Meniscofemoral_lig.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patella",
+      "label": "Patella",
+      "node": "Patella",
+      "asset": "./Patella.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-patellar-cartilage",
+      "label": "Patellar cartilage",
+      "node": "Patellar_cartilage",
+      "asset": "./Patellar_cartilage.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tibia",
+      "label": "Tibia",
+      "node": "Tibia",
+      "asset": "./Tibia.glb",
+      "region": "root"
+    }
+  ]
+}
