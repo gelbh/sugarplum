@@ -1,0 +1,62 @@
+{
+  "id": "canine-vulva",
+  "title": "Canine vulva",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-k9-vulva-shell-ext-urethral-orifice",
+      "label": "k9 vulva shell ext urethral orifice",
+      "node": "k9_vulva_shell_ext_urethral_orifice",
+      "asset": "./k9_vulva_shell_ext_urethral_orifice.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-vulva-shell-fossa-clitoridis",
+      "label": "k9 vulva shell fossa clitoridis",
+      "node": "k9_vulva_shell_fossa_clitoridis",
+      "asset": "./k9_vulva_shell_fossa_clitoridis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-vulva-shell-labium",
+      "label": "k9 vulva shell labium",
+      "node": "k9_vulva_shell_labium",
+      "asset": "./k9_vulva_shell_labium.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-vulva-shell-m-constrictor-vestib",
+      "label": "k9 vulva shell m constrictor vestib",
+      "node": "k9_vulva_shell_m_constrictor_vestib",
+      "asset": "./k9_vulva_shell_m_constrictor_vestib.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-vulva-shell-main",
+      "label": "k9 vulva shell main",
+      "node": "k9_vulva_shell_main",
+      "asset": "./k9_vulva_shell_main.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-vulva-shell-urethral-tubercle",
+      "label": "k9 vulva shell urethral tubercle",
+      "node": "k9_vulva_shell_urethral_tubercle",
+      "asset": "./k9_vulva_shell_urethral_tubercle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-vulva-shell-vestibule",
+      "label": "k9 vulva shell vestibule",
+      "node": "k9_vulva_shell_vestibule",
+      "asset": "./k9_vulva_shell_vestibule.glb",
+      "region": "root"
+    }
+  ]
+}

@@ -1,0 +1,384 @@
+{
+  "id": "canine-internal-organs",
+  "title": "Canine internal organs",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-adrenal-l-lp",
+      "label": "adrenal L LP",
+      "node": "adrenal_L_LP",
+      "asset": "./adrenal_L_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-adrenal-r-lp",
+      "label": "adrenal R LP",
+      "node": "adrenal_R_LP",
+      "asset": "./adrenal_R_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-cervical-vertebra",
+      "label": "b cervical vertebra",
+      "node": "b_cervical_vertebra",
+      "asset": "./b_cervical_vertebra.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-forelimb",
+      "label": "b forelimb",
+      "node": "b_forelimb",
+      "asset": "./b_forelimb.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-hindlimb",
+      "label": "b hindlimb",
+      "node": "b_hindlimb",
+      "asset": "./b_hindlimb.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-lumbar-cocc-vertebra",
+      "label": "b lumbar cocc vertebra",
+      "node": "b_lumbar_cocc_vertebra",
+      "asset": "./b_lumbar_cocc_vertebra.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-rib-cage",
+      "label": "b rib cage",
+      "node": "b_rib_cage",
+      "asset": "./b_rib_cage.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-scapular-cartilage",
+      "label": "b scapular cartilage",
+      "node": "b_scapular_cartilage",
+      "asset": "./b_scapular_cartilage.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-skull",
+      "label": "b skull",
+      "node": "b_skull",
+      "asset": "./b_skull.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-teeth",
+      "label": "b teeth",
+      "node": "b_teeth",
+      "asset": "./b_teeth.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-b-thoracic-vertebra",
+      "label": "b thoracic vertebra",
+      "node": "b_thoracic_vertebra",
+      "asset": "./b_thoracic_vertebra.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-bladder-lp",
+      "label": "bladder LP",
+      "node": "bladder_LP",
+      "asset": "./bladder_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-bronchial-tree-filled-low",
+      "label": "bronchial tree filled LOW",
+      "node": "bronchial_tree_filled_LOW",
+      "asset": "./bronchial_tree_filled_LOW.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-colon-ascending-lp",
+      "label": "colon ascending LP",
+      "node": "colon_ascending_LP",
+      "asset": "./colon_ascending_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-colon-caecum-lp",
+      "label": "colon caecum LP",
+      "node": "colon_caecum_LP",
+      "asset": "./colon_caecum_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-colon-descending-lp",
+      "label": "colon descending LP",
+      "node": "colon_descending_LP",
+      "asset": "./colon_descending_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-colon-transverse-lp",
+      "label": "colon transverse LP",
+      "node": "colon_transverse_LP",
+      "asset": "./colon_transverse_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-diaphragm-lo",
+      "label": "diaphragm LO",
+      "node": "diaphragm_LO",
+      "asset": "./diaphragm_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-duodenum-lp",
+      "label": "duodenum LP",
+      "node": "duodenum_LP",
+      "asset": "./duodenum_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-heart-lo",
+      "label": "heart LO",
+      "node": "heart_LO",
+      "asset": "./heart_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ileum-lp",
+      "label": "ileum LP",
+      "node": "ileum_LP",
+      "asset": "./ileum_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-jejunum-lp",
+      "label": "jejunum LP",
+      "node": "jejunum_LP",
+      "asset": "./jejunum_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-kidney-l-lp",
+      "label": "kidney L LP",
+      "node": "kidney_L_LP",
+      "asset": "./kidney_L_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-kidney-r-lp",
+      "label": "kidney R LP",
+      "node": "kidney_R_LP",
+      "asset": "./kidney_R_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-lung-caudal-lung-lobe-low",
+      "label": "L lung caudal lung lobe LOW",
+      "node": "L_lung_caudal_lung_lobe_LOW",
+      "asset": "./L_lung_caudal_lung_lobe_LOW.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-lung-caudal-part-cranial-lung-lobe-low",
+      "label": "L lung caudal part cranial lung lobe LOW",
+      "node": "L_lung_caudal_part_cranial_lung_lobe_LOW",
+      "asset": "./L_lung_caudal_part_cranial_lung_lobe_LOW.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-lung-cranial-part-cranial-lung-lobe-low",
+      "label": "L lung cranial part cranial lung lobe LOW",
+      "node": "L_lung_cranial_part_cranial_lung_lobe_LOW",
+      "asset": "./L_lung_cranial_part_cranial_lung_lobe_LOW.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-larynx-low",
+      "label": "larynx LOW",
+      "node": "larynx_LOW",
+      "asset": "./larynx_LOW.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-liver",
+      "label": "liver",
+      "node": "liver",
+      "asset": "./liver.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-node-lymph-colic-l-lp",
+      "label": "node lymph colic L LP",
+      "node": "node_lymph_colic_L_LP",
+      "asset": "./node_lymph_colic_L_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-node-lymph-colic-middle-lp",
+      "label": "node lymph colic middle LP",
+      "node": "node_lymph_colic_middle_LP",
+      "asset": "./node_lymph_colic_middle_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-node-lymph-colic-r-lp",
+      "label": "node lymph colic R LP",
+      "node": "node_lymph_colic_R_LP",
+      "asset": "./node_lymph_colic_R_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nodes-lymph-gastric-lp",
+      "label": "nodes lymph gastric LP",
+      "node": "nodes_lymph_gastric_LP",
+      "asset": "./nodes_lymph_gastric_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nodes-lymph-jejunal2-lp",
+      "label": "nodes lymph jejunal2 LP",
+      "node": "nodes_lymph_jejunal2_LP",
+      "asset": "./nodes_lymph_jejunal2_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nodes-lymph-medial-iliac-lp",
+      "label": "nodes lymph medial iliac LP",
+      "node": "nodes_lymph_medial_iliac_LP",
+      "asset": "./nodes_lymph_medial_iliac_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nodes-lymph-pancreaticoduodenal-lp",
+      "label": "nodes lymph pancreaticoduodenal LP",
+      "node": "nodes_lymph_pancreaticoduodenal_LP",
+      "asset": "./nodes_lymph_pancreaticoduodenal_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nodes-lymph-renal-lp",
+      "label": "nodes lymph renal LP",
+      "node": "nodes_lymph_renal_LP",
+      "asset": "./nodes_lymph_renal_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nodes-lymph-splenic-lp",
+      "label": "nodes lymph splenic LP",
+      "node": "nodes_lymph_splenic_LP",
+      "asset": "./nodes_lymph_splenic_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-oesophagus-lo",
+      "label": "oesophagus LO",
+      "node": "oesophagus_LO",
+      "asset": "./oesophagus_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pancreas-lp",
+      "label": "pancreas LP",
+      "node": "pancreas_LP",
+      "asset": "./pancreas_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-lung-accessory-lobe-low",
+      "label": "R lung accessory lobe LOW",
+      "node": "R_lung_accessory_lobe_LOW",
+      "asset": "./R_lung_accessory_lobe_LOW.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-lung-caudal-lobe-low",
+      "label": "R lung caudal lobe LOW",
+      "node": "R_lung_caudal_lobe_LOW",
+      "asset": "./R_lung_caudal_lobe_LOW.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-lung-cranial-lobe-low",
+      "label": "R lung cranial lobe LOW",
+      "node": "R_lung_cranial_lobe_LOW",
+      "asset": "./R_lung_cranial_lobe_LOW.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-lung-middle-lobe-low",
+      "label": "R lung middle lobe LOW",
+      "node": "R_lung_middle_lobe_LOW",
+      "asset": "./R_lung_middle_lobe_LOW.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-spleen-lp",
+      "label": "spleen LP",
+      "node": "spleen_LP",
+      "asset": "./spleen_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-stom-cardia-lp",
+      "label": "stom cardia LP",
+      "node": "stom_cardia_LP",
+      "asset": "./stom_cardia_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-stom-fundus-lp",
+      "label": "stom fundus LP",
+      "node": "stom_fundus_LP",
+      "asset": "./stom_fundus_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-stom-pyloric-antrum-lp",
+      "label": "stom pyloric antrum LP",
+      "node": "stom_pyloric_antrum_LP",
+      "asset": "./stom_pyloric_antrum_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-stom-pylorus-lp",
+      "label": "stom pylorus LP",
+      "node": "stom_pylorus_LP",
+      "asset": "./stom_pylorus_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-trachea-low",
+      "label": "trachea LOW",
+      "node": "trachea_LOW",
+      "asset": "./trachea_LOW.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ureter-l-lp",
+      "label": "Ureter L LP",
+      "node": "Ureter_L_LP",
+      "asset": "./Ureter_L_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ureter-r-lp",
+      "label": "Ureter R LP",
+      "node": "Ureter_R_LP",
+      "asset": "./Ureter_R_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-uterus-ovaries-lp",
+      "label": "uterus ovaries LP",
+      "node": "uterus_ovaries_LP",
+      "asset": "./uterus_ovaries_LP.glb",
+      "region": "root"
+    }
+  ]
+}

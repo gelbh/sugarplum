@@ -1,0 +1,489 @@
+{
+  "id": "canine-hemisection-scan",
+  "title": "Canine hemisection scan",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-a-aorta-abdominal",
+      "label": "A Aorta Abdominal",
+      "node": "A_Aorta_Abdominal",
+      "asset": "./A_Aorta_Abdominal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-aorta-thoracic",
+      "label": "A Aorta Thoracic",
+      "node": "A_Aorta_Thoracic",
+      "asset": "./A_Aorta_Thoracic.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-aortic-arch",
+      "label": "A Aortic Arch",
+      "node": "A_Aortic_Arch",
+      "asset": "./A_Aortic_Arch.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-brachiocephalic-trunk",
+      "label": "A Brachiocephalic trunk",
+      "node": "A_Brachiocephalic_trunk",
+      "asset": "./A_Brachiocephalic_trunk.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-common-carotid-l",
+      "label": "A Common Carotid L",
+      "node": "A_Common_Carotid_L",
+      "asset": "./A_Common_Carotid_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-common-carotid-r",
+      "label": "A Common Carotid R",
+      "node": "A_Common_Carotid_R",
+      "asset": "./A_Common_Carotid_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-dorsal-intercostals",
+      "label": "A Dorsal Intercostals",
+      "node": "A_Dorsal_Intercostals",
+      "asset": "./A_Dorsal_Intercostals.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-pulmonary",
+      "label": "A Pulmonary",
+      "node": "A_Pulmonary",
+      "asset": "./A_Pulmonary.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-subclavian-l",
+      "label": "A Subclavian L",
+      "node": "A_Subclavian_L",
+      "asset": "./A_Subclavian_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-biceps-brachii",
+      "label": "M Biceps Brachii",
+      "node": "M_Biceps_Brachii",
+      "asset": "./M_Biceps_Brachii.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-cleidobrachialis",
+      "label": "M Cleidobrachialis",
+      "node": "M_Cleidobrachialis",
+      "asset": "./M_Cleidobrachialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-cleidocephalicus",
+      "label": "M Cleidocephalicus",
+      "node": "M_Cleidocephalicus",
+      "asset": "./M_Cleidocephalicus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-crico-thyropharyngeus",
+      "label": "M Crico   Thyropharyngeus",
+      "node": "M_Crico___Thyropharyngeus",
+      "asset": "./M_Crico___Thyropharyngeus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-deep-pectoral",
+      "label": "M Deep Pectoral",
+      "node": "M_Deep_Pectoral",
+      "asset": "./M_Deep_Pectoral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-deltoid-acromial",
+      "label": "M Deltoid Acromial",
+      "node": "M_Deltoid_Acromial",
+      "asset": "./M_Deltoid_Acromial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-deltoid-scapular",
+      "label": "M Deltoid Scapular",
+      "node": "M_Deltoid_Scapular",
+      "asset": "./M_Deltoid_Scapular.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-external-abdominal-oblique",
+      "label": "M External Abdominal Oblique",
+      "node": "M_External_Abdominal_Oblique",
+      "asset": "./M_External_Abdominal_Oblique.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-iliocostalis-lumborum",
+      "label": "M Iliocostalis Lumborum",
+      "node": "M_Iliocostalis_Lumborum",
+      "asset": "./M_Iliocostalis_Lumborum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-intercostals",
+      "label": "M Intercostals",
+      "node": "M_Intercostals",
+      "asset": "./M_Intercostals.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-intertransversus",
+      "label": "M Intertransversus",
+      "node": "M_Intertransversus",
+      "asset": "./M_Intertransversus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-latissimus-dorsi",
+      "label": "M Latissimus Dorsi",
+      "node": "M_Latissimus_Dorsi",
+      "asset": "./M_Latissimus_Dorsi.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-longissimus",
+      "label": "M Longissimus",
+      "node": "M_Longissimus",
+      "asset": "./M_Longissimus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-longus-capitis",
+      "label": "M Longus Capitis",
+      "node": "M_Longus_Capitis",
+      "asset": "./M_Longus_Capitis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-omohyoideus",
+      "label": "M Omohyoideus",
+      "node": "M_Omohyoideus",
+      "asset": "./M_Omohyoideus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-psoas-minor",
+      "label": "M Psoas Minor",
+      "node": "M_Psoas_Minor",
+      "asset": "./M_Psoas_Minor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-rhomboideus",
+      "label": "M Rhomboideus",
+      "node": "M_Rhomboideus",
+      "asset": "./M_Rhomboideus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-serratus-ventralis-cervical",
+      "label": "M Serratus Ventralis Cervical",
+      "node": "M_Serratus_Ventralis_Cervical",
+      "asset": "./M_Serratus_Ventralis_Cervical.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-splenius-l",
+      "label": "M Splenius L",
+      "node": "M_Splenius_L",
+      "asset": "./M_Splenius_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-splenius-r",
+      "label": "M Splenius R",
+      "node": "M_Splenius_R",
+      "asset": "./M_Splenius_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-sternocephalicus-l",
+      "label": "M Sternocephalicus L",
+      "node": "M_Sternocephalicus_L",
+      "asset": "./M_Sternocephalicus_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-sternocephalicus-mastoid",
+      "label": "M Sternocephalicus Mastoid",
+      "node": "M_Sternocephalicus_Mastoid",
+      "asset": "./M_Sternocephalicus_Mastoid.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-sternocephalicus-occipital",
+      "label": "M Sternocephalicus Occipital",
+      "node": "M_Sternocephalicus_Occipital",
+      "asset": "./M_Sternocephalicus_Occipital.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-sternohyoideus",
+      "label": "M Sternohyoideus",
+      "node": "M_Sternohyoideus",
+      "asset": "./M_Sternohyoideus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-sternothyroideus",
+      "label": "M Sternothyroideus",
+      "node": "M_Sternothyroideus",
+      "asset": "./M_Sternothyroideus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-superficial-pectoral",
+      "label": "M Superficial Pectoral",
+      "node": "M_Superficial_Pectoral",
+      "asset": "./M_Superficial_Pectoral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-supraspinatus",
+      "label": "M Supraspinatus",
+      "node": "M_Supraspinatus",
+      "asset": "./M_Supraspinatus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-triceps-lateral",
+      "label": "M Triceps Lateral",
+      "node": "M_Triceps_Lateral",
+      "asset": "./M_Triceps_Lateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-triceps-long",
+      "label": "M Triceps Long",
+      "node": "M_Triceps_Long",
+      "asset": "./M_Triceps_Long.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-triceps-medial",
+      "label": "M Triceps Medial",
+      "node": "M_Triceps_Medial",
+      "asset": "./M_Triceps_Medial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-ansa-subclavia",
+      "label": "N Ansa Subclavia",
+      "node": "N_Ansa_Subclavia",
+      "asset": "./N_Ansa_Subclavia.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-n-sympathetic-trunk",
+      "label": "N Sympathetic trunk",
+      "node": "N_Sympathetic_trunk",
+      "asset": "./N_Sympathetic_trunk.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-o-diaphragm",
+      "label": "O Diaphragm",
+      "node": "O_Diaphragm",
+      "asset": "./O_Diaphragm.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-o-heart-auricle-l",
+      "label": "O Heart Auricle L",
+      "node": "O_Heart_Auricle_L",
+      "asset": "./O_Heart_Auricle_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-o-heart-auricle-r",
+      "label": "O Heart Auricle R",
+      "node": "O_Heart_Auricle_R",
+      "asset": "./O_Heart_Auricle_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-o-heart-paraconal-interventricular-groove",
+      "label": "O Heart Paraconal Interventricular Groove",
+      "node": "O_Heart_Paraconal_Interventricular_Groove",
+      "asset": "./O_Heart_Paraconal_Interventricular_Groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-o-heart-subsinuosal-groove",
+      "label": "O Heart Subsinuosal Groove",
+      "node": "O_Heart_Subsinuosal_Groove",
+      "asset": "./O_Heart_Subsinuosal_Groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-o-heart-ventricle-l",
+      "label": "O Heart Ventricle L",
+      "node": "O_Heart_Ventricle_L",
+      "asset": "./O_Heart_Ventricle_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-o-heart-ventricle-r",
+      "label": "O Heart Ventricle R",
+      "node": "O_Heart_Ventricle_R",
+      "asset": "./O_Heart_Ventricle_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-o-liver-caudate-process-caudal-lobe",
+      "label": "O Liver Caudate Process Caudal Lobe",
+      "node": "O_Liver_Caudate_Process_Caudal_Lobe",
+      "asset": "./O_Liver_Caudate_Process_Caudal_Lobe.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-o-liver-left-lat-hepatic-lobe",
+      "label": "O Liver Left Lat Hepatic Lobe",
+      "node": "O_Liver_Left_Lat_Hepatic_Lobe",
+      "asset": "./O_Liver_Left_Lat_Hepatic_Lobe.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-o-liver-left-medial-hepatic-lobe",
+      "label": "O Liver Left Medial Hepatic Lobe",
+      "node": "O_Liver_Left_Medial_Hepatic_Lobe",
+      "asset": "./O_Liver_Left_Medial_Hepatic_Lobe.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-o-liver-papillary-process-caudate-lobe",
+      "label": "O Liver Papillary Process Caudate Lobe",
+      "node": "O_Liver_Papillary_Process_Caudate_Lobe",
+      "asset": "./O_Liver_Papillary_Process_Caudate_Lobe.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-o-liver-right-lateral-hepatic-lobe",
+      "label": "O Liver Right Lateral Hepatic Lobe",
+      "node": "O_Liver_Right_Lateral_Hepatic_Lobe",
+      "asset": "./O_Liver_Right_Lateral_Hepatic_Lobe.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-o-lung-accessory-lobe",
+      "label": "O Lung Accessory Lobe",
+      "node": "O_Lung_Accessory_Lobe",
+      "asset": "./O_Lung_Accessory_Lobe.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-o-lung-cranial-right-lobe",
+      "label": "O Lung Cranial Right Lobe",
+      "node": "O_Lung_Cranial_Right_Lobe",
+      "asset": "./O_Lung_Cranial_Right_Lobe.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-o-oesophagus",
+      "label": "O Oesophagus",
+      "node": "O_Oesophagus",
+      "asset": "./O_Oesophagus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-kidney-cut",
+      "label": "R Kidney Cut",
+      "node": "R_Kidney_Cut",
+      "asset": "./R_Kidney_Cut.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-retopo-canine-hemisection-001-uv-001",
+      "label": "retopo canine hemisection 001 uv 001",
+      "node": "retopo_canine_hemisection_001_uv_001",
+      "asset": "./retopo_canine_hemisection_001_uv_001.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-v-brachiocephalic-l",
+      "label": "V Brachiocephalic L",
+      "node": "V_Brachiocephalic_L",
+      "asset": "./V_Brachiocephalic_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-v-cervicothoracic-ganglion",
+      "label": "V Cervicothoracic Ganglion",
+      "node": "V_Cervicothoracic_Ganglion",
+      "asset": "./V_Cervicothoracic_Ganglion.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-v-costocervical-l",
+      "label": "V Costocervical L",
+      "node": "V_Costocervical_L",
+      "asset": "./V_Costocervical_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-v-cranial-vc",
+      "label": "V Cranial VC",
+      "node": "V_Cranial_VC",
+      "asset": "./V_Cranial_VC.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-v-internal-thoracic",
+      "label": "V Internal Thoracic",
+      "node": "V_Internal_Thoracic",
+      "asset": "./V_Internal_Thoracic.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-v-jugular-l",
+      "label": "V Jugular L",
+      "node": "V_Jugular_L",
+      "asset": "./V_Jugular_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-v-jugular-r",
+      "label": "V Jugular R",
+      "node": "V_Jugular_R",
+      "asset": "./V_Jugular_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-v-vagosympathetic-trunk",
+      "label": "V Vagosympathetic Trunk",
+      "node": "V_Vagosympathetic_Trunk",
+      "asset": "./V_Vagosympathetic_Trunk.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-v-vagus",
+      "label": "V Vagus",
+      "node": "V_Vagus",
+      "asset": "./V_Vagus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-v-vena-cava-caudal",
+      "label": "V Vena Cava Caudal",
+      "node": "V_Vena_Cava_Caudal",
+      "asset": "./V_Vena_Cava_Caudal.glb",
+      "region": "root"
+    }
+  ]
+}

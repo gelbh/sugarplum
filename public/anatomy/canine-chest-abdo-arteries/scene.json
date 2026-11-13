@@ -1,0 +1,482 @@
+{
+  "id": "canine-chest-abdo-arteries",
+  "title": "Canine chest and abdomen arteries",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-a-aorta-abdo-a-aorta-abdo",
+      "label": "A aorta abdo A aorta abdo",
+      "node": "A_aorta_abdo_A_aorta_abdo",
+      "asset": "./A_aorta_abdo_A_aorta_abdo.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-aorta-thoracic-a-aorta-thoracic",
+      "label": "A aorta thoracic A aorta thoracic",
+      "node": "A_aorta_thoracic_A_aorta_thoracic",
+      "asset": "./A_aorta_thoracic_A_aorta_thoracic.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-aortic-arch-a-aortic-arch",
+      "label": "A aortic arch A aortic arch",
+      "node": "A_aortic_arch_A_aortic_arch",
+      "asset": "./A_aortic_arch_A_aortic_arch.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-brachial-a-brachial",
+      "label": "A brachial A brachial",
+      "node": "A_brachial_A_brachial",
+      "asset": "./A_brachial_A_brachial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-brachial-deep-a-brachial-deep",
+      "label": "A brachial deep A brachial deep",
+      "node": "A_brachial_deep_A_brachial_deep",
+      "asset": "./A_brachial_deep_A_brachial_deep.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-brachial-r-a-brachial-r",
+      "label": "A brachial R A brachial R",
+      "node": "A_brachial_R_A_brachial_R",
+      "asset": "./A_brachial_R_A_brachial_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-brachiocephalic-trunk-a-brachiocephalic-trunk",
+      "label": "A brachiocephalic trunk A brachiocephalic trunk",
+      "node": "A_brachiocephalic_trunk_A_brachiocephalic_trunk",
+      "asset": "./A_brachiocephalic_trunk_A_brachiocephalic_trunk.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-carotid-comm-l-oesoph-br-a-carotid-comm-l-oesoph-br",
+      "label": "A carotid comm L oesoph br A carotid comm L oesoph br",
+      "node": "A_carotid_comm_L_oesoph_br_A_carotid_comm_L_oesoph_br",
+      "asset": "./A_carotid_comm_L_oesoph_br_A_carotid_comm_L_oesoph_br.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-carotid-common-l-a-carotid-common-l",
+      "label": "A carotid common L A carotid common L",
+      "node": "A_carotid_common_L_A_carotid_common_L",
+      "asset": "./A_carotid_common_L_A_carotid_common_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-carotid-common-r-a-carotid-common-r",
+      "label": "A carotid common R A carotid common R",
+      "node": "A_carotid_common_R_A_carotid_common_R",
+      "asset": "./A_carotid_common_R_A_carotid_common_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-caudal-gluteal-r-a-caudal-gluteal-r",
+      "label": "A caudal gluteal R A caudal gluteal R",
+      "node": "A_caudal_gluteal_R_A_caudal_gluteal_R",
+      "asset": "./A_caudal_gluteal_R_A_caudal_gluteal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-coeliac-a-coeliac",
+      "label": "A coeliac A coeliac",
+      "node": "A_coeliac_A_coeliac",
+      "asset": "./A_coeliac_A_coeliac.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-coeliac-branches-a-coeliac-branches",
+      "label": "A coeliac branches A coeliac branches",
+      "node": "A_coeliac_branches_A_coeliac_branches",
+      "asset": "./A_coeliac_branches_A_coeliac_branches.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-femoral-l-a-femoral-l",
+      "label": "A femoral L A femoral L",
+      "node": "A_femoral_L_A_femoral_L",
+      "asset": "./A_femoral_L_A_femoral_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-femoral-r-a-femoral-r",
+      "label": "A femoral R A femoral R",
+      "node": "A_femoral_R_A_femoral_R",
+      "asset": "./A_femoral_R_A_femoral_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-genicular-descending-a-genicular-descending",
+      "label": "A genicular descending A genicular descending",
+      "node": "A_genicular_descending_A_genicular_descending",
+      "asset": "./A_genicular_descending_A_genicular_descending.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-gluteal-caud-l-a-gluteal-caud-l",
+      "label": "A gluteal caud L A gluteal caud L",
+      "node": "A_gluteal_caud_L_A_gluteal_caud_L",
+      "asset": "./A_gluteal_caud_L_A_gluteal_caud_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-humeral-cranial-circumflex-a-humeral-cranial-circumflex",
+      "label": "A humeral cranial circumflex A humeral cranial circumflex",
+      "node": "A_humeral_cranial_circumflex_A_humeral_cranial_circumflex",
+      "asset": "./A_humeral_cranial_circumflex_A_humeral_cranial_circumflex.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-iliac-deep-circumflex-l-a-iliac-deep-circumflex-l",
+      "label": "A iliac deep circumflex L A iliac deep circumflex L",
+      "node": "A_iliac_deep_circumflex_L_A_iliac_deep_circumflex_L",
+      "asset": "./A_iliac_deep_circumflex_L_A_iliac_deep_circumflex_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-iliac-deep-circumflex-r-a-iliac-deep-circumflex-r",
+      "label": "A iliac deep circumflex R A iliac deep circumflex R",
+      "node": "A_iliac_deep_circumflex_R_A_iliac_deep_circumflex_R",
+      "asset": "./A_iliac_deep_circumflex_R_A_iliac_deep_circumflex_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-iliac-external-l-a-iliac-external-l",
+      "label": "A iliac external L A iliac external L",
+      "node": "A_iliac_external_L_A_iliac_external_L",
+      "asset": "./A_iliac_external_L_A_iliac_external_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-iliac-external-r-a-iliac-external-r",
+      "label": "A iliac external R A iliac external R",
+      "node": "A_iliac_external_R_A_iliac_external_R",
+      "asset": "./A_iliac_external_R_A_iliac_external_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-iliac-internal-l-a-iliac-internal-l",
+      "label": "A iliac internal L A iliac internal L",
+      "node": "A_iliac_internal_L_A_iliac_internal_L",
+      "asset": "./A_iliac_internal_L_A_iliac_internal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-iliac-internal-r-a-iliac-internal-r",
+      "label": "A iliac internal R A iliac internal R",
+      "node": "A_iliac_internal_R_A_iliac_internal_R",
+      "asset": "./A_iliac_internal_R_A_iliac_internal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-mesenteric-caudal-a-mesenteric-caudal",
+      "label": "A mesenteric caudal A mesenteric caudal",
+      "node": "A_mesenteric_caudal_A_mesenteric_caudal",
+      "asset": "./A_mesenteric_caudal_A_mesenteric_caudal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-mesenteric-cranial-a-mesenteric-cranial",
+      "label": "A mesenteric cranial A mesenteric cranial",
+      "node": "A_mesenteric_cranial_A_mesenteric_cranial",
+      "asset": "./A_mesenteric_cranial_A_mesenteric_cranial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-phrenicoabdominal-l-a-phrenicoabdominal-l",
+      "label": "A phrenicoabdominal L A phrenicoabdominal L",
+      "node": "A_phrenicoabdominal_L_A_phrenicoabdominal_L",
+      "asset": "./A_phrenicoabdominal_L_A_phrenicoabdominal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-phrenicoabdominal-r-a-phrenicoabdominal-r",
+      "label": "A phrenicoabdominal R A phrenicoabdominal R",
+      "node": "A_phrenicoabdominal_R_A_phrenicoabdominal_R",
+      "asset": "./A_phrenicoabdominal_R_A_phrenicoabdominal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-pudendal-internal-l-a-pudendal-internal-l",
+      "label": "A pudendal internal L A pudendal internal L",
+      "node": "A_pudendal_internal_L_A_pudendal_internal_L",
+      "asset": "./A_pudendal_internal_L_A_pudendal_internal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-pudendal-internal-r-a-pudendal-internal-r",
+      "label": "A pudendal internal R A pudendal internal R",
+      "node": "A_pudendal_internal_R_A_pudendal_internal_R",
+      "asset": "./A_pudendal_internal_R_A_pudendal_internal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-renal-l-a-renal-l",
+      "label": "A renal L A renal L",
+      "node": "A_renal_L_A_renal_L",
+      "asset": "./A_renal_L_A_renal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-renal-l-ramus-adrenal-caud-a-renal-l-ramus-adrenal-caud",
+      "label": "A renal L ramus adrenal caud A renal L ramus adrenal caud",
+      "node": "A_renal_L_ramus_adrenal_caud_A_renal_L_ramus_adrenal_caud",
+      "asset": "./A_renal_L_ramus_adrenal_caud_A_renal_L_ramus_adrenal_caud.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-renal-r-a-renal-r",
+      "label": "A renal R A renal R",
+      "node": "A_renal_R_A_renal_R",
+      "asset": "./A_renal_R_A_renal_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-repro-a-repro",
+      "label": "A repro A repro",
+      "node": "A_repro_A_repro",
+      "asset": "./A_repro_A_repro.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-sacral-medial-a-sacral-medial",
+      "label": "A sacral medial A sacral medial",
+      "node": "A_sacral_medial_A_sacral_medial",
+      "asset": "./A_sacral_medial_A_sacral_medial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-saphenous-a-saphenous",
+      "label": "A saphenous A saphenous",
+      "node": "A_saphenous_A_saphenous",
+      "asset": "./A_saphenous_A_saphenous.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-subclavian-l-a-subclavian-l",
+      "label": "A subclavian L A subclavian L",
+      "node": "A_subclavian_L_A_subclavian_L",
+      "asset": "./A_subclavian_L_A_subclavian_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-subclavian-r-a-subclavian-r",
+      "label": "A subclavian R A subclavian R",
+      "node": "A_subclavian_R_A_subclavian_R",
+      "asset": "./A_subclavian_R_A_subclavian_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-thoracic-internal-a-thoracic-internal",
+      "label": "A thoracic internal A thoracic internal",
+      "node": "A_thoracic_internal_A_thoracic_internal",
+      "asset": "./A_thoracic_internal_A_thoracic_internal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-thoracic-lat-a-thoracic-lat",
+      "label": "A thoracic lat A thoracic lat",
+      "node": "A_thoracic_lat_A_thoracic_lat",
+      "asset": "./A_thoracic_lat_A_thoracic_lat.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-thoracodorsal-a-thoracodorsal",
+      "label": "A thoracodorsal A thoracodorsal",
+      "node": "A_thoracodorsal_A_thoracodorsal",
+      "asset": "./A_thoracodorsal_A_thoracodorsal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-thyroid-caud-l-a-thyroid-caud-l",
+      "label": "A thyroid caud L A thyroid caud L",
+      "node": "A_thyroid_caud_L_A_thyroid_caud_L",
+      "asset": "./A_thyroid_caud_L_A_thyroid_caud_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-unused-8-group56721",
+      "label": "A unused 8 Group56721",
+      "node": "A_unused_8_Group56721",
+      "asset": "./A_unused_8_Group56721.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-unused-a-unused",
+      "label": "A unused A unused",
+      "node": "A_unused_A_unused",
+      "asset": "./A_unused_A_unused.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-unused2-group30467",
+      "label": "A unused2 Group30467",
+      "node": "A_unused2_Group30467",
+      "asset": "./A_unused2_Group30467.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-unused3-group40746",
+      "label": "A unused3 Group40746",
+      "node": "A_unused3_Group40746",
+      "asset": "./A_unused3_Group40746.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-unused4-group21122",
+      "label": "A unused4 Group21122",
+      "node": "A_unused4_Group21122",
+      "asset": "./A_unused4_Group21122.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-unused5-group43917",
+      "label": "A unused5 Group43917",
+      "node": "A_unused5_Group43917",
+      "asset": "./A_unused5_Group43917.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-unused6-group47418",
+      "label": "A unused6 Group47418",
+      "node": "A_unused6_Group47418",
+      "asset": "./A_unused6_Group47418.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-unused7-group52907",
+      "label": "A unused7 Group52907",
+      "node": "A_unused7_Group52907",
+      "asset": "./A_unused7_Group52907.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-a-unused9-group12317",
+      "label": "A unused9 Group12317",
+      "node": "A_unused9_Group12317",
+      "asset": "./A_unused9_Group12317.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-blocker-mesh-blocker-mesh",
+      "label": "Blocker mesh Blocker mesh",
+      "node": "Blocker_mesh_Blocker_mesh",
+      "asset": "./Blocker_mesh_Blocker_mesh.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-sacrotuberous-l-l-sacrotuberous-l",
+      "label": "L sacrotuberous L L sacrotuberous L",
+      "node": "L_sacrotuberous_L_L_sacrotuberous_L",
+      "asset": "./L_sacrotuberous_L_L_sacrotuberous_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-sacrotuberous-r-l-sacrotuberous-r",
+      "label": "L sacrotuberous R L sacrotuberous R",
+      "node": "L_sacrotuberous_R_L_sacrotuberous_R",
+      "asset": "./L_sacrotuberous_R_L_sacrotuberous_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-adductor-m-adductor",
+      "label": "M adductor M adductor",
+      "node": "M_adductor_M_adductor",
+      "asset": "./M_adductor_M_adductor.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-biceps-brachii-m-biceps-brachii",
+      "label": "M biceps brachii M biceps brachii",
+      "node": "M_biceps_brachii_M_biceps_brachii",
+      "asset": "./M_biceps_brachii_M_biceps_brachii.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-cleidobrachialis-m-cleidobrachialis",
+      "label": "M cleidobrachialis M cleidobrachialis",
+      "node": "M_cleidobrachialis_M_cleidobrachialis",
+      "asset": "./M_cleidobrachialis_M_cleidobrachialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-cleidocephalicus-m-cleidocephalicus",
+      "label": "M cleidocephalicus M cleidocephalicus",
+      "node": "M_cleidocephalicus_M_cleidocephalicus",
+      "asset": "./M_cleidocephalicus_M_cleidocephalicus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-diaphragm-m-diaphragm",
+      "label": "M diaphragm M diaphragm",
+      "node": "M_diaphragm_M_diaphragm",
+      "asset": "./M_diaphragm_M_diaphragm.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-iliopsoas-l-r-m-iliopsoas-l-r",
+      "label": "M iliopsoas L R M iliopsoas L R",
+      "node": "M_iliopsoas_L_R_M_iliopsoas_L_R",
+      "asset": "./M_iliopsoas_L_R_M_iliopsoas_L_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-pectineus-m-pectineus",
+      "label": "M pectineus M pectineus",
+      "node": "M_pectineus_M_pectineus",
+      "asset": "./M_pectineus_M_pectineus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-semimembranosus-caud-m-semimembranosus",
+      "label": "M semimembranosus caud M semimembranosus",
+      "node": "M_semimembranosus_caud_M_semimembranosus",
+      "asset": "./M_semimembranosus_caud_M_semimembranosus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-semimembranosus-cran-m-triceps-brach-long-001",
+      "label": "M semimembranosus cran M triceps brach long 001",
+      "node": "M_semimembranosus_cran_M_triceps_brach_long_001",
+      "asset": "./M_semimembranosus_cran_M_triceps_brach_long_001.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-semitendinosus-m-semitendinosus",
+      "label": "M semitendinosus M semitendinosus",
+      "node": "M_semitendinosus_M_semitendinosus",
+      "asset": "./M_semitendinosus_M_semitendinosus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-m-triceps-brach-long-m-triceps-brach-long",
+      "label": "M triceps brach long M triceps brach long",
+      "node": "M_triceps_brach_long_M_triceps_brach_long",
+      "asset": "./M_triceps_brach_long_M_triceps_brach_long.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-oesophagus-oesophagus",
+      "label": "Oesophagus Oesophagus",
+      "node": "Oesophagus_Oesophagus",
+      "asset": "./Oesophagus_Oesophagus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-trachea-trachea",
+      "label": "Trachea Trachea",
+      "node": "Trachea_Trachea",
+      "asset": "./Trachea_Trachea.glb",
+      "region": "root"
+    }
+  ]
+}

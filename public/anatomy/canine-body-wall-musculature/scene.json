@@ -1,0 +1,321 @@
+{
+  "id": "canine-body-wall-musculature",
+  "title": "Canine body wall musculature",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-cervical-degrade",
+      "label": "Cervical degrade",
+      "node": "Cervical_degrade",
+      "asset": "./Cervical_degrade.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cleidobrachialis",
+      "label": "Cleidobrachialis",
+      "node": "Cleidobrachialis",
+      "asset": "./Cleidobrachialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cleidobrachialis-1",
+      "label": "Cleidobrachialis 1",
+      "node": "Cleidobrachialis_1",
+      "asset": "./Cleidobrachialis_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cleidobrachialis-cerv",
+      "label": "Cleidobrachialis cerv",
+      "node": "Cleidobrachialis_cerv",
+      "asset": "./Cleidobrachialis_cerv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cleidocephalicus-cerv",
+      "label": "Cleidocephalicus cerv",
+      "node": "Cleidocephalicus_cerv",
+      "asset": "./Cleidocephalicus_cerv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cleidocephalicus-mast",
+      "label": "Cleidocephalicus mast",
+      "node": "Cleidocephalicus_mast",
+      "asset": "./Cleidocephalicus_mast.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-costal-carts-copy000",
+      "label": "COSTAL CARTS copy000",
+      "node": "COSTAL_CARTS_copy000",
+      "asset": "./COSTAL_CARTS_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-eao",
+      "label": "EAO",
+      "node": "EAO",
+      "asset": "./EAO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-external-intercostals",
+      "label": "External intercostals",
+      "node": "External_intercostals",
+      "asset": "./External_intercostals.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-iao",
+      "label": "IAO",
+      "node": "IAO",
+      "asset": "./IAO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-inguinal-ligament",
+      "label": "Inguinal ligament",
+      "node": "Inguinal_ligament",
+      "asset": "./Inguinal_ligament.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-humerus-copy000",
+      "label": "L humerus copy000",
+      "node": "L_humerus_copy000",
+      "asset": "./L_humerus_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-scapula-copy000",
+      "label": "L scapula copy000",
+      "node": "L_scapula_copy000",
+      "asset": "./L_scapula_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-latissimus-dorsi",
+      "label": "Latissimus dorsi",
+      "node": "Latissimus_dorsi",
+      "asset": "./Latissimus_dorsi.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lumbar-degrade",
+      "label": "Lumbar degrade",
+      "node": "Lumbar_degrade",
+      "asset": "./Lumbar_degrade.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-degrade",
+      "label": "Mandible degrade",
+      "node": "Mandible_degrade",
+      "asset": "./Mandible_degrade.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-maxilla-copy000",
+      "label": "Maxilla copy000",
+      "node": "Maxilla_copy000",
+      "asset": "./Maxilla_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-omotransversarius",
+      "label": "Omotransversarius",
+      "node": "Omotransversarius",
+      "asset": "./Omotransversarius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pectoralis-profundus",
+      "label": "Pectoralis profundus",
+      "node": "Pectoralis_profundus",
+      "asset": "./Pectoralis_profundus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pectoralis-profundus-1",
+      "label": "Pectoralis profundus 1",
+      "node": "Pectoralis_profundus_1",
+      "asset": "./Pectoralis_profundus_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pectoralis-superficialis",
+      "label": "Pectoralis superficialis",
+      "node": "Pectoralis_superficialis",
+      "asset": "./Pectoralis_superficialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pectoralis-superficialis-1",
+      "label": "Pectoralis superficialis 1",
+      "node": "Pectoralis_superficialis_1",
+      "asset": "./Pectoralis_superficialis_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pelvis-back-degrade",
+      "label": "Pelvis back degrade",
+      "node": "Pelvis_back_degrade",
+      "asset": "./Pelvis_back_degrade.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-prepubic-tendon",
+      "label": "Prepubic tendon",
+      "node": "Prepubic_tendon",
+      "asset": "./Prepubic_tendon.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rectus-abdominis",
+      "label": "Rectus abdominis",
+      "node": "Rectus_abdominis",
+      "asset": "./Rectus_abdominis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rectus-thoracis",
+      "label": "Rectus thoracis",
+      "node": "Rectus_thoracis",
+      "asset": "./Rectus_thoracis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rhomboideus",
+      "label": "Rhomboideus",
+      "node": "Rhomboideus",
+      "asset": "./Rhomboideus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ribs-degrade",
+      "label": "Ribs degrade",
+      "node": "Ribs_degrade",
+      "asset": "./Ribs_degrade.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scalenus-dorsalis",
+      "label": "Scalenus dorsalis",
+      "node": "Scalenus_dorsalis",
+      "asset": "./Scalenus_dorsalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scalenus-medius",
+      "label": "Scalenus medius",
+      "node": "Scalenus_medius",
+      "asset": "./Scalenus_medius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scalenus-ventralis",
+      "label": "Scalenus ventralis",
+      "node": "Scalenus_ventralis",
+      "asset": "./Scalenus_ventralis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-serratus-cervicis",
+      "label": "Serratus cervicis",
+      "node": "Serratus_cervicis",
+      "asset": "./Serratus_cervicis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-serratus-dorsalis-caudal",
+      "label": "Serratus dorsalis caudal",
+      "node": "Serratus_dorsalis_caudal",
+      "asset": "./Serratus_dorsalis_caudal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-serratus-dorsalis-cranialis",
+      "label": "Serratus dorsalis cranialis",
+      "node": "Serratus_dorsalis_cranialis",
+      "asset": "./Serratus_dorsalis_cranialis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-serratus-thoracis",
+      "label": "Serratus thoracis",
+      "node": "Serratus_thoracis",
+      "asset": "./Serratus_thoracis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-splenius-capitus",
+      "label": "Splenius capitus",
+      "node": "Splenius_capitus",
+      "asset": "./Splenius_capitus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sternocephalic-cerv",
+      "label": "Sternocephalic cerv",
+      "node": "Sternocephalic_cerv",
+      "asset": "./Sternocephalic_cerv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sternocephalic-mast",
+      "label": "Sternocephalic mast",
+      "node": "Sternocephalic_mast",
+      "asset": "./Sternocephalic_mast.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-teeth-degrade",
+      "label": "Teeth degrade",
+      "node": "Teeth_degrade",
+      "asset": "./Teeth_degrade.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-thoracic-a-degrade",
+      "label": "Thoracic a degrade",
+      "node": "Thoracic_a_degrade",
+      "asset": "./Thoracic_a_degrade.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-thoracic-b-degrade",
+      "label": "Thoracic B degrade",
+      "node": "Thoracic_B_degrade",
+      "asset": "./Thoracic_B_degrade.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-transversus-abdominis",
+      "label": "Transversus abdominis",
+      "node": "Transversus_abdominis",
+      "asset": "./Transversus_abdominis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-trapezius",
+      "label": "Trapezius",
+      "node": "Trapezius",
+      "asset": "./Trapezius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-trapezius-1",
+      "label": "Trapezius 1",
+      "node": "Trapezius_1",
+      "asset": "./Trapezius_1.glb",
+      "region": "root"
+    }
+  ]
+}

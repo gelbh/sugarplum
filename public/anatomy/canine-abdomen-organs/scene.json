@@ -1,0 +1,272 @@
+{
+  "id": "canine-abdomen-organs",
+  "title": "Canine abdomen organs",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-23-2-24-rib-cage-skin-resized-lp",
+      "label": "23 2 24 rib cage skin resized LP",
+      "node": "23_2_24_rib_cage_skin_resized_LP",
+      "asset": "./23_2_24_rib_cage_skin_resized_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-adrenal-l-lp",
+      "label": "adrenal L LP",
+      "node": "adrenal_L_LP",
+      "asset": "./adrenal_L_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-adrenal-r-lp",
+      "label": "adrenal R LP",
+      "node": "adrenal_R_LP",
+      "asset": "./adrenal_R_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-bile-duct",
+      "label": "Bile duct",
+      "node": "Bile_duct",
+      "asset": "./Bile_duct.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-bladder-lp",
+      "label": "bladder LP",
+      "node": "bladder_LP",
+      "asset": "./bladder_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-colon-ascending-lp",
+      "label": "colon ascending LP",
+      "node": "colon_ascending_LP",
+      "asset": "./colon_ascending_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-colon-caecum-lp",
+      "label": "colon caecum LP",
+      "node": "colon_caecum_LP",
+      "asset": "./colon_caecum_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-colon-descending-lp",
+      "label": "colon descending LP",
+      "node": "colon_descending_LP",
+      "asset": "./colon_descending_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-colon-transverse-lp",
+      "label": "colon transverse LP",
+      "node": "colon_transverse_LP",
+      "asset": "./colon_transverse_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-duodenum-lp",
+      "label": "duodenum LP",
+      "node": "duodenum_LP",
+      "asset": "./duodenum_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-gall-bladder",
+      "label": "Gall bladder",
+      "node": "Gall_bladder",
+      "asset": "./Gall_bladder.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ileum-lp",
+      "label": "ileum LP",
+      "node": "ileum_LP",
+      "asset": "./ileum_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-jejunum-lp",
+      "label": "jejunum LP",
+      "node": "jejunum_LP",
+      "asset": "./jejunum_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-kidney-l-lp",
+      "label": "kidney L LP",
+      "node": "kidney_L_LP",
+      "asset": "./kidney_L_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-kidney-r-lp",
+      "label": "kidney R LP",
+      "node": "kidney_R_LP",
+      "asset": "./kidney_R_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lp-002",
+      "label": "LP 002",
+      "node": "LP_002",
+      "asset": "./LP_002.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-node-lymph-colic-l-lp",
+      "label": "node lymph colic L LP",
+      "node": "node_lymph_colic_L_LP",
+      "asset": "./node_lymph_colic_L_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-node-lymph-colic-middle-lp",
+      "label": "node lymph colic middle LP",
+      "node": "node_lymph_colic_middle_LP",
+      "asset": "./node_lymph_colic_middle_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-node-lymph-colic-r-lp",
+      "label": "node lymph colic R LP",
+      "node": "node_lymph_colic_R_LP",
+      "asset": "./node_lymph_colic_R_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nodes-lymph-gastric-lp",
+      "label": "nodes lymph gastric LP",
+      "node": "nodes_lymph_gastric_LP",
+      "asset": "./nodes_lymph_gastric_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nodes-lymph-jejunal2-lp",
+      "label": "nodes lymph jejunal2 LP",
+      "node": "nodes_lymph_jejunal2_LP",
+      "asset": "./nodes_lymph_jejunal2_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nodes-lymph-medial-iliac-lp",
+      "label": "nodes lymph medial iliac LP",
+      "node": "nodes_lymph_medial_iliac_LP",
+      "asset": "./nodes_lymph_medial_iliac_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nodes-lymph-pancreaticoduodenal-lp",
+      "label": "nodes lymph pancreaticoduodenal LP",
+      "node": "nodes_lymph_pancreaticoduodenal_LP",
+      "asset": "./nodes_lymph_pancreaticoduodenal_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nodes-lymph-renal-lp",
+      "label": "nodes lymph renal LP",
+      "node": "nodes_lymph_renal_LP",
+      "asset": "./nodes_lymph_renal_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nodes-lymph-splenic-lp",
+      "label": "nodes lymph splenic LP",
+      "node": "nodes_lymph_splenic_LP",
+      "asset": "./nodes_lymph_splenic_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pancreas-lp",
+      "label": "pancreas LP",
+      "node": "pancreas_LP",
+      "asset": "./pancreas_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-skeleton-15-lp",
+      "label": "Skeleton 15 LP",
+      "node": "Skeleton_15_LP",
+      "asset": "./Skeleton_15_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-skeleton-17-lp",
+      "label": "Skeleton 17 LP",
+      "node": "Skeleton_17_LP",
+      "asset": "./Skeleton_17_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-skeleton-18-lp",
+      "label": "Skeleton 18 LP",
+      "node": "Skeleton_18_LP",
+      "asset": "./Skeleton_18_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-spleen-lp",
+      "label": "spleen LP",
+      "node": "spleen_LP",
+      "asset": "./spleen_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-stom-cardia-lp",
+      "label": "stom cardia LP",
+      "node": "stom_cardia_LP",
+      "asset": "./stom_cardia_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-stom-fundus-lp",
+      "label": "stom fundus LP",
+      "node": "stom_fundus_LP",
+      "asset": "./stom_fundus_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-stom-pyloric-antrum-lp",
+      "label": "stom pyloric antrum LP",
+      "node": "stom_pyloric_antrum_LP",
+      "asset": "./stom_pyloric_antrum_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-stom-pylorus-lp",
+      "label": "stom pylorus LP",
+      "node": "stom_pylorus_LP",
+      "asset": "./stom_pylorus_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ureter-l-lp",
+      "label": "Ureter L LP",
+      "node": "Ureter_L_LP",
+      "asset": "./Ureter_L_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ureter-r-lp",
+      "label": "Ureter R LP",
+      "node": "Ureter_R_LP",
+      "asset": "./Ureter_R_LP.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-uterus-ovaries-lp",
+      "label": "uterus ovaries LP",
+      "node": "uterus_ovaries_LP",
+      "asset": "./uterus_ovaries_LP.glb",
+      "region": "root"
+    }
+  ]
+}
