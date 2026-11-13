@@ -2,6 +2,7 @@ import {
   Box3,
   OrthographicCamera,
   PerspectiveCamera,
+  Sphere,
   Vector3,
   type Camera,
 } from "three";
@@ -15,18 +16,18 @@ export type OrbitLimitControls = Pick<OrbitControls, "target" | "update"> & {
   maxDistance?: number;
 };
 
-/** Distance so an AABB of `halfExtent` (max half-axis) fills the tighter FOV. */
+/** Distance so a sphere of `radius` fills the tighter FOV (covers AABB corners). */
 export function perspectiveFitDistance(
-  halfExtent: number,
+  radius: number,
   fovDeg: number,
   aspect: number,
   padding = DEFAULT_PADDING,
 ): number {
-  const half = Math.max(halfExtent, 1e-6);
+  const r = Math.max(radius, 1e-6);
   const vFov = (fovDeg * Math.PI) / 180;
   const hFov = 2 * Math.atan(Math.tan(vFov / 2) * Math.max(aspect, 1e-6));
   const limiting = Math.min(vFov, hFov);
-  return (half / Math.tan(limiting / 2)) * padding;
+  return (r / Math.tan(limiting / 2)) * padding;
 }
 
 export function orbitDistanceLimits(fitDistance: number): {
@@ -47,24 +48,28 @@ function applyOrbitLimits(
   const limits = orbitDistanceLimits(fitDistance);
   if ("minDistance" in controls) controls.minDistance = limits.minDistance;
   if ("maxDistance" in controls) controls.maxDistance = limits.maxDistance;
+  return limits;
 }
 
 function setPerspectiveNearFar(
   camera: PerspectiveCamera,
   size: number,
   distance: number,
+  maxDistance: number,
 ) {
   camera.near = Math.min(Math.max(size / 100, 1e-4), distance / 100);
-  camera.far = Math.max(size * 10, distance * 10);
+  camera.far = Math.max(size * 10, distance * 10, maxDistance * 1.25 + size);
   camera.updateProjectionMatrix();
 }
 
-function boxHalfExtent(box: Box3): { center: Vector3; half: number; sizeLen: number } {
-  const sizeVec = box.getSize(new Vector3());
-  const center = box.getCenter(new Vector3());
-  const half = Math.max(sizeVec.x, sizeVec.y, sizeVec.z) / 2 || 1e-6;
-  const sizeLen = sizeVec.length() || half * 2;
-  return { center, half, sizeLen };
+function boxSphere(box: Box3): { center: Vector3; radius: number; sizeLen: number } {
+  const sphere = box.getBoundingSphere(new Sphere());
+  const sizeLen = box.getSize(new Vector3()).length() || sphere.radius * 2;
+  return {
+    center: sphere.center,
+    radius: Math.max(sphere.radius, 1e-6),
+    sizeLen,
+  };
 }
 
 export function applyPerspectiveFit(
@@ -73,12 +78,12 @@ export function applyPerspectiveFit(
   box: Box3,
   aspect: number,
 ): { fitDistance: number } {
-  const { center, half, sizeLen } = boxHalfExtent(box);
-  const fitDistance = perspectiveFitDistance(half, camera.fov, aspect);
+  const { center, radius, sizeLen } = boxSphere(box);
+  const fitDistance = perspectiveFitDistance(radius, camera.fov, aspect);
   controls.target.copy(center);
   camera.position.copy(center).addScaledVector(LOOK, fitDistance);
-  setPerspectiveNearFar(camera, sizeLen, fitDistance);
-  applyOrbitLimits(controls, fitDistance);
+  const limits = applyOrbitLimits(controls, fitDistance);
+  setPerspectiveNearFar(camera, sizeLen, fitDistance, limits.maxDistance);
   controls.update();
   return { fitDistance };
 }
@@ -90,21 +95,21 @@ export function applyOrthographicFit(
   aspect: number,
   halfPad = 0.55,
 ): { fitDistance: number } {
-  const sizeVec = box.getSize(new Vector3());
-  const size = sizeVec.length() || 1;
-  const center = box.getCenter(new Vector3());
-  const half = Math.max(sizeVec.x, sizeVec.y, sizeVec.z) * halfPad || 1;
+  const { center, radius, sizeLen } = boxSphere(box);
+  // Sphere radius covers oblique LOOK; pad matches prior AABB halfPad feel.
+  const half = radius * (halfPad / 0.55);
+  camera.zoom = 1;
   camera.left = -half * aspect;
   camera.right = half * aspect;
   camera.top = half;
   camera.bottom = -half;
-  camera.near = size / 100;
-  camera.far = size * 10;
-  const fitDistance = size;
+  const fitDistance = Math.max(sizeLen, radius * 2);
+  const limits = applyOrbitLimits(controls, fitDistance);
+  camera.near = sizeLen / 100;
+  camera.far = Math.max(sizeLen * 10, limits.maxDistance * 1.25 + sizeLen);
   controls.target.copy(center);
   camera.position.copy(center).addScaledVector(LOOK, fitDistance);
   camera.updateProjectionMatrix();
-  applyOrbitLimits(controls, fitDistance);
   controls.update();
   return { fitDistance };
 }
@@ -134,8 +139,8 @@ export function applyFocus(
     return applyOrthographicFit(camera, controls, box, aspect, 0.7);
   }
   if (camera instanceof PerspectiveCamera) {
-    const { center, half, sizeLen } = boxHalfExtent(box);
-    const fitDistance = perspectiveFitDistance(half, camera.fov, aspect);
+    const { center, radius, sizeLen } = boxSphere(box);
+    const fitDistance = perspectiveFitDistance(radius, camera.fov, aspect);
     controls.target.copy(center);
     const offset = camera.position.clone().sub(controls.target);
     if (offset.lengthSq() < 1e-6) {
@@ -144,8 +149,8 @@ export function applyFocus(
       offset.setLength(fitDistance);
     }
     camera.position.copy(center).add(offset);
-    setPerspectiveNearFar(camera, sizeLen, fitDistance);
-    applyOrbitLimits(controls, fitDistance);
+    const limits = applyOrbitLimits(controls, fitDistance);
+    setPerspectiveNearFar(camera, sizeLen, fitDistance, limits.maxDistance);
     controls.update();
     return { fitDistance };
   }

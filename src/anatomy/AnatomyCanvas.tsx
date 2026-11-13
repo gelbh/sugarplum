@@ -210,12 +210,12 @@ function fitCameraToUnion(
   controls: OrbitControls,
   nodeMap: Map<string, Object3D>,
   aspect: number,
-) {
-  if (nodeMap.size === 0) return;
+): number {
+  if (nodeMap.size === 0) return 0;
   const box = new Box3();
   for (const obj of nodeMap.values()) box.expandByObject(obj);
-  if (box.isEmpty()) return;
-  applyFit(camera, controls, box, aspect);
+  if (box.isEmpty()) return 0;
+  return applyFit(camera, controls, box, aspect).fitDistance;
 }
 
 function focusObject(
@@ -223,10 +223,23 @@ function focusObject(
   controls: OrbitControls,
   obj: Object3D,
   aspect: number,
+  /** Keep zoom-out able to reach the last union framing. */
+  unionFitDistance: number,
 ) {
   const box = new Box3().setFromObject(obj);
   if (box.isEmpty()) return;
   applyFocus(camera, controls, box, aspect);
+  if (unionFitDistance > 0) {
+    const floor = orbitDistanceLimits(unionFitDistance);
+    controls.maxDistance = Math.max(controls.maxDistance, floor.maxDistance);
+    if (camera instanceof PerspectiveCamera) {
+      camera.far = Math.max(camera.far, controls.maxDistance * 1.25);
+      camera.updateProjectionMatrix();
+    } else if (camera instanceof OrthographicCamera) {
+      camera.far = Math.max(camera.far, controls.maxDistance * 1.25);
+      camera.updateProjectionMatrix();
+    }
+  }
 }
 
 const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
@@ -266,6 +279,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
     const autoFocusRef = useRef(autoFocus);
     const cameraModeRef = useRef(cameraMode);
     const aspectRef = useRef(1);
+    const unionFitDistanceRef = useRef(0);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [retryToken, setRetryToken] = useState(0);
     const [progress, setProgress] = useState<{ loaded: number; total: number }>(
@@ -430,7 +444,13 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       const fitCamera = () => {
         const cam = cameraRef.current;
         if (!cam) return;
-        fitCameraToUnion(cam, controls, nodeMapRef.current, aspectRef.current);
+        const d = fitCameraToUnion(
+          cam,
+          controls,
+          nodeMapRef.current,
+          aspectRef.current,
+        );
+        if (d > 0) unionFitDistanceRef.current = d;
       };
       fitCameraRef.current = fitCamera;
 
@@ -438,7 +458,13 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         const cam = cameraRef.current;
         const obj = nodeMapRef.current.get(id);
         if (!cam || !obj) return;
-        focusObject(cam, controls, obj, aspectRef.current);
+        focusObject(
+          cam,
+          controls,
+          obj,
+          aspectRef.current,
+          unionFitDistanceRef.current,
+        );
       };
 
       setCameraModeRef.current = (mode: AnatomyCameraMode) => {

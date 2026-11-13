@@ -7,7 +7,7 @@ import {
 } from "../../src/anatomy/cameraFit";
 
 describe("perspectiveFitDistance", () => {
-  it("scales linearly with half-extent", () => {
+  it("scales linearly with radius", () => {
     const a = perspectiveFitDistance(10, 45, 1, 1.25);
     const b = perspectiveFitDistance(100, 45, 1, 1.25);
     expect(b / a).toBeCloseTo(10, 5);
@@ -62,5 +62,36 @@ describe("applyPerspectiveFit", () => {
     );
     expect(controls.maxDistance).toBeGreaterThan(fitDistance);
     expect(controls.minDistance).toBeLessThan(fitDistance);
+    expect(camera.far).toBeGreaterThan(controls.maxDistance!);
+  });
+
+  it("keeps unit-cube corners inside the viewport after oblique fit", () => {
+    const box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1));
+    const camera = new PerspectiveCamera(45, 1, 0.01, 100);
+    const controls = {
+      target: new Vector3(),
+      minDistance: 0.35,
+      maxDistance: 80,
+      update() {},
+    };
+    applyPerspectiveFit(camera, controls, box, 1);
+    camera.lookAt(controls.target);
+    camera.updateMatrixWorld(true);
+    const corners = [
+      [-1, -1, -1],
+      [-1, -1, 1],
+      [-1, 1, -1],
+      [-1, 1, 1],
+      [1, -1, -1],
+      [1, -1, 1],
+      [1, 1, -1],
+      [1, 1, 1],
+    ] as const;
+    const v = new Vector3();
+    for (const [x, y, z] of corners) {
+      v.set(x, y, z).project(camera);
+      expect(Math.abs(v.x)).toBeLessThanOrEqual(1.01);
+      expect(Math.abs(v.y)).toBeLessThanOrEqual(1.01);
+    }
   });
 });
