@@ -1,0 +1,118 @@
+{
+  "id": "goat-stomachs-opened",
+  "title": "Goat stomachs opened",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-abomasum-fundus",
+      "label": "abomasum fundus",
+      "node": "abomasum_fundus",
+      "asset": "./abomasum_fundus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-abomasum-pylorus",
+      "label": "abomasum pylorus",
+      "node": "abomasum_pylorus",
+      "asset": "./abomasum_pylorus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-caudal-pillar",
+      "label": "caudal pillar",
+      "node": "caudal_pillar",
+      "asset": "./caudal_pillar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranial-pillar",
+      "label": "cranial pillar",
+      "node": "cranial_pillar",
+      "asset": "./cranial_pillar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-dorsal-sac",
+      "label": "dorsal sac",
+      "node": "dorsal_sac",
+      "asset": "./dorsal_sac.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-entrance-omasum",
+      "label": "entrance omasum",
+      "node": "entrance_omasum",
+      "asset": "./entrance_omasum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-goat",
+      "label": "goat",
+      "node": "goat",
+      "asset": "./goat.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-goat-stomach-open-remesh",
+      "label": "Goat stomach open remesh",
+      "node": "Goat_stomach_open_remesh",
+      "asset": "./Goat_stomach_open_remesh.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-oesophageal-groove",
+      "label": "oesophageal groove",
+      "node": "oesophageal_groove",
+      "asset": "./oesophageal_groove.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-oesophagus",
+      "label": "oesophagus",
+      "node": "oesophagus",
+      "asset": "./oesophagus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-omasal-laminae",
+      "label": "omasal laminae",
+      "node": "omasal_laminae",
+      "asset": "./omasal_laminae.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-reticulum",
+      "label": "reticulum",
+      "node": "reticulum",
+      "asset": "./reticulum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-right-longitudinal-pillar",
+      "label": "right longitudinal pillar",
+      "node": "right_longitudinal_pillar",
+      "asset": "./right_longitudinal_pillar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rumenoreticular-fold",
+      "label": "rumenoreticular fold",
+      "node": "rumenoreticular_fold",
+      "asset": "./rumenoreticular_fold.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ventral-sac",
+      "label": "ventral sac",
+      "node": "ventral_sac",
+      "asset": "./ventral_sac.glb",
+      "region": "root"
+    }
+  ]
+}

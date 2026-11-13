@@ -1,0 +1,251 @@
+{
+  "id": "bovine-repro-tract-female",
+  "title": "Bovine repro tract female",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-artery-uterine-l",
+      "label": "artery uterine L",
+      "node": "artery_uterine_L",
+      "asset": "./artery_uterine_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-artery-uterine-r",
+      "label": "artery uterine R",
+      "node": "artery_uterine_R",
+      "asset": "./artery_uterine_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-bladder",
+      "label": "bladder",
+      "node": "bladder",
+      "asset": "./bladder.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-blocker-mesh",
+      "label": "blocker mesh",
+      "node": "blocker_mesh",
+      "asset": "./blocker_mesh.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fossa-clitoridian",
+      "label": "fossa clitoridian",
+      "node": "fossa_clitoridian",
+      "asset": "./fossa_clitoridian.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-group4766",
+      "label": "Group4766",
+      "node": "Group4766",
+      "asset": "./Group4766.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-group50499",
+      "label": "Group50499",
+      "node": "Group50499",
+      "asset": "./Group50499.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-infundibulum-l",
+      "label": "infundibulum L",
+      "node": "infundibulum_L",
+      "asset": "./infundibulum_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-infundibulum-r",
+      "label": "infundibulum R",
+      "node": "infundibulum_R",
+      "asset": "./infundibulum_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-labia",
+      "label": "labia",
+      "node": "labia",
+      "asset": "./labia.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-bladder-lateral-l",
+      "label": "ligament bladder lateral L",
+      "node": "ligament_bladder_lateral_L",
+      "asset": "./ligament_bladder_lateral_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-bladder-r",
+      "label": "ligament bladder R",
+      "node": "ligament_bladder_R",
+      "asset": "./ligament_bladder_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-broad-l",
+      "label": "ligament broad L",
+      "node": "ligament_broad_L",
+      "asset": "./ligament_broad_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-broad-r",
+      "label": "ligament broad R",
+      "node": "ligament_broad_R",
+      "asset": "./ligament_broad_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-intercorinual-vent",
+      "label": "ligament intercorinual vent",
+      "node": "ligament_intercorinual_vent",
+      "asset": "./ligament_intercorinual_vent.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ligament-intercornual-dors",
+      "label": "ligament intercornual dors",
+      "node": "ligament_intercornual_dors",
+      "asset": "./ligament_intercornual_dors.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mesometrium-l",
+      "label": "mesometrium L",
+      "node": "mesometrium_L",
+      "asset": "./mesometrium_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mesosalpinx-l",
+      "label": "mesosalpinx L",
+      "node": "mesosalpinx_L",
+      "asset": "./mesosalpinx_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mesosalpinx-r",
+      "label": "mesosalpinx R",
+      "node": "mesosalpinx_R",
+      "asset": "./mesosalpinx_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mesovarium-l",
+      "label": "mesovarium L",
+      "node": "mesovarium_L",
+      "asset": "./mesovarium_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ovary-corpus-albicans",
+      "label": "ovary corpus albicans",
+      "node": "ovary_corpus_albicans",
+      "asset": "./ovary_corpus_albicans.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ovary-l",
+      "label": "ovary L",
+      "node": "ovary_L",
+      "asset": "./ovary_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ovary-r",
+      "label": "ovary R",
+      "node": "ovary_R",
+      "asset": "./ovary_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-oviduct-l",
+      "label": "oviduct L",
+      "node": "oviduct_L",
+      "asset": "./oviduct_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-oviduct-r",
+      "label": "oviduct R",
+      "node": "oviduct_R",
+      "asset": "./oviduct_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rectum",
+      "label": "rectum",
+      "node": "rectum",
+      "asset": "./rectum.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-unknown",
+      "label": "unknown",
+      "node": "unknown",
+      "asset": "./unknown.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-urethra",
+      "label": "urethra",
+      "node": "urethra",
+      "asset": "./urethra.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-uterus-body",
+      "label": "uterus body",
+      "node": "uterus_body",
+      "asset": "./uterus_body.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-uterus-cervix",
+      "label": "uterus cervix",
+      "node": "uterus_cervix",
+      "asset": "./uterus_cervix.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-uterus-horn-l",
+      "label": "uterus horn L",
+      "node": "uterus_horn_L",
+      "asset": "./uterus_horn_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-uterus-horn-r",
+      "label": "uterus horn R",
+      "node": "uterus_horn_R",
+      "asset": "./uterus_horn_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vagina",
+      "label": "vagina",
+      "node": "vagina",
+      "asset": "./vagina.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vulvae-rima",
+      "label": "vulvae rima",
+      "node": "vulvae_rima",
+      "asset": "./vulvae_rima.glb",
+      "region": "root"
+    }
+  ]
+}
