@@ -22,7 +22,6 @@ import {
   Raycaster,
   Scene,
   Vector2,
-  Vector3,
   WebGLRenderer,
   type Camera,
   type Material,
@@ -31,6 +30,7 @@ import {
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { applyFit, applyFocus, orbitDistanceLimits } from "./cameraFit";
 import { isStructureVisible, type StructureUiState } from "./structureState";
 
 export type AnatomyLoadSpec = {
@@ -215,29 +215,7 @@ function fitCameraToUnion(
   const box = new Box3();
   for (const obj of nodeMap.values()) box.expandByObject(obj);
   if (box.isEmpty()) return;
-  const sizeVec = box.getSize(new Vector3());
-  const size = sizeVec.length() || 1;
-  const center = box.getCenter(new Vector3());
-  controls.target.copy(center);
-  if (camera instanceof OrthographicCamera) {
-    const half = Math.max(sizeVec.x, sizeVec.y, sizeVec.z) * 0.55 || 1;
-    camera.left = -half * aspect;
-    camera.right = half * aspect;
-    camera.top = half;
-    camera.bottom = -half;
-    camera.near = size / 100;
-    camera.far = size * 10;
-    camera.position.copy(center).add(new Vector3(0, size * 0.2, size));
-    camera.updateProjectionMatrix();
-  } else if (camera instanceof PerspectiveCamera) {
-    camera.position
-      .copy(center)
-      .add(new Vector3(size * 0.7, size * 0.45, size * 0.9));
-    camera.near = size / 100;
-    camera.far = size * 10;
-    camera.updateProjectionMatrix();
-  }
-  controls.update();
+  applyFit(camera, controls, box, aspect);
 }
 
 function focusObject(
@@ -248,25 +226,7 @@ function focusObject(
 ) {
   const box = new Box3().setFromObject(obj);
   if (box.isEmpty()) return;
-  const sizeVec = box.getSize(new Vector3());
-  const size = sizeVec.length() || 1;
-  const center = box.getCenter(new Vector3());
-  controls.target.copy(center);
-  if (camera instanceof OrthographicCamera) {
-    const half = Math.max(sizeVec.x, sizeVec.y, sizeVec.z) * 0.7 || 1;
-    camera.left = -half * aspect;
-    camera.right = half * aspect;
-    camera.top = half;
-    camera.bottom = -half;
-    camera.position.copy(center).add(new Vector3(0, size * 0.15, size * 1.1));
-    camera.updateProjectionMatrix();
-  } else {
-    const offset = camera.position.clone().sub(controls.target);
-    if (offset.lengthSq() < 1e-6) offset.set(size, size * 0.5, size);
-    offset.setLength(Math.max(size * 1.4, 0.5));
-    camera.position.copy(center).add(offset);
-  }
-  controls.update();
+  applyFocus(camera, controls, box, aspect);
 }
 
 const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
@@ -419,8 +379,9 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       controls.enableDamping = true;
       controls.autoRotate = autoRotateRef.current;
       controls.autoRotateSpeed = 1.2;
-      controls.minDistance = 0.35;
-      controls.maxDistance = 80;
+      const provisional = orbitDistanceLimits(1);
+      controls.minDistance = provisional.minDistance;
+      controls.maxDistance = provisional.maxDistance;
       controlsRef.current = controls;
 
       scene.add(new AmbientLight(0xffffff, 0.7));
