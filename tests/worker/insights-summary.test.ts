@@ -161,4 +161,58 @@ describe("GET /api/insights/summary", () => {
     expect(body.gradeCounts.good).toBe(1);
     expect(body.kpis.composition.total).toBe(1);
   });
+
+  it("honors localDay for reviewedToday bucket", async () => {
+    const env = createTestEnv();
+    env.seedUser({
+      id: "user-a",
+      email: "a@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-a",
+      user_id: "user-a",
+      title: "Mine",
+      subject_hint: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSession("sess-a", "user-a");
+    env.seedCard({
+      id: "mine",
+      deck_id: "deck-a",
+      job_id: null,
+      type: "qa",
+      front_json: JSON.stringify("Q?"),
+      back_json: JSON.stringify("A"),
+      media_r2_keys_json: null,
+      provenance_json: JSON.stringify({ pages: [1], excerpt: "ex" }),
+      status: "accepted",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedReviewLog({
+      id: "rl-old",
+      card_id: "mine",
+      rating: 3,
+      scheduled_days: 1,
+      elapsed_days: 0,
+      reviewed_at: "2026-11-12T08:00:00.000Z",
+      state_json: "{}",
+    });
+
+    const res = await app.request(
+      "/api/insights/summary?tzOffsetMinutes=0&localDay=2026-11-12",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as InsightsSummary;
+    expect(body.reviewsPerDay[body.reviewsPerDay.length - 1]!.day).toBe(
+      "2026-11-12",
+    );
+    expect(body.kpis.reviewedToday).toBe(1);
+  });
 });
+

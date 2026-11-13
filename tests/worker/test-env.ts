@@ -1345,13 +1345,20 @@ export function createTestEnv(opts?: {
           normalized.includes("WHERE d.user_id =")
         ) {
           const userId = bound[0] as string;
+          const since =
+            normalized.includes("rl.reviewed_at >=") &&
+            typeof bound[1] === "string"
+              ? (bound[1] as string)
+              : null;
           const withScheduleJoin = normalized.includes("LEFT JOIN card_schedules");
           const rows = reviewLogs
             .filter((rl) => {
               const card = cards.get(rl.card_id);
               if (!card) return false;
               const deck = decks.get(card.deck_id);
-              return deck?.user_id === userId;
+              if (deck?.user_id !== userId) return false;
+              if (since != null && rl.reviewed_at < since) return false;
+              return true;
             })
             .sort((a, b) => a.reviewed_at.localeCompare(b.reviewed_at))
             .map((rl) => ({

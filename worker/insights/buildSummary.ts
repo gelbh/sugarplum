@@ -1,12 +1,13 @@
 import {
   buildGradeCounts,
   buildReviewsPerDay,
+  insightDayKeys,
   INSIGHTS_GRADE_DAYS,
   INSIGHTS_REVIEWS_DAYS,
   ratingsInLocalWindow,
 } from "../../src/insights/buildSeries";
 import type { InsightsSummary } from "../../src/insights/types";
-import { localDayKey } from "../../src/study/loadBalance";
+import { resolveLocalDayStartIso } from "../../src/study/localDay";
 import {
   composeSubjectKnowledge,
   type CompositionScheduleInput,
@@ -32,7 +33,21 @@ export async function buildInsightsSummary(
   userId: string,
   opts: InsightsSummaryOpts,
 ): Promise<InsightsSummary> {
-  const { now, tzOffsetMinutes } = opts;
+  const { now, tzOffsetMinutes, localDay } = opts;
+  const todayKey =
+    localDay && /^\d{4}-\d{2}-\d{2}$/.test(localDay)
+      ? localDay
+      : insightDayKeys(now, tzOffsetMinutes, 1)[0]!;
+  const dayKeys = insightDayKeys(
+    now,
+    tzOffsetMinutes,
+    INSIGHTS_REVIEWS_DAYS,
+    todayKey,
+  );
+  const windowStartIso = resolveLocalDayStartIso(now, {
+    localDay: dayKeys[0],
+    tzOffsetMinutes,
+  });
 
   const { results: reviewRows } = await db
     .prepare(
@@ -41,9 +56,10 @@ export async function buildInsightsSummary(
        INNER JOIN cards c ON c.id = rl.card_id
        INNER JOIN decks d ON d.id = c.deck_id
        WHERE d.user_id = ?
+         AND rl.reviewed_at >= ?
        ORDER BY rl.reviewed_at ASC`,
     )
-    .bind(userId)
+    .bind(userId, windowStartIso)
     .all<ReviewRow>();
 
   const logs = reviewRows ?? [];
@@ -52,11 +68,17 @@ export async function buildInsightsSummary(
     now,
     tzOffsetMinutes,
     INSIGHTS_REVIEWS_DAYS,
+    todayKey,
   );
   const gradeCounts = buildGradeCounts(
-    ratingsInLocalWindow(logs, now, tzOffsetMinutes, INSIGHTS_GRADE_DAYS),
+    ratingsInLocalWindow(
+      logs,
+      now,
+      tzOffsetMinutes,
+      INSIGHTS_GRADE_DAYS,
+      todayKey,
+    ),
   );
-  const todayKey = localDayKey(now, tzOffsetMinutes);
   const reviewedToday =
     reviewsPerDay.find((d) => d.day === todayKey)?.count ?? 0;
   const reviewsInWindow = reviewsPerDay.reduce((sum, d) => sum + d.count, 0);

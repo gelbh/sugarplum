@@ -6,13 +6,19 @@ export const INSIGHTS_GRADE_DAYS = 14;
 
 const MS_PER_DAY = 86_400_000;
 
+const LOCAL_DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
 /** Local calendar day keys for the last `days` days ending today (oldest first). */
 export function insightDayKeys(
   now: Date,
   tzOffsetMinutes: number,
   days: number,
+  todayKeyOverride?: string | null,
 ): string[] {
-  const today = localDayKey(now, tzOffsetMinutes);
+  const today =
+    todayKeyOverride && LOCAL_DAY_RE.test(todayKeyOverride)
+      ? todayKeyOverride
+      : localDayKey(now, tzOffsetMinutes);
   const [y, m, d] = today.split("-").map(Number) as [number, number, number];
   // Noon UTC on the local YMD avoids DST edge ambiguity for stepping days.
   const cursor = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
@@ -31,8 +37,9 @@ export function buildReviewsPerDay(
   now: Date,
   tzOffsetMinutes: number,
   days: number = INSIGHTS_REVIEWS_DAYS,
+  todayKeyOverride?: string | null,
 ): Array<{ day: string; count: number }> {
-  const keys = insightDayKeys(now, tzOffsetMinutes, days);
+  const keys = insightDayKeys(now, tzOffsetMinutes, days, todayKeyOverride);
   const counts = new Map(keys.map((k) => [k, 0]));
   for (const iso of reviewedAtIsos) {
     const at = new Date(iso);
@@ -62,8 +69,11 @@ export function ratingsInLocalWindow(
   now: Date,
   tzOffsetMinutes: number,
   days: number,
+  todayKeyOverride?: string | null,
 ): number[] {
-  const keys = new Set(insightDayKeys(now, tzOffsetMinutes, days));
+  const keys = new Set(
+    insightDayKeys(now, tzOffsetMinutes, days, todayKeyOverride),
+  );
   const out: number[] = [];
   for (const row of rows) {
     const at = new Date(row.reviewed_at);
