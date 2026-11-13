@@ -13,7 +13,6 @@ import { anatomySceneHref } from "../anatomy/paths";
 import { atlasHubHref } from "../atlas/paths";
 import { isPlainClick, navigate } from "../nav/navigate";
 
-/** Decorative only; titles carry the species name. */
 const SPECIES_ICON: Record<string, ReactNode> = {
   canine: <PetsOutlinedIcon aria-hidden />,
   equine: <ViewInArOutlinedIcon aria-hidden />,

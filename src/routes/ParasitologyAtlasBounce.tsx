@@ -11,7 +11,6 @@ import { atlasHref, atlasHubHref } from "../atlas/paths";
 import { isGuest } from "../guest/session";
 import { navigate, navigateReplace } from "../nav/navigate";
 
-/** Opens the signed-in user's Parasitology Atlas via ensureAtlas (legacy + card open). */
 export default function ParasitologyAtlasBounce({
   onBack,
 }: {

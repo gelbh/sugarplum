@@ -41,7 +41,6 @@ type BgChoiceId = "page" | "paper" | "studio" | "white" | "stage";
 type BgChoice = {
   id: BgChoiceId;
   label: string;
-  /** Swatch preview; checker means transparent page. */
   swatch: string | "checker";
   value: AnatomyCanvasBackground;
 };
