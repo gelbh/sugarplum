@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 import AppShell from "./components/AppShell";
 import BareScroll from "./components/BareScroll";
 import GradeButtons from "./components/GradeButtons";
@@ -33,11 +34,14 @@ import AchievementsPage from "./routes/AchievementsPage";
 import { StudyChromeProvider } from "./study/StudyChromeContext";
 import AtlasLoading from "./atlas/AtlasLoading";
 import { isAtlasToAtlas, matchAtlasPath } from "./atlas/paths";
+import { matchAnatomyPath } from "./anatomy/paths";
 import AtlasHub from "./routes/AtlasHub";
+import AnatomyHub from "./routes/AnatomyHub";
 import SessionBootstrap from "./session/SessionBootstrap";
 
 // Keeps the dataset and its schemas out of the main chunk.
 const AtlasPage = lazy(() => import("./routes/AtlasPage"));
+const AnatomyViewerPage = lazy(() => import("./routes/AnatomyViewerPage"));
 
 const SUBJECT_PATH = /^\/library\/subjects\/([^/]+)\/?$/;
 const DECK_PATH = /^\/library\/decks\/([^/]+)\/?$/;
@@ -89,6 +93,26 @@ function matchPage(path: string, search: string): ReactNode {
   }
 
   if (path === "/library") return shell(<LibraryPage />);
+
+  const anatomyMatch = matchAnatomyPath(path);
+  if (anatomyMatch?.kind === "hub") {
+    return shell(<AnatomyHub />);
+  }
+  if (anatomyMatch?.kind === "scene") {
+    return shell(
+      <Suspense
+        fallback={
+          <Typography color="text.secondary">Loading anatomy…</Typography>
+        }
+      >
+        <AnatomyViewerPage
+          key={anatomyMatch.sceneId}
+          sceneId={anatomyMatch.sceneId}
+        />
+      </Suspense>,
+    );
+  }
+
   if (path === "/settings") return shell(<SettingsPage />);
   if (path === "/achievements") return shell(<AchievementsPage />);
   // Remount when search changes so scoped study does not freeze the old filter.

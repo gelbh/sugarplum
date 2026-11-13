@@ -64,6 +64,7 @@ import {
 import { isGuest } from "../guest/session";
 import { libraryShowsCreateFlow } from "../library/libraryCreateFlow";
 import { useCalendarSuggestions } from "../library/useCalendarSuggestions";
+import { anatomyHubHref } from "../anatomy/paths";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import {
@@ -122,8 +123,9 @@ export default function LibraryPage() {
   const { end: endLoad } = useTrackedOp("Loading library…", {
     trackOnMount: true,
   });
-  const { busy: exportBusy, run: runExport } =
-    useTrackedOp(ANKI_EXPORT_BUSY_LABEL);
+  const { busy: exportBusy, run: runExport } = useTrackedOp(
+    ANKI_EXPORT_BUSY_LABEL,
+  );
   const calendar = useCalendarSuggestions(guest, setSubjects, setError);
 
   const syncStepperFromJourney = useCallback(async () => {
@@ -186,19 +188,25 @@ export default function LibraryPage() {
     let cancelled = false;
     (async () => {
       try {
-        const [subjectList, deckList, jobs, materialList, coverList, summaries] =
-          await Promise.all([
-            listSubjects(),
-            listDecks(),
-            listJobsWithDrafts().catch(() => [] as JobListItem[]),
-            guest
-              ? Promise.resolve([] as MaterialListItem[])
-              : listMaterials().catch(() => [] as MaterialListItem[]),
-            guest
-              ? Promise.resolve([] as StoredCoverRow[])
-              : listCovers().catch(() => [] as StoredCoverRow[]),
-            listSubjectCompositionSummaries().catch(() => []),
-          ]);
+        const [
+          subjectList,
+          deckList,
+          jobs,
+          materialList,
+          coverList,
+          summaries,
+        ] = await Promise.all([
+          listSubjects(),
+          listDecks(),
+          listJobsWithDrafts().catch(() => [] as JobListItem[]),
+          guest
+            ? Promise.resolve([] as MaterialListItem[])
+            : listMaterials().catch(() => [] as MaterialListItem[]),
+          guest
+            ? Promise.resolve([] as StoredCoverRow[])
+            : listCovers().catch(() => [] as StoredCoverRow[]),
+          listSubjectCompositionSummaries().catch(() => []),
+        ]);
         if (cancelled) return;
         setSubjects(subjectList);
         setDecks(deckList);
@@ -429,6 +437,16 @@ export default function LibraryPage() {
                 ? "Tick the decks you want, then download them for Anki."
                 : "Choose a subject. Each one holds decks of flashcards."}
             </Typography>
+            {!selectMode ? (
+              <Button
+                size="small"
+                variant="outlined"
+                sx={{ mt: 1.5 }}
+                onClick={() => navigate(anatomyHubHref())}
+              >
+                Anatomy
+              </Button>
+            ) : null}
             <Stack
               direction="row"
               spacing={1}
@@ -669,7 +687,10 @@ export default function LibraryPage() {
                                   "aria-label": `Select deck ${deck.title}`,
                                 }}
                               />
-                              <Typography variant="body2" color="text.secondary">
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
                                 {deck.title}
                               </Typography>
                             </Box>
@@ -731,7 +752,11 @@ export default function LibraryPage() {
               >
                 Cards to check
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mb: 1.5 }}
+              >
                 These still need a look before you study them.
               </Typography>
               <Stack
