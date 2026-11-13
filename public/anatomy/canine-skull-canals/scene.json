@@ -1,0 +1,41 @@
+{
+  "id": "canine-skull-canals",
+  "title": "Canine skull canals",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-401tooth-003",
+      "label": "401tooth 003",
+      "node": "401tooth_003",
+      "asset": "./401tooth_003.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-003",
+      "label": "MANDIBLE 003",
+      "node": "MANDIBLE_003",
+      "asset": "./MANDIBLE_003.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-005",
+      "label": "MANDIBLE 005",
+      "node": "MANDIBLE_005",
+      "asset": "./MANDIBLE_005.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-maxilla-007",
+      "label": "MAXILLA 007",
+      "node": "MAXILLA_007",
+      "asset": "./MAXILLA_007.glb",
+      "region": "root"
+    }
+  ]
+}

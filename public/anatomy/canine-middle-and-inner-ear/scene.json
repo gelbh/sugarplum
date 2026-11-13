@@ -1,0 +1,615 @@
+{
+  "id": "canine-middle-and-inner-ear",
+  "title": "Canine middle and inner ear",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-ampulla-1-l",
+      "label": "Ampulla 1 L",
+      "node": "Ampulla_1_L",
+      "asset": "./Ampulla_1_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canal-chorda-tympani",
+      "label": "CANAL chorda tympani",
+      "node": "CANAL_chorda_tympani",
+      "asset": "./CANAL_chorda_tympani.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canal-chorda-tympani-l",
+      "label": "CANAL chorda tympani L",
+      "node": "CANAL_chorda_tympani_L",
+      "asset": "./CANAL_chorda_tympani_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canal-entrance-facial-n",
+      "label": "CANAL entrance facial n",
+      "node": "CANAL_entrance_facial_n",
+      "asset": "./CANAL_entrance_facial_n.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canal-entrance-facial-n-l",
+      "label": "CANAL entrance facial n L",
+      "node": "CANAL_entrance_facial_n_L",
+      "asset": "./CANAL_entrance_facial_n_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canal-facial-nerve",
+      "label": "CANAL facial nerve",
+      "node": "CANAL_facial_nerve",
+      "asset": "./CANAL_facial_nerve.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canal-facial-nerve-l",
+      "label": "CANAL facial nerve L",
+      "node": "CANAL_facial_nerve_L",
+      "asset": "./CANAL_facial_nerve_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canal-major-petrosal-nerve",
+      "label": "CANAL major petrosal nerve",
+      "node": "CANAL_major_petrosal_nerve",
+      "asset": "./CANAL_major_petrosal_nerve.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canal-major-petrosal-nerve-l",
+      "label": "CANAL major petrosal nerve L",
+      "node": "CANAL_major_petrosal_nerve_L",
+      "asset": "./CANAL_major_petrosal_nerve_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canaliculus-cochlear",
+      "label": "CANALICULUS cochlear",
+      "node": "CANALICULUS_cochlear",
+      "asset": "./CANALICULUS_cochlear.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canaliculus-cochlear-l",
+      "label": "CANALICULUS cochlear L",
+      "node": "CANALICULUS_cochlear_L",
+      "asset": "./CANALICULUS_cochlear_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-canaliculus-tympanic-n-l",
+      "label": "CANALICULUS tympanic n L",
+      "node": "CANALICULUS_tympanic_n_L",
+      "asset": "./CANALICULUS_tympanic_n_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cochlea",
+      "label": "Cochlea",
+      "node": "Cochlea",
+      "asset": "./Cochlea.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cochlea-l",
+      "label": "Cochlea L",
+      "node": "Cochlea_L",
+      "asset": "./Cochlea_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-common-crus-semicirc-canals-2-l",
+      "label": "Common crus semicirc canals 2 L",
+      "node": "Common_crus_semicirc_canals_2_L",
+      "asset": "./Common_crus_semicirc_canals_2_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cut-skull-bone",
+      "label": "Cut skull bone",
+      "node": "Cut_skull_bone",
+      "asset": "./Cut_skull_bone.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cut-skull-bone-l",
+      "label": "Cut skull bone L",
+      "node": "Cut_skull_bone_L",
+      "asset": "./Cut_skull_bone_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-epitympanic-recess",
+      "label": "Epitympanic recess",
+      "node": "Epitympanic_recess",
+      "asset": "./Epitympanic_recess.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-epitympanic-recess-l",
+      "label": "Epitympanic recess L",
+      "node": "Epitympanic_recess_L",
+      "asset": "./Epitympanic_recess_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-external-auditory-meatus",
+      "label": "External auditory meatus",
+      "node": "External_auditory_meatus",
+      "asset": "./External_auditory_meatus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-external-auditory-meatus-l",
+      "label": "External auditory meatus L",
+      "node": "External_auditory_meatus_L",
+      "asset": "./External_auditory_meatus_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-foramen-stylomastoid-l",
+      "label": "Foramen stylomastoid L",
+      "node": "Foramen_stylomastoid_L",
+      "asset": "./Foramen_stylomastoid_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fossa-head-malleolus",
+      "label": "FOSSA head malleolus",
+      "node": "FOSSA_head_malleolus",
+      "asset": "./FOSSA_head_malleolus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fossa-head-malleolus-l",
+      "label": "FOSSA head malleolus L",
+      "node": "FOSSA_head_malleolus_L",
+      "asset": "./FOSSA_head_malleolus_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fossa-stapedius-muscle",
+      "label": "FOSSA stapedius muscle",
+      "node": "FOSSA_stapedius_muscle",
+      "asset": "./FOSSA_stapedius_muscle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fossa-stapedius-muscle-l",
+      "label": "FOSSA stapedius muscle L",
+      "node": "FOSSA_stapedius_muscle_L",
+      "asset": "./FOSSA_stapedius_muscle_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fossa-tensor-tympani",
+      "label": "FOSSA tensor tympani",
+      "node": "FOSSA_tensor_tympani",
+      "asset": "./FOSSA_tensor_tympani.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-fossa-tensor-tympani-l",
+      "label": "FOSSA tensor tympani L",
+      "node": "FOSSA_tensor_tympani_L",
+      "asset": "./FOSSA_tensor_tympani_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-internal-auditory-meatus",
+      "label": "Internal auditory meatus",
+      "node": "Internal_auditory_meatus",
+      "asset": "./Internal_auditory_meatus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-internal-auditory-meatus-l",
+      "label": "Internal auditory meatus L",
+      "node": "Internal_auditory_meatus_L",
+      "asset": "./Internal_auditory_meatus_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-muscle-stapedius",
+      "label": "MUSCLE stapedius",
+      "node": "MUSCLE_stapedius",
+      "asset": "./MUSCLE_stapedius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-muscle-stapedius-l",
+      "label": "MUSCLE stapedius L",
+      "node": "MUSCLE_stapedius_L",
+      "asset": "./MUSCLE_stapedius_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-muscle-tensor-tympani",
+      "label": "MUSCLE tensor tympani",
+      "node": "MUSCLE_tensor_tympani",
+      "asset": "./MUSCLE_tensor_tympani.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-muscle-tensor-tympani-l",
+      "label": "MUSCLE tensor tympani L",
+      "node": "MUSCLE_tensor_tympani_L",
+      "asset": "./MUSCLE_tensor_tympani_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-musculotubal-canal",
+      "label": "Musculotubal canal",
+      "node": "Musculotubal_canal",
+      "asset": "./Musculotubal_canal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-musculotubal-canal-l",
+      "label": "Musculotubal canal L",
+      "node": "Musculotubal_canal_L",
+      "asset": "./Musculotubal_canal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-ccg",
+      "label": "NERVE CCG",
+      "node": "NERVE_CCG",
+      "asset": "./NERVE_CCG.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-ccg-l",
+      "label": "NERVE CCG L",
+      "node": "NERVE_CCG_L",
+      "asset": "./NERVE_CCG_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-chorda-tympani",
+      "label": "NERVE Chorda tympani",
+      "node": "NERVE_Chorda_tympani",
+      "asset": "./NERVE_Chorda_tympani.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-chorda-tympani-l",
+      "label": "NERVE Chorda tympani L",
+      "node": "NERVE_Chorda_tympani_L",
+      "asset": "./NERVE_Chorda_tympani_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-cochlear-viii",
+      "label": "NERVE cochlear VIII",
+      "node": "NERVE_cochlear_VIII",
+      "asset": "./NERVE_cochlear_VIII.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-cochlear-viii-l",
+      "label": "NERVE cochlear VIII L",
+      "node": "NERVE_cochlear_VIII_L",
+      "asset": "./NERVE_cochlear_VIII_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-ix",
+      "label": "NERVE IX",
+      "node": "NERVE_IX",
+      "asset": "./NERVE_IX.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-ix-l",
+      "label": "NERVE IX L",
+      "node": "NERVE_IX_L",
+      "asset": "./NERVE_IX_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-major-petrosal",
+      "label": "NERVE Major petrosal",
+      "node": "NERVE_Major_petrosal",
+      "asset": "./NERVE_Major_petrosal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-major-petrosal-l",
+      "label": "NERVE Major petrosal L",
+      "node": "NERVE_Major_petrosal_L",
+      "asset": "./NERVE_Major_petrosal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-minor-petrosal",
+      "label": "Nerve minor petrosal",
+      "node": "Nerve_minor_petrosal",
+      "asset": "./Nerve_minor_petrosal.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-minor-petrosal-l",
+      "label": "Nerve minor petrosal L",
+      "node": "Nerve_minor_petrosal_L",
+      "asset": "./Nerve_minor_petrosal_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-stapedial",
+      "label": "NERVE stapedial",
+      "node": "NERVE_stapedial",
+      "asset": "./NERVE_stapedial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-stapedial-l",
+      "label": "NERVE stapedial L",
+      "node": "NERVE_stapedial_L",
+      "asset": "./NERVE_stapedial_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-sympathetic-fibres",
+      "label": "NERVE sympathetic fibres",
+      "node": "NERVE_sympathetic_fibres",
+      "asset": "./NERVE_sympathetic_fibres.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-sympathetic-fibres-l",
+      "label": "NERVE sympathetic fibres L",
+      "node": "NERVE_sympathetic_fibres_L",
+      "asset": "./NERVE_sympathetic_fibres_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-tympanic-plexus",
+      "label": "NERVE Tympanic plexus",
+      "node": "NERVE_Tympanic_plexus",
+      "asset": "./NERVE_Tympanic_plexus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-tympanic-plexus-l",
+      "label": "NERVE Tympanic plexus L",
+      "node": "NERVE_Tympanic_plexus_L",
+      "asset": "./NERVE_Tympanic_plexus_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-vestibular-viii",
+      "label": "NERVE vestibular VIII",
+      "node": "NERVE_vestibular_VIII",
+      "asset": "./NERVE_vestibular_VIII.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-vestibular-viii-l",
+      "label": "NERVE vestibular VIII L",
+      "node": "NERVE_vestibular_VIII_L",
+      "asset": "./NERVE_vestibular_VIII_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-vii-extracranial",
+      "label": "NERVE VII extracranial",
+      "node": "NERVE_VII_extracranial",
+      "asset": "./NERVE_VII_extracranial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-vii-extracranial-l",
+      "label": "NERVE VII extracranial L",
+      "node": "NERVE_VII_extracranial_L",
+      "asset": "./NERVE_VII_extracranial_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-vii-intracranial",
+      "label": "NERVE VII intracranial",
+      "node": "NERVE_VII_intracranial",
+      "asset": "./NERVE_VII_intracranial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nerve-vii-intracranial-l",
+      "label": "NERVE VII intracranial L",
+      "node": "NERVE_VII_intracranial_L",
+      "asset": "./NERVE_VII_intracranial_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ossicle-incus",
+      "label": "OSSICLE Incus",
+      "node": "OSSICLE_Incus",
+      "asset": "./OSSICLE_Incus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ossicle-incus-l",
+      "label": "OSSICLE Incus L",
+      "node": "OSSICLE_Incus_L",
+      "asset": "./OSSICLE_Incus_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ossicle-malleus",
+      "label": "OSSICLE malleus",
+      "node": "OSSICLE_malleus",
+      "asset": "./OSSICLE_malleus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ossicle-malleus-l",
+      "label": "OSSICLE malleus L",
+      "node": "OSSICLE_malleus_L",
+      "asset": "./OSSICLE_malleus_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ossicle-stapes",
+      "label": "OSSICLE stapes",
+      "node": "OSSICLE_stapes",
+      "asset": "./OSSICLE_stapes.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ossicle-stapes-l",
+      "label": "OSSICLE stapes L",
+      "node": "OSSICLE_stapes_L",
+      "asset": "./OSSICLE_stapes_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-semicircular-canal-anterior",
+      "label": "Semicircular canal anterior",
+      "node": "Semicircular_canal_anterior",
+      "asset": "./Semicircular_canal_anterior.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-semicircular-canal-anterior-l",
+      "label": "Semicircular canal anterior L",
+      "node": "Semicircular_canal_anterior_L",
+      "asset": "./Semicircular_canal_anterior_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-semicircular-canal-lateral",
+      "label": "Semicircular canal lateral",
+      "node": "Semicircular_canal_lateral",
+      "asset": "./Semicircular_canal_lateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-semicircular-canal-lateral-l",
+      "label": "Semicircular canal lateral L",
+      "node": "Semicircular_canal_lateral_L",
+      "asset": "./Semicircular_canal_lateral_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-semicircular-canal-posterior",
+      "label": "Semicircular canal posterior",
+      "node": "Semicircular_canal_posterior",
+      "asset": "./Semicircular_canal_posterior.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-semicircular-canal-posterior-l",
+      "label": "Semicircular canal posterior L",
+      "node": "Semicircular_canal_posterior_L",
+      "asset": "./Semicircular_canal_posterior_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tympanic-bulla",
+      "label": "Tympanic bulla",
+      "node": "Tympanic_bulla",
+      "asset": "./Tympanic_bulla.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tympanic-bulla-l",
+      "label": "Tympanic bulla L",
+      "node": "Tympanic_bulla_L",
+      "asset": "./Tympanic_bulla_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tympanic-cavity-middle",
+      "label": "Tympanic cavity middle",
+      "node": "Tympanic_cavity_middle",
+      "asset": "./Tympanic_cavity_middle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tympanic-cavity-middle-l",
+      "label": "Tympanic cavity middle L",
+      "node": "Tympanic_cavity_middle_L",
+      "asset": "./Tympanic_cavity_middle_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tympanic-membrane",
+      "label": "Tympanic membrane",
+      "node": "Tympanic_membrane",
+      "asset": "./Tympanic_membrane.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-tympanic-membrane-l",
+      "label": "Tympanic membrane L",
+      "node": "Tympanic_membrane_L",
+      "asset": "./Tympanic_membrane_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vestibular-aqueduct",
+      "label": "Vestibular aqueduct",
+      "node": "Vestibular_aqueduct",
+      "asset": "./Vestibular_aqueduct.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vestibular-aqueduct-l",
+      "label": "Vestibular aqueduct L",
+      "node": "Vestibular_aqueduct_L",
+      "asset": "./Vestibular_aqueduct_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vestibule",
+      "label": "Vestibule",
+      "node": "Vestibule",
+      "asset": "./Vestibule.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-vestibule-l",
+      "label": "Vestibule L",
+      "node": "Vestibule_L",
+      "asset": "./Vestibule_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-window-cochlear",
+      "label": "WINDOW cochlear",
+      "node": "WINDOW_cochlear",
+      "asset": "./WINDOW_cochlear.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-window-cochlear-l",
+      "label": "WINDOW cochlear L",
+      "node": "WINDOW_cochlear_L",
+      "asset": "./WINDOW_cochlear_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-window-vestibular",
+      "label": "WINDOW vestibular",
+      "node": "WINDOW_vestibular",
+      "asset": "./WINDOW_vestibular.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-window-vestibular-l",
+      "label": "WINDOW vestibular L",
+      "node": "WINDOW_vestibular_L",
+      "asset": "./WINDOW_vestibular_L.glb",
+      "region": "root"
+    }
+  ]
+}

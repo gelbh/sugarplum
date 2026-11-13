@@ -1,0 +1,419 @@
+{
+  "id": "canine-dental-nerve-blocks",
+  "title": "Canine dental nerve blocks",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-caudal-maxillary-block-animation-shell",
+      "label": "Caudal Maxillary Block Animation Shell",
+      "node": "Caudal_Maxillary_Block_Animation_Shell",
+      "asset": "./Caudal_Maxillary_Block_Animation_Shell.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-infraorbital-foramen-l",
+      "label": "Cranium infraorbital foramen L",
+      "node": "Cranium_infraorbital_foramen_L",
+      "asset": "./Cranium_infraorbital_foramen_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-infraorbital-foramen-r",
+      "label": "Cranium infraorbital foramen R",
+      "node": "Cranium_infraorbital_foramen_R",
+      "asset": "./Cranium_infraorbital_foramen_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-lo",
+      "label": "Cranium LO",
+      "node": "Cranium_LO",
+      "asset": "./Cranium_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth-101",
+      "label": "Cranium tooth 101",
+      "node": "Cranium_tooth_101",
+      "asset": "./Cranium_tooth_101.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth-102",
+      "label": "Cranium tooth 102",
+      "node": "Cranium_tooth_102",
+      "asset": "./Cranium_tooth_102.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth-103",
+      "label": "Cranium tooth 103",
+      "node": "Cranium_tooth_103",
+      "asset": "./Cranium_tooth_103.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth-104",
+      "label": "Cranium tooth 104",
+      "node": "Cranium_tooth_104",
+      "asset": "./Cranium_tooth_104.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth-105",
+      "label": "Cranium tooth 105",
+      "node": "Cranium_tooth_105",
+      "asset": "./Cranium_tooth_105.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth-106",
+      "label": "Cranium tooth 106",
+      "node": "Cranium_tooth_106",
+      "asset": "./Cranium_tooth_106.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth-108",
+      "label": "Cranium tooth 108",
+      "node": "Cranium_tooth_108",
+      "asset": "./Cranium_tooth_108.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth-109",
+      "label": "Cranium tooth 109",
+      "node": "Cranium_tooth_109",
+      "asset": "./Cranium_tooth_109.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth-110",
+      "label": "Cranium tooth 110",
+      "node": "Cranium_tooth_110",
+      "asset": "./Cranium_tooth_110.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth-201",
+      "label": "Cranium tooth 201",
+      "node": "Cranium_tooth_201",
+      "asset": "./Cranium_tooth_201.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth-202",
+      "label": "Cranium tooth 202",
+      "node": "Cranium_tooth_202",
+      "asset": "./Cranium_tooth_202.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth-203",
+      "label": "Cranium tooth 203",
+      "node": "Cranium_tooth_203",
+      "asset": "./Cranium_tooth_203.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth-204",
+      "label": "Cranium tooth 204",
+      "node": "Cranium_tooth_204",
+      "asset": "./Cranium_tooth_204.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth-205",
+      "label": "Cranium tooth 205",
+      "node": "Cranium_tooth_205",
+      "asset": "./Cranium_tooth_205.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth-206",
+      "label": "Cranium tooth 206",
+      "node": "Cranium_tooth_206",
+      "asset": "./Cranium_tooth_206.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth-207",
+      "label": "Cranium tooth 207",
+      "node": "Cranium_tooth_207",
+      "asset": "./Cranium_tooth_207.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth-208",
+      "label": "Cranium tooth 208",
+      "node": "Cranium_tooth_208",
+      "asset": "./Cranium_tooth_208.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth-209",
+      "label": "Cranium tooth 209",
+      "node": "Cranium_tooth_209",
+      "asset": "./Cranium_tooth_209.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cranium-tooth-210",
+      "label": "Cranium tooth 210",
+      "node": "Cranium_tooth_210",
+      "asset": "./Cranium_tooth_210.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-trigeminus-mandibular",
+      "label": "L Trigeminus Mandibular",
+      "node": "L_Trigeminus_Mandibular",
+      "asset": "./L_Trigeminus_Mandibular.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-trigeminus-maxillary",
+      "label": "L Trigeminus Maxillary",
+      "node": "L_Trigeminus_Maxillary",
+      "asset": "./L_Trigeminus_Maxillary.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-l-trigeminus-ophthalmic",
+      "label": "L Trigeminus Ophthalmic",
+      "node": "L_Trigeminus_Ophthalmic",
+      "asset": "./L_Trigeminus_Ophthalmic.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-lo",
+      "label": "Mandible LO",
+      "node": "Mandible_LO",
+      "asset": "./Mandible_LO.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-mandibular-foramen",
+      "label": "Mandible mandibular foramen",
+      "node": "Mandible_mandibular_foramen",
+      "asset": "./Mandible_mandibular_foramen.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-mental-foramen",
+      "label": "Mandible mental foramen",
+      "node": "Mandible_mental_foramen",
+      "asset": "./Mandible_mental_foramen.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-symphisis",
+      "label": "Mandible symphisis",
+      "node": "Mandible_symphisis",
+      "asset": "./Mandible_symphisis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth301",
+      "label": "Mandible tooth301",
+      "node": "Mandible_tooth301",
+      "asset": "./Mandible_tooth301.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth302",
+      "label": "Mandible tooth302",
+      "node": "Mandible_tooth302",
+      "asset": "./Mandible_tooth302.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth303",
+      "label": "Mandible tooth303",
+      "node": "Mandible_tooth303",
+      "asset": "./Mandible_tooth303.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth304",
+      "label": "Mandible tooth304",
+      "node": "Mandible_tooth304",
+      "asset": "./Mandible_tooth304.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth305",
+      "label": "Mandible tooth305",
+      "node": "Mandible_tooth305",
+      "asset": "./Mandible_tooth305.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth307",
+      "label": "Mandible tooth307",
+      "node": "Mandible_tooth307",
+      "asset": "./Mandible_tooth307.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth308",
+      "label": "Mandible tooth308",
+      "node": "Mandible_tooth308",
+      "asset": "./Mandible_tooth308.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth309",
+      "label": "Mandible tooth309",
+      "node": "Mandible_tooth309",
+      "asset": "./Mandible_tooth309.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth310",
+      "label": "Mandible tooth310",
+      "node": "Mandible_tooth310",
+      "asset": "./Mandible_tooth310.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth311",
+      "label": "Mandible tooth311",
+      "node": "Mandible_tooth311",
+      "asset": "./Mandible_tooth311.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth401",
+      "label": "Mandible tooth401",
+      "node": "Mandible_tooth401",
+      "asset": "./Mandible_tooth401.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth402",
+      "label": "Mandible tooth402",
+      "node": "Mandible_tooth402",
+      "asset": "./Mandible_tooth402.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth403",
+      "label": "Mandible tooth403",
+      "node": "Mandible_tooth403",
+      "asset": "./Mandible_tooth403.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth404",
+      "label": "Mandible tooth404",
+      "node": "Mandible_tooth404",
+      "asset": "./Mandible_tooth404.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth405",
+      "label": "Mandible tooth405",
+      "node": "Mandible_tooth405",
+      "asset": "./Mandible_tooth405.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth406",
+      "label": "Mandible tooth406",
+      "node": "Mandible_tooth406",
+      "asset": "./Mandible_tooth406.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth407",
+      "label": "Mandible tooth407",
+      "node": "Mandible_tooth407",
+      "asset": "./Mandible_tooth407.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth408",
+      "label": "Mandible tooth408",
+      "node": "Mandible_tooth408",
+      "asset": "./Mandible_tooth408.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth409",
+      "label": "Mandible tooth409",
+      "node": "Mandible_tooth409",
+      "asset": "./Mandible_tooth409.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth410",
+      "label": "Mandible tooth410",
+      "node": "Mandible_tooth410",
+      "asset": "./Mandible_tooth410.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-tooth411",
+      "label": "Mandible tooth411",
+      "node": "Mandible_tooth411",
+      "asset": "./Mandible_tooth411.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandibular-block-animation-shell",
+      "label": "Mandibular Block Animation Shell",
+      "node": "Mandibular_Block_Animation_Shell",
+      "asset": "./Mandibular_Block_Animation_Shell.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mental-block-animation-shell",
+      "label": "Mental Block Animation Shell",
+      "node": "Mental_Block_Animation_Shell",
+      "asset": "./Mental_Block_Animation_Shell.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-needle",
+      "label": "Needle",
+      "node": "Needle",
+      "asset": "./Needle.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-trigeminus-mandibular",
+      "label": "R Trigeminus Mandibular",
+      "node": "R_Trigeminus_Mandibular",
+      "asset": "./R_Trigeminus_Mandibular.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-trigeminus-maxillary",
+      "label": "R Trigeminus Maxillary",
+      "node": "R_Trigeminus_Maxillary",
+      "asset": "./R_Trigeminus_Maxillary.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-r-trigeminus-ophthalmic",
+      "label": "R Trigeminus Ophthalmic",
+      "node": "R_Trigeminus_Ophthalmic",
+      "asset": "./R_Trigeminus_Ophthalmic.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-rostral-maxillary-block-animation-shell",
+      "label": "Rostral Maxillary Block Animation Shell",
+      "node": "Rostral_Maxillary_Block_Animation_Shell",
+      "asset": "./Rostral_Maxillary_Block_Animation_Shell.glb",
+      "region": "root"
+    }
+  ]
+}

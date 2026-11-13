@@ -1,0 +1,83 @@
+{
+  "id": "canine-skull-sinuses",
+  "title": "Canine skull sinuses",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-frontal-sinus-l-lateral",
+      "label": "Frontal sinus L lateral",
+      "node": "Frontal_sinus_L_lateral",
+      "asset": "./Frontal_sinus_L_lateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-frontal-sinus-l-medial",
+      "label": "Frontal sinus L medial",
+      "node": "Frontal_sinus_L_medial",
+      "asset": "./Frontal_sinus_L_medial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-frontal-sinus-l-rostral",
+      "label": "Frontal sinus L rostral",
+      "node": "Frontal_sinus_L_rostral",
+      "asset": "./Frontal_sinus_L_rostral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-frontal-sinus-r-lateral",
+      "label": "Frontal sinus R lateral",
+      "node": "Frontal_sinus_R_lateral",
+      "asset": "./Frontal_sinus_R_lateral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-frontal-sinus-r-medial",
+      "label": "Frontal sinus R medial",
+      "node": "Frontal_sinus_R_medial",
+      "asset": "./Frontal_sinus_R_medial.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-frontal-sinus-r-rostral",
+      "label": "Frontal sinus R rostral",
+      "node": "Frontal_sinus_R_rostral",
+      "asset": "./Frontal_sinus_R_rostral.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-k9-skull-retopo",
+      "label": "k9 skull retopo",
+      "node": "k9_skull_retopo",
+      "asset": "./k9_skull_retopo.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-maxillary-recess-l",
+      "label": "Maxillary recess L",
+      "node": "Maxillary_recess_L",
+      "asset": "./Maxillary_recess_L.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-maxillary-recess-r",
+      "label": "Maxillary recess R",
+      "node": "Maxillary_recess_R",
+      "asset": "./Maxillary_recess_R.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-nasal-cavity-copy001",
+      "label": "Nasal cavity copy001",
+      "node": "Nasal_cavity_copy001",
+      "asset": "./Nasal_cavity_copy001.glb",
+      "region": "root"
+    }
+  ]
+}

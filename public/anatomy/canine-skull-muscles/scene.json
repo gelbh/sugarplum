@@ -1,0 +1,769 @@
+{
+  "id": "canine-skull-muscles",
+  "title": "Canine skull muscles",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-110tooth-004",
+      "label": "110tooth 004",
+      "node": "110tooth_004",
+      "asset": "./110tooth_004.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-401tooth-004",
+      "label": "401tooth 004",
+      "node": "401tooth_004",
+      "asset": "./401tooth_004.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-annular-cart",
+      "label": "annular cart",
+      "node": "annular_cart",
+      "asset": "./annular_cart.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-annular-cart-1",
+      "label": "annular cart 1",
+      "node": "annular_cart_1",
+      "asset": "./annular_cart_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-buccinator",
+      "label": "buccinator",
+      "node": "buccinator",
+      "asset": "./buccinator.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-buccinator-copy000",
+      "label": "buccinator copy000",
+      "node": "buccinator_copy000",
+      "asset": "./buccinator_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-buccinator-molar",
+      "label": "buccinator molar",
+      "node": "buccinator_molar",
+      "asset": "./buccinator_molar.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-buccinator-molar-copy000",
+      "label": "buccinator molar copy000",
+      "node": "buccinator_molar_copy000",
+      "asset": "./buccinator_molar_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c1-atlas",
+      "label": "C1 Atlas",
+      "node": "C1_Atlas",
+      "asset": "./C1_Atlas.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c1-atlas-copy000",
+      "label": "C1 Atlas copy000",
+      "node": "C1_Atlas_copy000",
+      "asset": "./C1_Atlas_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c2-axis",
+      "label": "C2 Axis",
+      "node": "C2_Axis",
+      "asset": "./C2_Axis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-c2-axis-copy000",
+      "label": "C2 Axis copy000",
+      "node": "C2_Axis_copy000",
+      "asset": "./C2_Axis_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-caninus",
+      "label": "caninus",
+      "node": "caninus",
+      "asset": "./caninus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-caninus-copy000",
+      "label": "caninus copy000",
+      "node": "caninus_copy000",
+      "asset": "./caninus_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cervicoauric-med",
+      "label": "cervicoauric med",
+      "node": "cervicoauric_med",
+      "asset": "./cervicoauric_med.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cervicoauric-med-copy000",
+      "label": "cervicoauric med copy000",
+      "node": "cervicoauric_med_copy000",
+      "asset": "./cervicoauric_med_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cervicoauric-prof",
+      "label": "cervicoauric prof",
+      "node": "cervicoauric_prof",
+      "asset": "./cervicoauric_prof.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cervicoauric-prof-copy000",
+      "label": "cervicoauric prof copy000",
+      "node": "cervicoauric_prof_copy000",
+      "asset": "./cervicoauric_prof_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cervicoauric-sup",
+      "label": "cervicoauric sup",
+      "node": "cervicoauric_sup",
+      "asset": "./cervicoauric_sup.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cervicoauric-sup-copy000",
+      "label": "cervicoauric sup copy000",
+      "node": "cervicoauric_sup_copy000",
+      "asset": "./cervicoauric_sup_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cleidobrachialis-cerv",
+      "label": "Cleidobrachialis cerv",
+      "node": "Cleidobrachialis_cerv",
+      "asset": "./Cleidobrachialis_cerv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cleidobrachialis-cerv-copy000",
+      "label": "Cleidobrachialis cerv copy000",
+      "node": "Cleidobrachialis_cerv_copy000",
+      "asset": "./Cleidobrachialis_cerv_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cleidocephalicus-mast",
+      "label": "Cleidocephalicus mast",
+      "node": "Cleidocephalicus_mast",
+      "asset": "./Cleidocephalicus_mast.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-cleidocephalicus-mast-copy000",
+      "label": "Cleidocephalicus mast copy000",
+      "node": "Cleidocephalicus_mast_copy000",
+      "asset": "./Cleidocephalicus_mast_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-digastricus-c",
+      "label": "digastricus c",
+      "node": "digastricus_c",
+      "asset": "./digastricus_c.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-digastricus-c-copy000",
+      "label": "digastricus c copy000",
+      "node": "digastricus_c_copy000",
+      "asset": "./digastricus_c_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-digastricus-r",
+      "label": "digastricus r",
+      "node": "digastricus_r",
+      "asset": "./digastricus_r.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-digastricus-r-copy000",
+      "label": "digastricus r copy000",
+      "node": "digastricus_r_copy000",
+      "asset": "./digastricus_r_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ear",
+      "label": "EAR",
+      "node": "EAR",
+      "asset": "./EAR.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-ear-1",
+      "label": "EAR 1",
+      "node": "EAR_1",
+      "asset": "./EAR_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-frontalis",
+      "label": "frontalis",
+      "node": "frontalis",
+      "asset": "./frontalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-frontalis-copy000",
+      "label": "frontalis copy000",
+      "node": "frontalis_copy000",
+      "asset": "./frontalis_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-frontoscutularis",
+      "label": "frontoscutularis",
+      "node": "frontoscutularis",
+      "asset": "./frontoscutularis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-frontoscutularis-copy000",
+      "label": "frontoscutularis copy000",
+      "node": "frontoscutularis_copy000",
+      "asset": "./frontoscutularis_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-interscutularis",
+      "label": "Interscutularis",
+      "node": "Interscutularis",
+      "asset": "./Interscutularis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-interscutularis-copy000",
+      "label": "Interscutularis copy000",
+      "node": "Interscutularis_copy000",
+      "asset": "./Interscutularis_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lev-anguli-ocul-med",
+      "label": "lev anguli ocul med",
+      "node": "lev_anguli_ocul_med",
+      "asset": "./lev_anguli_ocul_med.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lev-anguli-ocul-med-copy000",
+      "label": "lev anguli ocul med copy000",
+      "node": "lev_anguli_ocul_med_copy000",
+      "asset": "./lev_anguli_ocul_med_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lev-lab-sup",
+      "label": "lev lab sup",
+      "node": "lev_lab_sup",
+      "asset": "./lev_lab_sup.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lev-lab-sup-copy000",
+      "label": "lev lab sup copy000",
+      "node": "lev_lab_sup_copy000",
+      "asset": "./lev_lab_sup_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lev-nasolab",
+      "label": "lev nasolab",
+      "node": "lev_nasolab",
+      "asset": "./lev_nasolab.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lev-nasolab-copy000",
+      "label": "lev nasolab copy000",
+      "node": "lev_nasolab_copy000",
+      "asset": "./lev_nasolab_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lev-palp-sup",
+      "label": "lev palp sup",
+      "node": "lev_palp_sup",
+      "asset": "./lev_palp_sup.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lev-palp-sup-copy000",
+      "label": "lev palp sup copy000",
+      "node": "lev_palp_sup_copy000",
+      "asset": "./lev_palp_sup_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-tmj",
+      "label": "lig tmj",
+      "node": "lig_tmj",
+      "asset": "./lig_tmj.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-tmj-copy000",
+      "label": "lig tmj copy000",
+      "node": "lig_tmj_copy000",
+      "asset": "./lig_tmj_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-zyg",
+      "label": "lig zyg",
+      "node": "lig_zyg",
+      "asset": "./lig_zyg.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-lig-zyg-copy000",
+      "label": "lig zyg copy000",
+      "node": "lig_zyg_copy000",
+      "asset": "./lig_zyg_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible",
+      "label": "MANDIBLE",
+      "node": "MANDIBLE",
+      "asset": "./MANDIBLE.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-004",
+      "label": "MANDIBLE 004",
+      "node": "MANDIBLE_004",
+      "asset": "./MANDIBLE_004.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mandible-copy001",
+      "label": "MANDIBLE copy001",
+      "node": "MANDIBLE_copy001",
+      "asset": "./MANDIBLE_copy001.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-masseter-deep",
+      "label": "masseter deep",
+      "node": "masseter_deep",
+      "asset": "./masseter_deep.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-masseter-deep-copy000",
+      "label": "masseter deep copy000",
+      "node": "masseter_deep_copy000",
+      "asset": "./masseter_deep_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-masseter-med",
+      "label": "masseter med",
+      "node": "masseter_med",
+      "asset": "./masseter_med.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-masseter-med-copy000",
+      "label": "masseter med copy000",
+      "node": "masseter_med_copy000",
+      "asset": "./masseter_med_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-masseter-sup",
+      "label": "masseter sup",
+      "node": "masseter_sup",
+      "asset": "./masseter_sup.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-masseter-sup-copy000",
+      "label": "masseter sup copy000",
+      "node": "masseter_sup_copy000",
+      "asset": "./masseter_sup_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-maxilla",
+      "label": "MAXILLA",
+      "node": "MAXILLA",
+      "asset": "./MAXILLA.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-maxilla-004",
+      "label": "MAXILLA 004",
+      "node": "MAXILLA_004",
+      "asset": "./MAXILLA_004.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-maxilla-copy001",
+      "label": "MAXILLA copy001",
+      "node": "MAXILLA_copy001",
+      "asset": "./MAXILLA_copy001.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mentalis",
+      "label": "mentalis",
+      "node": "mentalis",
+      "asset": "./mentalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-mentalis-copy000",
+      "label": "mentalis copy000",
+      "node": "mentalis_copy000",
+      "asset": "./mentalis_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-occipitalis",
+      "label": "occipitalis",
+      "node": "occipitalis",
+      "asset": "./occipitalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-occipitalis-copy000",
+      "label": "occipitalis copy000",
+      "node": "occipitalis_copy000",
+      "asset": "./occipitalis_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-omotransversarius",
+      "label": "Omotransversarius",
+      "node": "Omotransversarius",
+      "asset": "./Omotransversarius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-omotransversarius-copy000",
+      "label": "Omotransversarius copy000",
+      "node": "Omotransversarius_copy000",
+      "asset": "./Omotransversarius_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-orbic-ocular",
+      "label": "Orbic ocular",
+      "node": "Orbic_ocular",
+      "asset": "./Orbic_ocular.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-orbic-ocular-copy000",
+      "label": "Orbic ocular copy000",
+      "node": "Orbic_ocular_copy000",
+      "asset": "./Orbic_ocular_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-orbic-oris",
+      "label": "orbic oris",
+      "node": "orbic_oris",
+      "asset": "./orbic_oris.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-orbic-oris-copy000",
+      "label": "orbic oris copy000",
+      "node": "orbic_oris_copy000",
+      "asset": "./orbic_oris_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-parietoauricularis",
+      "label": "parietoauricularis",
+      "node": "parietoauricularis",
+      "asset": "./parietoauricularis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-parietoauricularis-copy000",
+      "label": "parietoauricularis copy000",
+      "node": "parietoauricularis_copy000",
+      "asset": "./parietoauricularis_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-parietoscutularis",
+      "label": "parietoscutularis",
+      "node": "parietoscutularis",
+      "asset": "./parietoscutularis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-parietoscutularis-copy000",
+      "label": "parietoscutularis copy000",
+      "node": "parietoscutularis_copy000",
+      "asset": "./parietoscutularis_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-platysma",
+      "label": "platysma",
+      "node": "platysma",
+      "asset": "./platysma.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-platysma-copy000",
+      "label": "platysma copy000",
+      "node": "platysma_copy000",
+      "asset": "./platysma_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pterygoid-lat",
+      "label": "pterygoid lat",
+      "node": "pterygoid_lat",
+      "asset": "./pterygoid_lat.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pterygoid-lat-copy000",
+      "label": "pterygoid lat copy000",
+      "node": "pterygoid_lat_copy000",
+      "asset": "./pterygoid_lat_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pterygoid-med",
+      "label": "pterygoid med",
+      "node": "pterygoid_med",
+      "asset": "./pterygoid_med.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-pterygoid-med-copy000",
+      "label": "pterygoid med copy000",
+      "node": "pterygoid_med_copy000",
+      "asset": "./pterygoid_med_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-retr-angul-ocul-lat",
+      "label": "Retr angul ocul lat",
+      "node": "Retr_angul_ocul_lat",
+      "asset": "./Retr_angul_ocul_lat.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-retr-angul-ocul-lat-copy000",
+      "label": "Retr angul ocul lat copy000",
+      "node": "Retr_angul_ocul_lat_copy000",
+      "asset": "./Retr_angul_ocul_lat_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scutiform-cart",
+      "label": "Scutiform cart",
+      "node": "Scutiform_cart",
+      "asset": "./Scutiform_cart.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scutiform-cart-1",
+      "label": "Scutiform cart 1",
+      "node": "Scutiform_cart_1",
+      "asset": "./Scutiform_cart_1.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scutulo-deep",
+      "label": "scutulo deep",
+      "node": "scutulo_deep",
+      "asset": "./scutulo_deep.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scutulo-deep-copy000",
+      "label": "scutulo deep copy000",
+      "node": "scutulo_deep_copy000",
+      "asset": "./scutulo_deep_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scutulo-supf",
+      "label": "scutulo supf",
+      "node": "scutulo_supf",
+      "asset": "./scutulo_supf.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-scutulo-supf-copy000",
+      "label": "scutulo supf copy000",
+      "node": "scutulo_supf_copy000",
+      "asset": "./scutulo_supf_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sphinc-colli-prof-palpeb",
+      "label": "sphinc colli prof palpeb",
+      "node": "sphinc_colli_prof_palpeb",
+      "asset": "./sphinc_colli_prof_palpeb.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sphinc-colli-prof-palpeb-copy000",
+      "label": "sphinc colli prof palpeb copy000",
+      "node": "sphinc_colli_prof_palpeb_copy000",
+      "asset": "./sphinc_colli_prof_palpeb_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sphinc-colli-profundus",
+      "label": "sphinc colli profundus",
+      "node": "sphinc_colli_profundus",
+      "asset": "./sphinc_colli_profundus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sphinc-colli-profundus-copy000",
+      "label": "sphinc colli profundus copy000",
+      "node": "sphinc_colli_profundus_copy000",
+      "asset": "./sphinc_colli_profundus_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-splenius-capitus",
+      "label": "Splenius capitus",
+      "node": "Splenius_capitus",
+      "asset": "./Splenius_capitus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-splenius-capitus-copy000",
+      "label": "Splenius capitus copy000",
+      "node": "Splenius_capitus_copy000",
+      "asset": "./Splenius_capitus_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sternocephalic-cerv",
+      "label": "Sternocephalic cerv",
+      "node": "Sternocephalic_cerv",
+      "asset": "./Sternocephalic_cerv.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sternocephalic-cerv-copy000",
+      "label": "Sternocephalic cerv copy000",
+      "node": "Sternocephalic_cerv_copy000",
+      "asset": "./Sternocephalic_cerv_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sternocephalic-mast",
+      "label": "Sternocephalic mast",
+      "node": "Sternocephalic_mast",
+      "asset": "./Sternocephalic_mast.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-sternocephalic-mast-copy000",
+      "label": "Sternocephalic mast copy000",
+      "node": "Sternocephalic_mast_copy000",
+      "asset": "./Sternocephalic_mast_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-styloauricularis",
+      "label": "styloauricularis",
+      "node": "styloauricularis",
+      "asset": "./styloauricularis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-styloauricularis-copy000",
+      "label": "styloauricularis copy000",
+      "node": "styloauricularis_copy000",
+      "asset": "./styloauricularis_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-temporalis",
+      "label": "temporalis",
+      "node": "temporalis",
+      "asset": "./temporalis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-temporalis-copy000",
+      "label": "temporalis copy000",
+      "node": "temporalis_copy000",
+      "asset": "./temporalis_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-trapezius",
+      "label": "Trapezius",
+      "node": "Trapezius",
+      "asset": "./Trapezius.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-trapezius-copy000",
+      "label": "Trapezius copy000",
+      "node": "Trapezius_copy000",
+      "asset": "./Trapezius_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-zygoauricularis",
+      "label": "zygoauricularis",
+      "node": "zygoauricularis",
+      "asset": "./zygoauricularis.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-zygoauricularis-copy000",
+      "label": "zygoauricularis copy000",
+      "node": "zygoauricularis_copy000",
+      "asset": "./zygoauricularis_copy000.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-zygomaticus",
+      "label": "zygomaticus",
+      "node": "zygomaticus",
+      "asset": "./zygomaticus.glb",
+      "region": "root"
+    },
+    {
+      "id": "root-zygomaticus-copy000",
+      "label": "zygomaticus copy000",
+      "node": "zygomaticus_copy000",
+      "asset": "./zygomaticus_copy000.glb",
+      "region": "root"
+    }
+  ]
+}
