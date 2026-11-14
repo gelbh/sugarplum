@@ -9,6 +9,12 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { Document, NodeIO } from "@gltf-transform/core";
+import {
+  ALL_EXTENSIONS,
+  EXTMeshoptCompression,
+} from "@gltf-transform/extensions";
+import { MeshoptDecoder } from "meshoptimizer";
 import {
   assertPackId,
   assertWithinRoot,
@@ -61,34 +67,36 @@ describe("assertWithinRoot", () => {
 });
 
 describe("ingestAnatomyPack traversal smoke", () => {
-  it("refuses symlink that escapes --src", () => {
+  it("refuses symlink that escapes --src", async () => {
     const src = tempDir("anatomy-pack-src-");
     const outside = tempDir("anatomy-pack-outside-");
     const outRoot = tempDir("anatomy-pack-out-");
     writeFileSync(join(outside, "secret.glb"), "fake");
     symlinkSync(join(outside, "secret.glb"), join(src, "leak.glb"));
 
-    expect(() =>
+    await expect(
       ingestAnatomyPack({
         src,
         packId: "smoke-pack",
         outRoot,
+        meshopt: false,
       }),
-    ).toThrow(/traversal/i);
+    ).rejects.toThrow(/traversal/i);
   });
 
-  it("copies a local drop and writes scene.json", () => {
+  it("copies a local drop and writes scene.json", async () => {
     const src = tempDir("anatomy-pack-ok-");
     const outRoot = tempDir("anatomy-pack-out-");
     mkdirSync(join(src, "heart"));
     writeFileSync(join(src, "heart", "ventricle.glb"), "fake-glb");
     writeFileSync(join(src, "heart", "ventricle.bin"), "fake-bin");
 
-    const result = ingestAnatomyPack({
+    const result = await ingestAnatomyPack({
       src,
       packId: "smoke-pack",
       title: "Smoke pack",
       outRoot,
+      meshopt: false,
     });
 
     expect(result.meshCount).toBe(1);
@@ -105,21 +113,22 @@ describe("ingestAnatomyPack traversal smoke", () => {
     );
   });
 
-  it("refuses overlapping src and destination", () => {
+  it("refuses overlapping src and destination", async () => {
     const root = tempDir("anatomy-pack-overlap-");
     mkdirSync(join(root, "smoke-pack", "heart"), { recursive: true });
     writeFileSync(join(root, "smoke-pack", "heart", "a.glb"), "x");
 
-    expect(() =>
+    await expect(
       ingestAnatomyPack({
         src: join(root, "smoke-pack"),
         packId: "smoke-pack",
         outRoot: root,
+        meshopt: false,
       }),
-    ).toThrow(/overlapping/i);
+    ).rejects.toThrow(/overlapping/i);
   });
 
-  it("dedupes in-tree mesh symlinks and skips dir cycles", () => {
+  it("dedupes in-tree mesh symlinks and skips dir cycles", async () => {
     const src = tempDir("anatomy-pack-dedupe-");
     const outRoot = tempDir("anatomy-pack-out-");
     mkdirSync(join(src, "heart"));
@@ -127,28 +136,74 @@ describe("ingestAnatomyPack traversal smoke", () => {
     symlinkSync(join(src, "heart", "v.glb"), join(src, "heart", "v-link.glb"));
     symlinkSync(src, join(src, "loop"));
 
-    const result = ingestAnatomyPack({
+    const result = await ingestAnatomyPack({
       src,
       packId: "smoke-pack",
       outRoot,
+      meshopt: false,
     });
     expect(result.meshCount).toBe(1);
   });
 
-  it("rejects colliding structure ids", () => {
+  it("rejects colliding structure ids", async () => {
     const src = tempDir("anatomy-pack-collide-");
     const outRoot = tempDir("anatomy-pack-out-");
     mkdirSync(join(src, "heart"));
     writeFileSync(join(src, "heart", "a_b.glb"), "1");
     writeFileSync(join(src, "heart", "a-b.glb"), "2");
 
-    expect(() =>
+    await expect(
       ingestAnatomyPack({
         src,
         packId: "smoke-pack",
         outRoot,
+        meshopt: false,
       }),
-    ).toThrow(/Duplicate structure id/i);
+    ).rejects.toThrow(/Duplicate structure id/i);
+  });
+
+  it("default meshopt writes EXT_meshopt_compression", async () => {
+    const src = tempDir("anatomy-pack-meshopt-src-");
+    const outRoot = tempDir("anatomy-pack-meshopt-out-");
+    mkdirSync(join(src, "heart"));
+    const path = join(src, "heart", "tri.glb");
+    const doc = new Document();
+    const buffer = doc.createBuffer();
+    const position = doc
+      .createAccessor()
+      .setType("VEC3")
+      .setArray(new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0]))
+      .setBuffer(buffer);
+    const indices = doc
+      .createAccessor()
+      .setType("SCALAR")
+      .setArray(new Uint16Array([0, 1, 2]))
+      .setBuffer(buffer);
+    const prim = doc
+      .createPrimitive()
+      .setAttribute("POSITION", position)
+      .setIndices(indices);
+    doc.createMesh().addPrimitive(prim);
+    doc.createNode().setMesh(doc.getRoot().listMeshes()[0]);
+    doc.createScene().addChild(doc.getRoot().listNodes()[0]);
+    await new NodeIO().write(path, doc);
+
+    const result = await ingestAnatomyPack({
+      src,
+      packId: "meshopt-pack",
+      outRoot,
+    });
+
+    await MeshoptDecoder.ready;
+    const round = await new NodeIO()
+      .registerExtensions(ALL_EXTENSIONS)
+      .registerDependencies({ "meshopt.decoder": MeshoptDecoder })
+      .read(join(result.outDir, "heart", "tri.glb"));
+    const ext = round
+      .getRoot()
+      .listExtensionsUsed()
+      .some((e) => e.extensionName === EXTMeshoptCompression.EXTENSION_NAME);
+    expect(ext).toBe(true);
   });
 
   it("merges clips.json and prefers drop CREDITS.md", () => {

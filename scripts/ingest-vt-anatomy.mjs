@@ -4,11 +4,11 @@
  * and generate scene.json + CREDITS.md. Expects a local checkout of
  * VT-ARIES/Anatomy with Production models under --src (default /tmp/vt-anatomy).
  * Optional: --only=Canine (or Equine|Bovine) to ingest one species.
+ * Optional: --no-meshopt to skip meshopt+quantize after copy (default: compress).
  */
 import { createHash } from "node:crypto";
 import {
   copyFileSync,
-  cpSync,
   existsSync,
   mkdirSync,
   readdirSync,
@@ -18,6 +18,10 @@ import {
 } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  compressGlbFile,
+  meshoptEnabledFromArgv,
+} from "./anatomyMeshopt.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = join(ROOT, "public", "anatomy");
@@ -31,6 +35,8 @@ const srcRoot = process.argv
 const onlyArg = process.argv
   .find((a) => a.startsWith("--only="))
   ?.slice("--only=".length);
+
+const meshoptOn = meshoptEnabledFromArgv(process.argv);
 
 const CREDITS = (species) => `# ${species} anatomy — credits
 
@@ -103,7 +109,7 @@ function defaultRegionId(species, regionIds) {
   return regionIds[0];
 }
 
-function ingestSpecies(species) {
+async function ingestSpecies(species) {
   const speciesSrc = join(srcRoot, species);
   if (!existsSync(speciesSrc)) {
     throw new Error(`Missing source: ${speciesSrc}`);
@@ -124,6 +130,7 @@ function ingestSpecies(species) {
     const dest = join(outDir, rel);
     mkdirSync(dirname(dest), { recursive: true });
     copyFileSync(full, dest);
+    if (meshoptOn) await compressGlbFile(dest);
 
     const assetPath =
       relDir === "." ? `./${file}` : `./${relDir.split(sep).join("/")}/${file}`;
@@ -171,7 +178,7 @@ function ingestSpecies(species) {
   );
 }
 
-function main() {
+async function main() {
   if (!existsSync(srcRoot)) {
     console.error(`Source missing: ${srcRoot}`);
     process.exit(1);
@@ -187,7 +194,7 @@ function main() {
     console.error(`Unknown --only=${onlyArg}; expected one of ${SPECIES.join(", ")}`);
     process.exit(1);
   }
-  for (const sp of targets) ingestSpecies(sp);
+  for (const sp of targets) await ingestSpecies(sp);
   const limb = join(OUT, "canine-limb");
   if (existsSync(limb)) {
     rmSync(limb, { recursive: true, force: true });
@@ -195,4 +202,4 @@ function main() {
   }
 }
 
-main();
+void main();
