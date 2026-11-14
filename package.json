@@ -38,6 +38,7 @@
     "sql.js": "^1.15.2",
     "tesseract.js": "^7.0.0",
     "three": "^0.187.0",
+    "three-mesh-bvh": "^0.9.18",
     "ts-fsrs": "^6.0.0",
     "unpdf": "^1.9.1",
     "world-atlas": "^2.0.2",
