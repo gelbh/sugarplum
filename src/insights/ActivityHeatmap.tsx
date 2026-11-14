@@ -40,7 +40,7 @@ function intensityLevel(count: number, max: number): 0 | 1 | 2 | 3 | 4 {
 export default function ActivityHeatmap({ series }: Props) {
   const theme = useTheme();
   const colors = useChartColors();
-  const fills = heatmapFills(colors.primary);
+  const fills = heatmapFills(colors.scheme);
   const total = series.reduce((sum, p) => sum + p.count, 0);
   const activeDays = series.filter((p) => p.count > 0).length;
   const peak = series.reduce((m, p) => Math.max(m, p.count), 0);

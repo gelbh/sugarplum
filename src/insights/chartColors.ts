@@ -20,6 +20,7 @@ const DARK = {
 } as const;
 
 export type ChartColorSet = {
+  scheme: "light" | "dark";
   primary: string;
   textPrimary: string;
   textSecondary: string;
@@ -34,12 +35,13 @@ export function useChartColors(): ChartColorSet {
   const { mode, systemMode } = useColorScheme();
   const resolved =
     mode === "system" ? systemMode : mode ?? theme.palette.mode;
-  return resolved === "dark" ? DARK : LIGHT;
+  const scheme: "light" | "dark" = resolved === "dark" ? "dark" : "light";
+  return scheme === "dark" ? { scheme, ...DARK } : { scheme, ...LIGHT };
 }
 
-export function heatmapFills(primary: string): readonly string[] {
-  // Relative opacity ladder on the active primary (readable on sugar dust and stage).
-  if (primary === DARK.primary) {
+/** Intensity ladder for the active scheme (no hex-string equality). */
+export function heatmapFills(scheme: "light" | "dark"): readonly string[] {
+  if (scheme === "dark") {
     return [
       "rgba(206, 147, 216, 0.14)",
       "rgba(206, 147, 216, 0.32)",
