@@ -4,7 +4,9 @@
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { describe, expect, it } from "vitest";
-import CompositionSpark from "../../src/components/CompositionSpark";
+import CompositionSpark, {
+  COMPOSITION_SEGMENT_COLORS,
+} from "../../src/components/CompositionSpark";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true;
@@ -49,5 +51,13 @@ describe("CompositionSpark", () => {
       "3 mature, 2 young, 1 learning, 4 new",
     );
     host.remove();
+  });
+
+  it("uses operate stage colors not MUI traffic-light tokens", () => {
+    expect(COMPOSITION_SEGMENT_COLORS.mature).toBe("#5B2C6F");
+    expect(COMPOSITION_SEGMENT_COLORS.young).toBe("rgba(91, 44, 111, 0.55)");
+    expect(COMPOSITION_SEGMENT_COLORS.learning).toBe("#C4A574");
+    expect(COMPOSITION_SEGMENT_COLORS.new).toBe("#bdbdbd");
+    expect(COMPOSITION_SEGMENT_COLORS.mature).not.toBe("success.main");
   });
 });
