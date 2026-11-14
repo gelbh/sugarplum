@@ -29,10 +29,10 @@ export async function studyPdfWithOcrSidecar(args: {
   pickedPages: number[];
 }> {
   const previousUnstudied = args.sidecar?.unstudiedPages ?? [];
-  const firstWindow = await extractPdfPages(
-    args.pdfBytes.slice(0),
-    args.startPage,
-  );
+  // Share one caller ArrayBuffer; extract-pdf copies once per open so pdf.js
+  // detach does not kill the buffer still needed for Docling FormData.
+  const pdfBytes = args.pdfBytes;
+  const firstWindow = await extractPdfPages(pdfBytes, args.startPage);
   const nativeByPage = new Map(
     firstWindow.pages.map((page) => [page.page, page.text]),
   );
@@ -40,10 +40,7 @@ export async function studyPdfWithOcrSidecar(args: {
     (page) => !nativeByPage.has(page),
   );
   if (sparseNeeded.length > 0) {
-    const sparse = await extractPdfPageNumbers(
-      args.pdfBytes.slice(0),
-      sparseNeeded,
-    );
+    const sparse = await extractPdfPageNumbers(pdfBytes, sparseNeeded);
     for (const page of sparse) {
       nativeByPage.set(page.page, page.text);
     }
@@ -72,7 +69,7 @@ export async function studyPdfWithOcrSidecar(args: {
           pages: applyOcrSidecar(firstWindow.pages, args.sidecar),
         };
       }
-      const window = await extractPdfPages(args.pdfBytes.slice(0), start);
+      const window = await extractPdfPages(pdfBytes, start);
       for (const page of window.pages) {
         touchedNative.set(page.page, page);
       }
