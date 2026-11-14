@@ -33,6 +33,7 @@ import AnatomyCanvas, {
   type AnatomyLoadSpec,
 } from "../anatomy/AnatomyCanvas";
 import AnatomyClipBar from "../anatomy/AnatomyClipBar";
+import AnatomyClipHud from "../anatomy/AnatomyClipHud";
 import AnatomyHelpOverlay from "../anatomy/AnatomyHelpOverlay";
 import AnatomyMobileSheet, {
   type AnatomySheetTab,
@@ -55,7 +56,10 @@ import TestYourself, {
   type AnatomyStudyMode,
 } from "../anatomy/TestYourself";
 import type { AnatomyClip, AnatomySceneManifest } from "../anatomy/types";
-import { anatomyViewerMobile } from "../anatomy/viewerLayout";
+import {
+  anatomyClipChrome,
+  anatomyViewerMobile,
+} from "../anatomy/viewerLayout";
 import { isPlainClick, navigate } from "../nav/navigate";
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -356,6 +360,48 @@ export default function AnatomyViewerPage({
   };
 
   const canvasReady = !!manifest && !!loads && loads.length > 0;
+  const sceneClips = manifest?.clips ?? [];
+  const hasClips = sceneClips.length > 0;
+  const { showClipBar, showClipsTrigger } = anatomyClipChrome(mobile, hasClips);
+  const activeClipLabel =
+    sceneClips.find((c) => c.id === activeClipId)?.label ?? null;
+
+  const selectClip = (clip: AnatomyClip, closeSheet: boolean) => {
+    if (!manifest) return;
+    const allIds = manifest.structures.map((s) => s.id);
+    if (clip.reveal && clip.reveal.length > 0) {
+      const keep = new Set(clip.reveal);
+      dispatch({
+        type: "hideAll",
+        ids: allIds.filter((id) => !keep.has(id)),
+      });
+    }
+    canvasRef.current?.stopClips();
+    const ok = canvasRef.current?.playClip(clip.animation, {
+      loop: clip.loop !== false,
+    });
+    if (!ok) {
+      setClipError(`Animation "${clip.animation}" not found`);
+      setActiveClipId(null);
+      setClipPaused(false);
+      return;
+    }
+    setClipError(null);
+    setActiveClipId(clip.id);
+    setClipPaused(false);
+    setAutoRotate(false);
+    if (closeSheet) setSheetOpen(false);
+  };
+
+  const togglePauseClip = () => {
+    if (clipPaused) {
+      canvasRef.current?.resumeClips();
+      setClipPaused(false);
+    } else {
+      canvasRef.current?.pauseClips();
+      setClipPaused(true);
+    }
+  };
 
   const markCorrect = (id: string) => {
     setRevealedIds((prev) => {
@@ -767,46 +813,15 @@ export default function AnatomyViewerPage({
                 </>
               ) : null}
             </Stack>
-            {manifest.clips && manifest.clips.length > 0 ? (
+            {showClipBar ? (
               <AnatomyClipBar
-                clips={manifest.clips}
+                clips={sceneClips}
                 disabled={!canvasReady}
                 activeClipId={activeClipId}
                 clipPaused={clipPaused}
                 clipError={clipError}
-                onSelectClip={(clip: AnatomyClip) => {
-                  const allIds = manifest.structures.map((s) => s.id);
-                  if (clip.reveal && clip.reveal.length > 0) {
-                    const keep = new Set(clip.reveal);
-                    dispatch({
-                      type: "hideAll",
-                      ids: allIds.filter((id) => !keep.has(id)),
-                    });
-                  }
-                  canvasRef.current?.stopClips();
-                  const ok = canvasRef.current?.playClip(clip.animation, {
-                    loop: clip.loop !== false,
-                  });
-                  if (!ok) {
-                    setClipError(`Animation "${clip.animation}" not found`);
-                    setActiveClipId(null);
-                    setClipPaused(false);
-                    return;
-                  }
-                  setClipError(null);
-                  setActiveClipId(clip.id);
-                  setClipPaused(false);
-                  setAutoRotate(false);
-                }}
-                onTogglePause={() => {
-                  if (clipPaused) {
-                    canvasRef.current?.resumeClips();
-                    setClipPaused(false);
-                  } else {
-                    canvasRef.current?.pauseClips();
-                    setClipPaused(true);
-                  }
-                }}
+                onSelectClip={(clip: AnatomyClip) => selectClip(clip, false)}
+                onTogglePause={togglePauseClip}
               />
             ) : null}
             <Menu
@@ -952,7 +967,34 @@ export default function AnatomyViewerPage({
                   >
                     Study
                   </Button>
+                  {showClipsTrigger ? (
+                    <Button
+                      size="small"
+                      variant="contained"
+                      aria-haspopup="dialog"
+                      aria-expanded={sheetOpen && sheetTab === "clips"}
+                      aria-controls={
+                        sheetOpen ? "anatomy-mobile-sheet-title" : undefined
+                      }
+                      onClick={() => {
+                        setSheetTab("clips");
+                        setSheetOpen(true);
+                      }}
+                    >
+                      Clips
+                    </Button>
+                  ) : null}
                 </Stack>
+              ) : null}
+              {mobile ? (
+                <AnatomyClipHud
+                  activeClipId={activeClipId}
+                  activeLabel={activeClipLabel}
+                  clipPaused={clipPaused}
+                  clipError={clipError}
+                  disabled={!canvasReady}
+                  onTogglePause={togglePauseClip}
+                />
               ) : null}
               <AnatomyHelpOverlay
                 open={helpOpen}
@@ -986,6 +1028,13 @@ export default function AnatomyViewerPage({
           selectedStructure={selectedStructure}
           regionStructures={regionStructures}
           onCorrect={markCorrect}
+          clips={sceneClips}
+          clipsDisabled={!canvasReady}
+          activeClipId={activeClipId}
+          clipPaused={clipPaused}
+          clipError={clipError}
+          onSelectClip={(clip) => selectClip(clip, true)}
+          onTogglePauseClip={togglePauseClip}
         />
       ) : null}
 
