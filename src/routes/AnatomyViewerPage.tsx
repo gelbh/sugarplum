@@ -6,8 +6,6 @@ import FullscreenExitOutlinedIcon from "@mui/icons-material/FullscreenExitOutlin
 import FullscreenOutlinedIcon from "@mui/icons-material/FullscreenOutlined";
 import GridOnOutlinedIcon from "@mui/icons-material/GridOnOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
-import PauseOutlinedIcon from "@mui/icons-material/PauseOutlined";
-import PlayArrowOutlinedIcon from "@mui/icons-material/PlayArrowOutlined";
 import ThreeSixtyOutlinedIcon from "@mui/icons-material/ThreeSixtyOutlined";
 import ZoomInOutlinedIcon from "@mui/icons-material/ZoomInOutlined";
 import ZoomOutOutlinedIcon from "@mui/icons-material/ZoomOutOutlined";
@@ -29,6 +27,7 @@ import AnatomyCanvas, {
   type AnatomyCanvasHandle,
   type AnatomyLoadSpec,
 } from "../anatomy/AnatomyCanvas";
+import AnatomyClipBar from "../anatomy/AnatomyClipBar";
 import AnatomyHelpOverlay from "../anatomy/AnatomyHelpOverlay";
 import InfoPanel from "../anatomy/InfoPanel";
 import MakeCardsDeckDialog from "../anatomy/MakeCardsDeckDialog";
@@ -47,7 +46,7 @@ import { makeCardsStructureIds } from "../anatomy/structureCard";
 import TestYourself, {
   type AnatomyStudyMode,
 } from "../anatomy/TestYourself";
-import type { AnatomySceneManifest } from "../anatomy/types";
+import type { AnatomyClip, AnatomySceneManifest } from "../anatomy/types";
 import { isPlainClick, navigate } from "../nav/navigate";
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -239,6 +238,13 @@ export default function AnatomyViewerPage({
     if (!manifest) return null;
     return buildLoads(sceneId, manifest, activeRegions);
   }, [manifest, sceneId, activeRegions]);
+
+  const loadsKey = loads?.map((l) => `${l.structureId}:${l.url}`).join("|") ?? "";
+  useEffect(() => {
+    setActiveClipId(null);
+    setClipPaused(false);
+    setClipError(null);
+  }, [loadsKey]);
 
   const selectedStructure =
     manifest?.structures.find((s) => s.id === ui.selectedId) ?? null;
@@ -679,88 +685,46 @@ export default function AnatomyViewerPage({
               })}
             </Stack>
             {manifest.clips && manifest.clips.length > 0 ? (
-              <Stack
-                direction="row"
-                alignItems="center"
-                flexWrap="wrap"
-                useFlexGap
-                spacing={0.75}
-                sx={{
-                  flexShrink: 0,
-                  px: 1,
-                  py: 0.5,
-                  borderBottom: 1,
-                  borderColor: "divider",
+              <AnatomyClipBar
+                clips={manifest.clips}
+                disabled={!canvasReady}
+                activeClipId={activeClipId}
+                clipPaused={clipPaused}
+                clipError={clipError}
+                onSelectClip={(clip: AnatomyClip) => {
+                  const allIds = manifest.structures.map((s) => s.id);
+                  if (clip.reveal && clip.reveal.length > 0) {
+                    const keep = new Set(clip.reveal);
+                    dispatch({
+                      type: "hideAll",
+                      ids: allIds.filter((id) => !keep.has(id)),
+                    });
+                  }
+                  canvasRef.current?.stopClips();
+                  const ok = canvasRef.current?.playClip(clip.animation, {
+                    loop: clip.loop !== false,
+                  });
+                  if (!ok) {
+                    setClipError(`Animation "${clip.animation}" not found`);
+                    setActiveClipId(null);
+                    setClipPaused(false);
+                    return;
+                  }
+                  setClipError(null);
+                  setActiveClipId(clip.id);
+                  setClipPaused(false);
+                  setAutoRotate(false);
                 }}
-              >
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ userSelect: "none" }}
-                >
-                  Clips
-                </Typography>
-                {manifest.clips.map((clip) => (
-                  <Chip
-                    key={clip.id}
-                    size="small"
-                    label={clip.label}
-                    color={activeClipId === clip.id ? "primary" : "default"}
-                    variant={activeClipId === clip.id ? "filled" : "outlined"}
-                    disabled={!canvasReady}
-                    onClick={() => {
-                      const allIds = manifest.structures.map((s) => s.id);
-                      if (clip.reveal && clip.reveal.length > 0) {
-                        const keep = new Set(clip.reveal);
-                        dispatch({
-                          type: "hideAll",
-                          ids: allIds.filter((id) => !keep.has(id)),
-                        });
-                        dispatch({ type: "clearIsolate" });
-                      }
-                      canvasRef.current?.stopClips();
-                      const ok = canvasRef.current?.playClip(clip.animation, {
-                        loop: clip.loop !== false,
-                      });
-                      if (!ok) {
-                        setClipError(`Animation "${clip.animation}" not found`);
-                        setActiveClipId(null);
-                        setClipPaused(false);
-                        return;
-                      }
-                      setClipError(null);
-                      setActiveClipId(clip.id);
-                      setClipPaused(false);
-                      setAutoRotate(false);
-                    }}
-                  />
-                ))}
-                <IconButton
-                  size="small"
-                  disabled={!canvasReady || !activeClipId}
-                  aria-label={clipPaused ? "Resume clip" : "Pause clip"}
-                  onClick={() => {
-                    if (clipPaused) {
-                      canvasRef.current?.resumeClips();
-                      setClipPaused(false);
-                    } else {
-                      canvasRef.current?.pauseClips();
-                      setClipPaused(true);
-                    }
-                  }}
-                >
-                  {clipPaused ? (
-                    <PlayArrowOutlinedIcon fontSize="small" />
-                  ) : (
-                    <PauseOutlinedIcon fontSize="small" />
-                  )}
-                </IconButton>
-                {clipError ? (
-                  <Typography variant="caption" color="error">
-                    {clipError}
-                  </Typography>
-                ) : null}
-              </Stack>
+                onTogglePause={() => {
+                  if (clipPaused) {
+                    canvasRef.current?.resumeClips();
+                    setClipPaused(false);
+                  } else {
+                    canvasRef.current?.pauseClips();
+                    setClipPaused(true);
+                  }
+                }}
+              />
             ) : null}
             <Box
               ref={stageRef}
