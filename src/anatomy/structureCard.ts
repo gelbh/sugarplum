@@ -1,6 +1,5 @@
 import type { AnatomyStructure } from "./types";
 
-/** Front = label; back = summary / synonyms (scene title fallback). */
 export function structureToQaFields(
   structure: AnatomyStructure,
   sceneTitle: string,
@@ -22,7 +21,6 @@ export function structureToQaFields(
   return { front, back: parts.join("\n\n") };
 }
 
-/** Selected structure plus Test Yourself solved set (deduped). */
 export function makeCardsStructureIds(
   selectedId: string | null,
   revealedIds: ReadonlySet<string>,
