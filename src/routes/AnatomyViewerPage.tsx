@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import BlurOnOutlinedIcon from "@mui/icons-material/BlurOnOutlined";
 import CenterFocusStrongOutlinedIcon from "@mui/icons-material/CenterFocusStrongOutlined";
 import CropFreeOutlinedIcon from "@mui/icons-material/CropFreeOutlined";
 import FilterCenterFocusOutlinedIcon from "@mui/icons-material/FilterCenterFocusOutlined";
@@ -134,6 +135,7 @@ export default function AnatomyViewerPage({
   );
   const [autoRotate, setAutoRotate] = useState(false);
   const [wireframe, setWireframe] = useState(false);
+  const [fadeOthers, setFadeOthers] = useState(false);
   const [autoFocus, setAutoFocus] = useState(true);
   const [cameraMode, setCameraMode] =
     useState<AnatomyCameraMode>("perspective");
@@ -193,6 +195,7 @@ export default function AnatomyViewerPage({
     dispatch({ type: "reset" });
     setAutoRotate(false);
     setWireframe(false);
+    setFadeOthers(false);
     setAutoFocus(true);
     setCameraMode("perspective");
     setHelpOpen(false);
@@ -642,6 +645,22 @@ export default function AnatomyViewerPage({
                     </span>
                   </Tooltip>
                   <Tooltip
+                    title={fadeOthers ? "Fade others on" : "Fade others off"}
+                  >
+                    <span>
+                      <IconButton
+                        size="small"
+                        disabled={!canvasReady}
+                        color={fadeOthers ? "primary" : "default"}
+                        aria-pressed={fadeOthers}
+                        aria-label="Fade others"
+                        onClick={() => setFadeOthers((on) => !on)}
+                      >
+                        <BlurOnOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                  <Tooltip
                     title={autoFocus ? "Auto-focus on" : "Auto-focus off"}
                   >
                     <span>
@@ -809,6 +828,16 @@ export default function AnatomyViewerPage({
               </MenuItem>
               <MenuItem
                 disabled={!canvasReady}
+                selected={fadeOthers}
+                onClick={() => {
+                  setFadeOthers((on) => !on);
+                  setMoreAnchor(null);
+                }}
+              >
+                Fade others
+              </MenuItem>
+              <MenuItem
+                disabled={!canvasReady}
                 selected={autoFocus}
                 onClick={() => {
                   setAutoFocus((v) => !v);
@@ -876,6 +905,7 @@ export default function AnatomyViewerPage({
                   background={canvasBackground}
                   autoRotate={autoRotate}
                   wireframe={wireframe}
+                  fadeOthers={fadeOthers}
                   autoFocus={autoFocus}
                   cameraMode={cameraMode}
                   onSelect={(id) => dispatch({ type: "select", id })}

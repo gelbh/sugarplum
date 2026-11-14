@@ -22,6 +22,7 @@ import {
   Raycaster,
   Scene,
   Vector2,
+  Vector3,
   WebGLRenderer,
   type AnimationClip,
   type Camera,
@@ -38,10 +39,22 @@ import {
 } from "./clipController";
 import { LOADER_DELAY_MS } from "./delayedShow";
 import {
+  FADE_OTHERS_OPACITY,
+  selectFadeIds,
+  type FadeCandidate,
+} from "./fadeOthers";
+import {
   movementExceeded,
   pickThresholdForPointerType,
   shouldCommitPick,
 } from "./pickGesture";
+import {
+  HOVER_EMISSIVE_HEX,
+  HOVER_EMISSIVE_MIN_INTENSITY,
+  SELECTION_EMISSIVE_HEX,
+  SELECTION_EMISSIVE_INTENSITY,
+  highlightModeFor,
+} from "./structureHighlight";
 import { isStructureVisible, type StructureUiState } from "./structureState";
 
 export type AnatomyLoadSpec = {
@@ -76,6 +89,8 @@ type Props = {
   /** When true, selection recenters the orbit target. Default true. */
   autoFocus?: boolean;
   cameraMode?: AnatomyCameraMode;
+  /** Soft-fade non-selected visible structures. Default false. */
+  fadeOthers?: boolean;
 };
 
 type EmissiveMat = Material & {
@@ -223,47 +238,18 @@ function applySceneBackground(
   renderer.setClearColor(color, 1);
 }
 
-function clearHoverHighlight(
-  mats: EmissiveMat[],
-  saved: { mat: EmissiveMat; color: Color; intensity: number }[],
-) {
-  for (const entry of saved) {
-    if (entry.mat.emissive) entry.mat.emissive.copy(entry.color);
-    if (entry.mat.emissiveIntensity != null) {
-      entry.mat.emissiveIntensity = entry.intensity;
-    }
-    entry.mat.needsUpdate = true;
-  }
-  mats.length = 0;
-  saved.length = 0;
-}
+type PresentableMat = EmissiveMat & {
+  opacity?: number;
+  transparent?: boolean;
+};
 
-function applyHoverHighlight(
-  root: Object3D,
-  mats: EmissiveMat[],
-  saved: { mat: EmissiveMat; color: Color; intensity: number }[],
-) {
-  clearHoverHighlight(mats, saved);
-  const seen = new Set<EmissiveMat>();
-  root.traverse((obj) => {
-    if (!(obj instanceof Mesh)) return;
-    const list = Array.isArray(obj.material) ? obj.material : [obj.material];
-    for (const mat of list) {
-      const m = mat as EmissiveMat;
-      if (!m?.emissive || seen.has(m)) continue;
-      seen.add(m);
-      saved.push({
-        mat: m,
-        color: m.emissive.clone(),
-        intensity: m.emissiveIntensity ?? 1,
-      });
-      m.emissive.setHex(0xffffff);
-      m.emissiveIntensity = Math.max(m.emissiveIntensity ?? 1, 0.55);
-      m.needsUpdate = true;
-      mats.push(m);
-    }
-  });
-}
+type BaseMat = {
+  mat: PresentableMat;
+  emissive?: Color;
+  intensity?: number;
+  opacity?: number;
+  transparent?: boolean;
+};
 
 function fitCameraToUnion(
   camera: Camera,
@@ -313,6 +299,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       wireframe = false,
       autoFocus = true,
       cameraMode = "perspective",
+      fadeOthers = false,
     },
     ref,
   ) {
@@ -323,6 +310,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
     const nodeMapRef = useRef<Map<string, Object3D>>(new Map());
     const idByNodeRef = useRef<Map<string, string>>(new Map());
     const applyVisibilityRef = useRef<() => void>(() => {});
+    const syncPresentationRef = useRef<() => void>(() => {});
     const fitCameraRef = useRef<() => void>(() => {});
     const focusStructureRef = useRef<(id: string) => void>(() => {});
     const setCameraModeRef = useRef<(mode: AnatomyCameraMode) => void>(
@@ -338,6 +326,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
     const stopClipLoopRef = useRef<() => void>(() => {});
     const autoRotateRef = useRef(autoRotate);
     const wireframeRef = useRef(wireframe);
+    const fadeOthersRef = useRef(fadeOthers);
     const backgroundRef = useRef(background);
     const autoFocusRef = useRef(autoFocus);
     const cameraModeRef = useRef(cameraMode);
@@ -393,6 +382,10 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         requestRenderRef.current();
       }
     }, [wireframe]);
+    useEffect(() => {
+      fadeOthersRef.current = fadeOthers;
+      syncPresentationRef.current();
+    }, [fadeOthers]);
     useEffect(() => {
       cameraModeRef.current = cameraMode;
       setCameraModeRef.current(cameraMode);
@@ -497,12 +490,160 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
 
       const raycaster = new Raycaster();
       const pointer = new Vector2();
-      const hoverMats: EmissiveMat[] = [];
-      const hoverSaved: { mat: EmissiveMat; color: Color; intensity: number }[] =
-        [];
+      const baseByMat = new Map<object, BaseMat>();
       let hoveredId: string | null = null;
 
       let disposed = false;
+
+      const ensureBase = (m: PresentableMat) => {
+        if (baseByMat.has(m)) return;
+        baseByMat.set(m, {
+          mat: m,
+          emissive: m.emissive?.clone(),
+          intensity: m.emissiveIntensity,
+          opacity: m.opacity,
+          transparent: m.transparent,
+        });
+      };
+
+      const restoreAllBases = () => {
+        for (const entry of baseByMat.values()) {
+          if (entry.emissive && entry.mat.emissive) {
+            entry.mat.emissive.copy(entry.emissive);
+          }
+          if (entry.intensity != null && entry.mat.emissiveIntensity != null) {
+            entry.mat.emissiveIntensity = entry.intensity;
+          }
+          if (entry.opacity != null && entry.mat.opacity != null) {
+            entry.mat.opacity = entry.opacity;
+          }
+          if (entry.transparent != null && entry.mat.transparent != null) {
+            entry.mat.transparent = entry.transparent;
+          }
+          entry.mat.needsUpdate = true;
+        }
+      };
+
+      const applyEmissive = (
+        root: Object3D,
+        hex: number,
+        intensity: number,
+        intensify: boolean,
+      ) => {
+        root.traverse((obj) => {
+          if (!(obj instanceof Mesh)) return;
+          const list = Array.isArray(obj.material)
+            ? obj.material
+            : [obj.material];
+          for (const mat of list) {
+            const m = mat as PresentableMat;
+            if (!m?.emissive) continue;
+            ensureBase(m);
+            m.emissive.setHex(hex);
+            m.emissiveIntensity = intensify
+              ? Math.max(m.emissiveIntensity ?? 1, intensity)
+              : intensity;
+            m.needsUpdate = true;
+          }
+        });
+      };
+
+      const applyFadeOpacity = (root: Object3D, opacity: number) => {
+        root.traverse((obj) => {
+          if (!(obj instanceof Mesh)) return;
+          const list = Array.isArray(obj.material)
+            ? obj.material
+            : [obj.material];
+          for (const mat of list) {
+            const m = mat as PresentableMat;
+            if (m?.opacity == null) continue;
+            ensureBase(m);
+            m.transparent = true;
+            m.opacity = opacity;
+            m.needsUpdate = true;
+          }
+        });
+      };
+
+      // ponytail: AABB distance scoring is O(visible); cache until selection /
+      // visibility / fade toggle / nodeMap membership changes (not every hover).
+      let lastFadeKey = "";
+      let lastFadeIds: string[] = [];
+
+      const fadeCacheKey = (
+        state: StructureUiState,
+        selectedId: string | null,
+      ) => {
+        if (!fadeOthersRef.current || !selectedId) return "off";
+        const bits = ["on", selectedId];
+        for (const id of nodeMapRef.current.keys()) {
+          if (id === selectedId) continue;
+          bits.push(id, isStructureVisible(state, id) ? "1" : "0");
+        }
+        return bits.join("|");
+      };
+
+      const resolveFadeIds = (
+        state: StructureUiState,
+        selectedId: string | null,
+      ): string[] => {
+        const key = fadeCacheKey(state, selectedId);
+        if (key === lastFadeKey) return lastFadeIds;
+        lastFadeKey = key;
+        if (key === "off" || !selectedId) {
+          lastFadeIds = [];
+          return lastFadeIds;
+        }
+        const selectedRoot = nodeMapRef.current.get(selectedId);
+        if (!selectedRoot) {
+          lastFadeIds = [];
+          return lastFadeIds;
+        }
+        const center = new Box3()
+          .setFromObject(selectedRoot)
+          .getCenter(new Vector3());
+        const candidates: FadeCandidate[] = [];
+        for (const [id, root] of nodeMapRef.current) {
+          if (id === selectedId) continue;
+          if (!isStructureVisible(state, id)) continue;
+          const c = new Box3().setFromObject(root).getCenter(new Vector3());
+          candidates.push({ id, distanceSq: c.distanceToSquared(center) });
+        }
+        lastFadeIds = selectFadeIds(candidates);
+        return lastFadeIds;
+      };
+
+      const syncPresentation = () => {
+        if (disposed) return;
+        restoreAllBases();
+        const state = uiRef.current;
+        const selectedId = state.selectedId;
+        for (const [id, root] of nodeMapRef.current) {
+          const mode = highlightModeFor(id, selectedId, hoveredId);
+          if (mode === "selected" || mode === "both") {
+            applyEmissive(
+              root,
+              SELECTION_EMISSIVE_HEX,
+              SELECTION_EMISSIVE_INTENSITY,
+              false,
+            );
+          }
+          if (mode === "hover" || mode === "both") {
+            applyEmissive(
+              root,
+              HOVER_EMISSIVE_HEX,
+              HOVER_EMISSIVE_MIN_INTENSITY,
+              true,
+            );
+          }
+        }
+        for (const id of resolveFadeIds(state, selectedId)) {
+          const root = nodeMapRef.current.get(id);
+          if (root) applyFadeOpacity(root, FADE_OTHERS_OPACITY);
+        }
+        requestRenderRef.current();
+      };
+      syncPresentationRef.current = syncPresentation;
 
       const isEffectivelyVisible = (obj: Object3D) => {
         let cur: Object3D | null = obj;
@@ -576,7 +717,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         for (const [id, obj] of nodeMapRef.current) {
           obj.visible = isStructureVisible(state, id);
         }
-        requestRender();
+        syncPresentation();
       };
       applyVisibilityRef.current = applyVisibility;
 
@@ -748,12 +889,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         canvas.style.cursor = id ? "pointer" : "";
         if (id === hoveredId) return;
         hoveredId = id;
-        clearHoverHighlight(hoverMats, hoverSaved);
-        if (id) {
-          const root = nodeMapRef.current.get(id);
-          if (root) applyHoverHighlight(root, hoverMats, hoverSaved);
-        }
-        requestRender();
+        syncPresentation();
       };
 
       const onPointerLeave = () => {
@@ -761,8 +897,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         pickGesture = null;
         hoveredId = null;
         canvas.style.cursor = "";
-        clearHoverHighlight(hoverMats, hoverSaved);
-        requestRender();
+        syncPresentation();
       };
 
       canvas.addEventListener("pointerdown", onPointerDown);
@@ -874,6 +1009,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         if (loaderDelayTimer != null) clearTimeout(loaderDelayTimer);
         setLoaderVisible(false);
         applyVisibilityRef.current = () => {};
+        syncPresentationRef.current = () => {};
         fitCameraRef.current = () => {};
         focusStructureRef.current = () => {};
         setCameraModeRef.current = () => {};
@@ -896,7 +1032,10 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         canvas.removeEventListener("pointercancel", onPointerCancel);
         canvas.removeEventListener("pointermove", onPointerMove);
         canvas.removeEventListener("pointerleave", onPointerLeave);
-        clearHoverHighlight(hoverMats, hoverSaved);
+        restoreAllBases();
+        baseByMat.clear();
+        lastFadeKey = "";
+        lastFadeIds = [];
         controls.dispose();
         disposeObjectTree(rootGroup);
         renderer.dispose();
