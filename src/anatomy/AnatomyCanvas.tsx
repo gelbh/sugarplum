@@ -32,6 +32,7 @@ import {
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { configureAnatomyGltfLoader } from "./configureGltfLoader";
 import { applyFit, applyFocus, orbitDistanceLimits } from "./cameraFit";
 import {
   createClipController,
@@ -910,7 +911,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       resize();
       requestRender();
 
-      const loader = new GLTFLoader();
+      const loader = configureAnatomyGltfLoader(new GLTFLoader());
       const specs = loadsRef.current;
       const byUrl = new Map<string, AnatomyLoadSpec[]>();
       for (const spec of specs) {
