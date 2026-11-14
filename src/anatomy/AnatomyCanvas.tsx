@@ -23,6 +23,7 @@ import {
   Scene,
   Vector2,
   WebGLRenderer,
+  type AnimationClip,
   type Camera,
   type Material,
   type Object3D,
@@ -31,6 +32,10 @@ import {
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { applyFit, applyFocus, orbitDistanceLimits } from "./cameraFit";
+import {
+  createClipController,
+  type ClipController,
+} from "./clipController";
 import { LOADER_DELAY_MS } from "./delayedShow";
 import {
   movementExceeded,
@@ -51,6 +56,10 @@ export type AnatomyCanvasHandle = {
   resetView: () => void;
   zoomBy: (factor: number) => void;
   focusStructure: (id: string) => void;
+  playClip: (name: string, opts?: { loop?: boolean }) => boolean;
+  pauseClips: () => void;
+  resumeClips: () => void;
+  stopClips: () => void;
 };
 
 /** CSS hex (`#rrggbb`) or `null` for transparent (page shows through). */
@@ -76,15 +85,60 @@ type EmissiveMat = Material & {
 
 const LOAD_CONCURRENCY = 6;
 
-function loadGltf(loader: GLTFLoader, url: string): Promise<Object3D> {
+type LoadedGltf = { scene: Object3D; animations: AnimationClip[] };
+
+function loadGltf(loader: GLTFLoader, url: string): Promise<LoadedGltf> {
   return new Promise((resolve, reject) => {
     loader.load(
       url,
-      (gltf) => resolve(gltf.scene),
+      (gltf) =>
+        resolve({
+          scene: gltf.scene,
+          animations: gltf.animations ?? [],
+        }),
       undefined,
       (err) => reject(err instanceof Error ? err : new Error(String(err))),
     );
   });
+}
+
+function composeClipControllers(
+  bundles: { root: Object3D; animations: AnimationClip[] }[],
+): ClipController | null {
+  if (bundles.length === 0) return null;
+  if (bundles.length === 1) {
+    return createClipController(bundles[0].root, bundles[0].animations);
+  }
+  const controllers = bundles.map((b) =>
+    createClipController(b.root, b.animations),
+  );
+  return {
+    get playing() {
+      return controllers.some((c) => c.playing);
+    },
+    play(name, opts) {
+      for (const c of controllers) c.stop();
+      for (const c of controllers) {
+        if (c.play(name, opts)) return true;
+      }
+      return false;
+    },
+    pause() {
+      for (const c of controllers) c.pause();
+    },
+    resume() {
+      for (const c of controllers) c.resume();
+    },
+    stop() {
+      for (const c of controllers) c.stop();
+    },
+    update(dt) {
+      for (const c of controllers) c.update(dt);
+    },
+    dispose() {
+      for (const c of controllers) c.dispose();
+    },
+  };
 }
 
 function disposeObjectTree(root: Object3D) {
@@ -279,6 +333,9 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
     const sceneRef = useRef<Scene | null>(null);
     const rendererRef = useRef<WebGLRenderer | null>(null);
     const rootGroupRef = useRef<Group | null>(null);
+    const clipCtlRef = useRef<ClipController | null>(null);
+    const startClipLoopRef = useRef<() => void>(() => {});
+    const stopClipLoopRef = useRef<() => void>(() => {});
     const autoRotateRef = useRef(autoRotate);
     const wireframeRef = useRef(wireframe);
     const backgroundRef = useRef(background);
@@ -369,6 +426,25 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         requestRenderRef.current();
       },
       focusStructure: (id: string) => focusStructureRef.current(id),
+      playClip: (name, opts) => {
+        const ok = clipCtlRef.current?.play(name, opts) ?? false;
+        if (ok) startClipLoopRef.current();
+        return ok;
+      },
+      pauseClips: () => {
+        clipCtlRef.current?.pause();
+        stopClipLoopRef.current();
+        requestRenderRef.current();
+      },
+      resumeClips: () => {
+        clipCtlRef.current?.resume();
+        startClipLoopRef.current();
+      },
+      stopClips: () => {
+        clipCtlRef.current?.stop();
+        stopClipLoopRef.current();
+        requestRenderRef.current();
+      },
     }));
 
     const loadsKey = loads.map((l) => `${l.structureId}:${l.url}`).join("|");
@@ -450,6 +526,8 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       };
 
       let renderRequested = false;
+      let clipLoopOn = false;
+      let lastClipFrameMs = performance.now();
       const renderFrame = () => {
         renderRequested = false;
         if (disposed) return;
@@ -459,10 +537,37 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         if (controls.autoRotate) requestRender();
       };
       const requestRender = () => {
-        if (disposed || renderRequested) return;
+        if (disposed || renderRequested || clipLoopOn) return;
         renderRequested = true;
         requestAnimationFrame(renderFrame);
       };
+      const stopClipLoop = () => {
+        if (!clipLoopOn) return;
+        clipLoopOn = false;
+        renderer.setAnimationLoop(null);
+      };
+      const startClipLoop = () => {
+        if (disposed) return;
+        if (clipLoopOn) return;
+        clipLoopOn = true;
+        lastClipFrameMs = performance.now();
+        renderer.setAnimationLoop(() => {
+          if (disposed) return;
+          const now = performance.now();
+          const dt = Math.min(0.1, (now - lastClipFrameMs) / 1000);
+          lastClipFrameMs = now;
+          clipCtlRef.current?.update(dt);
+          controls.update();
+          const cam = cameraRef.current;
+          if (cam) renderer.render(scene, cam);
+          if (!clipCtlRef.current?.playing) {
+            stopClipLoop();
+            if (controls.autoRotate) requestRender();
+          }
+        });
+      };
+      startClipLoopRef.current = startClipLoop;
+      stopClipLoopRef.current = stopClipLoop;
       requestRenderRef.current = requestRender;
       controls.addEventListener("change", requestRender);
 
@@ -690,6 +795,10 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         }, LOADER_DELAY_MS);
       }
 
+      /** One mixer per loaded asset so clip tracks bind to that model only. */
+      const assetClipBundles: { root: Object3D; animations: AnimationClip[] }[] =
+        [];
+
       void (async () => {
         if (total === 0) {
           setProgress({ loaded: 0, total: 0 });
@@ -700,8 +809,15 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
           urlEntries,
           LOAD_CONCURRENCY,
           async ([url, urlSpecs]) => {
-            const model = await loadGltf(loader, url);
+            const loaded = await loadGltf(loader, url);
             if (disposed) return;
+            const model = loaded.scene;
+            if (loaded.animations.length > 0) {
+              assetClipBundles.push({
+                root: model,
+                animations: loaded.animations,
+              });
+            }
             rootGroup.add(model);
             for (const spec of urlSpecs) {
               let root: Object3D = model;
@@ -746,6 +862,9 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
               : `Loaded with ${failed} missing part${failed === 1 ? "" : "s"}.`,
           );
         }
+        stopClipLoop();
+        clipCtlRef.current?.dispose();
+        clipCtlRef.current = composeClipControllers(assetClipBundles);
         applyVisibility();
         fitCamera();
       })();
@@ -759,6 +878,11 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         focusStructureRef.current = () => {};
         setCameraModeRef.current = () => {};
         requestRenderRef.current = () => {};
+        startClipLoopRef.current = () => {};
+        stopClipLoopRef.current = () => {};
+        stopClipLoop();
+        clipCtlRef.current?.dispose();
+        clipCtlRef.current = null;
         controlsRef.current = null;
         cameraRef.current = null;
         sceneRef.current = null;

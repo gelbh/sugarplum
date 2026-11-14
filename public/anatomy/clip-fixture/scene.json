@@ -1,0 +1,20 @@
+{
+  "id": "clip-fixture",
+  "title": "Clip player fixture",
+  "asset": "./model.glb",
+  "structures": [
+    {
+      "id": "root",
+      "label": "Root",
+      "node": "Root"
+    }
+  ],
+  "clips": [
+    {
+      "id": "pulse",
+      "label": "Pulse",
+      "animation": "Pulse",
+      "loop": true
+    }
+  ]
+}

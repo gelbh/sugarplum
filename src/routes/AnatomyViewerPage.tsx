@@ -27,6 +27,7 @@ import AnatomyCanvas, {
   type AnatomyCanvasHandle,
   type AnatomyLoadSpec,
 } from "../anatomy/AnatomyCanvas";
+import AnatomyClipBar from "../anatomy/AnatomyClipBar";
 import AnatomyHelpOverlay from "../anatomy/AnatomyHelpOverlay";
 import InfoPanel from "../anatomy/InfoPanel";
 import MakeCardsDeckDialog from "../anatomy/MakeCardsDeckDialog";
@@ -45,7 +46,7 @@ import { makeCardsStructureIds } from "../anatomy/structureCard";
 import TestYourself, {
   type AnatomyStudyMode,
 } from "../anatomy/TestYourself";
-import type { AnatomySceneManifest } from "../anatomy/types";
+import type { AnatomyClip, AnatomySceneManifest } from "../anatomy/types";
 import { isPlainClick, navigate } from "../nav/navigate";
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -132,6 +133,9 @@ export default function AnatomyViewerPage({
   const [revealedIds, setRevealedIds] = useState<Set<string>>(() => new Set());
   const [makeCardsOpen, setMakeCardsOpen] = useState(false);
   const [makeCardsNotice, setMakeCardsNotice] = useState<string | null>(null);
+  const [activeClipId, setActiveClipId] = useState<string | null>(null);
+  const [clipPaused, setClipPaused] = useState(false);
+  const [clipError, setClipError] = useState<string | null>(null);
 
   const bgChoices = useMemo<BgChoice[]>(
     () => [
@@ -183,6 +187,9 @@ export default function AnatomyViewerPage({
     setRevealedIds(new Set());
     setMakeCardsOpen(false);
     setMakeCardsNotice(null);
+    setActiveClipId(null);
+    setClipPaused(false);
+    setClipError(null);
   }, [sceneId]);
 
   useEffect(() => {
@@ -231,6 +238,13 @@ export default function AnatomyViewerPage({
     if (!manifest) return null;
     return buildLoads(sceneId, manifest, activeRegions);
   }, [manifest, sceneId, activeRegions]);
+
+  const loadsKey = loads?.map((l) => `${l.structureId}:${l.url}`).join("|") ?? "";
+  useEffect(() => {
+    setActiveClipId(null);
+    setClipPaused(false);
+    setClipError(null);
+  }, [loadsKey]);
 
   const selectedStructure =
     manifest?.structures.find((s) => s.id === ui.selectedId) ?? null;
@@ -670,6 +684,48 @@ export default function AnatomyViewerPage({
                 );
               })}
             </Stack>
+            {manifest.clips && manifest.clips.length > 0 ? (
+              <AnatomyClipBar
+                clips={manifest.clips}
+                disabled={!canvasReady}
+                activeClipId={activeClipId}
+                clipPaused={clipPaused}
+                clipError={clipError}
+                onSelectClip={(clip: AnatomyClip) => {
+                  const allIds = manifest.structures.map((s) => s.id);
+                  if (clip.reveal && clip.reveal.length > 0) {
+                    const keep = new Set(clip.reveal);
+                    dispatch({
+                      type: "hideAll",
+                      ids: allIds.filter((id) => !keep.has(id)),
+                    });
+                  }
+                  canvasRef.current?.stopClips();
+                  const ok = canvasRef.current?.playClip(clip.animation, {
+                    loop: clip.loop !== false,
+                  });
+                  if (!ok) {
+                    setClipError(`Animation "${clip.animation}" not found`);
+                    setActiveClipId(null);
+                    setClipPaused(false);
+                    return;
+                  }
+                  setClipError(null);
+                  setActiveClipId(clip.id);
+                  setClipPaused(false);
+                  setAutoRotate(false);
+                }}
+                onTogglePause={() => {
+                  if (clipPaused) {
+                    canvasRef.current?.resumeClips();
+                    setClipPaused(false);
+                  } else {
+                    canvasRef.current?.pauseClips();
+                    setClipPaused(true);
+                  }
+                }}
+              />
+            ) : null}
             <Box
               ref={stageRef}
               sx={{
