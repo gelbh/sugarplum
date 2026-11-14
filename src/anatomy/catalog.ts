@@ -619,6 +619,18 @@ export const ANATOMY_CATALOG: AnatomyCatalogEntry[] = [
     blurb: "IVALA teaching pack · herniation animations",
   },
   {
+    id: "canine-gait-animations",
+    title: "Canine gait animations",
+    standIn: false,
+    blurb: "IVALA teaching pack · gait animations",
+  },
+  {
+    id: "equine-gait-animations",
+    title: "Equine gait animations",
+    standIn: false,
+    blurb: "IVALA teaching pack · gait and lameness animations",
+  },
+  {
     id: "clip-fixture",
     title: "Clip player fixture",
     standIn: true,

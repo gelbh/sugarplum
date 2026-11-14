@@ -1,0 +1,94 @@
+{
+  "id": "canine-gait-animations",
+  "title": "Canine gait animations",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-canine-gait",
+      "label": "canine gait",
+      "node": "canine_gait",
+      "asset": "./canine_gait.glb",
+      "region": "root"
+    }
+  ],
+  "clips": [
+    {
+      "id": "amble",
+      "label": "Amble",
+      "animation": "Amble_baked",
+      "loop": true
+    },
+    {
+      "id": "canter",
+      "label": "Canter",
+      "animation": "Canter_baked",
+      "loop": true
+    },
+    {
+      "id": "gallop",
+      "label": "Gallop",
+      "animation": "Gallop_baked",
+      "loop": true
+    },
+    {
+      "id": "idle",
+      "label": "Idle",
+      "animation": "Idle_baked",
+      "loop": true
+    },
+    {
+      "id": "pace",
+      "label": "Pace",
+      "animation": "Pace_baked",
+      "loop": true
+    },
+    {
+      "id": "trot",
+      "label": "Trot",
+      "animation": "Trot_baked",
+      "loop": true
+    },
+    {
+      "id": "walk",
+      "label": "Walk",
+      "animation": "Walk_baked",
+      "loop": true
+    },
+    {
+      "id": "look-down-fidget",
+      "label": "LookDown Fidget",
+      "animation": "LookDown_Fidget_baked",
+      "loop": true
+    },
+    {
+      "id": "look-left-fidget",
+      "label": "LookLeft Fidget",
+      "animation": "LookLeft_Fidget_baked",
+      "loop": true
+    },
+    {
+      "id": "look-right-fidget",
+      "label": "LookRight Fidget",
+      "animation": "LookRight_Fidget_baked",
+      "loop": true
+    },
+    {
+      "id": "slow-look-left-fidget",
+      "label": "SlowLookLeft Fidget",
+      "animation": "SlowLookLeft_Fidget_baked",
+      "loop": true
+    },
+    {
+      "id": "slow-look-right-fidget",
+      "label": "SlowLookRight Fidget",
+      "animation": "SlowLookRight_Fidget_baked",
+      "loop": true
+    }
+  ]
+}

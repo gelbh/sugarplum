@@ -1,0 +1,124 @@
+{
+  "id": "equine-gait-animations",
+  "title": "Equine gait animations",
+  "regions": [
+    {
+      "id": "root",
+      "label": "Root",
+      "defaultActive": true
+    }
+  ],
+  "structures": [
+    {
+      "id": "root-equine-gait",
+      "label": "equine gait",
+      "node": "equine_gait",
+      "asset": "./equine_gait.glb",
+      "region": "root"
+    }
+  ],
+  "clips": [
+    {
+      "id": "canter-left-lead",
+      "label": "Canter (left lead)",
+      "animation": "Canter_LeftLead_baked",
+      "loop": true
+    },
+    {
+      "id": "canter-right-lead",
+      "label": "Canter (right lead)",
+      "animation": "Canter_RightLead_baked",
+      "loop": true
+    },
+    {
+      "id": "trot-grade2-reverse-circling",
+      "label": "Circle trot clockwise",
+      "animation": "Trot_Grade2_ReverseCircling_baked",
+      "loop": true
+    },
+    {
+      "id": "trot-f-l-grade1-circling",
+      "label": "Circle trot counterclockwise",
+      "animation": "Trot_FL_Grade1_Circling_baked",
+      "loop": true
+    },
+    {
+      "id": "trot-f-l-grade2-circling",
+      "label": "Circle trot counterclockwise",
+      "animation": "Trot_FL_Grade2_Circling_baked",
+      "loop": true
+    },
+    {
+      "id": "trot-h-l-grade1-circling",
+      "label": "Circle trot counterclockwise",
+      "animation": "Trot_HL_Grade1_Circling_baked",
+      "loop": true
+    },
+    {
+      "id": "trot-h-l-grade2-circling",
+      "label": "Circle trot counterclockwise",
+      "animation": "Trot_HL_Grade2_Circling_baked",
+      "loop": true
+    },
+    {
+      "id": "gallop",
+      "label": "Gallop",
+      "animation": "Gallop_baked",
+      "loop": true
+    },
+    {
+      "id": "idle",
+      "label": "Idle",
+      "animation": "Idle_baked",
+      "loop": true
+    },
+    {
+      "id": "pace",
+      "label": "Pace",
+      "animation": "Pace_baked",
+      "loop": true
+    },
+    {
+      "id": "trot-f-l-grade3-lameness",
+      "label": "Trot",
+      "animation": "Trot_FL_Grade3_Lameness_baked",
+      "loop": true
+    },
+    {
+      "id": "trot-h-l-grade3-lameness",
+      "label": "Trot",
+      "animation": "Trot_HL_Grade3_Lameness_baked",
+      "loop": true
+    },
+    {
+      "id": "trot",
+      "label": "Trot",
+      "animation": "Trot_baked",
+      "loop": true
+    },
+    {
+      "id": "walk-f-l-grade4-lameness",
+      "label": "Walk",
+      "animation": "Walk_FL_Grade4_Lameness_baked",
+      "loop": true
+    },
+    {
+      "id": "walk-h-l-grade4-lameness",
+      "label": "Walk",
+      "animation": "Walk_HL_Grade4_Lameness_baked",
+      "loop": true
+    },
+    {
+      "id": "walk",
+      "label": "Walk",
+      "animation": "Walk_baked",
+      "loop": true
+    },
+    {
+      "id": "f-l-grade5-lameness",
+      "label": "Walk",
+      "animation": "FL_Grade5_Lameness_baked",
+      "loop": true
+    }
+  ]
+}
