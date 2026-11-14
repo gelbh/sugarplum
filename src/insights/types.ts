@@ -8,7 +8,7 @@ export type InsightsGradeCounts = {
 };
 
 export type InsightsSummary = {
-  window: { reviewsDays: 30; gradeDays: 14 };
+  window: { reviewsDays: 30; gradeDays: 14; activityDays: 90 };
   kpis: {
     reviewsInWindow: number;
     reviewedToday: number;
@@ -23,5 +23,6 @@ export type InsightsSummary = {
     level: number;
   } | null;
   reviewsPerDay: Array<{ day: string; count: number }>;
+  activityByDay: Array<{ day: string; count: number }>;
   gradeCounts: InsightsGradeCounts;
 };

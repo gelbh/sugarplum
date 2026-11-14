@@ -1,6 +1,7 @@
 import {
   buildGradeCounts,
   buildReviewsPerDay,
+  INSIGHTS_ACTIVITY_DAYS,
   INSIGHTS_GRADE_DAYS,
   INSIGHTS_REVIEWS_DAYS,
   ratingsInLocalWindow,
@@ -35,8 +36,15 @@ export function guestInsightsSummary(
     reviewed_at: l.at,
     rating: l.rating as number,
   }));
+  const reviewedAts = logs.map((l) => l.reviewed_at);
+  const activityByDay = buildReviewsPerDay(
+    reviewedAts,
+    now,
+    tzOffsetMinutes,
+    INSIGHTS_ACTIVITY_DAYS,
+  );
   const reviewsPerDay = buildReviewsPerDay(
-    logs.map((l) => l.reviewed_at),
+    reviewedAts,
     now,
     tzOffsetMinutes,
     INSIGHTS_REVIEWS_DAYS,
@@ -72,6 +80,7 @@ export function guestInsightsSummary(
     window: {
       reviewsDays: INSIGHTS_REVIEWS_DAYS,
       gradeDays: INSIGHTS_GRADE_DAYS,
+      activityDays: INSIGHTS_ACTIVITY_DAYS,
     },
     kpis: {
       reviewsInWindow,
@@ -90,6 +99,7 @@ export function guestInsightsSummary(
     },
     gamification: null,
     reviewsPerDay,
+    activityByDay,
     gradeCounts,
   };
 }
