@@ -29,7 +29,7 @@ describe("ActivityHeatmap", () => {
   }
 
   function daySeries(counts: readonly number[]) {
-    const start = Date.UTC(2026, 7, 17, 12, 0, 0); // 2026-08-17
+    const start = Date.UTC(2026, 7, 17, 12, 0, 0);
     return counts.map((count, i) => {
       const d = new Date(start + i * 86_400_000);
       const day = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
