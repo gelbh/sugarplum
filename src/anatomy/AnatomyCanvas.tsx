@@ -565,6 +565,54 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         });
       };
 
+      // ponytail: AABB distance scoring is O(visible); cache until selection /
+      // visibility / fade toggle / nodeMap membership changes (not every hover).
+      let lastFadeKey = "";
+      let lastFadeIds: string[] = [];
+
+      const fadeCacheKey = (
+        state: StructureUiState,
+        selectedId: string | null,
+      ) => {
+        if (!fadeOthersRef.current || !selectedId) return "off";
+        const bits = ["on", selectedId];
+        for (const id of nodeMapRef.current.keys()) {
+          if (id === selectedId) continue;
+          bits.push(id, isStructureVisible(state, id) ? "1" : "0");
+        }
+        return bits.join("|");
+      };
+
+      const resolveFadeIds = (
+        state: StructureUiState,
+        selectedId: string | null,
+      ): string[] => {
+        const key = fadeCacheKey(state, selectedId);
+        if (key === lastFadeKey) return lastFadeIds;
+        lastFadeKey = key;
+        if (key === "off" || !selectedId) {
+          lastFadeIds = [];
+          return lastFadeIds;
+        }
+        const selectedRoot = nodeMapRef.current.get(selectedId);
+        if (!selectedRoot) {
+          lastFadeIds = [];
+          return lastFadeIds;
+        }
+        const center = new Box3()
+          .setFromObject(selectedRoot)
+          .getCenter(new Vector3());
+        const candidates: FadeCandidate[] = [];
+        for (const [id, root] of nodeMapRef.current) {
+          if (id === selectedId) continue;
+          if (!isStructureVisible(state, id)) continue;
+          const c = new Box3().setFromObject(root).getCenter(new Vector3());
+          candidates.push({ id, distanceSq: c.distanceToSquared(center) });
+        }
+        lastFadeIds = selectFadeIds(candidates);
+        return lastFadeIds;
+      };
+
       const syncPresentation = () => {
         if (disposed) return;
         restoreAllBases();
@@ -589,26 +637,9 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
             );
           }
         }
-        if (fadeOthersRef.current && selectedId) {
-          const selectedRoot = nodeMapRef.current.get(selectedId);
-          if (selectedRoot) {
-            const center = new Box3()
-              .setFromObject(selectedRoot)
-              .getCenter(new Vector3());
-            const candidates: FadeCandidate[] = [];
-            for (const [id, root] of nodeMapRef.current) {
-              if (id === selectedId) continue;
-              if (!isStructureVisible(state, id)) continue;
-              const c = new Box3()
-                .setFromObject(root)
-                .getCenter(new Vector3());
-              candidates.push({ id, distanceSq: c.distanceToSquared(center) });
-            }
-            for (const id of selectFadeIds(candidates)) {
-              const root = nodeMapRef.current.get(id);
-              if (root) applyFadeOpacity(root, FADE_OTHERS_OPACITY);
-            }
-          }
+        for (const id of resolveFadeIds(state, selectedId)) {
+          const root = nodeMapRef.current.get(id);
+          if (root) applyFadeOpacity(root, FADE_OTHERS_OPACITY);
         }
         requestRenderRef.current();
       };
@@ -1003,6 +1034,8 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         canvas.removeEventListener("pointerleave", onPointerLeave);
         restoreAllBases();
         baseByMat.clear();
+        lastFadeKey = "";
+        lastFadeIds = [];
         controls.dispose();
         disposeObjectTree(rootGroup);
         renderer.dispose();
