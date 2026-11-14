@@ -7,3 +7,16 @@ export function anatomyViewerMobile(mobile: boolean): {
     showSheetTriggers: mobile,
   };
 }
+
+export function anatomyClipChrome(
+  mobile: boolean,
+  hasClips: boolean,
+): {
+  showClipBar: boolean;
+  showClipsTrigger: boolean;
+} {
+  return {
+    showClipBar: !mobile && hasClips,
+    showClipsTrigger: mobile && hasClips,
+  };
+}
