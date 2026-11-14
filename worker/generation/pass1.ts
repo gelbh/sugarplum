@@ -714,7 +714,10 @@ export async function runPass1Phase(
       if (!pdfObject) {
         throw new Error(`R2 object missing: ${material.r2_key}`);
       }
-      const pdfBytes = await pdfObject.arrayBuffer();
+      // ponytail: full R2 arrayBuffer up to MAX_FILE_BYTES (50MB) inside a ~128MB
+      // isolate. Share one buffer through OCR windows + Docling; if OOM persists,
+      // park R2-range / out-of-isolate extract (do not roll back the product cap).
+      let pdfBytes: ArrayBuffer | undefined = await pdfObject.arrayBuffer();
       let text = "";
       let textError: unknown;
       let sidecar: OcrSidecar | null = null;
@@ -771,6 +774,8 @@ export async function runPass1Phase(
         opts,
         progress,
       });
+      // Drop full-PDF buffer before text LLM so peak memory falls sooner.
+      pdfBytes = undefined;
 
       let textDrafts: CardDraft[] = [];
       if (text.trim()) {
