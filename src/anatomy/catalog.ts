@@ -612,4 +612,10 @@ export const ANATOMY_CATALOG: AnatomyCatalogEntry[] = [
     standIn: false,
     blurb: "IVALA teaching pack · echo simulator canine heart",
   },
+  {
+    id: "clip-fixture",
+    title: "Clip player fixture",
+    standIn: true,
+    blurb: "Dev fixture · looping Pulse animation for clip bar smoke",
+  },
 ];

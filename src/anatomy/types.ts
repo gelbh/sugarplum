@@ -23,6 +23,17 @@ export type AnatomyStructure = {
   info?: AnatomyStructureInfo;
 };
 
+export type AnatomyClip = {
+  id: string;
+  label: string;
+  /** Exact glTF animation.name after load. */
+  animation: string;
+  /** Structure ids forced visible while this clip is active. */
+  reveal?: string[];
+  /** Default true when omitted. Herniation clips set false (play-once). */
+  loop?: boolean;
+};
+
 export type AnatomySceneManifest = {
   id: string;
   title: string;
@@ -31,4 +42,6 @@ export type AnatomySceneManifest = {
   /** Optional body-region groups for staged load. */
   regions?: AnatomyRegion[];
   structures: AnatomyStructure[];
+  /** Optional named glTF animations for the clip bar. */
+  clips?: AnatomyClip[];
 };

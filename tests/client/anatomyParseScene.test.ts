@@ -278,6 +278,41 @@ describe("parseAnatomySceneManifest", () => {
       }),
     ).toThrow(/alsoKnownAs|info/i);
   });
+
+  it("accepts optional clips with defaults", () => {
+    const m = parseAnatomySceneManifest({
+      id: "clip-demo",
+      title: "Clip demo",
+      asset: "./model.glb",
+      structures: [{ id: "root", label: "Root", node: "Root" }],
+      clips: [
+        { id: "walk", label: "Walk", animation: "Walk_baked" },
+        {
+          id: "falcine",
+          label: "Falcine",
+          animation: "BrainFalcineAnimation",
+          loop: false,
+          reveal: ["skull", "brain-falcine"],
+        },
+      ],
+    });
+    expect(m.clips).toHaveLength(2);
+    expect(m.clips?.[0].loop).toBeUndefined();
+    expect(m.clips?.[1].loop).toBe(false);
+    expect(m.clips?.[1].reveal).toEqual(["skull", "brain-falcine"]);
+  });
+
+  it("rejects clip missing animation name", () => {
+    expect(() =>
+      parseAnatomySceneManifest({
+        id: "x",
+        title: "X",
+        asset: "./m.glb",
+        structures: [{ id: "a", label: "A", node: "A" }],
+        clips: [{ id: "c", label: "C" }],
+      }),
+    ).toThrow();
+  });
 });
 
 describe("safeAnatomyRelativeAsset", () => {

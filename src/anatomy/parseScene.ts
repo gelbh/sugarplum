@@ -21,6 +21,14 @@ const RegionSchema = z.object({
   defaultActive: z.boolean().optional(),
 });
 
+const ClipSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  animation: z.string().min(1),
+  reveal: z.array(z.string().min(1)).optional(),
+  loop: z.boolean().optional(),
+});
+
 const ManifestSchema = z
   .object({
     id: z.string().min(1),
@@ -28,6 +36,7 @@ const ManifestSchema = z
     asset: z.string().min(1).optional(),
     regions: z.array(RegionSchema).min(1).optional(),
     structures: z.array(StructureSchema).min(1),
+    clips: z.array(ClipSchema).min(1).optional(),
   })
   .superRefine((data, ctx) => {
     const withAsset = data.structures.filter((s) => s.asset);
