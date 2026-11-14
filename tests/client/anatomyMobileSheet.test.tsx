@@ -7,12 +7,27 @@ import AnatomyMobileSheet, {
   type AnatomySheetTab,
 } from "../../src/anatomy/AnatomyMobileSheet";
 import { createStructureUiState } from "../../src/anatomy/structureState";
+import type { AnatomyClip } from "../../src/anatomy/types";
 
 const structures = [
   { id: "femur", label: "Femur", node: "Femur", region: "legs-right" },
 ];
 
-function Harness({ initialTab }: { initialTab: AnatomySheetTab }) {
+const clips: AnatomyClip[] = [
+  { id: "falcine", label: "Falcine", animation: "BrainFalcineAnimation" },
+  {
+    id: "caudal",
+    label: "Caudal tentorial",
+    animation: "BrainCaudalTentorialAnimation",
+  },
+];
+
+type HarnessProps = {
+  initialTab: AnatomySheetTab;
+  clips?: AnatomyClip[];
+};
+
+function Harness({ initialTab, clips: clipList }: HarnessProps) {
   const [tab, setTab] = useState(initialTab);
   const [open, setOpen] = useState(true);
   return createElement(AnatomyMobileSheet, {
@@ -31,10 +46,17 @@ function Harness({ initialTab }: { initialTab: AnatomySheetTab }) {
     selectedStructure: structures[0],
     regionStructures: structures,
     onCorrect: () => undefined,
+    clips: clipList,
+    clipsDisabled: false,
+    activeClipId: null,
+    clipPaused: false,
+    clipError: null,
+    onSelectClip: () => undefined,
+    onTogglePauseClip: () => undefined,
   });
 }
 
-async function renderSheet(tab: AnatomySheetTab) {
+async function renderSheet(tab: AnatomySheetTab, clipList?: AnatomyClip[]) {
   const host = document.createElement("div");
   document.body.appendChild(host);
   const root = createRoot(host);
@@ -43,11 +65,10 @@ async function renderSheet(tab: AnatomySheetTab) {
       createElement(
         ThemeProvider,
         { theme: createTheme() },
-        createElement(Harness, { initialTab: tab }),
+        createElement(Harness, { initialTab: tab, clips: clipList }),
       ),
     );
   });
-  // Drawer portals to body; give MUI a tick.
   await act(async () => {
     await new Promise((r) => setTimeout(r, 0));
   });
@@ -69,5 +90,29 @@ describe("AnatomyMobileSheet", () => {
     expect(document.body.textContent).toMatch(/Explore/);
     expect(document.body.textContent).toMatch(/Type/);
     expect(document.body.textContent).toMatch(/MCQ/);
+  });
+
+  it("lists clip labels on clips tab", async () => {
+    await renderSheet("clips", clips);
+    expect(document.body.textContent).toMatch(/Falcine/);
+    expect(document.body.textContent).toMatch(/Caudal tentorial/);
+  });
+
+  it("omits Clips tab when no clips", async () => {
+    await renderSheet("structures");
+    const tabs = Array.from(document.body.querySelectorAll('[role="tab"]')).map(
+      (el) => el.textContent,
+    );
+    expect(tabs).toContain("Structures");
+    expect(tabs).toContain("Study");
+    expect(tabs).not.toContain("Clips");
+  });
+
+  it("shows Clips tab when clips exist", async () => {
+    await renderSheet("structures", clips);
+    const tabs = Array.from(document.body.querySelectorAll('[role="tab"]')).map(
+      (el) => el.textContent,
+    );
+    expect(tabs).toContain("Clips");
   });
 });

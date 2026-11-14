@@ -14,6 +14,7 @@ type Props = {
   clipError: string | null;
   onSelectClip: (clip: AnatomyClip) => void;
   onTogglePause: () => void;
+  embedded?: boolean;
 };
 
 export default function AnatomyClipBar({
@@ -24,6 +25,7 @@ export default function AnatomyClipBar({
   clipError,
   onSelectClip,
   onTogglePause,
+  embedded = false,
 }: Props) {
   if (clips.length === 0) return null;
   return (
@@ -35,10 +37,11 @@ export default function AnatomyClipBar({
       spacing={0.75}
       sx={{
         flexShrink: 0,
-        px: 1,
-        py: 0.5,
-        borderBottom: 1,
-        borderColor: "divider",
+        px: embedded ? 0 : 1,
+        py: embedded ? 0 : 0.5,
+        ...(embedded
+          ? {}
+          : { borderBottom: 1, borderColor: "divider" }),
       }}
     >
       <Typography
