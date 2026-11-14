@@ -7,14 +7,22 @@ export type CompositionSparkProps = SubjectKnowledgeBuckets & {
   maxWidth?: number | string;
 };
 
+/** Operate-safe stage ladder (not Anki traffic lights). */
+export const COMPOSITION_SEGMENT_COLORS = {
+  mature: "#5B2C6F",
+  young: "rgba(91, 44, 111, 0.55)",
+  learning: "#C4A574",
+  new: "#bdbdbd",
+} as const;
+
 const SEGMENTS: {
   key: keyof SubjectKnowledgeBuckets;
   color: string;
 }[] = [
-  { key: "mature", color: "success.main" },
-  { key: "young", color: "info.main" },
-  { key: "learning", color: "warning.main" },
-  { key: "new", color: "grey.400" },
+  { key: "mature", color: COMPOSITION_SEGMENT_COLORS.mature },
+  { key: "young", color: COMPOSITION_SEGMENT_COLORS.young },
+  { key: "learning", color: COMPOSITION_SEGMENT_COLORS.learning },
+  { key: "new", color: COMPOSITION_SEGMENT_COLORS.new },
 ];
 
 export default function CompositionSpark({
