@@ -32,6 +32,11 @@ import {
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import {
+  buildBvhUnderRoot,
+  disposeGeometryWithBvh,
+  installAnatomyAcceleratedRaycast,
+} from "./anatomyBvh";
 import { configureAnatomyGltfLoader } from "./configureGltfLoader";
 import { applyFit, applyFocus, orbitDistanceLimits } from "./cameraFit";
 import {
@@ -160,10 +165,14 @@ function composeClipControllers(
 function disposeObjectTree(root: Object3D) {
   root.traverse((obj) => {
     const mesh = obj as Object3D & {
-      geometry?: { dispose: () => void };
+      geometry?: {
+        dispose: () => void;
+        disposeBoundsTree?: () => void;
+        boundsTree?: unknown;
+      };
       material?: Material | Material[];
     };
-    mesh.geometry?.dispose();
+    if (mesh.geometry) disposeGeometryWithBvh(mesh.geometry);
     const mats = mesh.material
       ? Array.isArray(mesh.material)
         ? mesh.material
@@ -447,6 +456,8 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       const host = hostRef.current;
       if (!host) return;
 
+      installAnatomyAcceleratedRaycast();
+
       setLoadError(null);
       setProgress({ loaded: 0, total: 0 });
       setLoaderVisible(false);
@@ -490,6 +501,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       scene.add(key);
 
       const raycaster = new Raycaster();
+      raycaster.firstHitOnly = true;
       const pointer = new Vector2();
       const baseByMat = new Map<object, BaseMat>();
       let hoveredId: string | null = null;
@@ -973,6 +985,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
               if (root.name) {
                 idByNodeRef.current.set(root.name, spec.structureId);
               }
+              buildBvhUnderRoot(root);
             }
             if (wireframeRef.current) setTreeWireframe(model, true);
             applyVisibility();
