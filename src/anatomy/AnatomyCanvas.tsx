@@ -32,7 +32,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { applyFit, applyFocus, orbitDistanceLimits } from "./cameraFit";
 import { LOADER_DELAY_MS } from "./delayedShow";
-import { movementExceeded } from "./pickGesture";
+import { movementExceeded, shouldCommitPick } from "./pickGesture";
 import { isStructureVisible, type StructureUiState } from "./structureState";
 
 export type AnatomyLoadSpec = {
@@ -567,24 +567,66 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         return resolveHitId(hits[0].object);
       };
 
-      let pointerDown: { x: number; y: number } | null = null;
+      type PickGesture = {
+        pointerId: number;
+        x: number;
+        y: number;
+        exceeded: boolean;
+        multi: boolean;
+      };
+      let pickGesture: PickGesture | null = null;
+      const activePointers = new Set<number>();
+
       const onPointerDown = (ev: PointerEvent) => {
-        pointerDown = { x: ev.clientX, y: ev.clientY };
+        activePointers.add(ev.pointerId);
+        if (activePointers.size > 1) {
+          if (pickGesture) pickGesture.multi = true;
+          return;
+        }
+        pickGesture = {
+          pointerId: ev.pointerId,
+          x: ev.clientX,
+          y: ev.clientY,
+          exceeded: false,
+          multi: false,
+        };
       };
       const onPointerUp = (ev: PointerEvent) => {
-        if (!pointerDown) return;
-        const dx = ev.clientX - pointerDown.x;
-        const dy = ev.clientY - pointerDown.y;
-        pointerDown = null;
-        if (movementExceeded(dx, dy)) return;
+        activePointers.delete(ev.pointerId);
+        const gesture = pickGesture;
+        if (!gesture || ev.pointerId !== gesture.pointerId) {
+          if (activePointers.size === 0) pickGesture = null;
+          return;
+        }
+        pickGesture = null;
+        if (
+          !shouldCommitPick({
+            exceededDuring: gesture.exceeded,
+            multiPointer: gesture.multi || activePointers.size > 0,
+            endDx: ev.clientX - gesture.x,
+            endDy: ev.clientY - gesture.y,
+          })
+        ) {
+          return;
+        }
         const id = pickIdAtEvent(ev);
         if (id) onSelectRef.current(id);
       };
-      const onPointerCancel = () => {
-        pointerDown = null;
+      const onPointerCancel = (ev: PointerEvent) => {
+        activePointers.delete(ev.pointerId);
+        if (pickGesture?.pointerId === ev.pointerId) pickGesture = null;
+        if (activePointers.size === 0) pickGesture = null;
       };
 
       const onPointerMove = (ev: PointerEvent) => {
+        if (
+          pickGesture &&
+          ev.pointerId === pickGesture.pointerId &&
+          !pickGesture.exceeded &&
+          movementExceeded(ev.clientX - pickGesture.x, ev.clientY - pickGesture.y)
+        ) {
+          pickGesture.exceeded = true;
+        }
         const id = pickIdAtEvent(ev);
         canvas.style.cursor = id ? "pointer" : "";
         if (id === hoveredId) return;
@@ -598,7 +640,8 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       };
 
       const onPointerLeave = () => {
-        pointerDown = null;
+        activePointers.clear();
+        pickGesture = null;
         hoveredId = null;
         canvas.style.cursor = "";
         clearHoverHighlight(hoverMats, hoverSaved);

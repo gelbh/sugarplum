@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   PICK_DRAG_THRESHOLD_PX,
   movementExceeded,
+  shouldCommitPick,
 } from "../../src/anatomy/pickGesture";
 
 describe("movementExceeded", () => {
@@ -18,5 +19,40 @@ describe("movementExceeded", () => {
   it("is true just over the threshold", () => {
     expect(movementExceeded(PICK_DRAG_THRESHOLD_PX + 0.1, 0)).toBe(true);
     expect(movementExceeded(3, 3)).toBe(true);
+  });
+});
+
+describe("shouldCommitPick", () => {
+  it("accepts a still tap", () => {
+    expect(
+      shouldCommitPick({
+        exceededDuring: false,
+        multiPointer: false,
+        endDx: 0,
+        endDy: 0,
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects when movement exceeded mid-gesture even if end is near start", () => {
+    expect(
+      shouldCommitPick({
+        exceededDuring: true,
+        multiPointer: false,
+        endDx: 1,
+        endDy: 0,
+      }),
+    ).toBe(false);
+  });
+
+  it("rejects multi-pointer gestures", () => {
+    expect(
+      shouldCommitPick({
+        exceededDuring: false,
+        multiPointer: true,
+        endDx: 0,
+        endDy: 0,
+      }),
+    ).toBe(false);
   });
 });
