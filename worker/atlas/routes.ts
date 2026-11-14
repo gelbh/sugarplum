@@ -3,12 +3,7 @@ import { getDb } from "../db/client";
 import { requireUser } from "../auth/session";
 import { refreshFocusBestEffort } from "./focus";
 import type { AppEnv, AtlasRow } from "./types";
-import {
-  TEMPLATE_KEY,
-  atlasMeta,
-  newId,
-  nowIso,
-} from "./ownership";
+import { TEMPLATE_KEY, atlasMeta, newId, nowIso } from "./ownership";
 import { atlasItemRoutes } from "./atlas-item-routes";
 
 export const atlasRoutes = new Hono<AppEnv>();

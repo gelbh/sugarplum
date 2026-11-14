@@ -18,10 +18,7 @@ import {
 import { loadParasiteDataset } from "./datasets/parasites";
 import { IMAGE_ROLES } from "./datasets/schema";
 import { normalizeParasiteName } from "./names";
-import {
-  emptyParasiteFields,
-  type ParasiteFields,
-} from "./templates/parasite";
+import { emptyParasiteFields, type ParasiteFields } from "./templates/parasite";
 import { createR2PutUrl } from "../materials/r2-presign";
 import { sha256Hex } from "../materials/content-hash";
 import { MAX_PASTE_BYTES } from "../materials/limits";
@@ -306,7 +303,8 @@ atlasItemRoutes.post("/entries", async (c) => {
     overlayAtlas(loadParasiteDataset().entries, overlays),
     focus,
   ).find((e) => e.id === row.id);
-  if (!view) throw new HTTPException(500, { message: "Failed to create entry" });
+  if (!view)
+    throw new HTTPException(500, { message: "Failed to create entry" });
   return c.json(view, 201);
 });
 
@@ -581,10 +579,8 @@ atlasItemRoutes.post("/entries/:entryId/refs", async (c) => {
       : body.field === null
         ? null
         : null;
-  const url =
-    typeof body.url === "string" ? body.url.trim() || null : null;
-  const note =
-    typeof body.note === "string" ? body.note.trim() || null : null;
+  const url = typeof body.url === "string" ? body.url.trim() || null : null;
+  const note = typeof body.note === "string" ? body.note.trim() || null : null;
   const materialId =
     typeof body.materialId === "string" ? body.materialId : null;
   const page =
@@ -599,7 +595,17 @@ atlasItemRoutes.post("/entries/:entryId/refs", async (c) => {
          user_added, created_at
        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
     )
-    .bind(id, row.id, fieldKey, citation, url, materialId, page, note, createdAt)
+    .bind(
+      id,
+      row.id,
+      fieldKey,
+      citation,
+      url,
+      materialId,
+      page,
+      note,
+      createdAt,
+    )
     .run();
 
   return c.json(
@@ -819,4 +825,3 @@ atlasItemRoutes.delete("/entries/:entryId/images/:imageId", async (c) => {
   }
   return c.body(null, 204);
 });
-
