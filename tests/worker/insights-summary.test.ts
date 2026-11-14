@@ -39,6 +39,9 @@ describe("GET /api/insights/summary", () => {
     const body = (await res.json()) as InsightsSummary;
     expect(body.reviewsPerDay).toHaveLength(30);
     expect(body.reviewsPerDay.every((p) => p.count === 0)).toBe(true);
+    expect(body.activityByDay).toHaveLength(90);
+    expect(body.activityByDay.every((p) => p.count === 0)).toBe(true);
+    expect(body.window.activityDays).toBe(90);
     expect(body.gradeCounts).toEqual({
       again: 0,
       hard: 0,

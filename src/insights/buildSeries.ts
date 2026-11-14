@@ -3,6 +3,7 @@ import type { InsightsGradeCounts } from "./types";
 
 export const INSIGHTS_REVIEWS_DAYS = 30;
 export const INSIGHTS_GRADE_DAYS = 14;
+export const INSIGHTS_ACTIVITY_DAYS = 90;
 
 const MS_PER_DAY = 86_400_000;
 
