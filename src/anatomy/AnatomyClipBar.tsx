@@ -14,7 +14,6 @@ type Props = {
   clipError: string | null;
   onSelectClip: (clip: AnatomyClip) => void;
   onTogglePause: () => void;
-  /** Drop bar chrome when embedded in the mobile sheet. */
   embedded?: boolean;
 };
 

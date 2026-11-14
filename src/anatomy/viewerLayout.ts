@@ -8,7 +8,6 @@ export function anatomyViewerMobile(mobile: boolean): {
   };
 }
 
-/** Clip chrome split for mobile sheet vs desktop bar. */
 export function anatomyClipChrome(
   mobile: boolean,
   hasClips: boolean,
