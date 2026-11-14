@@ -86,7 +86,7 @@ GAIT_PACKS = {
         "unity_hint": "canine_gait_animations.unity3d",
     },
     "equine-gait": {
-        # BODY + HOOVES only (skip hair / eyes / tears — cosmetics, large).
+        # BODY + HOOVES only (skip hair / eyes / tears: cosmetics, large).
         "meshes": ("horse_BODY", "horse_HOOVES"),
         "glb": "equine_gait.glb",
         "credits_title": "Equine gait animations",
@@ -668,8 +668,7 @@ def _load_gait_scene(env):
                 continue
             key = parts[0].strip()
             label = parts[1].strip().strip('"')
-            # Ivala.CustomUI.AnimationPanel.PlayButton.Walk → Walk
-            # AnimationPanel2 keys may be full clip names (…PlayButton.Trot_FL_…).
+            # PlayButton.* short name, or full clip name on AnimationPanel2 keys.
             short = key.rsplit(".", 1)[-1]
             labels[short] = label
 
@@ -691,7 +690,6 @@ def _clip_id_from_name(name: str) -> str:
         stem = stem[2:]
     if stem.startswith("A_"):
         stem = stem[2:]
-    # Camel / Underscore → kebab
     out = []
     for i, ch in enumerate(stem):
         if ch == "_":
@@ -709,15 +707,12 @@ def _label_for_clip(name: str, labels: dict[str, str]) -> str:
     for prefix in ("1_", "A_"):
         if stem.startswith(prefix):
             stem = stem[len(prefix) :]
-    # Exact clip stem, underscore-stripped (Canter_LeftLead → CanterLeftLead),
-    # full baked name (AnimationPanel2 keys), then first segment.
     for key in (stem, stem.replace("_", ""), name, name.replace("_", "")):
         if key in labels:
             return labels[key]
     head = stem.split("_")[0]
     if head in labels and "_" not in stem:
         return labels[head]
-    # Lameness / circling: keep readable stem when no exact localization hit.
     return stem.replace("_", " ")
 
 
@@ -739,7 +734,6 @@ def _decode_clip_bone_tracks(clip, crc_to_path: dict[int, str]):
             values[base + i] = float(v)
 
     frames = _parse_streamed_frames(list(streamed.data))
-    # curve index → (path, attr, component)
     curve_meta: list[tuple[str, int, int] | None] = [None] * len(curve_bindings)
     component_cursor: dict[tuple[int, int], int] = defaultdict(int)
     for ci, b in enumerate(curve_bindings):
@@ -754,13 +748,10 @@ def _decode_clip_bone_tracks(clip, crc_to_path: dict[int, str]):
         component_cursor[key] = comp + 1
         curve_meta[ci] = (path, attr, comp)
 
-    # Tracks: path → attr → list of component keyframe dicts rebuilt each frame
-    # Store times + Nx3 or Nx4 arrays incrementally.
     track_times: dict[tuple[str, int], list[float]] = defaultdict(list)
     track_vals: dict[tuple[str, int], list[list[float]]] = defaultdict(list)
 
     def snapshot(t: float) -> None:
-        # Gather current TRS per path from curve values.
         scratch: dict[tuple[str, int], list[float]] = {}
         for ci, meta in enumerate(curve_meta):
             if meta is None:
@@ -784,7 +775,7 @@ def _decode_clip_bone_tracks(clip, crc_to_path: dict[int, str]):
             continue
         snapshot(float(t))
 
-    # Quaternion continuity
+    # Avoid 180° quaternion flips between consecutive keys.
     for (path, attr), series in list(track_vals.items()):
         if attr != 2 or len(series) < 2:
             continue
@@ -822,7 +813,6 @@ def export_gait(pack: str, unity_path: Path, out_dir: Path) -> None:
     labels = scene["labels"]
     smrs = scene["smrs"]
 
-    # Pick SMRs whose mesh name is in the pack list (preserve order of cfg meshes).
     wanted = list(cfg["meshes"])
     chosen = []
     for mesh_name in wanted:
@@ -841,7 +831,6 @@ def export_gait(pack: str, unity_path: Path, out_dir: Path) -> None:
     if not bone_pids:
         raise SystemExit(f"{pack}: empty bone list on primary SMR")
 
-    # Verify extras share the same bone path_ids.
     for smr, mesh in chosen[1:]:
         other = [b.path_id for b in smr.m_Bones]
         if other != bone_pids:
@@ -850,8 +839,7 @@ def export_gait(pack: str, unity_path: Path, out_dir: Path) -> None:
                 f"({len(other)} vs {len(bone_pids)})"
             )
 
-    # Skeleton nodes: one glTF node per bone, parented by Transform hierarchy.
-    # Also include ancestor transforms under animator that parents bones.
+    # Include bone ancestors so local TRS parents stay intact under the Animator.
     needed = set(bone_pids)
     for pid in list(needed):
         cur = pid
@@ -864,7 +852,6 @@ def export_gait(pack: str, unity_path: Path, out_dir: Path) -> None:
             needed.add(father.path_id)
             cur = father.path_id
 
-    # Stable order: depth-first under animator, bones-only subset.
     ordered: list[int] = []
 
     def order_walk(pid: int) -> None:
@@ -877,7 +864,7 @@ def export_gait(pack: str, unity_path: Path, out_dir: Path) -> None:
     pid_to_node = {pid: i for i, pid in enumerate(ordered)}
 
     b = GlbBuilder()
-    # Build skeleton nodes first (indices 0..N-1), then prepend scene root.
+    # Skeleton first (0..N-1), then shift +1 under a scene root for ingest node lookup.
     skel_nodes: list[dict] = []
     for pid in ordered:
         tr = transforms[pid]
@@ -896,7 +883,6 @@ def export_gait(pack: str, unity_path: Path, out_dir: Path) -> None:
             node["children"] = kids
         skel_nodes.append(node)
 
-    # Name matches ingest structure.node (GLB stem) for AnatomyCanvas lookup.
     scene_node_name = Path(cfg["glb"]).stem
     b.nodes = [{"name": scene_node_name, "children": []}]
     for node in skel_nodes:
@@ -904,7 +890,6 @@ def export_gait(pack: str, unity_path: Path, out_dir: Path) -> None:
             node = {**node, "children": [c + 1 for c in node["children"]]}
         b.nodes.append(node)
     pid_to_node = {pid: i + 1 for pid, i in pid_to_node.items()}
-    # Top-level bones: parent is animator (or outside the skinned subset).
     top: list[int] = []
     for pid in ordered:
         father = transforms[pid].m_Father
@@ -975,9 +960,7 @@ def export_gait(pack: str, unity_path: Path, out_dir: Path) -> None:
 
     b.nodes[0]["children"] = list(b.nodes[0].get("children") or []) + mesh_node_indices
 
-    # Path string for each bone node (animator-relative).
     node_path = {pid_to_node[pid]: paths[pid] for pid in bone_pids if pid in paths}
-    # Also map any skeleton node path for animation retarget.
     for pid, node_i in pid_to_node.items():
         if pid in paths and paths[pid]:
             node_path[node_i] = paths[pid]
@@ -1009,7 +992,6 @@ def export_gait(pack: str, unity_path: Path, out_dir: Path) -> None:
         for bone_path, channels_map in tracks.items():
             node_i = path_to_node.get(bone_path)
             if node_i is None:
-                # Path may include 'root/...' — already animator-relative.
                 continue
             for path_name, (times, vals) in channels_map.items():
                 if len(times) == 0:
@@ -1042,12 +1024,12 @@ def export_gait(pack: str, unity_path: Path, out_dir: Path) -> None:
 
     if exported < 1:
         raise SystemExit(
-            f"{pack}: no animations exported — muscle-clip decode produced empty tracks.\n"
+            f"{pack}: no animations exported (muscle-clip decode produced empty tracks).\n"
             "Fallback (stop-and-ask): AssetRipper → Blender → animated GLB; "
             "do not change the player contract."
         )
 
-    # Prefer core gaits first in clips.json; keep extras after.
+    # Core locomotion first in clips.json; fidgets / lameness after.
     def sort_key(row: dict) -> tuple[int, str]:
         cid = row["id"]
         core = 0 if cid in GAIT_CORE_CLIP_IDS or any(
