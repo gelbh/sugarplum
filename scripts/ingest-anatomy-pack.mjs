@@ -11,6 +11,7 @@
  *   --src=<dir>     Required. Local drop directory (vendor-sent exports only).
  *   --packId=<slug> Required. Destination id under public/anatomy/ (no / \ ..).
  *   --title=<text>  Optional. scene.json title (default: packId).
+ *   --no-meshopt    Skip meshopt+quantize after copy (default: compress).
  *
  * Path A: never point --src at competitor CDN scrapes, Unity bundles, or tokens.
  * Fails if zero .glb/.gltf files are found. Overwrites an existing pack dir.
@@ -33,6 +34,10 @@ import {
 } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  compressGlbFile,
+  meshoptEnabledFromArgv,
+} from "./anatomyMeshopt.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = join(ROOT, "public", "anatomy");
@@ -185,9 +190,15 @@ Ingest: \`scripts/ingest-anatomy-pack.mjs\` (local drop only; Path A, no CDN scr
 }
 
 /**
- * @param {{ src: string; packId: string; title?: string; outRoot?: string }} opts
+ * @param {{
+ *   src: string;
+ *   packId: string;
+ *   title?: string;
+ *   outRoot?: string;
+ *   meshopt?: boolean;
+ * }} opts
  */
-export function ingestAnatomyPack(opts) {
+export async function ingestAnatomyPack(opts) {
   const packId = assertPackId(opts.packId);
   const title = (opts.title?.trim() || packId).trim();
   const outRoot = opts.outRoot ?? OUT;
@@ -236,6 +247,14 @@ export function ingestAnatomyPack(opts) {
   }
   copyMap(drop.extras);
   copyMap(drop.meshes);
+
+  const meshoptOn = opts.meshopt ?? true;
+  if (meshoptOn) {
+    for (const [, rel] of drop.meshes) {
+      const dest = resolve(outDir, rel);
+      await compressGlbFile(dest);
+    }
+  }
 
   /** @type {Map<string, { label: string; structures: object[] }>} */
   const byRegion = new Map();
@@ -314,18 +333,19 @@ export function ingestAnatomyPack(opts) {
   };
 }
 
-function main() {
+async function main() {
   const src = argValue("src");
   const packId = argValue("packId");
   const title = argValue("title");
   if (!src || !packId) {
     console.error(
-      "Usage: node scripts/ingest-anatomy-pack.mjs --src=<dir> --packId=<slug> [--title=...]",
+      "Usage: node scripts/ingest-anatomy-pack.mjs --src=<dir> --packId=<slug> [--title=...] [--no-meshopt]",
     );
     process.exit(1);
   }
   try {
-    const result = ingestAnatomyPack({ src, packId, title });
+    const meshopt = meshoptEnabledFromArgv(process.argv);
+    const result = await ingestAnatomyPack({ src, packId, title, meshopt });
     console.log(
       `${result.packId}: ${result.meshCount} meshes, ${result.regionCount} regions → ${result.outDir}`,
     );
@@ -339,4 +359,4 @@ const isDirect =
   process.argv[1] &&
   resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
-if (isDirect) main();
+if (isDirect) void main();
