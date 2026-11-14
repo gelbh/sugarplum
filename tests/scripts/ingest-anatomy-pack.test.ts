@@ -150,4 +150,49 @@ describe("ingestAnatomyPack traversal smoke", () => {
       }),
     ).toThrow(/Duplicate structure id/i);
   });
+
+  it("merges clips.json and prefers drop CREDITS.md", () => {
+    const src = tempDir("anatomy-pack-clips-");
+    const outRoot = tempDir("anatomy-pack-out-");
+    writeFileSync(join(src, "model.glb"), "fake-glb");
+    writeFileSync(
+      join(src, "clips.json"),
+      JSON.stringify([
+        { id: "pulse", label: "Pulse", animation: "Pulse", loop: true },
+      ]),
+    );
+    writeFileSync(join(src, "CREDITS.md"), "# Drop credits\nIVALA/SPL/2026-001\n");
+
+    const result = ingestAnatomyPack({
+      src,
+      packId: "clip-smoke",
+      title: "Clip smoke",
+      outRoot,
+    });
+
+    const scene = JSON.parse(
+      readFileSync(join(result.outDir, "scene.json"), "utf8"),
+    );
+    expect(scene.clips).toEqual([
+      { id: "pulse", label: "Pulse", animation: "Pulse", loop: true },
+    ]);
+    expect(readFileSync(join(result.outDir, "CREDITS.md"), "utf8")).toContain(
+      "IVALA/SPL/2026-001",
+    );
+  });
+
+  it("rejects empty clips.json", () => {
+    const src = tempDir("anatomy-pack-clips-empty-");
+    const outRoot = tempDir("anatomy-pack-out-");
+    writeFileSync(join(src, "model.glb"), "fake-glb");
+    writeFileSync(join(src, "clips.json"), "[]");
+
+    expect(() =>
+      ingestAnatomyPack({
+        src,
+        packId: "clip-smoke",
+        outRoot,
+      }),
+    ).toThrow(/clips\.json must be a non-empty array/);
+  });
 });

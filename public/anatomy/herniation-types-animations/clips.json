@@ -1,0 +1,32 @@
+[
+  {
+    "id": "falcine",
+    "label": "Falcine",
+    "animation": "BrainFalcineAnimation",
+    "loop": false,
+    "reveal": [
+      "root-skull-l",
+      "root-brain-falcine"
+    ]
+  },
+  {
+    "id": "caudal-tentorial",
+    "label": "Caudal tentorial",
+    "animation": "BrainCaudalTentorialAnimation",
+    "loop": false,
+    "reveal": [
+      "root-skull-l",
+      "root-brain-caudal-tentorial"
+    ]
+  },
+  {
+    "id": "foramen-magnum",
+    "label": "Foramen magnum",
+    "animation": "BrainForamenMagnumAnimation",
+    "loop": false,
+    "reveal": [
+      "root-skull-l",
+      "root-brain-foramen-magnum"
+    ]
+  }
+]

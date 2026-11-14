@@ -613,6 +613,12 @@ export const ANATOMY_CATALOG: AnatomyCatalogEntry[] = [
     blurb: "IVALA teaching pack · echo simulator canine heart",
   },
   {
+    id: "herniation-types-animations",
+    title: "Brain herniation types",
+    standIn: false,
+    blurb: "IVALA teaching pack · herniation animations",
+  },
+  {
     id: "clip-fixture",
     title: "Clip player fixture",
     standIn: true,
