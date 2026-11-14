@@ -1,6 +1,7 @@
 import { HTTPException } from "hono/http-exception";
 import type { DeckRow, MaterialRow } from "./types";
 
+/** Deck owned by userId, or 404 (do not leak existence to other users). */
 export async function requireOwnedDeck(
   db: D1Database,
   deckId: string,
