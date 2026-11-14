@@ -980,7 +980,7 @@ def export_gait(pack: str, unity_path: Path, out_dir: Path) -> None:
             continue
         try:
             tracks, _stop = _decode_clip_bone_tracks(clip, crc_to_path)
-        except Exception as exc:  # noqa: BLE001 — surface decode failures clearly
+        except Exception as exc:  # noqa: BLE001 - surface decode failures clearly
             raise SystemExit(
                 f"muscle-clip decode failed for {name}: {exc}\n"
                 "Fallback (stop-and-ask): AssetRipper → Blender → animated GLB; "
