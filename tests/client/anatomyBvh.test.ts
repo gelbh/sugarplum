@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { BoxGeometry, Mesh, MeshBasicMaterial, Object3D } from "three";
+import {
+  Bone,
+  BoxGeometry,
+  BufferAttribute,
+  Mesh,
+  MeshBasicMaterial,
+  Object3D,
+  Skeleton,
+  SkinnedMesh,
+} from "three";
 import {
   buildBvhUnderRoot,
   disposeGeometryWithBvh,
@@ -55,5 +64,29 @@ describe("anatomyBvh", () => {
     expect(geom.boundsTree).toBeTruthy();
     disposeGeometryWithBvh(geom);
     expect(geom.boundsTree).toBeFalsy();
+  });
+
+  it("skips SkinnedMesh and morph-target geometries", () => {
+    installAnatomyAcceleratedRaycast();
+    const root = new Object3D();
+
+    const morphGeom = new BoxGeometry(1, 1, 1);
+    morphGeom.morphAttributes.position = [
+      new BufferAttribute(new Float32Array(morphGeom.attributes.position.array), 3),
+    ];
+    root.add(new Mesh(morphGeom, new MeshBasicMaterial()));
+
+    const skinGeom = new BoxGeometry(1, 1, 1);
+    const bone = new Bone();
+    const skinned = new SkinnedMesh(skinGeom, new MeshBasicMaterial());
+    skinned.add(bone);
+    skinned.bind(new Skeleton([bone]));
+    root.add(skinned);
+
+    const result = buildBvhUnderRoot(root);
+    expect(result.built).toBe(0);
+    expect(result.failed).toBe(0);
+    expect(morphGeom.boundsTree).toBeFalsy();
+    expect(skinGeom.boundsTree).toBeFalsy();
   });
 });

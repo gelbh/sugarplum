@@ -1,4 +1,9 @@
-import { BufferGeometry, Mesh, type Object3D } from "three";
+import {
+  BufferGeometry,
+  Mesh,
+  SkinnedMesh,
+  type Object3D,
+} from "three";
 import {
   acceleratedRaycast,
   computeBoundsTree,
@@ -15,6 +20,11 @@ export function installAnatomyAcceleratedRaycast(): void {
   installed = true;
 }
 
+function hasMorphAttributes(geometry: BufferGeometry): boolean {
+  const morph = geometry.morphAttributes;
+  return Object.keys(morph).some((key) => (morph[key]?.length ?? 0) > 0);
+}
+
 export function buildBvhUnderRoot(root: Object3D): {
   built: number;
   failed: number;
@@ -22,10 +32,13 @@ export function buildBvhUnderRoot(root: Object3D): {
   let built = 0;
   let failed = 0;
   root.traverse((obj) => {
-    if (!(obj instanceof Mesh)) return;
+    // SkinnedMesh keeps its own raycast; BVH on its geometry is unused.
+    if (!(obj instanceof Mesh) || obj instanceof SkinnedMesh) return;
     const geometry = obj.geometry;
     if (!(geometry instanceof BufferGeometry)) return;
     if (geometry.boundsTree) return;
+    // three-mesh-bvh is bind-pose only; morph targets need stock raycast.
+    if (hasMorphAttributes(geometry)) return;
     try {
       geometry.computeBoundsTree();
       if (geometry.boundsTree) built += 1;
