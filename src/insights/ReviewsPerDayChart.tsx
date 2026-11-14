@@ -5,17 +5,23 @@ import { useTheme } from "@mui/material/styles";
 import {
   Bar,
   BarChart,
+  CartesianGrid,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import { useChartColors } from "./chartColors";
+import { chartTooltipStyles } from "./chartTooltip";
+import { insightsSectionTitleSx } from "./operatePaper";
 
 type Point = { day: string; count: number };
 
 type Props = {
   series: readonly Point[];
   reviewsDays?: number;
+  reviewsInWindow?: number;
+  reviewedToday?: number;
 };
 
 function shortDay(day: string): string {
@@ -25,8 +31,13 @@ function shortDay(day: string): string {
 export default function ReviewsPerDayChart({
   series,
   reviewsDays,
+  reviewsInWindow,
+  reviewedToday,
 }: Props) {
   const theme = useTheme();
+  const colors = useChartColors();
+  const tip = chartTooltipStyles(colors);
+  const tickFill = colors.textSecondary;
   const total = series.reduce((sum, p) => sum + p.count, 0);
   const peak = series.reduce((m, p) => Math.max(m, p.count), 0);
   const aria =
@@ -43,35 +54,92 @@ export default function ReviewsPerDayChart({
   return (
     <Stack spacing={1}>
       <Typography
-        variant="subtitle2"
+        variant="subtitle1"
         component="h2"
-        sx={{ color: "primary.main", fontWeight: 600 }}
+        sx={{ ...insightsSectionTitleSx, mb: 0.75 }}
       >
         {title}
       </Typography>
+      {reviewsInWindow != null || reviewedToday != null ? (
+        <Stack
+          direction="row"
+          spacing={2}
+          useFlexGap
+          flexWrap="wrap"
+          sx={{ mb: 0.5 }}
+        >
+          {reviewsInWindow != null && reviewsDays != null ? (
+            <Typography variant="body2" color="text.secondary">
+              Window:{" "}
+              <Box
+                component="span"
+                sx={{ color: "text.primary", fontWeight: 600 }}
+              >
+                {reviewsInWindow}
+              </Box>
+            </Typography>
+          ) : null}
+          {reviewedToday != null ? (
+            <Typography variant="body2" color="text.secondary">
+              Today:{" "}
+              <Box
+                component="span"
+                sx={{ color: "text.primary", fontWeight: 600 }}
+              >
+                {reviewedToday}
+              </Box>
+            </Typography>
+          ) : null}
+        </Stack>
+      ) : null}
       {total === 0 ? (
         <Box role="img" aria-label={aria}>
-          <Typography variant="caption" color="text.secondary">
-            No reviews in this window yet.
+          <Typography variant="body2" color="text.secondary">
+            No reviews in this window yet. Finish a study session to start the
+            series.
           </Typography>
         </Box>
       ) : (
         <>
-          <Box role="img" aria-label={aria} sx={{ width: "100%", height: 180 }}>
+          <Box role="img" aria-label={aria} sx={{ width: "100%", height: 200 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <BarChart
+                data={data}
+                margin={{ top: 8, right: 4, left: -8, bottom: 0 }}
+              >
+                <CartesianGrid
+                  vertical={false}
+                  stroke={colors.divider}
+                  strokeDasharray="3 6"
+                />
                 <XAxis
                   dataKey="label"
-                  tick={{ fontSize: 10, fill: theme.palette.text.secondary }}
+                  tick={{
+                    fontSize: 11,
+                    fill: tickFill,
+                    fontFamily: theme.typography.fontFamily,
+                  }}
+                  axisLine={{ stroke: colors.divider }}
+                  tickLine={false}
                   interval="preserveStartEnd"
-                  minTickGap={24}
+                  minTickGap={28}
                 />
                 <YAxis
                   allowDecimals={false}
-                  width={28}
-                  tick={{ fontSize: 10, fill: theme.palette.text.secondary }}
+                  width={32}
+                  tick={{
+                    fontSize: 11,
+                    fill: tickFill,
+                    fontFamily: theme.typography.fontFamily,
+                  }}
+                  axisLine={false}
+                  tickLine={false}
                 />
                 <Tooltip
+                  cursor={tip.cursor}
+                  contentStyle={tip.contentStyle}
+                  labelStyle={tip.labelStyle}
+                  itemStyle={tip.itemStyle}
                   formatter={(value) => [value ?? 0, "Reviews"]}
                   labelFormatter={(_, payload) => {
                     const day = payload?.[0]?.payload?.day;
@@ -80,9 +148,10 @@ export default function ReviewsPerDayChart({
                 />
                 <Bar
                   dataKey="count"
-                  fill={theme.palette.primary.main}
-                  radius={[2, 2, 0, 0]}
+                  fill={colors.primary}
+                  radius={[3, 3, 0, 0]}
                   isAnimationActive={false}
+                  maxBarSize={28}
                 />
               </BarChart>
             </ResponsiveContainer>

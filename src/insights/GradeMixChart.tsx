@@ -5,6 +5,7 @@ import { useTheme } from "@mui/material/styles";
 import {
   Bar,
   BarChart,
+  CartesianGrid,
   Cell,
   ResponsiveContainer,
   Tooltip,
@@ -13,6 +14,9 @@ import {
 } from "recharts";
 import { gradeChartFill } from "../study/gradeColors";
 import { GRADE_LABELS } from "../study/gradeLabels";
+import { useChartColors } from "./chartColors";
+import { chartTooltipStyles } from "./chartTooltip";
+import { insightsSectionTitleSx } from "./operatePaper";
 import type { InsightsGradeCounts } from "./types";
 
 type Props = {
@@ -29,6 +33,8 @@ const ROWS: Array<{ key: keyof InsightsGradeCounts; rating: 1 | 2 | 3 | 4 }> = [
 
 export default function GradeMixChart({ counts, gradeDays = 14 }: Props) {
   const theme = useTheme();
+  const colors = useChartColors();
+  const tip = chartTooltipStyles(colors);
   const total = counts.again + counts.hard + counts.good + counts.easy;
   const aria =
     total === 0
@@ -45,40 +51,64 @@ export default function GradeMixChart({ counts, gradeDays = 14 }: Props) {
   return (
     <Stack spacing={1}>
       <Typography
-        variant="subtitle2"
+        variant="subtitle1"
         component="h2"
-        sx={{ color: "primary.main", fontWeight: 600 }}
+        sx={insightsSectionTitleSx}
       >
         Grade mix ({gradeDays}d)
       </Typography>
       {total === 0 ? (
         <Box role="img" aria-label={aria}>
-          <Typography variant="caption" color="text.secondary">
-            No grades in this window yet.
+          <Typography variant="body2" color="text.secondary">
+            No grades in this window yet. Grade cards in Study to see the mix.
           </Typography>
         </Box>
       ) : (
         <>
-          <Box role="img" aria-label={aria} sx={{ width: "100%", height: 180 }}>
+          <Box role="img" aria-label={aria} sx={{ width: "100%", height: 200 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 layout="vertical"
                 data={data}
-                margin={{ top: 8, right: 16, left: 8, bottom: 0 }}
+                margin={{ top: 4, right: 16, left: 4, bottom: 0 }}
+                barCategoryGap="28%"
               >
+                <CartesianGrid
+                  horizontal={false}
+                  stroke={colors.divider}
+                  strokeDasharray="3 6"
+                />
                 <XAxis
                   type="number"
                   allowDecimals={false}
-                  tick={{ fontSize: 10, fill: theme.palette.text.secondary }}
+                  tick={{
+                    fontSize: 11,
+                    fill: colors.textSecondary,
+                    fontFamily: theme.typography.fontFamily,
+                  }}
+                  axisLine={{ stroke: colors.divider }}
+                  tickLine={false}
                 />
                 <YAxis
                   type="category"
                   dataKey="name"
-                  width={110}
-                  tick={{ fontSize: 11, fill: theme.palette.text.secondary }}
+                  width={112}
+                  tick={{
+                    fontSize: 12,
+                    fill: colors.textPrimary,
+                    fontFamily: theme.typography.fontFamily,
+                  }}
+                  axisLine={false}
+                  tickLine={false}
                 />
-                <Tooltip formatter={(value) => [value ?? 0, "Count"]} />
-                <Bar dataKey="count" radius={[0, 2, 2, 0]} isAnimationActive={false}>
+                <Tooltip
+                  cursor={tip.cursor}
+                  contentStyle={tip.contentStyle}
+                  labelStyle={tip.labelStyle}
+                  itemStyle={tip.itemStyle}
+                  formatter={(value) => [value ?? 0, "Count"]}
+                />
+                <Bar dataKey="count" radius={[0, 3, 3, 0]} isAnimationActive={false}>
                   {data.map((row) => (
                     <Cell key={row.key} fill={row.fill} />
                   ))}
