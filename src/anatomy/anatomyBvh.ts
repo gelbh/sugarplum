@@ -21,8 +21,9 @@ export function installAnatomyAcceleratedRaycast(): void {
 }
 
 function hasMorphAttributes(geometry: BufferGeometry): boolean {
-  const morph = geometry.morphAttributes;
-  return Object.keys(morph).some((key) => (morph[key]?.length ?? 0) > 0);
+  return Object.values(geometry.morphAttributes).some(
+    (attrs) => (attrs?.length ?? 0) > 0,
+  );
 }
 
 export function buildBvhUnderRoot(root: Object3D): {
