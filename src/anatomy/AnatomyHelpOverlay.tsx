@@ -7,9 +7,10 @@ import Typography from "@mui/material/Typography";
 type Props = {
   open: boolean;
   onClose: () => void;
+  touch?: boolean;
 };
 
-const ROWS: { keys: string; action: string }[] = [
+const DESKTOP_ROWS: { keys: string; action: string }[] = [
   { keys: "Drag", action: "Orbit" },
   { keys: "Scroll / Ctrl+drag", action: "Zoom" },
   { keys: "Right-drag", action: "Pan" },
@@ -17,10 +18,24 @@ const ROWS: { keys: string; action: string }[] = [
   { keys: "I", action: "Isolate selected" },
   { keys: "R", action: "Reset view" },
   { keys: "Click", action: "Select structure" },
+  { keys: "Fade", action: "Fade others (toolbar)" },
 ];
 
-export default function AnatomyHelpOverlay({ open, onClose }: Props) {
+const TOUCH_ROWS: { keys: string; action: string }[] = [
+  { keys: "One-finger drag", action: "Orbit" },
+  { keys: "Pinch", action: "Zoom" },
+  { keys: "Two-finger drag", action: "Pan" },
+  { keys: "Tap", action: "Select structure" },
+  { keys: "Fade", action: "Fade others (More menu)" },
+];
+
+export default function AnatomyHelpOverlay({
+  open,
+  onClose,
+  touch = false,
+}: Props) {
   if (!open) return null;
+  const rows = touch ? TOUCH_ROWS : DESKTOP_ROWS;
   return (
     <Box
       role="dialog"
@@ -57,7 +72,7 @@ export default function AnatomyHelpOverlay({ open, onClose }: Props) {
         </IconButton>
       </Stack>
       <Stack spacing={0.5}>
-        {ROWS.map((row) => (
+        {rows.map((row) => (
           <Stack
             key={row.keys}
             direction="row"

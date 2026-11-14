@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import BlurOnOutlinedIcon from "@mui/icons-material/BlurOnOutlined";
 import CenterFocusStrongOutlinedIcon from "@mui/icons-material/CenterFocusStrongOutlined";
 import CropFreeOutlinedIcon from "@mui/icons-material/CropFreeOutlined";
 import FilterCenterFocusOutlinedIcon from "@mui/icons-material/FilterCenterFocusOutlined";
@@ -6,6 +7,7 @@ import FullscreenExitOutlinedIcon from "@mui/icons-material/FullscreenExitOutlin
 import FullscreenOutlinedIcon from "@mui/icons-material/FullscreenOutlined";
 import GridOnOutlinedIcon from "@mui/icons-material/GridOnOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ThreeSixtyOutlinedIcon from "@mui/icons-material/ThreeSixtyOutlined";
 import ZoomInOutlinedIcon from "@mui/icons-material/ZoomInOutlined";
 import ZoomOutOutlinedIcon from "@mui/icons-material/ZoomOutOutlined";
@@ -16,9 +18,12 @@ import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
 import type { MouseEvent } from "react";
 import AnatomyCanvas, {
@@ -29,6 +34,9 @@ import AnatomyCanvas, {
 } from "../anatomy/AnatomyCanvas";
 import AnatomyClipBar from "../anatomy/AnatomyClipBar";
 import AnatomyHelpOverlay from "../anatomy/AnatomyHelpOverlay";
+import AnatomyMobileSheet, {
+  type AnatomySheetTab,
+} from "../anatomy/AnatomyMobileSheet";
 import InfoPanel from "../anatomy/InfoPanel";
 import MakeCardsDeckDialog from "../anatomy/MakeCardsDeckDialog";
 import {
@@ -47,6 +55,7 @@ import TestYourself, {
   type AnatomyStudyMode,
 } from "../anatomy/TestYourself";
 import type { AnatomyClip, AnatomySceneManifest } from "../anatomy/types";
+import { anatomyViewerMobile } from "../anatomy/viewerLayout";
 import { isPlainClick, navigate } from "../nav/navigate";
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -109,8 +118,11 @@ export default function AnatomyViewerPage({
   initialRegions = [],
 }: Props) {
   const theme = useTheme();
+  const mobile = useMediaQuery(theme.breakpoints.down("md"), { noSsr: true });
+  const { showRail, showSheetTriggers } = anatomyViewerMobile(mobile);
   const canvasRef = useRef<AnatomyCanvasHandle>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
+  const [stageEl, setStageEl] = useState<HTMLDivElement | null>(null);
   const [manifest, setManifest] = useState<AnatomySceneManifest | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeRegions, setActiveRegions] = useState<Set<string>>(
@@ -123,6 +135,7 @@ export default function AnatomyViewerPage({
   );
   const [autoRotate, setAutoRotate] = useState(false);
   const [wireframe, setWireframe] = useState(false);
+  const [fadeOthers, setFadeOthers] = useState(false);
   const [autoFocus, setAutoFocus] = useState(true);
   const [cameraMode, setCameraMode] =
     useState<AnatomyCameraMode>("perspective");
@@ -136,6 +149,9 @@ export default function AnatomyViewerPage({
   const [activeClipId, setActiveClipId] = useState<string | null>(null);
   const [clipPaused, setClipPaused] = useState(false);
   const [clipError, setClipError] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetTab, setSheetTab] = useState<AnatomySheetTab>("structures");
+  const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null);
 
   const bgChoices = useMemo<BgChoice[]>(
     () => [
@@ -179,6 +195,7 @@ export default function AnatomyViewerPage({
     dispatch({ type: "reset" });
     setAutoRotate(false);
     setWireframe(false);
+    setFadeOthers(false);
     setAutoFocus(true);
     setCameraMode("perspective");
     setHelpOpen(false);
@@ -190,15 +207,29 @@ export default function AnatomyViewerPage({
     setActiveClipId(null);
     setClipPaused(false);
     setClipError(null);
+    setSheetOpen(false);
+    setSheetTab("structures");
+    setMoreAnchor(null);
   }, [sceneId]);
 
   useEffect(() => {
     const onFs = () => {
-      setFullscreen(document.fullscreenElement === stageRef.current);
+      const onStage = document.fullscreenElement === stageRef.current;
+      setFullscreen(onStage);
+      if (onStage) {
+        setSheetOpen(false);
+        setMoreAnchor(null);
+      }
     };
     document.addEventListener("fullscreenchange", onFs);
     return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
+
+  useEffect(() => {
+    if (mobile) return;
+    setSheetOpen(false);
+    setMoreAnchor(null);
+  }, [mobile]);
 
   useEffect(() => {
     let cancelled = false;
@@ -326,6 +357,60 @@ export default function AnatomyViewerPage({
 
   const canvasReady = !!manifest && !!loads && loads.length > 0;
 
+  const markCorrect = (id: string) => {
+    setRevealedIds((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  };
+
+  const bgSwatchButton = (choice: BgChoice) => {
+    const selected = bgId === choice.id;
+    return (
+      <Tooltip key={choice.id} title={choice.label}>
+        <span>
+          <IconButton
+            size="small"
+            aria-label={`Background ${choice.label}`}
+            aria-pressed={selected}
+            onClick={() => {
+              setBgId(choice.id);
+              setMoreAnchor(null);
+            }}
+            sx={{
+              p: 0.4,
+              border: 1,
+              borderColor: selected ? "primary.main" : "divider",
+              borderRadius: 1,
+            }}
+          >
+            <Box
+              aria-hidden
+              sx={{
+                width: 16,
+                height: 16,
+                borderRadius: 0.5,
+                border: 1,
+                borderColor: "divider",
+                ...(choice.swatch === "checker"
+                  ? {
+                      backgroundImage:
+                        "linear-gradient(45deg, rgba(128,128,128,0.35) 25%, transparent 25%), linear-gradient(-45deg, rgba(128,128,128,0.35) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(128,128,128,0.35) 75%), linear-gradient(-45deg, transparent 75%, rgba(128,128,128,0.35) 75%)",
+                      backgroundSize: "8px 8px",
+                      backgroundPosition: "0 0, 0 4px, 4px -4px, -4px 0",
+                      bgcolor: "background.default",
+                    }
+                  : { bgcolor: choice.swatch }),
+              }}
+            />
+          </IconButton>
+        </span>
+      </Tooltip>
+    );
+  };
+
   return (
     <Box
       sx={{
@@ -414,68 +499,60 @@ export default function AnatomyViewerPage({
 
       {manifest && loads ? (
         <Stack
-          direction={{ xs: "column", md: "row" }}
+          direction={showRail ? "row" : "column"}
           spacing={1.25}
           alignItems="stretch"
           sx={{ flex: 1, minHeight: 0 }}
         >
-          <Stack
-            spacing={1.25}
-            sx={{
-              width: { xs: "100%", md: 280 },
-              flex: { xs: "0 1 auto", md: "0 0 auto" },
-              flexShrink: { xs: 1, md: 0 },
-              minHeight: 0,
-              height: { xs: "auto", md: "100%" },
-              // Mobile height budget used to live on StructurePanel; keep it on
-              // this outer rail so nested % maxHeight still resolves.
-              maxHeight: { xs: "42%", md: "none" },
-              overflow: "hidden",
-            }}
-          >
-            <Box
+          {showRail ? (
+            <Stack
+              spacing={1.25}
               sx={{
-                flex: 1,
+                width: 280,
+                flex: "0 0 auto",
+                flexShrink: 0,
                 minHeight: 0,
-                display: "flex",
-                flexDirection: "column",
+                height: "100%",
+                overflow: "hidden",
               }}
             >
-              <StructurePanel
-                structures={manifest.structures}
-                regions={manifest.regions}
-                activeRegions={activeRegions}
-                onChangeRegions={changeRegions}
-                ui={ui}
-                dispatch={dispatch}
-                maskNames={maskNames}
+              <Box
+                sx={{
+                  flex: 1,
+                  minHeight: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <StructurePanel
+                  structures={manifest.structures}
+                  regions={manifest.regions}
+                  activeRegions={activeRegions}
+                  onChangeRegions={changeRegions}
+                  ui={ui}
+                  dispatch={dispatch}
+                  maskNames={maskNames}
+                  revealedIds={revealedIds}
+                />
+              </Box>
+              <TestYourself
+                mode={studyMode}
+                onModeChange={setStudyMode}
+                structure={selectedStructure}
+                regionStructures={regionStructures}
                 revealedIds={revealedIds}
+                onCorrect={markCorrect}
               />
-            </Box>
-            <TestYourself
-              mode={studyMode}
-              onModeChange={setStudyMode}
-              structure={selectedStructure}
-              regionStructures={regionStructures}
-              revealedIds={revealedIds}
-              onCorrect={(id) => {
-                setRevealedIds((prev) => {
-                  if (prev.has(id)) return prev;
-                  const next = new Set(prev);
-                  next.add(id);
-                  return next;
-                });
-              }}
-            />
-            {studyMode === "explore" ? (
-              <InfoPanel structure={selectedStructure} />
-            ) : null}
-          </Stack>
+              {studyMode === "explore" ? (
+                <InfoPanel structure={selectedStructure} />
+              ) : null}
+            </Stack>
+          ) : null}
           <Box
             sx={{
               flex: 1,
               minWidth: 0,
-              minHeight: { xs: 240, md: 0 },
+              minHeight: 0,
               display: "flex",
               flexDirection: "column",
               borderRadius: 1,
@@ -551,77 +628,120 @@ export default function AnatomyViewerPage({
                   </IconButton>
                 </span>
               </Tooltip>
-              <Tooltip title={wireframe ? "Solid shading" : "Wireframe"}>
-                <span>
-                  <IconButton
-                    size="small"
-                    disabled={!canvasReady}
-                    color={wireframe ? "primary" : "default"}
-                    aria-pressed={wireframe}
-                    aria-label="Wireframe"
-                    onClick={() => setWireframe((on) => !on)}
+              {!mobile ? (
+                <>
+                  <Tooltip title={wireframe ? "Solid shading" : "Wireframe"}>
+                    <span>
+                      <IconButton
+                        size="small"
+                        disabled={!canvasReady}
+                        color={wireframe ? "primary" : "default"}
+                        aria-pressed={wireframe}
+                        aria-label="Wireframe"
+                        onClick={() => setWireframe((on) => !on)}
+                      >
+                        <GridOnOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                  <Tooltip
+                    title={fadeOthers ? "Fade others on" : "Fade others off"}
                   >
-                    <GridOnOutlinedIcon fontSize="small" />
-                  </IconButton>
-                </span>
-              </Tooltip>
-              <Tooltip title={autoFocus ? "Auto-focus on" : "Auto-focus off"}>
-                <span>
-                  <IconButton
-                    size="small"
-                    disabled={!canvasReady}
-                    color={autoFocus ? "primary" : "default"}
-                    aria-pressed={autoFocus}
-                    aria-label="Auto-focus selection"
-                    onClick={() => setAutoFocus((v) => !v)}
+                    <span>
+                      <IconButton
+                        size="small"
+                        disabled={!canvasReady}
+                        color={fadeOthers ? "primary" : "default"}
+                        aria-pressed={fadeOthers}
+                        aria-label="Fade others"
+                        onClick={() => setFadeOthers((on) => !on)}
+                      >
+                        <BlurOnOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                  <Tooltip
+                    title={autoFocus ? "Auto-focus on" : "Auto-focus off"}
                   >
-                    <FilterCenterFocusOutlinedIcon fontSize="small" />
-                  </IconButton>
-                </span>
-              </Tooltip>
-              <Tooltip
-                title={
-                  cameraMode === "orthographic"
-                    ? "Perspective camera"
-                    : "Orthographic camera"
-                }
-              >
-                <span>
-                  <IconButton
-                    size="small"
-                    disabled={!canvasReady}
-                    color={
-                      cameraMode === "orthographic" ? "primary" : "default"
+                    <span>
+                      <IconButton
+                        size="small"
+                        disabled={!canvasReady}
+                        color={autoFocus ? "primary" : "default"}
+                        aria-pressed={autoFocus}
+                        aria-label="Auto-focus selection"
+                        onClick={() => setAutoFocus((v) => !v)}
+                      >
+                        <FilterCenterFocusOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                  <Tooltip
+                    title={
+                      cameraMode === "orthographic"
+                        ? "Perspective camera"
+                        : "Orthographic camera"
                     }
-                    aria-pressed={cameraMode === "orthographic"}
-                    aria-label="Toggle orthographic camera"
-                    onClick={() => {
-                      setCameraMode((mode) =>
-                        mode === "perspective" ? "orthographic" : "perspective",
-                      );
-                    }}
                   >
-                    <CropFreeOutlinedIcon fontSize="small" />
-                  </IconButton>
-                </span>
-              </Tooltip>
-              <Tooltip title={fullscreen ? "Exit fullscreen" : "Fullscreen"}>
-                <span>
-                  <IconButton
-                    size="small"
-                    disabled={!canvasReady}
-                    aria-pressed={fullscreen}
-                    aria-label={fullscreen ? "Exit fullscreen" : "Fullscreen"}
-                    onClick={() => void toggleFullscreen()}
+                    <span>
+                      <IconButton
+                        size="small"
+                        disabled={!canvasReady}
+                        color={
+                          cameraMode === "orthographic" ? "primary" : "default"
+                        }
+                        aria-pressed={cameraMode === "orthographic"}
+                        aria-label="Toggle orthographic camera"
+                        onClick={() => {
+                          setCameraMode((mode) =>
+                            mode === "perspective"
+                              ? "orthographic"
+                              : "perspective",
+                          );
+                        }}
+                      >
+                        <CropFreeOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                  <Tooltip
+                    title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
                   >
-                    {fullscreen ? (
-                      <FullscreenExitOutlinedIcon fontSize="small" />
-                    ) : (
-                      <FullscreenOutlinedIcon fontSize="small" />
-                    )}
-                  </IconButton>
-                </span>
-              </Tooltip>
+                    <span>
+                      <IconButton
+                        size="small"
+                        disabled={!canvasReady}
+                        aria-pressed={fullscreen}
+                        aria-label={
+                          fullscreen ? "Exit fullscreen" : "Fullscreen"
+                        }
+                        onClick={() => void toggleFullscreen()}
+                      >
+                        {fullscreen ? (
+                          <FullscreenExitOutlinedIcon fontSize="small" />
+                        ) : (
+                          <FullscreenOutlinedIcon fontSize="small" />
+                        )}
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                </>
+              ) : (
+                <Tooltip title="More tools">
+                  <span>
+                    <IconButton
+                      size="small"
+                      disabled={!canvasReady}
+                      aria-label="More tools"
+                      aria-haspopup="menu"
+                      aria-expanded={moreAnchor != null}
+                      onClick={(ev) => setMoreAnchor(ev.currentTarget)}
+                    >
+                      <MoreVertIcon fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              )}
               <Tooltip title="Controls help">
                 <IconButton
                   size="small"
@@ -633,56 +753,19 @@ export default function AnatomyViewerPage({
                   <HelpOutlineOutlinedIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
-              <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ px: 0.5, userSelect: "none" }}
-              >
-                BG
-              </Typography>
-              {bgChoices.map((choice) => {
-                const selected = bgId === choice.id;
-                return (
-                  <Tooltip key={choice.id} title={choice.label}>
-                    <span>
-                      <IconButton
-                        size="small"
-                        aria-label={`Background ${choice.label}`}
-                        aria-pressed={selected}
-                        onClick={() => setBgId(choice.id)}
-                        sx={{
-                          p: 0.4,
-                          border: 1,
-                          borderColor: selected ? "primary.main" : "divider",
-                          borderRadius: 1,
-                        }}
-                      >
-                        <Box
-                          aria-hidden
-                          sx={{
-                            width: 16,
-                            height: 16,
-                            borderRadius: 0.5,
-                            border: 1,
-                            borderColor: "divider",
-                            ...(choice.swatch === "checker"
-                              ? {
-                                  backgroundImage:
-                                    "linear-gradient(45deg, rgba(128,128,128,0.35) 25%, transparent 25%), linear-gradient(-45deg, rgba(128,128,128,0.35) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(128,128,128,0.35) 75%), linear-gradient(-45deg, transparent 75%, rgba(128,128,128,0.35) 75%)",
-                                  backgroundSize: "8px 8px",
-                                  backgroundPosition:
-                                    "0 0, 0 4px, 4px -4px, -4px 0",
-                                  bgcolor: "background.default",
-                                }
-                              : { bgcolor: choice.swatch }),
-                          }}
-                        />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                );
-              })}
+              {!mobile ? (
+                <>
+                  <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ px: 0.5, userSelect: "none" }}
+                  >
+                    BG
+                  </Typography>
+                  {bgChoices.map((choice) => bgSwatchButton(choice))}
+                </>
+              ) : null}
             </Stack>
             {manifest.clips && manifest.clips.length > 0 ? (
               <AnatomyClipBar
@@ -726,8 +809,82 @@ export default function AnatomyViewerPage({
                 }}
               />
             ) : null}
+            <Menu
+              anchorEl={moreAnchor}
+              open={moreAnchor != null}
+              onClose={() => setMoreAnchor(null)}
+              container={stageEl ?? undefined}
+              anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+            >
+              <MenuItem
+                disabled={!canvasReady}
+                selected={wireframe}
+                onClick={() => {
+                  setWireframe((on) => !on);
+                  setMoreAnchor(null);
+                }}
+              >
+                Wireframe
+              </MenuItem>
+              <MenuItem
+                disabled={!canvasReady}
+                selected={fadeOthers}
+                onClick={() => {
+                  setFadeOthers((on) => !on);
+                  setMoreAnchor(null);
+                }}
+              >
+                Fade others
+              </MenuItem>
+              <MenuItem
+                disabled={!canvasReady}
+                selected={autoFocus}
+                onClick={() => {
+                  setAutoFocus((v) => !v);
+                  setMoreAnchor(null);
+                }}
+              >
+                Auto-focus
+              </MenuItem>
+              <MenuItem
+                disabled={!canvasReady}
+                selected={cameraMode === "orthographic"}
+                onClick={() => {
+                  setCameraMode((mode) =>
+                    mode === "perspective" ? "orthographic" : "perspective",
+                  );
+                  setMoreAnchor(null);
+                }}
+              >
+                Orthographic
+              </MenuItem>
+              <MenuItem
+                disabled={!canvasReady}
+                onClick={() => {
+                  setMoreAnchor(null);
+                  void toggleFullscreen();
+                }}
+              >
+                {fullscreen ? "Exit fullscreen" : "Fullscreen"}
+              </MenuItem>
+              <Divider />
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={0.5}
+                sx={{ px: 1.5, py: 0.75 }}
+              >
+                <Typography variant="caption" color="text.secondary">
+                  BG
+                </Typography>
+                {bgChoices.map((choice) => bgSwatchButton(choice))}
+              </Stack>
+            </Menu>
             <Box
-              ref={stageRef}
+              ref={(el: HTMLDivElement | null) => {
+                stageRef.current = el;
+                setStageEl(el);
+              }}
               sx={{
                 flex: 1,
                 minHeight: 0,
@@ -748,20 +905,88 @@ export default function AnatomyViewerPage({
                   background={canvasBackground}
                   autoRotate={autoRotate}
                   wireframe={wireframe}
+                  fadeOthers={fadeOthers}
                   autoFocus={autoFocus}
                   cameraMode={cameraMode}
                   onSelect={(id) => dispatch({ type: "select", id })}
                 />
               )}
+              {showSheetTriggers ? (
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{
+                    position: "absolute",
+                    left: 8,
+                    bottom: 8,
+                    zIndex: 1,
+                  }}
+                >
+                  <Button
+                    size="small"
+                    variant="contained"
+                    aria-haspopup="dialog"
+                    aria-expanded={sheetOpen && sheetTab === "structures"}
+                    aria-controls={
+                      sheetOpen ? "anatomy-mobile-sheet-title" : undefined
+                    }
+                    onClick={() => {
+                      setSheetTab("structures");
+                      setSheetOpen(true);
+                    }}
+                  >
+                    Structures
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    aria-haspopup="dialog"
+                    aria-expanded={sheetOpen && sheetTab === "study"}
+                    aria-controls={
+                      sheetOpen ? "anatomy-mobile-sheet-title" : undefined
+                    }
+                    onClick={() => {
+                      setSheetTab("study");
+                      setSheetOpen(true);
+                    }}
+                  >
+                    Study
+                  </Button>
+                </Stack>
+              ) : null}
               <AnatomyHelpOverlay
                 open={helpOpen}
                 onClose={() => setHelpOpen(false)}
+                touch={mobile}
               />
             </Box>
           </Box>
         </Stack>
       ) : !error && !manifest ? (
         <Typography color="text.secondary">Loading scene…</Typography>
+      ) : null}
+
+      {manifest ? (
+        <AnatomyMobileSheet
+          open={showSheetTriggers && sheetOpen}
+          onClose={() => setSheetOpen(false)}
+          tab={sheetTab}
+          onTabChange={setSheetTab}
+          container={stageEl}
+          structures={manifest.structures}
+          regions={manifest.regions}
+          activeRegions={activeRegions}
+          onChangeRegions={changeRegions}
+          ui={ui}
+          dispatch={dispatch}
+          maskNames={maskNames}
+          revealedIds={revealedIds}
+          studyMode={studyMode}
+          onStudyModeChange={setStudyMode}
+          selectedStructure={selectedStructure}
+          regionStructures={regionStructures}
+          onCorrect={markCorrect}
+        />
       ) : null}
 
       <MakeCardsDeckDialog
