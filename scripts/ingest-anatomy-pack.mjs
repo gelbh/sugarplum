@@ -25,6 +25,7 @@ import {
   existsSync,
   lstatSync,
   mkdirSync,
+  readFileSync,
   readdirSync,
   realpathSync,
   rmSync,
@@ -289,8 +290,21 @@ export function ingestAnatomyPack(opts) {
   );
 
   const scene = { id: packId, title, regions, structures };
+  const clipsPath = join(srcAbs, "clips.json");
+  if (existsSync(clipsPath)) {
+    const clips = JSON.parse(readFileSync(clipsPath, "utf8"));
+    if (!Array.isArray(clips) || clips.length === 0) {
+      throw new Error("clips.json must be a non-empty array");
+    }
+    scene.clips = clips;
+  }
   writeFileSync(join(outDir, "scene.json"), `${JSON.stringify(scene, null, 2)}\n`);
-  writeFileSync(join(outDir, "CREDITS.md"), creditsStub(title));
+  const creditsDrop = join(srcAbs, "CREDITS.md");
+  if (existsSync(creditsDrop)) {
+    copyFileSync(creditsDrop, join(outDir, "CREDITS.md"));
+  } else {
+    writeFileSync(join(outDir, "CREDITS.md"), creditsStub(title));
+  }
   return {
     packId,
     outDir,
