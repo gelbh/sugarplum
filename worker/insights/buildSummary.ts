@@ -2,6 +2,7 @@ import {
   buildGradeCounts,
   buildReviewsPerDay,
   insightDayKeys,
+  INSIGHTS_ACTIVITY_DAYS,
   INSIGHTS_GRADE_DAYS,
   INSIGHTS_REVIEWS_DAYS,
   ratingsInLocalWindow,
@@ -38,14 +39,14 @@ export async function buildInsightsSummary(
     localDay && /^\d{4}-\d{2}-\d{2}$/.test(localDay)
       ? localDay
       : insightDayKeys(now, tzOffsetMinutes, 1)[0]!;
-  const dayKeys = insightDayKeys(
+  const activityDayKeys = insightDayKeys(
     now,
     tzOffsetMinutes,
-    INSIGHTS_REVIEWS_DAYS,
+    INSIGHTS_ACTIVITY_DAYS,
     todayKey,
   );
   const windowStartIso = resolveLocalDayStartIso(now, {
-    localDay: dayKeys[0],
+    localDay: activityDayKeys[0],
     tzOffsetMinutes,
   });
 
@@ -63,8 +64,16 @@ export async function buildInsightsSummary(
     .all<ReviewRow>();
 
   const logs = reviewRows ?? [];
+  const reviewedAts = logs.map((r) => r.reviewed_at);
+  const activityByDay = buildReviewsPerDay(
+    reviewedAts,
+    now,
+    tzOffsetMinutes,
+    INSIGHTS_ACTIVITY_DAYS,
+    todayKey,
+  );
   const reviewsPerDay = buildReviewsPerDay(
-    logs.map((r) => r.reviewed_at),
+    reviewedAts,
     now,
     tzOffsetMinutes,
     INSIGHTS_REVIEWS_DAYS,
@@ -139,6 +148,7 @@ export async function buildInsightsSummary(
     window: {
       reviewsDays: INSIGHTS_REVIEWS_DAYS,
       gradeDays: INSIGHTS_GRADE_DAYS,
+      activityDays: INSIGHTS_ACTIVITY_DAYS,
     },
     kpis: {
       reviewsInWindow,
@@ -162,6 +172,7 @@ export async function buildInsightsSummary(
       level: gamRow?.level ?? 1,
     },
     reviewsPerDay,
+    activityByDay,
     gradeCounts,
   };
 }
