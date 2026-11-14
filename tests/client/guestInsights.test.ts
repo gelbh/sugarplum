@@ -56,6 +56,8 @@ describe("guestInsightsSummary", () => {
     );
     expect(summary.gamification).toBeNull();
     expect(summary.reviewsPerDay).toHaveLength(30);
+    expect(summary.activityByDay).toHaveLength(90);
+    expect(summary.window.activityDays).toBe(90);
     expect(summary.kpis.reviewsInWindow).toBe(2);
     expect(summary.kpis.reviewedToday).toBe(2);
     expect(summary.gradeCounts).toEqual({

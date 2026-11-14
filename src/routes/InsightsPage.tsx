@@ -13,6 +13,7 @@ import {
 } from "../api/client";
 import CompositionSpark from "../components/CompositionSpark";
 import StrugglingList from "../components/StrugglingList";
+import ActivityHeatmap from "../insights/ActivityHeatmap";
 import GradeMixChart from "../insights/GradeMixChart";
 import KpiStrip from "../insights/KpiStrip";
 import ReviewsPerDayChart from "../insights/ReviewsPerDayChart";
@@ -102,6 +103,7 @@ export default function InsightsPage() {
           {summary ? (
             <Stack spacing={3}>
               <KpiStrip summary={summary} />
+              <ActivityHeatmap series={summary.activityByDay} />
               <ReviewsPerDayChart series={summary.reviewsPerDay} />
               <GradeMixChart counts={summary.gradeCounts} />
               <Stack spacing={1}>
