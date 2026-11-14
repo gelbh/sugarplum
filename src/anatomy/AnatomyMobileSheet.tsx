@@ -6,13 +6,14 @@ import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import Typography from "@mui/material/Typography";
+import AnatomyClipBar from "./AnatomyClipBar";
 import InfoPanel from "./InfoPanel";
 import StructurePanel from "./StructurePanel";
 import TestYourself, { type AnatomyStudyMode } from "./TestYourself";
-import type { AnatomyRegion, AnatomyStructure } from "./types";
+import type { AnatomyClip, AnatomyRegion, AnatomyStructure } from "./types";
 import type { StructureUiAction, StructureUiState } from "./structureState";
 
-export type AnatomySheetTab = "structures" | "study";
+export type AnatomySheetTab = "structures" | "study" | "clips";
 
 export type AnatomyMobileSheetProps = {
   open: boolean;
@@ -34,6 +35,13 @@ export type AnatomyMobileSheetProps = {
   selectedStructure: AnatomyStructure | null;
   regionStructures: AnatomyStructure[];
   onCorrect: (structureId: string) => void;
+  clips?: AnatomyClip[];
+  clipsDisabled?: boolean;
+  activeClipId?: string | null;
+  clipPaused?: boolean;
+  clipError?: string | null;
+  onSelectClip?: (clip: AnatomyClip) => void;
+  onTogglePauseClip?: () => void;
 };
 
 export default function AnatomyMobileSheet({
@@ -55,8 +63,18 @@ export default function AnatomyMobileSheet({
   selectedStructure,
   regionStructures,
   onCorrect,
+  clips = [],
+  clipsDisabled = false,
+  activeClipId = null,
+  clipPaused = false,
+  clipError = null,
+  onSelectClip,
+  onTogglePauseClip,
 }: AnatomyMobileSheetProps) {
   const titleId = "anatomy-mobile-sheet-title";
+  const hasClips = clips.length > 0;
+  const title =
+    tab === "structures" ? "Structures" : tab === "study" ? "Study" : "Clips";
   return (
     <Drawer
       anchor="bottom"
@@ -90,7 +108,7 @@ export default function AnatomyMobileSheet({
           variant="subtitle2"
           sx={{ fontWeight: 600, flex: 1 }}
         >
-          {tab === "structures" ? "Structures" : "Study"}
+          {title}
         </Typography>
         <IconButton size="small" aria-label="Done" onClick={onClose}>
           <CloseIcon fontSize="small" />
@@ -103,6 +121,7 @@ export default function AnatomyMobileSheet({
       >
         <Tab value="structures" label="Structures" />
         <Tab value="study" label="Study" />
+        {hasClips ? <Tab value="clips" label="Clips" /> : null}
       </Tabs>
       <Box sx={{ flex: 1, minHeight: 0, overflow: "auto", px: 1.5, pb: 1.5 }}>
         {tab === "structures" ? (
@@ -116,7 +135,7 @@ export default function AnatomyMobileSheet({
             maskNames={maskNames}
             revealedIds={revealedIds}
           />
-        ) : (
+        ) : tab === "study" ? (
           <Stack spacing={1.25}>
             <TestYourself
               mode={studyMode}
@@ -130,7 +149,18 @@ export default function AnatomyMobileSheet({
               <InfoPanel structure={selectedStructure} />
             ) : null}
           </Stack>
-        )}
+        ) : hasClips && onSelectClip && onTogglePauseClip ? (
+          <AnatomyClipBar
+            clips={clips}
+            disabled={clipsDisabled}
+            activeClipId={activeClipId}
+            clipPaused={clipPaused}
+            clipError={clipError}
+            onSelectClip={onSelectClip}
+            onTogglePause={onTogglePauseClip}
+            embedded
+          />
+        ) : null}
       </Box>
     </Drawer>
   );
