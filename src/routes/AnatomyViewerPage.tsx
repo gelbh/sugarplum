@@ -11,6 +11,7 @@ import ZoomInOutlinedIcon from "@mui/icons-material/ZoomInOutlined";
 import ZoomOutOutlinedIcon from "@mui/icons-material/ZoomOutOutlined";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
@@ -28,6 +29,7 @@ import AnatomyCanvas, {
 } from "../anatomy/AnatomyCanvas";
 import AnatomyHelpOverlay from "../anatomy/AnatomyHelpOverlay";
 import InfoPanel from "../anatomy/InfoPanel";
+import MakeCardsDeckDialog from "../anatomy/MakeCardsDeckDialog";
 import {
   activeRegionIdsForOpen,
   parseAnatomySceneManifest,
@@ -39,6 +41,7 @@ import {
   createStructureUiState,
   structureUiReducer,
 } from "../anatomy/structureState";
+import { makeCardsStructureIds } from "../anatomy/structureCard";
 import TestYourself, {
   type AnatomyStudyMode,
 } from "../anatomy/TestYourself";
@@ -127,6 +130,8 @@ export default function AnatomyViewerPage({
   const [bgId, setBgId] = useState<BgChoiceId>("page");
   const [studyMode, setStudyMode] = useState<AnatomyStudyMode>("explore");
   const [revealedIds, setRevealedIds] = useState<Set<string>>(() => new Set());
+  const [makeCardsOpen, setMakeCardsOpen] = useState(false);
+  const [makeCardsNotice, setMakeCardsNotice] = useState<string | null>(null);
 
   const bgChoices = useMemo<BgChoice[]>(
     () => [
@@ -176,6 +181,8 @@ export default function AnatomyViewerPage({
     setBgId("page");
     setStudyMode("explore");
     setRevealedIds(new Set());
+    setMakeCardsOpen(false);
+    setMakeCardsNotice(null);
   }, [sceneId]);
 
   useEffect(() => {
@@ -240,6 +247,17 @@ export default function AnatomyViewerPage({
       ? "Hidden"
       : selectedStructure.label
     : null;
+  const makeCardsIds = useMemo(
+    () => makeCardsStructureIds(ui.selectedId, revealedIds),
+    [ui.selectedId, revealedIds],
+  );
+  const makeCardsStructures = useMemo(() => {
+    if (!manifest || makeCardsIds.length === 0) return [];
+    const byId = new Map(manifest.structures.map((s) => [s.id, s]));
+    return makeCardsIds
+      .map((id) => byId.get(id))
+      .filter((s): s is NonNullable<typeof s> => s != null);
+  }, [manifest, makeCardsIds]);
 
   useEffect(() => {
     const onKey = (ev: KeyboardEvent) => {
@@ -346,8 +364,29 @@ export default function AnatomyViewerPage({
             Pick a structure in the list or on the model.
           </Typography>
         )}
+        <Button
+          size="small"
+          variant="outlined"
+          disabled={makeCardsStructures.length === 0}
+          onClick={() => setMakeCardsOpen(true)}
+          sx={{ ml: { xs: 0, md: "auto" } }}
+        >
+          Make cards
+          {makeCardsStructures.length > 0
+            ? ` (${makeCardsStructures.length})`
+            : ""}
+        </Button>
       </Stack>
 
+      {makeCardsNotice ? (
+        <Alert
+          severity="success"
+          sx={{ mb: 1, flexShrink: 0 }}
+          onClose={() => setMakeCardsNotice(null)}
+        >
+          {makeCardsNotice}
+        </Alert>
+      ) : null}
       {error ? (
         <Alert severity="error" sx={{ mb: 1, flexShrink: 0 }}>
           {error}
@@ -668,6 +707,21 @@ export default function AnatomyViewerPage({
       ) : !error && !manifest ? (
         <Typography color="text.secondary">Loading scene…</Typography>
       ) : null}
+
+      <MakeCardsDeckDialog
+        open={makeCardsOpen}
+        sceneId={sceneId}
+        sceneTitle={manifest?.title ?? sceneId}
+        structures={makeCardsStructures}
+        onClose={() => setMakeCardsOpen(false)}
+        onCreated={(count) => {
+          setMakeCardsNotice(
+            count === 1
+              ? "Created 1 Study card. Open Library to review it."
+              : `Created ${count} Study cards. Open Library to review them.`,
+          );
+        }}
+      />
     </Box>
   );
 }
