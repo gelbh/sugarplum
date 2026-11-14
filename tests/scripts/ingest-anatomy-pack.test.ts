@@ -206,7 +206,7 @@ describe("ingestAnatomyPack traversal smoke", () => {
     expect(ext).toBe(true);
   });
 
-  it("merges clips.json and prefers drop CREDITS.md", () => {
+  it("merges clips.json and prefers drop CREDITS.md", async () => {
     const src = tempDir("anatomy-pack-clips-");
     const outRoot = tempDir("anatomy-pack-out-");
     writeFileSync(join(src, "model.glb"), "fake-glb");
@@ -218,11 +218,12 @@ describe("ingestAnatomyPack traversal smoke", () => {
     );
     writeFileSync(join(src, "CREDITS.md"), "# Drop credits\nIVALA/SPL/2026-001\n");
 
-    const result = ingestAnatomyPack({
+    const result = await ingestAnatomyPack({
       src,
       packId: "clip-smoke",
       title: "Clip smoke",
       outRoot,
+      meshopt: false,
     });
 
     const scene = JSON.parse(
@@ -236,18 +237,19 @@ describe("ingestAnatomyPack traversal smoke", () => {
     );
   });
 
-  it("rejects empty clips.json", () => {
+  it("rejects empty clips.json", async () => {
     const src = tempDir("anatomy-pack-clips-empty-");
     const outRoot = tempDir("anatomy-pack-out-");
     writeFileSync(join(src, "model.glb"), "fake-glb");
     writeFileSync(join(src, "clips.json"), "[]");
 
-    expect(() =>
+    await expect(
       ingestAnatomyPack({
         src,
         packId: "clip-smoke",
         outRoot,
+        meshopt: false,
       }),
-    ).toThrow(/clips\.json must be a non-empty array/);
+    ).rejects.toThrow(/clips\.json must be a non-empty array/);
   });
 });
