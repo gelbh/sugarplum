@@ -31,6 +31,8 @@ import {
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { applyFit, applyFocus, orbitDistanceLimits } from "./cameraFit";
+import { LOADER_DELAY_MS } from "./delayedShow";
+import { movementExceeded } from "./pickGesture";
 import { isStructureVisible, type StructureUiState } from "./structureState";
 
 export type AnatomyLoadSpec = {
@@ -280,6 +282,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
     const cameraModeRef = useRef(cameraMode);
     const aspectRef = useRef(1);
     const unionFitDistanceRef = useRef(0);
+    const requestRenderRef = useRef<() => void>(() => {});
     const [loadError, setLoadError] = useState<string | null>(null);
     const [retryToken, setRetryToken] = useState(0);
     const [progress, setProgress] = useState<{ loaded: number; total: number }>(
@@ -288,6 +291,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         total: 0,
       },
     );
+    const [loaderVisible, setLoaderVisible] = useState(false);
 
     useEffect(() => {
       uiRef.current = ui;
@@ -307,6 +311,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       const renderer = rendererRef.current;
       if (scene && renderer) {
         applySceneBackground(scene, renderer, background);
+        requestRenderRef.current();
       }
     }, [background]);
 
@@ -316,12 +321,16 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       if (!controls) return;
       controls.autoRotate = autoRotate;
       controls.autoRotateSpeed = 1.2;
+      requestRenderRef.current();
     }, [autoRotate]);
 
     useEffect(() => {
       wireframeRef.current = wireframe;
       const root = rootGroupRef.current;
-      if (root) setTreeWireframe(root, wireframe);
+      if (root) {
+        setTreeWireframe(root, wireframe);
+        requestRenderRef.current();
+      }
     }, [wireframe]);
     useEffect(() => {
       cameraModeRef.current = cameraMode;
@@ -341,6 +350,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
           );
           camera.updateProjectionMatrix();
           controls.update();
+          requestRenderRef.current();
           return;
         }
         const offset = camera.position.clone().sub(controls.target);
@@ -352,6 +362,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         else if (len > maxD) offset.setLength(maxD);
         camera.position.copy(controls.target).add(offset);
         controls.update();
+        requestRenderRef.current();
       },
       focusStructure: (id: string) => focusStructureRef.current(id),
     }));
@@ -364,6 +375,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
 
       setLoadError(null);
       setProgress({ loaded: 0, total: 0 });
+      setLoaderVisible(false);
 
       const scene = new Scene();
       sceneRef.current = scene;
@@ -433,11 +445,29 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         return null;
       };
 
+      let renderRequested = false;
+      const renderFrame = () => {
+        renderRequested = false;
+        if (disposed) return;
+        controls.update();
+        const cam = cameraRef.current;
+        if (cam) renderer.render(scene, cam);
+        if (controls.autoRotate) requestRender();
+      };
+      const requestRender = () => {
+        if (disposed || renderRequested) return;
+        renderRequested = true;
+        requestAnimationFrame(renderFrame);
+      };
+      requestRenderRef.current = requestRender;
+      controls.addEventListener("change", requestRender);
+
       const applyVisibility = () => {
         const state = uiRef.current;
         for (const [id, obj] of nodeMapRef.current) {
           obj.visible = isStructureVisible(state, id);
         }
+        requestRender();
       };
       applyVisibilityRef.current = applyVisibility;
 
@@ -451,6 +481,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
           aspectRef.current,
         );
         if (d > 0) unionFitDistanceRef.current = d;
+        requestRender();
       };
       fitCameraRef.current = fitCamera;
 
@@ -465,6 +496,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
           aspectRef.current,
           unionFitDistanceRef.current,
         );
+        requestRender();
       };
 
       setCameraModeRef.current = (mode: AnatomyCameraMode) => {
@@ -491,6 +523,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         fitCamera();
         controls.target.copy(target);
         controls.update();
+        requestRender();
       };
 
       const resize = () => {
@@ -514,6 +547,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         renderer.setSize(bw, bh, true);
         canvas.style.width = "100%";
         canvas.style.height = "100%";
+        requestRender();
       };
 
       const pickIdAtEvent = (ev: PointerEvent): string | null => {
@@ -533,9 +567,21 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         return resolveHitId(hits[0].object);
       };
 
+      let pointerDown: { x: number; y: number } | null = null;
       const onPointerDown = (ev: PointerEvent) => {
+        pointerDown = { x: ev.clientX, y: ev.clientY };
+      };
+      const onPointerUp = (ev: PointerEvent) => {
+        if (!pointerDown) return;
+        const dx = ev.clientX - pointerDown.x;
+        const dy = ev.clientY - pointerDown.y;
+        pointerDown = null;
+        if (movementExceeded(dx, dy)) return;
         const id = pickIdAtEvent(ev);
         if (id) onSelectRef.current(id);
+      };
+      const onPointerCancel = () => {
+        pointerDown = null;
       };
 
       const onPointerMove = (ev: PointerEvent) => {
@@ -544,30 +590,30 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         if (id === hoveredId) return;
         hoveredId = id;
         clearHoverHighlight(hoverMats, hoverSaved);
-        if (!id) return;
-        const root = nodeMapRef.current.get(id);
-        if (root) applyHoverHighlight(root, hoverMats, hoverSaved);
+        if (id) {
+          const root = nodeMapRef.current.get(id);
+          if (root) applyHoverHighlight(root, hoverMats, hoverSaved);
+        }
+        requestRender();
       };
 
       const onPointerLeave = () => {
+        pointerDown = null;
         hoveredId = null;
         canvas.style.cursor = "";
         clearHoverHighlight(hoverMats, hoverSaved);
+        requestRender();
       };
 
       canvas.addEventListener("pointerdown", onPointerDown);
+      canvas.addEventListener("pointerup", onPointerUp);
+      canvas.addEventListener("pointercancel", onPointerCancel);
       canvas.addEventListener("pointermove", onPointerMove);
       canvas.addEventListener("pointerleave", onPointerLeave);
       const ro = new ResizeObserver(resize);
       ro.observe(host);
       resize();
-
-      renderer.setAnimationLoop(() => {
-        if (disposed) return;
-        controls.update();
-        const cam = cameraRef.current;
-        if (cam) renderer.render(scene, cam);
-      });
+      requestRender();
 
       const loader = new GLTFLoader();
       const specs = loadsRef.current;
@@ -581,10 +627,18 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       const total = urlEntries.length;
       let loadedCount = 0;
       setProgress({ loaded: 0, total });
+      setLoaderVisible(false);
+      let loaderDelayTimer: ReturnType<typeof setTimeout> | null = null;
+      if (total > 0) {
+        loaderDelayTimer = setTimeout(() => {
+          if (!disposed) setLoaderVisible(true);
+        }, LOADER_DELAY_MS);
+      }
 
       void (async () => {
         if (total === 0) {
           setProgress({ loaded: 0, total: 0 });
+          setLoaderVisible(false);
           return;
         }
         const results = await mapPoolSettled(
@@ -615,6 +669,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
             }
             if (wireframeRef.current) setTreeWireframe(model, true);
             applyVisibility();
+            requestRender();
           },
           () => {
             if (disposed) return;
@@ -623,6 +678,11 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
           },
         );
         if (disposed) return;
+        if (loaderDelayTimer != null) {
+          clearTimeout(loaderDelayTimer);
+          loaderDelayTimer = null;
+        }
+        setLoaderVisible(false);
         const failed = results.filter((r) => r.status === "rejected").length;
         if (failed > 0) {
           setLoadError(
@@ -637,18 +697,24 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
 
       return () => {
         disposed = true;
+        if (loaderDelayTimer != null) clearTimeout(loaderDelayTimer);
+        setLoaderVisible(false);
         applyVisibilityRef.current = () => {};
         fitCameraRef.current = () => {};
         focusStructureRef.current = () => {};
         setCameraModeRef.current = () => {};
+        requestRenderRef.current = () => {};
         controlsRef.current = null;
         cameraRef.current = null;
         sceneRef.current = null;
         rendererRef.current = null;
         rootGroupRef.current = null;
+        controls.removeEventListener("change", requestRender);
         renderer.setAnimationLoop(null);
         ro.disconnect();
         canvas.removeEventListener("pointerdown", onPointerDown);
+        canvas.removeEventListener("pointerup", onPointerUp);
+        canvas.removeEventListener("pointercancel", onPointerCancel);
         canvas.removeEventListener("pointermove", onPointerMove);
         canvas.removeEventListener("pointerleave", onPointerLeave);
         clearHoverHighlight(hoverMats, hoverSaved);
@@ -674,7 +740,8 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       focusStructureRef.current(ui.selectedId);
     }, [ui.selectedId, autoFocus, loadsKey, progress.loaded, progress.total]);
 
-    const showProgress = progress.total > 0 && progress.loaded < progress.total;
+    const showProgress =
+      loaderVisible && progress.total > 0 && progress.loaded < progress.total;
 
     return (
       <Box
