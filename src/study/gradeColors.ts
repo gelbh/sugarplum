@@ -32,3 +32,15 @@ const BY_RATING: Record<StudyRating, GradeColorVars> = {
 export function gradeColorVars(rating: StudyRating): GradeColorVars {
   return BY_RATING[rating];
 }
+
+/** Solid chart fills; mirrors `--sp-grade-*-border` in brand.css. */
+const CHART_FILL: Record<StudyRating, string> = {
+  1: "#c45c6a",
+  2: "#c4a574",
+  3: "#8b5a9e",
+  4: "#6a9e8b",
+};
+
+export function gradeChartFill(rating: StudyRating): string {
+  return CHART_FILL[rating];
+}

@@ -15,13 +15,17 @@ type Point = { day: string; count: number };
 
 type Props = {
   series: readonly Point[];
+  reviewsDays?: number;
 };
 
 function shortDay(day: string): string {
   return day.length >= 10 ? day.slice(5) : day;
 }
 
-export default function ReviewsPerDayChart({ series }: Props) {
+export default function ReviewsPerDayChart({
+  series,
+  reviewsDays,
+}: Props) {
   const theme = useTheme();
   const total = series.reduce((sum, p) => sum + p.count, 0);
   const peak = series.reduce((m, p) => Math.max(m, p.count), 0);
@@ -33,11 +37,17 @@ export default function ReviewsPerDayChart({ series }: Props) {
     ...p,
     label: shortDay(p.day),
   }));
+  const title =
+    reviewsDays != null ? `Reviews per day (${reviewsDays}d)` : "Reviews per day";
 
   return (
     <Stack spacing={1}>
-      <Typography variant="subtitle2" component="h2">
-        Reviews per day
+      <Typography
+        variant="subtitle2"
+        component="h2"
+        sx={{ color: "primary.main", fontWeight: 600 }}
+      >
+        {title}
       </Typography>
       {total === 0 ? (
         <Box role="img" aria-label={aria}>

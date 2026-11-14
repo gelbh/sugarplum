@@ -11,11 +11,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { gradeChartFill } from "../study/gradeColors";
 import { GRADE_LABELS } from "../study/gradeLabels";
 import type { InsightsGradeCounts } from "./types";
 
 type Props = {
   counts: InsightsGradeCounts;
+  gradeDays?: number;
 };
 
 const ROWS: Array<{ key: keyof InsightsGradeCounts; rating: 1 | 2 | 3 | 4 }> = [
@@ -25,7 +27,7 @@ const ROWS: Array<{ key: keyof InsightsGradeCounts; rating: 1 | 2 | 3 | 4 }> = [
   { key: "easy", rating: 4 },
 ];
 
-export default function GradeMixChart({ counts }: Props) {
+export default function GradeMixChart({ counts, gradeDays = 14 }: Props) {
   const theme = useTheme();
   const total = counts.again + counts.hard + counts.good + counts.easy;
   const aria =
@@ -33,24 +35,21 @@ export default function GradeMixChart({ counts }: Props) {
       ? "No grades in this window"
       : `Grade mix: ${GRADE_LABELS[1]} ${counts.again}, ${GRADE_LABELS[2]} ${counts.hard}, ${GRADE_LABELS[3]} ${counts.good}, ${GRADE_LABELS[4]} ${counts.easy}`;
 
-  const fills: Record<keyof InsightsGradeCounts, string> = {
-    again: theme.palette.error.main,
-    hard: theme.palette.warning.main,
-    good: theme.palette.info.main,
-    easy: theme.palette.success.main,
-  };
-
   const data = ROWS.map(({ key, rating }) => ({
     key,
     name: GRADE_LABELS[rating],
     count: counts[key],
-    fill: fills[key],
+    fill: gradeChartFill(rating),
   }));
 
   return (
     <Stack spacing={1}>
-      <Typography variant="subtitle2" component="h2">
-        Grade mix (14d)
+      <Typography
+        variant="subtitle2"
+        component="h2"
+        sx={{ color: "primary.main", fontWeight: 600 }}
+      >
+        Grade mix ({gradeDays}d)
       </Typography>
       {total === 0 ? (
         <Box role="img" aria-label={aria}>
@@ -88,7 +87,7 @@ export default function GradeMixChart({ counts }: Props) {
             </ResponsiveContainer>
           </Box>
           <Typography variant="caption" color="text.secondary">
-            {total} grades in the last 14 days
+            {total} grades in the last {gradeDays} days
           </Typography>
         </>
       )}

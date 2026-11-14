@@ -2,29 +2,20 @@ import { useEffect, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
+import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import {
-  ApiError,
-  getInsightsSummary,
-  listStrugglingCards,
-  type InsightsSummary,
-  type StrugglingRow,
-} from "../api/client";
+import { ApiError, getInsightsSummary, type InsightsSummary } from "../api/client";
 import CompositionSpark from "../components/CompositionSpark";
-import StrugglingList from "../components/StrugglingList";
 import ActivityHeatmap from "../insights/ActivityHeatmap";
 import GradeMixChart from "../insights/GradeMixChart";
-import KpiStrip from "../insights/KpiStrip";
 import ReviewsPerDayChart from "../insights/ReviewsPerDayChart";
 import { useTrackedOp } from "../progress/useTrackedOp";
 
-/** Study health dashboard: KPIs, charts, and struggling cards. */
+/** Charts-forward study-health + habit dashboard (no struggling list). */
 export default function InsightsPage() {
   const [summary, setSummary] = useState<InsightsSummary | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
-  const [rows, setRows] = useState<StrugglingRow[]>([]);
-  const [strugglingError, setStrugglingError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const { end: endLoad } = useTrackedOp("Loading insights…", {
     trackOnMount: true,
@@ -33,16 +24,14 @@ export default function InsightsPage() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [summaryResult, strugglingResult] = await Promise.allSettled([
-        getInsightsSummary(),
-        listStrugglingCards(),
-      ]);
-      if (cancelled) return;
-
-      if (summaryResult.status === "fulfilled") {
-        setSummary(summaryResult.value);
-      } else {
-        const err = summaryResult.reason;
+      try {
+        const value = await getInsightsSummary();
+        if (cancelled) return;
+        setSummary(value);
+        setReady(true);
+        endLoad(true);
+      } catch (err) {
+        if (cancelled) return;
         if (err instanceof ApiError && err.status === 401) {
           window.location.assign("/login");
           return;
@@ -50,33 +39,19 @@ export default function InsightsPage() {
         setSummaryError(
           err instanceof ApiError ? err.message : "Failed to load study summary",
         );
+        setReady(true);
+        endLoad(false);
       }
-
-      if (strugglingResult.status === "fulfilled") {
-        setRows(strugglingResult.value);
-      } else {
-        const err = strugglingResult.reason;
-        if (err instanceof ApiError && err.status === 401) {
-          window.location.assign("/login");
-          return;
-        }
-        setStrugglingError(
-          err instanceof ApiError
-            ? err.message
-            : "Failed to load struggling cards",
-        );
-      }
-
-      setReady(true);
-      endLoad(
-        summaryResult.status === "fulfilled" ||
-          strugglingResult.status === "fulfilled",
-      );
     })();
     return () => {
       cancelled = true;
     };
   }, [endLoad]);
+
+  const recallPct =
+    summary?.kpis.avgRetrievability == null
+      ? null
+      : Math.round(100 * summary.kpis.avgRetrievability);
 
   return (
     <Container maxWidth="md" sx={{ py: { xs: 4, md: 5 } }}>
@@ -94,7 +69,7 @@ export default function InsightsPage() {
               Insights
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Study health, recent activity, and cards that need attention.
+              Study health, habit, and recent activity.
             </Typography>
           </Box>
 
@@ -102,12 +77,111 @@ export default function InsightsPage() {
 
           {summary ? (
             <Stack spacing={3}>
-              <KpiStrip summary={summary} />
-              <ActivityHeatmap series={summary.activityByDay} />
-              <ReviewsPerDayChart series={summary.reviewsPerDay} />
-              <GradeMixChart counts={summary.gradeCounts} />
-              <Stack spacing={1}>
-                <Typography variant="subtitle2" component="h2">
+              <Paper variant="outlined" sx={{ p: 2.5 }}>
+                <Typography
+                  variant="subtitle2"
+                  component="h2"
+                  sx={{ color: "primary.main", fontWeight: 600, mb: 1 }}
+                >
+                  Study health
+                </Typography>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={3}
+                  alignItems={{ sm: "flex-end" }}
+                >
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant="h3"
+                      component="p"
+                      sx={{
+                        fontWeight: 700,
+                        lineHeight: 1,
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      {recallPct == null ? "—" : `${recallPct}%`}
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.5 }}>
+                      Est. recall
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Average chance you remember accepted cards right now.
+                    </Typography>
+                  </Box>
+                  {summary.gamification ? (
+                    <Stack direction="row" spacing={3}>
+                      <Box>
+                        <Typography
+                          variant="h5"
+                          sx={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}
+                        >
+                          {summary.gamification.streakCurrent}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Streak
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography
+                          variant="h5"
+                          sx={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}
+                        >
+                          L{summary.gamification.level}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {summary.gamification.xpTotal} XP
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  ) : null}
+                </Stack>
+              </Paper>
+
+              <Paper variant="outlined" sx={{ p: 2.5 }}>
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  sx={{ mb: 1.5 }}
+                  useFlexGap
+                  flexWrap="wrap"
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Reviews ({summary.window.reviewsDays}d):{" "}
+                    <Box component="span" sx={{ color: "text.primary", fontWeight: 600 }}>
+                      {summary.kpis.reviewsInWindow}
+                    </Box>
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Today:{" "}
+                    <Box component="span" sx={{ color: "text.primary", fontWeight: 600 }}>
+                      {summary.kpis.reviewedToday}
+                    </Box>
+                  </Typography>
+                </Stack>
+                <ReviewsPerDayChart
+                  series={summary.reviewsPerDay}
+                  reviewsDays={summary.window.reviewsDays}
+                />
+              </Paper>
+
+              <Paper variant="outlined" sx={{ p: 2.5 }}>
+                <ActivityHeatmap series={summary.activityByDay} />
+              </Paper>
+
+              <Paper variant="outlined" sx={{ p: 2.5 }}>
+                <GradeMixChart
+                  counts={summary.gradeCounts}
+                  gradeDays={summary.window.gradeDays}
+                />
+              </Paper>
+
+              <Paper variant="outlined" sx={{ p: 2.5 }}>
+                <Typography
+                  variant="subtitle2"
+                  component="h2"
+                  sx={{ color: "primary.main", fontWeight: 600 }}
+                >
                   Knowledge mix
                 </Typography>
                 {summary.kpis.composition.total === 0 ? (
@@ -115,7 +189,7 @@ export default function InsightsPage() {
                     No accepted cards yet.
                   </Typography>
                 ) : (
-                  <>
+                  <Stack spacing={1} sx={{ mt: 1 }}>
                     <CompositionSpark
                       new={summary.kpis.composition.new}
                       learning={summary.kpis.composition.learning}
@@ -134,26 +208,11 @@ export default function InsightsPage() {
                         ? ` · ${summary.kpis.composition.graduatedPct}% graduated`
                         : ""}
                     </Typography>
-                  </>
+                  </Stack>
                 )}
-              </Stack>
+              </Paper>
             </Stack>
           ) : null}
-
-          <Box>
-            <Typography variant="subtitle2" component="h2" gutterBottom>
-              Struggling cards
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-              Cards that recently felt hard (No Idea or Tough Cookie) or are at
-              risk of slipping.
-            </Typography>
-            {strugglingError ? (
-              <Alert severity="error">{strugglingError}</Alert>
-            ) : (
-              <StrugglingList rows={rows} />
-            )}
-          </Box>
         </Stack>
       )}
     </Container>

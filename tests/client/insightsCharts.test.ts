@@ -7,6 +7,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import GradeMixChart from "../../src/insights/GradeMixChart";
 import ReviewsPerDayChart from "../../src/insights/ReviewsPerDayChart";
+import { gradeChartFill } from "../../src/study/gradeColors";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true;
@@ -102,5 +103,12 @@ describe("insights charts", () => {
     await act(async () => {
       root.unmount();
     });
+  });
+
+  it("gradeChartFill uses brand spectrum hexes not MUI traffic lights", () => {
+    expect(gradeChartFill(1)).toBe("#c45c6a");
+    expect(gradeChartFill(2)).toBe("#c4a574");
+    expect(gradeChartFill(3)).toBe("#8b5a9e");
+    expect(gradeChartFill(4)).toBe("#6a9e8b");
   });
 });
