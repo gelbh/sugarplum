@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   PICK_DRAG_THRESHOLD_PX,
+  PICK_DRAG_THRESHOLD_TOUCH_PX,
   movementExceeded,
+  pickThresholdForPointerType,
   shouldCommitPick,
 } from "../../src/anatomy/pickGesture";
 
@@ -54,5 +56,26 @@ describe("shouldCommitPick", () => {
         endDy: 0,
       }),
     ).toBe(false);
+  });
+
+  it("allows touch slop under the touch threshold", () => {
+    expect(
+      shouldCommitPick({
+        exceededDuring: false,
+        multiPointer: false,
+        endDx: 8,
+        endDy: 0,
+        thresholdPx: PICK_DRAG_THRESHOLD_TOUCH_PX,
+      }),
+    ).toBe(true);
+  });
+});
+
+describe("pickThresholdForPointerType", () => {
+  it("uses a tighter threshold for mouse", () => {
+    expect(pickThresholdForPointerType("mouse")).toBe(PICK_DRAG_THRESHOLD_PX);
+    expect(pickThresholdForPointerType("touch")).toBe(
+      PICK_DRAG_THRESHOLD_TOUCH_PX,
+    );
   });
 });

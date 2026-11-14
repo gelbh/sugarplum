@@ -32,7 +32,11 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { applyFit, applyFocus, orbitDistanceLimits } from "./cameraFit";
 import { LOADER_DELAY_MS } from "./delayedShow";
-import { movementExceeded, shouldCommitPick } from "./pickGesture";
+import {
+  movementExceeded,
+  pickThresholdForPointerType,
+  shouldCommitPick,
+} from "./pickGesture";
 import { isStructureVisible, type StructureUiState } from "./structureState";
 
 export type AnatomyLoadSpec = {
@@ -573,11 +577,13 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         y: number;
         exceeded: boolean;
         multi: boolean;
+        thresholdPx: number;
       };
       let pickGesture: PickGesture | null = null;
       const activePointers = new Set<number>();
 
       const onPointerDown = (ev: PointerEvent) => {
+        if (ev.button !== 0 && ev.pointerType === "mouse") return;
         activePointers.add(ev.pointerId);
         if (activePointers.size > 1) {
           if (pickGesture) pickGesture.multi = true;
@@ -589,6 +595,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
           y: ev.clientY,
           exceeded: false,
           multi: false,
+          thresholdPx: pickThresholdForPointerType(ev.pointerType),
         };
       };
       const onPointerUp = (ev: PointerEvent) => {
@@ -605,6 +612,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
             multiPointer: gesture.multi || activePointers.size > 0,
             endDx: ev.clientX - gesture.x,
             endDy: ev.clientY - gesture.y,
+            thresholdPx: gesture.thresholdPx,
           })
         ) {
           return;
@@ -623,7 +631,11 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
           pickGesture &&
           ev.pointerId === pickGesture.pointerId &&
           !pickGesture.exceeded &&
-          movementExceeded(ev.clientX - pickGesture.x, ev.clientY - pickGesture.y)
+          movementExceeded(
+            ev.clientX - pickGesture.x,
+            ev.clientY - pickGesture.y,
+            pickGesture.thresholdPx,
+          )
         ) {
           pickGesture.exceeded = true;
         }
