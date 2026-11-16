@@ -428,11 +428,20 @@ export default function DeckHubPage({ deckId }: Props) {
   const workshopOpen = workshopStack.length > 0;
 
   return (
-    <Container maxWidth="md" sx={{ py: { xs: 4, md: 5 } }}>
+    <Container
+      maxWidth="md"
+      sx={{
+        py: { xs: 2, md: 3 },
+        display: "flex",
+        flexDirection: "column",
+        minHeight: { md: "100%" },
+        flex: 1,
+      }}
+    >
       {!ready ? (
         <Typography color="text.secondary">Loading deck…</Typography>
       ) : (
-        <Stack spacing={3}>
+        <Stack spacing={2} sx={{ flex: 1, minHeight: 0 }}>
           {deck ? (
             <DeckHubTitleHeader
               title={deck.title}

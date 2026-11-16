@@ -127,26 +127,35 @@ export default function LibraryPage() {
   });
 
   return (
-    <Container maxWidth="md" sx={{ py: { xs: 4, md: 5 } }}>
+    <Container
+      maxWidth="md"
+      sx={{
+        py: { xs: 2, md: 3 },
+        display: "flex",
+        flexDirection: "column",
+        minHeight: { md: "100%" },
+        flex: 1,
+      }}
+    >
       {!ready ? (
         <Stack spacing={2}>
           <Skeleton variant="text" width={120} height={40} />
           <Skeleton variant="text" width="60%" />
           <Grid container spacing={2}>
-            {[0, 1, 2].map((key) => (
-              <Grid key={key} size={{ xs: 12, md: 6 }}>
+            {[0, 1, 2, 3].map((key) => (
+              <Grid key={key} size={{ xs: 6, sm: 4, md: 3 }}>
                 <Skeleton
                   variant="rounded"
                   height={160}
-                  sx={{ borderRadius: 1 }}
+                  sx={{ borderRadius: 2 }}
                 />
               </Grid>
             ))}
           </Grid>
         </Stack>
       ) : (
-        <Stack spacing={3}>
-          <Box>
+        <Stack spacing={2} sx={{ flex: 1, minHeight: 0 }}>
+          <Box sx={{ flexShrink: 0 }}>
             <Typography
               variant="h4"
               component="h1"
@@ -263,6 +272,7 @@ export default function LibraryPage() {
             toggleSubjectDecks={toggleSubjectDecks}
             toggleDeckSelected={toggleDeckSelected}
             setSubjectMenu={setSubjectMenu}
+            onCreateSubject={openCreateSubject}
           />
 
           {draftJobs.length > 0 ? (

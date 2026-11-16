@@ -1,13 +1,8 @@
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import Chip from "@mui/material/Chip";
-import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import RateReviewOutlinedIcon from "@mui/icons-material/RateReviewOutlined";
-import StyleOutlinedIcon from "@mui/icons-material/StyleOutlined";
-import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
 import type { WorkshopId } from "./workshopStack";
 
 export type MissionTileId = Extract<
@@ -15,12 +10,12 @@ export type MissionTileId = Extract<
   "addMaterial" | "drafts" | "cards" | "study"
 >;
 
-const TILE_ICONS = {
-  addMaterial: AddCircleOutlineIcon,
-  drafts: RateReviewOutlinedIcon,
-  cards: StyleOutlinedIcon,
-  study: TimerOutlinedIcon,
-} as const;
+const TILE_IMAGES: Record<MissionTileId, string> = {
+  addMaterial: "/atlas/sites/muscle.webp",
+  drafts: "/achievements/fruits/pineapple.svg",
+  cards: "/achievements/fruits/orange.svg",
+  study: "/achievements/fruits/strawberry.svg",
+};
 
 type Tile = {
   id: MissionTileId;
@@ -81,13 +76,18 @@ export default function MissionBoard({
       sx={{
         display: "grid",
         gridTemplateColumns: { xs: "1fr 1fr", sm: "1fr 1fr" },
+        gridTemplateRows: { xs: "1fr 1fr", sm: "1fr 1fr" },
         gap: { xs: 1.5, sm: 2 },
+        flex: 1,
+        minHeight: { xs: 320, sm: "min(52dvh, 480px)" },
+        alignContent: "stretch",
       }}
       role="list"
-      aria-label="Deck mission board"
+      aria-label="Deck hub jobs"
     >
       {tiles.map((tile) => {
-        const Icon = TILE_ICONS[tile.id];
+        const imageSrc = TILE_IMAGES[tile.id];
+        const isSvg = imageSrc.endsWith(".svg");
         return (
           <ButtonBase
             key={tile.id}
@@ -104,66 +104,81 @@ export default function MissionBoard({
                   : tile.title
             }
             sx={{
-              display: "block",
-              textAlign: "left",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 1.25,
+              textAlign: "center",
               p: { xs: 2, sm: 2.5 },
               borderRadius: 2,
               border: 1,
               borderColor: tile.accent ? "primary.main" : "divider",
               bgcolor: "background.paper",
               opacity: tile.muted ? 0.55 : 1,
-              transition: "border-color 160ms ease, box-shadow 160ms ease",
+              minHeight: 0,
+              height: "100%",
+              transition: "border-color 160ms ease",
               "&:hover": tile.muted
                 ? undefined
                 : {
                     borderColor: "primary.main",
-                    boxShadow: 1,
+                    bgcolor: "action.hover",
                   },
               "&.Mui-disabled": {
                 opacity: 0.55,
               },
             }}
           >
-            <Stack spacing={1} alignItems="flex-start">
-              <Stack
-                direction="row"
-                spacing={1}
-                alignItems="center"
-                sx={{ width: "100%" }}
+            <Box
+              aria-hidden
+              sx={(theme) => ({
+                width: { xs: 64, sm: 80 },
+                height: { xs: 64, sm: 80 },
+                borderRadius: 2,
+                bgcolor: alpha(theme.palette.primary.main, 0.12),
+                display: "grid",
+                placeItems: "center",
+                overflow: "hidden",
+                flexShrink: 0,
+              })}
+            >
+              <Box
+                component="img"
+                src={imageSrc}
+                alt=""
+                sx={{
+                  width: isSvg ? "62%" : "100%",
+                  height: isSvg ? "62%" : "100%",
+                  objectFit: isSvg ? "contain" : "cover",
+                }}
+              />
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                justifyContent: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 600,
+                  color: tile.accent ? "primary.main" : "text.primary",
+                }}
               >
-                <Box
-                  aria-hidden
-                  sx={(theme) => ({
-                    width: 28,
-                    height: 28,
-                    borderRadius: 1,
-                    bgcolor: alpha(theme.palette.primary.main, 0.1),
-                    color: "primary.main",
-                    display: "grid",
-                    placeItems: "center",
-                    flexShrink: 0,
-                  })}
-                >
-                  <Icon sx={{ fontSize: 18 }} />
-                </Box>
-                <Typography
-                  variant="subtitle1"
-                  sx={{
-                    fontWeight: 600,
-                    color: tile.accent ? "primary.main" : "text.primary",
-                    flex: 1,
-                  }}
-                >
-                  {tile.title}
-                </Typography>
-                {tile.badge ? (
-                  <Chip size="small" label={tile.badge} color="primary" />
-                ) : null}
-              </Stack>
-              <Typography variant="body2" color="text.secondary">
-                {tile.blurb}
+                {tile.title}
               </Typography>
-            </Stack>
+              {tile.badge ? (
+                <Chip size="small" label={tile.badge} color="primary" />
+              ) : null}
+            </Box>
+            <Typography variant="body2" color="text.secondary">
+              {tile.blurb}
+            </Typography>
           </ButtonBase>
         );
       })}

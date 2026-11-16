@@ -1,20 +1,18 @@
 import Box from "@mui/material/Box";
 import Checkbox from "@mui/material/Checkbox";
-import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import CompositionSpark from "../components/CompositionSpark";
 import EmptyNext from "../components/EmptyNext";
-import ShelfVolume from "../components/ShelfVolume";
 import type {
   Deck,
   StoredCoverRow,
   Subject,
   SubjectCompositionSummary,
 } from "../api/client";
-import { navigate } from "../nav/navigate";
 import { effectiveSubjectDeckCount } from "../subjects/subjectDeleteGuard";
-import { formatEtkTooltip } from "./formatEtkTooltip";
+import BoardTile from "./board/BoardTile";
+import LibraryBoard from "./board/LibraryBoard";
+import { fruitMarkSrc } from "./board/fruitMark";
 
 type Props = {
   subjects: Subject[];
@@ -35,6 +33,7 @@ type Props = {
     anchor: HTMLElement;
     subject: Subject;
   }) => void;
+  onCreateSubject?: () => void;
 };
 
 export function LibraryShelf({
@@ -50,35 +49,32 @@ export function LibraryShelf({
   toggleSubjectDecks,
   toggleDeckSelected,
   setSubjectMenu,
+  onCreateSubject,
 }: Props) {
   function localDeckCountForSubject(subjectId: string) {
     return decks.filter((d) => d.subject_id === subjectId).length;
   }
 
+  if (subjects.length === 0) {
+    return showCreateFlow ? (
+      <Typography variant="body2" color="text.secondary">
+        No subjects yet. Add your notes below to make the first one.
+      </Typography>
+    ) : (
+      <EmptyNext
+        title="No subjects yet"
+        body="Create a subject and deck by adding your notes."
+        primary={{
+          label: "Add material",
+          onClick: () => setShowCreateFlow(true),
+        }}
+      />
+    );
+  }
+
   return (
     <>
-      {subjects.length === 0 ? (
-        showCreateFlow ? (
-          <Typography variant="body2" color="text.secondary">
-            No subjects yet. Add your notes below to make the first one.
-          </Typography>
-        ) : (
-          <EmptyNext
-            title="No subjects yet"
-            body="Create a subject and deck by adding your notes."
-            primary={{
-              label: "Add material",
-              onClick: () => setShowCreateFlow(true),
-            }}
-          />
-        )
-      ) : (
-      <Grid
-        container
-        component="ul"
-        spacing={2}
-        sx={{ listStyle: "none", p: 0, m: 0 }}
-      >
+      <LibraryBoard aria-label="Subjects">
         {subjects.map((s) => {
           const localCount = localDeckCountForSubject(s.id);
           const deckCount = effectiveSubjectDeckCount(s, localCount);
@@ -99,65 +95,31 @@ export function LibraryShelf({
                 : `${deckCount} decks`;
           const href = `/library/subjects/${encodeURIComponent(s.id)}`;
           const composition = compositionBySubject[s.id];
+          const cover = covers.find(
+            (c) => c.ownerKind === "subject" && c.ownerId === s.id,
+          );
+          const recall =
+            composition != null &&
+            composition.total > 0 &&
+            composition.avgRetrievability != null
+              ? `${Math.round(100 * composition.avgRetrievability)}% recall`
+              : null;
           return (
-            <Grid key={s.id} component="li" size={{ xs: 12, md: 6 }}>
-              <ShelfVolume
+            <Box key={s.id} component="li" sx={{ listStyle: "none", m: 0, p: 0, minHeight: 0 }}>
+              <BoardTile
                 title={s.title}
+                meta={[meta, recall].filter(Boolean).join(" · ") || meta}
+                imageSrc={cover?.imageUrl ?? fruitMarkSrc(s.id)}
                 href={href}
-                onNavigate={(ev) => {
-                  if (
-                    ev.defaultPrevented ||
-                    ev.button !== 0 ||
-                    ev.metaKey ||
-                    ev.ctrlKey ||
-                    ev.shiftKey ||
-                    ev.altKey
-                  ) {
-                    return;
-                  }
-                  ev.preventDefault();
-                  navigate(href);
-                }}
-                meta={meta}
-                chip={
-                  composition?.graduatedPct != null
-                    ? `${composition.graduatedPct}% graduated`
+                openLabel={`Open subject ${s.title}`}
+                credit={
+                  cover?.source === "unsplash"
+                    ? {
+                        photographerName: cover.photographerName,
+                        photographerUrl: cover.photographerUrl,
+                        photoHtmlUrl: cover.photoHtmlUrl,
+                      }
                     : null
-                }
-                recallChip={
-                  composition != null &&
-                  composition.total > 0 &&
-                  composition.avgRetrievability != null
-                    ? `${Math.round(100 * composition.avgRetrievability)}% recall`
-                    : null
-                }
-                recallTooltip={
-                  composition != null &&
-                  composition.total > 0 &&
-                  composition.avgRetrievability != null
-                    ? formatEtkTooltip(composition.etk)
-                    : null
-                }
-                spark={
-                  composition != null && composition.total > 0 ? (
-                    <CompositionSpark
-                      new={composition.new}
-                      learning={composition.learning}
-                      young={composition.young}
-                      mature={composition.mature}
-                      total={composition.total}
-                    />
-                  ) : null
-                }
-                studyLabel="Study"
-                onStudy={() => {
-                  navigate(`/study?subjectId=${encodeURIComponent(s.id)}`);
-                }}
-                cover={
-                  covers.find(
-                    (cover) =>
-                      cover.ownerKind === "subject" && cover.ownerId === s.id,
-                  ) ?? null
                 }
                 moreLabel={`More actions for ${s.title}`}
                 onMore={(ev) => {
@@ -177,57 +139,65 @@ export function LibraryShelf({
                       }
                     : undefined
                 }
-              >
-                {selectMode && subjectDecks.length > 0 ? (
-                  <Stack
-                    component="ul"
-                    spacing={0}
-                    sx={{
-                      m: 0,
-                      mt: 0.5,
-                      mb: 0,
-                      mr: 0,
-                      ml: 0,
-                      pl: 5,
-                      pr: 0,
-                      py: 0,
-                      listStyle: "none",
-                    }}
-                  >
-                    {subjectDecks.map((deck) => (
-                      <Box
-                        component="li"
-                        key={deck.id}
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 0.5,
-                          py: 0.25,
-                        }}
-                      >
-                        <Checkbox
-                          size="small"
-                          checked={selectedDeckIdSet.has(deck.id)}
-                          onChange={() => toggleDeckSelected(deck.id)}
-                          inputProps={{
-                            "aria-label": `Select deck ${deck.title}`,
+                footer={
+                  selectMode && subjectDecks.length > 0 ? (
+                    <Stack
+                      component="ul"
+                      spacing={0}
+                      sx={{
+                        m: 0,
+                        mt: 0.5,
+                        width: "100%",
+                        listStyle: "none",
+                        maxHeight: 96,
+                        overflow: "auto",
+                      }}
+                    >
+                      {subjectDecks.map((deck) => (
+                        <Box
+                          component="li"
+                          key={deck.id}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                            py: 0.25,
                           }}
-                        />
-                        <Typography variant="body2" color="text.secondary">
-                          {deck.title}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Stack>
-                ) : null}
-              </ShelfVolume>
-            </Grid>
+                        >
+                          <Checkbox
+                            size="small"
+                            checked={selectedDeckIdSet.has(deck.id)}
+                            onChange={() => toggleDeckSelected(deck.id)}
+                            inputProps={{
+                              "aria-label": `Select deck ${deck.title}`,
+                            }}
+                          />
+                          <Typography variant="caption" color="text.secondary">
+                            {deck.title}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Stack>
+                  ) : null
+                }
+              />
+            </Box>
           );
         })}
-      </Grid>
-      )}
+        {!selectMode && onCreateSubject ? (
+          <Box component="li" sx={{ listStyle: "none", m: 0, p: 0, minHeight: 0 }}>
+            <BoardTile
+              title="New subject"
+              meta="Keep the board full"
+              create
+              onCreate={onCreateSubject}
+              openLabel="New subject"
+            />
+          </Box>
+        ) : null}
+      </LibraryBoard>
       {selectMode && orphanDecks.length > 0 ? (
-        <Box>
+        <Box sx={{ mt: 2 }}>
           <Typography
             variant="caption"
             color="text.secondary"

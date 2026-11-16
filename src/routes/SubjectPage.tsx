@@ -8,7 +8,6 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import Menu from "@mui/material/Menu";
@@ -21,7 +20,9 @@ import Typography from "@mui/material/Typography";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import CoverPickerDialog from "../components/CoverPickerDialog";
 import EmptyNext from "../components/EmptyNext";
-import ShelfVolume from "../components/ShelfVolume";
+import BoardTile from "../library/board/BoardTile";
+import LibraryBoard from "../library/board/LibraryBoard";
+import { fruitMarkSrc } from "../library/board/fruitMark";
 import {
   ApiError,
   apkgFilenameForDeckTitle,
@@ -327,26 +328,35 @@ export default function SubjectPage({ subjectId }: Props) {
   const menuDeck = pageMenu?.kind === "deck" ? pageMenu.deck : null;
 
   return (
-    <Container maxWidth="md" sx={{ py: { xs: 4, md: 5 } }}>
+    <Container
+      maxWidth="md"
+      sx={{
+        py: { xs: 2, md: 3 },
+        display: "flex",
+        flexDirection: "column",
+        minHeight: { md: "100%" },
+        flex: 1,
+      }}
+    >
       {!ready ? (
         <Stack spacing={2}>
           <Skeleton variant="text" width={80} />
           <Skeleton variant="text" width={200} height={40} />
-          <Grid container spacing={2}>
-            {[0, 1].map((key) => (
-              <Grid key={key} size={{ xs: 12, md: 6 }}>
+          <LibraryBoard aria-label="Loading decks" fillViewport>
+            {[0, 1, 2, 3].map((key) => (
+              <Box key={key} component="li" sx={{ listStyle: "none" }}>
                 <Skeleton
                   variant="rounded"
-                  height={140}
-                  sx={{ borderRadius: 1 }}
+                  height={160}
+                  sx={{ borderRadius: 2 }}
                 />
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </LibraryBoard>
         </Stack>
       ) : (
-        <Stack spacing={3}>
-          <Box>
+        <Stack spacing={2} sx={{ flex: 1, minHeight: 0 }}>
+          <Box sx={{ flexShrink: 0 }}>
             <Link
               href="/library"
               underline="hover"
@@ -447,44 +457,32 @@ export default function SubjectPage({ subjectId }: Props) {
               primary={{ label: "New deck", onClick: openCreateDeck }}
             />
           ) : (
-            <Grid
-              container
-              component="ul"
-              spacing={2}
-              sx={{ listStyle: "none", p: 0, m: 0 }}
-            >
+            <LibraryBoard aria-label="Decks">
               {decks.map((d) => {
                 const href = `/library/decks/${encodeURIComponent(d.id)}`;
+                const cover = covers.find(
+                  (c) => c.ownerKind === "deck" && c.ownerId === d.id,
+                );
                 return (
-                  <Grid key={d.id} component="li" size={{ xs: 12, md: 6 }}>
-                    <ShelfVolume
+                  <Box
+                    key={d.id}
+                    component="li"
+                    sx={{ listStyle: "none", m: 0, p: 0, minHeight: 0 }}
+                  >
+                    <BoardTile
                       title={d.title}
+                      meta="Open hub to author"
+                      imageSrc={cover?.imageUrl ?? fruitMarkSrc(d.id)}
                       href={href}
-                      openLabel={`Open deck ${d.title}`}
-                      onNavigate={(ev) => {
-                        if (
-                          ev.defaultPrevented ||
-                          ev.button !== 0 ||
-                          ev.metaKey ||
-                          ev.ctrlKey ||
-                          ev.shiftKey ||
-                          ev.altKey
-                        ) {
-                          return;
-                        }
-                        ev.preventDefault();
-                        navigate(href);
-                      }}
-                      studyLabel="Study"
-                      onStudy={() =>
-                        navigate(`/study?deckId=${encodeURIComponent(d.id)}`)
-                      }
-                      cover={
-                        covers.find(
-                          (cover) =>
-                            cover.ownerKind === "deck" &&
-                            cover.ownerId === d.id,
-                        ) ?? null
+                      openLabel={`Open hub for ${d.title}`}
+                      credit={
+                        cover?.source === "unsplash"
+                          ? {
+                              photographerName: cover.photographerName,
+                              photographerUrl: cover.photographerUrl,
+                              photoHtmlUrl: cover.photoHtmlUrl,
+                            }
+                          : null
                       }
                       moreLabel={`More actions for ${d.title}`}
                       onMore={(ev) =>
@@ -495,10 +493,19 @@ export default function SubjectPage({ subjectId }: Props) {
                         })
                       }
                     />
-                  </Grid>
+                  </Box>
                 );
               })}
-            </Grid>
+              <Box component="li" sx={{ listStyle: "none", m: 0, p: 0 }}>
+                <BoardTile
+                  title="New deck"
+                  meta="Add to this subject"
+                  create
+                  onCreate={openCreateDeck}
+                  openLabel="New deck"
+                />
+              </Box>
+            </LibraryBoard>
           )}
         </Stack>
       )}
