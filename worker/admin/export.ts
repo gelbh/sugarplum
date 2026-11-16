@@ -101,113 +101,89 @@ export async function buildUserExportPayload(
       .prepare(EXPORT_SUBJECTS_SQL)
       .bind(id)
       .all<{ id: string; title: string; created_at: string }>(),
-    db
-      .prepare(EXPORT_DECKS_SQL)
-      .bind(id)
-      .all<{
-        id: string;
-        title: string;
-        subject_id: string | null;
-        subject_hint: string | null;
-        created_at: string;
-      }>(),
-    db
-      .prepare(EXPORT_MATERIALS_SQL)
-      .bind(id)
-      .all<{
-        id: string;
-        deck_id: string;
-        kind: string;
-        r2_key: string | null;
-        filename: string | null;
-        page_count: number | null;
-        status: string;
-        created_at: string;
-      }>(),
-    db
-      .prepare(EXPORT_JOBS_SQL)
-      .bind(id)
-      .all<{
-        id: string;
-        material_id: string;
-        status: string;
-        error: string | null;
-        coverage_json: string | null;
-        progress_json: string | null;
-        created_at: string;
-        finished_at: string | null;
-      }>(),
-    db
-      .prepare(EXPORT_CARDS_SQL)
-      .bind(id)
-      .all<{
-        id: string;
-        deck_id: string;
-        job_id: string | null;
-        type: string;
-        front_json: string;
-        back_json: string;
-        media_r2_keys_json: string | null;
-        provenance_json: string | null;
-        status: string;
-        created_at: string;
-        updated_at: string;
-      }>(),
-    db
-      .prepare(EXPORT_SCHEDULES_SQL)
-      .bind(id)
-      .all<{
-        card_id: string;
-        due: string;
-        stability: number;
-        difficulty: number;
-        elapsed_days: number;
-        scheduled_days: number;
-        learning_steps: number;
-        reps: number;
-        lapses: number;
-        state: number;
-        last_review: string | null;
-      }>(),
-    db
-      .prepare(EXPORT_REVIEW_LOGS_SQL)
-      .bind(id)
-      .all<{
-        id: string;
-        card_id: string;
-        rating: number;
-        scheduled_days: number;
-        elapsed_days: number;
-        reviewed_at: string;
-        state_json: string;
-      }>(),
-    db
-      .prepare(EXPORT_STUDY_PREFS_SQL)
-      .bind(id)
-      .first<{
-        intro_budget: number;
-        review_budget: number;
-        r_floor: number;
-        updated_at: string;
-      }>(),
+    db.prepare(EXPORT_DECKS_SQL).bind(id).all<{
+      id: string;
+      title: string;
+      subject_id: string | null;
+      subject_hint: string | null;
+      created_at: string;
+    }>(),
+    db.prepare(EXPORT_MATERIALS_SQL).bind(id).all<{
+      id: string;
+      deck_id: string;
+      kind: string;
+      r2_key: string | null;
+      filename: string | null;
+      page_count: number | null;
+      status: string;
+      created_at: string;
+    }>(),
+    db.prepare(EXPORT_JOBS_SQL).bind(id).all<{
+      id: string;
+      material_id: string;
+      status: string;
+      error: string | null;
+      coverage_json: string | null;
+      progress_json: string | null;
+      created_at: string;
+      finished_at: string | null;
+    }>(),
+    db.prepare(EXPORT_CARDS_SQL).bind(id).all<{
+      id: string;
+      deck_id: string;
+      job_id: string | null;
+      type: string;
+      front_json: string;
+      back_json: string;
+      media_r2_keys_json: string | null;
+      provenance_json: string | null;
+      status: string;
+      created_at: string;
+      updated_at: string;
+    }>(),
+    db.prepare(EXPORT_SCHEDULES_SQL).bind(id).all<{
+      card_id: string;
+      due: string;
+      stability: number;
+      difficulty: number;
+      elapsed_days: number;
+      scheduled_days: number;
+      learning_steps: number;
+      reps: number;
+      lapses: number;
+      state: number;
+      last_review: string | null;
+    }>(),
+    db.prepare(EXPORT_REVIEW_LOGS_SQL).bind(id).all<{
+      id: string;
+      card_id: string;
+      rating: number;
+      scheduled_days: number;
+      elapsed_days: number;
+      reviewed_at: string;
+      state_json: string;
+    }>(),
+    db.prepare(EXPORT_STUDY_PREFS_SQL).bind(id).first<{
+      intro_budget: number;
+      review_budget: number;
+      r_floor: number;
+      updated_at: string;
+    }>(),
     db
       .prepare(EXPORT_STUDY_DAYS_SQL)
       .bind(id)
       .all<{ day: string; intros_used: number }>(),
-    db
-      .prepare(EXPORT_EXPORT_JOBS_SQL)
-      .bind(id)
-      .all<{
-        id: string;
-        status: string;
-        request_json: string;
-        r2_key: string | null;
-        error: string | null;
-        warning_json: string | null;
-        created_at: string;
-        updated_at: string;
-        expires_at: string;
-      }>(),
+    db.prepare(EXPORT_EXPORT_JOBS_SQL).bind(id).all<{
+      id: string;
+      status: string;
+      request_json: string;
+      r2_key: string | null;
+      error: string | null;
+      warning_json: string | null;
+      created_at: string;
+      updated_at: string;
+      expires_at: string;
+    }>(),
   ]);
 
   const materials = [];

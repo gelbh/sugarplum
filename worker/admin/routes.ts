@@ -14,10 +14,7 @@ import {
   loadAdminUser,
   refuseAllowlistedTarget,
 } from "./wipe";
-import {
-  EXPORT_MAX_CHARS,
-  buildUserExportPayload,
-} from "./export";
+import { EXPORT_MAX_CHARS, buildUserExportPayload } from "./export";
 import {
   LIST_USERS_SQL,
   USER_DETAIL_SQL,
@@ -175,16 +172,13 @@ adminRoutes.get("/users/:id", async (c) => {
     { results: cardRows },
     freeGenToday,
   ] = await Promise.all([
-    db
-      .prepare(RECENT_JOBS_SQL)
-      .bind(id, 20)
-      .all<{
-        id: string;
-        status: string;
-        created_at: string;
-        finished_at: string | null;
-        progress_json: string | null;
-      }>(),
+    db.prepare(RECENT_JOBS_SQL).bind(id, 20).all<{
+      id: string;
+      status: string;
+      created_at: string;
+      finished_at: string | null;
+      progress_json: string | null;
+    }>(),
     db
       .prepare(RECENT_STUDY_DAYS_SQL)
       .bind(id, 14)
@@ -193,35 +187,26 @@ adminRoutes.get("/users/:id", async (c) => {
       .prepare(SUBJECTS_SQL)
       .bind(id)
       .all<{ id: string; title: string; created_at: string }>(),
-    db
-      .prepare(DECKS_SQL)
-      .bind(id)
-      .all<{
-        id: string;
-        title: string;
-        subject_id: string | null;
-        created_at: string;
-      }>(),
-    db
-      .prepare(MATERIALS_SQL)
-      .bind(id)
-      .all<{
-        id: string;
-        deck_id: string;
-        kind: string;
-        filename: string | null;
-        status: string;
-        created_at: string;
-      }>(),
-    db
-      .prepare(STUDY_PREFS_SQL)
-      .bind(id)
-      .first<{
-        intro_budget: number;
-        review_budget: number;
-        r_floor: number;
-        updated_at: string;
-      }>(),
+    db.prepare(DECKS_SQL).bind(id).all<{
+      id: string;
+      title: string;
+      subject_id: string | null;
+      created_at: string;
+    }>(),
+    db.prepare(MATERIALS_SQL).bind(id).all<{
+      id: string;
+      deck_id: string;
+      kind: string;
+      filename: string | null;
+      status: string;
+      created_at: string;
+    }>(),
+    db.prepare(STUDY_PREFS_SQL).bind(id).first<{
+      intro_budget: number;
+      review_budget: number;
+      r_floor: number;
+      updated_at: string;
+    }>(),
     db
       .prepare(USER_USAGE_SQL)
       .bind(id, id, cutoff30, id, cutoff30, id, cutoff30)
@@ -231,15 +216,12 @@ adminRoutes.get("/users/:id", async (c) => {
         free_jobs_30d: number;
         byo_jobs_30d: number;
       }>(),
-    db
-      .prepare(CARD_SAMPLE_SQL)
-      .bind(id)
-      .all<{
-        id: string;
-        type: string;
-        status: string;
-        front_json: string;
-      }>(),
+    db.prepare(CARD_SAMPLE_SQL).bind(id).all<{
+      id: string;
+      type: string;
+      status: string;
+      front_json: string;
+    }>(),
     getFreeGenUsage(c.env, id).catch(() => null),
   ]);
 

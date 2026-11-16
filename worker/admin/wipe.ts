@@ -29,14 +29,22 @@ export async function loadAdminUser(
   return row;
 }
 
-export function refuseAllowlistedTarget(email: string, adminEmails: string | undefined) {
+export function refuseAllowlistedTarget(
+  email: string,
+  adminEmails: string | undefined,
+) {
   const allow = parseAdminEmails(adminEmails);
   if (isAdminEmail(email, allow)) {
-    throw new HTTPException(400, { message: "Cannot modify allowlisted admin" });
+    throw new HTTPException(400, {
+      message: "Cannot modify allowlisted admin",
+    });
   }
 }
 
-export async function collectUserR2Keys(db: D1Database, userId: string): Promise<string[]> {
+export async function collectUserR2Keys(
+  db: D1Database,
+  userId: string,
+): Promise<string[]> {
   const keys = new Set<string>();
   const { results: materialKeys } = await db
     .prepare(WIPE_MATERIAL_KEYS_SQL)
