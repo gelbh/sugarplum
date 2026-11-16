@@ -14,14 +14,14 @@ export type InsightsPassFail = {
 };
 
 export type InsightsTrueRetention = {
-  windowDays: 30;
+  windowDays: number;
   overall: InsightsPassFail;
   young: InsightsPassFail;
   mature: InsightsPassFail;
 };
 
 export type InsightsConsistency = {
-  windowDays: 30;
+  windowDays: number;
   activeDays: number;
   intensity: number;
   /** Null when there is no study activity in the window. */
@@ -63,7 +63,7 @@ export type InsightsHourlySuccessPoint = {
 };
 
 export type InsightsSummary = {
-  window: { reviewsDays: 30; gradeDays: 14; activityDays: 90 };
+  window: { reviewsDays: number; gradeDays: number; activityDays: number };
   kpis: {
     reviewsInWindow: number;
     reviewedToday: number;

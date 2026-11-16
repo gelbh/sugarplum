@@ -29,15 +29,28 @@ import {
   type Camera,
   type Material,
   type Object3D,
-  type Texture,
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import {
   buildBvhUnderRoot,
-  disposeGeometryWithBvh,
   installAnatomyAcceleratedRaycast,
 } from "./anatomyBvh";
+import {
+  disposeObjectTree,
+} from "./anatomyCanvasDispose";
+import {
+  composeClipControllers,
+  loadGltf,
+  mapPoolSettled,
+} from "./anatomyCanvasLoad";
+import {
+  applySceneBackground,
+  fitCameraToUnion,
+  focusObject,
+  setTreeWireframe,
+  type AnatomyCanvasBackground,
+} from "./anatomyCanvasSceneHelpers";
 import {
   SECTION_CLIP_NORMAL,
   attachSectionClipPlanes,
@@ -51,12 +64,10 @@ import {
   shouldShowSelectedLabel,
 } from "./anatomyScreenLabel";
 import { configureAnatomyGltfLoader } from "./configureGltfLoader";
-import { applyFit, applyFocus, orbitDistanceLimits } from "./cameraFit";
-import {
-  createClipController,
-  type ClipController,
-} from "./clipController";
+import { orbitDistanceLimits } from "./cameraFit";
+import { type ClipController } from "./clipController";
 import { LOADER_DELAY_MS } from "./delayedShow";
+import { applyDidacticTint } from "./didacticTint";
 import {
   FADE_OTHERS_OPACITY,
   selectFadeIds,
@@ -80,6 +91,8 @@ export type AnatomyLoadSpec = {
   structureId: string;
   url: string;
   node: string;
+  region?: string;
+  label?: string;
 };
 
 export type AnatomyCameraMode = "perspective" | "orthographic";
@@ -94,8 +107,7 @@ export type AnatomyCanvasHandle = {
   stopClips: () => void;
 };
 
-/** CSS hex (`#rrggbb`) or `null` for transparent (page shows through). */
-export type AnatomyCanvasBackground = string | null;
+export type { AnatomyCanvasBackground };
 
 type Props = {
   loads: AnatomyLoadSpec[];
@@ -125,148 +137,6 @@ type EmissiveMat = Material & {
 
 const LOAD_CONCURRENCY = 6;
 
-type LoadedGltf = { scene: Object3D; animations: AnimationClip[] };
-
-function loadGltf(loader: GLTFLoader, url: string): Promise<LoadedGltf> {
-  return new Promise((resolve, reject) => {
-    loader.load(
-      url,
-      (gltf) =>
-        resolve({
-          scene: gltf.scene,
-          animations: gltf.animations ?? [],
-        }),
-      undefined,
-      (err) => reject(err instanceof Error ? err : new Error(String(err))),
-    );
-  });
-}
-
-function composeClipControllers(
-  bundles: { root: Object3D; animations: AnimationClip[] }[],
-): ClipController | null {
-  if (bundles.length === 0) return null;
-  if (bundles.length === 1) {
-    return createClipController(bundles[0].root, bundles[0].animations);
-  }
-  const controllers = bundles.map((b) =>
-    createClipController(b.root, b.animations),
-  );
-  return {
-    get playing() {
-      return controllers.some((c) => c.playing);
-    },
-    play(name, opts) {
-      for (const c of controllers) c.stop();
-      for (const c of controllers) {
-        if (c.play(name, opts)) return true;
-      }
-      return false;
-    },
-    pause() {
-      for (const c of controllers) c.pause();
-    },
-    resume() {
-      for (const c of controllers) c.resume();
-    },
-    stop() {
-      for (const c of controllers) c.stop();
-    },
-    update(dt) {
-      for (const c of controllers) c.update(dt);
-    },
-    dispose() {
-      for (const c of controllers) c.dispose();
-    },
-  };
-}
-
-function disposeObjectTree(root: Object3D) {
-  root.traverse((obj) => {
-    const mesh = obj as Object3D & {
-      geometry?: {
-        dispose: () => void;
-        disposeBoundsTree?: () => void;
-        boundsTree?: unknown;
-      };
-      material?: Material | Material[];
-    };
-    if (mesh.geometry) disposeGeometryWithBvh(mesh.geometry);
-    const mats = mesh.material
-      ? Array.isArray(mesh.material)
-        ? mesh.material
-        : [mesh.material]
-      : [];
-    for (const mat of mats) {
-      for (const value of Object.values(mat)) {
-        const tex = value as Texture | undefined;
-        if (
-          tex &&
-          typeof tex === "object" &&
-          "isTexture" in tex &&
-          tex.isTexture
-        ) {
-          tex.dispose();
-        }
-      }
-      mat.dispose();
-    }
-  });
-}
-
-async function mapPoolSettled<T, R>(
-  items: T[],
-  limit: number,
-  fn: (item: T) => Promise<R>,
-  onItemDone: () => void,
-): Promise<PromiseSettledResult<R>[]> {
-  const results: PromiseSettledResult<R>[] = new Array(items.length);
-  let next = 0;
-  async function worker() {
-    while (next < items.length) {
-      const idx = next;
-      next += 1;
-      try {
-        results[idx] = { status: "fulfilled", value: await fn(items[idx]) };
-      } catch (reason) {
-        results[idx] = { status: "rejected", reason };
-      }
-      onItemDone();
-    }
-  }
-  const n = Math.min(Math.max(1, limit), Math.max(1, items.length));
-  await Promise.all(Array.from({ length: n }, () => worker()));
-  return results;
-}
-
-function setTreeWireframe(root: Object3D, wireframe: boolean) {
-  root.traverse((obj) => {
-    if (!(obj instanceof Mesh)) return;
-    const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
-    for (const mat of mats) {
-      if (mat && "wireframe" in mat) {
-        (mat as Material & { wireframe: boolean }).wireframe = wireframe;
-        mat.needsUpdate = true;
-      }
-    }
-  });
-}
-
-function applySceneBackground(
-  scene: Scene,
-  renderer: WebGLRenderer,
-  background: AnatomyCanvasBackground,
-) {
-  if (background == null) {
-    scene.background = null;
-    renderer.setClearColor(0x000000, 0);
-    return;
-  }
-  const color = new Color(background);
-  scene.background = color;
-  renderer.setClearColor(color, 1);
-}
-
 type PresentableMat = EmissiveMat & {
   opacity?: number;
   transparent?: boolean;
@@ -279,43 +149,6 @@ type BaseMat = {
   opacity?: number;
   transparent?: boolean;
 };
-
-function fitCameraToUnion(
-  camera: Camera,
-  controls: OrbitControls,
-  nodeMap: Map<string, Object3D>,
-  aspect: number,
-): number {
-  if (nodeMap.size === 0) return 0;
-  const box = new Box3();
-  for (const obj of nodeMap.values()) box.expandByObject(obj);
-  if (box.isEmpty()) return 0;
-  return applyFit(camera, controls, box, aspect).fitDistance;
-}
-
-function focusObject(
-  camera: Camera,
-  controls: OrbitControls,
-  obj: Object3D,
-  aspect: number,
-  /** Keep zoom-out able to reach the last union framing. */
-  unionFitDistance: number,
-) {
-  const box = new Box3().setFromObject(obj);
-  if (box.isEmpty()) return;
-  applyFocus(camera, controls, box, aspect);
-  if (unionFitDistance > 0) {
-    const floor = orbitDistanceLimits(unionFitDistance);
-    controls.maxDistance = Math.max(controls.maxDistance, floor.maxDistance);
-    if (camera instanceof PerspectiveCamera) {
-      camera.far = Math.max(camera.far, controls.maxDistance * 1.25);
-      camera.updateProjectionMatrix();
-    } else if (camera instanceof OrthographicCamera) {
-      camera.far = Math.max(camera.far, controls.maxDistance * 1.25);
-      camera.updateProjectionMatrix();
-    }
-  }
-}
 
 const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
   function AnatomyCanvas(
@@ -490,6 +323,9 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
     }));
 
     const loadsKey = loads.map((l) => `${l.structureId}:${l.url}`).join("|");
+    const urlModelRef = useRef<Map<string, Object3D>>(new Map());
+    const structureUrlRef = useRef<Map<string, string>>(new Map());
+    const loadGenRef = useRef(0);
 
     useEffect(() => {
       const host = hostRef.current;
@@ -1026,106 +862,9 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       resize();
       requestRender();
 
-      const loader = configureAnatomyGltfLoader(new GLTFLoader());
-      const specs = loadsRef.current;
-      const byUrl = new Map<string, AnatomyLoadSpec[]>();
-      for (const spec of specs) {
-        const list = byUrl.get(spec.url) ?? [];
-        list.push(spec);
-        byUrl.set(spec.url, list);
-      }
-      const urlEntries = [...byUrl.entries()];
-      const total = urlEntries.length;
-      let loadedCount = 0;
-      setProgress({ loaded: 0, total });
-      setLoaderVisible(false);
-      let loaderDelayTimer: ReturnType<typeof setTimeout> | null = null;
-      if (total > 0) {
-        loaderDelayTimer = setTimeout(() => {
-          if (!disposed) setLoaderVisible(true);
-        }, LOADER_DELAY_MS);
-      }
-
-      /** One mixer per loaded asset so clip tracks bind to that model only. */
-      const assetClipBundles: { root: Object3D; animations: AnimationClip[] }[] =
-        [];
-
-      void (async () => {
-        if (total === 0) {
-          setProgress({ loaded: 0, total: 0 });
-          setLoaderVisible(false);
-          return;
-        }
-        const results = await mapPoolSettled(
-          urlEntries,
-          LOAD_CONCURRENCY,
-          async ([url, urlSpecs]) => {
-            const loaded = await loadGltf(loader, url);
-            if (disposed) return;
-            const model = loaded.scene;
-            if (loaded.animations.length > 0) {
-              assetClipBundles.push({
-                root: model,
-                animations: loaded.animations,
-              });
-            }
-            rootGroup.add(model);
-            for (const spec of urlSpecs) {
-              let root: Object3D = model;
-              let found: Object3D | null = null;
-              model.traverse((obj) => {
-                if (!found && obj.name === spec.node) found = obj;
-              });
-              if (found) root = found;
-              else if (urlSpecs.length === 1) {
-                model.name = spec.node || spec.structureId;
-                root = model;
-              } else {
-                throw new Error(`Missing node ${spec.node} in ${url}`);
-              }
-              nodeMapRef.current.set(spec.structureId, root);
-              idByNodeRef.current.set(root.uuid, spec.structureId);
-              if (root.name) {
-                idByNodeRef.current.set(root.name, spec.structureId);
-              }
-              buildBvhUnderRoot(root);
-            }
-            if (wireframeRef.current) setTreeWireframe(model, true);
-            applyVisibility();
-            syncSectionClip();
-            requestRender();
-          },
-          () => {
-            if (disposed) return;
-            loadedCount += 1;
-            setProgress({ loaded: loadedCount, total });
-          },
-        );
-        if (disposed) return;
-        if (loaderDelayTimer != null) {
-          clearTimeout(loaderDelayTimer);
-          loaderDelayTimer = null;
-        }
-        setLoaderVisible(false);
-        const failed = results.filter((r) => r.status === "rejected").length;
-        if (failed > 0) {
-          setLoadError(
-            failed === results.length
-              ? "Could not load the 3D models."
-              : `Loaded with ${failed} missing part${failed === 1 ? "" : "s"}.`,
-          );
-        }
-        stopClipLoop();
-        clipCtlRef.current?.dispose();
-        clipCtlRef.current = composeClipControllers(assetClipBundles);
-        applyVisibility();
-        syncSectionClip();
-        fitCamera();
-      })();
-
       return () => {
         disposed = true;
-        if (loaderDelayTimer != null) clearTimeout(loaderDelayTimer);
+        loadGenRef.current += 1;
         setLoaderVisible(false);
         applyVisibilityRef.current = () => {};
         syncPresentationRef.current = () => {};
@@ -1165,6 +904,191 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         scene.remove(rootGroup);
         nodeMapRef.current = new Map();
         idByNodeRef.current = new Map();
+        urlModelRef.current = new Map();
+        structureUrlRef.current = new Map();
+      };
+    }, [retryToken]);
+
+    useEffect(() => {
+      const rootGroup = rootGroupRef.current;
+      if (!rootGroup) return;
+
+      // Invalidate any in-flight batch (including early-return / mid-toggle off).
+      const gen = ++loadGenRef.current;
+
+      const specs = loadsRef.current;
+      const wantedIds = new Set(specs.map((s) => s.structureId));
+      const byUrl = new Map<string, AnatomyLoadSpec[]>();
+      for (const spec of specs) {
+        const list = byUrl.get(spec.url) ?? [];
+        list.push(spec);
+        byUrl.set(spec.url, list);
+      }
+
+      const unregisterStructure = (id: string) => {
+        const obj = nodeMapRef.current.get(id);
+        if (obj) {
+          idByNodeRef.current.delete(obj.uuid);
+          if (obj.name) idByNodeRef.current.delete(obj.name);
+        }
+        nodeMapRef.current.delete(id);
+        structureUrlRef.current.delete(id);
+      };
+
+      const disposeUrl = (url: string) => {
+        const model = urlModelRef.current.get(url);
+        if (!model) return;
+        rootGroup.remove(model);
+        disposeObjectTree(model);
+        urlModelRef.current.delete(url);
+      };
+
+      const bindSpecsToModel = (
+        model: Object3D,
+        url: string,
+        urlSpecs: AnatomyLoadSpec[],
+      ) => {
+        for (const spec of urlSpecs) {
+          if (nodeMapRef.current.has(spec.structureId)) continue;
+          let root: Object3D = model;
+          let found: Object3D | null = null;
+          model.traverse((obj) => {
+            if (!found && obj.name === spec.node) found = obj;
+          });
+          if (found) root = found;
+          else if (urlSpecs.length === 1) {
+            model.name = spec.node || spec.structureId;
+            root = model;
+          } else {
+            throw new Error(`Missing node ${spec.node} in ${url}`);
+          }
+          nodeMapRef.current.set(spec.structureId, root);
+          idByNodeRef.current.set(root.uuid, spec.structureId);
+          if (root.name) idByNodeRef.current.set(root.name, spec.structureId);
+          structureUrlRef.current.set(spec.structureId, url);
+          buildBvhUnderRoot(root);
+          applyDidacticTint(root, {
+            region: spec.region,
+            node: spec.node,
+            label: spec.label,
+          });
+        }
+      };
+
+      for (const id of [...nodeMapRef.current.keys()]) {
+        if (wantedIds.has(id)) continue;
+        const url = structureUrlRef.current.get(id);
+        unregisterStructure(id);
+        if (
+          url &&
+          ![...structureUrlRef.current.values()].some((u) => u === url)
+        ) {
+          disposeUrl(url);
+        }
+      }
+
+      const urlsToLoad: [string, AnatomyLoadSpec[]][] = [];
+      for (const [url, urlSpecs] of byUrl) {
+        if (urlModelRef.current.has(url)) {
+          bindSpecsToModel(urlModelRef.current.get(url)!, url, urlSpecs);
+          continue;
+        }
+        urlsToLoad.push([url, urlSpecs]);
+      }
+
+      const fitWhenDone =
+        urlModelRef.current.size === 0 && urlsToLoad.length > 0;
+
+      if (urlsToLoad.length === 0) {
+        setProgress({ loaded: 0, total: 0 });
+        setLoaderVisible(false);
+        applyVisibilityRef.current();
+        syncSectionClipRef.current();
+        return () => {
+          loadGenRef.current += 1;
+        };
+      }
+
+      const loader = configureAnatomyGltfLoader(new GLTFLoader());
+      const total = urlsToLoad.length;
+      let loadedCount = 0;
+      let loaderDelayTimer: ReturnType<typeof setTimeout> | null = null;
+      setLoadError(null);
+      setProgress({ loaded: 0, total });
+      setLoaderVisible(false);
+      loaderDelayTimer = setTimeout(() => {
+        if (gen === loadGenRef.current) setLoaderVisible(true);
+      }, LOADER_DELAY_MS);
+
+      /** One mixer per newly loaded asset so clip tracks bind to that model only. */
+      const assetClipBundles: { root: Object3D; animations: AnimationClip[] }[] =
+        [];
+
+      void (async () => {
+        const results = await mapPoolSettled(
+          urlsToLoad,
+          LOAD_CONCURRENCY,
+          async ([url, urlSpecs]) => {
+            const loaded = await loadGltf(loader, url);
+            const model = loaded.scene;
+            const stillWanted = loadsRef.current.some((s) => s.url === url);
+            if (
+              gen !== loadGenRef.current ||
+              !rootGroupRef.current ||
+              !stillWanted
+            ) {
+              disposeObjectTree(model);
+              return;
+            }
+            if (loaded.animations.length > 0) {
+              assetClipBundles.push({
+                root: model,
+                animations: loaded.animations,
+              });
+            }
+            rootGroupRef.current.add(model);
+            urlModelRef.current.set(url, model);
+            bindSpecsToModel(model, url, urlSpecs);
+            if (wireframeRef.current) setTreeWireframe(model, true);
+            applyVisibilityRef.current();
+            syncSectionClipRef.current();
+            requestRenderRef.current();
+          },
+          () => {
+            if (gen !== loadGenRef.current) return;
+            loadedCount += 1;
+            setProgress({ loaded: loadedCount, total });
+          },
+        );
+        if (gen !== loadGenRef.current) return;
+        if (loaderDelayTimer != null) {
+          clearTimeout(loaderDelayTimer);
+          loaderDelayTimer = null;
+        }
+        setLoaderVisible(false);
+        const failed = results.filter((r) => r.status === "rejected").length;
+        if (failed > 0) {
+          setLoadError(
+            failed === results.length
+              ? "Could not load the 3D models."
+              : `Loaded with ${failed} missing part${failed === 1 ? "" : "s"}.`,
+          );
+        }
+        if (assetClipBundles.length > 0) {
+          stopClipLoopRef.current();
+          clipCtlRef.current?.dispose();
+          clipCtlRef.current = composeClipControllers(assetClipBundles);
+        }
+        applyVisibilityRef.current();
+        syncSectionClipRef.current();
+        // Fit only when this batch was the first content (keep orbit on later toggles).
+        if (fitWhenDone) fitCameraRef.current();
+      })();
+
+      return () => {
+        loadGenRef.current += 1;
+        if (loaderDelayTimer != null) clearTimeout(loaderDelayTimer);
+        setLoaderVisible(false);
       };
     }, [loadsKey, retryToken]);
 

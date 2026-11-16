@@ -2,15 +2,15 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { getDb } from "../db/client";
 import { requireUser } from "../auth/session";
-import type { FigureExtractMode } from "../generation/enqueue";
 import {
   enqueueOrManualOcclusion,
   userHasByoSecret,
 } from "../generation/image-free-path";
-import { loadMaterialWindowResume } from "../generation/study-windows";
-import { parseOptionalJsonBody } from "../optional-json";
-import { findReadyMaterialByContentHash, sha256Hex } from "./content-hash";
-import { normalizeTopicHints } from "../generation/topic-hints";
+import {
+  findReadyMaterialByContentHash,
+  sha256Hex,
+} from "./content-hash";
+import { parseCompleteMaterialBody } from "./complete-body";
 import { MAX_IMAGE_BYTES } from "./limits";
 import { MAX_FIGURES_PER_PDF } from "./docling";
 import {
@@ -21,6 +21,7 @@ import {
   listFigureKeysInR2,
   parseFigureR2Key,
 } from "./figures";
+import { assertReadyPdfForOcr, ocrResumeStartPage } from "./ocr-gates";
 import { createR2GetUrl, createR2PutUrl } from "./r2-presign";
 import {
   mergeOcrPages,
@@ -445,58 +446,9 @@ materialRoutes.post("/:id/complete", async (c) => {
     });
   }
 
-  let figureExtractMode: FigureExtractMode | undefined;
-  let topicHints: string[] | null = null;
-  let attachOnly = false;
-  let ocrPages: OcrPageText[] | undefined;
   const rawBody = await c.req.text();
-  const parsed = parseOptionalJsonBody(rawBody);
-  if (parsed !== undefined) {
-    if (
-      parsed === null ||
-      typeof parsed !== "object" ||
-      Array.isArray(parsed)
-    ) {
-      throw new HTTPException(400, { message: "Invalid JSON body" });
-    }
-    const body = parsed as {
-      figureExtractMode?: unknown;
-      topicHints?: unknown;
-      attachOnly?: unknown;
-      ocrPages?: unknown;
-    };
-    const rawMode = body.figureExtractMode;
-    if (rawMode !== undefined) {
-      if (rawMode !== "fast" && rawMode !== "accurate") {
-        throw new HTTPException(400, {
-          message: "Invalid figureExtractMode",
-        });
-      }
-      figureExtractMode = rawMode;
-    }
-    try {
-      topicHints = normalizeTopicHints(body.topicHints);
-    } catch (err) {
-      throw new HTTPException(400, {
-        message: err instanceof Error ? err.message : "Invalid topicHints",
-      });
-    }
-    if (body.attachOnly !== undefined && body.attachOnly !== false) {
-      if (body.attachOnly !== true) {
-        throw new HTTPException(400, { message: "Invalid attachOnly" });
-      }
-      attachOnly = true;
-    }
-    try {
-      ocrPages = parseOcrPages(body.ocrPages);
-    } catch {
-      throw new HTTPException(400, { message: "Invalid ocrPages" });
-    }
-    if (ocrPages && material.kind !== "pdf") {
-      throw new HTTPException(400, { message: "Invalid ocrPages" });
-    }
-  }
-
+  const { figureExtractMode, topicHints, attachOnly, ocrPages } =
+    parseCompleteMaterialBody(rawBody, material.kind);
   const isFigure = isFigureMaterialKey(material.r2_key);
 
   let contentHash: string | null = null;
@@ -615,26 +567,6 @@ materialRoutes.post("/:id/complete", async (c) => {
     ...(manual_occlusion ? { manual_occlusion: true } : {}),
   });
 });
-
-function assertReadyPdfForOcr(material: MaterialRow): string {
-  if (
-    material.kind !== "pdf" ||
-    material.status !== FILE_READY ||
-    !material.r2_key
-  ) {
-    throw new HTTPException(422, {
-      message: "OCR refill is only for a ready PDF",
-    });
-  }
-  return material.r2_key;
-}
-
-async function ocrResumeStartPage(
-  db: D1Database,
-  materialId: string,
-): Promise<number> {
-  return (await loadMaterialWindowResume(db, materialId)).startPage;
-}
 
 materialRoutes.post("/:id/ocr-refetch", async (c) => {
   const userId = await requireUser(c);

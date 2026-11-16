@@ -8,10 +8,10 @@ import {
   buildGradeCounts,
   buildReviewsPerDay,
   insightDayKeys,
-  INSIGHTS_ACTIVITY_DAYS,
-  INSIGHTS_GRADE_DAYS,
-  INSIGHTS_REVIEWS_DAYS,
+  isInsightsRangePreset,
   ratingsInLocalWindow,
+  resolveInsightsWindows,
+  type InsightsRangePreset,
 } from "../../src/insights/buildSeries";
 import type { InsightsSummary } from "../../src/insights/types";
 import { resolveLocalDayStartIso } from "../../src/study/localDay";
@@ -25,6 +25,7 @@ export type InsightsSummaryOpts = {
   now: Date;
   tzOffsetMinutes: number;
   localDay?: string | null;
+  rangeDays?: InsightsRangePreset;
 };
 
 type ReviewRow = {
@@ -78,6 +79,12 @@ export async function buildInsightsSummary(
   opts: InsightsSummaryOpts,
 ): Promise<InsightsSummary> {
   const { now, tzOffsetMinutes, localDay } = opts;
+  const rangeDays: InsightsRangePreset =
+    opts.rangeDays != null && isInsightsRangePreset(opts.rangeDays)
+      ? opts.rangeDays
+      : 30;
+  const { reviewsDays, gradeDays, activityDays } =
+    resolveInsightsWindows(rangeDays);
   const todayKey =
     localDay && /^\d{4}-\d{2}-\d{2}$/.test(localDay)
       ? localDay
@@ -85,7 +92,7 @@ export async function buildInsightsSummary(
   const activityDayKeys = insightDayKeys(
     now,
     tzOffsetMinutes,
-    INSIGHTS_ACTIVITY_DAYS,
+    activityDays,
     todayKey,
   );
   const windowStartIso = resolveLocalDayStartIso(now, {
@@ -117,14 +124,14 @@ export async function buildInsightsSummary(
     reviewedAts,
     now,
     tzOffsetMinutes,
-    INSIGHTS_ACTIVITY_DAYS,
+    activityDays,
     todayKey,
   );
   const reviewsPerDay = buildReviewsPerDay(
     reviewedAts,
     now,
     tzOffsetMinutes,
-    INSIGHTS_REVIEWS_DAYS,
+    reviewsDays,
     todayKey,
   );
   const gradeCounts = buildGradeCounts(
@@ -132,7 +139,7 @@ export async function buildInsightsSummary(
       logs,
       now,
       tzOffsetMinutes,
-      INSIGHTS_GRADE_DAYS,
+      gradeDays,
       todayKey,
     ),
   );
@@ -210,6 +217,8 @@ export async function buildInsightsSummary(
     now,
     tzOffsetMinutes,
     todayKeyOverride: todayKey,
+    reviewsDays,
+    gradeDays,
   });
 
   await ensureUserGamification(db, userId);
@@ -229,9 +238,9 @@ export async function buildInsightsSummary(
 
   return {
     window: {
-      reviewsDays: INSIGHTS_REVIEWS_DAYS,
-      gradeDays: INSIGHTS_GRADE_DAYS,
-      activityDays: INSIGHTS_ACTIVITY_DAYS,
+      reviewsDays,
+      gradeDays,
+      activityDays,
     },
     kpis: {
       reviewsInWindow,

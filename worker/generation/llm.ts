@@ -2,63 +2,72 @@ import {
   JSON_OBJECT_RESPONSE_FORMAT,
   openAiJsonSchemaResponseFormat,
 } from "./cards-json-schema";
-import {
-  parseCardDrafts,
-  type CardDraft,
-} from "./schema";
+import { parseCardDrafts, type CardDraft } from "./schema";
 import { appendExtraUserSuffix } from "./feedback-hints";
+import {
+  isTruncationParseError,
+  parseCardsPayload,
+  salvageCompleteJsonObjects,
+  unwrapLlmJsonText,
+  withCompactTruncationRetry,
+} from "./llm-json";
+import {
+  ZAI_DEFAULT_TEXT_MODEL,
+  ZAI_VISION_MODEL,
+  parseLlmProvider,
+  providerRequestUrl,
+  resolveZaiTextModel,
+  type UserLlmProvider,
+  type ZaiTextModel,
+} from "./llm-providers";
+import {
+  usageFromAnthropicShape,
+  usageFromGoogleShape,
+  usageFromOpenAiShape,
+} from "./llm-usage";
 import {
   GENERATE_COMPACT_SYSTEM_PROMPT,
   GENERATE_SYSTEM_PROMPT,
-  IMAGE_GENERATE_SYSTEM_PROMPT,
   generateCompactUserPrompt,
-  generateImageUserPrompt,
-  generateUserPrompt,
+  imagePromptForJson,
+  systemPromptForGenerateDrafts,
+  userPromptForJson,
 } from "./prompts";
 
-/** User-selectable BYO providers (Settings + Secrets). */
-export const USER_LLM_PROVIDERS = [
-  "openai",
-  "anthropic",
-  "google",
-  "zai",
-] as const;
-export type UserLlmProvider = (typeof USER_LLM_PROVIDERS)[number];
+export { userPromptForJson };
 
-/** Z.ai Settings text-model allowlist (vision uses ZAI_VISION_MODEL). */
-export const ZAI_TEXT_MODELS = [
-  "glm-4.7-flash",
-  "glm-4.7-flashx",
-  "glm-4.7",
-] as const;
-export type ZaiTextModel = (typeof ZAI_TEXT_MODELS)[number];
-export const ZAI_DEFAULT_TEXT_MODEL: ZaiTextModel = "glm-4.7-flash";
-export const ZAI_VISION_MODEL = "glm-4.6v-flash" as const;
+export {
+  isTruncationParseError,
+  parseCardsPayload,
+  salvageCompleteJsonObjects,
+  unwrapLlmJsonText,
+  withCompactTruncationRetry,
+};
+
+export {
+  BYO_PROVIDERS_PHRASE,
+  LLM_PROVIDERS,
+  USER_LLM_PROVIDERS,
+  ZAI_DEFAULT_TEXT_MODEL,
+  ZAI_TEXT_MODELS,
+  ZAI_VISION_MODEL,
+  isUserLlmProvider,
+  parseLlmProvider,
+  providerRequestUrl,
+  resolveZaiTextModel,
+  type LlmProvider,
+  type UserLlmProvider,
+  type ZaiTextModel,
+} from "./llm-providers";
+
+export {
+  usageFromAnthropicShape,
+  usageFromGoogleShape,
+  usageFromOpenAiShape,
+} from "./llm-usage";
+
 /** Same multi-card JSON headroom as the Workers AI free path. */
 const ZAI_MAX_TOKENS = 8192;
-
-function isZaiTextModel(value: string): value is ZaiTextModel {
-  return (ZAI_TEXT_MODELS as readonly string[]).includes(value);
-}
-
-/** Resolve a zai text model id: blank → default Flash, unknown → null. */
-export function resolveZaiTextModel(
-  raw: string | null | undefined,
-): ZaiTextModel | null {
-  const trimmed = typeof raw === "string" ? raw.trim() : "";
-  if (!trimmed) return ZAI_DEFAULT_TEXT_MODEL;
-  return isZaiTextModel(trimmed) ? trimmed : null;
-}
-
-export const BYO_PROVIDERS_PHRASE = "OpenAI, Anthropic, Google, or Z.ai";
-
-/** Includes test fixture + internal platform provider. */
-export const LLM_PROVIDERS = [
-  ...USER_LLM_PROVIDERS,
-  "mock",
-  "workers-ai",
-] as const;
-export type LlmProvider = (typeof LLM_PROVIDERS)[number];
 
 export type GenerateImageInput = {
   mimeType: string;
@@ -102,140 +111,6 @@ export type LlmAdapter = {
   complete(input: CompleteInput): Promise<CompleteResult>;
 };
 
-function asUsageInt(value: unknown): number | null {
-  if (typeof value !== "number" || !Number.isFinite(value)) return null;
-  return Math.trunc(value);
-}
-
-/** OpenAI-style `usage` object. */
-export function usageFromOpenAiShape(body: unknown): LlmTokenUsage | null {
-  if (!body || typeof body !== "object") return null;
-  const usage = (body as { usage?: unknown }).usage;
-  if (!usage || typeof usage !== "object") return null;
-  const u = usage as Record<string, unknown>;
-  const prompt_tokens = asUsageInt(u.prompt_tokens);
-  const completion_tokens = asUsageInt(u.completion_tokens);
-  let total_tokens = asUsageInt(u.total_tokens);
-  if (
-    total_tokens == null &&
-    (prompt_tokens != null || completion_tokens != null)
-  ) {
-    total_tokens = (prompt_tokens ?? 0) + (completion_tokens ?? 0);
-  }
-  if (
-    prompt_tokens == null &&
-    completion_tokens == null &&
-    total_tokens == null
-  ) {
-    return null;
-  }
-  return { prompt_tokens, completion_tokens, total_tokens };
-}
-
-/** Anthropic Messages `usage` (`input_tokens` / `output_tokens`). */
-export function usageFromAnthropicShape(body: unknown): LlmTokenUsage | null {
-  if (!body || typeof body !== "object") return null;
-  const usage = (body as { usage?: unknown }).usage;
-  if (!usage || typeof usage !== "object") return null;
-  const u = usage as Record<string, unknown>;
-  const prompt_tokens = asUsageInt(u.input_tokens);
-  const completion_tokens = asUsageInt(u.output_tokens);
-  if (prompt_tokens == null && completion_tokens == null) return null;
-  return {
-    prompt_tokens,
-    completion_tokens,
-    total_tokens: (prompt_tokens ?? 0) + (completion_tokens ?? 0),
-  };
-}
-
-/** Google `usageMetadata` token counts. */
-export function usageFromGoogleShape(body: unknown): LlmTokenUsage | null {
-  if (!body || typeof body !== "object") return null;
-  const meta = (body as { usageMetadata?: unknown }).usageMetadata;
-  if (!meta || typeof meta !== "object") return null;
-  const m = meta as Record<string, unknown>;
-  const prompt_tokens = asUsageInt(m.promptTokenCount);
-  const completion_tokens = asUsageInt(m.candidatesTokenCount);
-  let total_tokens = asUsageInt(m.totalTokenCount);
-  if (
-    total_tokens == null &&
-    (prompt_tokens != null || completion_tokens != null)
-  ) {
-    total_tokens = (prompt_tokens ?? 0) + (completion_tokens ?? 0);
-  }
-  if (
-    prompt_tokens == null &&
-    completion_tokens == null &&
-    total_tokens == null
-  ) {
-    return null;
-  }
-  return { prompt_tokens, completion_tokens, total_tokens };
-}
-
-export function isUserLlmProvider(value: string): value is UserLlmProvider {
-  return (USER_LLM_PROVIDERS as readonly string[]).includes(value);
-}
-
-export function parseLlmProvider(raw: string): LlmProvider {
-  const p = raw.trim().toLowerCase();
-  if ((LLM_PROVIDERS as readonly string[]).includes(p)) {
-    return p as LlmProvider;
-  }
-  throw new Error(
-    `Unsupported LLM provider "${raw.trim()}". Allowed: ${USER_LLM_PROVIDERS.join(", ")}`,
-  );
-}
-
-/** Absolute request URL for the provider's generate call (tests assert routing). */
-export function providerRequestUrl(provider: LlmProvider): string {
-  switch (provider) {
-    case "openai":
-      return "https://api.openai.com/v1/chat/completions";
-    case "anthropic":
-      return "https://api.anthropic.com/v1/messages";
-    case "google": {
-      const model = "gemini-2.0-flash";
-      return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-    }
-    case "zai":
-      return "https://api.z.ai/api/paas/v4/chat/completions";
-    case "mock":
-      throw new Error("mock provider has no network URL");
-    case "workers-ai":
-      throw new Error("workers-ai uses env.AI binding, not HTTP");
-    default: {
-      const _exhaustive: never = provider;
-      return _exhaustive;
-    }
-  }
-}
-
-export function userPromptForJson(text: string): string {
-  return `${generateUserPrompt(text)}\n\nReturn JSON as {"cards":[...]}`;
-}
-
-/** True when parseCardsPayload (or a wrapped caller) hit mid-JSON truncation. */
-export function isTruncationParseError(err: unknown): boolean {
-  return err instanceof Error && /truncated mid-JSON/i.test(err.message);
-}
-
-/**
- * Run `first`; on mid-JSON truncation parse error only, run `retry` once.
- * Used by Workers AI and BYO generateDrafts text paths.
- */
-export async function withCompactTruncationRetry<T>(
-  first: () => Promise<T>,
-  retry: () => Promise<T>,
-): Promise<T> {
-  try {
-    return await first();
-  } catch (err) {
-    if (!isTruncationParseError(err)) throw err;
-    return await retry();
-  }
-}
-
 /** Text generate: full prompt, then one compact retry on mid-JSON truncation. */
 async function generateTextDraftsWithCompactRetry(
   text: string,
@@ -265,177 +140,6 @@ async function generateTextDraftsWithCompactRetry(
         ).text,
       ),
   );
-}
-
-function imagePromptForJson(imageKey: string): string {
-  return `${generateImageUserPrompt(imageKey)}\n\nReturn JSON as {"cards":[...]}`;
-}
-
-function systemPromptFor(input: GenerateDraftsInput): string {
-  return input.image ? IMAGE_GENERATE_SYSTEM_PROMPT : GENERATE_SYSTEM_PROMPT;
-}
-
-/**
- * Extract JSON text from Workers AI / GLM replies.
- * Handles whole-string fences, embedded fences, and prose around a raw
- * object/array. Does not invent structure when none is present.
- */
-export function unwrapLlmJsonText(content: string): string {
-  const trimmed = content.trim();
-  if (!trimmed) return trimmed;
-
-  const wholeFence = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
-  if (wholeFence?.[1]) return wholeFence[1].trim();
-
-  const embeddedFence = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-  if (embeddedFence?.[1]) return embeddedFence[1].trim();
-
-  const startObj = trimmed.indexOf("{");
-  const startArr = trimmed.indexOf("[");
-  let start = -1;
-  if (startObj >= 0 && startArr >= 0) start = Math.min(startObj, startArr);
-  else start = Math.max(startObj, startArr);
-  if (start < 0) return trimmed;
-
-  const open = trimmed[start]!;
-  const close = open === "{" ? "}" : "]";
-  const end = trimmed.lastIndexOf(close);
-  if (end > start) return trimmed.slice(start, end + 1).trim();
-
-  return trimmed;
-}
-
-/**
- * Pull complete top-level `{...}` values from a truncated JSON array/object
- * body (string-aware). Used when the model hits a completion cap mid-card.
- */
-export function salvageCompleteJsonObjects(text: string): unknown[] {
-  const out: unknown[] = [];
-  let i = 0;
-  while (i < text.length) {
-    if (text[i] !== "{") {
-      i += 1;
-      continue;
-    }
-    let depth = 0;
-    let inString = false;
-    let escape = false;
-    let end = -1;
-    for (let j = i; j < text.length; j += 1) {
-      const ch = text[j]!;
-      if (inString) {
-        if (escape) escape = false;
-        else if (ch === "\\") escape = true;
-        else if (ch === '"') inString = false;
-        continue;
-      }
-      if (ch === '"') {
-        inString = true;
-        continue;
-      }
-      if (ch === "{") depth += 1;
-      else if (ch === "}") {
-        depth -= 1;
-        if (depth === 0) {
-          end = j;
-          break;
-        }
-      }
-    }
-    if (end < 0) {
-      // Unclosed object (truncation): skip this `{` and keep scanning
-      // for complete nested objects (e.g. finished cards).
-      i += 1;
-      continue;
-    }
-    const slice = text.slice(i, end + 1);
-    try {
-      out.push(JSON.parse(slice));
-    } catch {
-      /* skip non-card fragments */
-    }
-    i = end + 1;
-  }
-  return out;
-}
-
-function looksLikeTruncatedJson(text: string): boolean {
-  const t = text.trim();
-  if (!(t.startsWith("{") || t.startsWith("["))) return false;
-  let depth = 0;
-  let inString = false;
-  let escape = false;
-  for (const ch of t) {
-    if (inString) {
-      if (escape) escape = false;
-      else if (ch === "\\") escape = true;
-      else if (ch === '"') inString = false;
-      continue;
-    }
-    if (ch === '"') inString = true;
-    else if (ch === "{" || ch === "[") depth += 1;
-    else if (ch === "}" || ch === "]") depth -= 1;
-  }
-  return inString || depth !== 0;
-}
-
-export function parseCardsPayload(content: string): CardDraft[] {
-  const unwrapped = unwrapLlmJsonText(content);
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(unwrapped);
-  } catch {
-    const isCardShape = (obj: unknown) =>
-      !!obj &&
-      typeof obj === "object" &&
-      "type" in obj &&
-      "front" in obj &&
-      "back" in obj;
-    // Prefer raw text: unwrap's last-`}` slice can clip a truncated payload
-    // to an incomplete wrapper and hide complete card objects.
-    const salvaged = [
-      ...salvageCompleteJsonObjects(content),
-      ...salvageCompleteJsonObjects(unwrapped),
-    ].filter(isCardShape);
-    const unique = [
-      ...new Map(salvaged.map((c) => [JSON.stringify(c), c])).values(),
-    ];
-    if (unique.length > 0) {
-      return parseCardDrafts(unique);
-    }
-    const preview = content.trim().replace(/\s+/g, " ").slice(0, 80);
-    if (
-      looksLikeTruncatedJson(unwrapped) ||
-      looksLikeTruncatedJson(content.trim())
-    ) {
-      throw new Error(
-        preview
-          ? `LLM response truncated mid-JSON (preview: ${preview})`
-          : "LLM response truncated mid-JSON",
-      );
-    }
-    throw new Error(
-      preview
-        ? `LLM returned non-JSON content (preview: ${preview})`
-        : "LLM returned non-JSON content",
-    );
-  }
-
-  const cards =
-    parsed &&
-    typeof parsed === "object" &&
-    "cards" in parsed &&
-    Array.isArray((parsed as { cards: unknown }).cards)
-      ? (parsed as { cards: unknown }).cards
-      : Array.isArray(parsed)
-        ? parsed
-        : null;
-
-  if (!cards) {
-    throw new Error('LLM JSON must be an array or {"cards":[...]}');
-  }
-
-  return parseCardDrafts(cards);
 }
 
 /** Fixed drafts for tests (no network). */
@@ -692,7 +396,7 @@ function openAiCompatibleAdapter(opts: {
             ? { response_format: { type: "json_object" } }
             : {}),
           messages: [
-            { role: "system", content: systemPromptFor(input) },
+            { role: "system", content: systemPromptForGenerateDrafts(input) },
             {
               role: "user",
               content: [
@@ -804,7 +508,7 @@ function anthropicAdapter(): LlmAdapter {
           model: "claude-3-5-haiku-latest",
           max_tokens: 4096,
           temperature: 0.3,
-          system: systemPromptFor(input),
+          system: systemPromptForGenerateDrafts(input),
           messages: [
             {
               role: "user",
@@ -890,7 +594,7 @@ function googleAdapter(): LlmAdapter {
         },
         body: JSON.stringify({
           systemInstruction: {
-            parts: [{ text: systemPromptFor(input) }],
+            parts: [{ text: systemPromptForGenerateDrafts(input) }],
           },
           contents: [
             {

@@ -29,6 +29,8 @@ export type AssembleInsightsAnkiMetricsInput = {
   now: Date;
   tzOffsetMinutes: number;
   todayKeyOverride?: string | null;
+  /** Retention / hourly / consistency window; defaults to reviews series length. */
+  reviewsDays?: number;
   gradeDays?: number;
 };
 
@@ -49,6 +51,7 @@ export function assembleInsightsAnkiMetrics(
   input: AssembleInsightsAnkiMetricsInput,
 ): AssembledInsightsAnkiMetrics {
   const gradeDays = input.gradeDays ?? INSIGHTS_GRADE_DAYS;
+  const reviewsDays = input.reviewsDays ?? input.reviewsPerDay.length;
   const todayKey = input.todayKeyOverride;
   const workload = buildWorkloadFromDues(
     input.dues,
@@ -62,7 +65,7 @@ export function assembleInsightsAnkiMetrics(
     input.metricLogs,
     input.now,
     input.tzOffsetMinutes,
-    undefined,
+    reviewsDays,
     todayKey,
   );
   const gradeCountsByMaturity = buildGradeCountsByMaturity(
@@ -83,7 +86,7 @@ export function assembleInsightsAnkiMetrics(
       input.metricLogs,
       input.now,
       input.tzOffsetMinutes,
-      undefined,
+      reviewsDays,
       todayKey,
     ),
     trueRetention,

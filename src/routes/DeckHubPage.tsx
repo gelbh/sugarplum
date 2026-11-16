@@ -24,28 +24,24 @@ import { useShellBackOverride } from "../components/shell/ShellBackOverride";
 import CardsWorkshop from "../deckHub/CardsWorkshop";
 import DeckHubTitleHeader from "../deckHub/DeckHubTitleHeader";
 import MaterialsWorkshop from "../deckHub/MaterialsWorkshop";
-import MissionBoard, { type MissionTileId } from "../deckHub/MissionBoard";
+import MissionBoard from "../deckHub/MissionBoard";
 import StudyReadySheet from "../deckHub/StudyReadySheet";
 import WorkshopShell from "../deckHub/WorkshopShell";
-import { popWorkshop, type WorkshopFrame } from "../deckHub/workshopStack";
+import { type WorkshopFrame } from "../deckHub/workshopStack";
 import { navigate } from "../nav/navigate";
 import { useCreateCardController } from "../deckHub/useCreateCardController";
 import { useAddMaterialWorkshop } from "../deckHub/useAddMaterialWorkshop";
 import { useCardsWorkshop } from "../deckHub/useCardsWorkshop";
 import { useDeckHubCardMutations } from "../deckHub/useDeckHubCardMutations";
 import { useDeckHubDeckLifecycle } from "../deckHub/useDeckHubDeckLifecycle";
+import { useDeckHubExport } from "../deckHub/useDeckHubExport";
+import { useDeckHubLoad } from "../deckHub/useDeckHubLoad";
+import { useDeckHubWorkshopNav } from "../deckHub/useDeckHubWorkshopNav";
 import { useStudyReadySheet } from "../deckHub/useStudyReadySheet";
+import "../deckHub/deckHubMotion.css";
 import {
   ApiError,
-  apkgFilenameForDeckTitle,
-  createDeckExport,
   deleteMaterial,
-  getDeckComposition,
-  listDeckCards,
-  listDeckMaterials,
-  listDecks,
-  listJobsWithDrafts,
-  listSubjects,
   asRegenType,
   cardHasRegenSource,
   type CardDraftView,
@@ -58,11 +54,7 @@ import {
 import DraftCardEditor from "../components/DraftCardEditor";
 import { isGuest } from "../guest/session";
 import { collectDeckImageKeys, hubDiyTypes } from "../lib/hubDiyCreate";
-import {
-  formatExportWarnings,
-  ANKI_EXPORT_BUSY_LABEL,
-  runAnkiExportDownload,
-} from "../export/runAnkiExport";
+import { ANKI_EXPORT_BUSY_LABEL } from "../export/runAnkiExport";
 import { useTrackedOp } from "../progress/useTrackedOp";
 
 type Props = {
@@ -161,6 +153,7 @@ export default function DeckHubPage({ deckId }: Props) {
   const [exportWarning, setExportWarning] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
+  /** Stack stays on page so create/material can take setWorkshopStack before nav Args exist. */
   const [workshopStack, setWorkshopStack] = useState<WorkshopFrame[]>([]);
   const [draftPickerOpen, setDraftPickerOpen] = useState(false);
 
@@ -254,65 +247,6 @@ export default function DeckHubPage({ deckId }: Props) {
     ANKI_EXPORT_BUSY_LABEL,
   );
 
-  const refreshComposition = useCallback(async () => {
-    try {
-      setComposition(await getDeckComposition(deckId));
-    } catch {
-      setComposition(null);
-    }
-  }, [deckId]);
-
-  const refreshCards = useCallback(async () => {
-    const next = await listDeckCards(
-      deckId,
-      showArchived ? { status: "archived" } : undefined,
-    );
-    setCards(next);
-    if (!showArchived) {
-      setAcceptedCount(next.length);
-    } else {
-      const accepted = await listDeckCards(deckId);
-      setAcceptedCount(accepted.length);
-    }
-    await refreshComposition();
-  }, [deckId, refreshComposition, showArchived]);
-
-  const refreshDraftJobs = useCallback(async () => {
-    if (guest) {
-      setDraftJobs([]);
-      return;
-    }
-    try {
-      const jobs = await listJobsWithDrafts();
-      setDraftJobs(jobs.filter((j) => j.deck_id === deckId));
-    } catch {
-      setDraftJobs([]);
-    }
-  }, [deckId, guest]);
-
-  const refreshMaterials = useCallback(async () => {
-    if (guest) {
-      setMaterials([]);
-      return;
-    }
-    try {
-      setMaterials(await listDeckMaterials(deckId));
-    } catch {
-      setMaterials([]);
-    }
-  }, [deckId, guest]);
-
-  const material = useAddMaterialWorkshop({
-    deckId,
-    refreshCards,
-    refreshDraftJobs,
-    refreshMaterials,
-    setWorkshopStack,
-    prepareOcclusionFromImageKey: create.prepareOcclusionFromImageKey,
-  });
-
-  const study = useStudyReadySheet();
-
   const {
     deckCover,
     refreshDeckCover,
@@ -344,132 +278,76 @@ export default function DeckHubPage({ deckId }: Props) {
     setError,
   });
 
-  const load = useCallback(async () => {
-    const [deckList, subjects] = await Promise.all([
-      listDecks(),
-      listSubjects(),
-    ]);
-    const found = deckList.find((d) => d.id === deckId) ?? null;
-    setDeck(found);
-    setSubject(
-      found ? (subjects.find((s) => s.id === found.subject_id) ?? null) : null,
-    );
-    if (found) {
-      await Promise.all([
-        refreshDraftJobs(),
-        refreshMaterials(),
-        refreshDeckCover(),
-        refreshComposition(),
-      ]);
-    } else {
-      setComposition(null);
-    }
-    return found;
-  }, [
+  const { refreshCards, refreshDraftJobs, refreshMaterials } = useDeckHubLoad({
     deckId,
-    refreshComposition,
+    guest,
+    showArchived,
+    ready,
+    deck,
+    endLoad,
     refreshDeckCover,
+    setDeck,
+    setSubject,
+    setCards,
+    setAcceptedCount,
+    setComposition,
+    setDraftJobs,
+    setMaterials,
+    setError,
+    setReady,
+  });
+
+  const material = useAddMaterialWorkshop({
+    deckId,
+    refreshCards,
     refreshDraftJobs,
     refreshMaterials,
-  ]);
+    setWorkshopStack,
+    prepareOcclusionFromImageKey: create.prepareOcclusionFromImageKey,
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const found = await load();
-        if (cancelled) return;
-        if (!found) setError("Deck not found");
-        setReady(true);
-        endLoad();
-      } catch (err) {
-        if (cancelled) return;
-        if (err instanceof ApiError && err.status === 401) {
-          window.location.assign("/login");
-          return;
-        }
-        setError(err instanceof ApiError ? err.message : "Failed to load deck");
-        setReady(true);
-        endLoad(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [endLoad, load]);
+  const study = useStudyReadySheet();
 
-  useEffect(() => {
-    if (!ready || !deck) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const next = await listDeckCards(
-          deckId,
-          showArchived ? { status: "archived" } : undefined,
-        );
-        if (cancelled) return;
-        setCards(next);
-        if (!showArchived) {
-          setAcceptedCount(next.length);
-        } else {
-          try {
-            const accepted = await listDeckCards(deckId);
-            if (!cancelled) setAcceptedCount(accepted.length);
-          } catch {
-            if (!cancelled) setAcceptedCount(0);
-          }
-        }
-        try {
-          const nextComposition = await getDeckComposition(deckId);
-          if (!cancelled) setComposition(nextComposition);
-        } catch {
-          if (!cancelled) setComposition(null);
-        }
-      } catch {
-        if (!cancelled) setCards([]);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [deck, deckId, ready, showArchived]);
-
-  const topWorkshop = workshopStack[workshopStack.length - 1] ?? null;
-
-  function openFullDraftReview() {
+  const openFullDraftReview = useCallback(() => {
     if (draftJobs.length === 0) return;
     if (draftJobs.length === 1) {
       navigate(`/jobs/${encodeURIComponent(draftJobs[0]!.id)}/drafts`);
       return;
     }
     setDraftPickerOpen(true);
-  }
+  }, [draftJobs]);
+
+  const {
+    topWorkshop,
+    workshopTitle,
+    workshopOpen,
+    creatingFlashcards,
+    openWorkshop,
+    onWorkshopBack,
+  } = useDeckHubWorkshopNav({
+    workshopStack,
+    setWorkshopStack,
+    resetMaterialMessages: material.resetMaterialMessages,
+    loadStudySummary: study.loadStudySummary,
+    clearSelection,
+    refreshMaterials,
+    onOpenDrafts: openFullDraftReview,
+    deck,
+    acceptedCount,
+  });
+
+  const { onExportAnki } = useDeckHubExport({
+    guest,
+    deck,
+    setError,
+    setNotice,
+    setExportWarning,
+    runExport,
+  });
 
   function openDraftJob(jobId: string) {
     setDraftPickerOpen(false);
     navigate(`/jobs/${encodeURIComponent(jobId)}/drafts`);
-  }
-
-  function openWorkshop(id: MissionTileId) {
-    if (id === "drafts") {
-      openFullDraftReview();
-      return;
-    }
-    const frame: WorkshopFrame =
-      id === "addMaterial" ? { id: "addMaterial" } : { id };
-    setWorkshopStack([frame]);
-    if (id === "addMaterial") {
-      material.resetMaterialMessages();
-    }
-    if (id === "study" && deck) {
-      study.loadStudySummary(deck.id, acceptedCount);
-    }
-    if (id === "cards") {
-      clearSelection();
-    }
-    if (id === "materials") {
-      void refreshMaterials();
-    }
   }
 
   function openUploadFromMaterials() {
@@ -501,47 +379,6 @@ export default function DeckHubPage({ deckId }: Props) {
       setDeleteMaterialBusy(false);
     }
   }
-
-  function onWorkshopBack() {
-    if (workshopStack[workshopStack.length - 1]?.id === "addMaterial") {
-      material.resetMaterialMessages();
-    }
-    setWorkshopStack((prev) => popWorkshop(prev));
-  }
-
-  async function onExportAnki() {
-    if (!deck || guest) return;
-    setError(null);
-    setExportWarning(null);
-    try {
-      await runExport(async () => {
-        const warnings = await runAnkiExportDownload(
-          () => createDeckExport(deck.id),
-          apkgFilenameForDeckTitle(deck.title),
-        );
-        const warningText = formatExportWarnings(warnings);
-        if (warningText) {
-          setExportWarning(warningText);
-        } else {
-          setNotice("Anki deck downloaded");
-        }
-      });
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Export failed");
-    }
-  }
-
-  const workshopTitle =
-    topWorkshop?.id === "cards"
-      ? "Browse cards"
-      : topWorkshop?.id === "materials"
-        ? "Browse files"
-        : topWorkshop?.id === "study"
-          ? "Study ready"
-          : "";
-
-  const creatingFlashcards = topWorkshop?.id === "addMaterial";
-  const workshopOpen = workshopStack.length > 0 && !creatingFlashcards;
 
   const sortedMaterials = useMemo(
     () =>
@@ -608,6 +445,7 @@ export default function DeckHubPage({ deckId }: Props) {
       hubDiyAllowedTypes={create.hubDiyAllowedTypes}
     />
   ) : null;
+
 
   return (
     <Container

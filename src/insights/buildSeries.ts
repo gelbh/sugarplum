@@ -5,6 +5,28 @@ export const INSIGHTS_REVIEWS_DAYS = 30;
 export const INSIGHTS_GRADE_DAYS = 14;
 export const INSIGHTS_ACTIVITY_DAYS = 90;
 
+/** History presets for Insights charts (local days). Default = reviews window. */
+export const INSIGHTS_RANGE_PRESETS = [30, 90, 365] as const;
+export type InsightsRangePreset = (typeof INSIGHTS_RANGE_PRESETS)[number];
+
+export function isInsightsRangePreset(n: number): n is InsightsRangePreset {
+  return (INSIGHTS_RANGE_PRESETS as readonly number[]).includes(n);
+}
+
+/** Scale grade/activity from the reviews preset; activity never shrinks below 90. */
+export function resolveInsightsWindows(
+  preset: InsightsRangePreset = INSIGHTS_REVIEWS_DAYS,
+): { reviewsDays: number; gradeDays: number; activityDays: number } {
+  return {
+    reviewsDays: preset,
+    gradeDays: Math.max(
+      7,
+      Math.round((preset * INSIGHTS_GRADE_DAYS) / INSIGHTS_REVIEWS_DAYS),
+    ),
+    activityDays: Math.max(preset, INSIGHTS_ACTIVITY_DAYS),
+  };
+}
+
 const MS_PER_DAY = 86_400_000;
 
 const LOCAL_DAY_RE = /^\d{4}-\d{2}-\d{2}$/;

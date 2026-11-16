@@ -370,6 +370,7 @@ describe("material complete", () => {
       status: "uploading",
       created_at: "2026-01-01T00:00:00.000Z",
     });
+    void env.MATERIALS.put("materials/deck-a/mat-1.pdf", "pdf-bytes");
   }
 
   it("marks ready and queues a generation job for the owner", async () => {
@@ -437,6 +438,7 @@ describe("material complete", () => {
       status: "uploading",
       created_at: "2026-01-02T00:00:00.000Z",
     });
+    void env.MATERIALS.put("materials/deck-a/mat-img.png", "img-bytes");
 
     const res = await app.request(
       "/api/materials/mat-img/complete",
@@ -472,6 +474,7 @@ describe("material complete", () => {
       status: "uploading",
       created_at: "2026-01-02T00:00:00.000Z",
     });
+    void env.MATERIALS.put("materials/deck-a/mat-img-free.png", "img-bytes");
 
     const res = await app.request(
       "/api/materials/mat-img-free/complete",
@@ -545,6 +548,7 @@ describe("material complete", () => {
       status: "uploading",
       created_at: "2026-01-02T00:00:00.000Z",
     });
+    void env.MATERIALS.put("materials/deck-a/mat-img-byo.png", "img-bytes");
 
     const res = await app.request(
       "/api/materials/mat-img-byo/complete",

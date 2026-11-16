@@ -30,9 +30,7 @@ import { useTheme } from "@mui/material/styles";
 import type { MouseEvent } from "react";
 import AnatomyCanvas, {
   type AnatomyCameraMode,
-  type AnatomyCanvasBackground,
   type AnatomyCanvasHandle,
-  type AnatomyLoadSpec,
 } from "../anatomy/AnatomyCanvas";
 import AnatomyClipBar from "../anatomy/AnatomyClipBar";
 import AnatomyClipHud from "../anatomy/AnatomyClipHud";
@@ -40,15 +38,16 @@ import AnatomyHelpOverlay from "../anatomy/AnatomyHelpOverlay";
 import AnatomyMobileSheet, {
   type AnatomySheetTab,
 } from "../anatomy/AnatomyMobileSheet";
+import {
+  anatomyViewerBgChoices,
+  type BgChoice,
+  type BgChoiceId,
+} from "../anatomy/anatomyViewerBg";
+import { buildLoads } from "../anatomy/anatomyViewerLoads";
 import { selectedStructureLabelText } from "../anatomy/anatomyScreenLabel";
 import InfoPanel from "../anatomy/InfoPanel";
 import MakeCardsDeckDialog from "../anatomy/MakeCardsDeckDialog";
-import {
-  activeRegionIdsForOpen,
-  parseAnatomySceneManifest,
-} from "../anatomy/parseScene";
 import { anatomyHubHref } from "../anatomy/paths";
-import { resolveAnatomyAssetUrl } from "../anatomy/resolveAssetUrl";
 import StructurePanel from "../anatomy/StructurePanel";
 import {
   createStructureUiState,
@@ -58,81 +57,28 @@ import { makeCardsStructureIds } from "../anatomy/structureCard";
 import TestYourself, {
   type AnatomyStudyMode,
 } from "../anatomy/TestYourself";
-import type { AnatomyClip, AnatomySceneManifest } from "../anatomy/types";
+import { useAnatomyViewerClips } from "../anatomy/useAnatomyViewerClips";
+import { useAnatomyViewerFullscreen } from "../anatomy/useAnatomyViewerFullscreen";
+import { useAnatomyViewerKeys } from "../anatomy/useAnatomyViewerKeys";
+import { useAnatomyViewerManifest } from "../anatomy/useAnatomyViewerManifest";
 import {
   anatomyClipChrome,
   anatomyViewerMobile,
 } from "../anatomy/viewerLayout";
 import { isPlainClick, navigate } from "../nav/navigate";
 
-function isTypingTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  const tag = target.tagName;
-  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
-  return target.isContentEditable;
-}
-
 type Props = { sceneId: string; initialRegions?: string[] };
-
-type BgChoiceId = "page" | "paper" | "studio" | "white" | "stage";
-
-type BgChoice = {
-  id: BgChoiceId;
-  label: string;
-  swatch: string | "checker";
-  value: AnatomyCanvasBackground;
-};
-
-function buildLoads(
-  sceneId: string,
-  manifest: AnatomySceneManifest,
-  activeRegions: Set<string>,
-): AnatomyLoadSpec[] | null {
-  const structures =
-    manifest.regions && manifest.regions.length > 0
-      ? manifest.structures.filter(
-          (s) => s.region != null && activeRegions.has(s.region),
-        )
-      : manifest.structures;
-
-  if (manifest.asset) {
-    const url = resolveAnatomyAssetUrl(sceneId, manifest.asset);
-    if (!url) return null;
-    return structures.map((s) => ({
-      structureId: s.id,
-      url,
-      node: s.node,
-    }));
-  }
-  const loads: AnatomyLoadSpec[] = [];
-  for (const s of structures) {
-    if (!s.asset) return null;
-    const url = resolveAnatomyAssetUrl(sceneId, s.asset);
-    if (!url) return null;
-    loads.push({
-      structureId: s.id,
-      url,
-      node: s.node,
-    });
-  }
-  return loads;
-}
 
 export default function AnatomyViewerPage({
   sceneId,
   initialRegions = [],
 }: Props) {
   const theme = useTheme();
-  const mobile = useMediaQuery(theme.breakpoints.down("md"), { noSsr: true });
+  const mobile = useMediaQuery(theme.breakpoints.down("sm"), { noSsr: true });
   const { showRail, showSheetTriggers } = anatomyViewerMobile(mobile);
   const canvasRef = useRef<AnatomyCanvasHandle>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const [stageEl, setStageEl] = useState<HTMLDivElement | null>(null);
-  const [manifest, setManifest] = useState<AnatomySceneManifest | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [activeRegions, setActiveRegions] = useState<Set<string>>(
-    () => new Set(),
-  );
   const [ui, dispatch] = useReducer(
     structureUiReducer,
     undefined,
@@ -147,7 +93,6 @@ export default function AnatomyViewerPage({
   const [cameraMode, setCameraMode] =
     useState<AnatomyCameraMode>("perspective");
   const [helpOpen, setHelpOpen] = useState(false);
-  const [fullscreen, setFullscreen] = useState(false);
   const [bgId, setBgId] = useState<BgChoiceId>("page");
   const [studyMode, setStudyMode] = useState<AnatomyStudyMode>("explore");
   const [revealedIds, setRevealedIds] = useState<Set<string>>(() => new Set());
@@ -160,77 +105,42 @@ export default function AnatomyViewerPage({
   const [sheetTab, setSheetTab] = useState<AnatomySheetTab>("structures");
   const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null);
 
-  const bgChoices = useMemo<BgChoice[]>(
-    () => [
-      {
-        id: "page",
-        label: "Page",
-        swatch: "checker",
-        value: null,
-      },
-      {
-        id: "paper",
-        label: "Paper",
-        swatch: theme.palette.background.paper,
-        value: theme.palette.background.paper,
-      },
-      {
-        id: "studio",
-        label: "Studio",
-        swatch: "#d8d2cc",
-        value: "#d8d2cc",
-      },
-      {
-        id: "white",
-        label: "White",
-        swatch: "#ffffff",
-        value: "#ffffff",
-      },
-      {
-        id: "stage",
-        label: "Stage",
-        swatch: "#1e0d1b",
-        value: "#1e0d1b",
-      },
-    ],
+  const { fullscreen, toggleFullscreen } = useAnatomyViewerFullscreen({
+    stageRef,
+    setSheetOpen,
+    setMoreAnchor,
+  });
+
+  const { manifest, error, activeRegions, setActiveRegions } =
+    useAnatomyViewerManifest({
+      sceneId,
+      initialRegions,
+      dispatch,
+      setAutoRotate,
+      setWireframe,
+      setFadeOthers,
+      setAutoFocus,
+      setCameraMode,
+      setHelpOpen,
+      setBgId,
+      setStudyMode,
+      setRevealedIds,
+      setMakeCardsOpen,
+      setMakeCardsNotice,
+      setActiveClipId,
+      setClipPaused,
+      setClipError,
+      setSheetOpen,
+      setSheetTab,
+      setMoreAnchor,
+    });
+
+  const bgChoices = useMemo(
+    () => anatomyViewerBgChoices(theme.palette.background.paper),
     [theme.palette.background.paper],
   );
 
   const canvasBackground = bgChoices.find((c) => c.id === bgId)?.value ?? null;
-
-  useEffect(() => {
-    dispatch({ type: "reset" });
-    setAutoRotate(false);
-    setWireframe(false);
-    setFadeOthers(false);
-    setAutoFocus(true);
-    setCameraMode("perspective");
-    setHelpOpen(false);
-    setBgId("page");
-    setStudyMode("explore");
-    setRevealedIds(new Set());
-    setMakeCardsOpen(false);
-    setMakeCardsNotice(null);
-    setActiveClipId(null);
-    setClipPaused(false);
-    setClipError(null);
-    setSheetOpen(false);
-    setSheetTab("structures");
-    setMoreAnchor(null);
-  }, [sceneId]);
-
-  useEffect(() => {
-    const onFs = () => {
-      const onStage = document.fullscreenElement === stageRef.current;
-      setFullscreen(onStage);
-      if (onStage) {
-        setSheetOpen(false);
-        setMoreAnchor(null);
-      }
-    };
-    document.addEventListener("fullscreenchange", onFs);
-    return () => document.removeEventListener("fullscreenchange", onFs);
-  }, []);
 
   useEffect(() => {
     if (mobile) return;
@@ -238,51 +148,33 @@ export default function AnatomyViewerPage({
     setMoreAnchor(null);
   }, [mobile]);
 
-  useEffect(() => {
-    let cancelled = false;
-    setManifest(null);
-    setError(null);
-    setActiveRegions(new Set());
-    void (async () => {
-      try {
-        const res = await fetch(
-          `/anatomy/${encodeURIComponent(sceneId)}/scene.json`,
-        );
-        if (!res.ok) throw new Error(`Could not load scene (${res.status})`);
-        const json: unknown = await res.json();
-        const parsed = parseAnatomySceneManifest(json);
-        if (parsed.id !== sceneId) {
-          throw new Error("Scene id mismatch");
-        }
-        if (!cancelled) {
-          setManifest(parsed);
-          setActiveRegions(
-            new Set(activeRegionIdsForOpen(parsed, initialRegions)),
-          );
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load scene");
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-    // initialRegions applied on mount; parent remounts when the region key changes.
-  }, [sceneId]);
-
   const loads = useMemo(() => {
     if (!manifest) return null;
     return buildLoads(sceneId, manifest, activeRegions);
   }, [manifest, sceneId, activeRegions]);
 
-  const loadsKey = loads?.map((l) => `${l.structureId}:${l.url}`).join("|") ?? "";
-  useEffect(() => {
-    setActiveClipId(null);
-    setClipPaused(false);
-    setClipError(null);
-  }, [loadsKey]);
+  const loadsKey =
+    loads?.map((l) => `${l.structureId}:${l.url}`).join("|") ?? "";
+
+  const { selectClip, togglePauseClip } = useAnatomyViewerClips({
+    manifest,
+    canvasRef,
+    loadsKey,
+    dispatch,
+    clipPaused,
+    setActiveClipId,
+    setClipPaused,
+    setClipError,
+    setAutoRotate,
+    setSheetOpen,
+  });
+
+  useAnatomyViewerKeys({
+    ui,
+    dispatch,
+    canvasRef,
+    setHelpOpen,
+  });
 
   const selectedStructure =
     manifest?.structures.find((s) => s.id === ui.selectedId) ?? null;
@@ -313,52 +205,6 @@ export default function AnatomyViewerPage({
       .filter((s): s is NonNullable<typeof s> => s != null);
   }, [manifest, makeCardsIds]);
 
-  useEffect(() => {
-    const onKey = (ev: KeyboardEvent) => {
-      if (isTypingTarget(ev.target)) return;
-      if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
-      const key = ev.key.toLowerCase();
-      if (key === "h") {
-        if (!ui.selectedId) return;
-        ev.preventDefault();
-        dispatch({ type: "toggleHidden", id: ui.selectedId });
-        return;
-      }
-      if (key === "i") {
-        if (!ui.selectedId) return;
-        ev.preventDefault();
-        dispatch(
-          ui.isolatedId === ui.selectedId
-            ? { type: "clearIsolate" }
-            : { type: "isolate", id: ui.selectedId },
-        );
-        return;
-      }
-      if (key === "r") {
-        ev.preventDefault();
-        canvasRef.current?.resetView();
-        return;
-      }
-      if (key === "?" || (ev.shiftKey && key === "/")) {
-        ev.preventDefault();
-        setHelpOpen((v) => !v);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [ui.selectedId, ui.isolatedId]);
-
-  const toggleFullscreen = async () => {
-    const el = stageRef.current;
-    if (!el) return;
-    try {
-      if (document.fullscreenElement === el) await document.exitFullscreen();
-      else await el.requestFullscreen();
-    } catch {
-      /* ignore fullscreen rejection */
-    }
-  };
-
   const changeRegions = (regionIds: string[]) => {
     setActiveRegions(new Set(regionIds));
     dispatch({ type: "reset" });
@@ -374,43 +220,6 @@ export default function AnatomyViewerPage({
   const { showClipBar, showClipsTrigger } = anatomyClipChrome(mobile, hasClips);
   const activeClipLabel =
     sceneClips.find((c) => c.id === activeClipId)?.label ?? null;
-
-  const selectClip = (clip: AnatomyClip, closeSheet: boolean) => {
-    if (!manifest) return;
-    const allIds = manifest.structures.map((s) => s.id);
-    if (clip.reveal && clip.reveal.length > 0) {
-      const keep = new Set(clip.reveal);
-      dispatch({
-        type: "hideAll",
-        ids: allIds.filter((id) => !keep.has(id)),
-      });
-    }
-    canvasRef.current?.stopClips();
-    const ok = canvasRef.current?.playClip(clip.animation, {
-      loop: clip.loop !== false,
-    });
-    if (!ok) {
-      setClipError(`Animation "${clip.animation}" not found`);
-      setActiveClipId(null);
-      setClipPaused(false);
-      return;
-    }
-    setClipError(null);
-    setActiveClipId(clip.id);
-    setClipPaused(false);
-    setAutoRotate(false);
-    if (closeSheet) setSheetOpen(false);
-  };
-
-  const togglePauseClip = () => {
-    if (clipPaused) {
-      canvasRef.current?.resumeClips();
-      setClipPaused(false);
-    } else {
-      canvasRef.current?.pauseClips();
-      setClipPaused(true);
-    }
-  };
 
   const markCorrect = (id: string) => {
     setRevealedIds((prev) => {
@@ -859,7 +668,7 @@ export default function AnatomyViewerPage({
                 activeClipId={activeClipId}
                 clipPaused={clipPaused}
                 clipError={clipError}
-                onSelectClip={(clip: AnatomyClip) => selectClip(clip, false)}
+                onSelectClip={(clip) => selectClip(clip, false)}
                 onTogglePause={togglePauseClip}
               />
             ) : null}
@@ -963,7 +772,6 @@ export default function AnatomyViewerPage({
               ) : (
                 <AnatomyCanvas
                   ref={canvasRef}
-                  key={loads.map((l) => `${l.structureId}:${l.url}`).join("|")}
                   loads={loads}
                   ui={ui}
                   background={canvasBackground}
