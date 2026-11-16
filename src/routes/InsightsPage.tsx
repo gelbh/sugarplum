@@ -118,11 +118,11 @@ export default function InsightsPage() {
       : Math.round(100 * summary.kpis.consistency.score);
 
   return (
-    <Container maxWidth="md" sx={{ py: { xs: 4, md: 5 } }}>
+    <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4 } }}>
       {!ready ? (
         <Typography color="text.secondary">Loading insights…</Typography>
       ) : (
-        <Stack spacing={3}>
+        <Stack spacing={2.5}>
           <Box>
             <Typography
               variant="h4"
