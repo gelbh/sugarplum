@@ -5,6 +5,8 @@ import Container from "@mui/material/Container";
 import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import {
   ApiError,
@@ -18,6 +20,10 @@ import CompositionSpark, {
 import EmptyNext from "../components/EmptyNext";
 import { navigate } from "../nav/navigate";
 import ActivityHeatmap from "../insights/ActivityHeatmap";
+import {
+  INSIGHTS_RANGE_PRESETS,
+  type InsightsRangePreset,
+} from "../insights/buildSeries";
 import DifficultyStabilityBlock from "../insights/DifficultyStabilityBlock";
 import FutureDueChart from "../insights/FutureDueChart";
 import HourlySuccessChart from "../insights/HourlySuccessChart";
@@ -38,11 +44,18 @@ const COMPOSITION_LEGEND = [
   { key: "new", label: "New", color: COMPOSITION_SEGMENT_COLORS.new },
 ] as const;
 
+const RANGE_LABELS: Record<InsightsRangePreset, string> = {
+  30: "30d",
+  90: "90d",
+  365: "365d",
+};
+
 /** Charts-forward study-health + habit dashboard (no struggling list). */
 export default function InsightsPage() {
   const [summary, setSummary] = useState<InsightsSummary | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [desiredRetention, setDesiredRetention] = useState<number | null>(null);
+  const [rangeDays, setRangeDays] = useState<InsightsRangePreset>(30);
   const [ready, setReady] = useState(false);
   const { end: endLoad } = useTrackedOp("Loading insights…", {
     trackOnMount: true,
@@ -50,10 +63,11 @@ export default function InsightsPage() {
 
   useEffect(() => {
     let cancelled = false;
+    setReady(false);
     (async () => {
       try {
         const [value, prefsResult] = await Promise.all([
-          getInsightsSummary(),
+          getInsightsSummary({ rangeDays }),
           getStudyPrefs().then(
             (prefs) => ({ ok: true as const, prefs }),
             () => ({ ok: false as const }),
@@ -70,6 +84,7 @@ export default function InsightsPage() {
         } else {
           setDesiredRetention(null);
         }
+        setSummaryError(null);
         setReady(true);
         endLoad(true);
       } catch (err) {
@@ -88,7 +103,7 @@ export default function InsightsPage() {
     return () => {
       cancelled = true;
     };
-  }, [endLoad]);
+  }, [endLoad, rangeDays]);
 
   const recallPct =
     summary?.kpis.avgRetrievability == null
@@ -137,6 +152,22 @@ export default function InsightsPage() {
             <Typography variant="body2" color="text.secondary">
               Study health, habit, and recent activity.
             </Typography>
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={rangeDays}
+              onChange={(_e, next: InsightsRangePreset | null) => {
+                if (next != null) setRangeDays(next);
+              }}
+              aria-label="Insights history range"
+              sx={{ mt: 1.5 }}
+            >
+              {INSIGHTS_RANGE_PRESETS.map((days) => (
+                <ToggleButton key={days} value={days}>
+                  {RANGE_LABELS[days]}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
           </Box>
 
           {summaryError ? <Alert severity="error">{summaryError}</Alert> : null}

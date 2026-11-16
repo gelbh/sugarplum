@@ -7,10 +7,10 @@ import {
 import {
   buildGradeCounts,
   buildReviewsPerDay,
-  INSIGHTS_ACTIVITY_DAYS,
-  INSIGHTS_GRADE_DAYS,
-  INSIGHTS_REVIEWS_DAYS,
+  isInsightsRangePreset,
   ratingsInLocalWindow,
+  resolveInsightsWindows,
+  type InsightsRangePreset,
 } from "../insights/buildSeries";
 import type { InsightsSummary } from "../insights/types";
 import { localDayKey } from "../study/loadBalance";
@@ -26,6 +26,7 @@ export function guestInsightsSummary(
   opts?: {
     now?: Date;
     tzOffsetMinutes?: number;
+    rangeDays?: InsightsRangePreset;
   },
   storage?: GuestStorage,
 ): InsightsSummary {
@@ -37,6 +38,12 @@ export function guestInsightsSummary(
   const now = opts?.now ?? new Date();
   const tzOffsetMinutes =
     opts?.tzOffsetMinutes ?? new Date().getTimezoneOffset();
+  const rangeDays: InsightsRangePreset =
+    opts?.rangeDays != null && isInsightsRangePreset(opts.rangeDays)
+      ? opts.rangeDays
+      : 30;
+  const { reviewsDays, gradeDays, activityDays } =
+    resolveInsightsWindows(rangeDays);
 
   const metricLogs: InsightsReviewLogRow[] = store.reviewLogs.map((l) => ({
     card_id: l.cardId,
@@ -57,16 +64,16 @@ export function guestInsightsSummary(
     reviewedAts,
     now,
     tzOffsetMinutes,
-    INSIGHTS_ACTIVITY_DAYS,
+    activityDays,
   );
   const reviewsPerDay = buildReviewsPerDay(
     reviewedAts,
     now,
     tzOffsetMinutes,
-    INSIGHTS_REVIEWS_DAYS,
+    reviewsDays,
   );
   const gradeCounts = buildGradeCounts(
-    ratingsInLocalWindow(logs, now, tzOffsetMinutes, INSIGHTS_GRADE_DAYS),
+    ratingsInLocalWindow(logs, now, tzOffsetMinutes, gradeDays),
   );
   const todayKey = localDayKey(now, tzOffsetMinutes);
   const reviewedToday =
@@ -127,13 +134,15 @@ export function guestInsightsSummary(
     stabilities: scheduleRows.map((r) => r.stability),
     now,
     tzOffsetMinutes,
+    reviewsDays,
+    gradeDays,
   });
 
   return {
     window: {
-      reviewsDays: INSIGHTS_REVIEWS_DAYS,
-      gradeDays: INSIGHTS_GRADE_DAYS,
-      activityDays: INSIGHTS_ACTIVITY_DAYS,
+      reviewsDays,
+      gradeDays,
+      activityDays,
     },
     kpis: {
       reviewsInWindow,

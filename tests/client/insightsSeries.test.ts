@@ -3,7 +3,28 @@ import {
   buildGradeCounts,
   buildReviewsPerDay,
   INSIGHTS_REVIEWS_DAYS,
+  resolveInsightsWindows,
 } from "../../src/insights/buildSeries";
+
+describe("resolveInsightsWindows", () => {
+  it("keeps default 30/14/90 and scales grade/activity for longer presets", () => {
+    expect(resolveInsightsWindows(30)).toEqual({
+      reviewsDays: 30,
+      gradeDays: 14,
+      activityDays: 90,
+    });
+    expect(resolveInsightsWindows(90)).toEqual({
+      reviewsDays: 90,
+      gradeDays: 42,
+      activityDays: 90,
+    });
+    expect(resolveInsightsWindows(365)).toEqual({
+      reviewsDays: 365,
+      gradeDays: 170,
+      activityDays: 365,
+    });
+  });
+});
 
 describe("buildReviewsPerDay", () => {
   it("zero-fills a 30-day window", () => {

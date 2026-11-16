@@ -240,5 +240,35 @@ describe("GET /api/insights/summary", () => {
     );
     expect(body.kpis.reviewedToday).toBe(1);
   });
+
+  it("scales windows for rangeDays=365", async () => {
+    const env = createTestEnv();
+    env.seedUser({
+      id: "user-a",
+      email: "a@example.com",
+      password_hash: null,
+      oauth_subject: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedSession("sess-a", "user-a");
+
+    const res = await app.request(
+      "/api/insights/summary?tzOffsetMinutes=0&rangeDays=365",
+      { headers: { cookie: `${SESSION_COOKIE}=sess-a` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as InsightsSummary;
+    expect(body.window).toEqual({
+      reviewsDays: 365,
+      gradeDays: 170,
+      activityDays: 365,
+    });
+    expect(body.reviewsPerDay).toHaveLength(365);
+    expect(body.activityByDay).toHaveLength(365);
+    expect(body.kpis.trueRetention.windowDays).toBe(365);
+    expect(body.kpis.consistency.windowDays).toBe(365);
+    expect(body.futureDue).toHaveLength(14);
+  });
 });
 
