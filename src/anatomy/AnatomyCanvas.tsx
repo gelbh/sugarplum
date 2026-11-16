@@ -44,6 +44,12 @@ import {
   parkedSectionClipConstant,
   sectionClipConstant,
 } from "./anatomySectionClip";
+import {
+  anchorWorldPointFromObject,
+  isNdcDepthInView,
+  ndcToCanvasCss,
+  shouldShowSelectedLabel,
+} from "./anatomyScreenLabel";
 import { configureAnatomyGltfLoader } from "./configureGltfLoader";
 import { applyFit, applyFocus, orbitDistanceLimits } from "./cameraFit";
 import {
@@ -108,6 +114,8 @@ type Props = {
   clipEnabled?: boolean;
   /** Clip depth along scene +X through root AABB, 0–1. Default 0.5. */
   clipDepth01?: number;
+  /** Selected structure label (page applies Test Yourself masking). */
+  selectedLabelText?: string | null;
 };
 
 type EmissiveMat = Material & {
@@ -323,10 +331,12 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       fadeOthers = false,
       clipEnabled = false,
       clipDepth01 = 0.5,
+      selectedLabelText = null,
     },
     ref,
   ) {
     const hostRef = useRef<HTMLDivElement | null>(null);
+    const labelElRef = useRef<HTMLDivElement | null>(null);
     const uiRef = useRef(ui);
     const onSelectRef = useRef(onSelect);
     const loadsRef = useRef(loads);
@@ -353,6 +363,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
     const fadeOthersRef = useRef(fadeOthers);
     const clipEnabledRef = useRef(clipEnabled);
     const clipDepth01Ref = useRef(clipDepth01);
+    const selectedLabelTextRef = useRef(selectedLabelText);
     const backgroundRef = useRef(background);
     const autoFocusRef = useRef(autoFocus);
     const cameraModeRef = useRef(cameraMode);
@@ -420,6 +431,10 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       clipDepth01Ref.current = clipDepth01;
       syncSectionClipRef.current();
     }, [clipDepth01]);
+    useEffect(() => {
+      selectedLabelTextRef.current = selectedLabelText;
+      requestRenderRef.current();
+    }, [selectedLabelText]);
     useEffect(() => {
       cameraModeRef.current = cameraMode;
       setCameraModeRef.current(cameraMode);
@@ -714,12 +729,52 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       let renderRequested = false;
       let clipLoopOn = false;
       let lastClipFrameMs = performance.now();
+      const labelScratchBox = new Box3();
+      const labelScratchWorld = new Vector3();
+      const syncSelectedLabelOverlay = () => {
+        const el = labelElRef.current;
+        const cam = cameraRef.current;
+        if (!el || !cam || disposed) return;
+        const selectedId = uiRef.current.selectedId;
+        const root = selectedId
+          ? nodeMapRef.current.get(selectedId)
+          : undefined;
+        const labelText = selectedLabelTextRef.current;
+        const structureVisible = root ? isEffectivelyVisible(root) : false;
+        const show = shouldShowSelectedLabel({
+          selectedId,
+          hasRoot: Boolean(root),
+          structureVisible,
+          labelText,
+        });
+        if (!show || !root) {
+          el.style.display = "none";
+          return;
+        }
+        cam.updateMatrixWorld();
+        anchorWorldPointFromObject(root, labelScratchWorld, labelScratchBox);
+        labelScratchWorld.project(cam);
+        if (!isNdcDepthInView(labelScratchWorld.z)) {
+          el.style.display = "none";
+          return;
+        }
+        const { x, y } = ndcToCanvasCss(
+          labelScratchWorld.x,
+          labelScratchWorld.y,
+          renderer.domElement.clientWidth,
+          renderer.domElement.clientHeight,
+        );
+        el.style.display = "block";
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+      };
       const renderFrame = () => {
         renderRequested = false;
         if (disposed) return;
         controls.update();
         const cam = cameraRef.current;
         if (cam) renderer.render(scene, cam);
+        syncSelectedLabelOverlay();
         if (controls.autoRotate) requestRender();
       };
       const requestRender = () => {
@@ -746,6 +801,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
           controls.update();
           const cam = cameraRef.current;
           if (cam) renderer.render(scene, cam);
+          syncSelectedLabelOverlay();
           if (!clipCtlRef.current?.playing) {
             stopClipLoop();
             if (controls.autoRotate) requestRender();
@@ -1146,6 +1202,32 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
             background: background ?? "transparent",
           }}
         />
+        <Box
+          ref={labelElRef}
+          aria-hidden
+          sx={{
+            display: "none",
+            position: "absolute",
+            left: 0,
+            top: 0,
+            transform: "translate(-50%, -50%)",
+            pointerEvents: "none",
+            zIndex: 2,
+            px: 0.75,
+            py: 0.25,
+            borderRadius: 1,
+            bgcolor: "background.paper",
+            boxShadow: 1,
+            maxWidth: "70%",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          <Typography variant="caption" component="span">
+            {selectedLabelText ?? ""}
+          </Typography>
+        </Box>
         {showProgress ? (
           <Box
             sx={{
