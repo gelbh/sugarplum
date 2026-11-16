@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -70,7 +70,10 @@ export default function LibraryPage() {
   });
 
   const calendar = useCalendarSuggestions(guest, setSubjects, setError);
-  calendarRefreshRef.current = calendar.refresh;
+  // Layout so the load mount effect (useEffect) sees the real refresh on first paint.
+  useLayoutEffect(() => {
+    calendarRefreshRef.current = calendar.refresh;
+  }, [calendar.refresh]);
 
   const {
     titleDialog,

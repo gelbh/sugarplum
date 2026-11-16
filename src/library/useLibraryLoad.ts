@@ -176,7 +176,7 @@ export function useLibraryLoad({
     return () => {
       cancelled = true;
     };
-  }, [calendarRefresh, endLoad, guest]);
+  }, [applyCompositionSummaries, calendarRefresh, endLoad, guest, setError]);
 
   return {
     subjects,
