@@ -84,3 +84,78 @@ export function clozeExtraSubtitle(back: string): string | null {
 
 /** Draft editor label for cloze back (Anki Extra). */
 export const CLOZE_EXTRA_LABEL = "Extra (optional)";
+
+export type ComposeClozeResult =
+  | { ok: true; front: string }
+  | { ok: false; error: string };
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Index of `blank` in `sentence`. Alphanumeric blanks must be whole tokens so
+ * typing "P" does not wrap the P inside "Paris".
+ */
+export function findClozeBlankIndex(sentence: string, blank: string): number {
+  if (!blank) return -1;
+  if (/^[\p{L}\p{N}]+$/u.test(blank)) {
+    const re = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegExp(blank)}(?![\\p{L}\\p{N}])`, "u");
+    const match = re.exec(sentence);
+    return match?.index ?? -1;
+  }
+  return sentence.indexOf(blank);
+}
+
+export function composeClozeFront(
+  sentence: string,
+  blank: string,
+): ComposeClozeResult {
+  if (!sentence.trim()) {
+    return { ok: false, error: "Sentence is required" };
+  }
+  if (!blank.trim()) {
+    return { ok: false, error: "Blank is required" };
+  }
+  if (blank.includes("}}") || blank.includes("::")) {
+    return { ok: false, error: "Blank cannot contain :: or }}" };
+  }
+  const index = findClozeBlankIndex(sentence, blank);
+  if (index < 0) {
+    return { ok: false, error: "Put the blank text inside the sentence." };
+  }
+  const front =
+    sentence.slice(0, index) +
+    `{{c1::${blank}}}` +
+    sentence.slice(index + blank.length);
+  try {
+    assertSingleCloze(front);
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Invalid blank",
+    };
+  }
+  return { ok: true, front };
+}
+
+/**
+ * Split a single Anki cloze front into DIY sentence + blank fields.
+ * Returns null when the front is not exactly one Anki blank (no underscore blanks).
+ */
+export function parseClozeDiyFields(
+  front: string,
+): { sentence: string; blank: string } | null {
+  const anki = front.match(ANKI_CLOZE_COUNT_RE) ?? [];
+  const underscores = front.match(UNDERSCORE_BLANK_RE) ?? [];
+  if (anki.length !== 1 || underscores.length > 0) return null;
+  const blank = extractClozeAnswer(front);
+  if (blank == null) return null;
+  return { sentence: revealClozeFront(front), blank };
+}
+
+export function hasSingleClozeBlank(front: string): boolean {
+  const anki = front.match(ANKI_CLOZE_COUNT_RE) ?? [];
+  const underscores = front.match(UNDERSCORE_BLANK_RE) ?? [];
+  return anki.length + underscores.length === 1;
+}

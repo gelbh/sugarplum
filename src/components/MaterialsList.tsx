@@ -22,6 +22,7 @@ import {
 import { materialDisplayName } from "../materials/materialActions";
 import { partitionSplitSiblings } from "../materials/splitSiblingGroups";
 import type { SourceRole } from "../lib/sourceRole";
+import EmptyNext from "./EmptyNext";
 import MaterialRow from "./MaterialRow";
 
 export type MaterialsListProps = {
@@ -29,6 +30,7 @@ export type MaterialsListProps = {
   showDeckTitle: boolean;
   onChanged: () => void;
   onCreateOcclusion?: (material: MaterialListItem) => void;
+  onAddMaterial?: () => void;
 };
 
 const KIND_ORDER = ["pdf", "pptx", "paste", "image", "topic"];
@@ -68,6 +70,7 @@ export default function MaterialsList({
   showDeckTitle,
   onChanged,
   onCreateOcclusion,
+  onAddMaterial,
 }: MaterialsListProps) {
   const [deleteTarget, setDeleteTarget] = useState<MaterialListItem | null>(
     null,
@@ -193,6 +196,15 @@ export default function MaterialsList({
   }
 
   if (materials.length === 0) {
+    if (onAddMaterial) {
+      return (
+        <EmptyNext
+          title="No materials yet"
+          body="Add notes or a file to generate cards."
+          primary={{ label: "Add material", onClick: onAddMaterial }}
+        />
+      );
+    }
     return (
       <Typography variant="body2" color="text.secondary">
         No materials yet. Add one above to generate cards.

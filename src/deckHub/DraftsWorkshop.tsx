@@ -13,6 +13,7 @@ import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import DraftCardEditor from "../components/DraftCardEditor";
+import EmptyNext from "../components/EmptyNext";
 import type { CardType, JobListItem } from "../api/client";
 import { cardFrontPreview, TYPE_LABELS } from "../lib/draftCardModel";
 import { navigate } from "../nav/navigate";
@@ -84,18 +85,11 @@ export default function DraftsWorkshop({
 
   if (draftJobs.length === 0 || desk.remaining === 0) {
     return (
-      <Stack spacing={2}>
-        <Alert severity="info">
-          No draft cards for this deck yet. Add material to generate cards.
-        </Alert>
-        <Button
-          variant="text"
-          onClick={onAddMoreMaterial}
-          sx={{ alignSelf: "flex-start" }}
-        >
-          Add more material
-        </Button>
-      </Stack>
+      <EmptyNext
+        title="No draft cards yet"
+        body="Add material to generate cards for this deck."
+        primary={{ label: "Add material", onClick: onAddMoreMaterial }}
+      />
     );
   }
 

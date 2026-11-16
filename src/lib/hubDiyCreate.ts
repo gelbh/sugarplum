@@ -3,6 +3,7 @@ import type {
   CardType,
   HubCreateCardBody,
 } from "../api/client";
+import { hasSingleClozeBlank } from "./clozeFormat";
 import { backAnswer, isOcclusionFront } from "./draftCardModel";
 
 const GUEST_HUB_DIY_TYPES: CardType[] = ["qa", "cloze", "mcq"];
@@ -97,6 +98,9 @@ export function validateHubCreateCard(card: CardDraftView): HubCreateValidation 
   const front = typeof card.front === "string" ? card.front.trim() : "";
   if (!front) {
     return { ok: false, error: "Front is required" };
+  }
+  if (type === "cloze" && !hasSingleClozeBlank(front)) {
+    return { ok: false, error: "Add a blank word in the sentence" };
   }
   const backRaw =
     typeof card.back === "string" ? card.back : backAnswer(card.back);
