@@ -6,6 +6,7 @@ import { createRoot } from "react-dom/client";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import DifficultyStabilityBlock from "../../src/insights/DifficultyStabilityBlock";
+import SubjectDifficultyStabilityList from "../../src/insights/SubjectDifficultyStabilityList";
 import FutureDueChart from "../../src/insights/FutureDueChart";
 import HourlySuccessChart from "../../src/insights/HourlySuccessChart";
 import GradeMixByMaturityChart from "../../src/insights/GradeMixByMaturityChart";
@@ -277,6 +278,43 @@ describe("insights charts", () => {
     expect(host!.textContent).toMatch(/Median stability 12\.5d/);
     expect(host!.textContent).toMatch(/Easy 2/);
     expect(host!.textContent).toMatch(/1–7d/);
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it("SubjectDifficultyStabilityList renders titles and medians", async () => {
+    const { root, node } = renderChart(
+      createElement(SubjectDifficultyStabilityList, {
+        rows: [
+          {
+            subjectId: "a",
+            title: "Anatomy",
+            difficulty: { easy: 1, medium: 0, hard: 1, total: 2 },
+            medianStabilityDays: 4.5,
+          },
+        ],
+      }),
+    );
+    await act(async () => {
+      root.render(node);
+    });
+    expect(host!.textContent).toMatch(/By subject/);
+    expect(host!.textContent).toMatch(/Anatomy/);
+    expect(host!.textContent).toMatch(/Median 4\.5d/);
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it("SubjectDifficultyStabilityList renders nothing when empty", async () => {
+    const { root, node } = renderChart(
+      createElement(SubjectDifficultyStabilityList, { rows: [] }),
+    );
+    await act(async () => {
+      root.render(node);
+    });
+    expect(host!.textContent ?? "").toBe("");
     await act(async () => {
       root.unmount();
     });

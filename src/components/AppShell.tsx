@@ -29,14 +29,15 @@ import { useStudyChrome } from "../study/StudyChromeContext";
 import BottomChrome from "./shell/BottomChrome";
 import DesktopDrawer from "./shell/DesktopDrawer";
 import GenerationStatusStrip from "./shell/GenerationStatusStrip";
+import ShellNavRail from "./shell/ShellNavRail";
 import { ShellBackOverrideProvider } from "./shell/ShellBackOverride";
 import TopChrome from "./shell/TopChrome";
 import {
   BOTTOM_NAV_HEIGHT,
-  DRAWER_WIDTH,
   SHELL_BG,
   TOP_BAR_HEIGHT,
 } from "./shell/chromeTokens";
+import { resolveShellSideChrome } from "./shell/shellSideChrome";
 import type { ShellNavId, ShellNavItem } from "./shell/shellNav";
 
 type NavItem = ShellNavItem & {
@@ -121,15 +122,16 @@ function AppShellChrome({ children }: AppShellProps) {
   const { user } = useSession();
   const { hideChrome } = useStudyChrome();
   const theme = useTheme();
-  const mobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const phone = useMediaQuery(theme.breakpoints.down("sm"));
+  const medium = useMediaQuery(theme.breakpoints.between("sm", "md"));
   const path = window.location.pathname;
   const isAdmin = !isGuest() && user?.is_admin === true;
   const [streak, setStreak] = useState<number | null>(null);
   const [level, setLevel] = useState<number | null>(null);
   const drawerNav = isAdmin ? [...LEARNER_NAV, ADMIN_NAV] : LEARNER_NAV;
   const active = activeNavId(path, drawerNav);
-  const showDrawer = !hideChrome && !mobile;
-  const showMobileChrome = !hideChrome && mobile;
+  const { side, sideWidth } = resolveShellSideChrome(phone, medium, hideChrome);
+  const showMobileChrome = !hideChrome && phone;
   const genStatus = useShellGenerationStatus(hideChrome);
   const headerRef = useRef<HTMLDivElement>(null);
   const [mobileHeaderPx, setMobileHeaderPx] = useState(TOP_BAR_HEIGHT);
@@ -214,7 +216,15 @@ function AppShellChrome({ children }: AppShellProps) {
           ) : null}
         </Box>
       ) : null}
-      {showDrawer ? (
+      {side === "rail" ? (
+        <ShellNavRail
+          drawerNav={drawerNav}
+          active={active}
+          genStatus={genStatus}
+          streakChip={streakChip}
+        />
+      ) : null}
+      {side === "drawer" ? (
         <DesktopDrawer
           drawerNav={drawerNav}
           active={active}
@@ -232,10 +242,10 @@ function AppShellChrome({ children }: AppShellProps) {
           overflowY: "auto",
           overscrollBehavior: "contain",
           bgcolor: "background.default",
-          ...(showDrawer
+          ...(sideWidth > 0
             ? {
-                width: `calc(100% - ${DRAWER_WIDTH}px)`,
-                ml: `${DRAWER_WIDTH}px`,
+                width: `calc(100% - ${sideWidth}px)`,
+                ml: `${sideWidth}px`,
               }
             : {}),
         }}
@@ -254,7 +264,7 @@ function AppShellChrome({ children }: AppShellProps) {
   );
 }
 
-/** Authenticated chrome: permanent drawer from sm up; top + bottom chrome below sm. */
+/** Authenticated chrome: dock below sm; collapsed rail sm–md; labeled drawer md+. */
 export default function AppShell({ children }: AppShellProps) {
   return (
     <ProgressProvider>

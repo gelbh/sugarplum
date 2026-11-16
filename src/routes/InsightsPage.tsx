@@ -23,6 +23,7 @@ import FutureDueChart from "../insights/FutureDueChart";
 import HourlySuccessChart from "../insights/HourlySuccessChart";
 import GradeMixByMaturityChart from "../insights/GradeMixByMaturityChart";
 import GradeMixChart from "../insights/GradeMixChart";
+import SubjectDifficultyStabilityList from "../insights/SubjectDifficultyStabilityList";
 import {
   insightsPaperSx,
   insightsSectionTitleSx,
@@ -485,6 +486,9 @@ export default function InsightsPage() {
                 <DifficultyStabilityBlock
                   difficulty={summary.kpis.difficulty}
                   stability={summary.kpis.stability}
+                />
+                <SubjectDifficultyStabilityList
+                  rows={summary.kpis.subjectDifficultyStability}
                 />
               </Paper>
             </Stack>
