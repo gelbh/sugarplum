@@ -1,13 +1,15 @@
 import type { Env } from "../env";
 import {
   BYO_PROVIDERS_PHRASE,
-  parseCardsPayload,
   userPromptForJson,
-  withCompactTruncationRetry,
   type CompleteInput,
   type GenerateDraftsInput,
   type LlmAdapter,
 } from "./llm";
+import {
+  parseCardsPayload,
+  withCompactTruncationRetry,
+} from "./llm-json";
 import { workersAiJsonSchemaResponseFormat } from "./cards-json-schema";
 import { appendExtraUserSuffix } from "./feedback-hints";
 import {
