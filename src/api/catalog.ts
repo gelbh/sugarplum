@@ -70,11 +70,14 @@ export function listSubjects() {
   return api<Subject[]>("/api/subjects");
 }
 
-export function searchCovers(query: string) {
+export function searchCovers(query: string, page = 1) {
   if (isGuest()) rejectGuestCover();
-  return api<{ photos: CoverFields[] }>(
-    `/api/covers/search?q=${encodeURIComponent(query)}`,
-  ).then((body) => body.photos);
+  const safePage = Number.isFinite(page) && page >= 1 ? Math.floor(page) : 1;
+  return api<{
+    photos: CoverFields[];
+    page: number;
+    totalPages: number;
+  }>(`/api/covers/search?q=${encodeURIComponent(query)}&page=${safePage}`);
 }
 
 export function listCovers() {

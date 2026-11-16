@@ -182,6 +182,22 @@ describe("draft review / accept gate", () => {
     expect(dueRes.status).toBe(200);
     const due = (await dueRes.json()) as { cards: { id: string }[] };
     expect(due.cards.some((c) => c.id === "card-draft")).toBe(true);
+
+    const undoRes = await app.request(
+      "/api/cards/card-draft/undo-review",
+      {
+        method: "POST",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+    expect(undoRes.status).toBe(200);
+    expect(env.getCards().find((c) => c.id === "card-draft")?.status).toBe(
+      "draft",
+    );
+    expect(env.getSchedules().some((s) => s.card_id === "card-draft")).toBe(
+      false,
+    );
   });
 
   it("patch preserves image_label type", async () => {
@@ -313,9 +329,7 @@ describe("draft review / accept gate", () => {
       type: "occlusion",
       front_json: JSON.stringify({
         image_key: "materials/deck-a/m1.png",
-        regions: [
-          { id: "r1", x: 0.1, y: 0.1, w: 0.2, h: 0.2, label: "A" },
-        ],
+        regions: [{ id: "r1", x: 0.1, y: 0.1, w: 0.2, h: 0.2, label: "A" }],
         mode: "hide_one",
       }),
       back_json: JSON.stringify({ answer: "A" }),
@@ -418,7 +432,9 @@ describe("draft review / accept gate", () => {
     expect(body.failed).toBe(0);
     expect(body.leftUnsafe).toBe(1);
     expect(body.rejectedSiblingCount).toBe(0);
-    const byId = Object.fromEntries(env.getCards().map((c) => [c.id, c.status]));
+    const byId = Object.fromEntries(
+      env.getCards().map((c) => [c.id, c.status]),
+    );
     expect(byId["safe-1"]).toBe("accepted");
     expect(byId["junk-1"]).toBe("draft");
     expect(env.getSchedules()).toHaveLength(1);
@@ -494,7 +510,9 @@ describe("draft review / accept gate", () => {
     };
     expect(body.accepted).toBe(1);
     expect(body.rejectedSiblingCount).toBe(0);
-    const byId = Object.fromEntries(env.getCards().map((c) => [c.id, c.status]));
+    const byId = Object.fromEntries(
+      env.getCards().map((c) => [c.id, c.status]),
+    );
     expect(byId["a-safe"]).toBe("accepted");
     expect(byId["b-safe"]).toBe("draft");
     expect(byId["b-junk"]).toBe("draft");
@@ -580,10 +598,7 @@ describe("draft review / accept gate", () => {
       jobId: "job-b",
       materialId: "mat-b",
       deckId: "deck-a",
-      cards: [
-        { id: "b-draft" },
-        { id: "b-accepted", status: "accepted" },
-      ],
+      cards: [{ id: "b-draft" }, { id: "b-accepted", status: "accepted" }],
     });
 
     const res = await postAcceptAll(env, "job-a");
@@ -842,7 +857,12 @@ describe("draft review / accept gate", () => {
     expect(body.accepted).toBe(1);
     expect(body.failed).toBe(1);
     expect(body.rejectedSiblingCount).toBe(0);
-    expect(env.getSchedules().map((s) => s.card_id).sort()).toEqual(["d-ok"]);
+    expect(
+      env
+        .getSchedules()
+        .map((s) => s.card_id)
+        .sort(),
+    ).toEqual(["d-ok"]);
   });
 
   it("accept-all counts schedule races as failed without 500", async () => {
@@ -1006,7 +1026,9 @@ describe("draft review / accept gate", () => {
       deck_id: "deck-a",
       job_id: "job-1",
       type: "mcq",
-      front_json: JSON.stringify("Which vessel carries oxygenated blood from the heart?"),
+      front_json: JSON.stringify(
+        "Which vessel carries oxygenated blood from the heart?",
+      ),
       back_json: JSON.stringify({ answer: "Aorta", options }),
       media_r2_keys_json: null,
       provenance_json: JSON.stringify({ pages: [1], excerpt: "aorta" }),
@@ -1350,6 +1372,25 @@ describe("POST /api/cards/:id/reject reason", () => {
     const res = await reject(env, JSON.stringify({ reason: "nope" }));
     expect(res.status).toBe(400);
     expect(card(env)?.status).toBe("draft");
+  });
+
+  it("undo-review restores a rejected card to draft", async () => {
+    const env = createTestEnv();
+    seedDraft(env);
+    expect(
+      (await reject(env, JSON.stringify({ reason: "vague" }))).status,
+    ).toBe(200);
+    const undo = await app.request(
+      "/api/cards/card-draft/undo-review",
+      {
+        method: "POST",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+    expect(undo.status).toBe(200);
+    expect(card(env)?.status).toBe("draft");
+    expect(card(env)?.reject_reason ?? null).toBeNull();
   });
 
   it("malformed JSON is 400", async () => {

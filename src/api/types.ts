@@ -8,10 +8,7 @@ export type {
 } from "../study/subjectKnowledge";
 export type { SubjectCompositionSummary } from "../guest/composition";
 export type { FsrsOptimizeStatus } from "../study/fsrsOptimizeTypes";
-export type {
-  InsightsGradeCounts,
-  InsightsSummary,
-} from "../insights/types";
+export type { InsightsGradeCounts, InsightsSummary } from "../insights/types";
 
 export type AuthUser = {
   id: string;
@@ -243,6 +240,11 @@ export type GenerationJob = {
   free_quota: { used: number; cap: number; remaining: number } | null;
   created_at: string;
   finished_at: string | null;
+  /** Deck/subject for draft-review crumbs (GET /api/jobs/:id). */
+  deck_id?: string;
+  deck_title?: string;
+  subject_id?: string | null;
+  subject_title?: string | null;
 };
 
 export type RegenCardType = "qa" | "cloze" | "mcq";

@@ -1,6 +1,6 @@
 import Typography from "@mui/material/Typography";
-import Stack from "@mui/material/Stack";
 import { LEGAL_CONTACT_EMAIL } from "./contact";
+import { LegalSections } from "./LegalSections";
 
 /** Section strings kept here so plainText() and JSX share one source. */
 export const termsSections = [
@@ -48,21 +48,13 @@ export function termsPlainText(): string {
 
 export function TermsContent() {
   return (
-    <Stack spacing={3}>
-      {termsSections.map((s) => (
-        <section key={s.title}>
-          <Typography variant="h6" component="h2" gutterBottom>
-            {s.title}
-          </Typography>
-          <Typography variant="body1" component="p" sx={{ whiteSpace: "pre-wrap" }}>
-            {s.body}
-          </Typography>
-        </section>
-      ))}
-      <Typography variant="body2">
-        This page is operator-written and is not legal advice.
-      </Typography>
-    </Stack>
+    <LegalSections
+      sections={termsSections}
+      footer={
+        <Typography variant="body2" color="text.secondary">
+          This page is operator-written and is not legal advice.
+        </Typography>
+      }
+    />
   );
 }
-

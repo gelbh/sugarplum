@@ -2,15 +2,14 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import ButtonBase from "@mui/material/ButtonBase";
 import Container from "@mui/material/Container";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
-import Link from "@mui/material/Link";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Skeleton from "@mui/material/Skeleton";
@@ -18,10 +17,17 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
+import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import CoverPickerDialog from "../components/CoverPickerDialog";
-import EmptyNext from "../components/EmptyNext";
-import ShelfVolume from "../components/ShelfVolume";
+import CoverPickerPanel from "../components/CoverPickerPanel";
+import BoardTile from "../library/board/BoardTile";
+import LibraryBoard from "../library/board/LibraryBoard";
+import { coverPlaceholderSrc } from "../library/board/coverPlaceholder";
+import { LibraryCreateSubjectPanel } from "../library/LibraryCreateSubjectPanel";
+import StageBreadcrumbs from "../library/StageBreadcrumbs";
 import {
   ApiError,
   apkgFilenameForDeckTitle,
@@ -33,12 +39,14 @@ import {
   deleteSubject,
   listCovers,
   listDecks,
+  listJobsWithDrafts,
   listSubjects,
   patchDeck,
   patchSubject,
   subjectComposition,
   type Deck,
   type DeckStats,
+  type JobListItem,
   type StoredCoverRow,
   type Subject,
   type SubjectKnowledge,
@@ -86,13 +94,17 @@ export default function SubjectPage({ subjectId }: Props) {
   const [subjectDeleteBusy, setSubjectDeleteBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [exportWarning, setExportWarning] = useState<string | null>(null);
-  const [pageMenu, setPageMenu] = useState<
-    | { kind: "subject"; anchor: HTMLElement }
-    | { kind: "deck"; anchor: HTMLElement; deck: Deck }
-    | null
-  >(null);
+  const [pageMenu, setPageMenu] = useState<{
+    anchor: HTMLElement;
+    deck: Deck;
+  } | null>(null);
   const [covers, setCovers] = useState<StoredCoverRow[]>([]);
+  const [draftJobs, setDraftJobs] = useState<JobListItem[]>([]);
   const [coverPicker, setCoverPicker] = useState<CoverTarget | null>(null);
+  /** Keeps the create pane mounted while the post-create cover picker is open. */
+  const [createDeckHold, setCreateDeckHold] = useState(false);
+  /** Deck already created in this flow; later Continues patch instead of re-create. */
+  const [createFlowDeck, setCreateFlowDeck] = useState<Deck | null>(null);
   const [knowledge, setKnowledge] = useState<SubjectKnowledge | null>(null);
   const guest = isGuest();
   const { end: endLoad } = useTrackedOp("Loading subject…", {
@@ -103,19 +115,24 @@ export default function SubjectPage({ subjectId }: Props) {
   );
 
   const load = useCallback(async () => {
-    const [subjects, deckList, coverList, knowledgeResult] = await Promise.all([
-      listSubjects(),
-      listDecks(subjectId),
-      guest
-        ? Promise.resolve([] as StoredCoverRow[])
-        : listCovers().catch(() => [] as StoredCoverRow[]),
-      subjectComposition(subjectId).catch(() => null),
-    ]);
+    const [subjects, deckList, coverList, knowledgeResult, jobs] =
+      await Promise.all([
+        listSubjects(),
+        listDecks(subjectId),
+        guest
+          ? Promise.resolve([] as StoredCoverRow[])
+          : listCovers().catch(() => [] as StoredCoverRow[]),
+        subjectComposition(subjectId).catch(() => null),
+        guest
+          ? Promise.resolve([] as JobListItem[])
+          : listJobsWithDrafts().catch(() => [] as JobListItem[]),
+      ]);
     const found = subjects.find((s) => s.id === subjectId) ?? null;
     setSubject(found);
     setDecks(deckList);
     setCovers(coverList);
     setKnowledge(knowledgeResult);
+    setDraftJobs(jobs);
     return found;
   }, [guest, subjectId]);
 
@@ -172,6 +189,10 @@ export default function SubjectPage({ subjectId }: Props) {
         (cover) => cover.ownerKind !== ownerKind || cover.ownerId !== ownerId,
       ),
     );
+    if (createDeckHold) {
+      finishCreateDeck(ownerId);
+      return;
+    }
     setCoverPicker(null);
   }
 
@@ -185,7 +206,48 @@ export default function SubjectPage({ subjectId }: Props) {
   function openCreateDeck() {
     setDialogError(null);
     setTitleValue("");
+    setCreateDeckHold(false);
+    setCreateFlowDeck(null);
     setTitleDialog({ kind: "deck-create" });
+  }
+
+  function cancelCreateDeck() {
+    setTitleDialog(null);
+    setCreateDeckHold(false);
+    setCoverPicker(null);
+    setCreateFlowDeck(null);
+    setDialogError(null);
+  }
+
+  function backFromCreateDeckCover() {
+    if (!createFlowDeck) {
+      cancelCreateDeck();
+      return;
+    }
+    setDialogError(null);
+    setTitleValue(createFlowDeck.title);
+    setCoverPicker(null);
+    setCreateDeckHold(false);
+    setTitleDialog({ kind: "deck-create" });
+  }
+
+  function finishCreateDeck(deckId: string) {
+    setTitleDialog(null);
+    setCoverPicker(null);
+    setCreateDeckHold(false);
+    setCreateFlowDeck(null);
+    setDialogError(null);
+    navigate(`/library/decks/${encodeURIComponent(deckId)}`);
+  }
+
+  function closeCreateDeckCover() {
+    const createdId = createFlowDeck?.id ?? null;
+    setCoverPicker(null);
+    setCreateDeckHold(false);
+    setCreateFlowDeck(null);
+    if (createdId) {
+      navigate(`/library/decks/${encodeURIComponent(createdId)}`);
+    }
   }
 
   function openRenameDeck(deck: Deck) {
@@ -200,6 +262,32 @@ export default function SubjectPage({ subjectId }: Props) {
     setDialogBusy(true);
     setDialogError(null);
     try {
+      if (titleDialog.kind === "deck-create") {
+        const saved = createFlowDeck
+          ? await patchDeck(createFlowDeck.id, titleValue.trim())
+          : await createDeck(titleValue.trim(), subjectId);
+        if (createFlowDeck) {
+          setDecks((prev) => prev.map((d) => (d.id === saved.id ? saved : d)));
+        } else {
+          setDecks((prev) => [...prev, saved]);
+          await syncSubjectFromList();
+        }
+        setCreateFlowDeck(saved);
+        setTitleValue(saved.title);
+        if (!guest) {
+          setCreateDeckHold(true);
+          setCoverPicker({
+            ownerKind: "deck",
+            ownerId: saved.id,
+            title: saved.title,
+          });
+          setTitleDialog(null);
+        } else {
+          finishCreateDeck(saved.id);
+        }
+        return;
+      }
+
       let saved: CoverTarget;
       if (titleDialog.kind === "subject") {
         const updated = await patchSubject(subjectId, titleValue.trim());
@@ -209,11 +297,6 @@ export default function SubjectPage({ subjectId }: Props) {
           ownerId: updated.id,
           title: updated.title,
         };
-      } else if (titleDialog.kind === "deck-create") {
-        const deck = await createDeck(titleValue.trim(), subjectId);
-        setDecks((prev) => [...prev, deck]);
-        await syncSubjectFromList();
-        saved = { ownerKind: "deck", ownerId: deck.id, title: deck.title };
       } else {
         const updated = await patchDeck(titleDialog.deck.id, titleValue.trim());
         setDecks((prev) =>
@@ -315,203 +398,619 @@ export default function SubjectPage({ subjectId }: Props) {
   const deleteSubjectBlocked = subject
     ? subjectDeleteBlocked(subject, decks.length)
     : decks.length > 0;
-  const dialogTitle =
+  const subjectCover = subject
+    ? covers.find((c) => c.ownerKind === "subject" && c.ownerId === subject.id)
+    : undefined;
+  const titleDialogChrome =
     titleDialog?.kind === "subject"
-      ? "Rename subject"
-      : titleDialog?.kind === "deck-create"
-        ? "Create deck"
-        : titleDialog?.kind === "deck-rename"
-          ? "Rename deck"
-          : "";
+      ? {
+          overline: "Rename",
+          title: "Update the subject name",
+          blurb: "Shown on the Library cover and in menus.",
+          label: "Subject name",
+          placeholder: "e.g. Anatomy",
+          submit: "Save",
+          busy: "Saving…",
+        }
+      : titleDialog?.kind === "deck-rename"
+        ? {
+            overline: "Rename",
+            title: "Update the deck name",
+            blurb: "Shown on the hub header and in your Library.",
+            label: "Deck name",
+            placeholder: "e.g. Upper limb",
+            submit: "Save",
+            busy: "Saving…",
+          }
+        : null;
 
-  const menuDeck = pageMenu?.kind === "deck" ? pageMenu.deck : null;
+  const menuDeck = pageMenu?.deck ?? null;
+  const creatingDeck = titleDialog?.kind === "deck-create" || createDeckHold;
+  const renameDialogOpen =
+    titleDialog?.kind === "subject" || titleDialog?.kind === "deck-rename";
+
+  function openCoverPicker() {
+    if (!subject || guest) return;
+    setCoverPicker({
+      ownerKind: "subject",
+      ownerId: subject.id,
+      title: subject.title,
+    });
+  }
 
   return (
-    <Container maxWidth="md" sx={{ py: { xs: 4, md: 5 } }}>
+    <Container
+      maxWidth="md"
+      sx={{
+        py: { xs: 2, md: 3 },
+        display: "flex",
+        flexDirection: "column",
+        minHeight: { md: "100%" },
+        flex: 1,
+      }}
+    >
       {!ready ? (
         <Stack spacing={2}>
           <Skeleton variant="text" width={80} />
           <Skeleton variant="text" width={200} height={40} />
-          <Grid container spacing={2}>
-            {[0, 1].map((key) => (
-              <Grid key={key} size={{ xs: 12, md: 6 }}>
+          <LibraryBoard aria-label="Loading decks">
+            {[0, 1, 2, 3].map((key) => (
+              <Box key={key} component="li" sx={{ listStyle: "none" }}>
                 <Skeleton
                   variant="rounded"
-                  height={140}
-                  sx={{ borderRadius: 1 }}
+                  height={160}
+                  sx={{ borderRadius: 2 }}
                 />
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </LibraryBoard>
         </Stack>
       ) : (
-        <Stack spacing={3}>
-          <Box>
-            <Link
-              href="/library"
-              underline="hover"
-              onClick={(ev) => {
-                if (
-                  ev.defaultPrevented ||
-                  ev.button !== 0 ||
-                  ev.metaKey ||
-                  ev.ctrlKey ||
-                  ev.shiftKey ||
-                  ev.altKey
-                ) {
-                  return;
-                }
-                ev.preventDefault();
-                navigate("/library");
+        <Stack spacing={creatingDeck ? 0 : 2} sx={{ flex: 1, minHeight: 0 }}>
+          {creatingDeck ? null : (
+            <Box
+              sx={{
+                flexShrink: 0,
+                pb: 1.5,
+                borderBottom: 1,
+                borderColor: "divider",
               }}
-              sx={{ display: "inline-block", mb: 1 }}
             >
-              Library
-            </Link>
-            <Stack
-              direction="row"
-              alignItems="flex-start"
-              justifyContent="space-between"
-              gap={1}
-            >
-              <Typography
-                variant="h4"
-                component="h1"
-                sx={{ color: "text.primary", fontWeight: 600, flex: 1 }}
+              <StageBreadcrumbs
+                crumbs={[{ label: "Library", href: "/library" }]}
+                sx={{ mb: 1.5 }}
+              />
+              <Stack
+                direction="row"
+                alignItems="flex-start"
+                justifyContent="space-between"
+                spacing={2}
               >
-                {subject?.title ?? "Subject"}
-              </Typography>
-              {subject ? (
-                <IconButton
-                  aria-label={`More actions for ${subject.title}`}
-                  onClick={(ev) =>
-                    setPageMenu({ kind: "subject", anchor: ev.currentTarget })
-                  }
-                  sx={{ color: "text.secondary" }}
+                <Stack
+                  direction="row"
+                  spacing={{ xs: 2, sm: 2.5 }}
+                  alignItems="flex-start"
+                  sx={{ flex: 1, minWidth: 0 }}
                 >
-                  <MoreVertIcon />
-                </IconButton>
-              ) : null}
-            </Stack>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              Choose a deck of flashcards.
-            </Typography>
-            <Stack
-              direction="row"
-              spacing={1}
-              flexWrap="wrap"
-              useFlexGap
-              sx={{ mt: 2 }}
-            >
-              {decks.length > 0 ? (
-                <Button
-                  size="small"
-                  variant="contained"
-                  onClick={() =>
-                    navigate(
-                      `/study?subjectId=${encodeURIComponent(subjectId)}`,
-                    )
-                  }
-                >
-                  Study all decks
-                </Button>
-              ) : null}
-              <Button
-                size="small"
-                variant={decks.length === 0 ? "contained" : "outlined"}
-                onClick={openCreateDeck}
-                disabled={!subject}
-              >
-                New deck
-              </Button>
-            </Stack>
-            {knowledge ? <SubjectKnowledgeBar knowledge={knowledge} /> : null}
-          </Box>
+                  <Stack
+                    spacing={0.75}
+                    alignItems="stretch"
+                    sx={{ flexShrink: 0, width: { xs: 104, sm: 132 } }}
+                  >
+                    <Box
+                      component={!guest && subject ? ButtonBase : "div"}
+                      {...(!guest && subject
+                        ? {
+                            focusRipple: true,
+                            onClick: openCoverPicker,
+                            "aria-label": subjectCover
+                              ? `Change cover for ${subject.title}`
+                              : `Add cover for ${subject.title}`,
+                          }
+                        : {})}
+                      sx={{
+                        position: "relative",
+                        width: "100%",
+                        aspectRatio: "3 / 4",
+                        borderRadius: 2,
+                        overflow: "hidden",
+                        border: 1,
+                        borderColor: "rgba(232, 216, 199, 0.16)",
+                        bgcolor: "#1a0b18",
+                        boxShadow: "0 14px 36px rgba(0,0,0,0.42)",
+                        textAlign: "left",
+                        display: "block",
+                        transition:
+                          "transform 180ms ease, box-shadow 180ms ease",
+                        "@media (prefers-reduced-motion: reduce)": {
+                          transition: "none",
+                        },
+                        ...(!guest && subject
+                          ? {
+                              "&:hover, &:focus-visible": {
+                                transform: "translateY(-2px) scale(1.02)",
+                                boxShadow: "0 18px 44px rgba(0,0,0,0.5)",
+                              },
+                              "@media (prefers-reduced-motion: reduce)": {
+                                "&:hover, &:focus-visible": {
+                                  transform: "none",
+                                },
+                              },
+                            }
+                          : {}),
+                      }}
+                    >
+                      <Box
+                        component="img"
+                        src={
+                          subjectCover?.imageUrl ??
+                          coverPlaceholderSrc(subject?.id ?? subjectId)
+                        }
+                        alt=""
+                        sx={{
+                          position: "absolute",
+                          inset: 0,
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          display: "block",
+                        }}
+                      />
+                      <Box
+                        aria-hidden
+                        sx={{
+                          position: "absolute",
+                          inset: 0,
+                          background:
+                            "linear-gradient(180deg, transparent 42%, rgba(15, 5, 14, 0.82) 100%)",
+                          pointerEvents: "none",
+                        }}
+                      />
+                    </Box>
+                  </Stack>
+                  <Box sx={{ minWidth: 0, flex: 1, pt: { xs: 0.25, sm: 0.5 } }}>
+                    <Stack
+                      direction="row"
+                      alignItems="flex-start"
+                      justifyContent="space-between"
+                      spacing={1}
+                    >
+                      <Box sx={{ minWidth: 0, flex: 1 }}>
+                        <Typography
+                          component="p"
+                          sx={{
+                            m: 0,
+                            mb: 0.75,
+                            fontSize: "0.6875rem",
+                            fontWeight: 500,
+                            letterSpacing: "0.22em",
+                            textTransform: "uppercase",
+                            color: "primary.main",
+                          }}
+                        >
+                          Subject
+                        </Typography>
+                        <Typography
+                          variant="h3"
+                          component="h1"
+                          sx={{
+                            m: 0,
+                            fontFamily:
+                              '"Alice", "Georgia", "Times New Roman", serif',
+                            fontWeight: 400,
+                            letterSpacing: "0.02em",
+                            lineHeight: 1.1,
+                            color: "text.primary",
+                          }}
+                        >
+                          {subject?.title ?? "Subject"}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mt: 0.75 }}
+                        >
+                          {decks.length === 0
+                            ? "No decks yet"
+                            : decks.length === 1
+                              ? "1 deck"
+                              : `${decks.length} decks`}
+                        </Typography>
+                      </Box>
+                      {subject ? (
+                        <Stack
+                          direction="row"
+                          spacing={0.25}
+                          flexShrink={0}
+                          sx={{ mt: -0.25 }}
+                        >
+                          <Tooltip title="Rename subject">
+                            <IconButton
+                              size="small"
+                              aria-label={`Rename ${subject.title}`}
+                              onClick={openRenameSubject}
+                              sx={{ color: "text.secondary" }}
+                            >
+                              <EditOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          {!guest ? (
+                            <Tooltip
+                              title={
+                                subjectCover ? "Change cover" : "Add cover"
+                              }
+                            >
+                              <IconButton
+                                size="small"
+                                aria-label={
+                                  subjectCover
+                                    ? `Change cover for ${subject.title}`
+                                    : `Add cover for ${subject.title}`
+                                }
+                                onClick={openCoverPicker}
+                                sx={{ color: "text.secondary" }}
+                              >
+                                <ImageOutlinedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          ) : null}
+                          {deleteSubjectBlocked ? (
+                            <Tooltip title="Remove decks before deleting this subject">
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  aria-label={`Delete ${subject.title}`}
+                                  disabled
+                                  sx={{ color: "text.secondary" }}
+                                >
+                                  <DeleteOutlineIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          ) : (
+                            <Tooltip title="Delete subject">
+                              <IconButton
+                                size="small"
+                                aria-label={`Delete ${subject.title}`}
+                                onClick={requestDeleteSubject}
+                                sx={{ color: "text.secondary" }}
+                              >
+                                <DeleteOutlineIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          {!guest && decks.length > 0 ? (
+                            <Tooltip
+                              title={
+                                exportBusy ? "Exporting…" : "Download for Anki"
+                              }
+                            >
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  aria-label={`Download ${subject.title} for Anki`}
+                                  disabled={exportBusy}
+                                  onClick={() => {
+                                    void onExportAnki();
+                                  }}
+                                  sx={{ color: "text.secondary" }}
+                                >
+                                  <FileDownloadOutlinedIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          ) : null}
+                        </Stack>
+                      ) : null}
+                    </Stack>
+                    {knowledge ? (
+                      <Box sx={{ mt: 1.5 }}>
+                        <SubjectKnowledgeBar knowledge={knowledge} />
+                      </Box>
+                    ) : null}
+                  </Box>
+                </Stack>
+              </Stack>
+            </Box>
+          )}
 
-          {error ? <Alert severity="error">{error}</Alert> : null}
-          {notice ? (
+          {creatingDeck ? null : error ? (
+            <Alert severity="error">{error}</Alert>
+          ) : null}
+          {creatingDeck ? null : notice ? (
             <Alert severity="success" onClose={() => setNotice(null)}>
               {notice}
             </Alert>
           ) : null}
-          {exportWarning ? (
+          {creatingDeck ? null : exportWarning ? (
             <Alert severity="warning" onClose={() => setExportWarning(null)}>
               {exportWarning}
             </Alert>
           ) : null}
 
-          {decks.length === 0 ? (
-            <EmptyNext
-              title="No decks yet"
-              body="Add a deck, then put your notes in it."
-              primary={{ label: "New deck", onClick: openCreateDeck }}
-            />
-          ) : (
-            <Grid
-              container
-              component="ul"
-              spacing={2}
-              sx={{ listStyle: "none", p: 0, m: 0 }}
-            >
-              {decks.map((d) => {
-                const href = `/library/decks/${encodeURIComponent(d.id)}`;
-                return (
-                  <Grid key={d.id} component="li" size={{ xs: 12, md: 6 }}>
-                    <ShelfVolume
-                      title={d.title}
-                      href={href}
-                      openLabel={`Open deck ${d.title}`}
-                      onNavigate={(ev) => {
-                        if (
-                          ev.defaultPrevented ||
-                          ev.button !== 0 ||
-                          ev.metaKey ||
-                          ev.ctrlKey ||
-                          ev.shiftKey ||
-                          ev.altKey
-                        ) {
-                          return;
-                        }
-                        ev.preventDefault();
-                        navigate(href);
-                      }}
-                      studyLabel="Study"
-                      onStudy={() =>
-                        navigate(`/study?deckId=${encodeURIComponent(d.id)}`)
-                      }
-                      cover={
-                        covers.find(
+          <Box
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            {creatingDeck ? (
+              <Box
+                key="create-deck"
+                sx={{
+                  flex: 1,
+                  minHeight: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  animation: "subjectCreateIn 320ms cubic-bezier(0.2, 0, 0, 1)",
+                  "@keyframes subjectCreateIn": {
+                    from: { opacity: 0, transform: "translateX(40px)" },
+                    to: { opacity: 1, transform: "translateX(0)" },
+                  },
+                  "@media (prefers-reduced-motion: reduce)": {
+                    animation: "none",
+                  },
+                }}
+              >
+                {titleDialog?.kind === "deck-create" ? (
+                  <LibraryCreateSubjectPanel
+                    guest={guest}
+                    titleValue={titleValue}
+                    setTitleValue={setTitleValue}
+                    busy={dialogBusy}
+                    error={dialogError}
+                    onSubmit={onTitleDialogSubmit}
+                    onCancel={cancelCreateDeck}
+                    overline="New deck"
+                    heading="Name this deck"
+                    blurb={
+                      guest
+                        ? "Opens in the deck hub so you can add material next."
+                        : "Next you will pick a cover photo, then open the hub."
+                    }
+                    fieldLabel="Deck name"
+                    placeholder="e.g. Upper limb"
+                  />
+                ) : coverPicker ? (
+                  <CoverPickerPanel
+                    active
+                    inlineChrome
+                    title={coverPicker.title}
+                    ownerKind={coverPicker.ownerKind}
+                    ownerId={coverPicker.ownerId}
+                    onSaved={(row) => {
+                      setCovers((prev) => [
+                        row,
+                        ...prev.filter(
                           (cover) =>
-                            cover.ownerKind === "deck" &&
-                            cover.ownerId === d.id,
-                        ) ?? null
-                      }
-                      moreLabel={`More actions for ${d.title}`}
-                      onMore={(ev) =>
-                        setPageMenu({
-                          kind: "deck",
-                          anchor: ev.currentTarget,
-                          deck: d,
-                        })
-                      }
-                    />
-                  </Grid>
-                );
-              })}
-            </Grid>
-          )}
+                            cover.ownerKind !== row.ownerKind ||
+                            cover.ownerId !== row.ownerId,
+                        ),
+                      ]);
+                      closeCreateDeckCover();
+                    }}
+                    onClear={onClearCover}
+                    onCancel={closeCreateDeckCover}
+                    onBack={backFromCreateDeckCover}
+                  />
+                ) : null}
+              </Box>
+            ) : decks.length === 0 ? (
+              <Box
+                sx={{
+                  flex: 1,
+                  minHeight: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Box
+                  sx={{
+                    width: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 2.5,
+                    py: 2,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      textAlign: "center",
+                      px: 2,
+                      maxWidth: 420,
+                    }}
+                  >
+                    <Typography
+                      component="p"
+                      sx={{
+                        m: 0,
+                        mb: 0.75,
+                        fontSize: "0.6875rem",
+                        fontWeight: 500,
+                        letterSpacing: "0.22em",
+                        textTransform: "uppercase",
+                        color: "primary.main",
+                      }}
+                    >
+                      Get started
+                    </Typography>
+                    <Typography
+                      variant="h5"
+                      component="p"
+                      sx={{
+                        m: 0,
+                        fontFamily:
+                          '"Alice", "Georgia", "Times New Roman", serif',
+                        fontWeight: 400,
+                        letterSpacing: "0.02em",
+                        lineHeight: 1.2,
+                        color: "text.primary",
+                      }}
+                    >
+                      Add your first deck
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mt: 1, lineHeight: 1.5 }}
+                    >
+                      Decks hold the cards for one topic inside this subject.
+                      Name one, pick a cover, then add material in the hub.
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      width: "100%",
+                      maxWidth: { xs: 168, sm: 180, md: 200 },
+                    }}
+                  >
+                    <LibraryBoard aria-label="Decks">
+                      <Box
+                        component="li"
+                        sx={{ listStyle: "none", m: 0, p: 0, minHeight: 0 }}
+                      >
+                        <BoardTile
+                          index={0}
+                          title="New deck"
+                          meta="Name it, then open the hub"
+                          create
+                          accent
+                          onCreate={openCreateDeck}
+                          openLabel="New deck"
+                        />
+                      </Box>
+                    </LibraryBoard>
+                  </Box>
+                </Box>
+              </Box>
+            ) : (
+              <LibraryBoard aria-label="Decks">
+                {decks.map((d, index) => {
+                  const href = `/library/decks/${encodeURIComponent(d.id)}`;
+                  const cover = covers.find(
+                    (c) => c.ownerKind === "deck" && c.ownerId === d.id,
+                  );
+                  const draftCount = draftJobs
+                    .filter((job) => job.deck_id === d.id)
+                    .reduce((sum, job) => sum + job.draft_count, 0);
+                  const reviewNotice =
+                    draftCount <= 0
+                      ? null
+                      : draftCount === 1
+                        ? "1 to check"
+                        : `${draftCount} to check`;
+                  return (
+                    <Box
+                      key={d.id}
+                      component="li"
+                      sx={{ listStyle: "none", m: 0, p: 0, minHeight: 0 }}
+                    >
+                      <BoardTile
+                        index={index}
+                        title={d.title}
+                        meta="Open hub to author"
+                        imageSrc={cover?.imageUrl ?? coverPlaceholderSrc(d.id)}
+                        href={href}
+                        openLabel={
+                          reviewNotice
+                            ? `Open hub for ${d.title}, ${reviewNotice}`
+                            : `Open hub for ${d.title}`
+                        }
+                        notice={reviewNotice}
+                        moreLabel={`More actions for ${d.title}`}
+                        onMore={(ev) =>
+                          setPageMenu({
+                            anchor: ev.currentTarget,
+                            deck: d,
+                          })
+                        }
+                      />
+                    </Box>
+                  );
+                })}
+                <Box component="li" sx={{ listStyle: "none", m: 0, p: 0 }}>
+                  <BoardTile
+                    index={decks.length}
+                    title="New deck"
+                    meta="Add to this subject"
+                    create
+                    onCreate={openCreateDeck}
+                    openLabel="New deck"
+                  />
+                </Box>
+              </LibraryBoard>
+            )}
+          </Box>
         </Stack>
       )}
 
       <Dialog
-        open={titleDialog !== null}
+        open={renameDialogOpen}
         onClose={() => !dialogBusy && setTitleDialog(null)}
         fullWidth
         maxWidth="xs"
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            overflow: "hidden",
+            bgcolor: "background.paper",
+          },
+        }}
       >
         <Box component="form" onSubmit={onTitleDialogSubmit} noValidate>
-          <DialogTitle>{dialogTitle}</DialogTitle>
-          <DialogContent>
+          <Box
+            sx={{
+              px: 3,
+              pt: 2.5,
+              pb: 1.5,
+              borderBottom: 1,
+              borderColor: "divider",
+              background:
+                "linear-gradient(180deg, rgba(91, 44, 111, 0.12) 0%, transparent 100%)",
+            }}
+          >
+            <Typography
+              component="p"
+              sx={{
+                m: 0,
+                mb: 0.75,
+                fontSize: "0.6875rem",
+                fontWeight: 500,
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                color: "primary.main",
+              }}
+            >
+              {titleDialogChrome?.overline ?? ""}
+            </Typography>
+            <DialogTitle
+              sx={{
+                p: 0,
+                fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
+                fontWeight: 400,
+                letterSpacing: "0.02em",
+                lineHeight: 1.15,
+                fontSize: "1.75rem",
+              }}
+            >
+              {titleDialogChrome?.title ?? ""}
+            </DialogTitle>
+            {titleDialogChrome?.blurb ? (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 1, maxWidth: "36ch" }}
+              >
+                {titleDialogChrome.blurb}
+              </Typography>
+            ) : null}
+          </Box>
+          <DialogContent sx={{ px: 3, pt: 2.5, pb: 1 }}>
             {dialogError ? (
               <Alert severity="error" sx={{ mb: 2 }}>
                 {dialogError}
@@ -519,24 +1018,38 @@ export default function SubjectPage({ subjectId }: Props) {
             ) : null}
             <TextField
               autoFocus
-              margin="dense"
-              label="Title"
+              margin="none"
+              label={titleDialogChrome?.label ?? "Name"}
+              placeholder={titleDialogChrome?.placeholder}
               value={titleValue}
               onChange={(ev) => setTitleValue(ev.target.value)}
               required
               fullWidth
+              inputProps={{
+                maxLength: 80,
+                "aria-label": titleDialogChrome?.label ?? "Name",
+              }}
+              helperText={`${titleValue.trim().length}/80`}
+              FormHelperTextProps={{ sx: { textAlign: "right", mx: 0 } }}
             />
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setTitleDialog(null)} disabled={dialogBusy}>
+          <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+            <Button
+              onClick={() => setTitleDialog(null)}
+              disabled={dialogBusy}
+              sx={{ color: "text.secondary" }}
+            >
               Cancel
             </Button>
             <Button
               type="submit"
               variant="contained"
               disabled={dialogBusy || !titleValue.trim()}
+              sx={{ minWidth: 112 }}
             >
-              {dialogBusy ? "Saving…" : "Save"}
+              {dialogBusy
+                ? (titleDialogChrome?.busy ?? "Saving…")
+                : (titleDialogChrome?.submit ?? "Save")}
             </Button>
           </DialogActions>
         </Box>
@@ -545,19 +1058,72 @@ export default function SubjectPage({ subjectId }: Props) {
       <Dialog
         open={confirmSubjectDelete}
         onClose={() => !subjectDeleteBusy && setConfirmSubjectDelete(false)}
+        fullWidth
+        maxWidth="xs"
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            overflow: "hidden",
+            bgcolor: "background.paper",
+          },
+        }}
       >
-        <DialogTitle>Delete subject?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {subject
-              ? `Delete “${subject.title}”? This only works when the subject has no decks.`
-              : ""}
+        <Box
+          sx={{
+            px: 3,
+            pt: 2.5,
+            pb: 1.5,
+            borderBottom: 1,
+            borderColor: "divider",
+            background:
+              "linear-gradient(180deg, rgba(183, 28, 28, 0.1) 0%, transparent 100%)",
+          }}
+        >
+          <Typography
+            component="p"
+            sx={{
+              m: 0,
+              mb: 0.75,
+              fontSize: "0.6875rem",
+              fontWeight: 500,
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              color: "error.main",
+            }}
+          >
+            Delete
+          </Typography>
+          <DialogTitle
+            sx={{
+              p: 0,
+              fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
+              fontWeight: 400,
+              letterSpacing: "0.02em",
+              lineHeight: 1.15,
+              fontSize: "1.75rem",
+            }}
+          >
+            Remove this subject?
+          </DialogTitle>
+        </Box>
+        <DialogContent sx={{ px: 3, pt: 2.5, pb: 1 }}>
+          <DialogContentText sx={{ color: "text.secondary" }}>
+            {subject ? (
+              <>
+                Delete{" "}
+                <Box component="strong" sx={{ color: "text.primary" }}>
+                  {subject.title}
+                </Box>
+                ? This only works when the subject has no decks.
+              </>
+            ) : null}
           </DialogContentText>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
           <Button
             onClick={() => setConfirmSubjectDelete(false)}
             disabled={subjectDeleteBusy}
+            sx={{ color: "text.secondary" }}
           >
             Cancel
           </Button>
@@ -566,6 +1132,7 @@ export default function SubjectPage({ subjectId }: Props) {
             variant="contained"
             disabled={subjectDeleteBusy}
             onClick={confirmDeleteSubject}
+            sx={{ minWidth: 112 }}
           >
             {subjectDeleteBusy ? "Deleting…" : "Delete"}
           </Button>
@@ -575,19 +1142,81 @@ export default function SubjectPage({ subjectId }: Props) {
       <Dialog
         open={deleteTarget !== null}
         onClose={() => !deleteBusy && setDeleteTarget(null)}
+        fullWidth
+        maxWidth="xs"
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            overflow: "hidden",
+            bgcolor: "background.paper",
+          },
+        }}
       >
-        <DialogTitle>Delete deck?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {deleteTarget && deleteStats
-              ? `Delete “${deleteTarget.title}”? This removes ${deleteStats.accepted} accepted card${deleteStats.accepted === 1 ? "" : "s"}, ${deleteStats.draft} draft${deleteStats.draft === 1 ? "" : "s"}, ${deleteStats.archived} archived card${deleteStats.archived === 1 ? "" : "s"}, and ${deleteStats.materials} material${deleteStats.materials === 1 ? "" : "s"}.`
-              : deleteTarget
-                ? `Loading counts for “${deleteTarget.title}”…`
-                : ""}
+        <Box
+          sx={{
+            px: 3,
+            pt: 2.5,
+            pb: 1.5,
+            borderBottom: 1,
+            borderColor: "divider",
+            background:
+              "linear-gradient(180deg, rgba(183, 28, 28, 0.1) 0%, transparent 100%)",
+          }}
+        >
+          <Typography
+            component="p"
+            sx={{
+              m: 0,
+              mb: 0.75,
+              fontSize: "0.6875rem",
+              fontWeight: 500,
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              color: "error.main",
+            }}
+          >
+            Delete
+          </Typography>
+          <DialogTitle
+            sx={{
+              p: 0,
+              fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
+              fontWeight: 400,
+              letterSpacing: "0.02em",
+              lineHeight: 1.15,
+              fontSize: "1.75rem",
+            }}
+          >
+            Remove this deck?
+          </DialogTitle>
+        </Box>
+        <DialogContent sx={{ px: 3, pt: 2.5, pb: 1 }}>
+          <DialogContentText sx={{ color: "text.secondary" }}>
+            {deleteTarget && deleteStats ? (
+              <>
+                Delete{" "}
+                <Box component="strong" sx={{ color: "text.primary" }}>
+                  {deleteTarget.title}
+                </Box>
+                ? This removes {deleteStats.accepted} accepted card
+                {deleteStats.accepted === 1 ? "" : "s"}, {deleteStats.draft}{" "}
+                draft{deleteStats.draft === 1 ? "" : "s"},{" "}
+                {deleteStats.archived} archived card
+                {deleteStats.archived === 1 ? "" : "s"}, and{" "}
+                {deleteStats.materials} material
+                {deleteStats.materials === 1 ? "" : "s"}.
+              </>
+            ) : deleteTarget ? (
+              <>Loading counts for {deleteTarget.title}…</>
+            ) : null}
           </DialogContentText>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)} disabled={deleteBusy}>
+        <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+          <Button
+            onClick={() => setDeleteTarget(null)}
+            disabled={deleteBusy}
+            sx={{ color: "text.secondary" }}
+          >
             Cancel
           </Button>
           <Button
@@ -595,6 +1224,7 @@ export default function SubjectPage({ subjectId }: Props) {
             variant="contained"
             disabled={deleteBusy || !deleteStats}
             onClick={confirmDeleteDeck}
+            sx={{ minWidth: 112 }}
           >
             {deleteBusy ? "Deleting…" : "Delete"}
           </Button>
@@ -602,49 +1232,7 @@ export default function SubjectPage({ subjectId }: Props) {
       </Dialog>
 
       <Menu
-        anchorEl={pageMenu?.kind === "subject" ? pageMenu.anchor : null}
-        open={pageMenu?.kind === "subject"}
-        onClose={() => setPageMenu(null)}
-      >
-        <MenuItem
-          onClick={() => {
-            setPageMenu(null);
-            openRenameSubject();
-          }}
-        >
-          Rename subject
-        </MenuItem>
-        {deleteSubjectBlocked ? (
-          <Tooltip title="Remove decks before deleting this subject">
-            <span>
-              <MenuItem disabled>Delete subject</MenuItem>
-            </span>
-          </Tooltip>
-        ) : (
-          <MenuItem
-            onClick={() => {
-              setPageMenu(null);
-              requestDeleteSubject();
-            }}
-          >
-            Delete subject
-          </MenuItem>
-        )}
-        {!guest && decks.length > 0 ? (
-          <MenuItem
-            disabled={exportBusy}
-            onClick={() => {
-              setPageMenu(null);
-              void onExportAnki();
-            }}
-          >
-            {exportBusy ? "Exporting…" : "Download for Anki"}
-          </MenuItem>
-        ) : null}
-      </Menu>
-
-      <Menu
-        anchorEl={pageMenu?.kind === "deck" ? pageMenu.anchor : null}
+        anchorEl={pageMenu?.anchor ?? null}
         open={menuDeck !== null}
         onClose={() => setPageMenu(null)}
       >
@@ -684,7 +1272,7 @@ export default function SubjectPage({ subjectId }: Props) {
         </MenuItem>
       </Menu>
 
-      {guest ? null : (
+      {guest || createDeckHold ? null : (
         <CoverPickerDialog
           open={coverPicker !== null}
           title={coverPicker?.title ?? ""}

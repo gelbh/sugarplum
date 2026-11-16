@@ -32,20 +32,20 @@ export function buildJobProgressSnapshot(
       source: "job",
     };
   }
-  const measurable = (progress.total ?? 0) > 0;
   // Claim heartbeat can leave progress.stage === "queued" while status is
   // already "running"; that is not the calm in-line wait stage.
   const stage =
-    progress.stage && progress.stage !== "queued"
-      ? progress.stage
-      : undefined;
+    progress.stage && progress.stage !== "queued" ? progress.stage : undefined;
+  // Prefer weighted server percent as a real bar, even when current/total is
+  // 0/0 (Docling figures, extract warmup). Only queued stays indeterminate.
+  const percent = Math.min(100, Math.max(0, progress.percent ?? 0));
   return {
     id: jobId,
     label: stage
       ? friendlyStageHeadline(stage)
       : progress.label || friendlyStageHeadline(null),
-    mode: measurable ? "determinate" : "indeterminate",
-    percent: progress.percent ?? 0,
+    mode: "determinate",
+    percent,
     source: "job",
     stage,
   };

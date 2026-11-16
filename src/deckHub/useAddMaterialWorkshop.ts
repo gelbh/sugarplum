@@ -9,7 +9,6 @@ import {
   pasteMaterial,
   PPTX_MIME,
   resolveUploadContentType,
-  topicGenerate,
   uploadMaterialFile,
   uploadPdfWithFigureCrops,
 } from "../api/client";
@@ -36,8 +35,12 @@ const ALLOWED_UPLOAD_MIMES = new Set([
   ...IMAGE_MIMES,
 ]);
 const FIGURES_SKIPPED_NOTICE = "Figure crops skipped for split uploads";
+/** Hub PDF uploads use Accurate so local/prod Docling can recover empty text PDFs. */
+const PDF_ACCURATE_OPTS = {
+  figureExtractMode: "accurate" as const,
+};
 
-export type MaterialTab = "upload" | "paste" | "topic" | "diy";
+export type MaterialTab = "upload" | "paste" | "diy";
 
 type Args = {
   deckId: string;
@@ -65,13 +68,8 @@ export function useAddMaterialWorkshop({
   const [readingScan, setReadingScan] = useState(false);
   const [materialError, setMaterialError] = useState<string | null>(null);
   const [materialNotice, setMaterialNotice] = useState<string | null>(null);
-  const [topicValue, setTopicValue] = useState("");
-  const [topicBusy, setTopicBusy] = useState(false);
-  const [topicError, setTopicError] = useState<string | null>(null);
   const [pdfSplitOpen, setPdfSplitOpen] = useState(false);
-  const [pdfSplitProgress, setPdfSplitProgress] = useState<string | null>(
-    null,
-  );
+  const [pdfSplitProgress, setPdfSplitProgress] = useState<string | null>(null);
   const [pptxSplitOpen, setPptxSplitOpen] = useState(false);
   const [pptxSplitProgress, setPptxSplitProgress] = useState<string | null>(
     null,
@@ -84,15 +82,18 @@ export function useAddMaterialWorkshop({
   function resetMaterialMessages() {
     setMaterialError(null);
     setMaterialNotice(null);
-    setTopicError(null);
   }
 
-  function onTabChange(tab: MaterialTab) {
-    setMaterialTab(tab);
+  function onTabChange(tab: MaterialTab | null) {
+    resetMaterialMessages();
+    if (tab) setMaterialTab(tab);
     setWorkshopStack((prev) => {
       const top = prev[prev.length - 1];
       if (!top || top.id !== "addMaterial") return prev;
-      return [...prev.slice(0, -1), { ...top, tab }];
+      return [
+        ...prev.slice(0, -1),
+        tab ? { ...top, tab } : { id: "addMaterial" },
+      ];
     });
   }
 
@@ -211,9 +212,13 @@ export function useAddMaterialWorkshop({
                 part,
                 figuresForThisPart,
                 undefined,
-                { onScan: () => setReadingScan(true) },
+                {
+                  ...PDF_ACCURATE_OPTS,
+                  onScan: () => setReadingScan(true),
+                },
               )
             : uploadMaterialFile(deckId, part, undefined, {
+                ...PDF_ACCURATE_OPTS,
                 onScan: () => setReadingScan(true),
               }),
       });
@@ -255,9 +260,7 @@ export function useAddMaterialWorkshop({
             ? `Stored ${parts.length} materials (${lastStatus}). Generation started.${figureNote}`
             : `Stored file (${lastStatus}). Generation started.`,
         );
-        window.location.assign(
-          `/jobs/${encodeURIComponent(lastJobId)}/drafts`,
-        );
+        window.location.assign(`/jobs/${encodeURIComponent(lastJobId)}/drafts`);
         return;
       }
       if (lastManualKey && prepareOcclusionFromImageKey) {
@@ -330,9 +333,7 @@ export function useAddMaterialWorkshop({
             ? `Stored ${parts.length} materials (${lastStatus}). Generation started.`
             : `Stored file (${lastStatus}). Generation started.`,
         );
-        window.location.assign(
-          `/jobs/${encodeURIComponent(lastJobId)}/drafts`,
-        );
+        window.location.assign(`/jobs/${encodeURIComponent(lastJobId)}/drafts`);
         return;
       }
       if (lastManualKey && prepareOcclusionFromImageKey) {
@@ -384,9 +385,13 @@ export function useAddMaterialWorkshop({
                 part,
                 figuresForThisPart,
                 undefined,
-                { onScan: () => setReadingScan(true) },
+                {
+                  ...PDF_ACCURATE_OPTS,
+                  onScan: () => setReadingScan(true),
+                },
               )
             : uploadMaterialFile(deckId, part, undefined, {
+                ...PDF_ACCURATE_OPTS,
                 onScan: () => setReadingScan(true),
               }),
       });
@@ -468,10 +473,7 @@ export function useAddMaterialWorkshop({
         return;
       }
     }
-    if (
-      contentType === "application/pdf" &&
-      uploadFile.size > MAX_FILE_BYTES
-    ) {
+    if (contentType === "application/pdf" && uploadFile.size > MAX_FILE_BYTES) {
       if (uploadFile.size > MAX_SPLIT_SOURCE_BYTES) {
         setMaterialError(splitSourceTooLargeMessage(undefined, "pdf"));
         return;
@@ -495,6 +497,13 @@ export function useAddMaterialWorkshop({
     }
     setMaterialBusy(true);
     try {
+      const pdfOpts =
+        contentType === "application/pdf"
+          ? {
+              ...PDF_ACCURATE_OPTS,
+              onScan: () => setReadingScan(true),
+            }
+          : { onScan: () => setReadingScan(true) };
       const material =
         contentType === "application/pdf" && figureFiles.length > 0
           ? await uploadPdfWithFigureCrops(
@@ -502,11 +511,9 @@ export function useAddMaterialWorkshop({
               uploadFile,
               figureFiles,
               undefined,
-              { onScan: () => setReadingScan(true) },
+              pdfOpts,
             )
-          : await uploadMaterialFile(deckId, uploadFile, undefined, {
-              onScan: () => setReadingScan(true),
-            });
+          : await uploadMaterialFile(deckId, uploadFile, undefined, pdfOpts);
       setUploadFile(null);
       setFigureFiles([]);
       if (material.jobId) {
@@ -539,28 +546,6 @@ export function useAddMaterialWorkshop({
     }
   }
 
-  async function onTopicGenerate(e?: FormEvent) {
-    e?.preventDefault();
-    const topic = topicValue.trim();
-    if (!topic) {
-      setTopicError("Enter a topic");
-      return;
-    }
-    setTopicBusy(true);
-    setTopicError(null);
-    try {
-      const { jobId } = await topicGenerate(deckId, { topic });
-      setTopicValue("");
-      window.location.assign(`/jobs/${encodeURIComponent(jobId)}/drafts`);
-    } catch (err) {
-      setTopicError(
-        err instanceof ApiError ? err.message : "Could not start generation",
-      );
-    } finally {
-      setTopicBusy(false);
-    }
-  }
-
   return {
     materialTab,
     setMaterialTab,
@@ -576,10 +561,6 @@ export function useAddMaterialWorkshop({
     readingScan,
     materialError,
     materialNotice,
-    topicValue,
-    setTopicValue,
-    topicBusy,
-    topicError,
     pdfSplitOpen,
     pdfSplitProgress,
     pptxSplitOpen,
@@ -598,6 +579,5 @@ export function useAddMaterialWorkshop({
     onPptxSplitCancel,
     onPdfCompressConfirm,
     onPdfCompressCancel,
-    onTopicGenerate,
   };
 }

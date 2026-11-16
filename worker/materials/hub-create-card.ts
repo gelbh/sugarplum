@@ -2,6 +2,7 @@ import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { getDb } from "../db/client";
 import { OcclusionFrontSchema } from "../generation/schema";
+import { parseFigureR2Key } from "./figures";
 
 export const HubCreateTextCardSchema = z
   .object({
@@ -51,17 +52,27 @@ export async function assertDeckMaterialKeys(
 ): Promise<void> {
   if (keys.length === 0) return;
   const { results } = await db
-    .prepare(
-      "SELECT r2_key FROM materials WHERE deck_id = ? AND r2_key IS NOT NULL",
-    )
+    .prepare("SELECT id, kind, r2_key FROM materials WHERE deck_id = ?")
     .bind(deckId)
-    .all<{ r2_key: string }>();
-  const allowed = new Set((results ?? []).map((row) => row.r2_key));
+    .all<{ id: string; kind: string; r2_key: string | null }>();
+  const allowed = new Set<string>();
+  const pdfIds = new Set<string>();
+  for (const row of results ?? []) {
+    if (row.r2_key) allowed.add(row.r2_key);
+    if (row.kind === "pdf") pdfIds.add(row.id);
+  }
   for (const key of keys) {
-    if (!allowed.has(key)) {
-      throw new HTTPException(400, {
-        message: "Media key not found for deck",
-      });
+    if (allowed.has(key)) continue;
+    const parsed = parseFigureR2Key(key);
+    if (
+      parsed &&
+      parsed.deckId === deckId &&
+      pdfIds.has(parsed.pdfMaterialId)
+    ) {
+      continue;
     }
+    throw new HTTPException(400, {
+      message: "Media key not found for deck",
+    });
   }
 }

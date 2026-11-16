@@ -1,25 +1,26 @@
-import Accordion from "@mui/material/Accordion";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import AccordionSummary from "@mui/material/AccordionSummary";
+import AutorenewRoundedIcon from "@mui/icons-material/AutorenewRounded";
+import CloseIcon from "@mui/icons-material/Close";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import IconButton from "@mui/material/IconButton";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Radio from "@mui/material/Radio";
+import RadioGroup from "@mui/material/RadioGroup";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useEffect, useRef, useState } from "react";
 import { mediaUrl, type CardDraftView, type CardType } from "../api/client";
 import {
+  CLOZE_BLANK_MAX,
   CLOZE_EXTRA_LABEL,
   composeClozeFront,
-  extractClozeAnswer,
+  extractClozeAnswers,
   parseClozeDiyFields,
   revealClozeFront,
 } from "../lib/clozeFormat";
@@ -35,12 +36,9 @@ import {
   type DraftEditorChange,
 } from "../lib/draftCardModel";
 import {
-  SelectEnumItem,
-  renderSelectEnumValue,
-} from "./SelectEnumItem";
-import {
   MCQ_MAX,
   MCQ_MIN,
+  mcqBack,
   type McqDraft,
   withMcqCorrect,
   withMcqOptionAdded,
@@ -49,8 +47,11 @@ import {
 } from "../lib/mcqDraftEdit";
 import ClozePrompt from "./ClozePrompt";
 import OcclusionRegionEditor from "./OcclusionRegionEditor";
+import { SelectEnumItem, renderSelectEnumValue } from "./SelectEnumItem";
 
 export { resolveEditorType, type DraftEditorChange };
+
+export type DraftPreviewFace = "front" | "back";
 
 export type DraftCardEditorProps = {
   card: CardDraftView;
@@ -58,6 +59,10 @@ export type DraftCardEditorProps = {
   onChange: (next: DraftEditorChange) => void;
   /** When set, type Select is limited to these values (hub DIY: qa|cloze|mcq). */
   allowedTypes?: CardType[];
+  /** Hub DIY: pick type from cards instead of a dropdown. */
+  typePicker?: "select" | "cards";
+  /** Notify which side the author is editing (live preview flip). */
+  onPreviewFaceChange?: (face: DraftPreviewFace) => void;
   /** Optional single-card regen control rendered next to the type Select. */
   regenAction?: {
     busy: boolean;
@@ -66,12 +71,14 @@ export type DraftCardEditorProps = {
   };
 };
 
-function seedClozeDiy(front: string): { sentence: string; blank: string } {
+function seedClozeDiy(front: string): { sentence: string; blanks: string[] } {
   const parsed = parseClozeDiyFields(front);
   if (parsed) return parsed;
+  const revealed = revealClozeFront(front);
+  const answers = extractClozeAnswers(front);
   return {
-    sentence: revealClozeFront(front),
-    blank: extractClozeAnswer(front) ?? "",
+    sentence: revealed,
+    blanks: answers.length > 0 ? answers : [""],
   };
 }
 
@@ -81,15 +88,20 @@ function ClozeDiyFields({
   backText,
   disabled,
   onPatch,
+  onPreviewFaceChange,
+  hideInlinePreview = false,
 }: {
   cardId: string;
   frontText: string;
   backText: string;
   disabled: boolean;
   onPatch: (partial: Partial<DraftEditorChange>) => void;
+  onPreviewFaceChange?: (face: DraftPreviewFace) => void;
+  hideInlinePreview?: boolean;
 }) {
-  const [sentence, setSentence] = useState(() => seedClozeDiy(frontText).sentence);
-  const [blank, setBlank] = useState(() => seedClozeDiy(frontText).blank);
+  const seeded0 = seedClozeDiy(frontText);
+  const [sentence, setSentence] = useState(seeded0.sentence);
+  const [blanks, setBlanks] = useState(seeded0.blanks);
   const [diyError, setDiyError] = useState<string | null>(null);
   const lastPatchedFront = useRef<string | null>(frontText);
 
@@ -97,26 +109,26 @@ function ClozeDiyFields({
     if (frontText === lastPatchedFront.current) return;
     const seeded = seedClozeDiy(frontText);
     setSentence(seeded.sentence);
-    setBlank(seeded.blank);
+    setBlanks(seeded.blanks);
     setDiyError(null);
     lastPatchedFront.current = frontText;
   }, [cardId, frontText]);
 
-  const clozeAnswer = extractClozeAnswer(frontText) ?? (blank.trim() || null);
+  const clozeAnswers = extractClozeAnswers(frontText);
 
-  function applyDiy(nextSentence: string, nextBlank: string) {
+  function applyDiy(nextSentence: string, nextBlanks: string[]) {
     setSentence(nextSentence);
-    setBlank(nextBlank);
-    if (!nextSentence.trim() && !nextBlank.trim()) {
+    setBlanks(nextBlanks.length > 0 ? nextBlanks : [""]);
+    const filled = nextBlanks.map((b) => b.trim()).filter(Boolean);
+    if (!nextSentence.trim() && filled.length === 0) {
       setDiyError(null);
       lastPatchedFront.current = "";
       onPatch({ front: "" });
       return;
     }
-    const composed = composeClozeFront(nextSentence, nextBlank);
+    const composed = composeClozeFront(nextSentence, nextBlanks);
     if (!composed.ok) {
       setDiyError(composed.error);
-      // Keep parent front as plain sentence so a partial blank cannot ship.
       lastPatchedFront.current = nextSentence;
       onPatch({ front: nextSentence });
       return;
@@ -126,131 +138,229 @@ function ClozeDiyFields({
     onPatch({ front: composed.front });
   }
 
+  function updateBlank(index: number, value: string) {
+    const next = blanks.map((b, i) => (i === index ? value : b));
+    applyDiy(sentence, next);
+  }
+
+  function addBlank() {
+    if (blanks.length >= CLOZE_BLANK_MAX) return;
+    applyDiy(sentence, [...blanks, ""]);
+  }
+
+  function removeBlank(index: number) {
+    if (blanks.length <= 1) return;
+    applyDiy(
+      sentence,
+      blanks.filter((_, i) => i !== index),
+    );
+  }
+
   return (
     <>
-      <Box
-        sx={{
-          p: 2,
-          borderRadius: 1,
-          bgcolor: "action.hover",
-          border: 1,
-          borderColor: "divider",
-        }}
-      >
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          display="block"
-          sx={{ mb: 1 }}
+      {!hideInlinePreview ? (
+        <Box
+          sx={{
+            p: 2,
+            borderRadius: 1,
+            bgcolor: "action.hover",
+            border: 1,
+            borderColor: "divider",
+          }}
         >
-          How it will look when you study
-        </Typography>
-        <Typography
-          component="p"
-          variant="body1"
-          sx={{ whiteSpace: "pre-wrap", mb: clozeAnswer ? 1.5 : 0 }}
-        >
-          <ClozePrompt front={frontText} />
-        </Typography>
-        {clozeAnswer ? (
-          <Stack
-            direction="row"
-            alignItems="center"
-            spacing={1}
-            flexWrap="wrap"
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            display="block"
+            sx={{ mb: 1 }}
           >
-            <Typography variant="caption" color="text.secondary">
-              Answer:
-            </Typography>
-            <Chip
-              size="small"
-              label={clozeAnswer}
-              color="primary"
-              variant="outlined"
-            />
-          </Stack>
-        ) : null}
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          display="block"
-          sx={{ mt: 1.5 }}
-        >
-          Blanks show as a line when you study
-        </Typography>
-      </Box>
+            How it will look when you study
+          </Typography>
+          <Typography
+            component="p"
+            variant="body1"
+            sx={{ whiteSpace: "pre-wrap", mb: clozeAnswers.length ? 1.5 : 0 }}
+          >
+            <ClozePrompt front={frontText} />
+          </Typography>
+          {clozeAnswers.length > 0 ? (
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1}
+              flexWrap="wrap"
+            >
+              <Typography variant="caption" color="text.secondary">
+                Answer:
+              </Typography>
+              {clozeAnswers.map((answer) => (
+                <Chip
+                  key={answer}
+                  size="small"
+                  label={answer}
+                  color="primary"
+                  variant="outlined"
+                />
+              ))}
+            </Stack>
+          ) : null}
+        </Box>
+      ) : null}
 
       <TextField
         label="Sentence"
         value={sentence}
-        onChange={(e) => applyDiy(e.target.value, blank)}
+        onChange={(e) => applyDiy(e.target.value, blanks)}
+        onFocus={() => onPreviewFaceChange?.("front")}
         multiline
-        minRows={2}
+        minRows={3}
         fullWidth
         disabled={disabled}
-        helperText="Write the full sentence, including the word you will hide."
+        placeholder="The full sentence, including words you will hide"
       />
-      <TextField
-        label="Blank"
-        value={blank}
-        onChange={(e) => applyDiy(sentence, e.target.value)}
-        fullWidth
-        disabled={disabled}
-        error={diyError != null}
-        helperText={
-          diyError ?? "The word or phrase to hide (must appear in the sentence)."
-        }
-      />
+      <Stack spacing={1.25}>
+        {blanks.map((blank, index) => (
+          <Stack
+            key={`cloze-blank-${index}`}
+            direction="row"
+            spacing={1}
+            alignItems="flex-start"
+          >
+            <TextField
+              label={blanks.length === 1 ? "Blank" : `Blank ${index + 1}`}
+              value={blank}
+              onChange={(e) => updateBlank(index, e.target.value)}
+              onFocus={() => onPreviewFaceChange?.("front")}
+              fullWidth
+              disabled={disabled}
+              error={diyError != null && index === blanks.length - 1}
+              helperText={
+                diyError != null && index === blanks.length - 1
+                  ? diyError
+                  : undefined
+              }
+              placeholder="Word to hide (must appear in the sentence)"
+            />
+            {blanks.length > 1 ? (
+              <Button
+                variant="text"
+                color="inherit"
+                size="small"
+                disabled={disabled}
+                onClick={() => removeBlank(index)}
+                sx={{ flexShrink: 0, mt: 1 }}
+              >
+                Remove
+              </Button>
+            ) : null}
+          </Stack>
+        ))}
+        <Button
+          variant="outlined"
+          size="small"
+          disabled={disabled || blanks.length >= CLOZE_BLANK_MAX}
+          onClick={addBlank}
+          sx={{ alignSelf: "flex-start" }}
+        >
+          Add blank
+        </Button>
+      </Stack>
       <TextField
         label={CLOZE_EXTRA_LABEL}
         value={backText}
         onChange={(e) => onPatch({ back: e.target.value })}
+        onFocus={() => onPreviewFaceChange?.("back")}
         multiline
         minRows={2}
         fullWidth
         disabled={disabled}
+        placeholder="Optional note on the answer face"
       />
-
-      <Accordion
-        disableGutters
-        elevation={0}
-        sx={{
-          "&:before": { display: "none" },
-          border: 1,
-          borderColor: "divider",
-          borderRadius: 1,
-        }}
-      >
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="edit-cloze-advanced"
-          id="edit-cloze-advanced-header"
-        >
-          <Typography variant="body2" fontWeight={500}>
-            Advanced
-          </Typography>
-        </AccordionSummary>
-        <AccordionDetails id="edit-cloze-advanced" sx={{ pt: 0 }}>
-          <TextField
-            label="Front (blank markup)"
-            value={frontText}
-            onChange={(e) => {
-              const next = e.target.value;
-              onPatch({ front: next });
-              const seeded = seedClozeDiy(next);
-              setSentence(seeded.sentence);
-              setBlank(seeded.blank);
-              setDiyError(null);
-            }}
-            multiline
-            minRows={2}
-            fullWidth
-            disabled={disabled}
-            helperText="Optional: edit Anki-style {{c1::answer}} markers directly."
-          />
-        </AccordionDetails>
-      </Accordion>
     </>
+  );
+}
+
+function TypePickerCards({
+  card,
+  typeValue,
+  typeOptions,
+  locked,
+  disabled,
+  onChange,
+}: {
+  card: CardDraftView;
+  typeValue: CardType;
+  typeOptions: CardType[];
+  locked: boolean;
+  disabled: boolean;
+  onChange: (next: DraftEditorChange) => void;
+}) {
+  return (
+    <Box
+      role="radiogroup"
+      aria-label="Card type"
+      sx={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 0.75,
+      }}
+    >
+      {typeOptions.map((t) => {
+        const selected = typeValue === t;
+        const Icon = CARD_TYPE_ICONS[t];
+        return (
+          <Box
+            key={t}
+            component="button"
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            disabled={disabled || locked}
+            onClick={() => {
+              if (selected || disabled || locked) return;
+              onChange(draftForType(card, t));
+            }}
+            sx={{
+              display: "inline-flex",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 0.75,
+              m: 0,
+              px: 1.25,
+              py: 0.85,
+              textAlign: "left",
+              cursor: disabled || locked ? "default" : "pointer",
+              borderRadius: 999,
+              border: "1px solid",
+              borderColor: selected ? "primary.main" : "divider",
+              bgcolor: selected ? "action.selected" : "transparent",
+              color: "text.primary",
+              font: "inherit",
+              opacity: disabled || locked ? 0.7 : 1,
+              "&:hover":
+                disabled || locked
+                  ? undefined
+                  : {
+                      borderColor: selected ? "primary.main" : "text.secondary",
+                    },
+            }}
+          >
+            <Icon
+              sx={{
+                fontSize: 18,
+                color: selected ? "primary.light" : "text.secondary",
+              }}
+            />
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: selected ? 600 : 500 }}
+            >
+              {TYPE_LABELS[t] ?? t}
+            </Typography>
+          </Box>
+        );
+      })}
+    </Box>
   );
 }
 
@@ -260,38 +370,73 @@ export default function DraftCardEditor({
   disabled = false,
   onChange,
   allowedTypes,
+  typePicker = "select",
+  onPreviewFaceChange,
   regenAction,
 }: DraftCardEditorProps) {
+  const {
+    value: typeValue,
+    options: typeOptions,
+    locked: typeSelectLocked,
+  } = typeSelectModel(
+    resolveEditorType(card.type as CardType, allowedTypes).typeValue,
+    allowedTypes,
+  );
+
+  const isMcq = typeValue === "mcq";
+  const mcqOptionsFromCard = isMcq ? mcqDraftFromCard(card).options : [];
+  const [mcqCorrectIndex, setMcqCorrectIndex] = useState(
+    () => mcqDraftFromCard(card).correctIndex,
+  );
+
+  useEffect(() => {
+    if (!isMcq) return;
+    setMcqCorrectIndex(mcqDraftFromCard(card).correctIndex);
+  }, [card.id, isMcq]);
+
+  useEffect(() => {
+    if (!isMcq) return;
+    setMcqCorrectIndex((i) =>
+      Math.min(Math.max(0, i), Math.max(0, mcqOptionsFromCard.length - 1)),
+    );
+  }, [isMcq, mcqOptionsFromCard.length]);
+
   if (card.type === "occlusion" && isOcclusionFront(card.front)) {
+    const hasImage = Boolean(card.front.image_key.trim());
     return (
-      <OcclusionRegionEditor
-        key={card.id}
-        front={card.front}
-        disabled={disabled}
-        onChange={({ front, back }) =>
-          onChange({ front, back, type: "occlusion" })
-        }
-      />
+      <Stack spacing={2}>
+        {typePicker === "cards" ? (
+          <TypePickerCards
+            card={card}
+            typeValue={typeValue}
+            typeOptions={typeOptions}
+            locked={typeSelectLocked}
+            disabled={disabled}
+            onChange={onChange}
+          />
+        ) : null}
+        {hasImage || typePicker !== "cards" ? (
+          <OcclusionRegionEditor
+            key={card.id}
+            front={card.front}
+            disabled={disabled}
+            onChange={({ front, back }) =>
+              onChange({ front, back, type: "occlusion" })
+            }
+          />
+        ) : null}
+      </Stack>
     );
   }
 
   const imageKey = card.media_r2_keys?.[0];
   const frontText = typeof card.front === "string" ? card.front : "";
   const backText = backAnswer(card.back);
-  const {
-    value: typeValue,
-    options: typeOptions,
-    locked: typeSelectLocked,
-  } = typeSelectModel(
-    // An occlusion-typed card without a region front still edits as qa here.
-    resolveEditorType(card.type as CardType, allowedTypes).typeValue,
-    allowedTypes,
-  );
   const isCloze = typeValue === "cloze";
-  const isMcq = typeValue === "mcq";
-  const mcqDraft: McqDraft = isMcq
-    ? mcqDraftFromCard(card)
-    : { options: [], back: backText };
+  const mcqDraft: McqDraft = {
+    options: mcqOptionsFromCard,
+    correctIndex: mcqCorrectIndex,
+  };
   const mcqOptions = mcqDraft.options;
 
   function patch(partial: Partial<DraftEditorChange>) {
@@ -307,20 +452,25 @@ export default function DraftCardEditor({
     });
   }
 
+  function patchMcq(next: McqDraft) {
+    setMcqCorrectIndex(next.correctIndex);
+    patch({ options: next.options, back: mcqBack(next) });
+  }
+
   function updateMcqOption(index: number, value: string) {
-    patch(withMcqOptionText(mcqDraft, index, value));
+    patchMcq(withMcqOptionText(mcqDraft, index, value));
   }
 
   function setMcqCorrect(index: number) {
-    patch(withMcqCorrect(mcqDraft, index));
+    patchMcq(withMcqCorrect(mcqDraft, index));
   }
 
   function addMcqOption() {
-    patch(withMcqOptionAdded(mcqDraft));
+    patchMcq(withMcqOptionAdded(mcqDraft));
   }
 
   function removeMcqOption(index: number) {
-    patch(withMcqOptionRemoved(mcqDraft, index));
+    patchMcq(withMcqOptionRemoved(mcqDraft, index));
   }
 
   return (
@@ -339,63 +489,93 @@ export default function DraftCardEditor({
           }}
         />
       ) : null}
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={1.5}
-        alignItems={{ sm: "flex-start" }}
-      >
-        <FormControl
-          fullWidth
-          size="small"
-          disabled={disabled || typeSelectLocked}
+      {typePicker === "cards" ? (
+        <TypePickerCards
+          card={card}
+          typeValue={typeValue}
+          typeOptions={typeOptions}
+          locked={typeSelectLocked}
+          disabled={disabled}
+          onChange={onChange}
+        />
+      ) : (
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1.5}
+          alignItems={{ sm: "flex-start" }}
         >
-          <InputLabel id={`card-type-${card.id}`}>Type</InputLabel>
-          <Select
-            labelId={`card-type-${card.id}`}
-            label="Type"
-            value={typeValue}
-            onChange={(e) =>
-              onChange(draftForType(card, e.target.value as CardType))
-            }
-            renderValue={(value) =>
-              renderSelectEnumValue({
-                icon: CARD_TYPE_ICONS[value as CardType],
-                label: TYPE_LABELS[value as CardType] ?? String(value),
-              })
-            }
+          <FormControl
+            fullWidth
+            size="small"
+            disabled={disabled || typeSelectLocked}
           >
-            {typeSelectLocked ? (
-              <MenuItem value={typeValue}>
-                <SelectEnumItem
-                  icon={CARD_TYPE_ICONS[typeValue]}
-                  label={TYPE_LABELS[typeValue] ?? typeValue}
-                />
-              </MenuItem>
-            ) : (
-              typeOptions.map((t) => (
-                <MenuItem key={t} value={t}>
+            <InputLabel id={`card-type-${card.id}`}>Type</InputLabel>
+            <Select
+              labelId={`card-type-${card.id}`}
+              label="Type"
+              value={typeValue}
+              onChange={(e) =>
+                onChange(draftForType(card, e.target.value as CardType))
+              }
+              renderValue={(value) =>
+                renderSelectEnumValue({
+                  icon: CARD_TYPE_ICONS[value as CardType],
+                  label: TYPE_LABELS[value as CardType] ?? String(value),
+                })
+              }
+            >
+              {typeSelectLocked ? (
+                <MenuItem value={typeValue}>
                   <SelectEnumItem
-                    icon={CARD_TYPE_ICONS[t]}
-                    label={TYPE_LABELS[t] ?? t}
+                    icon={CARD_TYPE_ICONS[typeValue]}
+                    label={TYPE_LABELS[typeValue] ?? typeValue}
                   />
                 </MenuItem>
-              ))
-            )}
-          </Select>
-        </FormControl>
-        {regenAction ? (
-          <Button
-            variant="outlined"
-            onClick={regenAction.onClick}
-            disabled={
-              disabled || regenAction.busy || regenAction.disabled === true
-            }
-            sx={{ flexShrink: 0, whiteSpace: "nowrap" }}
-          >
-            {regenAction.busy ? "Regenerating…" : "Regenerate this card"}
-          </Button>
-        ) : null}
-      </Stack>
+              ) : (
+                typeOptions.map((t) => (
+                  <MenuItem key={t} value={t}>
+                    <SelectEnumItem
+                      icon={CARD_TYPE_ICONS[t]}
+                      label={TYPE_LABELS[t] ?? t}
+                    />
+                  </MenuItem>
+                ))
+              )}
+            </Select>
+          </FormControl>
+          {regenAction ? (
+            <Button
+              variant="outlined"
+              startIcon={<AutorenewRoundedIcon sx={{ fontSize: 18 }} />}
+              onClick={regenAction.onClick}
+              disabled={
+                disabled || regenAction.busy || regenAction.disabled === true
+              }
+              sx={{
+                flexShrink: 0,
+                alignSelf: { xs: "stretch", sm: "center" },
+                minHeight: 40,
+                px: 1.6,
+                borderRadius: 999,
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: "0.8125rem",
+                letterSpacing: "0.02em",
+                whiteSpace: "nowrap",
+                borderColor: "rgba(232, 216, 199, 0.28)",
+                color: "rgba(232, 216, 199, 0.88)",
+                bgcolor: "rgba(18, 7, 15, 0.22)",
+                "&:hover": {
+                  borderColor: "rgba(232, 216, 199, 0.48)",
+                  bgcolor: "rgba(91, 44, 111, 0.22)",
+                },
+              }}
+            >
+              {regenAction.busy ? "Regenerating…" : "Regenerate"}
+            </Button>
+          ) : null}
+        </Stack>
+      )}
 
       {isCloze ? (
         <ClozeDiyFields
@@ -404,6 +584,8 @@ export default function DraftCardEditor({
           backText={backText}
           disabled={disabled}
           onPatch={patch}
+          onPreviewFaceChange={onPreviewFaceChange}
+          hideInlinePreview={typePicker === "cards"}
         />
       ) : isMcq ? (
         <>
@@ -411,67 +593,112 @@ export default function DraftCardEditor({
             label="Question"
             value={frontText}
             onChange={(e) => patch({ front: e.target.value })}
+            onFocus={() => onPreviewFaceChange?.("front")}
             multiline
             minRows={2}
             fullWidth
             disabled={disabled}
           />
-          <Typography variant="body2" fontWeight={500}>
-            Choices
-          </Typography>
-          <Stack spacing={1.5}>
-            {mcqOptions.map((option, index) => (
-              <Stack
-                key={index}
-                direction="row"
-                spacing={1}
-                alignItems="flex-start"
-              >
-                <FormControlLabel
-                  sx={{ m: 0, flexShrink: 0, pt: 1 }}
-                  control={
-                    <Radio
-                      checked={backText === option}
-                      onChange={() => setMcqCorrect(index)}
-                      disabled={disabled}
-                      inputProps={{ "aria-label": `Correct choice ${index + 1}` }}
+          <Stack spacing={1}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ letterSpacing: "0.06em", textTransform: "uppercase" }}
+            >
+              Choices
+            </Typography>
+            <RadioGroup
+              value={String(mcqDraft.correctIndex)}
+              onChange={(_, value) => setMcqCorrect(Number(value))}
+            >
+              <Stack spacing={1}>
+                {mcqOptions.map((option, index) => (
+                  <Stack
+                    key={index}
+                    direction="row"
+                    spacing={0.75}
+                    alignItems="center"
+                    sx={{
+                      px: 1,
+                      py: 0.75,
+                      borderRadius: 1.5,
+                      border: "1px solid",
+                      borderColor:
+                        mcqDraft.correctIndex === index
+                          ? "rgba(167, 139, 250, 0.45)"
+                          : "rgba(232, 216, 199, 0.12)",
+                      bgcolor:
+                        mcqDraft.correctIndex === index
+                          ? "rgba(91, 44, 111, 0.18)"
+                          : "rgba(18, 7, 15, 0.22)",
+                    }}
+                  >
+                    <FormControlLabel
+                      value={String(index)}
+                      sx={{
+                        m: 0,
+                        mr: 0.5,
+                        flexShrink: 0,
+                        "& .MuiFormControlLabel-label": {
+                          fontSize: "0.75rem",
+                          color: "text.secondary",
+                        },
+                      }}
+                      control={
+                        <Radio
+                          size="small"
+                          disabled={disabled}
+                          inputProps={{
+                            "aria-label": `Correct choice ${index + 1}`,
+                          }}
+                        />
+                      }
+                      label={mcqDraft.correctIndex === index ? "Correct" : ""}
                     />
-                  }
-                  label="Correct"
-                />
-                <TextField
-                  label={`Choice ${index + 1}`}
-                  value={option}
-                  onChange={(e) => updateMcqOption(index, e.target.value)}
-                  fullWidth
-                  size="small"
-                  disabled={disabled}
-                />
-                <Button
-                  variant="text"
-                  color="inherit"
-                  size="small"
-                  disabled={disabled || mcqOptions.length <= MCQ_MIN}
-                  onClick={() => removeMcqOption(index)}
-                  sx={{ flexShrink: 0, mt: 0.5 }}
-                >
-                  Remove
-                </Button>
+                    <TextField
+                      placeholder={`Choice ${index + 1}`}
+                      value={option}
+                      onChange={(e) => updateMcqOption(index, e.target.value)}
+                      onFocus={() => onPreviewFaceChange?.("front")}
+                      fullWidth
+                      size="small"
+                      disabled={disabled}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          bgcolor: "transparent",
+                        },
+                      }}
+                    />
+                    <IconButton
+                      size="small"
+                      aria-label={`Remove choice ${index + 1}`}
+                      disabled={disabled || mcqOptions.length <= MCQ_MIN}
+                      onClick={() => removeMcqOption(index)}
+                      sx={{ color: "text.secondary", flexShrink: 0 }}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </Stack>
+                ))}
               </Stack>
-            ))}
+            </RadioGroup>
+            <Button
+              variant="text"
+              size="small"
+              disabled={disabled || mcqOptions.length >= MCQ_MAX}
+              onClick={addMcqOption}
+              sx={{
+                alignSelf: "flex-start",
+                color: "text.secondary",
+                textTransform: "none",
+              }}
+            >
+              Add choice
+            </Button>
+            <Typography variant="caption" color="text.secondary">
+              Mark one correct answer ({MCQ_MIN}–{MCQ_MAX} choices).
+            </Typography>
           </Stack>
-          <Button
-            variant="outlined"
-            size="small"
-            disabled={disabled || mcqOptions.length >= MCQ_MAX}
-            onClick={addMcqOption}
-            sx={{ alignSelf: "flex-start" }}
-          >
-            Add choice
-          </Button>
-          <Typography variant="caption" color="text.secondary">
-            Pick the radio next to the right answer ({MCQ_MIN}–{MCQ_MAX} choices).
-          </Typography>
         </>
       ) : (
         <>
@@ -479,8 +706,9 @@ export default function DraftCardEditor({
             label="Front"
             value={frontText}
             onChange={(e) => patch({ front: e.target.value })}
+            onFocus={() => onPreviewFaceChange?.("front")}
             multiline
-            minRows={2}
+            minRows={4}
             fullWidth
             disabled={disabled}
           />
@@ -488,8 +716,9 @@ export default function DraftCardEditor({
             label="Back"
             value={backText}
             onChange={(e) => patch({ back: e.target.value })}
+            onFocus={() => onPreviewFaceChange?.("back")}
             multiline
-            minRows={2}
+            minRows={4}
             fullWidth
             disabled={disabled}
           />

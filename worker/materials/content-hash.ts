@@ -65,9 +65,12 @@ export async function findReadyMaterialByContentHash(
     .bind(deckId, "ready", contentHash)
     .all<MaterialCandidate>();
 
-  const candidates = (results ?? []).filter(
-    (m) => !excludeMaterialId || m.id !== excludeMaterialId,
-  );
+  const candidates = (results ?? []).filter((m) => {
+    if (excludeMaterialId && m.id === excludeMaterialId) return false;
+    // Figure crops are generation sidecars, never reuse targets for uploads.
+    if (m.r2_key?.includes("/figures/")) return false;
+    return true;
+  });
   if (candidates.length === 0) return null;
 
   let best: ReadyHashHit | null = null;

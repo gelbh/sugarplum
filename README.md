@@ -38,9 +38,9 @@ npm run dev
 
 GitHub Actions (no PR preview Workers in v1):
 
-| Workflow | Trigger | What it does |
-|----------|---------|--------------|
-| [CI](.github/workflows/ci.yml) | Pull requests; push to `main` | `npm test` + `npm run build` |
+| Workflow                               | Trigger                                      | What it does                                            |
+| -------------------------------------- | -------------------------------------------- | ------------------------------------------------------- |
+| [CI](.github/workflows/ci.yml)         | Pull requests; push to `main`                | `npm test` + `npm run build`                            |
 | [Deploy](.github/workflows/deploy.yml) | Push to `main`; manual **workflow_dispatch** | Test + build → remote D1 migrations → `wrangler deploy` |
 
 **Recommended:** protect `main` so PRs must pass CI before merge.
@@ -79,7 +79,7 @@ npx wrangler secret put TURNSTILE_SECRET_KEY  # Turnstile Siteverify secret (pai
 
 Set `vars.TURNSTILE_SITE_KEY` (or `.dev.vars`) to the widget sitekey before email auth works. Leave empty in committed wrangler until the prod widget exists. Local dummy always-pass: sitekey `1x00000000000000000000AA`, secret `1x0000000000000000000000000000000AA` in `.dev.vars` (required for localhost; the prod sitekey in `wrangler.jsonc` does not allow local domains).
 
-**Local R2 signing** (image / material uploads): put `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` in gitignored `.dev.vars`. `R2_ACCOUNT_ID` is already in `wrangler.jsonc` vars. Use the same R2 API token values you would pass to the prod `wrangler secret put` lines above; Worker secrets are write-only (you cannot read them back). Never commit `.dev.vars` or paste real secret values into docs or PRs.
+**Local R2 signing** (image / material uploads): put `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` in gitignored `.dev.vars`. `R2_ACCOUNT_ID` is already in `wrangler.jsonc` vars. Use the same R2 API token values you would pass to the prod `wrangler secret put` lines above; Worker secrets are write-only (you cannot read them back). Never commit `.dev.vars` or paste real secret values into docs or PRs. The `MATERIALS` binding uses `remote: true` so local generation can read browser uploads that landed in the real bucket (local Miniflare R2 stays empty and would otherwise fail with `R2 object missing`).
 
 **Local signed-in account** (D1 + dummy Turnstile; does not touch remote):
 
@@ -97,7 +97,6 @@ lsof -nP -iTCP:5173-5185 -sTCP:LISTEN
 npm run dev -- --host 127.0.0.1 --port 5181   # use any free port from the scan
 ```
 
-
 Local: put `ADMIN_EMAILS=...` in `.dev.vars` (gitignored). Open `/admin` while signed in as a Google-linked allowlisted user. Empty/unset → all `/api/admin/*` return 403.
 
 ### Google Sign-In (one-time)
@@ -110,7 +109,7 @@ Local: put `ADMIN_EMAILS=...` in `.dev.vars` (gitignored). Open `/admin` while s
 
 ### 3. R2 CORS (one-time)
 
-Browser uploads use signed URLs against the R2 bucket. Configure bucket CORS so `https://sugarplum.gelbhart.dev` (and local Vite origin if needed) may `PUT` objects with the headers your client sends (`Content-Type`, `Content-Length`, etc.) and may `GET` objects for a later OCR refill. Without CORS, PDF upload from the app fails in the browser even when the Worker returns a signed URL, and Generate more cannot download the PDF to OCR later pages.
+Browser uploads use signed URLs against the R2 bucket. Configure bucket CORS so `https://sugarplum.gelbhart.dev` and local Vite origins (`http://127.0.0.1:<port>` / `http://localhost:<port>`, including non-default ports such as 5186) may `PUT` objects with the headers your client sends (`Content-Type`, `Content-Length`, etc.) and may `GET` objects for a later OCR refill. Without CORS, PDF upload from the app fails in the browser with "Upload network error" even when the Worker returns a signed URL, and Generate more cannot download the PDF to OCR later pages. Update with `npx wrangler r2 bucket cors set sugarplum-materials --file <cors.json>`.
 
 ### 4. Ship
 

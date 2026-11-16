@@ -1,8 +1,4 @@
-import type {
-  CardDraftView,
-  CardType,
-  HubCreateCardBody,
-} from "../api/client";
+import type { CardDraftView, CardType, HubCreateCardBody } from "../api/client";
 import { hasSingleClozeBlank } from "./clozeFormat";
 import { backAnswer, isOcclusionFront } from "./draftCardModel";
 
@@ -31,10 +27,11 @@ export function collectDeckImageKeys(cards: CardDraftView[]): string[] {
 }
 
 export type HubCreateValidation =
-  | { ok: true; body: HubCreateCardBody }
-  | { ok: false; error: string };
+  { ok: true; body: HubCreateCardBody } | { ok: false; error: string };
 
-export function validateHubCreateCard(card: CardDraftView): HubCreateValidation {
+export function validateHubCreateCard(
+  card: CardDraftView,
+): HubCreateValidation {
   const type = card.type as CardType;
 
   if (type === "occlusion") {
@@ -70,13 +67,14 @@ export function validateHubCreateCard(card: CardDraftView): HubCreateValidation 
     if (!mediaKey) {
       return { ok: false, error: "Choose or upload an image" };
     }
-    const front =
-      typeof card.front === "string" ? card.front.trim() : "";
+    const front = typeof card.front === "string" ? card.front.trim() : "";
     if (!front) {
       return { ok: false, error: "Front is required" };
     }
     const back =
-      typeof card.back === "string" ? card.back.trim() : backAnswer(card.back).trim();
+      typeof card.back === "string"
+        ? card.back.trim()
+        : backAnswer(card.back).trim();
     if (!back) {
       return { ok: false, error: "Back is required" };
     }
@@ -100,7 +98,7 @@ export function validateHubCreateCard(card: CardDraftView): HubCreateValidation 
     return { ok: false, error: "Front is required" };
   }
   if (type === "cloze" && !hasSingleClozeBlank(front)) {
-    return { ok: false, error: "Add a blank word in the sentence" };
+    return { ok: false, error: "Add at least one blank in the sentence" };
   }
   const backRaw =
     typeof card.back === "string" ? card.back : backAnswer(card.back);

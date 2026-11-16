@@ -31,7 +31,6 @@ async function renderRail() {
           ],
           active: "atlas",
           genStatus: null,
-          streakChip: null,
         }),
       ),
     );
@@ -44,13 +43,13 @@ describe("ShellNavRail", () => {
     document.body.replaceChildren();
   });
 
-  it("lists destination labels and marks active", async () => {
+  it("exposes destinations via aria-label only (icons, no visible text labels)", async () => {
     const { host } = await renderRail();
-    expect(host.textContent).toMatch(/Today/);
-    expect(host.textContent).toMatch(/Atlas/);
-    const atlas = [...host.querySelectorAll("button")].find((b) =>
-      /Atlas/i.test(b.textContent ?? ""),
+    const atlas = [...host.querySelectorAll("button")].find(
+      (b) => b.getAttribute("aria-label") === "Atlas",
     );
+    expect(atlas).toBeTruthy();
     expect(atlas?.getAttribute("aria-current")).toBe("page");
+    expect(atlas?.textContent?.trim()).toBe("A");
   });
 });

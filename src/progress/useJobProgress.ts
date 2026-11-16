@@ -36,6 +36,9 @@ export type UseJobProgressResult = {
   estimates: Estimates | null;
 };
 
+const POLL_FETCH_TIMEOUT_MS = 8_000;
+const ETA_TICK_MS = 1_000;
+
 export function useJobProgress(jobId: string | null): UseJobProgressResult {
   const { upsert, complete, fail } = useProgressRegistry();
   const [pending, setPending] = useState(Boolean(jobId));
@@ -70,6 +73,29 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
     setPending(true);
     let cancelled = false;
     let pollTimer: ReturnType<typeof setTimeout> | undefined;
+    let etaTickTimer: ReturnType<typeof setInterval> | undefined;
+
+    const applyEtaCountdown = (nowMs: number) => {
+      const sample = calmEtaRef.current;
+      if (!sample || settledRef.current) return;
+      const wallDelta = Math.max(0, nowMs - sample.atMs);
+      const display = Math.max(0, sample.displayEtaMs - wallDelta);
+      const nextEta = display === 0 ? null : display;
+      setSnapshot((prev) => {
+        if (!prev || prev.etaMs === nextEta) return prev;
+        return { ...prev, etaMs: nextEta };
+      });
+      setEstimates((prev) => {
+        if (!prev || prev.etaMs === nextEta) return prev;
+        return { ...prev, etaMs: nextEta };
+      });
+    };
+
+    // Keep ETA counting down even when getJob polls stall (e.g. Docling blocks).
+    etaTickTimer = setInterval(() => {
+      if (cancelled) return;
+      applyEtaCountdown(Date.now());
+    }, ETA_TICK_MS);
 
     const settleOk = () => {
       if (settledRef.current) return;
@@ -89,7 +115,9 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
 
     const tick = async () => {
       try {
-        const job = await getJob(jobId);
+        const job = await getJob(jobId, {
+          signal: AbortSignal.timeout(POLL_FETCH_TIMEOUT_MS),
+        });
         if (cancelled) return;
 
         const snapBase = buildJobProgressSnapshot(
@@ -239,14 +267,24 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
         }
       } catch (err) {
         if (cancelled) return;
-        const message =
-          err instanceof ApiError
-            ? err.message
-            : err instanceof Error
+        // Timeout / abort: keep polling so ETA ticks and a later response can land.
+        const aborted =
+          (err instanceof DOMException && err.name === "TimeoutError") ||
+          (err instanceof Error &&
+            (err.name === "AbortError" ||
+              /aborted|timed out/i.test(err.message)));
+        if (aborted) {
+          applyEtaCountdown(Date.now());
+        } else {
+          const message =
+            err instanceof ApiError
               ? err.message
-              : "Failed to poll job";
-        settleFail(message);
-        return;
+              : err instanceof Error
+                ? err.message
+                : "Failed to poll job";
+          settleFail(message);
+          return;
+        }
       }
 
       if (!cancelled && !settledRef.current) {
@@ -261,6 +299,7 @@ export function useJobProgress(jobId: string | null): UseJobProgressResult {
     return () => {
       cancelled = true;
       if (pollTimer !== undefined) clearTimeout(pollTimer);
+      if (etaTickTimer !== undefined) clearInterval(etaTickTimer);
       if (!settledRef.current) {
         fail(jobId);
       }

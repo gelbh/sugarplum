@@ -60,9 +60,9 @@ describe("extractClozeAnswer", () => {
   });
 
   it("returns answer not hint when hint is present", () => {
-    expect(extractClozeAnswer("The capital is {{c1::Paris::city of light}}.")).toBe(
-      "Paris",
-    );
+    expect(
+      extractClozeAnswer("The capital is {{c1::Paris::city of light}}."),
+    ).toBe("Paris");
   });
 
   it("returns null when no cloze marker", () => {
@@ -94,10 +94,17 @@ describe("assertSingleCloze", () => {
     ).not.toThrow();
   });
 
-  it("rejects two Anki blanks", () => {
+  it("allows two Anki blanks", () => {
     expect(() =>
-      assertSingleCloze("The {{c1::a}} and {{c1::b}}"),
-    ).toThrow(/at most one blank/);
+      assertSingleCloze("The {{c1::a}} and {{c2::b}}"),
+    ).not.toThrow();
+  });
+
+  it("rejects too many Anki blanks", () => {
+    const front = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+      .map((n) => `{{c${n}::x}}`)
+      .join(" ");
+    expect(() => assertSingleCloze(front)).toThrow(/at most 8 blanks/);
   });
 });
 
@@ -105,6 +112,14 @@ describe("composeClozeFront", () => {
   it("wraps the first blank occurrence", () => {
     const r = composeClozeFront("The capital is Paris", "Paris");
     expect(r).toEqual({ ok: true, front: "The capital is {{c1::Paris}}" });
+  });
+
+  it("wraps multiple blanks left to right", () => {
+    const r = composeClozeFront("The cat sat on the mat", ["cat", "mat"]);
+    expect(r).toEqual({
+      ok: true,
+      front: "The {{c1::cat}} sat on the {{c2::mat}}",
+    });
   });
 
   it("errors when blank is missing from sentence", () => {
@@ -125,7 +140,16 @@ describe("parseClozeDiyFields", () => {
   it("round-trips one blank", () => {
     expect(parseClozeDiyFields("The capital is {{c1::Paris}}")).toEqual({
       sentence: "The capital is Paris",
-      blank: "Paris",
+      blanks: ["Paris"],
+    });
+  });
+
+  it("round-trips multiple blanks", () => {
+    expect(
+      parseClozeDiyFields("The {{c1::cat}} sat on the {{c2::mat}}"),
+    ).toEqual({
+      sentence: "The cat sat on the mat",
+      blanks: ["cat", "mat"],
     });
   });
 

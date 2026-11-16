@@ -1,20 +1,18 @@
 import Box from "@mui/material/Box";
 import Checkbox from "@mui/material/Checkbox";
-import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import CompositionSpark from "../components/CompositionSpark";
-import EmptyNext from "../components/EmptyNext";
-import ShelfVolume from "../components/ShelfVolume";
 import type {
   Deck,
+  JobListItem,
   StoredCoverRow,
   Subject,
   SubjectCompositionSummary,
 } from "../api/client";
-import { navigate } from "../nav/navigate";
 import { effectiveSubjectDeckCount } from "../subjects/subjectDeleteGuard";
-import { formatEtkTooltip } from "./formatEtkTooltip";
+import BoardTile from "./board/BoardTile";
+import LibraryBoard from "./board/LibraryBoard";
+import { coverPlaceholderSrc } from "./board/coverPlaceholder";
 
 type Props = {
   subjects: Subject[];
@@ -24,17 +22,14 @@ type Props = {
     string,
     Omit<SubjectCompositionSummary, "subjectId">
   >;
-  showCreateFlow: boolean;
-  setShowCreateFlow: (value: boolean) => void;
+  draftJobs?: JobListItem[];
   selectMode: boolean;
   selectedDeckIdSet: Set<string>;
   orphanDecks: Deck[];
   toggleSubjectDecks: (subjectId: string) => void;
   toggleDeckSelected: (deckId: string) => void;
-  setSubjectMenu: (value: {
-    anchor: HTMLElement;
-    subject: Subject;
-  }) => void;
+  setSubjectMenu: (value: { anchor: HTMLElement; subject: Subject }) => void;
+  onCreateSubject?: () => void;
 };
 
 export function LibraryShelf({
@@ -42,192 +37,267 @@ export function LibraryShelf({
   decks,
   covers,
   compositionBySubject,
-  showCreateFlow,
-  setShowCreateFlow,
+  draftJobs = [],
   selectMode,
   selectedDeckIdSet,
   orphanDecks,
   toggleSubjectDecks,
   toggleDeckSelected,
   setSubjectMenu,
+  onCreateSubject,
 }: Props) {
   function localDeckCountForSubject(subjectId: string) {
     return decks.filter((d) => d.subject_id === subjectId).length;
   }
 
+  const draftCountBySubject = new Map<string, number>();
+  for (const job of draftJobs) {
+    const subjectId = decks.find((d) => d.id === job.deck_id)?.subject_id;
+    if (!subjectId) continue;
+    draftCountBySubject.set(
+      subjectId,
+      (draftCountBySubject.get(subjectId) ?? 0) + job.draft_count,
+    );
+  }
+
+  const emptyShelf = subjects.length === 0;
+
   return (
-    <>
-      {subjects.length === 0 ? (
-        showCreateFlow ? (
-          <Typography variant="body2" color="text.secondary">
-            No subjects yet. Add your notes below to make the first one.
-          </Typography>
-        ) : (
-          <EmptyNext
-            title="No subjects yet"
-            body="Create a subject and deck by adding your notes."
-            primary={{
-              label: "Add material",
-              onClick: () => setShowCreateFlow(true),
+    <Box
+      sx={{
+        flex: 1,
+        minHeight: 0,
+        display: "flex",
+        flexDirection: "column",
+        ...(emptyShelf && !selectMode
+          ? {
+              justifyContent: "center",
+              alignItems: "center",
+            }
+          : {}),
+      }}
+    >
+      {emptyShelf && !selectMode ? (
+        <Box
+          sx={{
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 2.5,
+            py: 2,
+          }}
+        >
+          <Box
+            sx={{
+              textAlign: "center",
+              px: 2,
+              maxWidth: 420,
             }}
-          />
-        )
+          >
+            <Typography
+              component="p"
+              sx={{
+                m: 0,
+                mb: 0.75,
+                fontSize: "0.6875rem",
+                fontWeight: 500,
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                color: "primary.main",
+              }}
+            >
+              Get started
+            </Typography>
+            <Typography
+              variant="h5"
+              component="p"
+              sx={{
+                m: 0,
+                fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
+                fontWeight: 400,
+                letterSpacing: "0.02em",
+                lineHeight: 1.2,
+                color: "text.primary",
+              }}
+            >
+              Start with a subject
+            </Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 1, lineHeight: 1.5 }}
+            >
+              Subjects group your decks, like Anatomy or Pharmacology. Add one,
+              then open it to create decks and study material.
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              width: "100%",
+              maxWidth: { xs: 168, sm: 180, md: 200 },
+            }}
+          >
+            <LibraryBoard aria-label="Subjects">
+              {!selectMode && onCreateSubject ? (
+                <Box
+                  component="li"
+                  sx={{ listStyle: "none", m: 0, p: 0, minHeight: 0 }}
+                >
+                  <BoardTile
+                    index={0}
+                    title="New subject"
+                    meta="Name it, then add decks inside"
+                    create
+                    accent
+                    onCreate={onCreateSubject}
+                    openLabel="New subject"
+                  />
+                </Box>
+              ) : null}
+            </LibraryBoard>
+          </Box>
+        </Box>
       ) : (
-      <Grid
-        container
-        component="ul"
-        spacing={2}
-        sx={{ listStyle: "none", p: 0, m: 0 }}
-      >
-        {subjects.map((s) => {
-          const localCount = localDeckCountForSubject(s.id);
-          const deckCount = effectiveSubjectDeckCount(s, localCount);
-          const subjectDecks = decks.filter((d) => d.subject_id === s.id);
-          const selectedChildCount = subjectDecks.filter((d) =>
-            selectedDeckIdSet.has(d.id),
-          ).length;
-          const subjectFullySelected =
-            subjectDecks.length > 0 &&
-            selectedChildCount === subjectDecks.length;
-          const subjectPartiallySelected =
-            selectedChildCount > 0 && !subjectFullySelected;
-          const meta =
-            deckCount === 0
-              ? "No decks yet"
-              : deckCount === 1
-                ? "1 deck"
-                : `${deckCount} decks`;
-          const href = `/library/subjects/${encodeURIComponent(s.id)}`;
-          const composition = compositionBySubject[s.id];
-          return (
-            <Grid key={s.id} component="li" size={{ xs: 12, md: 6 }}>
-              <ShelfVolume
-                title={s.title}
-                href={href}
-                onNavigate={(ev) => {
-                  if (
-                    ev.defaultPrevented ||
-                    ev.button !== 0 ||
-                    ev.metaKey ||
-                    ev.ctrlKey ||
-                    ev.shiftKey ||
-                    ev.altKey
-                  ) {
-                    return;
-                  }
-                  ev.preventDefault();
-                  navigate(href);
-                }}
-                meta={meta}
-                chip={
-                  composition?.graduatedPct != null
-                    ? `${composition.graduatedPct}% graduated`
-                    : null
-                }
-                recallChip={
-                  composition != null &&
-                  composition.total > 0 &&
-                  composition.avgRetrievability != null
-                    ? `${Math.round(100 * composition.avgRetrievability)}% recall`
-                    : null
-                }
-                recallTooltip={
-                  composition != null &&
-                  composition.total > 0 &&
-                  composition.avgRetrievability != null
-                    ? formatEtkTooltip(composition.etk)
-                    : null
-                }
-                spark={
-                  composition != null && composition.total > 0 ? (
-                    <CompositionSpark
-                      new={composition.new}
-                      learning={composition.learning}
-                      young={composition.young}
-                      mature={composition.mature}
-                      total={composition.total}
-                    />
-                  ) : null
-                }
-                studyLabel="Study"
-                onStudy={() => {
-                  navigate(`/study?subjectId=${encodeURIComponent(s.id)}`);
-                }}
-                cover={
-                  covers.find(
-                    (cover) =>
-                      cover.ownerKind === "subject" && cover.ownerId === s.id,
-                  ) ?? null
-                }
-                moreLabel={`More actions for ${s.title}`}
-                onMore={(ev) => {
-                  setSubjectMenu({
-                    anchor: ev.currentTarget,
-                    subject: s,
-                  });
-                }}
-                select={
-                  selectMode
-                    ? {
-                        checked: subjectFullySelected,
-                        indeterminate: subjectPartiallySelected,
-                        disabled: subjectDecks.length === 0,
-                        onChange: () => toggleSubjectDecks(s.id),
-                        inputLabel: `Select all decks in ${s.title}`,
-                      }
-                    : undefined
-                }
+        <LibraryBoard aria-label="Subjects">
+          {subjects.map((s) => {
+            const localCount = localDeckCountForSubject(s.id);
+            const deckCount = effectiveSubjectDeckCount(s, localCount);
+            const subjectDecks = decks.filter((d) => d.subject_id === s.id);
+            const selectedChildCount = subjectDecks.filter((d) =>
+              selectedDeckIdSet.has(d.id),
+            ).length;
+            const subjectFullySelected =
+              subjectDecks.length > 0 &&
+              selectedChildCount === subjectDecks.length;
+            const subjectPartiallySelected =
+              selectedChildCount > 0 && !subjectFullySelected;
+            const meta =
+              deckCount === 0
+                ? "No decks yet"
+                : deckCount === 1
+                  ? "1 deck"
+                  : `${deckCount} decks`;
+            const href = `/library/subjects/${encodeURIComponent(s.id)}`;
+            const composition = compositionBySubject[s.id];
+            const cover = covers.find(
+              (c) => c.ownerKind === "subject" && c.ownerId === s.id,
+            );
+            const recall =
+              composition != null &&
+              composition.total > 0 &&
+              composition.avgRetrievability != null
+                ? `${Math.round(100 * composition.avgRetrievability)}% recall`
+                : null;
+            const draftCount = draftCountBySubject.get(s.id) ?? 0;
+            const reviewNotice =
+              draftCount <= 0
+                ? null
+                : draftCount === 1
+                  ? "1 to check"
+                  : `${draftCount} to check`;
+            return (
+              <Box
+                key={s.id}
+                component="li"
+                sx={{ listStyle: "none", m: 0, p: 0, minHeight: 0 }}
               >
-                {selectMode && subjectDecks.length > 0 ? (
-                  <Stack
-                    component="ul"
-                    spacing={0}
-                    sx={{
-                      m: 0,
-                      mt: 0.5,
-                      mb: 0,
-                      mr: 0,
-                      ml: 0,
-                      pl: 5,
-                      pr: 0,
-                      py: 0,
-                      listStyle: "none",
-                    }}
-                  >
-                    {subjectDecks.map((deck) => (
-                      <Box
-                        component="li"
-                        key={deck.id}
+                <BoardTile
+                  title={s.title}
+                  meta={[meta, recall].filter(Boolean).join(" · ") || meta}
+                  index={subjects.indexOf(s)}
+                  imageSrc={cover?.imageUrl ?? coverPlaceholderSrc(s.id)}
+                  href={href}
+                  openLabel={
+                    reviewNotice
+                      ? `Open subject ${s.title}, ${reviewNotice}`
+                      : `Open subject ${s.title}`
+                  }
+                  notice={reviewNotice}
+                  moreLabel={`More actions for ${s.title}`}
+                  onMore={(ev) => {
+                    setSubjectMenu({
+                      anchor: ev.currentTarget,
+                      subject: s,
+                    });
+                  }}
+                  select={
+                    selectMode
+                      ? {
+                          checked: subjectFullySelected,
+                          indeterminate: subjectPartiallySelected,
+                          disabled: subjectDecks.length === 0,
+                          onChange: () => toggleSubjectDecks(s.id),
+                          inputLabel: `Select all decks in ${s.title}`,
+                        }
+                      : undefined
+                  }
+                  footer={
+                    selectMode && subjectDecks.length > 0 ? (
+                      <Stack
+                        component="ul"
+                        spacing={0}
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 0.5,
-                          py: 0.25,
+                          m: 0,
+                          mt: 0.5,
+                          width: "100%",
+                          listStyle: "none",
+                          maxHeight: 96,
+                          overflow: "auto",
                         }}
                       >
-                        <Checkbox
-                          size="small"
-                          checked={selectedDeckIdSet.has(deck.id)}
-                          onChange={() => toggleDeckSelected(deck.id)}
-                          inputProps={{
-                            "aria-label": `Select deck ${deck.title}`,
-                          }}
-                        />
-                        <Typography variant="body2" color="text.secondary">
-                          {deck.title}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Stack>
-                ) : null}
-              </ShelfVolume>
-            </Grid>
-          );
-        })}
-      </Grid>
+                        {subjectDecks.map((deck) => (
+                          <Box
+                            component="li"
+                            key={deck.id}
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                              py: 0.25,
+                            }}
+                          >
+                            <Checkbox
+                              size="small"
+                              checked={selectedDeckIdSet.has(deck.id)}
+                              onChange={() => toggleDeckSelected(deck.id)}
+                              inputProps={{
+                                "aria-label": `Select deck ${deck.title}`,
+                              }}
+                            />
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {deck.title}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Stack>
+                    ) : null
+                  }
+                />
+              </Box>
+            );
+          })}
+          {!selectMode && onCreateSubject ? (
+            <Box
+              component="li"
+              sx={{ listStyle: "none", m: 0, p: 0, minHeight: 0 }}
+            >
+              <BoardTile
+                index={subjects.length}
+                title="New subject"
+                create
+                onCreate={onCreateSubject}
+                openLabel="New subject"
+              />
+            </Box>
+          ) : null}
+        </LibraryBoard>
       )}
       {selectMode && orphanDecks.length > 0 ? (
-        <Box>
+        <Box sx={{ mt: 2 }}>
           <Typography
             variant="caption"
             color="text.secondary"
@@ -265,6 +335,6 @@ export function LibraryShelf({
           </Stack>
         </Box>
       ) : null}
-    </>
+    </Box>
   );
 }

@@ -60,6 +60,16 @@ export function rejectCard(cardId: string, reason?: RejectReason | null) {
   });
 }
 
+/** Undo accept or reject: restore the card as a draft. */
+export async function undoReviewCard(cardId: string) {
+  if (isGuest()) guestUnsupported("undo card review");
+  const card = await api<CardDraftView>(`/api/cards/${cardId}/undo-review`, {
+    method: "POST",
+  });
+  clearDueCache();
+  return card;
+}
+
 export async function moveCard(cardId: string, deckId: string) {
   if (isGuest()) {
     try {

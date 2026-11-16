@@ -11,6 +11,7 @@ import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import Typography from "@mui/material/Typography";
 import {
   ApiError,
   asRegenType,
@@ -27,6 +28,39 @@ import DraftCardEditor, {
 import { isGuest } from "../guest/session";
 import { hubDiyTypes } from "../lib/hubDiyCreate";
 import { dropPendingGrade } from "./pendingGrades";
+
+const DIALOG_PAPER_SX = {
+  borderRadius: 2,
+  overflow: "hidden",
+  bgcolor: "background.paper",
+} as const;
+
+const DIALOG_TITLE_SX = {
+  p: 0,
+  fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
+  fontWeight: 400,
+  letterSpacing: "0.02em",
+  lineHeight: 1.2,
+  fontSize: "1.65rem",
+} as const;
+
+const DIALOG_CANCEL_SX = {
+  color: "text.secondary",
+  textTransform: "none",
+  fontWeight: 500,
+  "&:hover": { color: "text.primary", bgcolor: "transparent" },
+} as const;
+
+const PRIMARY_PILL_SX = {
+  minWidth: 112,
+  px: 2.25,
+  py: 0.95,
+  borderRadius: 999,
+  textTransform: "none",
+  fontWeight: 600,
+  boxShadow: "none",
+  "&:hover": { boxShadow: "none" },
+} as const;
 
 type StudyCardActionsProps = {
   card: CardDraftView;
@@ -103,7 +137,9 @@ export function StudyCardActions({
       onSaved(updated);
       setEditCard(null);
     } catch (err) {
-      setEditError(err instanceof ApiError ? err.message : "Could not save card");
+      setEditError(
+        err instanceof ApiError ? err.message : "Could not save card",
+      );
     } finally {
       setEditBusy(false);
     }
@@ -180,46 +216,76 @@ export function StudyCardActions({
         onClose={() => !editDialogBusy && setEditCard(null)}
         fullWidth
         maxWidth="sm"
+        PaperProps={{ sx: DIALOG_PAPER_SX }}
       >
-        <DialogTitle>Edit card</DialogTitle>
-        <DialogContent>
+        <Box
+          sx={{
+            px: 3,
+            pt: 2.5,
+            pb: 1.5,
+            borderBottom: 1,
+            borderColor: "divider",
+            background:
+              "linear-gradient(180deg, rgba(91, 44, 111, 0.14) 0%, transparent 100%)",
+          }}
+        >
+          <Typography
+            component="p"
+            sx={{
+              m: 0,
+              mb: 0.75,
+              fontSize: "0.6875rem",
+              fontWeight: 500,
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              color: "primary.main",
+            }}
+          >
+            Card
+          </Typography>
+          <DialogTitle sx={DIALOG_TITLE_SX}>Edit card</DialogTitle>
+        </Box>
+        <DialogContent sx={{ px: 3, pt: 2.5, pb: 1 }}>
           {editError ? (
             <Alert severity="error" sx={{ mb: 2 }}>
               {editError}
             </Alert>
           ) : null}
           {editCard ? (
-            <Box sx={{ pt: 1 }}>
-              <DraftCardEditor
-                card={editCard}
-                disabled={editDialogBusy}
-                onChange={onEditChange}
-                allowedTypes={hubDiyTypes(isGuest())}
-                regenAction={
-                  isGuest()
-                    ? undefined
-                    : {
-                        busy: cardRegenBusy,
-                        disabled:
-                          asRegenType(editCard.type) === null ||
-                          !cardHasRegenSource(editCard),
-                        onClick: () => {
-                          void onRegenEditCard();
-                        },
-                      }
-                }
-              />
-            </Box>
+            <DraftCardEditor
+              card={editCard}
+              disabled={editDialogBusy}
+              onChange={onEditChange}
+              allowedTypes={hubDiyTypes(isGuest())}
+              regenAction={
+                isGuest()
+                  ? undefined
+                  : {
+                      busy: cardRegenBusy,
+                      disabled:
+                        asRegenType(editCard.type) === null ||
+                        !cardHasRegenSource(editCard),
+                      onClick: () => {
+                        void onRegenEditCard();
+                      },
+                    }
+              }
+            />
           ) : null}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditCard(null)} disabled={editDialogBusy}>
+        <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+          <Button
+            onClick={() => setEditCard(null)}
+            disabled={editDialogBusy}
+            sx={DIALOG_CANCEL_SX}
+          >
             Cancel
           </Button>
           <Button
             variant="contained"
             disabled={editDialogBusy || !editCard}
             onClick={() => void saveEdit()}
+            sx={PRIMARY_PILL_SX}
           >
             {editBusy ? "Saving…" : "Save"}
           </Button>

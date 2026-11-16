@@ -11,7 +11,10 @@ function asString(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
-function coverPhotoFromDetail(body: unknown, fallbackId: string): CoverPhoto | null {
+function coverPhotoFromDetail(
+  body: unknown,
+  fallbackId: string,
+): CoverPhoto | null {
   if (!body || typeof body !== "object" || Array.isArray(body)) return null;
   const photo = body as {
     id?: unknown;
@@ -62,25 +65,45 @@ export async function fetchCoverPhoto(
   }
 }
 
+export type CoverSearchResult = {
+  photos: CoverPhoto[];
+  page: number;
+  totalPages: number;
+};
+
+/** Photos shown beside the upload tile in the cover picker. */
+export const COVER_SEARCH_PAGE_SIZE = 5;
+
 export async function searchCoverPhotos(
   accessKey: string,
   query: string,
+  page = 1,
   fetchImpl?: typeof fetch,
-): Promise<CoverPhoto[]> {
+): Promise<CoverSearchResult> {
   const doFetch = fetchImpl ?? globalThis.fetch;
+  const safePage = Number.isFinite(page) && page >= 1 ? Math.floor(page) : 1;
   const url =
     `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}` +
-    "&order_by=relevant&content_filter=high&orientation=landscape&per_page=10";
+    `&page=${safePage}&order_by=relevant&content_filter=high&orientation=landscape&per_page=10`;
   const searchRes = await doFetch(url, { headers: unsplashHeaders(accessKey) });
   if (!searchRes.ok) {
     await discardBody(searchRes);
     throw new Error(`Unsplash search failed (${searchRes.status})`);
   }
-  const payload = (await searchRes.json()) as { results?: { id?: unknown }[] };
+  const payload = (await searchRes.json()) as {
+    results?: { id?: unknown }[];
+    total_pages?: unknown;
+  };
   const ids = (payload.results ?? []).flatMap((row) => {
     const id = asString(row?.id);
     return id ? [id] : [];
   });
+  const totalPagesRaw =
+    typeof payload.total_pages === "number" &&
+    Number.isFinite(payload.total_pages)
+      ? Math.floor(payload.total_pages)
+      : 0;
+  const totalPages = Math.max(1, totalPagesRaw);
   const details = await Promise.all(
     ids.map(async (id) => {
       try {
@@ -90,9 +113,11 @@ export async function searchCoverPhotos(
       }
     }),
   );
-  const photos = details.filter((photo): photo is CoverPhoto => photo != null);
-  // Keep Unsplash search relevance order; take first six only.
-  return photos.slice(0, 6);
+  const photos = details
+    .filter((photo): photo is CoverPhoto => photo != null)
+    .sort((a, b) => b.downloads - a.downloads)
+    .slice(0, COVER_SEARCH_PAGE_SIZE);
+  return { photos, page: safePage, totalPages };
 }
 
 export async function trackDownload(

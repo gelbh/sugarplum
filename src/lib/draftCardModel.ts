@@ -3,20 +3,20 @@ import type {
   CardType,
   OcclusionFrontView,
 } from "../api/client";
-import { MCQ_MAX, MCQ_MIN, pickCorrect, type McqDraft } from "./mcqDraftEdit";
+import {
+  MCQ_MAX,
+  MCQ_MIN,
+  correctIndexFor,
+  pickCorrect,
+  type McqDraft,
+} from "./mcqDraftEdit";
 
 export type DraftEditorChange = Pick<
   CardDraftView,
   "front" | "back" | "type" | "options"
 >;
 
-const TEXT_TYPES: CardType[] = [
-  "qa",
-  "cloze",
-  "image_label",
-  "diagram",
-  "mcq",
-];
+const TEXT_TYPES: CardType[] = ["qa", "cloze", "image_label", "diagram", "mcq"];
 
 export const TYPE_LABELS: Record<CardType, string> = {
   qa: "Q&A",
@@ -104,7 +104,9 @@ export function starterOcclusionFront(imageKey: string): OcclusionFrontView {
   };
 }
 
-export function draftFaceKind(card: CardDraftView): "mcq" | "occlusion" | "text" {
+export function draftFaceKind(
+  card: CardDraftView,
+): "mcq" | "occlusion" | "text" {
   if (isOcclusionFront(card.front)) return "occlusion";
   if (card.type === "mcq") return "mcq";
   return "text";
@@ -126,9 +128,10 @@ export function defaultMcqOptions(card: CardDraftView): string[] {
 }
 
 export function mcqDraftFromCard(card: CardDraftView): McqDraft {
+  const options = card.options ?? defaultMcqOptions(card);
   return {
-    options: card.options ?? defaultMcqOptions(card),
-    back: backAnswer(card.back),
+    options,
+    correctIndex: correctIndexFor(options, backAnswer(card.back)),
   };
 }
 
