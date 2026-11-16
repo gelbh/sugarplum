@@ -159,22 +159,21 @@ export default function LibraryPage() {
             <Typography
               variant="h4"
               component="h1"
-              gutterBottom
               sx={{ color: "text.primary", fontWeight: 600 }}
             >
               Library
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {selectMode
-                ? "Tick the decks you want, then download them for Anki."
-                : "Choose a subject. Each one holds decks of flashcards."}
-            </Typography>
+            {selectMode ? (
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                Tick the decks you want, then download them for Anki.
+              </Typography>
+            ) : null}
             <Stack
               direction="row"
               spacing={1}
               flexWrap="wrap"
               useFlexGap
-              sx={{ mt: 2 }}
+              sx={{ mt: selectMode || (!guest && (subjects.length > 0 || decks.length > 0)) ? 2 : 0 }}
             >
               {!guest && selectMode ? (
                 <>
@@ -202,36 +201,14 @@ export default function LibraryPage() {
                   </Button>
                 </>
               ) : null}
-              {!selectMode ? (
-                <>
-                  {!guest && (subjects.length > 0 || decks.length > 0) ? (
-                    <Button
-                      size="small"
-                      variant="text"
-                      onClick={() => setSelectMode(true)}
-                    >
-                      Download for Anki
-                    </Button>
-                  ) : null}
-                  {subjects.length > 0 ? (
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={openCreateSubject}
-                    >
-                      New subject
-                    </Button>
-                  ) : null}
-                  {!showCreateFlow ? (
-                    <Button
-                      size="small"
-                      variant="contained"
-                      onClick={() => setShowCreateFlow(true)}
-                    >
-                      Add material
-                    </Button>
-                  ) : null}
-                </>
+              {!selectMode && !guest && (subjects.length > 0 || decks.length > 0) ? (
+                <Button
+                  size="small"
+                  variant="text"
+                  onClick={() => setSelectMode(true)}
+                >
+                  Download for Anki
+                </Button>
               ) : null}
             </Stack>
           </Box>

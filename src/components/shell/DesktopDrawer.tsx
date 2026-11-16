@@ -61,9 +61,9 @@ export default function DesktopDrawer({
       <Toolbar
         variant="dense"
         sx={{
-          gap: 1,
+          gap: 1.25,
           minHeight: 56,
-          px: 1.5,
+          px: 2,
           borderBottom: `1px solid ${SHELL_HAIRLINE}`,
         }}
       >
@@ -76,26 +76,10 @@ export default function DesktopDrawer({
         <Typography
           variant="h6"
           noWrap
-          sx={{ color: SHELL_FG, letterSpacing: 0.2, flex: 1, minWidth: 0 }}
+          sx={{ color: SHELL_FG, letterSpacing: 0.2 }}
         >
           Sugarplum
         </Typography>
-        {onCollapse ? (
-          <IconButton
-            aria-label="Collapse sidebar"
-            onClick={onCollapse}
-            size="small"
-            sx={{
-              color: SHELL_MUTED,
-              width: 44,
-              height: 44,
-              flexShrink: 0,
-              "&:hover": { color: SHELL_FG, bgcolor: "rgba(245,245,245,0.06)" },
-            }}
-          >
-            <KeyboardDoubleArrowLeftIcon fontSize="small" />
-          </IconButton>
-        ) : null}
       </Toolbar>
       <List dense sx={{ px: 1, pt: 1.5 }}>
         {drawerNav.map((item) => {
@@ -145,7 +129,31 @@ export default function DesktopDrawer({
         </Box>
       ) : null}
       <Box sx={{ flexGrow: 1 }} />
-      {streakChip ? <Box sx={{ px: 2, pb: 1.5 }}>{streakChip}</Box> : null}
+      {streakChip ? <Box sx={{ px: 2, pb: 1 }}>{streakChip}</Box> : null}
+      {onCollapse ? (
+        <Box
+          sx={{
+            px: 1.5,
+            pb: 1,
+            display: "flex",
+            justifyContent: "flex-end",
+          }}
+        >
+          <IconButton
+            aria-label="Collapse sidebar"
+            onClick={onCollapse}
+            size="small"
+            sx={{
+              color: SHELL_MUTED,
+              width: 44,
+              height: 44,
+              "&:hover": { color: SHELL_FG, bgcolor: "rgba(245,245,245,0.06)" },
+            }}
+          >
+            <KeyboardDoubleArrowLeftIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      ) : null}
       <Box
         sx={{
           px: 2,

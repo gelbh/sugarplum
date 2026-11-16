@@ -50,31 +50,6 @@ export default function ShellNavRail({
         boxSizing: "border-box",
       }}
     >
-      {onExpand ? (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            pt: 1,
-            pb: 0.5,
-            borderBottom: `1px solid ${SHELL_HAIRLINE}`,
-          }}
-        >
-          <IconButton
-            aria-label="Expand sidebar"
-            onClick={onExpand}
-            size="small"
-            sx={{
-              color: SHELL_MUTED,
-              width: 44,
-              height: 44,
-              "&:hover": { color: SHELL_FG, bgcolor: "rgba(245,245,245,0.06)" },
-            }}
-          >
-            <KeyboardDoubleArrowRightIcon fontSize="small" />
-          </IconButton>
-        </Box>
-      ) : null}
       <Box
         sx={{
           display: "flex",
@@ -82,7 +57,7 @@ export default function ShellNavRail({
           alignItems: "stretch",
           gap: 0.5,
           px: 0.5,
-          pt: 1,
+          pt: 1.5,
           flex: 1,
           minHeight: 0,
           overflowY: "auto",
@@ -135,13 +110,37 @@ export default function ShellNavRail({
         <Box
           sx={{
             px: 0.5,
-            pb: 1,
+            pb: 0.5,
             display: "flex",
             justifyContent: "center",
             "& > *": { maxWidth: "100%" },
           }}
         >
           {streakChip}
+        </Box>
+      ) : null}
+      {onExpand ? (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            py: 1,
+            borderTop: `1px solid ${SHELL_HAIRLINE}`,
+          }}
+        >
+          <IconButton
+            aria-label="Expand sidebar"
+            onClick={onExpand}
+            size="small"
+            sx={{
+              color: SHELL_MUTED,
+              width: 44,
+              height: 44,
+              "&:hover": { color: SHELL_FG, bgcolor: "rgba(245,245,245,0.06)" },
+            }}
+          >
+            <KeyboardDoubleArrowRightIcon fontSize="small" />
+          </IconButton>
         </Box>
       ) : null}
     </Box>
