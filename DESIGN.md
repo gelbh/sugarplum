@@ -207,7 +207,7 @@ Fruit plum and evening stage ink carry the brand; sugar dust and ivory are the t
 
 ## Layout
 
-Operate and Study share MUI `Container` `maxWidth="sm"` as the reading column. Today vertically centers on desktop (`minHeight: calc(100vh - 32px)` with flex center). Study zen fills the viewport with tighter vertical padding (`py` 16–24px) and stacks card then grade rail. Card column maxes at 360px. Shell: permanent drawer 220px from `md` up; mobile sticky top bar (48px + safe-top) and bottom dock (56px + safe-bottom inset inside the bar). MUI spacing unit 8px; common rhythm 8 / 16 / 24.
+Operate and Study share MUI `Container` `maxWidth="sm"` as the reading column. Today vertically centers from `sm` up (`minHeight: 100%` with flex center). Study zen fills the viewport with tighter vertical padding (`py` 16–24px) and stacks card then grade rail. Card column maxes at 360px. Shell: permanent drawer 220px from `sm` up; phone sticky top bar (48px + safe-top) and bottom dock (56px + safe-bottom inset inside the bar) only below `sm`. Zen chrome icon controls target at least 44×44 CSS px hit area. MUI spacing unit 8px; common rhythm 8 / 16 / 24.
 
 Phone zen Study: session chrome (header, progress bar, card, grade rail) fits `100dvh` without page scroll; long card copy scrolls inside the face only.
 
