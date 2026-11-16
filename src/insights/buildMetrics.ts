@@ -1,7 +1,7 @@
 import { State } from "ts-fsrs";
 import { localDayKey } from "../study/loadBalance";
 import { MATURE_INTERVAL_DAYS } from "../study/subjectKnowledge";
-import { insightDayKeys, buildGradeCounts } from "./buildSeries";
+import { insightDayKeys } from "./buildSeries";
 import type {
   InsightsConsistency,
   InsightsDifficultyMix,
@@ -82,13 +82,12 @@ export function buildTrueRetention(
     insightDayKeys(now, tzOffsetMinutes, windowDays, todayKeyOverride),
   );
   const firstByCardDay = new Map<string, InsightsReviewLogRow>();
-  const sorted = [...rows].sort((a, b) =>
-    a.reviewed_at < b.reviewed_at ? -1 : a.reviewed_at > b.reviewed_at ? 1 : 0,
-  );
-  for (const row of sorted) {
-    const at = new Date(row.reviewed_at);
-    if (Number.isNaN(at.getTime())) continue;
-    const day = localDayKey(at, tzOffsetMinutes);
+  const sorted = [...rows]
+    .map((row) => ({ row, t: new Date(row.reviewed_at).getTime() }))
+    .filter((x) => Number.isFinite(x.t))
+    .sort((a, b) => a.t - b.t);
+  for (const { row, t } of sorted) {
+    const day = localDayKey(new Date(t), tzOffsetMinutes);
     if (!keys.has(day)) continue;
     const id = `${row.card_id}|${day}`;
     if (!firstByCardDay.has(id)) firstByCardDay.set(id, row);
@@ -195,7 +194,7 @@ export function buildConsistency(
       windowDays,
       activeDays: 0,
       intensity: 0,
-      score: 1,
+      score: null,
     };
   }
   let activeDays = 0;
@@ -203,6 +202,14 @@ export function buildConsistency(
   for (const row of reviewsPerDay) {
     sum += row.count;
     if (row.count > 0) activeDays += 1;
+  }
+  if (activeDays === 0) {
+    return {
+      windowDays,
+      activeDays: 0,
+      intensity: 0,
+      score: null,
+    };
   }
   const mean = sum / n;
   let varSum = 0;

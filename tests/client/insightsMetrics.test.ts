@@ -81,6 +81,14 @@ describe("buildConsistency", () => {
     expect(out.score).toBeGreaterThan(0);
     expect(out.score).toBeLessThanOrEqual(1);
   });
+
+  it("returns null score when there is no activity", () => {
+    const series = Array.from({ length: 30 }, (_, i) => ({
+      day: `2026-10-${String(i + 1).padStart(2, "0")}`,
+      count: 0,
+    }));
+    expect(buildConsistency(series).score).toBeNull();
+  });
 });
 
 describe("buildDifficultyMix / buildStabilitySnapshot", () => {

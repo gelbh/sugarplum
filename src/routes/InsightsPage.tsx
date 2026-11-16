@@ -85,7 +85,7 @@ export default function InsightsPage() {
       ? null
       : Math.round(summary.kpis.etk * 10) / 10;
   const consistencyPct =
-    summary == null
+    summary?.kpis.consistency.score == null
       ? null
       : Math.round(100 * summary.kpis.consistency.score);
 
@@ -326,7 +326,7 @@ export default function InsightsPage() {
                   >
                     Studied {summary.kpis.consistency.activeDays}/
                     {summary.kpis.consistency.windowDays} days · consistency{" "}
-                    {consistencyPct}%
+                    {consistencyPct == null ? "—" : `${consistencyPct}%`}
                     {summary.kpis.dailyLoad == null
                       ? null
                       : ` · Steady-state load ~${summary.kpis.dailyLoad} cards/day`}

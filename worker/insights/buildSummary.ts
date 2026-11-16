@@ -37,9 +37,29 @@ type ReviewRow = {
   reviewed_at: string;
   rating: number;
   scheduled_days: number | null;
+  state_json: string | null;
 };
 
 type ScheduleRow = CompositionScheduleInput;
+
+function stateFromLogJson(raw: string | null): number | null {
+  if (raw == null || raw.length === 0) return null;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      "state" in parsed &&
+      typeof (parsed as { state: unknown }).state === "number" &&
+      Number.isFinite((parsed as { state: number }).state)
+    ) {
+      return (parsed as { state: number }).state;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
 
 function toMetricLogs(rows: ReviewRow[]): InsightsReviewLogRow[] {
   return rows.map((r) => ({
@@ -50,7 +70,7 @@ function toMetricLogs(rows: ReviewRow[]): InsightsReviewLogRow[] {
       r.scheduled_days == null || !Number.isFinite(r.scheduled_days)
         ? null
         : r.scheduled_days,
-    state: null,
+    state: stateFromLogJson(r.state_json),
   }));
 }
 
@@ -80,7 +100,8 @@ export async function buildInsightsSummary(
       `SELECT rl.card_id AS card_id,
               rl.reviewed_at AS reviewed_at,
               rl.rating AS rating,
-              rl.scheduled_days AS scheduled_days
+              rl.scheduled_days AS scheduled_days,
+              rl.state_json AS state_json
        FROM review_logs rl
        INNER JOIN cards c ON c.id = rl.card_id
        INNER JOIN decks d ON d.id = c.deck_id

@@ -24,7 +24,8 @@ export type InsightsConsistency = {
   windowDays: 30;
   activeDays: number;
   intensity: number;
-  score: number;
+  /** Null when there is no study activity in the window. */
+  score: number | null;
 };
 
 export type InsightsDifficultyMix = {
