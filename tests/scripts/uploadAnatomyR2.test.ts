@@ -43,6 +43,7 @@ describe("uploadAnatomyObject", () => {
       "sugarplum-anatomy/pack/x.glb",
       "--file",
       file,
+      "--remote",
       "--content-type",
       "model/gltf-binary",
       "--cache-control",

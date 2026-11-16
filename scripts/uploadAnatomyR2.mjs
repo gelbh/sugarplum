@@ -61,6 +61,7 @@ export function uploadAnatomyObject(opts) {
     objectPath,
     "--file",
     file,
+    "--remote",
     "--content-type",
     "model/gltf-binary",
     "--cache-control",

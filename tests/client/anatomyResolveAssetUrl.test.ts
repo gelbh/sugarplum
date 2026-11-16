@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { parseAnatomySceneManifest } from "../../src/anatomy/parseScene";
 import { resolveAnatomyAssetUrl } from "../../src/anatomy/resolveAssetUrl";
 
 const ORIGIN = "https://anatomy-assets.example.com";
@@ -40,5 +41,27 @@ describe("resolveAnatomyAssetUrl", () => {
       ),
     ).toBeNull();
     expect(resolveAnatomyAssetUrl("s", "../x.glb", [ORIGIN])).toBeNull();
+  });
+
+  it("parses manifests that use allowlisted https structure assets", () => {
+    const url = `${ORIGIN}/equine-gait-animations/equine_gait.glb`;
+    const m = parseAnatomySceneManifest({
+      id: "equine-gait-animations",
+      title: "Equine gait animations",
+      structures: [
+        {
+          id: "root-equine-gait",
+          label: "equine gait",
+          node: "equine_gait",
+          asset: url,
+          region: "root",
+        },
+      ],
+      regions: [{ id: "root", label: "Root", defaultActive: true }],
+    });
+    expect(m.structures[0]?.asset).toBe(url);
+    expect(resolveAnatomyAssetUrl(m.id, m.structures[0]!.asset!, [ORIGIN])).toBe(
+      url,
+    );
   });
 });
