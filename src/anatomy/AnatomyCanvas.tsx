@@ -500,12 +500,10 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
     }));
 
     const loadsKey = loads.map((l) => `${l.structureId}:${l.url}`).join("|");
-    /** URL → model root under rootGroup (incremental dispose). */
     const urlModelRef = useRef<Map<string, Object3D>>(new Map());
     const structureUrlRef = useRef<Map<string, string>>(new Map());
     const loadGenRef = useRef(0);
 
-    // Scene / renderer / controls: mount once (or on retry). Loads attach incrementally.
     useEffect(() => {
       const host = hostRef.current;
       if (!host) return;
@@ -1041,7 +1039,6 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       resize();
       requestRender();
 
-      // GLB loads attach in the incremental loads effect (keeps skeleton mounted).
       return () => {
         disposed = true;
         loadGenRef.current += 1;
@@ -1089,7 +1086,6 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       };
     }, [retryToken]);
 
-    // Incremental GLB attach/detach when active region loads change.
     useEffect(() => {
       const rootGroup = rootGroupRef.current;
       if (!rootGroup) return;
@@ -1156,7 +1152,6 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         }
       };
 
-      // Drop structures / URLs no longer requested.
       for (const id of [...nodeMapRef.current.keys()]) {
         if (wantedIds.has(id)) continue;
         const url = structureUrlRef.current.get(id);
@@ -1178,7 +1173,6 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         urlsToLoad.push([url, urlSpecs]);
       }
 
-      // Fit camera only when this batch brings the first content into an empty scene.
       const fitWhenDone =
         urlModelRef.current.size === 0 && urlsToLoad.length > 0;
 
