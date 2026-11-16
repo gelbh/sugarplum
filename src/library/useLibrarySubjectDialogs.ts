@@ -17,12 +17,12 @@ import {
 } from "../api/client";
 import { subjectDeleteBlocked } from "../subjects/subjectDeleteGuard";
 
-type TitleDialog =
+export type LibraryTitleDialog =
   | { mode: "create" }
   | { mode: "rename"; subject: Subject }
   | null;
 
-type CoverTarget = {
+export type LibraryCoverTarget = {
   ownerKind: "subject";
   ownerId: string;
   title: string;
@@ -47,7 +47,7 @@ export function useLibrarySubjectDialogs({
   refreshSubjects,
   refreshDecks,
 }: Args) {
-  const [titleDialog, setTitleDialog] = useState<TitleDialog>(null);
+  const [titleDialog, setTitleDialog] = useState<LibraryTitleDialog>(null);
   const [titleValue, setTitleValue] = useState("");
   const [dialogBusy, setDialogBusy] = useState(false);
   const [dialogError, setDialogError] = useState<string | null>(null);
@@ -58,7 +58,9 @@ export function useLibrarySubjectDialogs({
     anchor: HTMLElement;
     subject: Subject;
   } | null>(null);
-  const [coverPicker, setCoverPicker] = useState<CoverTarget | null>(null);
+  const [coverPicker, setCoverPicker] = useState<LibraryCoverTarget | null>(
+    null,
+  );
 
   function openCreateSubject() {
     setDialogError(null);

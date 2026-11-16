@@ -13,22 +13,15 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import CoverPickerDialog from "../components/CoverPickerDialog";
 import type { StoredCoverRow, Subject } from "../api/client";
-
-type TitleDialog =
-  | { mode: "create" }
-  | { mode: "rename"; subject: Subject }
-  | null;
-
-type CoverTarget = {
-  ownerKind: "subject";
-  ownerId: string;
-  title: string;
-};
+import type {
+  LibraryCoverTarget,
+  LibraryTitleDialog,
+} from "./useLibrarySubjectDialogs";
 
 type Props = {
   guest: boolean;
-  titleDialog: TitleDialog;
-  setTitleDialog: (value: TitleDialog) => void;
+  titleDialog: LibraryTitleDialog;
+  setTitleDialog: (value: LibraryTitleDialog) => void;
   titleValue: string;
   setTitleValue: (value: string) => void;
   dialogBusy: boolean;
@@ -46,8 +39,8 @@ type Props = {
   menuDeleteBlocked: boolean;
   openRenameSubject: (subject: Subject, ev: MouseEvent) => void;
   requestDeleteSubject: (subject: Subject, ev: MouseEvent) => void;
-  coverPicker: CoverTarget | null;
-  setCoverPicker: (value: CoverTarget | null) => void;
+  coverPicker: LibraryCoverTarget | null;
+  setCoverPicker: (value: LibraryCoverTarget | null) => void;
   setCovers: (
     updater: (prev: StoredCoverRow[]) => StoredCoverRow[],
   ) => void;

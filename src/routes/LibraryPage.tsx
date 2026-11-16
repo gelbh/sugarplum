@@ -93,7 +93,6 @@ export default function LibraryPage() {
     openRenameSubject,
     onTitleDialogSubmit,
     onClearCover,
-    localDeckCountForSubject,
     requestDeleteSubject,
     confirmDeleteSubject,
     menuSubject,
@@ -261,7 +260,6 @@ export default function LibraryPage() {
             selectMode={selectMode}
             selectedDeckIdSet={selectedDeckIdSet}
             orphanDecks={orphanDecks}
-            localDeckCountForSubject={localDeckCountForSubject}
             toggleSubjectDecks={toggleSubjectDecks}
             toggleDeckSelected={toggleDeckSelected}
             setSubjectMenu={setSubjectMenu}

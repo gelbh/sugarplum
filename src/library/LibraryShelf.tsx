@@ -29,7 +29,6 @@ type Props = {
   selectMode: boolean;
   selectedDeckIdSet: Set<string>;
   orphanDecks: Deck[];
-  localDeckCountForSubject: (subjectId: string) => number;
   toggleSubjectDecks: (subjectId: string) => void;
   toggleDeckSelected: (deckId: string) => void;
   setSubjectMenu: (value: {
@@ -48,30 +47,32 @@ export function LibraryShelf({
   selectMode,
   selectedDeckIdSet,
   orphanDecks,
-  localDeckCountForSubject,
   toggleSubjectDecks,
   toggleDeckSelected,
   setSubjectMenu,
 }: Props) {
-  if (subjects.length === 0) {
-    return showCreateFlow ? (
-      <Typography variant="body2" color="text.secondary">
-        No subjects yet. Add your notes below to make the first one.
-      </Typography>
-    ) : (
-      <EmptyNext
-        title="No subjects yet"
-        body="Create a subject and deck by adding your notes."
-        primary={{
-          label: "Add material",
-          onClick: () => setShowCreateFlow(true),
-        }}
-      />
-    );
+  function localDeckCountForSubject(subjectId: string) {
+    return decks.filter((d) => d.subject_id === subjectId).length;
   }
 
   return (
     <>
+      {subjects.length === 0 ? (
+        showCreateFlow ? (
+          <Typography variant="body2" color="text.secondary">
+            No subjects yet. Add your notes below to make the first one.
+          </Typography>
+        ) : (
+          <EmptyNext
+            title="No subjects yet"
+            body="Create a subject and deck by adding your notes."
+            primary={{
+              label: "Add material",
+              onClick: () => setShowCreateFlow(true),
+            }}
+          />
+        )
+      ) : (
       <Grid
         container
         component="ul"
@@ -224,6 +225,7 @@ export function LibraryShelf({
           );
         })}
       </Grid>
+      )}
       {selectMode && orphanDecks.length > 0 ? (
         <Box>
           <Typography
