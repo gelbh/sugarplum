@@ -46,7 +46,7 @@ describe("uploadAnatomyObject", () => {
       "--content-type",
       "model/gltf-binary",
       "--cache-control",
-      "public, max-age=31536000, immutable",
+      "public, max-age=86400",
     ]);
   });
 });

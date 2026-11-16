@@ -5,9 +5,16 @@
  * One-time setup (Cloudflare dashboard / wrangler):
  *   1. Create bucket `sugarplum-anatomy`
  *   2. Enable public access (custom domain preferred, or pub-*.r2.dev)
- *   3. Set Vite env `VITE_ANATOMY_ASSET_ORIGIN` to that public base (no trailing slash)
- *   4. Point scene.json `asset` at `${VITE_ANATOMY_ASSET_ORIGIN}/<key>`
- *   5. Remove the binary from `public/` so Workers static assets stay ≤25 MiB
+ *   3. Configure bucket CORS so the app origin can fetch GLBs (e.g. AllowedOrigins
+ *      `https://sugarplum.gelbhart.dev` and local `http://127.0.0.1:*` / `http://localhost:*`,
+ *      AllowedMethods GET/HEAD, AllowedHeaders `*`). Without CORS, GLTFLoader fails
+ *      on cross-origin HTTPS assets even when the origin is allowlisted in the app.
+ *   4. Set Vite env `VITE_ANATOMY_ASSET_ORIGIN` to that public base (no trailing slash)
+ *   5. Point scene.json `asset` at `${VITE_ANATOMY_ASSET_ORIGIN}/<key>`
+ *   6. Remove the binary from `public/` so Workers static assets stay ≤25 MiB
+ *
+ * Keys: prefer content-hashed object names when replacing assets. Reused stable
+ * paths get a one-day cache TTL (no `immutable`) so re-uploads can refresh.
  *
  * Example:
  *   node scripts/uploadAnatomyR2.mjs \
@@ -57,7 +64,7 @@ export function uploadAnatomyObject(opts) {
     "--content-type",
     "model/gltf-binary",
     "--cache-control",
-    "public, max-age=31536000, immutable",
+    "public, max-age=86400",
   ];
   const run =
     opts.run ??
