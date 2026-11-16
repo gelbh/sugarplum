@@ -40,6 +40,7 @@ import AnatomyHelpOverlay from "../anatomy/AnatomyHelpOverlay";
 import AnatomyMobileSheet, {
   type AnatomySheetTab,
 } from "../anatomy/AnatomyMobileSheet";
+import { selectedStructureLabelText } from "../anatomy/anatomyScreenLabel";
 import InfoPanel from "../anatomy/InfoPanel";
 import MakeCardsDeckDialog from "../anatomy/MakeCardsDeckDialog";
 import {
@@ -296,9 +297,11 @@ export default function AnatomyViewerPage({
   }, [manifest, activeRegions]);
   const maskNames = studyMode === "type" || studyMode === "mcq";
   const selectedLabel = selectedStructure
-    ? maskNames && !revealedIds.has(selectedStructure.id)
-      ? "Hidden"
-      : selectedStructure.label
+    ? selectedStructureLabelText({
+        label: selectedStructure.label,
+        maskNames,
+        revealed: revealedIds.has(selectedStructure.id),
+      })
     : null;
   const makeCardsIds = useMemo(
     () => makeCardsStructureIds(ui.selectedId, revealedIds),
@@ -971,6 +974,7 @@ export default function AnatomyViewerPage({
                   fadeOthers={fadeOthers}
                   clipEnabled={clipEnabled}
                   clipDepth01={clipDepth01}
+                  selectedLabelText={selectedLabel}
                   autoFocus={autoFocus}
                   cameraMode={cameraMode}
                   onSelect={(id) => dispatch({ type: "select", id })}
