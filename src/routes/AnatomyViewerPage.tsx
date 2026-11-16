@@ -74,7 +74,7 @@ export default function AnatomyViewerPage({
   initialRegions = [],
 }: Props) {
   const theme = useTheme();
-  const mobile = useMediaQuery(theme.breakpoints.down("md"), { noSsr: true });
+  const mobile = useMediaQuery(theme.breakpoints.down("sm"), { noSsr: true });
   const { showRail, showSheetTriggers } = anatomyViewerMobile(mobile);
   const canvasRef = useRef<AnatomyCanvasHandle>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
