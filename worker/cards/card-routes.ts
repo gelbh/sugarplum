@@ -403,7 +403,6 @@ cardRoutes.post("/:id/undo-review", async (c) => {
     serializeCard({
       ...row,
       status: "draft",
-      reject_reason: null,
       updated_at: updatedAt,
     }),
   );

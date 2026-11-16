@@ -44,8 +44,6 @@ import {
   OCR_REFETCH_EXPIRES_SEC,
   assertConfiguredR2AccountId,
   contentTypeForMaterial,
-  newId,
-  resolveSourceRole,
   sanitizeDownloadFilename,
 } from "./upload";
 

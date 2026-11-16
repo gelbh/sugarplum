@@ -21,7 +21,6 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import CoverPickerDialog from "../components/CoverPickerDialog";
 import CoverPickerPanel from "../components/CoverPickerPanel";
 import BoardTile from "../library/board/BoardTile";
