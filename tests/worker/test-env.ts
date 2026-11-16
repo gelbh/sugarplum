@@ -1939,6 +1939,10 @@ export function createTestEnv(opts?: {
             })
             .map((card) => {
               const schedule = schedules.get(card.id);
+              const deck = decks.get(card.deck_id);
+              const subjectId = deck?.subject_id ?? null;
+              const subject =
+                subjectId != null ? subjects.get(subjectId) : undefined;
               return {
                 state: schedule?.state ?? null,
                 scheduled_days: schedule?.scheduled_days ?? null,
@@ -1950,6 +1954,8 @@ export function createTestEnv(opts?: {
                 reps: schedule?.reps ?? null,
                 lapses: schedule?.lapses ?? null,
                 last_review: schedule?.last_review ?? null,
+                subject_id: subjectId,
+                subject_title: subject?.title ?? null,
               };
             });
           return { results: rows as T[] };

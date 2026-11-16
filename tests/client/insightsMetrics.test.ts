@@ -6,6 +6,7 @@ import {
   buildGradeCountsByMaturity,
   buildHourlySuccess,
   buildStabilitySnapshot,
+  buildSubjectDifficultyStability,
   buildTrueRetention,
   buildWorkloadFromDues,
 } from "../../src/insights/buildMetrics";
@@ -103,6 +104,67 @@ describe("buildDifficultyMix / buildStabilitySnapshot", () => {
     const stab = buildStabilitySnapshot([0.5, 3, 10, 30, null, 0]);
     expect(stab.medianDays).toBe(6.5);
     expect(stab.bins.map((b) => b.count)).toEqual([1, 1, 1, 1]);
+  });
+});
+
+describe("buildSubjectDifficultyStability", () => {
+  it("groups Unassigned, sorts hard-share desc, omits empty shells", () => {
+    const out = buildSubjectDifficultyStability([
+      {
+        subjectId: "anat",
+        title: "Anatomy",
+        difficulty: 8,
+        stability: 5,
+      },
+      {
+        subjectId: "anat",
+        title: "Anatomy",
+        difficulty: 3,
+        stability: 10,
+      },
+      {
+        subjectId: "phys",
+        title: "Physiology",
+        difficulty: 5,
+        stability: 20,
+      },
+      {
+        subjectId: null,
+        title: "ignored",
+        difficulty: 9,
+        stability: 2,
+      },
+      {
+        subjectId: "empty",
+        title: "Empty",
+        difficulty: null,
+        stability: null,
+      },
+    ]);
+    expect(out.map((r) => r.title)).toEqual([
+      "Unassigned",
+      "Anatomy",
+      "Physiology",
+    ]);
+    expect(out[0]).toMatchObject({
+      subjectId: null,
+      title: "Unassigned",
+      difficulty: { easy: 0, medium: 0, hard: 1, total: 1 },
+      medianStabilityDays: 2,
+    });
+    expect(out[1]?.difficulty).toEqual({
+      easy: 1,
+      medium: 0,
+      hard: 1,
+      total: 2,
+    });
+    expect(out[1]?.medianStabilityDays).toBe(7.5);
+    expect(out[2]?.difficulty).toEqual({
+      easy: 0,
+      medium: 1,
+      hard: 0,
+      total: 1,
+    });
   });
 });
 

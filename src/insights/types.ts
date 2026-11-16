@@ -40,6 +40,15 @@ export type InsightsStabilitySnapshot = {
   bins: Array<{ label: string; count: number }>;
 };
 
+/** Per-subject difficulty mix + median stability (no stability bins). */
+export type InsightsSubjectDifficultyStability = {
+  /** Null when the card's deck has no subject_id (Unassigned). */
+  subjectId: string | null;
+  title: string;
+  difficulty: InsightsDifficultyMix;
+  medianStabilityDays: number | null;
+};
+
 export type InsightsGradeByMaturity = {
   young: InsightsGradeCounts;
   mature: InsightsGradeCounts;
@@ -68,6 +77,7 @@ export type InsightsSummary = {
     consistency: InsightsConsistency;
     difficulty: InsightsDifficultyMix;
     stability: InsightsStabilitySnapshot;
+    subjectDifficultyStability: InsightsSubjectDifficultyStability[];
   };
   gamification: {
     streakCurrent: number;
