@@ -5,6 +5,9 @@ import { act, createElement, type ReactElement } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import DifficultyStabilityBlock from "../../src/insights/DifficultyStabilityBlock";
+import FutureDueChart from "../../src/insights/FutureDueChart";
+import GradeMixByMaturityChart from "../../src/insights/GradeMixByMaturityChart";
 import GradeMixChart from "../../src/insights/GradeMixChart";
 import ReviewsPerDayChart from "../../src/insights/ReviewsPerDayChart";
 import { gradeChartFill } from "../../src/study/gradeColors";
@@ -110,5 +113,129 @@ describe("insights charts", () => {
     expect(gradeChartFill(2)).toBe("#c4a574");
     expect(gradeChartFill(3)).toBe("#8b5a9e");
     expect(gradeChartFill(4)).toBe("#6a9e8b");
+  });
+
+  it("FutureDueChart empty caption and img role", async () => {
+    const series = Array.from({ length: 14 }, (_, i) => ({
+      day: `2026-11-${String(i + 1).padStart(2, "0")}`,
+      count: 0,
+    }));
+    const { root, node } = renderChart(
+      createElement(FutureDueChart, { series }),
+    );
+    await act(async () => {
+      root.render(node);
+    });
+    const img = host!.querySelector('[role="img"]');
+    expect(img?.getAttribute("aria-label")).toMatch(/No upcoming due/i);
+    expect(host!.textContent).toMatch(/No cards due in the next 14 days/i);
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it("FutureDueChart renders peak caption when nonzero", async () => {
+    const series = Array.from({ length: 14 }, (_, i) => ({
+      day: `2026-11-${String(i + 1).padStart(2, "0")}`,
+      count: i === 2 ? 5 : 0,
+    }));
+    const { root, node } = renderChart(
+      createElement(FutureDueChart, { series }),
+    );
+    await act(async () => {
+      root.render(node);
+    });
+    expect(host!.textContent).toMatch(/5 due/);
+    expect(host!.textContent).toMatch(/peak 5\/day/);
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it("GradeMixByMaturityChart empty caption", async () => {
+    const empty = { again: 0, hard: 0, good: 0, easy: 0 };
+    const { root, node } = renderChart(
+      createElement(GradeMixByMaturityChart, {
+        byMaturity: { young: empty, mature: empty, learning: empty },
+      }),
+    );
+    await act(async () => {
+      root.render(node);
+    });
+    const img = host!.querySelector('[role="img"]');
+    expect(img?.getAttribute("aria-label")).toMatch(/No maturity-split/i);
+    expect(host!.textContent).toMatch(/No young, mature, or learning grades/i);
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it("GradeMixByMaturityChart names stacked totals when nonzero", async () => {
+    const { root, node } = renderChart(
+      createElement(GradeMixByMaturityChart, {
+        byMaturity: {
+          young: { again: 1, hard: 0, good: 2, easy: 0 },
+          mature: { again: 0, hard: 1, good: 0, easy: 1 },
+          learning: { again: 0, hard: 0, good: 1, easy: 0 },
+        },
+      }),
+    );
+    await act(async () => {
+      root.render(node);
+    });
+    expect(host!.textContent).toMatch(/6 grades split by maturity/);
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it("DifficultyStabilityBlock empty caption", async () => {
+    const { root, node } = renderChart(
+      createElement(DifficultyStabilityBlock, {
+        difficulty: { easy: 0, medium: 0, hard: 0, total: 0 },
+        stability: {
+          medianDays: null,
+          bins: [
+            { label: "<1d", count: 0 },
+            { label: "1–7d", count: 0 },
+            { label: "7–21d", count: 0 },
+            { label: "21d+", count: 0 },
+          ],
+        },
+      }),
+    );
+    await act(async () => {
+      root.render(node);
+    });
+    expect(host!.textContent).toMatch(/Grade accepted cards to see FSRS/i);
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it("DifficultyStabilityBlock shows median and bin labels", async () => {
+    const { root, node } = renderChart(
+      createElement(DifficultyStabilityBlock, {
+        difficulty: { easy: 2, medium: 1, hard: 1, total: 4 },
+        stability: {
+          medianDays: 12.5,
+          bins: [
+            { label: "<1d", count: 1 },
+            { label: "1–7d", count: 2 },
+            { label: "7–21d", count: 1 },
+            { label: "21d+", count: 0 },
+          ],
+        },
+      }),
+    );
+    await act(async () => {
+      root.render(node);
+    });
+    expect(host!.textContent).toMatch(/Median stability 12\.5d/);
+    expect(host!.textContent).toMatch(/Easy 2/);
+    expect(host!.textContent).toMatch(/1–7d/);
+    await act(async () => {
+      root.unmount();
+    });
   });
 });
