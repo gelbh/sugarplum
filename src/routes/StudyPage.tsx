@@ -4,6 +4,8 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type Dispatch,
+  type SetStateAction,
 } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -18,168 +20,55 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CloseIcon from "@mui/icons-material/Close";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import { useUnlockToasts } from "../achievements/UnlockToastProvider";
-import {
-  rememberIncomingUnlocks,
-  rememberUnlocks,
-} from "../achievements/rememberUnlocks";
+import { rememberIncomingUnlocks } from "../achievements/rememberUnlocks";
 import type { UnlockView } from "../achievements/wire";
-import CardFace, { type OcclusionStudyFace } from "../components/CardFace";
+import CardFace from "../components/CardFace";
 import GradeButtons from "../components/GradeButtons";
 import { FACE_SANS } from "../components/studyFaceSx";
 import { useStudyCardGesture } from "../components/useStudyCardGesture";
-import {
-  ApiError,
-  commitStudyPacing,
-  listDecks,
-  listDueCards,
-  listSubjects,
-  reviewCard,
-  type CardDraftView,
-  type StudyQueueMeta,
-  type StudyRating,
-} from "../api/client";
+import { ApiError } from "../api/client";
 import { isGuest } from "../guest/session";
 import { navigate } from "../nav/navigate";
 import { useSession } from "../session/SessionContext";
 import { useTrackedOp } from "../progress/useTrackedOp";
-import { backAnswer, isOcclusionFront } from "../lib/draftCardModel";
 import { useGradeMailboxFlight } from "../study/useGradeMailboxFlight";
 import { studyQueueProgress } from "../study/studyQueueProgress";
 import {
-  faceScrollsFor,
-  plainShortcutKey,
-  resolveStudyKey,
-} from "../study/studyKeys";
+  isMcqCard,
+  occlusionStudyParts,
+  studyFrontText,
+} from "../study/studyCardPresentation";
 import { useStudyNotesOverlay } from "../study/useStudyNotesOverlay";
-import {
-  dueScopeFromSearch,
-  filterDueExcludingPending,
-  loadDueCache,
-  pruneDueCacheCard,
-  saveDueCache,
-  type DueScopeOpts,
-} from "../study/dueCache";
 import { scopeLibraryBack } from "../study/scopeLibraryBack";
-import { bumpIntroBonus, getIntroBonus } from "../study/introBonus";
-import { clientLocalDay } from "../study/localDay";
-import { enqueuePendingGrade, pendingCardIdSet } from "../study/pendingGrades";
 import LearningSoftWait from "../study/LearningSoftWait";
 import SessionComplete from "../study/SessionComplete";
 import SessionQuietEnd from "../study/SessionQuietEnd";
 import { StudyCardActions } from "../study/StudyCardActions";
 import {
-  addGrade,
   emptyTally,
   gradedTotal,
   sessionSurface,
 } from "../study/sessionTally";
 import { useLearningRequeue } from "../study/useLearningRequeue";
-import {
-  occlusionRevealAnswer,
-  pickOcclusionRegion,
-} from "../study/pickOcclusionRegion";
-import {
-  cardIdFromSearch,
-  prioritizeDueCard,
-} from "../study/prioritizeDueCard";
-import { isNetworkGradeError } from "../study/runPendingFlush";
 import { usePendingGradeSync } from "../study/usePendingGradeSync";
 import { useStudyImmersion } from "../study/useStudyImmersion";
-import { warmDueMedia } from "../study/warmDueMedia";
-
-function isMcqCard(card: CardDraftView | null): boolean {
-  return card?.type === "mcq";
-}
-
-function studyFrontText(card: CardDraftView): string {
-  if (isOcclusionFront(card.front)) {
-    return card.front.prompt?.trim() || "Identify the hidden region";
-  }
-  return typeof card.front === "string" ? card.front : "";
-}
-
-type OcclusionStudyParts = {
-  face: OcclusionStudyFace | undefined;
-  answer: string;
-};
-
-/**
- * One hide_one pick drives both the mask and the reveal answer (region label,
- * else back.answer).
- */
-function occlusionStudyParts(card: CardDraftView): OcclusionStudyParts {
-  const fallback = backAnswer(card.back);
-  if (card.type !== "occlusion" || !isOcclusionFront(card.front)) {
-    return { face: undefined, answer: fallback };
-  }
-  const region = pickOcclusionRegion(card.id, card.front.regions);
-  if (!region) {
-    return { face: undefined, answer: fallback };
-  }
-  return {
-    face: {
-      imageKey: card.front.image_key,
-      mask: { x: region.x, y: region.y, w: region.w, h: region.h },
-    },
-    answer: occlusionRevealAnswer(region, fallback),
-  };
-}
+import { useStudyGrade } from "../study/useStudyGrade";
+import { useStudyQueueLoad } from "../study/useStudyQueueLoad";
+import { useStudySessionKeys } from "../study/useStudySessionKeys";
 
 /** Study session: reveal answer, grade with FSRS (keys 1-4 or arrows; Space flips). Code-led MUI. */
 export default function StudyPage() {
   const { user } = useSession();
-  const [queue, setQueue] = useState<CardDraftView[]>([]);
-  const [queueTotal, setQueueTotal] = useState(0);
   const [revealed, setRevealed] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
-  const [offlineCopy, setOfflineCopy] = useState(false);
-  const [deepLinkMiss, setDeepLinkMiss] = useState(false);
-  const [scopeOpts] = useState<DueScopeOpts | undefined>(() =>
-    dueScopeFromSearch(window.location.search),
-  );
-  const [scopeLabel, setScopeLabel] = useState<string | null>(null);
-  /** True once this mount showed at least one due card (scoped session-complete). */
-  const [hadCards, setHadCards] = useState(false);
-  const [queueMeta, setQueueMeta] = useState<StudyQueueMeta | null>(null);
   const [tally, setTally] = useState(emptyTally);
   const [unlocks, setUnlocks] = useState<readonly UnlockView[]>([]);
-  const queueRef = useRef<CardDraftView[]>([]);
-  const {
-    pendingLearning,
-    nextLearningDue,
-    parkShortTermFollowUp,
-    advanceAfterGrade,
-  } = useLearningRequeue({
-    queueRef,
-    setQueue,
-    setQueueTotal,
-    setHadCards,
-    setRevealed,
-  });
   const cardDialogOpenRef = useRef(false);
   const onCardDialogOpen = useCallback((open: boolean) => {
     cardDialogOpenRef.current = open;
   }, []);
-  const introBonusRef = useRef<number | undefined>(undefined);
-  if (introBonusRef.current === undefined) {
-    introBonusRef.current = getIntroBonus();
-  }
   const { enqueueUnlocks } = useUnlockToasts();
-  const queueHead = queue[0] ?? null;
-  const { stage, mobile, toggleZen, exitZen } = useStudyImmersion(
-    queueHead != null,
-  );
-
-  const leaveStudy = useCallback(() => {
-    exitZen();
-    navigate("/today");
-  }, [exitZen]);
-
   const answerFocusRef = useRef<HTMLElement | null>(null);
   const busyRef = useRef(false);
-  /** Suppress leave-on-Esc for one tick after FS exits (UA may clear FS before keydown). */
-  const ignoreEscLeaveUntilRef = useRef(0);
 
   const { end: endLoad } = useTrackedOp("Loading study…", {
     trackOnMount: true,
@@ -195,63 +84,11 @@ export default function StudyPage() {
     if (!busy) busyRef.current = false;
   }, [busy]);
 
-  const applyDueQueue = useCallback(
-    (cards: CardDraftView[], wanted: string | null) => {
-      const { queue: next, found } = prioritizeDueCard(cards, wanted);
-      queueRef.current = next;
-      setQueue(next);
-      setQueueTotal(next.length);
-      if (next.length > 0) setHadCards(true);
-      // Only when there are other due cards to study (avoids contradicting empty session).
-      setDeepLinkMiss(Boolean(wanted) && !found && next.length > 0);
-      setRevealed(false);
-    },
-    [],
+  const loadRef = useRef<(uid: string, bonus?: number) => Promise<void>>(
+    async () => {},
   );
-
-  const load = useCallback(
-    async (uid: string, bonusOverride?: number) => {
-      const wanted = cardIdFromSearch(window.location.search);
-      const bonus = bonusOverride ?? introBonusRef.current ?? 0;
-      const dueOpts = {
-        ...scopeOpts,
-        localDay: clientLocalDay(),
-        ...(bonus > 0 ? { introBonus: bonus } : {}),
-      };
-      try {
-        const {
-          cards: due,
-          meta,
-          pendingDeferrals,
-        } = await listDueCards(dueOpts);
-        if ((pendingDeferrals?.length ?? 0) > 0) {
-          try {
-            await commitStudyPacing(dueOpts);
-          } catch {
-            /* peek queue still usable; dues stay until next commit */
-          }
-        }
-        saveDueCache(uid, due, scopeOpts);
-        warmDueMedia(due);
-        applyDueQueue(due, wanted);
-        setQueueMeta(meta);
-        setOfflineCopy(false);
-      } catch (err) {
-        const cached = loadDueCache(uid, scopeOpts);
-        if (cached && cached.cards.length > 0) {
-          const filtered = filterDueExcludingPending(
-            cached.cards,
-            pendingCardIdSet(uid),
-          );
-          if (filtered.length === 0) throw err;
-          applyDueQueue(filtered, wanted);
-          setOfflineCopy(true);
-          return;
-        }
-        throw err;
-      }
-    },
-    [applyDueQueue, scopeOpts],
+  const setErrorRef = useRef<Dispatch<SetStateAction<string | null>>>(
+    () => null,
   );
 
   const rememberFlushedUnlocks = useCallback((incoming: readonly unknown[]) => {
@@ -271,67 +108,72 @@ export default function StudyPage() {
     // Flush refreshes global due; reload with page scope so queues do not bleed.
     onDueRefreshed: () => {
       if (!userId) return;
-      void load(userId).catch((err) => {
-        setError(
+      void loadRef.current(userId).catch((err) => {
+        setErrorRef.current(
           err instanceof ApiError ? err.message : "Failed to refresh study",
         );
       });
     },
-    onDueRefreshFailed: (uid) => load(uid),
+    onDueRefreshFailed: (uid) => loadRef.current(uid),
   });
 
-  const onStudyMore = useCallback(async () => {
-    if (!userId || studyMoreBusy || offlineCopy) return;
-    setError(null);
-    beginStudyMore();
-    try {
-      const next = bumpIntroBonus();
-      introBonusRef.current = next;
-      await load(userId, next);
-      endStudyMore();
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Failed to load more cards",
-      );
-      endStudyMore(false);
-    }
-  }, [beginStudyMore, endStudyMore, load, offlineCopy, studyMoreBusy, userId]);
+  const {
+    queue,
+    setQueue,
+    queueTotal,
+    setQueueTotal,
+    ready,
+    setReady,
+    error,
+    setError,
+    offlineCopy,
+    deepLinkMiss,
+    setDeepLinkMiss,
+    scopeOpts,
+    scopeLabel,
+    hadCards,
+    setHadCards,
+    queueMeta,
+    queueRef,
+    load,
+    onStudyMore,
+  } = useStudyQueueLoad({
+    setRevealed,
+    beginStudyMore,
+    endStudyMore,
+    studyMoreBusy,
+    userId,
+  });
+
+  loadRef.current = load;
+  setErrorRef.current = setError;
+
+  const {
+    pendingLearning,
+    nextLearningDue,
+    parkShortTermFollowUp,
+    advanceAfterGrade,
+  } = useLearningRequeue({
+    queueRef,
+    setQueue,
+    setQueueTotal,
+    setHadCards,
+    setRevealed,
+  });
+
+  const queueHead = queue[0] ?? null;
+  const { stage, mobile, toggleZen, exitZen } = useStudyImmersion(
+    queueHead != null,
+  );
+
+  const leaveStudy = useCallback(() => {
+    exitZen();
+    navigate("/today");
+  }, [exitZen]);
 
   useEffect(() => {
     let cancelled = false;
-    if (!scopeOpts) {
-      setScopeLabel(null);
-      return;
-    }
-    (async () => {
-      try {
-        if (scopeOpts.deckId) {
-          const decks = await listDecks();
-          if (cancelled) return;
-          const deck = decks.find((d) => d.id === scopeOpts.deckId);
-          setScopeLabel(deck?.title ?? "This deck");
-          return;
-        }
-        if (scopeOpts.subjectId) {
-          const subjects = await listSubjects();
-          if (cancelled) return;
-          const subject = subjects.find((s) => s.id === scopeOpts.subjectId);
-          setScopeLabel(subject?.title ?? "This subject");
-        }
-      } catch {
-        if (!cancelled) {
-          setScopeLabel(scopeOpts.deckId ? "This deck" : "This subject");
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [scopeOpts]);
-
-  useEffect(() => {
     if (!user) return;
-    let cancelled = false;
     (async () => {
       try {
         setUserId(user.id);
@@ -360,7 +202,16 @@ export default function StudyPage() {
     return () => {
       cancelled = true;
     };
-  }, [endLoad, flushOnMount, load, refreshPendingCount, setUserId, user]);
+  }, [
+    endLoad,
+    flushOnMount,
+    load,
+    refreshPendingCount,
+    setError,
+    setReady,
+    setUserId,
+    user,
+  ]);
 
   const current = queueHead;
   const notes = useStudyNotesOverlay(current);
@@ -414,180 +265,45 @@ export default function StudyPage() {
   const { mailboxHold, flightBusyRef, playGradeMailboxMotion } =
     useGradeMailboxFlight(cardHostRef);
 
-  const onGrade = useCallback(
-    async (rating: StudyRating, fromMcq = false): Promise<boolean> => {
-      if (!current || busyRef.current || flightBusyRef.current) return false;
-      if (!fromMcq && !revealed) return false;
-      busyRef.current = true;
-      setError(null);
-      begin();
-
-      const queueOffline = async (uid: string) => {
-        if (!enqueuePendingGrade(uid, current.id, rating)) {
-          setError("Could not save grade offline (storage full).");
-          end(false);
-          return false;
-        }
-        setTally((prev) => addGrade(prev, rating));
-        pruneDueCacheCard(uid, current.id, scopeOpts);
-        refreshPendingCount(uid);
-        await playGradeMailboxMotion(rating);
-        advanceAfterGrade();
-        end();
-        return true;
-      };
-
-      if (!isGuest() && offlineCopy && userId) {
-        return queueOffline(userId);
-      }
-
-      try {
-        const result = await reviewCard(current.id, rating, {
-          localDay: clientLocalDay(),
-        });
-        setTally((prev) => addGrade(prev, rating));
-        parkShortTermFollowUp(current, result.due, result.state);
-        // Unlock toast after flight so FruitMedal mount/filter paint does not
-        // contend with the WAAPI swallow.
-        await playGradeMailboxMotion(rating);
-        const incoming = result.unlocks;
-        if (incoming?.length) {
-          enqueueUnlocks(incoming);
-          setUnlocks((prev) => rememberUnlocks(prev, incoming));
-        }
-        advanceAfterGrade();
-        end();
-        return true;
-      } catch (err) {
-        if (!isGuest() && userId && isNetworkGradeError(err)) {
-          return queueOffline(userId);
-        }
-        setError(
-          err instanceof ApiError ? err.message : "Could not save grade",
-        );
-        end(false);
-        return false;
-      }
-    },
-    [
-      advanceAfterGrade,
-      begin,
-      current,
-      end,
-      enqueueUnlocks,
-      flightBusyRef,
-      offlineCopy,
-      parkShortTermFollowUp,
-      playGradeMailboxMotion,
-      refreshPendingCount,
-      revealed,
-      scopeOpts,
-      userId,
-    ],
-  );
-
-  useEffect(() => {
-    function onFullscreenChange() {
-      if (!document.fullscreenElement) {
-        ignoreEscLeaveUntilRef.current = performance.now() + 500;
-      }
-    }
-    document.addEventListener("fullscreenchange", onFullscreenChange);
-    return () =>
-      document.removeEventListener("fullscreenchange", onFullscreenChange);
-  }, []);
-
-  useEffect(() => {
-    if (!ready) return;
-
-    function onKey(e: KeyboardEvent) {
-      if (cardDialogOpenRef.current) return;
-      if (notes.notesOpenRef.current) {
-        // Keep zen: MUI closes the dialog but does not cancel Escape.
-        if (e.key === "Escape") e.preventDefault();
-        return;
-      }
-      const key = plainShortcutKey(e);
-      if (key === null) return;
-      if ((key === "s" || key === "S") && notes.notesAvailable) {
-        e.preventDefault();
-        notes.openNotes();
-        return;
-      }
-      if (key === "Escape") {
-        e.preventDefault();
-        if (document.fullscreenElement) {
-          ignoreEscLeaveUntilRef.current = performance.now() + 500;
-          void document.exitFullscreen?.();
-          return;
-        }
-        if (performance.now() < ignoreEscLeaveUntilRef.current) {
-          return;
-        }
-        leaveStudy();
-        return;
-      }
-      if (key === "z" || key === "Z") {
-        e.preventDefault();
-        if (!mobile) toggleZen();
-        return;
-      }
-      if (
-        isMcqCard(current) ||
-        busyRef.current ||
-        flightBusyRef.current ||
-        !current
-      )
-        return;
-      const action = resolveStudyKey(key, revealed);
-      switch (action.type) {
-        case "reveal":
-          e.preventDefault();
-          reveal();
-          return;
-        case "hide":
-          e.preventDefault();
-          flipBack();
-          return;
-        case "grade":
-          if (
-            faceScrollsFor(
-              key,
-              answerFocusRef.current?.closest("[data-card-face-content]") ??
-                null,
-            )
-          ) {
-            return;
-          }
-          e.preventDefault();
-          void onGrade(action.rating);
-          return;
-        case "none":
-          return;
-        default: {
-          const unhandled: never = action;
-          void unhandled;
-        }
-      }
-    }
-
-    // Capture so Space flips before a focused Show answer button activates.
-    window.addEventListener("keydown", onKey, true);
-    return () => window.removeEventListener("keydown", onKey, true);
-  }, [
+  const { onGrade, replaceQueuedCard, removeQueuedCard } = useStudyGrade({
     current,
-    flipBack,
+    revealed,
+    busyRef,
+    flightBusyRef,
+    begin,
+    end,
+    setError,
+    offlineCopy,
+    userId,
+    scopeOpts,
+    refreshPendingCount,
+    enqueueUnlocks,
+    setUnlocks,
+    setTally,
+    parkShortTermFollowUp,
+    advanceAfterGrade,
+    playGradeMailboxMotion,
+    queueRef,
+    setQueue,
+    setRevealed,
+  });
+
+  useStudySessionKeys({
+    ready,
+    current,
+    revealed,
+    notes,
     leaveStudy,
     mobile,
-    notes.notesAvailable,
-    notes.openNotes,
-    onGrade,
-    ready,
-    reveal,
-    revealed,
-    flightBusyRef,
     toggleZen,
-  ]);
+    busyRef,
+    flightBusyRef,
+    reveal,
+    flipBack,
+    onGrade,
+    cardDialogOpenRef,
+    answerFocusRef,
+  });
 
   const canCommitStudyGesture = () =>
     !busyRef.current &&
@@ -596,28 +312,12 @@ export default function StudyPage() {
     !isMcqCard(current);
   const cardGesture = useStudyCardGesture({
     canCommit: canCommitStudyGesture,
-    blocked: () =>
-      notes.notesOpenRef.current || !canCommitStudyGesture(),
+    blocked: () => notes.notesOpenRef.current || !canCommitStudyGesture(),
     revealed,
     onGrade: (rating) => {
       void onGrade(rating);
     },
   });
-
-  const replaceQueuedCard = useCallback((updated: CardDraftView) => {
-    const next = queueRef.current.map((c) =>
-      c.id === updated.id ? updated : c,
-    );
-    queueRef.current = next;
-    setQueue(next);
-  }, []);
-
-  const removeQueuedCard = useCallback((cardId: string) => {
-    const next = queueRef.current.filter((c) => c.id !== cardId);
-    queueRef.current = next;
-    setQueue(next);
-    setRevealed(false);
-  }, []);
 
   if (!ready) {
     return (
