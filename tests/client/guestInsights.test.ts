@@ -8,6 +8,7 @@ import {
   guestCreateDeckCard,
   guestCreateSubject,
   guestReviewCard,
+  peekGuestStore,
 } from "../../src/guest/store";
 
 function memoryStorage() {
@@ -66,6 +67,11 @@ describe("guestInsightsSummary", () => {
       good: 1,
       easy: 0,
     });
+    expect(summary.futureDue).toHaveLength(14);
+    expect(summary.kpis.trueRetention.windowDays).toBe(30);
+    expect(summary.gradeCountsByMaturity).toBeTruthy();
+    const store = peekGuestStore(storage);
+    expect(store?.reviewLogs.at(-1)?.scheduledDays).toEqual(expect.any(Number));
     expect(storage.getItem(GUEST_STORE_KEY)).toBeTruthy();
   });
 });
