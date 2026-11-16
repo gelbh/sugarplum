@@ -4,7 +4,6 @@ import Box from "@mui/material/Box";
 type Props = {
   "aria-label": string;
   children: ReactNode;
-  /** When true, board grows to fill leftover viewport under the page header band. */
   fillViewport?: boolean;
 };
 
