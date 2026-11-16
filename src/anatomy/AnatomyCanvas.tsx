@@ -29,15 +29,28 @@ import {
   type Camera,
   type Material,
   type Object3D,
-  type Texture,
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import {
   buildBvhUnderRoot,
-  disposeGeometryWithBvh,
   installAnatomyAcceleratedRaycast,
 } from "./anatomyBvh";
+import {
+  disposeObjectTree,
+} from "./anatomyCanvasDispose";
+import {
+  composeClipControllers,
+  loadGltf,
+  mapPoolSettled,
+} from "./anatomyCanvasLoad";
+import {
+  applySceneBackground,
+  fitCameraToUnion,
+  focusObject,
+  setTreeWireframe,
+  type AnatomyCanvasBackground,
+} from "./anatomyCanvasSceneHelpers";
 import {
   SECTION_CLIP_NORMAL,
   attachSectionClipPlanes,
@@ -51,11 +64,8 @@ import {
   shouldShowSelectedLabel,
 } from "./anatomyScreenLabel";
 import { configureAnatomyGltfLoader } from "./configureGltfLoader";
-import { applyFit, applyFocus, orbitDistanceLimits } from "./cameraFit";
-import {
-  createClipController,
-  type ClipController,
-} from "./clipController";
+import { orbitDistanceLimits } from "./cameraFit";
+import { type ClipController } from "./clipController";
 import { LOADER_DELAY_MS } from "./delayedShow";
 import { applyDidacticTint } from "./didacticTint";
 import {
@@ -97,8 +107,7 @@ export type AnatomyCanvasHandle = {
   stopClips: () => void;
 };
 
-/** CSS hex (`#rrggbb`) or `null` for transparent (page shows through). */
-export type AnatomyCanvasBackground = string | null;
+export type { AnatomyCanvasBackground };
 
 type Props = {
   loads: AnatomyLoadSpec[];
@@ -128,155 +137,6 @@ type EmissiveMat = Material & {
 
 const LOAD_CONCURRENCY = 6;
 
-type LoadedGltf = { scene: Object3D; animations: AnimationClip[] };
-
-function loadGltf(loader: GLTFLoader, url: string): Promise<LoadedGltf> {
-  return new Promise((resolve, reject) => {
-    loader.load(
-      url,
-      (gltf) =>
-        resolve({
-          scene: gltf.scene,
-          animations: gltf.animations ?? [],
-        }),
-      undefined,
-      (err) => reject(err instanceof Error ? err : new Error(String(err))),
-    );
-  });
-}
-
-function composeClipControllers(
-  bundles: { root: Object3D; animations: AnimationClip[] }[],
-): ClipController | null {
-  if (bundles.length === 0) return null;
-  if (bundles.length === 1) {
-    return createClipController(bundles[0].root, bundles[0].animations);
-  }
-  const controllers = bundles.map((b) =>
-    createClipController(b.root, b.animations),
-  );
-  return {
-    get playing() {
-      return controllers.some((c) => c.playing);
-    },
-    play(name, opts) {
-      for (const c of controllers) c.stop();
-      for (const c of controllers) {
-        if (c.play(name, opts)) return true;
-      }
-      return false;
-    },
-    pause() {
-      for (const c of controllers) c.pause();
-    },
-    resume() {
-      for (const c of controllers) c.resume();
-    },
-    stop() {
-      for (const c of controllers) c.stop();
-    },
-    update(dt) {
-      for (const c of controllers) c.update(dt);
-    },
-    dispose() {
-      for (const c of controllers) c.dispose();
-    },
-  };
-}
-
-function disposeMaterial(mat: Material) {
-  for (const value of Object.values(mat)) {
-    const tex = value as Texture | undefined;
-    if (
-      tex &&
-      typeof tex === "object" &&
-      "isTexture" in tex &&
-      tex.isTexture
-    ) {
-      tex.dispose();
-    }
-  }
-  mat.dispose();
-}
-
-function disposeObjectTree(root: Object3D) {
-  root.traverse((obj) => {
-    const orphans = obj.userData?.didacticOrphans as Material[] | undefined;
-    if (orphans?.length) {
-      for (const mat of orphans) disposeMaterial(mat);
-      obj.userData.didacticOrphans = [];
-    }
-    const mesh = obj as Object3D & {
-      geometry?: {
-        dispose: () => void;
-        disposeBoundsTree?: () => void;
-        boundsTree?: unknown;
-      };
-      material?: Material | Material[];
-    };
-    if (mesh.geometry) disposeGeometryWithBvh(mesh.geometry);
-    const mats = mesh.material
-      ? Array.isArray(mesh.material)
-        ? mesh.material
-        : [mesh.material]
-      : [];
-    for (const mat of mats) disposeMaterial(mat);
-  });
-}
-
-async function mapPoolSettled<T, R>(
-  items: T[],
-  limit: number,
-  fn: (item: T) => Promise<R>,
-  onItemDone: () => void,
-): Promise<PromiseSettledResult<R>[]> {
-  const results: PromiseSettledResult<R>[] = new Array(items.length);
-  let next = 0;
-  async function worker() {
-    while (next < items.length) {
-      const idx = next;
-      next += 1;
-      try {
-        results[idx] = { status: "fulfilled", value: await fn(items[idx]) };
-      } catch (reason) {
-        results[idx] = { status: "rejected", reason };
-      }
-      onItemDone();
-    }
-  }
-  const n = Math.min(Math.max(1, limit), Math.max(1, items.length));
-  await Promise.all(Array.from({ length: n }, () => worker()));
-  return results;
-}
-
-function setTreeWireframe(root: Object3D, wireframe: boolean) {
-  root.traverse((obj) => {
-    if (!(obj instanceof Mesh)) return;
-    const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
-    for (const mat of mats) {
-      if (mat && "wireframe" in mat) {
-        (mat as Material & { wireframe: boolean }).wireframe = wireframe;
-        mat.needsUpdate = true;
-      }
-    }
-  });
-}
-
-function applySceneBackground(
-  scene: Scene,
-  renderer: WebGLRenderer,
-  background: AnatomyCanvasBackground,
-) {
-  if (background == null) {
-    scene.background = null;
-    renderer.setClearColor(0x000000, 0);
-    return;
-  }
-  const color = new Color(background);
-  scene.background = color;
-  renderer.setClearColor(color, 1);
-}
-
 type PresentableMat = EmissiveMat & {
   opacity?: number;
   transparent?: boolean;
@@ -289,43 +149,6 @@ type BaseMat = {
   opacity?: number;
   transparent?: boolean;
 };
-
-function fitCameraToUnion(
-  camera: Camera,
-  controls: OrbitControls,
-  nodeMap: Map<string, Object3D>,
-  aspect: number,
-): number {
-  if (nodeMap.size === 0) return 0;
-  const box = new Box3();
-  for (const obj of nodeMap.values()) box.expandByObject(obj);
-  if (box.isEmpty()) return 0;
-  return applyFit(camera, controls, box, aspect).fitDistance;
-}
-
-function focusObject(
-  camera: Camera,
-  controls: OrbitControls,
-  obj: Object3D,
-  aspect: number,
-  /** Keep zoom-out able to reach the last union framing. */
-  unionFitDistance: number,
-) {
-  const box = new Box3().setFromObject(obj);
-  if (box.isEmpty()) return;
-  applyFocus(camera, controls, box, aspect);
-  if (unionFitDistance > 0) {
-    const floor = orbitDistanceLimits(unionFitDistance);
-    controls.maxDistance = Math.max(controls.maxDistance, floor.maxDistance);
-    if (camera instanceof PerspectiveCamera) {
-      camera.far = Math.max(camera.far, controls.maxDistance * 1.25);
-      camera.updateProjectionMatrix();
-    } else if (camera instanceof OrthographicCamera) {
-      camera.far = Math.max(camera.far, controls.maxDistance * 1.25);
-      camera.updateProjectionMatrix();
-    }
-  }
-}
 
 const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
   function AnatomyCanvas(
