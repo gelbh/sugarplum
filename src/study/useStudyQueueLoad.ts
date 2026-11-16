@@ -4,7 +4,6 @@ import {
   useRef,
   useState,
   type Dispatch,
-  type MutableRefObject,
   type SetStateAction,
 } from "react";
 import {
@@ -193,9 +192,7 @@ export function useStudyQueueLoad({
     hadCards,
     setHadCards,
     queueMeta,
-    queueRef: queueRef as MutableRefObject<CardDraftView[]>,
-    introBonusRef,
-    applyDueQueue,
+    queueRef,
     load,
     onStudyMore,
   };

@@ -4,8 +4,6 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-  type Dispatch,
-  type SetStateAction,
 } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -84,38 +82,9 @@ export default function StudyPage() {
     if (!busy) busyRef.current = false;
   }, [busy]);
 
-  const loadRef = useRef<(uid: string, bonus?: number) => Promise<void>>(
-    async () => {},
-  );
-  const setErrorRef = useRef<Dispatch<SetStateAction<string | null>>>(
-    () => null,
-  );
-
   const rememberFlushedUnlocks = useCallback((incoming: readonly unknown[]) => {
     setUnlocks((prev) => rememberIncomingUnlocks(prev, incoming));
   }, []);
-
-  const {
-    userId,
-    setUserId,
-    pendingCount,
-    syncSummary,
-    setSyncSummary,
-    refreshPendingCount,
-    flushOnMount,
-  } = usePendingGradeSync({
-    onUnlocks: rememberFlushedUnlocks,
-    // Flush refreshes global due; reload with page scope so queues do not bleed.
-    onDueRefreshed: () => {
-      if (!userId) return;
-      void loadRef.current(userId).catch((err) => {
-        setErrorRef.current(
-          err instanceof ApiError ? err.message : "Failed to refresh study",
-        );
-      });
-    },
-    onDueRefreshFailed: (uid) => loadRef.current(uid),
-  });
 
   const {
     queue,
@@ -142,14 +111,30 @@ export default function StudyPage() {
     beginStudyMore,
     endStudyMore,
     studyMoreBusy,
-    userId,
+    userId: user?.id ?? null,
   });
 
-  // Layout so pending-sync online handlers see the latest load/setError on first paint.
-  useLayoutEffect(() => {
-    loadRef.current = load;
-    setErrorRef.current = setError;
-  }, [load, setError]);
+  const {
+    userId,
+    setUserId,
+    pendingCount,
+    syncSummary,
+    setSyncSummary,
+    refreshPendingCount,
+    flushOnMount,
+  } = usePendingGradeSync({
+    onUnlocks: rememberFlushedUnlocks,
+    // Flush refreshes global due; reload with page scope so queues do not bleed.
+    onDueRefreshed: () => {
+      if (!user?.id) return;
+      void load(user.id).catch((err) => {
+        setError(
+          err instanceof ApiError ? err.message : "Failed to refresh study",
+        );
+      });
+    },
+    onDueRefreshFailed: (uid) => load(uid),
+  });
 
   const {
     pendingLearning,
