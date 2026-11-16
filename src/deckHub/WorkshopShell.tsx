@@ -14,7 +14,6 @@ type Props = {
   closeMode?: boolean;
   children: ReactNode;
   footer?: ReactNode;
-  /** Kept for call-site compatibility; inline pan ignores dialog maxWidth. */
   maxWidth?: "sm" | "md" | "lg";
 };
 

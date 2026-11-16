@@ -26,9 +26,7 @@ import {
 type Props = {
   card: CardDraftView;
   face?: DraftPreviewFace;
-  /** Primary action under the plate (e.g. Add card). */
   action?: ReactNode;
-  /** Browse icons tile: plate only, tap to flip. */
   variant?: "editor" | "tile";
 };
 
@@ -77,7 +75,6 @@ function previewParts(card: CardDraftView): {
   };
 }
 
-/** Quiet live plate for Write a card (no study CTAs). */
 export default function DiyCardPreview({
   card,
   face = "front",

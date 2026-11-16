@@ -24,7 +24,6 @@ type Props = {
   metaLine: string;
   crumbs?: StageCrumb[];
   spark?: ReactNode;
-  /** When set, Study is shown under the header (operable only). */
   onStudy?: () => void;
   exportBusy: boolean;
   exportDisabled: boolean;

@@ -13,9 +13,7 @@ import {
 
 type GenerationStatusStripProps = {
   status: ShellGenerationStatus;
-  /** Mobile top chrome: compact text strip. */
   dense?: boolean;
-  /** Icon rail: status dot + tiny bar only (no overflowing copy). */
   rail?: boolean;
 };
 

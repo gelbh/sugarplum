@@ -85,7 +85,6 @@ const ROW_ACTION = {
   },
 } as const;
 
-/** Soft outlined select control (toolbar + tile/list rows). */
 const SELECT_CHECKBOX_SX = {
   p: 0.55,
   borderRadius: "9px",
