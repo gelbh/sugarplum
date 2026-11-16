@@ -102,6 +102,8 @@ function buildLoads(
       structureId: s.id,
       url,
       node: s.node,
+      region: s.region,
+      label: s.label,
     }));
   }
   const loads: AnatomyLoadSpec[] = [];
@@ -113,6 +115,8 @@ function buildLoads(
       structureId: s.id,
       url,
       node: s.node,
+      region: s.region,
+      label: s.label,
     });
   }
   return loads;
@@ -963,7 +967,6 @@ export default function AnatomyViewerPage({
               ) : (
                 <AnatomyCanvas
                   ref={canvasRef}
-                  key={loads.map((l) => `${l.structureId}:${l.url}`).join("|")}
                   loads={loads}
                   ui={ui}
                   background={canvasBackground}
