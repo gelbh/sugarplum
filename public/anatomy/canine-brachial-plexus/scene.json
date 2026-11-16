@@ -10,160 +10,6 @@
   ],
   "structures": [
     {
-      "id": "root-b-c1",
-      "label": "B C1",
-      "node": "B_C1",
-      "asset": "./B_C1.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-c2",
-      "label": "B C2",
-      "node": "B_C2",
-      "asset": "./B_C2.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-c3",
-      "label": "B C3",
-      "node": "B_C3",
-      "asset": "./B_C3.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-c4",
-      "label": "B C4",
-      "node": "B_C4",
-      "asset": "./B_C4.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-c5",
-      "label": "B C5",
-      "node": "B_C5",
-      "asset": "./B_C5.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-c6",
-      "label": "B C6",
-      "node": "B_C6",
-      "asset": "./B_C6.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-c7",
-      "label": "B C7",
-      "node": "B_C7",
-      "asset": "./B_C7.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-carpals-down",
-      "label": "B Carpals down",
-      "node": "B_Carpals_down",
-      "asset": "./B_Carpals_down.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-costal-cartilages",
-      "label": "B Costal cartilages",
-      "node": "B_Costal_cartilages",
-      "asset": "./B_Costal_cartilages.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-humerus",
-      "label": "B Humerus",
-      "node": "B_Humerus",
-      "asset": "./B_Humerus.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-radius",
-      "label": "B Radius",
-      "node": "B_Radius",
-      "asset": "./B_Radius.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-ribs",
-      "label": "B Ribs",
-      "node": "B_Ribs",
-      "asset": "./B_Ribs.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-scapula",
-      "label": "B Scapula",
-      "node": "B_Scapula",
-      "asset": "./B_Scapula.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-scapular-cartilage",
-      "label": "B Scapular cartilage",
-      "node": "B_Scapular_cartilage",
-      "asset": "./B_Scapular_cartilage.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-skull",
-      "label": "B Skull",
-      "node": "B_Skull",
-      "asset": "./B_Skull.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-t1",
-      "label": "B T1",
-      "node": "B_T1",
-      "asset": "./B_T1.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-t2",
-      "label": "B T2",
-      "node": "B_T2",
-      "asset": "./B_T2.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-t3",
-      "label": "B T3",
-      "node": "B_T3",
-      "asset": "./B_T3.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-t4",
-      "label": "B T4",
-      "node": "B_T4",
-      "asset": "./B_T4.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-t5",
-      "label": "B T5",
-      "node": "B_T5",
-      "asset": "./B_T5.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-teeth",
-      "label": "B Teeth",
-      "node": "B_Teeth",
-      "asset": "./B_Teeth.glb",
-      "region": "root"
-    },
-    {
-      "id": "root-b-ulna",
-      "label": "B Ulna",
-      "node": "B_Ulna",
-      "asset": "./B_Ulna.glb",
-      "region": "root"
-    },
-    {
       "id": "root-m-biceps",
       "label": "M biceps",
       "node": "M_biceps",
@@ -283,10 +129,10 @@
       "region": "root"
     },
     {
-      "id": "root-n-musculocutaneous-l",
-      "label": "N musculocutaneous L",
-      "node": "N_musculocutaneous_L",
-      "asset": "./N_musculocutaneous_L.glb",
+      "id": "root-n-musculocutaneous",
+      "label": "N musculocutaneous",
+      "node": "N_musculocutaneous",
+      "asset": "./N_musculocutaneous.glb",
       "region": "root"
     },
     {

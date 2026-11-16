@@ -13,6 +13,12 @@ export const ANATOMY_CATALOG: AnatomyCatalogEntry[] = [
   { id: "equine", title: "Equine", standIn: false, blurb: OSTEOLOGY_BLURB },
   { id: "bovine", title: "Bovine", standIn: false, blurb: OSTEOLOGY_BLURB },
   {
+    id: "canine-ivala",
+    title: "Canine (IVALA)",
+    standIn: false,
+    blurb: "IVALA canine mega · seated regions (lazy load)",
+  },
+  {
     id: "canine-heart-surface-topology",
     title: "Canine heart surface",
     standIn: false,
