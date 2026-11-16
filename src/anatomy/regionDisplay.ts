@@ -105,8 +105,7 @@ const FAMILY_RULES: { family: string; test: (id: string) => boolean }[] = [
   },
   {
     family: "Trunk",
-    test: (id) =>
-      id === "spine" || id === "ribs" || id === "organs" || id === "pelvis-tail",
+    test: (id) => id === "spine" || id === "ribs" || id === "pelvis-tail",
   },
 ];
 
