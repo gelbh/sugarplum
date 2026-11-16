@@ -19,6 +19,7 @@ import {
   Mesh,
   OrthographicCamera,
   PerspectiveCamera,
+  Plane,
   Raycaster,
   Scene,
   Vector2,
@@ -37,6 +38,12 @@ import {
   disposeGeometryWithBvh,
   installAnatomyAcceleratedRaycast,
 } from "./anatomyBvh";
+import {
+  SECTION_CLIP_NORMAL,
+  attachSectionClipPlanes,
+  parkedSectionClipConstant,
+  sectionClipConstant,
+} from "./anatomySectionClip";
 import { configureAnatomyGltfLoader } from "./configureGltfLoader";
 import { applyFit, applyFocus, orbitDistanceLimits } from "./cameraFit";
 import {
@@ -97,6 +104,10 @@ type Props = {
   cameraMode?: AnatomyCameraMode;
   /** Soft-fade non-selected visible structures. Default false. */
   fadeOthers?: boolean;
+  /** Cross-section clip plane. Default false. */
+  clipEnabled?: boolean;
+  /** Clip depth along scene +X through root AABB, 0–1. Default 0.5. */
+  clipDepth01?: number;
 };
 
 type EmissiveMat = Material & {
@@ -310,6 +321,8 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       autoFocus = true,
       cameraMode = "perspective",
       fadeOthers = false,
+      clipEnabled = false,
+      clipDepth01 = 0.5,
     },
     ref,
   ) {
@@ -321,6 +334,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
     const idByNodeRef = useRef<Map<string, string>>(new Map());
     const applyVisibilityRef = useRef<() => void>(() => {});
     const syncPresentationRef = useRef<() => void>(() => {});
+    const syncSectionClipRef = useRef<() => void>(() => {});
     const fitCameraRef = useRef<() => void>(() => {});
     const focusStructureRef = useRef<(id: string) => void>(() => {});
     const setCameraModeRef = useRef<(mode: AnatomyCameraMode) => void>(
@@ -337,6 +351,8 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
     const autoRotateRef = useRef(autoRotate);
     const wireframeRef = useRef(wireframe);
     const fadeOthersRef = useRef(fadeOthers);
+    const clipEnabledRef = useRef(clipEnabled);
+    const clipDepth01Ref = useRef(clipDepth01);
     const backgroundRef = useRef(background);
     const autoFocusRef = useRef(autoFocus);
     const cameraModeRef = useRef(cameraMode);
@@ -396,6 +412,14 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       fadeOthersRef.current = fadeOthers;
       syncPresentationRef.current();
     }, [fadeOthers]);
+    useEffect(() => {
+      clipEnabledRef.current = clipEnabled;
+      syncSectionClipRef.current();
+    }, [clipEnabled]);
+    useEffect(() => {
+      clipDepth01Ref.current = clipDepth01;
+      syncSectionClipRef.current();
+    }, [clipDepth01]);
     useEffect(() => {
       cameraModeRef.current = cameraMode;
       setCameraModeRef.current(cameraMode);
@@ -477,8 +501,16 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
 
       const renderer = new WebGLRenderer({ antialias: true, alpha: true });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.localClippingEnabled = false;
       applySceneBackground(scene, renderer, backgroundRef.current);
       rendererRef.current = renderer;
+      const sectionPlane = new Plane();
+      sectionPlane.normal.set(
+        SECTION_CLIP_NORMAL.x,
+        SECTION_CLIP_NORMAL.y,
+        SECTION_CLIP_NORMAL.z,
+      );
+      const sectionClipPlanes = [sectionPlane];
       const canvas = renderer.domElement;
       canvas.style.display = "block";
       canvas.style.width = "100%";
@@ -723,6 +755,21 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
       startClipLoopRef.current = startClipLoop;
       stopClipLoopRef.current = stopClipLoop;
       requestRenderRef.current = requestRender;
+      const syncSectionClip = () => {
+        if (disposed) return;
+        const hasStructures = nodeMapRef.current.size > 0;
+        const enabled = clipEnabledRef.current && hasStructures;
+        attachSectionClipPlanes(rootGroup, sectionClipPlanes);
+        const box = new Box3().setFromObject(rootGroup);
+        const minX = box.isEmpty() ? 0 : box.min.x;
+        const maxX = box.isEmpty() ? 0 : box.max.x;
+        sectionPlane.constant = enabled
+          ? sectionClipConstant(minX, maxX, clipDepth01Ref.current)
+          : parkedSectionClipConstant(minX, maxX);
+        renderer.localClippingEnabled = enabled;
+        requestRender();
+      };
+      syncSectionClipRef.current = syncSectionClip;
       controls.addEventListener("change", requestRender);
 
       const applyVisibility = () => {
@@ -989,6 +1036,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
             }
             if (wireframeRef.current) setTreeWireframe(model, true);
             applyVisibility();
+            syncSectionClip();
             requestRender();
           },
           () => {
@@ -1015,6 +1063,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         clipCtlRef.current?.dispose();
         clipCtlRef.current = composeClipControllers(assetClipBundles);
         applyVisibility();
+        syncSectionClip();
         fitCamera();
       })();
 
@@ -1024,6 +1073,7 @@ const AnatomyCanvas = forwardRef<AnatomyCanvasHandle, Props>(
         setLoaderVisible(false);
         applyVisibilityRef.current = () => {};
         syncPresentationRef.current = () => {};
+        syncSectionClipRef.current = () => {};
         fitCameraRef.current = () => {};
         focusStructureRef.current = () => {};
         setCameraModeRef.current = () => {};
