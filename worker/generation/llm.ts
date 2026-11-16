@@ -12,6 +12,20 @@ import {
   withCompactTruncationRetry,
 } from "./llm-json";
 import {
+  ZAI_DEFAULT_TEXT_MODEL,
+  ZAI_VISION_MODEL,
+  parseLlmProvider,
+  providerRequestUrl,
+  resolveZaiTextModel,
+  type UserLlmProvider,
+  type ZaiTextModel,
+} from "./llm-providers";
+import {
+  usageFromAnthropicShape,
+  usageFromGoogleShape,
+  usageFromOpenAiShape,
+} from "./llm-usage";
+import {
   GENERATE_COMPACT_SYSTEM_PROMPT,
   GENERATE_SYSTEM_PROMPT,
   IMAGE_GENERATE_SYSTEM_PROMPT,
@@ -28,49 +42,30 @@ export {
   withCompactTruncationRetry,
 };
 
-/** User-selectable BYO providers (Settings + Secrets). */
-export const USER_LLM_PROVIDERS = [
-  "openai",
-  "anthropic",
-  "google",
-  "zai",
-] as const;
-export type UserLlmProvider = (typeof USER_LLM_PROVIDERS)[number];
+export {
+  BYO_PROVIDERS_PHRASE,
+  LLM_PROVIDERS,
+  USER_LLM_PROVIDERS,
+  ZAI_DEFAULT_TEXT_MODEL,
+  ZAI_TEXT_MODELS,
+  ZAI_VISION_MODEL,
+  isUserLlmProvider,
+  parseLlmProvider,
+  providerRequestUrl,
+  resolveZaiTextModel,
+  type LlmProvider,
+  type UserLlmProvider,
+  type ZaiTextModel,
+} from "./llm-providers";
 
-/** Z.ai Settings text-model allowlist (vision uses ZAI_VISION_MODEL). */
-export const ZAI_TEXT_MODELS = [
-  "glm-4.7-flash",
-  "glm-4.7-flashx",
-  "glm-4.7",
-] as const;
-export type ZaiTextModel = (typeof ZAI_TEXT_MODELS)[number];
-export const ZAI_DEFAULT_TEXT_MODEL: ZaiTextModel = "glm-4.7-flash";
-export const ZAI_VISION_MODEL = "glm-4.6v-flash" as const;
+export {
+  usageFromAnthropicShape,
+  usageFromGoogleShape,
+  usageFromOpenAiShape,
+} from "./llm-usage";
+
 /** Same multi-card JSON headroom as the Workers AI free path. */
 const ZAI_MAX_TOKENS = 8192;
-
-function isZaiTextModel(value: string): value is ZaiTextModel {
-  return (ZAI_TEXT_MODELS as readonly string[]).includes(value);
-}
-
-/** Resolve a zai text model id: blank → default Flash, unknown → null. */
-export function resolveZaiTextModel(
-  raw: string | null | undefined,
-): ZaiTextModel | null {
-  const trimmed = typeof raw === "string" ? raw.trim() : "";
-  if (!trimmed) return ZAI_DEFAULT_TEXT_MODEL;
-  return isZaiTextModel(trimmed) ? trimmed : null;
-}
-
-export const BYO_PROVIDERS_PHRASE = "OpenAI, Anthropic, Google, or Z.ai";
-
-/** Includes test fixture + internal platform provider. */
-export const LLM_PROVIDERS = [
-  ...USER_LLM_PROVIDERS,
-  "mock",
-  "workers-ai",
-] as const;
-export type LlmProvider = (typeof LLM_PROVIDERS)[number];
 
 export type GenerateImageInput = {
   mimeType: string;
@@ -113,115 +108,6 @@ export type LlmAdapter = {
   generateDrafts(input: GenerateDraftsInput): Promise<CardDraft[]>;
   complete(input: CompleteInput): Promise<CompleteResult>;
 };
-
-function asUsageInt(value: unknown): number | null {
-  if (typeof value !== "number" || !Number.isFinite(value)) return null;
-  return Math.trunc(value);
-}
-
-/** OpenAI-style `usage` object. */
-export function usageFromOpenAiShape(body: unknown): LlmTokenUsage | null {
-  if (!body || typeof body !== "object") return null;
-  const usage = (body as { usage?: unknown }).usage;
-  if (!usage || typeof usage !== "object") return null;
-  const u = usage as Record<string, unknown>;
-  const prompt_tokens = asUsageInt(u.prompt_tokens);
-  const completion_tokens = asUsageInt(u.completion_tokens);
-  let total_tokens = asUsageInt(u.total_tokens);
-  if (
-    total_tokens == null &&
-    (prompt_tokens != null || completion_tokens != null)
-  ) {
-    total_tokens = (prompt_tokens ?? 0) + (completion_tokens ?? 0);
-  }
-  if (
-    prompt_tokens == null &&
-    completion_tokens == null &&
-    total_tokens == null
-  ) {
-    return null;
-  }
-  return { prompt_tokens, completion_tokens, total_tokens };
-}
-
-/** Anthropic Messages `usage` (`input_tokens` / `output_tokens`). */
-export function usageFromAnthropicShape(body: unknown): LlmTokenUsage | null {
-  if (!body || typeof body !== "object") return null;
-  const usage = (body as { usage?: unknown }).usage;
-  if (!usage || typeof usage !== "object") return null;
-  const u = usage as Record<string, unknown>;
-  const prompt_tokens = asUsageInt(u.input_tokens);
-  const completion_tokens = asUsageInt(u.output_tokens);
-  if (prompt_tokens == null && completion_tokens == null) return null;
-  return {
-    prompt_tokens,
-    completion_tokens,
-    total_tokens: (prompt_tokens ?? 0) + (completion_tokens ?? 0),
-  };
-}
-
-/** Google `usageMetadata` token counts. */
-export function usageFromGoogleShape(body: unknown): LlmTokenUsage | null {
-  if (!body || typeof body !== "object") return null;
-  const meta = (body as { usageMetadata?: unknown }).usageMetadata;
-  if (!meta || typeof meta !== "object") return null;
-  const m = meta as Record<string, unknown>;
-  const prompt_tokens = asUsageInt(m.promptTokenCount);
-  const completion_tokens = asUsageInt(m.candidatesTokenCount);
-  let total_tokens = asUsageInt(m.totalTokenCount);
-  if (
-    total_tokens == null &&
-    (prompt_tokens != null || completion_tokens != null)
-  ) {
-    total_tokens = (prompt_tokens ?? 0) + (completion_tokens ?? 0);
-  }
-  if (
-    prompt_tokens == null &&
-    completion_tokens == null &&
-    total_tokens == null
-  ) {
-    return null;
-  }
-  return { prompt_tokens, completion_tokens, total_tokens };
-}
-
-export function isUserLlmProvider(value: string): value is UserLlmProvider {
-  return (USER_LLM_PROVIDERS as readonly string[]).includes(value);
-}
-
-export function parseLlmProvider(raw: string): LlmProvider {
-  const p = raw.trim().toLowerCase();
-  if ((LLM_PROVIDERS as readonly string[]).includes(p)) {
-    return p as LlmProvider;
-  }
-  throw new Error(
-    `Unsupported LLM provider "${raw.trim()}". Allowed: ${USER_LLM_PROVIDERS.join(", ")}`,
-  );
-}
-
-/** Absolute request URL for the provider's generate call (tests assert routing). */
-export function providerRequestUrl(provider: LlmProvider): string {
-  switch (provider) {
-    case "openai":
-      return "https://api.openai.com/v1/chat/completions";
-    case "anthropic":
-      return "https://api.anthropic.com/v1/messages";
-    case "google": {
-      const model = "gemini-2.0-flash";
-      return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-    }
-    case "zai":
-      return "https://api.z.ai/api/paas/v4/chat/completions";
-    case "mock":
-      throw new Error("mock provider has no network URL");
-    case "workers-ai":
-      throw new Error("workers-ai uses env.AI binding, not HTTP");
-    default: {
-      const _exhaustive: never = provider;
-      return _exhaustive;
-    }
-  }
-}
 
 export function userPromptForJson(text: string): string {
   return `${generateUserPrompt(text)}\n\nReturn JSON as {"cards":[...]}`;
