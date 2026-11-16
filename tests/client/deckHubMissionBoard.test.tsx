@@ -76,7 +76,7 @@ describe("deck hub mission board smoke", () => {
     );
   });
 
-  it("renders a distinct icon per mission tile", async () => {
+  it("renders a distinct image mark per mission tile", async () => {
     const onOpen = vi.fn();
     await render(
       createElement(MissionBoard, {
@@ -89,15 +89,21 @@ describe("deck hub mission board smoke", () => {
     );
     const tiles = document.querySelectorAll('[role="listitem"]');
     expect(tiles).toHaveLength(4);
-    for (const tile of tiles) {
-      expect(tile.querySelector("svg")).not.toBeNull();
-    }
+    const srcs = [...tiles].map((tile) => tile.querySelector("img")?.getAttribute("src"));
+    expect(srcs.every(Boolean)).toBe(true);
+    expect(new Set(srcs).size).toBe(4);
     expect(
-      document.querySelector('[data-tile-id="addMaterial"] svg'),
-    ).not.toBeNull();
-    expect(document.querySelector('[data-tile-id="drafts"] svg')).not.toBeNull();
-    expect(document.querySelector('[data-tile-id="cards"] svg')).not.toBeNull();
-    expect(document.querySelector('[data-tile-id="study"] svg')).not.toBeNull();
+      document.querySelector('[data-tile-id="addMaterial"] img')?.getAttribute("src"),
+    ).toContain("muscle.webp");
+    expect(
+      document.querySelector('[data-tile-id="drafts"] img')?.getAttribute("src"),
+    ).toContain("pineapple.svg");
+    expect(
+      document.querySelector('[data-tile-id="cards"] img')?.getAttribute("src"),
+    ).toContain("orange.svg");
+    expect(
+      document.querySelector('[data-tile-id="study"] img')?.getAttribute("src"),
+    ).toContain("strawberry.svg");
   });
 
   it("opens Add material from the mission board tile", async () => {
