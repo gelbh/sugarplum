@@ -11,6 +11,7 @@
     "deploy": "npm run build && wrangler deploy",
     "cf-typegen": "wrangler types",
     "test": "vitest run",
+    "check:asset-size": "node scripts/checkWorkersAssetSize.mjs public",
     "eval:live": "vitest run --config vitest.live.config.ts",
     "db:migrate:local": "wrangler d1 migrations apply sugarplum --local",
     "db:seed:local": "node scripts/seed-local-dev.mjs"

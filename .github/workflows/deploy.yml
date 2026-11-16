@@ -38,6 +38,9 @@ jobs:
       - name: Typecheck and build
         run: npm run build
 
+      - name: Check Workers asset sizes
+        run: node scripts/checkWorkersAssetSize.mjs public && node scripts/checkWorkersAssetSize.mjs dist/client
+
       - name: Apply D1 migrations
         uses: cloudflare/wrangler-action@v4
         with:
