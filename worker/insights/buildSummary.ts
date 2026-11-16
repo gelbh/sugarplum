@@ -1,14 +1,6 @@
 import { State } from "ts-fsrs";
-import {
-  buildConsistency,
-  buildDifficultyMix,
-  buildGradeCountsByMaturity,
-  buildStabilitySnapshot,
-  buildTrueRetention,
-  buildWorkloadFromDues,
-  reviewRowsInLocalWindow,
-  type InsightsReviewLogRow,
-} from "../../src/insights/buildMetrics";
+import { assembleInsightsAnkiMetrics } from "../../src/insights/assembleAnkiMetrics";
+import type { InsightsReviewLogRow } from "../../src/insights/buildMetrics";
 import {
   buildGradeCounts,
   buildReviewsPerDay,
@@ -138,14 +130,6 @@ export async function buildInsightsSummary(
       todayKey,
     ),
   );
-  const gradeWindowRows = reviewRowsInLocalWindow(
-    metricLogs,
-    now,
-    tzOffsetMinutes,
-    INSIGHTS_GRADE_DAYS,
-    todayKey,
-  );
-  const gradeCountsByMaturity = buildGradeCountsByMaturity(gradeWindowRows);
   const reviewedToday =
     reviewsPerDay.find((d) => d.day === todayKey)?.count ?? 0;
   const reviewsInWindow = reviewsPerDay.reduce((sum, d) => sum + d.count, 0);
@@ -199,24 +183,17 @@ export async function buildInsightsSummary(
         Number.isFinite(r.scheduled_days),
     )
     .map((r) => r.scheduled_days as number);
-  const workload = buildWorkloadFromDues(
-    dues,
-    now,
-    tzOffsetMinutes,
-    reviewIntervals,
-    undefined,
-    todayKey,
-  );
-  const trueRetention = buildTrueRetention(
+  const anki = assembleInsightsAnkiMetrics({
     metricLogs,
+    reviewsPerDay,
+    dues,
+    reviewIntervals,
+    difficulties: schedules.map((r) => r.difficulty),
+    stabilities: schedules.map((r) => r.stability),
     now,
     tzOffsetMinutes,
-    undefined,
-    todayKey,
-  );
-  const consistency = buildConsistency(reviewsPerDay);
-  const difficulty = buildDifficultyMix(schedules.map((r) => r.difficulty));
-  const stability = buildStabilitySnapshot(schedules.map((r) => r.stability));
+    todayKeyOverride: todayKey,
+  });
 
   await ensureUserGamification(db, userId);
   const gamRow = await db
@@ -253,13 +230,13 @@ export async function buildInsightsSummary(
         graduated: knowledge.graduated,
         graduatedPct: knowledge.graduatedPct,
       },
-      dueToday: workload.dueToday,
-      overdue: workload.overdue,
-      dailyLoad: workload.dailyLoad,
-      trueRetention,
-      consistency,
-      difficulty,
-      stability,
+      dueToday: anki.dueToday,
+      overdue: anki.overdue,
+      dailyLoad: anki.dailyLoad,
+      trueRetention: anki.trueRetention,
+      consistency: anki.consistency,
+      difficulty: anki.difficulty,
+      stability: anki.stability,
     },
     gamification: {
       streakCurrent: gamRow?.streak_current ?? 0,
@@ -269,8 +246,8 @@ export async function buildInsightsSummary(
     },
     reviewsPerDay,
     activityByDay,
-    futureDue: workload.futureDue,
+    futureDue: anki.futureDue,
     gradeCounts,
-    gradeCountsByMaturity,
+    gradeCountsByMaturity: anki.gradeCountsByMaturity,
   };
 }

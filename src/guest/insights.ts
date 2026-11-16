@@ -1,14 +1,6 @@
 import { State } from "ts-fsrs";
-import {
-  buildConsistency,
-  buildDifficultyMix,
-  buildGradeCountsByMaturity,
-  buildStabilitySnapshot,
-  buildTrueRetention,
-  buildWorkloadFromDues,
-  reviewRowsInLocalWindow,
-  type InsightsReviewLogRow,
-} from "../insights/buildMetrics";
+import { assembleInsightsAnkiMetrics } from "../insights/assembleAnkiMetrics";
+import type { InsightsReviewLogRow } from "../insights/buildMetrics";
 import {
   buildGradeCounts,
   buildReviewsPerDay,
@@ -73,14 +65,6 @@ export function guestInsightsSummary(
   const gradeCounts = buildGradeCounts(
     ratingsInLocalWindow(logs, now, tzOffsetMinutes, INSIGHTS_GRADE_DAYS),
   );
-  const gradeCountsByMaturity = buildGradeCountsByMaturity(
-    reviewRowsInLocalWindow(
-      metricLogs,
-      now,
-      tzOffsetMinutes,
-      INSIGHTS_GRADE_DAYS,
-    ),
-  );
   const todayKey = localDayKey(now, tzOffsetMinutes);
   const reviewedToday =
     reviewsPerDay.find((d) => d.day === todayKey)?.count ?? 0;
@@ -116,18 +100,16 @@ export function guestInsightsSummary(
         Number.isFinite(r.scheduled_days),
     )
     .map((r) => r.scheduled_days as number);
-  const workload = buildWorkloadFromDues(
+  const anki = assembleInsightsAnkiMetrics({
+    metricLogs,
+    reviewsPerDay,
     dues,
+    reviewIntervals,
+    difficulties: scheduleRows.map((r) => r.difficulty),
+    stabilities: scheduleRows.map((r) => r.stability),
     now,
     tzOffsetMinutes,
-    reviewIntervals,
-  );
-  const trueRetention = buildTrueRetention(metricLogs, now, tzOffsetMinutes);
-  const consistency = buildConsistency(reviewsPerDay);
-  const difficulty = buildDifficultyMix(scheduleRows.map((r) => r.difficulty));
-  const stability = buildStabilitySnapshot(
-    scheduleRows.map((r) => r.stability),
-  );
+  });
 
   return {
     window: {
@@ -149,19 +131,19 @@ export function guestInsightsSummary(
         graduated: knowledge.graduated,
         graduatedPct: knowledge.graduatedPct,
       },
-      dueToday: workload.dueToday,
-      overdue: workload.overdue,
-      dailyLoad: workload.dailyLoad,
-      trueRetention,
-      consistency,
-      difficulty,
-      stability,
+      dueToday: anki.dueToday,
+      overdue: anki.overdue,
+      dailyLoad: anki.dailyLoad,
+      trueRetention: anki.trueRetention,
+      consistency: anki.consistency,
+      difficulty: anki.difficulty,
+      stability: anki.stability,
     },
     gamification: null,
     reviewsPerDay,
     activityByDay,
-    futureDue: workload.futureDue,
+    futureDue: anki.futureDue,
     gradeCounts,
-    gradeCountsByMaturity,
+    gradeCountsByMaturity: anki.gradeCountsByMaturity,
   };
 }
