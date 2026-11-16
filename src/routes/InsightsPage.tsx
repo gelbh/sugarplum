@@ -68,6 +68,26 @@ export default function InsightsPage() {
     summary?.kpis.avgRetrievability == null
       ? null
       : Math.round(100 * summary.kpis.avgRetrievability);
+  const retentionPct =
+    summary?.kpis.trueRetention.overall.rate == null
+      ? null
+      : Math.round(100 * summary.kpis.trueRetention.overall.rate);
+  const youngPct =
+    summary?.kpis.trueRetention.young.rate == null
+      ? null
+      : Math.round(100 * summary.kpis.trueRetention.young.rate);
+  const maturePct =
+    summary?.kpis.trueRetention.mature.rate == null
+      ? null
+      : Math.round(100 * summary.kpis.trueRetention.mature.rate);
+  const etkDisplay =
+    summary?.kpis.etk == null
+      ? null
+      : Math.round(summary.kpis.etk * 10) / 10;
+  const consistencyPct =
+    summary == null
+      ? null
+      : Math.round(100 * summary.kpis.consistency.score);
 
   return (
     <Container maxWidth="md" sx={{ py: { xs: 4, md: 5 } }}>
@@ -133,31 +153,119 @@ export default function InsightsPage() {
                       Average chance you remember accepted cards right now.
                     </Typography>
                   </Box>
-                  {summary.gamification ? (
-                    <>
-                      <Divider
-                        orientation="vertical"
-                        flexItem
+                  <Divider
+                    orientation="vertical"
+                    flexItem
+                    sx={{
+                      display: { xs: "none", sm: "block" },
+                      mx: 3,
+                      borderColor: "divider",
+                    }}
+                  />
+                  <Divider
+                    sx={{
+                      display: { xs: "block", sm: "none" },
+                      borderColor: "divider",
+                    }}
+                  />
+                  <Stack
+                    direction="row"
+                    spacing={3}
+                    useFlexGap
+                    flexWrap="wrap"
+                    sx={{
+                      alignItems: { xs: "flex-start", sm: "center" },
+                      pt: { xs: 0, sm: 0.5 },
+                      flex: 2,
+                      minWidth: 0,
+                    }}
+                  >
+                    <Box>
+                      <Typography
+                        variant="h5"
                         sx={{
-                          display: { xs: "none", sm: "block" },
-                          mx: 3,
-                          borderColor: "divider",
-                        }}
-                      />
-                      <Divider
-                        sx={{
-                          display: { xs: "block", sm: "none" },
-                          borderColor: "divider",
-                        }}
-                      />
-                      <Stack
-                        direction="row"
-                        spacing={3}
-                        sx={{
-                          alignItems: { xs: "flex-start", sm: "center" },
-                          pt: { xs: 0, sm: 0.5 },
+                          fontWeight: 600,
+                          fontVariantNumeric: "tabular-nums",
+                          lineHeight: 1.1,
                         }}
                       >
+                        {etkDisplay == null ? "—" : `~${etkDisplay}`}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ display: "block", mt: 0.5 }}
+                      >
+                        Cards remembered
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography
+                        variant="h5"
+                        sx={{
+                          fontWeight: 600,
+                          fontVariantNumeric: "tabular-nums",
+                          lineHeight: 1.1,
+                        }}
+                      >
+                        {retentionPct == null ? "—" : `${retentionPct}%`}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ display: "block", mt: 0.5 }}
+                      >
+                        True retention
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ display: "block" }}
+                      >
+                        Young {youngPct == null ? "—" : `${youngPct}%`} · Mature{" "}
+                        {maturePct == null ? "—" : `${maturePct}%`}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography
+                        variant="h5"
+                        sx={{
+                          fontWeight: 600,
+                          fontVariantNumeric: "tabular-nums",
+                          lineHeight: 1.1,
+                        }}
+                      >
+                        {summary.kpis.dueToday}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ display: "block", mt: 0.5 }}
+                      >
+                        Due today
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography
+                        variant="h5"
+                        sx={{
+                          fontWeight: 600,
+                          fontVariantNumeric: "tabular-nums",
+                          lineHeight: 1.1,
+                        }}
+                      >
+                        {summary.kpis.overdue}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ display: "block", mt: 0.5 }}
+                      >
+                        Overdue
+                      </Typography>
+                    </Box>
+                    {summary.gamification ? (
+                      <>
                         <Box>
                           <Typography
                             variant="h5"
@@ -196,9 +304,9 @@ export default function InsightsPage() {
                             {summary.gamification.xpTotal} XP
                           </Typography>
                         </Box>
-                      </Stack>
-                    </>
-                  ) : null}
+                      </>
+                    ) : null}
+                  </Stack>
                 </Stack>
               </Paper>
 
@@ -211,6 +319,33 @@ export default function InsightsPage() {
                 />
                 <Box sx={{ mt: 3 }}>
                   <ActivityHeatmap series={summary.activityByDay} />
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: "block", mt: 1 }}
+                  >
+                    Studied {summary.kpis.consistency.activeDays}/
+                    {summary.kpis.consistency.windowDays} days · consistency{" "}
+                    {consistencyPct}%
+                    {summary.kpis.dailyLoad == null
+                      ? null
+                      : ` · Steady-state load ~${summary.kpis.dailyLoad} cards/day`}
+                  </Typography>
+                  {summary.kpis.difficulty.total > 0 ||
+                  summary.kpis.stability.medianDays != null ? (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: "block", mt: 0.5 }}
+                    >
+                      Difficulty easy {summary.kpis.difficulty.easy} · medium{" "}
+                      {summary.kpis.difficulty.medium} · hard{" "}
+                      {summary.kpis.difficulty.hard}
+                      {summary.kpis.stability.medianDays == null
+                        ? null
+                        : ` · Median stability ${summary.kpis.stability.medianDays}d`}
+                    </Typography>
+                  ) : null}
                 </Box>
               </Paper>
 

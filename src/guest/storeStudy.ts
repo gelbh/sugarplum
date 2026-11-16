@@ -399,7 +399,13 @@ export async function guestReviewCard(
     }
     store.reviewLogs = [
       ...store.reviewLogs,
-      { cardId, rating, at: nowIsoValue, state: log.state },
+      {
+        cardId,
+        rating,
+        at: nowIsoValue,
+        state: log.state,
+        scheduledDays: next.scheduled_days,
+      },
     ];
     if (wasNew) {
       const day = opts?.localDay ?? clientLocalDay(now);

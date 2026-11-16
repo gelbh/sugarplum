@@ -1,3 +1,14 @@
+import { State } from "ts-fsrs";
+import {
+  buildConsistency,
+  buildDifficultyMix,
+  buildGradeCountsByMaturity,
+  buildStabilitySnapshot,
+  buildTrueRetention,
+  buildWorkloadFromDues,
+  reviewRowsInLocalWindow,
+  type InsightsReviewLogRow,
+} from "../../src/insights/buildMetrics";
 import {
   buildGradeCounts,
   buildReviewsPerDay,
@@ -25,9 +36,23 @@ type ReviewRow = {
   card_id: string;
   reviewed_at: string;
   rating: number;
+  scheduled_days: number | null;
 };
 
 type ScheduleRow = CompositionScheduleInput;
+
+function toMetricLogs(rows: ReviewRow[]): InsightsReviewLogRow[] {
+  return rows.map((r) => ({
+    card_id: r.card_id,
+    reviewed_at: r.reviewed_at,
+    rating: r.rating,
+    scheduled_days:
+      r.scheduled_days == null || !Number.isFinite(r.scheduled_days)
+        ? null
+        : r.scheduled_days,
+    state: null,
+  }));
+}
 
 export async function buildInsightsSummary(
   db: D1Database,
@@ -52,7 +77,10 @@ export async function buildInsightsSummary(
 
   const { results: reviewRows } = await db
     .prepare(
-      `SELECT rl.card_id AS card_id, rl.reviewed_at AS reviewed_at, rl.rating AS rating
+      `SELECT rl.card_id AS card_id,
+              rl.reviewed_at AS reviewed_at,
+              rl.rating AS rating,
+              rl.scheduled_days AS scheduled_days
        FROM review_logs rl
        INNER JOIN cards c ON c.id = rl.card_id
        INNER JOIN decks d ON d.id = c.deck_id
@@ -64,6 +92,7 @@ export async function buildInsightsSummary(
     .all<ReviewRow>();
 
   const logs = reviewRows ?? [];
+  const metricLogs = toMetricLogs(logs);
   const reviewedAts = logs.map((r) => r.reviewed_at);
   const activityByDay = buildReviewsPerDay(
     reviewedAts,
@@ -88,6 +117,14 @@ export async function buildInsightsSummary(
       todayKey,
     ),
   );
+  const gradeWindowRows = reviewRowsInLocalWindow(
+    metricLogs,
+    now,
+    tzOffsetMinutes,
+    INSIGHTS_GRADE_DAYS,
+    todayKey,
+  );
+  const gradeCountsByMaturity = buildGradeCountsByMaturity(gradeWindowRows);
   const reviewedToday =
     reviewsPerDay.find((d) => d.day === todayKey)?.count ?? 0;
   const reviewsInWindow = reviewsPerDay.reduce((sum, d) => sum + d.count, 0);
@@ -113,8 +150,9 @@ export async function buildInsightsSummary(
     .bind(userId)
     .all<ScheduleRow>();
 
+  const schedules = scheduleRows ?? [];
   const knowledge = composeSubjectKnowledge(
-    (scheduleRows ?? []).map((row) => ({
+    schedules.map((row) => ({
       state: row.state ?? null,
       scheduled_days: row.scheduled_days ?? null,
       due: row.due ?? null,
@@ -128,6 +166,36 @@ export async function buildInsightsSummary(
     })),
     now,
   );
+
+  const dues = schedules
+    .map((r) => r.due)
+    .filter((d): d is string => typeof d === "string" && d.length > 0);
+  const reviewIntervals = schedules
+    .filter(
+      (r) =>
+        r.state === State.Review &&
+        r.scheduled_days != null &&
+        Number.isFinite(r.scheduled_days),
+    )
+    .map((r) => r.scheduled_days as number);
+  const workload = buildWorkloadFromDues(
+    dues,
+    now,
+    tzOffsetMinutes,
+    reviewIntervals,
+    undefined,
+    todayKey,
+  );
+  const trueRetention = buildTrueRetention(
+    metricLogs,
+    now,
+    tzOffsetMinutes,
+    undefined,
+    todayKey,
+  );
+  const consistency = buildConsistency(reviewsPerDay);
+  const difficulty = buildDifficultyMix(schedules.map((r) => r.difficulty));
+  const stability = buildStabilitySnapshot(schedules.map((r) => r.stability));
 
   await ensureUserGamification(db, userId);
   const gamRow = await db
@@ -164,6 +232,13 @@ export async function buildInsightsSummary(
         graduated: knowledge.graduated,
         graduatedPct: knowledge.graduatedPct,
       },
+      dueToday: workload.dueToday,
+      overdue: workload.overdue,
+      dailyLoad: workload.dailyLoad,
+      trueRetention,
+      consistency,
+      difficulty,
+      stability,
     },
     gamification: {
       streakCurrent: gamRow?.streak_current ?? 0,
@@ -173,6 +248,8 @@ export async function buildInsightsSummary(
     },
     reviewsPerDay,
     activityByDay,
+    futureDue: workload.futureDue,
     gradeCounts,
+    gradeCountsByMaturity,
   };
 }
