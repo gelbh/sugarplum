@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import BlurOnOutlinedIcon from "@mui/icons-material/BlurOnOutlined";
 import CenterFocusStrongOutlinedIcon from "@mui/icons-material/CenterFocusStrongOutlined";
+import ContentCutOutlinedIcon from "@mui/icons-material/ContentCutOutlined";
 import CropFreeOutlinedIcon from "@mui/icons-material/CropFreeOutlined";
 import FilterCenterFocusOutlinedIcon from "@mui/icons-material/FilterCenterFocusOutlined";
 import FullscreenExitOutlinedIcon from "@mui/icons-material/FullscreenExitOutlined";
@@ -20,6 +21,7 @@ import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import Slider from "@mui/material/Slider";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -140,6 +142,8 @@ export default function AnatomyViewerPage({
   const [autoRotate, setAutoRotate] = useState(false);
   const [wireframe, setWireframe] = useState(false);
   const [fadeOthers, setFadeOthers] = useState(false);
+  const [clipEnabled, setClipEnabled] = useState(false);
+  const [clipDepth01, setClipDepth01] = useState(0.5);
   const [autoFocus, setAutoFocus] = useState(true);
   const [cameraMode, setCameraMode] =
     useState<AnatomyCameraMode>("perspective");
@@ -360,6 +364,10 @@ export default function AnatomyViewerPage({
   };
 
   const canvasReady = !!manifest && !!loads && loads.length > 0;
+  const toggleClipPlane = () => {
+    if (!canvasReady || loads.length === 0) return;
+    setClipEnabled((on) => !on);
+  };
   const sceneClips = manifest?.clips ?? [];
   const hasClips = sceneClips.length > 0;
   const { showClipBar, showClipsTrigger } = anatomyClipChrome(mobile, hasClips);
@@ -707,6 +715,36 @@ export default function AnatomyViewerPage({
                     </span>
                   </Tooltip>
                   <Tooltip
+                    title={clipEnabled ? "Clip plane on" : "Clip plane off"}
+                  >
+                    <span>
+                      <IconButton
+                        size="small"
+                        disabled={!canvasReady || loads.length === 0}
+                        color={clipEnabled ? "primary" : "default"}
+                        aria-pressed={clipEnabled}
+                        aria-label="Clip plane"
+                        onClick={toggleClipPlane}
+                      >
+                        <ContentCutOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                  {clipEnabled ? (
+                    <Slider
+                      size="small"
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      value={clipDepth01}
+                      onChange={(_, v) =>
+                        setClipDepth01(typeof v === "number" ? v : v[0])
+                      }
+                      aria-label="Clip depth"
+                      sx={{ width: 96, mx: 1 }}
+                    />
+                  ) : null}
+                  <Tooltip
                     title={autoFocus ? "Auto-focus on" : "Auto-focus off"}
                   >
                     <span>
@@ -852,6 +890,16 @@ export default function AnatomyViewerPage({
                 Fade others
               </MenuItem>
               <MenuItem
+                disabled={!canvasReady || loads.length === 0}
+                selected={clipEnabled}
+                onClick={() => {
+                  toggleClipPlane();
+                  setMoreAnchor(null);
+                }}
+              >
+                Clip plane
+              </MenuItem>
+              <MenuItem
                 disabled={!canvasReady}
                 selected={autoFocus}
                 onClick={() => {
@@ -921,6 +969,8 @@ export default function AnatomyViewerPage({
                   autoRotate={autoRotate}
                   wireframe={wireframe}
                   fadeOthers={fadeOthers}
+                  clipEnabled={clipEnabled}
+                  clipDepth01={clipDepth01}
                   autoFocus={autoFocus}
                   cameraMode={cameraMode}
                   onSelect={(id) => dispatch({ type: "select", id })}
