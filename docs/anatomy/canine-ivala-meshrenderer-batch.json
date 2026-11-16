@@ -1,0 +1,14 @@
+{
+  "ok": 1,
+  "fail": 0,
+  "results": [
+    {
+      "packId": "canine-forelimb-bones",
+      "stem": "canine_forelimb_bones",
+      "unity3d": "/tmp/rea-ivala/inner-raw/canine_forelimb_bones.unity3d",
+      "align": "world",
+      "ok": true,
+      "meshCount": 40
+    }
+  ]
+}

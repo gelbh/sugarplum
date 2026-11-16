@@ -18,6 +18,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import type { AnatomyRegion, AnatomyStructure } from "./types";
 import type { StructureUiAction, StructureUiState } from "./structureState";
+import { didacticColorFor } from "./didacticPalette";
 import { groupRegionsByFamily, type RegionDisplay } from "./regionDisplay";
 
 type Props = {
@@ -71,6 +72,7 @@ function RegionToggle({
   active: boolean;
   onToggle: () => void;
 }) {
+  const tint = didacticColorFor({ region: display.region.id });
   return (
     <ButtonBase
       focusRipple
@@ -120,9 +122,27 @@ function RegionToggle({
           height: 16,
           flexShrink: 0,
           opacity: active ? 1 : 0.85,
+          position: "relative",
         }}
       >
         {regionIcon(display.region.id)}
+        {tint ? (
+          <Box
+            component="span"
+            aria-hidden
+            sx={{
+              position: "absolute",
+              right: -2,
+              bottom: -1,
+              width: 7,
+              height: 7,
+              borderRadius: "50%",
+              bgcolor: tint,
+              border: "1px solid",
+              borderColor: active ? "primary.contrastText" : "background.paper",
+            }}
+          />
+        ) : null}
       </Box>
       <Typography
         variant="body2"
@@ -345,12 +365,25 @@ export default function StructurePanel({
       }}
     >
       {regionGroups.length > 0 ? (
-        <Box sx={{ flexShrink: 0 }}>
+        <Box
+          sx={{
+            // Regions used to be flexShrink:0 with no overflow, so family
+            // chips clipped below the panel edge with no way to reach them.
+            flex: "0 1 auto",
+            flexShrink: 1,
+            minHeight: { xs: "9.5rem", md: 0 },
+            maxHeight: { xs: "65%", md: "48%" },
+            overflowY: "auto",
+            overscrollBehavior: "contain",
+            touchAction: "pan-y",
+            WebkitOverflowScrolling: "touch",
+          }}
+        >
           <Stack
             direction="row"
             alignItems="center"
             justifyContent="space-between"
-            sx={{ mb: 0.75 }}
+            sx={{ mb: 0.75, position: "sticky", top: 0, zIndex: 1, bgcolor: "background.paper", pt: 0.25 }}
           >
             <Typography
               variant="subtitle2"
