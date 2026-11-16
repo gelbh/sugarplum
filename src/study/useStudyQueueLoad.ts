@@ -58,10 +58,8 @@ export function useStudyQueueLoad({
   const [hadCards, setHadCards] = useState(false);
   const [queueMeta, setQueueMeta] = useState<StudyQueueMeta | null>(null);
   const queueRef = useRef<CardDraftView[]>([]);
-  const introBonusRef = useRef<number | undefined>(undefined);
-  if (introBonusRef.current === undefined) {
-    introBonusRef.current = getIntroBonus();
-  }
+  const [introBonusSeed] = useState(() => getIntroBonus());
+  const introBonusRef = useRef(introBonusSeed);
 
   const applyDueQueue = useCallback(
     (cards: CardDraftView[], wanted: string | null) => {

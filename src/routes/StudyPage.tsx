@@ -145,8 +145,11 @@ export default function StudyPage() {
     userId,
   });
 
-  loadRef.current = load;
-  setErrorRef.current = setError;
+  // Layout so pending-sync online handlers see the latest load/setError on first paint.
+  useLayoutEffect(() => {
+    loadRef.current = load;
+    setErrorRef.current = setError;
+  }, [load, setError]);
 
   const {
     pendingLearning,
