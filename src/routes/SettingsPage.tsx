@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -19,30 +19,24 @@ import Brightness6Icon from "@mui/icons-material/Brightness6";
 import Switch from "@mui/material/Switch";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import {
-  ApiError,
-  deleteLlmSettings,
-  disconnectCalendar,
-  getCalendarStatus,
-  getGamification,
-  getLlmSettings,
-  getStudyPrefs,
-  listDueCards,
-  patchGamificationSettings,
-  putLlmSettings,
-  putStudyPrefs,
   type CalendarStatus,
   type GamificationResponse,
   type LlmSettings,
   type StudyPrefs,
 } from "../api/client";
 import MagnificCredits from "../achievements/MagnificCredits";
-import { isGuest } from "../guest/session";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { useSession } from "../session/SessionContext";
 import { freeGenFaqBody, freeGenIntroBlurb } from "../settings/freeGenFaq";
 import SettingsSectionNav from "../settings/SettingsSectionNav";
 import StudyPacingSection from "../settings/StudyPacingSection";
+import { settingsQueryMessage } from "../settings/settingsQueryMessage";
+import { useSettingsAchievementsForm } from "../settings/useSettingsAchievementsForm";
+import { useSettingsCalendar } from "../settings/useSettingsCalendar";
+import { useSettingsLlmForm } from "../settings/useSettingsLlmForm";
+import { useSettingsLoad } from "../settings/useSettingsLoad";
+import { useSettingsStudyForm } from "../settings/useSettingsStudyForm";
 import {
   ZAI_DEFAULT_TEXT_MODEL,
   ZAI_TEXT_MODEL_OPTIONS,
@@ -88,45 +82,6 @@ const PROVIDERS: ReadonlyArray<{
   { value: "google", label: "Google", icon: CloudOutlinedIcon },
   { value: "zai", label: "Z.ai", icon: BoltOutlinedIcon },
 ];
-
-function settingsQueryMessage(): {
-  error: string | null;
-  notice: string | null;
-} {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("linked") === "1") {
-    return { error: null, notice: "Google account linked." };
-  }
-  if (params.get("calendar") === "1") {
-    return { error: null, notice: "Google Calendar connected." };
-  }
-  const code = params.get("error");
-  if (code === "oauth_conflict") {
-    return {
-      error: "That Google account is already linked to a different user.",
-      notice: null,
-    };
-  }
-  if (code === "oauth_email_mismatch") {
-    return {
-      error: "Google email must match your Sugarplum account email.",
-      notice: null,
-    };
-  }
-  if (code === "oauth_denied") {
-    return { error: "Google linking was cancelled.", notice: null };
-  }
-  if (code === "oauth") {
-    return { error: "Google linking failed. Try again.", notice: null };
-  }
-  if (code === "calendar" || code === "calendar_refresh") {
-    return {
-      error: "Calendar connection failed. Try again.",
-      notice: null,
-    };
-  }
-  return { error: null, notice: null };
-}
 
 export default function SettingsPage() {
   const { user, logout } = useSession();
@@ -187,197 +142,88 @@ export default function SettingsPage() {
   const themeMode: ThemeMode =
     mode === "light" || mode === "dark" || mode === "system" ? mode : "system";
 
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const guestMode = isGuest();
-        const settings = await getLlmSettings();
-        const prefs = await getStudyPrefs();
-        const gam = guestMode
-          ? null
-          : await getGamification().catch(() => null);
-        const calendar = guestMode
-          ? null
-          : await getCalendarStatus().catch(() => null);
-        if (cancelled) return;
-        setGuest(guestMode);
-        setAccountEmail(user.email);
-        setGoogleLinked(user.google_linked === true);
-        setCalendarStatus(calendar);
-        setCurrent(settings);
-        if (settings.configured) {
-          setProvider(settings.provider);
-          if (settings.provider === "zai" && settings.model) {
-            setZaiModel(settings.model);
-          }
-        }
-        setStudyPrefs(prefs);
-        setIntroBudgetInput(String(prefs.introBudget));
-        setReviewBudgetInput(String(prefs.reviewBudget));
-        setDesiredRetentionInput(String(prefs.desiredRetention));
-        setEnableFuzz(prefs.enableFuzz);
-        setEnableLoadBalance(prefs.enableLoadBalance);
-        setEasyDays([...prefs.easyDays]);
-        if (gam) {
-          setGamification(gam);
-          setDisplayNameInput(gam.displayName ?? "");
-          setBoardOptIn(gam.boardOptIn);
-        }
-        setReady(true);
-        endLoad();
-        // Waiting count is informative; don't block Settings paint on the due queue.
-        void listDueCards()
-          .then((due) => {
-            if (cancelled) return;
-            if (typeof due.meta?.heldIntroCount === "number") {
-              setHeldIntroCount(due.meta.heldIntroCount);
-            }
-          })
-          .catch(() => {});
-      } catch (err) {
-        if (cancelled) return;
-        if (err instanceof ApiError && err.status === 401) {
-          window.location.assign("/login");
-          return;
-        }
-        setError(
-          err instanceof ApiError ? err.message : "Failed to load settings",
-        );
-        setReady(true);
-        endLoad(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [endLoad, user]);
+  useSettingsLoad({
+    user,
+    endLoad,
+    setGuest,
+    setAccountEmail,
+    setGoogleLinked,
+    setCalendarStatus,
+    setCurrent,
+    setProvider,
+    setZaiModel,
+    setStudyPrefs,
+    setIntroBudgetInput,
+    setReviewBudgetInput,
+    setDesiredRetentionInput,
+    setEnableFuzz,
+    setEnableLoadBalance,
+    setEasyDays,
+    setGamification,
+    setDisplayNameInput,
+    setBoardOptIn,
+    setHeldIntroCount,
+    setError,
+    setReady,
+  });
+
+  const { onSubmit, onRemoveKey } = useSettingsLlmForm({
+    provider,
+    apiKey,
+    zaiModel,
+    begin,
+    end,
+    setError,
+    setNotice,
+    setCurrent,
+    setApiKey,
+  });
+
+  const { onSubmitStudy } = useSettingsStudyForm({
+    introBudgetInput,
+    reviewBudgetInput,
+    desiredRetentionInput,
+    studyPrefs,
+    enableFuzz,
+    enableLoadBalance,
+    easyDays,
+    beginStudy,
+    endStudy,
+    setStudyError,
+    setStudyNotice,
+    setStudyPrefs,
+    setIntroBudgetInput,
+    setReviewBudgetInput,
+    setDesiredRetentionInput,
+    setEnableFuzz,
+    setEnableLoadBalance,
+    setEasyDays,
+    setHeldIntroCount,
+  });
+
+  const { onSubmitAchievements } = useSettingsAchievementsForm({
+    guest,
+    boardOptIn,
+    displayNameInput,
+    beginAchieve,
+    endAchieve,
+    setAchieveError,
+    setAchieveNotice,
+    setGamification,
+    setDisplayNameInput,
+    setBoardOptIn,
+  });
+
+  const { onDisconnectCalendar } = useSettingsCalendar({
+    setCalendarBusy,
+    setError,
+    setNotice,
+    setCalendarStatus,
+  });
 
   async function endGuestSession() {
     await logout();
     window.location.assign("/login");
-  }
-
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setNotice(null);
-    begin();
-    try {
-      const saved = await putLlmSettings(
-        provider,
-        apiKey,
-        provider === "zai" ? zaiModel : undefined,
-      );
-      setCurrent(saved);
-      setApiKey("");
-      setNotice("API key saved (encrypted at rest).");
-      end();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not save key");
-      end(false);
-    }
-  }
-
-  async function onRemoveKey() {
-    if (
-      !window.confirm(
-        "Remove the saved API key? New generation will use free platform AI.",
-      )
-    ) {
-      return;
-    }
-    setError(null);
-    setNotice(null);
-    try {
-      await deleteLlmSettings();
-      setCurrent({ configured: false });
-      setApiKey("");
-      setNotice("API key removed. Generation will use free platform AI.");
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not remove key");
-    }
-  }
-
-  async function onSubmitAchievements(e: FormEvent) {
-    e.preventDefault();
-    if (guest) return;
-    setAchieveError(null);
-    setAchieveNotice(null);
-    beginAchieve();
-    try {
-      const saved = await patchGamificationSettings({
-        boardOptIn,
-        displayName: displayNameInput.trim() || null,
-      });
-      setGamification(saved);
-      setDisplayNameInput(saved.displayName ?? "");
-      setBoardOptIn(saved.boardOptIn);
-      setAchieveNotice("Achievement settings saved.");
-      endAchieve();
-    } catch (err) {
-      setAchieveError(
-        err instanceof ApiError ? err.message : "Could not save settings",
-      );
-      endAchieve(false);
-    }
-  }
-
-  async function onSubmitStudy(e: FormEvent) {
-    e.preventDefault();
-    setStudyError(null);
-    setStudyNotice(null);
-    const introBudget = Number(introBudgetInput);
-    const reviewBudget = Number(reviewBudgetInput);
-    const desiredRetention = Number(desiredRetentionInput);
-    if (
-      !Number.isFinite(introBudget) ||
-      !Number.isFinite(reviewBudget) ||
-      !Number.isFinite(desiredRetention) ||
-      desiredRetention < 0.7 ||
-      desiredRetention > 0.97 ||
-      introBudget < 1 ||
-      reviewBudget < 1
-    ) {
-      setStudyError(
-        "Enter positive budgets and a retention between 0.70 and 0.97.",
-      );
-      return;
-    }
-    beginStudy();
-    try {
-      const saved = await putStudyPrefs({
-        introBudget,
-        reviewBudget,
-        rFloor: studyPrefs.rFloor,
-        desiredRetention,
-        enableFuzz,
-        enableLoadBalance,
-        easyDays,
-      });
-      setStudyPrefs(saved);
-      setIntroBudgetInput(String(saved.introBudget));
-      setReviewBudgetInput(String(saved.reviewBudget));
-      setDesiredRetentionInput(String(saved.desiredRetention));
-      setEnableFuzz(saved.enableFuzz);
-      setEnableLoadBalance(saved.enableLoadBalance);
-      setEasyDays([...saved.easyDays]);
-      setStudyNotice("Study settings saved.");
-      endStudy();
-      void listDueCards()
-        .then((due) => {
-          if (typeof due.meta?.heldIntroCount === "number") {
-            setHeldIntroCount(due.meta.heldIntroCount);
-          }
-        })
-        .catch(() => {});
-    } catch (err) {
-      setStudyError(
-        err instanceof ApiError ? err.message : "Could not save study prefs",
-      );
-      endStudy(false);
-    }
   }
 
   const navSections = useMemo(
@@ -595,28 +441,7 @@ export default function SettingsPage() {
                       color="primary"
                       disabled={calendarBusy}
                       onClick={() => {
-                        void (async () => {
-                          setCalendarBusy(true);
-                          setError(null);
-                          try {
-                            await disconnectCalendar();
-                            setCalendarStatus({
-                              connected: false,
-                              suggestions: false,
-                              gaps: false,
-                              reconnect: false,
-                            });
-                            setNotice("Google Calendar disconnected.");
-                          } catch (err) {
-                            setError(
-                              err instanceof ApiError
-                                ? err.message
-                                : "Could not disconnect calendar",
-                            );
-                          } finally {
-                            setCalendarBusy(false);
-                          }
-                        })();
+                        void onDisconnectCalendar();
                       }}
                     >
                       Disconnect Google Calendar
