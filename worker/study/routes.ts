@@ -368,10 +368,14 @@ studyRoutes.post("/review", async (c) => {
   const cols = scheduleColumnsFromCard(nextCard);
   const reviewedAt = toIsoRequired(log.review ?? now);
   const reviewLogId = crypto.randomUUID();
-  const logScheduledDays = cols.scheduled_days;
+  // Insights TR/maturity use Anki-style pre-review interval (lastIvl).
+  // Keep ts-fsrs post-grade scheduled_days in state_json via ...log.
+  const logScheduledDays =
+    schedule.scheduled_days != null && Number.isFinite(schedule.scheduled_days)
+      ? schedule.scheduled_days
+      : 0;
   const logForPersist = {
     ...log,
-    scheduled_days: logScheduledDays,
     due: nextCard.dueAt,
   };
 

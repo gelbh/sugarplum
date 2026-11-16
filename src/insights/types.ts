@@ -46,6 +46,13 @@ export type InsightsGradeByMaturity = {
   learning: InsightsGradeCounts;
 };
 
+export type InsightsHourlySuccessPoint = {
+  hour: number;
+  pass: number;
+  fail: number;
+  rate: number | null;
+};
+
 export type InsightsSummary = {
   window: { reviewsDays: 30; gradeDays: 14; activityDays: 90 };
   kpis: {
@@ -71,6 +78,7 @@ export type InsightsSummary = {
   reviewsPerDay: Array<{ day: string; count: number }>;
   activityByDay: Array<{ day: string; count: number }>;
   futureDue: Array<{ day: string; count: number }>;
+  hourlySuccess: InsightsHourlySuccessPoint[];
   gradeCounts: InsightsGradeCounts;
   gradeCountsByMaturity: InsightsGradeByMaturity;
 };

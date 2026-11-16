@@ -20,6 +20,7 @@ import { navigate } from "../nav/navigate";
 import ActivityHeatmap from "../insights/ActivityHeatmap";
 import DifficultyStabilityBlock from "../insights/DifficultyStabilityBlock";
 import FutureDueChart from "../insights/FutureDueChart";
+import HourlySuccessChart from "../insights/HourlySuccessChart";
 import GradeMixByMaturityChart from "../insights/GradeMixByMaturityChart";
 import GradeMixChart from "../insights/GradeMixChart";
 import {
@@ -274,7 +275,7 @@ export default function InsightsPage() {
                         color="text.secondary"
                         sx={{ display: "block" }}
                       >
-                        Maturity uses interval after that review.
+                        Maturity uses interval before that review.
                       </Typography>
                     </Box>
                     <Box>
@@ -377,6 +378,9 @@ export default function InsightsPage() {
                 />
                 <Box sx={{ mt: 3 }}>
                   <FutureDueChart series={summary.futureDue} />
+                </Box>
+                <Box sx={{ mt: 3 }}>
+                  <HourlySuccessChart series={summary.hourlySuccess} />
                 </Box>
                 <Box sx={{ mt: 3 }}>
                   <ActivityHeatmap series={summary.activityByDay} />

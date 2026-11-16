@@ -39,7 +39,7 @@ export type GuestReviewLog = {
   at: string;
   /** Pre-transition FSRS state; absent on historical thin logs. */
   state?: number;
-  /** Post-grade interval days; absent on historical thin logs. */
+  /** Pre-review interval days (Anki lastIvl); absent on historical thin logs. */
   scheduledDays?: number;
 };
 

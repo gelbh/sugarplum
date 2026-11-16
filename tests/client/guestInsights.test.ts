@@ -68,10 +68,32 @@ describe("guestInsightsSummary", () => {
       easy: 0,
     });
     expect(summary.futureDue).toHaveLength(14);
+    expect(summary.hourlySuccess).toHaveLength(24);
     expect(summary.kpis.trueRetention.windowDays).toBe(30);
     expect(summary.gradeCountsByMaturity).toBeTruthy();
     const store = peekGuestStore(storage);
     expect(store?.reviewLogs.at(-1)?.scheduledDays).toEqual(expect.any(Number));
     expect(storage.getItem(GUEST_STORE_KEY)).toBeTruthy();
+  });
+
+  it("persists pre-review scheduledDays on each guest grade", async () => {
+    const subject = guestCreateSubject("Vet", storage);
+    const deck = guestCreateDeck("Deck", subject.id, storage);
+    const card = guestCreateDeckCard(
+      deck.id,
+      { type: "qa", front: "Q?", back: "A" },
+      storage,
+    );
+    await guestReviewCard(card.id, 3, storage);
+    const afterFirst = peekGuestStore(storage);
+    expect(afterFirst?.reviewLogs).toHaveLength(1);
+    expect(afterFirst?.reviewLogs[0]?.scheduledDays).toBe(0);
+    const preSecond = afterFirst?.schedules[card.id]?.scheduled_days;
+    expect(preSecond).toEqual(expect.any(Number));
+
+    await guestReviewCard(card.id, 3, storage);
+    const afterSecond = peekGuestStore(storage);
+    expect(afterSecond?.reviewLogs).toHaveLength(2);
+    expect(afterSecond?.reviewLogs[1]?.scheduledDays).toBe(preSecond);
   });
 });
