@@ -685,6 +685,7 @@ export default function StudyPage() {
               onClick={leaveStudy}
               color="primary"
               size="small"
+              sx={{ minWidth: 44, minHeight: 44 }}
             >
               {mobile ? (
                 <ArrowBackIcon fontSize="small" />
@@ -710,13 +711,14 @@ export default function StudyPage() {
               Sugarplum
             </Typography>
             {mobile ? (
-              <Box sx={{ width: 34, height: 34, flexShrink: 0 }} aria-hidden />
+              <Box sx={{ width: 44, height: 44, flexShrink: 0 }} aria-hidden />
             ) : (
               <IconButton
                 aria-label="Fullscreen"
                 onClick={toggleZen}
                 color="primary"
                 size="small"
+                sx={{ minWidth: 44, minHeight: 44 }}
               >
                 <FullscreenIcon fontSize="small" />
               </IconButton>

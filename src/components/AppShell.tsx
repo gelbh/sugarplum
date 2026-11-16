@@ -121,7 +121,7 @@ function AppShellChrome({ children }: AppShellProps) {
   const { user } = useSession();
   const { hideChrome } = useStudyChrome();
   const theme = useTheme();
-  const mobile = useMediaQuery(theme.breakpoints.down("md"));
+  const mobile = useMediaQuery(theme.breakpoints.down("sm"));
   const path = window.location.pathname;
   const isAdmin = !isGuest() && user?.is_admin === true;
   const [streak, setStreak] = useState<number | null>(null);
@@ -234,8 +234,8 @@ function AppShellChrome({ children }: AppShellProps) {
           bgcolor: "background.default",
           ...(showDrawer
             ? {
-                width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
-                ml: { md: `${DRAWER_WIDTH}px` },
+                width: `calc(100% - ${DRAWER_WIDTH}px)`,
+                ml: `${DRAWER_WIDTH}px`,
               }
             : {}),
         }}
@@ -254,7 +254,7 @@ function AppShellChrome({ children }: AppShellProps) {
   );
 }
 
-/** Authenticated chrome: permanent drawer on desktop, top + bottom chrome on mobile. */
+/** Authenticated chrome: permanent drawer from sm up; top + bottom chrome below sm. */
 export default function AppShell({ children }: AppShellProps) {
   return (
     <ProgressProvider>
