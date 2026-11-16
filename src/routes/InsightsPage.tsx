@@ -13,6 +13,9 @@ import CompositionSpark, {
 import EmptyNext from "../components/EmptyNext";
 import { navigate } from "../nav/navigate";
 import ActivityHeatmap from "../insights/ActivityHeatmap";
+import DifficultyStabilityBlock from "../insights/DifficultyStabilityBlock";
+import FutureDueChart from "../insights/FutureDueChart";
+import GradeMixByMaturityChart from "../insights/GradeMixByMaturityChart";
 import GradeMixChart from "../insights/GradeMixChart";
 import {
   insightsPaperSx,
@@ -225,6 +228,13 @@ export default function InsightsPage() {
                         Young {youngPct == null ? "—" : `${youngPct}%`} · Mature{" "}
                         {maturePct == null ? "—" : `${maturePct}%`}
                       </Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ display: "block" }}
+                      >
+                        Maturity uses interval after that review.
+                      </Typography>
                     </Box>
                     <Box>
                       <Typography
@@ -318,6 +328,9 @@ export default function InsightsPage() {
                   reviewedToday={summary.kpis.reviewedToday}
                 />
                 <Box sx={{ mt: 3 }}>
+                  <FutureDueChart series={summary.futureDue} />
+                </Box>
+                <Box sx={{ mt: 3 }}>
                   <ActivityHeatmap series={summary.activityByDay} />
                   <Typography
                     variant="caption"
@@ -331,27 +344,16 @@ export default function InsightsPage() {
                       ? null
                       : ` · Steady-state load ~${summary.kpis.dailyLoad} cards/day`}
                   </Typography>
-                  {summary.kpis.difficulty.total > 0 ||
-                  summary.kpis.stability.medianDays != null ? (
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ display: "block", mt: 0.5 }}
-                    >
-                      Difficulty easy {summary.kpis.difficulty.easy} · medium{" "}
-                      {summary.kpis.difficulty.medium} · hard{" "}
-                      {summary.kpis.difficulty.hard}
-                      {summary.kpis.stability.medianDays == null
-                        ? null
-                        : ` · Median stability ${summary.kpis.stability.medianDays}d`}
-                    </Typography>
-                  ) : null}
                 </Box>
               </Paper>
 
               <Paper variant="outlined" sx={insightsPaperSx}>
                 <GradeMixChart
                   counts={summary.gradeCounts}
+                  gradeDays={summary.window.gradeDays}
+                />
+                <GradeMixByMaturityChart
+                  byMaturity={summary.gradeCountsByMaturity}
                   gradeDays={summary.window.gradeDays}
                 />
               </Paper>
@@ -428,6 +430,10 @@ export default function InsightsPage() {
                     ) : null}
                   </Stack>
                 )}
+                <DifficultyStabilityBlock
+                  difficulty={summary.kpis.difficulty}
+                  stability={summary.kpis.stability}
+                />
               </Paper>
             </Stack>
           ) : null}
