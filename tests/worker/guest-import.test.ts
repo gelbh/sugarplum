@@ -700,7 +700,7 @@ describe("POST /api/guest/import", () => {
     expect(decks![0].subject_id).toBe("subj-anatomy");
   });
 
-  it("rejects cloze with more than one blank", async () => {
+  it("imports cloze with multiple blanks", async () => {
     const env = createTestEnv();
     seedOwner(env);
 
@@ -735,8 +735,9 @@ describe("POST /api/guest/import", () => {
       env,
     );
 
-    expect(res.status).toBe(400);
-    expect(env.getCards()).toHaveLength(0);
+    expect(res.status).toBe(200);
+    expect(env.getCards()).toHaveLength(1);
+    expect(env.getCards()[0]?.type).toBe("cloze");
   });
 
   it("imports cloze with empty back", async () => {
