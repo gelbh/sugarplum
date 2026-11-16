@@ -38,6 +38,10 @@ import {
   TOP_BAR_HEIGHT,
 } from "./shell/chromeTokens";
 import { resolveShellSideChrome } from "./shell/shellSideChrome";
+import {
+  loadShellSidebarCollapsed,
+  saveShellSidebarCollapsed,
+} from "./shell/shellSidebarPreference";
 import type { ShellNavId, ShellNavItem } from "./shell/shellNav";
 
 type NavItem = ShellNavItem & {
@@ -130,13 +134,36 @@ function AppShellChrome({ children }: AppShellProps) {
   const [level, setLevel] = useState<number | null>(null);
   const drawerNav = isAdmin ? [...LEARNER_NAV, ADMIN_NAV] : LEARNER_NAV;
   const active = activeNavId(path, drawerNav);
-  const { side, sideWidth } = resolveShellSideChrome(phone, medium, hideChrome);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean | null>(
+    () => loadShellSidebarCollapsed(),
+  );
+  const { side, sideWidth } = resolveShellSideChrome(
+    phone,
+    medium,
+    hideChrome,
+    sidebarCollapsed,
+  );
   const showMobileChrome = !hideChrome && phone;
   const genStatus = useShellGenerationStatus(hideChrome);
   const headerRef = useRef<HTMLDivElement>(null);
   const [mobileHeaderPx, setMobileHeaderPx] = useState(TOP_BAR_HEIGHT);
   const mainRef = useRef<HTMLElement>(null);
   useMainScrollRestore(mainRef);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--shell-side-width",
+      `${sideWidth}px`,
+    );
+    return () => {
+      document.documentElement.style.removeProperty("--shell-side-width");
+    };
+  }, [sideWidth]);
+
+  function setCollapsed(next: boolean) {
+    setSidebarCollapsed(next);
+    saveShellSidebarCollapsed(next);
+  }
 
   // Zen hides the chip, so refetch on leaving zen instead of after every grade.
   useEffect(() => {
@@ -222,6 +249,7 @@ function AppShellChrome({ children }: AppShellProps) {
           active={active}
           genStatus={genStatus}
           streakChip={streakChip}
+          onExpand={() => setCollapsed(false)}
         />
       ) : null}
       {side === "drawer" ? (
@@ -230,6 +258,7 @@ function AppShellChrome({ children }: AppShellProps) {
           active={active}
           genStatus={genStatus}
           streakChip={streakChip}
+          onCollapse={() => setCollapsed(true)}
         />
       ) : null}
       <Box
@@ -264,7 +293,7 @@ function AppShellChrome({ children }: AppShellProps) {
   );
 }
 
-/** Authenticated chrome: dock below sm; collapsed rail sm–md; labeled drawer md+. */
+/** Authenticated chrome: dock below sm; desktop sidebar toggleable rail ↔ drawer. */
 export default function AppShell({ children }: AppShellProps) {
   return (
     <ProgressProvider>

@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
-import Typography from "@mui/material/Typography";
+import IconButton from "@mui/material/IconButton";
+import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
 import { navigateReplace } from "../../nav/navigate";
 import type { ShellGenerationStatus } from "../../shell/resolveShellGenerationStatus";
 import GenerationStatusStrip from "./GenerationStatusStrip";
@@ -20,6 +21,7 @@ type Props = {
   active: ShellNavId;
   genStatus: ShellGenerationStatus | null;
   streakChip: ReactNode;
+  onExpand?: () => void;
 };
 
 export default function ShellNavRail({
@@ -27,6 +29,7 @@ export default function ShellNavRail({
   active,
   genStatus,
   streakChip,
+  onExpand,
 }: Props) {
   return (
     <Box
@@ -47,6 +50,31 @@ export default function ShellNavRail({
         boxSizing: "border-box",
       }}
     >
+      {onExpand ? (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            pt: 1,
+            pb: 0.5,
+            borderBottom: `1px solid ${SHELL_HAIRLINE}`,
+          }}
+        >
+          <IconButton
+            aria-label="Expand sidebar"
+            onClick={onExpand}
+            size="small"
+            sx={{
+              color: SHELL_MUTED,
+              width: 44,
+              height: 44,
+              "&:hover": { color: SHELL_FG, bgcolor: "rgba(245,245,245,0.06)" },
+            }}
+          >
+            <KeyboardDoubleArrowRightIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      ) : null}
       <Box
         sx={{
           display: "flex",
@@ -54,7 +82,7 @@ export default function ShellNavRail({
           alignItems: "stretch",
           gap: 0.5,
           px: 0.5,
-          pt: 1.5,
+          pt: 1,
           flex: 1,
           minHeight: 0,
           overflowY: "auto",
@@ -69,12 +97,11 @@ export default function ShellNavRail({
               onClick={() => navigateReplace(item.href)}
               aria-current={selected ? "page" : undefined}
               aria-label={item.label}
+              title={item.label}
               sx={{
                 display: "flex",
-                flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 0.25,
                 minHeight: 44,
                 px: 0.5,
                 py: 0.75,
@@ -95,18 +122,6 @@ export default function ShellNavRail({
               }}
             >
               {item.icon}
-              <Typography
-                variant="caption"
-                noWrap
-                sx={{
-                  maxWidth: "100%",
-                  fontSize: "0.65rem",
-                  lineHeight: 1.1,
-                  fontWeight: selected ? 600 : 500,
-                }}
-              >
-                {item.label}
-              </Typography>
             </ButtonBase>
           );
         })}

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
+import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
@@ -8,6 +9,7 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
+import KeyboardDoubleArrowLeftIcon from "@mui/icons-material/KeyboardDoubleArrowLeft";
 import { navigateReplace } from "../../nav/navigate";
 import type { ShellGenerationStatus } from "../../shell/resolveShellGenerationStatus";
 import GenerationStatusStrip from "./GenerationStatusStrip";
@@ -26,6 +28,7 @@ type DesktopDrawerProps = {
   active: ShellNavId;
   genStatus: ShellGenerationStatus | null;
   streakChip: ReactNode;
+  onCollapse?: () => void;
 };
 
 export default function DesktopDrawer({
@@ -33,6 +36,7 @@ export default function DesktopDrawer({
   active,
   genStatus,
   streakChip,
+  onCollapse,
 }: DesktopDrawerProps) {
   return (
     <Drawer
@@ -57,9 +61,9 @@ export default function DesktopDrawer({
       <Toolbar
         variant="dense"
         sx={{
-          gap: 1.25,
+          gap: 1,
           minHeight: 56,
-          px: 2,
+          px: 1.5,
           borderBottom: `1px solid ${SHELL_HAIRLINE}`,
         }}
       >
@@ -67,15 +71,31 @@ export default function DesktopDrawer({
           component="img"
           src="/logo-sidebar.png"
           alt=""
-          sx={{ height: 28, width: "auto", display: "block" }}
+          sx={{ height: 28, width: "auto", display: "block", flexShrink: 0 }}
         />
         <Typography
           variant="h6"
           noWrap
-          sx={{ color: SHELL_FG, letterSpacing: 0.2 }}
+          sx={{ color: SHELL_FG, letterSpacing: 0.2, flex: 1, minWidth: 0 }}
         >
           Sugarplum
         </Typography>
+        {onCollapse ? (
+          <IconButton
+            aria-label="Collapse sidebar"
+            onClick={onCollapse}
+            size="small"
+            sx={{
+              color: SHELL_MUTED,
+              width: 44,
+              height: 44,
+              flexShrink: 0,
+              "&:hover": { color: SHELL_FG, bgcolor: "rgba(245,245,245,0.06)" },
+            }}
+          >
+            <KeyboardDoubleArrowLeftIcon fontSize="small" />
+          </IconButton>
+        ) : null}
       </Toolbar>
       <List dense sx={{ px: 1, pt: 1.5 }}>
         {drawerNav.map((item) => {

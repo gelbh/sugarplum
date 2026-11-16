@@ -2,10 +2,10 @@
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import ShellNavRail from "../../src/components/shell/ShellNavRail";
 
-async function renderRail() {
+async function renderRail(onExpand?: () => void) {
   const host = document.createElement("div");
   document.body.appendChild(host);
   const root = createRoot(host);
@@ -32,6 +32,7 @@ async function renderRail() {
           active: "atlas",
           genStatus: null,
           streakChip: null,
+          onExpand,
         }),
       ),
     );
@@ -44,13 +45,28 @@ describe("ShellNavRail", () => {
     document.body.replaceChildren();
   });
 
-  it("lists destination labels and marks active", async () => {
+  it("exposes destinations via aria-label only (icons, no visible text labels)", async () => {
     const { host } = await renderRail();
-    expect(host.textContent).toMatch(/Today/);
-    expect(host.textContent).toMatch(/Atlas/);
-    const atlas = [...host.querySelectorAll("button")].find((b) =>
-      /Atlas/i.test(b.textContent ?? ""),
+    const atlas = [...host.querySelectorAll("button")].find(
+      (b) => b.getAttribute("aria-label") === "Atlas",
     );
+    expect(atlas).toBeTruthy();
     expect(atlas?.getAttribute("aria-current")).toBe("page");
+    expect(atlas?.textContent?.trim()).toBe("A");
+  });
+
+  it("expands via the control", async () => {
+    const onExpand = vi.fn();
+    const { host } = await renderRail(onExpand);
+    const expand = [...host.querySelectorAll("button")].find(
+      (b) => b.getAttribute("aria-label") === "Expand sidebar",
+    );
+    expect(expand).toBeTruthy();
+    await act(async () => {
+      expand!.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true }),
+      );
+    });
+    expect(onExpand).toHaveBeenCalled();
   });
 });
