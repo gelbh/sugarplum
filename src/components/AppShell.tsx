@@ -27,14 +27,14 @@ import { useSession } from "../session/SessionContext";
 import { useShellGenerationStatus } from "../shell/useShellGenerationStatus";
 import { useStudyChrome } from "../study/StudyChromeContext";
 import BottomChrome from "./shell/BottomChrome";
+import DesktopDrawer from "./shell/DesktopDrawer";
 import GenerationStatusStrip from "./shell/GenerationStatusStrip";
+import ShellNavRail from "./shell/ShellNavRail";
 import { ShellBackOverrideProvider } from "./shell/ShellBackOverride";
 import TopChrome from "./shell/TopChrome";
-import TopPictogramBand from "./shell/TopPictogramBand";
 import {
   BOTTOM_NAV_HEIGHT,
   SHELL_BG,
-  TOP_BAND_HEIGHT,
   TOP_BAR_HEIGHT,
 } from "./shell/chromeTokens";
 import { resolveShellSideChrome } from "./shell/shellSideChrome";
@@ -123,13 +123,14 @@ function AppShellChrome({ children }: AppShellProps) {
   const { hideChrome } = useStudyChrome();
   const theme = useTheme();
   const phone = useMediaQuery(theme.breakpoints.down("sm"));
+  const medium = useMediaQuery(theme.breakpoints.between("sm", "md"));
   const path = window.location.pathname;
   const isAdmin = !isGuest() && user?.is_admin === true;
   const [streak, setStreak] = useState<number | null>(null);
   const [level, setLevel] = useState<number | null>(null);
   const drawerNav = isAdmin ? [...LEARNER_NAV, ADMIN_NAV] : LEARNER_NAV;
   const active = activeNavId(path, drawerNav);
-  const { topBand } = resolveShellSideChrome(phone, false, hideChrome);
+  const { side, sideWidth } = resolveShellSideChrome(phone, medium, hideChrome);
   const showMobileChrome = !hideChrome && phone;
   const genStatus = useShellGenerationStatus(hideChrome);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -193,14 +194,10 @@ function AppShellChrome({ children }: AppShellProps) {
               pt: `${mobileHeaderPx}px`,
               pb: `calc(${BOTTOM_NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px))`,
             }
-          : topBand
-            ? { pt: `${TOP_BAND_HEIGHT}px` }
-            : {}),
+          : {}),
       }}
     >
-      <GlobalProgressBar
-        top={showMobileChrome ? mobileHeaderPx : topBand ? TOP_BAND_HEIGHT : 0}
-      />
+      <GlobalProgressBar top={showMobileChrome ? mobileHeaderPx : 0} />
       {showMobileChrome ? (
         <Box
           ref={headerRef}
@@ -219,8 +216,16 @@ function AppShellChrome({ children }: AppShellProps) {
           ) : null}
         </Box>
       ) : null}
-      {topBand ? (
-        <TopPictogramBand
+      {side === "rail" ? (
+        <ShellNavRail
+          drawerNav={drawerNav}
+          active={active}
+          genStatus={genStatus}
+          streakChip={streakChip}
+        />
+      ) : null}
+      {side === "drawer" ? (
+        <DesktopDrawer
           drawerNav={drawerNav}
           active={active}
           genStatus={genStatus}
@@ -237,6 +242,12 @@ function AppShellChrome({ children }: AppShellProps) {
           overflowY: "auto",
           overscrollBehavior: "contain",
           bgcolor: "background.default",
+          ...(sideWidth > 0
+            ? {
+                width: `calc(100% - ${sideWidth}px)`,
+                ml: `${sideWidth}px`,
+              }
+            : {}),
         }}
       >
         {children}
@@ -253,7 +264,7 @@ function AppShellChrome({ children }: AppShellProps) {
   );
 }
 
-/** Authenticated chrome: dock below sm; slim top pictogram band from sm up. */
+/** Authenticated chrome: dock below sm; collapsed rail sm–md; labeled drawer md+. */
 export default function AppShell({ children }: AppShellProps) {
   return (
     <ProgressProvider>

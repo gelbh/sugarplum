@@ -1,7 +1,5 @@
 /** Dense monochrome shell (north-star top bar, mapped to drawer / bottom nav). */
 export const TOP_BAR_HEIGHT = 48;
-/** Desktop magazine shell: slim top pictogram band. */
-export const TOP_BAND_HEIGHT = 56;
 export const BOTTOM_NAV_HEIGHT = 56;
 export const SHELL_BG = "#1e0d1b";
 export const SHELL_FG = "#F5F5F5";
