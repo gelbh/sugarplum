@@ -140,7 +140,7 @@ export function presignPdfFigure(
   },
 ) {
   if (isGuest()) guestUnsupported("upload PDF figure crops");
-  return api<UploadUrlResponse>(
+  return api<{ uploadUrl: string; r2Key: string }>(
     `/api/materials/${pdfMaterialId}/figures/presign`,
     {
       method: "POST",
@@ -299,7 +299,6 @@ export async function uploadPdfWithFigureCrops(
       await uploadWithProgress(crop.uploadUrl, figure, () => {}, {
         contentType: "image/png",
       });
-      await completeMaterial(crop.materialId);
     }
   } catch (err) {
     if (err instanceof UploadError) {

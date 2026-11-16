@@ -1,7 +1,7 @@
 import Typography from "@mui/material/Typography";
 import Link from "@mui/material/Link";
-import Stack from "@mui/material/Stack";
 import { LEGAL_CONTACT_EMAIL } from "./contact";
+import { LegalSections } from "./LegalSections";
 
 /** Section strings kept here so plainText() and JSX share one source. */
 export const dataDeletionSections = [
@@ -29,27 +29,15 @@ export function dataDeletionPlainText(): string {
 
 export function DataDeletionContent() {
   return (
-    <Stack spacing={3}>
-      {dataDeletionSections.map((s) => (
-        <section key={s.title}>
-          <Typography variant="h6" component="h2" gutterBottom>
-            {s.title}
-          </Typography>
-          <Typography
-            variant="body1"
-            component="p"
-            sx={{ whiteSpace: "pre-wrap" }}
-          >
-            {s.body}
-          </Typography>
-        </section>
-      ))}
-      <Typography variant="body2">
-        <Link href="/privacy" underline="hover">
-          Back to privacy policy
-        </Link>
-      </Typography>
-    </Stack>
+    <LegalSections
+      sections={dataDeletionSections}
+      footer={
+        <Typography variant="body2">
+          <Link href="/privacy" underline="hover" color="primary">
+            Back to privacy policy
+          </Link>
+        </Typography>
+      }
+    />
   );
 }
-

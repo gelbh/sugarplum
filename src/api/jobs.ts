@@ -10,9 +10,9 @@ import type {
   RegenCardType,
 } from "./types";
 
-export function getJob(jobId: string) {
+export function getJob(jobId: string, init?: RequestInit) {
   if (isGuest()) guestUnsupported("view generation jobs");
-  return api<GenerationJob>(`/api/jobs/${jobId}`);
+  return api<GenerationJob>(`/api/jobs/${jobId}`, init);
 }
 
 /** Wipe all job cards (including accepted), reset to queued, and requeue generation. */
@@ -45,6 +45,14 @@ export function regenCard(cardId: string, body: { type: RegenCardType }) {
 export function rejectJobDrafts(jobId: string) {
   if (isGuest()) guestUnsupported("reject remaining drafts");
   return api<{ rejectedCount: number }>(`/api/jobs/${jobId}/reject-drafts`, {
+    method: "POST",
+  });
+}
+
+/** Clear a failed/empty job from pending chrome (marks done). */
+export function dismissJob(jobId: string) {
+  if (isGuest()) guestUnsupported("dismiss generation job");
+  return api<{ deck_id: string }>(`/api/jobs/${jobId}/dismiss`, {
     method: "POST",
   });
 }

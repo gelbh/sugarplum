@@ -328,7 +328,7 @@ adminRoutes.post("/users/:id/wipe", async (c) => {
   if (confirmEmail.trim().toLowerCase() !== user.email.trim().toLowerCase()) {
     throw new HTTPException(400, { message: "confirmEmail mismatch" });
   }
-  const r2Keys = await collectUserR2Keys(db, id);
+  const r2Keys = await collectUserR2Keys(db, c.env.MATERIALS, id);
   await db.prepare("DELETE FROM users WHERE id = ?").bind(id).run();
   for (const key of r2Keys) {
     try {

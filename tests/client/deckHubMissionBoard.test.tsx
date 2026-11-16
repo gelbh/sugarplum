@@ -14,12 +14,12 @@ import {
 } from "../../src/deckHub/workshopStack";
 import WorkshopShell from "../../src/deckHub/WorkshopShell";
 import AddMaterialWorkshop from "../../src/deckHub/AddMaterialWorkshop";
-import CardsWorkshop from "../../src/deckHub/CardsWorkshop";
 import type { CardDraftView } from "../../src/api/client";
 import { theme } from "../../src/theme";
 
-(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
-  true;
+(
+  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const roots: Root[] = [];
 
@@ -76,43 +76,49 @@ describe("deck hub mission board smoke", () => {
     );
   });
 
-  it("renders a distinct image mark per mission tile", async () => {
+  it("renders an icon mark per mission tile (no atlas photos)", async () => {
     const onOpen = vi.fn();
     await render(
       createElement(MissionBoard, {
         draftCount: 1,
         cardCount: 2,
-        acceptedCount: 2,
         emptyDeck: false,
         onOpen,
       }),
     );
     const tiles = document.querySelectorAll('[role="listitem"]');
-    expect(tiles).toHaveLength(4);
-    const srcs = [...tiles].map((tile) => tile.querySelector("img")?.getAttribute("src"));
-    expect(srcs.every(Boolean)).toBe(true);
-    expect(new Set(srcs).size).toBe(4);
-    expect(
-      document.querySelector('[data-tile-id="addMaterial"] img')?.getAttribute("src"),
-    ).toContain("muscle.webp");
-    expect(
-      document.querySelector('[data-tile-id="drafts"] img')?.getAttribute("src"),
-    ).toContain("liver.webp");
-    expect(
-      document.querySelector('[data-tile-id="cards"] img')?.getAttribute("src"),
-    ).toContain("lungs.webp");
-    expect(
-      document.querySelector('[data-tile-id="study"] img')?.getAttribute("src"),
-    ).toContain("eye.webp");
+    expect(tiles).toHaveLength(3);
+    for (const tile of tiles) {
+      expect(tile.querySelector("img")).toBeNull();
+      expect(tile.querySelector("svg")).toBeTruthy();
+    }
+    expect(document.querySelector('[data-tile-id="addMaterial"]')).toBeTruthy();
+    expect(document.querySelector('[data-tile-id="drafts"]')).toBeTruthy();
+    expect(document.querySelector('[data-tile-id="cards"]')).toBeTruthy();
+    expect(document.querySelector('[data-tile-id="study"]')).toBeNull();
   });
 
-  it("opens Add material from the mission board tile", async () => {
+  it("hides drafts and cards tiles when empty", async () => {
+    await render(
+      createElement(MissionBoard, {
+        draftCount: 0,
+        cardCount: 0,
+        emptyDeck: true,
+        onOpen: () => {},
+      }),
+    );
+    expect(document.querySelectorAll('[role="listitem"]')).toHaveLength(1);
+    expect(document.querySelector('[data-tile-id="addMaterial"]')).toBeTruthy();
+    expect(document.querySelector('[data-tile-id="drafts"]')).toBeNull();
+    expect(document.querySelector('[data-tile-id="cards"]')).toBeNull();
+  });
+
+  it("opens Create flashcards from the mission board tile", async () => {
     const onOpen = vi.fn();
     await render(
       createElement(MissionBoard, {
         draftCount: 0,
         cardCount: 0,
-        acceptedCount: 0,
         emptyDeck: true,
         onOpen,
       }),
@@ -120,7 +126,7 @@ describe("deck hub mission board smoke", () => {
 
     const addTile = Array.from(
       document.body.querySelectorAll('[role="listitem"]'),
-    ).find((el) => el.textContent?.includes("Add material"));
+    ).find((el) => el.textContent?.includes("Create flashcards"));
     expect(addTile).toBeTruthy();
     await act(async () => {
       addTile!.dispatchEvent(
@@ -130,39 +136,76 @@ describe("deck hub mission board smoke", () => {
     expect(onOpen).toHaveBeenCalledWith("addMaterial");
   });
 
-  it("stacks Cards → Create card → Back", async () => {
+  it("stacks Cards → DIY Create → Back", async () => {
     let stack: WorkshopFrame[] = [{ id: "cards" }];
-    stack = pushWorkshop(stack, { id: "createCard" });
-    expect(stack.map((f) => f.id)).toEqual(["cards", "createCard"]);
+    stack = pushWorkshop(stack, { id: "addMaterial", tab: "diy" });
+    expect(stack).toEqual([{ id: "cards" }, { id: "addMaterial", tab: "diy" }]);
 
     await render(
       createElement(WorkshopShell, {
         open: true,
-        title: "Create card",
+        title: "Create flashcards",
         closeMode: false,
         onBack: () => {
           stack = popWorkshop(stack);
         },
-        children: createElement(CardsWorkshop, {
-          mode: "create",
+        children: createElement(AddMaterialWorkshop, {
+          guest: false,
+          tab: "diy",
+          onTabChange: () => {},
+          onCancel: () => {
+            stack = popWorkshop(stack);
+          },
+          returnToChooser: false,
+          materialError: null,
+          materialNotice: null,
+          onClearMaterialMessages: () => {},
+          materialBusy: false,
+          readingScan: false,
+          pasteText: "",
+          onPasteTextChange: () => {},
+          pasteFilename: "",
+          onPasteFilenameChange: () => {},
+          onGuestPaste: () => {},
+          onAccountPaste: () => {},
+          uploadFile: null,
+          onUploadFileChange: () => {},
+          figureFiles: [],
+          onFigureFilesChange: () => {},
+          onUploadFile: () => {},
+          pdfSplitOpen: false,
+          pdfSplitProgress: null,
+          onPdfSplitConfirm: () => {},
+          onPdfSplitCancel: () => {},
+          pptxSplitOpen: false,
+          pptxSplitProgress: null,
+          onPptxSplitConfirm: () => {},
+          onPptxSplitCancel: () => {},
+          pdfCompressOpen: false,
+          pdfCompressProgress: null,
+          onPdfCompressConfirm: () => {},
+          onPdfCompressCancel: () => {},
           createCard: blankCard({ id: "hub-create-draft", status: "draft" }),
           createBusy: false,
           createImageBusy: false,
           createError: null,
+          createNotice: null,
+          createSessionHasCard: false,
           createNeedsImage: false,
           createImageKey: "",
           deckImageKeys: [],
           createImageInputRef: { current: null },
-          hubDiyAllowedTypes: ["qa", "cloze", "mcq"],
           onCreateChange: () => {},
-          onCreateSubmit: () => {},
+          onCreateCard: () => {},
           onCreateImageUpload: () => {},
           applyCreateImageKey: () => {},
+          clearCreateNotice: () => {},
+          hubDiyAllowedTypes: ["qa", "cloze", "mcq"],
         }),
       }),
     );
 
-    expect(document.body.textContent).toContain("Create card");
+    expect(document.body.textContent).toMatch(/DIY|Create|card/i);
     const back = document.body.querySelector('[aria-label="Back"]');
     expect(back).toBeTruthy();
     await act(async () => {
@@ -173,15 +216,16 @@ describe("deck hub mission board smoke", () => {
     expect(stack.map((f) => f.id)).toEqual(["cards"]);
   });
 
-  it("replaces Add material with Drafts when drafts exist", async () => {
-    const onReviewDrafts = vi.fn();
+  it("shows upload drop zone without a Review drafts shortcut", async () => {
     await render(
       createElement(AddMaterialWorkshop, {
         guest: false,
         tab: "upload",
         onTabChange: () => {},
+        onCancel: () => {},
         materialError: null,
         materialNotice: null,
+        onClearMaterialMessages: () => {},
         materialBusy: false,
         readingScan: false,
         pasteText: "",
@@ -199,19 +243,20 @@ describe("deck hub mission board smoke", () => {
         pdfSplitProgress: null,
         onPdfSplitConfirm: () => {},
         onPdfSplitCancel: () => {},
+        pptxSplitOpen: false,
+        pptxSplitProgress: null,
+        onPptxSplitConfirm: () => {},
+        onPptxSplitCancel: () => {},
         pdfCompressOpen: false,
         pdfCompressProgress: null,
         onPdfCompressConfirm: () => {},
         onPdfCompressCancel: () => {},
-        topicValue: "",
-        onTopicValueChange: () => {},
-        topicBusy: false,
-        topicError: null,
-        onTopicGenerate: () => {},
         createCard: blankCard({ id: "hub-create-draft", status: "draft" }),
         createBusy: false,
         createImageBusy: false,
         createError: null,
+        createNotice: null,
+        createSessionHasCard: false,
         createNeedsImage: false,
         createImageKey: "",
         deckImageKeys: [],
@@ -220,50 +265,32 @@ describe("deck hub mission board smoke", () => {
         onCreateCard: () => {},
         onCreateImageUpload: () => {},
         applyCreateImageKey: () => {},
+        clearCreateNotice: () => {},
         hubDiyAllowedTypes: ["qa", "cloze", "mcq"],
-        materials: [],
-        onMaterialsChanged: () => {},
-        draftCount: 2,
-        onReviewDrafts,
       }),
     );
 
-    expect(document.body.textContent).toContain("Also review drafts (2)");
+    expect(document.body.textContent).not.toContain("Review drafts");
     expect(document.body.textContent).toContain(
       "Drop PDF, PPTX, or image here",
     );
     expect(document.body.textContent).toContain("Choose file");
-    const jump = Array.from(document.body.querySelectorAll("button")).find(
-      (b) => b.textContent?.includes("Also review drafts"),
-    );
-    expect(jump).toBeTruthy();
-    await act(async () => {
-      jump!.dispatchEvent(
-        new MouseEvent("click", { bubbles: true, cancelable: true }),
-      );
-    });
-    expect(onReviewDrafts).toHaveBeenCalled();
 
-    const replaced = replaceWorkshop([{ id: "addMaterial" }], { id: "drafts" });
-    expect(replaced).toEqual([{ id: "drafts" }]);
+    const replaced = replaceWorkshop([{ id: "addMaterial" }], { id: "cards" });
+    expect(replaced).toEqual([{ id: "cards" }]);
   });
 
-  it("mutes Study when there are no accepted cards", async () => {
+  it("keeps Study off the mission board", async () => {
     await render(
       createElement(MissionBoard, {
         draftCount: 1,
         cardCount: 0,
-        acceptedCount: 0,
         emptyDeck: false,
         onOpen: () => {},
       }),
     );
-    const study = Array.from(
-      document.body.querySelectorAll('[role="listitem"]'),
-    ).find((el) => el.getAttribute("aria-label")?.includes("Study"));
-    expect(study).toBeTruthy();
-    expect(study?.getAttribute("aria-disabled") === "true" || study?.hasAttribute("disabled")).toBe(
-      true,
-    );
+    expect(document.querySelector('[data-tile-id="study"]')).toBeNull();
+    expect(document.querySelector('[data-tile-id="cards"]')).toBeNull();
+    expect(document.querySelector('[data-tile-id="drafts"]')).toBeTruthy();
   });
 });

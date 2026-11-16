@@ -44,7 +44,19 @@ export function useCardsWorkshop({
   }
 
   function onSelectAll(cards: CardDraftView[]) {
-    setSelectedCardIds(new Set(cards.map((c) => c.id)));
+    const ids = cards.map((c) => c.id).filter(Boolean);
+    setSelectedCardIds((prev) => {
+      // Toggle off when every visible card is already selected.
+      if (ids.length > 0 && ids.every((id) => prev.has(id))) {
+        return new Set();
+      }
+      return new Set(ids);
+    });
+  }
+
+  function onShowArchivedChange(checked: boolean) {
+    setShowArchived(checked);
+    setSelectedCardIds(new Set());
   }
 
   async function onArchiveCard(card: CardDraftView) {
@@ -111,9 +123,34 @@ export function useCardsWorkshop({
     }
   }
 
+  async function onBatchRestore() {
+    if (selectedCardIds.size === 0 || !showArchived) return;
+    setBatchBusy(true);
+    setError(null);
+    try {
+      const ids = [...selectedCardIds];
+      for (const id of ids) {
+        await restoreCard(id);
+      }
+      setCards((prev) => prev.filter((c) => !selectedCardIds.has(c.id)));
+      setAcceptedCount((n) => n + ids.length);
+      setSelectedCardIds(new Set());
+      setNotice(
+        ids.length === 1 ? "Card restored" : `${ids.length} cards restored`,
+      );
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Could not restore cards",
+      );
+    } finally {
+      setBatchBusy(false);
+    }
+  }
+
   return {
     showArchived,
     setShowArchived,
+    onShowArchivedChange,
     archiveBusyId,
     selectedCardIds,
     setSelectedCardIds,
@@ -124,5 +161,6 @@ export function useCardsWorkshop({
     onArchiveCard,
     onRestoreCard,
     onBatchArchive,
+    onBatchRestore,
   };
 }

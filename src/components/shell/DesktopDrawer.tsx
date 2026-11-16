@@ -1,7 +1,5 @@
-import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
-import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
@@ -9,7 +7,6 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import KeyboardDoubleArrowLeftIcon from "@mui/icons-material/KeyboardDoubleArrowLeft";
 import { navigateReplace } from "../../nav/navigate";
 import type { ShellGenerationStatus } from "../../shell/resolveShellGenerationStatus";
 import GenerationStatusStrip from "./GenerationStatusStrip";
@@ -27,34 +24,33 @@ type DesktopDrawerProps = {
   drawerNav: ShellNavItem[];
   active: ShellNavId;
   genStatus: ShellGenerationStatus | null;
-  streakChip: ReactNode;
-  onCollapse?: () => void;
+  width?: number;
 };
 
 export default function DesktopDrawer({
   drawerNav,
   active,
   genStatus,
-  streakChip,
-  onCollapse,
+  width = DRAWER_WIDTH,
 }: DesktopDrawerProps) {
   return (
     <Drawer
       variant="permanent"
       sx={{
-        width: DRAWER_WIDTH,
+        width,
         flexShrink: 0,
         [`& .MuiDrawer-paper`]: {
           position: "fixed",
-          width: DRAWER_WIDTH,
+          width,
           boxSizing: "border-box",
           display: "flex",
           flexDirection: "column",
           height: "100%",
           bgcolor: SHELL_BG,
           color: SHELL_FG,
-          borderRight: `1px solid ${SHELL_HAIRLINE}`,
+          borderRight: "none",
           backgroundImage: "none",
+          overflow: "hidden",
         },
       }}
     >
@@ -81,7 +77,10 @@ export default function DesktopDrawer({
           Sugarplum
         </Typography>
       </Toolbar>
-      <List dense sx={{ px: 1, pt: 1.5 }}>
+      <List
+        dense
+        sx={{ px: 1, pt: 1.5, flex: 1, minHeight: 0, overflowY: "auto" }}
+      >
         {drawerNav.map((item) => {
           const selected = active === item.id;
           return (
@@ -123,61 +122,59 @@ export default function DesktopDrawer({
           );
         })}
       </List>
-      {genStatus ? (
-        <Box sx={{ px: 1, pb: 1 }}>
-          <GenerationStatusStrip status={genStatus} />
-        </Box>
-      ) : null}
-      <Box sx={{ flexGrow: 1 }} />
-      {streakChip ? <Box sx={{ px: 2, pb: 1 }}>{streakChip}</Box> : null}
-      {onCollapse ? (
+      <Box sx={{ flexShrink: 0 }}>
+        {genStatus ? (
+          <Box sx={{ px: 1, pb: 1 }}>
+            <GenerationStatusStrip status={genStatus} />
+          </Box>
+        ) : null}
         <Box
+          component="nav"
+          aria-label="Legal"
           sx={{
             px: 1.5,
-            pb: 1,
+            pt: 1,
+            pb: 1.5,
+            borderTop: `1px solid ${SHELL_HAIRLINE}`,
             display: "flex",
-            justifyContent: "flex-end",
+            flexDirection: "column",
+            gap: 0.25,
           }}
         >
-          <IconButton
-            aria-label="Collapse sidebar"
-            onClick={onCollapse}
-            size="small"
-            sx={{
-              color: SHELL_MUTED,
-              width: 44,
-              height: 44,
-              "&:hover": { color: SHELL_FG, bgcolor: "rgba(245,245,245,0.06)" },
-            }}
-          >
-            <KeyboardDoubleArrowLeftIcon fontSize="small" />
-          </IconButton>
+          {(
+            [
+              { href: "/privacy", label: "Privacy" },
+              { href: "/terms", label: "Terms" },
+              { href: "/data-deletion", label: "Data deletion" },
+            ] as const
+          ).map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              underline="none"
+              color="inherit"
+              sx={{
+                display: "block",
+                px: 0.75,
+                py: 0.55,
+                borderRadius: 1,
+                color: SHELL_MUTED,
+                fontSize: "0.8125rem",
+                fontWeight: 500,
+                letterSpacing: "0.01em",
+                textUnderlineOffset: 3,
+                transition: "color 120ms ease, background-color 120ms ease",
+                "&:hover": {
+                  color: SHELL_FG,
+                  bgcolor: "rgba(245, 245, 245, 0.06)",
+                  textDecoration: "underline",
+                },
+              }}
+            >
+              {item.label}
+            </Link>
+          ))}
         </Box>
-      ) : null}
-      <Box
-        sx={{
-          px: 2,
-          py: 1.5,
-          borderTop: `1px solid ${SHELL_HAIRLINE}`,
-        }}
-      >
-        <Typography
-          variant="caption"
-          component="div"
-          sx={{ color: SHELL_MUTED }}
-        >
-          <Link href="/privacy" underline="hover" color="inherit">
-            Privacy
-          </Link>
-          {" · "}
-          <Link href="/terms" underline="hover" color="inherit">
-            Terms
-          </Link>
-          {" · "}
-          <Link href="/data-deletion" underline="hover" color="inherit">
-            Deletion
-          </Link>
-        </Typography>
       </Box>
     </Drawer>
   );

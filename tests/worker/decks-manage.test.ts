@@ -606,6 +606,53 @@ describe("DELETE /api/decks/:id", () => {
     expect(env.getCards()).toHaveLength(0);
   });
 
+  it("deletes R2-only figure crops under figures/{pdfId}/ with no materials row", async () => {
+    const env = createTestEnv();
+    seedOwner(env);
+    env.seedSubject({
+      id: "sub-1",
+      user_id: "user-a",
+      title: "Anatomy",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    env.seedDeck({
+      id: "deck-fig",
+      user_id: "user-a",
+      title: "Bones",
+      subject_hint: null,
+      subject_id: "sub-1",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+    const materialKey = "materials/deck-fig/mat-pdf.pdf";
+    const figureKey = "materials/deck-fig/figures/mat-pdf/0.png";
+    env.seedR2(materialKey, "pdf-bytes");
+    env.seedR2(figureKey, "png-bytes");
+    env.seedR2("materials/other-deck/keep.pdf", "keep");
+    env.seedMaterial({
+      id: "mat-pdf",
+      deck_id: "deck-fig",
+      kind: "pdf",
+      r2_key: materialKey,
+      filename: "mat-pdf.pdf",
+      page_count: 1,
+      status: "ready",
+      created_at: "2026-01-01T00:00:00.000Z",
+    });
+
+    const res = await app.request(
+      "/api/decks/deck-fig",
+      {
+        method: "DELETE",
+        headers: { cookie: `${SESSION_COOKIE}=sess-a` },
+      },
+      env,
+    );
+
+    expect(res.status).toBe(204);
+    expect(env.getR2Keys()).toEqual(["materials/other-deck/keep.pdf"]);
+    expect(env.getMaterials()).toHaveLength(0);
+  });
+
   it("returns 404 when deleting another user's deck", async () => {
     const env = createTestEnv();
     seedOwner(env);

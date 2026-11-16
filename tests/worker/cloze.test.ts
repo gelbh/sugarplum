@@ -12,16 +12,25 @@ import { SESSION_COOKIE } from "../../worker/auth/session";
 import { createTestEnv, TEST_SECRETS_WRAP_KEY } from "./test-env";
 
 describe("assertSingleCloze", () => {
-  it("rejects multi-blank cloze", () => {
-    expect(() => assertSingleCloze("{{c1::a}} and {{c2::b}}")).toThrow();
+  it("allows multi-blank cloze", () => {
+    expect(() => assertSingleCloze("{{c1::a}} and {{c2::b}}")).not.toThrow();
   });
 
   it("allows a single Anki cloze blank", () => {
-    expect(() => assertSingleCloze("Paris is {{c1::France}}'s capital")).not.toThrow();
+    expect(() =>
+      assertSingleCloze("Paris is {{c1::France}}'s capital"),
+    ).not.toThrow();
   });
 
-  it("rejects multiple underscore blanks", () => {
-    expect(() => assertSingleCloze("___ and ___")).toThrow();
+  it("allows multiple underscore blanks within the cap", () => {
+    expect(() => assertSingleCloze("___ and ___")).not.toThrow();
+  });
+
+  it("rejects more than eight blanks", () => {
+    const front = Array.from({ length: 9 }, (_, i) => `{{c${i + 1}::x}}`).join(
+      " ",
+    );
+    expect(() => assertSingleCloze(front)).toThrow(/at most 8 blanks/);
   });
 });
 
@@ -44,14 +53,14 @@ describe("CardDraft schema", () => {
     expect(drafts).toHaveLength(2);
   });
 
-  it("rejects cloze with multiple blanks via schema", () => {
+  it("parses cloze with multiple blanks via schema", () => {
     const result = CardDraftSchema.safeParse({
       type: "cloze",
       front: "{{c1::a}} and {{c2::b}}",
       back: "x",
       provenance: { pages: [1], excerpt: "ex" },
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it("parses cloze with empty Extra back", () => {
@@ -160,7 +169,7 @@ describe("CardDraft schema", () => {
     expect(drafts.map((d) => d.type)).toEqual(["mcq", "qa"]);
   });
 
-  it("keeps valid cards when some cloze drafts are multi-blank", () => {
+  it("keeps multi-blank cloze drafts with valid cards", () => {
     const drafts = parseCardDrafts([
       {
         type: "qa",
@@ -181,9 +190,9 @@ describe("CardDraft schema", () => {
         provenance: { pages: [1], excerpt: "ex" },
       },
     ]);
-    expect(drafts).toHaveLength(2);
-    expect(drafts.map((d) => d.type)).toEqual(["qa", "cloze"]);
-    expect(drafts[1]?.front).toBe("Hello {{c1::world}}");
+    expect(drafts).toHaveLength(3);
+    expect(drafts.map((d) => d.type)).toEqual(["qa", "cloze", "cloze"]);
+    expect(drafts[1]?.front).toBe("{{c1::a}} and {{c2::b}}");
   });
 });
 
@@ -329,9 +338,8 @@ describe("generation pipeline (paste + mock LLM)", () => {
     });
     env.seedR2("materials/deck-a/mat-pdf-progress.pdf", "%PDF-fake");
 
-    const { enqueueGeneration } = await import(
-      "../../worker/generation/enqueue"
-    );
+    const { enqueueGeneration } =
+      await import("../../worker/generation/enqueue");
     const jobId = await enqueueGeneration(env, {
       materialId: "mat-pdf",
       deckId: "deck-a",
@@ -387,9 +395,8 @@ describe("generation pipeline (paste + mock LLM)", () => {
       new TextDecoder().decode(pdfBytes),
     );
 
-    const { enqueueGeneration } = await import(
-      "../../worker/generation/enqueue"
-    );
+    const { enqueueGeneration } =
+      await import("../../worker/generation/enqueue");
     const jobId = await enqueueGeneration(env, {
       materialId: "mat-pdf",
       deckId: "deck-a",
@@ -422,9 +429,8 @@ describe("generation pipeline (paste + mock LLM)", () => {
     });
     env.seedR2("materials/deck-a/mat-empty.pdf", "%PDF-1.1\n%%EOF");
 
-    const { enqueueGeneration } = await import(
-      "../../worker/generation/enqueue"
-    );
+    const { enqueueGeneration } =
+      await import("../../worker/generation/enqueue");
     const jobId = await enqueueGeneration(env, {
       materialId: "mat-pdf-empty",
       deckId: "deck-a",
@@ -463,9 +469,8 @@ describe("generation pipeline (paste + mock LLM)", () => {
       status: "ready",
       created_at: "2026-01-01T00:00:00.000Z",
     });
-    const { enqueueGeneration } = await import(
-      "../../worker/generation/enqueue"
-    );
+    const { enqueueGeneration } =
+      await import("../../worker/generation/enqueue");
     const jobId = await enqueueGeneration(env, {
       materialId: "mat-1",
       deckId: "deck-a",

@@ -13,7 +13,10 @@ import {
 
 type GenerationStatusStripProps = {
   status: ShellGenerationStatus;
+  /** Mobile top chrome: compact text strip. */
   dense?: boolean;
+  /** Icon rail: status dot + tiny bar only (no overflowing copy). */
+  rail?: boolean;
 };
 
 const DOT: Record<ShellGenerationStatus["kind"], string> = {
@@ -25,11 +28,82 @@ const DOT: Record<ShellGenerationStatus["kind"], string> = {
 export default function GenerationStatusStrip({
   status,
   dense = false,
+  rail = false,
 }: GenerationStatusStripProps) {
   const showBar =
     status.kind === "generating" &&
     status.percent != null &&
     Number.isFinite(status.percent);
+
+  const title = [status.label, status.subline].filter(Boolean).join(" · ");
+
+  if (rail) {
+    return (
+      <ButtonBase
+        component="button"
+        type="button"
+        onClick={() => navigate(status.href)}
+        aria-label={status.ariaLabel}
+        title={title}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 0.75,
+          width: "100%",
+          minHeight: 44,
+          px: 0.75,
+          py: 1,
+          borderRadius: 1,
+          color: SHELL_FG,
+          bgcolor:
+            status.kind === "drafts_ready"
+              ? "rgba(91, 44, 111, 0.28)"
+              : "rgba(245, 245, 245, 0.06)",
+          "&:hover": {
+            bgcolor: "rgba(91, 44, 111, 0.22)",
+          },
+        }}
+      >
+        <Box
+          aria-hidden
+          sx={{
+            width: 10,
+            height: 10,
+            borderRadius: "50%",
+            bgcolor: DOT[status.kind],
+            flexShrink: 0,
+            ...(status.kind === "generating"
+              ? {
+                  animation: "sp-gen-pulse 1.4s ease-in-out infinite",
+                  "@keyframes sp-gen-pulse": {
+                    "0%, 100%": { opacity: 1, transform: "scale(1)" },
+                    "50%": { opacity: 0.45, transform: "scale(0.85)" },
+                  },
+                }
+              : {}),
+          }}
+        />
+        {showBar ? (
+          <LinearProgress
+            variant="determinate"
+            value={status.percent ?? 0}
+            aria-hidden
+            sx={{
+              width: "100%",
+              height: 3,
+              borderRadius: 1,
+              bgcolor: "rgba(245, 245, 245, 0.12)",
+              "& .MuiLinearProgress-bar": {
+                bgcolor: SHELL_SELECTED,
+              },
+            }}
+          />
+        ) : null}
+      </ButtonBase>
+    );
+  }
 
   return (
     <ButtonBase

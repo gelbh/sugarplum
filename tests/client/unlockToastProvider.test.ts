@@ -104,13 +104,12 @@ describe("UnlockToastProvider", () => {
       .join("");
     const desktopBottom =
       "bottom:calc(24px + env(safe-area-inset-bottom, 0px))";
-    const mobileBottom =
-      "bottom:calc(88px + env(safe-area-inset-bottom, 0px))";
+    const mobileBottom = "bottom:calc(88px + env(safe-area-inset-bottom, 0px))";
     const smAt = css.indexOf("@media (min-width:600px)");
     expect(smAt).toBeGreaterThan(-1);
-    const smBlock = css.slice(smAt).match(
-      /^@media \(min-width:600px\)\{[^{]*\{([^}]*)\}/,
-    );
+    const smBlock = css
+      .slice(smAt)
+      .match(/^@media \(min-width:600px\)\{[^{]*\{([^}]*)\}/);
     expect(smBlock).not.toBeNull();
     expect(smBlock![1]).toContain("var(--shell-side-width");
     expect(smBlock![1]).toContain(desktopBottom);
@@ -118,4 +117,3 @@ describe("UnlockToastProvider", () => {
     expect(css.slice(0, smAt)).toContain(mobileBottom);
   });
 });
-

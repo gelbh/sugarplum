@@ -11,6 +11,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import CoverPickerDialog from "../components/CoverPickerDialog";
 import type { StoredCoverRow, Subject } from "../api/client";
 import type {
@@ -41,9 +42,10 @@ type Props = {
   requestDeleteSubject: (subject: Subject, ev: MouseEvent) => void;
   coverPicker: LibraryCoverTarget | null;
   setCoverPicker: (value: LibraryCoverTarget | null) => void;
-  setCovers: (
-    updater: (prev: StoredCoverRow[]) => StoredCoverRow[],
-  ) => void;
+  closeCoverPicker: () => void;
+  /** When true, create-flow cover is handled inline on LibraryPage. */
+  suppressCoverDialog?: boolean;
+  setCovers: (updater: (prev: StoredCoverRow[]) => StoredCoverRow[]) => void;
   onClearCover: () => void | Promise<void>;
 };
 
@@ -68,24 +70,73 @@ export function LibraryDialogs({
   requestDeleteSubject,
   coverPicker,
   setCoverPicker,
+  closeCoverPicker,
+  suppressCoverDialog = false,
   setCovers,
   onClearCover,
 }: Props) {
   return (
     <>
       <Dialog
-        open={titleDialog !== null}
+        open={titleDialog?.mode === "rename"}
         onClose={() => !dialogBusy && setTitleDialog(null)}
         fullWidth
         maxWidth="xs"
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            overflow: "hidden",
+            bgcolor: "background.paper",
+          },
+        }}
       >
         <Box component="form" onSubmit={onTitleDialogSubmit} noValidate>
-          <DialogTitle>
-            {titleDialog?.mode === "rename"
-              ? "Rename subject"
-              : "Create subject"}
-          </DialogTitle>
-          <DialogContent>
+          <Box
+            sx={{
+              px: 3,
+              pt: 2.5,
+              pb: 1.5,
+              borderBottom: 1,
+              borderColor: "divider",
+              background:
+                "linear-gradient(180deg, rgba(91, 44, 111, 0.12) 0%, transparent 100%)",
+            }}
+          >
+            <Typography
+              component="p"
+              sx={{
+                m: 0,
+                mb: 0.75,
+                fontSize: "0.6875rem",
+                fontWeight: 500,
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                color: "primary.main",
+              }}
+            >
+              Rename
+            </Typography>
+            <DialogTitle
+              sx={{
+                p: 0,
+                fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
+                fontWeight: 400,
+                letterSpacing: "0.02em",
+                lineHeight: 1.15,
+                fontSize: "1.75rem",
+              }}
+            >
+              Update the name
+            </DialogTitle>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 1, maxWidth: "36ch" }}
+            >
+              Shown on the Library cover and in menus.
+            </Typography>
+          </Box>
+          <DialogContent sx={{ px: 3, pt: 2.5, pb: 1 }}>
             {dialogError ? (
               <Alert severity="error" sx={{ mb: 2 }}>
                 {dialogError}
@@ -93,22 +144,31 @@ export function LibraryDialogs({
             ) : null}
             <TextField
               autoFocus
-              margin="dense"
-              label="Title"
+              margin="none"
+              label="Subject name"
+              placeholder="e.g. Anatomy"
               value={titleValue}
               onChange={(ev) => setTitleValue(ev.target.value)}
               required
               fullWidth
+              inputProps={{ maxLength: 80, "aria-label": "Subject name" }}
+              helperText={`${titleValue.trim().length}/80`}
+              FormHelperTextProps={{ sx: { textAlign: "right", mx: 0 } }}
             />
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setTitleDialog(null)} disabled={dialogBusy}>
+          <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+            <Button
+              onClick={() => setTitleDialog(null)}
+              disabled={dialogBusy}
+              sx={{ color: "text.secondary" }}
+            >
               Cancel
             </Button>
             <Button
               type="submit"
               variant="contained"
               disabled={dialogBusy || !titleValue.trim()}
+              sx={{ minWidth: 112 }}
             >
               {dialogBusy ? "Saving…" : "Save"}
             </Button>
@@ -119,19 +179,72 @@ export function LibraryDialogs({
       <Dialog
         open={deleteSubjectTarget !== null}
         onClose={() => !deleteSubjectBusy && setDeleteSubjectTarget(null)}
+        fullWidth
+        maxWidth="xs"
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            overflow: "hidden",
+            bgcolor: "background.paper",
+          },
+        }}
       >
-        <DialogTitle>Delete subject?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {deleteSubjectTarget
-              ? `Delete “${deleteSubjectTarget.title}”? This only works when the subject has no decks.`
-              : ""}
+        <Box
+          sx={{
+            px: 3,
+            pt: 2.5,
+            pb: 1.5,
+            borderBottom: 1,
+            borderColor: "divider",
+            background:
+              "linear-gradient(180deg, rgba(183, 28, 28, 0.1) 0%, transparent 100%)",
+          }}
+        >
+          <Typography
+            component="p"
+            sx={{
+              m: 0,
+              mb: 0.75,
+              fontSize: "0.6875rem",
+              fontWeight: 500,
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              color: "error.main",
+            }}
+          >
+            Delete
+          </Typography>
+          <DialogTitle
+            sx={{
+              p: 0,
+              fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
+              fontWeight: 400,
+              letterSpacing: "0.02em",
+              lineHeight: 1.15,
+              fontSize: "1.75rem",
+            }}
+          >
+            Remove this subject?
+          </DialogTitle>
+        </Box>
+        <DialogContent sx={{ px: 3, pt: 2.5, pb: 1 }}>
+          <DialogContentText sx={{ color: "text.secondary" }}>
+            {deleteSubjectTarget ? (
+              <>
+                Delete{" "}
+                <Box component="strong" sx={{ color: "text.primary" }}>
+                  {deleteSubjectTarget.title}
+                </Box>
+                ? This only works when the subject has no decks.
+              </>
+            ) : null}
           </DialogContentText>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
           <Button
             onClick={() => setDeleteSubjectTarget(null)}
             disabled={deleteSubjectBusy}
+            sx={{ color: "text.secondary" }}
           >
             Cancel
           </Button>
@@ -140,6 +253,7 @@ export function LibraryDialogs({
             variant="contained"
             disabled={deleteSubjectBusy}
             onClick={confirmDeleteSubject}
+            sx={{ minWidth: 112 }}
           >
             {deleteSubjectBusy ? "Deleting…" : "Delete"}
           </Button>
@@ -203,13 +317,13 @@ export function LibraryDialogs({
         )}
       </Menu>
 
-      {guest ? null : (
+      {guest || suppressCoverDialog ? null : (
         <CoverPickerDialog
           open={coverPicker !== null}
           title={coverPicker?.title ?? ""}
           ownerKind={coverPicker?.ownerKind ?? "subject"}
           ownerId={coverPicker?.ownerId ?? ""}
-          onClose={() => setCoverPicker(null)}
+          onClose={closeCoverPicker}
           onSaved={(row) => {
             setCovers((prev) => [
               row,
@@ -219,7 +333,7 @@ export function LibraryDialogs({
                   cover.ownerId !== row.ownerId,
               ),
             ]);
-            setCoverPicker(null);
+            closeCoverPicker();
           }}
           onClear={onClearCover}
         />

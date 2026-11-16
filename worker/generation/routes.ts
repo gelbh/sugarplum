@@ -40,6 +40,11 @@ export type JobPollRow = {
   progress_json: string | null;
   created_at: string;
   finished_at: string | null;
+  /** Present on GET /:id when the poll query joins deck/subject. */
+  deck_id?: string;
+  deck_title?: string;
+  subject_id?: string | null;
+  subject_title?: string | null;
 };
 
 function parseProgressJson(raw: string | null): JobProgressPayload | null {
@@ -145,10 +150,13 @@ jobRoutes.get("/:id", async (c) => {
 
   let row = await db
     .prepare(
-      `SELECT j.id, j.material_id, j.status, j.error, j.coverage_json, j.progress_json, j.created_at, j.finished_at
+      `SELECT j.id, j.material_id, j.status, j.error, j.coverage_json, j.progress_json,
+              j.created_at, j.finished_at, m.deck_id AS deck_id, d.title AS deck_title,
+              d.subject_id AS subject_id, s.title AS subject_title
        FROM generation_jobs j
        INNER JOIN materials m ON m.id = j.material_id
        INNER JOIN decks d ON d.id = m.deck_id
+       LEFT JOIN subjects s ON s.id = d.subject_id
        WHERE j.id = ? AND d.user_id = ?`,
     )
     .bind(jobId, userId)
@@ -169,10 +177,13 @@ jobRoutes.get("/:id", async (c) => {
     if (healed) {
       const refreshed = await db
         .prepare(
-          `SELECT j.id, j.material_id, j.status, j.error, j.coverage_json, j.progress_json, j.created_at, j.finished_at
+          `SELECT j.id, j.material_id, j.status, j.error, j.coverage_json, j.progress_json,
+                  j.created_at, j.finished_at, m.deck_id AS deck_id, d.title AS deck_title,
+                  d.subject_id AS subject_id, s.title AS subject_title
            FROM generation_jobs j
            INNER JOIN materials m ON m.id = j.material_id
            INNER JOIN decks d ON d.id = m.deck_id
+           LEFT JOIN subjects s ON s.id = d.subject_id
            WHERE j.id = ? AND d.user_id = ?`,
         )
         .bind(jobId, userId)
@@ -198,7 +209,83 @@ jobRoutes.get("/:id", async (c) => {
     free_quota,
     created_at: row.created_at,
     finished_at: row.finished_at,
+    deck_id: row.deck_id,
+    deck_title: row.deck_title,
+    subject_id: row.subject_id,
+    subject_title: row.subject_title,
   });
+});
+
+/**
+ * Clear a failed (or empty needs_review) job from pending chrome.
+ * Rejects leftover drafts, marks job done; returns deck_id for navigation.
+ */
+jobRoutes.post("/:id/dismiss", async (c) => {
+  const userId = await requireUser(c);
+  const jobId = c.req.param("id");
+  const db = getDb(c.env);
+
+  const row = await db
+    .prepare(
+      `SELECT j.id, j.status, j.error, j.finished_at, m.deck_id AS deck_id
+       FROM generation_jobs j
+       INNER JOIN materials m ON m.id = j.material_id
+       INNER JOIN decks d ON d.id = m.deck_id
+       WHERE j.id = ? AND d.user_id = ?`,
+    )
+    .bind(jobId, userId)
+    .first<{
+      id: string;
+      status: string;
+      error: string | null;
+      finished_at: string | null;
+      deck_id: string;
+    }>();
+
+  if (!row) throw new HTTPException(404, { message: "Job not found" });
+
+  if (row.status === "queued" || row.status === "running") {
+    throw new HTTPException(409, { message: "Job already in progress" });
+  }
+
+  if (row.status !== "failed" && row.status !== "needs_review") {
+    throw new HTTPException(409, { message: "Job cannot be dismissed" });
+  }
+
+  if (row.status === "needs_review") {
+    const draft = await db
+      .prepare(
+        `SELECT 1 AS ok FROM cards WHERE job_id = ? AND status = ? LIMIT 1`,
+      )
+      .bind(jobId, "draft")
+      .first<{ ok: number }>();
+    if (draft) {
+      throw new HTTPException(409, {
+        message: "Reject remaining drafts before dismissing",
+      });
+    }
+  }
+
+  const updatedAt = new Date().toISOString();
+  const dismissed = await db
+    .prepare(
+      `UPDATE generation_jobs SET status = ?, error = ?, finished_at = ?
+       WHERE id = ? AND status IN ('failed', 'needs_review')`,
+    )
+    .bind("done", row.error, row.finished_at ?? updatedAt, jobId)
+    .run();
+  if ((dismissed.meta?.changes ?? 0) === 0) {
+    throw new HTTPException(409, { message: "Job cannot be dismissed" });
+  }
+
+  await db
+    .prepare(
+      `UPDATE cards SET status = ?, updated_at = ? WHERE job_id = ? AND status = ?`,
+    )
+    .bind("rejected", updatedAt, jobId, "draft")
+    .run();
+
+  return c.json({ deck_id: row.deck_id });
 });
 
 /** Soft-clean: mark remaining drafts rejected; keep accepted; no requeue (owner only). */
@@ -274,13 +361,22 @@ jobRoutes.post("/:id/regen", async (c) => {
   }
 
   // Claim first so concurrent regens lose the race before any wipe.
-  const claim = await db
-    .prepare(
-      `UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = NULL, progress_json = NULL, finished_at = NULL
-       WHERE id = ? AND status NOT IN ('queued', 'running')`,
-    )
-    .bind("queued", jobId)
-    .run();
+  // Promote to Accurate when Docling is configured so empty-text PDFs can use figures.
+  const claim = c.env.DOCLING_URL?.trim()
+    ? await db
+        .prepare(
+          `UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = NULL, progress_json = NULL, finished_at = NULL, figure_extract_mode = ?
+           WHERE id = ? AND status NOT IN ('queued', 'running')`,
+        )
+        .bind("queued", "accurate", jobId)
+        .run()
+    : await db
+        .prepare(
+          `UPDATE generation_jobs SET status = ?, error = NULL, coverage_json = NULL, progress_json = NULL, finished_at = NULL
+           WHERE id = ? AND status NOT IN ('queued', 'running')`,
+        )
+        .bind("queued", jobId)
+        .run();
   if (!claim.meta.changes) {
     throw new HTTPException(409, { message: "Job already in progress" });
   }

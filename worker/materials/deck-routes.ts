@@ -9,20 +9,13 @@ import {
   userHasByoSecret,
 } from "../generation/image-free-path";
 import { normalizeTopicHints } from "../generation/topic-hints";
-import {
-  findReadyMaterialByContentHash,
-  sha256Hex,
-} from "./content-hash";
+import { findReadyMaterialByContentHash, sha256Hex } from "./content-hash";
 import {
   assertSingleCloze,
   assertValidMcqOptions,
   OcclusionFrontSchema,
 } from "../generation/schema";
-import {
-  encodeStoredBack,
-  serializeCard,
-  type CardRow,
-} from "../cards/routes";
+import { encodeStoredBack, serializeCard, type CardRow } from "../cards/routes";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
 import { composeSubjectKnowledge } from "../../src/study/subjectKnowledge";
 import { MAX_FILE_BYTES, MAX_IMAGE_BYTES, MAX_PASTE_BYTES } from "./limits";
@@ -35,6 +28,7 @@ import {
   requireOwnedMaterial,
   requireOwnedSubjectId,
 } from "./ownership";
+import { listFigureKeysInR2, parseFigureR2Key } from "./figures";
 import {
   DEFAULT_R2_BUCKET,
   FILE_READY,
@@ -132,7 +126,10 @@ deckRoutes.get("/:id/materials", async (c) => {
   const { results } = await db
     .prepare(
       `SELECT id, deck_id, kind, r2_key, filename, page_count, status, created_at, source_role
-       FROM materials WHERE deck_id = ? ORDER BY created_at DESC`,
+       FROM materials
+       WHERE deck_id = ?
+         AND (r2_key IS NULL OR instr(r2_key, '/figures/') = 0)
+       ORDER BY created_at DESC`,
     )
     .bind(deckId)
     .all();
@@ -164,7 +161,11 @@ deckRoutes.get("/:id/stats", async (c) => {
     .bind(deckId)
     .first<{ count: number }>();
   const materials = await db
-    .prepare("SELECT COUNT(*) AS count FROM materials WHERE deck_id = ?")
+    .prepare(
+      `SELECT COUNT(*) AS count FROM materials
+       WHERE deck_id = ?
+         AND (r2_key IS NULL OR instr(r2_key, '/figures/') = 0)`,
+    )
     .bind(deckId)
     .first<{ count: number }>();
 
@@ -278,18 +279,28 @@ async function assertDeckMaterialKeys(
 ): Promise<void> {
   if (keys.length === 0) return;
   const { results } = await db
-    .prepare(
-      "SELECT r2_key FROM materials WHERE deck_id = ? AND r2_key IS NOT NULL",
-    )
+    .prepare("SELECT id, kind, r2_key FROM materials WHERE deck_id = ?")
     .bind(deckId)
-    .all<{ r2_key: string }>();
-  const allowed = new Set((results ?? []).map((row) => row.r2_key));
+    .all<{ id: string; kind: string; r2_key: string | null }>();
+  const allowed = new Set<string>();
+  const pdfIds = new Set<string>();
+  for (const row of results ?? []) {
+    if (row.r2_key) allowed.add(row.r2_key);
+    if (row.kind === "pdf") pdfIds.add(row.id);
+  }
   for (const key of keys) {
-    if (!allowed.has(key)) {
-      throw new HTTPException(400, {
-        message: "Media key not found for deck",
-      });
+    if (allowed.has(key)) continue;
+    const parsed = parseFigureR2Key(key);
+    if (
+      parsed &&
+      parsed.deckId === deckId &&
+      pdfIds.has(parsed.pdfMaterialId)
+    ) {
+      continue;
     }
+    throw new HTTPException(400, {
+      message: "Media key not found for deck",
+    });
   }
 }
 
@@ -499,14 +510,21 @@ deckRoutes.delete("/:id", async (c) => {
   await requireOwnedDeck(db, deckId, userId);
 
   const keys = new Set<string>();
-  const { results: materialKeys } = await db
-    .prepare(
-      "SELECT r2_key FROM materials WHERE deck_id = ? AND r2_key IS NOT NULL",
-    )
+  const { results: materialRows } = await db
+    .prepare("SELECT id, kind, r2_key FROM materials WHERE deck_id = ?")
     .bind(deckId)
-    .all<{ r2_key: string }>();
-  for (const row of materialKeys ?? []) {
+    .all<{ id: string; kind: string; r2_key: string | null }>();
+  for (const row of materialRows ?? []) {
     if (row.r2_key) keys.add(row.r2_key);
+  }
+  for (const row of materialRows ?? []) {
+    if (row.kind !== "pdf") continue;
+    for (const key of await listFigureKeysInR2(c.env.MATERIALS, {
+      deckId,
+      pdfMaterialId: row.id,
+    })) {
+      keys.add(key);
+    }
   }
   const { results: cardMedia } = await db
     .prepare(
@@ -865,4 +883,3 @@ deckRoutes.post("/:id/materials/upload-url", async (c) => {
 
   return c.json({ materialId, uploadUrl, r2Key });
 });
-

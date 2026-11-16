@@ -55,6 +55,7 @@ describe("resolveShellGenerationStatus", () => {
       jobId: "fail-1",
       kind: "failed",
       label: "Generation failed",
+      subline: "Discard or try again",
       href: "/jobs/fail-1/drafts",
     });
   });

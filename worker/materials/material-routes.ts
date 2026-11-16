@@ -9,17 +9,17 @@ import {
 } from "../generation/image-free-path";
 import { loadMaterialWindowResume } from "../generation/study-windows";
 import { parseOptionalJsonBody } from "../optional-json";
-import {
-  findReadyMaterialByContentHash,
-  sha256Hex,
-} from "./content-hash";
+import { findReadyMaterialByContentHash, sha256Hex } from "./content-hash";
 import { normalizeTopicHints } from "../generation/topic-hints";
 import { MAX_IMAGE_BYTES } from "./limits";
 import { MAX_FIGURES_PER_PDF } from "./docling";
 import {
   figureR2Key,
   figureR2KeyPrefixBounds,
+  isFigureMaterialKey,
   isFigureR2KeyForPdf,
+  listFigureKeysInR2,
+  parseFigureR2Key,
 } from "./figures";
 import { createR2GetUrl, createR2PutUrl } from "./r2-presign";
 import {
@@ -33,6 +33,7 @@ import {
 } from "./ocr-sidecar";
 import { isSourceRole } from "../../src/lib/sourceRole";
 import { refreshAtlasFocusForDeck } from "../atlas/focus";
+import type { Env } from "../env";
 import type { AppEnv, MaterialRow } from "./types";
 import { requireOwnedMaterial } from "./ownership";
 import {
@@ -46,6 +47,39 @@ import {
   resolveSourceRole,
   sanitizeDownloadFilename,
 } from "./upload";
+
+/** Drop a provisional upload row and its R2 objects (PDF + R2-only figure crops). */
+async function discardProvisionalMaterialUpload(
+  env: Env,
+  material: MaterialRow,
+): Promise<void> {
+  const db = getDb(env);
+  const figureKeys =
+    material.kind === "pdf"
+      ? await listFigureKeysInR2(env.MATERIALS, {
+          deckId: material.deck_id,
+          pdfMaterialId: material.id,
+        })
+      : [];
+  await db
+    .prepare("DELETE FROM materials WHERE id = ?")
+    .bind(material.id)
+    .run();
+  if (material.r2_key) {
+    try {
+      await env.MATERIALS.delete(material.r2_key);
+    } catch {
+      /* best-effort */
+    }
+  }
+  for (const key of figureKeys) {
+    try {
+      await env.MATERIALS.delete(key);
+    } catch {
+      /* best-effort */
+    }
+  }
+}
 
 export const materialRoutes = new Hono<AppEnv>();
 
@@ -76,10 +110,6 @@ materialRoutes.post("/:id/figures/presign", async (c) => {
     throw new HTTPException(400, { message: "Invalid JSON body" });
   }
 
-  const filename =
-    typeof body.filename === "string" && body.filename.trim()
-      ? body.filename.trim()
-      : "figure.png";
   if (body.contentType !== "image/png") {
     throw new HTTPException(400, {
       message: "Figure crops must be PNG images",
@@ -100,6 +130,13 @@ materialRoutes.post("/:id/figures/presign", async (c) => {
   }
 
   const r2Key = figureR2Key(parent.deck_id, pdfMaterialId, index);
+  const existingObject = await c.env.MATERIALS.head(r2Key);
+  if (existingObject) {
+    throw new HTTPException(409, {
+      message: `Figure crop index ${index} is already attached to this PDF`,
+    });
+  }
+  // Legacy materials rows (pre R2-only figures) still block the slot.
   const existingFigure = await db
     .prepare("SELECT id FROM materials WHERE r2_key = ?")
     .bind(r2Key)
@@ -110,8 +147,6 @@ materialRoutes.post("/:id/figures/presign", async (c) => {
     });
   }
 
-  const materialId = newId();
-  const createdAt = new Date().toISOString();
   const accountId = c.env.R2_ACCOUNT_ID;
   const accessKeyId = c.env.R2_ACCESS_KEY_ID;
   const secretAccessKey = c.env.R2_SECRET_ACCESS_KEY;
@@ -132,29 +167,11 @@ materialRoutes.post("/:id/figures/presign", async (c) => {
     contentLength: size,
   });
 
-  const sourceRole = resolveSourceRole(undefined, filename);
-
-  await db
-    .prepare(
-      "INSERT INTO materials (id, deck_id, kind, r2_key, filename, page_count, status, created_at, source_role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    )
-    .bind(
-      materialId,
-      parent.deck_id,
-      "image",
-      r2Key,
-      filename,
-      null,
-      FILE_UPLOADING,
-      createdAt,
-      sourceRole,
-    )
-    .run();
-
-  return c.json({ materialId, uploadUrl, r2Key });
+  // R2-only: no materials row. Generation discovers crops via R2 heads.
+  return c.json({ uploadUrl, r2Key });
 });
 
-/** Session-gated media fetch by R2 key (must belong to a material the user owns). */
+/** Session-gated media fetch by R2 key (owned material, or figure under owned PDF). */
 materialRoutes.get("/media", async (c) => {
   const userId = await requireUser(c);
   const key = c.req.query("key")?.trim();
@@ -171,7 +188,21 @@ materialRoutes.get("/media", async (c) => {
     .bind(key, userId)
     .first<{ r2_key: string }>();
   if (!owned) {
-    throw new HTTPException(404, { message: "Media not found" });
+    const parsed = parseFigureR2Key(key);
+    if (!parsed) {
+      throw new HTTPException(404, { message: "Media not found" });
+    }
+    const parent = await db
+      .prepare(
+        `SELECT m.id FROM materials m
+         INNER JOIN decks d ON d.id = m.deck_id
+         WHERE m.id = ? AND m.deck_id = ? AND d.user_id = ?`,
+      )
+      .bind(parsed.pdfMaterialId, parsed.deckId, userId)
+      .first<{ id: string }>();
+    if (!parent) {
+      throw new HTTPException(404, { message: "Media not found" });
+    }
   }
   const obj = await c.env.MATERIALS.get(key);
   if (!obj) {
@@ -229,6 +260,7 @@ materialRoutes.delete("/:id", async (c) => {
 
   type FigureChild = { id: string; r2_key: string };
   let figureChildren: FigureChild[] = [];
+  const figureR2Keys: string[] = [];
   if (material.kind === "pdf") {
     const { lower, upper } = figureR2KeyPrefixBounds(
       material.deck_id,
@@ -247,6 +279,12 @@ materialRoutes.delete("/:id", async (c) => {
         typeof row.r2_key === "string" &&
         isFigureR2KeyForPdf(row.r2_key, material.deck_id, material.id),
     );
+    figureR2Keys.push(
+      ...(await listFigureKeysInR2(c.env.MATERIALS, {
+        deckId: material.deck_id,
+        pdfMaterialId: material.id,
+      })),
+    );
   }
 
   const keysToGuard = new Set<string>();
@@ -254,6 +292,9 @@ materialRoutes.delete("/:id", async (c) => {
   if (materialKey) keysToGuard.add(materialKey);
   for (const child of figureChildren) {
     keysToGuard.add(child.r2_key);
+  }
+  for (const key of figureR2Keys) {
+    keysToGuard.add(key);
   }
 
   // Drop draft/rejected cards for this material's jobs before media guard so
@@ -331,6 +372,7 @@ materialRoutes.get("/", async (c) => {
        FROM materials m
        INNER JOIN decks d ON d.id = m.deck_id
        WHERE d.user_id = ?
+         AND (m.r2_key IS NULL OR instr(m.r2_key, '/figures/') = 0)
        ORDER BY m.created_at DESC`,
     )
     .bind(userId)
@@ -387,8 +429,7 @@ materialRoutes.post("/:id/complete", async (c) => {
 
   if (material.status === FILE_READY) {
     const manual_occlusion =
-      material.kind === "image" &&
-      !(await userHasByoSecret(db, userId));
+      material.kind === "image" && !(await userHasByoSecret(db, userId));
     return c.json({
       id: material.id,
       deck_id: material.deck_id,
@@ -411,7 +452,11 @@ materialRoutes.post("/:id/complete", async (c) => {
   const rawBody = await c.req.text();
   const parsed = parseOptionalJsonBody(rawBody);
   if (parsed !== undefined) {
-    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    if (
+      parsed === null ||
+      typeof parsed !== "object" ||
+      Array.isArray(parsed)
+    ) {
       throw new HTTPException(400, { message: "Invalid JSON body" });
     }
     const body = parsed as {
@@ -452,76 +497,70 @@ materialRoutes.post("/:id/complete", async (c) => {
     }
   }
 
-  const isFigure = material.r2_key?.includes("/figures/") ?? false;
+  const isFigure = isFigureMaterialKey(material.r2_key);
 
   let contentHash: string | null = null;
   if (!isFigure && material.r2_key) {
     const obj = await c.env.MATERIALS.get(material.r2_key);
-    if (obj) {
-      contentHash = await sha256Hex(await obj.arrayBuffer());
-      const hit = await findReadyMaterialByContentHash(
+    if (!obj) {
+      // Browser PUT goes to remote R2; local MATERIALS without remote:true
+      // would miss it. Fail here instead of enqueueing a doomed job.
+      throw new HTTPException(409, {
+        message:
+          "Uploaded file not found in storage. Retry the upload, or enable remote R2 for local dev.",
+      });
+    }
+    contentHash = await sha256Hex(await obj.arrayBuffer());
+    const hit = await findReadyMaterialByContentHash(
+      db,
+      material.deck_id,
+      contentHash,
+      materialId,
+    );
+    if (hit?.jobId) {
+      await discardProvisionalMaterialUpload(c.env, material);
+      return c.json({
+        id: hit.materialId,
+        deck_id: hit.deck_id,
+        kind: hit.kind,
+        r2_key: hit.r2_key,
+        filename: hit.filename,
+        page_count: hit.page_count,
+        status: hit.status,
+        created_at: hit.created_at,
+        source_role: hit.source_role ?? "lecture",
+        jobId: hit.jobId,
+        reused: true,
+      });
+    }
+    if (hit && !hit.jobId) {
+      await discardProvisionalMaterialUpload(c.env, material);
+      const { jobId, manual_occlusion } = await enqueueOrManualOcclusion(
+        c.env,
         db,
-        material.deck_id,
-        contentHash,
-        materialId,
+        {
+          userId,
+          kind: hit.kind,
+          materialId: hit.materialId,
+          deckId: material.deck_id,
+          figureExtractMode,
+          topicHints,
+        },
       );
-      if (hit?.jobId) {
-        await db
-          .prepare("DELETE FROM materials WHERE id = ?")
-          .bind(materialId)
-          .run();
-        if (material.r2_key) {
-          await c.env.MATERIALS.delete(material.r2_key);
-        }
-        return c.json({
-          id: hit.materialId,
-          deck_id: hit.deck_id,
-          kind: hit.kind,
-          r2_key: hit.r2_key,
-          filename: hit.filename,
-          page_count: hit.page_count,
-          status: hit.status,
-          created_at: hit.created_at,
-          source_role: hit.source_role ?? "lecture",
-          jobId: hit.jobId,
-          reused: true,
-        });
-      }
-      if (hit && !hit.jobId) {
-        await db
-          .prepare("DELETE FROM materials WHERE id = ?")
-          .bind(materialId)
-          .run();
-        if (material.r2_key) {
-          await c.env.MATERIALS.delete(material.r2_key);
-        }
-        const { jobId, manual_occlusion } = await enqueueOrManualOcclusion(
-          c.env,
-          db,
-          {
-            userId,
-            kind: hit.kind,
-            materialId: hit.materialId,
-            deckId: material.deck_id,
-            figureExtractMode,
-            topicHints,
-          },
-        );
-        return c.json({
-          id: hit.materialId,
-          deck_id: hit.deck_id,
-          kind: hit.kind,
-          r2_key: hit.r2_key,
-          filename: hit.filename,
-          page_count: hit.page_count,
-          status: hit.status,
-          created_at: hit.created_at,
-          source_role: hit.source_role ?? "lecture",
-          jobId,
-          reused: false,
-          ...(manual_occlusion ? { manual_occlusion: true } : {}),
-        });
-      }
+      return c.json({
+        id: hit.materialId,
+        deck_id: hit.deck_id,
+        kind: hit.kind,
+        r2_key: hit.r2_key,
+        filename: hit.filename,
+        page_count: hit.page_count,
+        status: hit.status,
+        created_at: hit.created_at,
+        source_role: hit.source_role ?? "lecture",
+        jobId,
+        reused: false,
+        ...(manual_occlusion ? { manual_occlusion: true } : {}),
+      });
     }
   }
 

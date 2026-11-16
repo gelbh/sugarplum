@@ -21,10 +21,7 @@ import {
   typeSelectModel,
   type DraftEditorChange,
 } from "../lib/draftCardModel";
-import {
-  SelectEnumItem,
-  renderSelectEnumValue,
-} from "./SelectEnumItem";
+import { SelectEnumItem, renderSelectEnumValue } from "./SelectEnumItem";
 import {
   REJECT_REASONS,
   REJECT_REASON_LABELS,
@@ -108,7 +105,8 @@ function StageTypeSelect({
             sx: {
               bgcolor: "var(--sp-stage-deep, #180816)",
               color: "var(--sp-ivory)",
-              borderColor: "color-mix(in srgb, var(--sp-ivory) 24%, transparent)",
+              borderColor:
+                "color-mix(in srgb, var(--sp-ivory) 24%, transparent)",
               "& .MuiMenuItem-root.Mui-selected": {
                 bgcolor: "rgba(206, 147, 216, 0.16)",
               },
@@ -234,7 +232,11 @@ export default function ReviewCard({
       >
         <Typography
           variant="caption"
-          sx={{ letterSpacing: "0.06em", textTransform: "uppercase", opacity: 0.75 }}
+          sx={{
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            opacity: 0.75,
+          }}
         >
           {remaining} to review
         </Typography>
@@ -242,7 +244,13 @@ export default function ReviewCard({
       </Stack>
 
       <Box
-        sx={{ position: "relative", height: { xs: "min(52vh, 504px)", sm: 504 } }}
+        sx={{
+          position: "relative",
+          height: {
+            xs: "min(42dvh, 360px)",
+            sm: "min(48dvh, 420px)",
+          },
+        }}
       >
         {stackBehind ? (
           <Box
@@ -300,54 +308,67 @@ export default function ReviewCard({
       </Box>
 
       <Stack
-        direction="row"
-        spacing={1}
-        flexWrap="wrap"
-        useFlexGap
+        spacing={0.75}
         alignItems="center"
-        justifyContent="center"
         role="group"
         aria-labelledby="reject-reason-label"
       >
-        <Typography id="reject-reason-label" variant="caption" sx={{ opacity: 0.75 }}>
+        <Typography
+          id="reject-reason-label"
+          variant="caption"
+          sx={{ opacity: 0.72, letterSpacing: "0.04em" }}
+        >
           Reason (optional)
         </Typography>
-        {REJECT_REASONS.map((code) => {
-          const selected = reason === code;
-          return (
-            <Chip
-              key={code}
-              label={REJECT_REASON_LABELS[code]}
-              size="small"
-              clickable
-              variant="outlined"
-              aria-pressed={selected}
-              disabled={locked}
-              onClick={() => setReason(selected ? null : code)}
-              sx={
-                selected
-                  ? {
-                      color: again.fg,
-                      bgcolor: again.wash,
-                      borderColor: again.border,
-                      "&:hover": { bgcolor: again.wash },
-                    }
-                  : {
-                      color: "inherit",
-                      borderColor:
-                        "color-mix(in srgb, var(--sp-ivory) 35%, transparent)",
-                      "&:hover": {
-                        bgcolor:
-                          "color-mix(in srgb, var(--sp-ivory) 12%, transparent)",
-                      },
-                    }
-              }
-            />
-          );
-        })}
+        <Stack
+          direction="row"
+          spacing={0.75}
+          flexWrap="wrap"
+          useFlexGap
+          justifyContent="center"
+        >
+          {REJECT_REASONS.map((code) => {
+            const selected = reason === code;
+            return (
+              <Chip
+                key={code}
+                label={REJECT_REASON_LABELS[code]}
+                size="small"
+                clickable
+                variant="outlined"
+                aria-pressed={selected}
+                disabled={locked}
+                onClick={() => setReason(selected ? null : code)}
+                sx={
+                  selected
+                    ? {
+                        color: again.fg,
+                        bgcolor: again.wash,
+                        borderColor: again.border,
+                        "&:hover": { bgcolor: again.wash },
+                      }
+                    : {
+                        color: "inherit",
+                        borderColor:
+                          "color-mix(in srgb, var(--sp-ivory) 35%, transparent)",
+                        "&:hover": {
+                          bgcolor:
+                            "color-mix(in srgb, var(--sp-ivory) 12%, transparent)",
+                        },
+                      }
+                }
+              />
+            );
+          })}
+        </Stack>
       </Stack>
 
-      <Stack direction="row" spacing={3} justifyContent="center" alignItems="center">
+      <Stack
+        direction="row"
+        spacing={3}
+        justifyContent="center"
+        alignItems="center"
+      >
         <RoundAction
           label="Reject card"
           rating={1}

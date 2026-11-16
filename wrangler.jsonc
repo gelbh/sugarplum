@@ -51,6 +51,9 @@
     {
       "binding": "MATERIALS",
       "bucket_name": "sugarplum-materials",
+      // Browser uploads go to real R2 via presigned URLs; local Miniflare R2
+      // would not see those objects, so generation fails with "R2 object missing".
+      "remote": true,
     },
   ],
   "kv_namespaces": [

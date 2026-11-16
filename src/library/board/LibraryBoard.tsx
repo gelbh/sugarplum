@@ -29,9 +29,11 @@ export default function LibraryBoard({
         },
         justifyContent: "center",
         justifyItems: "stretch",
-        alignContent: "start",
+        alignContent: "center",
+        flex: 1,
         width: "100%",
         minWidth: 0,
+        minHeight: 0,
       }}
     >
       {children}

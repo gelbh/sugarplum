@@ -9,6 +9,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import {
   useCallback,
   useEffect,
@@ -24,7 +25,10 @@ export type OcclusionRegion = OcclusionFrontView["regions"][number];
 export type OcclusionRegionEditorProps = {
   front: OcclusionFrontView;
   disabled?: boolean;
-  onChange: (next: { front: OcclusionFrontView; back: { answer: string } }) => void;
+  onChange: (next: {
+    front: OcclusionFrontView;
+    back: { answer: string };
+  }) => void;
 };
 
 type DragKind = "move" | "resize";
@@ -298,275 +302,335 @@ export default function OcclusionRegionEditor({
     setDrag(null);
   }
 
+  const hasImage = Boolean(front.image_key.trim());
+
   return (
     <Stack spacing={2}>
-      <Box
-        sx={{
-          maxHeight: "45vh",
-          overflow: "auto",
-          borderRadius: "6px",
-          bgcolor: "background.paper",
-          border: "1px solid",
-          borderColor: "divider",
-        }}
-      >
+      {hasImage ? (
         <Box
-          ref={stageRef}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
           sx={{
-            position: "relative",
-            width: "100%",
-            lineHeight: 0,
-            userSelect: "none",
-            touchAction: "none",
+            maxHeight: "42vh",
+            overflow: "auto",
+            borderRadius: 2,
+            bgcolor: "rgba(18, 7, 15, 0.65)",
+            border: "1px solid",
+            borderColor: "rgba(232, 216, 199, 0.16)",
           }}
         >
           <Box
-            component="img"
-            src={mediaUrl(front.image_key)}
-            alt="Occlusion draft"
-            draggable={false}
+            ref={stageRef}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
             sx={{
-              display: "block",
+              position: "relative",
               width: "100%",
-              height: "auto",
-              pointerEvents: "none",
+              lineHeight: 0,
+              userSelect: "none",
+              touchAction: "none",
             }}
-          />
-          {front.regions.map((region) => {
-            const selected = region.id === selectedId;
-            return (
-              <Box
-                key={region.id}
-                onPointerDown={(e) => onBoxPointerDown(e, region, "move")}
-                sx={{
-                  position: "absolute",
-                  left: `${region.x * 100}%`,
-                  top: `${region.y * 100}%`,
-                  width: `${region.w * 100}%`,
-                  height: `${region.h * 100}%`,
-                  boxSizing: "border-box",
-                  border: "2px solid",
-                  borderColor: selected ? "primary.main" : "secondary.main",
-                  bgcolor: selected
-                    ? "color-mix(in srgb, var(--sp-plum) 28%, transparent)"
-                    : "color-mix(in srgb, var(--sp-lamp-glow) 65%, transparent)",
-                  cursor: editLocked ? "default" : "move",
-                  borderRadius: "4px",
-                  boxShadow: selected
-                    ? "0 2px 10px color-mix(in srgb, var(--sp-plum) 28%, transparent)"
-                    : "none",
-                }}
-              >
-                <Typography
-                  variant="caption"
+          >
+            <Box
+              component="img"
+              src={mediaUrl(front.image_key)}
+              alt=""
+              draggable={false}
+              sx={{
+                display: "block",
+                width: "100%",
+                height: "auto",
+                pointerEvents: "none",
+              }}
+            />
+            {front.regions.map((region) => {
+              const selected = region.id === selectedId;
+              return (
+                <Box
+                  key={region.id}
+                  onPointerDown={(e) => onBoxPointerDown(e, region, "move")}
                   sx={{
                     position: "absolute",
-                    left: 4,
-                    top: 2,
-                    px: 0.5,
-                    bgcolor: "var(--sp-stage-bg)",
-                    color: "var(--sp-ivory)",
+                    left: `${region.x * 100}%`,
+                    top: `${region.y * 100}%`,
+                    width: `${region.w * 100}%`,
+                    height: `${region.h * 100}%`,
+                    boxSizing: "border-box",
+                    border: "2px solid",
+                    borderColor: selected ? "primary.main" : "secondary.main",
+                    bgcolor: selected
+                      ? "color-mix(in srgb, var(--sp-plum) 28%, transparent)"
+                      : "color-mix(in srgb, var(--sp-lamp-glow) 65%, transparent)",
+                    cursor: editLocked ? "default" : "move",
                     borderRadius: "4px",
-                    maxWidth: "95%",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    lineHeight: 1.4,
-                    pointerEvents: "none",
-                    fontFamily:
-                      '"Source Sans 3", "Helvetica", "Arial", sans-serif',
-                    fontSize: "0.6875rem",
-                    letterSpacing: "0.02em",
+                    boxShadow: selected
+                      ? "0 2px 10px color-mix(in srgb, var(--sp-plum) 28%, transparent)"
+                      : "none",
                   }}
                 >
-                  {region.label || region.id}
-                </Typography>
-                {!editLocked ? (
-                  <Box
-                    onPointerDown={(e) => onBoxPointerDown(e, region, "resize")}
-                    aria-label="Resize region"
+                  <Typography
+                    variant="caption"
                     sx={{
                       position: "absolute",
-                      right: -5,
-                      bottom: -5,
-                      width: 12,
-                      height: 12,
-                      bgcolor: "primary.main",
-                      borderRadius: "2px",
-                      cursor: "nwse-resize",
-                      border: "1px solid",
-                      borderColor: "background.paper",
+                      left: 4,
+                      top: 2,
+                      px: 0.5,
+                      bgcolor: "var(--sp-stage-bg)",
+                      color: "var(--sp-ivory)",
+                      borderRadius: "4px",
+                      maxWidth: "95%",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      lineHeight: 1.4,
+                      pointerEvents: "none",
+                      fontFamily:
+                        '"Source Sans 3", "Helvetica", "Arial", sans-serif',
+                      fontSize: "0.6875rem",
+                      letterSpacing: "0.02em",
                     }}
-                  />
-                ) : null}
-              </Box>
-            );
-          })}
+                  >
+                    {region.label || region.id}
+                  </Typography>
+                  {!editLocked ? (
+                    <Box
+                      onPointerDown={(e) =>
+                        onBoxPointerDown(e, region, "resize")
+                      }
+                      aria-label="Resize region"
+                      sx={{
+                        position: "absolute",
+                        right: -5,
+                        bottom: -5,
+                        width: 12,
+                        height: 12,
+                        bgcolor: "primary.main",
+                        borderRadius: "2px",
+                        cursor: "nwse-resize",
+                        border: "1px solid",
+                        borderColor: "background.paper",
+                      }}
+                    />
+                  ) : null}
+                </Box>
+              );
+            })}
+          </Box>
         </Box>
-      </Box>
-
-      <TextField
-        label="Prompt (optional)"
-        value={front.prompt ?? ""}
-        onChange={(e) => {
-          const prompt = e.target.value;
-          emit(
-            {
-              ...front,
-              prompt: prompt.length > 0 ? prompt : undefined,
-            },
-            selectedId,
-          );
-        }}
-        fullWidth
-        size="small"
-        disabled={editLocked}
-      />
-
-      <Typography variant="body2" color="text.secondary">
-        Study reveals the hidden region’s label (one region per card via hide_one).
-        Delete unused boxes before accept.
-      </Typography>
-
-      {suggestNotice ? (
-        <Alert severity={suggestNotice.severity} onClose={() => setSuggestNotice(null)}>
-          {suggestNotice.message}
-        </Alert>
-      ) : null}
-
-      <Stack direction="row" spacing={1} alignItems="center">
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={onSuggestRegionsClick}
-          disabled={editLocked}
-          aria-busy={suggestBusy || undefined}
+      ) : (
+        <Box
+          sx={{
+            minHeight: 160,
+            px: 2.5,
+            py: 3,
+            borderRadius: 2,
+            border: "1px dashed",
+            borderColor: "divider",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+            textAlign: "center",
+          }}
         >
-          {suggestBusy ? "Suggesting…" : "Suggest regions"}
-        </Button>
-        {suggestBusy ? (
-          <Button variant="text" size="small" onClick={cancelSuggest}>
-            Cancel
-          </Button>
-        ) : null}
-        {suggestBusy ? (
-          <Typography variant="caption" color="text.secondary">
-            Running OCR on the crop (first run may take a moment).
+          <ImageOutlinedIcon sx={{ fontSize: 28, color: "primary.light" }} />
+          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            Image required
           </Typography>
-        ) : null}
-      </Stack>
+          <Typography variant="body2" color="text.secondary">
+            Upload or pick a deck image, then drag boxes over labels.
+          </Typography>
+        </Box>
+      )}
 
-      <Dialog
-        open={confirmReplaceOpen}
-        onClose={() => !suggestBusy && setConfirmReplaceOpen(false)}
-      >
-        <DialogTitle>Replace existing regions?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            OCR will replace your current region boxes with new suggestions. You
-            can still move, resize, and edit labels afterward.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => setConfirmReplaceOpen(false)}
-            disabled={suggestBusy}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={onConfirmReplaceRegions}
-            disabled={suggestBusy}
-            autoFocus
-          >
-            Replace
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {hasImage ? (
+        <>
+          <TextField
+            label="Prompt (optional)"
+            value={front.prompt ?? ""}
+            onChange={(e) => {
+              const prompt = e.target.value;
+              emit(
+                {
+                  ...front,
+                  prompt: prompt.length > 0 ? prompt : undefined,
+                },
+                selectedId,
+              );
+            }}
+            fullWidth
+            size="small"
+            disabled={editLocked}
+          />
 
-      <Stack spacing={1.5}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-          Regions
-        </Typography>
-        {front.regions.map((region) => (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ maxWidth: "42ch" }}
+          >
+            Hide one region per card. Drag to move, corner to resize. Label is
+            the study answer.
+          </Typography>
+
+          {suggestNotice ? (
+            <Alert
+              severity={suggestNotice.severity}
+              onClose={() => setSuggestNotice(null)}
+            >
+              {suggestNotice.message}
+            </Alert>
+          ) : null}
+
           <Stack
-            key={region.id}
+            direction="row"
             spacing={1}
-            sx={{
-              p: 1.5,
-              border: "1px solid",
-              borderColor:
-                region.id === selectedId ? "primary.main" : "divider",
-              borderRadius: "6px",
-              bgcolor: "background.paper",
-              boxShadow:
-                region.id === selectedId
-                  ? "0 0 0 1px color-mix(in srgb, var(--sp-plum) 20%, transparent)"
-                  : "none",
-            }}
-            onClick={() => {
-              if (editLocked) return;
-              setSelectedId(region.id);
-              emit(front, region.id);
-            }}
+            alignItems="center"
+            flexWrap="wrap"
           >
-            <TextField
-              label={`Label (${region.id})`}
-              value={region.label}
-              onChange={(e) => updateRegion(region.id, { label: e.target.value })}
+            <Button
+              variant="outlined"
               size="small"
-              fullWidth
+              onClick={onSuggestRegionsClick}
               disabled={editLocked}
-              helperText={
-                region.id === selectedId
-                  ? "This label is the study answer for hide_one"
-                  : undefined
-              }
-            />
-            <Stack direction="row" spacing={1}>
-              {(
-                [
-                  ["x", region.x],
-                  ["y", region.y],
-                  ["w", region.w],
-                  ["h", region.h],
-                ] as const
-              ).map(([key, value]) => (
-                <TextField
-                  key={key}
-                  label={key}
-                  type="number"
-                  value={Number(value.toFixed(3))}
-                  inputProps={{ min: 0, max: 1, step: 0.01 }}
-                  onChange={(e) => {
-                    const n = Number(e.target.value);
-                    if (Number.isFinite(n)) updateRegion(region.id, { [key]: n });
-                  }}
-                  size="small"
-                  disabled={editLocked}
-                  sx={{ flex: 1 }}
-                />
-              ))}
-            </Stack>
-            {front.regions.length > 1 && !editLocked ? (
-              <Button
-                size="small"
-                color="error"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  removeRegion(region.id);
-                }}
-              >
-                Remove region
+              aria-busy={suggestBusy || undefined}
+            >
+              {suggestBusy ? "Suggesting…" : "Suggest regions"}
+            </Button>
+            {suggestBusy ? (
+              <Button variant="text" size="small" onClick={cancelSuggest}>
+                Cancel
               </Button>
             ) : null}
+            {suggestBusy ? (
+              <Typography variant="caption" color="text.secondary">
+                First OCR run may take a moment.
+              </Typography>
+            ) : null}
           </Stack>
-        ))}
-      </Stack>
+
+          <Dialog
+            open={confirmReplaceOpen}
+            onClose={() => !suggestBusy && setConfirmReplaceOpen(false)}
+          >
+            <DialogTitle>Replace existing regions?</DialogTitle>
+            <DialogContent>
+              <DialogContentText>
+                OCR will replace your current region boxes with new suggestions.
+                You can still move, resize, and edit labels afterward.
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                onClick={() => setConfirmReplaceOpen(false)}
+                disabled={suggestBusy}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={onConfirmReplaceRegions}
+                disabled={suggestBusy}
+                autoFocus
+              >
+                Replace
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          {front.regions.length > 0 ? (
+            <Stack spacing={1.25}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                Regions
+              </Typography>
+              {front.regions.map((region) => (
+                <Stack
+                  key={region.id}
+                  direction="row"
+                  spacing={1}
+                  alignItems="flex-start"
+                  sx={{
+                    p: 1.25,
+                    border: "1px solid",
+                    borderColor:
+                      region.id === selectedId ? "primary.main" : "divider",
+                    borderRadius: 2,
+                    bgcolor:
+                      region.id === selectedId
+                        ? "action.selected"
+                        : "transparent",
+                    cursor: editLocked ? "default" : "pointer",
+                  }}
+                  onClick={() => {
+                    if (editLocked) return;
+                    setSelectedId(region.id);
+                    emit(front, region.id);
+                  }}
+                >
+                  <Stack spacing={1} sx={{ flex: 1, minWidth: 0 }}>
+                    <TextField
+                      label="Label"
+                      value={region.label}
+                      onChange={(e) =>
+                        updateRegion(region.id, { label: e.target.value })
+                      }
+                      size="small"
+                      fullWidth
+                      disabled={editLocked}
+                      helperText={
+                        region.id === selectedId
+                          ? "Study answer for this card"
+                          : undefined
+                      }
+                    />
+                    <Stack direction="row" spacing={1}>
+                      {(
+                        [
+                          ["x", region.x],
+                          ["y", region.y],
+                          ["w", region.w],
+                          ["h", region.h],
+                        ] as const
+                      ).map(([key, value]) => (
+                        <TextField
+                          key={key}
+                          label={key}
+                          type="number"
+                          value={Number(value.toFixed(3))}
+                          inputProps={{ min: 0, max: 1, step: 0.01 }}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            const n = Number(e.target.value);
+                            if (Number.isFinite(n)) {
+                              updateRegion(region.id, { [key]: n });
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          size="small"
+                          disabled={editLocked}
+                          sx={{ flex: 1 }}
+                        />
+                      ))}
+                    </Stack>
+                  </Stack>
+                  {front.regions.length > 1 && !editLocked ? (
+                    <Button
+                      size="small"
+                      color="error"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeRegion(region.id);
+                      }}
+                      sx={{ flexShrink: 0, mt: 0.5 }}
+                    >
+                      Remove
+                    </Button>
+                  ) : null}
+                </Stack>
+              ))}
+            </Stack>
+          ) : null}
+        </>
+      ) : null}
     </Stack>
   );
 }

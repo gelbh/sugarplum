@@ -303,19 +303,12 @@ export function createTestEnv(opts?: {
   let generationSlotHolders: SlotHolder[] = [];
   const generationSlotsStub = {
     async acquire(jobId: string) {
-      const result = tryAcquireSlot(
-        generationSlotHolders,
-        jobId,
-        Date.now(),
-      );
+      const result = tryAcquireSlot(generationSlotHolders, jobId, Date.now());
       generationSlotHolders = result.holders;
       return result.ok ? ({ ok: true } as const) : ({ ok: false } as const);
     },
     async release(jobId: string) {
-      generationSlotHolders = releaseSlotHolder(
-        generationSlotHolders,
-        jobId,
-      );
+      generationSlotHolders = releaseSlotHolder(generationSlotHolders, jobId);
       return { ok: true as const };
     },
   };
@@ -631,7 +624,11 @@ export function createTestEnv(opts?: {
           normalized ===
           "SELECT r2_key FROM shelf_covers WHERE user_id = ? AND owner_kind = ? AND owner_id = ?"
         ) {
-          const [userId, ownerKind, ownerId] = bound as [string, string, string];
+          const [userId, ownerKind, ownerId] = bound as [
+            string,
+            string,
+            string,
+          ];
           const row = shelfCovers.get(
             shelfCoverKey(userId, ownerKind, ownerId),
           );
@@ -706,9 +703,14 @@ export function createTestEnv(opts?: {
           normalized.includes("FROM materials WHERE deck_id =")
         ) {
           const deckId = bound[0] as string;
-          const cnt = [...materials.values()].filter(
-            (m) => m.deck_id === deckId,
-          ).length;
+          const excludeFigures = normalized.includes(
+            "instr(r2_key, '/figures/')",
+          );
+          const cnt = [...materials.values()].filter((m) => {
+            if (m.deck_id !== deckId) return false;
+            if (excludeFigures && m.r2_key?.includes("/figures/")) return false;
+            return true;
+          }).length;
           return { count: cnt } as unknown as T;
         }
         if (
@@ -725,9 +727,7 @@ export function createTestEnv(opts?: {
         }
         if (normalized.startsWith("SELECT subject_id FROM decks WHERE id =")) {
           const deck = decks.get(bound[0] as string);
-          return deck
-            ? ({ subject_id: deck.subject_id ?? null } as T)
-            : null;
+          return deck ? ({ subject_id: deck.subject_id ?? null } as T) : null;
         }
         if (normalized.startsWith("SELECT user_id FROM decks WHERE id =")) {
           const deck = decks.get(bound[0] as string);
@@ -855,6 +855,20 @@ export function createTestEnv(opts?: {
           normalized.includes("FROM materials m") &&
           normalized.includes("INNER JOIN decks d") &&
           normalized.includes("WHERE m.id =") &&
+          normalized.includes("m.deck_id =") &&
+          normalized.includes("d.user_id =")
+        ) {
+          const material = materials.get(bound[0] as string);
+          if (!material) return null;
+          if (material.deck_id !== bound[1]) return null;
+          const deck = decks.get(material.deck_id);
+          if (!deck || deck.user_id !== bound[2]) return null;
+          return { id: material.id } as T;
+        }
+        if (
+          normalized.includes("FROM materials m") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("WHERE m.id =") &&
           normalized.includes("d.user_id =")
         ) {
           const material = materials.get(bound[0] as string);
@@ -876,6 +890,9 @@ export function createTestEnv(opts?: {
           if (!material) return null;
           const deck = decks.get(material.deck_id);
           if (!deck || deck.user_id !== bound[1]) return null;
+          const subject = deck.subject_id
+            ? subjects.get(deck.subject_id)
+            : null;
           return {
             id: job.id,
             material_id: job.material_id,
@@ -886,6 +903,9 @@ export function createTestEnv(opts?: {
             created_at: job.created_at,
             finished_at: job.finished_at,
             deck_id: material.deck_id,
+            deck_title: deck.title,
+            subject_id: deck.subject_id ?? null,
+            subject_title: subject?.title ?? null,
           } as T;
         }
         // SELECT j.id ... WHERE d.user_id = ? AND j.status = 'needs_review' AND EXISTS (SELECT 1 FROM cards c WHERE c.job_id = j.id AND c.status = 'draft') ORDER BY j.created_at DESC LIMIT 1
@@ -991,8 +1011,9 @@ export function createTestEnv(opts?: {
           normalized.includes("FROM cards WHERE job_id =")
         ) {
           const jobId = bound[0] as string;
-          const n = [...cards.values()].filter((c) => c.job_id === jobId)
-            .length;
+          const n = [...cards.values()].filter(
+            (c) => c.job_id === jobId,
+          ).length;
           return { n } as unknown as T;
         }
         if (
@@ -1323,7 +1344,9 @@ export function createTestEnv(opts?: {
             .map((m) => {
               const deck = decks.get(m.deck_id);
               if (!deck) return null;
-              if (byUser ? deck.user_id !== ownerId : deck.subject_id !== ownerId) {
+              if (
+                byUser ? deck.user_id !== ownerId : deck.subject_id !== ownerId
+              ) {
                 return null;
               }
               return {
@@ -1350,7 +1373,9 @@ export function createTestEnv(opts?: {
             typeof bound[1] === "string"
               ? (bound[1] as string)
               : null;
-          const withScheduleJoin = normalized.includes("LEFT JOIN card_schedules");
+          const withScheduleJoin = normalized.includes(
+            "LEFT JOIN card_schedules",
+          );
           const rows = reviewLogs
             .filter((rl) => {
               const card = cards.get(rl.card_id);
@@ -1402,7 +1427,9 @@ export function createTestEnv(opts?: {
               if (cnt < minReviews) return null;
               return { user_id, cnt };
             })
-            .filter((row): row is { user_id: string; cnt: number } => row != null)
+            .filter(
+              (row): row is { user_id: string; cnt: number } => row != null,
+            )
             .sort((a, b) => b.cnt - a.cnt)
             .slice(0, limit);
           return { results: rows as T[] };
@@ -1432,9 +1459,7 @@ export function createTestEnv(opts?: {
             .map((row) => ({ cluster_key: row.cluster_key }));
           return { results: rows as T[] };
         }
-        if (
-          normalized === "SELECT id, title FROM subjects WHERE user_id = ?"
-        ) {
+        if (normalized === "SELECT id, title FROM subjects WHERE user_id = ?") {
           const userId = bound[0] as string;
           const rows = [...subjects.values()]
             .filter((s) => s.user_id === userId)
@@ -1890,7 +1915,9 @@ export function createTestEnv(opts?: {
           return { results: rows as T[] };
         }
         if (
-          normalized.includes("sugarplum:subject-composition-summaries-subjects")
+          normalized.includes(
+            "sugarplum:subject-composition-summaries-subjects",
+          )
         ) {
           const userId = bound[0] as string;
           const rows = [...subjects.values()]
@@ -1899,7 +1926,9 @@ export function createTestEnv(opts?: {
             .map((s) => ({ id: s.id }));
           return { results: rows as T[] };
         }
-        if (normalized.includes("sugarplum:subject-composition-summaries-rows")) {
+        if (
+          normalized.includes("sugarplum:subject-composition-summaries-rows")
+        ) {
           const userId = bound[0] as string;
           const rows = [...cards.values()]
             .filter((card) => {
@@ -2316,9 +2345,14 @@ export function createTestEnv(opts?: {
           return { results: rows as T[] };
         }
         if (normalized.includes("FROM materials WHERE deck_id =")) {
-          let rows = [...materials.values()].filter(
-            (m) => m.deck_id === bound[0],
+          const excludeFigures = normalized.includes(
+            "instr(r2_key, '/figures/')",
           );
+          let rows = [...materials.values()].filter((m) => {
+            if (m.deck_id !== bound[0]) return false;
+            if (excludeFigures && m.r2_key?.includes("/figures/")) return false;
+            return true;
+          });
           if (normalized.includes("ORDER BY created_at DESC")) {
             rows = rows.sort((a, b) =>
               b.created_at.localeCompare(a.created_at),
@@ -2333,10 +2367,15 @@ export function createTestEnv(opts?: {
           normalized.includes("WHERE d.user_id =")
         ) {
           const userId = bound[0] as string;
+          const excludeFigures = normalized.includes(
+            "instr(m.r2_key, '/figures/')",
+          );
           const rows = [...materials.values()]
             .map((m) => {
               const deck = decks.get(m.deck_id);
               if (!deck || deck.user_id !== userId) return null;
+              if (excludeFigures && m.r2_key?.includes("/figures/"))
+                return null;
               return {
                 id: m.id,
                 deck_id: m.deck_id,
@@ -2520,7 +2559,9 @@ export function createTestEnv(opts?: {
         return { results: [] };
       },
       async run(): Promise<D1Result> {
-        if (normalized.startsWith("UPDATE free_gen_usage SET used = used - 1")) {
+        if (
+          normalized.startsWith("UPDATE free_gen_usage SET used = used - 1")
+        ) {
           const row = freeGenUsage.get(`${bound[0]}:${bound[1]}`);
           if (!row || row.used <= 0) {
             return { success: true, meta: { changes: 0 } } as D1Result;
@@ -2857,7 +2898,11 @@ export function createTestEnv(opts?: {
         } else if (
           normalized.startsWith("DELETE FROM shelf_covers WHERE user_id =")
         ) {
-          const [userId, ownerKind, ownerId] = bound as [string, string, string];
+          const [userId, ownerKind, ownerId] = bound as [
+            string,
+            string,
+            string,
+          ];
           const key = shelfCoverKey(userId, ownerKind, ownerId);
           const had = shelfCovers.delete(key);
           return { success: true, meta: { changes: had ? 1 : 0 } } as D1Result;
@@ -3020,7 +3065,9 @@ export function createTestEnv(opts?: {
           }
           decks.delete(id);
           return { success: true, meta: { changes: 1 } } as D1Result;
-        } else if (normalized.startsWith("DELETE FROM review_logs WHERE card_id =")) {
+        } else if (
+          normalized.startsWith("DELETE FROM review_logs WHERE card_id =")
+        ) {
           const cardId = bound[0] as string;
           let changes = 0;
           for (let i = reviewLogs.length - 1; i >= 0; i--) {
@@ -3282,7 +3329,9 @@ export function createTestEnv(opts?: {
             });
           }
         } else if (
-          normalized.startsWith("UPDATE materials SET source_role = ? WHERE id = ?")
+          normalized.startsWith(
+            "UPDATE materials SET source_role = ? WHERE id = ?",
+          )
         ) {
           const [source_role, id] = bound as [string, string];
           const row = materials.get(id);
@@ -3379,18 +3428,15 @@ export function createTestEnv(opts?: {
             tokens_prompt =
               typeof providerOrTp === "number" ? providerOrTp : null;
             tokens_completion = typeof tpOrTc === "number" ? tpOrTc : null;
-            tokens_total =
-              typeof tcOrTt === "number" ? tcOrTt : null;
+            tokens_total = typeof tcOrTt === "number" ? tcOrTt : null;
             created_at = String(ttOrCreated);
           } else {
             job_id = jobOrPath;
             path = pathOrProvider;
             provider = typeof providerOrTp === "string" ? providerOrTp : null;
             tokens_prompt = typeof tpOrTc === "number" ? tpOrTc : null;
-            tokens_completion =
-              typeof tcOrTt === "number" ? tcOrTt : null;
-            tokens_total =
-              typeof ttOrCreated === "number" ? ttOrCreated : null;
+            tokens_completion = typeof tcOrTt === "number" ? tcOrTt : null;
+            tokens_total = typeof ttOrCreated === "number" ? ttOrCreated : null;
             created_at = String(createdOrMissing);
           }
           if (
@@ -3696,6 +3742,22 @@ export function createTestEnv(opts?: {
           }
         } else if (
           normalized.startsWith(
+            "UPDATE generation_jobs SET status = ?, finished_at = NULL WHERE id = ? AND status = ?",
+          )
+        ) {
+          const [status, id, expected] = bound as [string, string, string];
+          const row = generationJobs.get(id);
+          if (row && row.status === expected) {
+            generationJobs.set(id, {
+              ...row,
+              status,
+              finished_at: null,
+            });
+            return { success: true, meta: { changes: 1 } } as D1Result;
+          }
+          return { success: true, meta: { changes: 0 } } as D1Result;
+        } else if (
+          normalized.startsWith(
             "UPDATE generation_jobs SET coverage_json = ? WHERE id = ?",
           )
         ) {
@@ -3742,8 +3804,14 @@ export function createTestEnv(opts?: {
             "WHERE id = ? AND status = ? AND progress_json = ?",
           )
         ) {
-          const [status, error, finished_at, id, requiredStatus, expectedProgress] =
-            bound as [string, string, string, string, string, string];
+          const [
+            status,
+            error,
+            finished_at,
+            id,
+            requiredStatus,
+            expectedProgress,
+          ] = bound as [string, string, string, string, string, string];
           const row = generationJobs.get(id);
           if (
             !row ||
@@ -3774,6 +3842,32 @@ export function createTestEnv(opts?: {
           ];
           const row = generationJobs.get(id);
           if (!row || row.status !== requiredStatus) {
+            return { success: true, meta: { changes: 0 } } as D1Result;
+          }
+          generationJobs.set(id, {
+            ...row,
+            status,
+            error,
+            finished_at,
+          });
+          return { success: true, meta: { changes: 1 } } as D1Result;
+        } else if (
+          normalized.startsWith(
+            "UPDATE generation_jobs SET status = ?, error = ?, finished_at = ?",
+          ) &&
+          normalized.includes("WHERE id = ? AND status IN")
+        ) {
+          const [status, error, finished_at, id] = bound as [
+            string,
+            string,
+            string,
+            string,
+          ];
+          const row = generationJobs.get(id);
+          if (
+            !row ||
+            (row.status !== "failed" && row.status !== "needs_review")
+          ) {
             return { success: true, meta: { changes: 0 } } as D1Result;
           }
           generationJobs.set(id, {
@@ -3819,7 +3913,9 @@ export function createTestEnv(opts?: {
             created_at: existing?.created_at ?? created_at,
             updated_at,
           });
-        } else if (normalized.startsWith("DELETE FROM user_secrets WHERE user_id =")) {
+        } else if (
+          normalized.startsWith("DELETE FROM user_secrets WHERE user_id =")
+        ) {
           const id = bound[0] as string;
           const had = userSecrets.delete(id);
           return { success: true, meta: { changes: had ? 1 : 0 } } as D1Result;
@@ -3872,7 +3968,8 @@ export function createTestEnv(opts?: {
                 enable_load_balance,
                 easy_days_json,
                 fsrs_w_json: existing?.fsrs_w_json ?? null,
-                fsrs_last_optimized_at: existing?.fsrs_last_optimized_at ?? null,
+                fsrs_last_optimized_at:
+                  existing?.fsrs_last_optimized_at ?? null,
                 fsrs_optimize_pending: existing?.fsrs_optimize_pending ?? 0,
                 updated_at,
               });
@@ -3918,7 +4015,8 @@ export function createTestEnv(opts?: {
                   existing?.easy_days_json ??
                   '["normal","normal","normal","normal","normal","normal","normal"]',
                 fsrs_w_json: existing?.fsrs_w_json ?? null,
-                fsrs_last_optimized_at: existing?.fsrs_last_optimized_at ?? null,
+                fsrs_last_optimized_at:
+                  existing?.fsrs_last_optimized_at ?? null,
                 fsrs_optimize_pending: existing?.fsrs_optimize_pending ?? 0,
                 updated_at,
               });

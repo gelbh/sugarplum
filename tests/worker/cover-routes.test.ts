@@ -47,7 +47,10 @@ function authHeaders(json = false): HeadersInit {
   };
 }
 
-function installUnsplash(photos: StubPhoto[], searchIds: string[]): FetchCall[] {
+function installUnsplash(
+  photos: StubPhoto[],
+  searchIds: string[],
+): FetchCall[] {
   const calls: FetchCall[] = [];
   const byId = new Map(photos.map((photo) => [photo.id, photo]));
   globalThis.fetch = async (input, init) => {
@@ -99,7 +102,11 @@ function installUnsplash(photos: StubPhoto[], searchIds: string[]): FetchCall[] 
   return calls;
 }
 
-function photo(id: string, downloads: number | undefined, imageUrl: string): StubPhoto {
+function photo(
+  id: string,
+  downloads: number | undefined,
+  imageUrl: string,
+): StubPhoto {
   return {
     id,
     downloads,
@@ -112,7 +119,7 @@ function photo(id: string, downloads: number | undefined, imageUrl: string): Stu
 }
 
 describe("cover routes", () => {
-  it("keeps Unsplash search order and hides auth", async () => {
+  it("sorts Unsplash results by downloads and pages", async () => {
     const env = createTestEnv();
     seedOwner(env);
     const photos = [
@@ -129,7 +136,7 @@ describe("cover routes", () => {
     );
 
     const res = await app.request(
-      "/api/covers/search?q=heart",
+      "/api/covers/search?q=heart&page=2",
       { headers: authHeaders() },
       env,
     );
@@ -141,23 +148,28 @@ describe("cover routes", () => {
         downloadLocation?: string;
         source?: string;
       }>;
+      page: number;
+      totalPages: number;
     };
     expect(calls[0]?.url).toBe(
-      "https://api.unsplash.com/search/photos?query=heart&order_by=relevant&content_filter=high&orientation=landscape&per_page=10",
+      "https://api.unsplash.com/search/photos?query=heart&page=2&order_by=relevant&content_filter=high&orientation=landscape&per_page=10",
     );
     expect(calls[0]?.url).not.toContain("stats");
+    expect(body.page).toBe(2);
+    expect(body.totalPages).toBeGreaterThanOrEqual(1);
     expect(body.photos.map((item) => item.photoId)).toEqual([
-      "p1",
-      "p2",
-      "p3",
-      "p4",
       "p5",
-      "p0",
+      "p4",
+      "p3",
+      "p2",
+      "p1",
     ]);
-    expect(body.photos[0]?.imageUrl).toBe("https://images.unsplash.com/p1?ixid=1");
-    expect(body.photos.every((item) => item.downloadLocation === undefined)).toBe(
-      true,
+    expect(body.photos[0]?.imageUrl).toBe(
+      "https://images.unsplash.com/p5?ixid=1",
     );
+    expect(
+      body.photos.every((item) => item.downloadLocation === undefined),
+    ).toBe(true);
     expect(body.photos.every((item) => item.source === "unsplash")).toBe(true);
     const raw = JSON.stringify(body);
     expect(raw).not.toContain("test-key");
@@ -170,13 +182,7 @@ describe("cover routes", () => {
     const env = createTestEnv();
     seedOwner(env);
     const calls = installUnsplash(
-      [
-        photo(
-          "chosen",
-          12,
-          "https://images.unsplash.com/chosen?ixid=keep-me",
-        ),
-      ],
+      [photo("chosen", 12, "https://images.unsplash.com/chosen?ixid=keep-me")],
       [],
     );
 
@@ -197,7 +203,9 @@ describe("cover routes", () => {
     expect(res.status).toBe(200);
     const saved = (await res.json()) as { imageUrl: string; photoId: string };
     expect(saved.photoId).toBe("chosen");
-    expect(saved.imageUrl).toBe("https://images.unsplash.com/chosen?ixid=keep-me");
+    expect(saved.imageUrl).toBe(
+      "https://images.unsplash.com/chosen?ixid=keep-me",
+    );
     const raw = JSON.stringify(saved);
     expect(raw).not.toContain("test-key");
     expect(raw).not.toContain("Client-ID");
@@ -377,7 +385,11 @@ describe("cover routes", () => {
     );
     expect(saved.r2Key).toBe(upload.r2Key);
 
-    const media = await app.request(saved.imageUrl, { headers: authHeaders() }, env);
+    const media = await app.request(
+      saved.imageUrl,
+      { headers: authHeaders() },
+      env,
+    );
     expect(media.status).toBe(200);
     expect(media.headers.get("content-type")).toBe("image/jpeg");
 

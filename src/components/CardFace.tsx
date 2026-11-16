@@ -8,6 +8,7 @@ import {
   clozeExtraSubtitle,
   clozeSpoken,
   extractClozeAnswer,
+  extractClozeAnswers,
 } from "../lib/clozeFormat";
 import { CardFaceMcqBody } from "./cardFaceMcq";
 import ClozePrompt from "./ClozePrompt";
@@ -305,7 +306,10 @@ export default function CardFace({
   const isCloze = type === "cloze";
   const spokenFront = isCloze ? clozeSpoken(front) : front;
   const clozeExtra = isCloze ? clozeExtraSubtitle(back) : null;
-  const answerText = isCloze ? (extractClozeAnswer(front) ?? "") : back;
+  const clozeAnswers = isCloze ? extractClozeAnswers(front) : [];
+  const answerText = isCloze
+    ? clozeAnswers.join(" · ") || (extractClozeAnswer(front) ?? "")
+    : back;
   const imageKey = occlusion?.imageKey ?? mediaR2Keys[0];
   const canReveal = !revealed && !disabled;
   const canFlipBack = revealed && !disabled;

@@ -77,7 +77,9 @@ function coverMediaPath(r2Key: string): string {
   return `/api/covers/media?key=${encodeURIComponent(r2Key)}`;
 }
 
-async function readJson(c: { req: { json: () => Promise<unknown> } }): Promise<unknown> {
+async function readJson(c: {
+  req: { json: () => Promise<unknown> };
+}): Promise<unknown> {
   try {
     return await c.req.json();
   } catch {
@@ -89,7 +91,8 @@ function readOwner(body: unknown): OwnerRef {
   const record =
     body && typeof body === "object" ? (body as Record<string, unknown>) : {};
   const ownerKind = record.ownerKind;
-  const ownerId = typeof record.ownerId === "string" ? record.ownerId.trim() : "";
+  const ownerId =
+    typeof record.ownerId === "string" ? record.ownerId.trim() : "";
   if ((ownerKind !== "subject" && ownerKind !== "deck") || !ownerId) {
     throw new HTTPException(400, { message: "Invalid owner" });
   }
@@ -239,9 +242,14 @@ coverRoutes.get("/search", async (c) => {
   if (!accessKey) return coverSearchNotConfigured(c);
   const q = (c.req.query("q") ?? "").trim();
   if (!q) throw new HTTPException(400, { message: "Title required" });
-  const photos = await searchCoverPhotos(accessKey, q, globalThis.fetch);
+  const pageRaw = Number(c.req.query("page") ?? "1");
+  const page =
+    Number.isFinite(pageRaw) && pageRaw >= 1 ? Math.floor(pageRaw) : 1;
+  const result = await searchCoverPhotos(accessKey, q, page, globalThis.fetch);
   return c.json({
-    photos: photos.map((photo) => coverFieldsFromPhoto(photo)),
+    photos: result.photos.map((photo) => coverFieldsFromPhoto(photo)),
+    page: result.page,
+    totalPages: result.totalPages,
   });
 });
 
@@ -370,7 +378,8 @@ coverRoutes.put("/custom", async (c) => {
 coverRoutes.put("/", async (c) => {
   const { userId, owner, record, db } = await beginCoverPut(c);
 
-  const photoId = typeof record.photoId === "string" ? record.photoId.trim() : "";
+  const photoId =
+    typeof record.photoId === "string" ? record.photoId.trim() : "";
   if (!photoId) throw new HTTPException(400, { message: "Photo required" });
 
   const accessKey = unsplashKey(c.env);
@@ -393,7 +402,11 @@ coverRoutes.put("/", async (c) => {
   await deleteR2Key(c.env, priorKey);
 
   if (chosen.downloadLocation) {
-    const ping = trackDownload(accessKey, chosen.downloadLocation, globalThis.fetch);
+    const ping = trackDownload(
+      accessKey,
+      chosen.downloadLocation,
+      globalThis.fetch,
+    );
     const executionCtx = readExecutionCtx(c);
     if (executionCtx) executionCtx.waitUntil(ping);
     else void ping;

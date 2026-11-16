@@ -47,6 +47,8 @@ type Props = {
   select?: BoardTileSelect;
   credit?: BoardTileCredit | null;
   badge?: string | null;
+  /** Corner pill on the poster (e.g. drafts waiting for review). */
+  notice?: string | null;
   muted?: boolean;
   accent?: boolean;
   index?: number;
@@ -66,6 +68,7 @@ export default function BoardTile({
   select,
   credit,
   badge,
+  notice,
   muted,
   accent,
   index = 0,
@@ -83,21 +86,10 @@ export default function BoardTile({
           sx={{
             position: "absolute",
             inset: 0,
-            display: "grid",
-            placeItems: "center",
-            bgcolor: "rgba(91, 44, 111, 0.18)",
-            border: "1px dashed",
-            borderColor: "primary.main",
+            background:
+              "radial-gradient(ellipse at 50% 38%, rgba(91, 44, 111, 0.42) 0%, rgba(26, 11, 24, 0.92) 68%, #12070f 100%)",
           }}
-        >
-          <Typography
-            variant="h3"
-            color="primary"
-            sx={{ fontWeight: 600, lineHeight: 1 }}
-          >
-            +
-          </Typography>
-        </Box>
+        />
       ) : (
         <Box
           component="img"
@@ -112,15 +104,55 @@ export default function BoardTile({
           }}
         />
       )}
-      <Box
-        sx={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "linear-gradient(180deg, transparent 40%, rgba(15, 5, 14, 0.88) 100%)",
-          pointerEvents: "none",
-        }}
-      />
+      {create ? (
+        <Box
+          aria-hidden
+          sx={{
+            position: "absolute",
+            inset: 0,
+            display: "grid",
+            placeItems: "center",
+            pb: 5,
+          }}
+        >
+          <Box
+            sx={{
+              width: 56,
+              height: 56,
+              borderRadius: "50%",
+              border: "1px solid",
+              borderColor: "rgba(232, 216, 199, 0.28)",
+              bgcolor: "rgba(91, 44, 111, 0.35)",
+              boxShadow: "0 0 0 8px rgba(91, 44, 111, 0.12)",
+              display: "grid",
+              placeItems: "center",
+            }}
+          >
+            <Typography
+              component="span"
+              sx={{
+                fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
+                fontSize: "1.75rem",
+                lineHeight: 1,
+                color: "primary.light",
+                fontWeight: 400,
+              }}
+            >
+              +
+            </Typography>
+          </Box>
+        </Box>
+      ) : (
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(180deg, transparent 40%, rgba(15, 5, 14, 0.88) 100%)",
+            pointerEvents: "none",
+          }}
+        />
+      )}
       <Box
         sx={{
           position: "absolute",
@@ -135,10 +167,14 @@ export default function BoardTile({
           variant="subtitle1"
           component="h2"
           sx={{
-            fontWeight: 700,
-            color: accent ? "primary.light" : "#F5F5F5",
+            fontFamily: create
+              ? '"Alice", "Georgia", "Times New Roman", serif'
+              : "inherit",
+            fontWeight: create ? 400 : 700,
+            letterSpacing: create ? "0.02em" : undefined,
+            color: accent || create ? "primary.light" : "#F5F5F5",
             lineHeight: 1.2,
-            textShadow: "0 1px 8px rgba(0,0,0,0.55)",
+            textShadow: create ? "none" : "0 1px 8px rgba(0,0,0,0.55)",
           }}
         >
           {title}
@@ -146,7 +182,14 @@ export default function BoardTile({
         {meta ? (
           <Typography
             variant="caption"
-            sx={{ color: "rgba(245,245,245,0.72)", display: "block", mt: 0.25 }}
+            sx={{
+              color: create
+                ? "rgba(245,245,245,0.62)"
+                : "rgba(245,245,245,0.72)",
+              display: "block",
+              mt: 0.25,
+              lineHeight: 1.35,
+            }}
           >
             {meta}
           </Typography>
@@ -200,14 +243,17 @@ export default function BoardTile({
     bgcolor: "#1a0b18",
     opacity: muted ? 0.55 : 1,
     border: 1,
-    borderColor: accent ? "primary.main" : "rgba(232, 216, 199, 0.16)",
+    borderColor: create
+      ? "rgba(91, 44, 111, 0.55)"
+      : accent
+        ? "primary.main"
+        : "rgba(232, 216, 199, 0.16)",
     borderStyle: create ? "dashed" : "solid",
+    boxShadow: create ? "0 10px 28px rgba(0,0,0,0.28)" : undefined,
     transition: reduced
       ? undefined
-      : "transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease",
-    animation: reduced
-      ? undefined
-      : `boardPosterIn 420ms ease both`,
+      : "transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease, border-color 180ms ease",
+    animation: reduced ? undefined : `boardPosterIn 420ms ease both`,
     animationDelay: reduced ? undefined : `${Math.min(index, 12) * 40}ms`,
     "@keyframes boardPosterIn": {
       from: { opacity: 0, transform: "translateY(10px)" },
@@ -215,14 +261,17 @@ export default function BoardTile({
     },
     ".board-grid:hover &": reduced
       ? undefined
-      : { opacity: muted ? 0.4 : 0.55 },
+      : { opacity: muted ? 0.4 : create ? 0.72 : 0.55 },
     ".board-grid:hover &:hover, .board-grid:hover &:focus-within": reduced
       ? undefined
       : {
           opacity: 1,
           transform: "scale(1.03)",
           zIndex: 2,
-          boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
+          boxShadow: create
+            ? "0 16px 40px rgba(91, 44, 111, 0.35)"
+            : "0 12px 40px rgba(0,0,0,0.45)",
+          borderColor: create ? "primary.main" : undefined,
         },
   };
 
@@ -271,6 +320,23 @@ export default function BoardTile({
             zIndex: 3,
             bgcolor: "rgba(0,0,0,0.35)",
             borderRadius: 1,
+          }}
+        />
+      ) : null}
+      {notice && !select ? (
+        <Chip
+          size="small"
+          color="primary"
+          label={notice}
+          sx={{
+            position: "absolute",
+            top: 8,
+            left: 8,
+            zIndex: 3,
+            height: 24,
+            fontWeight: 600,
+            pointerEvents: "none",
+            boxShadow: "0 4px 14px rgba(0,0,0,0.35)",
           }}
         />
       ) : null}

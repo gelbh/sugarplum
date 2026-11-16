@@ -2,6 +2,8 @@ import type { Env } from "../env";
 import type { FigureCrop, FigureMime } from "./docling";
 import { MAX_FIGURES_PER_PDF } from "./docling";
 
+const FIGURE_MIMES: FigureMime[] = ["image/png", "image/jpeg", "image/webp"];
+
 export function figureExtForMime(mime: FigureMime): string {
   if (mime === "image/jpeg") return "jpg";
   if (mime === "image/webp") return "webp";
@@ -41,6 +43,26 @@ export function isFigureR2KeyForPdf(
   return /^[0-9]+\.(png|jpe?g|webp)$/i.test(rest);
 }
 
+/** True when the key is a PDF/PPTX figure crop under materials/{deck}/figures/… */
+export function isFigureMaterialKey(r2Key: string | null | undefined): boolean {
+  return typeof r2Key === "string" && r2Key.includes("/figures/");
+}
+
+/**
+ * Parse `materials/{deckId}/figures/{pdfMaterialId}/{n}.{ext}`.
+ * Returns null when the key is not a figure crop path.
+ */
+export function parseFigureR2Key(
+  r2Key: string,
+): { deckId: string; pdfMaterialId: string } | null {
+  const match =
+    /^materials\/([^/]+)\/figures\/([^/]+)\/\d+\.(?:png|jpe?g|webp)$/i.exec(
+      r2Key,
+    );
+  if (!match) return null;
+  return { deckId: match[1]!, pdfMaterialId: match[2]! };
+}
+
 export function mimeFromR2Key(r2Key: string): string {
   const lower = r2Key.toLowerCase();
   if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
@@ -64,8 +86,30 @@ export function bytesToBase64(bytes: ArrayBuffer): string {
 
 type FigureChildRow = { r2_key: string; status: string };
 
-/** Child figure materials under a PDF prefix (uploading and/or ready). */
-export async function listFigureChildrenForPdf(
+/**
+ * Probe R2 for figure objects at known index/mime slots.
+ * ponytail: O(MAX×3) heads; R2 list would need test-env support and prefix APIs.
+ */
+export async function listFigureKeysInR2(
+  materials: R2Bucket,
+  args: { deckId: string; pdfMaterialId: string },
+): Promise<string[]> {
+  const keys: string[] = [];
+  for (let index = 0; index < MAX_FIGURES_PER_PDF; index++) {
+    for (const mime of FIGURE_MIMES) {
+      const key = figureR2Key(args.deckId, args.pdfMaterialId, index, mime);
+      const hit = await materials.head(key);
+      if (hit) {
+        keys.push(key);
+        break;
+      }
+    }
+  }
+  return keys;
+}
+
+/** Legacy figure material rows (uploading/ready) still under the PDF prefix. */
+async function listLegacyFigureMaterialRows(
   db: D1Database,
   args: { deckId: string; pdfMaterialId: string },
 ): Promise<FigureChildRow[]> {
@@ -91,11 +135,35 @@ export async function listFigureChildrenForPdf(
   );
 }
 
+/**
+ * Figure children for a PDF: R2 objects (preferred) plus any legacy materials rows.
+ * Uploading legacy rows still block Docling so in-flight client puts are respected.
+ */
+export async function listFigureChildrenForPdf(
+  env: Pick<Env, "DB" | "MATERIALS">,
+  args: { deckId: string; pdfMaterialId: string },
+): Promise<FigureChildRow[]> {
+  const legacy = await listLegacyFigureMaterialRows(env.DB, args);
+  const byKey = new Map<string, FigureChildRow>();
+  for (const row of legacy) {
+    byKey.set(row.r2_key, row);
+  }
+
+  const r2Keys = await listFigureKeysInR2(env.MATERIALS, args);
+  for (const key of r2Keys) {
+    if (!byKey.has(key)) {
+      byKey.set(key, { r2_key: key, status: "ready" });
+    }
+  }
+
+  return [...byKey.values()].sort((a, b) => a.r2_key.localeCompare(b.r2_key));
+}
+
 export async function listFigureR2KeysForPdf(
-  db: D1Database,
+  env: Pick<Env, "DB" | "MATERIALS">,
   args: { deckId: string; pdfMaterialId: string },
 ): Promise<string[]> {
-  const children = await listFigureChildrenForPdf(db, args);
+  const children = await listFigureChildrenForPdf(env, args);
   return children
     .filter((row) => row.status === "ready")
     .map((row) => row.r2_key)
@@ -103,15 +171,19 @@ export async function listFigureR2KeysForPdf(
 }
 
 export async function hasUploadingFigureChildren(
-  db: D1Database,
+  env: Pick<Env, "DB" | "MATERIALS">,
   args: { deckId: string; pdfMaterialId: string },
 ): Promise<boolean> {
-  const children = await listFigureChildrenForPdf(db, args);
+  const children = await listFigureChildrenForPdf(env, args);
   return children.some((row) => row.status === "uploading");
 }
 
 export type PersistedFigure = { r2Key: string; crop: FigureCrop };
 
+/**
+ * Store Docling crops in R2 only (no materials rows).
+ * Generation reads keys from R2; Browse files never lists figure objects.
+ */
 export async function persistFigureCrops(
   env: Env,
   args: {
@@ -120,14 +192,13 @@ export async function persistFigureCrops(
     crops: FigureCrop[];
   },
 ): Promise<PersistedFigure[]> {
-  const existing = await listFigureChildrenForPdf(env.DB, {
+  const existing = await listFigureChildrenForPdf(env, {
     deckId: args.deckId,
     pdfMaterialId: args.pdfMaterialId,
   });
   const existingKeys = new Set(existing.map((row) => row.r2_key));
 
   const persisted: PersistedFigure[] = [];
-  const now = new Date().toISOString();
 
   for (const crop of args.crops.slice(0, MAX_FIGURES_PER_PDF)) {
     const key = figureR2Key(
@@ -142,22 +213,6 @@ export async function persistFigureCrops(
     await env.MATERIALS.put(key, crop.bytes, {
       httpMetadata: { contentType: crop.mimeType },
     });
-    const id = crypto.randomUUID();
-    await env.DB.prepare(
-      `INSERT INTO materials (id, deck_id, kind, r2_key, filename, page_count, status, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    )
-      .bind(
-        id,
-        args.deckId,
-        "image",
-        key,
-        `figure-p${crop.page}-${crop.index}.${figureExtForMime(crop.mimeType)}`,
-        null,
-        "ready",
-        now,
-      )
-      .run();
     existingKeys.add(key);
     persisted.push({ r2Key: key, crop });
   }

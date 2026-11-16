@@ -16,7 +16,7 @@ type MaterialListRow = {
 };
 
 describe("GET /api/decks/:id/materials", () => {
-  it("lists paste and figure materials for the deck owner", async () => {
+  it("lists deck materials and hides PDF figure crops", async () => {
     const env = createTestEnv();
     env.seedUser({
       id: "user-a",
@@ -62,16 +62,8 @@ describe("GET /api/decks/:id/materials", () => {
 
     expect(res.status).toBe(200);
     const body = (await res.json()) as MaterialListRow[];
-    expect(body.map((row) => row.id)).toEqual(["figure-1", "paste-1"]);
+    expect(body.map((row) => row.id)).toEqual(["paste-1"]);
     expect(body[0]).toMatchObject({
-      id: "figure-1",
-      deck_id: "deck-a",
-      kind: "image",
-      r2_key: "materials/deck-a/figures/pdf-1/0.png",
-      filename: "crop.png",
-      status: "ready",
-    });
-    expect(body[1]).toMatchObject({
       id: "paste-1",
       kind: "paste",
       filename: "notes.txt",
@@ -169,11 +161,21 @@ describe("GET /api/materials", () => {
       id: "mine-new",
       deck_id: "deck-a",
       kind: "image",
+      r2_key: "materials/deck-a/mine-new.png",
+      filename: "slide.png",
+      page_count: null,
+      status: "ready",
+      created_at: "2026-01-01T03:00:00.000Z",
+    });
+    env.seedMaterial({
+      id: "figure-hidden",
+      deck_id: "deck-a",
+      kind: "image",
       r2_key: "materials/deck-a/figures/pdf-1/0.png",
       filename: "crop.png",
       page_count: null,
       status: "ready",
-      created_at: "2026-01-01T03:00:00.000Z",
+      created_at: "2026-01-01T03:30:00.000Z",
     });
     env.seedMaterial({
       id: "theirs",
@@ -197,6 +199,7 @@ describe("GET /api/materials", () => {
     expect(body.map((row) => row.id)).toEqual(["mine-new", "mine-old"]);
     expect(body.every((row) => row.deck_title === "Anatomy")).toBe(true);
     expect(body.some((row) => row.id === "theirs")).toBe(false);
+    expect(body.some((row) => row.id === "figure-hidden")).toBe(false);
   });
 });
 

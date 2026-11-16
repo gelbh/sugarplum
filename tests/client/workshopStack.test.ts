@@ -7,24 +7,17 @@ import {
 } from "../../src/deckHub/workshopStack";
 
 describe("workshopStack", () => {
-  it("pushes createCard only onto cards", () => {
-    const s = pushWorkshop([{ id: "cards" }], { id: "createCard" });
-    expect(s.map((f) => f.id)).toEqual(["cards", "createCard"]);
+  it("pushes cards then diy addMaterial for Browse Create", () => {
+    const s = pushWorkshop([{ id: "cards" }], {
+      id: "addMaterial",
+      tab: "diy",
+    });
+    expect(s).toEqual([{ id: "cards" }, { id: "addMaterial", tab: "diy" }]);
   });
 
-  it("rejects createCard without cards base", () => {
-    expect(() => pushWorkshop([], { id: "createCard" })).toThrow();
-  });
-
-  it("rejects createCard when top is not cards", () => {
-    expect(() =>
-      pushWorkshop([{ id: "addMaterial" }], { id: "createCard" }),
-    ).toThrow();
-  });
-
-  it("replace swaps top frame for Add→Drafts jump", () => {
-    const s = replaceWorkshop([{ id: "addMaterial" }], { id: "drafts" });
-    expect(s).toEqual([{ id: "drafts" }]);
+  it("replace swaps the top frame", () => {
+    const s = replaceWorkshop([{ id: "addMaterial" }], { id: "cards" });
+    expect(s).toEqual([{ id: "cards" }]);
   });
 
   it("pushes a new frame onto an empty stack", () => {
@@ -35,7 +28,7 @@ describe("workshopStack", () => {
   it("pops the top frame", () => {
     const base: WorkshopFrame[] = [
       { id: "cards" },
-      { id: "createCard" },
+      { id: "addMaterial", tab: "diy" },
     ];
     expect(popWorkshop(base).map((f) => f.id)).toEqual(["cards"]);
   });
@@ -50,7 +43,7 @@ describe("workshopStack", () => {
 
   it("does not mutate the input stack", () => {
     const base: WorkshopFrame[] = [{ id: "cards" }];
-    const next = pushWorkshop(base, { id: "createCard" });
+    const next = pushWorkshop(base, { id: "addMaterial", tab: "diy" });
     expect(base).toEqual([{ id: "cards" }]);
     expect(next).not.toBe(base);
   });

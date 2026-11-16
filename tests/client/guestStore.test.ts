@@ -453,7 +453,9 @@ describe("guest store", () => {
     };
     expect(raw.schedules[id]?.reps).toBeGreaterThan(0);
     expect(raw.schedules[id]?.state).not.toBe(0); // not State.New
-    const graded = raw.reviewLogs.find((l) => l.cardId === id && l.rating === 3);
+    const graded = raw.reviewLogs.find(
+      (l) => l.cardId === id && l.rating === 3,
+    );
     expect(graded).toBeDefined();
     expect(graded?.state).toBe(0);
   });
@@ -837,21 +839,20 @@ describe("guest store", () => {
     ).toThrow(/MCQ requires options/);
   });
 
-  it("createDeckCard rejects multi-blank cloze", async () => {
+  it("createDeckCard accepts multi-blank cloze", async () => {
     enterGuest(storage);
-    const subject = guestCreateSubject("Cloze bad", storage);
-    const deck = guestCreateDeck("Cloze bad deck", subject.id, storage);
-    expect(() =>
-      guestCreateDeckCard(
-        deck.id,
-        {
-          type: "cloze",
-          front: "The {{c1::a}} and {{c1::b}}",
-          back: "",
-        },
-        storage,
-      ),
-    ).toThrow(/at most one blank/);
+    const subject = guestCreateSubject("Cloze multi", storage);
+    const deck = guestCreateDeck("Cloze multi deck", subject.id, storage);
+    const card = guestCreateDeckCard(
+      deck.id,
+      {
+        type: "cloze",
+        front: "The {{c1::a}} and {{c2::b}}",
+        back: "",
+      },
+      storage,
+    );
+    expect(card.front).toBe("The {{c1::a}} and {{c2::b}}");
   });
 
   it("patchCard rejects invalid MCQ options", async () => {
@@ -1206,9 +1207,7 @@ describe("guest store", () => {
     };
     // All accepted dues in the future → empty dueIds is intentional, not a heal.
     raw.cards = raw.cards.map((c) =>
-      c.status === "accepted"
-        ? { ...c, due: "2099-01-01T00:00:00.000Z" }
-        : c,
+      c.status === "accepted" ? { ...c, due: "2099-01-01T00:00:00.000Z" } : c,
     );
     raw.dueIds = [];
     storage.setItem(STORE_KEY, JSON.stringify(raw));
@@ -1223,9 +1222,8 @@ describe("guest store", () => {
   it("save and reset weights reschedule cards with review history", async () => {
     const { FSRS7_DEFAULT_WEIGHTS } = await import("ts-fsrs/models/fsrs-7");
     const { replayCardFromLogs } = await import("../../src/study/fsrsReplay");
-    const { scheduleColumnsFromCard } = await import(
-      "../../src/study/retrievability"
-    );
+    const { scheduleColumnsFromCard } =
+      await import("../../src/study/retrievability");
     enterGuest(storage);
     const subject = guestCreateSubject("Reschedule subject", storage);
     const deck = guestCreateDeck("Reschedule deck", subject.id, storage);
@@ -1268,7 +1266,9 @@ describe("guest store", () => {
     expect(rawAfterSave.cards.find((c) => c.id === card.id)?.due).toBe(
       customCols.due,
     );
-    expect(rawAfterSave.schedules[card.id]?.stability).toBe(customCols.stability);
+    expect(rawAfterSave.schedules[card.id]?.stability).toBe(
+      customCols.stability,
+    );
 
     const dueAfterSave = rawAfterSave.cards.find((c) => c.id === card.id)?.due;
     guestPutStudyPrefs({ introBudget: 9 }, storage);

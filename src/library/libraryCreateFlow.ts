@@ -1,3 +1,4 @@
-export function libraryShowsCreateFlow(subjectCount: number): boolean {
-  return subjectCount === 0;
+/** Never auto-open Add material on Library load; empty Library starts from Add subject. */
+export function libraryShowsCreateFlow(_subjectCount: number): boolean {
+  return false;
 }

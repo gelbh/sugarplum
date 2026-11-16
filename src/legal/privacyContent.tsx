@@ -1,7 +1,7 @@
 import Typography from "@mui/material/Typography";
 import Link from "@mui/material/Link";
-import Stack from "@mui/material/Stack";
 import { LEGAL_CONTACT_EMAIL, APP_ORIGIN } from "./contact";
+import { LegalSections } from "./LegalSections";
 
 /** Section strings kept here so plainText() and JSX share one source. */
 export const privacySections = [
@@ -61,26 +61,15 @@ export function privacyPlainText(): string {
 
 export function PrivacyContent() {
   return (
-    <Stack spacing={3}>
-      {privacySections.map((s) => (
-        <section key={s.title}>
-          <Typography variant="h6" component="h2" gutterBottom>
-            {s.title}
-          </Typography>
-          <Typography
-            variant="body1"
-            component="p"
-            sx={{ whiteSpace: "pre-wrap" }}
-          >
-            {s.body}
-          </Typography>
-        </section>
-      ))}
-      <Typography variant="body2">
-        <Link href="/data-deletion" underline="hover">
-          How to request data deletion
-        </Link>
-      </Typography>
-    </Stack>
+    <LegalSections
+      sections={privacySections}
+      footer={
+        <Typography variant="body2">
+          <Link href="/data-deletion" underline="hover" color="primary">
+            How to request data deletion
+          </Link>
+        </Typography>
+      }
+    />
   );
 }

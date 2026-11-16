@@ -1,215 +1,291 @@
-import type { MouseEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import ButtonBase from "@mui/material/ButtonBase";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
+import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
+import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
 import type { StoredCoverRow } from "../api/client";
-import { isPlainClick, navigate } from "../nav/navigate";
-
-type Crumb = {
-  label: string;
-  href: string;
-};
+import { coverPlaceholderSrc } from "../library/board/coverPlaceholder";
+import StageBreadcrumbs, { type StageCrumb } from "../library/StageBreadcrumbs";
 
 type Props = {
   title: string;
   cover: StoredCoverRow | null;
+  coverKey?: string;
   guest: boolean;
   metaLine: string;
-  crumbs?: Crumb[];
+  crumbs?: StageCrumb[];
   spark?: ReactNode;
+  /** When set, Study is shown under the header (operable only). */
+  onStudy?: () => void;
   exportBusy: boolean;
   exportDisabled: boolean;
-  overflowAnchor: HTMLElement | null;
-  onOverflowOpen: (anchor: HTMLElement) => void;
-  onOverflowClose: () => void;
   onExportAnki: () => void;
   onRename: () => void;
   onDelete: () => void;
   onChangeCover: () => void;
 };
 
-function onCrumbClick(href: string, ev: MouseEvent<HTMLAnchorElement>) {
-  if (ev.defaultPrevented || !isPlainClick(ev)) return;
-  ev.preventDefault();
-  navigate(href);
-}
-
 export default function DeckHubTitleHeader({
   title,
   cover,
+  coverKey = "deck",
   guest,
   metaLine,
   crumbs = [],
   spark,
+  onStudy,
   exportBusy,
   exportDisabled,
-  overflowAnchor,
-  onOverflowOpen,
-  onOverflowClose,
   onExportAnki,
   onRename,
   onDelete,
   onChangeCover,
 }: Props) {
+  const coverSrc = cover?.imageUrl ?? coverPlaceholderSrc(coverKey);
+
   return (
-    <Box>
-      {crumbs.length > 0 ? (
-        <Stack
-          direction="row"
-          alignItems="center"
-          flexWrap="wrap"
-          useFlexGap
-          gap={0.5}
-          sx={{ mb: 1 }}
-        >
-          {crumbs.map((crumb, index) => (
-            <Stack
-              key={crumb.href}
-              direction="row"
-              alignItems="center"
-              spacing={0.5}
-            >
-              {index > 0 ? (
-                <Typography variant="body2" color="text.secondary" aria-hidden>
-                  /
-                </Typography>
-              ) : null}
-              <Link
-                href={crumb.href}
-                underline="hover"
-                onClick={(ev) => onCrumbClick(crumb.href, ev)}
-                sx={{ typography: "body2" }}
-              >
-                {crumb.label}
-              </Link>
-            </Stack>
-          ))}
-        </Stack>
-      ) : null}
+    <Box
+      sx={{
+        pb: 1.5,
+        borderBottom: 1,
+        borderColor: "divider",
+      }}
+    >
+      <StageBreadcrumbs crumbs={crumbs} sx={{ mb: 1.5 }} />
+
       <Stack
         direction="row"
+        spacing={{ xs: 2, sm: 2.5 }}
         alignItems="flex-start"
-        justifyContent="space-between"
-        gap={1.5}
+        sx={{ minWidth: 0 }}
       >
         <Stack
-          direction="row"
-          spacing={2}
-          alignItems="flex-start"
-          sx={{ flex: 1, minWidth: 0 }}
+          spacing={0.75}
+          alignItems="stretch"
+          sx={{ flexShrink: 0, width: { xs: 104, sm: 132 } }}
         >
-          {cover ? (
+          <Box
+            component={!guest ? ButtonBase : "div"}
+            {...(!guest
+              ? {
+                  focusRipple: true,
+                  onClick: onChangeCover,
+                  "aria-label": cover
+                    ? `Change cover for ${title}`
+                    : `Add cover for ${title}`,
+                }
+              : {})}
+            sx={{
+              position: "relative",
+              width: "100%",
+              aspectRatio: "3 / 4",
+              borderRadius: 2,
+              overflow: "hidden",
+              border: 1,
+              borderColor: "rgba(232, 216, 199, 0.16)",
+              bgcolor: "#1a0b18",
+              boxShadow: "0 14px 36px rgba(0,0,0,0.42)",
+              textAlign: "left",
+              display: "block",
+              transition: "transform 180ms ease, box-shadow 180ms ease",
+              "@media (prefers-reduced-motion: reduce)": {
+                transition: "none",
+              },
+              ...(!guest
+                ? {
+                    "&:hover, &:focus-visible": {
+                      transform: "translateY(-2px) scale(1.02)",
+                      boxShadow: "0 18px 44px rgba(0,0,0,0.5)",
+                    },
+                    "@media (prefers-reduced-motion: reduce)": {
+                      "&:hover, &:focus-visible": {
+                        transform: "none",
+                      },
+                    },
+                  }
+                : {}),
+            }}
+          >
             <Box
               component="img"
-              src={cover.imageUrl}
+              src={coverSrc}
               alt=""
               sx={{
-                width: 88,
-                height: 88,
-                borderRadius: 2,
-                border: 1,
-                borderColor: "divider",
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
                 objectFit: "cover",
-                flexShrink: 0,
-                bgcolor: "background.paper",
+                display: "block",
               }}
             />
-          ) : (
             <Box
               aria-hidden
               sx={{
-                width: 88,
-                height: 88,
-                borderRadius: 2,
-                border: 1,
-                borderColor: "divider",
-                bgcolor: "background.paper",
-                display: "grid",
-                placeItems: "center",
-                flexShrink: 0,
-                color: "text.secondary",
-                typography: "caption",
-                fontWeight: 600,
-                textAlign: "center",
-                px: 1,
+                position: "absolute",
+                inset: 0,
+                background:
+                  "linear-gradient(180deg, transparent 42%, rgba(15, 5, 14, 0.82) 100%)",
+                pointerEvents: "none",
               }}
-            >
-              No cover
-            </Box>
-          )}
-          <Box sx={{ minWidth: 0, flex: 1 }}>
-            <Typography
-              variant="h4"
-              component="h1"
-              sx={{ color: "text.primary", fontWeight: 600 }}
-            >
-              {title}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {metaLine}
-            </Typography>
-            {spark ?? null}
-            {!guest ? (
-              <Button
-                size="small"
-                onClick={onChangeCover}
-                sx={{ mt: 1, px: 0, minWidth: 0 }}
-              >
-                {cover ? "Change cover" : "Add cover"}
-              </Button>
-            ) : null}
+            />
           </Box>
-        </Stack>
-        <Tooltip title="Deck actions">
-          <IconButton
-            size="small"
-            aria-label="Deck actions"
-            onClick={(ev) => onOverflowOpen(ev.currentTarget)}
-            sx={{ color: "text.secondary" }}
-          >
-            <MoreVertIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-        <Menu
-          anchorEl={overflowAnchor}
-          open={overflowAnchor !== null}
-          onClose={onOverflowClose}
-        >
-          {!guest ? (
-            <MenuItem
-              disabled={exportBusy || exportDisabled}
-              onClick={() => {
-                onOverflowClose();
-                onExportAnki();
+          {cover?.source === "unsplash" ? (
+            <Typography
+              variant="caption"
+              sx={{
+                color: "text.secondary",
+                display: "block",
+                lineHeight: 1.35,
+                px: 0.25,
               }}
             >
-              {exportBusy ? "Exporting…" : "Export Anki"}
-            </MenuItem>
+              Photo by{" "}
+              <Link
+                href={cover.photographerUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                underline="hover"
+                sx={{ color: "inherit" }}
+              >
+                {cover.photographerName}
+              </Link>
+            </Typography>
           ) : null}
-          <MenuItem
-            onClick={() => {
-              onOverflowClose();
-              onRename();
-            }}
+        </Stack>
+
+        <Box sx={{ minWidth: 0, flex: 1, pt: { xs: 0.25, sm: 0.5 } }}>
+          <Stack
+            direction="row"
+            alignItems="flex-start"
+            justifyContent="space-between"
+            spacing={1}
           >
-            Rename
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              onOverflowClose();
-              onDelete();
-            }}
-          >
-            Delete
-          </MenuItem>
-        </Menu>
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography
+                component="p"
+                sx={{
+                  m: 0,
+                  mb: 0.75,
+                  fontSize: "0.6875rem",
+                  fontWeight: 500,
+                  letterSpacing: "0.22em",
+                  textTransform: "uppercase",
+                  color: "primary.main",
+                }}
+              >
+                Deck hub
+              </Typography>
+              <Typography
+                variant="h3"
+                component="h1"
+                sx={{
+                  m: 0,
+                  fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
+                  fontWeight: 400,
+                  letterSpacing: "0.02em",
+                  lineHeight: 1.1,
+                  color: "text.primary",
+                }}
+              >
+                {title}
+              </Typography>
+              {metaLine ? (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 0.75 }}
+                >
+                  {metaLine}
+                </Typography>
+              ) : null}
+            </Box>
+            <Stack
+              direction="row"
+              spacing={0.25}
+              flexShrink={0}
+              sx={{ mt: -0.25 }}
+            >
+              <Tooltip title="Rename deck">
+                <IconButton
+                  size="small"
+                  aria-label={`Rename ${title}`}
+                  onClick={onRename}
+                  sx={{ color: "text.secondary" }}
+                >
+                  <EditOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              {!guest ? (
+                <Tooltip title={cover ? "Change cover" : "Add cover"}>
+                  <IconButton
+                    size="small"
+                    aria-label={
+                      cover
+                        ? `Change cover for ${title}`
+                        : `Add cover for ${title}`
+                    }
+                    onClick={onChangeCover}
+                    sx={{ color: "text.secondary" }}
+                  >
+                    <ImageOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              ) : null}
+              <Tooltip title="Delete deck">
+                <IconButton
+                  size="small"
+                  aria-label={`Delete ${title}`}
+                  onClick={onDelete}
+                  sx={{ color: "text.secondary" }}
+                >
+                  <DeleteOutlineIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              {!guest && (!exportDisabled || exportBusy) ? (
+                <Tooltip
+                  title={exportBusy ? "Exporting…" : "Download for Anki"}
+                >
+                  <span>
+                    <IconButton
+                      size="small"
+                      aria-label={`Download ${title} for Anki`}
+                      disabled={exportBusy}
+                      onClick={onExportAnki}
+                      sx={{ color: "text.secondary" }}
+                    >
+                      <FileDownloadOutlinedIcon fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              ) : null}
+            </Stack>
+          </Stack>
+          {spark ? <Box sx={{ mt: 1.5 }}>{spark}</Box> : null}
+          {onStudy ? (
+            <Box sx={{ mt: 1.75 }}>
+              <Button
+                variant="contained"
+                size="medium"
+                startIcon={<SchoolOutlinedIcon />}
+                onClick={onStudy}
+                aria-label="Study"
+                sx={{ minWidth: 128 }}
+              >
+                Study
+              </Button>
+            </Box>
+          ) : null}
+        </Box>
       </Stack>
     </Box>
   );

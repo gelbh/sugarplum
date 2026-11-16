@@ -5,18 +5,25 @@ const ANKI_CLOZE_RE = /\{\{c\d+::[\s\S]*?\}\}/g;
 /** Underscore blank markers (3+). */
 const UNDERSCORE_BLANK_RE = /_{3,}/g;
 
+const CLOZE_BLANK_MAX = 8;
+
 /**
- * Cloze fronts may have at most one blank (Anki `{{cN::…}}` or `___`).
- * Throws when more than one blank marker is present.
+ * Cloze fronts need 1–8 blanks (Anki `{{cN::…}}` or `___`).
  */
-export function assertSingleCloze(front: string): void {
+export function assertClozeFront(front: string): void {
   const anki = front.match(ANKI_CLOZE_RE) ?? [];
   const underscores = front.match(UNDERSCORE_BLANK_RE) ?? [];
   const total = anki.length + underscores.length;
-  if (total > 1) {
-    throw new Error("Cloze cards must contain at most one blank");
+  if (total < 1) {
+    throw new Error("Cloze cards need at least one blank");
+  }
+  if (total > CLOZE_BLANK_MAX) {
+    throw new Error(`Cloze cards allow at most ${CLOZE_BLANK_MAX} blanks`);
   }
 }
+
+/** @deprecated Prefer assertClozeFront */
+export const assertSingleCloze = assertClozeFront;
 
 /**
  * MCQ: 3–5 unique trimmed non-empty options; back must match one option.
