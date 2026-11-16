@@ -14,7 +14,6 @@ type Props = {
   secondary?: Action;
 };
 
-/** Centered empty list: why it's empty + one primary next step. */
 export default function EmptyNext({
   title,
   body,

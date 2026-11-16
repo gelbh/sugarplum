@@ -89,10 +89,6 @@ export type ComposeClozeResult =
   | { ok: true; front: string }
   | { ok: false; error: string };
 
-/**
- * Build a single-blank Anki cloze front from a plain sentence and the word to hide.
- * Wraps the first case-sensitive occurrence of `blank` in `{{c1::…}}`.
- */
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -158,7 +154,6 @@ export function parseClozeDiyFields(
   return { sentence: revealClozeFront(front), blank };
 }
 
-/** True when front has exactly one cloze blank (Anki or ___). */
 export function hasSingleClozeBlank(front: string): boolean {
   const anki = front.match(ANKI_CLOZE_COUNT_RE) ?? [];
   const underscores = front.match(UNDERSCORE_BLANK_RE) ?? [];
