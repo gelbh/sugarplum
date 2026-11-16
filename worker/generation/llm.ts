@@ -28,11 +28,13 @@ import {
 import {
   GENERATE_COMPACT_SYSTEM_PROMPT,
   GENERATE_SYSTEM_PROMPT,
-  IMAGE_GENERATE_SYSTEM_PROMPT,
   generateCompactUserPrompt,
-  generateImageUserPrompt,
-  generateUserPrompt,
+  imagePromptForJson,
+  systemPromptForGenerateDrafts,
+  userPromptForJson,
 } from "./prompts";
+
+export { userPromptForJson };
 
 export {
   isTruncationParseError,
@@ -109,10 +111,6 @@ export type LlmAdapter = {
   complete(input: CompleteInput): Promise<CompleteResult>;
 };
 
-export function userPromptForJson(text: string): string {
-  return `${generateUserPrompt(text)}\n\nReturn JSON as {"cards":[...]}`;
-}
-
 /** Text generate: full prompt, then one compact retry on mid-JSON truncation. */
 async function generateTextDraftsWithCompactRetry(
   text: string,
@@ -142,14 +140,6 @@ async function generateTextDraftsWithCompactRetry(
         ).text,
       ),
   );
-}
-
-function imagePromptForJson(imageKey: string): string {
-  return `${generateImageUserPrompt(imageKey)}\n\nReturn JSON as {"cards":[...]}`;
-}
-
-function systemPromptFor(input: GenerateDraftsInput): string {
-  return input.image ? IMAGE_GENERATE_SYSTEM_PROMPT : GENERATE_SYSTEM_PROMPT;
 }
 
 /** Fixed drafts for tests (no network). */
@@ -406,7 +396,7 @@ function openAiCompatibleAdapter(opts: {
             ? { response_format: { type: "json_object" } }
             : {}),
           messages: [
-            { role: "system", content: systemPromptFor(input) },
+            { role: "system", content: systemPromptForGenerateDrafts(input) },
             {
               role: "user",
               content: [
@@ -518,7 +508,7 @@ function anthropicAdapter(): LlmAdapter {
           model: "claude-3-5-haiku-latest",
           max_tokens: 4096,
           temperature: 0.3,
-          system: systemPromptFor(input),
+          system: systemPromptForGenerateDrafts(input),
           messages: [
             {
               role: "user",
@@ -604,7 +594,7 @@ function googleAdapter(): LlmAdapter {
         },
         body: JSON.stringify({
           systemInstruction: {
-            parts: [{ text: systemPromptFor(input) }],
+            parts: [{ text: systemPromptForGenerateDrafts(input) }],
           },
           contents: [
             {
