@@ -4,7 +4,9 @@ import {
   blankClozeFront,
   CLOZE_EXTRA_LABEL,
   clozeExtraSubtitle,
+  composeClozeFront,
   extractClozeAnswer,
+  parseClozeDiyFields,
   revealClozeFront,
 } from "../../src/lib/clozeFormat";
 
@@ -96,5 +98,38 @@ describe("assertSingleCloze", () => {
     expect(() =>
       assertSingleCloze("The {{c1::a}} and {{c1::b}}"),
     ).toThrow(/at most one blank/);
+  });
+});
+
+describe("composeClozeFront", () => {
+  it("wraps the first blank occurrence", () => {
+    const r = composeClozeFront("The capital is Paris", "Paris");
+    expect(r).toEqual({ ok: true, front: "The capital is {{c1::Paris}}" });
+  });
+
+  it("errors when blank is missing from sentence", () => {
+    const r = composeClozeFront("The capital is Paris", "London");
+    expect(r).toEqual({
+      ok: false,
+      error: "Put the blank text inside the sentence.",
+    });
+  });
+
+  it("does not wrap a letter prefix inside a longer word", () => {
+    const r = composeClozeFront("The capital is Paris", "P");
+    expect(r.ok).toBe(false);
+  });
+});
+
+describe("parseClozeDiyFields", () => {
+  it("round-trips one blank", () => {
+    expect(parseClozeDiyFields("The capital is {{c1::Paris}}")).toEqual({
+      sentence: "The capital is Paris",
+      blank: "Paris",
+    });
+  });
+
+  it("returns null for plain text", () => {
+    expect(parseClozeDiyFields("No blank here")).toBeNull();
   });
 });

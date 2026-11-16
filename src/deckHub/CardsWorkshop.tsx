@@ -21,6 +21,7 @@ import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
 import DraftCardEditor, {
   type DraftEditorChange,
 } from "../components/DraftCardEditor";
+import EmptyNext from "../components/EmptyNext";
 import type { CardDraftView, CardType } from "../api/client";
 import { cardFrontPreview } from "../lib/draftCardModel";
 
@@ -214,11 +215,17 @@ export default function CardsWorkshop(props: Props) {
       </Stack>
 
       {cards.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          {showArchived
-            ? "No archived cards."
-            : "No accepted cards yet. Create one or add material."}
-        </Typography>
+        showArchived ? (
+          <Typography variant="body2" color="text.secondary">
+            No archived cards.
+          </Typography>
+        ) : (
+          <EmptyNext
+            title="No accepted cards yet"
+            body="Create a card yourself or add material to generate some."
+            primary={{ label: "Create card", onClick: onCreateCard }}
+          />
+        )
       ) : (
         <>
           <Stack

@@ -49,6 +49,8 @@ type Props = {
   children?: ReactNode;
 };
 
+const ABOVE_STRETCH = { position: "relative", zIndex: 1 } as const;
+
 function withReferral(href: string): string {
   const url = new URL(href);
   url.searchParams.set("utm_source", "sugarplum");
@@ -75,15 +77,58 @@ export default function ShelfVolume({
   children,
 }: Props) {
   return (
-    <Paper variant="outlined" sx={{ p: 2.5, bgcolor: "background.paper", borderColor: "divider", height: "100%", "&:hover": { bgcolor: "action.hover" } }}>
+    <Paper
+      variant="outlined"
+      sx={{
+        p: 2.5,
+        bgcolor: "background.paper",
+        borderColor: "divider",
+        height: "100%",
+        position: "relative",
+        "&:hover": { bgcolor: "action.hover" },
+        ...(select
+          ? {}
+          : {
+              "&:has(.shelf-open-link:focus-visible)": {
+                outline: "2px solid",
+                outlineColor: "primary.main",
+                outlineOffset: 2,
+              },
+            }),
+      }}
+    >
       {cover ? (
         <Box sx={{ mx: -2.5, mt: -2.5, mb: 2 }}>
-          <Box component="img" src={cover.imageUrl} alt="" sx={{ display: "block", width: "100%", height: 160, objectFit: "cover" }} />
+          <Box
+            component="img"
+            src={cover.imageUrl}
+            alt=""
+            sx={{ display: "block", width: "100%", height: 160, objectFit: "cover" }}
+          />
           {cover.source === "custom" ? null : (
-            <Typography variant="caption" color="text.secondary" sx={{ display: "block", px: 2.5, pt: 0.5 }}>
-              Photo by <Link href={withReferral(cover.photographerUrl)} target="_blank" rel="noopener noreferrer">{cover.photographerName}</Link>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", px: 2.5, pt: 0.5, ...ABOVE_STRETCH }}
+            >
+              Photo by{" "}
+              <Link
+                href={withReferral(cover.photographerUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={ABOVE_STRETCH}
+              >
+                {cover.photographerName}
+              </Link>
               {" on "}
-              <Link href={withReferral(cover.photoHtmlUrl)} target="_blank" rel="noopener noreferrer">Unsplash</Link>
+              <Link
+                href={withReferral(cover.photoHtmlUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={ABOVE_STRETCH}
+              >
+                Unsplash
+              </Link>
             </Typography>
           )}
         </Box>
@@ -96,24 +141,68 @@ export default function ShelfVolume({
             disabled={select.disabled}
             onChange={select.onChange}
             inputProps={{ "aria-label": select.inputLabel }}
-            sx={{ p: 1.5 }}
+            sx={{ p: 1.5, ...ABOVE_STRETCH }}
           />
         ) : null}
         <Box sx={{ flex: 1, minWidth: 0 }}>
           {select ? (
-            <Button variant="text" onClick={select.onChange} disabled={select.disabled} sx={{ p: 0, textAlign: "left", textTransform: "none", color: "text.primary" }}>
-              <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>{title}</Typography>
+            <Button
+              variant="text"
+              onClick={select.onChange}
+              disabled={select.disabled}
+              sx={{
+                p: 0,
+                textAlign: "left",
+                textTransform: "none",
+                color: "text.primary",
+                ...ABOVE_STRETCH,
+              }}
+            >
+              <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
+                {title}
+              </Typography>
             </Button>
           ) : (
-            <Link href={href} aria-label={openLabel ?? `Open ${title}`} underline="hover" color="inherit" onClick={onNavigate} sx={{ display: "block", borderRadius: 1, outlineOffset: 2 }}>
-              <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>{title}</Typography>
+            <Link
+              className="shelf-open-link"
+              href={href}
+              aria-label={openLabel ?? `Open ${title}`}
+              underline="hover"
+              color="inherit"
+              onClick={onNavigate}
+              sx={{
+                display: "block",
+                borderRadius: 1,
+                outlineOffset: 2,
+                position: "static",
+                "&::after": {
+                  content: '""',
+                  position: "absolute",
+                  inset: 0,
+                  zIndex: 0,
+                },
+              }}
+            >
+              <Typography
+                variant="h5"
+                component="h2"
+                sx={{ fontWeight: 600, position: "relative", zIndex: 1 }}
+              >
+                {title}
+              </Typography>
             </Link>
           )}
           {meta ? (
-            <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>{meta}</Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
+              {meta}
+            </Typography>
           ) : null}
           {chip ? (
-            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.25 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mt: 0.25 }}
+            >
               {chip}
             </Typography>
           ) : null}
@@ -122,7 +211,7 @@ export default function ShelfVolume({
               <Typography
                 variant="caption"
                 color="text.secondary"
-                sx={{ display: "block", mt: 0.25 }}
+                sx={{ display: "block", mt: 0.25, ...ABOVE_STRETCH }}
               >
                 {recallChip}
               </Typography>
@@ -132,14 +221,25 @@ export default function ShelfVolume({
         </Box>
       </Box>
       {select ? null : (
-        <Box sx={{ display: "flex", gap: 1, mt: 2 }}>
-          <Button variant="outlined" onClick={onStudy} aria-label={studyLabel} sx={{ minHeight: 48 }}>{studyLabel}</Button>
-          <IconButton aria-label={moreLabel} onClick={onMore} sx={{ width: 48, height: 48 }}>
+        <Box sx={{ display: "flex", gap: 1, mt: 2, ...ABOVE_STRETCH }}>
+          <Button
+            variant="outlined"
+            onClick={onStudy}
+            aria-label={studyLabel}
+            sx={{ minHeight: 48, ...ABOVE_STRETCH }}
+          >
+            {studyLabel}
+          </Button>
+          <IconButton
+            aria-label={moreLabel}
+            onClick={onMore}
+            sx={{ width: 48, height: 48, ...ABOVE_STRETCH }}
+          >
             <MoreVertIcon />
           </IconButton>
         </Box>
       )}
-      {children}
+      {children ? <Box sx={ABOVE_STRETCH}>{children}</Box> : null}
     </Paper>
   );
 }

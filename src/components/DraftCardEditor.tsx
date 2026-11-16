@@ -14,10 +14,14 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { useEffect, useRef, useState } from "react";
 import { mediaUrl, type CardDraftView, type CardType } from "../api/client";
 import {
   CLOZE_EXTRA_LABEL,
+  composeClozeFront,
   extractClozeAnswer,
+  parseClozeDiyFields,
+  revealClozeFront,
 } from "../lib/clozeFormat";
 import { CARD_TYPE_ICONS } from "../lib/cardTypeIcons";
 import {
@@ -62,6 +66,194 @@ export type DraftCardEditorProps = {
   };
 };
 
+function seedClozeDiy(front: string): { sentence: string; blank: string } {
+  const parsed = parseClozeDiyFields(front);
+  if (parsed) return parsed;
+  return {
+    sentence: revealClozeFront(front),
+    blank: extractClozeAnswer(front) ?? "",
+  };
+}
+
+function ClozeDiyFields({
+  cardId,
+  frontText,
+  backText,
+  disabled,
+  onPatch,
+}: {
+  cardId: string;
+  frontText: string;
+  backText: string;
+  disabled: boolean;
+  onPatch: (partial: Partial<DraftEditorChange>) => void;
+}) {
+  const [sentence, setSentence] = useState(() => seedClozeDiy(frontText).sentence);
+  const [blank, setBlank] = useState(() => seedClozeDiy(frontText).blank);
+  const [diyError, setDiyError] = useState<string | null>(null);
+  const lastPatchedFront = useRef<string | null>(frontText);
+
+  useEffect(() => {
+    if (frontText === lastPatchedFront.current) return;
+    const seeded = seedClozeDiy(frontText);
+    setSentence(seeded.sentence);
+    setBlank(seeded.blank);
+    setDiyError(null);
+    lastPatchedFront.current = frontText;
+  }, [cardId, frontText]);
+
+  const clozeAnswer = extractClozeAnswer(frontText) ?? (blank.trim() || null);
+
+  function applyDiy(nextSentence: string, nextBlank: string) {
+    setSentence(nextSentence);
+    setBlank(nextBlank);
+    if (!nextSentence.trim() && !nextBlank.trim()) {
+      setDiyError(null);
+      lastPatchedFront.current = "";
+      onPatch({ front: "" });
+      return;
+    }
+    const composed = composeClozeFront(nextSentence, nextBlank);
+    if (!composed.ok) {
+      setDiyError(composed.error);
+      // Keep parent front as plain sentence so a partial blank cannot ship.
+      lastPatchedFront.current = nextSentence;
+      onPatch({ front: nextSentence });
+      return;
+    }
+    setDiyError(null);
+    lastPatchedFront.current = composed.front;
+    onPatch({ front: composed.front });
+  }
+
+  return (
+    <>
+      <Box
+        sx={{
+          p: 2,
+          borderRadius: 1,
+          bgcolor: "action.hover",
+          border: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          display="block"
+          sx={{ mb: 1 }}
+        >
+          How it will look when you study
+        </Typography>
+        <Typography
+          component="p"
+          variant="body1"
+          sx={{ whiteSpace: "pre-wrap", mb: clozeAnswer ? 1.5 : 0 }}
+        >
+          <ClozePrompt front={frontText} />
+        </Typography>
+        {clozeAnswer ? (
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={1}
+            flexWrap="wrap"
+          >
+            <Typography variant="caption" color="text.secondary">
+              Answer:
+            </Typography>
+            <Chip
+              size="small"
+              label={clozeAnswer}
+              color="primary"
+              variant="outlined"
+            />
+          </Stack>
+        ) : null}
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          display="block"
+          sx={{ mt: 1.5 }}
+        >
+          Blanks show as a line when you study
+        </Typography>
+      </Box>
+
+      <TextField
+        label="Sentence"
+        value={sentence}
+        onChange={(e) => applyDiy(e.target.value, blank)}
+        multiline
+        minRows={2}
+        fullWidth
+        disabled={disabled}
+        helperText="Write the full sentence, including the word you will hide."
+      />
+      <TextField
+        label="Blank"
+        value={blank}
+        onChange={(e) => applyDiy(sentence, e.target.value)}
+        fullWidth
+        disabled={disabled}
+        error={diyError != null}
+        helperText={
+          diyError ?? "The word or phrase to hide (must appear in the sentence)."
+        }
+      />
+      <TextField
+        label={CLOZE_EXTRA_LABEL}
+        value={backText}
+        onChange={(e) => onPatch({ back: e.target.value })}
+        multiline
+        minRows={2}
+        fullWidth
+        disabled={disabled}
+      />
+
+      <Accordion
+        disableGutters
+        elevation={0}
+        sx={{
+          "&:before": { display: "none" },
+          border: 1,
+          borderColor: "divider",
+          borderRadius: 1,
+        }}
+      >
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="edit-cloze-advanced"
+          id="edit-cloze-advanced-header"
+        >
+          <Typography variant="body2" fontWeight={500}>
+            Advanced
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails id="edit-cloze-advanced" sx={{ pt: 0 }}>
+          <TextField
+            label="Front (blank markup)"
+            value={frontText}
+            onChange={(e) => {
+              const next = e.target.value;
+              onPatch({ front: next });
+              const seeded = seedClozeDiy(next);
+              setSentence(seeded.sentence);
+              setBlank(seeded.blank);
+              setDiyError(null);
+            }}
+            multiline
+            minRows={2}
+            fullWidth
+            disabled={disabled}
+            helperText="Optional: edit Anki-style {{c1::answer}} markers directly."
+          />
+        </AccordionDetails>
+      </Accordion>
+    </>
+  );
+}
+
 /** Edit front / back / type for a draft card before accept. */
 export default function DraftCardEditor({
   card,
@@ -101,9 +293,6 @@ export default function DraftCardEditor({
     ? mcqDraftFromCard(card)
     : { options: [], back: backText };
   const mcqOptions = mcqDraft.options;
-  const clozeAnswer = isCloze
-    ? (extractClozeAnswer(frontText) ?? (backText.trim() || null))
-    : null;
 
   function patch(partial: Partial<DraftEditorChange>) {
     onChange({
@@ -209,79 +398,13 @@ export default function DraftCardEditor({
       </Stack>
 
       {isCloze ? (
-        <>
-          <Box
-            sx={{
-              p: 2,
-              borderRadius: 1,
-              bgcolor: "action.hover",
-              border: 1,
-              borderColor: "divider",
-            }}
-          >
-            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-              How it will look when you study
-            </Typography>
-            <Typography
-              component="p"
-              variant="body1"
-              sx={{ whiteSpace: "pre-wrap", mb: clozeAnswer ? 1.5 : 0 }}
-            >
-              <ClozePrompt front={frontText} />
-            </Typography>
-            {clozeAnswer ? (
-              <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
-                <Typography variant="caption" color="text.secondary">
-                  Answer:
-                </Typography>
-                <Chip size="small" label={clozeAnswer} color="primary" variant="outlined" />
-              </Stack>
-            ) : null}
-            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1.5 }}>
-              Blanks show as a line when you study
-            </Typography>
-          </Box>
-
-          <Accordion
-            disableGutters
-            elevation={0}
-            sx={{
-              "&:before": { display: "none" },
-              border: 1,
-              borderColor: "divider",
-              borderRadius: 1,
-            }}
-          >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="edit-text-content">
-              <Typography variant="body2" fontWeight={500}>
-                Edit text
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails sx={{ pt: 0 }}>
-              <Stack spacing={2}>
-                <TextField
-                  label="Front (sentence with blank markup)"
-                  value={frontText}
-                  onChange={(e) => patch({ front: e.target.value })}
-                  multiline
-                  minRows={2}
-                  fullWidth
-                  disabled={disabled}
-                  helperText="Advanced: keep the generated blank markers if you edit wording."
-                />
-                <TextField
-                  label={CLOZE_EXTRA_LABEL}
-                  value={backText}
-                  onChange={(e) => patch({ back: e.target.value })}
-                  multiline
-                  minRows={2}
-                  fullWidth
-                  disabled={disabled}
-                />
-              </Stack>
-            </AccordionDetails>
-          </Accordion>
-        </>
+        <ClozeDiyFields
+          cardId={card.id}
+          frontText={frontText}
+          backText={backText}
+          disabled={disabled}
+          onPatch={patch}
+        />
       ) : isMcq ? (
         <>
           <TextField

@@ -29,6 +29,7 @@ import { useStudyChrome } from "../study/StudyChromeContext";
 import BottomChrome from "./shell/BottomChrome";
 import DesktopDrawer from "./shell/DesktopDrawer";
 import GenerationStatusStrip from "./shell/GenerationStatusStrip";
+import { ShellBackOverrideProvider } from "./shell/ShellBackOverride";
 import TopChrome from "./shell/TopChrome";
 import {
   BOTTOM_NAV_HEIGHT,
@@ -257,7 +258,9 @@ function AppShellChrome({ children }: AppShellProps) {
 export default function AppShell({ children }: AppShellProps) {
   return (
     <ProgressProvider>
-      <AppShellChrome>{children}</AppShellChrome>
+      <ShellBackOverrideProvider>
+        <AppShellChrome>{children}</AppShellChrome>
+      </ShellBackOverrideProvider>
     </ProgressProvider>
   );
 }

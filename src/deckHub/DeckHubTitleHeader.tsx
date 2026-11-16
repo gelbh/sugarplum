@@ -1,7 +1,8 @@
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
+import Link from "@mui/material/Link";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
@@ -9,12 +10,19 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import type { StoredCoverRow } from "../api/client";
+import { isPlainClick, navigate } from "../nav/navigate";
+
+type Crumb = {
+  label: string;
+  href: string;
+};
 
 type Props = {
   title: string;
   cover: StoredCoverRow | null;
   guest: boolean;
   metaLine: string;
+  crumbs?: Crumb[];
   spark?: ReactNode;
   exportBusy: boolean;
   exportDisabled: boolean;
@@ -27,11 +35,18 @@ type Props = {
   onChangeCover: () => void;
 };
 
+function onCrumbClick(href: string, ev: MouseEvent<HTMLAnchorElement>) {
+  if (ev.defaultPrevented || !isPlainClick(ev)) return;
+  ev.preventDefault();
+  navigate(href);
+}
+
 export default function DeckHubTitleHeader({
   title,
   cover,
   guest,
   metaLine,
+  crumbs = [],
   spark,
   exportBusy,
   exportDisabled,
@@ -45,6 +60,39 @@ export default function DeckHubTitleHeader({
 }: Props) {
   return (
     <Box>
+      {crumbs.length > 0 ? (
+        <Stack
+          direction="row"
+          alignItems="center"
+          flexWrap="wrap"
+          useFlexGap
+          gap={0.5}
+          sx={{ mb: 1 }}
+        >
+          {crumbs.map((crumb, index) => (
+            <Stack
+              key={crumb.href}
+              direction="row"
+              alignItems="center"
+              spacing={0.5}
+            >
+              {index > 0 ? (
+                <Typography variant="body2" color="text.secondary" aria-hidden>
+                  /
+                </Typography>
+              ) : null}
+              <Link
+                href={crumb.href}
+                underline="hover"
+                onClick={(ev) => onCrumbClick(crumb.href, ev)}
+                sx={{ typography: "body2" }}
+              >
+                {crumb.label}
+              </Link>
+            </Stack>
+          ))}
+        </Stack>
+      ) : null}
       <Stack
         direction="row"
         alignItems="flex-start"
