@@ -22,9 +22,12 @@ import {
   runGenerationPipeline,
 } from "./pipeline";
 import {
+  bindOcclusionImageKey,
+  mergeAndDedupeDrafts,
+} from "./draft-merge";
+import {
   filterNovelDrafts,
   focusStudyPages,
-  isNearDuplicateFront,
   loadMaterialWindowResume,
   prepareStudySource,
   type WindowResume,
@@ -64,6 +67,8 @@ import { type CardDraft } from "./schema";
 import { mergeTopicHints, parseTopicHintsJson } from "./topic-hints";
 import { resolveTextLlm } from "./resolve-text-llm";
 import { stampDraftProvenancePages } from "../../src/study/excerptPages";
+
+export { mergeAndDedupeDrafts };
 
 const IMAGE_BYO_REQUIRED = `Image generation requires an ${BYO_PROVIDERS_PHRASE} API key under Settings.`;
 
@@ -235,58 +240,6 @@ export type ProcessGenerateOptions = {
    */
   llm?: LlmAdapter;
 };
-
-function normalizeFront(front: string): string {
-  return front.trim().toLowerCase();
-}
-
-function draftDedupeKey(draft: CardDraft): string {
-  if (draft.type === "occlusion") {
-    return `occlusion:${draft.front.image_key}:${draft.front.regions
-      .map((r) => r.id)
-      .join(",")}`;
-  }
-  return normalizeFront(draft.front);
-}
-
-/** Stamp material R2 key onto occlusion fronts (LLM must not invent storage keys). */
-function bindOcclusionImageKey(
-  drafts: CardDraft[],
-  imageKey: string,
-): CardDraft[] {
-  return drafts.map((draft) => {
-    if (draft.type !== "occlusion") return draft;
-    return {
-      ...draft,
-      front: { ...draft.front, image_key: imageKey },
-      media_keys: [imageKey],
-    };
-  });
-}
-
-/** Merge rules then LLM drafts; drop exact and close-paraphrase fronts. */
-export function mergeAndDedupeDrafts(
-  rulesDrafts: CardDraft[],
-  llmDrafts: CardDraft[],
-): CardDraft[] {
-  const seen = new Set<string>();
-  const stringFronts: string[] = [];
-  const out: CardDraft[] = [];
-  for (const draft of [...rulesDrafts, ...llmDrafts]) {
-    const key = draftDedupeKey(draft);
-    if (seen.has(key)) continue;
-    if (
-      typeof draft.front === "string" &&
-      isNearDuplicateFront(draft.front, stringFronts)
-    ) {
-      continue;
-    }
-    seen.add(key);
-    if (typeof draft.front === "string") stringFronts.push(draft.front);
-    out.push(draft);
-  }
-  return out;
-}
 
 const NO_NEW_SECTIONS = "No new high-yield sections left in this document.";
 
