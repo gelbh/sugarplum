@@ -37,6 +37,9 @@ jobs:
 
       - name: Typecheck and build
         run: npm run build
+        env:
+          # Public CDN origin for allowlisted HTTPS anatomy assets (not a secret).
+          VITE_ANATOMY_ASSET_ORIGIN: https://anatomy-assets.gelbhart.dev
 
       - name: Check Workers asset sizes
         run: node scripts/checkWorkersAssetSize.mjs public && node scripts/checkWorkersAssetSize.mjs dist/client
