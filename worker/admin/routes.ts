@@ -1,365 +1,44 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import type { Env } from "../env";
-import type { AuthVariables } from "../auth/session";
 import { getDb } from "../db/client";
 import { getFreeGenUsage } from "../generation/quota";
 import {
   backfillUsageEventsFromJobs,
   usageFieldsFromProgress,
 } from "../generation/usage";
-import { isAdminEmail, parseAdminEmails } from "./allowlist";
 import { requireAdmin } from "./requireAdmin";
 import { runProvenanceBackfill } from "./provenance-backfill";
+import type { AppEnv, AdminUserDetail, AdminUserListItem } from "./types";
+import {
+  collectUserR2Keys,
+  loadAdminUser,
+  refuseAllowlistedTarget,
+} from "./wipe";
+import { EXPORT_MAX_CHARS, buildUserExportPayload } from "./export";
+import {
+  LIST_USERS_SQL,
+  USER_DETAIL_SQL,
+  RECENT_JOBS_SQL,
+  RECENT_STUDY_DAYS_SQL,
+  SUBJECTS_SQL,
+  DECKS_SQL,
+  MATERIALS_SQL,
+  STUDY_PREFS_SQL,
+  CARD_SAMPLE_SQL,
+  USER_USAGE_SQL,
+  parseUserListLimit,
+  createdLast7dCutoffIso,
+  usage30dCutoffIso,
+  frontPreviewFromJson,
+} from "./queries";
 
-type AppEnv = { Bindings: Env; Variables: AuthVariables };
-
-const EXPORT_MAX_CHARS = 8_000_000;
-
-const USER_EMAIL_SQL =
-  "SELECT id, email, oauth_subject, created_at, disabled_at FROM users WHERE id = ?";
-
-const WIPE_MATERIAL_KEYS_SQL = `
-SELECT m.r2_key FROM materials m
-INNER JOIN decks d ON d.id = m.deck_id
-WHERE d.user_id = ? AND m.r2_key IS NOT NULL
-`.replace(/\s+/g, " ");
-
-const WIPE_CARD_MEDIA_SQL = `
-SELECT c.media_r2_keys_json FROM cards c
-INNER JOIN decks d ON d.id = c.deck_id
-WHERE d.user_id = ? AND c.media_r2_keys_json IS NOT NULL
-`.replace(/\s+/g, " ");
-
-const WIPE_EXPORT_KEYS_SQL =
-  "SELECT r2_key FROM export_jobs WHERE user_id = ? AND r2_key IS NOT NULL";
-
-const EXPORT_SUBJECTS_SQL =
-  "SELECT id, title, created_at FROM subjects WHERE user_id = ? ORDER BY created_at ASC";
-
-const EXPORT_DECKS_SQL = `
-SELECT id, title, subject_id, subject_hint, created_at
-FROM decks WHERE user_id = ? ORDER BY created_at ASC
-`.replace(/\s+/g, " ");
-
-const EXPORT_MATERIALS_SQL = `
-SELECT m.id, m.deck_id, m.kind, m.r2_key, m.filename, m.page_count, m.status, m.created_at
-FROM materials m
-INNER JOIN decks d ON d.id = m.deck_id
-WHERE d.user_id = ?
-ORDER BY m.created_at ASC
-`.replace(/\s+/g, " ");
-
-const EXPORT_JOBS_SQL = `
-SELECT j.id, j.material_id, j.status, j.error, j.coverage_json, j.progress_json,
-  j.created_at, j.finished_at
-FROM generation_jobs j
-INNER JOIN materials m ON m.id = j.material_id
-INNER JOIN decks d ON d.id = m.deck_id
-WHERE d.user_id = ?
-ORDER BY j.created_at ASC
-`.replace(/\s+/g, " ");
-
-const EXPORT_CARDS_SQL = `
-SELECT c.id, c.deck_id, c.job_id, c.type, c.front_json, c.back_json,
-  c.media_r2_keys_json, c.provenance_json, c.status, c.created_at, c.updated_at
-FROM cards c
-INNER JOIN decks d ON d.id = c.deck_id
-WHERE d.user_id = ?
-ORDER BY c.created_at ASC
-`.replace(/\s+/g, " ");
-
-const EXPORT_SCHEDULES_SQL = `
-SELECT s.card_id, s.due, s.stability, s.difficulty, s.elapsed_days, s.scheduled_days,
-  s.learning_steps, s.reps, s.lapses, s.state, s.last_review
-FROM card_schedules s
-INNER JOIN cards c ON c.id = s.card_id
-INNER JOIN decks d ON d.id = c.deck_id
-WHERE d.user_id = ?
-`.replace(/\s+/g, " ");
-
-const EXPORT_REVIEW_LOGS_SQL = `
-SELECT rl.id, rl.card_id, rl.rating, rl.scheduled_days, rl.elapsed_days,
-  rl.reviewed_at, rl.state_json
-FROM review_logs rl
-INNER JOIN cards c ON c.id = rl.card_id
-INNER JOIN decks d ON d.id = c.deck_id
-WHERE d.user_id = ?
-ORDER BY rl.reviewed_at ASC
-`.replace(/\s+/g, " ");
-
-const EXPORT_STUDY_PREFS_SQL =
-  "SELECT intro_budget, review_budget, r_floor, updated_at FROM user_study_prefs WHERE user_id = ?";
-
-const EXPORT_STUDY_DAYS_SQL =
-  "SELECT day, intros_used FROM user_study_day WHERE user_id = ? ORDER BY day ASC";
-
-const EXPORT_EXPORT_JOBS_SQL = `
-SELECT id, status, request_json, r2_key, error, warning_json, created_at, updated_at, expires_at
-FROM export_jobs WHERE user_id = ? ORDER BY created_at ASC
-`.replace(/\s+/g, " ");
-
-type AdminUserRow = {
-  id: string;
-  email: string;
-  oauth_subject: string | null;
-  created_at: string;
-  disabled_at: string | null;
-};
-
-function contentTypeForKind(kind: string): string | undefined {
-  if (kind === "paste") return "text/plain; charset=utf-8";
-  if (kind === "pdf") return "application/pdf";
-  if (kind === "pptx") {
-    return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
-  }
-  if (kind === "image") return "image/png";
-  return undefined;
-}
-
-async function loadAdminUser(
-  db: D1Database,
-  id: string,
-): Promise<AdminUserRow> {
-  const row = await db.prepare(USER_EMAIL_SQL).bind(id).first<AdminUserRow>();
-  if (!row) throw new HTTPException(404, { message: "User not found" });
-  return row;
-}
-
-function refuseAllowlistedTarget(email: string, adminEmails: string | undefined) {
-  const allow = parseAdminEmails(adminEmails);
-  if (isAdminEmail(email, allow)) {
-    throw new HTTPException(400, { message: "Cannot modify allowlisted admin" });
-  }
-}
-
-async function collectUserR2Keys(db: D1Database, userId: string): Promise<string[]> {
-  const keys = new Set<string>();
-  const { results: materialKeys } = await db
-    .prepare(WIPE_MATERIAL_KEYS_SQL)
-    .bind(userId)
-    .all<{ r2_key: string }>();
-  for (const row of materialKeys ?? []) {
-    if (row.r2_key) keys.add(row.r2_key);
-  }
-  const { results: cardMedia } = await db
-    .prepare(WIPE_CARD_MEDIA_SQL)
-    .bind(userId)
-    .all<{ media_r2_keys_json: string }>();
-  for (const row of cardMedia ?? []) {
-    try {
-      const parsed = JSON.parse(row.media_r2_keys_json) as unknown;
-      if (Array.isArray(parsed)) {
-        for (const key of parsed) {
-          if (typeof key === "string" && key) keys.add(key);
-        }
-      }
-    } catch {
-      /* ignore bad JSON */
-    }
-  }
-  const { results: exportKeys } = await db
-    .prepare(WIPE_EXPORT_KEYS_SQL)
-    .bind(userId)
-    .all<{ r2_key: string }>();
-  for (const row of exportKeys ?? []) {
-    if (row.r2_key) keys.add(row.r2_key);
-  }
-  return [...keys];
-}
-
-export type AdminUserListItem = {
-  id: string;
-  email: string;
-  created_at: string;
-  google_linked: boolean;
-  disabled_at: string | null;
-  deckCount: number;
-  cardCount: number;
-  jobCount: number;
-  tokens30d: number;
-};
-
-export type AdminUsageSummary = {
-  tokensAllTime: number;
-  tokens30d: number;
-  freeJobs30d: number;
-  byoJobs30d: number;
-};
-
-export type AdminUserDetail = {
-  id: string;
-  email: string;
-  created_at: string;
-  google_linked: boolean;
-  disabled_at: string | null;
-  counts: { decks: number; cards: number; jobs: number; materials: number };
-  recentJobs: {
-    id: string;
-    status: string;
-    created_at: string;
-    finished_at: string | null;
-    tokens_used?: number;
-    tokens_prompt?: number;
-    tokens_completion?: number;
-    path?: "free" | "byo";
-  }[];
-  recentStudyDays: { day: string; intros_used: number }[];
-  subjects: { id: string; title: string; created_at: string }[];
-  decks: {
-    id: string;
-    title: string;
-    subject_id: string | null;
-    created_at: string;
-  }[];
-  materials: {
-    id: string;
-    deck_id: string;
-    kind: string;
-    filename: string | null;
-    status: string;
-    created_at: string;
-  }[];
-  studyPrefs: {
-    intro_budget: number;
-    review_budget: number;
-    r_floor: number;
-    updated_at: string;
-  } | null;
-  freeGenToday: { used: number; cap: number; remaining: number } | null;
-  usage: AdminUsageSummary;
-  cardSample: {
-    id: string;
-    type: string;
-    status: string;
-    frontPreview: string;
-  }[];
-};
+export type {
+  AdminUserListItem,
+  AdminUsageSummary,
+  AdminUserDetail,
+} from "./types";
 
 export const adminRoutes = new Hono<AppEnv>();
-
-const LIST_USERS_SQL = `
-SELECT u.id, u.email, u.created_at, u.oauth_subject, u.disabled_at,
-  (SELECT COUNT(*) FROM decks d WHERE d.user_id = u.id) AS deck_count,
-  (SELECT COUNT(*) FROM cards c
-     INNER JOIN decks d ON d.id = c.deck_id WHERE d.user_id = u.id) AS card_count,
-  (SELECT COUNT(*) FROM generation_jobs j
-     INNER JOIN materials m ON m.id = j.material_id
-     INNER JOIN decks d ON d.id = m.deck_id WHERE d.user_id = u.id) AS job_count,
-  (SELECT COALESCE(SUM(COALESCE(ue.tokens_total, 0)), 0) FROM usage_events ue
-     WHERE ue.user_id = u.id AND ue.created_at >= ?) AS tokens_30d
-FROM users u
-WHERE (? = '' OR lower(u.email) LIKE '%' || lower(?) || '%')
-ORDER BY u.created_at DESC
-LIMIT ?
-`.replace(/\s+/g, " ");
-
-const USER_DETAIL_SQL = `
-SELECT u.id, u.email, u.created_at, u.oauth_subject, u.disabled_at,
-  (SELECT COUNT(*) FROM decks d WHERE d.user_id = u.id) AS deck_count,
-  (SELECT COUNT(*) FROM cards c
-     INNER JOIN decks d ON d.id = c.deck_id WHERE d.user_id = u.id) AS card_count,
-  (SELECT COUNT(*) FROM generation_jobs j
-     INNER JOIN materials m ON m.id = j.material_id
-     INNER JOIN decks d ON d.id = m.deck_id WHERE d.user_id = u.id) AS job_count,
-  (SELECT COUNT(*) FROM materials m
-     INNER JOIN decks d ON d.id = m.deck_id WHERE d.user_id = u.id) AS material_count
-FROM users u
-WHERE u.id = ?
-`.replace(/\s+/g, " ");
-
-const RECENT_JOBS_SQL = `
-SELECT j.id, j.status, j.created_at, j.finished_at, j.progress_json
-FROM generation_jobs j
-INNER JOIN materials m ON m.id = j.material_id
-INNER JOIN decks d ON d.id = m.deck_id
-WHERE d.user_id = ?
-ORDER BY j.created_at DESC
-LIMIT ?
-`.replace(/\s+/g, " ");
-
-const RECENT_STUDY_DAYS_SQL = `
-SELECT day, intros_used
-FROM user_study_day
-WHERE user_id = ?
-ORDER BY day DESC
-LIMIT ?
-`.replace(/\s+/g, " ");
-
-const SUBJECTS_SQL =
-  "SELECT id, title, created_at FROM subjects WHERE user_id = ? ORDER BY created_at DESC LIMIT 50";
-
-const DECKS_SQL = `
-SELECT id, title, subject_id, created_at FROM decks
-WHERE user_id = ? ORDER BY created_at DESC LIMIT 50
-`.replace(/\s+/g, " ");
-
-const MATERIALS_SQL = `
-SELECT m.id, m.deck_id, m.kind, m.filename, m.status, m.created_at
-FROM materials m
-INNER JOIN decks d ON d.id = m.deck_id
-WHERE d.user_id = ?
-ORDER BY m.created_at DESC
-LIMIT 50
-`.replace(/\s+/g, " ");
-
-const STUDY_PREFS_SQL =
-  "SELECT intro_budget, review_budget, r_floor, updated_at FROM user_study_prefs WHERE user_id = ?";
-
-const CARD_SAMPLE_SQL = `
-SELECT c.id, c.type, c.status, c.front_json
-FROM cards c
-INNER JOIN decks d ON d.id = c.deck_id
-WHERE d.user_id = ?
-ORDER BY c.created_at DESC
-LIMIT 10
-`.replace(/\s+/g, " ");
-
-const USER_USAGE_SQL = `
-SELECT
-  (SELECT COALESCE(SUM(COALESCE(tokens_total, 0)), 0) FROM usage_events WHERE user_id = ?) AS tokens_all_time,
-  (SELECT COALESCE(SUM(COALESCE(tokens_total, 0)), 0) FROM usage_events
-     WHERE user_id = ? AND created_at >= ?) AS tokens_30d,
-  (SELECT COUNT(*) FROM usage_events
-     WHERE user_id = ? AND created_at >= ? AND path = 'free'
-       AND kind = 'generation') AS free_jobs_30d,
-  (SELECT COUNT(*) FROM usage_events
-     WHERE user_id = ? AND created_at >= ? AND path = 'byo'
-       AND kind = 'generation') AS byo_jobs_30d
-`.replace(/\s+/g, " ");
-
-function parseUserListLimit(raw: string | undefined): number {
-  if (raw === undefined || raw === "") return 50;
-  const n = Number.parseInt(raw, 10);
-  if (!Number.isFinite(n) || n < 1) return 50;
-  return Math.min(n, 100);
-}
-
-const CREATED_LAST_7D_MS = 7 * 864e5;
-const USAGE_30D_MS = 30 * 864e5;
-
-function createdLast7dCutoffIso(): string {
-  return new Date(Date.now() - CREATED_LAST_7D_MS).toISOString();
-}
-
-function usage30dCutoffIso(): string {
-  return new Date(Date.now() - USAGE_30D_MS).toISOString();
-}
-
-function frontPreviewFromJson(frontJson: string, max = 120): string {
-  try {
-    const parsed = JSON.parse(frontJson) as unknown;
-    if (typeof parsed === "string") return parsed.slice(0, max);
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      const obj = parsed as { prompt?: unknown; text?: unknown };
-      if (typeof obj.prompt === "string") return obj.prompt.slice(0, max);
-      if (typeof obj.text === "string") return obj.text.slice(0, max);
-    }
-  } catch {
-    /* ignore */
-  }
-  return frontJson.slice(0, max);
-}
 
 adminRoutes.get("/overview", async (c) => {
   await requireAdmin(c);
@@ -493,16 +172,13 @@ adminRoutes.get("/users/:id", async (c) => {
     { results: cardRows },
     freeGenToday,
   ] = await Promise.all([
-    db
-      .prepare(RECENT_JOBS_SQL)
-      .bind(id, 20)
-      .all<{
-        id: string;
-        status: string;
-        created_at: string;
-        finished_at: string | null;
-        progress_json: string | null;
-      }>(),
+    db.prepare(RECENT_JOBS_SQL).bind(id, 20).all<{
+      id: string;
+      status: string;
+      created_at: string;
+      finished_at: string | null;
+      progress_json: string | null;
+    }>(),
     db
       .prepare(RECENT_STUDY_DAYS_SQL)
       .bind(id, 14)
@@ -511,35 +187,26 @@ adminRoutes.get("/users/:id", async (c) => {
       .prepare(SUBJECTS_SQL)
       .bind(id)
       .all<{ id: string; title: string; created_at: string }>(),
-    db
-      .prepare(DECKS_SQL)
-      .bind(id)
-      .all<{
-        id: string;
-        title: string;
-        subject_id: string | null;
-        created_at: string;
-      }>(),
-    db
-      .prepare(MATERIALS_SQL)
-      .bind(id)
-      .all<{
-        id: string;
-        deck_id: string;
-        kind: string;
-        filename: string | null;
-        status: string;
-        created_at: string;
-      }>(),
-    db
-      .prepare(STUDY_PREFS_SQL)
-      .bind(id)
-      .first<{
-        intro_budget: number;
-        review_budget: number;
-        r_floor: number;
-        updated_at: string;
-      }>(),
+    db.prepare(DECKS_SQL).bind(id).all<{
+      id: string;
+      title: string;
+      subject_id: string | null;
+      created_at: string;
+    }>(),
+    db.prepare(MATERIALS_SQL).bind(id).all<{
+      id: string;
+      deck_id: string;
+      kind: string;
+      filename: string | null;
+      status: string;
+      created_at: string;
+    }>(),
+    db.prepare(STUDY_PREFS_SQL).bind(id).first<{
+      intro_budget: number;
+      review_budget: number;
+      r_floor: number;
+      updated_at: string;
+    }>(),
     db
       .prepare(USER_USAGE_SQL)
       .bind(id, id, cutoff30, id, cutoff30, id, cutoff30)
@@ -549,15 +216,12 @@ adminRoutes.get("/users/:id", async (c) => {
         free_jobs_30d: number;
         byo_jobs_30d: number;
       }>(),
-    db
-      .prepare(CARD_SAMPLE_SQL)
-      .bind(id)
-      .all<{
-        id: string;
-        type: string;
-        status: string;
-        front_json: string;
-      }>(),
+    db.prepare(CARD_SAMPLE_SQL).bind(id).all<{
+      id: string;
+      type: string;
+      status: string;
+      front_json: string;
+    }>(),
     getFreeGenUsage(c.env, id).catch(() => null),
   ]);
 
@@ -682,199 +346,7 @@ adminRoutes.get("/users/:id/export", async (c) => {
   const db = getDb(c.env);
   const user = await loadAdminUser(db, id);
 
-  const [
-    { results: subjectRows },
-    { results: deckRows },
-    { results: materialRows },
-    { results: jobRows },
-    { results: cardRows },
-    { results: scheduleRows },
-    { results: reviewLogRows },
-    studyPrefs,
-    { results: studyDayRows },
-    { results: exportJobRows },
-  ] = await Promise.all([
-    db
-      .prepare(EXPORT_SUBJECTS_SQL)
-      .bind(id)
-      .all<{ id: string; title: string; created_at: string }>(),
-    db
-      .prepare(EXPORT_DECKS_SQL)
-      .bind(id)
-      .all<{
-        id: string;
-        title: string;
-        subject_id: string | null;
-        subject_hint: string | null;
-        created_at: string;
-      }>(),
-    db
-      .prepare(EXPORT_MATERIALS_SQL)
-      .bind(id)
-      .all<{
-        id: string;
-        deck_id: string;
-        kind: string;
-        r2_key: string | null;
-        filename: string | null;
-        page_count: number | null;
-        status: string;
-        created_at: string;
-      }>(),
-    db
-      .prepare(EXPORT_JOBS_SQL)
-      .bind(id)
-      .all<{
-        id: string;
-        material_id: string;
-        status: string;
-        error: string | null;
-        coverage_json: string | null;
-        progress_json: string | null;
-        created_at: string;
-        finished_at: string | null;
-      }>(),
-    db
-      .prepare(EXPORT_CARDS_SQL)
-      .bind(id)
-      .all<{
-        id: string;
-        deck_id: string;
-        job_id: string | null;
-        type: string;
-        front_json: string;
-        back_json: string;
-        media_r2_keys_json: string | null;
-        provenance_json: string | null;
-        status: string;
-        created_at: string;
-        updated_at: string;
-      }>(),
-    db
-      .prepare(EXPORT_SCHEDULES_SQL)
-      .bind(id)
-      .all<{
-        card_id: string;
-        due: string;
-        stability: number;
-        difficulty: number;
-        elapsed_days: number;
-        scheduled_days: number;
-        learning_steps: number;
-        reps: number;
-        lapses: number;
-        state: number;
-        last_review: string | null;
-      }>(),
-    db
-      .prepare(EXPORT_REVIEW_LOGS_SQL)
-      .bind(id)
-      .all<{
-        id: string;
-        card_id: string;
-        rating: number;
-        scheduled_days: number;
-        elapsed_days: number;
-        reviewed_at: string;
-        state_json: string;
-      }>(),
-    db
-      .prepare(EXPORT_STUDY_PREFS_SQL)
-      .bind(id)
-      .first<{
-        intro_budget: number;
-        review_budget: number;
-        r_floor: number;
-        updated_at: string;
-      }>(),
-    db
-      .prepare(EXPORT_STUDY_DAYS_SQL)
-      .bind(id)
-      .all<{ day: string; intros_used: number }>(),
-    db
-      .prepare(EXPORT_EXPORT_JOBS_SQL)
-      .bind(id)
-      .all<{
-        id: string;
-        status: string;
-        request_json: string;
-        r2_key: string | null;
-        error: string | null;
-        warning_json: string | null;
-        created_at: string;
-        updated_at: string;
-        expires_at: string;
-      }>(),
-  ]);
-
-  const materials = [];
-  for (const row of materialRows ?? []) {
-    const contentType = contentTypeForKind(row.kind);
-    if (row.kind === "paste" && row.r2_key) {
-      const obj = await c.env.MATERIALS.get(row.r2_key);
-      const text = obj ? await obj.text() : null;
-      materials.push({
-        id: row.id,
-        deck_id: row.deck_id,
-        kind: row.kind,
-        r2_key: row.r2_key,
-        filename: row.filename,
-        page_count: row.page_count,
-        status: row.status,
-        created_at: row.created_at,
-        contentType,
-        text,
-      });
-      continue;
-    }
-    let size: number | undefined;
-    if (row.r2_key) {
-      const meta = await c.env.MATERIALS.head(row.r2_key);
-      if (meta) size = meta.size;
-    }
-    materials.push({
-      id: row.id,
-      deck_id: row.deck_id,
-      kind: row.kind,
-      r2_key: row.r2_key,
-      filename: row.filename,
-      page_count: row.page_count,
-      status: row.status,
-      created_at: row.created_at,
-      contentType,
-      size,
-    });
-  }
-
-  const payload = {
-    user: {
-      id: user.id,
-      email: user.email,
-      google_linked: user.oauth_subject != null,
-      created_at: user.created_at,
-      disabled_at: user.disabled_at ?? null,
-    },
-    subjects: subjectRows ?? [],
-    decks: deckRows ?? [],
-    materials,
-    generationJobs: jobRows ?? [],
-    cards: cardRows ?? [],
-    schedules: scheduleRows ?? [],
-    reviewLogs: reviewLogRows ?? [],
-    studyPrefs: studyPrefs ?? null,
-    studyDays: studyDayRows ?? [],
-    exportJobs: (exportJobRows ?? []).map((row) => ({
-      id: row.id,
-      status: row.status,
-      request_json: row.request_json,
-      r2_key: row.r2_key,
-      error: row.error,
-      warning_json: row.warning_json,
-      created_at: row.created_at,
-      updated_at: row.updated_at,
-      expires_at: row.expires_at,
-    })),
-  };
+  const payload = await buildUserExportPayload(c.env, db, user);
 
   const serialized = JSON.stringify(payload);
   if (serialized.length > EXPORT_MAX_CHARS) {
