@@ -19,6 +19,7 @@ const DESKTOP_ROWS: { keys: string; action: string }[] = [
   { keys: "R", action: "Reset view" },
   { keys: "Click", action: "Select structure" },
   { keys: "Fade", action: "Fade others (toolbar)" },
+  { keys: "Clip", action: "Cross-section (toolbar)" },
 ];
 
 const TOUCH_ROWS: { keys: string; action: string }[] = [
@@ -27,6 +28,7 @@ const TOUCH_ROWS: { keys: string; action: string }[] = [
   { keys: "Two-finger drag", action: "Pan" },
   { keys: "Tap", action: "Select structure" },
   { keys: "Fade", action: "Fade others (More menu)" },
+  { keys: "Clip", action: "Cross-section (More menu)" },
 ];
 
 export default function AnatomyHelpOverlay({
