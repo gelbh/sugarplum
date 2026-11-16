@@ -18,6 +18,7 @@ import Typography from "@mui/material/Typography";
 import AddMaterialWorkshop from "../deckHub/AddMaterialWorkshop";
 import CompositionSpark from "../components/CompositionSpark";
 import CoverPickerDialog from "../components/CoverPickerDialog";
+import { useShellBackOverride } from "../components/shell/ShellBackOverride";
 import CardsWorkshop from "../deckHub/CardsWorkshop";
 import DeckHubTitleHeader from "../deckHub/DeckHubTitleHeader";
 import DraftsWorkshop from "../deckHub/DraftsWorkshop";
@@ -72,6 +73,7 @@ type Props = {
 
 export default function DeckHubPage({ deckId }: Props) {
   const guest = isGuest();
+  const { setHref: setShellBack } = useShellBackOverride();
   const [deck, setDeck] = useState<Deck | null>(null);
   const [subject, setSubject] = useState<Subject | null>(null);
   const [cards, setCards] = useState<CardDraftView[]>([]);
@@ -91,6 +93,15 @@ export default function DeckHubPage({ deckId }: Props) {
   );
 
   const deckImageKeys = useMemo(() => collectDeckImageKeys(cards), [cards]);
+
+  useEffect(() => {
+    if (subject) {
+      setShellBack(`/library/subjects/${encodeURIComponent(subject.id)}`);
+    } else {
+      setShellBack(null);
+    }
+    return () => setShellBack(null);
+  }, [subject, setShellBack]);
 
   const {
     editCard,
@@ -427,6 +438,17 @@ export default function DeckHubPage({ deckId }: Props) {
               title={deck.title}
               cover={deckCover}
               guest={guest}
+              crumbs={[
+                { label: "Library", href: "/library" },
+                ...(subject
+                  ? [
+                      {
+                        label: subject.title,
+                        href: `/library/subjects/${encodeURIComponent(subject.id)}`,
+                      },
+                    ]
+                  : []),
+              ]}
               metaLine={`${
                 acceptedCount === 0
                   ? "No accepted cards yet"
