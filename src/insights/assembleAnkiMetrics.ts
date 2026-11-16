@@ -42,7 +42,6 @@ export type AssembledInsightsAnkiMetrics = {
   gradeCountsByMaturity: InsightsGradeByMaturity;
 };
 
-/** Shared Anki-metric assembly for Worker and guest Insights summaries. */
 export function assembleInsightsAnkiMetrics(
   input: AssembleInsightsAnkiMetricsInput,
 ): AssembledInsightsAnkiMetrics {
