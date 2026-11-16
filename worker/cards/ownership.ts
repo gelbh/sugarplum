@@ -1,10 +1,7 @@
 import { HTTPException } from "hono/http-exception";
 import { assertValidMcqOptions } from "../generation/schema";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
-import {
-  type CardRow,
-  decodeStoredBack,
-} from "./serialize";
+import { type CardRow, decodeStoredBack } from "./serialize";
 
 export async function requireOwnedCard(
   db: D1Database,

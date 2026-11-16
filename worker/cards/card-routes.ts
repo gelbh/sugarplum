@@ -24,10 +24,7 @@ import { onCardAccepted } from "../gamification/onStudyEvent";
 import { REJECT_REASONS } from "../../src/lib/rejectReasons";
 import { parseOptionalJsonBody } from "../optional-json";
 import { mergeProvenancePagesIntoJson } from "../../src/study/notesProvenanceWrite";
-import {
-  acceptDraftCard,
-  requireOwnedCard,
-} from "./ownership";
+import { acceptDraftCard, requireOwnedCard } from "./ownership";
 import {
   decodeStoredBack,
   encodeStoredBack,
@@ -152,7 +149,10 @@ cardRoutes.patch("/:id", async (c) => {
     const persistBack = backOk.data;
     const updatedAt = new Date().toISOString();
     const nextProvenanceJson = parsed.data.provenance_pages
-      ? mergeProvenancePagesJson(row.provenance_json, parsed.data.provenance_pages)
+      ? mergeProvenancePagesJson(
+          row.provenance_json,
+          parsed.data.provenance_pages,
+        )
       : row.provenance_json;
     await db
       .prepare(
@@ -214,8 +214,7 @@ cardRoutes.patch("/:id", async (c) => {
       row.type === "mcq"
         ? storedBack
         : {
-            back:
-              typeof parsed.data.back === "string" ? parsed.data.back : "",
+            back: typeof parsed.data.back === "string" ? parsed.data.back : "",
             options: undefined as string[] | undefined,
           };
     const patchBack =
@@ -233,7 +232,10 @@ cardRoutes.patch("/:id", async (c) => {
       });
     }
   } else {
-    if (parsed.data.back !== undefined && typeof parsed.data.back !== "string") {
+    if (
+      parsed.data.back !== undefined &&
+      typeof parsed.data.back !== "string"
+    ) {
       throw new HTTPException(400, {
         message: "Text card back must be a string",
       });
@@ -250,7 +252,10 @@ cardRoutes.patch("/:id", async (c) => {
 
   const updatedAt = new Date().toISOString();
   const nextProvenanceJson = parsed.data.provenance_pages
-    ? mergeProvenancePagesJson(row.provenance_json, parsed.data.provenance_pages)
+    ? mergeProvenancePagesJson(
+        row.provenance_json,
+        parsed.data.provenance_pages,
+      )
     : row.provenance_json;
   await db
     .prepare(
