@@ -10,6 +10,7 @@ import type {
   InsightsHourlySuccessPoint,
   InsightsPassFail,
   InsightsStabilitySnapshot,
+  InsightsSubjectDifficultyStability,
   InsightsTrueRetention,
 } from "./types";
 
@@ -277,6 +278,75 @@ export function buildStabilitySnapshot(
     medianDays: Math.round(median * 10) / 10,
     bins,
   };
+}
+
+export type SubjectDifficultyStabilityInput = {
+  subjectId: string | null;
+  title: string;
+  difficulty: number | null | undefined;
+  stability: number | null | undefined;
+};
+
+/**
+ * Group accepted-card schedules by subject; reuse aggregate mix/median rules.
+ * Omit subjects with no countable D and no finite median S. Sort hard-share desc.
+ */
+export function buildSubjectDifficultyStability(
+  rows: readonly SubjectDifficultyStabilityInput[],
+): InsightsSubjectDifficultyStability[] {
+  type Group = {
+    subjectId: string | null;
+    title: string;
+    difficulties: Array<number | null | undefined>;
+    stabilities: Array<number | null | undefined>;
+  };
+  const groups = new Map<string, Group>();
+  for (const row of rows) {
+    const subjectId = row.subjectId;
+    const key = subjectId ?? "";
+    let group = groups.get(key);
+    if (!group) {
+      const title =
+        subjectId == null
+          ? "Unassigned"
+          : row.title.trim().length > 0
+            ? row.title.trim()
+            : "Unassigned";
+      group = { subjectId, title, difficulties: [], stabilities: [] };
+      groups.set(key, group);
+    }
+    group.difficulties.push(row.difficulty);
+    group.stabilities.push(row.stability);
+  }
+
+  const out: InsightsSubjectDifficultyStability[] = [];
+  for (const group of groups.values()) {
+    const difficulty = buildDifficultyMix(group.difficulties);
+    const medianStabilityDays = buildStabilitySnapshot(
+      group.stabilities,
+    ).medianDays;
+    if (difficulty.total === 0 && medianStabilityDays == null) continue;
+    out.push({
+      subjectId: group.subjectId,
+      title: group.title,
+      difficulty,
+      medianStabilityDays,
+    });
+  }
+
+  out.sort((a, b) => {
+    const shareA =
+      a.difficulty.total === 0
+        ? Number.NEGATIVE_INFINITY
+        : a.difficulty.hard / a.difficulty.total;
+    const shareB =
+      b.difficulty.total === 0
+        ? Number.NEGATIVE_INFINITY
+        : b.difficulty.hard / b.difficulty.total;
+    if (shareA !== shareB) return shareB - shareA;
+    return a.title.localeCompare(b.title);
+  });
+  return out;
 }
 
 /**

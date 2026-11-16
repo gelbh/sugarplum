@@ -71,6 +71,8 @@ describe("guestInsightsSummary", () => {
     expect(summary.hourlySuccess).toHaveLength(24);
     expect(summary.kpis.trueRetention.windowDays).toBe(30);
     expect(summary.gradeCountsByMaturity).toBeTruthy();
+    expect(Array.isArray(summary.kpis.subjectDifficultyStability)).toBe(true);
+    expect(summary.kpis.subjectDifficultyStability[0]?.title).toBe("Vet");
     const store = peekGuestStore(storage);
     expect(store?.reviewLogs.at(-1)?.scheduledDays).toEqual(expect.any(Number));
     expect(storage.getItem(GUEST_STORE_KEY)).toBeTruthy();
