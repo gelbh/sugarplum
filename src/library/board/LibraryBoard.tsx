@@ -23,11 +23,14 @@ export default function LibraryBoard({
         display: "grid",
         gap: { xs: 1.5, sm: 2 },
         gridTemplateColumns: {
-          xs: "repeat(2, minmax(0, 1fr))",
-          sm: "repeat(3, minmax(0, 1fr))",
-          md: "repeat(4, minmax(0, 1fr))",
+          xs: "repeat(auto-fit, minmax(140px, 168px))",
+          sm: "repeat(auto-fit, minmax(160px, 180px))",
+          md: "repeat(auto-fit, minmax(168px, 200px))",
         },
+        justifyContent: "center",
+        justifyItems: "stretch",
         alignContent: "start",
+        width: "100%",
         minWidth: 0,
       }}
     >
