@@ -82,3 +82,16 @@ export function generateImageUserPrompt(imageKey: string): string {
   return `Create flashcards for this lecture image or diagram. Prefer occlusion with 1–8 labelled regions when structures are clearly labelled. Use image_key "${imageKey}". Region x,y,w,h are normalized 0–1. Allow image_label / diagram when occlusion does not fit. Skip anything not clearly visible or grounded in the image.`;
 }
 
+export function userPromptForJson(text: string): string {
+  return `${generateUserPrompt(text)}\n\nReturn JSON as {"cards":[...]}`;
+}
+
+export function imagePromptForJson(imageKey: string): string {
+  return `${generateImageUserPrompt(imageKey)}\n\nReturn JSON as {"cards":[...]}`;
+}
+
+export function systemPromptForGenerateDrafts(input: {
+  image?: unknown;
+}): string {
+  return input.image ? IMAGE_GENERATE_SYSTEM_PROMPT : GENERATE_SYSTEM_PROMPT;
+}
