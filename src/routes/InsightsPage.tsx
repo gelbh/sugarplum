@@ -6,7 +6,12 @@ import Divider from "@mui/material/Divider";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { ApiError, getInsightsSummary, type InsightsSummary } from "../api/client";
+import {
+  ApiError,
+  getInsightsSummary,
+  getStudyPrefs,
+  type InsightsSummary,
+} from "../api/client";
 import CompositionSpark, {
   COMPOSITION_SEGMENT_COLORS,
 } from "../components/CompositionSpark";
@@ -35,6 +40,7 @@ const COMPOSITION_LEGEND = [
 export default function InsightsPage() {
   const [summary, setSummary] = useState<InsightsSummary | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [desiredRetention, setDesiredRetention] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
   const { end: endLoad } = useTrackedOp("Loading insights…", {
     trackOnMount: true,
@@ -44,9 +50,24 @@ export default function InsightsPage() {
     let cancelled = false;
     (async () => {
       try {
-        const value = await getInsightsSummary();
+        const [value, prefsResult] = await Promise.all([
+          getInsightsSummary(),
+          getStudyPrefs().then(
+            (prefs) => ({ ok: true as const, prefs }),
+            () => ({ ok: false as const }),
+          ),
+        ]);
         if (cancelled) return;
         setSummary(value);
+        if (
+          prefsResult.ok &&
+          typeof prefsResult.prefs.desiredRetention === "number" &&
+          Number.isFinite(prefsResult.prefs.desiredRetention)
+        ) {
+          setDesiredRetention(prefsResult.prefs.desiredRetention);
+        } else {
+          setDesiredRetention(null);
+        }
         setReady(true);
         endLoad(true);
       } catch (err) {
@@ -75,6 +96,10 @@ export default function InsightsPage() {
     summary?.kpis.trueRetention.overall.rate == null
       ? null
       : Math.round(100 * summary.kpis.trueRetention.overall.rate);
+  const targetRetentionPct =
+    desiredRetention == null
+      ? null
+      : Math.round(100 * desiredRetention);
   const youngPct =
     summary?.kpis.trueRetention.young.rate == null
       ? null
@@ -220,6 +245,22 @@ export default function InsightsPage() {
                       >
                         True retention
                       </Typography>
+                      {targetRetentionPct != null ? (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ display: "block" }}
+                        >
+                          Target {targetRetentionPct}%
+                          {retentionPct == null
+                            ? ""
+                            : ` · ${
+                                retentionPct - targetRetentionPct >= 0
+                                  ? "+"
+                                  : ""
+                              }${retentionPct - targetRetentionPct} pts`}
+                        </Typography>
+                      ) : null}
                       <Typography
                         variant="caption"
                         color="text.secondary"
@@ -293,6 +334,13 @@ export default function InsightsPage() {
                             sx={{ display: "block", mt: 0.5 }}
                           >
                             Day streak
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: "block" }}
+                          >
+                            Best {summary.gamification.streakBest}
                           </Typography>
                         </Box>
                         <Box>
