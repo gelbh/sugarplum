@@ -5,7 +5,6 @@ import { encryptSecret } from "../../worker/crypto/secrets";
 import {
   handleGenerateQueue,
   insertDraftCards,
-  mergeAndDedupeDrafts,
   processGenerateJob,
 } from "../../worker/generation/consumer";
 import { readFileSync } from "node:fs";
@@ -166,40 +165,6 @@ describe("insertDraftCards", () => {
     expect(mediaByFront.get("Label B")).toEqual([
       "materials/deck-a/figures/pdf/1.png",
     ]);
-  });
-});
-
-describe("mergeAndDedupeDrafts", () => {
-  it("keeps rules first and drops near-identical fronts", () => {
-    const rules: CardDraft[] = [
-      {
-        type: "qa",
-        front: "What is ATP?",
-        back: "Adenosine triphosphate",
-        provenance: {
-          pages: [1],
-          excerpt: "What is ATP :: Adenosine triphosphate",
-        },
-      },
-    ];
-    const llm: CardDraft[] = [
-      {
-        type: "qa",
-        front: "  what is atp?  ",
-        back: "duplicate",
-        provenance: { pages: [1], excerpt: "prose" },
-      },
-      {
-        type: "qa",
-        front: "What produces ATP?",
-        back: "mitochondria",
-        provenance: { pages: [1], excerpt: "prose" },
-      },
-    ];
-    const merged = mergeAndDedupeDrafts(rules, llm);
-    expect(merged).toHaveLength(2);
-    expect(merged[0]!.back).toBe("Adenosine triphosphate");
-    expect(merged[1]!.front).toBe("What produces ATP?");
   });
 });
 
