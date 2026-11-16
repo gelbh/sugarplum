@@ -7,6 +7,7 @@ import type {
   InsightsDifficultyMix,
   InsightsGradeByMaturity,
   InsightsGradeCounts,
+  InsightsHourlySuccessPoint,
   InsightsPassFail,
   InsightsStabilitySnapshot,
   InsightsTrueRetention,
@@ -69,7 +70,7 @@ export function insightFutureDayKeys(
 /**
  * First review per (card_id, localDay) in the retention window.
  * Pass = rating 2–4; Fail = rating 1.
- * Young/mature use post-grade scheduled_days; missing scheduled_days → overall only.
+ * Young/mature use pre-review scheduled_days (Anki lastIvl); missing → overall only.
  */
 export function buildTrueRetention(
   rows: readonly InsightsReviewLogRow[],
@@ -280,7 +281,8 @@ export function buildStabilitySnapshot(
 
 /**
  * Grade mix by maturity for rows already filtered to the grade window.
- * Learning/Relearning → learning; missing scheduled_days → omit; else young/mature.
+ * Learning/Relearning → learning; missing scheduled_days → omit;
+ * else young/mature on pre-review scheduled_days (same field as true retention).
  */
 export function buildGradeCountsByMaturity(
   rows: ReadonlyArray<{
@@ -310,6 +312,51 @@ export function buildGradeCountsByMaturity(
     }
   }
   return { young, mature, learning };
+}
+
+/**
+ * Pass/fail success rate by local hour-of-day over the retention window.
+ * Pass = rating 2–4; Fail = rating 1. Empty hours keep rate null.
+ */
+export function buildHourlySuccess(
+  rows: ReadonlyArray<{ reviewed_at: string; rating: number }>,
+  now: Date,
+  tzOffsetMinutes: number,
+  windowDays: number = INSIGHTS_RETENTION_DAYS,
+  todayKeyOverride?: string | null,
+): InsightsHourlySuccessPoint[] {
+  const keys = new Set(
+    insightDayKeys(now, tzOffsetMinutes, windowDays, todayKeyOverride),
+  );
+  const buckets = Array.from({ length: 24 }, (_, hour) => ({
+    hour,
+    pass: 0,
+    fail: 0,
+  }));
+  for (const row of rows) {
+    const at = new Date(row.reviewed_at);
+    if (Number.isNaN(at.getTime())) continue;
+    if (!keys.has(localDayKey(at, tzOffsetMinutes))) continue;
+    const isPass = row.rating >= 2 && row.rating <= 4;
+    const isFail = row.rating === 1;
+    if (!isPass && !isFail) continue;
+    const hour = new Date(
+      at.getTime() - tzOffsetMinutes * 60_000,
+    ).getUTCHours();
+    const bucket = buckets[hour];
+    if (!bucket) continue;
+    if (isPass) bucket.pass += 1;
+    else bucket.fail += 1;
+  }
+  return buckets.map((b) => {
+    const n = b.pass + b.fail;
+    return {
+      hour: b.hour,
+      pass: b.pass,
+      fail: b.fail,
+      rate: n === 0 ? null : b.pass / n,
+    };
+  });
 }
 
 /** Keep full review rows in the last `days` local days. */

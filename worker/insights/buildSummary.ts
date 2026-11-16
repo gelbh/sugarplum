@@ -247,6 +247,7 @@ export async function buildInsightsSummary(
     reviewsPerDay,
     activityByDay,
     futureDue: anki.futureDue,
+    hourlySuccess: anki.hourlySuccess,
     gradeCounts,
     gradeCountsByMaturity: anki.gradeCountsByMaturity,
   };

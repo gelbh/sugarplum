@@ -143,6 +143,7 @@ export function guestInsightsSummary(
     reviewsPerDay,
     activityByDay,
     futureDue: anki.futureDue,
+    hourlySuccess: anki.hourlySuccess,
     gradeCounts,
     gradeCountsByMaturity: anki.gradeCountsByMaturity,
   };

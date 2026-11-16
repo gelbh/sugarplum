@@ -2,6 +2,7 @@ import {
   buildConsistency,
   buildDifficultyMix,
   buildGradeCountsByMaturity,
+  buildHourlySuccess,
   buildStabilitySnapshot,
   buildTrueRetention,
   buildWorkloadFromDues,
@@ -13,6 +14,7 @@ import type {
   InsightsConsistency,
   InsightsDifficultyMix,
   InsightsGradeByMaturity,
+  InsightsHourlySuccessPoint,
   InsightsStabilitySnapshot,
   InsightsTrueRetention,
 } from "./types";
@@ -35,6 +37,7 @@ export type AssembledInsightsAnkiMetrics = {
   overdue: number;
   dailyLoad: number | null;
   futureDue: Array<{ day: string; count: number }>;
+  hourlySuccess: InsightsHourlySuccessPoint[];
   trueRetention: InsightsTrueRetention;
   consistency: InsightsConsistency;
   difficulty: InsightsDifficultyMix;
@@ -76,6 +79,13 @@ export function assembleInsightsAnkiMetrics(
     overdue: workload.overdue,
     dailyLoad: workload.dailyLoad,
     futureDue: workload.futureDue,
+    hourlySuccess: buildHourlySuccess(
+      input.metricLogs,
+      input.now,
+      input.tzOffsetMinutes,
+      undefined,
+      todayKey,
+    ),
     trueRetention,
     consistency: buildConsistency(input.reviewsPerDay),
     difficulty: buildDifficultyMix(input.difficulties),

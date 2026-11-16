@@ -7,6 +7,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import DifficultyStabilityBlock from "../../src/insights/DifficultyStabilityBlock";
 import FutureDueChart from "../../src/insights/FutureDueChart";
+import HourlySuccessChart from "../../src/insights/HourlySuccessChart";
 import GradeMixByMaturityChart from "../../src/insights/GradeMixByMaturityChart";
 import GradeMixChart from "../../src/insights/GradeMixChart";
 import ReviewsPerDayChart from "../../src/insights/ReviewsPerDayChart";
@@ -147,6 +148,48 @@ describe("insights charts", () => {
     });
     expect(host!.textContent).toMatch(/5 due/);
     expect(host!.textContent).toMatch(/peak 5\/day/);
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it("HourlySuccessChart empty caption and img role", async () => {
+    const series = Array.from({ length: 24 }, (_, hour) => ({
+      hour,
+      pass: 0,
+      fail: 0,
+      rate: null as number | null,
+    }));
+    const { root, node } = renderChart(
+      createElement(HourlySuccessChart, { series }),
+    );
+    await act(async () => {
+      root.render(node);
+    });
+    const img = host!.querySelector('[role="img"]');
+    expect(img?.getAttribute("aria-label")).toMatch(/No reviews/i);
+    expect(host!.textContent).toMatch(/No reviews yet to chart by hour/i);
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it("HourlySuccessChart labels success strip when nonzero", async () => {
+    const series = Array.from({ length: 24 }, (_, hour) => ({
+      hour,
+      pass: hour === 9 ? 2 : 0,
+      fail: hour === 9 ? 1 : 0,
+      rate: hour === 9 ? 2 / 3 : (null as number | null),
+    }));
+    const { root, node } = renderChart(
+      createElement(HourlySuccessChart, { series }),
+    );
+    await act(async () => {
+      root.render(node);
+    });
+    const img = host!.querySelector('[role="img"]');
+    expect(img?.getAttribute("aria-label")).toMatch(/3 reviews/i);
+    expect(host!.textContent).toMatch(/Success by hour/i);
     await act(async () => {
       root.unmount();
     });

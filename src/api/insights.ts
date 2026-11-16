@@ -1,3 +1,4 @@
+import { enrichGuestStoreScheduledDays } from "../guest/enrichScheduledDays";
 import { guestInsightsSummary } from "../guest/insights";
 import { isGuest } from "../guest/session";
 import type { InsightsSummary } from "../insights/types";
@@ -16,7 +17,7 @@ export function getInsightsSummary(
     opts?.tzOffsetMinutes ?? new Date().getTimezoneOffset();
   const localDay = opts?.localDay ?? clientLocalDay();
   if (isGuest()) {
-    return Promise.resolve(
+    return enrichGuestStoreScheduledDays().then(() =>
       guestInsightsSummary({ tzOffsetMinutes, now: new Date() }),
     );
   }

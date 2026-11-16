@@ -51,6 +51,8 @@ describe("GET /api/insights/summary", () => {
     expect(body.kpis.composition.total).toBe(0);
     expect(body.futureDue).toHaveLength(14);
     expect(body.futureDue.every((p) => p.count === 0)).toBe(true);
+    expect(body.hourlySuccess).toHaveLength(24);
+    expect(body.hourlySuccess.every((p) => p.rate === null)).toBe(true);
     expect(body.kpis.dueToday).toBe(0);
     expect(body.kpis.overdue).toBe(0);
     expect(body.kpis.dailyLoad).toBeNull();
