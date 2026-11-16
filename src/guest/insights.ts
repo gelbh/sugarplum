@@ -1,6 +1,9 @@
 import { State } from "ts-fsrs";
 import { assembleInsightsAnkiMetrics } from "../insights/assembleAnkiMetrics";
-import type { InsightsReviewLogRow } from "../insights/buildMetrics";
+import {
+  buildSubjectDifficultyStability,
+  type InsightsReviewLogRow,
+} from "../insights/buildMetrics";
 import {
   buildGradeCounts,
   buildReviewsPerDay,
@@ -70,23 +73,38 @@ export function guestInsightsSummary(
     reviewsPerDay.find((d) => d.day === todayKey)?.count ?? 0;
   const reviewsInWindow = reviewsPerDay.reduce((sum, d) => sum + d.count, 0);
 
-  const scheduleRows: CompositionScheduleInput[] = store.cards
-    .filter((c) => c.status === "accepted")
-    .map((c) => {
+  const subjectById = new Map(store.subjects.map((s) => [s.id, s]));
+  const deckById = new Map(store.decks.map((d) => [d.id, d]));
+  const acceptedCards = store.cards.filter((c) => c.status === "accepted");
+  const scheduleRows: CompositionScheduleInput[] = acceptedCards.map((c) => {
+    const s = store.schedules[c.id];
+    return {
+      state: s?.state ?? null,
+      scheduled_days: s?.scheduled_days ?? null,
+      due: typeof c.due === "string" ? c.due : null,
+      stability: s?.stability ?? null,
+      difficulty: s?.difficulty ?? null,
+      elapsed_days: s?.elapsed_days ?? null,
+      learning_steps: s?.learning_steps ?? null,
+      reps: s?.reps ?? null,
+      lapses: s?.lapses ?? null,
+      last_review: s?.last_review ?? null,
+    };
+  });
+  const subjectDifficultyStability = buildSubjectDifficultyStability(
+    acceptedCards.map((c) => {
       const s = store.schedules[c.id];
+      const deck = deckById.get(c.deck_id);
+      const subjectId = deck?.subject_id ?? null;
+      const subject = subjectId != null ? subjectById.get(subjectId) : undefined;
       return {
-        state: s?.state ?? null,
-        scheduled_days: s?.scheduled_days ?? null,
-        due: typeof c.due === "string" ? c.due : null,
-        stability: s?.stability ?? null,
+        subjectId,
+        title: subject?.title ?? "Unassigned",
         difficulty: s?.difficulty ?? null,
-        elapsed_days: s?.elapsed_days ?? null,
-        learning_steps: s?.learning_steps ?? null,
-        reps: s?.reps ?? null,
-        lapses: s?.lapses ?? null,
-        last_review: s?.last_review ?? null,
+        stability: s?.stability ?? null,
       };
-    });
+    }),
+  );
   const knowledge = composeSubjectKnowledge(scheduleRows, now);
 
   const dues = scheduleRows
@@ -138,6 +156,7 @@ export function guestInsightsSummary(
       consistency: anki.consistency,
       difficulty: anki.difficulty,
       stability: anki.stability,
+      subjectDifficultyStability,
     },
     gamification: null,
     reviewsPerDay,

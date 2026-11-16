@@ -63,6 +63,7 @@ describe("GET /api/insights/summary", () => {
       good: 0,
       easy: 0,
     });
+    expect(body.kpis.subjectDifficultyStability).toEqual([]);
     expect(body.gamification).not.toBeNull();
     expect(body.gamification!.level).toBeGreaterThanOrEqual(1);
   });
@@ -177,6 +178,14 @@ describe("GET /api/insights/summary", () => {
     expect(body.gradeCounts.again).toBe(1);
     expect(body.gradeCounts.good).toBe(1);
     expect(body.kpis.composition.total).toBe(1);
+    expect(body.kpis.subjectDifficultyStability).toEqual([
+      {
+        subjectId: null,
+        title: "Unassigned",
+        difficulty: { easy: 0, medium: 1, hard: 0, total: 1 },
+        medianStabilityDays: 10,
+      },
+    ]);
   });
 
   it("honors localDay for reviewedToday bucket", async () => {

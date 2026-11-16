@@ -1,6 +1,9 @@
 import { State } from "ts-fsrs";
 import { assembleInsightsAnkiMetrics } from "../../src/insights/assembleAnkiMetrics";
-import type { InsightsReviewLogRow } from "../../src/insights/buildMetrics";
+import {
+  buildSubjectDifficultyStability,
+  type InsightsReviewLogRow,
+} from "../../src/insights/buildMetrics";
 import {
   buildGradeCounts,
   buildReviewsPerDay,
@@ -32,7 +35,10 @@ type ReviewRow = {
   state_json: string | null;
 };
 
-type ScheduleRow = CompositionScheduleInput;
+type ScheduleRow = CompositionScheduleInput & {
+  subject_id: string | null;
+  subject_title: string | null;
+};
 
 function stateFromLogJson(raw: string | null): number | null {
   if (raw == null || raw.length === 0) return null;
@@ -146,9 +152,12 @@ export async function buildInsightsSummary(
               s.learning_steps AS learning_steps,
               s.reps AS reps,
               s.lapses AS lapses,
-              s.last_review AS last_review
+              s.last_review AS last_review,
+              d.subject_id AS subject_id,
+              sub.title AS subject_title
        FROM cards c
        INNER JOIN decks d ON d.id = c.deck_id
+       LEFT JOIN subjects sub ON sub.id = d.subject_id
        LEFT JOIN card_schedules s ON s.card_id = c.id
        WHERE d.user_id = ? AND c.status = 'accepted'`,
     )
@@ -170,6 +179,14 @@ export async function buildInsightsSummary(
       last_review: row.last_review ?? null,
     })),
     now,
+  );
+  const subjectDifficultyStability = buildSubjectDifficultyStability(
+    schedules.map((row) => ({
+      subjectId: row.subject_id ?? null,
+      title: row.subject_title ?? "Unassigned",
+      difficulty: row.difficulty,
+      stability: row.stability,
+    })),
   );
 
   const dues = schedules
@@ -237,6 +254,7 @@ export async function buildInsightsSummary(
       consistency: anki.consistency,
       difficulty: anki.difficulty,
       stability: anki.stability,
+      subjectDifficultyStability,
     },
     gamification: {
       streakCurrent: gamRow?.streak_current ?? 0,
