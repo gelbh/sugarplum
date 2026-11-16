@@ -4,6 +4,7 @@ import {
   buildConsistency,
   buildDifficultyMix,
   buildGradeCountsByMaturity,
+  buildHourlySuccess,
   buildStabilitySnapshot,
   buildTrueRetention,
   buildWorkloadFromDues,
@@ -116,5 +117,24 @@ describe("buildGradeCountsByMaturity", () => {
     expect(out.young).toEqual({ again: 0, hard: 0, good: 1, easy: 0 });
     expect(out.mature).toEqual({ again: 1, hard: 0, good: 0, easy: 0 });
     expect(out.learning).toEqual({ again: 0, hard: 1, good: 0, easy: 0 });
+  });
+});
+
+describe("buildHourlySuccess", () => {
+  it("buckets by local hour; empty hours keep null rate", () => {
+    const out = buildHourlySuccess(
+      [
+        { reviewed_at: "2026-11-13T10:00:00.000Z", rating: 3 },
+        { reviewed_at: "2026-11-13T10:30:00.000Z", rating: 1 },
+        { reviewed_at: "2026-11-13T15:00:00.000Z", rating: 4 },
+      ],
+      NOW,
+      TZ,
+    );
+    expect(out).toHaveLength(24);
+    expect(out[10]).toEqual({ hour: 10, pass: 1, fail: 1, rate: 0.5 });
+    expect(out[15]).toEqual({ hour: 15, pass: 1, fail: 0, rate: 1 });
+    expect(out[0]?.rate).toBeNull();
+    expect(out[0]?.pass).toBe(0);
   });
 });

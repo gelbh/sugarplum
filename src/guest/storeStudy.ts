@@ -30,6 +30,7 @@ import {
   scheduleColumnsFromCard,
 } from "../study/retrievability";
 import { GUEST_USER_ID } from "./session";
+import { enrichGuestReviewLogs } from "./enrichScheduledDays";
 import {
   buildGuestDueResult,
   buildGuestStruggling,
@@ -274,6 +275,7 @@ export async function guestReviewCard(
     const prefs = buildGuestFsrsPrefs(prefsSnap.studyPrefs, prefsSnap.fsrsW);
     const scheduler = await schedulerForPrefs(prefs);
     const store = readStore(storage);
+    await enrichGuestReviewLogs(store.reviewLogs, prefs);
     const now = new Date();
     const nowIsoValue = now.toISOString();
     const card = store.cards.find((c) => c.id === cardId);
@@ -397,6 +399,11 @@ export async function guestReviewCard(
     } else {
       store.dueIds = store.dueIds.filter((id) => id !== cardId);
     }
+    const preGradeScheduledDays =
+      existing?.scheduled_days != null &&
+      Number.isFinite(existing.scheduled_days)
+        ? existing.scheduled_days
+        : 0;
     store.reviewLogs = [
       ...store.reviewLogs,
       {
@@ -404,7 +411,7 @@ export async function guestReviewCard(
         rating,
         at: nowIsoValue,
         state: log.state,
-        scheduledDays: next.scheduled_days,
+        scheduledDays: preGradeScheduledDays,
       },
     ];
     if (wasNew) {
