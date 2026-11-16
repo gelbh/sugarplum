@@ -218,11 +218,11 @@ export default function TodayPage() {
     <Container
       maxWidth="sm"
       sx={{
-        py: { xs: 6, md: 8 },
-        minHeight: { md: "100%" },
+        py: { xs: 6, sm: 8 },
+        minHeight: { sm: "100%" },
         display: "flex",
         flexDirection: "column",
-        justifyContent: { md: "center" },
+        justifyContent: { sm: "center" },
       }}
     >
       <Stack spacing={3} alignItems="center" textAlign="center">

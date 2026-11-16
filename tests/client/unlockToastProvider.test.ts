@@ -102,12 +102,12 @@ describe("UnlockToastProvider", () => {
     const css = [...document.querySelectorAll("style[data-emotion]")]
       .map((s) => s.textContent)
       .join("");
-    const marker = "@media (min-width:900px)";
+    const marker = "@media (min-width:600px)";
     const at = css.indexOf(marker);
     expect(at).toBeGreaterThan(-1);
     const prefix = css.slice(0, at);
     const opened = css.slice(at).match(
-      /^@media \(min-width:900px\)\{[^{]*\{([^}]*)\}/,
+      /^@media \(min-width:600px\)\{[^{]*\{([^}]*)\}/,
     );
     expect(opened).not.toBeNull();
     const block = opened![1];
