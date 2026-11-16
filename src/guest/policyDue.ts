@@ -39,6 +39,8 @@ export type GuestReviewLog = {
   at: string;
   /** Pre-transition FSRS state; absent on historical thin logs. */
   state?: number;
+  /** Post-grade interval days; absent on historical thin logs. */
+  scheduledDays?: number;
 };
 
 /** True when the log can feed FSRS `computeParameters` (finite pre-grade state). */
