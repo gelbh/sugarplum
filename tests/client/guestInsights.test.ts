@@ -78,6 +78,36 @@ describe("guestInsightsSummary", () => {
     expect(storage.getItem(GUEST_STORE_KEY)).toBeTruthy();
   });
 
+  it("scales series lengths for rangeDays 90", async () => {
+    const subject = guestCreateSubject("Vet", storage);
+    const deck = guestCreateDeck("Deck", subject.id, storage);
+    const card = guestCreateDeckCard(
+      deck.id,
+      { type: "qa", front: "Q?", back: "A" },
+      storage,
+    );
+    await guestReviewCard(card.id, 3, storage);
+
+    const summary = guestInsightsSummary(
+      {
+        now: new Date("2026-11-13T15:00:00.000Z"),
+        tzOffsetMinutes: 0,
+        rangeDays: 90,
+      },
+      storage,
+    );
+    expect(summary.window).toEqual({
+      reviewsDays: 90,
+      gradeDays: 42,
+      activityDays: 90,
+    });
+    expect(summary.reviewsPerDay).toHaveLength(90);
+    expect(summary.activityByDay).toHaveLength(90);
+    expect(summary.kpis.trueRetention.windowDays).toBe(90);
+    expect(summary.kpis.consistency.windowDays).toBe(90);
+    expect(summary.futureDue).toHaveLength(14);
+  });
+
   it("persists pre-review scheduledDays on each guest grade", async () => {
     const subject = guestCreateSubject("Vet", storage);
     const deck = guestCreateDeck("Deck", subject.id, storage);

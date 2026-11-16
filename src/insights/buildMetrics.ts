@@ -122,7 +122,7 @@ export function buildTrueRetention(
   }
 
   return {
-    windowDays: 30,
+    windowDays,
     overall: passFail(overallPass, overallFail),
     young: passFail(youngPass, youngFail),
     mature: passFail(maturePass, matureFail),
@@ -190,10 +190,10 @@ export function buildConsistency(
   reviewsPerDay: ReadonlyArray<{ day: string; count: number }>,
 ): InsightsConsistency {
   const n = reviewsPerDay.length;
-  const windowDays = 30;
+  const windowDays = n;
   if (n === 0) {
     return {
-      windowDays,
+      windowDays: 0,
       activeDays: 0,
       intensity: 0,
       score: null,
