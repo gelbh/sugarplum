@@ -105,3 +105,35 @@ export async function acceptDraftCard(
   if (!results[0]?.meta.changes) return "conflict";
   return "accepted";
 }
+
+/** Undo a single accept or reject: return the card to draft for review. */
+export async function undoReviewDecision(
+  db: D1Database,
+  card: { id: string; status: string },
+): Promise<"draft" | "conflict" | "unsupported"> {
+  if (card.status !== "accepted" && card.status !== "rejected") {
+    return "unsupported";
+  }
+
+  const updatedAt = new Date().toISOString();
+  if (card.status === "rejected") {
+    const result = await db
+      .prepare(
+        `UPDATE cards SET status = ?, reject_reason = ?, updated_at = ?
+         WHERE id = ? AND status = ?`,
+      )
+      .bind("draft", null, updatedAt, card.id, "rejected")
+      .run();
+    return result.meta.changes ? "draft" : "conflict";
+  }
+
+  const results = await db.batch([
+    db
+      .prepare(
+        `UPDATE cards SET status = ?, updated_at = ? WHERE id = ? AND status = ?`,
+      )
+      .bind("draft", updatedAt, card.id, "accepted"),
+    db.prepare(`DELETE FROM card_schedules WHERE card_id = ?`).bind(card.id),
+  ]);
+  return results[0]?.meta.changes ? "draft" : "conflict";
+}

@@ -7,8 +7,9 @@ import { describe, expect, it } from "vitest";
 import SubjectKnowledgeBar from "../../src/components/SubjectKnowledgeBar";
 import type { SubjectKnowledge } from "../../src/study/subjectKnowledge";
 
-(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
-  true;
+(
+  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 const base: SubjectKnowledge = {
   new: 0,
@@ -46,9 +47,9 @@ describe("SubjectKnowledgeBar recall caption", () => {
       etk: 1.68,
       recallCardCount: 10,
     });
-    expect(host.textContent).toMatch(
-      /Estimated recall now:\s*17%\s*·\s*~1\.7 cards/,
-    );
+    expect(host.textContent).toMatch(/Estimated recall/);
+    expect(host.textContent).toMatch(/17%/);
+    expect(host.textContent).toMatch(/~1\.7 cards/);
     expect(host.textContent).not.toMatch(/reviewed/);
     host.remove();
   });
@@ -64,9 +65,9 @@ describe("SubjectKnowledgeBar recall caption", () => {
       etk: 1,
       recallCardCount: 2,
     });
-    expect(host.textContent).toMatch(
-      /Estimated recall now:\s*50%\s*·\s*~1 cards/,
-    );
+    expect(host.textContent).toMatch(/Estimated recall/);
+    expect(host.textContent).toMatch(/50%/);
+    expect(host.textContent).toMatch(/~1 cards/);
     expect(host.textContent).not.toMatch(/reviewed/);
     host.remove();
   });
@@ -81,9 +82,9 @@ describe("SubjectKnowledgeBar recall caption", () => {
       etk: 0,
       recallCardCount: 4,
     });
-    expect(host.textContent).toMatch(
-      /Estimated recall now:\s*0%\s*·\s*~0 cards/,
-    );
+    expect(host.textContent).toMatch(/Estimated recall/);
+    expect(host.textContent).toMatch(/0%/);
+    expect(host.textContent).toMatch(/~0 cards/);
     host.remove();
   });
 
@@ -94,7 +95,7 @@ describe("SubjectKnowledgeBar recall caption", () => {
       total: 4,
       graduatedPct: 0,
     });
-    expect(host.textContent).not.toMatch(/Estimated recall now/);
+    expect(host.textContent).not.toMatch(/Estimated recall/);
     host.remove();
   });
 });

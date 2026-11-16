@@ -31,9 +31,14 @@ vi.mock("../../src/api/client", () => {
   };
 });
 
-(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
+  true;
 
 const roots: Root[] = [];
+
+function emptySearch(page = 1) {
+  return { photos: [] as const, page, totalPages: 1 };
+}
 
 afterEach(() => {
   for (const root of roots.splice(0)) {
@@ -74,8 +79,12 @@ describe("CoverPickerDialog", () => {
       new ApiError(503, "Cover search is not configured"),
     );
     await renderDialog();
-    expect(document.body.textContent).toContain("Cover search is not configured");
-    expect(document.body.textContent).not.toContain("No photos for this title.");
+    expect(document.body.textContent).toContain(
+      "Cover search is not configured",
+    );
+    expect(document.body.textContent).not.toContain(
+      "No Unsplash photos matched",
+    );
 
     for (const root of roots.splice(0)) {
       act(() => {
@@ -84,16 +93,18 @@ describe("CoverPickerDialog", () => {
     }
     document.body.replaceChildren();
 
-    vi.mocked(searchCovers).mockResolvedValueOnce([]);
+    vi.mocked(searchCovers).mockResolvedValueOnce(emptySearch());
     await renderDialog();
-    expect(document.body.textContent).toContain("No photos for this title.");
-    expect(document.body.textContent).not.toContain("Cover search is not configured");
+    expect(document.body.textContent).toContain("No Unsplash photos matched");
+    expect(document.body.textContent).not.toContain(
+      "Cover search is not configured",
+    );
   });
 
   it("searches with an edited query", async () => {
-    vi.mocked(searchCovers).mockResolvedValue([]);
+    vi.mocked(searchCovers).mockResolvedValue(emptySearch());
     await renderDialog();
-    expect(searchCovers).toHaveBeenCalledWith("Anatomy");
+    expect(searchCovers).toHaveBeenCalledWith("Anatomy", 1);
 
     const input = document.body.querySelector(
       'input[type="text"], input:not([type="file"])',
@@ -106,13 +117,15 @@ describe("CoverPickerDialog", () => {
       setValue?.call(input, "heart anatomy");
       input.dispatchEvent(new Event("input", { bubbles: true }));
       input.dispatchEvent(new Event("change", { bubbles: true }));
-      document.body.querySelector<HTMLButtonElement>('button[type="submit"]')?.click();
+      document.body
+        .querySelector<HTMLButtonElement>('button[type="submit"]')
+        ?.click();
     });
-    expect(searchCovers).toHaveBeenCalledWith("heart anatomy");
+    expect(searchCovers).toHaveBeenCalledWith("heart anatomy", 1);
   });
 
   it("uploads a custom cover file", async () => {
-    vi.mocked(searchCovers).mockResolvedValue([]);
+    vi.mocked(searchCovers).mockResolvedValue(emptySearch());
     const uploaded = {
       ownerKind: "subject" as const,
       ownerId: "sub-1",
@@ -153,7 +166,11 @@ describe("CoverPickerDialog", () => {
       ownerKind: "subject" as const,
       ownerId: "sub-1",
     };
-    vi.mocked(searchCovers).mockResolvedValueOnce([photo]);
+    vi.mocked(searchCovers).mockResolvedValueOnce({
+      photos: [photo],
+      page: 1,
+      totalPages: 1,
+    });
     vi.mocked(setCover).mockResolvedValueOnce(saved);
     const onSaved = vi.fn();
     await renderDialog({ onSaved });

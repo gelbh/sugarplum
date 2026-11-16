@@ -3,10 +3,7 @@ import { app } from "../../worker/index";
 import { SESSION_COOKIE } from "../../worker/auth/session";
 import { hashPassword } from "../../worker/auth/password";
 import { createTestEnv } from "./test-env";
-import {
-  isAdminUser,
-  parseAdminEmails,
-} from "../../worker/admin/allowlist";
+import { isAdminUser, parseAdminEmails } from "../../worker/admin/allowlist";
 
 describe("parseAdminEmails", () => {
   it("lowercases and splits", () => {
@@ -381,7 +378,10 @@ describe("GET /api/admin/users (allowlisted)", () => {
     expect(body.users.map((u) => u.email)).toEqual(["alice@example.com"]);
   });
 
-  function seedManyListUsers(env: ReturnType<typeof createTestEnv>, count: number) {
+  function seedManyListUsers(
+    env: ReturnType<typeof createTestEnv>,
+    count: number,
+  ) {
     env.seedUser({
       id: "admin-u",
       email: "ops@example.com",
@@ -827,8 +827,20 @@ describe("POST /api/admin/users/:id/wipe", () => {
       created_at: "2026-10-28T00:00:00.000Z",
       updated_at: "2026-10-28T00:00:00.000Z",
     });
+    env.seedMaterial({
+      id: "mat-alice-pdf",
+      deck_id: "deck-alice",
+      kind: "pdf",
+      r2_key: "materials/deck-alice/mat-alice.pdf",
+      filename: "lecture.pdf",
+      page_count: 1,
+      status: "ready",
+      created_at: "2026-10-28T01:05:00.000Z",
+    });
     env.seedR2("materials/deck-alice/mat-alice.txt", "paste body");
+    env.seedR2("materials/deck-alice/mat-alice.pdf", "pdf-bytes");
     env.seedR2("materials/deck-alice/fig-1.png", "png-bytes");
+    env.seedR2("materials/deck-alice/figures/mat-alice-pdf/0.png", "crop");
     env.seedR2("exports/u-alice/export-alice.apkg", "apkg-bytes");
   }
 
@@ -900,7 +912,11 @@ describe("POST /api/admin/users/:id/wipe", () => {
       false,
     );
     expect(env.getR2Keys()).not.toContain("materials/deck-alice/mat-alice.txt");
+    expect(env.getR2Keys()).not.toContain("materials/deck-alice/mat-alice.pdf");
     expect(env.getR2Keys()).not.toContain("materials/deck-alice/fig-1.png");
+    expect(env.getR2Keys()).not.toContain(
+      "materials/deck-alice/figures/mat-alice-pdf/0.png",
+    );
     expect(env.getR2Keys()).not.toContain("exports/u-alice/export-alice.apkg");
     expect(env.getR2Keys()).toEqual([]);
   });

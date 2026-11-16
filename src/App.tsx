@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from "react";
 import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
 import AppShell from "./components/AppShell";
 import BareScroll from "./components/BareScroll";
 import GradeButtons from "./components/GradeButtons";
@@ -32,7 +31,7 @@ import { navigateReplace, subscribeLocation } from "./nav/navigate";
 import { UnlockToastProvider } from "./achievements/UnlockToastProvider";
 import AchievementsPage from "./routes/AchievementsPage";
 import { StudyChromeProvider } from "./study/StudyChromeContext";
-import AtlasLoading from "./atlas/AtlasLoading";
+import RouteSuspenseFallback from "./progress/RouteSuspenseFallback";
 import { isAtlasToAtlas, matchAtlasPath } from "./atlas/paths";
 import {
   anatomySceneHref,
@@ -84,11 +83,7 @@ function AnatomySceneRoute({
     }
   }, [rawSceneId, sceneId, initialRegions]);
   return (
-    <Suspense
-      fallback={
-        <Typography color="text.secondary">Loading anatomy…</Typography>
-      }
-    >
+    <Suspense fallback={<RouteSuspenseFallback label="Loading anatomy…" />}>
       <AnatomyViewerPage
         key={`${sceneId}|${initialRegions.join(",")}`}
         sceneId={sceneId}
@@ -115,7 +110,7 @@ function matchPage(path: string, search: string): ReactNode {
   }
   if (atlasMatch?.kind === "atlas") {
     return shell(
-      <Suspense fallback={<AtlasLoading />}>
+      <Suspense fallback={<RouteSuspenseFallback label="Loading Atlas…" />}>
         <AtlasPage
           key={atlasMatch.atlasId}
           atlasId={atlasMatch.atlasId}
@@ -146,10 +141,7 @@ function matchPage(path: string, search: string): ReactNode {
   }
   if (anatomyMatch?.kind === "scene") {
     return shell(
-      <AnatomySceneRoute
-        rawSceneId={anatomyMatch.sceneId}
-        search={search}
-      />,
+      <AnatomySceneRoute rawSceneId={anatomyMatch.sceneId} search={search} />,
     );
   }
 
@@ -162,11 +154,7 @@ function matchPage(path: string, search: string): ReactNode {
   if (path === "/today") return shell(<TodayPage />);
   if (path === "/insights") {
     return shell(
-      <Suspense
-        fallback={
-          <Typography color="text.secondary">Loading insights…</Typography>
-        }
-      >
+      <Suspense fallback={<RouteSuspenseFallback label="Loading insights…" />}>
         <InsightsPage />
       </Suspense>,
     );

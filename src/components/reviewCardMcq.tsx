@@ -8,7 +8,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CardDraftView } from "../api/client";
 import {
   mcqDraftFromCard,
@@ -17,6 +17,7 @@ import {
 import {
   MCQ_MAX,
   MCQ_MIN,
+  mcqBack,
   withMcqCorrect,
   withMcqOptionAdded,
   withMcqOptionRemoved,
@@ -49,19 +50,33 @@ export function ReviewMcqFace({
   onChange: (next: DraftEditorChange) => void;
 }) {
   const front = typeof card.front === "string" ? card.front : "";
-  const draft = mcqDraftFromCard(card);
+  const options = mcqDraftFromCard(card).options;
+  const [correctIndex, setCorrectIndex] = useState(
+    () => mcqDraftFromCard(card).correctIndex,
+  );
+  useEffect(() => {
+    setCorrectIndex(mcqDraftFromCard(card).correctIndex);
+  }, [card.id]);
+  useEffect(() => {
+    setCorrectIndex((i) =>
+      Math.min(Math.max(0, i), Math.max(0, options.length - 1)),
+    );
+  }, [options.length]);
+  const draft: McqDraft = { options, correctIndex };
   const rowKeys = useRef<string[]>([]);
   while (rowKeys.current.length < draft.options.length) {
     rowKeys.current.push(`${rowKeys.current.length}:${Math.random()}`);
   }
 
-  const emit = (next: McqDraft, nextFront = front) =>
+  const emit = (next: McqDraft, nextFront = front) => {
+    setCorrectIndex(next.correctIndex);
     onChange({
       front: nextFront,
-      back: next.back,
+      back: mcqBack(next),
       type: "mcq",
       options: next.options,
     });
+  };
 
   return (
     <StudyCardPlate>
@@ -98,7 +113,7 @@ export function ReviewMcqFace({
               >
                 <Radio
                   size="small"
-                  checked={draft.back === option}
+                  checked={draft.correctIndex === index}
                   disabled={disabled}
                   onChange={() => emit(withMcqCorrect(draft, index))}
                   inputProps={{ "aria-label": `Correct choice ${index + 1}` }}
@@ -108,7 +123,7 @@ export function ReviewMcqFace({
                     "&&.Mui-disabled.Mui-checked": { color: "var(--sp-plum)" },
                   }}
                 />
-                {draft.back === option ? (
+                {draft.correctIndex === index ? (
                   <Typography component="span" variant="caption">
                     Correct
                   </Typography>

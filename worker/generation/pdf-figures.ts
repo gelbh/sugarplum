@@ -56,10 +56,13 @@ export async function collectPdfFigureDrafts(args: {
     progress,
   } = args;
 
-  const figureChildren = await listFigureChildrenForPdf(db, {
-    deckId,
-    pdfMaterialId,
-  });
+  const figureChildren = await listFigureChildrenForPdf(
+    { DB: db, MATERIALS: env.MATERIALS },
+    {
+      deckId,
+      pdfMaterialId,
+    },
+  );
   const readyFigureKeys = figureChildren
     .filter((row) => row.status === "ready")
     .map((row) => row.r2_key);
@@ -185,10 +188,7 @@ export async function collectPdfFigureDrafts(args: {
             })),
           );
         } catch (err) {
-          console.warn(
-            `PDF figure generation failed for ${figure.r2Key}`,
-            err,
-          );
+          console.warn(`PDF figure generation failed for ${figure.r2Key}`, err);
         } finally {
           await progress.emit(
             "figures",

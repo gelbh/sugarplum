@@ -22,7 +22,7 @@ function seedOwner(env: ReturnType<typeof createTestEnv>) {
 }
 
 describe("PDF figure crop materials", () => {
-  it("presigns a figure crop and creates an uploading child material", async () => {
+  it("presigns a figure crop to R2 without creating a materials row", async () => {
     const env = createTestEnv();
     seedOwner(env);
     env.seedMaterial({
@@ -56,23 +56,18 @@ describe("PDF figure crop materials", () => {
 
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
-      materialId: string;
+      materialId?: string;
       uploadUrl: string;
       r2Key: string;
     };
-    expect(body.materialId).toBeTruthy();
+    expect(body.materialId).toBeUndefined();
     expect(body.r2Key).toBe("materials/deck-a/figures/pdf-1/2.png");
     expect(body.uploadUrl).toContain("X-Amz-Signature=");
-    expect(env.getMaterials()).toHaveLength(2);
-    expect(env.getMaterials()[1]).toMatchObject({
-      id: body.materialId,
-      kind: "image",
-      status: "uploading",
-      r2_key: body.r2Key,
-    });
+    expect(env.getMaterials()).toHaveLength(1);
+    expect(env.getMaterials()[0]?.id).toBe("pdf-1");
   });
 
-  it("completes a figure child without enqueueing a generation job", async () => {
+  it("completes a legacy figure child without enqueueing a generation job", async () => {
     const env = createTestEnv();
     seedOwner(env);
     env.seedMaterial({
@@ -116,6 +111,10 @@ describe("PDF figure crop materials", () => {
       status: "uploading",
       created_at: "2026-01-01T00:00:00.000Z",
     });
+    env.seedR2(
+      "materials/deck-a/image-1.png",
+      new Uint8Array([137, 80, 78, 71]),
+    );
 
     const res = await app.request(
       "/api/materials/image-1/complete",

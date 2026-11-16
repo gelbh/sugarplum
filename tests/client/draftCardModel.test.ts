@@ -36,12 +36,20 @@ describe("draftForType", () => {
   });
 
   it("falls back to the first non-empty option when the answer is not a choice", () => {
-    const mcq = card({ type: "qa", back: "Lyon", options: ["", "Rome", "Oslo"] });
+    const mcq = card({
+      type: "qa",
+      back: "Lyon",
+      options: ["", "Rome", "Oslo"],
+    });
     expect(draftForType(mcq, "mcq").back).toBe("Rome");
   });
 
   it("keeps text when switching mcq to qa", () => {
-    const mcq = card({ type: "mcq", back: "Paris", options: ["Paris", "Rome", "Oslo"] });
+    const mcq = card({
+      type: "mcq",
+      back: "Paris",
+      options: ["Paris", "Rome", "Oslo"],
+    });
     expect(draftForType(mcq, "qa")).toEqual({
       front: "Capital of France?",
       back: "Paris",
@@ -51,7 +59,10 @@ describe("draftForType", () => {
 
   it("returns a starter occlusion front for occlusion", () => {
     expect(
-      draftForType(card({ type: "image_label", media_r2_keys: ["img1"] }), "occlusion"),
+      draftForType(
+        card({ type: "image_label", media_r2_keys: ["img1"] }),
+        "occlusion",
+      ),
     ).toEqual({
       front: starterOcclusionFront("img1"),
       back: { answer: "" },
@@ -102,7 +113,11 @@ describe("draftFaceKind", () => {
   it("classifies occlusion, mcq and text cards", () => {
     expect(
       draftFaceKind(
-        card({ type: "occlusion", front: starterOcclusionFront("k"), back: { answer: "r1" } }),
+        card({
+          type: "occlusion",
+          front: starterOcclusionFront("k"),
+          back: { answer: "r1" },
+        }),
       ),
     ).toBe("occlusion");
     expect(draftFaceKind(card({ type: "mcq" }))).toBe("mcq");
@@ -111,10 +126,12 @@ describe("draftFaceKind", () => {
 });
 
 describe("mcqDraftFromCard", () => {
-  it("uses card options as-is and the back answer", () => {
+  it("uses card options as-is and resolves correctIndex from the back", () => {
     expect(
-      mcqDraftFromCard(card({ type: "mcq", back: { answer: "b" }, options: ["a", "b"] })),
-    ).toEqual({ options: ["a", "b"], back: "b" });
+      mcqDraftFromCard(
+        card({ type: "mcq", back: { answer: "b" }, options: ["a", "b"] }),
+      ),
+    ).toEqual({ options: ["a", "b"], correctIndex: 1 });
   });
 });
 

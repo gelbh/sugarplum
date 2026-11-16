@@ -40,8 +40,21 @@ describe("buildJobProgressSnapshot", () => {
     });
     expect(snap.stage).not.toBe("queued");
     expect(snap.label).not.toBe("Waiting to start");
-    expect(
-      formatProgressSubline({ stage: snap.stage, etaMs: null }),
-    ).not.toBe("You'll start when a worker is free");
+    expect(formatProgressSubline({ stage: snap.stage, etaMs: null })).not.toBe(
+      "You'll start when a worker is free",
+    );
+  });
+
+  it("uses weighted percent as a determinate bar even when total is 0", () => {
+    const snap = buildJobProgressSnapshot("j1", "running", {
+      stage: "figures",
+      current: 0,
+      total: 0,
+      percent: 18,
+      label: "Detecting figures…",
+    });
+    expect(snap.mode).toBe("determinate");
+    expect(snap.percent).toBe(18);
+    expect(snap.stage).toBe("figures");
   });
 });

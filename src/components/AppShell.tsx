@@ -19,7 +19,9 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import { GAMIFICATION_CHANGED_EVENT, getGamification } from "../api/client";
 import StreakXpChip from "../achievements/StreakXpChip";
 import { isGuest } from "../guest/session";
-import { navigateReplace } from "../nav/navigate";
+import { navigateReplace, subscribeLocation } from "../nav/navigate";
+import PageLoadingOverlay from "../progress/PageLoadingOverlay";
+import { useRouteLoadOverlay } from "../progress/useRouteLoadOverlay";
 import { useMainScrollRestore } from "../nav/scrollRestore";
 import GlobalProgressBar from "../progress/GlobalProgressBar";
 import { ProgressProvider } from "../progress/ProgressProvider";
@@ -30,6 +32,9 @@ import BottomChrome from "./shell/BottomChrome";
 import DesktopDrawer from "./shell/DesktopDrawer";
 import GenerationStatusStrip from "./shell/GenerationStatusStrip";
 import ShellNavRail from "./shell/ShellNavRail";
+import ShellSidebarEdgeBar, {
+  SHELL_SIDEBAR_SNAP_MID,
+} from "./shell/ShellSidebarEdgeBar";
 import { ShellBackOverrideProvider } from "./shell/ShellBackOverride";
 import TopChrome from "./shell/TopChrome";
 import {
@@ -38,6 +43,10 @@ import {
   TOP_BAR_HEIGHT,
 } from "./shell/chromeTokens";
 import { resolveShellSideChrome } from "./shell/shellSideChrome";
+import {
+  loadShellSidebarCollapsed,
+  saveShellSidebarCollapsed,
+} from "./shell/shellSidebarPreference";
 import type { ShellNavId, ShellNavItem } from "./shell/shellNav";
 
 type NavItem = ShellNavItem & {
@@ -130,13 +139,64 @@ function AppShellChrome({ children }: AppShellProps) {
   const [level, setLevel] = useState<number | null>(null);
   const drawerNav = isAdmin ? [...LEARNER_NAV, ADMIN_NAV] : LEARNER_NAV;
   const active = activeNavId(path, drawerNav);
-  const { side, sideWidth } = resolveShellSideChrome(phone, medium, hideChrome);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean | null>(() =>
+    loadShellSidebarCollapsed(),
+  );
+  const [dragSideWidth, setDragSideWidth] = useState<number | null>(null);
+  const resolvedSide = resolveShellSideChrome(
+    phone,
+    medium,
+    hideChrome,
+    sidebarCollapsed,
+  );
+  const collapsedNow =
+    dragSideWidth != null
+      ? dragSideWidth < SHELL_SIDEBAR_SNAP_MID
+      : resolvedSide.side === "rail";
+  const side =
+    dragSideWidth != null
+      ? collapsedNow
+        ? "rail"
+        : "drawer"
+      : resolvedSide.side;
+  const sideWidth = dragSideWidth ?? resolvedSide.sideWidth;
   const showMobileChrome = !hideChrome && phone;
   const genStatus = useShellGenerationStatus(hideChrome);
   const headerRef = useRef<HTMLDivElement>(null);
   const [mobileHeaderPx, setMobileHeaderPx] = useState(TOP_BAR_HEIGHT);
   const mainRef = useRef<HTMLElement>(null);
+  const [routeKey, setRouteKey] = useState(
+    () => `${window.location.pathname}${window.location.search}`,
+  );
+  const routeOverlay = useRouteLoadOverlay();
+  // Draft review owns progress via JobProgressPanel; skip the thin top bar there.
+  const hideGlobalProgress = /^\/jobs\/[^/]+\/drafts\/?$/.test(
+    routeKey.split("?")[0] ?? "",
+  );
   useMainScrollRestore(mainRef);
+
+  useEffect(
+    () =>
+      subscribeLocation((loc) => {
+        setRouteKey(`${loc.pathname}${loc.search}`);
+      }),
+    [],
+  );
+
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--shell-side-width",
+      `${sideWidth}px`,
+    );
+    return () => {
+      document.documentElement.style.removeProperty("--shell-side-width");
+    };
+  }, [sideWidth]);
+
+  function setCollapsed(next: boolean) {
+    setSidebarCollapsed(next);
+    saveShellSidebarCollapsed(next);
+  }
 
   // Zen hides the chip, so refetch on leaving zen instead of after every grade.
   useEffect(() => {
@@ -197,7 +257,9 @@ function AppShellChrome({ children }: AppShellProps) {
           : {}),
       }}
     >
-      <GlobalProgressBar top={showMobileChrome ? mobileHeaderPx : 0} />
+      {routeOverlay || hideGlobalProgress ? null : (
+        <GlobalProgressBar top={showMobileChrome ? mobileHeaderPx : 0} />
+      )}
       {showMobileChrome ? (
         <Box
           ref={headerRef}
@@ -221,7 +283,7 @@ function AppShellChrome({ children }: AppShellProps) {
           drawerNav={drawerNav}
           active={active}
           genStatus={genStatus}
-          streakChip={streakChip}
+          width={sideWidth}
         />
       ) : null}
       {side === "drawer" ? (
@@ -229,13 +291,22 @@ function AppShellChrome({ children }: AppShellProps) {
           drawerNav={drawerNav}
           active={active}
           genStatus={genStatus}
-          streakChip={streakChip}
+          width={sideWidth}
+        />
+      ) : null}
+      {side === "rail" || side === "drawer" ? (
+        <ShellSidebarEdgeBar
+          sideWidth={sideWidth}
+          collapsed={collapsedNow}
+          onCollapsedChange={setCollapsed}
+          onDragWidth={setDragSideWidth}
         />
       ) : null}
       <Box
         ref={mainRef}
         component="main"
         sx={{
+          position: "relative",
           flex: 1,
           minWidth: 0,
           minHeight: 0,
@@ -250,7 +321,26 @@ function AppShellChrome({ children }: AppShellProps) {
             : {}),
         }}
       >
-        {children}
+        <Box
+          key={routeKey}
+          sx={{
+            height: "100%",
+            minHeight: "100%",
+            display: "flex",
+            flexDirection: "column",
+            animation: "shellPageIn 320ms cubic-bezier(0.2, 0, 0, 1)",
+            "@keyframes shellPageIn": {
+              from: { opacity: 0, transform: "translateY(10px)" },
+              to: { opacity: 1, transform: "translateY(0)" },
+            },
+            "@media (prefers-reduced-motion: reduce)": {
+              animation: "none",
+            },
+          }}
+        >
+          {children}
+        </Box>
+        <PageLoadingOverlay snapshot={routeOverlay} />
       </Box>
       {showMobileChrome ? (
         <BottomChrome
@@ -264,7 +354,7 @@ function AppShellChrome({ children }: AppShellProps) {
   );
 }
 
-/** Authenticated chrome: dock below sm; collapsed rail sm–md; labeled drawer md+. */
+/** Authenticated chrome: dock below sm; desktop sidebar toggleable rail ↔ drawer. */
 export default function AppShell({ children }: AppShellProps) {
   return (
     <ProgressProvider>

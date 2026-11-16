@@ -47,8 +47,7 @@ function generatingSubline(
   progress: ShellGenerationJobInput["progress"],
 ): string {
   const stage =
-    progress?.label?.trim() ||
-    friendlyStageHeadline(progress?.stage ?? null);
+    progress?.label?.trim() || friendlyStageHeadline(progress?.stage ?? null);
   const pct =
     typeof progress?.percent === "number" && Number.isFinite(progress.percent)
       ? Math.round(Math.min(100, Math.max(0, progress.percent)))
@@ -84,10 +83,10 @@ export function resolveShellGenerationStatus(
       jobId: pendingId,
       kind: "failed",
       label: "Generation failed",
-      subline: "Tap to open and retry",
+      subline: "Discard or try again",
       percent: null,
       href: draftsHref(pendingId),
-      ariaLabel: "Generation failed, open details",
+      ariaLabel: "Generation failed, discard or try again",
     };
   }
 

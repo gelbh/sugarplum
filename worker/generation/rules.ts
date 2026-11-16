@@ -20,6 +20,10 @@ function qaDraft(front: string, back: string, line: string): CardDraft {
 }
 
 function clozeDraft(front: string, back: string, line: string): CardDraft | null {
+  // Mixed Anki + underscore blanks are ambiguous; skip the line.
+  if (/\{\{c\d+::/.test(front) && /_{3,}/.test(front)) {
+    return null;
+  }
   try {
     assertSingleCloze(front);
   } catch {

@@ -97,31 +97,23 @@ describe("UnlockToastProvider", () => {
     expect(toast()).toBeNull();
   });
 
-  it("centres over <main> beside rail then drawer", () => {
+  it("centres over <main> using shell side width", () => {
     act(() => enqueue([unlock("a", "First")]));
     const css = [...document.querySelectorAll("style[data-emotion]")]
       .map((s) => s.textContent)
       .join("");
     const desktopBottom =
       "bottom:calc(24px + env(safe-area-inset-bottom, 0px))";
-    const mobileBottom =
-      "bottom:calc(88px + env(safe-area-inset-bottom, 0px))";
+    const mobileBottom = "bottom:calc(88px + env(safe-area-inset-bottom, 0px))";
     const smAt = css.indexOf("@media (min-width:600px)");
     expect(smAt).toBeGreaterThan(-1);
-    const smBlock = css.slice(smAt).match(
-      /^@media \(min-width:600px\)\{[^{]*\{([^}]*)\}/,
-    );
+    const smBlock = css
+      .slice(smAt)
+      .match(/^@media \(min-width:600px\)\{[^{]*\{([^}]*)\}/);
     expect(smBlock).not.toBeNull();
-    expect(smBlock![1]).toContain("left:calc(50% + 40px)");
+    expect(smBlock![1]).toContain("var(--shell-side-width");
     expect(smBlock![1]).toContain(desktopBottom);
     expect(smBlock![1]).not.toContain(mobileBottom);
     expect(css.slice(0, smAt)).toContain(mobileBottom);
-    const mdAt = css.indexOf("@media (min-width:900px)");
-    expect(mdAt).toBeGreaterThan(-1);
-    const mdBlock = css.slice(mdAt).match(
-      /^@media \(min-width:900px\)\{[^{]*\{([^}]*)\}/,
-    );
-    expect(mdBlock).not.toBeNull();
-    expect(mdBlock![1]).toContain("left:calc(50% + 110px)");
   });
 });

@@ -24,7 +24,11 @@ import { onCardAccepted } from "../gamification/onStudyEvent";
 import { REJECT_REASONS } from "../../src/lib/rejectReasons";
 import { parseOptionalJsonBody } from "../optional-json";
 import { mergeProvenancePagesIntoJson } from "../../src/study/notesProvenanceWrite";
-import { acceptDraftCard, requireOwnedCard } from "./ownership";
+import {
+  acceptDraftCard,
+  requireOwnedCard,
+  undoReviewDecision,
+} from "./ownership";
 import {
   decodeStoredBack,
   encodeStoredBack,
@@ -362,6 +366,45 @@ cardRoutes.post("/:id/reject", async (c) => {
 
   return c.json(
     serializeCard({ ...row, status: "rejected", updated_at: updatedAt }),
+  );
+});
+
+/** Undo accept or reject: put the card back into draft review. */
+cardRoutes.post("/:id/undo-review", async (c) => {
+  const userId = await requireUser(c);
+  const cardId = c.req.param("id");
+  const db = getDb(c.env);
+  const row = await requireOwnedCard(db, cardId, userId);
+
+  const outcome = await undoReviewDecision(db, row);
+  if (outcome === "unsupported") {
+    throw new HTTPException(400, {
+      message: "Only accepted or rejected cards can be undone",
+    });
+  }
+  if (outcome === "conflict") {
+    throw new HTTPException(409, {
+      message: "Card is no longer accepted or rejected",
+    });
+  }
+
+  const updatedAt = new Date().toISOString();
+  if (row.job_id) {
+    await db
+      .prepare(
+        `UPDATE generation_jobs SET status = ?, finished_at = NULL
+         WHERE id = ? AND status = ?`,
+      )
+      .bind("needs_review", row.job_id, "done")
+      .run();
+  }
+
+  return c.json(
+    serializeCard({
+      ...row,
+      status: "draft",
+      updated_at: updatedAt,
+    }),
   );
 });
 

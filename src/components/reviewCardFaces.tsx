@@ -19,7 +19,7 @@ import {
 import {
   CLOZE_EXTRA_LABEL,
   clozeSpoken,
-  extractClozeAnswer,
+  extractClozeAnswers,
 } from "../lib/clozeFormat";
 import {
   backAnswer,
@@ -118,7 +118,10 @@ function EditableText({
           : {
               bgcolor: "color-mix(in srgb, var(--sp-stage-bg) 5%, transparent)",
             },
-        "&:focus-visible": { outline: "2px solid currentColor", outlineOffset: 2 },
+        "&:focus-visible": {
+          outline: "2px solid currentColor",
+          outlineOffset: 2,
+        },
       }}
     >
       <Typography
@@ -181,7 +184,9 @@ export function TextReviewFace({ card, disabled, onChange }: FaceProps) {
               value={frontText}
               spoken={isCloze ? clozeSpoken(frontText) : frontText}
               visual={
-                isCloze && frontText ? <ClozePrompt front={frontText} /> : undefined
+                isCloze && frontText ? (
+                  <ClozePrompt front={frontText} />
+                ) : undefined
               }
               textSx={FACE_PROMPT_TEXT_SX}
               onChange={(front) => onChange({ front, back: backText, type })}
@@ -216,7 +221,7 @@ export function TextReviewFace({ card, disabled, onChange }: FaceProps) {
           <Box sx={CONTENT_SX}>
             {isCloze ? (
               <Typography component="p" sx={FACE_ANSWER_TEXT_SX}>
-                {extractClozeAnswer(frontText) ?? ""}
+                {extractClozeAnswers(frontText).join(" · ")}
               </Typography>
             ) : null}
             <EditableText

@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useRef,
   useState,
   type Dispatch,
@@ -15,16 +16,9 @@ import {
   type CardType,
 } from "../api/client";
 import type { DraftEditorChange } from "../components/DraftCardEditor";
-import {
-  isOcclusionFront,
-  starterOcclusionFront,
-} from "../lib/draftCardModel";
-import {
-  hubDiyTypes,
-  validateHubCreateCard,
-} from "../lib/hubDiyCreate";
+import { isOcclusionFront, starterOcclusionFront } from "../lib/draftCardModel";
+import { hubDiyTypes, validateHubCreateCard } from "../lib/hubDiyCreate";
 import { MAX_IMAGE_BYTES } from "../lib/pdfPageRender";
-import { popWorkshop, type WorkshopFrame } from "./workshopStack";
 
 const IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
@@ -49,8 +43,6 @@ type Args = {
   showArchived: boolean;
   setCards: Dispatch<SetStateAction<CardDraftView[]>>;
   setAcceptedCount: Dispatch<SetStateAction<number>>;
-  setNotice: Dispatch<SetStateAction<string | null>>;
-  setWorkshopStack: Dispatch<SetStateAction<WorkshopFrame[]>>;
 };
 
 export type CreateCardController = {
@@ -58,6 +50,9 @@ export type CreateCardController = {
   createBusy: boolean;
   createImageBusy: boolean;
   createError: string | null;
+  createNotice: string | null;
+  /** True after at least one successful add in this writer session. */
+  createSessionHasCard: boolean;
   createNeedsImage: boolean;
   createImageKey: string;
   createImageInputRef: RefObject<HTMLInputElement | null>;
@@ -66,9 +61,36 @@ export type CreateCardController = {
   onCreateCard: (e?: FormEvent) => void;
   onCreateImageUpload: (file: File) => void;
   applyCreateImageKey: (key: string) => void;
+  clearCreateNotice: () => void;
   prepareCreateFrame: () => void;
   prepareOcclusionFromImageKey: (imageKey: string) => void;
 };
+
+/** Next blank draft after a successful add (keeps type; occlusion keeps image). */
+export function nextHubCreateCard(prev: CardDraftView): CardDraftView {
+  const blank = blankHubCreateCard(prev.deck_id);
+  if (prev.type === "occlusion") {
+    const key =
+      prev.media_r2_keys?.[0] ??
+      (isOcclusionFront(prev.front) ? prev.front.image_key : "");
+    return {
+      ...blank,
+      type: "occlusion",
+      media_r2_keys: key ? [key] : [],
+      front: starterOcclusionFront(key),
+      back: { answer: "" },
+    };
+  }
+  if (prev.type === "image_label") {
+    const key = prev.media_r2_keys?.[0] ?? "";
+    return {
+      ...blank,
+      type: "image_label",
+      media_r2_keys: key ? [key] : [],
+    };
+  }
+  return { ...blank, type: prev.type };
+}
 
 export function useCreateCardController({
   deckId,
@@ -76,8 +98,6 @@ export function useCreateCardController({
   showArchived,
   setCards,
   setAcceptedCount,
-  setNotice,
-  setWorkshopStack,
 }: Args): CreateCardController {
   const [createCard, setCreateCard] = useState<CardDraftView>(() =>
     blankHubCreateCard(deckId),
@@ -85,6 +105,8 @@ export function useCreateCardController({
   const [createBusy, setCreateBusy] = useState(false);
   const [createImageBusy, setCreateImageBusy] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [createNotice, setCreateNotice] = useState<string | null>(null);
+  const [createSessionHasCard, setCreateSessionHasCard] = useState(false);
   const createImageInputRef = useRef<HTMLInputElement | null>(null);
 
   const createImageKey =
@@ -141,6 +163,8 @@ export function useCreateCardController({
   }
 
   function onCreateChange(next: DraftEditorChange) {
+    setCreateError(null);
+    setCreateNotice(null);
     setCreateCard((prev) => {
       const imageKey = prev.media_r2_keys?.[0] ?? "";
       let front = next.front;
@@ -166,6 +190,7 @@ export function useCreateCardController({
   async function onCreateCard(e?: FormEvent) {
     e?.preventDefault();
     setCreateError(null);
+    setCreateNotice(null);
     const validated = validateHubCreateCard(createCard);
     if (!validated.ok) {
       setCreateError(validated.error);
@@ -178,12 +203,9 @@ export function useCreateCardController({
         setCards((prev) => [...prev, created]);
       }
       setAcceptedCount((n) => n + 1);
-      setCreateCard(blankHubCreateCard(deckId));
-      setNotice("Card added");
-      setWorkshopStack((prev) => {
-        const top = prev[prev.length - 1];
-        return top?.id === "createCard" ? popWorkshop(prev) : prev;
-      });
+      setCreateCard(nextHubCreateCard(createCard));
+      setCreateSessionHasCard(true);
+      setCreateNotice("added");
     } catch (err) {
       setCreateError(
         err instanceof ApiError ? err.message : "Could not create card",
@@ -193,14 +215,22 @@ export function useCreateCardController({
     }
   }
 
+  const clearCreateNotice = useCallback(() => {
+    setCreateNotice(null);
+  }, []);
+
   function prepareCreateFrame() {
     setCreateError(null);
+    setCreateNotice(null);
+    setCreateSessionHasCard(false);
     setCreateCard(blankHubCreateCard(deckId));
   }
 
   function prepareOcclusionFromImageKey(imageKey: string) {
     const key = imageKey.trim();
     setCreateError(null);
+    setCreateNotice(null);
+    setCreateSessionHasCard(false);
     setCreateCard({
       ...blankHubCreateCard(deckId),
       type: "occlusion",
@@ -215,6 +245,8 @@ export function useCreateCardController({
     createBusy,
     createImageBusy,
     createError,
+    createNotice,
+    createSessionHasCard,
     createNeedsImage,
     createImageKey,
     createImageInputRef,
@@ -223,6 +255,7 @@ export function useCreateCardController({
     onCreateCard,
     onCreateImageUpload,
     applyCreateImageKey,
+    clearCreateNotice,
     prepareCreateFrame,
     prepareOcclusionFromImageKey,
   };

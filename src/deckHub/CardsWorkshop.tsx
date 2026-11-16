@@ -1,29 +1,48 @@
-import type { FormEvent, RefObject } from "react";
-import Alert from "@mui/material/Alert";
+import { useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
-import Divider from "@mui/material/Divider";
-import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
 import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import GridViewOutlinedIcon from "@mui/icons-material/GridViewOutlined";
 import UnarchiveOutlinedIcon from "@mui/icons-material/UnarchiveOutlined";
-import DraftCardEditor, {
-  type DraftEditorChange,
-} from "../components/DraftCardEditor";
+import ViewListOutlinedIcon from "@mui/icons-material/ViewListOutlined";
 import EmptyNext from "../components/EmptyNext";
-import type { CardDraftView, CardType } from "../api/client";
+import type { CardDraftView } from "../api/client";
 import { cardFrontPreview } from "../lib/draftCardModel";
+import DiyCardPreview from "./DiyCardPreview";
+
+const VIEW_PREF_KEY = "sugarplum.cardsWorkshop.view";
+
+type ViewMode = "icons" | "details";
+
+function readViewMode(): ViewMode {
+  try {
+    const raw = localStorage.getItem(VIEW_PREF_KEY);
+    if (raw === "icons" || raw === "details") return raw;
+  } catch {
+    /* ignore */
+  }
+  return "icons";
+}
+
+function writeViewMode(mode: ViewMode) {
+  try {
+    localStorage.setItem(VIEW_PREF_KEY, mode);
+  } catch {
+    /* ignore */
+  }
+}
 
 function cardTypeLabel(type: CardDraftView["type"]): string {
   if (type === "cloze") return "Cloze";
@@ -34,8 +53,65 @@ function cardTypeLabel(type: CardDraftView["type"]): string {
   return "Q&A";
 }
 
-type ListProps = {
-  mode: "list";
+const PILL_BTN = {
+  borderRadius: 999,
+  textTransform: "none",
+  fontWeight: 600,
+  boxShadow: "none",
+  "&:hover": { boxShadow: "none" },
+} as const;
+
+const TOOL_LINK = {
+  minWidth: 0,
+  px: 1,
+  py: 0.35,
+  borderRadius: 999,
+  textTransform: "none",
+  fontWeight: 600,
+  fontSize: "0.75rem",
+  letterSpacing: "0.04em",
+  color: "rgba(232, 216, 199, 0.62)",
+  "&:hover": {
+    color: "primary.light",
+    bgcolor: "rgba(91, 44, 111, 0.22)",
+  },
+} as const;
+
+const ROW_ACTION = {
+  color: "rgba(232, 216, 199, 0.55)",
+  "&:hover": {
+    color: "primary.light",
+    bgcolor: "rgba(91, 44, 111, 0.28)",
+  },
+} as const;
+
+const SELECT_CHECKBOX_SX = {
+  p: 0.55,
+  borderRadius: "9px",
+  color: "rgba(232, 216, 199, 0.42)",
+  bgcolor: "rgba(18, 7, 15, 0.42)",
+  border: "1px solid rgba(232, 216, 199, 0.22)",
+  transition:
+    "background-color 140ms ease, border-color 140ms ease, color 140ms ease",
+  "& .MuiSvgIcon-root": {
+    fontSize: 17,
+  },
+  "&:hover": {
+    bgcolor: "rgba(91, 44, 111, 0.32)",
+    borderColor: "rgba(232, 216, 199, 0.4)",
+    color: "rgba(232, 216, 199, 0.72)",
+  },
+  "&.Mui-checked, &.MuiCheckbox-indeterminate": {
+    color: "rgba(245, 235, 220, 0.95)",
+    bgcolor: "rgba(91, 44, 111, 0.52)",
+    borderColor: "rgba(209, 163, 226, 0.55)",
+  },
+  "&.Mui-disabled": {
+    opacity: 0.45,
+  },
+} as const;
+
+type Props = {
   cards: CardDraftView[];
   showArchived: boolean;
   onShowArchivedChange: (checked: boolean) => void;
@@ -46,6 +122,7 @@ type ListProps = {
   archiveBusyId: string | null;
   batchBusy: boolean;
   onBatchArchive: () => void;
+  onBatchRestore: () => void;
   onBatchMove: () => void;
   onEdit: (card: CardDraftView) => void;
   onMove: (card: CardDraftView) => void;
@@ -54,171 +131,154 @@ type ListProps = {
   onCreateCard: () => void;
 };
 
-type CreateProps = {
-  mode: "create";
-  createCard: CardDraftView;
-  createBusy: boolean;
-  createImageBusy: boolean;
-  createError: string | null;
-  createNeedsImage: boolean;
-  createImageKey: string;
-  deckImageKeys: string[];
-  createImageInputRef: RefObject<HTMLInputElement | null>;
-  hubDiyAllowedTypes: CardType[];
-  onCreateChange: (next: DraftEditorChange) => void;
-  onCreateSubmit: (e?: FormEvent) => void;
-  onCreateImageUpload: (file: File) => void;
-  applyCreateImageKey: (key: string) => void;
-};
-
-type Props = ListProps | CreateProps;
-
-export default function CardsWorkshop(props: Props) {
-  if (props.mode === "create") {
-    const {
-      createCard,
-      createBusy,
-      createImageBusy,
-      createError,
-      createNeedsImage,
-      createImageKey,
-      deckImageKeys,
-      createImageInputRef,
-      hubDiyAllowedTypes,
-      onCreateChange,
-      onCreateSubmit,
-      onCreateImageUpload,
-      applyCreateImageKey,
-    } = props;
-
-    return (
-      <Box component="form" onSubmit={onCreateSubmit} noValidate>
-        <Stack spacing={2}>
-          {createError ? <Alert severity="error">{createError}</Alert> : null}
-          {createNeedsImage ? (
-            <Stack spacing={1}>
-              <Typography variant="body2" color="text.secondary">
-                Image (deck material)
-              </Typography>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                {deckImageKeys.length > 0 ? (
-                  <FormControl fullWidth size="small">
-                    <InputLabel id="hub-create-image-key">
-                      Existing image
-                    </InputLabel>
-                    <Select
-                      labelId="hub-create-image-key"
-                      label="Existing image"
-                      value={createImageKey || ""}
-                      disabled={createBusy || createImageBusy}
-                      onChange={(ev) =>
-                        applyCreateImageKey(String(ev.target.value))
-                      }
-                    >
-                      <MenuItem value="">
-                        <em>Select…</em>
-                      </MenuItem>
-                      {deckImageKeys.map((key) => (
-                        <MenuItem key={key} value={key}>
-                          {key.split("/").pop() ?? key}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                ) : null}
-                <Button
-                  variant="outlined"
-                  component="label"
-                  disabled={createBusy || createImageBusy}
-                  sx={{ flexShrink: 0, whiteSpace: "nowrap" }}
-                >
-                  {createImageBusy ? "Uploading…" : "Upload image"}
-                  <input
-                    ref={createImageInputRef}
-                    type="file"
-                    hidden
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={(ev) => {
-                      const file = ev.target.files?.[0];
-                      if (file) void onCreateImageUpload(file);
-                    }}
-                  />
-                </Button>
-              </Stack>
-            </Stack>
-          ) : null}
-          <DraftCardEditor
-            card={createCard}
-            disabled={createBusy || createImageBusy}
-            onChange={onCreateChange}
-            allowedTypes={hubDiyAllowedTypes}
-          />
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={createBusy || createImageBusy}
-          >
-            {createBusy ? "Adding…" : "Add card"}
-          </Button>
-        </Stack>
-      </Box>
-    );
-  }
-
-  const {
-    cards,
-    showArchived,
-    onShowArchivedChange,
-    selectedIds,
-    onToggleSelect,
-    onSelectAll,
-    onClearSelection,
-    archiveBusyId,
-    batchBusy,
-    onBatchArchive,
-    onBatchMove,
-    onEdit,
-    onMove,
-    onArchive,
-    onRestore,
-    onCreateCard,
-  } = props;
-
+export default function CardsWorkshop({
+  cards,
+  showArchived,
+  onShowArchivedChange,
+  selectedIds,
+  onToggleSelect,
+  onSelectAll,
+  onClearSelection,
+  archiveBusyId,
+  batchBusy,
+  onBatchArchive,
+  onBatchRestore,
+  onBatchMove,
+  onEdit,
+  onMove,
+  onArchive,
+  onRestore,
+  onCreateCard,
+}: Props) {
+  const [view, setView] = useState<ViewMode>(() => readViewMode());
   const busy = archiveBusyId !== null || batchBusy;
   const selectedCount = selectedIds.size;
+  const allSelected =
+    cards.length > 0 && cards.every((card) => selectedIds.has(card.id));
+  const someSelected = selectedCount > 0 && !allSelected;
+  const cardCountLabel =
+    cards.length === 0
+      ? showArchived
+        ? "No archived cards"
+        : "No cards yet"
+      : cards.length === 1
+        ? "1 card"
+        : `${cards.length} cards`;
+
+  function onViewChange(_: unknown, next: ViewMode | null) {
+    if (!next) return;
+    setView(next);
+    writeViewMode(next);
+  }
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={1.75} sx={{ minHeight: 0 }}>
       <Stack
         direction="row"
         alignItems="center"
         justifyContent="space-between"
         useFlexGap
         flexWrap="wrap"
-        gap={1}
+        gap={1.25}
       >
-        <Button variant="contained" size="small" onClick={onCreateCard}>
-          Create card
-        </Button>
-        <FormControlLabel
-          control={
-            <Switch
+        <Stack direction="row" alignItems="center" spacing={1.25} useFlexGap>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<AddRoundedIcon sx={{ fontSize: 18 }} />}
+            onClick={onCreateCard}
+            sx={{
+              ...PILL_BTN,
+              px: 1.75,
+              py: 0.85,
+              fontSize: "0.8125rem",
+            }}
+          >
+            Create card
+          </Button>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "rgba(232, 216, 199, 0.55)",
+              letterSpacing: "0.04em",
+            }}
+          >
+            {cardCountLabel}
+          </Typography>
+        </Stack>
+        <Stack direction="row" alignItems="center" spacing={1} useFlexGap>
+          {cards.length > 0 ? (
+            <ToggleButtonGroup
               size="small"
-              checked={showArchived}
-              onChange={(_ev, checked) => onShowArchivedChange(checked)}
-              disabled={busy}
-            />
-          }
-          label="Show archived"
-          sx={{ mr: 0 }}
-        />
+              exclusive
+              value={view}
+              aria-label="Card layout"
+              onChange={onViewChange}
+              sx={{
+                bgcolor: "rgba(18, 7, 15, 0.35)",
+                "& .MuiToggleButton-root": {
+                  borderColor: "rgba(232, 216, 199, 0.16)",
+                  color: "rgba(232, 216, 199, 0.55)",
+                  px: 1,
+                  "&.Mui-selected": {
+                    color: "primary.light",
+                    bgcolor: "rgba(91, 44, 111, 0.35)",
+                  },
+                },
+              }}
+            >
+              <ToggleButton value="icons" aria-label="Icons" title="Icons">
+                <GridViewOutlinedIcon fontSize="small" />
+              </ToggleButton>
+              <ToggleButton
+                value="details"
+                aria-label="Details"
+                title="Details"
+              >
+                <ViewListOutlinedIcon fontSize="small" />
+              </ToggleButton>
+            </ToggleButtonGroup>
+          ) : null}
+          <FormControlLabel
+            control={
+              <Switch
+                size="small"
+                checked={showArchived}
+                onChange={(_ev, checked) => onShowArchivedChange(checked)}
+                disabled={busy}
+              />
+            }
+            label="Show archived"
+            sx={{
+              mr: 0,
+              ml: 0,
+              gap: 0.75,
+              "& .MuiFormControlLabel-label": {
+                typography: "caption",
+                letterSpacing: "0.04em",
+                color: "rgba(232, 216, 199, 0.62)",
+              },
+            }}
+          />
+        </Stack>
       </Stack>
 
       {cards.length === 0 ? (
         showArchived ? (
-          <Typography variant="body2" color="text.secondary">
-            No archived cards.
-          </Typography>
+          <Box
+            sx={{
+              borderRadius: 2,
+              border: "1px solid",
+              borderColor: "rgba(232, 216, 199, 0.14)",
+              bgcolor: "rgba(18, 7, 15, 0.28)",
+              px: 2.25,
+              py: 2.5,
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              No archived cards in this deck.
+            </Typography>
+          </Box>
         ) : (
           <EmptyNext
             title="No accepted cards yet"
@@ -233,139 +293,445 @@ export default function CardsWorkshop(props: Props) {
             alignItems="center"
             spacing={1}
             useFlexGap
-            flexWrap="wrap"
+            sx={{
+              flexShrink: 0,
+              flexWrap: "wrap",
+              gap: 1,
+              minHeight: 44,
+              px: 1.25,
+              py: 0.75,
+              borderRadius: 2,
+              border: "1px solid",
+              borderColor:
+                selectedCount > 0
+                  ? "rgba(209, 163, 226, 0.28)"
+                  : "rgba(232, 216, 199, 0.12)",
+              bgcolor:
+                selectedCount > 0
+                  ? "rgba(91, 44, 111, 0.28)"
+                  : "rgba(18, 7, 15, 0.35)",
+            }}
           >
-            <Button size="small" onClick={onSelectAll} disabled={busy}>
-              Select all
-            </Button>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  size="small"
+                  disableRipple
+                  checked={allSelected}
+                  indeterminate={someSelected}
+                  disabled={busy || cards.length === 0}
+                  onChange={() => onSelectAll()}
+                  inputProps={{ "aria-label": "Select all cards" }}
+                  sx={SELECT_CHECKBOX_SX}
+                />
+              }
+              label={allSelected ? "Deselect all" : "Select all"}
+              sx={{
+                mr: 0,
+                ml: 0,
+                flexShrink: 0,
+                gap: 0.75,
+                "& .MuiFormControlLabel-label": {
+                  typography: "caption",
+                  fontWeight: 600,
+                  letterSpacing: "0.04em",
+                  color: "rgba(232, 216, 199, 0.72)",
+                  whiteSpace: "nowrap",
+                },
+              }}
+            />
             {selectedCount > 0 ? (
-              <Button size="small" onClick={onClearSelection} disabled={busy}>
-                Clear ({selectedCount})
-              </Button>
-            ) : null}
-            {selectedCount > 0 && !showArchived ? (
               <>
-                <Button
-                  size="small"
-                  startIcon={<DriveFileMoveOutlinedIcon />}
-                  disabled={busy}
-                  onClick={onBatchMove}
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "rgba(232, 216, 199, 0.55)",
+                    letterSpacing: "0.04em",
+                    whiteSpace: "nowrap",
+                  }}
                 >
-                  Move
-                </Button>
+                  {selectedCount} selected
+                </Typography>
+                {showArchived ? (
+                  <Button
+                    type="button"
+                    size="small"
+                    variant="contained"
+                    startIcon={<UnarchiveOutlinedIcon sx={{ fontSize: 18 }} />}
+                    disabled={busy}
+                    onClick={onBatchRestore}
+                    sx={{ ...PILL_BTN, px: 1.5 }}
+                  >
+                    Restore
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      type="button"
+                      size="small"
+                      variant="contained"
+                      startIcon={
+                        <DriveFileMoveOutlinedIcon sx={{ fontSize: 18 }} />
+                      }
+                      disabled={busy}
+                      onClick={onBatchMove}
+                      sx={{ ...PILL_BTN, px: 1.5 }}
+                    >
+                      Move
+                    </Button>
+                    <Button
+                      type="button"
+                      size="small"
+                      variant="outlined"
+                      startIcon={<ArchiveOutlinedIcon sx={{ fontSize: 18 }} />}
+                      disabled={busy}
+                      onClick={onBatchArchive}
+                      sx={{
+                        ...PILL_BTN,
+                        px: 1.5,
+                        borderColor: "rgba(232, 216, 199, 0.35)",
+                        color: "rgba(232, 216, 199, 0.88)",
+                        "&:hover": {
+                          borderColor: "rgba(232, 216, 199, 0.55)",
+                          bgcolor: "rgba(91, 44, 111, 0.28)",
+                        },
+                      }}
+                    >
+                      Archive
+                    </Button>
+                  </>
+                )}
                 <Button
+                  type="button"
                   size="small"
-                  color="warning"
-                  startIcon={<ArchiveOutlinedIcon />}
+                  onClick={onClearSelection}
                   disabled={busy}
-                  onClick={onBatchArchive}
+                  sx={TOOL_LINK}
                 >
-                  Archive
+                  Clear
                 </Button>
               </>
             ) : null}
           </Stack>
-          <Stack
-            component="ul"
-            spacing={0}
-            divider={<Divider flexItem />}
-            sx={{ m: 0, p: 0, listStyle: "none" }}
-          >
-            {cards.map((card) => {
-              const checked = selectedIds.has(card.id);
-              return (
-                <Box
-                  component="li"
-                  key={card.id}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 0.5,
-                    py: 1,
-                  }}
-                >
-                  <Checkbox
-                    size="small"
-                    checked={checked}
-                    disabled={busy}
-                    onChange={() => onToggleSelect(card.id)}
-                    inputProps={{
-                      "aria-label": `Select ${cardFrontPreview(card)}`,
+
+          {view === "icons" ? (
+            <Box
+              component="ul"
+              sx={{
+                m: 0,
+                p: 0,
+                listStyle: "none",
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(168px, 1fr))",
+                gap: 1.5,
+              }}
+            >
+              {cards.map((card) => {
+                const checked = selectedIds.has(card.id);
+                return (
+                  <Box
+                    component="li"
+                    key={card.id}
+                    sx={{
+                      position: "relative",
+                      display: "flex",
+                      flexDirection: "column",
+                      borderRadius: 2,
+                      border: "1px solid",
+                      borderColor: checked
+                        ? "rgba(209, 163, 226, 0.42)"
+                        : "rgba(232, 216, 199, 0.12)",
+                      bgcolor: checked
+                        ? "rgba(91, 44, 111, 0.22)"
+                        : "rgba(18, 7, 15, 0.28)",
+                      overflow: "hidden",
+                      transition:
+                        "background-color 140ms ease, border-color 140ms ease",
+                      "&:hover": {
+                        borderColor: checked
+                          ? "rgba(209, 163, 226, 0.55)"
+                          : "rgba(232, 216, 199, 0.22)",
+                        "& .sp-card-tile-actions": { opacity: 1 },
+                      },
                     }}
-                  />
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography variant="body2" noWrap>
-                      {cardFrontPreview(card)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {cardTypeLabel(card.type)}
-                    </Typography>
-                  </Box>
-                  <Tooltip title="Move card">
-                    <span>
-                      <IconButton
-                        size="small"
-                        aria-label="Move card"
-                        disabled={busy}
-                        onClick={() => {
-                          void onMove(card);
+                  >
+                    <Checkbox
+                      size="small"
+                      disableRipple
+                      checked={checked}
+                      disabled={busy}
+                      onChange={() => onToggleSelect(card.id)}
+                      inputProps={{
+                        "aria-label": `Select ${cardFrontPreview(card)}`,
+                      }}
+                      sx={{
+                        ...SELECT_CHECKBOX_SX,
+                        position: "absolute",
+                        top: 8,
+                        left: 8,
+                        zIndex: 2,
+                      }}
+                    />
+                    <Box
+                      sx={{
+                        width: "100%",
+                        aspectRatio: "var(--sp-card-aspect)",
+                        p: 1,
+                        pt: 4.5,
+                        minHeight: 0,
+                        // Let wheel/trackpad scroll the workshop, not nested faces.
+                        overscrollBehavior: "auto",
+                      }}
+                    >
+                      <DiyCardPreview card={card} variant="tile" />
+                    </Box>
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      spacing={0.5}
+                      sx={{ px: 1, pb: 0.85 }}
+                    >
+                      <Box
+                        component="span"
+                        sx={{
+                          display: "inline-flex",
+                          px: 0.85,
+                          py: 0.15,
+                          borderRadius: 999,
+                          border: "1px solid",
+                          borderColor: "rgba(232, 216, 199, 0.18)",
+                          bgcolor: "rgba(18, 7, 15, 0.35)",
+                          typography: "caption",
+                          fontSize: "0.6875rem",
+                          letterSpacing: "0.06em",
+                          textTransform: "uppercase",
+                          color: "rgba(232, 216, 199, 0.62)",
                         }}
                       >
-                        <DriveFileMoveOutlinedIcon fontSize="small" />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                  {!showArchived && card.status !== "archived" ? (
-                    <Tooltip title="Edit card">
-                      <span>
-                        <IconButton
-                          size="small"
-                          aria-label="Edit card"
-                          disabled={busy}
-                          onClick={() => onEdit(card)}
-                        >
-                          <EditOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                  ) : null}
-                  {showArchived ? (
-                    <Tooltip title="Restore card">
-                      <span>
-                        <IconButton
-                          size="small"
-                          aria-label="Restore card"
-                          disabled={busy}
-                          onClick={() => {
-                            void onRestore(card);
-                          }}
-                        >
-                          <UnarchiveOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                  ) : (
-                    <Tooltip title="Archive card">
-                      <span>
-                        <IconButton
-                          size="small"
-                          aria-label="Archive card"
-                          disabled={busy}
-                          onClick={() => {
-                            void onArchive(card);
-                          }}
-                        >
-                          <ArchiveOutlinedIcon fontSize="small" />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                  )}
-                </Box>
-              );
-            })}
-          </Stack>
+                        {cardTypeLabel(card.type)}
+                      </Box>
+                      <Stack
+                        className="sp-card-tile-actions"
+                        direction="row"
+                        sx={{
+                          opacity: { xs: 1, sm: checked ? 1 : 0.55 },
+                          transition: "opacity 140ms ease",
+                        }}
+                      >
+                        <CardRowActions
+                          card={card}
+                          showArchived={showArchived}
+                          busy={busy}
+                          onEdit={onEdit}
+                          onMove={onMove}
+                          onArchive={onArchive}
+                          onRestore={onRestore}
+                        />
+                      </Stack>
+                    </Stack>
+                  </Box>
+                );
+              })}
+            </Box>
+          ) : (
+            <Stack
+              component="ul"
+              spacing={0.75}
+              sx={{ m: 0, p: 0, listStyle: "none" }}
+            >
+              {cards.map((card) => {
+                const checked = selectedIds.has(card.id);
+                return (
+                  <Box
+                    component="li"
+                    key={card.id}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.75,
+                      px: 1,
+                      py: 0.85,
+                      borderRadius: 2,
+                      border: "1px solid",
+                      borderColor: checked
+                        ? "rgba(209, 163, 226, 0.42)"
+                        : "rgba(232, 216, 199, 0.12)",
+                      bgcolor: checked
+                        ? "rgba(91, 44, 111, 0.28)"
+                        : "rgba(18, 7, 15, 0.28)",
+                      transition:
+                        "background-color 140ms ease, border-color 140ms ease",
+                      "&:hover": {
+                        borderColor: checked
+                          ? "rgba(209, 163, 226, 0.55)"
+                          : "rgba(232, 216, 199, 0.22)",
+                        bgcolor: checked
+                          ? "rgba(91, 44, 111, 0.34)"
+                          : "rgba(91, 44, 111, 0.16)",
+                        "& .sp-card-row-actions": {
+                          opacity: 1,
+                        },
+                      },
+                    }}
+                  >
+                    <Checkbox
+                      size="small"
+                      disableRipple
+                      checked={checked}
+                      disabled={busy}
+                      onChange={() => onToggleSelect(card.id)}
+                      inputProps={{
+                        "aria-label": `Select ${cardFrontPreview(card)}`,
+                      }}
+                      sx={SELECT_CHECKBOX_SX}
+                    />
+                    <Box sx={{ flex: 1, minWidth: 0, py: 0.25 }}>
+                      <Typography
+                        variant="body2"
+                        noWrap
+                        sx={{
+                          fontWeight: 500,
+                          color: "rgba(245, 245, 245, 0.92)",
+                          lineHeight: 1.35,
+                        }}
+                      >
+                        {cardFrontPreview(card)}
+                      </Typography>
+                      <Box
+                        component="span"
+                        sx={{
+                          display: "inline-flex",
+                          mt: 0.55,
+                          px: 0.85,
+                          py: 0.15,
+                          borderRadius: 999,
+                          border: "1px solid",
+                          borderColor: "rgba(232, 216, 199, 0.18)",
+                          bgcolor: "rgba(18, 7, 15, 0.35)",
+                          typography: "caption",
+                          fontSize: "0.6875rem",
+                          letterSpacing: "0.06em",
+                          textTransform: "uppercase",
+                          color: "rgba(232, 216, 199, 0.62)",
+                        }}
+                      >
+                        {cardTypeLabel(card.type)}
+                      </Box>
+                    </Box>
+                    <Stack
+                      className="sp-card-row-actions"
+                      direction="row"
+                      spacing={0.15}
+                      sx={{
+                        flexShrink: 0,
+                        opacity: { xs: 1, sm: checked ? 1 : 0.55 },
+                        transition: "opacity 140ms ease",
+                      }}
+                    >
+                      <CardRowActions
+                        card={card}
+                        showArchived={showArchived}
+                        busy={busy}
+                        onEdit={onEdit}
+                        onMove={onMove}
+                        onArchive={onArchive}
+                        onRestore={onRestore}
+                      />
+                    </Stack>
+                  </Box>
+                );
+              })}
+            </Stack>
+          )}
         </>
       )}
     </Stack>
+  );
+}
+
+function CardRowActions({
+  card,
+  showArchived,
+  busy,
+  onEdit,
+  onMove,
+  onArchive,
+  onRestore,
+}: {
+  card: CardDraftView;
+  showArchived: boolean;
+  busy: boolean;
+  onEdit: (card: CardDraftView) => void;
+  onMove: (card: CardDraftView) => void;
+  onArchive: (card: CardDraftView) => void;
+  onRestore: (card: CardDraftView) => void;
+}) {
+  return (
+    <>
+      <Tooltip title="Move card">
+        <span>
+          <IconButton
+            size="small"
+            aria-label="Move card"
+            disabled={busy}
+            onClick={() => {
+              void onMove(card);
+            }}
+            sx={ROW_ACTION}
+          >
+            <DriveFileMoveOutlinedIcon fontSize="small" />
+          </IconButton>
+        </span>
+      </Tooltip>
+      {!showArchived && card.status !== "archived" ? (
+        <Tooltip title="Edit card">
+          <span>
+            <IconButton
+              size="small"
+              aria-label="Edit card"
+              disabled={busy}
+              onClick={() => onEdit(card)}
+              sx={ROW_ACTION}
+            >
+              <EditOutlinedIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+      ) : null}
+      {showArchived ? (
+        <Tooltip title="Restore card">
+          <span>
+            <IconButton
+              size="small"
+              aria-label="Restore card"
+              disabled={busy}
+              onClick={() => {
+                void onRestore(card);
+              }}
+              sx={ROW_ACTION}
+            >
+              <UnarchiveOutlinedIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+      ) : (
+        <Tooltip title="Archive card">
+          <span>
+            <IconButton
+              size="small"
+              aria-label="Archive card"
+              disabled={busy}
+              onClick={() => {
+                void onArchive(card);
+              }}
+              sx={ROW_ACTION}
+            >
+              <ArchiveOutlinedIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+      )}
+    </>
   );
 }

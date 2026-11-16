@@ -3,19 +3,17 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
-import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
-import Link from "@mui/material/Link";
 import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import CalendarSuggestionsPanel from "../components/CalendarSuggestionsPanel";
 import CreateMaterialStepper from "../components/CreateMaterialStepper";
-import MaterialsList from "../components/MaterialsList";
 import OperateSection from "../components/OperateSection";
 import { ANKI_EXPORT_BUSY_LABEL } from "../export/runAnkiExport";
 import { isGuest } from "../guest/session";
+import CoverPickerPanel from "../components/CoverPickerPanel";
+import { LibraryCreateSubjectPanel } from "../library/LibraryCreateSubjectPanel";
 import { LibraryDialogs } from "../library/LibraryDialogs";
 import { LibraryShelf } from "../library/LibraryShelf";
 import { useCalendarSuggestions } from "../library/useCalendarSuggestions";
@@ -36,10 +34,7 @@ export default function LibraryPage() {
     ANKI_EXPORT_BUSY_LABEL,
   );
   const calendarRefreshRef = useRef<() => void | Promise<void>>(() => {});
-  const calendarRefresh = useCallback(
-    () => calendarRefreshRef.current(),
-    [],
-  );
+  const calendarRefresh = useCallback(() => calendarRefreshRef.current(), []);
 
   const {
     subjects,
@@ -47,7 +42,6 @@ export default function LibraryPage() {
     decks,
     setDecks,
     draftJobs,
-    materials,
     ready,
     activeStep,
     setActiveStep,
@@ -89,7 +83,11 @@ export default function LibraryPage() {
     setSubjectMenu,
     coverPicker,
     setCoverPicker,
+    createCoverHold,
+    closeCoverPicker,
     openCreateSubject,
+    cancelCreateSubject,
+    backFromCreateCover,
     openRenameSubject,
     onTitleDialogSubmit,
     onClearCover,
@@ -106,6 +104,8 @@ export default function LibraryPage() {
     refreshSubjects,
     refreshDecks,
   });
+
+  const creatingSubject = titleDialog?.mode === "create" || createCoverHold;
 
   const {
     selectMode,
@@ -127,105 +127,147 @@ export default function LibraryPage() {
   });
 
   return (
-    <Container maxWidth="md" sx={{ py: { xs: 4, md: 5 } }}>
+    <Container
+      maxWidth="md"
+      sx={{
+        py: { xs: 2, md: 3 },
+        display: "flex",
+        flexDirection: "column",
+        minHeight: { md: "100%" },
+        flex: 1,
+      }}
+    >
       {!ready ? (
         <Stack spacing={2}>
           <Skeleton variant="text" width={120} height={40} />
           <Skeleton variant="text" width="60%" />
           <Grid container spacing={2}>
-            {[0, 1, 2].map((key) => (
-              <Grid key={key} size={{ xs: 12, md: 6 }}>
+            {[0, 1, 2, 3].map((key) => (
+              <Grid key={key} size={{ xs: 6, sm: 4, md: 3 }}>
                 <Skeleton
                   variant="rounded"
                   height={160}
-                  sx={{ borderRadius: 1 }}
+                  sx={{ borderRadius: 2 }}
                 />
               </Grid>
             ))}
           </Grid>
         </Stack>
       ) : (
-        <Stack spacing={3}>
-          <Box>
-            <Typography
-              variant="h4"
-              component="h1"
-              gutterBottom
-              sx={{ color: "text.primary", fontWeight: 600 }}
-            >
-              Library
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {selectMode
-                ? "Tick the decks you want, then download them for Anki."
-                : "Choose a subject. Each one holds decks of flashcards."}
-            </Typography>
-            <Stack
-              direction="row"
-              spacing={1}
-              flexWrap="wrap"
-              useFlexGap
-              sx={{ mt: 2 }}
-            >
-              {!guest && selectMode ? (
-                <>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    disabled={exportBusy || selectionCount === 0}
-                    onClick={() => {
-                      void onExportSelected();
+        <Stack spacing={creatingSubject ? 0 : 2} sx={{ flex: 1, minHeight: 0 }}>
+          {creatingSubject ? null : (
+            <Box sx={{ flexShrink: 0 }}>
+              <Stack
+                direction="row"
+                alignItems="flex-end"
+                justifyContent="space-between"
+                spacing={2}
+                sx={{
+                  pb: 1.5,
+                  borderBottom: 1,
+                  borderColor: "divider",
+                }}
+              >
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography
+                    component="p"
+                    sx={{
+                      m: 0,
+                      mb: 0.75,
+                      fontSize: "0.6875rem",
+                      fontWeight: 500,
+                      letterSpacing: "0.22em",
+                      textTransform: "uppercase",
+                      color: "primary.main",
                     }}
                   >
-                    {exportBusy
-                      ? "Exporting…"
-                      : selectionCount > 0
-                        ? `Download (${selectionCount})`
-                        : "Download"}
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="text"
-                    disabled={exportBusy}
-                    onClick={exitSelectMode}
+                    Subjects
+                  </Typography>
+                  <Typography
+                    variant="h3"
+                    component="h1"
+                    sx={{
+                      m: 0,
+                      fontFamily:
+                        '"Alice", "Georgia", "Times New Roman", serif',
+                      fontWeight: 400,
+                      letterSpacing: "0.02em",
+                      lineHeight: 1.1,
+                      color: "text.primary",
+                    }}
                   >
-                    Cancel
-                  </Button>
-                </>
-              ) : null}
-              {!selectMode ? (
-                <>
-                  {!guest && (subjects.length > 0 || decks.length > 0) ? (
+                    Library
+                  </Typography>
+                  {!selectMode && subjects.length > 0 ? (
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mt: 0.75 }}
+                    >
+                      {subjects.length === 1
+                        ? "1 subject"
+                        : `${subjects.length} subjects`}
+                      {decks.length > 0
+                        ? ` · ${decks.length === 1 ? "1 deck" : `${decks.length} decks`}`
+                        : null}
+                    </Typography>
+                  ) : null}
+                  {selectMode ? (
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mt: 0.75 }}
+                    >
+                      Tick the decks you want, then download them for Anki.
+                    </Typography>
+                  ) : null}
+                </Box>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  flexShrink={0}
+                  sx={{ pb: 0.25 }}
+                >
+                  {!guest && selectMode ? (
+                    <>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        disabled={exportBusy || selectionCount === 0}
+                        onClick={() => {
+                          void onExportSelected();
+                        }}
+                      >
+                        {exportBusy
+                          ? "Exporting…"
+                          : selectionCount > 0
+                            ? `Download (${selectionCount})`
+                            : "Download"}
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="text"
+                        disabled={exportBusy}
+                        onClick={exitSelectMode}
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  ) : null}
+                  {!selectMode && !guest && subjects.length > 0 ? (
                     <Button
                       size="small"
                       variant="text"
                       onClick={() => setSelectMode(true)}
+                      sx={{ color: "text.secondary" }}
                     >
                       Download for Anki
                     </Button>
                   ) : null}
-                  {subjects.length > 0 ? (
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={openCreateSubject}
-                    >
-                      New subject
-                    </Button>
-                  ) : null}
-                  {!showCreateFlow ? (
-                    <Button
-                      size="small"
-                      variant="contained"
-                      onClick={() => setShowCreateFlow(true)}
-                    >
-                      Add material
-                    </Button>
-                  ) : null}
-                </>
-              ) : null}
-            </Stack>
-          </Box>
+                </Stack>
+              </Stack>
+            </Box>
+          )}
 
           {error ? <Alert severity="error">{error}</Alert> : null}
           {notice ? (
@@ -239,7 +281,7 @@ export default function LibraryPage() {
             </Alert>
           ) : null}
 
-          {!guest ? (
+          {!creatingSubject && !guest ? (
             <CalendarSuggestionsPanel
               suggestions={calendar.suggestions}
               subjects={subjects}
@@ -250,87 +292,103 @@ export default function LibraryPage() {
             />
           ) : null}
 
-          <LibraryShelf
-            subjects={subjects}
-            decks={decks}
-            covers={covers}
-            compositionBySubject={compositionBySubject}
-            showCreateFlow={showCreateFlow}
-            setShowCreateFlow={setShowCreateFlow}
-            selectMode={selectMode}
-            selectedDeckIdSet={selectedDeckIdSet}
-            orphanDecks={orphanDecks}
-            toggleSubjectDecks={toggleSubjectDecks}
-            toggleDeckSelected={toggleDeckSelected}
-            setSubjectMenu={setSubjectMenu}
-          />
+          <Box
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            {creatingSubject ? (
+              <Box
+                key="create-subject"
+                sx={{
+                  flex: 1,
+                  minHeight: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  animation: "libraryCreateIn 320ms cubic-bezier(0.2, 0, 0, 1)",
+                  "@keyframes libraryCreateIn": {
+                    from: { opacity: 0, transform: "translateX(40px)" },
+                    to: { opacity: 1, transform: "translateX(0)" },
+                  },
+                  "@media (prefers-reduced-motion: reduce)": {
+                    animation: "none",
+                  },
+                }}
+              >
+                {titleDialog?.mode === "create" ? (
+                  <LibraryCreateSubjectPanel
+                    guest={guest}
+                    titleValue={titleValue}
+                    setTitleValue={setTitleValue}
+                    busy={dialogBusy}
+                    error={dialogError}
+                    onSubmit={onTitleDialogSubmit}
+                    onCancel={cancelCreateSubject}
+                  />
+                ) : coverPicker ? (
+                  <CoverPickerPanel
+                    active
+                    inlineChrome
+                    title={coverPicker.title}
+                    ownerKind={coverPicker.ownerKind}
+                    ownerId={coverPicker.ownerId}
+                    onSaved={(row) => {
+                      setCovers((prev) => [
+                        row,
+                        ...prev.filter(
+                          (cover) =>
+                            cover.ownerKind !== row.ownerKind ||
+                            cover.ownerId !== row.ownerId,
+                        ),
+                      ]);
+                      closeCoverPicker();
+                    }}
+                    onClear={onClearCover}
+                    onCancel={closeCoverPicker}
+                    onBack={backFromCreateCover}
+                  />
+                ) : null}
+              </Box>
+            ) : (
+              <Box
+                key="library-shelf"
+                sx={{
+                  flex: 1,
+                  minHeight: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  animation: "libraryShelfIn 280ms cubic-bezier(0.2, 0, 0, 1)",
+                  "@keyframes libraryShelfIn": {
+                    from: { opacity: 0, transform: "translateX(-24px)" },
+                    to: { opacity: 1, transform: "translateX(0)" },
+                  },
+                  "@media (prefers-reduced-motion: reduce)": {
+                    animation: "none",
+                  },
+                }}
+              >
+                <LibraryShelf
+                  subjects={subjects}
+                  decks={decks}
+                  covers={covers}
+                  compositionBySubject={compositionBySubject}
+                  draftJobs={draftJobs}
+                  selectMode={selectMode}
+                  selectedDeckIdSet={selectedDeckIdSet}
+                  orphanDecks={orphanDecks}
+                  toggleSubjectDecks={toggleSubjectDecks}
+                  toggleDeckSelected={toggleDeckSelected}
+                  setSubjectMenu={setSubjectMenu}
+                  onCreateSubject={openCreateSubject}
+                />
+              </Box>
+            )}
+          </Box>
 
-          {draftJobs.length > 0 ? (
-            <OperateSection>
-              <Typography
-                variant="subtitle1"
-                component="h2"
-                sx={{ fontWeight: 600, mb: 0.5, color: "primary.main" }}
-              >
-                Cards to check
-              </Typography>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mb: 1.5 }}
-              >
-                These still need a look before you study them.
-              </Typography>
-              <Stack
-                component="ul"
-                spacing={0}
-                divider={<Divider flexItem />}
-                sx={{ m: 0, p: 0, listStyle: "none" }}
-              >
-                {draftJobs.map((job) => {
-                  const filename = job.filename?.trim() || null;
-                  const label = filename || job.deck_title;
-                  const countLabel =
-                    job.draft_count === 1
-                      ? "1 card to check"
-                      : `${job.draft_count} cards to check`;
-                  const suffix = filename
-                    ? ` · ${countLabel} · ${job.deck_title}`
-                    : ` · ${countLabel}`;
-                  return (
-                    <Box
-                      component="li"
-                      key={job.id}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        py: 1.5,
-                      }}
-                    >
-                      <Link
-                        href={`/jobs/${encodeURIComponent(job.id)}/drafts`}
-                        underline="hover"
-                        color="primary"
-                        variant="body1"
-                        sx={{ flex: 1, minWidth: 0 }}
-                      >
-                        {label}
-                        {suffix}
-                      </Link>
-                      <ChevronRightIcon
-                        fontSize="small"
-                        sx={{ color: "text.secondary" }}
-                        aria-hidden
-                      />
-                    </Box>
-                  );
-                })}
-              </Stack>
-            </OperateSection>
-          ) : null}
-
-          {showCreateFlow ? (
+          {!creatingSubject && showCreateFlow && subjects.length > 0 ? (
             <OperateSection>
               <Stack
                 direction="row"
@@ -345,7 +403,7 @@ export default function LibraryPage() {
                 >
                   Add material
                 </Typography>
-                {subjects.length > 0 && decks.length > 0 ? (
+                {decks.length > 0 ? (
                   <Button size="small" onClick={() => setShowCreateFlow(false)}>
                     Hide
                   </Button>
@@ -369,26 +427,6 @@ export default function LibraryPage() {
                   await refreshDecks();
                   await refreshCompositionSummaries();
                 }}
-              />
-            </OperateSection>
-          ) : null}
-
-          {!guest && materials.length > 0 ? (
-            <OperateSection>
-              <Typography
-                variant="subtitle1"
-                component="h2"
-                sx={{ fontWeight: 600, mb: 1.5, color: "primary.main" }}
-              >
-                Your files
-              </Typography>
-              <MaterialsList
-                materials={materials}
-                showDeckTitle
-                onChanged={() => {
-                  void Promise.all([refreshMaterials(), refreshDraftJobs()]);
-                }}
-                onAddMaterial={() => setShowCreateFlow(true)}
               />
             </OperateSection>
           ) : null}
@@ -416,6 +454,8 @@ export default function LibraryPage() {
         requestDeleteSubject={requestDeleteSubject}
         coverPicker={coverPicker}
         setCoverPicker={setCoverPicker}
+        closeCoverPicker={closeCoverPicker}
+        suppressCoverDialog={createCoverHold}
         setCovers={setCovers}
         onClearCover={onClearCover}
       />

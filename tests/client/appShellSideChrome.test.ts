@@ -20,15 +20,26 @@ describe("resolveShellSideChrome", () => {
     });
   });
 
-  it("uses rail on medium", () => {
-    expect(resolveShellSideChrome(false, true, false)).toEqual({
+  it("uses rail on medium by default", () => {
+    expect(resolveShellSideChrome(false, true, false, null)).toEqual({
       side: "rail",
       sideWidth: RAIL_WIDTH,
     });
   });
 
-  it("uses drawer on expanded", () => {
-    expect(resolveShellSideChrome(false, false, false)).toEqual({
+  it("uses drawer on expanded by default", () => {
+    expect(resolveShellSideChrome(false, false, false, null)).toEqual({
+      side: "drawer",
+      sideWidth: DRAWER_WIDTH,
+    });
+  });
+
+  it("honors explicit collapse and expand on any desktop width", () => {
+    expect(resolveShellSideChrome(false, false, false, true)).toEqual({
+      side: "rail",
+      sideWidth: RAIL_WIDTH,
+    });
+    expect(resolveShellSideChrome(false, true, false, false)).toEqual({
       side: "drawer",
       sideWidth: DRAWER_WIDTH,
     });

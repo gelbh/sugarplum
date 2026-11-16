@@ -34,8 +34,13 @@ type Props = {
   back: string;
   options?: string[];
   disabled?: boolean;
+  /**
+   * Author preview: keep option order, no keyboard/grade taps.
+   * Looks like the idle study face.
+   */
+  preview?: boolean;
   /** Return false (or reject) so the face unlocks for another tap. */
-  onGrade: (rating: StudyRating) => boolean | Promise<boolean>;
+  onGrade?: (rating: StudyRating) => boolean | Promise<boolean>;
   overlineTrailing?: ReactNode;
 };
 
@@ -46,12 +51,18 @@ export function CardFaceMcqBody({
   back,
   options,
   disabled,
+  preview = false,
   onGrade,
   overlineTrailing,
 }: Props) {
   const choices = useMemo(
-    () => (options?.length ? shuffledMcqOptions(cardId, options) : []),
-    [cardId, options],
+    () =>
+      options?.length
+        ? preview
+          ? [...options]
+          : shuffledMcqOptions(cardId, options)
+        : [],
+    [cardId, options, preview],
   );
   const [picked, setPicked] = useState<string | null>(null);
   const gradeSentRef = useRef(false);
@@ -74,7 +85,14 @@ export function CardFaceMcqBody({
   };
 
   const onPick = (option: string) => {
-    if (disabled || picked !== null || gradeSentRef.current) return;
+    if (
+      preview ||
+      !onGrade ||
+      disabled ||
+      picked !== null ||
+      gradeSentRef.current
+    )
+      return;
     setPicked(option);
     gradeSentRef.current = true;
     const rating = mcqTapRating(option, back);
@@ -92,6 +110,7 @@ export function CardFaceMcqBody({
   };
 
   const onKey = useEffectEvent((e: KeyboardEvent) => {
+    if (preview) return;
     const key = plainShortcutKey(e);
     if (key === null) return;
     const index = mcqOptionIndexForKey(key, choices.length);
@@ -101,9 +120,10 @@ export function CardFaceMcqBody({
   });
 
   useEffect(() => {
+    if (preview) return;
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [preview]);
 
   return (
     <Paper
@@ -119,8 +139,9 @@ export function CardFaceMcqBody({
         data-card-face-content
         sx={{
           overflowX: "hidden",
-          overflowY: "auto",
-          overscrollBehavior: "contain",
+          // Preview tiles (browse/editor) must not trap workshop scroll.
+          overflowY: preview ? "hidden" : "auto",
+          overscrollBehavior: preview ? "auto" : "contain",
           flex: 1,
           minHeight: 0,
           display: "flex",
@@ -155,9 +176,9 @@ export function CardFaceMcqBody({
         ) : (
           <Stack spacing={1} sx={{ width: "100%", mt: "auto" }}>
             {choices.map((option, index) => {
-              const isPicked = picked === option;
+              const isPicked = !preview && picked === option;
               const isCorrect = option.trim() === back.trim();
-              const locked = picked !== null;
+              const locked = !preview && picked !== null;
               const shortcut = mcqOptionKey(index);
               let borderColor = "currentColor";
               let bgcolor = "transparent";
@@ -179,10 +200,14 @@ export function CardFaceMcqBody({
                 <Button
                   key={`${index}-${option}`}
                   fullWidth
-                  disabled={mcqOptionButtonDisabled(disabled, locked)}
-                  aria-disabled={disabled || locked}
-                  tabIndex={locked ? -1 : undefined}
-                  aria-keyshortcuts={shortcut ?? undefined}
+                  disabled={
+                    preview ? true : mcqOptionButtonDisabled(disabled, locked)
+                  }
+                  aria-disabled={preview || disabled || locked}
+                  tabIndex={preview || locked ? -1 : undefined}
+                  aria-keyshortcuts={
+                    preview ? undefined : (shortcut ?? undefined)
+                  }
                   onClick={() => onPick(option)}
                   sx={{
                     justifyContent: "flex-start",
@@ -195,7 +220,8 @@ export function CardFaceMcqBody({
                     border: "1px solid",
                     borderColor,
                     opacity,
-                    pointerEvents: disabled || locked ? "none" : "auto",
+                    pointerEvents:
+                      preview || disabled || locked ? "none" : "auto",
                     textTransform: "none",
                     fontFamily: FACE_SANS,
                     fontSize: "0.9375rem",
@@ -203,22 +229,24 @@ export function CardFaceMcqBody({
                     whiteSpace: "pre-wrap",
                     "&:hover": {
                       bgcolor:
-                        picked === null
-                          ? "color-mix(in srgb, currentColor 10%, transparent)"
-                          : bgcolor,
+                        preview || picked !== null
+                          ? bgcolor
+                          : "color-mix(in srgb, currentColor 10%, transparent)",
                     },
                     "&.Mui-disabled": {
                       color: "inherit",
                       borderColor,
                       bgcolor,
-                      opacity,
+                      opacity: preview ? 0.88 : opacity,
                     },
                   }}
                 >
                   <Box component="span" sx={{ flex: 1, minWidth: 0 }}>
-                    {option}
+                    {option.trim() || `Choice ${index + 1}`}
                   </Box>
-                  {shortcut ? <KeyChip label={shortcut} ml={1} /> : null}
+                  {!preview && shortcut ? (
+                    <KeyChip label={shortcut} ml={1} />
+                  ) : null}
                 </Button>
               );
             })}

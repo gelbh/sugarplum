@@ -1,4 +1,5 @@
 import { HTTPException } from "hono/http-exception";
+import { listFigureKeysInR2 } from "../materials/figures";
 import { isAdminEmail, parseAdminEmails } from "./allowlist";
 import type { AdminUserRow } from "./types";
 
@@ -9,6 +10,12 @@ const WIPE_MATERIAL_KEYS_SQL = `
 SELECT m.r2_key FROM materials m
 INNER JOIN decks d ON d.id = m.deck_id
 WHERE d.user_id = ? AND m.r2_key IS NOT NULL
+`.replace(/\s+/g, " ");
+
+const WIPE_PDF_MATERIALS_SQL = `
+SELECT m.id, m.deck_id, m.kind, m.r2_key FROM materials m
+INNER JOIN decks d ON d.id = m.deck_id
+WHERE d.user_id = ? ORDER BY m.created_at ASC
 `.replace(/\s+/g, " ");
 
 const WIPE_CARD_MEDIA_SQL = `
@@ -43,6 +50,7 @@ export function refuseAllowlistedTarget(
 
 export async function collectUserR2Keys(
   db: D1Database,
+  materials: R2Bucket,
   userId: string,
 ): Promise<string[]> {
   const keys = new Set<string>();
@@ -52,6 +60,19 @@ export async function collectUserR2Keys(
     .all<{ r2_key: string }>();
   for (const row of materialKeys ?? []) {
     if (row.r2_key) keys.add(row.r2_key);
+  }
+  const { results: pdfMaterials } = await db
+    .prepare(WIPE_PDF_MATERIALS_SQL)
+    .bind(userId)
+    .all<{ id: string; deck_id: string; kind: string }>();
+  for (const row of pdfMaterials ?? []) {
+    if (row.kind !== "pdf") continue;
+    for (const key of await listFigureKeysInR2(materials, {
+      deckId: row.deck_id,
+      pdfMaterialId: row.id,
+    })) {
+      keys.add(key);
+    }
   }
   const { results: cardMedia } = await db
     .prepare(WIPE_CARD_MEDIA_SQL)

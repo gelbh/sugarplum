@@ -121,14 +121,14 @@ describe("CardDraftSchema occlusion", () => {
     expect(result.success).toBe(false);
   });
 
-  it("still rejects multi-blank cloze", () => {
+  it("allows multi-blank cloze within the blank cap", () => {
     const result = CardDraftSchema.safeParse({
       type: "cloze",
       front: "{{c1::a}} and {{c2::b}}",
       back: "x",
       provenance,
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it("does not apply cloze blank rules to occlusion", () => {
@@ -158,7 +158,7 @@ describe("CardDraftSchema occlusion", () => {
         provenance,
       },
     ]);
-    expect(drafts).toHaveLength(2);
-    expect(drafts.map((d) => d.type)).toEqual(["qa", "occlusion"]);
+    expect(drafts).toHaveLength(3);
+    expect(drafts.map((d) => d.type)).toEqual(["qa", "occlusion", "cloze"]);
   });
 });
