@@ -46,9 +46,9 @@ import MakeCardsDeckDialog from "../anatomy/MakeCardsDeckDialog";
 import {
   activeRegionIdsForOpen,
   parseAnatomySceneManifest,
-  safeAnatomyRelativeAsset,
 } from "../anatomy/parseScene";
 import { anatomyHubHref } from "../anatomy/paths";
+import { resolveAnatomyAssetUrl } from "../anatomy/resolveAssetUrl";
 import StructurePanel from "../anatomy/StructurePanel";
 import {
   createStructureUiState,
@@ -88,7 +88,6 @@ function buildLoads(
   manifest: AnatomySceneManifest,
   activeRegions: Set<string>,
 ): AnatomyLoadSpec[] | null {
-  const base = `/anatomy/${encodeURIComponent(sceneId)}/`;
   const structures =
     manifest.regions && manifest.regions.length > 0
       ? manifest.structures.filter(
@@ -97,9 +96,8 @@ function buildLoads(
       : manifest.structures;
 
   if (manifest.asset) {
-    const rel = safeAnatomyRelativeAsset(manifest.asset);
-    if (!rel) return null;
-    const url = `${base}${rel}`;
+    const url = resolveAnatomyAssetUrl(sceneId, manifest.asset);
+    if (!url) return null;
     return structures.map((s) => ({
       structureId: s.id,
       url,
@@ -109,11 +107,11 @@ function buildLoads(
   const loads: AnatomyLoadSpec[] = [];
   for (const s of structures) {
     if (!s.asset) return null;
-    const rel = safeAnatomyRelativeAsset(s.asset);
-    if (!rel) return null;
+    const url = resolveAnatomyAssetUrl(sceneId, s.asset);
+    if (!url) return null;
     loads.push({
       structureId: s.id,
-      url: `${base}${rel}`,
+      url,
       node: s.node,
     });
   }
