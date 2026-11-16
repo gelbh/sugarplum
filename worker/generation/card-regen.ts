@@ -6,12 +6,14 @@ import { pdfTextOrOcrSidecar, readOcrSidecar } from "../materials/ocr-sidecar";
 import {
   BYO_PROVIDERS_PHRASE,
   createLlmAdapter,
-  isTruncationParseError,
-  parseCardsPayload,
   parseLlmProvider,
   type LlmAdapter,
   type LlmTokenUsage,
 } from "./llm";
+import {
+  isTruncationParseError,
+  parseCardsPayload,
+} from "./llm-json";
 import { CHUNK_CHAR_LIMIT } from "./pipeline";
 import { consumeFreeGenSlot } from "./quota";
 import { createWorkersAiAdapter, WorkersAiCapacityError } from "./workers-ai";
