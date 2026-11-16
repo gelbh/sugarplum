@@ -1,6 +1,5 @@
 import type { MouseEvent, ReactNode } from "react";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
 import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
@@ -8,7 +7,6 @@ import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { alpha } from "@mui/material/styles";
 import { isPlainClick, navigate } from "../../nav/navigate";
 
 export type BoardTileSelect = {
@@ -40,20 +38,18 @@ type Props = {
   title: string;
   meta?: string | null;
   imageSrc?: string;
-  imageAlt?: string;
   href?: string;
   openLabel?: string;
-  primaryLabel?: string | null;
-  onPrimary?: () => void;
-  badge?: string | null;
-  muted?: boolean;
-  accent?: boolean;
   create?: boolean;
   onCreate?: () => void;
   moreLabel?: string;
   onMore?: (event: MouseEvent<HTMLButtonElement>) => void;
   select?: BoardTileSelect;
   credit?: BoardTileCredit | null;
+  badge?: string | null;
+  muted?: boolean;
+  accent?: boolean;
+  index?: number;
   footer?: ReactNode;
 };
 
@@ -61,130 +57,206 @@ export default function BoardTile({
   title,
   meta,
   imageSrc = "",
-  imageAlt = "",
   href,
   openLabel,
-  primaryLabel,
-  onPrimary,
-  badge,
-  muted,
-  accent,
   create,
   onCreate,
   moreLabel,
   onMore,
   select,
   credit,
+  badge,
+  muted,
+  accent,
+  index = 0,
   footer,
 }: Props) {
-  const svg = imageSrc.endsWith(".svg");
-  const body = (
+  const reduced =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const plate = (
     <>
-      <Box
-        aria-hidden={imageAlt === ""}
-        sx={(theme) => ({
-          width: { xs: 56, sm: 72 },
-          height: { xs: 56, sm: 72 },
-          borderRadius: 2,
-          bgcolor: alpha(theme.palette.primary.main, 0.12),
-          display: "grid",
-          placeItems: "center",
-          overflow: "hidden",
-          flexShrink: 0,
-          border: create ? "1px dashed" : "none",
-          borderColor: "primary.main",
-        })}
-      >
-        {create ? (
-          <Typography variant="h4" color="primary" sx={{ fontWeight: 600, lineHeight: 1 }}>
+      {create ? (
+        <Box
+          aria-hidden
+          sx={{
+            position: "absolute",
+            inset: 0,
+            display: "grid",
+            placeItems: "center",
+            bgcolor: "rgba(91, 44, 111, 0.18)",
+            border: "1px dashed",
+            borderColor: "primary.main",
+          }}
+        >
+          <Typography
+            variant="h3"
+            color="primary"
+            sx={{ fontWeight: 600, lineHeight: 1 }}
+          >
             +
           </Typography>
-        ) : (
-          <Box
-            component="img"
-            src={imageSrc}
-            alt={imageAlt}
-            sx={{
-              width: svg ? "62%" : "100%",
-              height: svg ? "62%" : "100%",
-              objectFit: svg ? "contain" : "cover",
-            }}
-          />
-        )}
-      </Box>
-      <Typography
-        variant="subtitle1"
-        component="h2"
+        </Box>
+      ) : (
+        <Box
+          component="img"
+          src={imageSrc}
+          alt=""
+          sx={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
+        />
+      )}
+      <Box
         sx={{
-          fontWeight: 600,
-          color: accent ? "primary.main" : "text.primary",
-          textAlign: "center",
-          px: 0.5,
-          lineHeight: 1.25,
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(180deg, transparent 40%, rgba(15, 5, 14, 0.88) 100%)",
+          pointerEvents: "none",
+        }}
+      />
+      <Box
+        sx={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          p: 1.25,
+          zIndex: 1,
         }}
       >
-        {title}
-      </Typography>
-      {meta ? (
-        <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center" }}>
-          {meta}
-        </Typography>
-      ) : null}
-      {credit ? (
         <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ textAlign: "center", px: 0.5, lineHeight: 1.3 }}
-          onClick={(ev) => ev.stopPropagation()}
+          variant="subtitle1"
+          component="h2"
+          sx={{
+            fontWeight: 700,
+            color: accent ? "primary.light" : "#F5F5F5",
+            lineHeight: 1.2,
+            textShadow: "0 1px 8px rgba(0,0,0,0.55)",
+          }}
         >
-          Photo by{" "}
-          <Link
-            href={withReferral(credit.photographerUrl)}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(ev) => ev.stopPropagation()}
-          >
-            {credit.photographerName}
-          </Link>
-          {" on "}
-          <Link
-            href={withReferral(credit.photoHtmlUrl)}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(ev) => ev.stopPropagation()}
-          >
-            Unsplash
-          </Link>
+          {title}
         </Typography>
-      ) : null}
-      {badge ? <Chip size="small" color="primary" label={badge} /> : null}
+        {meta ? (
+          <Typography
+            variant="caption"
+            sx={{ color: "rgba(245,245,245,0.72)", display: "block", mt: 0.25 }}
+          >
+            {meta}
+          </Typography>
+        ) : null}
+        {badge ? (
+          <Chip
+            size="small"
+            color="primary"
+            label={badge}
+            sx={{ mt: 0.75, height: 22 }}
+          />
+        ) : null}
+        {credit ? (
+          <Typography
+            variant="caption"
+            sx={{ color: "rgba(245,245,245,0.55)", display: "block", mt: 0.5 }}
+            onClick={(ev) => ev.stopPropagation()}
+          >
+            Photo by{" "}
+            <Link
+              href={withReferral(credit.photographerUrl)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(ev) => ev.stopPropagation()}
+              sx={{ color: "inherit" }}
+            >
+              {credit.photographerName}
+            </Link>
+            {" · "}
+            <Link
+              href={withReferral(credit.photoHtmlUrl)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(ev) => ev.stopPropagation()}
+              sx={{ color: "inherit" }}
+            >
+              Unsplash
+            </Link>
+          </Typography>
+        ) : null}
+      </Box>
     </>
   );
 
+  const shellSx = {
+    position: "relative" as const,
+    aspectRatio: "3 / 4",
+    width: "100%",
+    borderRadius: 2,
+    overflow: "hidden",
+    bgcolor: "#1a0b18",
+    opacity: muted ? 0.55 : 1,
+    border: 1,
+    borderColor: accent ? "primary.main" : "rgba(232, 216, 199, 0.16)",
+    borderStyle: create ? "dashed" : "solid",
+    transition: reduced
+      ? undefined
+      : "transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease",
+    animation: reduced
+      ? undefined
+      : `boardPosterIn 420ms ease both`,
+    animationDelay: reduced ? undefined : `${Math.min(index, 12) * 40}ms`,
+    "@keyframes boardPosterIn": {
+      from: { opacity: 0, transform: "translateY(10px)" },
+      to: { opacity: muted ? 0.55 : 1, transform: "translateY(0)" },
+    },
+    ".board-grid:hover &": reduced
+      ? undefined
+      : { opacity: muted ? 0.4 : 0.55 },
+    ".board-grid:hover &:hover, .board-grid:hover &:focus-within": reduced
+      ? undefined
+      : {
+          opacity: 1,
+          transform: "scale(1.03)",
+          zIndex: 2,
+          boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
+        },
+  };
+
+  const body =
+    create && onCreate ? (
+      <ButtonBase
+        onClick={onCreate}
+        focusRipple
+        aria-label={openLabel ?? title}
+        sx={{ ...shellSx, display: "block", textAlign: "left" }}
+      >
+        {plate}
+      </ButtonBase>
+    ) : href && !select ? (
+      <Link
+        href={href}
+        underline="none"
+        color="inherit"
+        aria-label={openLabel ?? `Open ${title}`}
+        onClick={(ev) => {
+          if (ev.defaultPrevented || !isPlainClick(ev)) return;
+          ev.preventDefault();
+          navigate(href);
+        }}
+        sx={{ ...shellSx, display: "block" }}
+      >
+        {plate}
+      </Link>
+    ) : (
+      <Box sx={shellSx}>{plate}</Box>
+    );
+
   return (
-    <Box
-      sx={{
-        position: "relative",
-        height: "100%",
-        minHeight: { xs: 148, sm: 168 },
-        opacity: muted ? 0.55 : 1,
-        border: 1,
-        borderColor: accent ? "primary.main" : "divider",
-        borderStyle: create ? "dashed" : "solid",
-        borderRadius: 2,
-        bgcolor: "background.paper",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 1,
-        p: 1.5,
-        transition: "border-color 160ms ease",
-        "&:hover": muted
-          ? undefined
-          : { borderColor: "primary.main", bgcolor: "action.hover" },
-      }}
-    >
+    <Box sx={{ position: "relative", minWidth: 0 }}>
       {select ? (
         <Checkbox
           checked={select.checked}
@@ -192,7 +264,14 @@ export default function BoardTile({
           disabled={select.disabled}
           onChange={select.onChange}
           inputProps={{ "aria-label": select.inputLabel }}
-          sx={{ position: "absolute", top: 4, left: 4, zIndex: 2 }}
+          sx={{
+            position: "absolute",
+            top: 4,
+            left: 4,
+            zIndex: 3,
+            bgcolor: "rgba(0,0,0,0.35)",
+            borderRadius: 1,
+          }}
         />
       ) : null}
       {onMore && moreLabel ? (
@@ -200,79 +279,22 @@ export default function BoardTile({
           aria-label={moreLabel}
           onClick={onMore}
           size="small"
-          sx={{ position: "absolute", top: 4, right: 4, zIndex: 2, width: 44, height: 44 }}
+          sx={{
+            position: "absolute",
+            top: 4,
+            right: 4,
+            zIndex: 3,
+            width: 40,
+            height: 40,
+            bgcolor: "rgba(0,0,0,0.35)",
+            color: "#F5F5F5",
+            "&:hover": { bgcolor: "rgba(0,0,0,0.55)" },
+          }}
         >
           <MoreVertIcon fontSize="small" />
         </IconButton>
       ) : null}
-
-      {create && onCreate ? (
-        <ButtonBase
-          onClick={onCreate}
-          focusRipple
-          aria-label={openLabel ?? title}
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 1,
-            width: "100%",
-            flex: 1,
-            borderRadius: 1,
-          }}
-        >
-          {body}
-        </ButtonBase>
-      ) : href && !select ? (
-        <Link
-          href={href}
-          underline="none"
-          color="inherit"
-          aria-label={openLabel ?? `Open ${title}`}
-          onClick={(ev) => {
-            if (ev.defaultPrevented || !isPlainClick(ev)) return;
-            ev.preventDefault();
-            navigate(href);
-          }}
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 1,
-            width: "100%",
-            flex: 1,
-            borderRadius: 1,
-            outlineOffset: 2,
-          }}
-        >
-          {body}
-        </Link>
-      ) : (
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 1,
-            width: "100%",
-            flex: 1,
-          }}
-        >
-          {body}
-        </Box>
-      )}
-
-      {primaryLabel && onPrimary && !select ? (
-        <Button
-          size="small"
-          variant="contained"
-          onClick={onPrimary}
-          disabled={muted}
-          sx={{ minHeight: 40, mt: 0.5, zIndex: 1 }}
-        >
-          {primaryLabel}
-        </Button>
-      ) : null}
+      {body}
       {footer}
     </Box>
   );

@@ -97,13 +97,13 @@ describe("deck hub mission board smoke", () => {
     ).toContain("muscle.webp");
     expect(
       document.querySelector('[data-tile-id="drafts"] img')?.getAttribute("src"),
-    ).toContain("pineapple.svg");
+    ).toContain("liver.webp");
     expect(
       document.querySelector('[data-tile-id="cards"] img')?.getAttribute("src"),
-    ).toContain("orange.svg");
+    ).toContain("lungs.webp");
     expect(
       document.querySelector('[data-tile-id="study"] img')?.getAttribute("src"),
-    ).toContain("strawberry.svg");
+    ).toContain("eye.webp");
   });
 
   it("opens Add material from the mission board tile", async () => {

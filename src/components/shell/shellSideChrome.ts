@@ -1,17 +1,22 @@
-import { DRAWER_WIDTH, RAIL_WIDTH } from "./chromeTokens";
+import { TOP_BAND_HEIGHT } from "./chromeTokens";
 
-export type ShellSideChrome = "none" | "rail" | "drawer";
+export type ShellSideChrome = "none" | "top";
 
+/** Magazine shell: phone uses dock; sm+ uses top pictogram band (no side drawer/rail). */
 export function resolveShellSideChrome(
   phone: boolean,
-  medium: boolean,
+  _medium: boolean,
   hideChrome: boolean,
-): { side: ShellSideChrome; sideWidth: number } {
-  if (hideChrome || phone) {
-    return { side: "none", sideWidth: 0 };
+): { side: ShellSideChrome; sideWidth: number; topBand: boolean } {
+  if (hideChrome) {
+    return { side: "none", sideWidth: 0, topBand: false };
   }
-  if (medium) {
-    return { side: "rail", sideWidth: RAIL_WIDTH };
+  if (phone) {
+    return { side: "none", sideWidth: 0, topBand: false };
   }
-  return { side: "drawer", sideWidth: DRAWER_WIDTH };
+  return { side: "top", sideWidth: 0, topBand: true };
+}
+
+export function topBandOffsetPx(topBand: boolean): number {
+  return topBand ? TOP_BAND_HEIGHT : 0;
 }

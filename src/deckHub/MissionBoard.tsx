@@ -2,7 +2,6 @@ import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
 import Chip from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
-import { alpha } from "@mui/material/styles";
 import type { WorkshopId } from "./workshopStack";
 
 export type MissionTileId = Extract<
@@ -12,9 +11,9 @@ export type MissionTileId = Extract<
 
 const TILE_IMAGES: Record<MissionTileId, string> = {
   addMaterial: "/atlas/sites/muscle.webp",
-  drafts: "/achievements/fruits/pineapple.svg",
-  cards: "/achievements/fruits/orange.svg",
-  study: "/achievements/fruits/strawberry.svg",
+  drafts: "/atlas/sites/liver.webp",
+  cards: "/atlas/sites/lungs.webp",
+  study: "/atlas/sites/eye.webp",
 };
 
 type Tile = {
@@ -73,115 +72,109 @@ export default function MissionBoard({
 
   return (
     <Box
+      className="board-grid"
       sx={{
         display: "grid",
         gridTemplateColumns: { xs: "1fr 1fr", sm: "1fr 1fr" },
-        gridTemplateRows: { xs: "1fr 1fr", sm: "1fr 1fr" },
         gap: { xs: 1.5, sm: 2 },
-        flex: 1,
-        minHeight: { xs: 320, sm: "min(52dvh, 480px)" },
-        alignContent: "stretch",
+        alignContent: "start",
+        maxWidth: 720,
       }}
       role="list"
       aria-label="Deck hub jobs"
     >
-      {tiles.map((tile) => {
-        const imageSrc = TILE_IMAGES[tile.id];
-        const isSvg = imageSrc.endsWith(".svg");
-        return (
-          <ButtonBase
-            key={tile.id}
-            role="listitem"
-            focusRipple
-            disabled={tile.muted}
-            onClick={() => onOpen(tile.id)}
-            data-tile-id={tile.id}
-            aria-label={
-              tile.badge
-                ? `${tile.title}, ${tile.badge}`
-                : tile.muted
-                  ? `${tile.title} (unavailable)`
-                  : tile.title
-            }
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 1.25,
-              textAlign: "center",
-              p: { xs: 2, sm: 2.5 },
-              borderRadius: 2,
-              border: 1,
-              borderColor: tile.accent ? "primary.main" : "divider",
-              bgcolor: "background.paper",
-              opacity: tile.muted ? 0.55 : 1,
-              minHeight: 0,
-              height: "100%",
-              transition: "border-color 160ms ease",
-              "&:hover": tile.muted
-                ? undefined
-                : {
-                    borderColor: "primary.main",
-                    bgcolor: "action.hover",
-                  },
-              "&.Mui-disabled": {
-                opacity: 0.55,
+      {tiles.map((tile, index) => (
+        <ButtonBase
+          key={tile.id}
+          role="listitem"
+          focusRipple
+          disabled={tile.muted}
+          onClick={() => onOpen(tile.id)}
+          data-tile-id={tile.id}
+          aria-label={
+            tile.badge
+              ? `${tile.title}, ${tile.badge}`
+              : tile.muted
+                ? `${tile.title} (unavailable)`
+                : tile.title
+          }
+          sx={{
+            position: "relative",
+            aspectRatio: "3 / 4",
+            borderRadius: 2,
+            overflow: "hidden",
+            border: 1,
+            borderColor: tile.accent ? "primary.main" : "rgba(232, 216, 199, 0.16)",
+            opacity: tile.muted ? 0.55 : 1,
+            textAlign: "left",
+            animation: `boardPosterIn 420ms ease both`,
+            animationDelay: `${index * 40}ms`,
+            "@keyframes boardPosterIn": {
+              from: { opacity: 0, transform: "translateY(10px)" },
+              to: {
+                opacity: tile.muted ? 0.55 : 1,
+                transform: "translateY(0)",
               },
+            },
+            ".board-grid:hover &": { opacity: tile.muted ? 0.4 : 0.55 },
+            ".board-grid:hover &:hover, .board-grid:hover &:focus-visible": {
+              opacity: 1,
+              transform: "scale(1.03)",
+              zIndex: 2,
+              boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
+            },
+            "@media (prefers-reduced-motion: reduce)": {
+              animation: "none",
+              ".board-grid:hover &": { opacity: tile.muted ? 0.55 : 1 },
+              ".board-grid:hover &:hover, .board-grid:hover &:focus-visible": {
+                transform: "none",
+                boxShadow: "none",
+              },
+            },
+            "&.Mui-disabled": { opacity: 0.55 },
+          }}
+        >
+          <Box
+            component="img"
+            src={TILE_IMAGES[tile.id]}
+            alt=""
+            sx={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
             }}
-          >
-            <Box
-              aria-hidden
-              sx={(theme) => ({
-                width: { xs: 64, sm: 80 },
-                height: { xs: 64, sm: 80 },
-                borderRadius: 2,
-                bgcolor: alpha(theme.palette.primary.main, 0.12),
-                display: "grid",
-                placeItems: "center",
-                overflow: "hidden",
-                flexShrink: 0,
-              })}
-            >
-              <Box
-                component="img"
-                src={imageSrc}
-                alt=""
-                sx={{
-                  width: isSvg ? "62%" : "100%",
-                  height: isSvg ? "62%" : "100%",
-                  objectFit: isSvg ? "contain" : "cover",
-                }}
-              />
-            </Box>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                justifyContent: "center",
-                flexWrap: "wrap",
-              }}
-            >
+          />
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "linear-gradient(180deg, transparent 35%, rgba(15, 5, 14, 0.9) 100%)",
+            }}
+          />
+          <Box sx={{ position: "absolute", left: 0, right: 0, bottom: 0, p: 1.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 0.5 }}>
               <Typography
                 variant="subtitle1"
                 sx={{
-                  fontWeight: 600,
-                  color: tile.accent ? "primary.main" : "text.primary",
+                  fontWeight: 700,
+                  color: tile.accent ? "primary.light" : "#F5F5F5",
                 }}
               >
                 {tile.title}
               </Typography>
               {tile.badge ? (
-                <Chip size="small" label={tile.badge} color="primary" />
+                <Chip size="small" label={tile.badge} color="primary" sx={{ height: 22 }} />
               ) : null}
             </Box>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="caption" sx={{ color: "rgba(245,245,245,0.72)" }}>
               {tile.blurb}
             </Typography>
-          </ButtonBase>
-        );
-      })}
+          </Box>
+        </ButtonBase>
+      ))}
     </Box>
   );
 }

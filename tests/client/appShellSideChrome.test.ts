@@ -1,36 +1,33 @@
 import { describe, expect, it } from "vitest";
-import {
-  DRAWER_WIDTH,
-  RAIL_WIDTH,
-} from "../../src/components/shell/chromeTokens";
 import { resolveShellSideChrome } from "../../src/components/shell/shellSideChrome";
 
 describe("resolveShellSideChrome", () => {
-  it("hides side chrome when zen", () => {
+  it("hides chrome when zen", () => {
     expect(resolveShellSideChrome(false, true, true)).toEqual({
       side: "none",
       sideWidth: 0,
+      topBand: false,
     });
   });
 
-  it("uses no side chrome on phone (dock owns nav)", () => {
+  it("uses no top band on phone (dock owns nav)", () => {
     expect(resolveShellSideChrome(true, false, false)).toEqual({
       side: "none",
       sideWidth: 0,
+      topBand: false,
     });
   });
 
-  it("uses rail on medium", () => {
+  it("uses top pictogram band from sm up", () => {
     expect(resolveShellSideChrome(false, true, false)).toEqual({
-      side: "rail",
-      sideWidth: RAIL_WIDTH,
+      side: "top",
+      sideWidth: 0,
+      topBand: true,
     });
-  });
-
-  it("uses drawer on expanded", () => {
     expect(resolveShellSideChrome(false, false, false)).toEqual({
-      side: "drawer",
-      sideWidth: DRAWER_WIDTH,
+      side: "top",
+      sideWidth: 0,
+      topBand: true,
     });
   });
 });

@@ -12,7 +12,7 @@ import type {
 import { effectiveSubjectDeckCount } from "../subjects/subjectDeleteGuard";
 import BoardTile from "./board/BoardTile";
 import LibraryBoard from "./board/LibraryBoard";
-import { fruitMarkSrc } from "./board/fruitMark";
+import { coverPlaceholderSrc } from "./board/coverPlaceholder";
 
 type Props = {
   subjects: Subject[];
@@ -109,7 +109,8 @@ export function LibraryShelf({
               <BoardTile
                 title={s.title}
                 meta={[meta, recall].filter(Boolean).join(" · ") || meta}
-                imageSrc={cover?.imageUrl ?? fruitMarkSrc(s.id)}
+                index={subjects.indexOf(s)}
+                imageSrc={cover?.imageUrl ?? coverPlaceholderSrc(s.id)}
                 href={href}
                 openLabel={`Open subject ${s.title}`}
                 credit={
@@ -187,6 +188,7 @@ export function LibraryShelf({
         {!selectMode && onCreateSubject ? (
           <Box component="li" sx={{ listStyle: "none", m: 0, p: 0, minHeight: 0 }}>
             <BoardTile
+              index={subjects.length}
               title="New subject"
               meta="Keep the board full"
               create

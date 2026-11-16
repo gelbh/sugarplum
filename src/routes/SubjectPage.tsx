@@ -22,7 +22,7 @@ import CoverPickerDialog from "../components/CoverPickerDialog";
 import EmptyNext from "../components/EmptyNext";
 import BoardTile from "../library/board/BoardTile";
 import LibraryBoard from "../library/board/LibraryBoard";
-import { fruitMarkSrc } from "../library/board/fruitMark";
+import { coverPlaceholderSrc } from "../library/board/coverPlaceholder";
 import {
   ApiError,
   apkgFilenameForDeckTitle,
@@ -342,7 +342,7 @@ export default function SubjectPage({ subjectId }: Props) {
         <Stack spacing={2}>
           <Skeleton variant="text" width={80} />
           <Skeleton variant="text" width={200} height={40} />
-          <LibraryBoard aria-label="Loading decks" fillViewport>
+          <LibraryBoard aria-label="Loading decks">
             {[0, 1, 2, 3].map((key) => (
               <Box key={key} component="li" sx={{ listStyle: "none" }}>
                 <Skeleton
@@ -458,7 +458,7 @@ export default function SubjectPage({ subjectId }: Props) {
             />
           ) : (
             <LibraryBoard aria-label="Decks">
-              {decks.map((d) => {
+              {decks.map((d, index) => {
                 const href = `/library/decks/${encodeURIComponent(d.id)}`;
                 const cover = covers.find(
                   (c) => c.ownerKind === "deck" && c.ownerId === d.id,
@@ -470,9 +470,10 @@ export default function SubjectPage({ subjectId }: Props) {
                     sx={{ listStyle: "none", m: 0, p: 0, minHeight: 0 }}
                   >
                     <BoardTile
+                      index={index}
                       title={d.title}
                       meta="Open hub to author"
-                      imageSrc={cover?.imageUrl ?? fruitMarkSrc(d.id)}
+                      imageSrc={cover?.imageUrl ?? coverPlaceholderSrc(d.id)}
                       href={href}
                       openLabel={`Open hub for ${d.title}`}
                       credit={
@@ -498,6 +499,7 @@ export default function SubjectPage({ subjectId }: Props) {
               })}
               <Box component="li" sx={{ listStyle: "none", m: 0, p: 0 }}>
                 <BoardTile
+                  index={decks.length}
                   title="New deck"
                   meta="Add to this subject"
                   create

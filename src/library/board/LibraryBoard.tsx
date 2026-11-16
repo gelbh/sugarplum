@@ -4,16 +4,15 @@ import Box from "@mui/material/Box";
 type Props = {
   "aria-label": string;
   children: ReactNode;
-  fillViewport?: boolean;
 };
 
 export default function LibraryBoard({
   "aria-label": ariaLabel,
   children,
-  fillViewport = true,
 }: Props) {
   return (
     <Box
+      className="board-grid"
       component="ul"
       role="list"
       aria-label={ariaLabel}
@@ -22,20 +21,14 @@ export default function LibraryBoard({
         m: 0,
         p: 0,
         display: "grid",
-        gap: "12px",
+        gap: { xs: 1.5, sm: 2 },
         gridTemplateColumns: {
-          xs: "1fr",
-          sm: "repeat(2, minmax(0, 1fr))",
-          md: "repeat(3, minmax(0, 1fr))",
-          lg: "repeat(4, minmax(0, 1fr))",
+          xs: "repeat(2, minmax(0, 1fr))",
+          sm: "repeat(3, minmax(0, 1fr))",
+          md: "repeat(4, minmax(0, 1fr))",
         },
-        alignContent: "stretch",
-        minHeight: fillViewport
-          ? { xs: 300, sm: "min(48dvh, 420px)", md: "min(56dvh, 520px)" }
-          : undefined,
-        flex: fillViewport ? 1 : undefined,
+        alignContent: "start",
         minWidth: 0,
-        overflow: "auto",
       }}
     >
       {children}
