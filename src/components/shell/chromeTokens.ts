@@ -8,3 +8,5 @@ export const SHELL_HAIRLINE = "rgba(232, 216, 199, 0.16)";
 /** Selected / generating accent on night shell (fruit plum; DESIGN One Plum Voice). */
 export const SHELL_SELECTED = "#5B2C6F";
 export const DRAWER_WIDTH = 220;
+/** Collapsed M3-style nav rail for medium (`sm`–`md`) widths. */
+export const RAIL_WIDTH = 80;

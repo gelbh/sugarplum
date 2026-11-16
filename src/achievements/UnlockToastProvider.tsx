@@ -12,7 +12,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import FruitMedal from "./FruitMedal";
 import { isUnlockView } from "./rememberUnlocks";
-import { DRAWER_WIDTH } from "../components/shell/chromeTokens";
+import { DRAWER_WIDTH, RAIL_WIDTH } from "../components/shell/chromeTokens";
 import { useStudyChrome } from "../study/StudyChromeContext";
 import type { UnlockView } from "./wire";
 
@@ -108,7 +108,11 @@ export function UnlockToastProvider({ children }: { children: ReactNode }) {
             position: "fixed",
             left: hideChrome
               ? "50%"
-              : { xs: "50%", sm: `calc(50% + ${DRAWER_WIDTH / 2}px)` },
+              : {
+                  xs: "50%",
+                  sm: `calc(50% + ${RAIL_WIDTH / 2}px)`,
+                  md: `calc(50% + ${DRAWER_WIDTH / 2}px)`,
+                },
             bottom: hideChrome
               ? "calc(24px + env(safe-area-inset-bottom, 0px))"
               : {
