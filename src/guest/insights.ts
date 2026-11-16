@@ -1,3 +1,14 @@
+import { State } from "ts-fsrs";
+import {
+  buildConsistency,
+  buildDifficultyMix,
+  buildGradeCountsByMaturity,
+  buildStabilitySnapshot,
+  buildTrueRetention,
+  buildWorkloadFromDues,
+  reviewRowsInLocalWindow,
+  type InsightsReviewLogRow,
+} from "../insights/buildMetrics";
 import {
   buildGradeCounts,
   buildReviewsPerDay,
@@ -32,9 +43,19 @@ export function guestInsightsSummary(
   const tzOffsetMinutes =
     opts?.tzOffsetMinutes ?? new Date().getTimezoneOffset();
 
-  const logs = store.reviewLogs.map((l) => ({
+  const metricLogs: InsightsReviewLogRow[] = store.reviewLogs.map((l) => ({
+    card_id: l.cardId,
     reviewed_at: l.at,
     rating: l.rating as number,
+    scheduled_days:
+      typeof l.scheduledDays === "number" && Number.isFinite(l.scheduledDays)
+        ? l.scheduledDays
+        : null,
+    state: typeof l.state === "number" ? l.state : null,
+  }));
+  const logs = metricLogs.map((l) => ({
+    reviewed_at: l.reviewed_at,
+    rating: l.rating,
   }));
   const reviewedAts = logs.map((l) => l.reviewed_at);
   const activityByDay = buildReviewsPerDay(
@@ -51,6 +72,14 @@ export function guestInsightsSummary(
   );
   const gradeCounts = buildGradeCounts(
     ratingsInLocalWindow(logs, now, tzOffsetMinutes, INSIGHTS_GRADE_DAYS),
+  );
+  const gradeCountsByMaturity = buildGradeCountsByMaturity(
+    reviewRowsInLocalWindow(
+      metricLogs,
+      now,
+      tzOffsetMinutes,
+      INSIGHTS_GRADE_DAYS,
+    ),
   );
   const todayKey = localDayKey(now, tzOffsetMinutes);
   const reviewedToday =
@@ -76,6 +105,30 @@ export function guestInsightsSummary(
     });
   const knowledge = composeSubjectKnowledge(scheduleRows, now);
 
+  const dues = scheduleRows
+    .map((r) => r.due)
+    .filter((d): d is string => typeof d === "string" && d.length > 0);
+  const reviewIntervals = scheduleRows
+    .filter(
+      (r) =>
+        r.state === State.Review &&
+        r.scheduled_days != null &&
+        Number.isFinite(r.scheduled_days),
+    )
+    .map((r) => r.scheduled_days as number);
+  const workload = buildWorkloadFromDues(
+    dues,
+    now,
+    tzOffsetMinutes,
+    reviewIntervals,
+  );
+  const trueRetention = buildTrueRetention(metricLogs, now, tzOffsetMinutes);
+  const consistency = buildConsistency(reviewsPerDay);
+  const difficulty = buildDifficultyMix(scheduleRows.map((r) => r.difficulty));
+  const stability = buildStabilitySnapshot(
+    scheduleRows.map((r) => r.stability),
+  );
+
   return {
     window: {
       reviewsDays: INSIGHTS_REVIEWS_DAYS,
@@ -96,10 +149,19 @@ export function guestInsightsSummary(
         graduated: knowledge.graduated,
         graduatedPct: knowledge.graduatedPct,
       },
+      dueToday: workload.dueToday,
+      overdue: workload.overdue,
+      dailyLoad: workload.dailyLoad,
+      trueRetention,
+      consistency,
+      difficulty,
+      stability,
     },
     gamification: null,
     reviewsPerDay,
     activityByDay,
+    futureDue: workload.futureDue,
     gradeCounts,
+    gradeCountsByMaturity,
   };
 }

@@ -1365,6 +1365,7 @@ export function createTestEnv(opts?: {
               card_id: rl.card_id,
               reviewed_at: rl.reviewed_at,
               rating: rl.rating,
+              scheduled_days: rl.scheduled_days,
               state_json: rl.state_json,
               ...(withScheduleJoin
                 ? {

@@ -49,6 +49,18 @@ describe("GET /api/insights/summary", () => {
       easy: 0,
     });
     expect(body.kpis.composition.total).toBe(0);
+    expect(body.futureDue).toHaveLength(14);
+    expect(body.futureDue.every((p) => p.count === 0)).toBe(true);
+    expect(body.kpis.dueToday).toBe(0);
+    expect(body.kpis.overdue).toBe(0);
+    expect(body.kpis.dailyLoad).toBeNull();
+    expect(body.kpis.trueRetention.overall.rate).toBeNull();
+    expect(body.gradeCountsByMaturity.young).toEqual({
+      again: 0,
+      hard: 0,
+      good: 0,
+      easy: 0,
+    });
     expect(body.gamification).not.toBeNull();
     expect(body.gamification!.level).toBeGreaterThanOrEqual(1);
   });
