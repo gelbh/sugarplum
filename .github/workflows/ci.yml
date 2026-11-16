@@ -32,3 +32,6 @@ jobs:
 
       - name: Typecheck and build
         run: npm run build
+
+      - name: Check Workers asset sizes
+        run: node scripts/checkWorkersAssetSize.mjs public && node scripts/checkWorkersAssetSize.mjs dist/client
