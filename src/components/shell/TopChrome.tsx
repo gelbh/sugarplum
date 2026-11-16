@@ -3,7 +3,8 @@ import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import type { ReactNode } from "react";
-import { goShellBack, shellBackHref } from "../../nav/navigate";
+import { goShellBack } from "../../nav/navigate";
+import { useResolvedShellBack } from "./ShellBackOverride";
 import {
   SHELL_BG,
   SHELL_FG,
@@ -19,7 +20,7 @@ type TopChromeProps = {
 
 /** Mobile top bar content: Back for nested routes, centered logo + Alice wordmark. */
 export default function TopChrome({ trailing }: TopChromeProps) {
-  const backHref = shellBackHref(window.location.pathname);
+  const backHref = useResolvedShellBack(window.location.pathname);
 
   return (
     <Box

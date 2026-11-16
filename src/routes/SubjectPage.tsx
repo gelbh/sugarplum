@@ -13,12 +13,14 @@ import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import CoverPickerDialog from "../components/CoverPickerDialog";
+import EmptyNext from "../components/EmptyNext";
 import ShelfVolume from "../components/ShelfVolume";
 import {
   ApiError,
@@ -327,7 +329,21 @@ export default function SubjectPage({ subjectId }: Props) {
   return (
     <Container maxWidth="md" sx={{ py: { xs: 4, md: 5 } }}>
       {!ready ? (
-        <Typography color="text.secondary">Loading subject…</Typography>
+        <Stack spacing={2}>
+          <Skeleton variant="text" width={80} />
+          <Skeleton variant="text" width={200} height={40} />
+          <Grid container spacing={2}>
+            {[0, 1].map((key) => (
+              <Grid key={key} size={{ xs: 12, md: 6 }}>
+                <Skeleton
+                  variant="rounded"
+                  height={140}
+                  sx={{ borderRadius: 1 }}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </Stack>
       ) : (
         <Stack spacing={3}>
           <Box>
@@ -425,9 +441,11 @@ export default function SubjectPage({ subjectId }: Props) {
           ) : null}
 
           {decks.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              No decks yet. Add one, then put your notes in it.
-            </Typography>
+            <EmptyNext
+              title="No decks yet"
+              body="Add a deck, then put your notes in it."
+              primary={{ label: "New deck", onClick: openCreateDeck }}
+            />
           ) : (
             <Grid
               container

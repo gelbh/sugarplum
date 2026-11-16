@@ -21,8 +21,10 @@ import Grid from "@mui/material/Grid";
 import Link from "@mui/material/Link";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import CoverPickerDialog from "../components/CoverPickerDialog";
+import EmptyNext from "../components/EmptyNext";
 import OperateSection from "../components/OperateSection";
 import CompositionSpark from "../components/CompositionSpark";
 import ShelfVolume from "../components/ShelfVolume";
@@ -419,7 +421,21 @@ export default function LibraryPage() {
   return (
     <Container maxWidth="md" sx={{ py: { xs: 4, md: 5 } }}>
       {!ready ? (
-        <Typography color="text.secondary">Loading library…</Typography>
+        <Stack spacing={2}>
+          <Skeleton variant="text" width={120} height={40} />
+          <Skeleton variant="text" width="60%" />
+          <Grid container spacing={2}>
+            {[0, 1, 2].map((key) => (
+              <Grid key={key} size={{ xs: 12, md: 6 }}>
+                <Skeleton
+                  variant="rounded"
+                  height={160}
+                  sx={{ borderRadius: 1 }}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </Stack>
       ) : (
         <Stack spacing={3}>
           <Box>
@@ -527,11 +543,20 @@ export default function LibraryPage() {
           ) : null}
 
           {subjects.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              {showCreateFlow
-                ? "No subjects yet. Add your notes to make the first one."
-                : "No subjects yet. Use Add material to create a subject and deck."}
-            </Typography>
+            showCreateFlow ? (
+              <Typography variant="body2" color="text.secondary">
+                No subjects yet. Add your notes below to make the first one.
+              </Typography>
+            ) : (
+              <EmptyNext
+                title="No subjects yet"
+                body="Create a subject and deck by adding your notes."
+                primary={{
+                  label: "Add material",
+                  onClick: () => setShowCreateFlow(true),
+                }}
+              />
+            )
           ) : (
             <Grid
               container
@@ -855,6 +880,7 @@ export default function LibraryPage() {
                 onChanged={() => {
                   void Promise.all([refreshMaterials(), refreshDraftJobs()]);
                 }}
+                onAddMaterial={() => setShowCreateFlow(true)}
               />
             </OperateSection>
           ) : null}

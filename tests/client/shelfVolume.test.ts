@@ -50,7 +50,11 @@ describe("ShelfVolume", () => {
     expect(host.textContent).toContain("Anatomy");
     expect(host.textContent).toContain("2 decks");
     expect(host.querySelector("a")?.getAttribute("aria-label")).toBe("Open Anatomy");
+    expect(host.querySelector("a.shelf-open-link")).toBeTruthy();
     expect(host.querySelector('[aria-label="Study"]')).toBeTruthy();
+    expect(
+      host.querySelector('[aria-label="Study"]')?.closest("a.shelf-open-link"),
+    ).toBeNull();
     expect(host.querySelector('[aria-label="More actions for Anatomy"]')).toBeTruthy();
     host.remove();
   });

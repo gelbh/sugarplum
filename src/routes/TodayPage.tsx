@@ -3,6 +3,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
+import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import {
@@ -193,7 +194,16 @@ export default function TodayPage() {
   if (!ready) {
     return (
       <Container maxWidth="sm" sx={{ py: 6 }}>
-        <Typography color="text.secondary">Loading today…</Typography>
+        <Stack spacing={2} alignItems="center">
+          <Skeleton variant="text" width={120} height={72} />
+          <Skeleton variant="text" width={160} />
+          <Skeleton
+            variant="rounded"
+            width="100%"
+            height={48}
+            sx={{ maxWidth: 280, borderRadius: 1 }}
+          />
+        </Stack>
       </Container>
     );
   }

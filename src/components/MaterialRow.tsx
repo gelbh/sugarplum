@@ -151,44 +151,44 @@ export default function MaterialRow({
       <Stack direction="row" spacing={0.25}>
         <Tooltip title={`Download ${name}`}>
           <IconButton
-            size="small"
             component="a"
             href={downloadMaterialUrl(material.id)}
             aria-label={`Download ${name}`}
+            sx={{ width: 48, height: 48 }}
           >
-            <DownloadOutlinedIcon fontSize="small" />
+            <DownloadOutlinedIcon />
           </IconButton>
         </Tooltip>
         {canOcclusion ? (
           <Tooltip title={`Create occlusion from ${name}`}>
             <IconButton
-              size="small"
               aria-label={`Create occlusion from ${name}`}
               onClick={() => onCreateOcclusion?.(material)}
+              sx={{ width: 48, height: 48 }}
             >
-              <CropOutlinedIcon fontSize="small" />
+              <CropOutlinedIcon />
             </IconButton>
           </Tooltip>
         ) : null}
         {canGenerate ? (
           <Tooltip title={`Generate more from ${name}`}>
             <IconButton
-              size="small"
               aria-label={`Generate more from ${name}`}
               onClick={() => onRequestGenerate(material)}
+              sx={{ width: 48, height: 48 }}
             >
-              <AddCircleOutlineIcon fontSize="small" />
+              <AddCircleOutlineIcon />
             </IconButton>
           </Tooltip>
         ) : null}
         <Tooltip title={`Delete ${name}`}>
           <IconButton
-            size="small"
             color="error"
             aria-label={`Delete ${name}`}
             onClick={() => onRequestDelete(material)}
+            sx={{ width: 48, height: 48 }}
           >
-            <DeleteOutlineIcon fontSize="small" />
+            <DeleteOutlineIcon />
           </IconButton>
         </Tooltip>
       </Stack>

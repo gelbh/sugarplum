@@ -138,7 +138,8 @@ describe("deck hub drafts workshop", () => {
         onAddMoreMaterial: vi.fn(),
       }),
     );
-    expect(document.body.textContent).toMatch(/No draft cards for this deck/i);
+    expect(document.body.textContent).toMatch(/No draft cards yet/i);
+    expect(document.body.textContent).toMatch(/Add material/i);
     expect(listJobDrafts).not.toHaveBeenCalled();
   });
 
@@ -250,8 +251,6 @@ describe("deck hub drafts workshop", () => {
     });
     expect(document.body.textContent).toMatch(/Could not load some drafts|network/i);
     expect(document.body.textContent).toMatch(/Retry/);
-    expect(document.body.textContent).not.toMatch(
-      /No draft cards for this deck yet/,
-    );
+    expect(document.body.textContent).not.toMatch(/No draft cards yet/i);
   });
 });

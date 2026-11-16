@@ -10,6 +10,8 @@ import { ApiError, getInsightsSummary, type InsightsSummary } from "../api/clien
 import CompositionSpark, {
   COMPOSITION_SEGMENT_COLORS,
 } from "../components/CompositionSpark";
+import EmptyNext from "../components/EmptyNext";
+import { navigate } from "../nav/navigate";
 import ActivityHeatmap from "../insights/ActivityHeatmap";
 import GradeMixChart from "../insights/GradeMixChart";
 import {
@@ -228,10 +230,14 @@ export default function InsightsPage() {
                   Knowledge mix
                 </Typography>
                 {summary.kpis.composition.total === 0 ? (
-                  <Typography variant="body2" color="text.secondary">
-                    No accepted cards yet. Accept drafts from Library to see
-                    stage mix here.
-                  </Typography>
+                  <EmptyNext
+                    title="No accepted cards yet"
+                    body="Accept drafts from Library to see stage mix here."
+                    primary={{
+                      label: "Open Library",
+                      onClick: () => navigate("/library"),
+                    }}
+                  />
                 ) : (
                   <Stack spacing={1.5}>
                     <CompositionSpark
