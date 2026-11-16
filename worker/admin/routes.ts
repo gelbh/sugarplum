@@ -1,38 +1,27 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import type { Env } from "../env";
-import type { AuthVariables } from "../auth/session";
 import { getDb } from "../db/client";
 import { getFreeGenUsage } from "../generation/quota";
 import {
   backfillUsageEventsFromJobs,
   usageFieldsFromProgress,
 } from "../generation/usage";
-import { isAdminEmail, parseAdminEmails } from "./allowlist";
 import { requireAdmin } from "./requireAdmin";
 import { runProvenanceBackfill } from "./provenance-backfill";
+import type { AppEnv, AdminUserDetail, AdminUserListItem } from "./types";
+import {
+  collectUserR2Keys,
+  loadAdminUser,
+  refuseAllowlistedTarget,
+} from "./wipe";
 
-type AppEnv = { Bindings: Env; Variables: AuthVariables };
+export type {
+  AdminUserListItem,
+  AdminUsageSummary,
+  AdminUserDetail,
+} from "./types";
 
 const EXPORT_MAX_CHARS = 8_000_000;
-
-const USER_EMAIL_SQL =
-  "SELECT id, email, oauth_subject, created_at, disabled_at FROM users WHERE id = ?";
-
-const WIPE_MATERIAL_KEYS_SQL = `
-SELECT m.r2_key FROM materials m
-INNER JOIN decks d ON d.id = m.deck_id
-WHERE d.user_id = ? AND m.r2_key IS NOT NULL
-`.replace(/\s+/g, " ");
-
-const WIPE_CARD_MEDIA_SQL = `
-SELECT c.media_r2_keys_json FROM cards c
-INNER JOIN decks d ON d.id = c.deck_id
-WHERE d.user_id = ? AND c.media_r2_keys_json IS NOT NULL
-`.replace(/\s+/g, " ");
-
-const WIPE_EXPORT_KEYS_SQL =
-  "SELECT r2_key FROM export_jobs WHERE user_id = ? AND r2_key IS NOT NULL";
 
 const EXPORT_SUBJECTS_SQL =
   "SELECT id, title, created_at FROM subjects WHERE user_id = ? ORDER BY created_at ASC";
@@ -99,14 +88,6 @@ SELECT id, status, request_json, r2_key, error, warning_json, created_at, update
 FROM export_jobs WHERE user_id = ? ORDER BY created_at ASC
 `.replace(/\s+/g, " ");
 
-type AdminUserRow = {
-  id: string;
-  email: string;
-  oauth_subject: string | null;
-  created_at: string;
-  disabled_at: string | null;
-};
-
 function contentTypeForKind(kind: string): string | undefined {
   if (kind === "paste") return "text/plain; charset=utf-8";
   if (kind === "pdf") return "application/pdf";
@@ -116,125 +97,6 @@ function contentTypeForKind(kind: string): string | undefined {
   if (kind === "image") return "image/png";
   return undefined;
 }
-
-async function loadAdminUser(
-  db: D1Database,
-  id: string,
-): Promise<AdminUserRow> {
-  const row = await db.prepare(USER_EMAIL_SQL).bind(id).first<AdminUserRow>();
-  if (!row) throw new HTTPException(404, { message: "User not found" });
-  return row;
-}
-
-function refuseAllowlistedTarget(email: string, adminEmails: string | undefined) {
-  const allow = parseAdminEmails(adminEmails);
-  if (isAdminEmail(email, allow)) {
-    throw new HTTPException(400, { message: "Cannot modify allowlisted admin" });
-  }
-}
-
-async function collectUserR2Keys(db: D1Database, userId: string): Promise<string[]> {
-  const keys = new Set<string>();
-  const { results: materialKeys } = await db
-    .prepare(WIPE_MATERIAL_KEYS_SQL)
-    .bind(userId)
-    .all<{ r2_key: string }>();
-  for (const row of materialKeys ?? []) {
-    if (row.r2_key) keys.add(row.r2_key);
-  }
-  const { results: cardMedia } = await db
-    .prepare(WIPE_CARD_MEDIA_SQL)
-    .bind(userId)
-    .all<{ media_r2_keys_json: string }>();
-  for (const row of cardMedia ?? []) {
-    try {
-      const parsed = JSON.parse(row.media_r2_keys_json) as unknown;
-      if (Array.isArray(parsed)) {
-        for (const key of parsed) {
-          if (typeof key === "string" && key) keys.add(key);
-        }
-      }
-    } catch {
-      /* ignore bad JSON */
-    }
-  }
-  const { results: exportKeys } = await db
-    .prepare(WIPE_EXPORT_KEYS_SQL)
-    .bind(userId)
-    .all<{ r2_key: string }>();
-  for (const row of exportKeys ?? []) {
-    if (row.r2_key) keys.add(row.r2_key);
-  }
-  return [...keys];
-}
-
-export type AdminUserListItem = {
-  id: string;
-  email: string;
-  created_at: string;
-  google_linked: boolean;
-  disabled_at: string | null;
-  deckCount: number;
-  cardCount: number;
-  jobCount: number;
-  tokens30d: number;
-};
-
-export type AdminUsageSummary = {
-  tokensAllTime: number;
-  tokens30d: number;
-  freeJobs30d: number;
-  byoJobs30d: number;
-};
-
-export type AdminUserDetail = {
-  id: string;
-  email: string;
-  created_at: string;
-  google_linked: boolean;
-  disabled_at: string | null;
-  counts: { decks: number; cards: number; jobs: number; materials: number };
-  recentJobs: {
-    id: string;
-    status: string;
-    created_at: string;
-    finished_at: string | null;
-    tokens_used?: number;
-    tokens_prompt?: number;
-    tokens_completion?: number;
-    path?: "free" | "byo";
-  }[];
-  recentStudyDays: { day: string; intros_used: number }[];
-  subjects: { id: string; title: string; created_at: string }[];
-  decks: {
-    id: string;
-    title: string;
-    subject_id: string | null;
-    created_at: string;
-  }[];
-  materials: {
-    id: string;
-    deck_id: string;
-    kind: string;
-    filename: string | null;
-    status: string;
-    created_at: string;
-  }[];
-  studyPrefs: {
-    intro_budget: number;
-    review_budget: number;
-    r_floor: number;
-    updated_at: string;
-  } | null;
-  freeGenToday: { used: number; cap: number; remaining: number } | null;
-  usage: AdminUsageSummary;
-  cardSample: {
-    id: string;
-    type: string;
-    status: string;
-    frontPreview: string;
-  }[];
-};
 
 export const adminRoutes = new Hono<AppEnv>();
 
