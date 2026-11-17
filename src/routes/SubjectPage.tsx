@@ -25,7 +25,7 @@ import CoverPickerDialog from "../components/CoverPickerDialog";
 import CoverPickerPanel from "../components/CoverPickerPanel";
 import BoardTile from "../library/board/BoardTile";
 import LibraryBoard from "../library/board/LibraryBoard";
-import { coverPlaceholderSrc } from "../library/board/coverPlaceholder";
+import { coverPlaceholderColor } from "../library/board/coverPlaceholder";
 import { LibraryCreateSubjectPanel } from "../library/LibraryCreateSubjectPanel";
 import StageBreadcrumbs from "../library/StageBreadcrumbs";
 import {
@@ -516,7 +516,9 @@ export default function SubjectPage({ subjectId }: Props) {
                         overflow: "hidden",
                         border: 1,
                         borderColor: "rgba(232, 216, 199, 0.16)",
-                        bgcolor: "#1a0b18",
+                        bgcolor: coverPlaceholderColor(
+                          subject?.id ?? subjectId,
+                        ),
                         boxShadow: "0 14px 36px rgba(0,0,0,0.42)",
                         textAlign: "left",
                         display: "block",
@@ -540,22 +542,21 @@ export default function SubjectPage({ subjectId }: Props) {
                           : {}),
                       }}
                     >
-                      <Box
-                        component="img"
-                        src={
-                          subjectCover?.imageUrl ??
-                          coverPlaceholderSrc(subject?.id ?? subjectId)
-                        }
-                        alt=""
-                        sx={{
-                          position: "absolute",
-                          inset: 0,
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          display: "block",
-                        }}
-                      />
+                      {subjectCover?.imageUrl ? (
+                        <Box
+                          component="img"
+                          src={subjectCover.imageUrl}
+                          alt=""
+                          sx={{
+                            position: "absolute",
+                            inset: 0,
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            display: "block",
+                          }}
+                        />
+                      ) : null}
                       <Box
                         aria-hidden
                         sx={{
@@ -914,7 +915,8 @@ export default function SubjectPage({ subjectId }: Props) {
                         index={index}
                         title={d.title}
                         meta="Open hub to author"
-                        imageSrc={cover?.imageUrl ?? coverPlaceholderSrc(d.id)}
+                        imageSrc={cover?.imageUrl}
+                        placeholderColor={coverPlaceholderColor(d.id)}
                         href={href}
                         openLabel={
                           reviewNotice

@@ -12,7 +12,7 @@ import type {
 import { effectiveSubjectDeckCount } from "../subjects/subjectDeleteGuard";
 import BoardTile from "./board/BoardTile";
 import LibraryBoard from "./board/LibraryBoard";
-import { coverPlaceholderSrc } from "./board/coverPlaceholder";
+import { coverPlaceholderColor } from "./board/coverPlaceholder";
 
 type Props = {
   subjects: Subject[];
@@ -206,7 +206,8 @@ export function LibraryShelf({
                   title={s.title}
                   meta={[meta, recall].filter(Boolean).join(" · ") || meta}
                   index={subjects.indexOf(s)}
-                  imageSrc={cover?.imageUrl ?? coverPlaceholderSrc(s.id)}
+                  imageSrc={cover?.imageUrl}
+                  placeholderColor={coverPlaceholderColor(s.id)}
                   href={href}
                   openLabel={
                     reviewNotice

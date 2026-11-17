@@ -38,6 +38,7 @@ type Props = {
   title: string;
   meta?: string | null;
   imageSrc?: string;
+  placeholderColor?: string;
   href?: string;
   openLabel?: string;
   create?: boolean;
@@ -59,6 +60,7 @@ export default function BoardTile({
   title,
   meta,
   imageSrc = "",
+  placeholderColor,
   href,
   openLabel,
   create,
@@ -90,7 +92,7 @@ export default function BoardTile({
               "radial-gradient(ellipse at 50% 38%, rgba(91, 44, 111, 0.42) 0%, rgba(26, 11, 24, 0.92) 68%, #12070f 100%)",
           }}
         />
-      ) : (
+      ) : imageSrc ? (
         <Box
           component="img"
           src={imageSrc}
@@ -103,7 +105,7 @@ export default function BoardTile({
             objectFit: "cover",
           }}
         />
-      )}
+      ) : null}
       {create ? (
         <Box
           aria-hidden
@@ -240,7 +242,7 @@ export default function BoardTile({
     width: "100%",
     borderRadius: 2,
     overflow: "hidden",
-    bgcolor: "#1a0b18",
+    bgcolor: create ? "#1a0b18" : (placeholderColor ?? "#1a0b18"),
     opacity: muted ? 0.55 : 1,
     border: 1,
     borderColor: create

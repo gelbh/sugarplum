@@ -13,7 +13,7 @@ import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
 import type { StoredCoverRow } from "../api/client";
-import { coverPlaceholderSrc } from "../library/board/coverPlaceholder";
+import { coverPlaceholderColor } from "../library/board/coverPlaceholder";
 import StageBreadcrumbs, { type StageCrumb } from "../library/StageBreadcrumbs";
 
 type Props = {
@@ -49,7 +49,8 @@ export default function DeckHubTitleHeader({
   onDelete,
   onChangeCover,
 }: Props) {
-  const coverSrc = cover?.imageUrl ?? coverPlaceholderSrc(coverKey);
+  const coverSrc = cover?.imageUrl;
+  const emptyColor = coverPlaceholderColor(coverKey);
 
   return (
     <Box
@@ -91,7 +92,7 @@ export default function DeckHubTitleHeader({
               overflow: "hidden",
               border: 1,
               borderColor: "rgba(232, 216, 199, 0.16)",
-              bgcolor: "#1a0b18",
+              bgcolor: emptyColor,
               boxShadow: "0 14px 36px rgba(0,0,0,0.42)",
               textAlign: "left",
               display: "block",
@@ -114,19 +115,21 @@ export default function DeckHubTitleHeader({
                 : {}),
             }}
           >
-            <Box
-              component="img"
-              src={coverSrc}
-              alt=""
-              sx={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                display: "block",
-              }}
-            />
+            {coverSrc ? (
+              <Box
+                component="img"
+                src={coverSrc}
+                alt=""
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
+                }}
+              />
+            ) : null}
             <Box
               aria-hidden
               sx={{
