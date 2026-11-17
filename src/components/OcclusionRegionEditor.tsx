@@ -310,6 +310,8 @@ export default function OcclusionRegionEditor({
         <Box
           sx={{
             maxHeight: "42vh",
+            minHeight: 160,
+            flexShrink: 0,
             overflow: "auto",
             borderRadius: 2,
             bgcolor: "rgba(18, 7, 15, 0.65)",

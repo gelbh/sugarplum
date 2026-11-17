@@ -492,7 +492,9 @@ export default function AddMaterialWorkshop({
           minHeight: 0,
           overflow: "auto",
           display: "flex",
-          alignItems: "center",
+          // Center short upload/paste forms. DIY can be taller than the viewport;
+          // align start so the occlusion image stage is not clipped above the fold.
+          alignItems: activeTab === "diy" ? "flex-start" : "center",
           justifyContent: "center",
           px: 2,
           py: { xs: 3, md: 4 },

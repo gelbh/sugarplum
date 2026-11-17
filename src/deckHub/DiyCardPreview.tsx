@@ -51,16 +51,20 @@ function OcclusionFocusMedia({
         position: "relative",
         width: "100%",
         mb: focused ? 0 : 1.5,
-        overflow: "hidden",
+        flexShrink: 0,
+        // overflow:hidden only for tile focus-crop; otherwise flex parents
+        // can shrink this box and collapse the image above the prompt.
         ...(focused
           ? {
+              overflow: "hidden",
               flex: 1,
               minHeight: 0,
+              flexShrink: 1,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
             }
-          : {}),
+          : { overflow: "visible" }),
       }}
     >
       <Box
@@ -80,6 +84,7 @@ function OcclusionFocusMedia({
             display: "block",
             width: "100%",
             height: "auto",
+            flexShrink: 0,
             borderRadius: focused ? 0 : 1,
             userSelect: "none",
           }}
@@ -247,11 +252,30 @@ export default function DiyCardPreview({
       <Box
         sx={{
           width: "100%",
-          maxWidth: isTile ? "none" : card.type === "mcq" ? 280 : 240,
+          maxWidth: isTile
+            ? "none"
+            : card.type === "mcq"
+              ? 280
+              : card.type === "occlusion"
+                ? 280
+                : 240,
           mx: "auto",
-          aspectRatio: "var(--sp-card-aspect)",
-          maxHeight: isTile ? "none" : card.type === "mcq" ? 360 : 300,
-          height: isTile ? "100%" : undefined,
+          aspectRatio:
+            !isTile && card.type === "occlusion"
+              ? "unset"
+              : "var(--sp-card-aspect)",
+          maxHeight: isTile
+            ? "none"
+            : card.type === "mcq"
+              ? 360
+              : card.type === "occlusion"
+                ? 420
+                : 300,
+          height: isTile
+            ? "100%"
+            : card.type === "occlusion"
+              ? "min(420px, 70vh)"
+              : undefined,
           minHeight: 0,
         }}
       >
@@ -313,11 +337,25 @@ export default function DiyCardPreview({
                     maxHeight: "100%",
                     minHeight: 0,
                   }
-                : {}),
+                : card.type === "occlusion"
+                  ? {
+                      aspectRatio: "unset",
+                      height: "100%",
+                      maxHeight: "100%",
+                      width: "100%",
+                      maxWidth: "100%",
+                    }
+                  : {}),
             }}
             front={
               <Box data-card-face-content sx={faceBodySx}>
-                <Box sx={PROMPT_SX}>
+                <Box
+                  sx={
+                    parts.occlusion && !isTile
+                      ? { ...PROMPT_SX, flex: "0 1 auto", justifyContent: "flex-start" }
+                      : PROMPT_SX
+                  }
+                >
                   {parts.occlusion ? (
                     <OcclusionFocusMedia
                       imageKey={parts.occlusion.imageKey}
