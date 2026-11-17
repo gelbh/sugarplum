@@ -7,7 +7,7 @@ In-app home for **cross-domain presentational** chrome. Not a workspace package.
 A module may live under `src/ui/` only when **all** of these hold:
 
 1. **Prop-driven / presentational** — renders from props (or pure sx/helpers). No domain hooks, no guest store, no route modules, no `src/api/` imports.
-2. **Proven share** — already used at ≥2 call sites across domains, or extracted from a proven twin (near-identical structure in two places with a likely third touch).
+2. **Proven share** — already used at ≥2 call sites across domains, or extracted from near-identical twins already mounted in ≥2 domains (third consumer may land in the same promote PR; do not admit on a forecasted future touch alone).
 3. **Not app shell** — AppShell-coupled chrome stays in `src/components/shell/`.
 4. **Not a feature composite** — library / deckHub / atlas / anatomy / progress (etc.) keep domain-owned workshops, boards, and page composites unless they clear the bar above.
 
