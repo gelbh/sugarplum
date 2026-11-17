@@ -9,7 +9,8 @@ SELECT u.id, u.email, u.created_at, u.oauth_subject, u.disabled_at,
   (SELECT COALESCE(SUM(COALESCE(ue.tokens_total, 0)), 0) FROM usage_events ue
      WHERE ue.user_id = u.id AND ue.created_at >= ?) AS tokens_30d
 FROM users u
-WHERE (? = '' OR lower(u.email) LIKE '%' || lower(?) || '%')
+WHERE u.sandbox_of IS NULL
+  AND (? = '' OR lower(u.email) LIKE '%' || lower(?) || '%')
 ORDER BY u.created_at DESC
 LIMIT ?
 `.replace(/\s+/g, " ");

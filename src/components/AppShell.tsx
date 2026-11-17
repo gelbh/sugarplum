@@ -13,13 +13,19 @@ import MilitaryTechIcon from "@mui/icons-material/MilitaryTech";
 import SettingsIcon from "@mui/icons-material/Settings";
 import TodayIcon from "@mui/icons-material/Today";
 import { ATLAS_LEGACY_PATH } from "../atlas/paths";
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { GAMIFICATION_CHANGED_EVENT, getGamification } from "../api/client";
+import {
+  adminExitImpersonation,
+  GAMIFICATION_CHANGED_EVENT,
+  getGamification,
+} from "../api/client";
 import StreakXpChip from "../achievements/StreakXpChip";
 import { isGuest } from "../guest/session";
-import { navigateReplace, subscribeLocation } from "../nav/navigate";
+import { navigate, navigateReplace, subscribeLocation } from "../nav/navigate";
 import PageLoadingOverlay from "../progress/PageLoadingOverlay";
 import { useRouteLoadOverlay } from "../progress/useRouteLoadOverlay";
 import { useMainScrollRestore } from "../nav/scrollRestore";
@@ -128,13 +134,15 @@ type AppShellProps = {
 };
 
 function AppShellChrome({ children }: AppShellProps) {
-  const { user } = useSession();
+  const { user, refreshSession } = useSession();
   const { hideChrome } = useStudyChrome();
   const theme = useTheme();
   const phone = useMediaQuery(theme.breakpoints.down("sm"));
   const medium = useMediaQuery(theme.breakpoints.between("sm", "md"));
   const path = window.location.pathname;
   const isAdmin = !isGuest() && user?.is_admin === true;
+  const impersonation = user?.impersonation ?? null;
+  const [stopBusy, setStopBusy] = useState(false);
   const [streak, setStreak] = useState<number | null>(null);
   const [level, setLevel] = useState<number | null>(null);
   const drawerNav = isAdmin ? [...LEARNER_NAV, ADMIN_NAV] : LEARNER_NAV;
@@ -198,6 +206,42 @@ function AppShellChrome({ children }: AppShellProps) {
     saveShellSidebarCollapsed(next);
   }
 
+  async function onStopImpersonation() {
+    if (stopBusy) return;
+    setStopBusy(true);
+    try {
+      await adminExitImpersonation();
+      await refreshSession();
+      navigate("/admin");
+    } catch {
+      // Exit may 400 if TTL already restored the actor; still refresh UI.
+      try {
+        await refreshSession();
+        navigate("/admin");
+      } catch {
+        setStopBusy(false);
+      }
+    }
+  }
+
+  // Clear stale "Viewing as" after absolute TTL (server may already have restored actor).
+  useEffect(() => {
+    if (!impersonation?.expiresAt) return;
+    const ms = impersonation.expiresAt - Date.now();
+    const clear = async () => {
+      await refreshSession();
+      navigate("/admin");
+    };
+    if (ms <= 0) {
+      void clear();
+      return;
+    }
+    const t = window.setTimeout(() => {
+      void clear();
+    }, ms);
+    return () => window.clearTimeout(t);
+  }, [impersonation?.expiresAt, refreshSession]);
+
   // Zen hides the chip, so refetch on leaving zen instead of after every grade.
   useEffect(() => {
     if (hideChrome || isGuest()) return;
@@ -257,6 +301,30 @@ function AppShellChrome({ children }: AppShellProps) {
           : {}),
       }}
     >
+      {impersonation ? (
+        <Alert
+          severity="warning"
+          sx={{
+            borderRadius: 0,
+            position: "sticky",
+            top: 0,
+            zIndex: (t) => t.zIndex.appBar + 2,
+            flexShrink: 0,
+          }}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              disabled={stopBusy}
+              onClick={() => void onStopImpersonation()}
+            >
+              Stop
+            </Button>
+          }
+        >
+          Viewing as {impersonation.sourceEmail}
+        </Alert>
+      ) : null}
       {routeOverlay || hideGlobalProgress ? null : (
         <GlobalProgressBar top={showMobileChrome ? mobileHeaderPx : 0} />
       )}

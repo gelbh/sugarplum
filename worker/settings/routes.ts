@@ -3,6 +3,7 @@ import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
+import { assertNotImpersonating } from "../admin/impersonation";
 import { encryptSecret, parseSecretMeta } from "../crypto/secrets";
 import {
   isUserLlmProvider,
@@ -89,6 +90,7 @@ settingsRoutes.get("/llm", async (c) => {
 
 settingsRoutes.put("/llm", async (c) => {
   const userId = await requireUser(c);
+  await assertNotImpersonating(c);
 
   let body: { provider?: unknown; apiKey?: unknown; model?: unknown };
   try {
@@ -159,6 +161,7 @@ settingsRoutes.put("/llm", async (c) => {
 
 settingsRoutes.delete("/llm", async (c) => {
   const userId = await requireUser(c);
+  await assertNotImpersonating(c);
   await getDb(c.env)
     .prepare("DELETE FROM user_secrets WHERE user_id = ?")
     .bind(userId)
