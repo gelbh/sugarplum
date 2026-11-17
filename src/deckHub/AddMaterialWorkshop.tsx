@@ -743,47 +743,68 @@ export default function AddMaterialWorkshop({
               onSubmit={guest ? onGuestPaste : onAccountPaste}
               noValidate
             >
-              <Stack spacing={2}>
-                {!guest ? (
+              <Stack spacing={2.5}>
+                <Stack spacing={2}>
+                  {!guest ? (
+                    <TextField
+                      label="Filename (optional)"
+                      value={pasteFilename}
+                      onChange={(ev) => onPasteFilenameChange(ev.target.value)}
+                      fullWidth
+                    />
+                  ) : null}
                   <TextField
-                    label="Filename (optional)"
-                    value={pasteFilename}
-                    onChange={(ev) => onPasteFilenameChange(ev.target.value)}
-                    fullWidth
-                  />
-                ) : null}
-                <TextField
-                  label="Paste text"
-                  value={pasteText}
-                  onChange={(ev) => onPasteTextChange(ev.target.value)}
-                  required
-                  fullWidth
-                  multiline
-                  minRows={6}
-                />
-                {!guest ? (
-                  <TextField
-                    label="Learning objectives (optional)"
-                    name="alsoCover"
-                    value={alsoCover}
-                    onChange={(ev) => onAlsoCoverChange(ev.target.value)}
+                    label="Paste text"
+                    value={pasteText}
+                    onChange={(ev) => onPasteTextChange(ev.target.value)}
+                    required
                     fullWidth
                     multiline
-                    minRows={2}
-                    disabled={materialBusy}
-                    helperText="One objective or focus topic per line, up to 20"
+                    minRows={6}
                   />
-                ) : null}
-                {pasteText.trim() ? (
+                  {!guest ? (
+                    <TextField
+                      label="Learning objectives (optional)"
+                      name="alsoCover"
+                      value={alsoCover}
+                      onChange={(ev) => onAlsoCoverChange(ev.target.value)}
+                      fullWidth
+                      multiline
+                      minRows={2}
+                      disabled={materialBusy}
+                      helperText="One objective or focus topic per line, up to 20"
+                    />
+                  ) : null}
+                </Stack>
+                <Stack
+                  direction="row"
+                  spacing={1.5}
+                  justifyContent="space-between"
+                  alignItems="center"
+                  sx={{
+                    pt: 2,
+                    borderTop: "1px solid",
+                    borderColor: "rgba(232, 216, 199, 0.12)",
+                  }}
+                >
                   <Button
-                    type="submit"
-                    variant="contained"
-                    disabled={materialBusy}
-                    sx={{ alignSelf: "flex-start" }}
+                    onClick={onMethodBack}
+                    disabled={materialBusy || createBusy}
+                    sx={FOOTER_BTN_SX}
                   >
-                    {materialBusy ? "Saving…" : "Generate from paste"}
+                    Back
                   </Button>
-                ) : null}
+                  {pasteText.trim() ? (
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      disabled={materialBusy}
+                      sx={PRIMARY_PILL_SX}
+                    >
+                      {materialBusy ? "Saving…" : "Generate from paste"}
+                    </Button>
+                  ) : null}
+                </Stack>
               </Stack>
             </Box>
           ) : null}
@@ -1070,27 +1091,6 @@ export default function AddMaterialWorkshop({
                 ) : null}
               </Stack>
             </Box>
-          ) : null}
-
-          {activeTab === "paste" ? (
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              sx={{
-                pt: 2,
-                borderTop: "1px solid",
-                borderColor: "rgba(232, 216, 199, 0.12)",
-              }}
-            >
-              <Button
-                onClick={onMethodBack}
-                disabled={materialBusy || createBusy}
-                sx={FOOTER_BTN_SX}
-              >
-                Back
-              </Button>
-            </Stack>
           ) : null}
         </Stack>
       </Box>
