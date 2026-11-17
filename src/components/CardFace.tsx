@@ -2,7 +2,13 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-import type { MouseEvent, ReactNode, Ref } from "react";
+import {
+  useEffect,
+  useRef,
+  type MouseEvent,
+  type ReactNode,
+  type Ref,
+} from "react";
 import { mediaUrl, type StudyRating } from "../api/client";
 import {
   clozeExtraSubtitle,
@@ -10,6 +16,10 @@ import {
   extractClozeAnswer,
   extractClozeAnswers,
 } from "../lib/clozeFormat";
+import {
+  occlusionMaskScrollTop,
+  type OcclusionMaskBox,
+} from "../lib/occlusionLayout";
 import { CardFaceMcqBody } from "./cardFaceMcq";
 import ClozePrompt from "./ClozePrompt";
 import { FaceOverline } from "./faceOverline";
@@ -29,13 +39,7 @@ import {
   faceMotionSx,
 } from "./studyFaceSx";
 
-/** Normalized 0–1 hide_one box over the study image until reveal. */
-export type OcclusionMaskBox = {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-};
+export type { OcclusionMaskBox };
 
 export type OcclusionStudyFace = {
   imageKey: string;
@@ -184,18 +188,66 @@ function StudyMedia({
   mask?: OcclusionMaskBox;
   masked: boolean;
 }) {
+  const shellRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const maskX = mask?.x;
+  const maskY = mask?.y;
+  const maskW = mask?.w;
+  const maskH = mask?.h;
+
+  useEffect(() => {
+    if (
+      maskX === undefined ||
+      maskY === undefined ||
+      maskW === undefined ||
+      maskH === undefined
+    ) {
+      return;
+    }
+    const shell = shellRef.current;
+    const content = contentRef.current;
+    if (!shell || !content) return;
+    shell.scrollTop = occlusionMaskScrollTop(
+      { x: maskX, y: maskY, w: maskW, h: maskH },
+      content.offsetHeight,
+      shell.clientHeight,
+    );
+  }, [imageKey, maskX, maskY, maskW, maskH]);
+
+  const onImageLoad = () => {
+    if (
+      maskX === undefined ||
+      maskY === undefined ||
+      maskW === undefined ||
+      maskH === undefined
+    ) {
+      return;
+    }
+    const shell = shellRef.current;
+    const content = contentRef.current;
+    if (!shell || !content) return;
+    shell.scrollTop = occlusionMaskScrollTop(
+      { x: maskX, y: maskY, w: maskW, h: maskH },
+      content.offsetHeight,
+      shell.clientHeight,
+    );
+  };
+
   if (mask) {
     return (
       <Box
+        ref={shellRef}
         sx={{
-          maxHeight: "42vh",
+          maxHeight: "36vh",
           overflow: "auto",
           width: "100%",
           mb: 2,
           borderRadius: 1,
+          flexShrink: 0,
         }}
       >
         <Box
+          ref={contentRef}
           sx={{
             position: "relative",
             width: "100%",
@@ -208,10 +260,12 @@ function StudyMedia({
             alt="Card media"
             draggable={false}
             onDragStart={(event) => event.preventDefault()}
+            onLoad={onImageLoad}
             sx={{
               display: "block",
               width: "100%",
               height: "auto",
+              maxWidth: "100%",
               userSelect: "none",
             }}
           />
@@ -338,7 +392,20 @@ export default function CardFace({
     <FlipCardPlate
       revealed={revealed}
       onPlateClick={canReveal ? reveal : canFlipBack ? flipBack : undefined}
-      plateSx={{ cursor: canReveal || canFlipBack ? "pointer" : "default" }}
+      plateSx={{
+        cursor: canReveal || canFlipBack ? "pointer" : "default",
+        ...(occlusion
+          ? {
+              // Absolute faces need a definite plate height (faceMotionSx).
+              // Unset class .sp-playing-card aspect-ratio so media-first height wins.
+              aspectRatio: "unset",
+              height: "min(85vh, 640px)",
+              maxHeight: "min(100%, 85vh)",
+              width: "min(100%, 420px)",
+              maxWidth: "min(100%, 420px)",
+            }
+          : {}),
+      }}
       overlineTrailing={notesTrailing}
       front={
         <Box data-card-face-content sx={FACE_BODY_SX}>

@@ -19,6 +19,10 @@ import { clozeExtraSubtitle, extractClozeAnswers } from "../lib/clozeFormat";
 import { backAnswer, isOcclusionFront } from "../lib/draftCardModel";
 import { mediaUrl, type CardDraftView } from "../api/client";
 import {
+  occlusionTileFocusTransform,
+  type OcclusionMaskBox,
+} from "../lib/occlusionLayout";
+import {
   occlusionRevealAnswer,
   pickOcclusionRegion,
 } from "../study/pickOcclusionRegion";
@@ -30,9 +34,121 @@ type Props = {
   variant?: "editor" | "tile";
 };
 
+function OcclusionFocusMedia({
+  imageKey,
+  masks,
+  showMasks,
+  focused,
+}: {
+  imageKey: string;
+  masks: OcclusionMaskBox[];
+  showMasks: boolean;
+  focused: boolean;
+}) {
+  const focusMask = masks[0];
+  return (
+    <Box
+      sx={{
+        position: "relative",
+        width: "100%",
+        mb: focused ? 0 : 1.5,
+        ...(focused
+          ? {
+              // Tile: focus-crop around the study mask.
+              overflow: "hidden",
+              flex: 1,
+              minHeight: 0,
+              flexShrink: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }
+          : {
+              // Editor: leftover face height above the prompt. Container
+              // queries size the img to this slot (plain % max-height cannot
+              // resolve on a shrink-wrapped parent).
+              containerType: "size",
+              display: "grid",
+              placeItems: "center",
+              flex: "1 1 auto",
+              minHeight: 0,
+              width: "100%",
+              overflow: "hidden",
+              borderRadius: 1,
+              mb: 0,
+            }),
+      }}
+    >
+      <Box
+        sx={{
+          position: "relative",
+          lineHeight: 0,
+          ...(focused && focusMask
+            ? {
+                width: "100%",
+                ...occlusionTileFocusTransform(focusMask),
+              }
+            : {
+                // Shrink-wrap both axes to the painted image so % masks align.
+                width: "fit-content",
+                height: "fit-content",
+                maxWidth: "100%",
+                maxHeight: "100%",
+              }),
+        }}
+      >
+        <Box
+          component="img"
+          src={mediaUrl(imageKey)}
+          alt=""
+          draggable={false}
+          sx={
+            focused
+              ? {
+                  display: "block",
+                  width: "100%",
+                  height: "auto",
+                  userSelect: "none",
+                }
+              : {
+                  display: "block",
+                  maxWidth: "100cqw",
+                  maxHeight: "100cqh",
+                  width: "auto",
+                  height: "auto",
+                  borderRadius: 1,
+                  userSelect: "none",
+                }
+          }
+        />
+        {showMasks
+          ? masks.map((mask, i) => (
+              <Box
+                key={`${mask.x}-${mask.y}-${mask.w}-${mask.h}-${i}`}
+                aria-hidden
+                sx={{
+                  position: "absolute",
+                  left: `${mask.x * 100}%`,
+                  top: `${mask.y * 100}%`,
+                  width: `${mask.w * 100}%`,
+                  height: `${mask.h * 100}%`,
+                  borderRadius: "4px",
+                  bgcolor:
+                    "color-mix(in srgb, var(--sp-stage-bg) 92%, transparent)",
+                  border: "1.5px solid",
+                  borderColor: "secondary.main",
+                }}
+              />
+            ))
+          : null}
+      </Box>
+    </Box>
+  );
+}
+
 function previewFront(card: CardDraftView): string {
   if (isOcclusionFront(card.front)) {
-    return card.front.prompt?.trim() || "Identify the hidden region";
+    return card.front.prompt?.trim() ?? "";
   }
   return typeof card.front === "string" ? card.front : "";
 }
@@ -41,7 +157,11 @@ function previewParts(card: CardDraftView): {
   front: string;
   back: string;
   occlusion:
-    | { imageKey: string; mask: { x: number; y: number; w: number; h: number } }
+    | {
+        imageKey: string;
+        masks: OcclusionMaskBox[];
+        studyMask: OcclusionMaskBox | undefined;
+      }
     | undefined;
   imageKey: string | undefined;
 } {
@@ -49,7 +169,7 @@ function previewParts(card: CardDraftView): {
   if (card.type === "occlusion" && isOcclusionFront(card.front)) {
     const region = pickOcclusionRegion(card.id, card.front.regions);
     const imageKey = card.front.image_key.trim() || undefined;
-    if (!region || !imageKey) {
+    if (!imageKey) {
       return {
         front: previewFront(card),
         back: fallback,
@@ -57,12 +177,21 @@ function previewParts(card: CardDraftView): {
         imageKey,
       };
     }
+    const masks = card.front.regions.map((r) => ({
+      x: r.x,
+      y: r.y,
+      w: r.w,
+      h: r.h,
+    }));
     return {
       front: previewFront(card),
       back: occlusionRevealAnswer(region, fallback),
       occlusion: {
         imageKey,
-        mask: { x: region.x, y: region.y, w: region.w, h: region.h },
+        masks,
+        studyMask: region
+          ? { x: region.x, y: region.y, w: region.w, h: region.h }
+          : masks[0],
       },
       imageKey,
     };
@@ -130,6 +259,9 @@ export default function DiyCardPreview({
         border: isTile ? "none" : "1px solid",
         borderColor: isTile ? undefined : "rgba(232, 216, 199, 0.14)",
         bgcolor: isTile ? "transparent" : "rgba(18, 7, 15, 0.35)",
+        minWidth: isTile ? undefined : 0,
+        maxWidth: isTile ? undefined : "100%",
+        boxSizing: "border-box",
       }}
     >
       {isTile ? null : (
@@ -171,12 +303,27 @@ export default function DiyCardPreview({
       <Box
         sx={{
           width: "100%",
-          maxWidth: isTile ? "none" : card.type === "mcq" ? 280 : 240,
+          maxWidth: isTile
+            ? "none"
+            : card.type === "mcq"
+              ? 280
+              : card.type === "occlusion"
+                ? 280
+                : 240,
           mx: "auto",
+          // Width-driven aspect so the plate fits the sticky 280px lane
+          // (height-driven 5/7 from .sp-playing-card overflows and clips).
           aspectRatio: "var(--sp-card-aspect)",
-          maxHeight: isTile ? "none" : card.type === "mcq" ? 360 : 300,
+          maxHeight: isTile
+            ? "none"
+            : card.type === "mcq"
+              ? 360
+              : card.type === "occlusion"
+                ? "min(420px, 70vh)"
+                : 300,
           height: isTile ? "100%" : undefined,
           minHeight: 0,
+          minWidth: 0,
         }}
       >
         {empty ? (
@@ -237,94 +384,129 @@ export default function DiyCardPreview({
                     maxHeight: "100%",
                     minHeight: 0,
                   }
-                : {}),
+                : card.type === "occlusion"
+                  ? {
+                      // Beat brand.css `.sp-playing-card { aspect-ratio: 5/7 }`
+                      // (same specificity as emotion otherwise loses by order).
+                      width: "100%",
+                      maxWidth: "100%",
+                      height: "100%",
+                      maxHeight: "100%",
+                      minWidth: 0,
+                      "&&": { aspectRatio: "auto" },
+                    }
+                  : {}),
             }}
+            faceSx={
+              card.type === "occlusion" && !isTile
+                ? { overflow: "hidden", "&&": { aspectRatio: "auto" } }
+                : undefined
+            }
             front={
               <Box data-card-face-content sx={faceBodySx}>
-                <Box sx={PROMPT_SX}>
-                  {parts.occlusion ? (
-                    <Box sx={{ position: "relative", width: "100%", mb: 1.5 }}>
+                {parts.occlusion && !isTile ? (
+                  <>
+                    <OcclusionFocusMedia
+                      imageKey={parts.occlusion.imageKey}
+                      masks={parts.occlusion.masks}
+                      showMasks
+                      focused={false}
+                    />
+                    {parts.front.trim() ? (
+                      <Typography
+                        component="p"
+                        sx={{
+                          ...FACE_PROMPT_TEXT_SX,
+                          flexShrink: 0,
+                          mt: 1,
+                          fontSize: { xs: "0.95rem", sm: "1.05rem" },
+                        }}
+                      >
+                        {parts.front}
+                      </Typography>
+                    ) : null}
+                  </>
+                ) : (
+                  <Box sx={PROMPT_SX}>
+                    {parts.occlusion ? (
+                      <OcclusionFocusMedia
+                        imageKey={parts.occlusion.imageKey}
+                        masks={
+                          isTile && parts.occlusion.studyMask
+                            ? [parts.occlusion.studyMask]
+                            : parts.occlusion.masks
+                        }
+                        showMasks
+                        focused={isTile}
+                      />
+                    ) : parts.imageKey ? (
                       <Box
                         component="img"
-                        src={mediaUrl(parts.occlusion.imageKey)}
+                        src={mediaUrl(parts.imageKey)}
                         alt=""
                         draggable={false}
-                        sx={{
-                          display: "block",
-                          width: "100%",
-                          height: "auto",
-                          borderRadius: 1,
-                        }}
+                        sx={FACE_MEDIA_SX}
                       />
-                      <Box
-                        aria-hidden
-                        sx={{
-                          position: "absolute",
-                          left: `${parts.occlusion.mask.x * 100}%`,
-                          top: `${parts.occlusion.mask.y * 100}%`,
-                          width: `${parts.occlusion.mask.w * 100}%`,
-                          height: `${parts.occlusion.mask.h * 100}%`,
-                          borderRadius: "4px",
-                          bgcolor:
-                            "color-mix(in srgb, var(--sp-stage-bg) 92%, transparent)",
-                          border: "1.5px solid",
-                          borderColor: "secondary.main",
-                        }}
-                      />
-                    </Box>
-                  ) : parts.imageKey ? (
-                    <Box
-                      component="img"
-                      src={mediaUrl(parts.imageKey)}
-                      alt=""
-                      draggable={false}
-                      sx={FACE_MEDIA_SX}
-                    />
-                  ) : null}
-                  {parts.front.trim() ? (
-                    <Typography component="p" sx={FACE_PROMPT_TEXT_SX}>
-                      {isCloze ? (
-                        <ClozePrompt front={parts.front} />
-                      ) : (
-                        parts.front
-                      )}
-                    </Typography>
-                  ) : (
-                    <Typography
-                      component="p"
-                      sx={{ ...FACE_PROMPT_TEXT_SX, opacity: 0.45 }}
-                    >
-                      Front
-                    </Typography>
-                  )}
-                </Box>
+                    ) : null}
+                    {parts.front.trim() ? (
+                      <Typography component="p" sx={FACE_PROMPT_TEXT_SX}>
+                        {isCloze ? (
+                          <ClozePrompt front={parts.front} />
+                        ) : (
+                          parts.front
+                        )}
+                      </Typography>
+                    ) : (
+                      <Typography
+                        component="p"
+                        sx={{ ...FACE_PROMPT_TEXT_SX, opacity: 0.45 }}
+                      >
+                        Front
+                      </Typography>
+                    )}
+                  </Box>
+                )}
               </Box>
             }
             back={
               <Box data-card-face-content sx={faceBodySx}>
-                {parts.occlusion && parts.imageKey ? (
-                  <Box
-                    component="img"
-                    src={mediaUrl(parts.imageKey)}
-                    alt=""
-                    draggable={false}
-                    sx={{ ...FACE_MEDIA_SX, mb: 1.5 }}
+                {parts.occlusion && parts.imageKey && !isTile ? (
+                  <OcclusionFocusMedia
+                    imageKey={parts.imageKey}
+                    masks={parts.occlusion.masks}
+                    showMasks={false}
+                    focused={false}
                   />
-                ) : !isCloze && parts.front.trim() ? (
-                  <Typography component="p" sx={FACE_FRONT_ECHO_SX}>
-                    {parts.front}
-                  </Typography>
-                ) : null}
-                <Box sx={PROMPT_SX}>
-                  <Typography component="p" sx={FACE_ANSWER_TEXT_SX}>
-                    {answerText.trim() || "Back"}
-                  </Typography>
-                  {clozeExtra ? (
-                    <Typography component="p" sx={FACE_HINT_TEXT_SX}>
-                      {clozeExtra}
-                    </Typography>
-                  ) : null}
-                </Box>
+                ) : (
+                  <>
+                    {parts.occlusion && parts.imageKey ? (
+                      <OcclusionFocusMedia
+                        imageKey={parts.imageKey}
+                        masks={
+                          isTile && parts.occlusion.studyMask
+                            ? [parts.occlusion.studyMask]
+                            : parts.occlusion.masks
+                        }
+                        showMasks={false}
+                        focused={isTile}
+                      />
+                    ) : !isCloze && parts.front.trim() ? (
+                      <Typography component="p" sx={FACE_FRONT_ECHO_SX}>
+                        {parts.front}
+                      </Typography>
+                    ) : null}
+                    <Box sx={PROMPT_SX}>
+                      <Typography component="p" sx={FACE_ANSWER_TEXT_SX}>
+                        {answerText.trim() || "Back"}
+                      </Typography>
+                      {clozeExtra ? (
+                        <Typography component="p" sx={FACE_HINT_TEXT_SX}>
+                          {clozeExtra}
+                        </Typography>
+                      ) : null}
+                    </Box>
+                  </>
+                )}
               </Box>
             }
           />
