@@ -13,7 +13,9 @@ import {
   collectUserR2Keys,
   loadAdminUser,
   refuseAllowlistedTarget,
+  refuseSandboxTarget,
 } from "./wipe";
+import { exitImpersonation, startImpersonation } from "./impersonation";
 import { EXPORT_MAX_CHARS, buildUserExportPayload } from "./export";
 import {
   LIST_USERS_SQL,
@@ -280,11 +282,25 @@ adminRoutes.get("/users/:id", async (c) => {
   return c.json(detail);
 });
 
+adminRoutes.post("/users/:id/impersonate", async (c) => {
+  await requireAdmin(c);
+  const id = c.req.param("id");
+  const impersonation = await startImpersonation(c, id);
+  return c.json({ ok: true, impersonation });
+});
+
+adminRoutes.post("/impersonation/exit", async (c) => {
+  await requireAdmin(c);
+  await exitImpersonation(c);
+  return c.json({ ok: true });
+});
+
 adminRoutes.post("/users/:id/disable", async (c) => {
   await requireAdmin(c);
   const id = c.req.param("id");
   const db = getDb(c.env);
   const user = await loadAdminUser(db, id);
+  refuseSandboxTarget(user);
   refuseAllowlistedTarget(user.email, c.env.ADMIN_EMAILS);
   const disabledAt = new Date().toISOString();
   await db
@@ -324,6 +340,7 @@ adminRoutes.post("/users/:id/wipe", async (c) => {
       : "";
   const db = getDb(c.env);
   const user = await loadAdminUser(db, id);
+  refuseSandboxTarget(user);
   refuseAllowlistedTarget(user.email, c.env.ADMIN_EMAILS);
   if (confirmEmail.trim().toLowerCase() !== user.email.trim().toLowerCase()) {
     throw new HTTPException(400, { message: "confirmEmail mismatch" });
@@ -345,6 +362,7 @@ adminRoutes.get("/users/:id/export", async (c) => {
   const id = c.req.param("id");
   const db = getDb(c.env);
   const user = await loadAdminUser(db, id);
+  refuseSandboxTarget(user);
 
   const payload = await buildUserExportPayload(c.env, db, user);
 

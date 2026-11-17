@@ -4,7 +4,15 @@ import { isAdminEmail, parseAdminEmails } from "./allowlist";
 import type { AdminUserRow } from "./types";
 
 const USER_EMAIL_SQL =
-  "SELECT id, email, oauth_subject, created_at, disabled_at FROM users WHERE id = ?";
+  "SELECT id, email, oauth_subject, created_at, disabled_at, sandbox_of FROM users WHERE id = ?";
+
+export function refuseSandboxTarget(user: {
+  sandbox_of?: string | null;
+}) {
+  if (user.sandbox_of != null) {
+    throw new HTTPException(400, { message: "Cannot modify sandbox user" });
+  }
+}
 
 const WIPE_MATERIAL_KEYS_SQL = `
 SELECT m.r2_key FROM materials m

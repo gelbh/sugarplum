@@ -42,6 +42,7 @@ type UserRow = {
   oauth_subject: string | null;
   created_at: string;
   disabled_at?: string | null;
+  sandbox_of?: string | null;
 };
 
 type SubjectRow = {
@@ -209,7 +210,17 @@ export type ReviewLogRow = {
   state_json: string;
 };
 
-type SessionRecord = { userId: string; expiresAt: number };
+type SessionRecord = {
+  userId: string;
+  expiresAt: number;
+  actorUserId?: string;
+  impersonation?: {
+    sourceUserId: string;
+    sandboxUserId: string;
+    sourceEmail: string;
+    startedAt: number;
+  };
+};
 type ExportJobRow = {
   id: string;
   user_id: string;
@@ -235,6 +246,7 @@ export type TestEnv = Env & {
   seedDeck: (row: DeckRow) => void;
   seedMaterial: (row: MaterialRow) => void;
   seedSession: (id: string, userId: string, ttlMs?: number) => void;
+  seedSessionRecord: (id: string, record: SessionRecord) => void;
   seedUserSecret: (row: UserSecretRow) => void;
   seedUserStudyPrefs: (row: UserStudyPrefsRow) => void;
   seedUserStudyDay: (row: UserStudyDayRow) => void;
@@ -522,6 +534,23 @@ export function createTestEnv(opts?: {
         }
         if (
           normalized.startsWith(
+            "SELECT id, email, oauth_subject, created_at, disabled_at, sandbox_of FROM users WHERE id =",
+          )
+        ) {
+          const u = users.get(bound[0] as string);
+          return u
+            ? ({
+                id: u.id,
+                email: u.email,
+                oauth_subject: u.oauth_subject,
+                created_at: u.created_at,
+                disabled_at: u.disabled_at ?? null,
+                sandbox_of: u.sandbox_of ?? null,
+              } as T)
+            : null;
+        }
+        if (
+          normalized.startsWith(
             "SELECT id, email, oauth_subject, created_at, disabled_at FROM users WHERE id =",
           )
         ) {
@@ -533,6 +562,7 @@ export function createTestEnv(opts?: {
                 oauth_subject: u.oauth_subject,
                 created_at: u.created_at,
                 disabled_at: u.disabled_at ?? null,
+                sandbox_of: u.sandbox_of ?? null,
               } as T)
             : null;
         }
@@ -2761,8 +2791,13 @@ export function createTestEnv(opts?: {
           }
           return { success: true, meta: { changes: 0 } } as D1Result;
         } else if (normalized.startsWith("INSERT INTO users")) {
-          const [id, email, password_hash, oauth_subject, created_at] =
-            bound as [string, string, string | null, string | null, string];
+          const id = bound[0] as string;
+          const email = bound[1] as string;
+          const password_hash = bound[2] as string | null;
+          const oauth_subject = bound[3] as string | null;
+          const created_at = bound[4] as string;
+          const sandbox_of =
+            bound.length >= 6 ? (bound[5] as string | null) : null;
           for (const existing of users.values()) {
             if (existing.email === email) {
               throw new Error("UNIQUE constraint failed: users.email");
@@ -2781,6 +2816,7 @@ export function createTestEnv(opts?: {
             oauth_subject,
             created_at,
             disabled_at: null,
+            sandbox_of: sandbox_of ?? null,
           });
         } else if (normalized.startsWith("UPDATE users SET disabled_at =")) {
           const [disabled_at, id] = bound as [string | null, string];
@@ -4760,6 +4796,7 @@ export function createTestEnv(opts?: {
       users.set(row.id, {
         ...row,
         disabled_at: row.disabled_at ?? null,
+        sandbox_of: row.sandbox_of ?? null,
       });
     },
     seedSubject(row) {
@@ -4779,6 +4816,9 @@ export function createTestEnv(opts?: {
         userId,
         expiresAt: Date.now() + ttlMs,
       };
+      sessions.set(id, JSON.stringify(record));
+    },
+    seedSessionRecord(id, record) {
       sessions.set(id, JSON.stringify(record));
     },
     seedUserSecret(row) {

@@ -30,7 +30,9 @@ import {
 import {
   createSession,
   destroySession,
+  IMPERSONATION_TTL_SECONDS,
   peekSessionUserId,
+  readSessionRecord,
   requireUser,
   sessionCookieSecure,
   type AuthVariables,
@@ -186,6 +188,37 @@ authRoutes.post("/logout", async (c) => {
 authRoutes.get("/me", async (c) => {
   const userId = await requireUser(c);
   const db = getDb(c.env);
+  const session = await readSessionRecord(c);
+  const imp = session?.record.impersonation;
+
+  if (imp && session?.record.actorUserId) {
+    const [source, actor] = await Promise.all([
+      db
+        .prepare("SELECT id, email, oauth_subject FROM users WHERE id = ?")
+        .bind(imp.sourceUserId)
+        .first<{ id: string; email: string; oauth_subject: string | null }>(),
+      db
+        .prepare("SELECT id, email, oauth_subject FROM users WHERE id = ?")
+        .bind(session.record.actorUserId)
+        .first<{ id: string; email: string; oauth_subject: string | null }>(),
+    ]);
+    if (!source || !actor) {
+      throw new HTTPException(401, { message: "Unauthorized" });
+    }
+    return c.json({
+      id: imp.sourceUserId,
+      email: imp.sourceEmail,
+      google_linked: source.oauth_subject != null,
+      is_admin: isAdminUser(actor, c.env.ADMIN_EMAILS),
+      impersonation: {
+        sourceUserId: imp.sourceUserId,
+        sourceEmail: imp.sourceEmail,
+        startedAt: imp.startedAt,
+        expiresAt: imp.startedAt + IMPERSONATION_TTL_SECONDS * 1000,
+      },
+    });
+  }
+
   const user = await db
     .prepare("SELECT id, email, oauth_subject FROM users WHERE id = ?")
     .bind(userId)
