@@ -7,10 +7,21 @@ import { getDb } from "../db/client";
 export const SESSION_COOKIE = "sp_session";
 /** 30 days in seconds */
 export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
+/** Absolute impersonation window from startedAt (independent of cookie TTL). */
+export const IMPERSONATION_TTL_SECONDS = 60 * 60;
+
+export type ImpersonationMeta = {
+  sourceUserId: string;
+  sandboxUserId: string;
+  sourceEmail: string;
+  startedAt: number;
+};
 
 export type SessionRecord = {
   userId: string;
   expiresAt: number;
+  actorUserId?: string;
+  impersonation?: ImpersonationMeta;
 };
 
 export type AuthVariables = {
@@ -66,9 +77,39 @@ export async function destroySession(c: AuthContext): Promise<void> {
   deleteCookie(c, SESSION_COOKIE, sessionCookieAttrs(c));
 }
 
+/** Read the current cookie session record from KV (no throw). */
+export async function readSessionRecord(c: AuthContext): Promise<{
+  id: string;
+  record: SessionRecord;
+} | null> {
+  const id = getCookie(c, SESSION_COOKIE);
+  if (!id) return null;
+  const raw = await c.env.SESSIONS.get(id);
+  if (!raw) return null;
+  const record = parseSessionRecord(raw);
+  if (!record || !isSessionActive(record)) return null;
+  return { id, record };
+}
+
+/** Rewrite a session record in KV, preserving expiresAt via remaining TTL. */
+export async function writeSessionRecord(
+  c: AuthContext,
+  sessionId: string,
+  record: SessionRecord,
+): Promise<void> {
+  const ttlSeconds = Math.max(
+    60,
+    Math.ceil((record.expiresAt - Date.now()) / 1000),
+  );
+  await c.env.SESSIONS.put(sessionId, JSON.stringify(record), {
+    expirationTtl: Math.min(ttlSeconds, SESSION_TTL_SECONDS),
+  });
+}
+
 /**
  * Load session from cookie + KV. Throws 401 if missing/expired.
  * Sets `userId` on the context and returns it.
+ * Expired impersonation tears down the sandbox and restores the actor.
  */
 export async function requireUser(c: AuthContext): Promise<string> {
   const id = getCookie(c, SESSION_COOKIE);
@@ -97,6 +138,18 @@ export async function requireUser(c: AuthContext): Promise<string> {
     await c.env.SESSIONS.delete(id);
     deleteCookie(c, SESSION_COOKIE, sessionCookieAttrs(c));
     throw new HTTPException(401, { message: "Unauthorized" });
+  }
+
+  if (
+    record.impersonation &&
+    Date.now() >
+      record.impersonation.startedAt + IMPERSONATION_TTL_SECONDS * 1000
+  ) {
+    // Dynamic import avoids a session ↔ impersonation cycle at module init.
+    const { teardownImpersonationSession } = await import(
+      "../admin/impersonation"
+    );
+    record = await teardownImpersonationSession(c, id, record);
   }
 
   const user = await getDb(c.env)
