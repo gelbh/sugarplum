@@ -25,12 +25,14 @@ import {
   adminEnableUser,
   adminExportUser,
   adminGetUser,
+  adminImpersonateUser,
   adminWipeUser,
   ApiError,
   type AdminUserDetail,
 } from "../api/client";
 import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
+import { useSession } from "../session/SessionContext";
 
 const RETENTION_NOTE =
   "No automatic deletion; wipe inactive accounts manually.";
@@ -57,6 +59,7 @@ function handleAdminAuthError(err: unknown): "401" | "403" | "other" {
 type Props = { userId: string };
 
 export default function AdminUserPage({ userId }: Props) {
+  const { user, refreshSession } = useSession();
   const [detail, setDetail] = useState<AdminUserDetail | null>(null);
   const [forbidden, setForbidden] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -168,6 +171,29 @@ export default function AdminUserPage({ userId }: Props) {
     }
   }
 
+  async function onViewAs() {
+    if (!detail || actionBusy) return;
+    setActionBusy(true);
+    setActionError(null);
+    try {
+      await adminImpersonateUser(detail.id);
+      await refreshSession();
+      navigate("/");
+    } catch (err) {
+      const auth = handleAdminAuthError(err);
+      if (auth === "401") return;
+      if (auth === "403") {
+        setForbidden(true);
+        return;
+      }
+      setActionError(
+        err instanceof ApiError ? err.message : "View as user failed",
+      );
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
   function openWipe() {
     setWipeEmail("");
     setWipeError(null);
@@ -237,6 +263,13 @@ export default function AdminUserPage({ userId }: Props) {
           {detail ? (
             <>
               <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                <Button
+                  variant="contained"
+                  disabled={actionBusy || detail.id === user?.id}
+                  onClick={onViewAs}
+                >
+                  View as user
+                </Button>
                 {detail.disabled_at == null ? (
                   <Button
                     variant="outlined"

@@ -15,6 +15,12 @@ export type AuthUser = {
   email: string;
   google_linked?: boolean;
   is_admin?: boolean;
+  impersonation?: {
+    sourceUserId: string;
+    sourceEmail: string;
+    startedAt: number;
+    expiresAt?: number;
+  } | null;
 };
 
 export type CalendarStatus = {
