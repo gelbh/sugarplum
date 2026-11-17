@@ -7,7 +7,7 @@ const USER_EMAIL_SQL =
   "SELECT id, email, oauth_subject, created_at, disabled_at, sandbox_of FROM users WHERE id = ?";
 
 export function refuseSandboxTarget(user: {
-  sandbox_of?: string | null;
+  sandbox_of: string | null;
 }) {
   if (user.sandbox_of != null) {
     throw new HTTPException(400, { message: "Cannot modify sandbox user" });

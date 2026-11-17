@@ -57,6 +57,20 @@ export async function createSession(
   c: AuthContext,
   userId: string,
 ): Promise<string> {
+  // Abandon any prior impersonation sandbox before minting a new session.
+  const priorId = getCookie(c, SESSION_COOKIE);
+  if (priorId) {
+    const priorRaw = await c.env.SESSIONS.get(priorId);
+    const prior = priorRaw ? parseSessionRecord(priorRaw) : null;
+    if (prior?.impersonation) {
+      const { abandonImpersonationSandbox } = await import(
+        "../admin/impersonation"
+      );
+      await abandonImpersonationSandbox(c, prior);
+    }
+    await c.env.SESSIONS.delete(priorId);
+  }
+
   const id = randomSessionId();
   const expiresAt = Date.now() + SESSION_TTL_SECONDS * 1000;
   const record: SessionRecord = { userId, expiresAt };
@@ -73,7 +87,17 @@ export async function createSession(
 /** Delete the session from KV and clear the cookie. */
 export async function destroySession(c: AuthContext): Promise<void> {
   const id = getCookie(c, SESSION_COOKIE);
-  if (id) await c.env.SESSIONS.delete(id);
+  if (id) {
+    const raw = await c.env.SESSIONS.get(id);
+    const record = raw ? parseSessionRecord(raw) : null;
+    if (record?.impersonation) {
+      const { abandonImpersonationSandbox } = await import(
+        "../admin/impersonation"
+      );
+      await abandonImpersonationSandbox(c, record);
+    }
+    await c.env.SESSIONS.delete(id);
+  }
   deleteCookie(c, SESSION_COOKIE, sessionCookieAttrs(c));
 }
 
@@ -152,10 +176,25 @@ export async function requireUser(c: AuthContext): Promise<string> {
     record = await teardownImpersonationSession(c, id, record);
   }
 
-  const user = await getDb(c.env)
+  let user = await getDb(c.env)
     .prepare("SELECT disabled_at FROM users WHERE id = ?")
     .bind(record.userId)
     .first<{ disabled_at: string | null }>();
+  if (
+    (!user || user.disabled_at != null) &&
+    record.impersonation &&
+    record.actorUserId
+  ) {
+    // Sandbox gone mid-session: restore actor instead of hard logout.
+    const { teardownImpersonationSession } = await import(
+      "../admin/impersonation"
+    );
+    record = await teardownImpersonationSession(c, id, record);
+    user = await getDb(c.env)
+      .prepare("SELECT disabled_at FROM users WHERE id = ?")
+      .bind(record.userId)
+      .first<{ disabled_at: string | null }>();
+  }
   if (!user || user.disabled_at != null) {
     await destroySession(c);
     throw new HTTPException(401, { message: "Unauthorized" });

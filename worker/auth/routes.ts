@@ -202,8 +202,21 @@ authRoutes.get("/me", async (c) => {
         .bind(session.record.actorUserId)
         .first<{ id: string; email: string; oauth_subject: string | null }>(),
     ]);
-    if (!source || !actor) {
+    if (!actor) {
       throw new HTTPException(401, { message: "Unauthorized" });
+    }
+    if (!source) {
+      // Source wiped mid-act-as: tear down and return actor /me.
+      const { teardownImpersonationSession } = await import(
+        "../admin/impersonation"
+      );
+      await teardownImpersonationSession(c, session.id, session.record);
+      return c.json({
+        id: actor.id,
+        email: actor.email,
+        google_linked: actor.oauth_subject != null,
+        is_admin: isAdminUser(actor, c.env.ADMIN_EMAILS),
+      });
     }
     return c.json({
       id: imp.sourceUserId,

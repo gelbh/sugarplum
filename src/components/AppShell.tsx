@@ -214,9 +214,33 @@ function AppShellChrome({ children }: AppShellProps) {
       await refreshSession();
       navigate("/admin");
     } catch {
-      setStopBusy(false);
+      // Exit may 400 if TTL already restored the actor; still refresh UI.
+      try {
+        await refreshSession();
+        navigate("/admin");
+      } catch {
+        setStopBusy(false);
+      }
     }
   }
+
+  // Clear stale "Viewing as" after absolute TTL (server may already have restored actor).
+  useEffect(() => {
+    if (!impersonation?.expiresAt) return;
+    const ms = impersonation.expiresAt - Date.now();
+    const clear = async () => {
+      await refreshSession();
+      navigate("/admin");
+    };
+    if (ms <= 0) {
+      void clear();
+      return;
+    }
+    const t = window.setTimeout(() => {
+      void clear();
+    }, ms);
+    return () => window.clearTimeout(t);
+  }, [impersonation?.expiresAt, refreshSession]);
 
   // Zen hides the chip, so refetch on leaving zen instead of after every grade.
   useEffect(() => {

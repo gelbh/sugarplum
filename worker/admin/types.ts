@@ -9,7 +9,7 @@ export type AdminUserRow = {
   oauth_subject: string | null;
   created_at: string;
   disabled_at: string | null;
-  sandbox_of?: string | null;
+  sandbox_of: string | null;
 };
 
 export type AdminUserListItem = {

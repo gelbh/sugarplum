@@ -49,8 +49,8 @@ adminRoutes.get("/overview", async (c) => {
   const row = await getDb(c.env)
     .prepare(
       `SELECT
-        (SELECT COUNT(*) FROM users) AS user_count,
-        (SELECT COUNT(*) FROM users WHERE created_at >= ?) AS created_last_7d,
+        (SELECT COUNT(*) FROM users WHERE sandbox_of IS NULL) AS user_count,
+        (SELECT COUNT(*) FROM users WHERE sandbox_of IS NULL AND created_at >= ?) AS created_last_7d,
         (SELECT COALESCE(SUM(COALESCE(tokens_total, 0)), 0) FROM usage_events) AS tokens_all_time,
         (SELECT COALESCE(SUM(COALESCE(tokens_total, 0)), 0) FROM usage_events
            WHERE created_at >= ?) AS tokens_30d,
@@ -314,7 +314,8 @@ adminRoutes.post("/users/:id/enable", async (c) => {
   await requireAdmin(c);
   const id = c.req.param("id");
   const db = getDb(c.env);
-  await loadAdminUser(db, id);
+  const user = await loadAdminUser(db, id);
+  refuseSandboxTarget(user);
   await db
     .prepare("UPDATE users SET disabled_at = ? WHERE id = ?")
     .bind(null, id)

@@ -261,6 +261,7 @@ export type TestEnv = Env & {
   getExportJobs: () => ExportJobRow[];
   getGenerationJobs: () => GenerationJobRow[];
   getUserSecrets: () => UserSecretRow[];
+  getUsers: () => UserRow[];
   getUserStudyPrefs: () => UserStudyPrefsRow[];
   getCards: () => CardRow[];
   getSchedules: () => ScheduleRow[];
@@ -1212,7 +1213,9 @@ export function createTestEnv(opts?: {
           const cutoff30 =
             (bound[1] as string | undefined) ??
             new Date(Date.now() - 30 * 864e5).toISOString();
-          const allUsers = [...users.values()];
+          const allUsers = [...users.values()].filter(
+            (u) => (u.sandbox_of ?? null) == null,
+          );
           const createdLast7d = allUsers.filter(
             (u) => u.created_at >= cutoff7,
           ).length;
@@ -1795,7 +1798,9 @@ export function createTestEnv(opts?: {
             string,
             number,
           ];
-          let rows = [...users.values()];
+          let rows = [...users.values()].filter(
+            (u) => (u.sandbox_of ?? null) == null,
+          );
           if (q !== "") {
             rows = rows.filter((u) => emailMatchesAdminListQuery(u.email, q));
           }
@@ -4855,6 +4860,7 @@ export function createTestEnv(opts?: {
     getExportJobs: () => [...exportJobs.values()],
     getGenerationJobs: () => [...generationJobs.values()],
     getUserSecrets: () => [...userSecrets.values()],
+    getUsers: () => [...users.values()],
     getUserStudyPrefs: () => [...userStudyPrefs.values()],
     getCards: () => [...cards.values()],
     getSchedules: () => [...schedules.values()],

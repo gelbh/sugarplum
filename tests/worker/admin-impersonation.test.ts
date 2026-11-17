@@ -330,11 +330,14 @@ describe("admin impersonation", () => {
   it("GET /api/admin/users succeeds for actor during impersonation", async () => {
     const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
     seedAdminAndLearner(env);
-    await app.request(
+    const start = await app.request(
       "/api/admin/users/u-alice/impersonate",
       { method: "POST", headers: adminHeaders },
       env,
     );
+    const startBody = (await start.json()) as {
+      impersonation: { sandboxUserId: string };
+    };
     const res = await app.request(
       "/api/admin/users",
       { headers: { cookie: `${SESSION_COOKIE}=s-admin` } },
@@ -343,5 +346,31 @@ describe("admin impersonation", () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as { users: { id: string }[] };
     expect(body.users.some((u) => u.id === "u-alice")).toBe(true);
+    expect(
+      body.users.some((u) => u.id === startBody.impersonation.sandboxUserId),
+    ).toBe(false);
+  });
+
+  it("logout deletes sandbox user", async () => {
+    const env = createTestEnv({ adminEmails: ADMIN_EMAIL });
+    seedAdminAndLearner(env);
+    const start = await app.request(
+      "/api/admin/users/u-alice/impersonate",
+      { method: "POST", headers: adminHeaders },
+      env,
+    );
+    const startBody = (await start.json()) as {
+      impersonation: { sandboxUserId: string };
+    };
+    const sandboxId = startBody.impersonation.sandboxUserId;
+
+    const logout = await app.request(
+      "/api/auth/logout",
+      { method: "POST", headers: adminHeaders },
+      env,
+    );
+    expect(logout.status).toBe(200);
+    expect(env.getUsers().some((u) => u.id === sandboxId)).toBe(false);
+    expect(await env.SESSIONS.get("s-admin")).toBeNull();
   });
 });

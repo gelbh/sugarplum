@@ -62,6 +62,30 @@ function logImpersonationStopped(meta: {
   );
 }
 
+/** Delete sandbox user only (no R2 collector, no session rewrite). For logout. */
+export async function abandonImpersonationSandbox(
+  c: AdminContext,
+  record: SessionRecord,
+): Promise<void> {
+  if (!record.impersonation || !record.actorUserId) return;
+  const { sandboxUserId, sourceUserId, startedAt } = record.impersonation;
+  if (record.userId !== sandboxUserId) return;
+  try {
+    await getDb(c.env)
+      .prepare("DELETE FROM users WHERE id = ? AND sandbox_of IS NOT NULL")
+      .bind(sandboxUserId)
+      .run();
+  } catch {
+    /* best-effort */
+  }
+  logImpersonationStopped({
+    actorUserId: record.actorUserId,
+    sourceUserId,
+    sandboxUserId,
+    startedAt,
+  });
+}
+
 /** Delete sandbox user (no R2 collector) and restore actor on the same session. */
 export async function teardownImpersonationSession(
   c: AdminContext,
@@ -72,10 +96,18 @@ export async function teardownImpersonationSession(
 
   const { sandboxUserId, sourceUserId, startedAt } = record.impersonation;
   const actorUserId = record.actorUserId;
+  if (record.userId !== sandboxUserId) {
+    const next: SessionRecord = {
+      userId: actorUserId,
+      expiresAt: record.expiresAt,
+    };
+    await writeSessionRecord(c, sessionId, next);
+    return next;
+  }
 
   try {
     await getDb(c.env)
-      .prepare("DELETE FROM users WHERE id = ?")
+      .prepare("DELETE FROM users WHERE id = ? AND sandbox_of IS NOT NULL")
       .bind(sandboxUserId)
       .run();
   } catch {
@@ -158,7 +190,19 @@ export async function startImpersonation(
     actorUserId: actor.userId,
     impersonation: meta,
   };
-  await writeSessionRecord(c, session.id, next);
+  try {
+    await writeSessionRecord(c, session.id, next);
+  } catch (err) {
+    try {
+      await db
+        .prepare("DELETE FROM users WHERE id = ? AND sandbox_of IS NOT NULL")
+        .bind(sandboxUserId)
+        .run();
+    } catch {
+      /* compensating delete best-effort */
+    }
+    throw err;
+  }
   logImpersonationStarted({
     actorUserId: actor.userId,
     sourceUserId,
