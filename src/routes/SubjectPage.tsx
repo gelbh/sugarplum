@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import ButtonBase from "@mui/material/ButtonBase";
 import Container from "@mui/material/Container";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -26,6 +25,7 @@ import CoverPickerPanel from "../components/CoverPickerPanel";
 import BoardTile from "../library/board/BoardTile";
 import LibraryBoard from "../library/board/LibraryBoard";
 import { coverPlaceholderColor } from "../library/board/coverPlaceholder";
+import CoverHeroThumb from "../library/CoverHeroThumb";
 import { LibraryCreateSubjectPanel } from "../library/LibraryCreateSubjectPanel";
 import StageBreadcrumbs from "../library/StageBreadcrumbs";
 import {
@@ -492,83 +492,21 @@ export default function SubjectPage({ subjectId }: Props) {
                   alignItems="flex-start"
                   sx={{ flex: 1, minWidth: 0 }}
                 >
-                  <Stack
-                    spacing={0.75}
-                    alignItems="stretch"
-                    sx={{ flexShrink: 0, width: { xs: 104, sm: 132 } }}
-                  >
-                    <Box
-                      component={!guest && subject ? ButtonBase : "div"}
-                      {...(!guest && subject
-                        ? {
-                            focusRipple: true,
-                            onClick: openCoverPicker,
-                            "aria-label": subjectCover
-                              ? `Change cover for ${subject.title}`
-                              : `Add cover for ${subject.title}`,
-                          }
-                        : {})}
-                      sx={{
-                        position: "relative",
-                        width: "100%",
-                        aspectRatio: "3 / 4",
-                        borderRadius: 2,
-                        overflow: "hidden",
-                        border: 1,
-                        borderColor: "rgba(232, 216, 199, 0.16)",
-                        bgcolor: coverPlaceholderColor(
-                          subject?.id ?? subjectId,
-                        ),
-                        boxShadow: "0 14px 36px rgba(0,0,0,0.42)",
-                        textAlign: "left",
-                        display: "block",
-                        transition:
-                          "transform 180ms ease, box-shadow 180ms ease",
-                        "@media (prefers-reduced-motion: reduce)": {
-                          transition: "none",
-                        },
-                        ...(!guest && subject
-                          ? {
-                              "&:hover, &:focus-visible": {
-                                transform: "translateY(-2px) scale(1.02)",
-                                boxShadow: "0 18px 44px rgba(0,0,0,0.5)",
-                              },
-                              "@media (prefers-reduced-motion: reduce)": {
-                                "&:hover, &:focus-visible": {
-                                  transform: "none",
-                                },
-                              },
-                            }
-                          : {}),
-                      }}
-                    >
-                      {subjectCover?.imageUrl ? (
-                        <Box
-                          component="img"
-                          src={subjectCover.imageUrl}
-                          alt=""
-                          sx={{
-                            position: "absolute",
-                            inset: 0,
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                            display: "block",
-                          }}
-                        />
-                      ) : null}
-                      <Box
-                        aria-hidden
-                        sx={{
-                          position: "absolute",
-                          inset: 0,
-                          background:
-                            "linear-gradient(180deg, transparent 42%, rgba(15, 5, 14, 0.82) 100%)",
-                          pointerEvents: "none",
-                        }}
-                      />
-                    </Box>
-                  </Stack>
+                  <CoverHeroThumb
+                    src={subjectCover?.imageUrl}
+                    placeholderColor={coverPlaceholderColor(
+                      subject?.id ?? subjectId,
+                    )}
+                    interactive={!guest && !!subject}
+                    onChangeCover={openCoverPicker}
+                    ariaLabel={
+                      subject
+                        ? subjectCover
+                          ? `Change cover for ${subject.title}`
+                          : `Add cover for ${subject.title}`
+                        : undefined
+                    }
+                  />
                   <Box sx={{ minWidth: 0, flex: 1, pt: { xs: 0.25, sm: 0.5 } }}>
                     <Stack
                       direction="row"
