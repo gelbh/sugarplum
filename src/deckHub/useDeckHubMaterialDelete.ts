@@ -1,9 +1,5 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
-import {
-  ApiError,
-  deleteMaterial,
-  type MaterialListItem,
-} from "../api/client";
+import { ApiError, deleteMaterial, type MaterialListItem } from "../api/client";
 
 type Args = {
   refreshMaterials: () => void | Promise<void>;
