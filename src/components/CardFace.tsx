@@ -193,7 +193,8 @@ function StudyMedia({
   masked: boolean;
   /** True when this face is the visible study face (re-apply scroll on flip). */
   faceActive?: boolean;
-  scrollTop?: number;
+  /** Shared shell offset; null means not centered yet (do not restore). */
+  scrollTop?: number | null;
   onScrollTopChange?: (top: number) => void;
 }) {
   const shellRef = useRef<HTMLDivElement>(null);
@@ -224,13 +225,14 @@ function StudyMedia({
     onScrollTopChange?.(top);
   };
 
+  // Preserve scroll across flip: center only on geometry / load, never on faceActive.
   useEffect(() => {
     applyCenteredScroll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- center on geometry / face flip only
-  }, [imageKey, maskX, maskY, maskW, maskH, faceActive]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- center on geometry only
+  }, [imageKey, maskX, maskY, maskW, maskH]);
 
   useEffect(() => {
-    if (scrollTop === undefined) return;
+    if (scrollTop == null) return;
     const shell = shellRef.current;
     if (!shell) return;
     if (Math.abs(shell.scrollTop - scrollTop) > 1) {
@@ -350,7 +352,7 @@ export default function CardFace({
   notesAvailable,
   onOpenNotes,
 }: Props) {
-  const [maskScrollTop, setMaskScrollTop] = useState(0);
+  const [maskScrollTop, setMaskScrollTop] = useState<number | null>(null);
   const notesTrailing =
     notesAvailable && onOpenNotes ? (
       <StudyNotesButton onOpenNotes={onOpenNotes} />
@@ -360,7 +362,8 @@ export default function CardFace({
     : "";
 
   useEffect(() => {
-    setMaskScrollTop(0);
+    // Sentinel: skip restore until StudyMedia centers the new mask.
+    setMaskScrollTop(null);
   }, [occlusionScrollKey]);
 
   if (type === "mcq") {
@@ -450,7 +453,20 @@ export default function CardFace({
               />
             ) : null}
             {spokenFront ? (
-              <Typography component="p" sx={FACE_PROMPT_TEXT_SX}>
+              <Typography
+                component="p"
+                sx={{
+                  ...FACE_PROMPT_TEXT_SX,
+                  ...(occlusion
+                    ? {
+                        flex: "0 1 auto",
+                        minHeight: 0,
+                        maxHeight: "28%",
+                        overflowY: "auto",
+                      }
+                    : {}),
+                }}
+              >
                 {isCloze ? <ClozePrompt front={front} /> : spokenFront}
               </Typography>
             ) : null}
@@ -493,6 +509,14 @@ export default function CardFace({
             tabIndex={revealed ? -1 : undefined}
             sx={{
               ...promptSx,
+              ...(occlusion
+                ? {
+                    flex: "0 1 auto",
+                    minHeight: 0,
+                    maxHeight: "30%",
+                    overflowY: "auto",
+                  }
+                : {}),
               outline: "none",
               WebkitTapHighlightColor: "transparent",
               "&:focus": { outline: "none" },
