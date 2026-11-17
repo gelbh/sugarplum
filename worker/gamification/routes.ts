@@ -226,8 +226,10 @@ gamificationRoutes.get("/leaderboard/weekly", async (c) => {
     .prepare(
       `SELECT ug.user_id, ug.display_name, COALESCE(SUM(xl.amount), 0) AS xp
        FROM user_gamification ug
+       INNER JOIN users u ON u.id = ug.user_id
        INNER JOIN xp_ledger xl ON xl.user_id = ug.user_id
        WHERE ug.board_opt_in = 1
+         AND u.sandbox_of IS NULL
          AND xl.created_at >= ?
          AND xl.created_at < ?
        GROUP BY ug.user_id, ug.display_name
