@@ -14,4 +14,38 @@ describe("studyCardPresentation", () => {
   it("reads string fronts", () => {
     expect(studyFrontText({ front: "Hello" } as never)).toBe("Hello");
   });
+
+  it("hides blank occlusion prompts", () => {
+    expect(
+      studyFrontText({
+        type: "occlusion",
+        front: { image_key: "k", regions: [], prompt: "" },
+      } as never),
+    ).toBe("");
+    expect(
+      studyFrontText({
+        type: "occlusion",
+        front: { image_key: "k", regions: [], prompt: "   " },
+      } as never),
+    ).toBe("");
+    expect(
+      studyFrontText({
+        type: "occlusion",
+        front: { image_key: "k", regions: [] },
+      } as never),
+    ).toBe("");
+  });
+
+  it("keeps non-empty occlusion prompts", () => {
+    expect(
+      studyFrontText({
+        type: "occlusion",
+        front: {
+          image_key: "k",
+          regions: [],
+          prompt: "Name this structure",
+        },
+      } as never),
+    ).toBe("Name this structure");
+  });
 });
