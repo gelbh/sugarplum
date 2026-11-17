@@ -51,7 +51,6 @@ function OcclusionFocusMedia({
         position: "relative",
         width: "100%",
         mb: focused ? 0 : 1.5,
-        flexShrink: 0,
         // overflow:hidden only for tile focus-crop; otherwise flex parents
         // can shrink this box and collapse the image above the prompt.
         ...(focused
@@ -64,7 +63,7 @@ function OcclusionFocusMedia({
               alignItems: "center",
               justifyContent: "center",
             }
-          : { overflow: "visible" }),
+          : { overflow: "visible", flexShrink: 0 }),
       }}
     >
       <Box
