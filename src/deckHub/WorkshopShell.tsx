@@ -14,7 +14,6 @@ type Props = {
   closeMode?: boolean;
   children: ReactNode;
   footer?: ReactNode;
-  maxWidth?: "sm" | "md" | "lg";
 };
 
 export default function WorkshopShell({
