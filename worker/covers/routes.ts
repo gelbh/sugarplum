@@ -3,7 +3,11 @@ import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
-import { filterDeletableR2Keys } from "../admin/sandbox-r2";
+import {
+  applySandboxKeyPrefix,
+  filterDeletableR2Keys,
+  sandboxWriteUserId,
+} from "../admin/sandbox-r2";
 import { MAX_IMAGE_BYTES } from "../materials/limits";
 import { createR2PutUrl } from "../materials/r2-presign";
 import {
@@ -320,7 +324,11 @@ coverRoutes.post("/upload-url", async (c) => {
 
   const imageId = newId();
   const ext = contentTypeExt(contentType);
-  const r2Key = `covers/${userId}/${owner.ownerKind}/${owner.ownerId}/${imageId}.${ext}`;
+  const sandboxId = await sandboxWriteUserId(db, userId);
+  const r2Key = applySandboxKeyPrefix(
+    sandboxId,
+    `covers/${userId}/${owner.ownerKind}/${owner.ownerId}/${imageId}.${ext}`,
+  );
   const uploadUrl = await createR2PutUrl({
     accountId,
     accessKeyId,
@@ -354,7 +362,11 @@ coverRoutes.put("/custom", async (c) => {
   const { userId, owner, record, db } = await beginCoverPut(c);
 
   const r2Key = typeof record.r2Key === "string" ? record.r2Key.trim() : "";
-  const prefix = `covers/${userId}/${owner.ownerKind}/${owner.ownerId}/`;
+  const sandboxId = await sandboxWriteUserId(db, userId);
+  const prefix = applySandboxKeyPrefix(
+    sandboxId,
+    `covers/${userId}/${owner.ownerKind}/${owner.ownerId}/`,
+  );
   if (!r2Key || !r2Key.startsWith(prefix)) {
     throw new HTTPException(400, { message: "Invalid cover key" });
   }

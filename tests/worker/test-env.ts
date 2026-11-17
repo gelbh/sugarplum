@@ -4752,6 +4752,25 @@ export function createTestEnv(opts?: {
       async delete(key: string) {
         r2.delete(key);
       },
+      async list(options?: {
+        prefix?: string;
+        cursor?: string;
+        limit?: number;
+      }) {
+        const prefix = options?.prefix ?? "";
+        const keys = [...r2.keys()].filter((k) => k.startsWith(prefix)).sort();
+        const start = options?.cursor
+          ? Math.max(0, keys.indexOf(options.cursor) + 1)
+          : 0;
+        const limit = options?.limit ?? 1000;
+        const slice = keys.slice(start, start + limit);
+        const truncated = start + limit < keys.length;
+        return {
+          objects: slice.map((key) => ({ key })),
+          truncated,
+          cursor: truncated ? slice[slice.length - 1] : undefined,
+        };
+      },
     } as unknown as R2Bucket,
     SESSIONS: {
       async get(key: string) {

@@ -3,6 +3,10 @@ import { HTTPException } from "hono/http-exception";
 import { getDb } from "../db/client";
 import type { Env } from "../env";
 import { requireUser, type AuthVariables } from "../auth/session";
+import {
+  applySandboxKeyPrefix,
+  sandboxWriteUserId,
+} from "../admin/sandbox-r2";
 import { enqueueExport } from "./enqueue";
 import { runExportJob } from "./runExportJob";
 import { estimateExportWorkload, shouldEnqueueExport } from "./threshold";
@@ -148,9 +152,13 @@ exportRoutes.post("/", async (c) => {
   const now = new Date();
   const createdAt = now.toISOString();
   const expiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString();
-  const r2Key = `exports/${userId}/${id}.apkg`;
-  const requestJson = JSON.stringify(parsed.data);
   const db = getDb(c.env);
+  const sandboxId = await sandboxWriteUserId(db, userId);
+  const r2Key = applySandboxKeyPrefix(
+    sandboxId,
+    `exports/${userId}/${id}.apkg`,
+  );
+  const requestJson = JSON.stringify(parsed.data);
 
   const deckIds = await resolveExportDeckIds(c.env, userId, parsed.data);
   if (deckIds.length === 0) {

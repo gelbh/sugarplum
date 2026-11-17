@@ -310,6 +310,13 @@ function AppShellChrome({ children }: AppShellProps) {
             top: 0,
             zIndex: (t) => t.zIndex.appBar + 2,
             flexShrink: 0,
+            // Sit in the main column so the fixed sidebar does not clip the bar.
+            ...(sideWidth > 0
+              ? {
+                  width: `calc(100% - ${sideWidth}px)`,
+                  ml: `${sideWidth}px`,
+                }
+              : {}),
           }}
           action={
             <Button

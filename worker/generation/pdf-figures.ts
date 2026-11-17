@@ -1,4 +1,5 @@
 import type { Env } from "../env";
+import { sandboxWriteUserId } from "../admin/sandbox-r2";
 import { extractFiguresViaDocling } from "../materials/docling";
 import {
   bytesToBase64,
@@ -56,11 +57,20 @@ export async function collectPdfFigureDrafts(args: {
     progress,
   } = args;
 
+  const deckOwner = await db
+    .prepare("SELECT user_id FROM decks WHERE id = ?")
+    .bind(deckId)
+    .first<{ user_id: string }>();
+  const sandboxId = deckOwner
+    ? await sandboxWriteUserId(db, deckOwner.user_id)
+    : null;
+
   const figureChildren = await listFigureChildrenForPdf(
     { DB: db, MATERIALS: env.MATERIALS },
     {
       deckId,
       pdfMaterialId,
+      sandboxUserId: sandboxId,
     },
   );
   const readyFigureKeys = figureChildren
@@ -118,6 +128,7 @@ export async function collectPdfFigureDrafts(args: {
         deckId,
         pdfMaterialId,
         crops: figureResult.crops,
+        sandboxUserId: sandboxId,
       });
       figures = persisted.map(({ r2Key, crop }) => ({
         r2Key,
