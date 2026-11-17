@@ -25,7 +25,7 @@ import CoverPickerPanel from "../components/CoverPickerPanel";
 import BoardTile from "../library/board/BoardTile";
 import LibraryBoard from "../library/board/LibraryBoard";
 import { coverPlaceholderColor } from "../library/board/coverPlaceholder";
-import CoverHeroThumb from "../library/CoverHeroThumb";
+import CoverHeroThumb from "../ui/CoverHeroThumb";
 import { LibraryCreateSubjectPanel } from "../library/LibraryCreateSubjectPanel";
 import MagazineEmptyStage from "../library/MagazineEmptyStage";
 import StageBreadcrumbs from "../library/StageBreadcrumbs";
