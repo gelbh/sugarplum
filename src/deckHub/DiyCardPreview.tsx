@@ -51,8 +51,8 @@ function OcclusionFocusMedia({
         position: "relative",
         width: "100%",
         mb: focused ? 0 : 1.5,
-        // overflow:hidden only for tile focus-crop; otherwise flex parents
-        // can shrink this box and collapse the image above the prompt.
+        // Tile: focus-crop clip. Editor preview: scroll shell so tall images
+        // stay inside the playing-card face.
         ...(focused
           ? {
               overflow: "hidden",
@@ -63,7 +63,12 @@ function OcclusionFocusMedia({
               alignItems: "center",
               justifyContent: "center",
             }
-          : { overflow: "visible", flexShrink: 0 }),
+          : {
+              overflow: "auto",
+              flexShrink: 0,
+              maxHeight: 168,
+              borderRadius: 1,
+            }),
       }}
     >
       <Box
@@ -346,6 +351,11 @@ export default function DiyCardPreview({
                     }
                   : {}),
             }}
+            faceSx={
+              card.type === "occlusion" && !isTile
+                ? { overflow: "hidden" }
+                : undefined
+            }
             front={
               <Box data-card-face-content sx={faceBodySx}>
                 <Box

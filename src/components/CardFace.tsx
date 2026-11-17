@@ -238,11 +238,12 @@ function StudyMedia({
       <Box
         ref={shellRef}
         sx={{
-          maxHeight: "42vh",
+          maxHeight: "36vh",
           overflow: "auto",
           width: "100%",
           mb: 2,
           borderRadius: 1,
+          flexShrink: 0,
         }}
       >
         <Box
@@ -264,6 +265,7 @@ function StudyMedia({
               display: "block",
               width: "100%",
               height: "auto",
+              maxWidth: "100%",
               userSelect: "none",
             }}
           />

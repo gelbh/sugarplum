@@ -45,12 +45,33 @@ function clamp01(n: number): number {
   return Math.min(1, Math.max(0, n));
 }
 
+const MAX_REGIONS = 8;
+
 function clampRegion(r: OcclusionRegion): OcclusionRegion {
   const w = Math.min(Math.max(r.w, 0.02), 1);
   const h = Math.min(Math.max(r.h, 0.02), 1);
   const x = clamp01(Math.min(r.x, 1 - w));
   const y = clamp01(Math.min(r.y, 1 - h));
   return { ...r, x, y, w, h };
+}
+
+function nextManualRegionId(regions: OcclusionRegion[]): string {
+  let n = regions.length + 1;
+  const used = new Set(regions.map((r) => r.id));
+  while (used.has(`r${n}`)) n += 1;
+  return `r${n}`;
+}
+
+function createManualRegion(regions: OcclusionRegion[]): OcclusionRegion {
+  const n = regions.length + 1;
+  return clampRegion({
+    id: nextManualRegionId(regions),
+    label: `Region ${n}`,
+    x: 0.25,
+    y: 0.25,
+    w: 0.5,
+    h: 0.2,
+  });
 }
 
 function answerFromRegions(
@@ -249,8 +270,16 @@ export default function OcclusionRegionEditor({
     void runSuggestRegions();
   }
 
+  function addRegion() {
+    if (editLocked || front.regions.length >= MAX_REGIONS) return;
+    const region = createManualRegion(front.regions);
+    const regions = [...front.regions, region];
+    setSelectedId(region.id);
+    emit({ ...front, regions }, region.id);
+  }
+
   function removeRegion(id: string) {
-    if (editLocked || front.regions.length <= 1) return;
+    if (editLocked) return;
     const regions = front.regions.filter((r) => r.id !== id);
     const nextSelected =
       selectedId === id ? (regions[0]?.id ?? null) : selectedId;
@@ -470,8 +499,8 @@ export default function OcclusionRegionEditor({
             color="text.secondary"
             sx={{ maxWidth: "42ch" }}
           >
-            Hide one region per card. Drag to move, corner to resize. Label is
-            the study answer.
+            Hide one region per card. Add a box or use Suggest, then drag to
+            move and corner to resize. Label is the study answer.
           </Typography>
 
           {suggestNotice ? (
@@ -490,6 +519,14 @@ export default function OcclusionRegionEditor({
             flexWrap="wrap"
           >
             <Button
+              variant="contained"
+              size="small"
+              onClick={addRegion}
+              disabled={editLocked || front.regions.length >= MAX_REGIONS}
+            >
+              Add region
+            </Button>
+            <Button
               variant="outlined"
               size="small"
               onClick={onSuggestRegionsClick}
@@ -506,6 +543,10 @@ export default function OcclusionRegionEditor({
             {suggestBusy ? (
               <Typography variant="caption" color="text.secondary">
                 First OCR run may take a moment.
+              </Typography>
+            ) : front.regions.length >= MAX_REGIONS ? (
+              <Typography variant="caption" color="text.secondary">
+                At most {MAX_REGIONS} regions per card.
               </Typography>
             ) : null}
           </Stack>
@@ -614,7 +655,7 @@ export default function OcclusionRegionEditor({
                       ))}
                     </Stack>
                   </Stack>
-                  {front.regions.length > 1 && !editLocked ? (
+                  {!editLocked ? (
                     <Button
                       size="small"
                       color="error"
