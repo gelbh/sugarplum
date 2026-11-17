@@ -27,6 +27,7 @@ import LibraryBoard from "../library/board/LibraryBoard";
 import { coverPlaceholderColor } from "../library/board/coverPlaceholder";
 import CoverHeroThumb from "../library/CoverHeroThumb";
 import { LibraryCreateSubjectPanel } from "../library/LibraryCreateSubjectPanel";
+import MagazineEmptyStage from "../library/MagazineEmptyStage";
 import StageBreadcrumbs from "../library/StageBreadcrumbs";
 import {
   ApiError,
@@ -747,85 +748,17 @@ export default function SubjectPage({ subjectId }: Props) {
                   alignItems: "center",
                 }}
               >
-                <Box
-                  sx={{
-                    width: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 2.5,
-                    py: 2,
+                <MagazineEmptyStage
+                  title="Add your first deck"
+                  description="Decks hold the cards for one topic inside this subject. Name one, pick a cover, then add material in the hub."
+                  boardAriaLabel="Decks"
+                  create={{
+                    title: "New deck",
+                    meta: "Name it, then open the hub",
+                    openLabel: "New deck",
+                    onCreate: openCreateDeck,
                   }}
-                >
-                  <Box
-                    sx={{
-                      textAlign: "center",
-                      px: 2,
-                      maxWidth: 420,
-                    }}
-                  >
-                    <Typography
-                      component="p"
-                      sx={{
-                        m: 0,
-                        mb: 0.75,
-                        fontSize: "0.6875rem",
-                        fontWeight: 500,
-                        letterSpacing: "0.22em",
-                        textTransform: "uppercase",
-                        color: "primary.main",
-                      }}
-                    >
-                      Get started
-                    </Typography>
-                    <Typography
-                      variant="h5"
-                      component="p"
-                      sx={{
-                        m: 0,
-                        fontFamily:
-                          '"Alice", "Georgia", "Times New Roman", serif',
-                        fontWeight: 400,
-                        letterSpacing: "0.02em",
-                        lineHeight: 1.2,
-                        color: "text.primary",
-                      }}
-                    >
-                      Add your first deck
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mt: 1, lineHeight: 1.5 }}
-                    >
-                      Decks hold the cards for one topic inside this subject.
-                      Name one, pick a cover, then add material in the hub.
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      width: "100%",
-                      maxWidth: { xs: 168, sm: 180, md: 200 },
-                    }}
-                  >
-                    <LibraryBoard aria-label="Decks">
-                      <Box
-                        component="li"
-                        sx={{ listStyle: "none", m: 0, p: 0, minHeight: 0 }}
-                      >
-                        <BoardTile
-                          index={0}
-                          title="New deck"
-                          meta="Name it, then open the hub"
-                          create
-                          accent
-                          onCreate={openCreateDeck}
-                          openLabel="New deck"
-                        />
-                      </Box>
-                    </LibraryBoard>
-                  </Box>
-                </Box>
+                />
               </Box>
             ) : (
               <LibraryBoard aria-label="Decks">
