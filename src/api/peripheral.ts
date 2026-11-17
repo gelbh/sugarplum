@@ -118,6 +118,26 @@ export function adminWipeUser(id: string, confirmEmail: string) {
   });
 }
 
+export function adminImpersonateUser(id: string) {
+  return api<{
+    ok: true;
+    impersonation: {
+      sourceUserId: string;
+      sandboxUserId: string;
+      sourceEmail: string;
+      startedAt: number;
+    };
+  }>(`/api/admin/users/${encodeURIComponent(id)}/impersonate`, {
+    method: "POST",
+  });
+}
+
+export function adminExitImpersonation() {
+  return api<{ ok: true }>("/api/admin/impersonation/exit", {
+    method: "POST",
+  });
+}
+
 export async function adminExportUser(id: string) {
   const res = await fetch(`/api/admin/users/${encodeURIComponent(id)}/export`, {
     credentials: "include",
