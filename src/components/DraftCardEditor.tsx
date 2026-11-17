@@ -14,7 +14,7 @@ import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { mediaUrl, type CardDraftView, type CardType } from "../api/client";
 import {
   CLOZE_BLANK_MAX,
@@ -63,6 +63,8 @@ export type DraftCardEditorProps = {
   typePicker?: "select" | "cards";
   /** Notify which side the author is editing (live preview flip). */
   onPreviewFaceChange?: (face: DraftPreviewFace) => void;
+  /** Hub DIY: sits under the type picker (e.g. Replace image). */
+  afterTypePicker?: ReactNode;
   /** Optional single-card regen control rendered next to the type Select. */
   regenAction?: {
     busy: boolean;
@@ -372,6 +374,7 @@ export default function DraftCardEditor({
   allowedTypes,
   typePicker = "select",
   onPreviewFaceChange,
+  afterTypePicker,
   regenAction,
 }: DraftCardEditorProps) {
   const {
@@ -415,6 +418,7 @@ export default function DraftCardEditor({
             onChange={onChange}
           />
         ) : null}
+        {afterTypePicker}
         {hasImage || typePicker !== "cards" ? (
           <OcclusionRegionEditor
             key={card.id}
@@ -576,6 +580,7 @@ export default function DraftCardEditor({
           ) : null}
         </Stack>
       )}
+      {afterTypePicker}
 
       {isCloze ? (
         <ClozeDiyFields
