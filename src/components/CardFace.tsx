@@ -5,6 +5,7 @@ import Typography from "@mui/material/Typography";
 import {
   useEffect,
   useRef,
+  useState,
   type MouseEvent,
   type ReactNode,
   type Ref,
@@ -178,15 +179,22 @@ export function FlipCardPlate({
   );
 }
 
-/** Hide_one stage: editor contract (scroll shell + natural-aspect img, no contain letterbox). */
+/** Hide_one stage: Anki-width-fit shell + natural-aspect img (no contain letterbox). */
 function StudyMedia({
   imageKey,
   mask,
   masked,
+  faceActive,
+  scrollTop,
+  onScrollTopChange,
 }: {
   imageKey: string;
   mask?: OcclusionMaskBox;
   masked: boolean;
+  /** True when this face is the visible study face (re-apply scroll on flip). */
+  faceActive?: boolean;
+  scrollTop?: number;
+  onScrollTopChange?: (top: number) => void;
 }) {
   const shellRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -195,7 +203,7 @@ function StudyMedia({
   const maskW = mask?.w;
   const maskH = mask?.h;
 
-  useEffect(() => {
+  const applyCenteredScroll = () => {
     if (
       maskX === undefined ||
       maskY === undefined ||
@@ -207,43 +215,51 @@ function StudyMedia({
     const shell = shellRef.current;
     const content = contentRef.current;
     if (!shell || !content) return;
-    shell.scrollTop = occlusionMaskScrollTop(
+    const top = occlusionMaskScrollTop(
       { x: maskX, y: maskY, w: maskW, h: maskH },
       content.offsetHeight,
       shell.clientHeight,
     );
-  }, [imageKey, maskX, maskY, maskW, maskH]);
+    shell.scrollTop = top;
+    onScrollTopChange?.(top);
+  };
+
+  useEffect(() => {
+    applyCenteredScroll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- center on geometry / face flip only
+  }, [imageKey, maskX, maskY, maskW, maskH, faceActive]);
+
+  useEffect(() => {
+    if (scrollTop === undefined) return;
+    const shell = shellRef.current;
+    if (!shell) return;
+    if (Math.abs(shell.scrollTop - scrollTop) > 1) {
+      shell.scrollTop = scrollTop;
+    }
+  }, [scrollTop, faceActive]);
 
   const onImageLoad = () => {
-    if (
-      maskX === undefined ||
-      maskY === undefined ||
-      maskW === undefined ||
-      maskH === undefined
-    ) {
-      return;
-    }
-    const shell = shellRef.current;
-    const content = contentRef.current;
-    if (!shell || !content) return;
-    shell.scrollTop = occlusionMaskScrollTop(
-      { x: maskX, y: maskY, w: maskW, h: maskH },
-      content.offsetHeight,
-      shell.clientHeight,
-    );
+    applyCenteredScroll();
   };
 
   if (mask) {
     return (
       <Box
         ref={shellRef}
+        onScroll={() => {
+          const shell = shellRef.current;
+          if (shell) onScrollTopChange?.(shell.scrollTop);
+        }}
         sx={{
-          maxHeight: "36vh",
+          // Anki-width-fit: soft viewport budget, not a short 36vh crop band.
+          flex: 1,
+          minHeight: 0,
+          maxHeight: "min(70vh, calc(90vh - 11rem))",
           overflow: "auto",
           width: "100%",
           mb: 2,
           borderRadius: 1,
-          flexShrink: 0,
+          alignSelf: "stretch",
         }}
       >
         <Box
@@ -284,8 +300,7 @@ function StudyMedia({
               pointerEvents: "none",
               ...(masked
                 ? {
-                    bgcolor:
-                      "color-mix(in srgb, var(--sp-stage-bg) 92%, transparent)",
+                    bgcolor: "var(--sp-stage-bg)",
                     border: "1.5px solid",
                     borderColor: "secondary.main",
                     boxShadow: "0 2px 12px var(--sp-lamp-glow)",
@@ -335,10 +350,18 @@ export default function CardFace({
   notesAvailable,
   onOpenNotes,
 }: Props) {
+  const [maskScrollTop, setMaskScrollTop] = useState(0);
   const notesTrailing =
     notesAvailable && onOpenNotes ? (
       <StudyNotesButton onOpenNotes={onOpenNotes} />
     ) : undefined;
+  const occlusionScrollKey = occlusion
+    ? `${occlusion.imageKey}:${occlusion.mask.x}:${occlusion.mask.y}:${occlusion.mask.w}:${occlusion.mask.h}`
+    : "";
+
+  useEffect(() => {
+    setMaskScrollTop(0);
+  }, [occlusionScrollKey]);
 
   if (type === "mcq") {
     if (!cardId || !onGrade) return null;
@@ -367,6 +390,12 @@ export default function CardFace({
   const imageKey = occlusion?.imageKey ?? mediaR2Keys[0];
   const canReveal = !revealed && !disabled;
   const canFlipBack = revealed && !disabled;
+  const faceBodySx = occlusion
+    ? { ...FACE_BODY_SX, overflowY: "hidden" as const }
+    : FACE_BODY_SX;
+  const promptSx = occlusion
+    ? { ...PROMPT_SX, justifyContent: "flex-start" as const }
+    : PROMPT_SX;
 
   const reveal = () => {
     if (!canReveal) return;
@@ -408,13 +437,16 @@ export default function CardFace({
       }}
       overlineTrailing={notesTrailing}
       front={
-        <Box data-card-face-content sx={FACE_BODY_SX}>
-          <Box sx={PROMPT_SX}>
+        <Box data-card-face-content sx={faceBodySx}>
+          <Box sx={promptSx}>
             {imageKey ? (
               <StudyMedia
                 imageKey={imageKey}
                 mask={occlusion?.mask}
                 masked={!!occlusion}
+                faceActive={!revealed}
+                scrollTop={occlusion ? maskScrollTop : undefined}
+                onScrollTopChange={occlusion ? setMaskScrollTop : undefined}
               />
             ) : null}
             {spokenFront ? (
@@ -441,12 +473,15 @@ export default function CardFace({
         </Box>
       }
       back={
-        <Box data-card-face-content sx={FACE_BODY_SX}>
+        <Box data-card-face-content sx={faceBodySx}>
           {occlusion && imageKey ? (
             <StudyMedia
               imageKey={imageKey}
               mask={occlusion.mask}
               masked={false}
+              faceActive={revealed}
+              scrollTop={maskScrollTop}
+              onScrollTopChange={setMaskScrollTop}
             />
           ) : !isCloze && front ? (
             <Typography component="p" sx={FACE_FRONT_ECHO_SX}>
@@ -457,7 +492,7 @@ export default function CardFace({
             ref={answerFocusRef}
             tabIndex={revealed ? -1 : undefined}
             sx={{
-              ...PROMPT_SX,
+              ...promptSx,
               outline: "none",
               WebkitTapHighlightColor: "transparent",
               "&:focus": { outline: "none" },
