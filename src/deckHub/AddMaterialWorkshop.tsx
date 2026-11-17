@@ -148,6 +148,8 @@ type Props = {
   onPasteTextChange: (value: string) => void;
   pasteFilename: string;
   onPasteFilenameChange: (value: string) => void;
+  alsoCover: string;
+  onAlsoCoverChange: (value: string) => void;
   onGuestPaste: (e?: FormEvent) => void;
   onAccountPaste: (e?: FormEvent) => void;
   uploadFile: File | null;
@@ -242,6 +244,8 @@ export default function AddMaterialWorkshop({
   onPasteTextChange,
   pasteFilename,
   onPasteFilenameChange,
+  alsoCover,
+  onAlsoCoverChange,
   onGuestPaste,
   onAccountPaste,
   uploadFile,
@@ -683,6 +687,19 @@ export default function AddMaterialWorkshop({
                     </Stack>
                   )}
                 </Box>
+                {uploadFile && !guest ? (
+                  <TextField
+                    label="Learning objectives (optional)"
+                    name="alsoCover"
+                    value={alsoCover}
+                    onChange={(ev) => onAlsoCoverChange(ev.target.value)}
+                    fullWidth
+                    multiline
+                    minRows={2}
+                    disabled={materialBusy}
+                    helperText="One objective or focus topic per line, up to 20"
+                  />
+                ) : null}
                 <Stack
                   direction="row"
                   spacing={1.5}
@@ -744,6 +761,19 @@ export default function AddMaterialWorkshop({
                   multiline
                   minRows={6}
                 />
+                {!guest ? (
+                  <TextField
+                    label="Learning objectives (optional)"
+                    name="alsoCover"
+                    value={alsoCover}
+                    onChange={(ev) => onAlsoCoverChange(ev.target.value)}
+                    fullWidth
+                    multiline
+                    minRows={2}
+                    disabled={materialBusy}
+                    helperText="One objective or focus topic per line, up to 20"
+                  />
+                ) : null}
                 {pasteText.trim() ? (
                   <Button
                     type="submit"
@@ -851,7 +881,8 @@ export default function AddMaterialWorkshop({
                               sx={{ flex: 1, minWidth: 0 }}
                               noWrap
                             >
-                              {createImageKey.split("/").pop() ?? createImageKey}
+                              {createImageKey.split("/").pop() ??
+                                createImageKey}
                             </Typography>
                           )}
                           <Button
