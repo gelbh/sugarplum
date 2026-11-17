@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -22,26 +22,26 @@ import CompositionSpark from "../components/CompositionSpark";
 import CoverPickerDialog from "../components/CoverPickerDialog";
 import { useShellBackOverride } from "../components/shell/ShellBackOverride";
 import CardsWorkshop from "../deckHub/CardsWorkshop";
+import { createDeckHubWorkshopOpeners } from "../deckHub/deckHubWorkshopOpeners";
 import DeckHubTitleHeader from "../deckHub/DeckHubTitleHeader";
 import MaterialsWorkshop from "../deckHub/MaterialsWorkshop";
 import MissionBoard from "../deckHub/MissionBoard";
 import StudyReadySheet from "../deckHub/StudyReadySheet";
 import WorkshopShell from "../deckHub/WorkshopShell";
 import { type WorkshopFrame } from "../deckHub/workshopStack";
-import { navigate } from "../nav/navigate";
 import { useCreateCardController } from "../deckHub/useCreateCardController";
 import { useAddMaterialWorkshop } from "../deckHub/useAddMaterialWorkshop";
 import { useCardsWorkshop } from "../deckHub/useCardsWorkshop";
 import { useDeckHubCardMutations } from "../deckHub/useDeckHubCardMutations";
 import { useDeckHubDeckLifecycle } from "../deckHub/useDeckHubDeckLifecycle";
+import { useDeckHubDraftPicker } from "../deckHub/useDeckHubDraftPicker";
 import { useDeckHubExport } from "../deckHub/useDeckHubExport";
 import { useDeckHubLoad } from "../deckHub/useDeckHubLoad";
+import { useDeckHubMaterialDelete } from "../deckHub/useDeckHubMaterialDelete";
 import { useDeckHubWorkshopNav } from "../deckHub/useDeckHubWorkshopNav";
 import { useStudyReadySheet } from "../deckHub/useStudyReadySheet";
 import "../deckHub/deckHubMotion.css";
 import {
-  ApiError,
-  deleteMaterial,
   asRegenType,
   cardHasRegenSource,
   type CardDraftView,
@@ -145,9 +145,6 @@ export default function DeckHubPage({ deckId }: Props) {
   const [composition, setComposition] = useState<SubjectKnowledge | null>(null);
   const [draftJobs, setDraftJobs] = useState<JobListItem[]>([]);
   const [materials, setMaterials] = useState<MaterialListItem[]>([]);
-  const [deleteMaterialTarget, setDeleteMaterialTarget] =
-    useState<MaterialListItem | null>(null);
-  const [deleteMaterialBusy, setDeleteMaterialBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [exportWarning, setExportWarning] = useState<string | null>(null);
@@ -155,7 +152,6 @@ export default function DeckHubPage({ deckId }: Props) {
 
   /** Stack stays on page so create/material can take setWorkshopStack before nav Args exist. */
   const [workshopStack, setWorkshopStack] = useState<WorkshopFrame[]>([]);
-  const [draftPickerOpen, setDraftPickerOpen] = useState(false);
 
   const deckImageKeys = useMemo(() => collectDeckImageKeys(cards), [cards]);
 
@@ -297,6 +293,18 @@ export default function DeckHubPage({ deckId }: Props) {
     setReady,
   });
 
+  const {
+    deleteMaterialTarget,
+    setDeleteMaterialTarget,
+    deleteMaterialBusy,
+    confirmDeleteMaterial,
+  } = useDeckHubMaterialDelete({
+    refreshMaterials,
+    refreshDraftJobs,
+    setError,
+    setNotice,
+  });
+
   const material = useAddMaterialWorkshop({
     deckId,
     refreshCards,
@@ -308,14 +316,12 @@ export default function DeckHubPage({ deckId }: Props) {
 
   const study = useStudyReadySheet();
 
-  const openFullDraftReview = useCallback(() => {
-    if (draftJobs.length === 0) return;
-    if (draftJobs.length === 1) {
-      navigate(`/jobs/${encodeURIComponent(draftJobs[0]!.id)}/drafts`);
-      return;
-    }
-    setDraftPickerOpen(true);
-  }, [draftJobs]);
+  const {
+    draftPickerOpen,
+    setDraftPickerOpen,
+    openFullDraftReview,
+    openDraftJob,
+  } = useDeckHubDraftPicker({ draftJobs });
 
   const {
     topWorkshop,
@@ -345,40 +351,12 @@ export default function DeckHubPage({ deckId }: Props) {
     runExport,
   });
 
-  function openDraftJob(jobId: string) {
-    setDraftPickerOpen(false);
-    navigate(`/jobs/${encodeURIComponent(jobId)}/drafts`);
-  }
-
-  function openUploadFromMaterials() {
-    material.resetMaterialMessages();
-    setWorkshopStack([
-      { id: "materials" },
-      { id: "addMaterial", tab: "upload" },
-    ]);
-  }
-
-  function openDiyFromCards() {
-    create.prepareCreateFrame();
-    material.resetMaterialMessages();
-    setWorkshopStack([{ id: "cards" }, { id: "addMaterial", tab: "diy" }]);
-  }
-
-  async function confirmDeleteMaterial() {
-    if (!deleteMaterialTarget || deleteMaterialBusy) return;
-    setDeleteMaterialBusy(true);
-    setError(null);
-    try {
-      await deleteMaterial(deleteMaterialTarget.id);
-      setDeleteMaterialTarget(null);
-      setNotice("File deleted");
-      await Promise.all([refreshMaterials(), refreshDraftJobs()]);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not delete file");
-    } finally {
-      setDeleteMaterialBusy(false);
-    }
-  }
+  const { openUploadFromMaterials, openDiyFromCards } =
+    createDeckHubWorkshopOpeners({
+      resetMaterialMessages: material.resetMaterialMessages,
+      prepareCreateFrame: create.prepareCreateFrame,
+      setWorkshopStack,
+    });
 
   const sortedMaterials = useMemo(
     () =>
