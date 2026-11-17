@@ -77,7 +77,7 @@ describe("topicHints on paste", () => {
         },
         body: JSON.stringify({
           text: "notes",
-          topicHints: ["a", "b", "c", "d", "e", "f"],
+          topicHints: Array.from({ length: 21 }, (_, i) => `h${i}`),
         }),
       },
       env,
@@ -95,7 +95,7 @@ describe("topicHints on paste", () => {
         },
         body: JSON.stringify({
           text: "notes",
-          topicHints: ["x".repeat(201)],
+          topicHints: ["x".repeat(301)],
         }),
       },
       env,
@@ -108,7 +108,7 @@ describe("topicHints prompt suffix", () => {
   it("includes each hint phrase when hints are present", () => {
     const suffix = topicHintsPromptSuffix(["cranial nerves"]);
     expect(suffix.toLowerCase()).toContain("cranial nerves");
-    expect(suffix.toLowerCase()).toMatch(/must attempt/);
+    expect(suffix.toLowerCase()).toMatch(/assess/);
     expect(suffix.toLowerCase()).toMatch(/grounded/);
     expect(suffix.toLowerCase()).toMatch(/do not invent/);
   });
@@ -129,7 +129,7 @@ describe("topicHints prompt suffix", () => {
       buildExtraUserSuffix({ topicHints: ["cranial nerves"] }),
     );
     expect(prompt.toLowerCase()).toContain("cranial nerves");
-    expect(prompt.toLowerCase()).toMatch(/must attempt/);
+    expect(prompt.toLowerCase()).toMatch(/assess/);
     expect(prompt).toContain("brainstem notes");
   });
 });
@@ -493,7 +493,7 @@ describe("topicHints consumer injection", () => {
     });
 
     expect(userContent.toLowerCase()).toContain("cranial nerves");
-    expect(userContent.toLowerCase()).toMatch(/must attempt/);
+    expect(userContent.toLowerCase()).toMatch(/assess/);
   });
 });
 
@@ -613,9 +613,9 @@ describe("mergeTopicHints", () => {
     ).toEqual(["Krebs cycle", "ATP", "glycolysis"]);
   });
 
-  it("caps at 5 by dropping existing hints, never selected ones", () => {
+  it("caps by dropping existing hints, never selected ones", () => {
     expect(
-      mergeTopicHints(["s1", "s2", "s3", "s4"], ["e1", "e2"]),
+      mergeTopicHints(["s1", "s2", "s3", "s4"], ["e1", "e2"], 5),
     ).toEqual(["s1", "s2", "s3", "s4", "e1"]);
   });
 

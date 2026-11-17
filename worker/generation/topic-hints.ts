@@ -1,6 +1,6 @@
-/** Caps for optional generate-time "Also cover" topic hints. */
-export const MAX_TOPIC_HINTS = 5;
-export const MAX_TOPIC_HINT_CHARS = 200;
+/** Caps for optional generate-time learning-objective / focus topic hints. */
+export const MAX_TOPIC_HINTS = 20;
+export const MAX_TOPIC_HINT_CHARS = 300;
 
 /**
  * Parse `topicHints` from paste/upload JSON.

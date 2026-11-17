@@ -128,14 +128,14 @@ export default function CreateMaterialStepper({
 
   const alsoCoverField = (
     <TextField
-      label="Also cover (optional)"
+      label="Learning objectives (optional)"
       name="alsoCover"
       value={alsoCover}
       onChange={(ev) => setAlsoCover(ev.target.value)}
       fullWidth
       multiline
       minRows={2}
-      helperText="One topic per line, up to 5"
+      helperText="One objective or focus topic per line, up to 20"
     />
   );
 
