@@ -2,7 +2,11 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { getDb } from "../db/client";
 import { requireUser } from "../auth/session";
-import { filterDeletableR2Keys } from "../admin/sandbox-r2";
+import {
+  applySandboxKeyPrefix,
+  filterDeletableR2Keys,
+  sandboxWriteUserId,
+} from "../admin/sandbox-r2";
 import { enqueueGeneration } from "../generation/enqueue";
 import {
   IMAGE_MANUAL_OCCLUSION_MESSAGE,
@@ -448,11 +452,13 @@ deckRoutes.delete("/:id", async (c) => {
   for (const row of materialRows ?? []) {
     if (row.r2_key) keys.add(row.r2_key);
   }
+  const sandboxId = await sandboxWriteUserId(db, userId);
   for (const row of materialRows ?? []) {
     if (row.kind !== "pdf") continue;
     for (const key of await listFigureKeysInR2(c.env.MATERIALS, {
       deckId,
       pdfMaterialId: row.id,
+      sandboxUserId: sandboxId,
     })) {
       keys.add(key);
     }
@@ -561,7 +567,11 @@ deckRoutes.post("/:id/materials/paste", async (c) => {
 
   const id = newId();
   const createdAt = new Date().toISOString();
-  const r2Key = `materials/${deckId}/${id}.txt`;
+  const sandboxId = await sandboxWriteUserId(db, userId);
+  const r2Key = applySandboxKeyPrefix(
+    sandboxId,
+    `materials/${deckId}/${id}.txt`,
+  );
 
   await c.env.MATERIALS.put(r2Key, text, {
     httpMetadata: { contentType: "text/plain; charset=utf-8" },
@@ -752,7 +762,11 @@ deckRoutes.post("/:id/materials/upload-url", async (c) => {
 
   const materialId = newId();
   const createdAt = new Date().toISOString();
-  const r2Key = `materials/${deckId}/${materialId}.${resolved.ext}`;
+  const sandboxId = await sandboxWriteUserId(db, userId);
+  const r2Key = applySandboxKeyPrefix(
+    sandboxId,
+    `materials/${deckId}/${materialId}.${resolved.ext}`,
+  );
 
   const accountId = c.env.R2_ACCOUNT_ID;
   const accessKeyId = c.env.R2_ACCESS_KEY_ID;

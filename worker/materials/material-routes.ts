@@ -2,7 +2,10 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { getDb } from "../db/client";
 import { requireUser } from "../auth/session";
-import { filterDeletableR2Keys } from "../admin/sandbox-r2";
+import {
+  filterDeletableR2Keys,
+  sandboxWriteUserId,
+} from "../admin/sandbox-r2";
 import {
   enqueueOrManualOcclusion,
   userHasByoSecret,
@@ -55,11 +58,13 @@ async function discardProvisionalMaterialUpload(
   userId: string,
 ): Promise<void> {
   const db = getDb(env);
+  const sandboxId = await sandboxWriteUserId(db, userId);
   const figureKeys =
     material.kind === "pdf"
       ? await listFigureKeysInR2(env.MATERIALS, {
           deckId: material.deck_id,
           pdfMaterialId: material.id,
+          sandboxUserId: sandboxId,
         })
       : [];
   await db
@@ -127,7 +132,8 @@ materialRoutes.post("/:id/figures/presign", async (c) => {
     });
   }
 
-  const r2Key = figureR2Key(parent.deck_id, pdfMaterialId, index);
+  const sandboxId = await sandboxWriteUserId(db, userId);
+  const r2Key = figureR2Key(parent.deck_id, pdfMaterialId, index, "image/png", sandboxId);
   const existingObject = await c.env.MATERIALS.head(r2Key);
   if (existingObject) {
     throw new HTTPException(409, {
@@ -260,27 +266,39 @@ materialRoutes.delete("/:id", async (c) => {
   let figureChildren: FigureChild[] = [];
   const figureR2Keys: string[] = [];
   if (material.kind === "pdf") {
-    const { lower, upper } = figureR2KeyPrefixBounds(
-      material.deck_id,
-      material.id,
-    );
-    const { results } = await db
-      .prepare(
-        `SELECT id, r2_key FROM materials
-         WHERE deck_id = ? AND kind = 'image'
-           AND r2_key >= ? AND r2_key < ?`,
-      )
-      .bind(material.deck_id, lower, upper)
-      .all<{ id: string; r2_key: string }>();
-    figureChildren = (results ?? []).filter(
-      (row) =>
-        typeof row.r2_key === "string" &&
-        isFigureR2KeyForPdf(row.r2_key, material.deck_id, material.id),
-    );
+    const sandboxId = await sandboxWriteUserId(db, userId);
+    const ranges = [
+      figureR2KeyPrefixBounds(material.deck_id, material.id),
+      ...(sandboxId
+        ? [figureR2KeyPrefixBounds(material.deck_id, material.id, sandboxId)]
+        : []),
+    ];
+    const seen = new Set<string>();
+    for (const { lower, upper } of ranges) {
+      const { results } = await db
+        .prepare(
+          `SELECT id, r2_key FROM materials
+           WHERE deck_id = ? AND kind = 'image'
+             AND r2_key >= ? AND r2_key < ?`,
+        )
+        .bind(material.deck_id, lower, upper)
+        .all<{ id: string; r2_key: string }>();
+      for (const row of results ?? []) {
+        if (
+          typeof row.r2_key === "string" &&
+          isFigureR2KeyForPdf(row.r2_key, material.deck_id, material.id) &&
+          !seen.has(row.id)
+        ) {
+          seen.add(row.id);
+          figureChildren.push(row);
+        }
+      }
+    }
     figureR2Keys.push(
       ...(await listFigureKeysInR2(c.env.MATERIALS, {
         deckId: material.deck_id,
         pdfMaterialId: material.id,
+        sandboxUserId: sandboxId,
       })),
     );
   }
