@@ -12,7 +12,7 @@ export function isMcqCard(card: CardDraftView | null): boolean {
 
 export function studyFrontText(card: CardDraftView): string {
   if (isOcclusionFront(card.front)) {
-    return card.front.prompt?.trim() || "Identify the hidden region";
+    return card.front.prompt?.trim() || "";
   }
   return typeof card.front === "string" ? card.front : "";
 }
