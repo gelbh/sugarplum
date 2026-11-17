@@ -2,7 +2,13 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-import type { MouseEvent, ReactNode, Ref } from "react";
+import {
+  useEffect,
+  useRef,
+  type MouseEvent,
+  type ReactNode,
+  type Ref,
+} from "react";
 import { mediaUrl, type StudyRating } from "../api/client";
 import {
   clozeExtraSubtitle,
@@ -10,6 +16,7 @@ import {
   extractClozeAnswer,
   extractClozeAnswers,
 } from "../lib/clozeFormat";
+import { occlusionMaskScrollTop } from "../lib/occlusionLayout";
 import { CardFaceMcqBody } from "./cardFaceMcq";
 import ClozePrompt from "./ClozePrompt";
 import { FaceOverline } from "./faceOverline";
@@ -184,9 +191,26 @@ function StudyMedia({
   mask?: OcclusionMaskBox;
   masked: boolean;
 }) {
+  const shellRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const scrollToMask = () => {
+    if (!mask || !shellRef.current || !contentRef.current) return;
+    shellRef.current.scrollTop = occlusionMaskScrollTop(
+      mask,
+      contentRef.current.offsetHeight,
+      shellRef.current.clientHeight,
+    );
+  };
+
+  useEffect(() => {
+    scrollToMask();
+  }, [imageKey, mask?.x, mask?.y, mask?.w, mask?.h]);
+
   if (mask) {
     return (
       <Box
+        ref={shellRef}
         sx={{
           maxHeight: "42vh",
           overflow: "auto",
@@ -196,6 +220,7 @@ function StudyMedia({
         }}
       >
         <Box
+          ref={contentRef}
           sx={{
             position: "relative",
             width: "100%",
@@ -208,6 +233,7 @@ function StudyMedia({
             alt="Card media"
             draggable={false}
             onDragStart={(event) => event.preventDefault()}
+            onLoad={scrollToMask}
             sx={{
               display: "block",
               width: "100%",
@@ -334,14 +360,29 @@ export default function CardFace({
     flipBack();
   };
 
+  const faceBodySx = occlusion
+    ? { ...FACE_BODY_SX, overflowY: "hidden" as const }
+    : FACE_BODY_SX;
+
   return (
     <FlipCardPlate
       revealed={revealed}
       onPlateClick={canReveal ? reveal : canFlipBack ? flipBack : undefined}
-      plateSx={{ cursor: canReveal || canFlipBack ? "pointer" : "default" }}
+      plateSx={{
+        cursor: canReveal || canFlipBack ? "pointer" : "default",
+        ...(occlusion
+          ? {
+              aspectRatio: "auto",
+              height: "auto",
+              maxHeight: "min(100%, 85vh)",
+              width: "min(100%, 420px)",
+              maxWidth: "min(100%, 420px)",
+            }
+          : {}),
+      }}
       overlineTrailing={notesTrailing}
       front={
-        <Box data-card-face-content sx={FACE_BODY_SX}>
+        <Box data-card-face-content sx={faceBodySx}>
           <Box sx={PROMPT_SX}>
             {imageKey ? (
               <StudyMedia
@@ -374,7 +415,7 @@ export default function CardFace({
         </Box>
       }
       back={
-        <Box data-card-face-content sx={FACE_BODY_SX}>
+        <Box data-card-face-content sx={faceBodySx}>
           {occlusion && imageKey ? (
             <StudyMedia
               imageKey={imageKey}
