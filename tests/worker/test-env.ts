@@ -278,6 +278,7 @@ export type TestEnv = Env & {
   seedAchievementDef: (row: AchievementDefSeed) => void;
   getProgressWrites: () => string[];
   getUserGamification: (userId: string) => UserGamificationRow | undefined;
+  seedUserGamification: (row: UserGamificationRow) => void;
 };
 
 export function createTestEnv(opts?: {
@@ -1716,6 +1717,8 @@ export function createTestEnv(opts?: {
                 finished_at: job.finished_at,
                 figure_extract_mode: job.figure_extract_mode ?? "fast",
                 topic_hints_json: job.topic_hints_json ?? null,
+                avoid_patterns_json: job.avoid_patterns_json ?? null,
+                run_topic_hints_json: job.run_topic_hints_json ?? null,
                 atlas_provenance_json: job.atlas_provenance_json ?? null,
               };
             })
@@ -4926,6 +4929,9 @@ export function createTestEnv(opts?: {
     getProgressWrites: () => [...gamificationState.progressWrites],
     getUserGamification: (userId) =>
       gamificationState.userGamification.get(userId),
+    seedUserGamification: (row) => {
+      gamificationState.userGamification.set(row.user_id, row);
+    },
   };
 
   return env;

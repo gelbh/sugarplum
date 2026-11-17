@@ -108,6 +108,34 @@ function seedAdminAndLearnerWithLibrary(env: ReturnType<typeof createTestEnv>) {
     day: "2026-01-01",
     intros_used: 3,
   });
+  env.seedUserGamification({
+    user_id: "u-alice",
+    streak_current: 2,
+    streak_best: 5,
+    streak_day: "2026-01-01",
+    xp_total: 40,
+    level: 2,
+    display_name: "Alice",
+    board_opt_in: 1,
+    updated_at: NOW,
+    clear_due_days: 0,
+    clear_due_last_day: null,
+    catalog_version: 1,
+  });
+  env.seedGenerationJob({
+    id: "job-running",
+    material_id: "mat-1",
+    status: "running",
+    error: null,
+    coverage_json: null,
+    progress_json: JSON.stringify({ heartbeat_at: NOW }),
+    created_at: NOW,
+    finished_at: null,
+    topic_hints_json: JSON.stringify(["hint"]),
+    avoid_patterns_json: JSON.stringify(["avoid"]),
+    run_topic_hints_json: JSON.stringify(["run"]),
+    atlas_provenance_json: null,
+  });
   env.seedSession("s-admin", "admin-u");
 }
 
@@ -168,6 +196,23 @@ describe("admin impersonation D1 clone", () => {
       .find((p) => p.user_id === sandboxId);
     expect(prefs?.intro_budget).toBe(12);
     expect(prefs?.review_budget).toBe(150);
+
+    expect(env.getUserGamification(sandboxId)?.board_opt_in).toBe(0);
+    expect(env.getUserGamification("u-alice")?.board_opt_in).toBe(1);
+
+    const sandboxJobs = env
+      .getGenerationJobs()
+      .filter((j) =>
+        sandboxMaterials.some((m) => m.id === j.material_id),
+      );
+    expect(sandboxJobs).toHaveLength(1);
+    expect(sandboxJobs[0]!.status).toBe("failed");
+    expect(sandboxJobs[0]!.progress_json).toBeNull();
+    expect(sandboxJobs[0]!.avoid_patterns_json).toBe(JSON.stringify(["avoid"]));
+    expect(sandboxJobs[0]!.run_topic_hints_json).toBe(JSON.stringify(["run"]));
+    expect(env.getGenerationJobs().find((j) => j.id === "job-running")!.status).toBe(
+      "running",
+    );
   });
 
   it("study edit mutates sandbox only; source unchanged after Exit", async () => {

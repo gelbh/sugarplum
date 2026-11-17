@@ -168,6 +168,29 @@ export function gamificationFirst<T>(
       : null;
   }
   if (
+    normalized.includes("FROM user_gamification WHERE user_id =") &&
+    normalized.includes("clear_due_days") &&
+    normalized.includes("catalog_version") &&
+    normalized.includes("board_opt_in")
+  ) {
+    const row = state.userGamification.get(bound[0] as string);
+    return row
+      ? ({
+          streak_current: row.streak_current,
+          streak_best: row.streak_best,
+          streak_day: row.streak_day,
+          xp_total: row.xp_total,
+          level: row.level,
+          display_name: row.display_name,
+          board_opt_in: row.board_opt_in,
+          updated_at: row.updated_at,
+          clear_due_days: row.clear_due_days,
+          clear_due_last_day: row.clear_due_last_day,
+          catalog_version: row.catalog_version,
+        } as T)
+      : null;
+  }
+  if (
     normalized.startsWith(
       "SELECT xp_total FROM user_gamification WHERE user_id =",
     )
@@ -362,6 +385,54 @@ export function gamificationRun(
   normalized: string,
   bound: unknown[],
 ): D1Result | null {
+  if (
+    normalized.startsWith("INSERT INTO user_gamification") &&
+    normalized.includes("board_opt_in") &&
+    normalized.includes("clear_due_days")
+  ) {
+    const [
+      userId,
+      streak_current,
+      streak_best,
+      streak_day,
+      xp_total,
+      level,
+      display_name,
+      board_opt_in,
+      updated_at,
+      clear_due_days,
+      clear_due_last_day,
+      catalog_version,
+    ] = bound as [
+      string,
+      number,
+      number,
+      string | null,
+      number,
+      number,
+      string | null,
+      number,
+      string,
+      number,
+      string | null,
+      number,
+    ];
+    state.userGamification.set(userId, {
+      user_id: userId,
+      streak_current,
+      streak_best,
+      streak_day,
+      xp_total,
+      level,
+      display_name,
+      board_opt_in,
+      updated_at,
+      clear_due_days,
+      clear_due_last_day,
+      catalog_version,
+    });
+    return { success: true, meta: { changes: 1 } } as D1Result;
+  }
   if (normalized.startsWith("INSERT OR IGNORE INTO user_gamification")) {
     const [userId, updatedAt] = bound as [string, string];
     if (!state.userGamification.has(userId)) {
