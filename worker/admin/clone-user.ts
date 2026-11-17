@@ -181,7 +181,7 @@ async function cloneGenerationJobs(
     .prepare(
       `SELECT j.id, j.material_id, j.status, j.error, j.coverage_json, j.progress_json,
               j.created_at, j.finished_at, j.figure_extract_mode, j.topic_hints_json,
-              j.atlas_provenance_json
+              j.avoid_patterns_json, j.run_topic_hints_json, j.atlas_provenance_json
        FROM generation_jobs j
        INNER JOIN materials m ON m.id = j.material_id
        INNER JOIN decks d ON d.id = m.deck_id
@@ -200,6 +200,8 @@ async function cloneGenerationJobs(
       finished_at: string | null;
       figure_extract_mode: string | null;
       topic_hints_json: string | null;
+      avoid_patterns_json: string | null;
+      run_topic_hints_json: string | null;
       atlas_provenance_json: string | null;
     }>();
   const stmts: D1PreparedStatement[] = [];
@@ -207,6 +209,15 @@ async function cloneGenerationJobs(
     const materialId = materialMap.get(row.material_id);
     if (!materialId) continue;
     const id = mapId(jobMap, row.id);
+    const inFlight = row.status === "queued" || row.status === "running";
+    const status = inFlight ? "failed" : row.status;
+    const error = inFlight
+      ? "Sandbox clone: job was in progress"
+      : row.error;
+    const finishedAt = inFlight
+      ? (row.finished_at ?? row.created_at)
+      : row.finished_at;
+    const progressJson = inFlight ? null : row.progress_json;
     stmts.push(
       db
         .prepare(
@@ -215,23 +226,32 @@ async function cloneGenerationJobs(
         .bind(
           id,
           materialId,
-          row.status,
-          row.error,
+          status,
+          error,
           row.coverage_json,
           row.created_at,
-          row.finished_at,
+          finishedAt,
           row.figure_extract_mode ?? "fast",
           row.topic_hints_json,
           row.atlas_provenance_json,
         ),
     );
-    if (row.progress_json != null) {
+    if (progressJson != null) {
       stmts.push(
         db
           .prepare(
             "UPDATE generation_jobs SET progress_json = ? WHERE id = ?",
           )
-          .bind(row.progress_json, id),
+          .bind(progressJson, id),
+      );
+    }
+    if (row.avoid_patterns_json != null || row.run_topic_hints_json != null) {
+      stmts.push(
+        db
+          .prepare(
+            "UPDATE generation_jobs SET avoid_patterns_json = ?, run_topic_hints_json = ? WHERE id = ?",
+          )
+          .bind(row.avoid_patterns_json, row.run_topic_hints_json, id),
       );
     }
   }
@@ -594,7 +614,7 @@ async function cloneGamification(
         row.xp_total,
         row.level,
         row.display_name,
-        row.board_opt_in,
+        0,
         row.updated_at,
         row.clear_due_days ?? 0,
         row.clear_due_last_day,
