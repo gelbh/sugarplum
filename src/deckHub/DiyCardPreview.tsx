@@ -18,7 +18,10 @@ import {
 import { clozeExtraSubtitle, extractClozeAnswers } from "../lib/clozeFormat";
 import { backAnswer, isOcclusionFront } from "../lib/draftCardModel";
 import { mediaUrl, type CardDraftView } from "../api/client";
-import { occlusionTileFocusTransform } from "../lib/occlusionLayout";
+import {
+  occlusionTileFocusTransform,
+  type OcclusionMaskBox,
+} from "../lib/occlusionLayout";
 import {
   occlusionRevealAnswer,
   pickOcclusionRegion,
@@ -30,6 +33,78 @@ type Props = {
   action?: ReactNode;
   variant?: "editor" | "tile";
 };
+
+function OcclusionFocusMedia({
+  imageKey,
+  mask,
+  showMask,
+  focused,
+}: {
+  imageKey: string;
+  mask: OcclusionMaskBox;
+  showMask: boolean;
+  focused: boolean;
+}) {
+  return (
+    <Box
+      sx={{
+        position: "relative",
+        width: "100%",
+        mb: focused ? 0 : 1.5,
+        overflow: "hidden",
+        ...(focused
+          ? {
+              flex: 1,
+              minHeight: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }
+          : {}),
+      }}
+    >
+      <Box
+        sx={{
+          position: "relative",
+          width: "100%",
+          lineHeight: 0,
+          ...(focused ? occlusionTileFocusTransform(mask) : {}),
+        }}
+      >
+        <Box
+          component="img"
+          src={mediaUrl(imageKey)}
+          alt=""
+          draggable={false}
+          sx={{
+            display: "block",
+            width: "100%",
+            height: "auto",
+            borderRadius: focused ? 0 : 1,
+            userSelect: "none",
+          }}
+        />
+        {showMask ? (
+          <Box
+            aria-hidden
+            sx={{
+              position: "absolute",
+              left: `${mask.x * 100}%`,
+              top: `${mask.y * 100}%`,
+              width: `${mask.w * 100}%`,
+              height: `${mask.h * 100}%`,
+              borderRadius: "4px",
+              bgcolor:
+                "color-mix(in srgb, var(--sp-stage-bg) 92%, transparent)",
+              border: "1.5px solid",
+              borderColor: "secondary.main",
+            }}
+          />
+        ) : null}
+      </Box>
+    </Box>
+  );
+}
 
 function previewFront(card: CardDraftView): string {
   if (isOcclusionFront(card.front)) {
@@ -244,62 +319,12 @@ export default function DiyCardPreview({
               <Box data-card-face-content sx={faceBodySx}>
                 <Box sx={PROMPT_SX}>
                   {parts.occlusion ? (
-                    <Box
-                      sx={{
-                        position: "relative",
-                        width: "100%",
-                        mb: isTile ? 0 : 1.5,
-                        overflow: "hidden",
-                        ...(isTile
-                          ? {
-                              flex: 1,
-                              minHeight: 0,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }
-                          : {}),
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          position: "relative",
-                          width: "100%",
-                          lineHeight: 0,
-                          ...(isTile
-                            ? occlusionTileFocusTransform(parts.occlusion.mask)
-                            : {}),
-                        }}
-                      >
-                        <Box
-                          component="img"
-                          src={mediaUrl(parts.occlusion.imageKey)}
-                          alt=""
-                          draggable={false}
-                          sx={{
-                            display: "block",
-                            width: "100%",
-                            height: "auto",
-                            borderRadius: isTile ? 0 : 1,
-                          }}
-                        />
-                        <Box
-                          aria-hidden
-                          sx={{
-                            position: "absolute",
-                            left: `${parts.occlusion.mask.x * 100}%`,
-                            top: `${parts.occlusion.mask.y * 100}%`,
-                            width: `${parts.occlusion.mask.w * 100}%`,
-                            height: `${parts.occlusion.mask.h * 100}%`,
-                            borderRadius: "4px",
-                            bgcolor:
-                              "color-mix(in srgb, var(--sp-stage-bg) 92%, transparent)",
-                            border: "1.5px solid",
-                            borderColor: "secondary.main",
-                          }}
-                        />
-                      </Box>
-                    </Box>
+                    <OcclusionFocusMedia
+                      imageKey={parts.occlusion.imageKey}
+                      mask={parts.occlusion.mask}
+                      showMask
+                      focused={isTile}
+                    />
                   ) : parts.imageKey ? (
                     <Box
                       component="img"
@@ -331,57 +356,12 @@ export default function DiyCardPreview({
             back={
               <Box data-card-face-content sx={faceBodySx}>
                 {parts.occlusion && parts.imageKey ? (
-                  isTile ? (
-                    <Box
-                      sx={{
-                        position: "relative",
-                        width: "100%",
-                        overflow: "hidden",
-                        flex: 1,
-                        minHeight: 0,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        mb: 0,
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          position: "relative",
-                          width: "100%",
-                          lineHeight: 0,
-                          ...occlusionTileFocusTransform(parts.occlusion.mask),
-                        }}
-                      >
-                        <Box
-                          component="img"
-                          src={mediaUrl(parts.imageKey)}
-                          alt=""
-                          draggable={false}
-                          sx={{
-                            display: "block",
-                            width: "100%",
-                            height: "auto",
-                          }}
-                        />
-                      </Box>
-                    </Box>
-                  ) : (
-                    <Box
-                      component="img"
-                      src={mediaUrl(parts.imageKey)}
-                      alt=""
-                      draggable={false}
-                      sx={{
-                        display: "block",
-                        width: "100%",
-                        height: "auto",
-                        mb: 1.5,
-                        borderRadius: 1,
-                        userSelect: "none",
-                      }}
-                    />
-                  )
+                  <OcclusionFocusMedia
+                    imageKey={parts.imageKey}
+                    mask={parts.occlusion.mask}
+                    showMask={false}
+                    focused={isTile}
+                  />
                 ) : !isCloze && parts.front.trim() ? (
                   <Typography component="p" sx={FACE_FRONT_ECHO_SX}>
                     {parts.front}

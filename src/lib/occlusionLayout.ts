@@ -1,8 +1,9 @@
-export type OcclusionNormBox = { x: number; y: number; w: number; h: number };
+/** Normalized 0–1 hide_one box over an image. */
+export type OcclusionMaskBox = { x: number; y: number; w: number; h: number };
 
 /** Scroll offset so the mask center sits in the middle of the shell. */
 export function occlusionMaskScrollTop(
-  mask: OcclusionNormBox,
+  mask: OcclusionMaskBox,
   contentH: number,
   shellH: number,
 ): number {
@@ -18,7 +19,7 @@ export function occlusionMaskScrollTop(
  * element midpoint (parent clips with overflow:hidden).
  */
 export function occlusionTileFocusTransform(
-  mask: OcclusionNormBox,
+  mask: OcclusionMaskBox,
   opts?: { pad?: number; maxScale?: number },
 ): { transformOrigin: string; transform: string } {
   const pad = opts?.pad ?? 0.12;

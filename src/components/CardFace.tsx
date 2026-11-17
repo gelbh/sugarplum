@@ -16,7 +16,10 @@ import {
   extractClozeAnswer,
   extractClozeAnswers,
 } from "../lib/clozeFormat";
-import { occlusionMaskScrollTop } from "../lib/occlusionLayout";
+import {
+  occlusionMaskScrollTop,
+  type OcclusionMaskBox,
+} from "../lib/occlusionLayout";
 import { CardFaceMcqBody } from "./cardFaceMcq";
 import ClozePrompt from "./ClozePrompt";
 import { FaceOverline } from "./faceOverline";
@@ -36,13 +39,7 @@ import {
   faceMotionSx,
 } from "./studyFaceSx";
 
-/** Normalized 0–1 hide_one box over the study image until reveal. */
-export type OcclusionMaskBox = {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-};
+export type { OcclusionMaskBox };
 
 export type OcclusionStudyFace = {
   imageKey: string;
@@ -398,7 +395,8 @@ export default function CardFace({
         ...(occlusion
           ? {
               // Absolute faces need a definite plate height (faceMotionSx).
-              aspectRatio: "auto",
+              // Unset class .sp-playing-card aspect-ratio so media-first height wins.
+              aspectRatio: "unset",
               height: "min(85vh, 640px)",
               maxHeight: "min(100%, 85vh)",
               width: "min(100%, 420px)",
