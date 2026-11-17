@@ -3,6 +3,7 @@ import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
+import { filterDeletableR2Keys } from "../admin/sandbox-r2";
 import { MAX_IMAGE_BYTES } from "../materials/limits";
 import { createR2PutUrl } from "../materials/r2-presign";
 import {
@@ -163,10 +164,17 @@ async function readPriorR2Key(
   return key || null;
 }
 
-async function deleteR2Key(env: Env, key: string | null): Promise<void> {
+async function deleteR2Key(
+  env: Env,
+  db: D1Database,
+  userId: string,
+  key: string | null,
+): Promise<void> {
   if (!key) return;
+  const [safe] = await filterDeletableR2Keys(db, userId, [key]);
+  if (!safe) return;
   try {
-    await env.MATERIALS.delete(key);
+    await env.MATERIALS.delete(safe);
   } catch {}
 }
 
@@ -366,7 +374,7 @@ coverRoutes.put("/custom", async (c) => {
   };
   await upsertCoverRow(db, userId, owner, stored);
   if (priorKey && priorKey !== r2Key) {
-    await deleteR2Key(c.env, priorKey);
+    await deleteR2Key(c.env, db, userId, priorKey);
   }
   return c.json({
     ...stored,
@@ -399,7 +407,7 @@ coverRoutes.put("/", async (c) => {
   const priorKey = await readPriorR2Key(db, userId, owner);
   const stored = coverFieldsFromPhoto(chosen);
   await upsertCoverRow(db, userId, owner, stored);
-  await deleteR2Key(c.env, priorKey);
+  await deleteR2Key(c.env, db, userId, priorKey);
 
   if (chosen.downloadLocation) {
     const ping = trackDownload(
@@ -429,6 +437,6 @@ coverRoutes.delete("/", async (c) => {
     .prepare(DELETE_COVER_SQL)
     .bind(userId, owner.ownerKind, owner.ownerId)
     .run();
-  await deleteR2Key(c.env, priorKey);
+  await deleteR2Key(c.env, db, userId, priorKey);
   return c.body(null, 204);
 });

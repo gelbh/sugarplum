@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { getDb } from "../db/client";
 import { requireUser } from "../auth/session";
+import { filterDeletableR2Keys } from "../admin/sandbox-r2";
 import { enqueueGeneration } from "../generation/enqueue";
 import {
   IMAGE_MANUAL_OCCLUSION_MESSAGE,
@@ -475,7 +476,7 @@ deckRoutes.delete("/:id", async (c) => {
     }
   }
 
-  for (const key of keys) {
+  for (const key of await filterDeletableR2Keys(db, userId, keys)) {
     try {
       await c.env.MATERIALS.delete(key);
     } catch {
