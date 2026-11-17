@@ -209,10 +209,12 @@ describe("POST /api/decks/:id/topic-generate", () => {
     expect(body.jobId).not.toBe("job-old");
 
     expect(env.getCards()).toHaveLength(cardsBefore);
-    expect(env.getCards().map((c) => c.id).sort()).toEqual([
-      "c-keep-1",
-      "c-keep-2",
-    ]);
+    expect(
+      env
+        .getCards()
+        .map((c) => c.id)
+        .sort(),
+    ).toEqual(["c-keep-1", "c-keep-2"]);
 
     const jobs = env.getGenerationJobs();
     expect(jobs).toHaveLength(2);
@@ -614,9 +616,13 @@ describe("mergeTopicHints", () => {
   });
 
   it("caps by dropping existing hints, never selected ones", () => {
-    expect(
-      mergeTopicHints(["s1", "s2", "s3", "s4"], ["e1", "e2"], 5),
-    ).toEqual(["s1", "s2", "s3", "s4", "e1"]);
+    expect(mergeTopicHints(["s1", "s2", "s3", "s4"], ["e1", "e2"], 5)).toEqual([
+      "s1",
+      "s2",
+      "s3",
+      "s4",
+      "e1",
+    ]);
   });
 
   it("trims and skips blank entries", () => {

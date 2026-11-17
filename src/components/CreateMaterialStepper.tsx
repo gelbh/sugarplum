@@ -41,10 +41,7 @@ import { FigureSuggestPanel } from "./FigureSuggestPanel";
 import PdfCompressConsent from "./PdfCompressConsent";
 import PdfSplitConsent from "./PdfSplitConsent";
 import PptxSplitConsent from "./PptxSplitConsent";
-import {
-  SelectEnumItem,
-  renderSelectEnumValue,
-} from "./SelectEnumItem";
+import { SelectEnumItem, renderSelectEnumValue } from "./SelectEnumItem";
 import { stepperSx } from "./stepperSx";
 
 type Props = {
@@ -367,7 +364,9 @@ export default function CreateMaterialStepper({
                   <Button
                     type="submit"
                     variant="contained"
-                    disabled={busy || !deck.selectedDeckId || !upload.uploadFile}
+                    disabled={
+                      busy || !deck.selectedDeckId || !upload.uploadFile
+                    }
                   >
                     {busy
                       ? readingScan
