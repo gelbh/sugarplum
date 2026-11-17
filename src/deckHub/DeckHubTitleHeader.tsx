@@ -1,9 +1,7 @@
 import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import ButtonBase from "@mui/material/ButtonBase";
 import IconButton from "@mui/material/IconButton";
-import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -14,6 +12,7 @@ import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
 import type { StoredCoverRow } from "../api/client";
 import { coverPlaceholderColor } from "../library/board/coverPlaceholder";
+import CoverHeroThumb from "../library/CoverHeroThumb";
 import StageBreadcrumbs, { type StageCrumb } from "../library/StageBreadcrumbs";
 
 type Props = {
@@ -68,102 +67,23 @@ export default function DeckHubTitleHeader({
         alignItems="flex-start"
         sx={{ minWidth: 0 }}
       >
-        <Stack
-          spacing={0.75}
-          alignItems="stretch"
-          sx={{ flexShrink: 0, width: { xs: 104, sm: 132 } }}
-        >
-          <Box
-            component={!guest ? ButtonBase : "div"}
-            {...(!guest
+        <CoverHeroThumb
+          src={coverSrc}
+          placeholderColor={emptyColor}
+          interactive={!guest}
+          onChangeCover={onChangeCover}
+          ariaLabel={
+            cover ? `Change cover for ${title}` : `Add cover for ${title}`
+          }
+          credit={
+            cover?.source === "unsplash"
               ? {
-                  focusRipple: true,
-                  onClick: onChangeCover,
-                  "aria-label": cover
-                    ? `Change cover for ${title}`
-                    : `Add cover for ${title}`,
+                  photographerName: cover.photographerName,
+                  photographerUrl: cover.photographerUrl,
                 }
-              : {})}
-            sx={{
-              position: "relative",
-              width: "100%",
-              aspectRatio: "3 / 4",
-              borderRadius: 2,
-              overflow: "hidden",
-              border: 1,
-              borderColor: "rgba(232, 216, 199, 0.16)",
-              bgcolor: emptyColor,
-              boxShadow: "0 14px 36px rgba(0,0,0,0.42)",
-              textAlign: "left",
-              display: "block",
-              transition: "transform 180ms ease, box-shadow 180ms ease",
-              "@media (prefers-reduced-motion: reduce)": {
-                transition: "none",
-              },
-              ...(!guest
-                ? {
-                    "&:hover, &:focus-visible": {
-                      transform: "translateY(-2px) scale(1.02)",
-                      boxShadow: "0 18px 44px rgba(0,0,0,0.5)",
-                    },
-                    "@media (prefers-reduced-motion: reduce)": {
-                      "&:hover, &:focus-visible": {
-                        transform: "none",
-                      },
-                    },
-                  }
-                : {}),
-            }}
-          >
-            {coverSrc ? (
-              <Box
-                component="img"
-                src={coverSrc}
-                alt=""
-                sx={{
-                  position: "absolute",
-                  inset: 0,
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  display: "block",
-                }}
-              />
-            ) : null}
-            <Box
-              aria-hidden
-              sx={{
-                position: "absolute",
-                inset: 0,
-                background:
-                  "linear-gradient(180deg, transparent 42%, rgba(15, 5, 14, 0.82) 100%)",
-                pointerEvents: "none",
-              }}
-            />
-          </Box>
-          {cover?.source === "unsplash" ? (
-            <Typography
-              variant="caption"
-              sx={{
-                color: "text.secondary",
-                display: "block",
-                lineHeight: 1.35,
-                px: 0.25,
-              }}
-            >
-              Photo by{" "}
-              <Link
-                href={cover.photographerUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                underline="hover"
-                sx={{ color: "inherit" }}
-              >
-                {cover.photographerName}
-              </Link>
-            </Typography>
-          ) : null}
-        </Stack>
+              : null
+          }
+        />
 
         <Box sx={{ minWidth: 0, flex: 1, pt: { xs: 0.25, sm: 0.5 } }}>
           <Stack
