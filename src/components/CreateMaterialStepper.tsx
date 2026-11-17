@@ -41,10 +41,7 @@ import { FigureSuggestPanel } from "./FigureSuggestPanel";
 import PdfCompressConsent from "./PdfCompressConsent";
 import PdfSplitConsent from "./PdfSplitConsent";
 import PptxSplitConsent from "./PptxSplitConsent";
-import {
-  SelectEnumItem,
-  renderSelectEnumValue,
-} from "./SelectEnumItem";
+import { SelectEnumItem, renderSelectEnumValue } from "./SelectEnumItem";
 import { stepperSx } from "./stepperSx";
 
 type Props = {
@@ -128,14 +125,14 @@ export default function CreateMaterialStepper({
 
   const alsoCoverField = (
     <TextField
-      label="Also cover (optional)"
+      label="Learning objectives (optional)"
       name="alsoCover"
       value={alsoCover}
       onChange={(ev) => setAlsoCover(ev.target.value)}
       fullWidth
       multiline
       minRows={2}
-      helperText="One topic per line, up to 5"
+      helperText="One objective or focus topic per line, up to 20"
     />
   );
 
@@ -367,7 +364,9 @@ export default function CreateMaterialStepper({
                   <Button
                     type="submit"
                     variant="contained"
-                    disabled={busy || !deck.selectedDeckId || !upload.uploadFile}
+                    disabled={
+                      busy || !deck.selectedDeckId || !upload.uploadFile
+                    }
                   >
                     {busy
                       ? readingScan

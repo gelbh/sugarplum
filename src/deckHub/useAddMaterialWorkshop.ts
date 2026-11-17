@@ -9,6 +9,7 @@ import {
   pasteMaterial,
   PPTX_MIME,
   resolveUploadContentType,
+  topicHintsFromLines,
   uploadMaterialFile,
   uploadPdfWithFigureCrops,
 } from "../api/client";
@@ -62,6 +63,7 @@ export function useAddMaterialWorkshop({
   const [materialTab, setMaterialTab] = useState<MaterialTab>("upload");
   const [pasteText, setPasteText] = useState("");
   const [pasteFilename, setPasteFilename] = useState("");
+  const [alsoCover, setAlsoCover] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [figureFiles, setFigureFiles] = useState<File[]>([]);
   const [materialBusy, setMaterialBusy] = useState(false);
@@ -82,6 +84,11 @@ export function useAddMaterialWorkshop({
   function resetMaterialMessages() {
     setMaterialError(null);
     setMaterialNotice(null);
+  }
+
+  function topicHintOpts(): { topicHints?: string[] } {
+    const topicHints = topicHintsFromLines(alsoCover);
+    return topicHints ? { topicHints } : {};
   }
 
   function onTabChange(tab: MaterialTab | null) {
@@ -160,9 +167,11 @@ export function useAddMaterialWorkshop({
       const material = await pasteMaterial(deckId, {
         text: pasteText,
         ...(pasteFilename.trim() ? { filename: pasteFilename.trim() } : {}),
+        ...topicHintOpts(),
       });
       setPasteText("");
       setPasteFilename("");
+      setAlsoCover("");
       if (material.jobId) {
         window.location.assign(
           `/jobs/${encodeURIComponent(material.jobId)}/drafts`,
@@ -214,11 +223,13 @@ export function useAddMaterialWorkshop({
                 undefined,
                 {
                   ...PDF_ACCURATE_OPTS,
+                  ...topicHintOpts(),
                   onScan: () => setReadingScan(true),
                 },
               )
             : uploadMaterialFile(deckId, part, undefined, {
                 ...PDF_ACCURATE_OPTS,
+                ...topicHintOpts(),
                 onScan: () => setReadingScan(true),
               }),
       });
@@ -251,6 +262,7 @@ export function useAddMaterialWorkshop({
 
       setUploadFile(null);
       setFigureFiles([]);
+      setAlsoCover("");
       setPdfSplitOpen(false);
       setPdfSplitProgress(null);
       const figureNote = skippedFigures ? ` ${FIGURES_SKIPPED_NOTICE}.` : "";
@@ -300,6 +312,7 @@ export function useAddMaterialWorkshop({
         onProgress: setPptxSplitProgress,
         uploadPart: (part) =>
           uploadMaterialFile(deckId, part, undefined, {
+            ...topicHintOpts(),
             onScan: () => setReadingScan(true),
           }),
       });
@@ -325,6 +338,7 @@ export function useAddMaterialWorkshop({
 
       setUploadFile(null);
       setFigureFiles([]);
+      setAlsoCover("");
       setPptxSplitOpen(false);
       setPptxSplitProgress(null);
       if (lastJobId) {
@@ -387,11 +401,13 @@ export function useAddMaterialWorkshop({
                 undefined,
                 {
                   ...PDF_ACCURATE_OPTS,
+                  ...topicHintOpts(),
                   onScan: () => setReadingScan(true),
                 },
               )
             : uploadMaterialFile(deckId, part, undefined, {
                 ...PDF_ACCURATE_OPTS,
+                ...topicHintOpts(),
                 onScan: () => setReadingScan(true),
               }),
       });
@@ -404,6 +420,7 @@ export function useAddMaterialWorkshop({
 
       setUploadFile(null);
       setFigureFiles([]);
+      setAlsoCover("");
       setPdfCompressOpen(false);
       setPdfCompressProgress(null);
 
@@ -501,9 +518,13 @@ export function useAddMaterialWorkshop({
         contentType === "application/pdf"
           ? {
               ...PDF_ACCURATE_OPTS,
+              ...topicHintOpts(),
               onScan: () => setReadingScan(true),
             }
-          : { onScan: () => setReadingScan(true) };
+          : {
+              ...topicHintOpts(),
+              onScan: () => setReadingScan(true),
+            };
       const material =
         contentType === "application/pdf" && figureFiles.length > 0
           ? await uploadPdfWithFigureCrops(
@@ -516,6 +537,7 @@ export function useAddMaterialWorkshop({
           : await uploadMaterialFile(deckId, uploadFile, undefined, pdfOpts);
       setUploadFile(null);
       setFigureFiles([]);
+      setAlsoCover("");
       if (material.jobId) {
         setMaterialNotice(
           `Stored file (${material.status}). Generation started.`,
@@ -553,6 +575,8 @@ export function useAddMaterialWorkshop({
     setPasteText,
     pasteFilename,
     setPasteFilename,
+    alsoCover,
+    setAlsoCover,
     uploadFile,
     setUploadFile,
     figureFiles,

@@ -530,9 +530,11 @@ describe("POST /api/jobs/:id/regen", () => {
   it.each([
     [
       "too many hints",
-      JSON.stringify({ topicHints: ["a", "b", "c", "d", "e", "f"] }),
+      JSON.stringify({
+        topicHints: Array.from({ length: 21 }, (_, i) => `h${i}`),
+      }),
     ],
-    ["over-length hint", JSON.stringify({ topicHints: ["x".repeat(201)] })],
+    ["over-length hint", JSON.stringify({ topicHints: ["x".repeat(301)] })],
     ["non-array hints", JSON.stringify({ topicHints: "a" })],
     ["array body", "[]"],
     ["number body", "42"],
