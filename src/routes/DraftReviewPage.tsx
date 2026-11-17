@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -16,153 +16,36 @@ import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded";
 import HighlightOffRoundedIcon from "@mui/icons-material/HighlightOffRounded";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { useUnlockToasts } from "../achievements/UnlockToastProvider";
-import ReviewCard, { type ReviewDecision } from "../components/ReviewCard";
+import ReviewCard from "../components/ReviewCard";
 import {
-  ApiError,
-  acceptAllJobDrafts,
-  acceptCard,
-  dismissJob,
-  getJob,
-  getJourney,
-  listJobDrafts,
-  patchCard,
   asRegenType,
   cardHasRegenSource,
-  regenCard,
-  regenJob,
-  rejectCard,
-  rejectJobDrafts,
-  undoReviewCard,
   type CardDraftView,
-  type CardType,
 } from "../api/client";
 import {
   CreateFlowNoticeFade,
   NoticeUndoButton,
 } from "../library/CreateFlowNotice";
 import StageBreadcrumbs, { type StageCrumb } from "../library/StageBreadcrumbs";
-import {
-  emptyJobDraftCtas,
-  type EmptyJobDraftCtas,
-} from "../journey/emptyJobDraftCtas";
-import { REJECT_REASON_LABELS, type RejectReason } from "../lib/rejectReasons";
-import { navigate } from "../nav/navigate";
+import { type EmptyJobDraftCtas } from "../journey/emptyJobDraftCtas";
 import JobProgressPanel from "../progress/JobProgressPanel";
 import { useJobProgress } from "../progress/useJobProgress";
 import { useTrackedOp } from "../progress/useTrackedOp";
 import { useSession } from "../session/SessionContext";
-
-function jobIdFromPath(): string | null {
-  const match = window.location.pathname.match(/^\/jobs\/([^/]+)\/drafts\/?$/);
-  return match?.[1] ? decodeURIComponent(match[1]) : null;
-}
-
-function friendlyJobError(raw: string | null | undefined): string | null {
-  if (!raw) return null;
-  if (
-    raw.startsWith("R2 object missing:") ||
-    raw.includes("not found in storage")
-  ) {
-    return "Uploaded file not found in storage. Discard and upload again, or try again after storage is reachable.";
-  }
-  if (raw.includes("No schema-valid cards")) {
-    return "Generation finished without usable cards from this material.";
-  }
-  return raw;
-}
-
-const PRIMARY_PILL_SX = {
-  minWidth: 140,
-  px: 2.5,
-  py: 1.1,
-  borderRadius: 999,
-  textTransform: "none",
-  fontWeight: 600,
-  boxShadow: "none",
-  "&:hover": { boxShadow: "none" },
-} as const;
-
-const BATCH_PILL_BASE = {
-  minHeight: 40,
-  px: 1.6,
-  py: 0.85,
-  borderRadius: 999,
-  textTransform: "none",
-  fontWeight: 600,
-  fontSize: "0.8125rem",
-  letterSpacing: "0.02em",
-  boxShadow: "none",
-  border: "1px solid",
-  backdropFilter: "blur(8px)",
-  WebkitBackdropFilter: "blur(8px)",
-  "& .MuiButton-startIcon": { mr: 0.65 },
-  "&:hover": { boxShadow: "none" },
-  "&.Mui-disabled": {
-    opacity: 0.42,
-    borderColor: "rgba(232, 216, 199, 0.16)",
-    color: "rgba(232, 216, 199, 0.42)",
-  },
-} as const;
-
-const DIALOG_PAPER_SX = {
-  borderRadius: 2,
-  overflow: "hidden",
-  bgcolor: "background.paper",
-} as const;
-
-const DIALOG_TITLE_SX = {
-  p: 0,
-  fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
-  fontWeight: 400,
-  letterSpacing: "0.02em",
-  lineHeight: 1.2,
-  fontSize: "1.65rem",
-} as const;
-
-const DIALOG_CANCEL_SX = {
-  color: "text.secondary",
-  textTransform: "none",
-  fontWeight: 500,
-  "&:hover": { color: "text.primary", bgcolor: "transparent" },
-} as const;
-
-function DialogEyebrow({
-  label,
-  tone = "primary",
-}: {
-  label: string;
-  tone?: "primary" | "error" | "warning";
-}) {
-  return (
-    <Typography
-      component="p"
-      sx={{
-        m: 0,
-        mb: 0.75,
-        fontSize: "0.6875rem",
-        fontWeight: 500,
-        letterSpacing: "0.22em",
-        textTransform: "uppercase",
-        color: `${tone}.main`,
-      }}
-    >
-      {label}
-    </Typography>
-  );
-}
-
-function cardPatchBody(card: CardDraftView): Parameters<typeof patchCard>[1] {
-  const type = card.type as CardType;
-  const body: Parameters<typeof patchCard>[1] = {
-    front: card.front,
-    back: card.back,
-    type,
-  };
-  if (type === "mcq" && card.options) {
-    body.options = card.options;
-  }
-  return body;
-}
+import {
+  BATCH_PILL_BASE,
+  DIALOG_CANCEL_SX,
+  DIALOG_PAPER_SX,
+  DIALOG_TITLE_SX,
+  DialogEyebrow,
+  PRIMARY_PILL_SX,
+} from "../draftReview/draftReviewChrome";
+import { jobIdFromPath } from "../draftReview/draftReviewPath";
+import { friendlyJobError } from "../draftReview/friendlyJobError";
+import { useDraftReviewBatch } from "../draftReview/useDraftReviewBatch";
+import { useDraftReviewDecide } from "../draftReview/useDraftReviewDecide";
+import { useDraftReviewLoad } from "../draftReview/useDraftReviewLoad";
+import { useDraftReviewRegen } from "../draftReview/useDraftReviewRegen";
 
 /** Operate UI: review, edit, accept or reject generation drafts (code-led MUI; no Impeccable comps). */
 export default function DraftReviewPage() {
@@ -202,346 +85,73 @@ export default function DraftReviewPage() {
     }
   }, [progressGate, jobId]);
 
-  const load = useCallback(async (id: string) => {
-    const [list, job] = await Promise.all([listJobDrafts(id), getJob(id)]);
-    setDrafts(list);
-    setJobStatus(job.status);
-    if (job.error) setError(friendlyJobError(job.error));
-    setDirty(false);
-    const next: StageCrumb[] = [{ label: "Library", href: "/library" }];
-    if (job.subject_id && job.subject_title) {
-      next.push({
-        label: job.subject_title,
-        href: `/library/subjects/${encodeURIComponent(job.subject_id)}`,
-      });
-    }
-    if (job.deck_id && job.deck_title) {
-      next.push({
-        label: job.deck_title,
-        href: `/library/decks/${encodeURIComponent(job.deck_id)}`,
-      });
-    }
-    setCrumbs(next);
-    return list;
-  }, []);
-
-  const refreshJourney = useCallback(async (id: string, draftCount: number) => {
-    try {
-      if (draftCount > 0) {
-        setEmptyCtas(null);
-        return;
-      }
-      const journey = await getJourney();
-      setEmptyCtas(
-        emptyJobDraftCtas({
-          jobId: id,
-          openReviewJobId: journey.openReviewJobId,
-          dueCount: journey.dueCount,
-        }),
-      );
-    } catch {
-      setEmptyCtas(null);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!jobId) {
-      setError("Missing job id in URL");
-      setReady(true);
-    }
-  }, [jobId]);
-
-  useEffect(() => {
-    if (!jobId) return;
-    // Failed jobs still need status + drafts so empty UI can offer Discard.
-    if (!jobProgress.ready && !jobProgress.error) return;
-
-    let cancelled = false;
-    (async () => {
-      beginLoad();
-      try {
-        const list = await load(jobId);
-        if (cancelled) return;
-        if (jobProgress.error) setError(friendlyJobError(jobProgress.error));
-        await refreshJourney(jobId, list.length);
-        if (cancelled) return;
-        setReady(true);
-        endLoad();
-      } catch (err) {
-        if (cancelled) return;
-        if (err instanceof ApiError && err.status === 401) {
-          window.location.assign("/login");
-          return;
-        }
-        setError(
-          err instanceof ApiError
-            ? err.message
-            : (jobProgress.error ?? "Failed to load drafts"),
-        );
-        if (jobProgress.error) setJobStatus((prev) => prev ?? "failed");
-        setReady(true);
-        endLoad(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-      endLoad(false);
-    };
-  }, [
+  const { load, refreshJourney } = useDraftReviewLoad({
+    jobId,
+    jobProgressReady: jobProgress.ready,
+    jobProgressError: jobProgress.error,
     beginLoad,
     endLoad,
-    jobId,
-    jobProgress.error,
-    jobProgress.ready,
-    load,
-    refreshJourney,
-  ]);
+    setDrafts,
+    setEmptyCtas,
+    setError,
+    setJobStatus,
+    setCrumbs,
+    setReady,
+    setDirty,
+  });
 
   const current = drafts[0] ?? null;
 
-  function onEditorChange(
-    next: Pick<CardDraftView, "front" | "back" | "type" | "options">,
-  ) {
-    if (!current) return;
-    setDrafts((prev) =>
-      prev.map((c) => (c.id === current.id ? { ...c, ...next } : c)),
-    );
-    setDirty(true);
-  }
+  const { onEditorChange, onUndoDecision, onDecide } = useDraftReviewDecide({
+    jobId,
+    current,
+    dirty,
+    notice,
+    undoBusy,
+    begin,
+    end,
+    enqueueUnlocks,
+    load,
+    refreshJourney,
+    setDrafts,
+    setDirty,
+    setError,
+    setNotice,
+    setUndoBusy,
+  });
 
-  async function reloadAfterDecision(
-    id: string,
-    decidedId: string,
-    decidedNotice: {
-      message: string;
-      tone: "success" | "reject" | "info" | "error";
-      undoCardId?: string;
-    },
-  ) {
-    setNotice(decidedNotice);
-    try {
-      const list = await load(id);
-      await refreshJourney(id, list.length);
-      end();
-    } catch (err) {
-      setDrafts((prev) => prev.filter((c) => c.id !== decidedId));
-      setDirty(false);
-      setError(
-        err instanceof ApiError ? err.message : "Could not reload drafts",
-      );
-      end(false);
-    }
-  }
+  const { onAcceptAll, onRejectRemainingDrafts } = useDraftReviewBatch({
+    jobId,
+    current,
+    dirty,
+    begin,
+    end,
+    enqueueUnlocks,
+    load,
+    refreshJourney,
+    setConfirmAll,
+    setConfirmRejectDrafts,
+    setDirty,
+    setError,
+    setNotice,
+  });
 
-  async function onUndoDecision() {
-    if (!notice?.undoCardId || !jobId || undoBusy) return;
-    const cardId = notice.undoCardId;
-    setUndoBusy(true);
-    setError(null);
-    begin("Undoing…");
-    try {
-      await undoReviewCard(cardId);
-      const list = await load(jobId);
-      await refreshJourney(jobId, list.length);
-      setNotice({ message: "Card restored to drafts", tone: "info" });
-      end();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not undo");
-      end(false);
-    } finally {
-      setUndoBusy(false);
-    }
-  }
-
-  async function onAccept(): Promise<boolean> {
-    if (!current || !jobId) return false;
-    const decidedId = current.id;
-    setError(null);
-    setNotice(null);
-    begin();
-    try {
-      if (dirty) {
-        await patchCard(current.id, cardPatchBody(current));
-      }
-      const accepted = await acceptCard(current.id);
-      if (accepted.unlocks?.length) {
-        enqueueUnlocks(accepted.unlocks);
-      }
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not accept");
-      end(false);
-      return false;
-    }
-    await reloadAfterDecision(jobId, decidedId, {
-      message: "Accepted into study",
-      tone: "success",
-      undoCardId: decidedId,
-    });
-    return true;
-  }
-
-  async function onReject(reason: RejectReason | null): Promise<boolean> {
-    if (!current || !jobId) return false;
-    const decidedId = current.id;
-    setError(null);
-    setNotice(null);
-    begin();
-    try {
-      await rejectCard(current.id, reason);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not reject");
-      end(false);
-      return false;
-    }
-    await reloadAfterDecision(jobId, decidedId, {
-      message: reason
-        ? `Rejected · ${REJECT_REASON_LABELS[reason]}`
-        : "Card rejected",
-      tone: "reject",
-      undoCardId: decidedId,
-    });
-    return true;
-  }
-
-  function onDecide(decision: ReviewDecision, reason: RejectReason | null) {
-    return decision === "accept" ? onAccept() : onReject(reason);
-  }
-
-  async function onAcceptAll() {
-    if (!jobId) return;
-    setError(null);
-    setNotice(null);
-    setConfirmAll(false);
-    begin();
-    try {
-      if (dirty && current) {
-        await patchCard(current.id, cardPatchBody(current));
-      }
-      const result = await acceptAllJobDrafts(jobId);
-      if (result.unlocks?.length) {
-        enqueueUnlocks(result.unlocks);
-      }
-      const list = await load(jobId);
-      await refreshJourney(jobId, list.length);
-      if (result.failed > 0) {
-        setNotice({
-          message: `Accepted ${result.accepted}; ${result.failed} could not be accepted`,
-          tone: "error",
-        });
-      } else if (result.rejectedSiblingCount > 0) {
-        setNotice({
-          message: `Accepted ${result.accepted}; discarded ${result.rejectedSiblingCount} other drafts`,
-          tone: "success",
-        });
-      } else {
-        setNotice({
-          message:
-            result.accepted === 1
-              ? "Accepted 1 card into study"
-              : `Accepted ${result.accepted} cards into study`,
-          tone: "success",
-        });
-      }
-      end();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not accept all");
-      end(false);
-    }
-  }
-
-  async function onRejectRemainingDrafts() {
-    if (!jobId) return;
-    setError(null);
-    setNotice(null);
-    setConfirmRejectDrafts(false);
-    begin();
-    try {
-      const result = await rejectJobDrafts(jobId);
-      const list = await load(jobId);
-      setDirty(false);
-      await refreshJourney(jobId, list.length);
-      setNotice({
-        message:
-          result.rejectedCount === 0
-            ? "No remaining drafts to reject"
-            : result.rejectedCount === 1
-              ? "Rejected 1 remaining draft"
-              : `Rejected ${result.rejectedCount} remaining drafts`,
-        tone: result.rejectedCount === 0 ? "info" : "reject",
-      });
-      end();
-    } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : "Could not reject remaining drafts",
-      );
-      end(false);
-    }
-  }
-
-  async function onRegenThisCard() {
-    if (!current) return;
-    const type = asRegenType(current.type);
-    if (!type) {
-      setError("Choose Q&A, cloze, or multiple choice before regenerating");
-      return;
-    }
-    setError(null);
-    setNotice(null);
-    setCardRegenBusy(true);
-    begin("Regenerating card…");
-    try {
-      const updated = await regenCard(current.id, { type });
-      setDrafts((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
-      setDirty(false);
-      setRegenNonce((n) => n + 1);
-      setNotice({ message: "Card regenerated", tone: "info" });
-      end();
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Could not regenerate card",
-      );
-      end(false);
-    } finally {
-      setCardRegenBusy(false);
-    }
-  }
-
-  async function onRegen() {
-    if (!jobId) return;
-    setError(null);
-    setNotice(null);
-    setRegenHints(null);
-    begin();
-    try {
-      await regenJob(jobId, []);
-      setDrafts([]);
-      setJobStatus("queued");
-      setDirty(false);
-      setReady(false);
-      setProgressGate(false);
-      end();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not regenerate");
-      end(false);
-    }
-  }
-
-  async function onDismissFailed() {
-    if (!jobId) return;
-    setError(null);
-    setNotice(null);
-    begin("Discarding…");
-    try {
-      const { deck_id } = await dismissJob(jobId);
-      end();
-      navigate(`/library/decks/${encodeURIComponent(deck_id)}`);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not discard job");
-      end(false);
-    }
-  }
+  const { onRegenThisCard, onRegen, onDismissFailed } = useDraftReviewRegen({
+    jobId,
+    current,
+    begin,
+    end,
+    setDrafts,
+    setDirty,
+    setError,
+    setNotice,
+    setJobStatus,
+    setReady,
+    setRegenNonce,
+    setRegenHints,
+    setCardRegenBusy,
+    setProgressGate,
+  });
 
   const jobActionDisabled = busy || jobProgress.pending;
   const failedEmpty = !current && jobStatus === "failed";
