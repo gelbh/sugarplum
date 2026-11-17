@@ -1,19 +1,12 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { z } from "zod";
 import type { Env } from "../env";
 import { getDb } from "../db/client";
 import { requireUser, type AuthVariables } from "../auth/session";
 import {
-  assertSingleCloze,
-  assertValidMcqOptions,
-  OcclusionFrontSchema,
-} from "../generation/schema";
-import {
   capRegenSourceText,
   generateOneCard,
   loadCardSourceText,
-  REGEN_CARD_TYPES,
   resolveRegenLlm,
 } from "../generation/card-regen";
 import { recordRegenUsageEvent } from "../generation/usage";
@@ -21,63 +14,28 @@ import { WorkersAiCapacityError } from "../generation/workers-ai";
 import { requireOwnedDeck } from "../materials/routes";
 import { newCard, scheduleColumnsFromCard } from "../study/fsrs";
 import { onCardAccepted } from "../gamification/onStudyEvent";
-import { REJECT_REASONS } from "../../src/lib/rejectReasons";
 import { parseOptionalJsonBody } from "../optional-json";
-import { mergeProvenancePagesIntoJson } from "../../src/study/notesProvenanceWrite";
 import {
   acceptDraftCard,
   requireOwnedCard,
   undoReviewDecision,
 } from "./ownership";
+import { encodeStoredBack, parseJsonField, serializeCard } from "./serialize";
 import {
-  decodeStoredBack,
-  encodeStoredBack,
-  parseJsonField,
-  serializeCard,
-} from "./serialize";
+  isFacePatch,
+  mergeProvenancePagesJson,
+  parsePatchDraftBody,
+  resolveCardFacePatch,
+} from "./patch-draft";
+import {
+  parseMoveBody,
+  parseRejectBody,
+  parseRegenBody,
+} from "./card-action-bodies";
 
 const STUDY_STRUGGLE_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 
 type AppEnv = { Bindings: Env; Variables: AuthVariables };
-
-const OcclusionBackSchema = z.object({ answer: z.string().min(1) });
-const TextFaceSchema = z.string().min(1);
-/** Cloze Extra may be empty; other text backs still validated in the handler. */
-const TextBackPatchSchema = z.string();
-const CardTypeSchema = z.enum([
-  "qa",
-  "cloze",
-  "image_label",
-  "diagram",
-  "mcq",
-  "occlusion",
-]);
-
-/** PATCH body: string faces for text/MCQ; structured faces for occlusion; pages-only provenance. */
-const PatchDraftSchema = z
-  .object({
-    front: z.union([TextFaceSchema, OcclusionFrontSchema]).optional(),
-    back: z.union([TextBackPatchSchema, OcclusionBackSchema]).optional(),
-    options: z.array(z.string()).optional(),
-    type: CardTypeSchema.optional(),
-    provenance_pages: z.array(z.number().int().positive()).min(1).optional(),
-  })
-  .refine(
-    (body) =>
-      body.front !== undefined ||
-      body.back !== undefined ||
-      body.options !== undefined ||
-      body.type !== undefined ||
-      body.provenance_pages !== undefined,
-    { message: "No fields to update" },
-  );
-
-function mergeProvenancePagesJson(
-  existingJson: string | null,
-  pages: readonly number[],
-): string {
-  return mergeProvenancePagesIntoJson(existingJson, pages);
-}
 
 export const cardRoutes = new Hono<AppEnv>();
 
@@ -100,23 +58,12 @@ cardRoutes.patch("/:id", async (c) => {
     throw new HTTPException(400, { message: "Invalid JSON body" });
   }
 
-  const parsed = PatchDraftSchema.safeParse(body);
-  if (!parsed.success) {
-    throw new HTTPException(400, {
-      message: parsed.error.issues[0]?.message ?? "Invalid patch body",
-    });
-  }
+  const patch = parsePatchDraftBody(body);
 
-  const facePatch =
-    parsed.data.front !== undefined ||
-    parsed.data.back !== undefined ||
-    parsed.data.options !== undefined ||
-    parsed.data.type !== undefined;
-
-  if (!facePatch && parsed.data.provenance_pages) {
+  if (!isFacePatch(patch) && patch.provenance_pages) {
     const nextProvenanceJson = mergeProvenancePagesJson(
       row.provenance_json,
-      parsed.data.provenance_pages,
+      patch.provenance_pages,
     );
     const updatedAt = new Date().toISOString();
     await db
@@ -134,133 +81,8 @@ cardRoutes.patch("/:id", async (c) => {
     );
   }
 
-  const nextType = parsed.data.type ?? row.type;
-  const nextFront =
-    parsed.data.front ?? parseJsonField(row.front_json, row.front_json);
-
-  if (nextType === "occlusion") {
-    const nextBack =
-      parsed.data.back ?? parseJsonField(row.back_json, row.back_json);
-    const frontOk = OcclusionFrontSchema.safeParse(nextFront);
-    const backOk = OcclusionBackSchema.safeParse(nextBack);
-    if (!frontOk.success || !backOk.success) {
-      throw new HTTPException(400, {
-        message:
-          "Occlusion cards need structured front regions and back.answer",
-      });
-    }
-    const persistFront = frontOk.data;
-    const persistBack = backOk.data;
-    const updatedAt = new Date().toISOString();
-    const nextProvenanceJson = parsed.data.provenance_pages
-      ? mergeProvenancePagesJson(
-          row.provenance_json,
-          parsed.data.provenance_pages,
-        )
-      : row.provenance_json;
-    await db
-      .prepare(
-        `UPDATE cards
-         SET type = ?, front_json = ?, back_json = ?, provenance_json = ?, updated_at = ?
-         WHERE id = ?`,
-      )
-      .bind(
-        nextType,
-        JSON.stringify(persistFront),
-        JSON.stringify(persistBack),
-        nextProvenanceJson,
-        updatedAt,
-        cardId,
-      )
-      .run();
-    return c.json(
-      serializeCard({
-        ...row,
-        type: nextType,
-        front_json: JSON.stringify(persistFront),
-        back_json: JSON.stringify(persistBack),
-        provenance_json: nextProvenanceJson,
-        updated_at: updatedAt,
-      }),
-    );
-  }
-
-  const storedBack = decodeStoredBack(row.type, row.back_json);
-  const allowedTypes = new Set([
-    "qa",
-    "cloze",
-    "image_label",
-    "diagram",
-    "mcq",
-  ]);
-  if (!allowedTypes.has(nextType)) {
-    throw new HTTPException(400, { message: "Unsupported card type" });
-  }
-  if (typeof nextFront !== "string") {
-    throw new HTTPException(400, {
-      message: "Text card front must be a string",
-    });
-  }
-  if (nextType === "cloze") {
-    try {
-      assertSingleCloze(nextFront);
-    } catch (err) {
-      throw new HTTPException(400, {
-        message: err instanceof Error ? err.message : "Invalid cloze",
-      });
-    }
-  }
-
-  let nextBack: string;
-  let nextOptions: string[] | undefined;
-  if (nextType === "mcq") {
-    const prior =
-      row.type === "mcq"
-        ? storedBack
-        : {
-            back: typeof parsed.data.back === "string" ? parsed.data.back : "",
-            options: undefined as string[] | undefined,
-          };
-    const patchBack =
-      typeof parsed.data.back === "string" ? parsed.data.back : prior.back;
-    try {
-      const mcq = assertValidMcqOptions(
-        patchBack,
-        parsed.data.options ?? prior.options,
-      );
-      nextBack = mcq.back;
-      nextOptions = mcq.options;
-    } catch (err) {
-      throw new HTTPException(400, {
-        message: err instanceof Error ? err.message : "Invalid MCQ",
-      });
-    }
-  } else {
-    if (
-      parsed.data.back !== undefined &&
-      typeof parsed.data.back !== "string"
-    ) {
-      throw new HTTPException(400, {
-        message: "Text card back must be a string",
-      });
-    }
-    nextBack =
-      typeof parsed.data.back === "string" ? parsed.data.back : storedBack.back;
-    // Cloze Extra may be ""; other text types still need a non-empty back.
-    if (nextType !== "cloze" && nextBack.trim().length < 1) {
-      throw new HTTPException(400, { message: "Back cannot be empty" });
-    }
-  }
-
-  const nextBackJson = encodeStoredBack(nextType, nextBack, nextOptions);
-
+  const resolved = resolveCardFacePatch(row, patch);
   const updatedAt = new Date().toISOString();
-  const nextProvenanceJson = parsed.data.provenance_pages
-    ? mergeProvenancePagesJson(
-        row.provenance_json,
-        parsed.data.provenance_pages,
-      )
-    : row.provenance_json;
   await db
     .prepare(
       `UPDATE cards
@@ -268,10 +90,10 @@ cardRoutes.patch("/:id", async (c) => {
        WHERE id = ?`,
     )
     .bind(
-      nextType,
-      JSON.stringify(nextFront),
-      nextBackJson,
-      nextProvenanceJson,
+      resolved.type,
+      resolved.front_json,
+      resolved.back_json,
+      resolved.provenance_json,
       updatedAt,
       cardId,
     )
@@ -280,10 +102,10 @@ cardRoutes.patch("/:id", async (c) => {
   return c.json(
     serializeCard({
       ...row,
-      type: nextType,
-      front_json: JSON.stringify(nextFront),
-      back_json: nextBackJson,
-      provenance_json: nextProvenanceJson,
+      type: resolved.type,
+      front_json: resolved.front_json,
+      back_json: resolved.back_json,
+      provenance_json: resolved.provenance_json,
       updated_at: updatedAt,
     }),
   );
@@ -324,10 +146,6 @@ cardRoutes.post("/:id/accept", async (c) => {
   });
 });
 
-const RejectBodySchema = z.object({
-  reason: z.enum(REJECT_REASONS).nullish(),
-});
-
 cardRoutes.post("/:id/reject", async (c) => {
   const userId = await requireUser(c);
   const cardId = c.req.param("id");
@@ -337,13 +155,7 @@ cardRoutes.post("/:id/reject", async (c) => {
   const raw = await c.req.text();
   const parsedBody = parseOptionalJsonBody(raw);
   const body = parsedBody === undefined ? {} : parsedBody;
-  const parsed = RejectBodySchema.safeParse(body);
-  if (!parsed.success) {
-    throw new HTTPException(400, {
-      message: parsed.error.issues[0]?.message ?? "Invalid reject body",
-    });
-  }
-  const reason = parsed.data.reason ?? null;
+  const { reason } = parseRejectBody(body);
 
   if (row.status !== "draft") {
     throw new HTTPException(400, {
@@ -408,10 +220,6 @@ cardRoutes.post("/:id/undo-review", async (c) => {
   );
 });
 
-const MoveBodySchema = z.object({
-  deckId: z.string().min(1),
-});
-
 cardRoutes.post("/:id/move", async (c) => {
   const userId = await requireUser(c);
   const cardId = c.req.param("id");
@@ -430,14 +238,8 @@ cardRoutes.post("/:id/move", async (c) => {
   } catch {
     throw new HTTPException(400, { message: "Invalid JSON body" });
   }
-  const parsed = MoveBodySchema.safeParse(body);
-  if (!parsed.success) {
-    throw new HTTPException(400, {
-      message: parsed.error.issues[0]?.message ?? "Invalid move body",
-    });
-  }
+  const { deckId: targetDeckId } = parseMoveBody(body);
 
-  const targetDeckId = parsed.data.deckId;
   if (targetDeckId === row.deck_id) {
     return c.json(serializeCard(row));
   }
@@ -459,10 +261,6 @@ cardRoutes.post("/:id/move", async (c) => {
   );
 });
 
-const RegenBodySchema = z.object({
-  type: z.enum(REGEN_CARD_TYPES),
-});
-
 /** Single-card regen: UPDATE one row only; never job-wide DELETE. */
 cardRoutes.post("/:id/regen", async (c) => {
   const userId = await requireUser(c);
@@ -482,12 +280,7 @@ cardRoutes.post("/:id/regen", async (c) => {
   } catch {
     throw new HTTPException(400, { message: "Invalid JSON body" });
   }
-  const parsed = RegenBodySchema.safeParse(body);
-  if (!parsed.success) {
-    throw new HTTPException(400, {
-      message: parsed.error.issues[0]?.message ?? "Invalid regen body",
-    });
-  }
+  const { type: regenType } = parseRegenBody(body);
 
   const sourceRaw = await loadCardSourceText(c.env, row);
   if (!sourceRaw) {
@@ -531,7 +324,7 @@ cardRoutes.post("/:id/regen", async (c) => {
   try {
     generated = await generateOneCard({
       text: sourceText,
-      type: parsed.data.type,
+      type: regenType,
       existingFront:
         typeof existingFront === "string" ? existingFront : undefined,
       studyStruggle,
