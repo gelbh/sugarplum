@@ -1,5 +1,5 @@
 export const DIY_OCCLUSION_FREE_PATH_NOTICE =
-  "Image ready. Free path opens an Occlusion card and suggests regions automatically (or add a BYO API key for auto vision drafts).";
+  "Image ready. Free path opens an Occlusion card so you can add boxes or tap Suggest regions (or add a BYO API key for auto vision drafts).";
 
 export function openDiyOcclusionFromImageKey(args: {
   imageKey: string;

@@ -816,6 +816,65 @@ export default function AddMaterialWorkshop({
                     allowedTypes={hubDiyAllowedTypes}
                     typePicker="cards"
                     onPreviewFaceChange={setPreviewFace}
+                    afterTypePicker={
+                      createNeedsImage && createImageKey ? (
+                        <Stack
+                          direction={{ xs: "column", sm: "row" }}
+                          spacing={1}
+                          alignItems={{ sm: "center" }}
+                        >
+                          {deckImageKeys.length > 0 ? (
+                            <FormControl fullWidth size="small">
+                              <InputLabel id="hub-diy-image-key">
+                                Image
+                              </InputLabel>
+                              <Select
+                                labelId="hub-diy-image-key"
+                                label="Image"
+                                value={createImageKey || ""}
+                                disabled={createBusy || createImageBusy}
+                                onChange={(ev) =>
+                                  applyCreateImageKey(String(ev.target.value))
+                                }
+                              >
+                                {deckImageKeys.map((key) => (
+                                  <MenuItem key={key} value={key}>
+                                    {key.split("/").pop() ?? key}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+                          ) : (
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ flex: 1, minWidth: 0 }}
+                              noWrap
+                            >
+                              {createImageKey.split("/").pop() ?? createImageKey}
+                            </Typography>
+                          )}
+                          <Button
+                            variant="outlined"
+                            component="label"
+                            disabled={createBusy || createImageBusy}
+                            sx={{ flexShrink: 0, whiteSpace: "nowrap" }}
+                          >
+                            {createImageBusy ? "Uploading…" : "Replace image"}
+                            <input
+                              ref={createImageInputRef}
+                              type="file"
+                              hidden
+                              accept="image/jpeg,image/png,image/webp"
+                              onChange={(ev) => {
+                                const file = ev.target.files?.[0];
+                                if (file) void onCreateImageUpload(file);
+                              }}
+                            />
+                          </Button>
+                        </Stack>
+                      ) : null
+                    }
                   />
                   {createNeedsImage && !createImageKey ? (
                     <Box
@@ -893,61 +952,6 @@ export default function AddMaterialWorkshop({
                         </Button>
                       </Stack>
                     </Box>
-                  ) : null}
-                  {createNeedsImage && createImageKey ? (
-                    <Stack
-                      direction={{ xs: "column", sm: "row" }}
-                      spacing={1}
-                      alignItems={{ sm: "center" }}
-                    >
-                      {deckImageKeys.length > 0 ? (
-                        <FormControl fullWidth size="small">
-                          <InputLabel id="hub-diy-image-key">Image</InputLabel>
-                          <Select
-                            labelId="hub-diy-image-key"
-                            label="Image"
-                            value={createImageKey || ""}
-                            disabled={createBusy || createImageBusy}
-                            onChange={(ev) =>
-                              applyCreateImageKey(String(ev.target.value))
-                            }
-                          >
-                            {deckImageKeys.map((key) => (
-                              <MenuItem key={key} value={key}>
-                                {key.split("/").pop() ?? key}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      ) : (
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ flex: 1, minWidth: 0 }}
-                          noWrap
-                        >
-                          {createImageKey.split("/").pop() ?? createImageKey}
-                        </Typography>
-                      )}
-                      <Button
-                        variant="outlined"
-                        component="label"
-                        disabled={createBusy || createImageBusy}
-                        sx={{ flexShrink: 0, whiteSpace: "nowrap" }}
-                      >
-                        {createImageBusy ? "Uploading…" : "Replace image"}
-                        <input
-                          ref={createImageInputRef}
-                          type="file"
-                          hidden
-                          accept="image/jpeg,image/png,image/webp"
-                          onChange={(ev) => {
-                            const file = ev.target.files?.[0];
-                            if (file) void onCreateImageUpload(file);
-                          }}
-                        />
-                      </Button>
-                    </Stack>
                   ) : null}
                 </Stack>
                 <Box

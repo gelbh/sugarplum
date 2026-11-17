@@ -6,10 +6,13 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
+import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
+import { alpha } from "@mui/material/styles";
 import {
   useCallback,
   useEffect,
@@ -18,7 +21,6 @@ import {
   type PointerEvent,
 } from "react";
 import { mediaUrl, type OcclusionFrontView } from "../api/client";
-import { shouldAutoSuggestRegions } from "../lib/occlusionAutoSuggest";
 
 export type OcclusionRegion = OcclusionFrontView["regions"][number];
 
@@ -133,7 +135,6 @@ export default function OcclusionRegionEditor({
   const frontRef = useRef(front);
   const suggestGenRef = useRef(0);
   const suggestAbortRef = useRef<AbortController | null>(null);
-  const autoAttemptedKeyRef = useRef<string | null>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(
     front.regions[0]?.id ?? null,
@@ -225,36 +226,6 @@ export default function OcclusionRegionEditor({
       }
     }
   }, [emit, front.image_key]);
-
-  const runSuggestRegionsRef = useRef(runSuggestRegions);
-  runSuggestRegionsRef.current = runSuggestRegions;
-
-  useEffect(() => {
-    const key = front.image_key.trim();
-    if (
-      !shouldAutoSuggestRegions({
-        disabled,
-        imageKey: front.image_key,
-        regionCount: front.regions.length,
-        attemptedKey: autoAttemptedKeyRef.current,
-      })
-    ) {
-      return;
-    }
-    autoAttemptedKeyRef.current = key;
-    void runSuggestRegionsRef.current();
-    return () => {
-      // Strict Mode: allow remount to retry while still empty.
-      if (
-        frontRef.current.regions.length === 0 &&
-        frontRef.current.image_key.trim() === key &&
-        autoAttemptedKeyRef.current === key
-      ) {
-        autoAttemptedKeyRef.current = null;
-      }
-      cancelSuggest();
-    };
-  }, [disabled, front.image_key, front.regions.length, cancelSuggest]);
 
   function onSuggestRegionsClick() {
     if (editLocked) return;
@@ -398,30 +369,6 @@ export default function OcclusionRegionEditor({
                       : "none",
                   }}
                 >
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      position: "absolute",
-                      left: 4,
-                      top: 2,
-                      px: 0.5,
-                      bgcolor: "var(--sp-stage-bg)",
-                      color: "var(--sp-ivory)",
-                      borderRadius: "4px",
-                      maxWidth: "95%",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      lineHeight: 1.4,
-                      pointerEvents: "none",
-                      fontFamily:
-                        '"Source Sans 3", "Helvetica", "Arial", sans-serif',
-                      fontSize: "0.6875rem",
-                      letterSpacing: "0.02em",
-                    }}
-                  >
-                    {region.label || region.id}
-                  </Typography>
                   {!editLocked ? (
                     <Box
                       onPointerDown={(e) =>
@@ -500,7 +447,7 @@ export default function OcclusionRegionEditor({
             sx={{ maxWidth: "42ch" }}
           >
             Hide one region per card. Add a box or use Suggest, then drag to
-            move and corner to resize. Label is the study answer.
+            move and corner to resize.
           </Typography>
 
           {suggestNotice ? (
@@ -559,7 +506,7 @@ export default function OcclusionRegionEditor({
             <DialogContent>
               <DialogContentText>
                 OCR will replace your current region boxes with new suggestions.
-                You can still move, resize, and edit labels afterward.
+                You can still move and resize boxes afterward.
               </DialogContentText>
             </DialogContent>
             <DialogActions>
@@ -581,95 +528,149 @@ export default function OcclusionRegionEditor({
           </Dialog>
 
           {front.regions.length > 0 ? (
-            <Stack spacing={1.25}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                Regions
-              </Typography>
-              {front.regions.map((region) => (
-                <Stack
-                  key={region.id}
-                  direction="row"
-                  spacing={1}
-                  alignItems="flex-start"
+            <Stack spacing={1.5}>
+              <Stack
+                direction="row"
+                alignItems="baseline"
+                justifyContent="space-between"
+                spacing={1}
+              >
+                <Typography
+                  component="h3"
                   sx={{
-                    p: 1.25,
-                    border: "1px solid",
-                    borderColor:
-                      region.id === selectedId ? "primary.main" : "divider",
-                    borderRadius: 2,
-                    bgcolor:
-                      region.id === selectedId
-                        ? "action.selected"
-                        : "transparent",
-                    cursor: editLocked ? "default" : "pointer",
-                  }}
-                  onClick={() => {
-                    if (editLocked) return;
-                    setSelectedId(region.id);
-                    emit(front, region.id);
+                    m: 0,
+                    fontSize: "0.6875rem",
+                    fontWeight: 600,
+                    letterSpacing: "0.16em",
+                    textTransform: "uppercase",
+                    color: "text.secondary",
                   }}
                 >
-                  <Stack spacing={1} sx={{ flex: 1, minWidth: 0 }}>
-                    <TextField
-                      label="Label"
-                      value={region.label}
-                      onChange={(e) =>
-                        updateRegion(region.id, { label: e.target.value })
-                      }
-                      size="small"
-                      fullWidth
-                      disabled={editLocked}
-                      helperText={
-                        region.id === selectedId
-                          ? "Study answer for this card"
-                          : undefined
-                      }
-                    />
-                    <Stack direction="row" spacing={1}>
-                      {(
-                        [
-                          ["x", region.x],
-                          ["y", region.y],
-                          ["w", region.w],
-                          ["h", region.h],
-                        ] as const
-                      ).map(([key, value]) => (
-                        <TextField
-                          key={key}
-                          label={key}
-                          type="number"
-                          value={Number(value.toFixed(3))}
-                          inputProps={{ min: 0, max: 1, step: 0.01 }}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            const n = Number(e.target.value);
-                            if (Number.isFinite(n)) {
-                              updateRegion(region.id, { [key]: n });
-                            }
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                          size="small"
-                          disabled={editLocked}
-                          sx={{ flex: 1 }}
-                        />
-                      ))}
-                    </Stack>
-                  </Stack>
-                  {!editLocked ? (
-                    <Button
-                      size="small"
-                      color="error"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeRegion(region.id);
+                  Regions
+                </Typography>
+                <Typography
+                  component="span"
+                  sx={{
+                    fontSize: "0.75rem",
+                    color: "text.secondary",
+                    opacity: 0.8,
+                  }}
+                >
+                  {front.regions.length} of {MAX_REGIONS}
+                </Typography>
+              </Stack>
+              <Stack spacing={1}>
+                {front.regions.map((region, index) => {
+                  const selected = region.id === selectedId;
+                  return (
+                    <Box
+                      key={region.id}
+                      role="button"
+                      tabIndex={editLocked ? -1 : 0}
+                      aria-pressed={selected}
+                      onClick={() => {
+                        if (editLocked) return;
+                        setSelectedId(region.id);
+                        emit(front, region.id);
                       }}
-                      sx={{ flexShrink: 0, mt: 0.5 }}
+                      onKeyDown={(e) => {
+                        if (editLocked) return;
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setSelectedId(region.id);
+                          emit(front, region.id);
+                        }
+                      }}
+                      sx={(theme) => ({
+                        px: 1.25,
+                        py: 1,
+                        borderRadius: 2,
+                        border: "1px solid",
+                        borderColor: selected
+                          ? alpha(theme.palette.primary.main, 0.55)
+                          : "rgba(232, 216, 199, 0.12)",
+                        bgcolor: selected
+                          ? alpha(theme.palette.primary.main, 0.12)
+                          : "rgba(18, 7, 15, 0.35)",
+                        boxShadow: selected
+                          ? `inset 0 0 0 1px ${alpha(theme.palette.primary.main, 0.25)}`
+                          : "none",
+                        cursor: editLocked ? "default" : "pointer",
+                        transition:
+                          "border-color 120ms ease, background-color 120ms ease",
+                        "&:hover": editLocked
+                          ? undefined
+                          : {
+                              borderColor: selected
+                                ? alpha(theme.palette.primary.main, 0.7)
+                                : "rgba(232, 216, 199, 0.22)",
+                              bgcolor: selected
+                                ? alpha(theme.palette.primary.main, 0.16)
+                                : "rgba(18, 7, 15, 0.5)",
+                            },
+                      })}
                     >
-                      Remove
-                    </Button>
-                  ) : null}
-                </Stack>
-              ))}
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Box
+                          aria-hidden
+                          sx={(theme) => ({
+                            width: 28,
+                            height: 28,
+                            borderRadius: 1,
+                            flexShrink: 0,
+                            display: "grid",
+                            placeItems: "center",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            fontVariantNumeric: "tabular-nums",
+                            color: selected
+                              ? theme.palette.primary.light
+                              : "text.secondary",
+                            bgcolor: selected
+                              ? alpha(theme.palette.primary.main, 0.22)
+                              : "rgba(232, 216, 199, 0.06)",
+                          })}
+                        >
+                          {index + 1}
+                        </Box>
+                        <Typography
+                          component="p"
+                          sx={{
+                            m: 0,
+                            flex: 1,
+                            minWidth: 0,
+                            fontSize: "0.875rem",
+                            fontWeight: 500,
+                            color: selected
+                              ? "primary.light"
+                              : "text.primary",
+                          }}
+                        >
+                          Region {index + 1}
+                          {selected ? " · selected" : ""}
+                        </Typography>
+                        {!editLocked ? (
+                          <IconButton
+                            size="small"
+                            aria-label={`Remove region ${index + 1}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeRegion(region.id);
+                            }}
+                            sx={{
+                              flexShrink: 0,
+                              color: "text.secondary",
+                              "&:hover": { color: "error.light" },
+                            }}
+                          >
+                            <DeleteOutlineIcon fontSize="small" />
+                          </IconButton>
+                        ) : null}
+                      </Stack>
+                    </Box>
+                  );
+                })}
+              </Stack>
             </Stack>
           ) : null}
         </>
