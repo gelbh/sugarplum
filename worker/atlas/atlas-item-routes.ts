@@ -43,7 +43,8 @@ import {
   resolveEntry,
 } from "./entry-helpers";
 import {
-  parseMakeCardsBody,
+  parseMakeCardsDeckId,
+  parseMakeCardsEntryKeys,
   prepareMakeCardsItems,
 } from "./make-cards-body";
 import {
@@ -98,8 +99,9 @@ atlasItemRoutes.post("/make-cards", async (c) => {
     throw new HTTPException(400, { message: "Invalid JSON body" });
   }
 
-  const { deckId, entryKeys } = parseMakeCardsBody(body);
+  const deckId = parseMakeCardsDeckId(body);
   await requireOwnedDeck(db, deckId, userId);
+  const entryKeys = parseMakeCardsEntryKeys(body);
 
   const rows = await loadEntryRows(db, atlas.id);
   const overlays = await toOverlayRows(db, atlas.id, rows);

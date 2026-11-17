@@ -3,7 +3,8 @@ import { HTTPException } from "hono/http-exception";
 import type { AtlasEntryView } from "../../../src/atlas/types";
 import {
   MAX_MAKE_CARDS_ENTRIES,
-  parseMakeCardsBody,
+  parseMakeCardsDeckId,
+  parseMakeCardsEntryKeys,
   prepareMakeCardsItems,
 } from "../../../worker/atlas/make-cards-body";
 import { emptyParasiteFields } from "../../../worker/atlas/templates/parasite";
@@ -25,19 +26,14 @@ function entry(partial: Partial<AtlasEntryView> & Pick<AtlasEntryView, "id">): A
   };
 }
 
-describe("parseMakeCardsBody", () => {
-  it("trims deckId and dedupes entryKeys", () => {
-    expect(
-      parseMakeCardsBody({
-        deckId: " deck-a ",
-        entryKeys: ["a", " a ", "b", 1, ""],
-      }),
-    ).toEqual({ deckId: "deck-a", entryKeys: ["a", "b"] });
+describe("parseMakeCardsDeckId", () => {
+  it("trims deckId", () => {
+    expect(parseMakeCardsDeckId({ deckId: " deck-a " })).toBe("deck-a");
   });
 
   it("rejects missing deckId", () => {
     try {
-      parseMakeCardsBody({ entryKeys: ["a"] });
+      parseMakeCardsDeckId({});
       expect.unreachable();
     } catch (err) {
       expect(err).toBeInstanceOf(HTTPException);
@@ -45,10 +41,20 @@ describe("parseMakeCardsBody", () => {
       expect((err as HTTPException).message).toBe("deckId required");
     }
   });
+});
+
+describe("parseMakeCardsEntryKeys", () => {
+  it("dedupes entryKeys", () => {
+    expect(
+      parseMakeCardsEntryKeys({
+        entryKeys: ["a", " a ", "b", 1, ""],
+      }),
+    ).toEqual(["a", "b"]);
+  });
 
   it("rejects empty entryKeys", () => {
     try {
-      parseMakeCardsBody({ deckId: "d", entryKeys: [] });
+      parseMakeCardsEntryKeys({ entryKeys: [] });
       expect.unreachable();
     } catch (err) {
       expect((err as HTTPException).message).toBe("entryKeys required");
@@ -60,7 +66,7 @@ describe("parseMakeCardsBody", () => {
       String(i),
     );
     try {
-      parseMakeCardsBody({ deckId: "d", entryKeys: keys });
+      parseMakeCardsEntryKeys({ entryKeys: keys });
       expect.unreachable();
     } catch (err) {
       expect((err as HTTPException).message).toBe(

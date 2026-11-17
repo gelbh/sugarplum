@@ -6,11 +6,6 @@ import { buildAtlasMakeCardsSource } from "./makeCardsSource";
 
 export const MAX_MAKE_CARDS_ENTRIES = 8;
 
-export type MakeCardsBody = {
-  deckId: string;
-  entryKeys: string[];
-};
-
 export type PreparedMakeCardsItem = {
   entryKey: string;
   text: string;
@@ -18,13 +13,16 @@ export type PreparedMakeCardsItem = {
   topicHints: string[];
 };
 
-export function parseMakeCardsBody(body: {
-  deckId?: unknown;
-  entryKeys?: unknown;
-}): MakeCardsBody {
+/** Parse deckId only so ownership can run before entryKeys validation. */
+export function parseMakeCardsDeckId(body: { deckId?: unknown }): string {
   const deckId = typeof body.deckId === "string" ? body.deckId.trim() : "";
   if (!deckId) throw new HTTPException(400, { message: "deckId required" });
+  return deckId;
+}
 
+export function parseMakeCardsEntryKeys(body: {
+  entryKeys?: unknown;
+}): string[] {
   const rawKeys = Array.isArray(body.entryKeys) ? body.entryKeys : [];
   const entryKeys = [
     ...new Set(
@@ -42,8 +40,7 @@ export function parseMakeCardsBody(body: {
       message: `At most ${MAX_MAKE_CARDS_ENTRIES} entries per request`,
     });
   }
-
-  return { deckId, entryKeys };
+  return entryKeys;
 }
 
 /** Resolve + validate every entry before any R2/D1/queue write (no partial queue). */
