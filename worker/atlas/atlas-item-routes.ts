@@ -16,16 +16,12 @@ import {
   type EntryRow,
 } from "./entryOverlays";
 import { loadParasiteDataset } from "./datasets/parasites";
-import { IMAGE_ROLES } from "./datasets/schema";
 import { normalizeParasiteName } from "./names";
 import { emptyParasiteFields, type ParasiteFields } from "./templates/parasite";
 import { createR2PutUrl } from "../materials/r2-presign";
 import { sha256Hex } from "../materials/content-hash";
-import { MAX_PASTE_BYTES } from "../materials/limits";
 import { requireOwnedDeck } from "../materials/routes";
 import { enqueueGeneration } from "../generation/enqueue";
-import { normalizeTopicHints } from "../generation/topic-hints";
-import { buildAtlasMakeCardsSource } from "./makeCardsSource";
 import type { AppEnv } from "./types";
 import {
   atlasMeta,
@@ -46,10 +42,19 @@ import {
   parseFocusOverride,
   resolveEntry,
 } from "./entry-helpers";
+import {
+  parseMakeCardsDeckId,
+  parseMakeCardsEntryKeys,
+  prepareMakeCardsItems,
+} from "./make-cards-body";
+import {
+  imageExtForContentType,
+  parseAtlasImageCreateBody,
+  parseAtlasImageUploadBody,
+  parseAtlasRefBody,
+} from "./atlas-media-body";
 
-const MAX_MAKE_CARDS_ENTRIES = 8;
 const DEFAULT_R2_BUCKET = "sugarplum-materials";
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
 export const atlasItemRoutes = new Hono<AppEnv>();
 
@@ -94,27 +99,9 @@ atlasItemRoutes.post("/make-cards", async (c) => {
     throw new HTTPException(400, { message: "Invalid JSON body" });
   }
 
-  const deckId = typeof body.deckId === "string" ? body.deckId.trim() : "";
-  if (!deckId) throw new HTTPException(400, { message: "deckId required" });
+  const deckId = parseMakeCardsDeckId(body);
   await requireOwnedDeck(db, deckId, userId);
-
-  const rawKeys = Array.isArray(body.entryKeys) ? body.entryKeys : [];
-  const entryKeys = [
-    ...new Set(
-      rawKeys
-        .filter((k): k is string => typeof k === "string")
-        .map((k) => k.trim())
-        .filter(Boolean),
-    ),
-  ];
-  if (entryKeys.length === 0) {
-    throw new HTTPException(400, { message: "entryKeys required" });
-  }
-  if (entryKeys.length > MAX_MAKE_CARDS_ENTRIES) {
-    throw new HTTPException(400, {
-      message: `At most ${MAX_MAKE_CARDS_ENTRIES} entries per request`,
-    });
-  }
+  const entryKeys = parseMakeCardsEntryKeys(body);
 
   const rows = await loadEntryRows(db, atlas.id);
   const overlays = await toOverlayRows(db, atlas.id, rows);
@@ -125,51 +112,7 @@ atlasItemRoutes.post("/make-cards", async (c) => {
     entries: merged,
   });
 
-  // Resolve + validate every entry before any R2/D1/queue write (no partial queue).
-  const prepared: Array<{
-    entryKey: string;
-    text: string;
-    citations: string[];
-    topicHints: string[];
-  }> = [];
-  for (const key of entryKeys) {
-    const hit =
-      entries.find((e) => e.id === key) ??
-      entries.find((e) => e.originKey === key) ??
-      null;
-    if (!hit) {
-      throw new HTTPException(404, { message: `Entry not found: ${key}` });
-    }
-    const entryKey = hit.originKey ?? hit.id;
-    const source = buildAtlasMakeCardsSource({
-      entryKey,
-      canonicalName: hit.canonicalName,
-      commonName: hit.commonName,
-      aliases: hit.aliases,
-      fields: hit.fields,
-      refs: hit.refs,
-    });
-    const textBytes = new TextEncoder().encode(source.text).byteLength;
-    if (textBytes > MAX_PASTE_BYTES) {
-      throw new HTTPException(400, {
-        message: `Atlas source for ${hit.canonicalName} exceeds paste size`,
-      });
-    }
-    let topicHints: string[];
-    try {
-      topicHints = normalizeTopicHints(source.topicHints) ?? [];
-    } catch (err) {
-      throw new HTTPException(400, {
-        message: err instanceof Error ? err.message : "Invalid topicHints",
-      });
-    }
-    prepared.push({
-      entryKey,
-      text: source.text,
-      citations: source.citations,
-      topicHints,
-    });
-  }
+  const prepared = prepareMakeCardsItems(entries, entryKeys);
 
   const jobs: Array<{
     entryKey: string;
@@ -536,25 +479,16 @@ atlasItemRoutes.delete("/entries/:entryId", async (c) => {
 atlasItemRoutes.post("/entries/:entryId/refs", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
-  let body: {
-    field?: unknown;
-    citation?: unknown;
-    url?: unknown;
-    note?: unknown;
-    materialId?: unknown;
-    page?: unknown;
-  };
+  let body: unknown;
   try {
     body = await c.req.json();
   } catch {
     throw new HTTPException(400, { message: "Invalid JSON body" });
   }
 
-  const citation =
-    typeof body.citation === "string" ? body.citation.trim() : "";
-  if (!citation) {
-    throw new HTTPException(400, { message: "citation required" });
-  }
+  const ref = parseAtlasRefBody(
+    body && typeof body === "object" ? (body as Record<string, unknown>) : {},
+  );
 
   const resolved = await resolveEntry(db, atlas.id, entryId);
   if (!resolved) throw new HTTPException(404, { message: "Entry not found" });
@@ -573,20 +507,6 @@ atlasItemRoutes.post("/entries/:entryId/refs", async (c) => {
 
   const id = newId();
   const createdAt = nowIso();
-  const fieldKey =
-    typeof body.field === "string"
-      ? body.field.trim() || null
-      : body.field === null
-        ? null
-        : null;
-  const url = typeof body.url === "string" ? body.url.trim() || null : null;
-  const note = typeof body.note === "string" ? body.note.trim() || null : null;
-  const materialId =
-    typeof body.materialId === "string" ? body.materialId : null;
-  const page =
-    typeof body.page === "number" && Number.isFinite(body.page)
-      ? body.page
-      : null;
 
   await db
     .prepare(
@@ -598,12 +518,12 @@ atlasItemRoutes.post("/entries/:entryId/refs", async (c) => {
     .bind(
       id,
       row.id,
-      fieldKey,
-      citation,
-      url,
-      materialId,
-      page,
-      note,
+      ref.fieldKey,
+      ref.citation,
+      ref.url,
+      ref.materialId,
+      ref.page,
+      ref.note,
       createdAt,
     )
     .run();
@@ -611,12 +531,12 @@ atlasItemRoutes.post("/entries/:entryId/refs", async (c) => {
   return c.json(
     {
       id,
-      field: fieldKey,
-      citation,
-      url,
-      note,
-      materialId,
-      page,
+      field: ref.fieldKey,
+      citation: ref.citation,
+      url: ref.url,
+      note: ref.note,
+      materialId: ref.materialId,
+      page: ref.page,
       createdAt,
     },
     201,
@@ -645,28 +565,16 @@ atlasItemRoutes.delete("/entries/:entryId/refs/:refId", async (c) => {
 atlasItemRoutes.post("/entries/:entryId/images/upload-url", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
-  let body: { contentType?: unknown; size?: unknown };
+  let body: unknown;
   try {
     body = await c.req.json();
   } catch {
     throw new HTTPException(400, { message: "Invalid JSON body" });
   }
 
-  const contentType =
-    typeof body.contentType === "string" ? body.contentType.trim() : "";
-  const allowed = new Set(["image/jpeg", "image/png", "image/webp"]);
-  if (!allowed.has(contentType)) {
-    throw new HTTPException(400, {
-      message: "Only jpeg/png/webp uploads are allowed",
-    });
-  }
-  const size = typeof body.size === "number" ? body.size : Number(body.size);
-  if (!Number.isFinite(size) || size <= 0) {
-    throw new HTTPException(400, { message: "Valid size required" });
-  }
-  if (size > MAX_IMAGE_BYTES) {
-    throw new HTTPException(400, { message: "Image must be 10MB or smaller" });
-  }
+  const { contentType, size } = parseAtlasImageUploadBody(
+    body && typeof body === "object" ? (body as Record<string, unknown>) : {},
+  );
 
   const resolved = await resolveEntry(db, atlas.id, entryId);
   if (!resolved) throw new HTTPException(404, { message: "Entry not found" });
@@ -683,12 +591,7 @@ atlasItemRoutes.post("/entries/:entryId/images/upload-url", async (c) => {
   }
 
   const imageId = newId();
-  const ext =
-    contentType === "image/png"
-      ? "png"
-      : contentType === "image/webp"
-        ? "webp"
-        : "jpg";
+  const ext = imageExtForContentType(contentType);
   const r2Key = `atlas/${atlas.id}/${row.id}/${imageId}.${ext}`;
 
   const accountId = c.env.R2_ACCOUNT_ID;
@@ -716,29 +619,16 @@ atlasItemRoutes.post("/entries/:entryId/images/upload-url", async (c) => {
 atlasItemRoutes.post("/entries/:entryId/images", async (c) => {
   const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
   const entryId = requireParam(c, "entryId");
-  let body: {
-    src?: unknown;
-    role?: unknown;
-    caption?: unknown;
-    credit?: unknown;
-    license?: unknown;
-    sourceUrl?: unknown;
-    isHero?: unknown;
-  };
+  let body: unknown;
   try {
     body = await c.req.json();
   } catch {
     throw new HTTPException(400, { message: "Invalid JSON body" });
   }
 
-  const src = typeof body.src === "string" ? body.src.trim() : "";
-  if (!src) throw new HTTPException(400, { message: "src required" });
-  const role =
-    typeof body.role === "string" &&
-    (IMAGE_ROLES as readonly string[]).includes(body.role)
-      ? body.role
-      : null;
-  if (!role) throw new HTTPException(400, { message: "Valid role required" });
+  const image = parseAtlasImageCreateBody(
+    body && typeof body === "object" ? (body as Record<string, unknown>) : {},
+  );
 
   const resolved = await resolveEntry(db, atlas.id, entryId);
   if (!resolved) throw new HTTPException(404, { message: "Entry not found" });
@@ -756,15 +646,7 @@ atlasItemRoutes.post("/entries/:entryId/images", async (c) => {
 
   const id = newId();
   const createdAt = nowIso();
-  const caption =
-    typeof body.caption === "string" ? body.caption.trim() || null : null;
-  const credit =
-    typeof body.credit === "string" ? body.credit.trim() || null : null;
-  const license =
-    typeof body.license === "string" ? body.license.trim() || null : null;
-  const sourceUrl =
-    typeof body.sourceUrl === "string" ? body.sourceUrl.trim() || null : null;
-  const isHero = body.isHero === true ? 1 : 0;
+  const isHero = image.isHero ? 1 : 0;
 
   await db
     .prepare(
@@ -776,12 +658,12 @@ atlasItemRoutes.post("/entries/:entryId/images", async (c) => {
     .bind(
       id,
       row.id,
-      src,
-      role,
-      caption,
-      credit,
-      license,
-      sourceUrl,
+      image.src,
+      image.role,
+      image.caption,
+      image.credit,
+      image.license,
+      image.sourceUrl,
       isHero,
       createdAt,
     )
@@ -790,12 +672,12 @@ atlasItemRoutes.post("/entries/:entryId/images", async (c) => {
   return c.json(
     {
       id,
-      src,
-      role,
-      caption,
-      credit,
-      license,
-      sourceUrl,
+      src: image.src,
+      role: image.role,
+      caption: image.caption,
+      credit: image.credit,
+      license: image.license,
+      sourceUrl: image.sourceUrl,
       isHero: isHero === 1,
       createdAt,
     },
