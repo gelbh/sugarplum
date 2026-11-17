@@ -25,26 +25,18 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import type { MaterialListItem } from "../api/client";
 import { downloadMaterialUrl, mediaUrl } from "../api/client";
 import EmptyNext from "../components/EmptyNext";
+import {
+  PILL_BTN,
+  ROW_ACTION,
+  createWorkshopViewPref,
+  type WorkshopViewMode,
+} from "./workshopChrome";
 
-const VIEW_PREF_KEY = "sugarplum.materialsWorkshop.view";
+const { readViewMode, writeViewMode } = createWorkshopViewPref(
+  "sugarplum.materialsWorkshop.view",
+);
 
-type ViewMode = "icons" | "details";
-
-const PILL_BTN = {
-  borderRadius: 999,
-  textTransform: "none",
-  fontWeight: 600,
-  boxShadow: "none",
-  "&:hover": { boxShadow: "none" },
-} as const;
-
-const ROW_ACTION = {
-  color: "rgba(232, 216, 199, 0.55)",
-  "&:hover": {
-    color: "primary.light",
-    bgcolor: "rgba(91, 44, 111, 0.28)",
-  },
-} as const;
+type ViewMode = WorkshopViewMode;
 
 const SURFACE = {
   borderRadius: 2,
@@ -52,24 +44,6 @@ const SURFACE = {
   borderColor: "rgba(232, 216, 199, 0.12)",
   bgcolor: "rgba(18, 7, 15, 0.28)",
 } as const;
-
-function readViewMode(): ViewMode {
-  try {
-    const raw = localStorage.getItem(VIEW_PREF_KEY);
-    if (raw === "icons" || raw === "details") return raw;
-  } catch {
-    /* ignore */
-  }
-  return "icons";
-}
-
-function writeViewMode(mode: ViewMode) {
-  try {
-    localStorage.setItem(VIEW_PREF_KEY, mode);
-  } catch {
-    /* ignore */
-  }
-}
 
 function kindLabel(kind: string): string {
   if (kind === "pdf") return "PDF";

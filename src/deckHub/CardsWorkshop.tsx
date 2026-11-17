@@ -21,28 +21,18 @@ import EmptyNext from "../components/EmptyNext";
 import type { CardDraftView } from "../api/client";
 import { cardFrontPreview } from "../lib/draftCardModel";
 import DiyCardPreview from "./DiyCardPreview";
+import {
+  PILL_BTN,
+  ROW_ACTION,
+  createWorkshopViewPref,
+  type WorkshopViewMode,
+} from "./workshopChrome";
 
-const VIEW_PREF_KEY = "sugarplum.cardsWorkshop.view";
+const { readViewMode, writeViewMode } = createWorkshopViewPref(
+  "sugarplum.cardsWorkshop.view",
+);
 
-type ViewMode = "icons" | "details";
-
-function readViewMode(): ViewMode {
-  try {
-    const raw = localStorage.getItem(VIEW_PREF_KEY);
-    if (raw === "icons" || raw === "details") return raw;
-  } catch {
-    /* ignore */
-  }
-  return "icons";
-}
-
-function writeViewMode(mode: ViewMode) {
-  try {
-    localStorage.setItem(VIEW_PREF_KEY, mode);
-  } catch {
-    /* ignore */
-  }
-}
+type ViewMode = WorkshopViewMode;
 
 function cardTypeLabel(type: CardDraftView["type"]): string {
   if (type === "cloze") return "Cloze";
@@ -52,14 +42,6 @@ function cardTypeLabel(type: CardDraftView["type"]): string {
   if (type === "diagram") return "Diagram";
   return "Q&A";
 }
-
-const PILL_BTN = {
-  borderRadius: 999,
-  textTransform: "none",
-  fontWeight: 600,
-  boxShadow: "none",
-  "&:hover": { boxShadow: "none" },
-} as const;
 
 const TOOL_LINK = {
   minWidth: 0,
@@ -74,14 +56,6 @@ const TOOL_LINK = {
   "&:hover": {
     color: "primary.light",
     bgcolor: "rgba(91, 44, 111, 0.22)",
-  },
-} as const;
-
-const ROW_ACTION = {
-  color: "rgba(232, 216, 199, 0.55)",
-  "&:hover": {
-    color: "primary.light",
-    bgcolor: "rgba(91, 44, 111, 0.28)",
   },
 } as const;
 
