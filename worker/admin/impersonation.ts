@@ -10,6 +10,10 @@ import {
   type SessionRecord,
 } from "../auth/session";
 import { getDb } from "../db/client";
+import {
+  CloneLimitExceededError,
+  cloneUserGraph,
+} from "./clone-user";
 import { requireAdmin } from "./requireAdmin";
 import { refuseAllowlistedTarget } from "./wipe";
 import type { AdminUserRow } from "./types";
@@ -176,6 +180,25 @@ export async function startImpersonation(
     )
     .bind(sandboxUserId, email, null, null, createdAt, sourceUserId)
     .run();
+
+  try {
+    await cloneUserGraph(db, sourceUserId, sandboxUserId);
+  } catch (err) {
+    try {
+      await db
+        .prepare("DELETE FROM users WHERE id = ? AND sandbox_of IS NOT NULL")
+        .bind(sandboxUserId)
+        .run();
+    } catch {
+      /* compensating delete best-effort */
+    }
+    if (err instanceof CloneLimitExceededError) {
+      throw new HTTPException(413, {
+        message: "User library too large to clone for impersonation",
+      });
+    }
+    throw err;
+  }
 
   const meta: ImpersonationMeta = {
     sourceUserId,

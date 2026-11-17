@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { getDb } from "../db/client";
 import { requireUser } from "../auth/session";
+import { filterDeletableR2Keys } from "../admin/sandbox-r2";
 import {
   enqueueOrManualOcclusion,
   userHasByoSecret,
@@ -51,6 +52,7 @@ import {
 async function discardProvisionalMaterialUpload(
   env: Env,
   material: MaterialRow,
+  userId: string,
 ): Promise<void> {
   const db = getDb(env);
   const figureKeys =
@@ -64,14 +66,11 @@ async function discardProvisionalMaterialUpload(
     .prepare("DELETE FROM materials WHERE id = ?")
     .bind(material.id)
     .run();
-  if (material.r2_key) {
-    try {
-      await env.MATERIALS.delete(material.r2_key);
-    } catch {
-      /* best-effort */
-    }
-  }
-  for (const key of figureKeys) {
+  const candidates = [
+    ...(material.r2_key ? [material.r2_key] : []),
+    ...figureKeys,
+  ];
+  for (const key of await filterDeletableR2Keys(db, userId, candidates)) {
     try {
       await env.MATERIALS.delete(key);
     } catch {
@@ -347,7 +346,7 @@ materialRoutes.delete("/:id", async (c) => {
     .bind(material.id)
     .run();
 
-  const r2Keys = new Set<string>(keysToGuard);
+  const r2Keys = await filterDeletableR2Keys(db, userId, keysToGuard);
   for (const key of r2Keys) {
     try {
       await c.env.MATERIALS.delete(key);
@@ -468,7 +467,7 @@ materialRoutes.post("/:id/complete", async (c) => {
       materialId,
     );
     if (hit?.jobId) {
-      await discardProvisionalMaterialUpload(c.env, material);
+      await discardProvisionalMaterialUpload(c.env, material, userId);
       return c.json({
         id: hit.materialId,
         deck_id: hit.deck_id,
@@ -484,7 +483,7 @@ materialRoutes.post("/:id/complete", async (c) => {
       });
     }
     if (hit && !hit.jobId) {
-      await discardProvisionalMaterialUpload(c.env, material);
+      await discardProvisionalMaterialUpload(c.env, material, userId);
       const { jobId, manual_occlusion } = await enqueueOrManualOcclusion(
         c.env,
         db,

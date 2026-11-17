@@ -262,6 +262,7 @@ export type TestEnv = Env & {
   getGenerationJobs: () => GenerationJobRow[];
   getUserSecrets: () => UserSecretRow[];
   getUsers: () => UserRow[];
+  getDecks: () => DeckRow[];
   getUserStudyPrefs: () => UserStudyPrefsRow[];
   getCards: () => CardRow[];
   getSchedules: () => ScheduleRow[];
@@ -570,6 +571,12 @@ export function createTestEnv(opts?: {
         if (normalized.startsWith("SELECT id, email FROM users WHERE id =")) {
           const u = users.get(bound[0] as string);
           return u ? ({ id: u.id, email: u.email } as T) : null;
+        }
+        if (normalized.startsWith("SELECT sandbox_of FROM users WHERE id =")) {
+          const u = users.get(bound[0] as string);
+          return u
+            ? ({ sandbox_of: u.sandbox_of ?? null } as T)
+            : null;
         }
         if (
           normalized.includes("FROM user_study_prefs") &&
@@ -1062,6 +1069,22 @@ export function createTestEnv(opts?: {
             return true;
           }).length;
           return { count: cnt } as unknown as T;
+        }
+        if (
+          normalized.includes("SELECT COUNT(*) AS cnt") &&
+          normalized.includes("FROM cards c") &&
+          normalized.includes("INNER JOIN decks d") &&
+          normalized.includes("WHERE d.user_id =") &&
+          !normalized.includes("review_logs") &&
+          !normalized.includes("card_schedules") &&
+          !normalized.includes("status")
+        ) {
+          const userId = bound[0] as string;
+          const cnt = [...cards.values()].filter((card) => {
+            const deck = decks.get(card.deck_id);
+            return deck?.user_id === userId;
+          }).length;
+          return { cnt } as T;
         }
         if (
           normalized.startsWith("SELECT COUNT(*)") &&
@@ -1659,6 +1682,7 @@ export function createTestEnv(opts?: {
                 page_count: m.page_count,
                 status: m.status,
                 created_at: m.created_at,
+                content_hash: m.content_hash ?? null,
                 source_role: m.source_role ?? "lecture",
               };
             })
@@ -1690,6 +1714,9 @@ export function createTestEnv(opts?: {
                 progress_json: job.progress_json,
                 created_at: job.created_at,
                 finished_at: job.finished_at,
+                figure_extract_mode: job.figure_extract_mode ?? "fast",
+                topic_hints_json: job.topic_hints_json ?? null,
+                atlas_provenance_json: job.atlas_provenance_json ?? null,
               };
             })
             .filter((row): row is NonNullable<typeof row> => row != null)
@@ -4117,14 +4144,29 @@ export function createTestEnv(opts?: {
             });
           }
         } else if (normalized.startsWith("INSERT INTO user_study_day")) {
-          const [user_id, day] = bound as [string, string];
+          const [user_id, day, introsMaybe] = bound as [
+            string,
+            string,
+            number | undefined,
+          ];
           const key = `${user_id}\0${day}`;
           const existing = userStudyDay.get(key);
-          userStudyDay.set(key, {
-            user_id,
-            day,
-            intros_used: (existing?.intros_used ?? 0) + 1,
-          });
+          if (normalized.includes("ON CONFLICT")) {
+            userStudyDay.set(key, {
+              user_id,
+              day,
+              intros_used: (existing?.intros_used ?? 0) + 1,
+            });
+          } else {
+            userStudyDay.set(key, {
+              user_id,
+              day,
+              intros_used:
+                typeof introsMaybe === "number"
+                  ? introsMaybe
+                  : (existing?.intros_used ?? 0),
+            });
+          }
         } else if (normalized.startsWith("INSERT INTO cards")) {
           const [
             id,
@@ -4861,6 +4903,7 @@ export function createTestEnv(opts?: {
     getGenerationJobs: () => [...generationJobs.values()],
     getUserSecrets: () => [...userSecrets.values()],
     getUsers: () => [...users.values()],
+    getDecks: () => [...decks.values()],
     getUserStudyPrefs: () => [...userStudyPrefs.values()],
     getCards: () => [...cards.values()],
     getSchedules: () => [...schedules.values()],
