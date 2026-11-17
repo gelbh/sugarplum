@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -30,21 +30,6 @@ import { LibraryCreateSubjectPanel } from "../library/LibraryCreateSubjectPanel"
 import MagazineEmptyStage from "../library/MagazineEmptyStage";
 import StageBreadcrumbs from "../library/StageBreadcrumbs";
 import {
-  ApiError,
-  apkgFilenameForDeckTitle,
-  clearCover,
-  createDeck,
-  createSubjectExport,
-  deckStats,
-  deleteDeck,
-  deleteSubject,
-  listCovers,
-  listDecks,
-  listJobsWithDrafts,
-  listSubjects,
-  patchDeck,
-  patchSubject,
-  subjectComposition,
   type Deck,
   type DeckStats,
   type JobListItem,
@@ -53,30 +38,19 @@ import {
   type SubjectKnowledge,
 } from "../api/client";
 import SubjectKnowledgeBar from "../components/SubjectKnowledgeBar";
-import {
-  formatExportWarnings,
-  ANKI_EXPORT_BUSY_LABEL,
-  runAnkiExportDownload,
-} from "../export/runAnkiExport";
+import { ANKI_EXPORT_BUSY_LABEL } from "../export/runAnkiExport";
 import { isGuest } from "../guest/session";
-import { navigate } from "../nav/navigate";
 import { useTrackedOp } from "../progress/useTrackedOp";
+import { createSubjectCover } from "../subjects/subjectCover";
+import { createSubjectDelete } from "../subjects/subjectDelete";
 import { subjectDeleteBlocked } from "../subjects/subjectDeleteGuard";
+import { createSubjectExport } from "../subjects/subjectExport";
+import { createSubjectTitleDialogs } from "../subjects/subjectTitleDialogs";
+import type { CoverTarget, TitleDialog } from "../subjects/subjectTypes";
+import { useSubjectLoad } from "../subjects/useSubjectLoad";
 
 type Props = {
   subjectId: string;
-};
-
-type TitleDialog =
-  | { kind: "subject" }
-  | { kind: "deck-create" }
-  | { kind: "deck-rename"; deck: Deck }
-  | null;
-
-type CoverTarget = {
-  ownerKind: "subject" | "deck";
-  ownerId: string;
-  title: string;
 };
 
 export default function SubjectPage({ subjectId }: Props) {
@@ -115,286 +89,86 @@ export default function SubjectPage({ subjectId }: Props) {
     ANKI_EXPORT_BUSY_LABEL,
   );
 
-  const load = useCallback(async () => {
-    const [subjects, deckList, coverList, knowledgeResult, jobs] =
-      await Promise.all([
-        listSubjects(),
-        listDecks(subjectId),
-        guest
-          ? Promise.resolve([] as StoredCoverRow[])
-          : listCovers().catch(() => [] as StoredCoverRow[]),
-        subjectComposition(subjectId).catch(() => null),
-        guest
-          ? Promise.resolve([] as JobListItem[])
-          : listJobsWithDrafts().catch(() => [] as JobListItem[]),
-      ]);
-    const found = subjects.find((s) => s.id === subjectId) ?? null;
-    setSubject(found);
-    setDecks(deckList);
-    setCovers(coverList);
-    setKnowledge(knowledgeResult);
-    setDraftJobs(jobs);
-    return found;
-  }, [guest, subjectId]);
+  const { syncSubjectFromList, refreshKnowledge } = useSubjectLoad({
+    subjectId,
+    guest,
+    endLoad,
+    setSubject,
+    setDecks,
+    setCovers,
+    setKnowledge,
+    setDraftJobs,
+    setError,
+    setReady,
+  });
 
-  const syncSubjectFromList = useCallback(async () => {
-    const subjects = await listSubjects();
-    const found = subjects.find((s) => s.id === subjectId) ?? null;
-    setSubject(found);
-    return found;
-  }, [subjectId]);
+  const {
+    openRenameSubject,
+    openCreateDeck,
+    cancelCreateDeck,
+    finishCreateDeck,
+    backFromCreateDeckCover,
+    closeCreateDeckCover,
+    openRenameDeck,
+    onTitleDialogSubmit,
+  } = createSubjectTitleDialogs({
+    subjectId,
+    guest,
+    subject,
+    titleDialog,
+    titleValue,
+    createFlowDeck,
+    syncSubjectFromList,
+    setTitleDialog,
+    setTitleValue,
+    setDialogBusy,
+    setDialogError,
+    setCreateDeckHold,
+    setCreateFlowDeck,
+    setCoverPicker,
+    setDecks,
+    setSubject,
+  });
 
-  const refreshKnowledge = useCallback(async () => {
-    try {
-      setKnowledge(await subjectComposition(subjectId));
-    } catch {
-      // Soft-fail: keep prior bar rather than blanking the page.
-    }
-  }, [subjectId]);
+  const { openCoverPicker, openDeckCoverPicker, onCoverSaved, onClearCover } =
+    createSubjectCover({
+      subject,
+      guest,
+      coverPicker,
+      createDeckHold,
+      finishCreateDeck,
+      setCoverPicker,
+      setCovers,
+    });
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const found = await load();
-        if (cancelled) return;
-        if (!found) {
-          setError("Subject not found");
-        }
-        setReady(true);
-        endLoad();
-      } catch (err) {
-        if (cancelled) return;
-        if (err instanceof ApiError && err.status === 401) {
-          window.location.assign("/login");
-          return;
-        }
-        setError(
-          err instanceof ApiError ? err.message : "Failed to load subject",
-        );
-        setReady(true);
-        endLoad(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [endLoad, load]);
+  const {
+    requestDeleteSubject,
+    confirmDeleteSubject,
+    openDeleteDeck,
+    confirmDeleteDeck,
+  } = createSubjectDelete({
+    subject,
+    decks,
+    deleteTarget,
+    syncSubjectFromList,
+    refreshKnowledge,
+    setError,
+    setConfirmSubjectDelete,
+    setSubjectDeleteBusy,
+    setDeleteTarget,
+    setDeleteStats,
+    setDeleteBusy,
+    setDecks,
+  });
 
-  async function onClearCover() {
-    if (!coverPicker) return;
-    const { ownerKind, ownerId } = coverPicker;
-    await clearCover(ownerKind, ownerId);
-    setCovers((prev) =>
-      prev.filter(
-        (cover) => cover.ownerKind !== ownerKind || cover.ownerId !== ownerId,
-      ),
-    );
-    if (createDeckHold) {
-      finishCreateDeck(ownerId);
-      return;
-    }
-    setCoverPicker(null);
-  }
-
-  function openRenameSubject() {
-    if (!subject) return;
-    setDialogError(null);
-    setTitleValue(subject.title);
-    setTitleDialog({ kind: "subject" });
-  }
-
-  function openCreateDeck() {
-    setDialogError(null);
-    setTitleValue("");
-    setCreateDeckHold(false);
-    setCreateFlowDeck(null);
-    setTitleDialog({ kind: "deck-create" });
-  }
-
-  function cancelCreateDeck() {
-    setTitleDialog(null);
-    setCreateDeckHold(false);
-    setCoverPicker(null);
-    setCreateFlowDeck(null);
-    setDialogError(null);
-  }
-
-  function backFromCreateDeckCover() {
-    if (!createFlowDeck) {
-      cancelCreateDeck();
-      return;
-    }
-    setDialogError(null);
-    setTitleValue(createFlowDeck.title);
-    setCoverPicker(null);
-    setCreateDeckHold(false);
-    setTitleDialog({ kind: "deck-create" });
-  }
-
-  function finishCreateDeck(deckId: string) {
-    setTitleDialog(null);
-    setCoverPicker(null);
-    setCreateDeckHold(false);
-    setCreateFlowDeck(null);
-    setDialogError(null);
-    navigate(`/library/decks/${encodeURIComponent(deckId)}`);
-  }
-
-  function closeCreateDeckCover() {
-    const createdId = createFlowDeck?.id ?? null;
-    setCoverPicker(null);
-    setCreateDeckHold(false);
-    setCreateFlowDeck(null);
-    if (createdId) {
-      navigate(`/library/decks/${encodeURIComponent(createdId)}`);
-    }
-  }
-
-  function openRenameDeck(deck: Deck) {
-    setDialogError(null);
-    setTitleValue(deck.title);
-    setTitleDialog({ kind: "deck-rename", deck });
-  }
-
-  async function onTitleDialogSubmit(e?: FormEvent) {
-    e?.preventDefault();
-    if (!titleDialog || !titleValue.trim()) return;
-    setDialogBusy(true);
-    setDialogError(null);
-    try {
-      if (titleDialog.kind === "deck-create") {
-        const saved = createFlowDeck
-          ? await patchDeck(createFlowDeck.id, titleValue.trim())
-          : await createDeck(titleValue.trim(), subjectId);
-        if (createFlowDeck) {
-          setDecks((prev) => prev.map((d) => (d.id === saved.id ? saved : d)));
-        } else {
-          setDecks((prev) => [...prev, saved]);
-          await syncSubjectFromList();
-        }
-        setCreateFlowDeck(saved);
-        setTitleValue(saved.title);
-        if (!guest) {
-          setCreateDeckHold(true);
-          setCoverPicker({
-            ownerKind: "deck",
-            ownerId: saved.id,
-            title: saved.title,
-          });
-          setTitleDialog(null);
-        } else {
-          finishCreateDeck(saved.id);
-        }
-        return;
-      }
-
-      let saved: CoverTarget;
-      if (titleDialog.kind === "subject") {
-        const updated = await patchSubject(subjectId, titleValue.trim());
-        setSubject((prev) => (prev ? { ...prev, ...updated } : updated));
-        saved = {
-          ownerKind: "subject",
-          ownerId: updated.id,
-          title: updated.title,
-        };
-      } else {
-        const updated = await patchDeck(titleDialog.deck.id, titleValue.trim());
-        setDecks((prev) =>
-          prev.map((d) => (d.id === updated.id ? updated : d)),
-        );
-        saved = {
-          ownerKind: "deck",
-          ownerId: updated.id,
-          title: updated.title,
-        };
-      }
-      setTitleDialog(null);
-      if (!guest) setCoverPicker(saved);
-    } catch (err) {
-      setDialogError(err instanceof ApiError ? err.message : "Could not save");
-    } finally {
-      setDialogBusy(false);
-    }
-  }
-
-  function requestDeleteSubject() {
-    if (!subject || subjectDeleteBlocked(subject, decks.length)) return;
-    setError(null);
-    setConfirmSubjectDelete(true);
-  }
-
-  async function confirmDeleteSubject() {
-    if (!subject) return;
-    setSubjectDeleteBusy(true);
-    setError(null);
-    try {
-      await deleteSubject(subject.id);
-      setConfirmSubjectDelete(false);
-      navigate("/library");
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Could not delete subject",
-      );
-    } finally {
-      setSubjectDeleteBusy(false);
-    }
-  }
-
-  async function openDeleteDeck(deck: Deck) {
-    setError(null);
-    setDeleteTarget(deck);
-    setDeleteStats(null);
-    try {
-      setDeleteStats(await deckStats(deck.id));
-    } catch (err) {
-      setDeleteTarget(null);
-      setError(
-        err instanceof ApiError ? err.message : "Could not load deck stats",
-      );
-    }
-  }
-
-  async function confirmDeleteDeck() {
-    if (!deleteTarget) return;
-    setDeleteBusy(true);
-    setError(null);
-    try {
-      await deleteDeck(deleteTarget.id);
-      setDecks((prev) => prev.filter((d) => d.id !== deleteTarget.id));
-      await syncSubjectFromList();
-      await refreshKnowledge();
-      setDeleteTarget(null);
-      setDeleteStats(null);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not delete deck");
-    } finally {
-      setDeleteBusy(false);
-    }
-  }
-
-  async function onExportAnki() {
-    if (!subject || guest) return;
-    setError(null);
-    setNotice(null);
-    setExportWarning(null);
-    try {
-      await runExport(async () => {
-        const warnings = await runAnkiExportDownload(
-          () => createSubjectExport(subject.id),
-          apkgFilenameForDeckTitle(subject.title),
-        );
-        const warningText = formatExportWarnings(warnings);
-        if (warningText) {
-          setExportWarning(warningText);
-        } else {
-          setNotice("Anki package downloaded");
-        }
-      });
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Export failed");
-    }
-  }
+  const { onExportAnki } = createSubjectExport({
+    subject,
+    guest,
+    runExport,
+    setError,
+    setNotice,
+    setExportWarning,
+  });
 
   const deleteSubjectBlocked = subject
     ? subjectDeleteBlocked(subject, decks.length)
@@ -429,15 +203,6 @@ export default function SubjectPage({ subjectId }: Props) {
   const creatingDeck = titleDialog?.kind === "deck-create" || createDeckHold;
   const renameDialogOpen =
     titleDialog?.kind === "subject" || titleDialog?.kind === "deck-rename";
-
-  function openCoverPicker() {
-    if (!subject || guest) return;
-    setCoverPicker({
-      ownerKind: "subject",
-      ownerId: subject.id,
-      title: subject.title,
-    });
-  }
 
   return (
     <Container
@@ -721,14 +486,7 @@ export default function SubjectPage({ subjectId }: Props) {
                     ownerKind={coverPicker.ownerKind}
                     ownerId={coverPicker.ownerId}
                     onSaved={(row) => {
-                      setCovers((prev) => [
-                        row,
-                        ...prev.filter(
-                          (cover) =>
-                            cover.ownerKind !== row.ownerKind ||
-                            cover.ownerId !== row.ownerId,
-                        ),
-                      ]);
+                      onCoverSaved(row);
                       closeCreateDeckCover();
                     }}
                     onClear={onClearCover}
@@ -1122,11 +880,7 @@ export default function SubjectPage({ subjectId }: Props) {
           <MenuItem
             onClick={() => {
               if (!menuDeck) return;
-              setCoverPicker({
-                ownerKind: "deck",
-                ownerId: menuDeck.id,
-                title: menuDeck.title,
-              });
+              openDeckCoverPicker(menuDeck);
               setPageMenu(null);
             }}
           >
@@ -1153,14 +907,7 @@ export default function SubjectPage({ subjectId }: Props) {
           ownerId={coverPicker?.ownerId ?? ""}
           onClose={() => setCoverPicker(null)}
           onSaved={(row) => {
-            setCovers((prev) => [
-              row,
-              ...prev.filter(
-                (cover) =>
-                  cover.ownerKind !== row.ownerKind ||
-                  cover.ownerId !== row.ownerId,
-              ),
-            ]);
+            onCoverSaved(row);
             setCoverPicker(null);
           }}
           onClear={onClearCover}
