@@ -27,7 +27,6 @@ export type DraftReviewBatchCtx = DraftReviewTracked & {
   setNotice: Dispatch<SetStateAction<DraftReviewNotice | null>>;
 };
 
-/** Plain handlers (not a React hook): batch accept/reject remaining drafts. */
 export function createDraftReviewBatch(ctx: DraftReviewBatchCtx) {
   const {
     jobId,

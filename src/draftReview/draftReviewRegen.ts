@@ -25,7 +25,6 @@ export type DraftReviewRegenCtx = DraftReviewTracked & {
   setProgressGate: Dispatch<SetStateAction<boolean>>;
 };
 
-/** Plain handlers (not a React hook): card/job regen + failed dismiss. */
 export function createDraftReviewRegen(ctx: DraftReviewRegenCtx) {
   const {
     jobId,

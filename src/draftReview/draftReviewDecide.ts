@@ -32,7 +32,6 @@ export type DraftReviewDecideCtx = DraftReviewTracked & {
   setUndoBusy: Dispatch<SetStateAction<boolean>>;
 };
 
-/** Plain handlers (not a React hook): page owns state; this owns decide/undo flow. */
 export function createDraftReviewDecide(ctx: DraftReviewDecideCtx) {
   const {
     jobId,

@@ -48,7 +48,6 @@ import type { DraftReviewNotice } from "../draftReview/draftReviewTypes";
 import { friendlyJobError } from "../draftReview/friendlyJobError";
 import { useDraftReviewLoad } from "../draftReview/useDraftReviewLoad";
 
-/** Draft review: edit, accept, or reject generation drafts before study. */
 export default function DraftReviewPage() {
   const jobId = jobIdFromPath();
   const [drafts, setDrafts] = useState<CardDraftView[]>([]);
