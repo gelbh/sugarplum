@@ -18,8 +18,8 @@ import type {
   UploadUrlResponse,
 } from "./types";
 
-export const MAX_TOPIC_HINTS = 5;
-export const MAX_TOPIC_HINT_CHARS = 200;
+export const MAX_TOPIC_HINTS = 20;
+export const MAX_TOPIC_HINT_CHARS = 300;
 
 /** One non-empty line per hint; strips empties and soft-caps length/count. */
 export function topicHintsFromLines(raw: string): string[] | undefined {

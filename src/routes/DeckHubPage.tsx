@@ -402,6 +402,8 @@ export default function DeckHubPage({ deckId }: Props) {
       onPasteTextChange={material.setPasteText}
       pasteFilename={material.pasteFilename}
       onPasteFilenameChange={material.setPasteFilename}
+      alsoCover={material.alsoCover}
+      onAlsoCoverChange={material.setAlsoCover}
       onGuestPaste={material.onGuestPaste}
       onAccountPaste={material.onAccountPaste}
       uploadFile={material.uploadFile}
@@ -445,7 +447,6 @@ export default function DeckHubPage({ deckId }: Props) {
       hubDiyAllowedTypes={create.hubDiyAllowedTypes}
     />
   ) : null;
-
 
   return (
     <Container
