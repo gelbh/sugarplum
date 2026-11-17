@@ -11,4 +11,8 @@ describe("jobIdFromPath", () => {
     expect(jobIdFromPath("/library")).toBeNull();
     expect(jobIdFromPath("/jobs/only")).toBeNull();
   });
+
+  it("returns null for malformed percent-encoding", () => {
+    expect(jobIdFromPath("/jobs/%E0%A4%A/drafts")).toBeNull();
+  });
 });
