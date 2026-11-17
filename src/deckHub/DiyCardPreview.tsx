@@ -133,8 +133,7 @@ function OcclusionFocusMedia({
                   width: `${mask.w * 100}%`,
                   height: `${mask.h * 100}%`,
                   borderRadius: "4px",
-                  bgcolor:
-                    "color-mix(in srgb, var(--sp-stage-bg) 92%, transparent)",
+                  bgcolor: "var(--sp-stage-bg)",
                   border: "1.5px solid",
                   borderColor: "secondary.main",
                 }}
