@@ -13,6 +13,7 @@ import { effectiveSubjectDeckCount } from "../subjects/subjectDeleteGuard";
 import BoardTile from "./board/BoardTile";
 import LibraryBoard from "./board/LibraryBoard";
 import { coverPlaceholderColor } from "./board/coverPlaceholder";
+import MagazineEmptyStage from "./MagazineEmptyStage";
 
 type Props = {
   subjects: Subject[];
@@ -78,86 +79,21 @@ export function LibraryShelf({
       }}
     >
       {emptyShelf && !selectMode ? (
-        <Box
-          sx={{
-            width: "100%",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 2.5,
-            py: 2,
-          }}
-        >
-          <Box
-            sx={{
-              textAlign: "center",
-              px: 2,
-              maxWidth: 420,
-            }}
-          >
-            <Typography
-              component="p"
-              sx={{
-                m: 0,
-                mb: 0.75,
-                fontSize: "0.6875rem",
-                fontWeight: 500,
-                letterSpacing: "0.22em",
-                textTransform: "uppercase",
-                color: "primary.main",
-              }}
-            >
-              Get started
-            </Typography>
-            <Typography
-              variant="h5"
-              component="p"
-              sx={{
-                m: 0,
-                fontFamily: '"Alice", "Georgia", "Times New Roman", serif',
-                fontWeight: 400,
-                letterSpacing: "0.02em",
-                lineHeight: 1.2,
-                color: "text.primary",
-              }}
-            >
-              Start with a subject
-            </Typography>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mt: 1, lineHeight: 1.5 }}
-            >
-              Subjects group your decks, like Anatomy or Pharmacology. Add one,
-              then open it to create decks and study material.
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              width: "100%",
-              maxWidth: { xs: 168, sm: 180, md: 200 },
-            }}
-          >
-            <LibraryBoard aria-label="Subjects">
-              {!selectMode && onCreateSubject ? (
-                <Box
-                  component="li"
-                  sx={{ listStyle: "none", m: 0, p: 0, minHeight: 0 }}
-                >
-                  <BoardTile
-                    index={0}
-                    title="New subject"
-                    meta="Name it, then add decks inside"
-                    create
-                    accent
-                    onCreate={onCreateSubject}
-                    openLabel="New subject"
-                  />
-                </Box>
-              ) : null}
-            </LibraryBoard>
-          </Box>
-        </Box>
+        <MagazineEmptyStage
+          title="Start with a subject"
+          description="Subjects group your decks, like Anatomy or Pharmacology. Add one, then open it to create decks and study material."
+          boardAriaLabel="Subjects"
+          {...(onCreateSubject
+            ? {
+                create: {
+                  title: "New subject",
+                  meta: "Name it, then add decks inside",
+                  openLabel: "New subject",
+                  onCreate: onCreateSubject,
+                },
+              }
+            : {})}
+        />
       ) : (
         <LibraryBoard aria-label="Subjects">
           {subjects.map((s) => {
