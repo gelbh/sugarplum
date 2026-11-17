@@ -1,4 +1,9 @@
 import type { Env } from "../env";
+import {
+  applySandboxKeyPrefix,
+  sandboxWriteUserId,
+} from "../admin/sandbox-r2";
+import { getDb } from "../db/client";
 import { extractPdfText, REGEN_MAX_CHARS } from "./extract-pdf";
 
 export const OCR_PAGE_LIMIT = 8;
@@ -30,8 +35,26 @@ export function ocrRefillWindow(
   };
 }
 
-export function ocrSidecarKey(deckId: string, materialId: string): string {
-  return `materials/${deckId}/ocr/${materialId}.json`;
+export function ocrSidecarKey(
+  deckId: string,
+  materialId: string,
+  sandboxUserId?: string | null,
+): string {
+  return applySandboxKeyPrefix(
+    sandboxUserId,
+    `materials/${deckId}/ocr/${materialId}.json`,
+  );
+}
+
+async function sandboxIdForDeck(
+  env: Env,
+  deckId: string,
+): Promise<string | null> {
+  const row = await getDb(env)
+    .prepare("SELECT user_id FROM decks WHERE id = ?")
+    .bind(deckId)
+    .first<{ user_id: string }>();
+  return row ? sandboxWriteUserId(getDb(env), row.user_id) : null;
 }
 
 function parseOcrPageList(
@@ -204,7 +227,14 @@ export async function readOcrSidecar(
   deckId: string,
   materialId: string,
 ): Promise<OcrSidecar | null> {
-  const obj = await env.MATERIALS.get(ocrSidecarKey(deckId, materialId));
+  const sandboxId = await sandboxIdForDeck(env, deckId);
+  let obj = await env.MATERIALS.get(
+    ocrSidecarKey(deckId, materialId, sandboxId),
+  );
+  // Read-through: cloned decks may still point at source OCR objects.
+  if (!obj && sandboxId) {
+    obj = await env.MATERIALS.get(ocrSidecarKey(deckId, materialId));
+  }
   if (!obj) return null;
   try {
     const parsed: unknown = JSON.parse(await obj.text());
@@ -236,8 +266,9 @@ export async function writeOcrSidecar(
   if (unstudiedPages.length > 0) {
     body.unstudiedPages = [...unstudiedPages];
   }
+  const sandboxId = await sandboxIdForDeck(env, deckId);
   await env.MATERIALS.put(
-    ocrSidecarKey(deckId, materialId),
+    ocrSidecarKey(deckId, materialId, sandboxId),
     JSON.stringify(body),
     { httpMetadata: { contentType: "application/json" } },
   );

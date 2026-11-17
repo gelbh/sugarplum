@@ -18,6 +18,10 @@ import {
 import { loadParasiteDataset } from "./datasets/parasites";
 import { normalizeParasiteName } from "./names";
 import { emptyParasiteFields, type ParasiteFields } from "./templates/parasite";
+import {
+  applySandboxKeyPrefix,
+  sandboxWriteUserId,
+} from "../admin/sandbox-r2";
 import { createR2PutUrl } from "../materials/r2-presign";
 import { sha256Hex } from "../materials/content-hash";
 import { requireOwnedDeck } from "../materials/routes";
@@ -113,6 +117,7 @@ atlasItemRoutes.post("/make-cards", async (c) => {
   });
 
   const prepared = prepareMakeCardsItems(entries, entryKeys);
+  const sandboxId = await sandboxWriteUserId(db, userId);
 
   const jobs: Array<{
     entryKey: string;
@@ -124,7 +129,10 @@ atlasItemRoutes.post("/make-cards", async (c) => {
     const materialId = newId();
     const createdAt = nowIso();
     const filename = `atlas-${item.entryKey}.txt`;
-    const r2Key = `materials/${deckId}/${materialId}.txt`;
+    const r2Key = applySandboxKeyPrefix(
+      sandboxId,
+      `materials/${deckId}/${materialId}.txt`,
+    );
     const contentHash = await sha256Hex(item.text);
 
     await c.env.MATERIALS.put(r2Key, item.text, {
@@ -563,7 +571,10 @@ atlasItemRoutes.delete("/entries/:entryId/refs/:refId", async (c) => {
 });
 
 atlasItemRoutes.post("/entries/:entryId/images/upload-url", async (c) => {
-  const { atlas, db } = await requireOwnedAtlas(c, requireParam(c, "atlasId"));
+  const { atlas, db, userId } = await requireOwnedAtlas(
+    c,
+    requireParam(c, "atlasId"),
+  );
   const entryId = requireParam(c, "entryId");
   let body: unknown;
   try {
@@ -592,7 +603,11 @@ atlasItemRoutes.post("/entries/:entryId/images/upload-url", async (c) => {
 
   const imageId = newId();
   const ext = imageExtForContentType(contentType);
-  const r2Key = `atlas/${atlas.id}/${row.id}/${imageId}.${ext}`;
+  const sandboxId = await sandboxWriteUserId(db, userId);
+  const r2Key = applySandboxKeyPrefix(
+    sandboxId,
+    `atlas/${atlas.id}/${row.id}/${imageId}.${ext}`,
+  );
 
   const accountId = c.env.R2_ACCOUNT_ID;
   const accessKeyId = c.env.R2_ACCESS_KEY_ID;

@@ -1,4 +1,8 @@
 import type { Env } from "../env";
+import {
+  applySandboxKeyPrefix,
+  stripSandboxKeyPrefix,
+} from "../admin/sandbox-r2";
 import type { FigureCrop, FigureMime } from "./docling";
 import { MAX_FIGURES_PER_PDF } from "./docling";
 
@@ -15,8 +19,12 @@ export function figureR2Key(
   pdfMaterialId: string,
   index: number,
   mime: FigureMime = "image/png",
+  sandboxUserId?: string | null,
 ): string {
-  return `materials/${deckId}/figures/${pdfMaterialId}/${index}.${figureExtForMime(mime)}`;
+  return applySandboxKeyPrefix(
+    sandboxUserId,
+    `materials/${deckId}/figures/${pdfMaterialId}/${index}.${figureExtForMime(mime)}`,
+  );
 }
 
 /**
@@ -27,8 +35,12 @@ export function figureR2Key(
 export function figureR2KeyPrefixBounds(
   deckId: string,
   pdfMaterialId: string,
+  sandboxUserId?: string | null,
 ): { lower: string; upper: string } {
-  const stem = `materials/${deckId}/figures/${pdfMaterialId}`;
+  const stem = applySandboxKeyPrefix(
+    sandboxUserId,
+    `materials/${deckId}/figures/${pdfMaterialId}`,
+  );
   return { lower: `${stem}/`, upper: `${stem}0` };
 }
 
@@ -37,9 +49,10 @@ export function isFigureR2KeyForPdf(
   deckId: string,
   pdfMaterialId: string,
 ): boolean {
+  const logical = stripSandboxKeyPrefix(r2Key);
   const { lower: prefix } = figureR2KeyPrefixBounds(deckId, pdfMaterialId);
-  if (!r2Key.startsWith(prefix)) return false;
-  const rest = r2Key.slice(prefix.length);
+  if (!logical.startsWith(prefix)) return false;
+  const rest = logical.slice(prefix.length);
   return /^[0-9]+\.(png|jpe?g|webp)$/i.test(rest);
 }
 
@@ -57,7 +70,7 @@ export function parseFigureR2Key(
 ): { deckId: string; pdfMaterialId: string } | null {
   const match =
     /^materials\/([^/]+)\/figures\/([^/]+)\/\d+\.(?:png|jpe?g|webp)$/i.exec(
-      r2Key,
+      stripSandboxKeyPrefix(r2Key),
     );
   if (!match) return null;
   return { deckId: match[1]!, pdfMaterialId: match[2]! };
@@ -88,19 +101,36 @@ type FigureChildRow = { r2_key: string; status: string };
 
 /**
  * Probe R2 for figure objects at known index/mime slots.
- * ponytail: O(MAX×3) heads; R2 list would need test-env support and prefix APIs.
+ * ponytail: O(MAX×3) heads per index (sandbox + bare when impersonating); list-prefix scan is the upgrade.
  */
+type FigurePdfArgs = {
+  deckId: string;
+  pdfMaterialId: string;
+  sandboxUserId?: string | null;
+};
+
 export async function listFigureKeysInR2(
   materials: R2Bucket,
-  args: { deckId: string; pdfMaterialId: string },
+  args: FigurePdfArgs,
 ): Promise<string[]> {
   const keys: string[] = [];
   for (let index = 0; index < MAX_FIGURES_PER_PDF; index++) {
     for (const mime of FIGURE_MIMES) {
-      const key = figureR2Key(args.deckId, args.pdfMaterialId, index, mime);
-      const hit = await materials.head(key);
-      if (hit) {
-        keys.push(key);
+      const bare = figureR2Key(args.deckId, args.pdfMaterialId, index, mime);
+      const candidates =
+        args.sandboxUserId != null
+          ? [figureR2Key(args.deckId, args.pdfMaterialId, index, mime, args.sandboxUserId), bare]
+          : [bare];
+      let found: string | null = null;
+      for (const key of candidates) {
+        const hit = await materials.head(key);
+        if (hit) {
+          found = key;
+          break;
+        }
+      }
+      if (found) {
+        keys.push(found);
         break;
       }
     }
@@ -111,28 +141,40 @@ export async function listFigureKeysInR2(
 /** Legacy figure material rows (uploading/ready) still under the PDF prefix. */
 async function listLegacyFigureMaterialRows(
   db: D1Database,
-  args: { deckId: string; pdfMaterialId: string },
+  args: FigurePdfArgs,
 ): Promise<FigureChildRow[]> {
-  const { lower, upper } = figureR2KeyPrefixBounds(
-    args.deckId,
-    args.pdfMaterialId,
-  );
-  const { results } = await db
-    .prepare(
-      `SELECT r2_key, status FROM materials
-       WHERE deck_id = ? AND kind = 'image'
-         AND r2_key >= ? AND r2_key < ?
-         AND status IN ('ready', 'uploading')
-       ORDER BY r2_key ASC`,
-    )
-    .bind(args.deckId, lower, upper)
-    .all<{ r2_key: string; status: string }>();
-
-  return (results ?? []).filter(
-    (row) =>
-      typeof row.r2_key === "string" &&
-      isFigureR2KeyForPdf(row.r2_key, args.deckId, args.pdfMaterialId),
-  );
+  const ranges = [figureR2KeyPrefixBounds(args.deckId, args.pdfMaterialId)];
+  if (args.sandboxUserId != null) {
+    ranges.push(
+      figureR2KeyPrefixBounds(
+        args.deckId,
+        args.pdfMaterialId,
+        args.sandboxUserId,
+      ),
+    );
+  }
+  const byKey = new Map<string, FigureChildRow>();
+  for (const { lower, upper } of ranges) {
+    const { results } = await db
+      .prepare(
+        `SELECT r2_key, status FROM materials
+         WHERE deck_id = ? AND kind = 'image'
+           AND r2_key >= ? AND r2_key < ?
+           AND status IN ('ready', 'uploading')
+         ORDER BY r2_key ASC`,
+      )
+      .bind(args.deckId, lower, upper)
+      .all<{ r2_key: string; status: string }>();
+    for (const row of results ?? []) {
+      if (
+        typeof row.r2_key === "string" &&
+        isFigureR2KeyForPdf(row.r2_key, args.deckId, args.pdfMaterialId)
+      ) {
+        byKey.set(row.r2_key, row);
+      }
+    }
+  }
+  return [...byKey.values()];
 }
 
 /**
@@ -141,7 +183,7 @@ async function listLegacyFigureMaterialRows(
  */
 export async function listFigureChildrenForPdf(
   env: Pick<Env, "DB" | "MATERIALS">,
-  args: { deckId: string; pdfMaterialId: string },
+  args: FigurePdfArgs,
 ): Promise<FigureChildRow[]> {
   const legacy = await listLegacyFigureMaterialRows(env.DB, args);
   const byKey = new Map<string, FigureChildRow>();
@@ -161,7 +203,7 @@ export async function listFigureChildrenForPdf(
 
 export async function listFigureR2KeysForPdf(
   env: Pick<Env, "DB" | "MATERIALS">,
-  args: { deckId: string; pdfMaterialId: string },
+  args: FigurePdfArgs,
 ): Promise<string[]> {
   const children = await listFigureChildrenForPdf(env, args);
   return children
@@ -172,7 +214,7 @@ export async function listFigureR2KeysForPdf(
 
 export async function hasUploadingFigureChildren(
   env: Pick<Env, "DB" | "MATERIALS">,
-  args: { deckId: string; pdfMaterialId: string },
+  args: FigurePdfArgs,
 ): Promise<boolean> {
   const children = await listFigureChildrenForPdf(env, args);
   return children.some((row) => row.status === "uploading");
@@ -190,11 +232,13 @@ export async function persistFigureCrops(
     deckId: string;
     pdfMaterialId: string;
     crops: FigureCrop[];
+    sandboxUserId?: string | null;
   },
 ): Promise<PersistedFigure[]> {
   const existing = await listFigureChildrenForPdf(env, {
     deckId: args.deckId,
     pdfMaterialId: args.pdfMaterialId,
+    sandboxUserId: args.sandboxUserId,
   });
   const existingKeys = new Set(existing.map((row) => row.r2_key));
 
@@ -206,6 +250,7 @@ export async function persistFigureCrops(
       args.pdfMaterialId,
       crop.index,
       crop.mimeType,
+      args.sandboxUserId,
     );
     // Skip when a client crop (ready or still uploading) already owns this key.
     if (existingKeys.has(key)) continue;

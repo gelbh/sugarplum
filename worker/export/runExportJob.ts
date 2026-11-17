@@ -1,4 +1,8 @@
 import { HTTPException } from "hono/http-exception";
+import {
+  applySandboxKeyPrefix,
+  sandboxWriteUserId,
+} from "../admin/sandbox-r2";
 import { getDb } from "../db/client";
 import type { Env } from "../env";
 import { buildApkg } from "./buildApkg";
@@ -54,7 +58,13 @@ export async function runExportJob(
     };
   }
 
-  const r2Key = row.r2_key ?? `exports/${row.user_id}/${row.id}.apkg`;
+  const sandboxId = await sandboxWriteUserId(db, row.user_id);
+  const r2Key =
+    row.r2_key ??
+    applySandboxKeyPrefix(
+      sandboxId,
+      `exports/${row.user_id}/${row.id}.apkg`,
+    );
 
   try {
     const scope = parseExportScopeJson(row.request_json);

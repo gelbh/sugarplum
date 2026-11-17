@@ -15,6 +15,7 @@ import {
   cloneUserGraph,
 } from "./clone-user";
 import { requireAdmin } from "./requireAdmin";
+import { deleteSandboxR2Prefix } from "./sandbox-r2";
 import { refuseAllowlistedTarget } from "./wipe";
 import type { AdminUserRow } from "./types";
 
@@ -75,6 +76,11 @@ export async function abandonImpersonationSandbox(
   const { sandboxUserId, sourceUserId, startedAt } = record.impersonation;
   if (record.userId !== sandboxUserId) return;
   try {
+    await deleteSandboxR2Prefix(c.env.MATERIALS, sandboxUserId);
+  } catch {
+    /* best-effort */
+  }
+  try {
     await getDb(c.env)
       .prepare("DELETE FROM users WHERE id = ? AND sandbox_of IS NOT NULL")
       .bind(sandboxUserId)
@@ -109,6 +115,11 @@ export async function teardownImpersonationSession(
     return next;
   }
 
+  try {
+    await deleteSandboxR2Prefix(c.env.MATERIALS, sandboxUserId);
+  } catch {
+    /* best-effort; still tear down D1 + restore actor */
+  }
   try {
     await getDb(c.env)
       .prepare("DELETE FROM users WHERE id = ? AND sandbox_of IS NOT NULL")
