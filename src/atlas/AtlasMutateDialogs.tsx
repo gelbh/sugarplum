@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -10,61 +9,16 @@ import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { ZodError } from "zod";
-import { ApiError } from "../api/client";
-import {
-  diagnosticMirrorForSave,
-  diagnosticOwnershipIssue,
-  diagnosticStageFromStages,
-  hydrateLifecycleDraft,
-} from "../../worker/atlas/lifecycleDiagnostic";
 import LifecycleSwimlane from "./LifecycleSwimlane";
-import {
-  PARASITE_GROUPS,
-  lifecycleStageSchema,
-} from "../../worker/atlas/templates/parasite";
-import {
-  createEntry,
-  listDeletedEntries,
-  patchEntry,
-  purgeDeletedEntry,
-  resetEntry,
-  restoreEntry,
-  softDeleteEntry,
-} from "./apiSource";
+import { PARASITE_GROUPS } from "../../worker/atlas/templates/parasite";
 import { entryTitles } from "./entryTitles";
 import { GROUP_LABELS } from "./filter";
-import StageListEditor, { type StageDraft } from "./StageListEditor";
-import type { AtlasEntryView, DatasetFields, ParasiteGroup } from "./types";
-
-/** Preview accepts free-text hosts the same way learner overlays do. */
-function previewLifecycleFields(
-  base: DatasetFields,
-  stages: StageDraft[],
-): DatasetFields {
-  return {
-    ...base,
-    lifecycleStages: stages as DatasetFields["lifecycleStages"],
-    diagnosticStage: diagnosticStageFromStages(stages),
-  };
-}
-
-type Busy = boolean;
-
-function errMessage(err: unknown, fallback: string): string {
-  if (err instanceof ApiError) return err.message;
-  if (err instanceof ZodError) {
-    return err.issues.map((i) => i.message).join("; ") || fallback;
-  }
-  return fallback;
-}
-
-function parseHostList(raw: string): string[] {
-  return raw
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
+import StageListEditor from "./StageListEditor";
+import type { AtlasEntryView, ParasiteGroup } from "./types";
+import { useAddEntryDialog } from "./useAddEntryDialog";
+import { useEditEntryDialog } from "./useEditEntryDialog";
+import { useEditLifecycleDialog } from "./useEditLifecycleDialog";
+import { useRecentlyDeletedDialog } from "./useRecentlyDeletedDialog";
 
 type AddProps = {
   open: boolean;
@@ -74,53 +28,17 @@ type AddProps = {
 };
 
 export function AddEntryDialog({ open, atlasId, onClose, onDone }: AddProps) {
-  const [name, setName] = useState("");
-  const [commonName, setCommonName] = useState("");
-  const [group, setGroup] = useState<ParasiteGroup | "">("");
-  const [busy, setBusy] = useState<Busy>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    setName("");
-    setCommonName("");
-    setGroup("");
-    setError(null);
-    setBusy(false);
-  }, [open]);
-
-  async function onSubmit(ev: FormEvent) {
-    ev.preventDefault();
-    const canonicalName = name.trim();
-    const common = commonName.trim();
-    if (!canonicalName) {
-      setError("Canonical name required");
-      return;
-    }
-    if (!common) {
-      setError("Common name required");
-      return;
-    }
-    if (!group) {
-      setError("Group required");
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      const entry = await createEntry(atlasId, {
-        canonicalName,
-        commonName: common,
-        fields: { group },
-      });
-      onDone(entry);
-      onClose();
-    } catch (err) {
-      setError(errMessage(err, "Could not add entry"));
-    } finally {
-      setBusy(false);
-    }
-  }
+  const {
+    name,
+    setName,
+    commonName,
+    setCommonName,
+    group,
+    setGroup,
+    busy,
+    error,
+    onSubmit,
+  } = useAddEntryDialog({ open, atlasId, onClose, onDone });
 
   return (
     <Dialog open={open} onClose={() => !busy && onClose()} fullWidth maxWidth="xs">
@@ -193,82 +111,18 @@ export function EditEntryDialog({
   onClose,
   onDone,
 }: EditProps) {
-  const [commonName, setCommonName] = useState("");
-  const [definitiveHosts, setDefinitiveHosts] = useState("");
-  const [busy, setBusy] = useState<Busy>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!open || !entry) return;
-    setCommonName(entry.commonName ?? "");
-    setDefinitiveHosts((entry.fields.definitiveHosts ?? []).join(", "));
-    setError(null);
-    setBusy(false);
-  }, [open, entry]);
-
-  async function onSubmit(ev: FormEvent) {
-    ev.preventDefault();
-    if (!entry) return;
-    const common = commonName.trim();
-    if (!common) {
-      setError("Common name required");
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      await patchEntry(atlasId, entry.id, {
-        commonName: common,
-        // Learner edits accept free-text hosts; DatasetFields vocab is dataset-only.
-        fields: {
-          definitiveHosts: parseHostList(
-            definitiveHosts,
-          ) as AtlasEntryView["fields"]["definitiveHosts"],
-        },
-      });
-      onDone();
-      onClose();
-    } catch (err) {
-      setError(errMessage(err, "Could not save entry"));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function onSoftDelete() {
-    if (!entry) return;
-    if (!window.confirm(`Soft-delete ${entryTitles(entry).primary}?`)) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await softDeleteEntry(atlasId, entry.id);
-      onDone();
-      onClose();
-    } catch (err) {
-      setError(errMessage(err, "Could not delete entry"));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function onReset() {
-    if (!entry?.originKey) return;
-    if (!window.confirm(`Reset ${entryTitles(entry).primary} to the dataset?`))
-      return;
-    setBusy(true);
-    setError(null);
-    try {
-      await resetEntry(atlasId, entry.id);
-      onDone();
-      onClose();
-    } catch (err) {
-      setError(errMessage(err, "Could not reset entry"));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const canReset = Boolean(entry?.originKey && entry?.editedAt);
+  const {
+    commonName,
+    setCommonName,
+    definitiveHosts,
+    setDefinitiveHosts,
+    busy,
+    error,
+    canReset,
+    onSubmit,
+    onSoftDelete,
+    onReset,
+  } = useEditEntryDialog({ open, atlasId, entry, onClose, onDone });
 
   return (
     <Dialog open={open} onClose={() => !busy && onClose()} fullWidth maxWidth="xs">
@@ -338,70 +192,8 @@ export function EditLifecycleDialog({
   onClose,
   onDone,
 }: LifecycleEditProps) {
-  const [stages, setStages] = useState<StageDraft[]>([]);
-  const [busy, setBusy] = useState<Busy>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!open || !entry) return;
-    setStages(
-      hydrateLifecycleDraft(
-        structuredClone(entry.fields.lifecycleStages),
-        entry.fields.diagnosticStage,
-      ),
-    );
-    setError(null);
-    setBusy(false);
-  }, [open, entry]);
-
-  const previewFields = useMemo((): DatasetFields | null => {
-    if (!entry) return null;
-    return previewLifecycleFields(entry.fields, stages);
-  }, [entry, stages]);
-
-  async function onSubmit(ev: FormEvent) {
-    ev.preventDefault();
-    if (!entry) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const parsed = stages.map((s) => lifecycleStageSchema.parse(s));
-      const ownershipError = diagnosticOwnershipIssue(parsed, null);
-      if (ownershipError) {
-        setError(
-          ownershipError === "at most one diagnostic stage"
-            ? "At most one diagnostic stage"
-            : ownershipError,
-        );
-        setBusy(false);
-        return;
-      }
-      const imageIds = new Set(entry.images.map((img) => img.id));
-      for (const s of parsed) {
-        if (s.imageId && !imageIds.has(s.imageId)) {
-          setError(`Unknown image id: ${s.imageId}`);
-          setBusy(false);
-          return;
-        }
-      }
-      const diagnosticStage = diagnosticMirrorForSave(
-        parsed,
-        entry.fields.diagnosticStage,
-      );
-      await patchEntry(atlasId, entry.id, {
-        fields: {
-          lifecycleStages: parsed as DatasetFields["lifecycleStages"],
-          diagnosticStage,
-        },
-      });
-      onDone();
-      onClose();
-    } catch (err) {
-      setError(errMessage(err, "Could not save lifecycle"));
-    } finally {
-      setBusy(false);
-    }
-  }
+  const { stages, setStages, busy, error, previewFields, onSubmit } =
+    useEditLifecycleDialog({ open, atlasId, entry, onClose, onDone });
 
   return (
     <Dialog
@@ -475,60 +267,8 @@ export function RecentlyDeletedDialog({
   onClose,
   onChanged,
 }: DeletedProps) {
-  const [entries, setEntries] = useState<AtlasEntryView[] | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    let cancelled = false;
-    setEntries(null);
-    setError(null);
-    (async () => {
-      try {
-        const list = await listDeletedEntries(atlasId);
-        if (!cancelled) setEntries(list);
-      } catch (err) {
-        if (!cancelled) {
-          setError(errMessage(err, "Could not load deleted entries"));
-          setEntries([]);
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [open, atlasId]);
-
-  async function onRestore(id: string) {
-    setBusyId(id);
-    setError(null);
-    try {
-      await restoreEntry(atlasId, id);
-      setEntries((prev) => (prev ?? []).filter((e) => e.id !== id));
-      onChanged();
-    } catch (err) {
-      setError(errMessage(err, "Could not restore entry"));
-    } finally {
-      setBusyId(null);
-    }
-  }
-
-  async function onPurge(entry: AtlasEntryView) {
-    if (!window.confirm(`Permanently delete ${entryTitles(entry).primary}?`))
-      return;
-    setBusyId(entry.id);
-    setError(null);
-    try {
-      await purgeDeletedEntry(atlasId, entry.id);
-      setEntries((prev) => (prev ?? []).filter((e) => e.id !== entry.id));
-      onChanged();
-    } catch (err) {
-      setError(errMessage(err, "Could not permanently delete entry"));
-    } finally {
-      setBusyId(null);
-    }
-  }
+  const { entries, busyId, error, onRestore, onPurge } =
+    useRecentlyDeletedDialog({ open, atlasId, onChanged });
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
