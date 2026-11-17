@@ -10,48 +10,48 @@ import {
 } from "../api/client";
 import { cardPatchBody } from "../cards/cardPatchBody";
 import { REJECT_REASON_LABELS, type RejectReason } from "../lib/rejectReasons";
+import type {
+  DraftReviewEnqueueUnlocks,
+  DraftReviewNotice,
+  DraftReviewTracked,
+} from "./draftReviewTypes";
 
-type Notice = {
-  message: string;
-  tone: "success" | "reject" | "info" | "error";
-  undoCardId?: string;
-};
-
-type Args = {
+export type DraftReviewDecideCtx = DraftReviewTracked & {
   jobId: string | null;
   current: CardDraftView | null;
   dirty: boolean;
-  notice: Notice | null;
+  notice: DraftReviewNotice | null;
   undoBusy: boolean;
-  begin: (label?: string) => void;
-  end: (ok?: boolean) => void;
-  enqueueUnlocks: (unlocks: readonly unknown[]) => void;
+  enqueueUnlocks: DraftReviewEnqueueUnlocks;
   load: (id: string) => Promise<CardDraftView[]>;
   refreshJourney: (id: string, draftCount: number) => Promise<void>;
   setDrafts: Dispatch<SetStateAction<CardDraftView[]>>;
   setDirty: Dispatch<SetStateAction<boolean>>;
   setError: Dispatch<SetStateAction<string | null>>;
-  setNotice: Dispatch<SetStateAction<Notice | null>>;
+  setNotice: Dispatch<SetStateAction<DraftReviewNotice | null>>;
   setUndoBusy: Dispatch<SetStateAction<boolean>>;
 };
 
-export function useDraftReviewDecide({
-  jobId,
-  current,
-  dirty,
-  notice,
-  undoBusy,
-  begin,
-  end,
-  enqueueUnlocks,
-  load,
-  refreshJourney,
-  setDrafts,
-  setDirty,
-  setError,
-  setNotice,
-  setUndoBusy,
-}: Args) {
+/** Plain handlers (not a React hook): page owns state; this owns decide/undo flow. */
+export function createDraftReviewDecide(ctx: DraftReviewDecideCtx) {
+  const {
+    jobId,
+    current,
+    dirty,
+    notice,
+    undoBusy,
+    begin,
+    end,
+    enqueueUnlocks,
+    load,
+    refreshJourney,
+    setDrafts,
+    setDirty,
+    setError,
+    setNotice,
+    setUndoBusy,
+  } = ctx;
+
   function onEditorChange(
     next: Pick<CardDraftView, "front" | "back" | "type" | "options">,
   ) {
@@ -65,7 +65,7 @@ export function useDraftReviewDecide({
   async function reloadAfterDecision(
     id: string,
     decidedId: string,
-    decidedNotice: Notice,
+    decidedNotice: DraftReviewNotice,
   ) {
     setNotice(decidedNotice);
     try {

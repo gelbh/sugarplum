@@ -7,44 +7,44 @@ import {
   type CardDraftView,
 } from "../api/client";
 import { cardPatchBody } from "../cards/cardPatchBody";
+import type {
+  DraftReviewEnqueueUnlocks,
+  DraftReviewNotice,
+  DraftReviewTracked,
+} from "./draftReviewTypes";
 
-type Notice = {
-  message: string;
-  tone: "success" | "reject" | "info" | "error";
-  undoCardId?: string;
-};
-
-type Args = {
+export type DraftReviewBatchCtx = DraftReviewTracked & {
   jobId: string | null;
   current: CardDraftView | null;
   dirty: boolean;
-  begin: (label?: string) => void;
-  end: (ok?: boolean) => void;
-  enqueueUnlocks: (unlocks: readonly unknown[]) => void;
+  enqueueUnlocks: DraftReviewEnqueueUnlocks;
   load: (id: string) => Promise<CardDraftView[]>;
   refreshJourney: (id: string, draftCount: number) => Promise<void>;
   setConfirmAll: Dispatch<SetStateAction<boolean>>;
   setConfirmRejectDrafts: Dispatch<SetStateAction<boolean>>;
   setDirty: Dispatch<SetStateAction<boolean>>;
   setError: Dispatch<SetStateAction<string | null>>;
-  setNotice: Dispatch<SetStateAction<Notice | null>>;
+  setNotice: Dispatch<SetStateAction<DraftReviewNotice | null>>;
 };
 
-export function useDraftReviewBatch({
-  jobId,
-  current,
-  dirty,
-  begin,
-  end,
-  enqueueUnlocks,
-  load,
-  refreshJourney,
-  setConfirmAll,
-  setConfirmRejectDrafts,
-  setDirty,
-  setError,
-  setNotice,
-}: Args) {
+/** Plain handlers (not a React hook): batch accept/reject remaining drafts. */
+export function createDraftReviewBatch(ctx: DraftReviewBatchCtx) {
+  const {
+    jobId,
+    current,
+    dirty,
+    begin,
+    end,
+    enqueueUnlocks,
+    load,
+    refreshJourney,
+    setConfirmAll,
+    setConfirmRejectDrafts,
+    setDirty,
+    setError,
+    setNotice,
+  } = ctx;
+
   async function onAcceptAll() {
     if (!jobId) return;
     setError(null);

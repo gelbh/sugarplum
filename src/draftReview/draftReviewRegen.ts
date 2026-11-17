@@ -8,46 +8,42 @@ import {
   type CardDraftView,
 } from "../api/client";
 import { navigate } from "../nav/navigate";
+import type { DraftReviewNotice, DraftReviewTracked } from "./draftReviewTypes";
 
-type Notice = {
-  message: string;
-  tone: "success" | "reject" | "info" | "error";
-  undoCardId?: string;
-};
-
-type Args = {
+export type DraftReviewRegenCtx = DraftReviewTracked & {
   jobId: string | null;
   current: CardDraftView | null;
-  begin: (label?: string) => void;
-  end: (ok?: boolean) => void;
   setDrafts: Dispatch<SetStateAction<CardDraftView[]>>;
   setDirty: Dispatch<SetStateAction<boolean>>;
   setError: Dispatch<SetStateAction<string | null>>;
-  setNotice: Dispatch<SetStateAction<Notice | null>>;
+  setNotice: Dispatch<SetStateAction<DraftReviewNotice | null>>;
   setJobStatus: Dispatch<SetStateAction<string | null>>;
   setReady: Dispatch<SetStateAction<boolean>>;
   setRegenNonce: Dispatch<SetStateAction<number>>;
-  setRegenHints: Dispatch<SetStateAction<string[] | null>>;
+  setRegenConfirmOpen: Dispatch<SetStateAction<boolean>>;
   setCardRegenBusy: Dispatch<SetStateAction<boolean>>;
   setProgressGate: Dispatch<SetStateAction<boolean>>;
 };
 
-export function useDraftReviewRegen({
-  jobId,
-  current,
-  begin,
-  end,
-  setDrafts,
-  setDirty,
-  setError,
-  setNotice,
-  setJobStatus,
-  setReady,
-  setRegenNonce,
-  setRegenHints,
-  setCardRegenBusy,
-  setProgressGate,
-}: Args) {
+/** Plain handlers (not a React hook): card/job regen + failed dismiss. */
+export function createDraftReviewRegen(ctx: DraftReviewRegenCtx) {
+  const {
+    jobId,
+    current,
+    begin,
+    end,
+    setDrafts,
+    setDirty,
+    setError,
+    setNotice,
+    setJobStatus,
+    setReady,
+    setRegenNonce,
+    setRegenConfirmOpen,
+    setCardRegenBusy,
+    setProgressGate,
+  } = ctx;
+
   async function onRegenThisCard() {
     if (!current) return;
     const type = asRegenType(current.type);
@@ -80,7 +76,7 @@ export function useDraftReviewRegen({
     if (!jobId) return;
     setError(null);
     setNotice(null);
-    setRegenHints(null);
+    setRegenConfirmOpen(false);
     begin();
     try {
       await regenJob(jobId, []);

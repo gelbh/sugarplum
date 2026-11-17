@@ -41,24 +41,21 @@ import {
   PRIMARY_PILL_SX,
 } from "../draftReview/draftReviewChrome";
 import { jobIdFromPath } from "../draftReview/draftReviewPath";
+import { createDraftReviewBatch } from "../draftReview/draftReviewBatch";
+import { createDraftReviewDecide } from "../draftReview/draftReviewDecide";
+import { createDraftReviewRegen } from "../draftReview/draftReviewRegen";
+import type { DraftReviewNotice } from "../draftReview/draftReviewTypes";
 import { friendlyJobError } from "../draftReview/friendlyJobError";
-import { useDraftReviewBatch } from "../draftReview/useDraftReviewBatch";
-import { useDraftReviewDecide } from "../draftReview/useDraftReviewDecide";
 import { useDraftReviewLoad } from "../draftReview/useDraftReviewLoad";
-import { useDraftReviewRegen } from "../draftReview/useDraftReviewRegen";
 
-/** Operate UI: review, edit, accept or reject generation drafts (code-led MUI; no Impeccable comps). */
+/** Draft review: edit, accept, or reject generation drafts before study. */
 export default function DraftReviewPage() {
   const jobId = jobIdFromPath();
   const [drafts, setDrafts] = useState<CardDraftView[]>([]);
   const [regenNonce, setRegenNonce] = useState(0);
   const [emptyCtas, setEmptyCtas] = useState<EmptyJobDraftCtas | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<{
-    message: string;
-    tone: "success" | "reject" | "info" | "error";
-    undoCardId?: string;
-  } | null>(null);
+  const [notice, setNotice] = useState<DraftReviewNotice | null>(null);
   const [undoBusy, setUndoBusy] = useState(false);
   const [jobStatus, setJobStatus] = useState<string | null>(null);
   const [crumbs, setCrumbs] = useState<StageCrumb[]>([
@@ -68,8 +65,7 @@ export default function DraftReviewPage() {
   const [dirty, setDirty] = useState(false);
   const [confirmAll, setConfirmAll] = useState(false);
   const [confirmRejectDrafts, setConfirmRejectDrafts] = useState(false);
-  /** Open regen confirm with its hint payload; null when closed. */
-  const [regenHints, setRegenHints] = useState<string[] | null>(null);
+  const [regenConfirmOpen, setRegenConfirmOpen] = useState(false);
   const [cardRegenBusy, setCardRegenBusy] = useState(false);
   /** When false, drop jobId from useJobProgress so the same id can remount and poll again after regen. */
   const [progressGate, setProgressGate] = useState(true);
@@ -102,7 +98,7 @@ export default function DraftReviewPage() {
 
   const current = drafts[0] ?? null;
 
-  const { onEditorChange, onUndoDecision, onDecide } = useDraftReviewDecide({
+  const { onEditorChange, onUndoDecision, onDecide } = createDraftReviewDecide({
     jobId,
     current,
     dirty,
@@ -120,7 +116,7 @@ export default function DraftReviewPage() {
     setUndoBusy,
   });
 
-  const { onAcceptAll, onRejectRemainingDrafts } = useDraftReviewBatch({
+  const { onAcceptAll, onRejectRemainingDrafts } = createDraftReviewBatch({
     jobId,
     current,
     dirty,
@@ -136,7 +132,7 @@ export default function DraftReviewPage() {
     setNotice,
   });
 
-  const { onRegenThisCard, onRegen, onDismissFailed } = useDraftReviewRegen({
+  const { onRegenThisCard, onRegen, onDismissFailed } = createDraftReviewRegen({
     jobId,
     current,
     begin,
@@ -148,7 +144,7 @@ export default function DraftReviewPage() {
     setJobStatus,
     setReady,
     setRegenNonce,
-    setRegenHints,
+    setRegenConfirmOpen,
     setCardRegenBusy,
     setProgressGate,
   });
@@ -249,7 +245,7 @@ export default function DraftReviewPage() {
               onClose={() => setError(null)}
               sx={{ flexShrink: 0 }}
             >
-              {friendlyJobError(error)}
+              {error}
             </Alert>
           ) : null}
           <Box sx={{ flexShrink: 0 }}>
@@ -325,7 +321,7 @@ export default function DraftReviewPage() {
                     >
                       <Button
                         variant="contained"
-                        onClick={() => setRegenHints([])}
+                        onClick={() => setRegenConfirmOpen(true)}
                         disabled={jobActionDisabled}
                         sx={PRIMARY_PILL_SX}
                       >
@@ -425,7 +421,7 @@ export default function DraftReviewPage() {
                       <Button
                         variant="text"
                         color="inherit"
-                        onClick={() => setRegenHints([])}
+                        onClick={() => setRegenConfirmOpen(true)}
                         disabled={jobActionDisabled}
                         sx={{
                           color: "rgba(232, 216, 199, 0.72)",
@@ -559,7 +555,7 @@ export default function DraftReviewPage() {
                 <Button
                   variant="outlined"
                   startIcon={<AutorenewRoundedIcon sx={{ fontSize: 18 }} />}
-                  onClick={() => setRegenHints([])}
+                  onClick={() => setRegenConfirmOpen(true)}
                   disabled={jobActionDisabled}
                   sx={{
                     ...BATCH_PILL_BASE,
@@ -686,8 +682,8 @@ export default function DraftReviewPage() {
           </Dialog>
 
           <Dialog
-            open={regenHints !== null}
-            onClose={() => !busy && setRegenHints(null)}
+            open={regenConfirmOpen}
+            onClose={() => !busy && setRegenConfirmOpen(false)}
             fullWidth
             maxWidth="xs"
             PaperProps={{ sx: DIALOG_PAPER_SX }}
@@ -720,7 +716,7 @@ export default function DraftReviewPage() {
             </DialogContent>
             <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
               <Button
-                onClick={() => setRegenHints(null)}
+                onClick={() => setRegenConfirmOpen(false)}
                 disabled={busy}
                 sx={DIALOG_CANCEL_SX}
               >
