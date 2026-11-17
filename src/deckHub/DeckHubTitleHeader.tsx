@@ -12,7 +12,7 @@ import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
 import type { StoredCoverRow } from "../api/client";
 import { coverPlaceholderColor } from "../library/board/coverPlaceholder";
-import CoverHeroThumb from "../library/CoverHeroThumb";
+import CoverHeroThumb from "../ui/CoverHeroThumb";
 import StageBreadcrumbs, { type StageCrumb } from "../library/StageBreadcrumbs";
 
 type Props = {

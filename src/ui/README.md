@@ -22,4 +22,4 @@ Prefer named subpath imports (`../ui/Foo`) over a fat barrel that invites cycles
 
 ## Timing
 
-W8–W11 extracted next to owning domains on purpose. W12 harvests into `src/ui/` only after admission. Empty library after bootstrap is temporary; the next slice catalogs and promotes admitted families one PR at a time.
+W8–W11 extracted next to owning domains on purpose. W12 harvests into `src/ui/` only after admission. First admitted promote: `CoverHeroThumb` (Subject + DeckHub). Remaining catalog rows (StageBreadcrumbs, DialogEyebrow extract, parks) ship one family per later PR.
