@@ -45,7 +45,7 @@ export function parseTopicHintsJson(raw: string | null | undefined): string[] {
   }
 }
 
-/** Selected hints first, then existing; case-insensitive dedupe. Default cap is 5. */
+/** Selected hints first, then existing; case-insensitive dedupe. Default cap is MAX_TOPIC_HINTS. */
 export function mergeTopicHints(
   selected: string[],
   existing: string[],
